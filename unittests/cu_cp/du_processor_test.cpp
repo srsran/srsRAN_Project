@@ -8,68 +8,11 @@
  *
  */
 
-#include "../../lib/cu_cp/cu_cp.h"
 #include "du_processor_test_helpers.h"
-#include "lib/cu_cp/ue_manager.h"
-#include "test_helpers.h"
-#include "unittests/f1ap/common/test_helpers.h"
-#include "unittests/rrc/test_helpers.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/du_processor_factory.h"
-#include "srsgnb/support/test_utils.h"
-#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
-
-/// Fixture class for DU processor creation
-class du_processor_test : public ::testing::Test
-{
-protected:
-  void SetUp() override
-  {
-    srslog::init();
-    test_logger.set_level(srslog::basic_levels::debug);
-
-    cu_cp_notifier          = std::make_unique<dummy_du_processor_cu_cp_notifier>(nullptr);
-    f1c_pdu_notifier        = std::make_unique<dummy_f1c_pdu_notifier>();
-    f1c_du_mgmt_notifier    = std::make_unique<dummy_f1c_du_management_notifier>();
-    rrc_ue_e1_ctrl_notifier = std::make_unique<dummy_rrc_ue_e1_control_notifier>();
-    rrc_ue_ngc_notifier     = std::make_unique<dummy_rrc_ue_ngc_adapter>();
-    ue_task_sched           = std::make_unique<dummy_du_processor_to_cu_cp_task_scheduler>(timers);
-
-    // create and start DU processor
-    du_processor_config_t du_cfg = {};
-
-    du_processor_obj = create_du_processor(std::move(du_cfg),
-                                           *cu_cp_notifier,
-                                           *f1c_du_mgmt_notifier,
-                                           *f1c_pdu_notifier,
-                                           *rrc_ue_e1_ctrl_notifier,
-                                           *rrc_ue_ngc_notifier,
-                                           *rrc_ue_ngc_notifier,
-                                           *ue_task_sched,
-                                           ue_mng);
-  }
-
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-
-  std::unique_ptr<du_processor_interface>                     du_processor_obj;
-  std::unique_ptr<dummy_du_processor_cu_cp_notifier>          cu_cp_notifier;
-  std::unique_ptr<dummy_f1c_pdu_notifier>                     f1c_pdu_notifier;
-  std::unique_ptr<dummy_f1c_du_management_notifier>           f1c_du_mgmt_notifier;
-  std::unique_ptr<dummy_rrc_ue_e1_control_notifier>           rrc_ue_e1_ctrl_notifier;
-  std::unique_ptr<dummy_rrc_ue_ngc_adapter>                   rrc_ue_ngc_notifier;
-  timer_manager                                               timers;
-  std::unique_ptr<dummy_du_processor_to_cu_cp_task_scheduler> ue_task_sched;
-  ue_manager                                                  ue_mng;
-  srslog::basic_logger&                                       test_logger = srslog::fetch_basic_logger("TEST");
-};
 
 //////////////////////////////////////////////////////////////////////////////////////
 /* F1 setup                                                                         */
@@ -239,6 +182,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
   for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
@@ -255,6 +199,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
 
@@ -307,8 +252,10 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
-  // Reduce cu-cp logger loglevel to warning to reduce console output
+  // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
   for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
@@ -322,8 +269,10 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
     ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
   }
 
-  // Reset cu-cp logger loglevel
+  // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
 

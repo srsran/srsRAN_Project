@@ -13,6 +13,7 @@
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/cu_cp.h"
+#include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/ran/bcd_helpers.h"
@@ -59,13 +60,11 @@ class ngc_rrc_ue_adapter : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_con
 public:
   void connect_rrc_ue(rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler_,
                       rrc_ue_control_message_handler*       rrc_ue_ctrl_handler_,
-                      rrc_ue_init_security_context_handler* rrc_ue_security_handler_,
-                      rrc_ue_pdu_session_resource_handler*  rrc_ue_pdu_session_handler_)
+                      rrc_ue_init_security_context_handler* rrc_ue_security_handler_)
   {
-    rrc_ue_msg_handler         = rrc_ue_msg_handler_;
-    rrc_ue_ctrl_handler        = rrc_ue_ctrl_handler_;
-    rrc_ue_security_handler    = rrc_ue_security_handler_;
-    rrc_ue_pdu_session_handler = rrc_ue_pdu_session_handler_;
+    rrc_ue_msg_handler      = rrc_ue_msg_handler_;
+    rrc_ue_ctrl_handler     = rrc_ue_ctrl_handler_;
+    rrc_ue_security_handler = rrc_ue_security_handler_;
   }
 
   void on_new_pdu(byte_buffer nas_pdu) override
@@ -94,20 +93,32 @@ public:
     return rrc_ue_security_handler->handle_init_security_context(sec_ctxt);
   }
 
+private:
+  rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler      = nullptr;
+  rrc_ue_control_message_handler*       rrc_ue_ctrl_handler     = nullptr;
+  rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
+  srslog::basic_logger&                 logger                  = srslog::fetch_basic_logger("NGC");
+};
+
+/// Adapter between NGC and DU Processor
+class ngc_du_processor_adapter : public ngc_du_processor_control_notifier
+{
+public:
+  void connect_du_processor(du_processor_ngap_interface* du_processor_pdu_session_handler_)
+  {
+    du_processor_pdu_session_handler = du_processor_pdu_session_handler_;
+  }
+
   async_task<cu_cp_pdu_session_resource_setup_response_message>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& request) override
   {
-    srsgnb_assert(rrc_ue_pdu_session_handler != nullptr, "rrc_ue_pdu_session_handler must not be nullptr");
+    srsgnb_assert(du_processor_pdu_session_handler != nullptr, "du_processor_pdu_session_handler must not be nullptr");
 
-    return rrc_ue_pdu_session_handler->handle_new_pdu_session_resource_setup_request(request);
+    return du_processor_pdu_session_handler->handle_new_pdu_session_resource_setup_request(request);
   }
 
 private:
-  rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler         = nullptr;
-  rrc_ue_control_message_handler*       rrc_ue_ctrl_handler        = nullptr;
-  rrc_ue_init_security_context_handler* rrc_ue_security_handler    = nullptr;
-  rrc_ue_pdu_session_resource_handler*  rrc_ue_pdu_session_handler = nullptr;
-  srslog::basic_logger&                 logger                     = srslog::fetch_basic_logger("NGC");
+  du_processor_ngap_interface* du_processor_pdu_session_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

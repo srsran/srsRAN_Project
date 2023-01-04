@@ -24,7 +24,7 @@ class ng_pdu_session_resource_setup_procedure
 public:
   ng_pdu_session_resource_setup_procedure(ngc_ue&                                   ue_,
                                           cu_cp_pdu_session_resource_setup_message& request_,
-                                          ngc_rrc_ue_control_notifier&              rrc_ue_ctrl_notif_,
+                                          ngc_du_processor_control_notifier&        du_processor_ctrl_notif_,
                                           ngc_message_notifier&                     amf_notif_,
                                           srslog::basic_logger&                     logger_);
 
@@ -37,7 +37,7 @@ private:
   ngc_ue&                                           ue;
   cu_cp_pdu_session_resource_setup_message&         request;
   cu_cp_pdu_session_resource_setup_response_message response;
-  ngc_rrc_ue_control_notifier&                      rrc_ue_ctrl_notifier;
+  ngc_du_processor_control_notifier&                du_processor_ctrl_notifier;
   ngc_message_notifier&                             amf_notifier;
   srslog::basic_logger&                             logger;
 };

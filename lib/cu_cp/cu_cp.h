@@ -140,6 +140,9 @@ private:
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
   du_processor_cu_cp_adapter           du_processor_ev_notifier;
 
+  // DU Processor to E1 adapter
+  du_processor_e1ap_adapter du_processor_e1ap_notifier;
+
   // CU-UP processor to CU-CP adapter
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
 
@@ -155,11 +158,11 @@ private:
   // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_notifier;
 
-  // RRC UE to E1 adapter
-  rrc_ue_e1_adapter rrc_ue_e1_notifier;
-
   // NGC to RRC UE adapter array
   slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngc_rrc_ue_ev_notifiers;
+
+  // NGC to DU processor adapter array
+  slotted_array<ngc_du_processor_adapter, MAX_NOF_DUS> ngc_du_processor_ev_notifiers; // indexed by DU index
 
   std::atomic<bool> amf_connected = {false};
 };

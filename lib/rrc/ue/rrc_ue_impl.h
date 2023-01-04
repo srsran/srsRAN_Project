@@ -29,8 +29,6 @@ class rrc_ue_impl final : public rrc_ue_interface
 public:
   rrc_ue_impl(rrc_du_ue_manager&                     parent_,
               rrc_ue_du_processor_notifier&          du_proc_notif_,
-              rrc_ue_e1_control_notifier&            e1_ctrl_notif_,
-              rrc_ue_f1c_control_notifier&           f1c_ctrl_notif_,
               rrc_ue_nas_notifier&                   nas_notif_,
               rrc_ue_control_notifier&               ngc_ctrl_notif_,
               const ue_index_t                       ue_index_,
@@ -52,8 +50,8 @@ public:
   rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
-  rrc_ue_pdu_session_resource_handler&  get_rrc_ue_pdu_session_resource_handler() override { return *this; }
   rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler() override { return *this; }
+  drb_manager&                          get_rrc_ue_drb_manager() override { return context.get_drb_manager(); }
 
   void connect_srb_notifier(srb_id_t                  srb_id,
                             rrc_pdu_notifier&         notifier,
@@ -64,11 +62,8 @@ public:
   void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) override;
 
   // rrc_ue_control_message_handler
-  void handle_new_guami(const guami& msg) override;
-
-  // rrc_ue_pdu_session_resource_handler
-  async_task<cu_cp_pdu_session_resource_setup_response_message>
-  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg) override;
+  void             handle_new_guami(const guami& msg) override;
+  async_task<bool> handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg) override;
 
 private:
   // message handlers
@@ -101,7 +96,7 @@ private:
   async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
 
   // triggers a RRC reconfiguration of the UE
-  async_task<bool> start_rrc_reconfiguration(const rrc_reconfiguration_procedure_args& msg) override;
+  async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_message& msg) override;
 
   // Helper to create PDU from RRC message
   template <class T>
@@ -127,8 +122,6 @@ private:
   rrc_ue_context_t              context;
   rrc_du_ue_manager&            rrc_du;                // reference to the parant RRC object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
-  rrc_ue_e1_control_notifier&   e1_ctrl_notifier;      // notifier to the E1
-  rrc_ue_f1c_control_notifier&  f1c_ctrl_notifier;     // notifier to the F1C
   rrc_ue_nas_notifier&          nas_notifier;          // PDU notifier to the NGC
   rrc_ue_control_notifier&      ngc_ctrl_notifier;     // Control message notifier to the NGC
   srb_notifiers_array           srbs;                  // set notifiers for all SRBs

@@ -13,10 +13,13 @@
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/du_processor.h"
+#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
+/// Adapter between DU processor and CU-CP task scheduler
 class du_processor_to_cu_cp_task_scheduler : public du_processor_ue_task_scheduler
 {
 public:
@@ -45,6 +48,7 @@ private:
   ue_task_scheduler* cu_cp_task_sched = nullptr;
 };
 
+/// Adapter between DU processor and CU-CP
 class du_processor_cu_cp_adapter : public du_processor_cu_cp_notifier
 {
 public:
@@ -58,6 +62,35 @@ public:
 
 private:
   cu_cp_du_handler* cu_cp_handler = nullptr;
+};
+
+/// Adapter between DU processor and E1AP
+class du_processor_e1ap_adapter : public du_processor_e1ap_control_notifier
+{
+public:
+  void connect_e1ap(e1_bearer_context_manager* e1_bearer_context_mng_)
+  {
+    e1_bearer_context_mng = e1_bearer_context_mng_;
+  }
+
+  async_task<e1ap_bearer_context_setup_response>
+  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
+  {
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+
+    return e1_bearer_context_mng->handle_bearer_context_setup_request(msg);
+  }
+
+  async_task<e1ap_bearer_context_modification_response>
+  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override
+  {
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+
+    return e1_bearer_context_mng->handle_bearer_context_modification_request(msg);
+  }
+
+private:
+  e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
 };
 
 } // namespace srs_cu_cp

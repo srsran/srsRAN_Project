@@ -18,8 +18,6 @@ using namespace asn1::rrc_nr;
 
 rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
                          rrc_ue_du_processor_notifier&          du_proc_notif_,
-                         rrc_ue_e1_control_notifier&            e1_ctrl_notif_,
-                         rrc_ue_f1c_control_notifier&           f1c_ctrl_notif_,
                          rrc_ue_nas_notifier&                   nas_notif_,
                          rrc_ue_control_notifier&               ngc_ctrl_notif_,
                          const ue_index_t                       ue_index_,
@@ -32,8 +30,6 @@ rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
   context(ue_index_, c_rnti_, cell_, cfg_),
   rrc_du(rrc_du_),
   du_processor_notifier(du_proc_notif_),
-  e1_ctrl_notifier(e1_ctrl_notif_),
-  f1c_ctrl_notifier(f1c_ctrl_notif_),
   nas_notifier(nas_notif_),
   ngc_ctrl_notifier(ngc_ctrl_notif_),
   srbs(srbs_),
@@ -90,7 +86,7 @@ async_task<bool> rrc_ue_impl::handle_init_security_context(const rrc_init_securi
   return launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger);
 }
 
-async_task<bool> rrc_ue_impl::start_rrc_reconfiguration(const rrc_reconfiguration_procedure_args& msg)
+async_task<bool> rrc_ue_impl::start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_message& msg)
 {
   //  Launch RRC Reconfiguration procedure
   return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);

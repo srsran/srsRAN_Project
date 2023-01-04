@@ -10,7 +10,6 @@
 
 #include "../../ran/gnb_format.h"
 #include "procedures/rrc_setup_procedure.h"
-#include "routines/rrc_pdu_session_resource_setup_routine.h"
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
 
@@ -174,9 +173,7 @@ void rrc_ue_impl::handle_new_guami(const guami& msg)
   context.current_guami = msg;
 }
 
-async_task<cu_cp_pdu_session_resource_setup_response_message>
-rrc_ue_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg)
+async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg)
 {
-  return launch_async<rrc_pdu_session_resource_setup_routine>(
-      msg, context, e1_ctrl_notifier, f1c_ctrl_notifier, *this, *event_mng, logger);
+  return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);
 }

@@ -12,7 +12,13 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/nr_cgi.h"
+#include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
+#include "srsgnb/rlc/rlc_config.h"
+#include "srsgnb/security/security.h"
 #include <cstdint>
 #include <string>
 #include <type_traits>
@@ -54,6 +60,11 @@ enum du_cell_index_t : uint16_t {
 constexpr inline du_index_t int_to_du_index(std::underlying_type_t<du_index_t> idx)
 {
   return static_cast<du_index_t>(idx);
+}
+
+constexpr inline std::underlying_type_t<du_index_t> du_index_to_int(du_index_t du_index)
+{
+  return static_cast<std::underlying_type_t<du_index_t>>(du_index);
 }
 
 /// Convert integer to CU-UP index type.
@@ -113,11 +124,17 @@ inline cu_cp_ue_id_t get_cu_cp_ue_id(std::underlying_type_t<du_index_t> du_index
 
 inline ue_index_t get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id_t ngap_id)
 {
+  if (ngap_id == cu_cp_ue_id_t::invalid) {
+    return INVALID_UE_INDEX;
+  }
   return int_to_ue_index(cu_cp_ue_id_to_uint(ngap_id) % MAX_NOF_UES);
 }
 
 inline du_index_t get_du_index_from_cu_cp_ue_id(cu_cp_ue_id_t ngap_id)
 {
+  if (ngap_id == cu_cp_ue_id_t::invalid) {
+    return INVALID_DU_INDEX;
+  }
   std::underlying_type_t<ue_index_t> ue_idx = get_ue_index_from_cu_cp_ue_id(ngap_id);
   return int_to_du_index((cu_cp_ue_id_to_uint(ngap_id) - ue_idx) / MAX_NOF_UES);
 }
@@ -151,20 +168,20 @@ enum class cu_cp_cause_t : uint8_t {
 };
 
 struct cu_cp_rohc_profiles {
-  bool profile0x0001;
-  bool profile0x0002;
-  bool profile0x0003;
-  bool profile0x0004;
-  bool profile0x0006;
-  bool profile0x0101;
-  bool profile0x0102;
-  bool profile0x0103;
-  bool profile0x0104;
+  bool profile0x0001 = false;
+  bool profile0x0002 = false;
+  bool profile0x0003 = false;
+  bool profile0x0004 = false;
+  bool profile0x0006 = false;
+  bool profile0x0101 = false;
+  bool profile0x0102 = false;
+  bool profile0x0103 = false;
+  bool profile0x0104 = false;
 };
 
 struct cu_cp_rohc {
   cu_cp_rohc_profiles profiles;
-  bool                drb_continue_rohc_present;
+  bool                drb_continue_rohc_present = false;
   optional<uint16_t>  max_cid;
 };
 
@@ -174,7 +191,7 @@ struct cu_cp_ul_only_rohc_profiles {
 
 struct cu_cp_ul_only_rohc {
   cu_cp_ul_only_rohc_profiles profiles;
-  bool                        drb_continue_rohc_present;
+  bool                        drb_continue_rohc_present = false;
   optional<uint16_t>          max_cid;
 };
 
@@ -186,11 +203,11 @@ struct cu_cp_hdr_compress {
 struct cu_cp_drb {
   cu_cp_hdr_compress hdr_compress;
   optional<int16_t>  discard_timer;
-  uint8_t            pdcp_sn_size_ul;
-  uint8_t            pdcp_sn_size_dl;
-  bool               integrity_protection_present;
-  bool               status_report_required_present;
-  bool               out_of_order_delivery_present;
+  optional<uint8_t>  pdcp_sn_size_ul;
+  optional<uint8_t>  pdcp_sn_size_dl;
+  bool               integrity_protection_present   = false;
+  bool               status_report_required_present = false;
+  bool               out_of_order_delivery_present  = false;
 };
 
 struct cu_cp_primary_path {
@@ -205,22 +222,23 @@ struct cu_cp_more_than_one_rlc {
 };
 
 struct cu_cp_pdcp_config {
-  cu_cp_drb                         drb;
+  optional<cu_cp_drb>               drb;
   optional<cu_cp_more_than_one_rlc> more_than_one_rlc;
   optional<uint16_t>                t_reordering;
+  bool                              ciphering_disabled_present = false;
 };
 
 struct cu_cp_sdap_config {
   uint16_t             pdu_session;
   std::string          sdap_hdr_dl;
   std::string          sdap_hdr_ul;
-  bool                 default_drb;
+  bool                 default_drb = false;
   std::vector<uint8_t> mapped_qos_flows_to_add;
   std::vector<uint8_t> mapped_qos_flows_to_release;
 };
 
 struct cu_cp_qos_characteristics {
-  bool        is_dynamic_5qi;
+  bool        is_dynamic_5qi = false;
   uint16_t    five_qi;
   uint8_t     prio_level_arp;
   std::string pre_emption_cap;
@@ -252,6 +270,7 @@ struct cu_cp_pdu_session_res_setup_item {
 };
 
 struct cu_cp_pdu_session_resource_setup_message {
+  cu_cp_ue_id_t                                 cu_cp_ue_id = cu_cp_ue_id_t::invalid;
   std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
 };
@@ -303,6 +322,182 @@ struct cu_cp_pdu_session_resource_setup_response_message {
   std::vector<cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
   std::vector<cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
   // TODO: Add crit diagnostics
+};
+
+struct cu_cp_drb_setup_message {
+  drb_id_t                                 drb_id;
+  srsgnb::rlc_mode                         rlc;
+  cu_cp_qos_characteristics                qos_info;
+  std::vector<up_transport_layer_info>     gtp_tunnels;
+  cu_cp_s_nssai                            s_nssai;
+  std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb;
+
+  uint8_t dl_pdcp_sn_length; // id-DLPDCPSNLength 161
+  uint8_t ul_pdcp_sn_length; // id-ULPDCPSNLength 192
+};
+
+struct cu_cp_ue_context_modification_request {
+  ue_index_t                           ue_index;
+  std::vector<cu_cp_drb_setup_message> cu_cp_drb_setup_msgs;
+  optional<uint64_t>                   ue_aggregate_maximum_bit_rate_ul;
+};
+
+struct cu_cp_du_to_cu_rrc_info {
+  byte_buffer cell_group_cfg;
+  byte_buffer meas_gap_cfg;
+  byte_buffer requested_p_max_fr1;
+};
+
+struct cu_cp_dl_up_tnl_info_to_be_setup_item {
+  up_transport_layer_info dl_up_tnl_info;
+};
+
+struct cu_cp_drbs_setup_modified_item {
+  drb_id_t                                           drb_id;
+  optional<lcid_t>                                   lcid;
+  std::vector<cu_cp_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list;
+};
+
+struct cu_cp_srbs_failed_to_be_setup_mod_item {
+  srb_id_t                srb_id;
+  optional<cu_cp_cause_t> cause;
+};
+
+struct cu_cp_drbs_failed_to_be_setup_modified_item {
+  drb_id_t                drb_id;
+  optional<cu_cp_cause_t> cause;
+};
+
+struct cu_cp_scell_failed_to_setup_mod_item {
+  nr_cell_id_t            scell_id;
+  optional<cu_cp_cause_t> cause;
+};
+
+struct cu_cp_crit_diagnostics_item {
+  std::string iecrit;
+  uint32_t    ie_id;
+  std::string type_of_error;
+};
+
+struct cu_cp_crit_diagnostics {
+  std::vector<cu_cp_crit_diagnostics_item> ies_crit_diagnostics;
+  optional<uint16_t>                       proc_code;
+  optional<std::string>                    trigger_msg;
+  optional<std::string>                    proc_crit;
+  optional<uint16_t>                       transaction_id;
+};
+
+struct cu_cp_associated_scell_item {
+  nr_cell_id_t scell_id;
+};
+
+struct cu_cp_srbs_setup_modified_item {
+  srb_id_t srb_id;
+  lcid_t   lcid;
+};
+
+struct cu_cp_ue_context_modification_response {
+  bool success = false;
+  // ue context modification response
+  byte_buffer                                              res_coordination_transfer_container;
+  cu_cp_du_to_cu_rrc_info                                  du_to_cu_rrc_info;
+  std::vector<cu_cp_drbs_setup_modified_item>              drbs_setup_mod_list;
+  std::vector<cu_cp_drbs_setup_modified_item>              drbs_modified_list;
+  std::vector<cu_cp_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list;
+  std::vector<cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list;
+  std::vector<cu_cp_scell_failed_to_setup_mod_item>        scell_failed_to_setup_mod_list;
+  std::vector<cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
+  optional<std::string>                                    inactivity_monitoring_resp;
+  optional<srsgnb::rnti_t>                                 c_rnti;
+  std::vector<cu_cp_associated_scell_item>                 associated_scell_list;
+  std::vector<cu_cp_srbs_setup_modified_item>              srbs_setup_mod_list;
+  std::vector<cu_cp_srbs_setup_modified_item>              srbs_modified_list;
+  optional<std::string>                                    full_cfg;
+
+  // UE Context Modification Failure
+  optional<cu_cp_cause_t> cause;
+
+  // Common
+  optional<cu_cp_crit_diagnostics> crit_diagnostics;
+};
+
+/// Arguments for the RRC Reconfiguration procedure.
+
+struct cu_cp_srb_to_add_mod {
+  bool                        reestablish_pdcp_present = false;
+  bool                        discard_on_pdcp_present  = false;
+  srb_id_t                    srb_id;
+  optional<cu_cp_pdcp_config> pdcp_cfg;
+};
+
+struct cu_cp_cn_assoc {
+  optional<uint8_t>           eps_bearer_id;
+  optional<cu_cp_sdap_config> sdap_cfg;
+};
+
+struct cu_cp_drb_to_add_mod {
+  bool                        reestablish_pdcp_present = false;
+  bool                        recover_pdcp_present     = false;
+  optional<cu_cp_cn_assoc>    cn_assoc;
+  drb_id_t                    drb_id;
+  optional<cu_cp_pdcp_config> pdcp_cfg;
+};
+
+struct cu_cp_security_algorithm_config {
+  std::string           ciphering_algorithm;
+  optional<std::string> integrity_prot_algorithm;
+};
+
+struct cu_cp_security_config {
+  optional<cu_cp_security_algorithm_config> security_algorithm_cfg;
+  optional<std::string>                     key_to_use;
+};
+
+struct cu_cp_radio_bearer_config {
+  std::vector<cu_cp_srb_to_add_mod> srb_to_add_mod_list;
+  std::vector<cu_cp_drb_to_add_mod> drb_to_add_mod_list;
+  std::vector<drb_id_t>             drb_to_release_list;
+  optional<cu_cp_security_config>   security_cfg;
+  bool                              srb3_to_release_present = false;
+};
+
+struct cu_cp_meas_config {
+  // TODO: add meas config
+};
+
+struct cu_cp_master_key_upd {
+  bool        key_set_change_ind = false;
+  uint8_t     next_hop_chaining_count;
+  byte_buffer nas_container;
+};
+
+struct cu_cp_delay_budget_report_cfg {
+  std::string type;
+  std::string delay_budget_report_prohibit_timer;
+};
+
+struct cu_cp_other_cfg {
+  optional<cu_cp_delay_budget_report_cfg> delay_budget_report_cfg;
+};
+
+struct cu_cp_rrc_recfg_v1530_ies {
+  bool                           full_cfg_present = false;
+  byte_buffer                    master_cell_group;
+  std::vector<byte_buffer>       ded_nas_msg_list;
+  optional<cu_cp_master_key_upd> master_key_upd;
+  byte_buffer                    ded_sib1_delivery;
+  byte_buffer                    ded_sys_info_delivery;
+  optional<cu_cp_other_cfg>      other_cfg;
+
+  // TODO: Add rrc_recfg_v1540_ies_s
+  // optional<cu_cp_rrc_recfg_v1540_ies> non_crit_ext;
+};
+
+struct cu_cp_rrc_reconfiguration_procedure_message {
+  optional<cu_cp_radio_bearer_config> radio_bearer_cfg;
+  byte_buffer                         secondary_cell_group;
+  optional<cu_cp_meas_config>         meas_cfg;
+  optional<cu_cp_rrc_recfg_v1530_ies> non_crit_ext;
 };
 
 } // namespace srs_cu_cp

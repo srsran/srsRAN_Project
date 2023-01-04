@@ -19,10 +19,14 @@ using namespace asn1::ngap;
 ng_pdu_session_resource_setup_procedure::ng_pdu_session_resource_setup_procedure(
     ngc_ue&                                   ue_,
     cu_cp_pdu_session_resource_setup_message& request_,
-    ngc_rrc_ue_control_notifier&              rrc_ue_ctrl_notif_,
+    ngc_du_processor_control_notifier&        du_processor_ctrl_notif_,
     ngc_message_notifier&                     amf_notif_,
     srslog::basic_logger&                     logger_) :
-  ue(ue_), request(request_), rrc_ue_ctrl_notifier(rrc_ue_ctrl_notif_), amf_notifier(amf_notif_), logger(logger_)
+  ue(ue_),
+  request(request_),
+  du_processor_ctrl_notifier(du_processor_ctrl_notif_),
+  amf_notifier(amf_notif_),
+  logger(logger_)
 {
 }
 
@@ -33,7 +37,7 @@ void ng_pdu_session_resource_setup_procedure::operator()(coro_context<async_task
   logger.debug("PDU Session Resource Setup started");
 
   // Handle mandatory IEs
-  CORO_AWAIT_VALUE(response, rrc_ue_ctrl_notifier.on_new_pdu_session_resource_setup_request(request));
+  CORO_AWAIT_VALUE(response, du_processor_ctrl_notifier.on_new_pdu_session_resource_setup_request(request));
 
   // TODO: Handle optional IEs
 

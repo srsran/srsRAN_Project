@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/cu_cp/adapters/du_processor_adapters.h"
+#include "../../lib/cu_cp/adapters/du_processor_adapters.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
@@ -57,6 +57,42 @@ public:
 private:
   srslog::basic_logger& logger;
   cu_cp_du_handler*     cu_cp_handler = nullptr;
+};
+
+struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
+public:
+  dummy_du_processor_e1ap_control_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+
+  async_task<e1ap_bearer_context_setup_response>
+  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
+  {
+    logger.info("Received a new bearer context setup request");
+
+    return launch_async([res = e1ap_bearer_context_setup_response{},
+                         msg](coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      if (msg.uedl_aggregate_maximum_bit_rate > 0) {
+        res.success = true;
+      }
+      CORO_RETURN(res);
+    });
+  }
+
+  async_task<e1ap_bearer_context_modification_response>
+  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override
+  {
+    logger.info("Received a new bearer context modification request");
+
+    return launch_async([res = e1ap_bearer_context_modification_response{}](
+                            coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      CORO_RETURN(res);
+    });
+  }
+
+private:
+  srslog::basic_logger& logger;
 };
 
 /// \brief Generate DU-to-CU RRC Container with CellGroupConfig.

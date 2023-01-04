@@ -35,14 +35,15 @@ ngc_impl::ngc_impl(ngc_ue_task_scheduler& task_sched_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 ngc_impl::~ngc_impl() {}
 
-void ngc_impl::create_ngc_ue(du_index_t                   du_index,
-                             ue_index_t                   ue_index,
-                             ngc_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-                             ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier)
+void ngc_impl::create_ngc_ue(du_index_t                         du_index,
+                             ue_index_t                         ue_index,
+                             ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+                             ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+                             ngc_du_processor_control_notifier& du_processor_ctrl_notifier)
 {
   // Create UE context and store it
   cu_cp_ue_id_t cu_cp_ue_id = get_cu_cp_ue_id(du_index, ue_index);
-  auto&         ue          = ue_manager.add_ue(cu_cp_ue_id, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier);
+  auto& ue = ue_manager.add_ue(cu_cp_ue_id, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
 
   logger.debug("Created NGAP UE (ran_ue_id={}, cu_cp_ue_id={}, du_index={}, ue_index={})",
                ue.get_ran_ue_id(),
@@ -250,13 +251,14 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
 
   // Convert to common type
   cu_cp_pdu_session_resource_setup_message msg;
+  msg.cu_cp_ue_id = cu_cp_ue_id;
   fill_cu_cp_pdu_session_resource_setup_message(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
   // start procedure
   task_sched.schedule_async_task(cu_cp_ue_id,
                                  launch_async<ng_pdu_session_resource_setup_procedure>(
-                                     *ue, msg, ue->get_rrc_ue_control_notifier(), ngc_notifier, logger));
+                                     *ue, msg, ue->get_du_processor_control_notifier(), ngc_notifier, logger));
 
   // Handle optional parameters
   if (request->nas_pdu_present) {

@@ -10,10 +10,19 @@
 
 #pragma once
 
-#include "unittests/f1ap/cu_cp/f1_cu_test_helpers.h"
+#include "../../lib/cu_cp/ue_manager.h"
+#include "../../lib/f1ap/common/asn1_helpers.h"
+#include "../f1ap/common/test_helpers.h"
+#include "../f1ap/cu_cp/f1_cu_test_helpers.h"
+#include "../rrc/test_helpers.h"
+#include "du_processor_test_helpers.h"
+#include "test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor.h"
+#include "srsgnb/cu_cp/du_processor_factory.h"
 #include "srsgnb/rrc/rrc.h"
+#include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -59,6 +68,72 @@ ue_context_release_command_message generate_ue_context_release_command(ue_index_
   ue_context_release_command_msg.cause                              = ue_context_release_cause::radio_network;
   return ue_context_release_command_msg;
 }
+
+/// Fixture class for DU processor creation
+class du_processor_test : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    srslog::init();
+    test_logger.set_level(srslog::basic_levels::debug);
+
+    cu_cp_notifier       = std::make_unique<dummy_du_processor_cu_cp_notifier>(nullptr);
+    f1c_pdu_notifier     = std::make_unique<dummy_f1c_pdu_notifier>();
+    f1c_du_mgmt_notifier = std::make_unique<dummy_f1c_du_management_notifier>();
+    e1ap_ctrl_notifier   = std::make_unique<dummy_du_processor_e1ap_control_notifier>();
+    rrc_ue_ngc_notifier  = std::make_unique<dummy_rrc_ue_ngc_adapter>();
+    ue_task_sched        = std::make_unique<dummy_du_processor_to_cu_cp_task_scheduler>(timers);
+
+    // create and start DU processor
+    du_processor_config_t du_cfg = {};
+
+    du_processor_obj = create_du_processor(std::move(du_cfg),
+                                           *cu_cp_notifier,
+                                           *f1c_du_mgmt_notifier,
+                                           *f1c_pdu_notifier,
+                                           *e1ap_ctrl_notifier,
+                                           *rrc_ue_ngc_notifier,
+                                           *rrc_ue_ngc_notifier,
+                                           *ue_task_sched,
+                                           ue_mng);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
+  void attach_ue()
+  {
+    // Generate valid F1SetupRequest
+    f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+    // Pass message to DU processor
+    du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
+
+    // Generate ue_creation message
+    ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(MIN_CRNTI, 12345678);
+    // Pass message to DU processor
+    du_processor_obj->handle_ue_creation_request(ue_creation_msg);
+  }
+
+  void receive_rrc_reconfig_complete()
+  {
+    // inject RRC Reconfiguration complete into UE object
+  }
+
+  std::unique_ptr<du_processor_interface>                     du_processor_obj;
+  std::unique_ptr<dummy_du_processor_cu_cp_notifier>          cu_cp_notifier;
+  std::unique_ptr<dummy_f1c_pdu_notifier>                     f1c_pdu_notifier;
+  std::unique_ptr<dummy_f1c_du_management_notifier>           f1c_du_mgmt_notifier;
+  std::unique_ptr<dummy_du_processor_e1ap_control_notifier>   e1ap_ctrl_notifier;
+  std::unique_ptr<dummy_rrc_ue_ngc_adapter>                   rrc_ue_ngc_notifier;
+  timer_manager                                               timers;
+  std::unique_ptr<dummy_du_processor_to_cu_cp_task_scheduler> ue_task_sched;
+  ue_manager                                                  ue_mng;
+  srslog::basic_logger&                                       test_logger = srslog::fetch_basic_logger("TEST");
+};
 
 } // namespace srs_cu_cp
 } // namespace srsgnb

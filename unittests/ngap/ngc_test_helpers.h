@@ -31,6 +31,7 @@ protected:
 
     msg_notifier          = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
     rrc_ue_notifier       = std::make_unique<dummy_ngc_rrc_ue_notifier>();
+    du_processor_notifier = std::make_unique<dummy_ngc_du_processor_notifier>();
     ngc_ue_task_scheduler = std::make_unique<dummy_ngc_ue_task_scheduler>(timers);
 
     ngc = create_ngc(*ngc_ue_task_scheduler, ue_mng, *msg_notifier);
@@ -42,12 +43,13 @@ protected:
     srslog::flush();
   }
 
-  timer_manager                                timers;
-  ue_manager                                   ue_mng;
-  std::unique_ptr<dummy_ngc_amf_notifier>      msg_notifier;
-  std::unique_ptr<dummy_ngc_rrc_ue_notifier>   rrc_ue_notifier;
-  std::unique_ptr<dummy_ngc_ue_task_scheduler> ngc_ue_task_scheduler;
-  std::unique_ptr<ngc_interface>               ngc;
+  timer_manager                                    timers;
+  ue_manager                                       ue_mng;
+  std::unique_ptr<dummy_ngc_amf_notifier>          msg_notifier;
+  std::unique_ptr<dummy_ngc_rrc_ue_notifier>       rrc_ue_notifier;
+  std::unique_ptr<dummy_ngc_du_processor_notifier> du_processor_notifier;
+  std::unique_ptr<dummy_ngc_ue_task_scheduler>     ngc_ue_task_scheduler;
+  std::unique_ptr<ngc_interface>                   ngc;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

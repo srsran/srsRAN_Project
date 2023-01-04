@@ -50,8 +50,8 @@ public:
 
   async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command& msg) override;
 
-  async_task<f1ap_ue_context_modification_response>
-  handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) override;
+  async_task<cu_cp_ue_context_modification_response>
+  handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override;
 
   // f1c message handler functions
 
@@ -61,6 +61,14 @@ public:
 
   // F1C statistics
   int get_nof_ues() override;
+
+  // f1ap_cu_interface
+  f1c_message_handler&     get_f1c_message_handler() override { return *this; }
+  f1c_event_handler&       get_f1c_event_handler() override { return *this; }
+  f1c_rrc_message_handler& get_f1c_rrc_message_handler() override { return *this; }
+  f1c_connection_manager&  get_f1c_connection_manager() override { return *this; }
+  f1c_ue_context_manager&  get_f1c_ue_context_manager() override { return *this; }
+  f1c_statistics_handler&  get_f1c_statistics_handler() override { return *this; }
 
 private:
   /// \brief Notify about the reception of an initiating message.

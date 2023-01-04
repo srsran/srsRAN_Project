@@ -49,44 +49,56 @@ protected:
     srslog::flush();
   }
 
-  /// @brief Constructs full RRC Reconfig message with radioBearerConfig, masterCellGroup and NAS PDU
-  rrc_reconfiguration_procedure_args fill_rrc_reconfiguration_procedure_args()
+  /// \brief Constructs full RRC Reconfig message with radioBearerConfig, masterCellGroup and NAS PDU
+  cu_cp_rrc_reconfiguration_procedure_message fill_rrc_reconfiguration_procedure_message()
   {
-    rrc_reconfiguration_procedure_args args;
+    cu_cp_rrc_reconfiguration_procedure_message args;
 
     // add dummy radio bearer config
-    auto& rb_cfg = args.radio_bearer_cfg.emplace();
+    cu_cp_radio_bearer_config rb_cfg;
 
-    rb_cfg.drb_to_add_mod_list.resize(1);
+    cu_cp_drb_to_add_mod drb_item;
 
-    auto& drb_item                                = rb_cfg.drb_to_add_mod_list[0];
-    drb_item.drb_id                               = 1;
-    drb_item.cn_assoc_present                     = true;
-    drb_item.cn_assoc.set_eps_bearer_id()         = 5;
-    drb_item.pdcp_cfg_present                     = true;
-    drb_item.pdcp_cfg.ciphering_disabled_present  = true;
-    drb_item.pdcp_cfg.drb_present                 = true;
-    drb_item.pdcp_cfg.drb.pdcp_sn_size_dl_present = true;
-    drb_item.pdcp_cfg.drb.pdcp_sn_size_dl         = asn1::rrc_nr::pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_opts::len18bits;
-    drb_item.pdcp_cfg.drb.pdcp_sn_size_ul_present = true;
-    drb_item.pdcp_cfg.drb.pdcp_sn_size_ul         = asn1::rrc_nr::pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_opts::len18bits;
-    drb_item.pdcp_cfg.drb.discard_timer_present   = true;
-    drb_item.pdcp_cfg.drb.discard_timer           = asn1::rrc_nr::pdcp_cfg_s::drb_s_::discard_timer_opts::ms100;
-    drb_item.pdcp_cfg.drb.hdr_compress.set_not_used();
-    drb_item.pdcp_cfg.t_reordering_present = true;
-    drb_item.pdcp_cfg.t_reordering         = asn1::rrc_nr::pdcp_cfg_s::t_reordering_opts::ms0;
+    drb_item.drb_id = uint_to_drb_id(1);
 
-    rb_cfg.security_cfg_present                        = true;
-    rb_cfg.security_cfg.key_to_use_present             = true;
-    rb_cfg.security_cfg.key_to_use                     = asn1::rrc_nr::security_cfg_s::key_to_use_opts::secondary;
-    rb_cfg.security_cfg.security_algorithm_cfg_present = true;
-    rb_cfg.security_cfg.security_algorithm_cfg.ciphering_algorithm = asn1::rrc_nr::ciphering_algorithm_opts::nea2;
+    cu_cp_cn_assoc cn_assoc;
+    cn_assoc.eps_bearer_id = 5;
+    drb_item.cn_assoc      = cn_assoc;
 
+    cu_cp_pdcp_config pdcp_config;
+    pdcp_config.ciphering_disabled_present = true;
+
+    cu_cp_drb drb;
+    drb.pdcp_sn_size_dl = 18;
+    drb.pdcp_sn_size_ul = 18;
+    drb.discard_timer   = 100;
+    pdcp_config.drb     = drb;
+
+    pdcp_config.t_reordering = 0;
+    drb_item.pdcp_cfg        = pdcp_config;
+
+    cu_cp_security_config security_config;
+
+    security_config.key_to_use = "secondary";
+
+    cu_cp_security_algorithm_config security_algorithm_config;
+    security_algorithm_config.ciphering_algorithm = "nea2";
+    security_config.security_algorithm_cfg        = security_algorithm_config;
+
+    rb_cfg.security_cfg = security_config;
+
+    rb_cfg.drb_to_add_mod_list.push_back(drb_item);
+
+    args.radio_bearer_cfg = rb_cfg;
+
+    cu_cp_rrc_recfg_v1530_ies non_crit_ext;
     // add dummy NAS PDU
-    args.nas_pdu.emplace().from_string("aabbcc");
+    non_crit_ext.ded_nas_msg_list.push_back(make_byte_buffer("aabbcc"));
 
     // add dummy master cell group config
-    args.master_cell_group_config.emplace().from_string("deadbeef");
+    non_crit_ext.master_cell_group = make_byte_buffer("deadbeef");
+
+    args.non_crit_ext = non_crit_ext;
 
     return args;
   }
@@ -96,7 +108,7 @@ protected:
 TEST_F(rrc_ue_reconfig, when_reconfig_complete_received_proc_successful)
 {
   // Prepare args
-  rrc_reconfiguration_procedure_args args = fill_rrc_reconfiguration_procedure_args();
+  cu_cp_rrc_reconfiguration_procedure_message args = fill_rrc_reconfiguration_procedure_message();
 
   // Trigger Reconfig
   async_task<bool>         t = get_rrc_ue_reconfiguration_handler()->start_rrc_reconfiguration(args);

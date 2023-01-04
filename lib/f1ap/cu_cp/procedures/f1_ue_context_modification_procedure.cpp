@@ -10,6 +10,7 @@
 
 #include "f1_ue_context_modification_procedure.h"
 #include "../../common/asn1_helpers.h"
+#include "../f1ap_asn1_helpers.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
@@ -26,7 +27,7 @@ f1_ue_context_modification_procedure::f1_ue_context_modification_procedure(
 }
 
 void f1_ue_context_modification_procedure::operator()(
-    coro_context<async_task<f1ap_ue_context_modification_response>>& ctx)
+    coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -61,19 +62,28 @@ void f1_ue_context_modification_procedure::send_ue_context_modification_request(
   f1c_notifier.on_new_message(f1c_ue_ctxt_mod_request_msg);
 }
 
-f1ap_ue_context_modification_response f1_ue_context_modification_procedure::create_ue_context_modification_result()
+cu_cp_ue_context_modification_response f1_ue_context_modification_procedure::create_ue_context_modification_result()
 {
-  f1ap_ue_context_modification_response res{};
+  cu_cp_ue_context_modification_response res{};
 
   if (ue_ctxt_mod_outcome.has_value()) {
     logger.info("Received F1AP UE Context Modification Response.");
-    res.response = *ue_ctxt_mod_outcome.value();
-    res.success  = true;
+    if (logger.debug.enabled()) {
+      asn1::json_writer js;
+      (*ue_ctxt_mod_outcome.value()).to_json(js);
+      logger.debug("Containerized UE Context Modification Response message: {}", js.to_string());
+    }
+    fill_f1ap_ue_context_modification_response_message(res, *ue_ctxt_mod_outcome.value());
   } else {
     logger.info("Received F1AP UE Context Modification Failure. Cause: {}",
                 get_cause_str((*ue_ctxt_mod_outcome.error())->cause.value));
-    res.failure = *ue_ctxt_mod_outcome.error();
-    res.success = false;
+    if (logger.debug.enabled()) {
+      asn1::json_writer js;
+      (*ue_ctxt_mod_outcome.error()).to_json(js);
+      logger.debug("Containerized UE Context Modification Failure message: {}", js.to_string());
+    }
+    fill_f1ap_ue_context_modification_response_message(res, *ue_ctxt_mod_outcome.error());
   }
+
   return res;
 }

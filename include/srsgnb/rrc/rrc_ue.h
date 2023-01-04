@@ -10,16 +10,12 @@
 
 #pragma once
 
+#include "drb_manager.h"
 #include "rrc_cell_context.h"
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
-#include "srsgnb/ran/rnti.h"
-#include "srsgnb/ran/up_transport_layer_info.h"
-#include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/security/security.h"
 #include "srsgnb/support/async/async_task.h"
@@ -43,129 +39,6 @@ public:
   /// \brief Notify about a new PDU.
   /// \param[in] msg The RRC PDU message.
   virtual void on_new_pdu(const rrc_pdu_message& msg) = 0;
-};
-
-struct rrc_ue_drb_setup_message {
-  uint8_t                                  drb_id;
-  srsgnb::rlc_mode                         rlc;
-  cu_cp_qos_characteristics                qos_info;
-  std::vector<up_transport_layer_info>     gtp_tunnels;
-  cu_cp_s_nssai                            s_nssai;
-  std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb;
-
-  uint8_t dl_pdcp_sn_length; // id-DLPDCPSNLength 161
-  uint8_t ul_pdcp_sn_length; // id-ULPDCPSNLength 192
-};
-
-struct rrc_ue_ue_context_modification_request_message {
-  ue_index_t                            ue_index;
-  std::vector<rrc_ue_drb_setup_message> rrc_ue_drb_setup_msgs;
-  optional<uint64_t>                    ue_aggregate_maximum_bit_rate_ul;
-};
-
-struct rrc_ue_du_to_cu_rrc_info {
-  byte_buffer cell_group_cfg;
-  byte_buffer meas_gap_cfg;
-  byte_buffer requested_p_max_fr1;
-};
-
-struct rrc_ue_dluptnl_info_to_be_setup_item {
-  up_transport_layer_info dluptnl_info;
-};
-
-struct rrc_ue_drbs_setup_modified_item {
-  drb_id_t                                          drb_id;
-  optional<lcid_t>                                  lcid;
-  std::vector<rrc_ue_dluptnl_info_to_be_setup_item> dluptnl_info_to_be_setup_list;
-};
-
-struct rrc_ue_srbs_failed_to_be_setup_mod_item {
-  srb_id_t                srb_id;
-  optional<cu_cp_cause_t> cause;
-};
-
-struct rrc_ue_drbs_failed_to_be_setup_modified_item {
-  drb_id_t                drb_id;
-  optional<cu_cp_cause_t> cause;
-};
-
-struct rrc_ue_scell_failed_to_setup_mod_item {
-  nr_cell_id_t            scell_id;
-  optional<cu_cp_cause_t> cause;
-};
-
-struct rrc_ue_crit_diagnostics_item {
-  std::string iecrit;
-  uint32_t    ie_id;
-  std::string type_of_error;
-};
-
-struct rrc_ue_crit_diagnostics {
-  std::vector<rrc_ue_crit_diagnostics_item> ies_crit_diagnostics;
-  optional<uint16_t>                        proc_code;
-  optional<std::string>                     trigger_msg;
-  optional<std::string>                     proc_crit;
-  optional<uint16_t>                        transaction_id;
-};
-
-struct rrc_ue_associated_scell_item {
-  nr_cell_id_t scell_id;
-};
-
-struct rrc_ue_srbs_setup_modified_item {
-  srb_id_t srb_id;
-  lcid_t   lcid;
-};
-
-struct rrc_ue_ue_context_modification_response_message {
-  bool success = false;
-  // ue context modification response
-  byte_buffer                                               res_coordination_transfer_container;
-  rrc_ue_du_to_cu_rrc_info                                  du_to_cu_rrc_info;
-  std::vector<rrc_ue_drbs_setup_modified_item>              drbs_setup_mod_list;
-  std::vector<rrc_ue_drbs_setup_modified_item>              drbs_modified_list;
-  std::vector<rrc_ue_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list;
-  std::vector<rrc_ue_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list;
-  std::vector<rrc_ue_scell_failed_to_setup_mod_item>        scell_failed_to_setup_mod_list;
-  std::vector<rrc_ue_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
-  optional<std::string>                                     inactivity_monitoring_resp;
-  optional<srsgnb::rnti_t>                                  c_rnti;
-  std::vector<rrc_ue_associated_scell_item>                 associated_scell_list;
-  std::vector<rrc_ue_srbs_setup_modified_item>              srbs_setup_mod_list;
-  std::vector<rrc_ue_srbs_setup_modified_item>              srbs_modified_list;
-  optional<std::string>                                     full_cfg;
-
-  // UE Context Modification Failure
-  optional<cu_cp_cause_t> cause;
-
-  // Common
-  optional<rrc_ue_crit_diagnostics> crit_diagnostics;
-};
-
-/// Interface to notify the F1C about control messages.
-class rrc_ue_f1c_control_notifier
-{
-public:
-  virtual ~rrc_ue_f1c_control_notifier() = default;
-
-  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
-  virtual async_task<rrc_ue_ue_context_modification_response_message>
-  on_new_pdu_session_resource_setup_request(rrc_ue_ue_context_modification_request_message& msg) = 0;
-};
-
-/// Interface to notify the E1 about control messages.
-class rrc_ue_e1_control_notifier
-{
-public:
-  virtual ~rrc_ue_e1_control_notifier() = default;
-
-  /// \brief Notify about the reception of a new Bearer Context Setup Request.
-  virtual async_task<e1ap_bearer_context_setup_response>
-  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request) = 0;
-
-  /// \brief Notify about the reception of a new Bearer Context Modification Request.
-  virtual async_task<e1ap_bearer_context_modification_response>
-  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) = 0;
 };
 
 /// Interface to configure security in a SRB
@@ -372,6 +245,12 @@ public:
   /// \brief Handle an update of the GUAMI.
   /// \param[in] msg The new GUAMI.
   virtual void handle_new_guami(const guami& msg) = 0;
+
+  /// \brief Handle an RRC Reconfiguration Request.
+  /// \param[in] msg The new RRC Reconfiguration Request.
+  /// \returns The result of the rrc reconfiguration.
+  virtual async_task<bool>
+  handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg) = 0;
 };
 
 struct rrc_init_security_context {
@@ -391,13 +270,6 @@ public:
   virtual async_task<bool> handle_init_security_context(const rrc_init_security_context& msg) = 0;
 };
 
-/// Arguments for the RRC Reconfiguration procedure.
-struct rrc_reconfiguration_procedure_args {
-  optional<asn1::rrc_nr::radio_bearer_cfg_s> radio_bearer_cfg;
-  optional<asn1::dyn_octstring>              master_cell_group_config;
-  optional<asn1::dyn_octstring>              nas_pdu;
-};
-
 /// Handler to initialize a RRC Reconfiguration procedure.
 class rrc_ue_reconfiguration_handler
 {
@@ -406,18 +278,7 @@ public:
 
   /// \brief Start a RRC reconfiguration procedure.
   /// \param[in] msg The procedure parameters.
-  virtual async_task<bool> start_rrc_reconfiguration(const rrc_reconfiguration_procedure_args& msg) = 0;
-};
-
-/// Handler to initialize the PDU Session Resource Setup from NGAP.
-class rrc_ue_pdu_session_resource_handler
-{
-public:
-  virtual ~rrc_ue_pdu_session_resource_handler() = default;
-
-  /// \brief Handle the reception of a new PDU Session Resource Setup List.
-  virtual async_task<cu_cp_pdu_session_resource_setup_response_message>
-  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg) = 0;
+  virtual async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_message& msg) = 0;
 };
 
 /// Combined entry point for the RRC UE handling.
@@ -427,7 +288,6 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_dl_nas_message_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
-                         public rrc_ue_pdu_session_resource_handler,
                          public rrc_ue_reconfiguration_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
@@ -442,8 +302,8 @@ public:
   virtual rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler()        = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
-  virtual rrc_ue_pdu_session_resource_handler&  get_rrc_ue_pdu_session_resource_handler()  = 0;
   virtual rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler()       = 0;
+  virtual drb_manager&                          get_rrc_ue_drb_manager()                   = 0;
 
   virtual void connect_srb_notifier(srb_id_t                  srb_id,
                                     rrc_pdu_notifier&         notifier,

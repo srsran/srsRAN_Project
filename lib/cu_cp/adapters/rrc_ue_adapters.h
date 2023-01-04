@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "../converters/rrc_ue_asn1_converters.h"
-#include "../helpers/rrc_ue_f1ap_asn1_helpers.h"
 #include "../task_schedulers/ue_task_scheduler.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
@@ -47,81 +45,6 @@ public:
 private:
   f1c_rrc_message_handler& f1c_handler;
   const ue_index_t         ue_index;
-};
-
-/// Adapter between RRC UE and F1AP to trigger procedures
-class rrc_ue_f1ap_control_adapter : public rrc_ue_f1c_control_notifier
-{
-public:
-  explicit rrc_ue_f1ap_control_adapter(f1c_ue_context_manager& f1c_ue_context_mng_) :
-    f1c_ue_context_mng(f1c_ue_context_mng_)
-  {
-  }
-
-  async_task<rrc_ue_ue_context_modification_response_message>
-  on_new_pdu_session_resource_setup_request(rrc_ue_ue_context_modification_request_message& msg) override
-  {
-    f1ap_ue_context_modification_request f1c_ue_ctxt_mod_req;
-    fill_f1ap_ue_context_modification_request(f1c_ue_ctxt_mod_req, msg);
-
-    f1ap_ue_context_modification_response f1c_ue_ctxt_mod_resp;
-
-    return launch_async(
-        [this, res = rrc_ue_ue_context_modification_response_message{}, f1c_ue_ctxt_mod_resp, f1c_ue_ctxt_mod_req, msg](
-            coro_context<async_task<rrc_ue_ue_context_modification_response_message>>& ctx) mutable {
-          CORO_BEGIN(ctx);
-
-          CORO_AWAIT_VALUE(f1c_ue_ctxt_mod_resp,
-                           f1c_ue_context_mng.handle_ue_context_modification_request(f1c_ue_ctxt_mod_req));
-
-          fill_rrc_ue_ue_context_modification_response_message(res, f1c_ue_ctxt_mod_resp);
-
-          CORO_RETURN(res);
-        });
-  }
-
-private:
-  f1c_ue_context_manager& f1c_ue_context_mng;
-};
-
-/// Adapter between RRC UE and E1
-class rrc_ue_e1_adapter : public rrc_ue_e1_control_notifier
-{
-public:
-  void connect_e1(e1_bearer_context_manager* e1_bearer_context_mng_) { e1_bearer_context_mng = e1_bearer_context_mng_; }
-
-  async_task<e1ap_bearer_context_setup_response>
-  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
-  {
-    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
-
-    return launch_async([this, res = e1ap_bearer_context_setup_response{}, msg](
-                            coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-
-      CORO_AWAIT_VALUE(res, e1_bearer_context_mng->handle_bearer_context_setup_request(msg));
-
-      CORO_RETURN(res);
-    });
-  }
-
-  async_task<e1ap_bearer_context_modification_response>
-  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override
-  {
-    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
-
-    return launch_async([this, res = e1ap_bearer_context_modification_response{}, msg](
-                            coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-
-      CORO_AWAIT_VALUE(res, e1_bearer_context_mng->handle_bearer_context_modification_request(msg));
-
-      CORO_RETURN(res);
-    });
-  }
-
-private:
-  e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
 };
 
 /// Adapter between RRC UE and DU processor
@@ -268,6 +191,52 @@ public:
 private:
   ngc_nas_message_handler* ngc_nas_msg_handler = nullptr;
   du_index_t               du_index            = INVALID_DU_INDEX;
+
+  /// @brief Convert a RRC Establishment Cause to a NGAP RRC Establishment Cause.
+  /// @param establishment_cause The RRC Establishment Cause.
+  /// @return The NGAP RRC Establishment Cause.
+  inline asn1::ngap::rrc_establishment_cause_opts rrc_establishment_cause_to_ngap_rrcestablishment_cause(
+      const asn1::rrc_nr::establishment_cause_opts& establishment_cause)
+  {
+    asn1::ngap::rrc_establishment_cause_opts rrcestablishment_cause = {};
+    switch (establishment_cause.value) {
+      case asn1::rrc_nr::establishment_cause_opts::options::emergency:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::emergency;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::high_prio_access:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::high_prio_access;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mt_access:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mt_access;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_sig:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_sig;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_data:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_data;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_voice_call:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_voice_call;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_video_call:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_video_call;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mo_sms:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mo_sms;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mps_prio_access:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mps_prio_access;
+        break;
+      case asn1::rrc_nr::establishment_cause_opts::options::mcs_prio_access:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::mcs_prio_access;
+        break;
+      default:
+        rrcestablishment_cause.value = asn1::ngap::rrc_establishment_cause_opts::nulltype;
+        break;
+    }
+
+    return rrcestablishment_cause;
+  }
 };
 
 } // namespace srs_cu_cp

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "../common/f1_cu_test_messages.h"
 #include "../common/test_helpers.h"
-#include "unittests/f1ap/common/f1_cu_test_messages.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
@@ -49,10 +49,6 @@ private:
 /// \brief Creates a dummy UE CONTEXT SETUP REQUEST.
 f1ap_ue_context_setup_request create_ue_context_setup_request(ue_index_t                             ue_index,
                                                               const std::initializer_list<drb_id_t>& drbs_to_add);
-
-/// \brief Creates a dummy UE CONTEXT MODIFICATION REQUEST.
-f1ap_ue_context_modification_request
-create_ue_context_modification_request(ue_index_t ue_index, const std::initializer_list<drb_id_t>& drbs_to_add);
 
 /// Fixture class for F1AP
 class f1ap_cu_test : public ::testing::Test

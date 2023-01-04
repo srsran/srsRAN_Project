@@ -24,8 +24,8 @@ struct drb_context {
   uint16_t             five_qi        = 0;
   std::vector<uint8_t> mapped_qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
 
-  asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
-  asn1::rrc_nr::sdap_cfg_s sdap_cfg;
+  cu_cp_pdcp_config pdcp_cfg;
+  cu_cp_sdap_config sdap_cfg;
 };
 
 /// DRB manager implementation
@@ -35,19 +35,19 @@ public:
   drb_manager_impl(const drb_manager_cfg& cfg);
   ~drb_manager_impl() = default;
 
-  std::vector<drb_id_t>    calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_message& pdu) override;
-  asn1::rrc_nr::pdcp_cfg_s get_pdcp_config(const drb_id_t drb_id) override;
-  asn1::rrc_nr::sdap_cfg_s get_sdap_config(const drb_id_t drb_id) override;
-  std::vector<uint8_t>     get_mapped_qos_flows(const drb_id_t drb_id) override;
-  uint16_t                 get_pdu_session_id(const drb_id_t drb_id) override;
-  size_t                   get_nof_drbs() override;
+  std::vector<drb_id_t> calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_message& pdu) override;
+  cu_cp_pdcp_config     get_pdcp_config(const drb_id_t drb_id) override;
+  cu_cp_sdap_config     get_sdap_config(const drb_id_t drb_id) override;
+  std::vector<uint8_t>  get_mapped_qos_flows(const drb_id_t drb_id) override;
+  uint16_t              get_pdu_session_id(const drb_id_t drb_id) override;
+  size_t                get_nof_drbs() override;
 
 private:
   drb_id_t allocate_drb_id(); // allocates a new DRB ID and returns it
 
   // returns valid RRC PDCP config for a given FiveQI
-  asn1::rrc_nr::pdcp_cfg_s set_rrc_pdcp_config(uint16_t five_qi);
-  asn1::rrc_nr::sdap_cfg_s set_rrc_sdap_config(const drb_context& context);
+  cu_cp_pdcp_config set_rrc_pdcp_config(uint16_t five_qi);
+  cu_cp_sdap_config set_rrc_sdap_config(const drb_context& context);
 
   const drb_manager_cfg& cfg;
   srslog::basic_logger&  logger;

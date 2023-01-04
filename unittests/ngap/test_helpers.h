@@ -83,7 +83,7 @@ private:
   srslog::basic_logger& logger;
 };
 
-/// Dummy NGC to RRC UE PDU notifier
+/// Dummy NGC to RRC UE notifier
 class dummy_ngc_rrc_ue_notifier : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
 {
 public:
@@ -113,6 +113,18 @@ public:
     });
   }
 
+  byte_buffer last_nas_pdu;
+
+private:
+  srslog::basic_logger& logger;
+};
+
+/// Dummy NGC to DU processor notifier
+class dummy_ngc_du_processor_notifier : public ngc_du_processor_control_notifier
+{
+public:
+  dummy_ngc_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
   async_task<cu_cp_pdu_session_resource_setup_response_message>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& request) override
   {
@@ -135,7 +147,6 @@ public:
     });
   }
 
-  byte_buffer                              last_nas_pdu;
   cu_cp_pdu_session_resource_setup_message last_request;
 
 private:

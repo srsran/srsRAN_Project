@@ -31,12 +31,7 @@ protected:
     // create RRC entity
     du_proc_rrc_ue = std::make_unique<dummy_du_processor_rrc_ue_interface>(ue_ctxt);
 
-    rrc_du_creation_message msg(cfg,
-                                rrc_ue_ev_notifier,
-                                rrc_ue_e1_ctrl_notifier,
-                                rrc_ue_f1c_ctrl_notifier,
-                                rrc_ue_ngc_notifier,
-                                rrc_ue_ngc_notifier);
+    rrc_du_creation_message msg(cfg, rrc_ue_ev_notifier, rrc_ue_ngc_notifier, rrc_ue_ngc_notifier);
     rrc = srsgnb::srs_cu_cp::create_rrc_du(msg);
     rrc_ue_ev_notifier.connect(*du_proc_rrc_ue);
 
@@ -80,8 +75,6 @@ protected:
   rrc_ue_init_security_context_handler* get_rrc_ue_security_handler() { return ue_ctxt.rrc; }
 
   rrc_ue_reconfiguration_handler* get_rrc_ue_reconfiguration_handler() { return ue_ctxt.rrc; }
-
-  rrc_ue_pdu_session_resource_handler* get_rrc_ue_pdu_session_resource_handler() { return ue_ctxt.rrc; }
 
   void connect_amf()
   {
@@ -186,8 +179,6 @@ private:
   std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
   dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
   dummy_rrc_ue_ngc_adapter                             rrc_ue_ngc_notifier;
-  dummy_rrc_ue_e1_control_notifier                     rrc_ue_e1_ctrl_notifier;
-  dummy_rrc_ue_f1c_control_notifier                    rrc_ue_f1c_ctrl_notifier;
   timer_manager                                        timers;
   dummy_ue_task_scheduler*                             task_sched_handle = nullptr;
   std::unique_ptr<rrc_du_ue_repository>                rrc;

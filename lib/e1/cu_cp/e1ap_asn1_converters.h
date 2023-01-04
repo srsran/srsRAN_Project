@@ -112,18 +112,6 @@ inline asn1::e1ap::sdap_cfg_s sdap_config_to_e1ap_asn1(cu_cp_sdap_config sdap_cf
   return e1ap_sdap_cfg;
 }
 
-/// \brief Converts pdcp_sn_size integer to an E1AP ASN.1 type.
-/// \param pdcp_sn_size pdcp_sn_size integer.
-/// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::pdcp_sn_size_e pdcp_sn_size_to_asn1(uint8_t pdcp_sn_size)
-{
-  asn1::e1ap::pdcp_sn_size_e e1ap_pdcp_sn_size;
-
-  asn1::number_to_enum(e1ap_pdcp_sn_size, pdcp_sn_size);
-
-  return e1ap_pdcp_sn_size;
-}
-
 /// \brief Converts \c rlc_mode type to an E1AP ASN.1 type.
 /// \param rlc_mod rlc_mode type.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
@@ -162,10 +150,10 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
   asn1::e1ap::pdcp_cfg_s e1ap_pdcp_cfg;
 
   // pdcp sn size dl
-  e1ap_pdcp_cfg.pdcp_sn_size_dl.value = pdcp_sn_size_to_asn1(pdcp_cfg.pdcp_sn_size_dl);
+  asn1::number_to_enum(e1ap_pdcp_cfg.pdcp_sn_size_dl, pdcp_cfg.pdcp_sn_size_dl);
 
   // pdcp sn size ul
-  e1ap_pdcp_cfg.pdcp_sn_size_ul.value = pdcp_sn_size_to_asn1(pdcp_cfg.pdcp_sn_size_ul);
+  asn1::number_to_enum(e1ap_pdcp_cfg.pdcp_sn_size_ul, pdcp_cfg.pdcp_sn_size_ul);
 
   // rlc mode
   e1ap_pdcp_cfg.rlc_mode = rlc_mode_to_asn1(pdcp_cfg.rlc_mod);

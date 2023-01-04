@@ -48,10 +48,9 @@ f1c_message generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
 /// \brief Generates dummy F1AP UE CONTEXT SETUP FAILURE message.
 f1c_message generate_ue_context_setup_failure(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 
-/// \brief Generates dummy F1AP UE CONTEXT MODIFICATION REQUEST message.
-f1c_message generate_ue_context_modification_request(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
-                                                     gnb_du_ue_f1ap_id_t                    du_ue_id,
-                                                     const std::initializer_list<drb_id_t>& drbs_to_add);
+/// \brief Generates dummy CU-CP UE CONTEXT MODIFICATION REQUEST message.
+cu_cp_ue_context_modification_request
+generate_ue_context_modification_request(ue_index_t ue_index, const std::initializer_list<drb_id_t>& drbs_to_add);
 
 /// \brief Generates dummy F1AP UE CONTEXT MODIFICATION RESPONSE message.
 f1c_message generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t                    cu_ue_id,

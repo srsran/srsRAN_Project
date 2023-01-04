@@ -13,6 +13,7 @@
 #include "cu_cp_types.h"
 #include "du_processor_context.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/ran/rnti.h"
@@ -105,6 +106,43 @@ public:
   virtual void handle_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
 };
 
+/// Handler for an NGAP entity to communicate with the DU processor
+class du_processor_ngap_interface
+{
+public:
+  virtual ~du_processor_ngap_interface() = default;
+
+  /// \brief Handle the reception of a new PDU Session Resource Setup List.
+  virtual async_task<cu_cp_pdu_session_resource_setup_response_message>
+  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg) = 0;
+};
+
+/// Interface to notify the E1AP about control messages.
+class du_processor_e1ap_control_notifier
+{
+public:
+  virtual ~du_processor_e1ap_control_notifier() = default;
+
+  /// \brief Notify about the reception of a new Bearer Context Setup Request.
+  virtual async_task<e1ap_bearer_context_setup_response>
+  on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& request) = 0;
+
+  /// \brief Notify about the reception of a new Bearer Context Modification Request.
+  virtual async_task<e1ap_bearer_context_modification_response>
+  on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) = 0;
+};
+
+/// Interface to notify the F1AP about control messages.
+class du_processor_f1c_control_notifier
+{
+public:
+  virtual ~du_processor_f1c_control_notifier() = default;
+
+  /// \brief Notify about the reception of a new PDU Session Resource Setup List.
+  virtual async_task<cu_cp_ue_context_modification_response>
+  on_new_pdu_session_resource_setup_request(cu_cp_ue_context_modification_request& msg) = 0;
+};
+
 /// \brief Schedules asynchronous tasks associated with an UE.
 class du_processor_ue_task_scheduler
 {
@@ -152,6 +190,7 @@ public:
 class du_processor_interface : public du_processor_f1c_interface,
                                public du_processor_rrc_interface,
                                public du_processor_rrc_ue_interface,
+                               public du_processor_ngap_interface,
                                public du_processor_ue_task_handler,
                                public du_processor_statistics_handler
 

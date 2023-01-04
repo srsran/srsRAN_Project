@@ -190,30 +190,24 @@ f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap_
   return ue_context_setup_failure;
 }
 
-f1c_message
-srsgnb::srs_cu_cp::generate_ue_context_modification_request(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
-                                                            gnb_du_ue_f1ap_id_t                    du_ue_id,
+cu_cp_ue_context_modification_request
+srsgnb::srs_cu_cp::generate_ue_context_modification_request(ue_index_t                             ue_index,
                                                             const std::initializer_list<drb_id_t>& drbs_to_add)
 {
-  f1c_message msg;
+  cu_cp_ue_context_modification_request msg;
 
-  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  msg.ue_index                         = ue_index;
+  msg.ue_aggregate_maximum_bit_rate_ul = 200000000;
 
-  auto& ue_ctx_req                              = msg.pdu.init_msg().value.ue_context_mod_request();
-  ue_ctx_req->gnb_cu_ue_f1ap_id.value           = (unsigned)cu_ue_id;
-  ue_ctx_req->gnb_du_ue_f1ap_id.value           = (unsigned)du_ue_id;
-  ue_ctx_req->drbs_to_be_setup_mod_list_present = drbs_to_add.size() > 0;
   for (drb_id_t drb_id : drbs_to_add) {
-    ue_ctx_req->drbs_to_be_setup_mod_list.value.push_back({});
-    ue_ctx_req->drbs_to_be_setup_mod_list.value.back().load_info_obj(ASN1_F1AP_ID_DRBS_TO_BE_SETUP_MOD_ITEM);
-    auto& drb_to_setup          = ue_ctx_req->drbs_to_be_setup_mod_list.value.back()->drbs_to_be_setup_mod_item();
-    drb_to_setup.drb_id         = drb_id_to_uint(drb_id);
-    drb_to_setup.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_am;
-    drb_to_setup.qos_info.set_choice_ext().load_info_obj(ASN1_F1AP_ID_DRB_INFO);
-    drb_info_s& drb_info = drb_to_setup.qos_info.choice_ext().value().drb_info();
-    auto&       qi5      = drb_info.drb_qos.qos_characteristics.set_dyn_5qi();
-    qi5.five_qi_present  = true;
-    qi5.five_qi          = 8;
+    cu_cp_drb_setup_message drb_setup_msg;
+    drb_setup_msg.drb_id                  = drb_id;
+    drb_setup_msg.rlc                     = srsgnb::rlc_mode::am;
+    drb_setup_msg.qos_info.is_dynamic_5qi = true;
+    drb_setup_msg.qos_info.five_qi        = 8;
+    drb_setup_msg.qos_info.prio_level_arp = 1;
+
+    msg.cu_cp_drb_setup_msgs.push_back(drb_setup_msg);
   }
 
   return msg;

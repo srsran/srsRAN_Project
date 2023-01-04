@@ -51,17 +51,3 @@ srsgnb::srs_cu_cp::create_ue_context_setup_request(ue_index_t                   
 
   return req;
 }
-
-f1ap_ue_context_modification_request
-srsgnb::srs_cu_cp::create_ue_context_modification_request(ue_index_t                             ue_index,
-                                                          const std::initializer_list<drb_id_t>& drbs_to_add)
-{
-  f1ap_ue_context_modification_request req;
-  req.ue_index = ue_index;
-
-  f1c_message dummy_msg =
-      generate_ue_context_modification_request(int_to_gnb_cu_ue_f1ap_id(0), int_to_gnb_du_ue_f1ap_id(0), drbs_to_add);
-  req.msg = dummy_msg.pdu.init_msg().value.ue_context_mod_request();
-
-  return req;
-}

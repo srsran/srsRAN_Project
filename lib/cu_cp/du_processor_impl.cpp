@@ -13,6 +13,7 @@
 #include "adapters/pdcp_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "helpers/f1c_asn1_helpers.h"
+#include "routines/pdu_session_resource_setup_routine.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/ran/nr_cgi_helpers.h"
@@ -20,20 +21,20 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-du_processor_impl::du_processor_impl(const du_processor_config_t     du_processor_config_,
-                                     du_processor_cu_cp_notifier&    cu_cp_notifier_,
-                                     f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
-                                     f1c_message_notifier&           f1c_notifier_,
-                                     rrc_ue_e1_control_notifier&     rrc_ue_e1_ctrl_notifier_,
-                                     rrc_ue_nas_notifier&            rrc_ue_nas_pdu_notifier_,
-                                     rrc_ue_control_notifier&        rrc_ue_ngc_ctrl_notifier_,
-                                     du_processor_ue_task_scheduler& task_sched_,
-                                     du_processor_ue_manager&        ue_manager_) :
+du_processor_impl::du_processor_impl(const du_processor_config_t         du_processor_config_,
+                                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
+                                     f1c_du_management_notifier&         f1c_du_mgmt_notifier_,
+                                     f1c_message_notifier&               f1c_notifier_,
+                                     du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
+                                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
+                                     rrc_ue_control_notifier&            rrc_ue_ngc_ctrl_notifier_,
+                                     du_processor_ue_task_scheduler&     task_sched_,
+                                     du_processor_ue_manager&            ue_manager_) :
   cfg(du_processor_config_),
   cu_cp_notifier(cu_cp_notifier_),
   f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
   f1c_notifier(f1c_notifier_),
-  rrc_ue_e1_ctrl_notifier(rrc_ue_e1_ctrl_notifier_),
+  e1ap_ctrl_notifier(e1ap_ctrl_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngc_ctrl_notifier(rrc_ue_ngc_ctrl_notifier_),
   task_sched(task_sched_),
@@ -43,16 +44,9 @@ du_processor_impl::du_processor_impl(const du_processor_config_t     du_processo
   f1c = create_f1ap(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
   f1c_ev_notifier.connect_du_processor(*this);
 
-  // initialize control notifier for F1C (TODO: have one per UE and move to UE context)
-  f1c_ctrl_notifier = std::make_unique<rrc_ue_f1ap_control_adapter>(*f1c);
-
   // create RRC
-  rrc_du_creation_message rrc_creation_msg(cfg.rrc_cfg,
-                                           rrc_ue_ev_notifier,
-                                           rrc_ue_e1_ctrl_notifier,
-                                           *f1c_ctrl_notifier,
-                                           rrc_ue_nas_pdu_notifier,
-                                           rrc_ue_ngc_ctrl_notifier);
+  rrc_du_creation_message rrc_creation_msg(
+      cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngc_ctrl_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
 
   rrc_ue_ev_notifier.connect_du_processor(*this);
@@ -321,4 +315,17 @@ void du_processor_impl::handle_ue_context_release_command(const ue_context_relea
   // Remove UE from UE database
   logger.info("Removing UE (id={})", msg.ue_index);
   ue_manager.remove_ue(msg.ue_index);
+}
+
+async_task<cu_cp_pdu_session_resource_setup_response_message>
+du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg)
+{
+  ue_context* ue_ctxt = ue_manager.find_ue(get_ue_index_from_cu_cp_ue_id(msg.cu_cp_ue_id));
+
+  return launch_async<pdu_session_resource_setup_routine>(msg,
+                                                          e1ap_ctrl_notifier,
+                                                          f1c->get_f1c_ue_context_manager(),
+                                                          ue_ctxt->rrc->get_rrc_ue_control_message_handler(),
+                                                          ue_ctxt->rrc->get_rrc_ue_drb_manager(),
+                                                          logger);
 }

@@ -139,6 +139,13 @@ public:
   /// \brief Notify about the reception of new security capabilities and key.
   virtual async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
                                                    const asn1::fixed_bitstring<256, false, true>& key) = 0;
+};
+
+/// Interface to notify the DU Processor about control messages.
+class ngc_du_processor_control_notifier
+{
+public:
+  virtual ~ngc_du_processor_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response_message>
@@ -154,11 +161,14 @@ public:
   /// \brief Creates a NGC UE.
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] ue_index The index of the UE.
-  /// \param[in] ngc_rrc_ue_ev_notifier The notifier to the RRC UE.
-  virtual void create_ngc_ue(du_index_t                   du_index,
-                             ue_index_t                   ue_index,
-                             ngc_rrc_ue_pdu_notifier&     rrc_ue_pdu_notifier,
-                             ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier) = 0;
+  /// \param[in] rrc_ue_pdu_notifier The pdu notifier to the RRC UE.
+  /// \param[in] rrc_ue_ctrl_notifier The control notifier to the RRC UE.
+  /// \param[in] du_processor_ctrl_notifier The pdu notifier to the DU processor.
+  virtual void create_ngc_ue(du_index_t                         du_index,
+                             ue_index_t                         ue_index,
+                             ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+                             ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+                             ngc_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.

@@ -11,6 +11,7 @@
 #include "f1ap_cu_impl.h"
 #include "../../ran/gnb_format.h"
 #include "../common/asn1_helpers.h"
+#include "f1ap_asn1_helpers.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/ran/nr_cgi_helpers.h"
 
@@ -124,11 +125,14 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
   return launch_async<f1_ue_context_release_procedure>(ue_ctx_list, msg, pdu_notifier, *events, logger);
 }
 
-async_task<f1ap_ue_context_modification_response>
-f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request)
+async_task<cu_cp_ue_context_modification_response>
+f1ap_cu_impl::handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request)
 {
+  f1ap_ue_context_modification_request f1c_ue_ctxt_mod_req;
+  fill_f1ap_ue_context_modification_request(f1c_ue_ctxt_mod_req, request);
+
   return launch_async<f1_ue_context_modification_procedure>(
-      request, ue_ctx_list[request.ue_index], pdu_notifier, *events, logger);
+      f1c_ue_ctxt_mod_req, ue_ctx_list[request.ue_index], pdu_notifier, *events, logger);
 }
 
 void f1ap_cu_impl::handle_message(const f1c_message& msg)

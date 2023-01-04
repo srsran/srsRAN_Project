@@ -12,7 +12,6 @@
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
-using namespace asn1::rrc_nr;
 
 drb_manager_impl::drb_manager_impl(const drb_manager_cfg& cfg_) : cfg(cfg_), logger(srslog::fetch_basic_logger("RRC"))
 {
@@ -84,35 +83,34 @@ drb_id_t drb_manager_impl::allocate_drb_id()
   return new_drb_id;
 }
 
-asn1::rrc_nr::sdap_cfg_s drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
+cu_cp_sdap_config drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
 {
-  asn1::rrc_nr::sdap_cfg_s sdap_cfg;
+  cu_cp_sdap_config sdap_cfg;
   sdap_cfg.pdu_session = context.pdu_session_id;
   sdap_cfg.default_drb = context.default_drb;
-  sdap_cfg.sdap_hdr_dl = asn1::rrc_nr::sdap_cfg_s::sdap_hdr_dl_opts::absent;
-  sdap_cfg.sdap_hdr_ul = asn1::rrc_nr::sdap_cfg_s::sdap_hdr_ul_opts::absent;
+  sdap_cfg.sdap_hdr_dl = "absent";
+  sdap_cfg.sdap_hdr_ul = "absent";
   for (const auto& qos_flow : context.mapped_qos_flows) {
     sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow);
   }
   return sdap_cfg;
 }
 
-asn1::rrc_nr::pdcp_cfg_s drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
+cu_cp_pdcp_config drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
 {
   // TODO lookup PDCP config for 5QI in config
   (void)cfg;
-  asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
-  pdcp_cfg.ciphering_disabled_present  = true;
-  pdcp_cfg.drb_present                 = true;
-  pdcp_cfg.drb.pdcp_sn_size_dl_present = true;
-  pdcp_cfg.drb.pdcp_sn_size_dl         = asn1::rrc_nr::pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_opts::len18bits;
-  pdcp_cfg.drb.pdcp_sn_size_ul_present = true;
-  pdcp_cfg.drb.pdcp_sn_size_ul         = asn1::rrc_nr::pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_opts::len18bits;
-  pdcp_cfg.drb.discard_timer_present   = true;
-  pdcp_cfg.drb.discard_timer           = asn1::rrc_nr::pdcp_cfg_s::drb_s_::discard_timer_opts::ms100;
-  pdcp_cfg.drb.hdr_compress.set_not_used();
-  pdcp_cfg.t_reordering_present = true;
-  pdcp_cfg.t_reordering         = asn1::rrc_nr::pdcp_cfg_s::t_reordering_opts::ms0;
+  cu_cp_pdcp_config pdcp_cfg;
+  pdcp_cfg.ciphering_disabled_present = true;
+
+  cu_cp_drb drb;
+  drb.pdcp_sn_size_dl = 18;
+  drb.pdcp_sn_size_ul = 18;
+  drb.discard_timer   = 100;
+
+  pdcp_cfg.drb = drb;
+
+  pdcp_cfg.t_reordering = 0;
   return pdcp_cfg;
 }
 
@@ -134,7 +132,7 @@ std::vector<uint8_t> drb_manager_impl::get_mapped_qos_flows(const drb_id_t drb_i
   return drbs[drb_id].mapped_qos_flows;
 }
 
-asn1::rrc_nr::pdcp_cfg_s drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
+cu_cp_pdcp_config drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
@@ -143,7 +141,7 @@ asn1::rrc_nr::pdcp_cfg_s drb_manager_impl::get_pdcp_config(const drb_id_t drb_id
   return drbs[drb_id].pdcp_cfg;
 }
 
-asn1::rrc_nr::sdap_cfg_s drb_manager_impl::get_sdap_config(const drb_id_t drb_id)
+cu_cp_sdap_config drb_manager_impl::get_sdap_config(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);

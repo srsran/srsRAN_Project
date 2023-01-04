@@ -38,6 +38,9 @@ public:
     drb_mng(std::make_unique<drb_manager_impl>(cfg_.drb_cfg))
   {
   }
+
+  drb_manager& get_drb_manager() { return *drb_mng; }
+
   const ue_index_t                       ue_index; // UE index assigned by the DU processor
   const rnti_t                           c_rnti;   // current C-RNTI
   const rrc_cell_context                 cell;     // current cell

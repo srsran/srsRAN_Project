@@ -28,15 +28,15 @@ namespace srs_cu_cp {
 class du_processor_impl : public du_processor_interface
 {
 public:
-  du_processor_impl(const du_processor_config_t     du_processor_config_,
-                    du_processor_cu_cp_notifier&    cu_cp_notifier_,
-                    f1c_du_management_notifier&     f1c_du_mgmt_notifier_,
-                    f1c_message_notifier&           f1c_notifier_,
-                    rrc_ue_e1_control_notifier&     rrc_ue_e1_ctrl_notifier_,
-                    rrc_ue_nas_notifier&            rrc_ue_nas_pdu_notifier_,
-                    rrc_ue_control_notifier&        rrc_ue_ngc_ctrl_notifier_,
-                    du_processor_ue_task_scheduler& task_sched_,
-                    du_processor_ue_manager&        ue_manager_);
+  du_processor_impl(const du_processor_config_t         du_processor_config_,
+                    du_processor_cu_cp_notifier&        cu_cp_notifier_,
+                    f1c_du_management_notifier&         f1c_du_mgmt_notifier_,
+                    f1c_message_notifier&               f1c_notifier_,
+                    du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
+                    rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
+                    rrc_ue_control_notifier&            rrc_ue_ngc_ctrl_notifier_,
+                    du_processor_ue_task_scheduler&     task_sched_,
+                    du_processor_ue_manager&            ue_manager_);
   ~du_processor_impl() = default;
 
   // message handlers
@@ -63,6 +63,10 @@ public:
   void create_srb(const srb_creation_message& msg) override;
 
   void handle_ue_context_release_command(const ue_context_release_command_message& msg) override;
+
+  // du_processor_ngap_interface
+  async_task<cu_cp_pdu_session_resource_setup_response_message>
+  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg) override;
 
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
@@ -98,14 +102,14 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;
 
-  du_processor_cu_cp_notifier&    cu_cp_notifier;
-  f1c_du_management_notifier&     f1c_du_mgmt_notifier;
-  f1c_message_notifier&           f1c_notifier;
-  rrc_ue_e1_control_notifier&     rrc_ue_e1_ctrl_notifier;
-  rrc_ue_nas_notifier&            rrc_ue_nas_pdu_notifier;
-  rrc_ue_control_notifier&        rrc_ue_ngc_ctrl_notifier;
-  du_processor_ue_task_scheduler& task_sched;
-  du_processor_ue_manager&        ue_manager;
+  du_processor_cu_cp_notifier&        cu_cp_notifier;
+  f1c_du_management_notifier&         f1c_du_mgmt_notifier;
+  f1c_message_notifier&               f1c_notifier;
+  du_processor_e1ap_control_notifier& e1ap_ctrl_notifier;
+  rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier;
+  rrc_ue_control_notifier&            rrc_ue_ngc_ctrl_notifier;
+  du_processor_ue_task_scheduler&     task_sched;
+  du_processor_ue_manager&            ue_manager;
 
   du_processor_context context;
   slotted_array<du_cell_context, MAX_NOF_DU_CELLS>
@@ -121,8 +125,6 @@ private:
 
   // F1C to DU processor adapter
   f1c_du_processor_adapter f1c_ev_notifier;
-
-  std::unique_ptr<rrc_ue_f1ap_control_adapter> f1c_ctrl_notifier;
 
   // RRC UE to DU processor adapter
   rrc_ue_du_processor_adapter rrc_ue_ev_notifier;

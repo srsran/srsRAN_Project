@@ -8,8 +8,8 @@
  *
  */
 
+#include "../cu_cp/pdu_session_setup_helpers.h"
 #include "../lib/rrc/ue/drb_manager_impl.h"
-#include "pdu_session_setup_helpers.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rrc/drb_manager.h"
 #include "srsgnb/support/test_utils.h"
@@ -82,5 +82,5 @@ TEST_F(drb_manager_test, when_drb_is_added_pdcp_config_is_valid)
 
   // Verify DRB config
   const auto pdcp_cfg = manager->get_pdcp_config(drbs_to_add.at(0));
-  ASSERT_TRUE(pdcp_cfg.drb_present);
+  ASSERT_TRUE(pdcp_cfg.drb.has_value());
 }

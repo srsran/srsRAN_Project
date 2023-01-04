@@ -96,10 +96,10 @@ public:
 
   /// \brief Initiates the UE Context Modification procedure as per TS 38.473 section 8.3.4.
   /// \param[in] request The UE Context Modification message to transmit.
-  /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to
+  /// \return Returns a cu_cp_ue_context_modification_response_message struct with the success member set to
   /// 'true' in case of a successful outcome, 'false' otherwise.
-  virtual async_task<f1ap_ue_context_modification_response>
-  handle_ue_context_modification_request(const f1ap_ue_context_modification_request& request) = 0;
+  virtual async_task<cu_cp_ue_context_modification_response>
+  handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) = 0;
 };
 
 /// Interface to notify the reception of an new RRC message.
@@ -193,6 +193,13 @@ class f1ap_cu : public f1c_message_handler,
 {
 public:
   virtual ~f1ap_cu() = default;
+
+  virtual f1c_message_handler&     get_f1c_message_handler()     = 0;
+  virtual f1c_event_handler&       get_f1c_event_handler()       = 0;
+  virtual f1c_rrc_message_handler& get_f1c_rrc_message_handler() = 0;
+  virtual f1c_connection_manager&  get_f1c_connection_manager()  = 0;
+  virtual f1c_ue_context_manager&  get_f1c_ue_context_manager()  = 0;
+  virtual f1c_statistics_handler&  get_f1c_statistics_handler()  = 0;
 
   /// \brief Update a notifier to higher layers for a UE.
   /// \param[in] ue_index The index of the UE.

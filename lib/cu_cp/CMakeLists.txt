@@ -16,6 +16,7 @@ set(SOURCES
       ue_manager.cpp
       procedures/initial_cu_cp_setup_procedure.cpp
       procedures/initial_cu_up_processor_setup_procedure.cpp
+      routines/pdu_session_resource_setup_routine.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp
