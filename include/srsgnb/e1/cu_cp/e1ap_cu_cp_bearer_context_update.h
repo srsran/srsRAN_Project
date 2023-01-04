@@ -173,24 +173,24 @@ struct e1ap_security_algorithm {
   optional<srsgnb::security::integrity_algorithm> integrity_protection_algorithm;
 };
 
-struct e1ap_upsecuritykey {
+struct e1ap_up_security_key {
   byte_buffer encryption_key;
   byte_buffer integrity_protection_key;
 };
 
 struct e1ap_security_info {
   e1ap_security_algorithm security_algorithm;
-  e1ap_upsecuritykey      upsecuritykey;
+  e1ap_up_security_key    up_security_key;
 };
 
 struct e1ap_bearer_context_setup_request {
   cu_cp_ue_id_t                                   cu_cp_ue_id;
   e1ap_security_info                              security_info;
-  uint64_t                                        uedl_aggregate_maximum_bit_rate;
+  uint64_t                                        ue_dl_aggregate_maximum_bit_rate;
   std::string                                     serving_plmn;
   std::string                                     activity_notif_level;
   std::vector<e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list;
-  optional<uint64_t>                              uedl_maximum_integrity_protected_data_rate;
+  optional<uint64_t>                              ue_dl_maximum_integrity_protected_data_rate;
   optional<uint16_t>                              ue_inactivity_timer;
   optional<std::string>                           bearer_context_status_change;
   optional<ran_ue_id_t>                           ranueid;

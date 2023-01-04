@@ -28,12 +28,12 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
             request.security_info.security_algorithm.integrity_protection_algorithm.value());
   }
   asn1_request->security_info.value.up_securitykey.encryption_key =
-      request.security_info.upsecuritykey.encryption_key.copy();
+      request.security_info.up_security_key.encryption_key.copy();
   asn1_request->security_info.value.up_securitykey.integrity_protection_key =
-      request.security_info.upsecuritykey.integrity_protection_key.copy();
+      request.security_info.up_security_key.integrity_protection_key.copy();
 
   // ue dl aggregate maximum bit rate
-  asn1_request->ue_dl_aggr_max_bit_rate.value = request.uedl_aggregate_maximum_bit_rate;
+  asn1_request->ue_dl_aggr_max_bit_rate.value = request.ue_dl_aggregate_maximum_bit_rate;
 
   // serving plmn
   asn1_request->serving_plmn.value.from_string(request.serving_plmn);
@@ -341,10 +341,10 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   }
 
   // ue dl maximum integrity protection data rate
-  if (request.uedl_maximum_integrity_protected_data_rate.has_value()) {
+  if (request.ue_dl_maximum_integrity_protected_data_rate.has_value()) {
     asn1_request->ue_dl_max_integrity_protected_data_rate_present = true;
     asn1_request->ue_dl_max_integrity_protected_data_rate.value =
-        request.uedl_maximum_integrity_protected_data_rate.value();
+        request.ue_dl_maximum_integrity_protected_data_rate.value();
   }
 
   // ue inactivity timer

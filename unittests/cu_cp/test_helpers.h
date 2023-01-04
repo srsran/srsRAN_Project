@@ -71,7 +71,7 @@ public:
     return launch_async([res = e1ap_bearer_context_setup_response{},
                          msg](coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
-      if (msg.uedl_aggregate_maximum_bit_rate > 0) {
+      if (msg.ue_dl_aggregate_maximum_bit_rate > 0) {
         res.success = true;
       }
       CORO_RETURN(res);
