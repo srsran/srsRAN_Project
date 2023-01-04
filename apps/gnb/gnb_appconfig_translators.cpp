@@ -47,7 +47,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
         base_cell.dl_arfcn, base_cell.band, param.nof_crbs, scs, scs, ss0_idx);
 
     if (!ssb_freq_loc.has_value()) {
-      srsgnb_terminate("Unable to derive a valid SSB pointA and k_SSB for cell id ({}). Exiting.", cell.pci);
+      srsgnb_terminate("Unable to derive a valid SSB pointA and k_SSB for cell id ({}). Exiting.\n", cell.pci);
     }
 
     srslog::basic_logger& logger = srslog::fetch_basic_logger("gNB appconfig translator", false);
@@ -93,7 +93,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {
-      srsgnb_terminate("Invalid configuration DU cell detected.");
+      srsgnb_terminate("Invalid configuration DU cell detected: {}\n", error.error());
     }
     ++cell_id;
   }
@@ -148,7 +148,7 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
   }
 
   if (!is_valid_lower_phy_config(out_cfg)) {
-    srsgnb_terminate("Invalid lower PHY configuration. Exiting.");
+    srsgnb_terminate("Invalid lower PHY configuration. Exiting.\n");
   }
 
   return out_cfg;
@@ -250,7 +250,7 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
   }
 
   if (!validator.is_configuration_valid(out_cfg)) {
-    srsgnb_terminate("Invalid radio configuration. Exiting.");
+    srsgnb_terminate("Invalid radio configuration. Exiting.\n");
   }
 
   return out_cfg;
@@ -294,7 +294,7 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
     cfg.softbuffer_config.expire_timeout_slots = 100 * get_nof_slots_per_subframe(scs);
 
     if (!is_valid_upper_phy_config(cfg)) {
-      srsgnb_terminate("Invalid upper PHY configuration. Exiting.");
+      srsgnb_terminate("Invalid upper PHY configuration. Exiting.\n");
     }
 
     out_cfg.push_back(cfg);
@@ -326,7 +326,7 @@ scheduler_expert_config srsgnb::generate_scheduler_expert_config(const gnb_appco
 
   error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {
-    srsgnb_terminate("Invalid scheduler expert configuration detected. Exiting. ");
+    srsgnb_terminate("Invalid scheduler expert configuration detected. Exiting.\n");
   }
 
   return out_cfg;
