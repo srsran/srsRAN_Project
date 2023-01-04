@@ -27,6 +27,13 @@ static_assert(is_byte_buffer_range<byte_buffer>::value, "Invalid metafunction is
 static_assert(is_byte_buffer_range<byte_buffer_view>::value, "Invalid metafunction is_byte_buffer_range");
 static_assert(is_byte_buffer_range<byte_buffer_slice>::value, "Invalid metafunction is_byte_buffer_range");
 
+const size_t small_vec_size = 6;
+const size_t large_vec_size = byte_buffer_segment::SEGMENT_SIZE * 4;
+size_t       random_vec_size(unsigned lb = 1, unsigned ub = large_vec_size)
+{
+  return test_rgen::uniform_int<unsigned>(lb, ub);
+}
+
 /// Creates a vector with size randomly generated within defined bounds.
 std::vector<uint8_t> make_vec(unsigned lb = 1, unsigned ub = byte_buffer_segment::SEGMENT_SIZE * 4)
 {
@@ -69,7 +76,34 @@ std::vector<uint8_t> concat_vec(span<const uint8_t> before, span<const uint8_t> 
   std::equal(buffer1.begin(), buffer1.end(), buffer2.begin(), buffer2.end());                                          \
   ASSERT_EQ(buffer2, buffer1)
 
-///////////////////////// byte_buffer //////////////////////////////
+///////////////////////// byte_buffer_test //////////////////////////////
+
+class one_vec_size_param : public ::testing::TestWithParam<size_t>
+{
+protected:
+  size_t               sz1   = GetParam();
+  std::vector<uint8_t> bytes = test_rgen::random_vector<uint8_t>(sz1);
+};
+
+class two_vec_sizes_param : public ::testing::TestWithParam<std::tuple<size_t, size_t>>
+{
+protected:
+  size_t               sz1    = std::get<0>(GetParam());
+  size_t               sz2    = std::get<1>(GetParam());
+  std::vector<uint8_t> bytes1 = test_rgen::random_vector<uint8_t>(sz1);
+  std::vector<uint8_t> bytes2 = test_rgen::random_vector<uint8_t>(sz2);
+};
+
+class three_vec_sizes_param : public ::testing::TestWithParam<std::tuple<size_t, size_t, size_t>>
+{
+protected:
+  size_t               sz1    = std::get<0>(GetParam());
+  size_t               sz2    = std::get<1>(GetParam());
+  size_t               sz3    = std::get<2>(GetParam());
+  std::vector<uint8_t> bytes1 = test_rgen::random_vector<uint8_t>(sz1);
+  std::vector<uint8_t> bytes2 = test_rgen::random_vector<uint8_t>(sz2);
+  std::vector<uint8_t> bytes3 = test_rgen::random_vector<uint8_t>(sz3);
+};
 
 TEST(byte_buffer, empty_byte_buffer_in_valid_state)
 {
@@ -79,21 +113,19 @@ TEST(byte_buffer, empty_byte_buffer_in_valid_state)
   ASSERT_EQ(pdu, std::list<uint8_t>{});
 }
 
-TEST(byte_buffer, ctor_with_span)
+TEST_P(one_vec_size_param, ctor_with_span)
 {
-  std::vector<uint8_t> bytes = make_vec();
-  byte_buffer          pdu{bytes};
+  byte_buffer pdu{this->bytes};
 
   ASSERT_EQ_LEN(pdu, bytes.size());
   ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), bytes.begin(), bytes.end()));
 }
 
-TEST(byte_buffer, equality_comparison)
+TEST_P(one_vec_size_param, equality_comparison)
 {
-  std::vector<uint8_t> bytes = make_vec();
-  byte_buffer          pdu{bytes};
-  byte_buffer          pdu2{bytes};
-  std::list<uint8_t>   not_a_span{bytes.begin(), bytes.end()};
+  byte_buffer        pdu{this->bytes};
+  byte_buffer        pdu2{bytes};
+  std::list<uint8_t> not_a_span{bytes.begin(), bytes.end()};
 
   // comparison byte_buffer vs span.
   ASSERT_EQ_BUFFER(pdu, bytes);
@@ -104,23 +136,42 @@ TEST(byte_buffer, equality_comparison)
   // comparison byte_buffer vs any other range type.
   ASSERT_EQ(pdu, not_a_span);
 
-  // comparison byte_buffer vs other range of different length.
-  std::vector<uint8_t> bytes2 = bytes;
-  bytes2.push_back(test_rgen::uniform_int<uint8_t>());
-  std::list<uint8_t> not_a_span2{bytes2.begin(), bytes2.end()};
-  pdu2 = byte_buffer{bytes2};
-  ASSERT_NE(pdu, bytes2);
-  ASSERT_NE(bytes2, pdu);
+  // comparison byte_buffer vs other range of larger length.
+  std::vector<uint8_t> larger_bytes = concat_vec(bytes, make_vec());
+  std::list<uint8_t>   larger_not_a_span{larger_bytes.begin(), larger_bytes.end()};
+  pdu2 = byte_buffer{larger_bytes};
+  ASSERT_NE(pdu, larger_bytes);
+  ASSERT_NE(larger_bytes, pdu);
   ASSERT_NE(pdu, pdu2);
   ASSERT_NE(pdu2, pdu);
-  ASSERT_NE(pdu, not_a_span2);
+  ASSERT_NE(pdu, larger_not_a_span);
+
+  // comparison byte_buffer vs other range of shorter length.
+  std::vector<uint8_t> shorter_bytes(bytes.begin(),
+                                     bytes.begin() + test_rgen::uniform_int<unsigned>(1, bytes.size() - 1));
+  std::list<uint8_t>   shorter_not_a_span{shorter_bytes.begin(), shorter_bytes.end()};
+  pdu2 = byte_buffer{shorter_bytes};
+  ASSERT_NE(pdu, shorter_bytes);
+  ASSERT_NE(shorter_bytes, pdu);
+  ASSERT_NE(pdu, pdu2);
+  ASSERT_NE(pdu2, pdu);
+  ASSERT_NE(pdu, shorter_not_a_span);
+
+  // comparison of byte_buffer vs other range of equal length but different content.
+  std::vector<uint8_t> neq_bytes = bytes;
+  neq_bytes[test_rgen::uniform_int<unsigned>(0, neq_bytes.size() - 1)]++;
+  std::list<uint8_t> neq_not_a_span{neq_bytes.begin(), neq_bytes.end()};
+  ASSERT_NE(pdu, neq_bytes);
+  ASSERT_NE(neq_bytes, pdu);
+  ASSERT_NE(pdu, pdu2);
+  ASSERT_NE(pdu2, pdu);
+  ASSERT_NE(pdu, neq_not_a_span);
 }
 
-TEST(byte_buffer, move_ctor)
+TEST_P(one_vec_size_param, move_ctor)
 {
-  byte_buffer                pdu;
-  const std::vector<uint8_t> bytes = make_vec();
-  pdu.append(bytes);
+  byte_buffer pdu;
+  pdu.append(this->bytes);
 
   byte_buffer pdu2{std::move(pdu)};
   ASSERT_TRUE(pdu.empty());
@@ -130,54 +181,50 @@ TEST(byte_buffer, move_ctor)
 
 TEST(byte_buffer, initializer_list)
 {
-  byte_buffer pdu = {1, 2, 3, 4, 5, 6};
+  byte_buffer          pdu = {1, 2, 3, 4, 5, 6};
+  std::vector<uint8_t> bytes{1, 2, 3, 4, 5, 6};
+
   ASSERT_EQ_LEN(pdu, 6);
-
-  bool are_equal = pdu == std::vector<uint8_t>{1, 2, 3, 4, 5, 6};
-  ASSERT_TRUE(are_equal);
+  ASSERT_TRUE(std::equal(pdu.begin(), pdu.end(), bytes.begin(), bytes.end()));
 }
 
-TEST(byte_buffer, append)
-{
-  byte_buffer          pdu;
-  std::vector<uint8_t> vec = make_vec();
-
-  // Append span of bytes (that may occupy more than one segment).
-  pdu.append(vec);
-  ASSERT_EQ_LEN(pdu, vec.size());
-  ASSERT_EQ_BUFFER(pdu, vec);
-
-  // Append two byte_buffers.
-  std::vector<uint8_t> vec2 = make_vec();
-  byte_buffer          pdu2{vec2};
-  ASSERT_EQ(pdu2, vec2);
-  pdu2.append(pdu);
-  ASSERT_EQ(pdu.length() + vec2.size(), pdu2.length());
-  ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin());
-  ASSERT_EQ(pdu2, concat_vec(vec2, vec));
-}
-
-TEST(byte_buffer, prepend)
-{
-  byte_buffer          pdu;
-  std::vector<uint8_t> vec  = make_vec();
-  std::vector<uint8_t> vec2 = make_vec();
-
-  // prepend in empty byte_buffer.
-  pdu.prepend(vec);
-  ASSERT_EQ(pdu.length(), vec.size());
-  ASSERT_EQ(pdu, vec);
-
-  // prepend in non-empty byte_buffer.
-  pdu.prepend(vec2);
-  ASSERT_EQ(pdu.length(), vec.size() + vec2.size());
-  ASSERT_EQ(pdu, concat_vec(vec2, vec));
-}
-
-TEST(byte_buffer, clear)
+TEST_P(two_vec_sizes_param, append)
 {
   byte_buffer pdu;
-  pdu.append(make_vec());
+
+  // Append span of bytes (that may occupy more than one segment).
+  pdu.append(this->bytes1);
+  ASSERT_EQ_LEN(pdu, bytes1.size());
+  ASSERT_EQ_BUFFER(pdu, bytes1);
+
+  // Append two byte_buffers.
+  byte_buffer pdu2{bytes2};
+  ASSERT_EQ(pdu2, bytes2);
+  pdu2.append(pdu);
+  ASSERT_EQ(pdu.length() + bytes2.size(), pdu2.length());
+  ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin());
+  ASSERT_EQ(pdu2, concat_vec(bytes2, bytes1));
+}
+
+TEST_P(two_vec_sizes_param, prepend)
+{
+  byte_buffer pdu;
+
+  // prepend in empty byte_buffer.
+  pdu.prepend(bytes1);
+  ASSERT_EQ(pdu.length(), bytes1.size());
+  ASSERT_EQ(pdu, bytes1);
+
+  // prepend in non-empty byte_buffer.
+  pdu.prepend(bytes2);
+  ASSERT_EQ(pdu.length(), bytes1.size() + bytes2.size());
+  ASSERT_EQ(pdu, concat_vec(bytes2, bytes1));
+}
+
+TEST_P(one_vec_size_param, clear)
+{
+  byte_buffer pdu;
+  pdu.append(this->bytes);
 
   ASSERT_TRUE(not pdu.empty());
   pdu.clear();
@@ -186,40 +233,6 @@ TEST(byte_buffer, clear)
   // multiple clear calls are valid.
   pdu.clear();
   ASSERT_TRUE(pdu.empty());
-}
-
-TEST(byte_buffer, eq_compare_with_byte_buffer)
-{
-  byte_buffer          pdu, pdu_eq, pdu_shorter, pdu_diff;
-  std::vector<uint8_t> bytes         = {1, 2, 3, 4, 5, 6};
-  std::vector<uint8_t> shorter_bytes = {1, 2, 3, 4, 5};
-  std::vector<uint8_t> diff_bytes    = {2, 2, 3, 4, 5, 6};
-  std::vector<uint8_t> longer_bytes  = {1, 2, 3, 4, 5, 6, 7};
-
-  pdu.append(bytes);
-  pdu_eq.append(bytes);
-  pdu_shorter.append(shorter_bytes);
-  pdu_diff.append(diff_bytes);
-
-  ASSERT_EQ(pdu, pdu_eq);
-  ASSERT_NE(pdu, pdu_shorter);
-  ASSERT_NE(pdu, pdu_diff);
-  ASSERT_NE(pdu_eq, pdu_diff);
-  ASSERT_NE(pdu_shorter, pdu_diff);
-
-  // create a new segment during the append.
-  shorter_bytes.resize(byte_buffer_segment::SEGMENT_SIZE);
-  for (size_t i = 0; i < shorter_bytes.size(); ++i) {
-    shorter_bytes[i] = i;
-  }
-  pdu.append(shorter_bytes);
-  bytes.insert(bytes.end(), shorter_bytes.begin(), shorter_bytes.end());
-  ASSERT_EQ(pdu, bytes);
-
-  // create a new segment during the prepend.
-  pdu.prepend(shorter_bytes);
-  bytes.insert(bytes.begin(), shorter_bytes.begin(), shorter_bytes.end());
-  ASSERT_EQ(pdu, bytes);
 }
 
 TEST(byte_buffer, iterator)
@@ -274,47 +287,41 @@ TEST(byte_buffer, iterator)
   TESTASSERT_EQ(bytes_concat.size() - 2, (size_t)(pdu.end() - (pdu.begin() + 2)));
 }
 
-TEST(byte_buffer, copy)
+TEST_P(two_vec_sizes_param, deep_copy)
 {
   byte_buffer pdu;
-
-  std::vector<uint8_t> bytes = make_small_vec(), bytes2 = make_large_vec();
-  auto                 bytes_concat = bytes;
-  bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
-  pdu.append(bytes);
+  pdu.append(bytes1);
+  auto bytes_concat = concat_vec(bytes1, bytes2);
 
   // Deep copy.
   byte_buffer pdu2;
   pdu2 = pdu.deep_copy();
-  TESTASSERT(not pdu2.empty() and not pdu.empty());
-  TESTASSERT_EQ(pdu.length(), pdu2.length());
-  TESTASSERT(pdu == pdu2);
-  TESTASSERT(pdu2 == bytes);
+  ASSERT_FALSE(pdu.empty());
+  ASSERT_FALSE(pdu2.empty());
+  ASSERT_EQ_BUFFER(pdu, pdu2);
+  ASSERT_EQ_BUFFER(pdu2, bytes1);
 
   pdu2.append(bytes2);
-  TESTASSERT(pdu == bytes);
-  TESTASSERT(pdu != pdu2);
-  TESTASSERT_EQ(bytes_concat.size(), pdu2.length());
-  TESTASSERT(pdu2 == bytes_concat);
+  ASSERT_EQ_BUFFER(pdu, bytes1);
+  ASSERT_NE(pdu, pdu2);
+  ASSERT_EQ_BUFFER(pdu2, bytes_concat);
 }
 
-TEST(byte_buffer, shallow_copy)
+TEST_P(two_vec_sizes_param, shallow_copy)
 {
-  byte_buffer          pdu;
-  std::vector<uint8_t> bytes  = make_vec();
-  std::vector<uint8_t> bytes2 = make_vec();
-  pdu.append(bytes);
+  byte_buffer pdu;
+  pdu.append(bytes1);
 
   {
     byte_buffer pdu2 = pdu.copy();
-    ASSERT_EQ(pdu2, pdu);
-    ASSERT_EQ(pdu2, bytes);
+    ASSERT_EQ_BUFFER(pdu2, pdu);
+    ASSERT_EQ_BUFFER(pdu2, bytes1);
     pdu2.append(bytes2);
     ASSERT_EQ(pdu2, pdu);
     ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
     ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin());
   }
-  ASSERT_EQ(pdu, concat_vec(bytes, bytes2));
+  ASSERT_EQ_BUFFER(pdu, concat_vec(bytes1, bytes2));
   ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
 }
 
@@ -377,13 +384,12 @@ TEST(byte_buffer, prepend_and_trim_tail)
   ASSERT_EQ_LEN(sdu, pdu_len - trim_len);
 }
 
-TEST(byte_buffer, shallow_copy_prepend_and_append_keeps_validity)
+TEST_P(three_vec_sizes_param, shallow_copy_prepend_and_append_keeps_validity)
 {
   // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
   // could become invalidated. To avoid this issue, we perform COW on prepend, when more than one byte_buffer points to
   // the same head segment.
-  const std::vector<uint8_t> bytes1 = make_vec(), bytes2 = make_large_vec(), bytes3 = make_large_vec();
-  byte_buffer                pdu{bytes1};
+  byte_buffer pdu{bytes1};
 
   byte_buffer pdu2{pdu.copy()};
   pdu.prepend(bytes2);
@@ -391,16 +397,14 @@ TEST(byte_buffer, shallow_copy_prepend_and_append_keeps_validity)
 
   ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
   ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
-  ASSERT_EQ_BUFFER(pdu2, bytes1);
 }
 
-TEST(byte_buffer, shallow_copy_reserve_prepend_and_append_keeps_validity)
+TEST_P(three_vec_sizes_param, shallow_copy_reserve_prepend_and_append_keeps_validity)
 {
   // When a byte_buffer::prepend causes the byte_buffer head segment to move, any previously existing shallow copies
   // could become invalidated. To avoid this issue, we perform COW on prepend, when more than one byte_buffer points to
   // the same head segment.
-  const std::vector<uint8_t> bytes1 = make_vec(), bytes2 = make_large_vec(), bytes3 = make_large_vec();
-  byte_buffer                pdu{bytes1};
+  byte_buffer pdu{bytes1};
 
   byte_buffer      pdu2{pdu.copy()};
   byte_buffer_view v = pdu.reserve_prepend(bytes2.size());
@@ -409,7 +413,6 @@ TEST(byte_buffer, shallow_copy_reserve_prepend_and_append_keeps_validity)
 
   ASSERT_EQ(pdu, concat_vec(concat_vec(bytes2, bytes1), bytes3));
   ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
-  ASSERT_EQ_BUFFER(pdu2, bytes1);
 }
 
 TEST(byte_buffer, is_contiguous)
@@ -806,3 +809,18 @@ TEST(byte_buffer_chain, all)
   TESTASSERT_EQ(big_vec.size() * 2 + small_vec.size(), pdu.length());
   TESTASSERT(pdu == bytes_concat2);
 }
+
+INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
+                         one_vec_size_param,
+                         ::testing::Values(small_vec_size, large_vec_size, random_vec_size()));
+
+INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
+                         two_vec_sizes_param,
+                         ::testing::Combine(::testing::Values(small_vec_size, large_vec_size, random_vec_size()),
+                                            ::testing::Values(small_vec_size, large_vec_size, random_vec_size())));
+
+INSTANTIATE_TEST_SUITE_P(byte_buffer_test,
+                         three_vec_sizes_param,
+                         ::testing::Combine(::testing::Values(small_vec_size, large_vec_size, random_vec_size()),
+                                            ::testing::Values(small_vec_size, large_vec_size, random_vec_size()),
+                                            ::testing::Values(small_vec_size, large_vec_size, random_vec_size())));
