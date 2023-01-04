@@ -418,6 +418,7 @@ int main(int argc, char** argv)
   du_hi_cfg.ul_executors                  = &workers.ul_exec_mapper;
   du_hi_cfg.dl_executors                  = &workers.dl_exec_mapper;
   du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
+  du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
   du_hi_cfg.phy_adapter                   = &phy;
   du_hi_cfg.cells                         = du_cfg;
   du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);

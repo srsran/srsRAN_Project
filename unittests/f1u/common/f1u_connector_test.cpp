@@ -87,8 +87,8 @@ TEST_F(f1u_connector_test, create_new_connector)
 /// Test attaching F1-U bearer at CU-UP and DU
 TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
 {
-  f1u_cu_up_gateway* cu_gw = f1u_conn->get_f1u_cu_up_gateway();
-  f1u_du_gateway*    du_gw = f1u_conn->get_f1u_du_gateway();
+  f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
+  srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier      cu_rx;

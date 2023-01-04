@@ -16,6 +16,7 @@
 #include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 /// This class will be used to provide the interfaces to
 /// the DU to create and manage F1-U bearers.
@@ -33,4 +34,5 @@ public:
   create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) = 0;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
