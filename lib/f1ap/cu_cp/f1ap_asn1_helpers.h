@@ -17,13 +17,14 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modification_request&        f1c_request,
+/// \brief Convert the UE Context Modification Request from common type to ASN.1.
+/// \param[out] f1c_request The ASN.1 struct to store the result.
+/// \param[in] msg The common type UE Context Modification Request.
+inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod_request_s&        f1c_request,
                                                       const cu_cp_ue_context_modification_request& msg)
 {
-  f1c_request.ue_index = msg.ue_index;
-
   // drb to be setup mod list
-  f1c_request.msg->drbs_to_be_setup_mod_list_present = msg.cu_cp_drb_setup_msgs.size() > 0;
+  f1c_request->drbs_to_be_setup_mod_list_present = msg.cu_cp_drb_setup_msgs.size() > 0;
   for (const auto& drb_to_be_setup : msg.cu_cp_drb_setup_msgs) {
     asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> f1ap_setup_item;
     auto& f1ap_drb_to_setup_item = f1ap_setup_item->drbs_to_be_setup_mod_item();
@@ -80,16 +81,19 @@ inline void fill_f1ap_ue_context_modification_request(f1ap_ue_context_modificati
       drb_info.flows_mapped_to_drb_list.push_back(new_item);
     }
 
-    f1c_request.msg->drbs_to_be_setup_mod_list.value.push_back(f1ap_setup_item);
+    f1c_request->drbs_to_be_setup_mod_list.value.push_back(f1ap_setup_item);
   }
 
   // Add ue aggregate maximum bit rate
   if (msg.ue_aggregate_maximum_bit_rate_ul.has_value()) {
-    f1c_request.msg->gnb_du_ue_ambr_ul_present = true;
-    f1c_request.msg->gnb_du_ue_ambr_ul.value   = msg.ue_aggregate_maximum_bit_rate_ul.value();
+    f1c_request->gnb_du_ue_ambr_ul_present = true;
+    f1c_request->gnb_du_ue_ambr_ul.value   = msg.ue_aggregate_maximum_bit_rate_ul.value();
   }
 }
 
+/// \brief Convert the UE Context Modification Response from ASN.1 to common type.
+/// \param[out] res The common type struct to store the result.
+/// \param[in] f1ap_asn1_response The ASN.1 type UE Context Modification Response.
 inline void
 fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_modification_response&  res,
                                                    const asn1::f1ap::ue_context_mod_resp_s& f1ap_asn1_response)
@@ -261,6 +265,9 @@ fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_modification
   }
 }
 
+/// \brief Convert the UE Context Modification Failure from ASN.1 to common type.
+/// \param[out] res The common type struct to store the result.
+/// \param[in] f1ap_asn1_fail The ASN.1 type UE Context Modification Failure.
 inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_modification_response&  res,
                                                                const asn1::f1ap::ue_context_mod_fail_s& f1ap_asn1_fail)
 {

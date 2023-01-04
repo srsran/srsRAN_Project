@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "../../common/f1ap_asn1_utils.h"
 #include "../f1ap_cu_impl.h"
 #include "../ue_context/f1ap_cu_ue_context.h"
-#include "common/f1ap_asn1_utils.h"
 #include "f1c_cu_event_manager.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
@@ -24,11 +24,11 @@ namespace srs_cu_cp {
 class f1_ue_context_modification_procedure
 {
 public:
-  f1_ue_context_modification_procedure(const f1ap_ue_context_modification_request& request_,
-                                       f1ap_ue_context&                            ue_ctx_,
-                                       f1c_message_notifier&                       f1c_notif_,
-                                       f1c_event_manager&                          ev_mng_,
-                                       srslog::basic_logger&                       logger_);
+  f1_ue_context_modification_procedure(const cu_cp_ue_context_modification_request& request_,
+                                       f1ap_ue_context&                             ue_ctx_,
+                                       f1c_message_notifier&                        f1c_notif_,
+                                       f1c_event_manager&                           ev_mng_,
+                                       srslog::basic_logger&                        logger_);
 
   void operator()(coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx);
 
@@ -39,11 +39,11 @@ private:
   /// Creates procedure result to send back to procedure caller.
   cu_cp_ue_context_modification_response create_ue_context_modification_result();
 
-  const f1ap_ue_context_modification_request request;
-  f1ap_ue_context&                           ue_ctx;
-  f1c_message_notifier&                      f1c_notifier;
-  f1c_event_manager&                         ev_mng;
-  srslog::basic_logger&                      logger;
+  const cu_cp_ue_context_modification_request request;
+  f1ap_ue_context&                            ue_ctx;
+  f1c_message_notifier&                       f1c_notifier;
+  f1c_event_manager&                          ev_mng;
+  srslog::basic_logger&                       logger;
 
   f1c_event_manager::f1_ue_context_modification_outcome_t ue_ctxt_mod_outcome;
 };
