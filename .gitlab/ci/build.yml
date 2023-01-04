@@ -105,11 +105,12 @@ stages:
 
         if [[ $TEST_MODE = "coverage" ]]; then 
           gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
-            --exclude-directories unittests \
-            --exclude-directories integrationtests  \
-            --exclude-directories benchmarks \
-            --exclude-directories apps/examples \
-            --exclude-directories external \
+            --gcov-ignore-parse-errors \
+            --exclude "${CI_PROJECT_DIR}/unittests/*" \
+            --exclude "${CI_PROJECT_DIR}/integrationtests /*" \
+            --exclude "${CI_PROJECT_DIR}/benchmarks/*" \
+            --exclude "${CI_PROJECT_DIR}/apps/examples/*" \
+            --exclude "${CI_PROJECT_DIR}/external/*" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e1ap/.*" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/f1ap/.*" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/ngap/.*" \
@@ -118,10 +119,11 @@ stages:
             --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap/.*" \
             --exclude "${CI_PROJECT_DIR}/lib/asn1/ngap/.*" \
             --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
-            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs/.* \
-            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs/.* \
+            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs/.*" \
+            --exclude "${CI_PROJECT_DIR}/lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs/.*" \
             --exclude-lines-by-pattern ".*srsgnb_assert.*|.*srsgnb_sanity_check.*" \
-            --root ${CI_PROJECT_DIR} -o coverage.xml
+            --root ${CI_PROJECT_DIR} \
+            -o coverage.xml
 
           filesize=$(stat -c%s coverage.xml)
           maxsize=$((10*1204*1024))
