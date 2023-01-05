@@ -122,6 +122,36 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
   return response;
 }
 
+e1ap_bearer_context_modification_response
+cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg)
+{
+  e1ap_bearer_context_modification_response response = {};
+  response.ue_index                                  = INVALID_UE_INDEX;
+  response.success                                   = false;
+
+  ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
+  if (ue_ctxt == nullptr) {
+    logger.error("Could not find UE context");
+    return response;
+  }
+
+  const auto& bearer_ctx_modification_request = msg.request.ng_ran_bearer_context_mod_request();
+
+  // pdu session resource to modify list
+  if (bearer_ctx_modification_request.pdu_session_res_to_modify_list_present) {
+    for (const auto& pdu_session_item : bearer_ctx_modification_request.pdu_session_res_to_modify_list.value) {
+      pdu_session_modification_result result = ue_ctxt->modify_pdu_session(pdu_session_item);
+    }
+  }
+
+  // 3. Create response
+  response.ue_index = ue_ctxt->get_index();
+
+  response.success = true;
+
+  return response;
+}
+
 void cu_up::on_e1_connection_establish()
 {
   e1_connected = true;

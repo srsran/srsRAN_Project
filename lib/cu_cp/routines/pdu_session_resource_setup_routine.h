@@ -36,6 +36,7 @@ public:
 
 private:
   void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request& e1ap_request);
+  void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request& e1ap_request);
 
   cu_cp_pdu_session_resource_setup_response_message handle_pdu_session_resource_setup_result(bool success);
 
@@ -53,13 +54,16 @@ private:
   // (sub-)routine requests
   e1ap_bearer_context_setup_request           bearer_context_setup_request;
   cu_cp_ue_context_modification_request       ue_context_mod_request;
+  e1ap_bearer_context_modification_request    bearer_context_modification_request;
   cu_cp_rrc_reconfiguration_procedure_message rrc_reconfig_args;
 
   // (sub-)routine results
   cu_cp_pdu_session_resource_setup_response_message response_msg;
   e1ap_bearer_context_setup_response     bearer_context_setup_response;    // to initially setup the DRBs at the CU-UP
   cu_cp_ue_context_modification_response ue_context_modification_response; // to inform DU about the new DRBs
-  bool                                   rrc_reconfig_result = false;      // the final UE reconfiguration
+  e1ap_bearer_context_modification_response
+       bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
+  bool rrc_reconfig_result = false;          // the final UE reconfiguration
 };
 
 } // namespace srs_cu_cp

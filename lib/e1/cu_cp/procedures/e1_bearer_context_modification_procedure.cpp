@@ -14,11 +14,10 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
-e1_bearer_context_modification_procedure::e1_bearer_context_modification_procedure(
-    const bearer_context_mod_request_s& request_,
-    e1_message_notifier&                e1_notif_,
-    e1_event_manager&                   ev_mng_,
-    srslog::basic_logger&               logger_) :
+e1_bearer_context_modification_procedure::e1_bearer_context_modification_procedure(const e1_message&     request_,
+                                                                                   e1_message_notifier&  e1_notif_,
+                                                                                   e1_event_manager&     ev_mng_,
+                                                                                   srslog::basic_logger& logger_) :
   request(request_), e1_notifier(e1_notif_), ev_mng(ev_mng_), logger(logger_)
 {
 }
@@ -40,20 +39,14 @@ void e1_bearer_context_modification_procedure::operator()(
 
 void e1_bearer_context_modification_procedure::send_bearer_context_modification_request()
 {
-  // Pack message into PDU
-  e1_message e1_bearer_ctxt_mod_request_msg;
-  e1_bearer_ctxt_mod_request_msg.pdu.set_init_msg();
-  e1_bearer_ctxt_mod_request_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
-  e1_bearer_ctxt_mod_request_msg.pdu.init_msg().value.bearer_context_mod_request() = request;
-
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    e1_bearer_ctxt_mod_request_msg.pdu.to_json(js);
+    request.pdu.to_json(js);
     logger.debug("Containerized UE Context Modification Request message: {}", js.to_string());
   }
 
   // send UE context modification request message
-  e1_notifier.on_new_message(e1_bearer_ctxt_mod_request_msg);
+  e1_notifier.on_new_message(request);
 }
 
 e1ap_bearer_context_modification_response

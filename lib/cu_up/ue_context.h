@@ -37,6 +37,11 @@ public:
   {
     return pdu_session_manager.setup_pdu_session(session);
   }
+  pdu_session_modification_result
+  modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session) override
+  {
+    return pdu_session_manager.modify_pdu_session(session);
+  }
   void   remove_pdu_session(uint8_t pdu_session_id) override { pdu_session_manager.remove_pdu_session(pdu_session_id); }
   size_t get_nof_pdu_sessions() override { return pdu_session_manager.get_nof_pdu_sessions(); }
 

@@ -362,9 +362,9 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   }
 
   // ran ue id
-  if (request.ranueid.has_value()) {
+  if (request.ran_ue_id.has_value()) {
     asn1_request->ran_ue_id_present = true;
-    asn1_request->ran_ue_id.value.from_number(ran_ue_id_to_uint(request.ranueid.value()));
+    asn1_request->ran_ue_id.value.from_number(ran_ue_id_to_uint(request.ran_ue_id.value()));
   }
 
   // gnb du id
@@ -512,7 +512,38 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_context_mod_request_s&       asn1_request,
                                                           const e1ap_bearer_context_modification_request& request)
 {
-  // TODO: Add needed info to input struct and fill msg
+  // ng ran bearer context mod
+  if (request.ng_ran_bearer_context_mod_request.has_value()) {
+    asn1_request->sys_bearer_context_mod_request_present = true;
+    asn1_request->sys_bearer_context_mod_request.value.set_ng_ran_bearer_context_mod_request();
+    auto& ans1_bearer_context_mod =
+        asn1_request->sys_bearer_context_mod_request.value.ng_ran_bearer_context_mod_request();
+
+    if (!request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.empty()) {
+      ans1_bearer_context_mod.pdu_session_res_to_modify_list_present = true;
+      for (const auto& res_to_mod_item :
+           request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
+        asn1::e1ap::pdu_session_res_to_modify_item_s asn1_res_to_mod_item;
+
+        for (const auto& drb_to_mod_item : res_to_mod_item.drb_to_modify_list_ng_ran) {
+          asn1::e1ap::drb_to_modify_item_ng_ran_s asn1_drb_to_mod_item;
+
+          asn1_drb_to_mod_item.drb_id = drb_id_to_uint(drb_to_mod_item.drb_id);
+
+          for (const auto& dl_up_param : drb_to_mod_item.dl_up_params) {
+            asn1::e1ap::up_params_item_s asn1_dl_up_param;
+            up_transport_layer_info_to_asn1(asn1_dl_up_param.up_tnl_info, dl_up_param.up_tnl_info);
+            asn1_dl_up_param.cell_group_id = dl_up_param.cell_group_id;
+            asn1_drb_to_mod_item.dl_up_params.push_back(asn1_dl_up_param);
+          }
+
+          asn1_res_to_mod_item.drb_to_modify_list_ng_ran.push_back(asn1_drb_to_mod_item);
+        }
+
+        ans1_bearer_context_mod.pdu_session_res_to_modify_list.value.push_back(asn1_res_to_mod_item);
+      }
+    }
+  }
 }
 
 inline void fill_e1ap_bearer_context_modification_response(

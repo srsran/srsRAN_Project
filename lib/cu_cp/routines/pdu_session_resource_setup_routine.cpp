@@ -113,11 +113,18 @@ void pdu_session_resource_setup_routine::operator()(
 
   // Inform CU-UP about the new TEID for UL F1u traffic
   {
-      // prepare BearerContextModificationRequest and call E1 notifier
-      // TODO: add modification request to E1AP
-      // e1ap_pdu_session_resource_setup_message request;
+    // prepare BearerContextModificationRequest
+    fill_e1ap_bearer_context_modification_request(bearer_context_modification_request);
 
-      // Wait for BearerContextModificationResponse
+    // call E1 procedure and wait for BearerContextModificationResponse
+    CORO_AWAIT_VALUE(bearer_context_modification_response,
+                     e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
+
+    // Handle BearerContextModificationResponse
+    if (not bearer_context_modification_response.success) {
+      logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.cu_cp_ue_id, name());
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
   }
 
   {
@@ -267,4 +274,38 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
 
     e1ap_request.pdu_session_res_to_setup_list.push_back(e1ap_pdu_session_item);
   }
+}
+
+void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_request(
+    e1ap_bearer_context_modification_request& e1ap_request)
+{
+  e1ap_request.cu_cp_ue_id = setup_msg.cu_cp_ue_id;
+
+  e1ap_ng_ran_bearer_context_mod_request e1ap_bearer_context_mod;
+
+  // pdu session res to modify list
+  for (const auto& pdu_session : bearer_context_setup_response.pdu_session_resource_setup_list) {
+    e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
+
+    e1ap_mod_item.pdu_session_id = pdu_session.pdu_session_id;
+
+    for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
+      e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
+      e1ap_drb_item.drb_id = drb_item.drb_id;
+
+      for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
+        e1ap_up_params_item e1ap_dl_up_param;
+
+        e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
+        e1ap_dl_up_param.cell_group_id = 0; // TODO: Remove hardcoded value
+
+        e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);
+      }
+      e1ap_mod_item.drb_to_modify_list_ng_ran.push_back(e1ap_drb_item);
+    }
+
+    e1ap_bearer_context_mod.pdu_session_res_to_modify_list.push_back(e1ap_mod_item);
+  }
+
+  e1ap_request.ng_ran_bearer_context_mod_request = e1ap_bearer_context_mod;
 }

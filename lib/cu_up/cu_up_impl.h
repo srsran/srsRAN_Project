@@ -40,6 +40,8 @@ public:
   cu_cp_e1_setup_response handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg) override;
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
+  e1ap_bearer_context_modification_response
+  handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override;
 
   // cu_up_e1_connection_notifier
   void on_e1_connection_establish() override;

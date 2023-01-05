@@ -164,6 +164,14 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   return pdu_session_result;
 }
 
+pdu_session_modification_result
+pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session)
+{
+  pdu_session_modification_result pdu_session_result;
+
+  return pdu_session_result;
+}
+
 void pdu_session_manager_impl::remove_pdu_session(uint8_t pdu_session_id)
 {
   if (pdu_sessions.find(pdu_session_id) == pdu_sessions.end()) {

@@ -105,6 +105,9 @@ void e1_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_setup_request: {
       handle_bearer_context_setup_request(msg.value.bearer_context_setup_request());
     } break;
+    case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_mod_request: {
+      handle_bearer_context_modification_request(msg.value.bearer_context_mod_request());
+    } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
@@ -181,6 +184,63 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
         gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_id);
     e1_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.value =
         ue_context_setup_response_msg.cause;
+
+    // send response
+    pdu_notifier.on_new_message(e1_msg);
+  }
+}
+
+void e1_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& msg)
+{
+  e1ap_bearer_context_modification_request e1_bearer_context_mod = {};
+
+  e1ap_ue_context ue_ctxt = cu_up_ue_id_to_e1ap_ue_context[msg->gnb_cu_up_ue_e1ap_id.value];
+  if (ue_ctxt.cu_cp_e1_ue_id == gnb_cu_cp_ue_e1ap_id_t::invalid) {
+    logger.error("No UE context for the received gnb_cu_cp_ue_e1ap_id={} available.", msg->gnb_cu_up_ue_e1ap_id.value);
+    return;
+  }
+
+  // sys bearer context mod request
+  if (msg->sys_bearer_context_mod_request_present) {
+    // We only support NG-RAN Bearer
+    if (msg->sys_bearer_context_mod_request.value.type() !=
+        asn1::e1ap::sys_bearer_context_mod_request_c::types::ng_ran_bearer_context_mod_request) {
+      logger.error("Not handling E-UTRAN Bearers");
+      return;
+    }
+
+    e1_bearer_context_mod.request = msg->sys_bearer_context_mod_request.value;
+  }
+
+  // Forward message to CU-UP
+  e1ap_bearer_context_modification_response ue_context_mod_response_msg =
+      e1_cu_up_notifier.on_bearer_context_modification_request_received(e1_bearer_context_mod);
+
+  if (ue_context_mod_response_msg.ue_index == INVALID_UE_INDEX) {
+    logger.error("Invalid UE index.");
+    return;
+  }
+
+  e1_message e1_msg;
+  if (ue_context_mod_response_msg.success) {
+    logger.info("Transmitting BearerContextModificationResponse message");
+
+    e1_msg.pdu.set_successful_outcome();
+    e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+    e1_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_cp_ue_e1ap_id = msg->gnb_cu_cp_ue_e1ap_id;
+    e1_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->gnb_cu_up_ue_e1ap_id = msg->gnb_cu_up_ue_e1ap_id;
+    e1_msg.pdu.successful_outcome().value.bearer_context_mod_resp()->sys_bearer_context_mod_resp.value =
+        ue_context_mod_response_msg.sys_bearer_context_modification_resp;
+
+    // send response
+    pdu_notifier.on_new_message(e1_msg);
+  } else {
+    logger.info("Transmitting BearerContextModificationFailure message");
+    e1_msg.pdu.set_unsuccessful_outcome();
+    e1_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+    e1_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->gnb_cu_cp_ue_e1ap_id = msg->gnb_cu_cp_ue_e1ap_id;
+    e1_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->gnb_cu_up_ue_e1ap_id = msg->gnb_cu_up_ue_e1ap_id;
+    e1_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause.value = ue_context_mod_response_msg.cause;
 
     // send response
     pdu_notifier.on_new_message(e1_msg);

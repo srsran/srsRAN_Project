@@ -26,12 +26,27 @@ struct e1ap_bearer_context_setup_request {
   // TODO: add optional fields like DU-ID, etc
 };
 
-/// \brief Response to an bearer context setup request including UE index for E1 map.
+/// \brief Response to a bearer context setup request including UE index for E1 map.
 struct e1ap_bearer_context_setup_response {
   bool                                        success;
   ue_index_t                                  ue_index; // Valid UE index if setup was successful.
   asn1::e1ap::sys_bearer_context_setup_resp_c sys_bearer_context_setup_resp;
   asn1::e1ap::cause_c                         cause; // Cause if setup was unsuccessful.
+};
+
+/// \brief Request to modify a bearer context.
+struct e1ap_bearer_context_modification_request {
+  ue_index_t                                   ue_index;
+  asn1::e1ap::sys_bearer_context_mod_request_c request;
+  // TODO: add optional fields
+};
+
+/// \brief Response to a bearer context modification request including UE index for E1 map.
+struct e1ap_bearer_context_modification_response {
+  bool                                      success;
+  ue_index_t                                ue_index; // Valid UE index if modification was successful.
+  asn1::e1ap::sys_bearer_context_mod_resp_c sys_bearer_context_modification_resp;
+  asn1::e1ap::cause_c                       cause; // Cause if modification was unsuccessful.
 };
 
 struct e1ap_ue_context {
@@ -75,6 +90,12 @@ public:
   /// \return Returns a bearer context response message containing the index of the created UE context.
   virtual e1ap_bearer_context_setup_response
   on_bearer_context_setup_request_received(const e1ap_bearer_context_setup_request& msg) = 0;
+
+  /// \brief Notifies the UE manager to create a UE context.
+  /// \param[in] msg The received bearer context modification message.
+  /// \return Returns a bearer context response message containing the index of the created UE context.
+  virtual e1ap_bearer_context_modification_response
+  on_bearer_context_modification_request_received(const e1ap_bearer_context_modification_request& msg) = 0;
 };
 
 /// Combined entry point for E1 handling.

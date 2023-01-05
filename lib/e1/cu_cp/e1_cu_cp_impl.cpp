@@ -98,15 +98,17 @@ e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_cont
 
   e1_message e1_msg;
   e1_msg.pdu.set_init_msg();
-  e1_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
+  e1_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
 
-  auto& bearer_context_mod_request                       = e1_msg.pdu.init_msg().value.bearer_context_mod_request();
+  auto& bearer_context_mod_request = e1_msg.pdu.init_msg().value.bearer_context_mod_request();
+  fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
+
   bearer_context_mod_request->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_context.cu_cp_ue_e1ap_id);
   bearer_context_mod_request->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_context.cu_up_ue_e1ap_id);
 
   fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
 
-  return launch_async<e1_bearer_context_modification_procedure>(request.msg, pdu_notifier, *events, logger);
+  return launch_async<e1_bearer_context_modification_procedure>(e1_msg, pdu_notifier, *events, logger);
 }
 
 async_task<e1ap_bearer_context_release_complete>

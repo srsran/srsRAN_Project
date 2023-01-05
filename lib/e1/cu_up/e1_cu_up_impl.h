@@ -51,6 +51,11 @@ private:
   /// \param[in] msg The E1 Bearer Context Setup message.
   void handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg);
 
+  /// \brief Notify about the reception of an Bearer Context Modification Request message.
+  /// This starts the UE context creation at the UE manager and E1.
+  /// \param[in] msg The E1 Bearer Context Modification message.
+  void handle_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& msg);
+
   /// \brief Notify about the reception of an successful outcome.
   /// \param[in] msg The received successful outcome message.
   void handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome);
@@ -70,7 +75,7 @@ private:
 
   srslog::basic_logger& logger;
 
-  std::array<e1ap_ue_context, MAX_NOF_UES> cu_up_ue_id_to_e1ap_ue_context;
+  std::array<e1ap_ue_context, MAX_NOF_UES> cu_up_ue_id_to_e1ap_ue_context; // indexed by gnb_cu_up_ue_e1ap_id
 
   // nofifiers and handles
 

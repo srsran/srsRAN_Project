@@ -193,7 +193,7 @@ struct e1ap_bearer_context_setup_request {
   optional<uint64_t>                              ue_dl_maximum_integrity_protected_data_rate;
   optional<uint16_t>                              ue_inactivity_timer;
   optional<std::string>                           bearer_context_status_change;
-  optional<ran_ue_id_t>                           ranueid;
+  optional<ran_ue_id_t>                           ran_ue_id;
   optional<uint64_t>                              gnb_du_id;
 };
 
@@ -271,9 +271,78 @@ struct e1ap_bearer_context_setup_response {
   optional<e1ap_crit_diagnostics> crit_diagnostics;
 };
 
+struct e1ap_drb_to_setup_mod_item_ng_ran {
+  drb_id_t                                    drb_id;
+  cu_cp_sdap_config                           sdap_cfg;
+  e1ap_pdcp_config                            pdcp_cfg;
+  std::vector<e1ap_cell_group_info_item>      cell_group_info;
+  std::vector<e1ap_qos_flow_qos_param_item>   flow_map_info;
+  optional<e1ap_data_forwarding_info_request> drb_data_forwarding_info_request;
+  optional<uint16_t>                          drb_inactivity_timer;
+  optional<e1ap_pdcp_sn_status_info>          pdcp_sn_status_info;
+};
+
+struct e1ap_pdu_session_res_to_setup_mod_item {
+  uint16_t                                       pdu_session_id;
+  std::string                                    pdu_session_type;
+  cu_cp_s_nssai                                  snssai;
+  e1ap_security_ind                              security_ind;
+  optional<uint64_t>                             pdu_session_res_ambr;
+  up_transport_layer_info                        ng_ul_up_tnl_info;
+  optional<e1ap_data_forwarding_info_request>    pdu_session_data_forwarding_info_request;
+  optional<uint16_t>                             pdu_session_inactivity_timer;
+  std::vector<e1ap_drb_to_setup_mod_item_ng_ran> drb_to_setup_mod_list_ng_ran;
+};
+
+struct e1ap_drb_to_modify_item_ng_ran {
+  drb_id_t                                  drb_id;
+  optional<cu_cp_sdap_config>               sdap_cfg;
+  optional<cu_cp_pdcp_config>               pdcp_cfg;
+  optional<e1ap_data_forwarding_info>       drb_data_forwarding_info;
+  optional<std::string>                     pdcp_sn_status_request;
+  std::vector<e1ap_up_params_item>          dl_up_params;
+  std::vector<e1ap_cell_group_info_item>    cell_group_to_add;
+  std::vector<e1ap_cell_group_info_item>    cell_group_to_modify;
+  std::vector<e1ap_cell_group_info_item>    cell_group_to_rem;
+  std::vector<e1ap_qos_flow_qos_param_item> flow_map_info;
+  optional<uint16_t>                        drb_inactivity_timer;
+};
+
+struct e1ap_pdu_session_res_to_modify_item {
+  uint16_t                                    pdu_session_id;
+  optional<e1ap_security_ind>                 security_ind;
+  optional<uint64_t>                          pdu_session_res_dl_ambr;
+  optional<up_transport_layer_info>           ng_ul_up_tnl_info;
+  optional<e1ap_data_forwarding_info_request> pdu_session_data_forwarding_info_request;
+  optional<e1ap_data_forwarding_info>         pdu_session_data_forwarding_info;
+  optional<uint16_t>                          pdu_session_inactivity_timer;
+  optional<uint16_t>                          network_instance;
+  std::vector<e1ap_drb_to_setup_item_ng_ran>  drb_to_setup_list_ng_ran;
+  std::vector<e1ap_drb_to_modify_item_ng_ran> drb_to_modify_list_ng_ran;
+  std::vector<drb_id_t>                       drb_to_rem_list_ng_ran;
+
+  std::vector<e1ap_drb_to_setup_mod_item_ng_ran> drb_to_setup_mod_list_ng_ran;
+};
+
+struct e1ap_ng_ran_bearer_context_mod_request {
+  std::vector<e1ap_pdu_session_res_to_setup_mod_item> pdu_session_res_to_setup_mod_list;
+  std::vector<e1ap_pdu_session_res_to_modify_item>    pdu_session_res_to_modify_list;
+  std::vector<uint16_t>                               pdu_session_res_to_rem_list;
+};
+
 struct e1ap_bearer_context_modification_request {
-  cu_cp_ue_id_t                            cu_cp_ue_id;
-  asn1::e1ap::bearer_context_mod_request_s msg;
+  cu_cp_ue_id_t                                    cu_cp_ue_id;
+  optional<e1ap_security_info>                     security_info;
+  optional<uint64_t>                               ue_dl_aggr_max_bit_rate;
+  optional<uint64_t>                               ue_dl_max_integrity_protected_data_rate;
+  optional<std::string>                            bearer_context_status_change;
+  optional<std::string>                            new_ul_tnl_info_required;
+  optional<uint16_t>                               ue_inactivity_timer;
+  optional<std::string>                            data_discard_required;
+  optional<e1ap_ng_ran_bearer_context_mod_request> ng_ran_bearer_context_mod_request;
+  optional<ran_ue_id_t>                            ran_ue_id;
+  optional<uint64_t>                               gnb_du_id;
+  optional<std::string>                            activity_notif_level;
 };
 
 struct e1ap_drb_modified_item_ng_ran {

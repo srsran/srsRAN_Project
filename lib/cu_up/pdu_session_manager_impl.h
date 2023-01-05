@@ -33,8 +33,10 @@ public:
   ~pdu_session_manager_impl() = default;
 
   pdu_session_setup_result setup_pdu_session(const asn1::e1ap::pdu_session_res_to_setup_item_s& session) override;
-  void                     remove_pdu_session(uint8_t pdu_session_id) override;
-  size_t                   get_nof_pdu_sessions() override;
+  pdu_session_modification_result
+         modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session) override;
+  void   remove_pdu_session(uint8_t pdu_session_id) override;
+  size_t get_nof_pdu_sessions() override;
 
 private:
   uint32_t allocate_local_teid(uint8_t pdu_session_id);
