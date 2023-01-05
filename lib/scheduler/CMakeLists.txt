@@ -34,4 +34,4 @@ add_library(srsgnb_sched STATIC ${SOURCES}
         $<TARGET_OBJECTS:sched_cell>
         $<TARGET_OBJECTS:common_sched>
         $<TARGET_OBJECTS:ue_sched>)
-target_link_libraries(srsgnb_sched srsgnb_ran scheduler_logger)
+target_link_libraries(srsgnb_sched srsgnb_ran sched_config scheduler_logger)

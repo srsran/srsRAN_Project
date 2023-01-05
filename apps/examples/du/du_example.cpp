@@ -95,7 +95,7 @@ static srslog::basic_logger& du_logger        = srslog::fetch_basic_logger("DU_A
 static std::atomic<bool>     is_running       = {true};
 
 /// PRACH params
-static unsigned       prach_msg1_freq_offset    = 0;
+static unsigned       prach_msg1_freq_offset    = 2;
 static unsigned       prach_root_sequence_index = 0;
 static const unsigned zero_correlation_zone     = 0;
 static const unsigned prach_config_index        = 16;
