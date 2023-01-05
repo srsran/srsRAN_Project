@@ -59,15 +59,16 @@ public:
   virtual void on_e1_setup_request_received(const cu_cp_e1_setup_request& msg) = 0;
 };
 
-/// Methods used by E1 to notify the UE Context Manager.
-class e1_ue_manager_notifier
+/// Methods used by E1 to notify the CU-UP.
+class e1ap_cu_cp_notifier
 {
 public:
-  virtual ~e1_ue_manager_notifier() = default;
+  virtual ~e1ap_cu_cp_notifier() = default;
 
   /// \brief Notifies about the reception of a E1 Setup Request message.
   /// \param[in] msg The received E1 Setup Request message.
-  virtual void on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) = 0;
+  /// \return The CU-CP E1 Setup Response message.
+  virtual cu_cp_e1_setup_response on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) = 0;
 
   /// \brief Notifies the UE manager to create a UE context.
   /// \param[in] msg The received bearer context setup message.

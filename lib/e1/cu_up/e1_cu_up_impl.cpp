@@ -16,10 +16,8 @@ using namespace srsgnb;
 using namespace asn1::e1ap;
 using namespace srs_cu_up;
 
-e1_cu_up_impl::e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_, e1_ue_manager_notifier& e1_ue_manager_notifier_) :
-  logger(srslog::fetch_basic_logger("CU-UP-E1")),
-  pdu_notifier(e1_pdu_notifier_),
-  ue_manager_notifier(e1_ue_manager_notifier_)
+e1_cu_up_impl::e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_, e1ap_cu_cp_notifier& e1_cu_up_notifier_) :
+  logger(srslog::fetch_basic_logger("CU-UP-E1")), pdu_notifier(e1_pdu_notifier_), e1_cu_up_notifier(e1_cu_up_notifier_)
 {
 }
 
@@ -100,10 +98,8 @@ void e1_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_cp_e1_setup_request: {
-      cu_cp_e1_setup_request req_msg = {};
-      current_transaction_id         = msg.value.gnb_cu_cp_e1_setup_request()->transaction_id.value;
-      req_msg.request                = msg.value.gnb_cu_cp_e1_setup_request();
-      ue_manager_notifier.on_cu_cp_e1_setup_request_received(req_msg);
+      current_transaction_id = msg.value.gnb_cu_cp_e1_setup_request()->transaction_id.value;
+      handle_cu_cp_e1_setup_request(msg.value.gnb_cu_cp_e1_setup_request());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::bearer_context_setup_request: {
       handle_bearer_context_setup_request(msg.value.bearer_context_setup_request());
@@ -111,6 +107,13 @@ void e1_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
+}
+
+void e1_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_e1_setup_request_s& msg)
+{
+  cu_cp_e1_setup_request req_msg = {};
+  req_msg.request                = msg;
+  e1_cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
 }
 
 void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg)
@@ -135,7 +138,7 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
   e1_bearer_context_setup.serving_plmn                      = msg->serving_plmn.value;
   e1_bearer_context_setup.request                           = msg->sys_bearer_context_setup_request.value;
   e1ap_bearer_context_setup_response ue_context_setup_response_msg =
-      ue_manager_notifier.on_bearer_context_setup_request_received(e1_bearer_context_setup);
+      e1_cu_up_notifier.on_bearer_context_setup_request_received(e1_bearer_context_setup);
 
   if (ue_context_setup_response_msg.ue_index == INVALID_UE_INDEX) {
     logger.error("Invalid UE index.");

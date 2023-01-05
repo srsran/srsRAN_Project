@@ -31,7 +31,7 @@ TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_valid_then_connect_cu_cp)
   e1->handle_message(cu_cp_e1_setup_msg);
 
   // Action 2: Check if E1SetupRequest was forwarded to UE manager
-  ASSERT_EQ(ue_manager_notifier->last_cu_cp_e1_setup_request_msg.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
+  ASSERT_EQ(cu_up_notifier->last_cu_cp_e1_setup_request_msg.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
 
   // Action 3: Transmit E1SetupResponse message
   test_logger.info("TEST: Transmit E1SetupResponse message...");
@@ -54,7 +54,7 @@ TEST_F(e1_cu_up_test, when_cu_cp_e1_setup_request_cant_be_handled_then_reject_cu
   e1->handle_message(cu_cp_e1_setup_msg);
 
   // Action 2: Check if E1SetupRequest was forwarded to UE manager
-  ASSERT_EQ(ue_manager_notifier->last_cu_cp_e1_setup_request_msg.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
+  ASSERT_EQ(cu_up_notifier->last_cu_cp_e1_setup_request_msg.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
 
   // Action 3: Transmit E1SetupFailure message
   test_logger.info("TEST: Transmit E1SetupFailure message...");

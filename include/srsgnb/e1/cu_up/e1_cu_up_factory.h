@@ -18,8 +18,7 @@ namespace srsgnb {
 namespace srs_cu_up {
 
 /// Creates an instance of an E1 interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<e1_interface> create_e1(e1_message_notifier&    e1_pdu_notifier_,
-                                        e1_ue_manager_notifier& e1_ue_manager_notifier_);
+std::unique_ptr<e1_interface> create_e1(e1_message_notifier& e1_pdu_notifier_, e1ap_cu_cp_notifier& e1_cu_up_notifier_);
 
 } // namespace srs_cu_up
 } // namespace srsgnb

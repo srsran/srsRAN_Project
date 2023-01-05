@@ -16,9 +16,9 @@
 using namespace srsgnb;
 using namespace srs_cu_up;
 
-std::unique_ptr<e1_interface> srsgnb::srs_cu_up::create_e1(e1_message_notifier&    e1_pdu_notifier_,
-                                                           e1_ue_manager_notifier& e1_ue_manager_notifier_)
+std::unique_ptr<e1_interface> srsgnb::srs_cu_up::create_e1(e1_message_notifier& e1_pdu_notifier_,
+                                                           e1ap_cu_cp_notifier& e1_cu_up_notifier_)
 {
-  auto e1_cu_up = std::make_unique<e1_cu_up_impl>(e1_pdu_notifier_, e1_ue_manager_notifier_);
+  auto e1_cu_up = std::make_unique<e1_cu_up_impl>(e1_pdu_notifier_, e1_cu_up_notifier_);
   return e1_cu_up;
 }

@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_impl.h"
+#include "srsgnb/e1/cu_up/e1_cu_up_factory.h"
 #include "srsgnb/gateways/network_gateway_factory.h"
 #include "srsgnb/gtpu/gtpu_demux_factory.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"
@@ -58,8 +59,9 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(logger, timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux);
 
-  // connect event notifier to layers
-  // f1c_ev_notifier.connect_cu_cp(*this);
+  // create e1ap
+  e1 = create_e1(*cfg.e1_notifier, e1_cu_up_ev_notifier);
+  e1_cu_up_ev_notifier.connect_cu_up(*this);
 }
 
 cu_up::~cu_up()
@@ -67,6 +69,25 @@ cu_up::~cu_up()
   if (ngu_gw) {
     cfg.epoll_broker->unregister_fd(ngu_gw->get_socket_fd());
   }
+}
+
+cu_cp_e1_setup_response cu_up::handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg)
+{
+  cu_cp_e1_setup_response response;
+  response.success = true;
+
+  response.response->gnb_cu_up_id.value     = cfg.cu_up_id;
+  response.response->gnb_cu_up_name_present = true;
+  response.response->gnb_cu_up_name.value.from_string(cfg.cu_up_name);
+
+  // We only support 5G
+  response.response->cn_support.value = asn1::e1ap::cn_support_opts::options::c_5gc;
+
+  asn1::e1ap::supported_plmns_item_s plmn_item;
+  plmn_item.plmn_id.from_string(cfg.plmn);
+  response.response->supported_plmns.value.push_back(plmn_item);
+
+  return response;
 }
 
 e1ap_bearer_context_setup_response

@@ -42,15 +42,18 @@ private:
   uint16_t              ue_index = srs_cu_cp::MIN_UE_INDEX;
 };
 
-class dummy_e1_ue_manager_notifier : public srs_cu_up::e1_ue_manager_notifier
+class dummy_e1ap_cu_up_notifier : public srs_cu_up::e1ap_cu_cp_notifier
 {
 public:
-  dummy_e1_ue_manager_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_e1ap_cu_up_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) override
+  cu_cp_e1_setup_response on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) override
   {
     logger.info("Received E1SetupRequest message.");
     last_cu_cp_e1_setup_request_msg = msg;
+
+    cu_cp_e1_setup_response res = {};
+    return res;
   }
 
   srs_cu_up::e1ap_bearer_context_setup_response

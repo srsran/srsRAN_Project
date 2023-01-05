@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/e1ap_adapters.h"
 #include "adapters/gtpu_adapters.h"
 #include "adapters/gw_adapters.h"
 #include "ue_manager.h"
@@ -35,7 +36,8 @@ public:
   ~cu_up();
 
   // cu_up_e1_interface
-  e1_message_handler& get_e1_message_handler() override { return *e1; }
+  e1_message_handler&     get_e1_message_handler() override { return *e1; }
+  cu_cp_e1_setup_response handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg) override;
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
 
@@ -69,6 +71,7 @@ private:
   network_gateway_data_gtpu_demux_adapter    gw_data_gtpu_demux_adapter;
   network_gateway_control_gtpu_demux_adapter gw_ctrl_gtpu_demux_adapter;
   gtpu_network_gateway_adapter               gtpu_gw_adapter;
+  e1ap_cu_up_adapter                         e1_cu_up_ev_notifier;
 };
 
 } // namespace srs_cu_up

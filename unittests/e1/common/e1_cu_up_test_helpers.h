@@ -28,10 +28,10 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    msg_notifier        = std::make_unique<dummy_e1_pdu_notifier>(nullptr);
-    ue_manager_notifier = std::make_unique<dummy_e1_ue_manager_notifier>();
+    msg_notifier   = std::make_unique<dummy_e1_pdu_notifier>(nullptr);
+    cu_up_notifier = std::make_unique<dummy_e1ap_cu_up_notifier>();
 
-    e1 = create_e1(*msg_notifier, *ue_manager_notifier);
+    e1 = create_e1(*msg_notifier, *cu_up_notifier);
   }
 
   void TearDown() override
@@ -40,10 +40,10 @@ protected:
     srslog::flush();
   }
 
-  std::unique_ptr<e1_interface>                 e1;
-  std::unique_ptr<dummy_e1_pdu_notifier>        msg_notifier;
-  std::unique_ptr<dummy_e1_ue_manager_notifier> ue_manager_notifier;
-  srslog::basic_logger&                         test_logger = srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<e1_interface>              e1;
+  std::unique_ptr<dummy_e1_pdu_notifier>     msg_notifier;
+  std::unique_ptr<dummy_e1ap_cu_up_notifier> cu_up_notifier;
+  srslog::basic_logger&                      test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 e1_message generate_cu_cp_e1_setup_request()

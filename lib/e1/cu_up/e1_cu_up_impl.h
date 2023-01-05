@@ -24,7 +24,7 @@ class e1_event_manager;
 class e1_cu_up_impl final : public e1_interface
 {
 public:
-  e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_, e1_ue_manager_notifier& e1_ue_manager_notifier_);
+  e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_, e1ap_cu_cp_notifier& e1_cu_up_notifier_);
   ~e1_cu_up_impl();
 
   // e1 connection manager functions
@@ -41,6 +41,10 @@ private:
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::e1ap::init_msg_s& msg);
+
+  /// \brief Notify about the reception of an CU-CP E1 Setup Request message.
+  /// \param[in] msg The CU-CP E1 Setup Request message.
+  void handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_e1_setup_request_s& msg);
 
   /// \brief Notify about the reception of an Bearer Context Setup Request message.
   /// This starts the UE context creation at the UE manager and E1.
@@ -70,8 +74,8 @@ private:
 
   // nofifiers and handles
 
-  e1_message_notifier&    pdu_notifier;
-  e1_ue_manager_notifier& ue_manager_notifier;
+  e1_message_notifier& pdu_notifier;
+  e1ap_cu_cp_notifier& e1_cu_up_notifier;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id
 };

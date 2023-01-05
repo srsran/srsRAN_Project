@@ -28,6 +28,10 @@ struct cu_up_configuration {
   // TODO: Refactor to use UPF IP that we get from E1
   std::string upf_addr      = "0.0.0.0";   ///< IP address of UPF for NG-U connection.
   std::string gtp_bind_addr = "127.0.1.1"; ///< Local IP address to bind for GTP connection.
+
+  unsigned    cu_up_id   = 0;
+  std::string cu_up_name = "srs_cu_up_01";
+  std::string plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
 };
 
 } // namespace srs_cu_up
