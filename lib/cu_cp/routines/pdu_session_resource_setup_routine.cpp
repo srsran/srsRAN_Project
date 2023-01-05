@@ -52,11 +52,11 @@ void pdu_session_resource_setup_routine::operator()(
 
   {
     // prepare BearerContextSetupRequest
-    fill_e1ap_bearer_context_setup_request(bearer_contest_setup_request);
+    fill_e1ap_bearer_context_setup_request(bearer_context_setup_request);
 
     // call E1 procedure
     CORO_AWAIT_VALUE(bearer_context_setup_response,
-                     e1ap_ctrl_notifier.on_bearer_context_setup_request(bearer_contest_setup_request));
+                     e1ap_ctrl_notifier.on_bearer_context_setup_request(bearer_context_setup_request));
 
     // Handle BearerContextSetupResponse
     if (not bearer_context_setup_response.success) {
