@@ -40,7 +40,7 @@ const char* ssb_case_to_str(ssb_pattern_case ssb_case)
 
 /// Helper struct to test HARQs and update loggers slot context.
 struct ssb_test_bench {
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
   ssb_test_bench(ssb_periodicity    ssb_period,

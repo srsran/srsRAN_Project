@@ -109,7 +109,7 @@ protected:
   constexpr static du_ue_index_t ue_id   = to_du_ue_index(0);
   constexpr static rnti_t        ue_rnti = to_rnti(0x4601);
 
-  srslog::basic_logger&          logger = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger&          logger = srslog::fetch_basic_logger("MAC", true);
   sched_cfg_dummy_notifier       notif;
   optional<cell_configuration>   cell_cfg;
   std::unique_ptr<mac_scheduler> sched;
@@ -163,7 +163,7 @@ TEST_F(uci_sched_tester, pusch_scheduled_after_sr_indication)
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
   srslog::init();
 
   ::testing::InitGoogleTest(&argc, argv);

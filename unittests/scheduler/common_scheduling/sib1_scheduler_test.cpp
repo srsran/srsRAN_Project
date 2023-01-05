@@ -71,7 +71,7 @@ public:
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct sib_test_bench {
   const bwp_id_t        bwp_id      = to_bwp_id(0);
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
   scheduler_si_expert_config               si_cfg;
@@ -429,7 +429,7 @@ void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs)
 
 TEST(sib1_scheduler_test, test_all)
 {
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 

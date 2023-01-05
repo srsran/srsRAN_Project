@@ -93,7 +93,7 @@ void test_mac_ctrl_ue_procedures()
 
 int main()
 {
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
 
   srslog::init();
 

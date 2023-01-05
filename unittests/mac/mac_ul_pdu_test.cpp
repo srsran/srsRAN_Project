@@ -574,7 +574,7 @@ int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
 
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
   srslog::init();
 
   return RUN_ALL_TESTS();

@@ -354,7 +354,7 @@ protected:
   slot_point result_slot_tx() const { return bench->res_grid[0].slot; }
 
   slot_point              next_slot{0, 0};
-  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("MAC", true);
   srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST");
   optional<ra_test_bench> bench;
 };
@@ -489,7 +489,7 @@ INSTANTIATE_TEST_SUITE_P(ra_scheduler,
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 

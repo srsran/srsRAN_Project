@@ -242,7 +242,7 @@ int main(int argc, char** argv)
   compute_derived_args(gnb_cfg);
 
   srslog::init();
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::info);
   gnb_logger.set_level(srslog::basic_levels::info);
 
   auto& rrc_logger = srslog::fetch_basic_logger("RRC", false);

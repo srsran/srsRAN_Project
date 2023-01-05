@@ -204,7 +204,7 @@ void test_dl_ue_procedure_tsan()
 
 int main()
 {
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   srslog::init();

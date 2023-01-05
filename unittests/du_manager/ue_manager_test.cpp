@@ -235,7 +235,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
 
 int main()
 {
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 

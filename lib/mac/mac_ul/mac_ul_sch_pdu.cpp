@@ -23,7 +23,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 {
   unsigned subpdu_len = subpdu_reader.length();
   if (subpdu_len == 0) {
-    srslog::fetch_basic_logger("MAC").warning("Invalid MAC PDU. Cause: Empty subPDU.");
+    srslog::fetch_basic_logger("MAC", true).warning("Invalid MAC PDU. Cause: Empty subPDU.");
     return false;
   }
   payload_view = {};

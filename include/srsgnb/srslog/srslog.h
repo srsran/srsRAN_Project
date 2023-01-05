@@ -76,13 +76,13 @@ inline T* find_logger(const std::string& id)
 /// specified id string. All logger channels will write into the default sink.
 /// The context value of the logger can be printed on each log entry by setting
 /// to true the should_print_context argument.
-basic_logger& fetch_basic_logger(const std::string& id, bool should_print_context = true);
+basic_logger& fetch_basic_logger(const std::string& id, bool should_print_context = false);
 
 /// Returns an instance of a basic logger (see basic_logger type) with the
 /// specified id string. All logger channels will write into the specified sink.
 /// The context value of the logger can be printed on each log entry by setting
 /// to true the should_print_context argument.
-basic_logger& fetch_basic_logger(const std::string& id, sink& s, bool should_print_context = true);
+basic_logger& fetch_basic_logger(const std::string& id, sink& s, bool should_print_context = false);
 
 /// Returns a logger instance with the specified id string, type and channel
 /// references.
@@ -108,7 +108,7 @@ inline T& fetch_logger(const std::string& id, Args&&... args)
 /// the specified sink. Returns a pointer to the newly created logger, otherwise
 /// when a logger is already registered with the same id it returns nullptr.
 /// NOTE: Deprecated, use fetch_basic_logger instead.
-basic_logger* create_basic_logger(const std::string& id, sink& s, bool should_print_context = true);
+basic_logger* create_basic_logger(const std::string& id, sink& s, bool should_print_context = false);
 
 /// Creates a new logger instance with the specified id string, type and channel
 /// references, registering it into the logger repository so that it can be

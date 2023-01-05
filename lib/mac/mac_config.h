@@ -31,7 +31,7 @@ struct mac_common_config_t {
                       du_high_cell_executor_mapper& dl_exec_,
                       task_executor&                ctrl_exec_,
                       mac_result_notifier&          phy_notifier_) :
-    logger(srslog::fetch_basic_logger("MAC")),
+    logger(srslog::fetch_basic_logger("MAC", true)),
     event_notifier(event_notifier_),
     ue_exec_mapper(ul_exec_),
     cell_exec_mapper(dl_exec_),

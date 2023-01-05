@@ -163,7 +163,7 @@ int main()
 {
   srslog::init();
 
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("F1AP").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("ASN1").set_level(srslog::basic_levels::info);
 

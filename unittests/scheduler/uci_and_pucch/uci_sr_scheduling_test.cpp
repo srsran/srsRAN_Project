@@ -173,7 +173,7 @@ INSTANTIATE_TEST_SUITE_P(test_pucch_output_for_dci,
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 

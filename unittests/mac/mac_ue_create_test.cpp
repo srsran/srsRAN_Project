@@ -23,7 +23,7 @@ class mac_ue_create_procedure_test : public testing::Test
 protected:
   void SetUp() override
   {
-    srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
+    srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::info);
     srslog::init();
 
     // Launch procedure

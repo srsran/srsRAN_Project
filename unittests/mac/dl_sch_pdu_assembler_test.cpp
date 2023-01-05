@@ -136,7 +136,7 @@ public:
     dl_bearers(2),
     dl_sch_enc(ue_mng, pdu_pool)
   {
-    srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
     srslog::init();
 
     for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {

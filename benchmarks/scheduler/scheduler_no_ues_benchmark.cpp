@@ -63,7 +63,7 @@ void benchmark_sib_scheduling()
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
-  auto& logger = srslog::fetch_basic_logger("MAC");
+  auto& logger = srslog::fetch_basic_logger("MAC", true);
 
   // Run benchmark.
   slot_point sl_tx{0, 0};
@@ -85,7 +85,7 @@ void benchmark_rach_scheduling()
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
-  auto&                   logger = srslog::fetch_basic_logger("MAC");
+  auto&                   logger = srslog::fetch_basic_logger("MAC", true);
   slot_point              sl_tx{0, 0};
   rach_indication_message rach_ind = generate_rach_ind_msg(sl_tx - 4, to_rnti(0x4601));
 
@@ -119,7 +119,7 @@ void benchmark_rach_scheduling()
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::error);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::error);
 
   srslog::init();
 
