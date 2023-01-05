@@ -10,21 +10,27 @@
 
 #pragma once
 
+#include "srsgnb/e1/common/e1_common.h"
+
 namespace srsgnb {
 
 /// \brief E1 bridge between CU-CP and CU-UP using fast-path message passing.
 class e1_local_adapter : public e1_message_notifier
 {
 public:
-  e1_local_adapter(std::string log_name) : logger(srslog::fetch_basic_logger(log_name)) {}
+  explicit e1_local_adapter(const std::string log_name) : logger(srslog::fetch_basic_logger(log_name)) {}
+
+  void attach_handler(e1_message_handler* handler_) { handler = handler_; }
   void on_new_message(const e1_message& msg) override
   {
+    report_fatal_error_if_not(handler, "E1AP message handler not set.");
     logger.debug("Received a E1AP PDU of type {}", msg.pdu.type().to_string());
-    // TODO: add and pass to handler
+    handler->handle_message(msg);
   }
 
 private:
   srslog::basic_logger& logger;
+  e1_message_handler*   handler = nullptr;
 };
 
 }; // namespace srsgnb

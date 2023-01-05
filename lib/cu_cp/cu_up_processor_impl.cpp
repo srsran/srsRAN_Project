@@ -28,14 +28,14 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t       
   main_ctrl_loop(128)
 {
   context.cu_cp_name = cfg.name;
+
+  // create e1
+  e1 = create_e1(task_sched.get_timer_manager(), e1_notifier, e1_ev_notifier);
+  e1_ev_notifier.connect_cu_up_processor(*this);
 }
 
 void cu_up_processor_impl::start()
 {
-  // create e1
-  e1 = create_e1(task_sched.get_timer_manager(), e1_notifier, e1_ev_notifier);
-  e1_ev_notifier.connect_cu_up_processor(*this);
-
   // Start E1 setup procedure
   main_ctrl_loop.schedule<initial_cu_up_processor_setup_procedure>(context, *e1, cu_cp_notifier);
 }

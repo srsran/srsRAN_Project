@@ -272,20 +272,6 @@ int main(int argc, char** argv)
   std::unique_ptr<srsgnb::srs_cu_cp::ngap_network_adapter> ngap_adapter =
       std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker, ngap_nw_config);
 
-  // Create CU-CP config.
-  srs_cu_cp::cu_cp_configuration cu_cfg = generate_cu_cp_config(gnb_cfg);
-  cu_cfg.cu_executor                    = &workers.cu_exec.front();
-  cu_cfg.f1c_notifier                   = &f1c_cu_to_du_adapter;
-  cu_cfg.ngc_notifier                   = ngap_adapter.get();
-
-  // create and start CU.
-  std::unique_ptr<srsgnb::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cfg));
-  cu_cp_obj->on_new_du_connection(); // trigger DU addition
-
-  // Connect NGAP adpter to CU-CP to pass NGC messages.
-  ngap_adapter->connect_ngc(&cu_cp_obj->get_ngc_message_handler(), &cu_cp_obj->get_ngc_event_handler());
-  cu_cp_obj->start();
-
   // Create CU-UP config.
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor = &workers.cu_exec.front();
@@ -297,6 +283,30 @@ int main(int argc, char** argv)
 
   // create and start DUT
   std::unique_ptr<srsgnb::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));
+
+  // Create CU-CP config.
+  srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
+  cu_cp_cfg.cu_executor                    = &workers.cu_exec.front();
+  cu_cp_cfg.f1c_notifier                   = &f1c_cu_to_du_adapter;
+  cu_cp_cfg.e1_notifier                    = &e1_cp_to_up_adapter;
+  cu_cp_cfg.ngc_notifier                   = ngap_adapter.get();
+
+  // create CU-CP.
+  std::unique_ptr<srsgnb::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cp_cfg));
+  cu_cp_obj->on_new_du_connection();    // trigger DU addition
+  cu_cp_obj->on_new_cu_up_connection(); // trigger CU-UP addition
+
+  // Connect NGAP adpter to CU-CP to pass NGC messages.
+  ngap_adapter->connect_ngc(&cu_cp_obj->get_ngc_message_handler(), &cu_cp_obj->get_ngc_event_handler());
+
+  // attach E1AP adapters to CU-UP and CU-CP
+  e1_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1_message_handler(srsgnb::srs_cu_cp::int_to_cu_up_index(0)));
+  e1_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1_message_handler());
+
+  // start CU-CP
+  gnb_logger.info("Starting CU-CP...");
+  cu_cp_obj->start();
+  gnb_logger.info("CU-CP started successfully");
 
   // Create radio.
   radio_notification_handler_printer radio_event_printer;

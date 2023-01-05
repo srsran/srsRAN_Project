@@ -34,9 +34,13 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   ngc_entity = create_ngc(cfg.ngc_config, ngc_task_sched, ue_mng, *cfg.ngc_notifier);
 
   // connect event notifiers to layers
-  ngc_task_sched.connect_cu_cp(ue_task_sched);
   f1c_ev_notifier.connect_cu_cp(*this);
   cu_up_processor_ev_notifier.connect_cu_cp(*this);
+
+  // connect task schedulers
+  ngc_task_sched.connect_cu_cp(ue_task_sched);
+  du_processor_task_sched.connect_cu_cp(ue_task_sched);
+  cu_up_processor_task_sched.connect_cu_cp(cu_up_task_sched);
 }
 
 cu_cp::~cu_cp()
@@ -48,6 +52,11 @@ void cu_cp::start()
 {
   // start NG setup procedure.
   main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(cfg.ngc_config, *ngc_entity, *this);
+
+  // start E1 setup procedure(s)
+  for (auto& cu_up : cu_up_db) {
+    cu_up->start();
+  }
 }
 
 void cu_cp::stop() {}
@@ -185,7 +194,6 @@ du_index_t cu_cp::add_du()
 
   du_processor_ev_notifier.connect_cu_cp(*this);
   rrc_ue_ngc_notifier.connect_ngc(*ngc_entity);
-  du_processor_task_sched.connect_cu_cp(ue_task_sched);
   ngc_du_processor_ev_notifiers.emplace(du_index_to_int(du_index));
   ngc_du_processor_ev_notifiers[du_index_to_int(du_index)].connect_du_processor(du.get());
 
@@ -255,13 +263,12 @@ cu_up_index_t cu_cp::add_cu_up()
   std::unique_ptr<cu_up_processor_interface> cu_up = create_cu_up_processor(
       std::move(cu_up_cfg), cu_up_processor_ev_notifier, *cfg.e1_notifier, cu_up_processor_task_sched);
 
-  cu_up_processor_task_sched.connect_cu_cp(cu_up_task_sched);
   cu_up->get_context().cu_up_index = cu_up_index;
 
   // Connect e1ap to DU processor
   du_processor_e1ap_notifier.connect_e1ap(&cu_up->get_e1_bearer_context_manager());
 
-  cu_up->start();
+  // cu_up->start();
 
   srsgnb_assert(
       cu_up->get_context().cu_up_index < MAX_NOF_CU_UPS, "Invalid cu_up_index={}", cu_up->get_context().cu_up_index);
@@ -294,7 +301,7 @@ void cu_cp::remove_cu_up(cu_up_index_t cu_up_index)
 cu_up_processor_interface& cu_cp::find_cu_up(cu_up_index_t cu_up_index)
 {
   srsgnb_assert(cu_up_index < MAX_NOF_CU_UPS, "Invalid cu_up_index={}", cu_up_index);
-  srsgnb_assert(cu_up_db.contains(cu_up_index), "DU not found cu_up_index={}", cu_up_index);
+  srsgnb_assert(cu_up_db.contains(cu_up_index), "CU-UP not found cu_up_index={}", cu_up_index);
   return *cu_up_db[cu_up_index];
 }
 
