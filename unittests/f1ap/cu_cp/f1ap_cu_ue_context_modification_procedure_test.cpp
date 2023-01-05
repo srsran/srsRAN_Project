@@ -82,7 +82,8 @@ TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_failure_receiv
 {
   // Start UE CONTEXT MODIFICATION procedure and return back the Failure Response from the DU.
   this->start_procedure(generate_ue_context_modification_request(testue.ue_index, {drb_id_t::drb1}));
-  f1c_message ue_context_modification_failure = generate_ue_context_modification_failure(*testue.cu_ue_id, *testue.du_ue_id);
+  f1c_message ue_context_modification_failure =
+      generate_ue_context_modification_failure(*testue.cu_ue_id, *testue.du_ue_id);
   f1ap->handle_message(ue_context_modification_failure);
 
   // The UE CONTEXT MODIFICATION procedure finished unsuccessfully.
