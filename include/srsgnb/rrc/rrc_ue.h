@@ -304,6 +304,7 @@ public:
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
   virtual rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler()       = 0;
   virtual drb_manager&                          get_rrc_ue_drb_manager()                   = 0;
+  virtual security::sec_as_config&              get_rrc_ue_secutity_config()               = 0;
 
   virtual void connect_srb_notifier(srb_id_t                  srb_id,
                                     rrc_pdu_notifier&         notifier,

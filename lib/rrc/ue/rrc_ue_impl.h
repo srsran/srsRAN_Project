@@ -52,6 +52,7 @@ public:
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
   rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler() override { return *this; }
   drb_manager&                          get_rrc_ue_drb_manager() override { return context.get_drb_manager(); }
+  security::sec_as_config&              get_rrc_ue_secutity_config() override { return context.sec_cfg; }
 
   void connect_srb_notifier(srb_id_t                  srb_id,
                             rrc_pdu_notifier&         notifier,

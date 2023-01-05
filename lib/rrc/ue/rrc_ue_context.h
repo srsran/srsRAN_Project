@@ -50,6 +50,7 @@ public:
   guami                                  current_guami; // current GUAMI
   uint64_t                               setup_ue_id = -1;
   asn1::rrc_nr::establishment_cause_opts connection_cause;
+  security::sec_as_config                sec_cfg;
 };
 
 } // namespace srs_cu_cp
