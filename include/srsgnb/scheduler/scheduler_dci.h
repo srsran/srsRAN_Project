@@ -49,7 +49,7 @@ struct dci_format1_0_info {
 };
 
 /// Defines which fields are stored in the DCI payload, based on the chosen DCI format and RNTI type.
-enum class dci_dl_rnti_config_type { si_f1_0, ra_f1_0, c_rnti_f1_0, tc_rnti_f1_0 };
+enum class dci_dl_rnti_config_type { si_f1_0, ra_f1_0, c_rnti_f1_0, tc_rnti_f1_0, p_rnti_f1_0 };
 
 /// \brief Describes an unpacked DL DCI message.
 /// \remark See FAPI DCI PDU and ORAN WG8 DL-DCI Configuration.
@@ -60,6 +60,7 @@ struct dci_dl_info {
     dci_1_0_ra_rnti_configuration ra_f1_0;
     dci_1_0_c_rnti_configuration  c_rnti_f1_0;
     dci_1_0_tc_rnti_configuration tc_rnti_f1_0;
+    dci_1_0_p_rnti_configuration  p_rnti_f1_0;
   };
 
   dci_dl_info() : type(dci_dl_rnti_config_type::si_f1_0) { new (&si_f1_0) dci_1_0_si_rnti_configuration(); }

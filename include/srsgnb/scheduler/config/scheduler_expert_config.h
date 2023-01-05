@@ -46,11 +46,19 @@ struct scheduler_ra_expert_config {
   unsigned      max_nof_msg3_harq_retxs;
 };
 
+/// \brief Paging scheduling statically configurable expert parameters.
+struct scheduler_paging_expert_config {
+  /// As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for Paging.
+  sch_mcs_index     paging_mcs_index;
+  aggregation_level paging_dci_aggr_lev;
+};
+
 /// \brief Scheduling statically configurable expert parameters.
 struct scheduler_expert_config {
-  scheduler_si_expert_config si;
-  scheduler_ra_expert_config ra;
-  scheduler_ue_expert_config ue;
+  scheduler_si_expert_config     si;
+  scheduler_ra_expert_config     ra;
+  scheduler_paging_expert_config pg;
+  scheduler_ue_expert_config     ue;
 };
 
 } // namespace srsgnb

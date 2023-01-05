@@ -61,6 +61,9 @@ public:
     feedback_handler.handle_dl_mac_ce_indication(mac_ce);
   }
 
+  /// Handle scheduling of paging message.
+  void handle_paging_indication(const paging_indication_message& pi) override;
+
 private:
   const scheduler_expert_config sched_cfg;
   srslog::basic_logger&         logger;

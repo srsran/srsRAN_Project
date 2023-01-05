@@ -129,3 +129,8 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   // Return result for the slot.
   return &cell.res_grid[0].result;
 }
+
+void scheduler_impl::handle_paging_indication(const paging_indication_message& pi)
+{
+  // TODO
+}

@@ -275,6 +275,13 @@ struct dl_broadcast_allocation {
   static_vector<sib_information, MAX_SIB1_PDUS_PER_SLOT> sibs;
 };
 
+/// Stores the information associated with Paging allocation.
+struct dl_paging_allocation {
+  /// Paging ID sent from AMF, used to calculate the paging occasions per TS 38.304, clause 7.1.
+  unsigned          ue_id;
+  pdsch_information pdsch_cfg;
+};
+
 struct dl_sched_result {
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
   static_vector<pdcch_dl_information, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_pdcchs;
@@ -287,6 +294,9 @@ struct dl_sched_result {
 
   /// Allocation of dedicated RARs.
   static_vector<rar_information, MAX_RAR_PDUS_PER_SLOT> rar_grants;
+
+  /// Allocation of Paging messages.
+  static_vector<dl_paging_allocation, MAX_PAGING_PDUS_PER_SLOT> paging_grants;
 
   /// Allocation of dedicated UE messages.
   static_vector<dl_msg_alloc, MAX_UE_PDUS_PER_SLOT> ue_grants;

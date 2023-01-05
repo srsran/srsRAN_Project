@@ -47,7 +47,7 @@ struct pcch_config {
 
   nof_pf_per_drx_cycle nof_pf;
   /// Values {0,...,(T/n) - 1}. e.g. if n = quarterT, then values range from 0 to 3.
-  unsigned paging_frame_offset;
+  unsigned paging_frame_offset{0};
 
   nof_po_per_pf ns;
 
