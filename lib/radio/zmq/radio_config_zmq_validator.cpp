@@ -47,7 +47,7 @@ static bool validate_lo_freq(const radio_configuration::lo_frequency& lo_freq)
 static bool validate_channel_args(const std::string& channel_args)
 {
   std::cmatch cmatch;
-  std::regex  exp_tcp_socket(R"(^tcp:\/\/((([a-zA-Z0-9])\.*)*([a-zA-Z0-9])*|\*):[0-9]*$)");
+  std::regex  exp_tcp_socket(R"(^tcp:\/\/((([a-zA-Z0-9_\-])\.*)*([a-zA-Z0-9])*|\*):[0-9]*$)");
   std::regex_match(channel_args.c_str(), cmatch, exp_tcp_socket);
 
   if (cmatch.empty()) {
