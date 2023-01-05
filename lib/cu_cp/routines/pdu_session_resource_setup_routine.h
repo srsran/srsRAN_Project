@@ -23,6 +23,7 @@ class pdu_session_resource_setup_routine
 {
 public:
   pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_message& setup_msg_,
+                                     const srsgnb::security::sec_as_config&          security_cfg_,
                                      du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
                                      f1c_ue_context_manager&                         f1c_ue_ctxt_mng_,
                                      rrc_ue_control_message_handler&                 rrc_ue_ctrl_handler_,
@@ -39,6 +40,7 @@ private:
   cu_cp_pdu_session_resource_setup_response_message handle_pdu_session_resource_setup_result(bool success);
 
   const cu_cp_pdu_session_resource_setup_message setup_msg;
+  const srsgnb::security::sec_as_config          security_cfg;
 
   std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
 

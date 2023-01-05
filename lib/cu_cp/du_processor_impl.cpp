@@ -323,6 +323,7 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
   ue_context* ue_ctxt = ue_manager.find_ue(get_ue_index_from_cu_cp_ue_id(msg.cu_cp_ue_id));
 
   return launch_async<pdu_session_resource_setup_routine>(msg,
+                                                          ue_ctxt->rrc->get_rrc_ue_secutity_config(),
                                                           e1ap_ctrl_notifier,
                                                           f1c->get_f1c_ue_context_manager(),
                                                           ue_ctxt->rrc->get_rrc_ue_control_message_handler(),

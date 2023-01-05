@@ -16,12 +16,14 @@ using namespace asn1::rrc_nr;
 
 pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_message& setup_msg_,
+    const srsgnb::security::sec_as_config&          security_cfg_,
     du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
     f1c_ue_context_manager&                         f1c_ue_ctxt_mng_,
     rrc_ue_control_message_handler&                 rrc_ue_notifier_,
     drb_manager&                                    rrc_ue_drb_manager_,
     srslog::basic_logger&                           logger_) :
   setup_msg(setup_msg_),
+  security_cfg(security_cfg_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
   f1c_ue_ctxt_mng(f1c_ue_ctxt_mng_),
   rrc_ue_notifier(rrc_ue_notifier_),
@@ -186,7 +188,13 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     e1ap_bearer_context_setup_request& e1ap_request)
 {
   e1ap_request.cu_cp_ue_id = setup_msg.cu_cp_ue_id;
-  // TODO: Add security info
+
+  // security info
+  e1ap_request.security_info.security_algorithm.ciphering_algo                 = security_cfg.cipher_algo;
+  e1ap_request.security_info.security_algorithm.integrity_protection_algorithm = security_cfg.integ_algo;
+  e1ap_request.security_info.up_security_key.encryption_key                    = security_cfg.k_up_enc;
+  e1ap_request.security_info.up_security_key.integrity_protection_key          = security_cfg.k_up_int;
+
   e1ap_request.ue_dl_aggregate_maximum_bit_rate = setup_msg.ue_aggregate_maximum_bit_rate_dl;
   e1ap_request.serving_plmn                     = setup_msg.serving_plmn;
   e1ap_request.activity_notif_level             = "ue"; // TODO: Remove hardcoded value
