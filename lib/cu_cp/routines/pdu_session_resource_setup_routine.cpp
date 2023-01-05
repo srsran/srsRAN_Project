@@ -77,9 +77,17 @@ void pdu_session_resource_setup_routine::operator()(
       cu_cp_drb_setup_message rrc_ue_drb_setup_message_item;
 
       rrc_ue_drb_setup_message_item.drb_id = drb_to_add;
-      up_transport_layer_info gtp_tunnel;
-      gtp_tunnel.gtp_teid = int_to_gtp_teid(0x12345678); // TODO: take from CU-UP response
-      rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(gtp_tunnel);
+
+      for (const auto& cu_up_gtp_tunnel :
+           bearer_context_setup_response
+               .pdu_session_resource_setup_list[rrc_ue_drb_manager.get_pdu_session_id(drb_to_add)]
+               .drb_setup_list_ng_ran[drb_id_to_uint(drb_to_add)]
+               .ul_up_transport_params) {
+        up_transport_layer_info gtp_tunnel;
+        gtp_tunnel.gtp_teid   = cu_up_gtp_tunnel.up_tnl_info.gtp_teid;
+        gtp_tunnel.tp_address = cu_up_gtp_tunnel.up_tnl_info.tp_address;
+        rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(gtp_tunnel);
+      }
 
       rrc_ue_drb_setup_message_item.rlc = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
 
