@@ -157,19 +157,20 @@ cu_cp_pdu_session_resource_setup_response_message
 pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(bool success)
 {
   if (success) {
-    cu_cp_pdu_session_res_setup_response_item item;
-    item.pdu_session_id = setup_msg.pdu_session_res_setup_items[0].pdu_session_id;
+    for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
+      cu_cp_pdu_session_res_setup_response_item item;
+      item.pdu_session_id = setup_item.pdu_session_id;
 
-    auto& transfer                                    = item.pdu_session_resource_setup_response_transfer;
-    transfer.dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"127.0.0.1"},
-                                                         int_to_gtp_teid(0x12345678)};
+      auto& transfer = item.pdu_session_resource_setup_response_transfer;
+      transfer.dlqos_flow_per_tnl_info.up_tp_layer_info =
+          bearer_context_setup_response.pdu_session_resource_setup_list[setup_item.pdu_session_id].ng_dl_up_tnl_info;
 
-    cu_cp_associated_qos_flow qos_flow;
-    qos_flow.qos_flow_id = 1;
-    transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.push_back(qos_flow);
+      cu_cp_associated_qos_flow qos_flow;
+      qos_flow.qos_flow_id = 1;
+      transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.push_back(qos_flow);
 
-    // add to response message
-    response_msg.pdu_session_res_setup_response_items.push_back(item);
+      response_msg.pdu_session_res_setup_response_items.push_back(item);
+    }
 
     logger.debug("ue={}: \"{}\" finalized.", setup_msg.cu_cp_ue_id, name());
   } else {
