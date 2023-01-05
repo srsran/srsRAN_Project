@@ -11,6 +11,7 @@
 #include "e1_cu_up_impl.h"
 #include "../../ran/gnb_format.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
+#include "srsgnb/ran/bcd_helpers.h"
 
 using namespace srsgnb;
 using namespace asn1::e1ap;
@@ -125,7 +126,7 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
     return;
   }
 
-  logger.info("Received Bearer Context Setup Request plmn={}", msg->serving_plmn.value.to_string());
+  logger.info("Received Bearer Context Setup Request plmn={}", plmn_bcd_to_string(msg->serving_plmn.value.to_number()));
 
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_id = get_next_cu_up_ue_id();
   if (cu_up_ue_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
@@ -133,7 +134,7 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
     return;
   }
 
-  // Forward message to UE manager
+  // Forward message to CU-UP
   e1ap_bearer_context_setup_request e1_bearer_context_setup = {};
   e1_bearer_context_setup.serving_plmn                      = msg->serving_plmn.value;
   e1_bearer_context_setup.request                           = msg->sys_bearer_context_setup_request.value;
