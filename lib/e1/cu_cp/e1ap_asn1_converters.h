@@ -28,26 +28,22 @@ namespace srs_cu_cp {
 inline asn1::e1ap::ciphering_algorithm_e
 ciphering_algorithm_to_e1ap_asn1(const srsgnb::security::ciphering_algorithm& ciph_algo)
 {
-  asn1::e1ap::ciphering_algorithm_e asn1_ciph_algo;
-
   switch (ciph_algo) {
     case srsgnb::security::ciphering_algorithm::nea0:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::nea0;
+      return asn1::e1ap::ciphering_algorithm_opts::nea0;
       break;
     case srsgnb::security::ciphering_algorithm::nea1:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_neg128_nea1;
+      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1;
       break;
     case srsgnb::security::ciphering_algorithm::nea2:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_neg128_nea2;
+      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2;
       break;
     case srsgnb::security::ciphering_algorithm::nea3:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::c_neg128_nea3;
+      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3;
       break;
     default:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::options::nulltype;
+      return asn1::e1ap::ciphering_algorithm_opts::nulltype;
   }
-
-  return asn1_ciph_algo;
 }
 
 /// \brief Converts type \c integrity_algorithm to an E1AP ASN.1 type.
@@ -56,26 +52,22 @@ ciphering_algorithm_to_e1ap_asn1(const srsgnb::security::ciphering_algorithm& ci
 inline asn1::e1ap::integrity_protection_algorithm_e
 integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& int_algo)
 {
-  asn1::e1ap::integrity_protection_algorithm_e asn1_int_algo;
-
   switch (int_algo) {
     case srsgnb::security::integrity_algorithm::nia0:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::nia0;
+      return asn1::e1ap::integrity_protection_algorithm_opts::nia0;
       break;
     case srsgnb::security::integrity_algorithm::nia1:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_neg128_nia1;
+      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1;
       break;
     case srsgnb::security::integrity_algorithm::nia2:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_neg128_nia2;
+      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2;
       break;
     case srsgnb::security::integrity_algorithm::nia3:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::i_neg128_nia3;
+      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3;
       break;
     default:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::options::nulltype;
+      return asn1::e1ap::integrity_protection_algorithm_opts::nulltype;
   }
-
-  return asn1_int_algo;
 }
 
 /// \brief Convert CU-CP s-NSSAI to E1AP ASN1 s-NSSAI.

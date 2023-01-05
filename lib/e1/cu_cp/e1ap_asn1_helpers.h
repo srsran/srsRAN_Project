@@ -11,12 +11,13 @@
 #pragma once
 
 #include "e1ap_asn1_converters.h"
+#include "srsgnb/ran/bcd_helpers.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
-inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_setup_request_s asn1_request,
-                                                   const e1ap_bearer_context_setup_request&   request)
+inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_setup_request_s& asn1_request,
+                                                   const e1ap_bearer_context_setup_request&    request)
 {
   // security info
   asn1_request->security_info.value.security_algorithm.ciphering_algorithm =
@@ -36,7 +37,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   asn1_request->ue_dl_aggr_max_bit_rate.value = request.ue_dl_aggregate_maximum_bit_rate;
 
   // serving plmn
-  asn1_request->serving_plmn.value.from_string(request.serving_plmn);
+  asn1_request->serving_plmn.value.from_number(plmn_string_to_bcd(request.serving_plmn));
 
   // activity notification level
   asn1::string_to_enum(asn1_request->activity_notif_level.value, request.activity_notif_level);
