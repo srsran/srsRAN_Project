@@ -39,6 +39,15 @@ git lfs install
 ```
 </details>
 <details>
+<summary>Fedora</summary>
+
+
+```bash
+sudo yum install cmake fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel git-lfs gtest-devel
+git lfs install
+```
+</details>
+<details>
 <summary>Arch Linux</summary>
 
 
