@@ -18,7 +18,7 @@ namespace srsgnb {
 class e1_local_adapter : public e1_message_notifier
 {
 public:
-  explicit e1_local_adapter(const std::string log_name) : logger(srslog::fetch_basic_logger(log_name)) {}
+  explicit e1_local_adapter(const std::string& log_name) : logger(srslog::fetch_basic_logger(log_name)) {}
 
   void attach_handler(e1_message_handler* handler_) { handler = handler_; }
   void on_new_message(const e1_message& msg) override
