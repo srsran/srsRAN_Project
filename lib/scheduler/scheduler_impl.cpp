@@ -115,7 +115,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   cell.pucch_guard_sch.run_slot(cell.res_grid);
 
   // > Schedule PRACH PDUs.
-  cell.prach_sch.run_slot(cell.res_grid[0]);
+  cell.prach_sch.run_slot(cell.res_grid);
 
   // > Schedule RARs and Msg3.
   cell.ra_sch.run_slot(cell.res_grid);

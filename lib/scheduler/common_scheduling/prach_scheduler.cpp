@@ -107,28 +107,46 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   }
 }
 
-void prach_scheduler::run_slot(cell_slot_resource_allocator& slot_res_grid)
+void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
 {
-  slot_point sl = slot_res_grid.slot;
+  if (srsgnb_unlikely(first_slot_ind)) {
+    // If called for the first time, pre-allocates the PRACH PDUs over the entire grid, until the last
+    // (farthest in the future) usable slot.
+    first_slot_ind = false;
+    for (unsigned sl = 0; sl < cell_resource_allocator::RING_ALLOCATOR_SIZE; ++sl) {
+      allocate_slot_prach_pdus(res_grid[sl]);
+    }
+    return;
+  }
 
-  if (sl.sfn() % prach_cfg.x != prach_cfg.y) {
+  // Pre-allocate PRACH PDU in the last slot.
+  allocate_slot_prach_pdus(res_grid[cell_resource_allocator::RING_ALLOCATOR_SIZE - 1]);
+}
+
+void prach_scheduler::allocate_slot_prach_pdus(cell_slot_resource_allocator& sl_res_grid)
+{
+  if (not cell_cfg.is_ul_enabled(sl_res_grid.slot)) {
+    // UL is not enabled in this slot.
+    return;
+  }
+  if (sl_res_grid.slot.sfn() % prach_cfg.x != prach_cfg.y) {
     // PRACH is not enabled in this SFN.
     return;
   }
-  if (not prach_subframe_occasion_bitmap.test(sl.subframe_index())) {
+  if (not prach_subframe_occasion_bitmap.test(sl_res_grid.slot.subframe_index())) {
     // PRACH is not enabled in this subframe.
     return;
   }
 
   for (cached_prach_occasion& cached_prach : cached_prachs) {
     // Reserve RBs and symbols of the PRACH occasion in the resource grid.
-    if (slot_res_grid.ul_res_grid.collides(cached_prach.grant_resources)) {
+    if (sl_res_grid.ul_res_grid.collides(cached_prach.grant_resources)) {
       logger.warning("SCHED: Cannot allocate PRACH occasion. Cause: Lack of space in resource grid.");
       continue;
     }
-    slot_res_grid.ul_res_grid.fill(cached_prach.grant_resources);
+    sl_res_grid.ul_res_grid.fill(cached_prach.grant_resources);
 
     // Add PRACH occasion to scheduler slot output.
-    slot_res_grid.result.ul.prachs.push_back(cached_prach.occasion);
+    sl_res_grid.result.ul.prachs.push_back(cached_prach.occasion);
   }
 }

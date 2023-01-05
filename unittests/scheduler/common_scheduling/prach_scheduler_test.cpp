@@ -26,16 +26,16 @@ protected:
         frequency_range::FR1,
         duplex_mode::FDD,
         cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)),
-    sl_alloc_grid(cell_cfg)
+    res_grid(cell_cfg)
   {
   }
 
   void slot_indication()
   {
     ++sl;
-    sl_alloc_grid.slot_indication(sl);
-    prach_sch.run_slot(sl_alloc_grid);
-    prach_counter += sl_alloc_grid.result.ul.prachs.size();
+    res_grid.slot_indication(sl);
+    prach_sch.run_slot(res_grid);
+    prach_counter += res_grid[0].result.ul.prachs.size();
   }
 
   bool is_prach_slot()
@@ -50,15 +50,15 @@ protected:
     return true;
   }
 
-  unsigned nof_prach_occasions_allocated() const { return sl_alloc_grid.result.ul.prachs.size(); }
+  unsigned nof_prach_occasions_allocated() const { return res_grid[0].result.ul.prachs.size(); }
 
   static const unsigned nof_slots_run = 1000;
 
-  cell_configuration           cell_cfg;
-  prach_scheduler              prach_sch;
-  slot_point                   sl;
-  prach_configuration          prach_cfg;
-  cell_slot_resource_allocator sl_alloc_grid;
+  cell_configuration      cell_cfg;
+  prach_scheduler         prach_sch;
+  slot_point              sl;
+  prach_configuration     prach_cfg;
+  cell_resource_allocator res_grid;
 
   unsigned prach_counter = 0;
 };
@@ -80,6 +80,6 @@ TEST_F(prach_tester, prach_sched_results_matches_config)
 {
   for (unsigned i = 0; i != nof_slots_run; ++i) {
     slot_indication();
-    test_scheduler_result_consistency(cell_cfg, sl_alloc_grid.result);
+    test_scheduler_result_consistency(cell_cfg, res_grid[0].result);
   }
 }

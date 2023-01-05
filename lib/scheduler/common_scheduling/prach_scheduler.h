@@ -23,7 +23,7 @@ public:
   explicit prach_scheduler(const cell_configuration& cfg_);
 
   /// Allocate RACH PDUs for the given slot.
-  void run_slot(cell_slot_resource_allocator& res_grid);
+  void run_slot(cell_resource_allocator& res_grid);
 
 private:
   struct cached_prach_occasion {
@@ -35,8 +35,12 @@ private:
 
   const rach_config_common& rach_cfg_common() const { return *cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common; }
 
+  void allocate_slot_prach_pdus(cell_slot_resource_allocator& sl_res_grid);
+
   const cell_configuration& cell_cfg;
   srslog::basic_logger&     logger;
+
+  bool first_slot_ind = true;
 
   /// PRACH Configuration parameters derived from the cell configuration.
   prach_configuration prach_cfg;
