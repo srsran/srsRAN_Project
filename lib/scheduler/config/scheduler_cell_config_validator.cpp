@@ -9,6 +9,10 @@
  */
 
 #include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
+#include "srsgnb/ran/duplex_mode.h"
+#include "srsgnb/ran/prach/prach_configuration.h"
+#include "srsgnb/ran/prach/prach_frequency_mapping.h"
+#include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/scheduler/sched_consts.h"
 
 using namespace srsgnb;
@@ -30,15 +34,31 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
 {
   VERIFY(msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.has_value(),
          "Cells without RACH-ConfigCommon are not supported");
+  const rach_config_common& rach_cfg_cmn = msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
 
-  for (const auto& pucch_region : msg.pucch_guardbands) {
-    prb_interval prach_prbs = {msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start,
-                               msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start +
-                                   1};
-    VERIFY(not pucch_region.prbs.overlaps(prach_prbs),
-           "Configured PRACH occasion collides with PUCCH RBs ({} intersects {})",
-           pucch_region.prbs,
-           prach_prbs);
+  const prach_configuration prach_cfg =
+      prach_configuration_get(frequency_range::FR1,
+                              msg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD,
+                              rach_cfg_cmn.rach_cfg_generic.prach_config_index);
+  VERIFY(prach_cfg.format.is_long_preamble(), "Short PRACH preamble formats not supported");
+
+  const prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
+
+  const unsigned nof_td_occasions = prach_cfg.format.is_long_preamble() ? 1 : prach_cfg.nof_occasions_within_slot;
+  const unsigned prach_nof_prbs =
+      prach_frequency_mapping_get(info.scs, msg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
+  for (unsigned i = 0; i != nof_td_occasions; ++i) {
+    for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
+      uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
+      prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};
+
+      for (const auto& pucch_region : msg.pucch_guardbands) {
+        VERIFY(not pucch_region.prbs.overlaps(prach_prbs),
+               "Configured PRACH occasion collides with PUCCH RBs ({} intersects {})",
+               pucch_region.prbs,
+               prach_prbs);
+      }
+    }
   }
 
   return {};

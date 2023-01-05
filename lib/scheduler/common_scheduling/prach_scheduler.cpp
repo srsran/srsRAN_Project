@@ -37,7 +37,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
 
   // Derive PRACH subcarrier spacing and other parameters.
   prach_preamble_information info;
-  if (prach_cfg.format < preamble_format::OTHER) {
+  if (prach_cfg.format.is_long_preamble()) {
     // Long preamble.
     info = get_prach_preamble_long_info(prach_cfg.format);
 
@@ -65,7 +65,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   }
 
   // Pre-compute and store potential PRACH occasions.
-  unsigned nof_td_occasions = prach_cfg.format < preamble_format::OTHER ? 1 : prach_cfg.nof_occasions_within_slot;
+  unsigned nof_td_occasions = prach_cfg.format.is_long_preamble() ? 1 : prach_cfg.nof_occasions_within_slot;
   for (unsigned i = 0; i != nof_td_occasions; ++i) {
     for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_common().rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
       cached_prach_occasion& cached_prach = cached_prachs.emplace_back();
