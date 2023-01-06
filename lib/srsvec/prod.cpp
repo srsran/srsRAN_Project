@@ -78,6 +78,37 @@ static void prod_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_t len
   }
 }
 
+static void prod_conj_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_t len)
+{
+  std::size_t i = 0;
+
+#if SRSRAN_SIMD_CF_SIZE
+  if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
+    for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_CF_SIZE) {
+      simd_cf_t a = srsran_simd_cfi_load(&x[i]);
+      simd_cf_t b = srsran_simd_cfi_load(&y[i]);
+
+      simd_cf_t r = srsran_simd_cf_conjprod(a, b);
+
+      srsran_simd_cfi_store(&z[i], r);
+    }
+  } else {
+    for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_CF_SIZE) {
+      simd_cf_t a = srsran_simd_cfi_loadu(&x[i]);
+      simd_cf_t b = srsran_simd_cfi_loadu(&y[i]);
+
+      simd_cf_t r = srsran_simd_cf_conjprod(a, b);
+
+      srsran_simd_cfi_storeu(&z[i], r);
+    }
+  }
+#endif
+
+  for (; i != len; ++i) {
+    z[i] = x[i] * std::conj(y[i]);
+  }
+}
+
 void srsgnb::srsvec::prod(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
 {
   srsgnb_srsvec_assert_size(x, y);
@@ -99,7 +130,5 @@ void srsgnb::srsvec::prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
 
-  for (unsigned i = 0; i < x.size(); ++i) {
-    z[i] = x[i] * std::conj(y[i]);
-  }
+  prod_conj_ccc_simd(x.data(), y.data(), z.data(), x.size());
 }
