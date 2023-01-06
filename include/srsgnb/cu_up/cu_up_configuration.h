@@ -31,7 +31,7 @@ struct cu_up_configuration {
 
   unsigned    cu_up_id   = 0;
   std::string cu_up_name = "srs_cu_up_01";
-  std::string plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
+  std::string plmn; ///< Full PLMN as string (without possible filler digit) e.g. "00101"
 };
 
 } // namespace srs_cu_up
