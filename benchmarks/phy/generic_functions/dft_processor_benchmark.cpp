@@ -73,8 +73,8 @@ int main(int argc, char** argv)
   benchmarker perf_meas("DFT " + dft_factory_str, nof_repetitions);
 
   // Test for the most common DFT sizes
-  for (unsigned size : {128,  139,  256,  384,  512,  768,   839,   1024,  1536,  2048,
-                        3072, 4096, 4608, 6144, 9216, 12288, 18432, 24576, 36864, 49152}) {
+  for (unsigned size :
+       {128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 4608, 6144, 9216, 12288, 18432, 24576, 36864, 49152}) {
     for (dft_processor::direction direction : {dft_processor::direction::DIRECT, dft_processor::direction::INVERSE}) {
       // Performance measurements.
       std::vector<unsigned> perf_results;

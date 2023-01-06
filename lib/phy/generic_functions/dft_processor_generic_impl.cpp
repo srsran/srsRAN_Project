@@ -177,97 +177,10 @@ public:
   }
 };
 
-// Implements a DFT algorithm of size N. It is thought for N being a prime number.
-template <unsigned N>
-class generic_dft_prime : public generic_dft_N
-{
-private:
-  static constexpr unsigned K = divide_ceil(N, 2);
-  float                     sign;
-  std::array<cf_t, K * N>   tables;
-
-public:
-  generic_dft_prime(float sign_) : sign(sign_)
-  {
-    std::array<cf_t, N> cexp;
-    for (unsigned k = 0; k != N; ++k) {
-      cexp[k] = std::exp(COMPLEX_J * sign * TWOPI * static_cast<float>(k) / static_cast<float>(N));
-    }
-
-    for (unsigned k = 0; k != K; ++k) {
-      for (unsigned n = 0; n != N; ++n) {
-        tables[N * k + n] = cexp[(k * n) % N];
-      }
-    }
-  }
-
-  void run(cf_t* out, const cf_t* in) const override
-  {
-    out[0] = std::accumulate(in, in + N, cf_t());
-
-    for (unsigned k = 1; k != K; ++k) {
-      const cf_t* table = &tables[N * k];
-
-      cf_t sum0 = in[0];
-      cf_t sum1 = in[0];
-
-      unsigned n = 1;
-
-#if SRSRAN_SIMD_CF_SIZE
-      simd_cf_t simd_sum0 = srsran_simd_cf_zero();
-      simd_cf_t simd_sum1 = srsran_simd_cf_zero();
-      for (; n != ((N - 1) / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE + 1; n += SRSRAN_SIMD_CF_SIZE) {
-        simd_cf_t simd_in    = srsran_simd_cfi_loadu(&in[n]);
-        simd_cf_t simd_table = srsran_simd_cfi_loadu(&table[n]);
-
-        simd_f_t prod_rere = srsran_simd_f_mul(simd_in.re, simd_table.re);
-        simd_f_t prod_imim = srsran_simd_f_mul(simd_in.im, simd_table.im);
-        simd_f_t prod_reim = srsran_simd_f_mul(simd_in.re, simd_table.im);
-        simd_f_t prod_imre = srsran_simd_f_mul(simd_in.im, simd_table.re);
-
-        simd_cf_t prod0 = {srsran_simd_f_sub(prod_rere, prod_imim), srsran_simd_f_add(prod_imre, prod_reim)};
-        simd_cf_t prod1 = {srsran_simd_f_add(prod_rere, prod_imim), srsran_simd_f_sub(prod_imre, prod_reim)};
-
-        simd_sum0 = srsran_simd_cf_add(simd_sum0, prod0);
-        simd_sum1 = srsran_simd_cf_add(simd_sum1, prod1);
-      }
-
-      // Reduce sums.
-      std::array<cf_t, SRSRAN_SIMD_CF_SIZE> simd_sum0_vector;
-      std::array<cf_t, SRSRAN_SIMD_CF_SIZE> simd_sum1_vector;
-      srsran_simd_cfi_storeu(simd_sum0_vector.data(), simd_sum0);
-      srsran_simd_cfi_storeu(simd_sum1_vector.data(), simd_sum1);
-      sum0 = std::accumulate(simd_sum0_vector.begin(), simd_sum0_vector.end(), sum0);
-      sum1 = std::accumulate(simd_sum1_vector.begin(), simd_sum1_vector.end(), sum1);
-#endif // SRSRAN_SIMD_CF_SIZE
-
-      for (; n != N; ++n) {
-        float prod_rere = in[n].real() * table[n].real();
-        float prod_imim = in[n].imag() * table[n].imag();
-        float prod_reim = in[n].real() * table[n].imag();
-        float prod_imre = in[n].imag() * table[n].real();
-        sum0 += cf_t(prod_rere - prod_imim, prod_imre + prod_reim);
-        sum1 += cf_t(prod_rere + prod_imim, prod_imre - prod_reim);
-      }
-
-      out[k]     = sum0;
-      out[N - k] = sum1;
-    }
-  }
-};
-
-#define GENERIC_EVEN_SIZE(SIZE)                                                                                        \
+#define CREATE_GENERIC_DFT_DIT(SIZE)                                                                                   \
   do {                                                                                                                 \
     if (input.size() == (SIZE)) {                                                                                      \
       generic_dft = std::make_unique<generic_dft_dit<SIZE>>(sign, 1);                                                  \
-      return;                                                                                                          \
-    }                                                                                                                  \
-  } while (false)
-
-#define GENERIC_ODD_SIZE(SIZE)                                                                                         \
-  do {                                                                                                                 \
-    if (input.size() == (SIZE)) {                                                                                      \
-      generic_dft = std::make_unique<generic_dft_prime<SIZE>>(sign);                                                   \
       return;                                                                                                          \
     }                                                                                                                  \
   } while (false)
@@ -277,29 +190,24 @@ dft_processor_generic_impl::dft_processor_generic_impl(const configuration& dft_
 {
   float sign = (dir == dft_processor::direction::DIRECT) ? -1 : +1;
 
-  GENERIC_EVEN_SIZE(128);
-  GENERIC_EVEN_SIZE(256);
-  GENERIC_EVEN_SIZE(384);
-  GENERIC_EVEN_SIZE(512);
-  GENERIC_EVEN_SIZE(768);
-  GENERIC_EVEN_SIZE(1024);
-  GENERIC_EVEN_SIZE(1536);
-  GENERIC_EVEN_SIZE(2048);
-  GENERIC_EVEN_SIZE(3072);
-  GENERIC_EVEN_SIZE(4096);
-  GENERIC_EVEN_SIZE(4608);
-  GENERIC_EVEN_SIZE(6144);
-  GENERIC_EVEN_SIZE(9216);
-  GENERIC_EVEN_SIZE(12288);
-  GENERIC_EVEN_SIZE(18432);
-  GENERIC_EVEN_SIZE(24576);
-  GENERIC_EVEN_SIZE(36864);
-  GENERIC_EVEN_SIZE(49152);
-
-  // Used for generating frequency-domain short PRACH sequence.
-  GENERIC_ODD_SIZE(139);
-  // Used for generating frequency-domain long PRACH sequence.
-  GENERIC_ODD_SIZE(839);
+  CREATE_GENERIC_DFT_DIT(128);
+  CREATE_GENERIC_DFT_DIT(256);
+  CREATE_GENERIC_DFT_DIT(384);
+  CREATE_GENERIC_DFT_DIT(512);
+  CREATE_GENERIC_DFT_DIT(768);
+  CREATE_GENERIC_DFT_DIT(1024);
+  CREATE_GENERIC_DFT_DIT(1536);
+  CREATE_GENERIC_DFT_DIT(2048);
+  CREATE_GENERIC_DFT_DIT(3072);
+  CREATE_GENERIC_DFT_DIT(4096);
+  CREATE_GENERIC_DFT_DIT(4608);
+  CREATE_GENERIC_DFT_DIT(6144);
+  CREATE_GENERIC_DFT_DIT(9216);
+  CREATE_GENERIC_DFT_DIT(12288);
+  CREATE_GENERIC_DFT_DIT(18432);
+  CREATE_GENERIC_DFT_DIT(24576);
+  CREATE_GENERIC_DFT_DIT(36864);
+  CREATE_GENERIC_DFT_DIT(49152);
 }
 
 span<const cf_t> dft_processor_generic_impl::run()
