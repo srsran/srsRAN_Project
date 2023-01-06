@@ -20,9 +20,6 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Forward declared messages.
-struct cu_up_e1_setup_request;
-
 /// Interface for an E1 notifier to communicate with the CU-UP processor.
 class cu_up_processor_e1_interface
 {
@@ -40,7 +37,7 @@ public:
   /// \brief Handle the reception of an GNB-CU-UP E1 Setup Request message and transmit the GNB-CU-UP E1 Setup Response
   /// or GNB-CU-UP E1 Setup Failure.
   /// \param[in] msg The received GNB-CU-UP E1 Setup Request message.
-  virtual void handle_cu_up_e1_setup_request(const srsgnb::cu_up_e1_setup_request& msg) = 0;
+  virtual void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) = 0;
 
   /// \brief Get the E1 message handler interface of the CU-UP processor object.
   /// \return The E1 message handler interface of the CU-UP processor object.

@@ -42,7 +42,7 @@ void cu_up_processor_impl::start()
 
 void cu_up_processor_impl::stop() {}
 
-void cu_up_processor_impl::handle_cu_up_e1_setup_request(const srsgnb::cu_up_e1_setup_request& msg)
+void cu_up_processor_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg)
 {
   // TODO: Handle setup request
 

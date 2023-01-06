@@ -35,7 +35,7 @@ public:
   void stop() override;
 
   // message handlers
-  void handle_cu_up_e1_setup_request(const srsgnb::cu_up_e1_setup_request& msg) override;
+  void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) override;
 
   // getter functions
 
