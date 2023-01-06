@@ -282,27 +282,8 @@ public:
 
 class prach_generator_factory_sw : public prach_generator_factory
 {
-private:
-  std::shared_ptr<dft_processor_factory> dft_factory;
-
 public:
-  explicit prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_) :
-    dft_factory(std::move(dft_factory_))
-  {
-    srsgnb_assert(dft_factory, "Invalid DFT factory.");
-  }
-
-  std::unique_ptr<prach_generator> create() override
-  {
-    dft_processor::configuration dft_config_l839 = {};
-    dft_config_l839.size                         = 839;
-    dft_config_l839.dir                          = dft_processor::direction::DIRECT;
-    dft_processor::configuration dft_config_l139 = {};
-    dft_config_l139.size                         = 139;
-    dft_config_l139.dir                          = dft_processor::direction::DIRECT;
-    return std::make_unique<prach_generator_impl>(dft_factory->create(dft_config_l839),
-                                                  dft_factory->create(dft_config_l139));
-  }
+  std::unique_ptr<prach_generator> create() override { return std::make_unique<prach_generator_impl>(); }
 };
 
 class pucch_detector_factory_sw : public pucch_detector_factory
@@ -679,10 +660,9 @@ std::shared_ptr<pucch_processor_factory> srsgnb::create_pucch_processor_factory_
       dmrs_factory, detector_factory, demodulator_factory, decoder_factory, channel_estimate_dimensions);
 }
 
-std::shared_ptr<prach_generator_factory>
-srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory)
+std::shared_ptr<prach_generator_factory> srsgnb::create_prach_generator_factory_sw()
 {
-  return std::make_shared<prach_generator_factory_sw>(std::move(dft_factory));
+  return std::make_shared<prach_generator_factory_sw>();
 }
 
 std::shared_ptr<pucch_demodulator_factory>

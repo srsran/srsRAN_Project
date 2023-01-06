@@ -11,6 +11,7 @@
 #include "prach_generator_impl.h"
 #include "srsgnb/ran/prach/prach_cyclic_shifts.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
+#include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
@@ -24,7 +25,7 @@ public:
   prach_generator_cexp_table()
   {
     std::generate(this->begin(), this->end(), [n = 0]() mutable {
-      return std::exp(-COMPLEX_J * static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(L));
+      return std::exp(COMPLEX_J * static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(L));
     });
   }
 };
@@ -74,18 +75,89 @@ unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_i
       604, 267, 572, 302, 537, 309, 530, 265, 574, 233, 606, 367, 472, 296, 543, 336, 503, 305, 534, 373, 466, 280, 559,
       279, 560, 419, 420, 240, 599, 258, 581, 229, 610};
 
-  return lut[root_sequence_index % lut.size()];
+  return static_cast<unsigned>(lut[root_sequence_index % lut.size()]);
 }
 
 span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_number, unsigned cyclic_shift)
 {
-  span<cf_t> x_u_v = dft_long->get_input();
-  for (unsigned n = 0; n != LONG; ++n) {
-    uint64_t x_u_v_index = (sequence_number * n * (n + 1UL)) % prach_generator_cexp_table_long.size();
-    x_u_v[(n + (LONG - cyclic_shift)) % LONG] = prach_generator_cexp_table_long[x_u_v_index];
+  // Sequence compression factor look-up table for each sequence number.
+  static const std::array<uint16_t, LONG> compression_factor_table = {
+      0,   1,   420, 280, 210, 168, 140, 120, 105, 373, 84,  534, 70,  710, 60,  56,  472, 691, 606, 265, 42,  40,  267,
+      73,  35,  537, 355, 404, 30,  434, 28,  406, 236, 178, 765, 24,  303, 771, 552, 796, 21,  573, 20,  800, 553, 578,
+      456, 482, 437, 137, 688, 510, 597, 95,  202, 778, 15,  368, 217, 128, 14,  784, 203, 293, 118, 142, 89,  551, 802,
+      304, 12,  130, 571, 23,  805, 179, 276, 316, 398, 308, 430, 694, 706, 465, 10,  306, 400, 704, 696, 66,  289, 461,
+      228, 415, 241, 53,  638, 173, 488, 339, 344, 108, 255, 391, 718, 8,   467, 494, 101, 585, 389, 257, 427, 297, 184,
+      518, 528, 545, 64,  698, 7,   735, 392, 191, 521, 443, 566, 621, 59,  826, 71,  269, 464, 757, 695, 752, 401, 49,
+      152, 670, 6,   720, 65,  751, 705, 758, 431, 605, 822, 473, 509, 789, 138, 170, 158, 249, 199, 668, 154, 591, 215,
+      370, 347, 664, 353, 539, 652, 628, 5,   700, 153, 682, 200, 97,  352, 676, 348, 602, 33,  75,  564, 445, 650, 541,
+      114, 322, 627, 673, 540, 657, 446, 123, 319, 313, 506, 327, 244, 477, 589, 156, 172, 743, 54,  62,  547, 618, 615,
+      381, 359, 558, 4,   672, 653, 323, 247, 160, 470, 58,  712, 567, 614, 634, 548, 380, 633, 619, 568, 377, 92,  425,
+      259, 385, 264, 821, 692, 432, 32,  662, 349, 502, 423, 94,  787, 511, 196, 363, 515, 214, 680, 155, 641, 478, 283,
+      388, 730, 102, 449, 111, 413, 230, 455, 794, 554, 453, 232, 19,  798, 22,  767, 131, 376, 613, 620, 713, 444, 659,
+      76,  524, 335, 418, 3,   630, 360, 252, 452, 577, 795, 801, 772, 90,  379, 617, 635, 63,  722, 529, 411, 113, 656,
+      651, 674, 354, 814, 36,  69,  828, 85,  440, 79,  410, 544, 723, 519, 193, 334, 562, 77,  442, 715, 192, 527, 724,
+      185, 213, 593, 364, 332, 195, 596, 788, 689, 474, 326, 645, 314, 278, 422, 600, 350, 99,  496, 342, 341, 499, 100,
+      732, 468, 162, 176, 238, 338, 741, 174, 164, 301, 26,  436, 792, 457, 208, 282, 588, 642, 245, 325, 508, 690, 823,
+      57,  623, 161, 493, 733, 9,   756, 707, 270, 227, 748, 290, 223, 207, 481, 793, 579, 231, 576, 555, 253, 110, 583,
+      103, 122, 649, 658, 565, 714, 522, 78,  532, 86,  136, 791, 483, 27,  810, 31,  604, 693, 759, 309, 296, 727, 258,
+      610, 93,  599, 503, 279, 837, 2,   560, 336, 240, 746, 229, 581, 112, 543, 530, 80,  146, 235, 808, 29,  812, 356,
+      48,  703, 753, 307, 761, 317, 125, 274, 181, 190, 717, 736, 256, 729, 586, 284, 263, 608, 260, 46,  358, 632, 616,
+      549, 91,  612, 569, 132, 83,  830, 106, 346, 678, 216, 782, 16,  149, 331, 514, 594, 197, 251, 557, 631, 382, 47,
+      403, 813, 538, 675, 665, 98,  501, 601, 663, 677, 371, 107, 739, 340, 498, 497, 343, 740, 489, 239, 417, 561, 525,
+      194, 513, 365, 150, 51,  243, 644, 507, 475, 246, 626, 654, 115, 312, 647, 124, 397, 762, 277, 505, 646, 320, 116,
+      295, 429, 760, 399, 754, 11,  770, 803, 25,  485, 165, 188, 183, 726, 428, 310, 117, 776, 204, 222, 460, 749, 67,
+      38,  44,  262, 387, 587, 479, 209, 836, 421, 504, 315, 763, 180, 395, 126, 219, 226, 463, 708, 72,  817, 41,  820,
+      607, 386, 285, 45,  384, 609, 426, 728, 390, 737, 109, 451, 556, 361, 198, 684, 159, 625, 324, 476, 643, 328, 52,
+      745, 416, 337, 490, 177, 807, 407, 147, 18,  575, 454, 580, 414, 747, 462, 271, 220, 206, 459, 291, 205, 225, 272,
+      127, 781, 369, 679, 592, 516, 186, 167, 835, 281, 480, 458, 224, 221, 292, 777, 785, 96,  667, 683, 250, 362, 595,
+      512, 333, 526, 520, 716, 393, 182, 299, 166, 212, 517, 725, 298, 189, 394, 275, 764, 806, 237, 491, 163, 487, 742,
+      639, 157, 686, 139, 834, 211, 187, 300, 486, 175, 492, 469, 624, 248, 685, 171, 640, 590, 681, 669, 701, 50,  330,
+      366, 17,  234, 408, 81,  134, 88,  774, 119, 833, 169, 687, 790, 438, 87,  144, 82,  375, 570, 768, 13,  780, 218,
+      273, 396, 318, 648, 447, 104, 832, 141, 775, 294, 311, 321, 655, 542, 412, 582, 450, 254, 738, 345, 372, 831, 121,
+      448, 584, 731, 495, 500, 351, 666, 201, 786, 598, 424, 611, 378, 550, 773, 143, 135, 439, 533, 829, 374, 133, 145,
+      409, 531, 441, 523, 563, 660, 34,  816, 268, 709, 827, 535, 37,  288, 750, 697, 721, 546, 636, 55,  825, 711, 622,
+      471, 824, 61,  637, 744, 242, 329, 151, 702, 402, 357, 383, 261, 286, 39,  819, 266, 818, 43,  287, 68,  536, 815,
+      74,  661, 603, 433, 811, 405, 809, 435, 484, 302, 804, 766, 572, 799, 797, 574, 233, 148, 367, 783, 779, 129, 769,
+      305, 755, 466, 734, 719, 699, 671, 629, 559, 419, 838};
+
+  // Create view of the sequence.
+  span<cf_t> y_u_v = sequence.first(LONG);
+
+  // Exponential function LUT size.
+  uint64_t cexp_table_size = prach_generator_cexp_table_long.size();
+
+  // Sequence compression factor.
+  uint64_t factor = static_cast<uint64_t>(compression_factor_table[sequence_number]);
+
+  // Zadoff-Chu root.
+  uint64_t root = static_cast<uint64_t>(sequence_number);
+
+  // Generate sequence and calculate the scaling of the sequence transform.
+  cf_t scaling = 0.0;
+  for (uint64_t n = 0; n != LONG; ++n) {
+    // Calculate ZC sequence table index.
+    uint64_t x_u_v_index = root * n * (n + 1UL);
+
+    // Get value from the complex exponential table and accumulate it.
+    scaling += prach_generator_cexp_table_long[x_u_v_index % cexp_table_size];
+
+    // Calculate sequence table index considering the compression factor of the sequence sample index.
+    uint64_t y_u_v_index = ((root * factor) * n * (factor * n + 1UL));
+
+    // Apply cyclic shift.
+    y_u_v_index += ((2UL * cyclic_shift) * n);
+
+    // Get value from the complex exponential table.
+    y_u_v[n] = prach_generator_cexp_table_long[y_u_v_index % cexp_table_size];
   }
 
-  return dft_long->run();
+  // As the table is conjugated, the scaling must be conjugated too.
+  scaling = std::conj(scaling);
+
+  // Scale sequence.
+  srsvec::sc_prod(y_u_v, scaling, y_u_v);
+
+  return y_u_v;
 }
 
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)

@@ -18,7 +18,7 @@
 
 namespace srsgnb {
 
-std::ostream& operator<<(std::ostream& os, test_case_t test_case)
+static std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
   fmt::print(os,
              "Format={}; RootSequenceIndex={}; PreambleIndex={}; RestrictedSet={}; ZeroCorrelationZone={};",
@@ -28,6 +28,19 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
              static_cast<unsigned>(test_case.config.restricted_set),
              test_case.config.zero_correlation_zone);
   return os;
+}
+
+static std::ostream& operator<<(std::ostream& os, span<const cf_t> data)
+{
+  fmt::print(os, "{}", data);
+  return os;
+}
+
+static bool operator==(span<const cf_t> in0, span<const cf_t> in1)
+{
+  return std::equal(in0.begin(), in0.end(), in1.begin(), in1.end(), [](cf_t value0, cf_t value1) {
+    return (std::abs(value0 - value1) <= 0.0001F);
+  });
 }
 
 } // namespace srsgnb
@@ -41,10 +54,7 @@ protected:
 
   void SetUp() override
   {
-    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_generic();
-    ASSERT_TRUE(dft_factory);
-
-    std::shared_ptr<prach_generator_factory> generator_factory = create_prach_generator_factory_sw(dft_factory);
+    std::shared_ptr<prach_generator_factory> generator_factory = create_prach_generator_factory_sw();
     ASSERT_TRUE(generator_factory);
 
     generator = generator_factory->create();
@@ -66,14 +76,8 @@ TEST_P(prach_generator_test, vector)
   // Run generator.
   span<const cf_t> output = generator->generate(test_case.config);
 
-  // Make sure sizes match.
-  ASSERT_EQ(expected_output.size(), output.size());
-
   // For each element...
-  for (unsigned index = 0; index != output.size(); ++index) {
-    EXPECT_NEAR(expected_output[index].real(), output[index].real(), 0.0001);
-    EXPECT_NEAR(expected_output[index].imag(), output[index].imag(), 0.0001);
-  }
+  ASSERT_EQ(span<const cf_t>(expected_output), span<const cf_t>(output));
 }
 
 // Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.

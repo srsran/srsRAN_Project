@@ -115,7 +115,7 @@ target_link_libraries(prach_generator_vectortest srsgnb_channel_processors srsgn
 add_test(prach_generator_vectortest prach_generator_vectortest)
 
 add_custom_command(
-        TARGET prach_generator_vectortest prach_detector_vectortest
+        TARGET prach_generator_vectortest
         POST_BUILD
         WORKING_DIRECTORY ${TEST_DATA_DIR}
         COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/prach_generator_test_data.tar.gz

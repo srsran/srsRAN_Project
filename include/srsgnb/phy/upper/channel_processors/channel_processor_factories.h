@@ -160,8 +160,7 @@ public:
   virtual std::unique_ptr<prach_generator> create() = 0;
 };
 
-std::shared_ptr<prach_generator_factory>
-create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory);
+std::shared_ptr<prach_generator_factory> create_prach_generator_factory_sw();
 
 class pucch_demodulator_factory
 {

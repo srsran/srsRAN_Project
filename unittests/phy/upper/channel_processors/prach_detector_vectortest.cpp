@@ -46,10 +46,10 @@ protected:
   {
     unsigned dft_size_detector = std::get<0>(GetParam());
 
-    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_generic();
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
     ASSERT_TRUE(dft_factory);
 
-    std::shared_ptr<prach_generator_factory> generator_factory = create_prach_generator_factory_sw(dft_factory);
+    std::shared_ptr<prach_generator_factory> generator_factory = create_prach_generator_factory_sw();
     ASSERT_TRUE(generator_factory);
 
     std::shared_ptr<prach_detector_factory> detector_factory =
@@ -117,6 +117,6 @@ TEST_P(PrachDetectorFixture, FromVector)
 // Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.
 INSTANTIATE_TEST_SUITE_P(PrachDetectorSimple,
                          PrachDetectorFixture,
-                         ::testing::Combine(::testing::Values(1536),
+                         ::testing::Combine(::testing::Values(1024),
                                             ::testing::Values(-8, 0, 1, 3),
                                             ::testing::ValuesIn(prach_generator_test_data)));

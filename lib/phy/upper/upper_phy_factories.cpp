@@ -190,7 +190,7 @@ static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(con
     report_fatal_error_if_not(dft_factory, "Invalid DFT factory.");
   }
 
-  std::shared_ptr<prach_generator_factory> prach_gen_factory = create_prach_generator_factory_sw(dft_factory);
+  std::shared_ptr<prach_generator_factory> prach_gen_factory = create_prach_generator_factory_sw();
   report_fatal_error_if_not(prach_gen_factory, "Invalid PRACH generator factory.");
 
   std::shared_ptr<prach_detector_factory> prach_factory =
