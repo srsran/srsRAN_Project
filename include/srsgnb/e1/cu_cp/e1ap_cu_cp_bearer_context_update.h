@@ -98,7 +98,7 @@ struct e1ap_qos_flow_map_item {
 
 struct e1ap_data_forwarding_info_request {
   std::string                         data_forwarding_request;
-  std::vector<e1ap_qos_flow_map_item> qos_flows_forwarded_on_fwd_tunnels;
+  std::vector<e1ap_qos_flow_map_item> qos_flows_forwarded_on_fwd_tunnels = {};
 };
 
 struct e1ap_pdcp_count {
@@ -146,8 +146,8 @@ struct e1ap_drb_to_setup_item_ng_ran {
   drb_id_t                                    drb_id;
   cu_cp_sdap_config                           sdap_cfg;
   e1ap_pdcp_config                            pdcp_cfg;
-  std::vector<e1ap_cell_group_info_item>      cell_group_info;
-  std::vector<e1ap_qos_flow_qos_param_item>   qos_flow_info_to_be_setup;
+  std::vector<e1ap_cell_group_info_item>      cell_group_info           = {};
+  std::vector<e1ap_qos_flow_qos_param_item>   qos_flow_info_to_be_setup = {};
   optional<e1ap_data_forwarding_info_request> drb_data_forwarding_info_request;
   optional<uint16_t>                          drb_inactivity_timer;
   optional<e1ap_pdcp_sn_status_info>          pdcp_sn_status_info;
@@ -159,7 +159,7 @@ struct e1ap_pdu_session_res_to_setup_item {
   cu_cp_s_nssai                              snssai;
   up_transport_layer_info                    ng_ul_up_tnl_info;
   e1ap_security_ind                          security_ind;
-  std::vector<e1ap_drb_to_setup_item_ng_ran> drb_to_setup_list_ng_ran;
+  std::vector<e1ap_drb_to_setup_item_ng_ran> drb_to_setup_list_ng_ran = {};
 
   optional<uint64_t>                          pdu_session_res_dl_ambr;
   optional<e1ap_data_forwarding_info_request> pdu_session_data_forwarding_info_request;
@@ -189,7 +189,7 @@ struct e1ap_bearer_context_setup_request {
   uint64_t                                        ue_dl_aggregate_maximum_bit_rate;
   std::string                                     serving_plmn;
   std::string                                     activity_notif_level;
-  std::vector<e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list;
+  std::vector<e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list = {};
   optional<uint64_t>                              ue_dl_maximum_integrity_protected_data_rate;
   optional<uint16_t>                              ue_inactivity_timer;
   optional<std::string>                           bearer_context_status_change;
@@ -218,9 +218,9 @@ struct e1ap_data_forwarding_info {
 
 struct e1ap_drb_setup_item_ng_ran {
   drb_id_t                               drb_id;
-  std::vector<e1ap_up_params_item>       ul_up_transport_params;
-  std::vector<e1ap_qos_flow_item>        flow_setup_list;
-  std::vector<e1ap_qos_flow_failed_item> flow_failed_list;
+  std::vector<e1ap_up_params_item>       ul_up_transport_params = {};
+  std::vector<e1ap_qos_flow_item>        flow_setup_list        = {};
+  std::vector<e1ap_qos_flow_failed_item> flow_failed_list       = {};
   optional<e1ap_data_forwarding_info>    drb_data_forwarding_info_resp;
 };
 
@@ -232,8 +232,8 @@ struct e1ap_drb_failed_item_ng_ran {
 struct e1ap_pdu_session_resource_setup_modification_item {
   uint16_t                                 pdu_session_id;
   up_transport_layer_info                  ng_dl_up_tnl_info;
-  std::vector<e1ap_drb_setup_item_ng_ran>  drb_setup_list_ng_ran;
-  std::vector<e1ap_drb_failed_item_ng_ran> drb_failed_list_ng_ran;
+  std::vector<e1ap_drb_setup_item_ng_ran>  drb_setup_list_ng_ran  = {};
+  std::vector<e1ap_drb_failed_item_ng_ran> drb_failed_list_ng_ran = {};
   optional<cu_cp_security_result>          security_result;
   optional<e1ap_data_forwarding_info>      pdu_session_data_forwarding_info_resp;
   optional<bool>                           ng_dl_up_unchanged;
@@ -251,7 +251,7 @@ struct e1ap_crit_diagnostics_item {
 };
 
 struct e1ap_crit_diagnostics {
-  std::vector<e1ap_crit_diagnostics_item> ies_crit_diagnostics;
+  std::vector<e1ap_crit_diagnostics_item> ies_crit_diagnostics = {};
   optional<uint16_t>                      proc_code;
   optional<std::string>                   trigger_msg;
   optional<std::string>                   proc_crit;
@@ -261,8 +261,8 @@ struct e1ap_crit_diagnostics {
 struct e1ap_bearer_context_setup_response {
   bool success;
   // Bearer Context Setup Response
-  std::vector<e1ap_pdu_session_resource_setup_modification_item> pdu_session_resource_setup_list;
-  std::vector<e1ap_pdu_session_resource_failed_item>             pdu_session_resource_failed_list;
+  std::vector<e1ap_pdu_session_resource_setup_modification_item> pdu_session_resource_setup_list  = {};
+  std::vector<e1ap_pdu_session_resource_failed_item>             pdu_session_resource_failed_list = {};
 
   // Bearer Context Setup Failure
   optional<cu_cp_cause_t> cause;
@@ -275,8 +275,8 @@ struct e1ap_drb_to_setup_mod_item_ng_ran {
   drb_id_t                                    drb_id;
   cu_cp_sdap_config                           sdap_cfg;
   e1ap_pdcp_config                            pdcp_cfg;
-  std::vector<e1ap_cell_group_info_item>      cell_group_info;
-  std::vector<e1ap_qos_flow_qos_param_item>   flow_map_info;
+  std::vector<e1ap_cell_group_info_item>      cell_group_info = {};
+  std::vector<e1ap_qos_flow_qos_param_item>   flow_map_info   = {};
   optional<e1ap_data_forwarding_info_request> drb_data_forwarding_info_request;
   optional<uint16_t>                          drb_inactivity_timer;
   optional<e1ap_pdcp_sn_status_info>          pdcp_sn_status_info;
@@ -291,7 +291,7 @@ struct e1ap_pdu_session_res_to_setup_mod_item {
   up_transport_layer_info                        ng_ul_up_tnl_info;
   optional<e1ap_data_forwarding_info_request>    pdu_session_data_forwarding_info_request;
   optional<uint16_t>                             pdu_session_inactivity_timer;
-  std::vector<e1ap_drb_to_setup_mod_item_ng_ran> drb_to_setup_mod_list_ng_ran;
+  std::vector<e1ap_drb_to_setup_mod_item_ng_ran> drb_to_setup_mod_list_ng_ran = {};
 };
 
 struct e1ap_drb_to_modify_item_ng_ran {
@@ -300,11 +300,11 @@ struct e1ap_drb_to_modify_item_ng_ran {
   optional<cu_cp_pdcp_config>               pdcp_cfg;
   optional<e1ap_data_forwarding_info>       drb_data_forwarding_info;
   optional<std::string>                     pdcp_sn_status_request;
-  std::vector<e1ap_up_params_item>          dl_up_params;
-  std::vector<e1ap_cell_group_info_item>    cell_group_to_add;
-  std::vector<e1ap_cell_group_info_item>    cell_group_to_modify;
-  std::vector<e1ap_cell_group_info_item>    cell_group_to_rem;
-  std::vector<e1ap_qos_flow_qos_param_item> flow_map_info;
+  std::vector<e1ap_up_params_item>          dl_up_params         = {};
+  std::vector<e1ap_cell_group_info_item>    cell_group_to_add    = {};
+  std::vector<e1ap_cell_group_info_item>    cell_group_to_modify = {};
+  std::vector<e1ap_cell_group_info_item>    cell_group_to_rem    = {};
+  std::vector<e1ap_qos_flow_qos_param_item> flow_map_info        = {};
   optional<uint16_t>                        drb_inactivity_timer;
 };
 
@@ -317,17 +317,17 @@ struct e1ap_pdu_session_res_to_modify_item {
   optional<e1ap_data_forwarding_info>         pdu_session_data_forwarding_info;
   optional<uint16_t>                          pdu_session_inactivity_timer;
   optional<uint16_t>                          network_instance;
-  std::vector<e1ap_drb_to_setup_item_ng_ran>  drb_to_setup_list_ng_ran;
-  std::vector<e1ap_drb_to_modify_item_ng_ran> drb_to_modify_list_ng_ran;
-  std::vector<drb_id_t>                       drb_to_rem_list_ng_ran;
+  std::vector<e1ap_drb_to_setup_item_ng_ran>  drb_to_setup_list_ng_ran  = {};
+  std::vector<e1ap_drb_to_modify_item_ng_ran> drb_to_modify_list_ng_ran = {};
+  std::vector<drb_id_t>                       drb_to_rem_list_ng_ran    = {};
 
-  std::vector<e1ap_drb_to_setup_mod_item_ng_ran> drb_to_setup_mod_list_ng_ran;
+  std::vector<e1ap_drb_to_setup_mod_item_ng_ran> drb_to_setup_mod_list_ng_ran = {};
 };
 
 struct e1ap_ng_ran_bearer_context_mod_request {
-  std::vector<e1ap_pdu_session_res_to_setup_mod_item> pdu_session_res_to_setup_mod_list;
-  std::vector<e1ap_pdu_session_res_to_modify_item>    pdu_session_res_to_modify_list;
-  std::vector<uint16_t>                               pdu_session_res_to_rem_list;
+  std::vector<e1ap_pdu_session_res_to_setup_mod_item> pdu_session_res_to_setup_mod_list = {};
+  std::vector<e1ap_pdu_session_res_to_modify_item>    pdu_session_res_to_modify_list    = {};
+  std::vector<uint16_t>                               pdu_session_res_to_rem_list       = {};
 };
 
 struct e1ap_bearer_context_modification_request {
@@ -347,19 +347,19 @@ struct e1ap_bearer_context_modification_request {
 
 struct e1ap_drb_modified_item_ng_ran {
   drb_id_t                               drb_id;
-  std::vector<e1ap_up_params_item>       ul_up_transport_params;
-  std::vector<e1ap_qos_flow_item>        flow_setup_list;
-  std::vector<e1ap_qos_flow_failed_item> flow_failed_list;
+  std::vector<e1ap_up_params_item>       ul_up_transport_params = {};
+  std::vector<e1ap_qos_flow_item>        flow_setup_list        = {};
+  std::vector<e1ap_qos_flow_failed_item> flow_failed_list       = {};
   optional<e1ap_pdcp_sn_status_info>     pdcp_sn_status_info;
 };
 
 struct e1ap_pdu_session_resource_modified_item {
   uint16_t                                   pdu_session_id;
   up_transport_layer_info                    ng_dl_up_tnl_info;
-  std::vector<e1ap_drb_setup_item_ng_ran>    drb_setup_list_ng_ran;
-  std::vector<e1ap_drb_failed_item_ng_ran>   drb_failed_list_ng_ran;
-  std::vector<e1ap_drb_modified_item_ng_ran> drb_modified_list_ng_ran;
-  std::vector<e1ap_drb_failed_item_ng_ran>   drb_failed_to_modify_list_ng_ran;
+  std::vector<e1ap_drb_setup_item_ng_ran>    drb_setup_list_ng_ran            = {};
+  std::vector<e1ap_drb_failed_item_ng_ran>   drb_failed_list_ng_ran           = {};
+  std::vector<e1ap_drb_modified_item_ng_ran> drb_modified_list_ng_ran         = {};
+  std::vector<e1ap_drb_failed_item_ng_ran>   drb_failed_to_modify_list_ng_ran = {};
   optional<cu_cp_security_result>            security_result;
   optional<e1ap_data_forwarding_info>        pdu_session_data_forwarding_info_resp;
 };
@@ -367,10 +367,10 @@ struct e1ap_pdu_session_resource_modified_item {
 struct e1ap_bearer_context_modification_response_message {
   bool success;
   // Bearer Context Modification Response
-  std::vector<e1ap_pdu_session_resource_setup_modification_item> pdu_session_resource_setup_list;
-  std::vector<e1ap_pdu_session_resource_failed_item>             pdu_session_resource_failed_list;
-  std::vector<e1ap_pdu_session_resource_modified_item>           pdu_session_resource_modified_list;
-  std::vector<e1ap_pdu_session_resource_failed_item>             pdu_session_resource_failed_to_modify_list;
+  std::vector<e1ap_pdu_session_resource_setup_modification_item> pdu_session_resource_setup_list            = {};
+  std::vector<e1ap_pdu_session_resource_failed_item>             pdu_session_resource_failed_list           = {};
+  std::vector<e1ap_pdu_session_resource_modified_item>           pdu_session_resource_modified_list         = {};
+  std::vector<e1ap_pdu_session_resource_failed_item>             pdu_session_resource_failed_to_modify_list = {};
 
   // Bearer Context Modification Failure
   optional<cu_cp_cause_t> cause;

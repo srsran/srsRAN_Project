@@ -232,9 +232,9 @@ struct cu_cp_sdap_config {
   uint16_t             pdu_session;
   std::string          sdap_hdr_dl;
   std::string          sdap_hdr_ul;
-  bool                 default_drb = false;
-  std::vector<uint8_t> mapped_qos_flows_to_add;
-  std::vector<uint8_t> mapped_qos_flows_to_release;
+  bool                 default_drb                 = false;
+  std::vector<uint8_t> mapped_qos_flows_to_add     = {};
+  std::vector<uint8_t> mapped_qos_flows_to_release = {};
 };
 
 struct cu_cp_qos_characteristics {
@@ -266,12 +266,12 @@ struct cu_cp_pdu_session_res_setup_item {
   uint64_t                                 pdu_session_aggregate_maximum_bit_rate_ul;
   up_transport_layer_info                  ul_ngu_up_tnl_info;
   std::string                              pdu_session_type;
-  std::vector<qos_flow_setup_request_item> qos_flow_setup_request_items;
+  std::vector<qos_flow_setup_request_item> qos_flow_setup_request_items = {};
 };
 
 struct cu_cp_pdu_session_resource_setup_message {
-  cu_cp_ue_id_t                                 cu_cp_ue_id = cu_cp_ue_id_t::invalid;
-  std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
+  cu_cp_ue_id_t                                 cu_cp_ue_id                 = cu_cp_ue_id_t::invalid;
+  std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items = {};
   uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
   std::string                                   serving_plmn;
 };
@@ -288,7 +288,7 @@ struct cu_cp_qos_flow_failed_to_setup_item {
 
 struct cu_cp_qos_flow_per_tnl_information {
   up_transport_layer_info                up_tp_layer_info;
-  std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
+  std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list = {};
 };
 
 struct cu_cp_security_result {
@@ -297,10 +297,10 @@ struct cu_cp_security_result {
 };
 
 struct cu_cp_pdu_session_resource_setup_response_transfer {
-  std::vector<cu_cp_qos_flow_per_tnl_information>  add_dl_qos_flow_per_tnl_info;
+  std::vector<cu_cp_qos_flow_per_tnl_information>  add_dl_qos_flow_per_tnl_info = {};
   cu_cp_qos_flow_per_tnl_information               dlqos_flow_per_tnl_info;
-  std::vector<cu_cp_associated_qos_flow>           associated_qos_flow_list;
-  std::vector<cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list;
+  std::vector<cu_cp_associated_qos_flow>           associated_qos_flow_list      = {};
+  std::vector<cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list = {};
   optional<cu_cp_security_result>                  security_result;
 };
 
@@ -320,8 +320,8 @@ struct cu_cp_pdu_session_res_setup_failed_item {
 };
 
 struct cu_cp_pdu_session_resource_setup_response_message {
-  std::vector<cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
-  std::vector<cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
+  std::vector<cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items  = {};
+  std::vector<cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items = {};
   // TODO: Add crit diagnostics
 };
 
@@ -329,9 +329,9 @@ struct cu_cp_drb_setup_message {
   drb_id_t                                 drb_id;
   srsgnb::rlc_mode                         rlc;
   cu_cp_qos_characteristics                qos_info;
-  std::vector<up_transport_layer_info>     gtp_tunnels;
+  std::vector<up_transport_layer_info>     gtp_tunnels = {};
   cu_cp_s_nssai                            s_nssai;
-  std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb;
+  std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb = {};
 
   uint8_t dl_pdcp_sn_length; // id-DLPDCPSNLength 161
   uint8_t ul_pdcp_sn_length; // id-ULPDCPSNLength 192
@@ -339,7 +339,7 @@ struct cu_cp_drb_setup_message {
 
 struct cu_cp_ue_context_modification_request {
   ue_index_t                           ue_index;
-  std::vector<cu_cp_drb_setup_message> cu_cp_drb_setup_msgs;
+  std::vector<cu_cp_drb_setup_message> cu_cp_drb_setup_msgs = {};
   optional<uint64_t>                   ue_aggregate_maximum_bit_rate_ul;
 };
 
@@ -356,7 +356,7 @@ struct cu_cp_dl_up_tnl_info_to_be_setup_item {
 struct cu_cp_drbs_setup_modified_item {
   drb_id_t                                           drb_id;
   optional<lcid_t>                                   lcid;
-  std::vector<cu_cp_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list;
+  std::vector<cu_cp_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list = {};
 };
 
 struct cu_cp_srbs_failed_to_be_setup_mod_item {
@@ -381,7 +381,7 @@ struct cu_cp_crit_diagnostics_item {
 };
 
 struct cu_cp_crit_diagnostics {
-  std::vector<cu_cp_crit_diagnostics_item> ies_crit_diagnostics;
+  std::vector<cu_cp_crit_diagnostics_item> ies_crit_diagnostics = {};
   optional<uint16_t>                       proc_code;
   optional<std::string>                    trigger_msg;
   optional<std::string>                    proc_crit;
@@ -402,17 +402,17 @@ struct cu_cp_ue_context_modification_response {
   // ue context modification response
   byte_buffer                                              res_coordination_transfer_container;
   cu_cp_du_to_cu_rrc_info                                  du_to_cu_rrc_info;
-  std::vector<cu_cp_drbs_setup_modified_item>              drbs_setup_mod_list;
-  std::vector<cu_cp_drbs_setup_modified_item>              drbs_modified_list;
-  std::vector<cu_cp_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list;
-  std::vector<cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list;
-  std::vector<cu_cp_scell_failed_to_setup_mod_item>        scell_failed_to_setup_mod_list;
-  std::vector<cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
+  std::vector<cu_cp_drbs_setup_modified_item>              drbs_setup_mod_list              = {};
+  std::vector<cu_cp_drbs_setup_modified_item>              drbs_modified_list               = {};
+  std::vector<cu_cp_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list = {};
+  std::vector<cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list = {};
+  std::vector<cu_cp_scell_failed_to_setup_mod_item>        scell_failed_to_setup_mod_list   = {};
+  std::vector<cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list  = {};
   optional<std::string>                                    inactivity_monitoring_resp;
   optional<srsgnb::rnti_t>                                 c_rnti;
-  std::vector<cu_cp_associated_scell_item>                 associated_scell_list;
-  std::vector<cu_cp_srbs_setup_modified_item>              srbs_setup_mod_list;
-  std::vector<cu_cp_srbs_setup_modified_item>              srbs_modified_list;
+  std::vector<cu_cp_associated_scell_item>                 associated_scell_list = {};
+  std::vector<cu_cp_srbs_setup_modified_item>              srbs_setup_mod_list   = {};
+  std::vector<cu_cp_srbs_setup_modified_item>              srbs_modified_list    = {};
   optional<std::string>                                    full_cfg;
 
   // UE Context Modification Failure
@@ -455,9 +455,9 @@ struct cu_cp_security_config {
 };
 
 struct cu_cp_radio_bearer_config {
-  std::vector<cu_cp_srb_to_add_mod> srb_to_add_mod_list;
-  std::vector<cu_cp_drb_to_add_mod> drb_to_add_mod_list;
-  std::vector<drb_id_t>             drb_to_release_list;
+  std::vector<cu_cp_srb_to_add_mod> srb_to_add_mod_list = {};
+  std::vector<cu_cp_drb_to_add_mod> drb_to_add_mod_list = {};
+  std::vector<drb_id_t>             drb_to_release_list = {};
   optional<cu_cp_security_config>   security_cfg;
   bool                              srb3_to_release_present = false;
 };
@@ -484,7 +484,7 @@ struct cu_cp_other_cfg {
 struct cu_cp_rrc_recfg_v1530_ies {
   bool                           full_cfg_present = false;
   byte_buffer                    master_cell_group;
-  std::vector<byte_buffer>       ded_nas_msg_list;
+  std::vector<byte_buffer>       ded_nas_msg_list = {};
   optional<cu_cp_master_key_upd> master_key_upd;
   byte_buffer                    ded_sib1_delivery;
   byte_buffer                    ded_sys_info_delivery;
