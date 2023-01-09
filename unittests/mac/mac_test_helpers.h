@@ -78,7 +78,10 @@ public:
   void handle_crc_indication(const ul_crc_indication& crc) override {}
   void handle_uci_indication(const uci_indication& uci) override {}
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override {}
-  void handle_paging_indication(const paging_indication_message& pi) override {}
+  void handle_paging_indication(const paging_indication_message&    pi,
+                                const std::vector<du_cell_index_t>& paging_cell_list) override
+  {
+  }
   const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override
   {
     return &next_sched_result;

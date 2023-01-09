@@ -53,7 +53,10 @@ public:
   void                handle_crc_indication(const ul_crc_indication& crc) override {}
   void                handle_uci_indication(const uci_indication& msg) override {}
   void                handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce) override {}
-  void                handle_paging_indication(const paging_indication_message& pi) override {}
+  void                handle_paging_indication(const paging_indication_message&    pi,
+                                               const std::vector<du_cell_index_t>& paging_cell_list) override
+  {
+  }
 };
 
 /// Enum used to track the progress of the test task
