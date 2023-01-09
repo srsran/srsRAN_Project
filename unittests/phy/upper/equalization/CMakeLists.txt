@@ -17,12 +17,4 @@ target_link_libraries(
         srslog
         gtest
         gtest_main)
-add_test(channel_equalizer_test channel_equalizer_test)
-
-add_custom_command(
-        TARGET channel_equalizer_test
-        POST_BUILD
-        WORKING_DIRECTORY ${TEST_DATA_DIR}
-        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/channel_equalizer_test_data.tar.gz
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/channel_equalizer_test_data.tar.gz
-        VERBATIM)
+add_test_vector(channel_equalizer_test channel_equalizer_test_data.tar.gz "")

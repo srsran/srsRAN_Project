@@ -22,13 +22,4 @@ endif (ENABLE_FFTW AND FFTW3F_FOUND)
 
 add_executable(dft_processor_vectortest dft_processor_vectortest.cpp)
 target_link_libraries(dft_processor_vectortest srslog srsgnb_generic_funcs gtest gtest_main)
-
-add_test(dft_processor_vectortest dft_processor_vectortest)
-
-add_custom_command(
-  TARGET dft_processor_vectortest
-  POST_BUILD
-  WORKING_DIRECTORY ${TEST_DATA_DIR}
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dft_processor_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dft_processor_test_data.tar.gz
-  VERBATIM)
+add_test_vector(dft_processor_vectortest dft_processor_test_data.tar.gz "")

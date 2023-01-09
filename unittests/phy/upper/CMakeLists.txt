@@ -19,15 +19,7 @@ set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(dl_processor_vectortest dl_processor_vectortest.cpp)
 target_link_libraries(dl_processor_vectortest srsgnb_sequence_generators srsgnb_channel_processors srsgnb_signal_processors srslog)
-add_test(dl_processor_vectortest dl_processor_vectortest)
-
-add_custom_command(
-        TARGET dl_processor_vectortest
-        POST_BUILD
-        WORKING_DIRECTORY ${TEST_DATA_DIR}
-        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dl_processor_test_data.tar.gz
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dl_processor_test_data.tar.gz
-        VERBATIM)
+add_test_vector(dl_processor_vectortest dl_processor_test_data.tar.gz "")
 
 add_executable(downlink_processor_test downlink_processor_test.cpp)
 target_link_libraries(downlink_processor_test srsgnb_downlink_processor srslog srsgnb_support)

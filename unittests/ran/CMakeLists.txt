@@ -49,7 +49,7 @@ add_test(pusch_mcs_table_test pusch_mcs_table_test)
 
 add_executable(ulsch_info_test pusch/ulsch_info_test.cpp)
 target_link_libraries(ulsch_info_test srsgnb_ran srslog gtest gtest_main)
-add_test(ulsch_info_test ulsch_info_test)
+add_test_vector(ulsch_info_test none "")
 
 add_executable(resource_allocation_frequency_test resource_allocation/resource_allocation_frequency_test.cpp)
 target_link_libraries(resource_allocation_frequency_test srsgnb_support srsgnb_ran)

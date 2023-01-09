@@ -6,6 +6,34 @@
 # the distribution.
 #
 
+# Adds a vector-based test.
+#
+# Adds a test to be run by ctest for TARGET that has been generated from an external tool. The test is labeled as
+# vectortest.
+#
+# It optionally uses the vectors contained in VECTOR_FILE (this is a tar.gz file containing all vectors in the
+# appropriate format, which will be extracted in the proper build directory). Set VECTOR_FILE to an empty string to
+# disable the extraction of vector files.
+#
+# Other arguments to the underlying add_test command can be provided through TEST_ARGS.
+macro(ADD_TEST_VECTOR TARGET VECTOR_FILE TEST_ARGS)
+    if (NOT (${VECTOR_FILE} STREQUAL none))
+        if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE})
+            add_custom_command(
+                    TARGET ${TARGET}
+                    POST_BUILD
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data
+                    COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE}
+                    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE}
+                    VERBATIM)
+        else (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE})
+            message(FATAL_ERROR "Vector file ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE} does not exist.")
+        endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE})
+    endif (NOT (${VECTOR_FILE} STREQUAL none))
+    add_test(${TARGET} ${TARGET} ${TEST_ARGS})
+    set_property(TARGET ${TARGET} APPEND PROPERTY LABELS vectortest)
+endmacro(ADD_TEST_VECTOR TARGET VECTOR_FILE ...)
+
 add_subdirectory(adt)
 add_subdirectory(asn1)
 add_subdirectory(cu_cp)
