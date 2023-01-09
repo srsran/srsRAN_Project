@@ -30,11 +30,11 @@ public:
                     const codeblock_metadata&        cfg) override;
 
 protected:
-  /// \brief Combines softbits by saturated addition of the soft bits.
+  /// \brief Combines two sequences of soft bits by taking saturated addition.
   ///
-  /// \param[out] out Destination of the input soft bit buffers combination.
-  /// \param[in] in0  Input soft bits buffer.
-  /// \param[in] in1  Input soft bits buffer to combine with \c in0.
+  /// \param[out] out Resulting sequence of soft bits.
+  /// \param[in] in0  First input sequence of soft bits.
+  /// \param[in] in1  Second input sequence of soft bits.
   virtual void combine_softbits(span<log_likelihood_ratio>       out,
                                 span<const log_likelihood_ratio> in0,
                                 span<const log_likelihood_ratio> in1) const;

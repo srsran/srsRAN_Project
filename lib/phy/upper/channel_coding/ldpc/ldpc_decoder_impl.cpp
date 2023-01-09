@@ -12,7 +12,6 @@
 #include "ldpc_luts_impl.h"
 #include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/srsgnb_assert.h"
-#include <cmath>
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
@@ -70,11 +69,11 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
                 min_input_length);
 
   // Find the last soft bit in the buffer and trim the output.
+  const log_likelihood_ratio* last =
+      std::find_if(input.rbegin(), input.rend(), [](const log_likelihood_ratio& in) { return in != 0; }).base();
   unsigned input_size = input.size();
-  for (; input_size != 1; --input_size) {
-    if (input[input_size - 1] != 0) {
-      break;
-    }
+  if (last > input.begin()) {
+    input_size = static_cast<unsigned>(last - input.begin());
   }
 
   load_soft_bits(input);

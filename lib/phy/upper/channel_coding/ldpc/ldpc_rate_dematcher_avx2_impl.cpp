@@ -17,16 +17,19 @@ void ldpc_rate_dematcher_avx2_impl::combine_softbits(span<srsgnb::log_likelihood
                                                      span<const srsgnb::log_likelihood_ratio> in0,
                                                      span<const srsgnb::log_likelihood_ratio> in1) const
 {
+  srsgnb_assert(out.size() == in0.size(), "All sizes must be equal.");
+  srsgnb_assert(out.size() == in1.size(), "All sizes must be equal.");
+
   unsigned index = 0;
 
   __m256i LLR_MAX_epi8 = _mm256_set1_epi8(static_cast<int8_t>(LLR_MAX));
   __m256i LLR_MIN_epi8 = _mm256_set1_epi8(static_cast<int8_t>(LLR_MIN));
 
   for (unsigned index_end = (out.size() / 32) * 32; index != index_end; index += 32) {
-    __m256i in0_avx = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&in0[index]));
-    __m256i in1_avx = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&in1[index]));
+    __m256i in0_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&in0[index]));
+    __m256i in1_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&in1[index]));
 
-    __m256i result = _mm256_adds_epi8(in0_avx, in1_avx);
+    __m256i result = _mm256_adds_epi8(in0_epi8, in1_epi8);
 
     __m256i mask_epi8 = _mm256_cmpgt_epi8(result, LLR_MAX_epi8);
     result            = _mm256_blendv_epi8(result, LLR_MAX_epi8, mask_epi8);

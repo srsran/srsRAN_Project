@@ -102,6 +102,9 @@ void ldpc_rate_dematcher_impl::combine_softbits(span<log_likelihood_ratio>      
                                                 span<const log_likelihood_ratio> in0,
                                                 span<const log_likelihood_ratio> in1) const
 {
+  srsgnb_assert(out.size() == in0.size(), "All sizes must be equal.");
+  srsgnb_assert(out.size() == in1.size(), "All sizes must be equal.");
+
   for (unsigned index = 0, index_end = out.size(); index != index_end; ++index) {
     out[index] = in0[index] + in1[index];
   }
@@ -112,7 +115,7 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
   unsigned nof_info_bits = nof_systematic_bits - nof_filler_bits;
 
   // Set to true for copy, false to combine.
-  bool copy_or_combine = is_new_data;
+  bool is_copy_mode = is_new_data;
 
   unsigned tmp_idx = shift_k0;
   while (!in.empty()) {
@@ -126,7 +129,7 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
 
       // Not a filler bit, combine value with the previous LLR value relative to the same bit (if any).
       // Reminder: this is a sum between LLRs, therefore it is saturated.
-      if (copy_or_combine) {
+      if (is_copy_mode) {
         srsvec::zero(out.first(tmp_idx));
         srsvec::copy(out_chunk, in.first(nbits_systematic));
       } else {
@@ -136,12 +139,12 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
       // Advance buffers.
       tmp_idx += nbits_systematic;
       in = in.last(in.size() - nbits_systematic);
-    } else if (copy_or_combine) {
+    } else if (is_copy_mode) {
       srsvec::zero(out.first(nof_info_bits));
     }
 
     // Set filler bits if it is copying data.
-    if (copy_or_combine) {
+    if (is_copy_mode) {
       // Filler bits are counted as fixed, logical zeros by the decoder. Set the corresponding LLR to +inf.
       span<log_likelihood_ratio> filler_bits = out.subspan(nof_info_bits, nof_filler_bits);
       std::fill(filler_bits.begin(), filler_bits.end(), LLR_INFINITY);
@@ -160,7 +163,7 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
 
     // Not a filler bit, combine value with the previous LLR value relative to the same bit (if any).
     // Reminder: this is a sum between LLRs, therefore it is saturated.
-    if (copy_or_combine) {
+    if (is_copy_mode) {
       srsvec::copy(out_chunk, in.first(nbits_parity));
     } else {
       combine_softbits(out_chunk, out_chunk, in.first(nbits_parity));
@@ -170,14 +173,14 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<c
     tmp_idx = (tmp_idx + nbits_parity) % buffer_length;
     in      = in.last(in.size() - nbits_parity);
 
-    // The next iteration shall be combined.
+    // All iterations after the first one are in combine mode.
     if (!in.empty()) {
-      copy_or_combine = false;
+      is_copy_mode = false;
     }
   }
 
   // If the data is new and the buffer has not been completely filled, then set the remaining bits to zero.
-  if ((copy_or_combine) && (tmp_idx != 0)) {
+  if ((is_copy_mode) && (tmp_idx != 0)) {
     srsvec::zero(out.last(buffer_length - tmp_idx));
   }
 }
