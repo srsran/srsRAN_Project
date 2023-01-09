@@ -34,7 +34,7 @@ You can install the required libraries for some example distributions with the c
 
 
 ```bash
-sudo apt-get install cmake libfftw3-dev libsctp-dev libyaml-cpp-dev libmbedtls-dev git-lfs libgtest-dev
+sudo apt-get install build-essential cmake libfftw3-dev libsctp-dev libyaml-cpp-dev libmbedtls-dev git-lfs libgtest-dev
 git lfs install
 ```
 </details>
