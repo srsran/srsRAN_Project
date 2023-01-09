@@ -13,9 +13,6 @@
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
-#include "srsgnb/ran/prach/prach_constants.h"
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
 
@@ -33,7 +30,11 @@ public:
 /// from the ratio of the frequency-domain correlation maximum value and the input buffer average power.
 class prach_detector_simple_impl : public prach_detector
 {
+  /// Correlation detection threshold.
   static constexpr float DETECTION_THRESHOLD = 0.1F;
+  /// Correlation DFT size assertion of multiples. It is the ratio of the minimum time alignment command granularity
+  /// (1.92 MHz) over the minimum PRACH subcarrier spacing (1.25 kHz).
+  static constexpr unsigned ASSERT_DFT_SIZE_MULTIPLE = 1536;
 
   std::unique_ptr<dft_processor>   idft;
   std::unique_ptr<prach_generator> generator;
@@ -45,12 +46,12 @@ public:
   prach_detector_simple_impl(std::unique_ptr<dft_processor> idft_, std::unique_ptr<prach_generator> generator_) :
     idft(std::move(idft_)), generator(std::move(generator_))
   {
-    report_fatal_error_if_not(idft, "Invalid IDFT processor.");
-    report_fatal_error_if_not(idft->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    report_fatal_error_if_not(idft->get_size() >= prach_constants::LONG_SEQUENCE_LENGTH,
-                              "IDFT size {} must be at least {}.",
-                              idft->get_size(),
-                              prach_constants::LONG_SEQUENCE_LENGTH);
+    srsgnb_assert(idft, "Invalid IDFT processor.");
+    srsgnb_assert(idft->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
+    srsgnb_assert(idft->get_size() % ASSERT_DFT_SIZE_MULTIPLE == 0,
+                  "IDFT size {} must be multiple of {}.",
+                  idft->get_size(),
+                  static_cast<unsigned>(ASSERT_DFT_SIZE_MULTIPLE));
   };
 
   // See interface for documentation.

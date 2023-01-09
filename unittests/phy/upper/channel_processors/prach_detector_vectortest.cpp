@@ -117,6 +117,6 @@ TEST_P(PrachDetectorFixture, FromVector)
 // Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.
 INSTANTIATE_TEST_SUITE_P(PrachDetectorSimple,
                          PrachDetectorFixture,
-                         ::testing::Combine(::testing::Values(1024),
+                         ::testing::Combine(::testing::Values(1536),
                                             ::testing::Values(-8, 0, 1, 3),
                                             ::testing::ValuesIn(prach_generator_test_data)));
