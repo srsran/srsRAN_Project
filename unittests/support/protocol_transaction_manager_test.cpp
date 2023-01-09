@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/support/async/eager_async_task.h"
+#include "srsgnb/support/async/protocol_transaction_channel.h"
 #include "srsgnb/support/async/protocol_transaction_manager.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -118,3 +119,32 @@ TEST_F(protocol_transaction_test,
   ASSERT_TRUE(t.ready());
   ASSERT_EQ(-1, t.get());
 }
+
+class protocol_transaction_channel_test : public ::testing::Test
+{
+protected:
+  timer_manager                     timers{1};
+  protocol_transaction_channel<int> transaction_manager{timers, -1};
+};
+
+TEST_F(protocol_transaction_channel_test, when_transaction_is_created_then_it_starts_incomplete)
+{
+  protocol_transaction_receiver<int> tr = transaction_manager.create_transaction();
+  ASSERT_FALSE(tr.complete());
+}
+
+#ifdef ASSERTS_ENABLED
+TEST_F(protocol_transaction_channel_test,
+       when_transaction_is_created_twice_then_coroutine_awaiting_first_transaction_is_cancelled)
+{
+  protocol_transaction_receiver<int> tr = transaction_manager.create_transaction();
+  eager_async_task<int>              t  = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(tr);
+    CORO_RETURN(tr.result());
+  });
+
+  ASSERT_FALSE(t.ready());
+  ASSERT_DEATH(protocol_transaction_receiver<int> tr2 = transaction_manager.create_transaction(), ".*");
+}
+#endif

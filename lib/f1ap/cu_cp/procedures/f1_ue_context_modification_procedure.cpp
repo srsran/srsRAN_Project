@@ -31,11 +31,13 @@ void f1_ue_context_modification_procedure::operator()(
 {
   CORO_BEGIN(ctx);
 
+  transaction_receiver = ev_mng.ue_context_modify_transaction_channel.create_transaction();
+
   // Send command to DU.
   send_ue_context_modification_request();
 
   // Await CU response.
-  CORO_AWAIT_VALUE(ue_ctxt_mod_outcome, ev_mng.f1ap_ue_context_modification_outcome);
+  CORO_AWAIT(transaction_receiver);
 
   // Handle response from DU and return UE index
   CORO_RETURN(create_ue_context_modification_result());
@@ -67,23 +69,24 @@ cu_cp_ue_context_modification_response f1_ue_context_modification_procedure::cre
 {
   cu_cp_ue_context_modification_response res{};
 
-  if (ue_ctxt_mod_outcome.has_value()) {
+  if (transaction_receiver.result().has_value()) {
+    const asn1::f1ap::ue_context_mod_resp_s& resp = transaction_receiver.result().value();
     logger.info("Received F1AP UE Context Modification Response.");
     if (logger.debug.enabled()) {
       asn1::json_writer js;
-      (*ue_ctxt_mod_outcome.value()).to_json(js);
+      resp.to_json(js);
       logger.debug("Containerized UE Context Modification Response message: {}", js.to_string());
     }
-    fill_f1ap_ue_context_modification_response_message(res, *ue_ctxt_mod_outcome.value());
+    fill_f1ap_ue_context_modification_response_message(res, resp);
   } else {
-    logger.info("Received F1AP UE Context Modification Failure. Cause: {}",
-                get_cause_str((*ue_ctxt_mod_outcome.error())->cause.value));
+    const asn1::f1ap::ue_context_mod_fail_s& fail = transaction_receiver.result().error();
+    logger.info("Received F1AP UE Context Modification Failure. Cause: {}", get_cause_str(fail->cause.value));
     if (logger.debug.enabled()) {
       asn1::json_writer js;
-      (*ue_ctxt_mod_outcome.error()).to_json(js);
+      (*transaction_receiver.result().error()).to_json(js);
       logger.debug("Containerized UE Context Modification Failure message: {}", js.to_string());
     }
-    fill_f1ap_ue_context_modification_response_message(res, *ue_ctxt_mod_outcome.error());
+    fill_f1ap_ue_context_modification_response_message(res, fail);
   }
 
   return res;

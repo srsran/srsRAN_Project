@@ -13,6 +13,7 @@
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
+#include "srsgnb/support/async/protocol_transaction_channel.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -20,6 +21,11 @@ namespace srs_cu_cp {
 class f1c_event_manager
 {
 public:
+  f1c_event_manager(timer_manager& timers) :
+    ue_context_modify_transaction_channel(timers, asn1::f1ap::ue_context_mod_fail_s{})
+  {
+  }
+
   /// F1 Context Release Complete
   using f1_ue_context_release_outcome_t = const asn1::f1ap::ue_context_release_complete_s*;
   event_signal<f1_ue_context_release_outcome_t> f1ap_ue_context_release_complete;
@@ -31,8 +37,8 @@ public:
 
   /// F1 UE Context Modification procedure outcome.
   using f1_ue_context_modification_outcome_t =
-      expected<const asn1::f1ap::ue_context_mod_resp_s*, const asn1::f1ap::ue_context_mod_fail_s*>;
-  event_signal<f1_ue_context_modification_outcome_t> f1ap_ue_context_modification_outcome;
+      expected<asn1::f1ap::ue_context_mod_resp_s, asn1::f1ap::ue_context_mod_fail_s>;
+  protocol_transaction_channel<f1_ue_context_modification_outcome_t> ue_context_modify_transaction_channel;
 };
 
 } // namespace srs_cu_cp

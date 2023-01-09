@@ -49,8 +49,8 @@ private:
   manual_event<result_type>* ev             = nullptr;
 };
 
-/// \brief Manager of multiple protocol transactions. Each managed transaction can be uniquely identified by a
-/// "transaction_id", which is automatically assigned by the \c protocol_transaction_manager.
+/// \brief Manager of multiple concurrent protocol transactions. Each managed transaction can be uniquely identified by
+/// a "transaction_id" integer value, which is automatically assigned by the \c protocol_transaction_manager.
 /// Transactions are single-use, meaning that the user will have to create new transaction objects, with different
 /// transaction_ids for every message exchange.
 /// To create a new transaction, the user may call "create_transaction(...)", where a timeout for the transaction
@@ -94,6 +94,7 @@ public:
     return t;
   }
 
+  /// \brief Sets the result of a managed transaction with the provided transaction_id.
   template <typename U>
   void set(unsigned transaction_id, U&& u)
   {
@@ -116,45 +117,44 @@ template <typename T>
 class single_protocol_transaction_manager
 {
 public:
-  explicit single_protocol_transaction_manager(timer_manager& timer_db_, const T& cancel_value_ = {}) :
-    timer_db(timer_db_), cancel_value(cancel_value_)
+  explicit single_protocol_transaction_manager(timer_manager& timer_db, const T& cancel_value_ = {}) :
+    cancel_value(cancel_value_), running_timer(timer_db.create_unique_timer())
   {
   }
 
+  /// \brief Creates a new protocol transaction, cancelling previous one for this manager if still on-going.
   protocol_transaction<T> create_transaction() __attribute__((warn_unused_result))
   {
     if (not event.is_set()) {
       // cancel any existing awaiter.
-      running_timer.stop();
-      event.set(cancel_value);
+      set(cancel_value);
     }
     event.reset();
     return {0, event};
   }
 
+  /// \brief Creates a new protocol transaction, cancelling previous one for this manager if still on-going, and sets
+  /// a timeout for the transaction to be completed.
   protocol_transaction<T> create_transaction(unsigned time_to_cancel) __attribute__((warn_unused_result))
   {
     protocol_transaction<T> t = create_transaction();
     // Setup timeout.
-    if (not running_timer.is_valid()) {
-      // Create a new timer if it doesn't exist yet.
-      running_timer = timer_db.create_unique_timer();
-    }
-    running_timer.set(time_to_cancel, [this](timer_id_t /**/) { event.set(cancel_value); });
-    event.run();
+    running_timer.set(time_to_cancel, [this](timer_id_t /**/) { set(cancel_value); });
+    running_timer.run();
     return t;
   }
 
+  /// \brief Sets the result of the managed transaction.
   template <typename U>
   void set(U&& u)
   {
     running_timer.stop();
+    srsgnb_assert(not event.is_set(), "Transaction result cannot be overwritten.");
     event.set(std::forward<U>(u));
   }
 
 private:
-  timer_manager& timer_db;
-  const T        cancel_value;
+  const T cancel_value;
 
   unique_timer    running_timer;
   manual_event<T> event;
