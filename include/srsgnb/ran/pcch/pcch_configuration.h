@@ -24,6 +24,13 @@ struct pcch_config {
   /// \remark See TS 38.311, maxPO-perPF.
   static constexpr unsigned MAX_PO_PER_PF = 4;
 
+  /// \brief The number of PDCCH monitoring occasions corresponding to an SSB within a Paging Occasion.
+  /// \remark See TS 38.311, nrofPDCCH-MonitoringOccasionPerSSB-InPO. This field is part of PCCH_Config IE and is
+  /// present only if cell operates with shared spectrum channel access.
+  /// \remark See TS 38.304, clause 7.1, if nrofPDCCH-MonitoringOccasionPerSSB-InPO is not configured its value is equal
+  /// to 1.
+  static constexpr unsigned NR_OF_PDCCH_MONITORING_OCCASION_PER_SSB_IN_PO = 1;
+
   /// \brief Number of paging occasions per paging frame.
   enum class nof_po_per_pf { four, two, one };
   /// Number of paging frames per DRX cycle. nAndPagingFrameOffset in TS 38.311 in divided into \c nof_pf and \c

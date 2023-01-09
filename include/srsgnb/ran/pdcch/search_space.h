@@ -70,7 +70,8 @@ struct search_space_configuration {
   unsigned monitoring_slot_period;
   /// Offset of slot for PDCCH monitoring. Possible values: {0, ..., monitoring_slot_period}.
   unsigned monitoring_slot_offset;
-  /// Number of consecutive slots that a SearchSpace lasts in every occasion. Values: (1..2559).
+  /// Number of consecutive slots that a SearchSpace lasts in every occasion. Values: (1..2559). If the field is absent,
+  /// the UE applies the value 1 slot, except for DCI format 2_0. The UE ignores this field for DCI format 2_0.
   unsigned duration;
   /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring. The most significant bit represents
   /// the first OFDM in a slot.
