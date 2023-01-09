@@ -19,7 +19,7 @@ namespace srs_cu_cp {
 
 struct drb_context {
   srsgnb::drb_id_t     drb_id         = drb_id_t::invalid;
-  uint16_t             pdu_session_id = 0;
+  pdu_session_id_t     pdu_session_id = pdu_session_id_t::min;
   bool                 default_drb    = false;
   uint16_t             five_qi        = 0;
   std::vector<uint8_t> mapped_qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
@@ -39,8 +39,8 @@ public:
   cu_cp_pdcp_config     get_pdcp_config(const drb_id_t drb_id) override;
   cu_cp_sdap_config     get_sdap_config(const drb_id_t drb_id) override;
   std::vector<uint8_t>  get_mapped_qos_flows(const drb_id_t drb_id) override;
-  std::vector<uint8_t>  get_mapped_qos_flows(const uint16_t pdu_session_id) override;
-  uint16_t              get_pdu_session_id(const drb_id_t drb_id) override;
+  std::vector<uint8_t>  get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) override;
+  pdu_session_id_t      get_pdu_session_id(const drb_id_t drb_id) override;
   size_t                get_nof_drbs() override;
 
 private:

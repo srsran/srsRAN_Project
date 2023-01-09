@@ -54,7 +54,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
     asn1::e1ap::pdu_session_res_to_setup_item_s e1ap_pdu_session_res_item;
 
     // pdu session id
-    e1ap_pdu_session_res_item.pdu_session_id = pdu_session_res_item.pdu_session_id;
+    e1ap_pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_res_item.pdu_session_id);
 
     // pdu session type
     asn1::string_to_enum(e1ap_pdu_session_res_item.pdu_session_type, pdu_session_res_item.pdu_session_type);
@@ -392,7 +392,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 
     for (const auto& asn1_res_setup_item : asn1_bearer_context_setup_response.pdu_session_res_setup_list.value) {
       e1ap_pdu_session_resource_setup_modification_item res_setup_item;
-      res_setup_item.pdu_session_id = asn1_res_setup_item.pdu_session_id;
+      res_setup_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_setup_item.pdu_session_id);
 
       // Add NG DL UP TNL Info
       res_setup_item.ng_dl_up_tnl_info = asn1_to_up_transport_layer_info(asn1_res_setup_item.ng_dl_up_tnl_info);
@@ -489,7 +489,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
       for (const auto& asn1_failed_item : asn1_bearer_context_setup_response.pdu_session_res_failed_list.value) {
         e1ap_pdu_session_resource_failed_item failed_item;
 
-        failed_item.pdu_session_id = asn1_failed_item.pdu_session_id;
+        failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
         failed_item.cause          = e1ap_cause_to_cu_cp_cause(asn1_failed_item.cause);
 
         res.pdu_session_resource_failed_list.push_back(failed_item);
@@ -566,7 +566,7 @@ inline void fill_e1ap_bearer_context_modification_response(
       if (asn1_bearer_context_mod_response.pdu_session_res_setup_mod_list_present) {
         for (const auto& asn1_res_mod_item : asn1_bearer_context_mod_response.pdu_session_res_setup_mod_list.value) {
           e1ap_pdu_session_resource_setup_modification_item res_mod_item;
-          res_mod_item.pdu_session_id = asn1_res_mod_item.pdu_session_id;
+          res_mod_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_mod_item.pdu_session_id);
 
           // Add NG DL UP TNL Info
           res_mod_item.ng_dl_up_tnl_info = asn1_to_up_transport_layer_info(asn1_res_mod_item.ng_dl_up_tnl_info);
@@ -660,7 +660,7 @@ inline void fill_e1ap_bearer_context_modification_response(
         for (const auto& asn1_failed_item : asn1_bearer_context_mod_response.pdu_session_res_failed_mod_list.value) {
           e1ap_pdu_session_resource_failed_item failed_item;
 
-          failed_item.pdu_session_id = asn1_failed_item.pdu_session_id;
+          failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
           failed_item.cause          = e1ap_cause_to_cu_cp_cause(asn1_failed_item.cause);
 
           res.pdu_session_resource_failed_list.push_back(failed_item);
@@ -672,7 +672,7 @@ inline void fill_e1ap_bearer_context_modification_response(
         for (const auto& asn1_res_mod_item : asn1_bearer_context_mod_response.pdu_session_res_modified_list.value) {
           e1ap_pdu_session_resource_modified_item res_mod_item;
 
-          res_mod_item.pdu_session_id = asn1_res_mod_item.pdu_session_id;
+          res_mod_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_mod_item.pdu_session_id);
 
           // Add NG DL UP TNL Info
           res_mod_item.ng_dl_up_tnl_info = asn1_to_up_transport_layer_info(asn1_res_mod_item.ng_dl_up_tnl_info);
@@ -827,7 +827,7 @@ inline void fill_e1ap_bearer_context_modification_response(
              asn1_bearer_context_mod_response.pdu_session_res_failed_to_modify_list.value) {
           e1ap_pdu_session_resource_failed_item failed_item;
 
-          failed_item.pdu_session_id = e1ap_failed_item.pdu_session_id;
+          failed_item.pdu_session_id = uint_to_pdu_session_id(e1ap_failed_item.pdu_session_id);
           failed_item.cause          = e1ap_cause_to_cu_cp_cause(e1ap_failed_item.cause);
 
           res.pdu_session_resource_failed_to_modify_list.push_back(failed_item);

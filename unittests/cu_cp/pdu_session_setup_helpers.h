@@ -23,7 +23,7 @@ cu_cp_pdu_session_resource_setup_message fill_res_setup_request()
   req.cu_cp_ue_id = uint_to_cu_cp_ue_id(0);
 
   cu_cp_pdu_session_res_setup_item item;
-  item.pdu_session_id = 1;
+  item.pdu_session_id = uint_to_pdu_session_id(1);
   item.pdu_session_nas_pdu.resize(2);
   item.pdu_session_nas_pdu[0] = 0xaa;
   item.pdu_session_nas_pdu[1] = 0xbb;

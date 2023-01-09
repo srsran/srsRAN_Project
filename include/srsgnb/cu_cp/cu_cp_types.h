@@ -157,6 +157,24 @@ inline ran_ue_id_t uint_to_ran_ue_id(std::underlying_type_t<ran_ue_id_t> id)
 
 // ASN1 types converted to common types
 
+// See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
+constexpr static uint16_t MAX_NOF_PDU_SESSIONS = 256;
+
+/// \brief PDU Session ID.
+/// \remark See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
+enum class pdu_session_id_t : uint16_t { min = 0, max = MAX_NOF_PDU_SESSIONS - 1, invalid = MAX_NOF_PDU_SESSIONS };
+
+constexpr inline uint16_t pdu_session_id_to_uint(pdu_session_id_t id)
+{
+  return static_cast<uint16_t>(id);
+}
+
+/// Convert integer to PDU Session ID type.
+constexpr inline pdu_session_id_t uint_to_pdu_session_id(uint16_t idx)
+{
+  return static_cast<pdu_session_id_t>(idx);
+}
+
 enum class cu_cp_cause_t : uint8_t {
   radio_network = 0,
   transport     = 1,
@@ -229,7 +247,7 @@ struct cu_cp_pdcp_config {
 };
 
 struct cu_cp_sdap_config {
-  uint16_t             pdu_session;
+  pdu_session_id_t     pdu_session = pdu_session_id_t::invalid;
   std::string          sdap_hdr_dl;
   std::string          sdap_hdr_ul;
   bool                 default_drb                 = false;
@@ -259,7 +277,7 @@ struct cu_cp_s_nssai {
 };
 
 struct cu_cp_pdu_session_res_setup_item {
-  uint16_t                                 pdu_session_id;
+  pdu_session_id_t                         pdu_session_id = pdu_session_id_t::invalid;
   byte_buffer                              pdu_session_nas_pdu;
   cu_cp_s_nssai                            s_nssai;
   uint64_t                                 pdu_session_aggregate_maximum_bit_rate_dl;
@@ -305,7 +323,7 @@ struct cu_cp_pdu_session_resource_setup_response_transfer {
 };
 
 struct cu_cp_pdu_session_res_setup_response_item {
-  uint16_t                                           pdu_session_id;
+  pdu_session_id_t                                   pdu_session_id = pdu_session_id_t::invalid;
   cu_cp_pdu_session_resource_setup_response_transfer pdu_session_resource_setup_response_transfer;
 };
 
@@ -315,7 +333,7 @@ struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
 };
 
 struct cu_cp_pdu_session_res_setup_failed_item {
-  uint16_t                                               pdu_session_id;
+  pdu_session_id_t                                       pdu_session_id = pdu_session_id_t::invalid;
   cu_cp_pdu_session_resource_setup_unsuccessful_transfer pdu_session_resource_setup_unsuccessful_transfer;
 };
 

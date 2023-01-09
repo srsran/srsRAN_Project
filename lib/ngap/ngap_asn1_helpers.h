@@ -83,7 +83,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
     cu_cp_pdu_session_res_setup_item setup_item;
 
     // pDUSessionID
-    setup_item.pdu_session_id = ngap_session_item.pdu_session_id;
+    setup_item.pdu_session_id = uint_to_pdu_session_id(ngap_session_item.pdu_session_id);
 
     // pDUSessionNAS-PDU
     if (!ngap_session_item.pdu_session_nas_pdu.empty()) {
@@ -194,7 +194,7 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
     for (auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_setup_response_items) {
       asn1::ngap::pdu_session_res_setup_item_su_res_s resp_item;
 
-      resp_item.pdu_session_id = cu_cp_resp_item.pdu_session_id;
+      resp_item.pdu_session_id = pdu_session_id_to_uint(cu_cp_resp_item.pdu_session_id);
 
       asn1::ngap::pdu_session_res_setup_resp_transfer_s response_transfer;
 

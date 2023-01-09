@@ -151,31 +151,31 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(cu_cp_pdcp_config pdc
 /// \return The RRC NR ASN.1 object where the result of the conversion is stored.
 inline asn1::rrc_nr::sdap_cfg_s sdap_config_to_rrc_asn1(cu_cp_sdap_config sdap_cfg)
 {
-  asn1::rrc_nr::sdap_cfg_s rrc_sdap_cfg;
+  asn1::rrc_nr::sdap_cfg_s asn1_sdap_cfg;
 
   // pdu session
-  rrc_sdap_cfg.pdu_session = sdap_cfg.pdu_session;
+  asn1_sdap_cfg.pdu_session = pdu_session_id_to_uint(sdap_cfg.pdu_session);
 
   // sdap hdr dl
-  asn1::string_to_enum(rrc_sdap_cfg.sdap_hdr_dl, sdap_cfg.sdap_hdr_dl);
+  asn1::string_to_enum(asn1_sdap_cfg.sdap_hdr_dl, sdap_cfg.sdap_hdr_dl);
 
   // sdap hdr ul
-  asn1::string_to_enum(rrc_sdap_cfg.sdap_hdr_ul, sdap_cfg.sdap_hdr_ul);
+  asn1::string_to_enum(asn1_sdap_cfg.sdap_hdr_ul, sdap_cfg.sdap_hdr_ul);
 
   // default drb
-  rrc_sdap_cfg.default_drb = sdap_cfg.default_drb;
+  asn1_sdap_cfg.default_drb = sdap_cfg.default_drb;
 
   // mapped qos flow to add
   for (const auto& mapped_qps_flow_to_add : sdap_cfg.mapped_qos_flows_to_add) {
-    rrc_sdap_cfg.mapped_qos_flows_to_add.push_back(mapped_qps_flow_to_add);
+    asn1_sdap_cfg.mapped_qos_flows_to_add.push_back(mapped_qps_flow_to_add);
   }
 
   // mapped qos flow to release
   for (const auto& mapped_qps_flow_to_release : sdap_cfg.mapped_qos_flows_to_release) {
-    rrc_sdap_cfg.mapped_qos_flows_to_release.push_back(mapped_qps_flow_to_release);
+    asn1_sdap_cfg.mapped_qos_flows_to_release.push_back(mapped_qps_flow_to_release);
   }
 
-  return rrc_sdap_cfg;
+  return asn1_sdap_cfg;
 }
 
 } // namespace srs_cu_cp

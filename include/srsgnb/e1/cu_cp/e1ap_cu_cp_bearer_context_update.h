@@ -154,7 +154,7 @@ struct e1ap_drb_to_setup_item_ng_ran {
 };
 
 struct e1ap_pdu_session_res_to_setup_item {
-  uint16_t                                   pdu_session_id;
+  pdu_session_id_t                           pdu_session_id = pdu_session_id_t::invalid;
   std::string                                pdu_session_type;
   cu_cp_s_nssai                              snssai;
   up_transport_layer_info                    ng_ul_up_tnl_info;
@@ -230,7 +230,7 @@ struct e1ap_drb_failed_item_ng_ran {
 };
 
 struct e1ap_pdu_session_resource_setup_modification_item {
-  uint16_t                                 pdu_session_id;
+  pdu_session_id_t                         pdu_session_id = pdu_session_id_t::invalid;
   up_transport_layer_info                  ng_dl_up_tnl_info;
   std::vector<e1ap_drb_setup_item_ng_ran>  drb_setup_list_ng_ran  = {};
   std::vector<e1ap_drb_failed_item_ng_ran> drb_failed_list_ng_ran = {};
@@ -240,8 +240,8 @@ struct e1ap_pdu_session_resource_setup_modification_item {
 };
 
 struct e1ap_pdu_session_resource_failed_item {
-  uint16_t      pdu_session_id;
-  cu_cp_cause_t cause;
+  pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
+  cu_cp_cause_t    cause;
 };
 
 struct e1ap_crit_diagnostics_item {
@@ -283,7 +283,7 @@ struct e1ap_drb_to_setup_mod_item_ng_ran {
 };
 
 struct e1ap_pdu_session_res_to_setup_mod_item {
-  uint16_t                                       pdu_session_id;
+  pdu_session_id_t                               pdu_session_id = pdu_session_id_t::invalid;
   std::string                                    pdu_session_type;
   cu_cp_s_nssai                                  snssai;
   e1ap_security_ind                              security_ind;
@@ -309,7 +309,7 @@ struct e1ap_drb_to_modify_item_ng_ran {
 };
 
 struct e1ap_pdu_session_res_to_modify_item {
-  uint16_t                                    pdu_session_id;
+  pdu_session_id_t                            pdu_session_id = pdu_session_id_t::invalid;
   optional<e1ap_security_ind>                 security_ind;
   optional<uint64_t>                          pdu_session_res_dl_ambr;
   optional<up_transport_layer_info>           ng_ul_up_tnl_info;
@@ -354,7 +354,7 @@ struct e1ap_drb_modified_item_ng_ran {
 };
 
 struct e1ap_pdu_session_resource_modified_item {
-  uint16_t                                   pdu_session_id;
+  pdu_session_id_t                           pdu_session_id = pdu_session_id_t::invalid;
   up_transport_layer_info                    ng_dl_up_tnl_info;
   std::vector<e1ap_drb_setup_item_ng_ran>    drb_setup_list_ng_ran            = {};
   std::vector<e1ap_drb_failed_item_ng_ran>   drb_failed_list_ng_ran           = {};

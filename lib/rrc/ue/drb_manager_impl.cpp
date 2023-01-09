@@ -114,11 +114,11 @@ cu_cp_pdcp_config drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
   return pdcp_cfg;
 }
 
-uint16_t drb_manager_impl::get_pdu_session_id(const drb_id_t drb_id)
+pdu_session_id_t drb_manager_impl::get_pdu_session_id(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
-    return {};
+    return pdu_session_id_t::invalid;
   }
   return drbs[drb_id].pdu_session_id;
 }
@@ -132,7 +132,7 @@ std::vector<uint8_t> drb_manager_impl::get_mapped_qos_flows(const drb_id_t drb_i
   return drbs[drb_id].mapped_qos_flows;
 }
 
-std::vector<uint8_t> drb_manager_impl::get_mapped_qos_flows(const uint16_t pdu_session_id)
+std::vector<uint8_t> drb_manager_impl::get_mapped_qos_flows(const pdu_session_id_t pdu_session_id)
 {
   std::vector<uint8_t> mapped_flows;
 
