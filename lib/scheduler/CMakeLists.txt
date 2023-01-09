@@ -20,6 +20,7 @@ set(SOURCES
         pucch_scheduling/pucch_guardbands_scheduler.cpp
         uci_scheduling/uci_scheduler_impl.cpp
         uci_scheduling/uci_allocator_impl.cpp
+        support/pdcch/pdcch_type0_helpers.cpp
         support/pdsch/pdsch_default_time_allocation.cpp
         support/pdsch/pdsch_dmrs_symbol_mask.cpp
         support/pucch/pucch_default_resource.cpp

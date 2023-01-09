@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../common_scheduling/paging_scheduler.h"
 #include "../common_scheduling/prach_scheduler.h"
 #include "../common_scheduling/ra_scheduler.h"
 #include "../common_scheduling/sib_scheduler.h"
@@ -39,7 +40,8 @@ public:
     pucch_alloc(cell_cfg),
     uci_alloc(pucch_alloc),
     sib1_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
-    pucch_guard_sch(cell_cfg)
+    pucch_guard_sch(cell_cfg),
+    pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
   {
   }
 
@@ -61,6 +63,7 @@ public:
   uci_allocator_impl            uci_alloc;
   sib1_scheduler                sib1_sch;
   pucch_guardbands_scheduler    pucch_guard_sch;
+  paging_scheduler              pg_sch;
 };
 
 class scheduler_cell_manager

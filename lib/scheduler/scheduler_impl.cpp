@@ -120,6 +120,9 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   // > Schedule RARs and Msg3.
   cell.ra_sch.run_slot(cell.res_grid);
 
+  // > Schedule Paging.
+  cell.pg_sch.schedule_paging(cell.res_grid[0], sl_tx);
+
   // > Schedule UE DL and UL data.
   ue_sched->run_slot(sl_tx, cell_index);
 

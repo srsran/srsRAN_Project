@@ -423,7 +423,7 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
               : first_pmo_of_po[po_idx];
       srsgnb_assert(pmo_idx < pdcch_monitoring_occasions.size(),
                     "Not enough PDCCH Monitoring Occasions for Paging Occasion");
-      type2_pdcch_css_slots[i_ssb][po_idx] = pdcch_monitoring_occasions[pmo_idx];
+      type2_pdcch_css_slots[i_ssb].push_back(pdcch_monitoring_occasions[pmo_idx]);
     }
   }
 }
