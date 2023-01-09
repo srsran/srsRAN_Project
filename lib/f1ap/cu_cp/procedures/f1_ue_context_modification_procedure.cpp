@@ -31,7 +31,8 @@ void f1_ue_context_modification_procedure::operator()(
 {
   CORO_BEGIN(ctx);
 
-  transaction_receiver = ev_mng.ue_context_modify_transaction_channel.create_transaction();
+  // Subscribe to respective publisher to receive UE CONTEXT MODIFICATION RESPONSE/FAILURE message.
+  transaction_receiver.subscribe_to(ev_mng.ue_context_modify_transaction_channel);
 
   // Send command to DU.
   send_ue_context_modification_request();

@@ -9,8 +9,8 @@
  */
 
 #include "srsgnb/support/async/eager_async_task.h"
-#include "srsgnb/support/async/protocol_transaction_channel.h"
 #include "srsgnb/support/async/protocol_transaction_manager.h"
+#include "srsgnb/support/async/protocol_transaction_publisher.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -123,28 +123,46 @@ TEST_F(protocol_transaction_test,
 class protocol_transaction_channel_test : public ::testing::Test
 {
 protected:
-  timer_manager                     timers{1};
-  protocol_transaction_channel<int> transaction_manager{timers, -1};
+  timer_manager                       timers{1};
+  protocol_transaction_publisher<int> transaction_channel{timers, -1};
 };
 
-TEST_F(protocol_transaction_channel_test, when_transaction_is_created_then_it_starts_incomplete)
+TEST_F(protocol_transaction_channel_test, when_transaction_subscriber_is_created_then_it_starts_unregistered)
 {
-  protocol_transaction_receiver<int> tr = transaction_manager.create_transaction();
+  protocol_transaction_subscriber<int> tr;
+  ASSERT_FALSE(tr.has_publisher());
+}
+
+TEST_F(protocol_transaction_channel_test, when_no_events_have_been_set_then_subscriber_is_not_complete)
+{
+  protocol_transaction_subscriber<int> tr;
+  tr.subscribe_to(transaction_channel);
   ASSERT_FALSE(tr.complete());
 }
 
-#ifdef ASSERTS_ENABLED
-TEST_F(protocol_transaction_channel_test,
-       when_transaction_is_created_twice_then_coroutine_awaiting_first_transaction_is_cancelled)
+TEST_F(protocol_transaction_channel_test, when_publisher_is_triggered_then_subscriber_receives_result)
 {
-  protocol_transaction_receiver<int> tr = transaction_manager.create_transaction();
-  eager_async_task<int>              t  = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
+  protocol_transaction_subscriber<int> tr;
+  tr.subscribe_to(transaction_channel);
+
+  transaction_channel.set(2);
+  ASSERT_TRUE(tr.complete());
+  ASSERT_EQ(tr.result(), 2);
+}
+
+#ifdef ASSERTS_ENABLED
+TEST_F(protocol_transaction_channel_test, only_one_subscriber_per_publisher_allowed)
+{
+  protocol_transaction_subscriber<int> tr, tr2;
+  tr.subscribe_to(transaction_channel);
+
+  eager_async_task<int> t = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT(tr);
     CORO_RETURN(tr.result());
   });
 
   ASSERT_FALSE(t.ready());
-  ASSERT_DEATH(protocol_transaction_receiver<int> tr2 = transaction_manager.create_transaction(), ".*");
+  ASSERT_DEATH(tr2.subscribe_to(transaction_channel), ".*");
 }
 #endif
