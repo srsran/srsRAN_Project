@@ -49,7 +49,7 @@ struct dlsch_information {
   /// Number of encoded and rate-matched DL-SCH data bits.
   units::bits nof_dl_sch_bits;
 
-  /// \brief Calculates the effective code rate normalised between 0 and 1.
+  /// \brief Calculates the effective code rate normalized between 0 and 1.
   ///
   /// The effective code rate is determined as the quotient of the number of information bits plus CRCs and the total
   /// number of channel bits.

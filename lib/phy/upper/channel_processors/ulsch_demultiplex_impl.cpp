@@ -45,7 +45,7 @@ unsigned get_ulsch_demultiplex_nof_re_prb_dmrs(dmrs_type dmrs_, unsigned nof_cdm
 {
   dmrs_config_type dmrs = (dmrs_ == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
 
-  // Check DM-RS number of CDM groups without data is valid.
+  // Check whether the number of CDM groups without data is valid.
   srsgnb_assert(nof_cdm_groups_without_data >= 1 &&
                     nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs),
                 "The number of CDM groups without data (i.e., {}) exceeds the maximum (i.e., {}).",

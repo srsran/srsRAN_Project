@@ -80,7 +80,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   // Get shared channel parameters.
   result.sch = get_sch_segmentation_info(config.tbs, config.mcs_descr.get_normalised_target_code_rate());
 
-  // Check DM-RS number of CDM groups without data is valid.
+  // Check whether the number of CDM groups without data is valid.
   srsgnb_assert(config.nof_cdm_groups_without_data >= 1 &&
                     config.nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(config.dmrs_type),
                 "The number of CDM groups without data (i.e., {}) is invalid (min. 1, max. {}).",

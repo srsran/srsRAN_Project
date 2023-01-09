@@ -83,7 +83,7 @@ struct ulsch_information {
   /// Number of resource elements occupied by CSI Part 1 information. Parameter \f$Q'_\textup{CSI-2}\f$.
   unsigned nof_csi_part2_re;
 
-  /// \brief Calculates the effective code rate normalised between 0 and 1.
+  /// \brief Calculates the effective code rate normalized between 0 and 1.
   ///
   /// The effective code rate is determined as the quotient of the number of information bits plus CRCs and the total
   /// number of channel bits.
