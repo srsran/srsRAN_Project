@@ -34,7 +34,7 @@ inline pdcp_config make_pdcp_drb_config(const asn1::e1ap::pdcp_cfg_s& e1ap_cfg)
     cfg.tx.rlc_mode = pdcp_rlc_mode::am;
     cfg.rx.rlc_mode = pdcp_rlc_mode::am;
   } else {
-    srsgnb_assertion_failure("Unsupported RLC mode for DRB. RLC mode={}", e1ap_cfg.rlc_mode);
+    report_fatal_error("Unsupported RLC mode for DRB. RLC mode={}", e1ap_cfg.rlc_mode);
   }
 
   // SN size
@@ -43,14 +43,14 @@ inline pdcp_config make_pdcp_drb_config(const asn1::e1ap::pdcp_cfg_s& e1ap_cfg)
   } else if (e1ap_cfg.pdcp_sn_size_dl == asn1::e1ap::pdcp_sn_size_opts::options::s_neg18) {
     cfg.tx.sn_size = pdcp_sn_size::size18bits;
   } else {
-    srsgnb_assertion_failure("Unsupported PDCP SN size for DRB DL. PDCP SN size={}", e1ap_cfg.pdcp_sn_size_dl);
+    report_fatal_error("Unsupported PDCP SN size for DRB DL. PDCP SN size={}", e1ap_cfg.pdcp_sn_size_dl);
   }
   if (e1ap_cfg.pdcp_sn_size_ul == asn1::e1ap::pdcp_sn_size_opts::options::s_neg12) {
     cfg.rx.sn_size = pdcp_sn_size::size12bits;
   } else if (e1ap_cfg.pdcp_sn_size_ul == asn1::e1ap::pdcp_sn_size_opts::options::s_neg18) {
     cfg.rx.sn_size = pdcp_sn_size::size18bits;
   } else {
-    srsgnb_assertion_failure("Unsupported PDCP SN size for DRB UL. PDCP SN size={}", e1ap_cfg.pdcp_sn_size_ul);
+    report_fatal_error("Unsupported PDCP SN size for DRB UL. PDCP SN size={}", e1ap_cfg.pdcp_sn_size_ul);
   }
 
   // Direction
@@ -120,8 +120,7 @@ inline pdcp_config make_pdcp_drb_config(const asn1::e1ap::pdcp_cfg_s& e1ap_cfg)
         cfg.tx.discard_timer = pdcp_discard_timer::infinity;
         break;
       default:
-        srsgnb_assertion_failure("Unsupported PDCP discard tiemr. PDCP discard timer={}",
-                                 e1ap_cfg.discard_timer.to_string());
+        report_fatal_error("Unsupported PDCP discard timer. PDCP discard timer={}", e1ap_cfg.discard_timer.to_string());
     }
 
     // Status report required
@@ -245,8 +244,8 @@ inline pdcp_config make_pdcp_drb_config(const asn1::e1ap::pdcp_cfg_s& e1ap_cfg)
         cfg.rx.t_reordering = pdcp_t_reordering::ms3000;
         break;
       default:
-        srsgnb_assertion_failure("Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}",
-                                 e1ap_cfg.t_reordering_timer.t_reordering.to_string());
+        report_fatal_error("Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}",
+                           e1ap_cfg.t_reordering_timer.t_reordering.to_string());
     }
   }
   return cfg;
