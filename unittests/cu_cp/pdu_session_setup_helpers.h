@@ -35,7 +35,7 @@ cu_cp_pdu_session_resource_setup_message fill_res_setup_request()
   item.pdu_session_type                          = "ipv4";
 
   qos_flow_setup_request_item qos_item;
-  qos_item.qos_flow_id                                   = 1;
+  qos_item.qos_flow_id                                   = uint_to_qos_flow_id(1);
   qos_item.qos_characteristics.is_dynamic_5qi            = false;
   qos_item.qos_characteristics.five_qi                   = 9;
   qos_item.qos_characteristics.prio_level_arp            = 8;

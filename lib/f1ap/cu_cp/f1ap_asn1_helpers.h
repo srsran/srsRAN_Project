@@ -75,10 +75,10 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
     }
 
     for (const auto& qos_flow : drb_to_be_setup.qos_flows_mapped_to_drb) {
-      asn1::f1ap::flows_mapped_to_drb_item_s new_item;
-      new_item.qos_flow_id               = qos_flow.qos_flow_id;
-      new_item.qos_flow_level_qos_params = drb_info.drb_qos;
-      drb_info.flows_mapped_to_drb_list.push_back(new_item);
+      asn1::f1ap::flows_mapped_to_drb_item_s asn1_flow;
+      asn1_flow.qos_flow_id               = qos_flow_id_to_uint(qos_flow.qos_flow_id);
+      asn1_flow.qos_flow_level_qos_params = drb_info.drb_qos;
+      drb_info.flows_mapped_to_drb_list.push_back(asn1_flow);
     }
 
     f1c_request->drbs_to_be_setup_mod_list.value.push_back(f1ap_setup_item);

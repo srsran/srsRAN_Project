@@ -36,10 +36,10 @@ public:
   virtual cu_cp_sdap_config get_sdap_config(const drb_id_t drb_id) = 0;
 
   /// \brief Return list of QoS flow IDs mapped on a given DRB.
-  virtual std::vector<uint8_t> get_mapped_qos_flows(const drb_id_t drb_id) = 0;
+  virtual std::vector<qos_flow_id_t> get_mapped_qos_flows(const drb_id_t drb_id) = 0;
 
   /// \brief Return list of QoS flow IDs of a given PDU session.
-  virtual std::vector<uint8_t> get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) = 0;
+  virtual std::vector<qos_flow_id_t> get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) = 0;
 
   /// \brief Return PDU session ID for a given DRB.
   virtual pdu_session_id_t get_pdu_session_id(const drb_id_t drb_id) = 0;

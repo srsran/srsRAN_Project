@@ -79,30 +79,30 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
     const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_setup_item_su_req_s, 1U, 256U, true>&
         pdu_session_res_setup_su_req)
 {
-  for (auto ngap_session_item : pdu_session_res_setup_su_req) {
+  for (auto asn1_session_item : pdu_session_res_setup_su_req) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
     // pDUSessionID
-    setup_item.pdu_session_id = uint_to_pdu_session_id(ngap_session_item.pdu_session_id);
+    setup_item.pdu_session_id = uint_to_pdu_session_id(asn1_session_item.pdu_session_id);
 
     // pDUSessionNAS-PDU
-    if (!ngap_session_item.pdu_session_nas_pdu.empty()) {
-      setup_item.pdu_session_nas_pdu.resize(ngap_session_item.pdu_session_nas_pdu.size());
-      std::copy(ngap_session_item.pdu_session_nas_pdu.begin(),
-                ngap_session_item.pdu_session_nas_pdu.end(),
+    if (!asn1_session_item.pdu_session_nas_pdu.empty()) {
+      setup_item.pdu_session_nas_pdu.resize(asn1_session_item.pdu_session_nas_pdu.size());
+      std::copy(asn1_session_item.pdu_session_nas_pdu.begin(),
+                asn1_session_item.pdu_session_nas_pdu.end(),
                 setup_item.pdu_session_nas_pdu.begin());
     }
 
     // s-NSSAI
-    if (ngap_session_item.s_nssai.sd_present) {
-      setup_item.s_nssai.sd = ngap_session_item.s_nssai.sd.to_number();
+    if (asn1_session_item.s_nssai.sd_present) {
+      setup_item.s_nssai.sd = asn1_session_item.s_nssai.sd.to_number();
     }
-    setup_item.s_nssai.sst = ngap_session_item.s_nssai.sst.to_number();
+    setup_item.s_nssai.sst = asn1_session_item.s_nssai.sst.to_number();
 
     // pDUSessionResourceSetupRequestTransfer
     asn1::ngap::pdu_session_res_setup_request_transfer_s setup_req_transfer;
-    asn1::cbit_ref bref({ngap_session_item.pdu_session_res_setup_request_transfer.begin(),
-                         ngap_session_item.pdu_session_res_setup_request_transfer.end()});
+    asn1::cbit_ref bref({asn1_session_item.pdu_session_res_setup_request_transfer.begin(),
+                         asn1_session_item.pdu_session_res_setup_request_transfer.end()});
 
     if (setup_req_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
       //   logger.error("Couldn't unpack PDU Session Resource Setup Request Transfer PDU");
@@ -122,55 +122,55 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
     setup_item.pdu_session_type = setup_req_transfer->pdu_session_type.value.to_string();
 
     // id-QosFlowSetupRequestList
-    for (auto ngap_flow_item : setup_req_transfer->qos_flow_setup_request_list.value) {
+    for (auto asn1_flow_item : setup_req_transfer->qos_flow_setup_request_list.value) {
       qos_flow_setup_request_item qos_flow_setup_req_item;
 
       // qosFlowIdentifier
-      qos_flow_setup_req_item.qos_flow_id = ngap_flow_item.qos_flow_id;
+      qos_flow_setup_req_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
 
       // qosFlowLevelQosParameters
-      if (ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
+      if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
           asn1::ngap::qos_characteristics_c::types::dyn5qi) {
         qos_flow_setup_req_item.qos_characteristics.is_dynamic_5qi = true;
         qos_flow_setup_req_item.qos_characteristics.five_qi =
-            ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi;
+            asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi;
 
         // TODO: ADD optional values
 
-      } else if (ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
+      } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
                  asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
         qos_flow_setup_req_item.qos_characteristics.is_dynamic_5qi = false;
         qos_flow_setup_req_item.qos_characteristics.five_qi =
-            ngap_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi;
+            asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi;
 
         // TODO: ADD optional values
       }
 
       // allocationAndRetentionPriority
       qos_flow_setup_req_item.qos_characteristics.prio_level_arp =
-          ngap_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
+          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
       qos_flow_setup_req_item.qos_characteristics.pre_emption_cap =
-          ngap_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
+          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
       qos_flow_setup_req_item.qos_characteristics.pre_emption_vulnerability =
-          ngap_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
+          asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
 
       // Optional Parameters
-      if (ngap_flow_item.qos_flow_level_qos_params.add_qos_flow_info_present) {
+      if (asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info_present) {
         qos_flow_setup_req_item.add_qos_flow_info.value() =
-            ngap_flow_item.qos_flow_level_qos_params.add_qos_flow_info.to_string();
+            asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info.to_string();
       }
 
-      if (ngap_flow_item.qos_flow_level_qos_params.gbr_qos_info_present) {
+      if (asn1_flow_item.qos_flow_level_qos_params.gbr_qos_info_present) {
         // TODO: Add to common type
       }
 
-      if (ngap_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
+      if (asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
         qos_flow_setup_req_item.reflective_qos_attribute.value() =
-            ngap_flow_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
+            asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
       }
 
-      if (ngap_flow_item.erab_id_present) {
-        qos_flow_setup_req_item.erab_id.value() = ngap_flow_item.erab_id;
+      if (asn1_flow_item.erab_id_present) {
+        qos_flow_setup_req_item.erab_id.value() = asn1_flow_item.erab_id;
       }
 
       setup_item.qos_flow_setup_request_items.push_back(qos_flow_setup_req_item);

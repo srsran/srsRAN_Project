@@ -86,13 +86,13 @@ struct e1ap_qos_flow_level_qos_params {
 };
 
 struct e1ap_qos_flow_qos_param_item {
-  uint8_t                        qos_flow_id;
+  qos_flow_id_t                  qos_flow_id = qos_flow_id_t::invalid;
   e1ap_qos_flow_level_qos_params qos_flow_level_qos_params;
   optional<std::string>          qos_flow_map_ind;
 };
 
 struct e1ap_qos_flow_map_item {
-  uint8_t               qos_flow_id;
+  qos_flow_id_t         qos_flow_id = qos_flow_id_t::invalid;
   optional<std::string> qos_flow_map_ind;
 };
 
@@ -203,11 +203,11 @@ struct e1ap_up_params_item {
 };
 
 struct e1ap_qos_flow_item {
-  uint8_t qos_flow_id;
+  qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
 };
 
 struct e1ap_qos_flow_failed_item {
-  uint8_t       qos_flow_id;
+  qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
   cu_cp_cause_t cause;
 };
 

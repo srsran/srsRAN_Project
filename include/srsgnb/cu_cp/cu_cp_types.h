@@ -175,6 +175,24 @@ constexpr inline pdu_session_id_t uint_to_pdu_session_id(uint16_t idx)
   return static_cast<pdu_session_id_t>(idx);
 }
 
+// See TS 38.463 Section 9.3.1.24: QoS Flow ID valid values: (0..63)
+constexpr static uint8_t MAX_NOF_QOS_FLOWS = 64;
+
+/// \brief QoS Flow ID.
+/// \remark See TS 38.463 Section 9.3.1.21: QoS Flow ID valid values: (0..63)
+enum class qos_flow_id_t : uint8_t { min = 0, max = MAX_NOF_QOS_FLOWS - 1, invalid = MAX_NOF_QOS_FLOWS };
+
+constexpr inline uint8_t qos_flow_id_to_uint(qos_flow_id_t id)
+{
+  return static_cast<uint8_t>(id);
+}
+
+/// Convert integer to QoS Flow ID type.
+constexpr inline qos_flow_id_t uint_to_qos_flow_id(uint8_t idx)
+{
+  return static_cast<qos_flow_id_t>(idx);
+}
+
 enum class cu_cp_cause_t : uint8_t {
   radio_network = 0,
   transport     = 1,
@@ -247,12 +265,12 @@ struct cu_cp_pdcp_config {
 };
 
 struct cu_cp_sdap_config {
-  pdu_session_id_t     pdu_session = pdu_session_id_t::invalid;
-  std::string          sdap_hdr_dl;
-  std::string          sdap_hdr_ul;
-  bool                 default_drb                 = false;
-  std::vector<uint8_t> mapped_qos_flows_to_add     = {};
-  std::vector<uint8_t> mapped_qos_flows_to_release = {};
+  pdu_session_id_t           pdu_session = pdu_session_id_t::invalid;
+  std::string                sdap_hdr_dl;
+  std::string                sdap_hdr_ul;
+  bool                       default_drb                 = false;
+  std::vector<qos_flow_id_t> mapped_qos_flows_to_add     = {};
+  std::vector<qos_flow_id_t> mapped_qos_flows_to_release = {};
 };
 
 struct cu_cp_qos_characteristics {
@@ -264,7 +282,7 @@ struct cu_cp_qos_characteristics {
 };
 
 struct qos_flow_setup_request_item {
-  uint8_t                   qos_flow_id;
+  qos_flow_id_t             qos_flow_id = qos_flow_id_t::invalid;
   cu_cp_qos_characteristics qos_characteristics;
   optional<uint8_t>         erab_id;
   optional<std::string>     add_qos_flow_info;
@@ -295,12 +313,12 @@ struct cu_cp_pdu_session_resource_setup_message {
 };
 
 struct cu_cp_associated_qos_flow {
-  uint8_t               qos_flow_id;
+  qos_flow_id_t         qos_flow_id = qos_flow_id_t::invalid;
   optional<std::string> qos_flow_map_ind;
 };
 
 struct cu_cp_qos_flow_failed_to_setup_item {
-  uint8_t       qos_flow_id;
+  qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
   cu_cp_cause_t cause;
 };
 

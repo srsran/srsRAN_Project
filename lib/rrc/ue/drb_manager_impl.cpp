@@ -123,7 +123,7 @@ pdu_session_id_t drb_manager_impl::get_pdu_session_id(const drb_id_t drb_id)
   return drbs[drb_id].pdu_session_id;
 }
 
-std::vector<uint8_t> drb_manager_impl::get_mapped_qos_flows(const drb_id_t drb_id)
+std::vector<qos_flow_id_t> drb_manager_impl::get_mapped_qos_flows(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
@@ -132,9 +132,9 @@ std::vector<uint8_t> drb_manager_impl::get_mapped_qos_flows(const drb_id_t drb_i
   return drbs[drb_id].mapped_qos_flows;
 }
 
-std::vector<uint8_t> drb_manager_impl::get_mapped_qos_flows(const pdu_session_id_t pdu_session_id)
+std::vector<qos_flow_id_t> drb_manager_impl::get_mapped_qos_flows(const pdu_session_id_t pdu_session_id)
 {
-  std::vector<uint8_t> mapped_flows;
+  std::vector<qos_flow_id_t> mapped_flows;
 
   for (const auto& drb : drbs) {
     if (drb.second.pdu_session_id == pdu_session_id) {

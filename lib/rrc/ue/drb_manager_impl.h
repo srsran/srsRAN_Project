@@ -18,11 +18,11 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct drb_context {
-  srsgnb::drb_id_t     drb_id         = drb_id_t::invalid;
-  pdu_session_id_t     pdu_session_id = pdu_session_id_t::min;
-  bool                 default_drb    = false;
-  uint16_t             five_qi        = 0;
-  std::vector<uint8_t> mapped_qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
+  srsgnb::drb_id_t           drb_id         = drb_id_t::invalid;
+  pdu_session_id_t           pdu_session_id = pdu_session_id_t::min;
+  bool                       default_drb    = false;
+  uint16_t                   five_qi        = 0;
+  std::vector<qos_flow_id_t> mapped_qos_flows; // QoS flow IDs of all QoS flows mapped to this DRB
 
   cu_cp_pdcp_config pdcp_cfg;
   cu_cp_sdap_config sdap_cfg;
@@ -35,13 +35,13 @@ public:
   drb_manager_impl(const drb_manager_cfg& cfg);
   ~drb_manager_impl() = default;
 
-  std::vector<drb_id_t> calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_message& pdu) override;
-  cu_cp_pdcp_config     get_pdcp_config(const drb_id_t drb_id) override;
-  cu_cp_sdap_config     get_sdap_config(const drb_id_t drb_id) override;
-  std::vector<uint8_t>  get_mapped_qos_flows(const drb_id_t drb_id) override;
-  std::vector<uint8_t>  get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) override;
-  pdu_session_id_t      get_pdu_session_id(const drb_id_t drb_id) override;
-  size_t                get_nof_drbs() override;
+  std::vector<drb_id_t>      calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_message& pdu) override;
+  cu_cp_pdcp_config          get_pdcp_config(const drb_id_t drb_id) override;
+  cu_cp_sdap_config          get_sdap_config(const drb_id_t drb_id) override;
+  std::vector<qos_flow_id_t> get_mapped_qos_flows(const drb_id_t drb_id) override;
+  std::vector<qos_flow_id_t> get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) override;
+  pdu_session_id_t           get_pdu_session_id(const drb_id_t drb_id) override;
+  size_t                     get_nof_drbs() override;
 
 private:
   drb_id_t allocate_drb_id(); // allocates a new DRB ID and returns it

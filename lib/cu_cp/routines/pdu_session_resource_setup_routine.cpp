@@ -180,7 +180,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
               .ng_dl_up_tnl_info;
 
       cu_cp_associated_qos_flow qos_flow;
-      qos_flow.qos_flow_id = 1;
+      qos_flow.qos_flow_id = uint_to_qos_flow_id(1);
       transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.push_back(qos_flow);
 
       response_msg.pdu_session_res_setup_response_items.push_back(item);

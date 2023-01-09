@@ -49,23 +49,23 @@ cu_cp_security_result_to_ngap_security_result(cu_cp_security_result cu_cp_securi
 inline asn1::ngap::associated_qos_flow_item_s
 cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(cu_cp_associated_qos_flow cu_cp_qos_flow)
 {
-  asn1::ngap::associated_qos_flow_item_s ngap_assoc_qos_item;
+  asn1::ngap::associated_qos_flow_item_s asn1_assoc_qos_item;
 
-  ngap_assoc_qos_item.qos_flow_id = cu_cp_qos_flow.qos_flow_id;
+  asn1_assoc_qos_item.qos_flow_id = qos_flow_id_to_uint(cu_cp_qos_flow.qos_flow_id);
 
   if (cu_cp_qos_flow.qos_flow_map_ind.has_value()) {
-    ngap_assoc_qos_item.qos_flow_map_ind_present = true;
+    asn1_assoc_qos_item.qos_flow_map_ind_present = true;
 
     if (cu_cp_qos_flow.qos_flow_map_ind.value() == "ul") {
-      ngap_assoc_qos_item.qos_flow_map_ind.value =
+      asn1_assoc_qos_item.qos_flow_map_ind.value =
           asn1::ngap::associated_qos_flow_item_s::qos_flow_map_ind_opts::options::ul;
     } else {
-      ngap_assoc_qos_item.qos_flow_map_ind.value =
+      asn1_assoc_qos_item.qos_flow_map_ind.value =
           asn1::ngap::associated_qos_flow_item_s::qos_flow_map_ind_opts::options::dl;
     }
   }
 
-  return ngap_assoc_qos_item;
+  return asn1_assoc_qos_item;
 }
 
 /// @brief Convert CU-CP QoS Flow Per TNL Info to NGAP QoS Flow Per TNL Info.
@@ -124,11 +124,11 @@ inline asn1::ngap::cause_c cu_cp_cause_to_ngap_cause(cu_cp_cause_t cu_cp_cause)
 inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_item_to_ngap_qos_flow_with_cause_item(
     cu_cp_qos_flow_failed_to_setup_item cu_cp_failed_item)
 {
-  asn1::ngap::qos_flow_with_cause_item_s ngap_failed_item;
-  ngap_failed_item.qos_flow_id = cu_cp_failed_item.qos_flow_id;
-  ngap_failed_item.cause       = cu_cp_cause_to_ngap_cause(cu_cp_failed_item.cause);
+  asn1::ngap::qos_flow_with_cause_item_s asn1_failed_item;
+  asn1_failed_item.qos_flow_id = qos_flow_id_to_uint(cu_cp_failed_item.qos_flow_id);
+  asn1_failed_item.cause       = cu_cp_cause_to_ngap_cause(cu_cp_failed_item.cause);
 
-  return ngap_failed_item;
+  return asn1_failed_item;
 }
 
 } // namespace srs_cu_cp

@@ -167,12 +167,12 @@ inline asn1::rrc_nr::sdap_cfg_s sdap_config_to_rrc_asn1(cu_cp_sdap_config sdap_c
 
   // mapped qos flow to add
   for (const auto& mapped_qps_flow_to_add : sdap_cfg.mapped_qos_flows_to_add) {
-    asn1_sdap_cfg.mapped_qos_flows_to_add.push_back(mapped_qps_flow_to_add);
+    asn1_sdap_cfg.mapped_qos_flows_to_add.push_back(qos_flow_id_to_uint(mapped_qps_flow_to_add));
   }
 
   // mapped qos flow to release
   for (const auto& mapped_qps_flow_to_release : sdap_cfg.mapped_qos_flows_to_release) {
-    asn1_sdap_cfg.mapped_qos_flows_to_release.push_back(mapped_qps_flow_to_release);
+    asn1_sdap_cfg.mapped_qos_flows_to_release.push_back(qos_flow_id_to_uint(mapped_qps_flow_to_release));
   }
 
   return asn1_sdap_cfg;
