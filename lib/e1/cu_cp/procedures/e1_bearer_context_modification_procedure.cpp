@@ -56,12 +56,12 @@ e1_bearer_context_modification_procedure::create_bearer_context_modification_res
 
   if (bearer_ctxt_mod_outcome.has_value()) {
     logger.info("Received E1AP Bearer Context Modification Response.");
-    res.response = *bearer_ctxt_mod_outcome.value();
+    res.response = bearer_ctxt_mod_outcome.value();
     res.success  = true;
   } else {
     logger.info("Received E1AP Bearer Context Modification Failure. Cause: {}",
-                get_cause_str((*bearer_ctxt_mod_outcome.error())->cause.value));
-    res.failure = *bearer_ctxt_mod_outcome.error();
+                get_cause_str(bearer_ctxt_mod_outcome.error()->cause.value));
+    res.failure = bearer_ctxt_mod_outcome.error();
     res.success = false;
   }
   return res;

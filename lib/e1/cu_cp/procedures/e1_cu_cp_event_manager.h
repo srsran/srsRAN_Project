@@ -39,13 +39,13 @@ public:
 
   /// E1 Bearer Context Setup procedure outcome.
   using e1_bearer_context_setup_outcome_t =
-      expected<const asn1::e1ap::bearer_context_setup_resp_s*, const asn1::e1ap::bearer_context_setup_fail_s*>;
-  event_signal<e1_bearer_context_setup_outcome_t> e1ap_bearer_context_setup_outcome;
+      expected<asn1::e1ap::bearer_context_setup_resp_s, asn1::e1ap::bearer_context_setup_fail_s>;
+  manual_event<e1_bearer_context_setup_outcome_t> e1ap_bearer_context_setup_outcome;
 
   /// E1 Bearer Context Modification procedure outcome.
   using e1_bearer_context_modification_outcome_t =
-      expected<const asn1::e1ap::bearer_context_mod_resp_s*, const asn1::e1ap::bearer_context_mod_fail_s*>;
-  event_signal<e1_bearer_context_modification_outcome_t> e1ap_bearer_context_modification_outcome;
+      expected<asn1::e1ap::bearer_context_mod_resp_s, asn1::e1ap::bearer_context_mod_fail_s>;
+  manual_event<e1_bearer_context_modification_outcome_t> e1ap_bearer_context_modification_outcome;
 
   explicit e1_event_manager(timer_manager& timers) :
     transactions(timers, e1ap_outcome{asn1::e1ap::unsuccessful_outcome_s{}})

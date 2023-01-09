@@ -28,6 +28,8 @@ void e1_bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_
 {
   CORO_BEGIN(ctx);
 
+  ev_mng.e1ap_bearer_context_setup_outcome.reset();
+
   // Send command to CU-UP.
   send_bearer_context_setup_request();
 
@@ -56,20 +58,27 @@ e1ap_bearer_context_setup_response e1_bearer_context_setup_procedure::create_bea
 
   if (e1_bearer_ctxt_setup_outcome.has_value()) {
     logger.info("Received E1AP Bearer Context Setup Response.");
-    // Add CU-UP UE E1AP ID to UE context
-    ue_ctxt.cu_up_ue_e1ap_id =
-        int_to_gnb_cu_up_ue_e1ap_id((*e1_bearer_ctxt_setup_outcome.value())->gnb_cu_up_ue_e1ap_id.value);
-    fill_e1ap_bearer_context_setup_response(res, *e1_bearer_ctxt_setup_outcome.value());
-  } else {
-    logger.info("Received E1AP Bearer Context Setup Failure. Cause: {}",
-                get_cause_str((*e1_bearer_ctxt_setup_outcome.error())->cause.value));
+
+    if (logger.debug.enabled()) {
+      asn1::json_writer js;
+      e1_bearer_ctxt_setup_outcome.value().to_json(js);
+      logger.debug("Containerized Bearer Context Setup Response message: {}", js.to_string());
+    }
 
     // Add CU-UP UE E1AP ID to UE context
-    if ((*e1_bearer_ctxt_setup_outcome.error())->gnb_cu_up_ue_e1ap_id_present) {
+    ue_ctxt.cu_up_ue_e1ap_id =
+        int_to_gnb_cu_up_ue_e1ap_id(e1_bearer_ctxt_setup_outcome.value()->gnb_cu_up_ue_e1ap_id.value);
+    fill_e1ap_bearer_context_setup_response(res, e1_bearer_ctxt_setup_outcome.value());
+  } else {
+    logger.info("Received E1AP Bearer Context Setup Failure. Cause: {}",
+                get_cause_str(e1_bearer_ctxt_setup_outcome.error()->cause.value));
+
+    // Add CU-UP UE E1AP ID to UE context
+    if (e1_bearer_ctxt_setup_outcome.error()->gnb_cu_up_ue_e1ap_id_present) {
       ue_ctxt.cu_up_ue_e1ap_id =
-          int_to_gnb_cu_up_ue_e1ap_id((*e1_bearer_ctxt_setup_outcome.error())->gnb_cu_up_ue_e1ap_id.value);
+          int_to_gnb_cu_up_ue_e1ap_id(e1_bearer_ctxt_setup_outcome.error()->gnb_cu_up_ue_e1ap_id.value);
     }
-    fill_e1ap_bearer_context_setup_response(res, *e1_bearer_ctxt_setup_outcome.error());
+    fill_e1ap_bearer_context_setup_response(res, e1_bearer_ctxt_setup_outcome.error());
   }
 
   return res;
