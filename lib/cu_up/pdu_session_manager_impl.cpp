@@ -57,6 +57,8 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   // Allocate local TEID
   new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
 
+  pdu_session_result.gtp_tunnel.set_gtp_tunnel().gtp_teid.from_number(new_session->local_teid);
+
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {};
   sdap_msg.rx_sdu_notifier              = &new_session->sdap_to_gtpu_adapter;
@@ -116,6 +118,8 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     f1u_bearer* f1u_bearer =
         f1u_gw.create_cu_dl_bearer(dl_f1u_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
 
+    drb_result.gtp_tunnel.set_gtp_tunnel().gtp_teid.from_number(dl_f1u_teid);
+
     srsgnb_assert(drb.qos_flow_info_to_be_setup.size() <= 1,
                   "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS "
                   "flow per DRB!",
@@ -168,6 +172,11 @@ pdu_session_modification_result
 pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session)
 {
   pdu_session_modification_result pdu_session_result;
+
+  for (const auto& drb_to_mod : session.drb_to_modify_list_ng_ran) {
+    uint32_t dl_f1u_teid = allocate_local_f1u_teid(session.pdu_session_id, drb_to_mod.drb_id);
+    f1u_gw.attach_cu_ul_bearer(dl_f1u_teid, drb_to_mod.dl_up_params[0].up_tnl_info.gtp_tunnel().gtp_teid.to_number());
+  }
 
   return pdu_session_result;
 }

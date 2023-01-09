@@ -29,6 +29,7 @@ struct drb_setup_result {
   bool                               success;
   uint16_t                           drb_id;
   asn1::e1ap::cause_c                cause; // Cause if setup was unsuccessful.
+  asn1::e1ap::up_tnl_info_c          gtp_tunnel;
   std::vector<qos_flow_setup_result> qos_flow_results;
 };
 
@@ -37,6 +38,7 @@ struct pdu_session_setup_result {
   bool                          success;        // True if PDU session could be set up.
   uint8_t                       pdu_session_id; // The PDU session ID.
   asn1::e1ap::cause_c           cause;          // Cause if setup was unsuccessful.
+  asn1::e1ap::up_tnl_info_c     gtp_tunnel;
   std::vector<drb_setup_result> drb_setup_results;
 };
 

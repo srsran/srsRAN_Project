@@ -118,13 +118,15 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
 
       if (result.success) {
         asn1::e1ap::pdu_session_res_setup_item_s res_setup_item;
-        res_setup_item.pdu_session_id = result.pdu_session_id;
+        res_setup_item.pdu_session_id    = result.pdu_session_id;
+        res_setup_item.ng_dl_up_tnl_info = result.gtp_tunnel;
         for (const auto& drb_setup_item : result.drb_setup_results) {
           if (drb_setup_item.success) {
             asn1::e1ap::drb_setup_item_ng_ran_s asn1_drb_setup_item;
             asn1_drb_setup_item.drb_id = drb_setup_item.drb_id;
 
             asn1::e1ap::up_params_item_s asn1_up_param_item;
+            asn1_up_param_item.up_tnl_info = drb_setup_item.gtp_tunnel;
             asn1_drb_setup_item.ul_up_transport_params.push_back(asn1_up_param_item);
 
             for (const auto& flow_item : drb_setup_item.qos_flow_results) {
