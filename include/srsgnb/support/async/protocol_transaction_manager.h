@@ -69,7 +69,7 @@ public:
   /// \brief Creates a new protocol transaction with automatically assigned transaction ID.
   protocol_transaction<T> create_transaction() __attribute__((warn_unused_result))
   {
-    unsigned transaction_id = next_transaction_id.fetch_add(1, std::memory_order_relaxed);
+    unsigned transaction_id = next_transaction_id.fetch_add(1, std::memory_order_relaxed) % N;
     if (not transactions[transaction_id].is_set()) {
       // cancel any existing awaiter.
       set(transaction_id, cancel_value);

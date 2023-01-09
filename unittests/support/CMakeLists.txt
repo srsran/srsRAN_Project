@@ -51,7 +51,7 @@ target_link_libraries(bit_encoding_test srslog srsgnb_support)
 add_test(bit_encoding_test bit_encoding_test)
 
 add_executable(protocol_transaction_manager_test protocol_transaction_manager_test.cpp)
-target_link_libraries(protocol_transaction_manager_test srslog srsgnb_support)
+target_link_libraries(protocol_transaction_manager_test srslog srsgnb_support gtest gtest_main)
 add_test(protocol_transaction_manager_test protocol_transaction_manager_test)
 
 add_executable(ring_buffer_pool_test ring_buffer_pool_test.cpp)

@@ -15,110 +15,106 @@
 
 using namespace srsgnb;
 
-/// In this test, the transaction is completed successfully after the coroutine suspends.
-void test_protocol_transaction_success_trigger_after_suspend()
+class protocol_transaction_test : public ::testing::Test
 {
-  timer_manager                          timers;
-  protocol_transaction_manager<int, 128> transaction_manager(timers, -1);
+protected:
+  static constexpr size_t NOF_TRANSACTIONS = 128;
 
+  timer_manager                                       timers;
+  protocol_transaction_manager<int, NOF_TRANSACTIONS> transaction_manager{timers, -1};
+};
+
+TEST_F(protocol_transaction_test,
+       when_transactions_are_created_then_they_are_not_complete_and_have_consecutive_transaction_ids)
+{
+  // new transaction objects.
+  for (unsigned i = 0; i != NOF_TRANSACTIONS; ++i) {
+    protocol_transaction<int> tr = transaction_manager.create_transaction();
+    ASSERT_FALSE(tr.complete());
+    ASSERT_EQ(i, tr.id());
+  }
+
+  // reused transaction objects should start incomplete.
+  for (unsigned i = 0; i != NOF_TRANSACTIONS; ++i) {
+    protocol_transaction<int> tr = transaction_manager.create_transaction();
+    ASSERT_FALSE(tr.complete());
+    ASSERT_EQ(i, tr.id());
+  }
+}
+
+TEST_F(protocol_transaction_test, when_transaction_is_set_after_suspend_then_awaiting_coroutine_is_resumed)
+{
   protocol_transaction<int> tr = transaction_manager.create_transaction();
-  TESTASSERT(not tr.complete());
-  TESTASSERT_EQ(0, tr.id());
-
-  eager_async_task<int> t = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
+  eager_async_task<int>     t  = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
     CORO_BEGIN(ctx);
-    TESTASSERT(not tr.complete());
+    EXPECT_FALSE(tr.complete());
     CORO_AWAIT(tr);
-    TESTASSERT(tr.complete());
+    EXPECT_TRUE(tr.complete());
     CORO_RETURN(tr.result());
   });
 
-  // Test: Setting the result should resume the coroutine.
-  TESTASSERT(not t.ready());
+  // Test Section.
+  ASSERT_FALSE(t.ready());
   transaction_manager.set(tr.id(), 1);
-  TESTASSERT(t.ready());
-  TESTASSERT_EQ(1, tr.result());
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(1, tr.result());
 }
 
-/// In this test, the transaction is completed successfully before the coroutine suspends.
-void test_protocol_transaction_success_trigger_before_suspend()
+TEST_F(protocol_transaction_test, when_transaction_is_set_before_suspend_then_awaiting_coroutine_skips_suspension)
 {
-  timer_manager                          timers;
-  protocol_transaction_manager<int, 128> transaction_manager(timers, -1);
-
   protocol_transaction<int> tr = transaction_manager.create_transaction();
-  TESTASSERT(not tr.complete());
-  TESTASSERT_EQ(0, tr.id());
-
-  eager_async_task<int> t = launch_async([&tr, &transaction_manager](coro_context<eager_async_task<int>>& ctx) {
+  eager_async_task<int>     t  = launch_async([this, &tr](coro_context<eager_async_task<int>>& ctx) {
     CORO_BEGIN(ctx);
-    TESTASSERT(not tr.complete());
-    transaction_manager.set(tr.id(), 2);
+    EXPECT_FALSE(tr.complete());
+    // transaction set before await.
+    this->transaction_manager.set(tr.id(), 2);
     CORO_AWAIT(tr);
-    TESTASSERT(tr.complete());
+    EXPECT_TRUE(tr.complete());
     CORO_RETURN(tr.result());
   });
 
-  // Test: Setting the result should resume the coroutine.
-  TESTASSERT(t.ready());
-  TESTASSERT_EQ(2, tr.result());
+  // Test Section.
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(2, tr.result());
 }
 
-void test_protocol_transaction_different_id()
+TEST_F(protocol_transaction_test,
+       when_concurrent_transactions_are_created_then_coroutine_only_gets_resumed_when_respective_transaction_id_is_set)
 {
-  timer_manager                          timers;
-  protocol_transaction_manager<int, 128> transaction_manager(timers, -1);
-
   protocol_transaction<int> tr  = transaction_manager.create_transaction();
   protocol_transaction<int> tr2 = transaction_manager.create_transaction();
-  TESTASSERT(not tr.complete());
-  TESTASSERT(not tr2.complete());
-  TESTASSERT_EQ(0, tr.id());
-  TESTASSERT_EQ(1, tr2.id());
-
-  eager_async_task<int> t = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
+  eager_async_task<int>     t   = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT(tr);
     CORO_RETURN(tr.result());
   });
 
-  // Test: Setting the result for a different transaction id should not resume the coroutine.
-  TESTASSERT(not t.ready());
+  // Test Section.
+  ASSERT_FALSE(t.ready());
   transaction_manager.set(tr2.id(), 1);
-  TESTASSERT(not t.ready());
+  ASSERT_FALSE(t.ready());
   transaction_manager.set(tr.id(), 2);
-  TESTASSERT(t.ready());
+  ASSERT_TRUE(t.ready());
 }
 
-void test_protocol_transaction_timeout()
+TEST_F(protocol_transaction_test,
+       when_transaction_is_created_with_timeout_then_transaction_is_automatically_cancelled_on_timeout)
 {
-  const unsigned                         timeout = 10;
-  timer_manager                          timers;
-  protocol_transaction_manager<int, 128> transaction_manager(timers, -1);
+  const unsigned timeout = 10;
 
   protocol_transaction<int> tr = transaction_manager.create_transaction(timeout);
-  TESTASSERT(not tr.complete());
-  TESTASSERT_EQ(0, tr.id());
-
+  ASSERT_FALSE(tr.complete());
   eager_async_task<int> t = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT(tr);
     CORO_RETURN(tr.result());
   });
 
-  // Test: Coroutine is suspended until transaction timeout.
+  // Test Section.
   for (unsigned i = 0; i < timeout; ++i) {
-    TESTASSERT(not t.ready());
+    ASSERT_FALSE(t.ready());
     timers.tick_all();
   }
-  TESTASSERT(t.ready());
-  TESTASSERT_EQ(-1, t.get());
-}
-
-int main()
-{
-  test_protocol_transaction_success_trigger_after_suspend();
-  test_protocol_transaction_success_trigger_before_suspend();
-  test_protocol_transaction_different_id();
-  test_protocol_transaction_timeout();
+  ASSERT_TRUE(t.ready());
+  ASSERT_EQ(-1, t.get());
 }
