@@ -8,7 +8,7 @@
  *
  */
 
-#include "ue_paging_scheduler.h"
+#include "paging_scheduler.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
@@ -19,10 +19,10 @@
 
 using namespace srsgnb;
 
-ue_paging_scheduler::ue_paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
-                                         const cell_configuration&                       cell_cfg_,
-                                         pdcch_resource_allocator&                       pdcch_sch_,
-                                         const sched_cell_configuration_request_message& msg) :
+paging_scheduler::paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
+                                   const cell_configuration&                       cell_cfg_,
+                                   pdcch_resource_allocator&                       pdcch_sch_,
+                                   const sched_cell_configuration_request_message& msg) :
   expert_cfg(expert_cfg_), cell_cfg(cell_cfg_), pdcch_sch(pdcch_sch_), logger(srslog::fetch_basic_logger("MAC"))
 {
   switch (cell_cfg.dl_cfg_common.pcch_cfg.default_paging_cycle) {
@@ -116,7 +116,7 @@ ue_paging_scheduler::ue_paging_scheduler(const scheduler_expert_config&         
   }
 }
 
-void ue_paging_scheduler::schedule_paging(cell_slot_resource_allocator& res_grid, slot_point sl_point)
+void paging_scheduler::schedule_paging(cell_slot_resource_allocator& res_grid, slot_point sl_point)
 {
   // NOTE:
   // - [Implementation defined] The pagingSearchSpace (in PDCCH-Common IE) value in UE's active BWP must be taken into
@@ -166,17 +166,17 @@ void ue_paging_scheduler::schedule_paging(cell_slot_resource_allocator& res_grid
   }
 }
 
-void ue_paging_scheduler::handle_paging_indication_message(paging_indication_message paging_indication)
+void paging_scheduler::handle_paging_indication_message(paging_indication_message paging_indication)
 {
   paging_pending_ues.push_back(paging_indication);
 }
 
-bool ue_paging_scheduler::schedule_paging_in_search_space_id_gt_0(cell_slot_resource_allocator& res_grid,
-                                                                  slot_point                    sl_point,
-                                                                  unsigned                      pdsch_time_res,
-                                                                  unsigned                      ue_id,
-                                                                  unsigned                      i_s,
-                                                                  unsigned                      paging_msg_size)
+bool paging_scheduler::schedule_paging_in_search_space_id_gt_0(cell_slot_resource_allocator& res_grid,
+                                                               slot_point                    sl_point,
+                                                               unsigned                      pdsch_time_res,
+                                                               unsigned                      ue_id,
+                                                               unsigned                      i_s,
+                                                               unsigned                      paging_msg_size)
 {
   // Following values for Ns are valid as per TS 38.304, clause 7.1 and TS 38.331, clause 5.2.1 when pagingSearchSpace >
   // 0
@@ -209,12 +209,12 @@ bool ue_paging_scheduler::schedule_paging_in_search_space_id_gt_0(cell_slot_reso
   return false;
 }
 
-bool ue_paging_scheduler::schedule_paging_in_search_space0(cell_slot_resource_allocator& res_grid,
-                                                           slot_point                    sl_point,
-                                                           unsigned                      pdsch_time_res,
-                                                           unsigned                      ue_id,
-                                                           unsigned                      i_s,
-                                                           unsigned                      paging_msg_size)
+bool paging_scheduler::schedule_paging_in_search_space0(cell_slot_resource_allocator& res_grid,
+                                                        slot_point                    sl_point,
+                                                        unsigned                      pdsch_time_res,
+                                                        unsigned                      ue_id,
+                                                        unsigned                      i_s,
+                                                        unsigned                      paging_msg_size)
 {
   // Following values for Ns are valid as per TS 38.304, clause 7.1 and TS 38.331, clause 5.2.1 when pagingSearchSpace =
   // 0
@@ -262,12 +262,12 @@ bool ue_paging_scheduler::schedule_paging_in_search_space0(cell_slot_resource_al
   return false;
 }
 
-bool ue_paging_scheduler::allocate_paging(cell_slot_resource_allocator& res_grid,
-                                          unsigned                      pdsch_time_res,
-                                          unsigned                      ue_id,
-                                          unsigned                      beam_idx,
-                                          search_space_id               ss_id,
-                                          unsigned                      paging_msg_size)
+bool paging_scheduler::allocate_paging(cell_slot_resource_allocator& res_grid,
+                                       unsigned                      pdsch_time_res,
+                                       unsigned                      ue_id,
+                                       unsigned                      beam_idx,
+                                       search_space_id               ss_id,
+                                       unsigned                      paging_msg_size)
 {
   // NOTE:
   // - [Implementation defined] Need to take into account PDSCH Time Domain Resource Allocation in UE's active DL BWP,
@@ -320,12 +320,12 @@ bool ue_paging_scheduler::allocate_paging(cell_slot_resource_allocator& res_grid
   return true;
 }
 
-void ue_paging_scheduler::fill_paging_grant(cell_slot_resource_allocator& res_grid,
-                                            crb_interval                  crbs_grant,
-                                            unsigned                      time_resource,
-                                            unsigned                      ue_id,
-                                            const dmrs_information&       dmrs_info,
-                                            unsigned                      tbs)
+void paging_scheduler::fill_paging_grant(cell_slot_resource_allocator& res_grid,
+                                         crb_interval                  crbs_grant,
+                                         unsigned                      time_resource,
+                                         unsigned                      ue_id,
+                                         const dmrs_information&       dmrs_info,
+                                         unsigned                      tbs)
 {
   // Add DCI to list to dl_pdcch.
   srsgnb_assert(not res_grid.result.dl.dl_pdcchs.empty(), "No DL PDCCH grant found in the DL sched results.");
@@ -371,7 +371,7 @@ void ue_paging_scheduler::fill_paging_grant(cell_slot_resource_allocator& res_gr
   pdsch.dci_fmt        = dci_dl_format::f1_0;
 }
 
-void ue_paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_common)
+void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_common)
 {
   const auto& ss_periodicity = ss_cfg.monitoring_slot_period;
   const auto& ss_slot_offset = ss_cfg.monitoring_slot_offset;

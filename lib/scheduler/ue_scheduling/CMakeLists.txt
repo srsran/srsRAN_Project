@@ -16,7 +16,6 @@ set(SOURCES
         ue_cell_grid_allocator.cpp
         ue_event_manager.cpp
         ue_srb0_scheduler.cpp
-        ue_paging_scheduler.cpp
         ue_scheduler_impl.cpp
         ue_dci_builder.cpp
         ue_sch_pdu_builder.cpp)

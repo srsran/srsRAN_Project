@@ -12,19 +12,18 @@
 
 #include "../cell/cell_configuration.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
-#include "ue.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 
 namespace srsgnb {
 
 /// Defines Paging scheduler that is used to allocate resources to send paging information to UE in a given slot.
-class ue_paging_scheduler
+class paging_scheduler
 {
 public:
-  explicit ue_paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
-                               const cell_configuration&                       cell_cfg_,
-                               pdcch_resource_allocator&                       pdcch_sch_,
-                               const sched_cell_configuration_request_message& msg);
+  explicit paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
+                            const cell_configuration&                       cell_cfg_,
+                            pdcch_resource_allocator&                       pdcch_sch_,
+                            const sched_cell_configuration_request_message& msg);
 
   /// \brief Performs paging (if any) scheduling for the current slot.
   ///

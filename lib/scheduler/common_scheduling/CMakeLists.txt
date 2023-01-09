@@ -10,6 +10,7 @@ set(SOURCES
         ra_scheduler.cpp
         sib_scheduler.cpp
         ssb_scheduler.cpp
-        prach_scheduler.cpp)
+        prach_scheduler.cpp
+        paging_scheduler.cpp)
 
 add_library(common_sched OBJECT ${SOURCES})
