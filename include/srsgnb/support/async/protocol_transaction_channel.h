@@ -28,6 +28,9 @@ public:
   {
   }
 
+  /// \brief Checks if there is any pending transaction.
+  bool active() const { return channel_active; }
+
   /// \brief Creates a new protocol transaction and returns the receiver for the transaction result.
   /// \return Awaitable/Receiver of the transaction result.
   protocol_transaction_receiver<T> create_transaction() __attribute__((warn_unused_result));
@@ -43,18 +46,31 @@ public:
     return create_transaction();
   }
 
-  /// \brief Sets the result of the managed transaction.
+  /// \brief Sets the result of the managed transaction. If no transaction is active, report a warning.
   template <typename U>
   void set(U&& u)
   {
+    if (try_set(std::forward<U>(u))) {
+      return;
+    }
     if (not channel_active) {
       srslog::fetch_basic_logger("ALL").warning("Setting transaction result, but no transaction was created");
-    }
-    if (event.is_set()) {
+    } else {
       srslog::fetch_basic_logger("ALL").warning("Transaction result is being overwritten");
+    }
+  }
+
+  /// \brief Sets the result of the managed transaction if active. If no transaction is currently pending, returns
+  /// false.
+  template <typename U>
+  bool try_set(U&& u)
+  {
+    if (not channel_active or event.is_set()) {
+      return false;
     }
     running_timer.stop();
     event.set(std::forward<U>(u));
+    return true;
   }
 
 private:
@@ -83,12 +99,12 @@ public:
   using awaiter_type = typename manual_event<result_type>::awaiter_type;
 
   protocol_transaction_receiver() = default;
-  protocol_transaction_receiver(protocol_transaction_channel<T>* parent_) : parent(parent_) {}
+  explicit protocol_transaction_receiver(protocol_transaction_channel<T>* parent_) : parent(parent_) {}
   protocol_transaction_receiver(protocol_transaction_receiver&& other) noexcept :
     parent(std::exchange(other.parent, nullptr))
   {
   }
-  protocol_transaction_receiver& operator=(protocol_transaction_receiver&& other)
+  protocol_transaction_receiver& operator=(protocol_transaction_receiver&& other) noexcept
   {
     parent = std::exchange(other.parent, nullptr);
     return *this;
