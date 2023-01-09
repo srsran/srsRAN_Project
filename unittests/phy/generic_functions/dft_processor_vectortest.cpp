@@ -74,15 +74,6 @@ TEST_P(DFTprocessorFixture, DFTProcessorUnittest)
 {
   const test_case_t& test_case = std::get<1>(GetParam());
 
-  // If the FFTW is not enabled, then the factory shall be nullptr.
-#ifndef ENABLE_FFTW
-  const std::string& dft_factory_str = std::get<0>(GetParam());
-  if (dft_factory_str == "fftw") {
-    ASSERT_EQ(dft_factory, nullptr);
-    return;
-  }
-#endif // ENABLE_FFTW
-
   // Make sure the factory is valid.
   ASSERT_NE(dft_factory, nullptr);
 
@@ -116,5 +107,10 @@ TEST_P(DFTprocessorFixture, DFTProcessorUnittest)
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(DFTprocessorVectorTest,
                          DFTprocessorFixture,
-                         ::testing::Combine(::testing::Values("generic", "fftw"),
+                         ::testing::Combine(::testing::Values("generic"
+#ifdef ENABLE_FFTW
+                                                              ,
+                                                              "fftw"
+#endif // ENABLE_FFTW
+                                                              ),
                                             ::testing::ValuesIn(dft_processor_test_data)));

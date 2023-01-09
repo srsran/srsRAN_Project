@@ -29,7 +29,7 @@ static float ASSERT_MAX_MSE = 1e-6;
 // Maximum allowed peak error.
 static float ASSERT_MAX_ERROR = 1e-3;
 
-void ditfft(span<cf_t> out, span<const cf_t> in, span<const cf_t> table, unsigned N, unsigned s)
+static void ditfft(span<cf_t> out, span<const cf_t> in, span<const cf_t> table, unsigned N, unsigned s)
 {
   if (N == 1) {
     // FFT of size 1.
@@ -76,6 +76,31 @@ static void run_expected_dft(span<cf_t> output, dft_processor::direction directi
   // Compute theoretical discrete fourier transform.
   ditfft(output, input, exp, N, 1);
 }
+
+namespace srsgnb {
+static bool operator==(span<const cf_t> left, span<const cf_t> right)
+{
+  unsigned size = left.size();
+
+  // Temporary vector to store the difference.
+  std::vector<cf_t> diff(left.size());
+
+  // Calculate difference between the expected output and the actual output.
+  for (unsigned idx = 0; idx != size; ++idx) {
+    diff[idx] = left[idx] - right[idx];
+  }
+
+  // Mean square error.
+  float mse = srsvec::average_power(diff);
+
+  // Maximum error.
+  std::pair<unsigned, float> max_abs_error = srsvec::max_abs_element(diff);
+
+  // Vectors are equal only if
+  return (mse < ASSERT_MAX_MSE) && (max_abs_error.second < ASSERT_MAX_ERROR);
+}
+
+} // namespace srsgnb
 
 static std::string dft_factory_str = "generic";
 static unsigned    nof_repetitions = 10;
@@ -146,12 +171,6 @@ int main(int argc, char** argv)
       // Allocate golden output buffer.
       std::vector<cf_t> expected_output(size);
 
-      // Maximum Mean Squared Error
-      float max_mse = 0.0F;
-
-      // Maximum error for this size and direction.
-      float max_error = 0.0F;
-
       // For each repetition...
       for (unsigned repetition = 0; repetition != nof_repetitions; ++repetition) {
         // Generate input random data.
@@ -165,58 +184,9 @@ int main(int argc, char** argv)
         // Run expected DFT
         run_expected_dft(expected_output, direction, input);
 
-        // Calculate difference between the expected output and the actual output.
-        std::vector<cf_t> diff(size);
-        for (unsigned idx = 0; idx != size; ++idx) {
-          diff[idx] = expected_output[idx] - output[idx];
-        }
-
-        // Mean square error.
-        float mse = srsvec::average_power(diff);
-
-        // Peak max error.
-        std::pair<unsigned, float> max_abs_error = srsvec::max_abs_element(diff);
-
-        // Update maximum MSE.
-        max_mse = std::max(max_mse, mse);
-
-        // Update maximum error.
-        max_error = std::max(max_error, std::sqrt(max_abs_error.second));
-
-        // Set the next line to 1 for printing the error for each case.
-#if 0
-        fmt::print("size={}; dir={}; mse={} peak_error={};\n",
-                   size,
-                   dft_processor::direction_to_string(direction).c_str(),
-                   mse,
-                   std::sqrt(max_abs_error.second));
-#endif
+        // Make sure the output matches the expected within the tolerances.
+        TESTASSERT_EQ(span<const cf_t>(expected_output), span<const cf_t>(output));
       }
-
-      // Set the next line to 1 for printing the maximum error for each case.
-#if 0
-      fmt::print("size={}; dir={}; max_mse={} max_error={};\n",
-                 size,
-                 dft_processor::direction_to_string(direction).c_str(),
-                 max_mse,
-                 max_error);
-#endif
-
-      // Actual assertion.
-      TESTASSERT(max_mse < ASSERT_MAX_MSE,
-                 "Error {} exceeds maximum {} for {} DFT size {}.",
-                 max_mse,
-                 ASSERT_MAX_MSE,
-                 dft_processor::direction_to_string(direction),
-                 size);
-
-      // Actual assertion.
-      TESTASSERT(max_error < ASSERT_MAX_ERROR,
-                 "Error {} exceeds maximum {} for {} DFT size {}.",
-                 max_error,
-                 ASSERT_MAX_ERROR,
-                 dft_processor::direction_to_string(direction),
-                 size);
     }
   }
 
