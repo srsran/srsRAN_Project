@@ -32,13 +32,13 @@ void f1_ue_context_modification_procedure::operator()(
   CORO_BEGIN(ctx);
 
   // Subscribe to respective publisher to receive UE CONTEXT MODIFICATION RESPONSE/FAILURE message.
-  transaction_receiver.subscribe_to(ev_mng.context_modification_outcome);
+  transaction_sink.subscribe_to(ev_mng.context_modification_outcome);
 
   // Send command to DU.
   send_ue_context_modification_request();
 
   // Await CU response.
-  CORO_AWAIT(transaction_receiver);
+  CORO_AWAIT(transaction_sink);
 
   // Handle response from DU and return UE index
   CORO_RETURN(create_ue_context_modification_result());
@@ -70,8 +70,8 @@ cu_cp_ue_context_modification_response f1_ue_context_modification_procedure::cre
 {
   cu_cp_ue_context_modification_response res{};
 
-  if (transaction_receiver.result().has_value()) {
-    const asn1::f1ap::ue_context_mod_resp_s& resp = transaction_receiver.result().value();
+  if (transaction_sink.successful()) {
+    const asn1::f1ap::ue_context_mod_resp_s& resp = transaction_sink.response();
     logger.info("Received F1AP UE Context Modification Response.");
     if (logger.debug.enabled()) {
       asn1::json_writer js;
@@ -79,15 +79,19 @@ cu_cp_ue_context_modification_response f1_ue_context_modification_procedure::cre
       logger.debug("Containerized UE Context Modification Response message: {}", js.to_string());
     }
     fill_f1ap_ue_context_modification_response_message(res, resp);
-  } else {
-    const asn1::f1ap::ue_context_mod_fail_s& fail = transaction_receiver.result().error();
+  } else if (transaction_sink.failed()) {
+    const asn1::f1ap::ue_context_mod_fail_s& fail = transaction_sink.failure();
     logger.info("Received F1AP UE Context Modification Failure. Cause: {}", get_cause_str(fail->cause.value));
     if (logger.debug.enabled()) {
       asn1::json_writer js;
-      (*transaction_receiver.result().error()).to_json(js);
+      (*transaction_sink.failure()).to_json(js);
       logger.debug("Containerized UE Context Modification Failure message: {}", js.to_string());
     }
     fill_f1ap_ue_context_modification_response_message(res, fail);
+  } else {
+    logger.warning("F1AP UE Context Modification Response timeout.");
+    res.success = false;
+    res.cause   = cu_cp_cause_t::misc;
   }
 
   return res;

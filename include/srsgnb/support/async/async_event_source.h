@@ -11,6 +11,7 @@
 #pragma once
 
 #include "manual_event.h"
+#include "srsgnb/adt/expected.h"
 #include "srsgnb/support/timers.h"
 
 namespace srsgnb {
@@ -24,20 +25,12 @@ template <typename T>
 class async_event_source
 {
 public:
-  explicit async_event_source(timer_manager& timer_db, const T& cancel_value_ = {}) :
-    cancel_value(cancel_value_), running_timer(timer_db.create_unique_timer())
-  {
-  }
+  explicit async_event_source(timer_manager& timer_db) : running_timer(timer_db.create_unique_timer()) {}
   async_event_source(const async_event_source&)            = delete;
   async_event_source(async_event_source&&)                 = delete;
   async_event_source& operator=(const async_event_source&) = delete;
   async_event_source& operator=(async_event_source&&)      = delete;
-  ~async_event_source()
-  {
-    if (has_subscriber()) {
-      remove_observer();
-    }
-  }
+  ~async_event_source() { srsgnb_assert(not has_subscriber(), "Subscribers must not outlive event sources"); }
 
   /// \brief Checks if there is any listener registered.
   bool has_subscriber() const { return sub != nullptr; }
@@ -68,11 +61,13 @@ private:
     sub->parent = this;
   }
 
-  void set_observer(async_single_event_observer<T>& sub_, unsigned time_to_cancel)
+  template <typename U>
+  void set_observer(async_single_event_observer<T>& sub_, unsigned time_to_cancel, U&& cancelled_value)
   {
     set_observer(sub_);
     // Setup timeout.
-    running_timer.set(time_to_cancel, [this](timer_id_t /**/) { set(cancel_value); });
+    running_timer.set(time_to_cancel,
+                      [this, c = std::forward<U>(cancelled_value)](timer_id_t /**/) { set(std::forward<U>(c)); });
     running_timer.run();
   }
 
@@ -82,8 +77,6 @@ private:
     sub->parent = nullptr;
     sub         = nullptr;
   }
-
-  const T cancel_value;
 
   async_single_event_observer<T>* sub = nullptr;
   unique_timer                    running_timer;
@@ -117,15 +110,16 @@ public:
 
   /// \brief Subscribes this observer/listener to an \c async_event_source and sets a timeout for automatic
   /// unsubscription. Only one simultaneous subscriber is allowed.
-  void subscribe_to(async_event_source<T>& publisher, unsigned time_to_cancel)
+  template <typename U>
+  void subscribe_to(async_event_source<T>& publisher, unsigned time_to_cancel, U&& cancelled_value)
   {
-    publisher.set_observer(*this, time_to_cancel);
+    publisher.set_observer(*this, time_to_cancel, std::forward<U>(cancelled_value));
   }
 
   /// \brief Checks whether this sink has been registered to an event source.
   bool connected() const { return parent != nullptr; }
 
-  /// \brief Checks if result has been set by the event source.
+  /// \brief Checks if result has been set successfully by the event source.
   bool complete() const { return event.is_set(); }
 
   /// \brief Result set by event source.

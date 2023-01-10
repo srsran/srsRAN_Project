@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "async_event_source.h"
 #include "manual_event.h"
 #include "srsgnb/adt/expected.h"
+#include "srsgnb/adt/variant.h"
 #include "srsgnb/support/timers.h"
 #include <array>
 
@@ -110,6 +112,78 @@ private:
   std::atomic<unsigned>          next_transaction_id{0};
   std::array<unique_timer, N>    running_timers;
   std::array<manual_event<T>, N> transactions;
+};
+
+struct no_fail_response_path {};
+
+/// \brief Type used to represent a transaction timeout.
+struct transaction_timeout {};
+
+/// \brief Publisher of application protocol transaction outcomes to which an observer can subscribe to.
+template <typename SuccessResp, typename FailureResp = no_fail_response_path>
+using protocol_transaction_event_source = async_event_source<variant<SuccessResp, FailureResp, transaction_timeout>>;
+
+/// \brief Observer of application protocol transaction outcome.
+template <typename SuccessResp, typename FailureResp = no_fail_response_path>
+class protocol_transaction_outcome_observer
+{
+  static_assert(not std::is_same<SuccessResp, transaction_timeout>::value, "Invalid Success Response");
+  static_assert(not std::is_same<FailureResp, transaction_timeout>::value, "Invalid Success Response");
+
+  using observer_type = async_single_event_observer<variant<SuccessResp, FailureResp, transaction_timeout>>;
+
+public:
+  using success_response_type = SuccessResp;
+  using failure_response_type = FailureResp;
+  using event_source_type     = protocol_transaction_event_source<success_response_type, failure_response_type>;
+  using awaiter_type          = typename observer_type::awaiter_type;
+
+  /// \brief Subscribes this observer to transaction event source of type \c protocol_transaction_event_source.
+  /// Only one simultaneous subscriber is allowed.
+  void subscribe_to(event_source_type& publisher) { observer.subscribe_to(publisher); }
+
+  /// \brief Subscribes this observer to transaction event source of type \c protocol_transaction_event_source and
+  /// sets a timeout to get a response. Only one simultaneous subscriber is allowed.
+  void subscribe_to(event_source_type& publisher, unsigned time_to_cancel)
+  {
+    observer.subscribe_to(publisher, time_to_cancel, transaction_timeout{});
+  }
+
+  /// \brief Checks whether this sink has been registered to an event source.
+  bool connected() const { return observer.connected(); }
+
+  /// \brief Checks if result has been set by the event source.
+  bool complete() const { return observer.complete(); }
+
+  /// \brief Checks whether the result of transaction was successful.
+  bool successful() const { return complete() and variant_holds_alternative<success_response_type>(observer.result()); }
+
+  /// \brief Checks whether the result of the transaction was a failure message.
+  bool failed() const { return complete() and variant_holds_alternative<failure_response_type>(observer.result()); }
+
+  /// \brief Checks whether there was a transaction timeout.
+  bool timeout_expired() const
+  {
+    return complete() and variant_holds_alternative<transaction_timeout>(observer.result());
+  }
+
+  /// \brief Result set by event source.
+  const success_response_type& response() const
+  {
+    srsgnb_assert(successful(), "Trying to fetch incorrect transaction result");
+    return variant_get<success_response_type>(observer.result());
+  }
+  const failure_response_type& failure() const
+  {
+    srsgnb_assert(failed(), "Trying to fetch incorrect transaction result");
+    return variant_get<failure_response_type>(observer.result());
+  }
+
+  /// Awaiter interface.
+  awaiter_type get_awaiter() { return observer.get_awaiter(); }
+
+private:
+  observer_type observer;
 };
 
 } // namespace srsgnb

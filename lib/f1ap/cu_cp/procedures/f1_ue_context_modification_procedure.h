@@ -13,7 +13,7 @@
 #include "../../common/f1ap_asn1_utils.h"
 #include "../f1ap_cu_impl.h"
 #include "../ue_context/f1ap_cu_ue_context.h"
-#include "cu_cp/ue_context/f1ap_cu_ue_event_manager.h"
+#include "cu_cp/ue_context/f1ap_cu_ue_transaction_manager.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/support/async/async_task.h"
@@ -45,7 +45,8 @@ private:
   f1ap_ue_transaction_manager&                ev_mng;
   srslog::basic_logger&                       logger;
 
-  async_single_event_observer<f1ap_ue_transaction_manager::context_modification_outcome_t> transaction_receiver;
+  protocol_transaction_outcome_observer<asn1::f1ap::ue_context_mod_resp_s, asn1::f1ap::ue_context_mod_fail_s>
+      transaction_sink;
 };
 
 } // namespace srs_cu_cp

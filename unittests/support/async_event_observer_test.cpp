@@ -18,7 +18,7 @@ class async_single_event_observer_test : public ::testing::Test
 {
 protected:
   timer_manager           timers{1};
-  async_event_source<int> transaction_channel{timers, -1};
+  async_event_source<int> transaction_channel{timers};
 };
 
 TEST_F(async_single_event_observer_test, when_transaction_subscriber_is_created_then_it_starts_unregistered)
