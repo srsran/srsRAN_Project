@@ -60,8 +60,7 @@ using namespace srsgnb;
 static const std::array<uint16_t, NOF_NUMEROLOGIES> nof_prb_ul_grid = {106, 51, 24, 0, 0};
 static std::string                                  config_file;
 
-static srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
-static std::atomic<bool>     is_running = {true};
+static std::atomic<bool> is_running = {true};
 // NGAP configuration.
 static srsgnb::network_gateway_config ngap_nw_config;
 const std::string                     srsgnb_version = "0.1";
@@ -241,25 +240,66 @@ int main(int argc, char** argv)
   // Compute derived parameters.
   compute_derived_args(gnb_cfg);
 
+  // Set up logging.
+  srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
+                                                                  : srslog::create_file_sink(gnb_cfg.log_cfg.filename);
+  if (!log_sink) {
+    return -1;
+  }
+  srslog::set_default_sink(*log_sink);
   srslog::init();
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::info);
-  gnb_logger.set_level(srslog::basic_levels::info);
 
-  auto& rrc_logger = srslog::fetch_basic_logger("RRC", false);
-  rrc_logger.set_level(srslog::basic_levels::debug);
-  rrc_logger.set_hex_dump_max_size(32);
+  // Set log-level of app and all non-layer specific components to app level.
+  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
+  for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW"}) {
+    auto& logger = srslog::fetch_basic_logger(id, false);
+    logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.app_level));
+    logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  }
+
+  // Set component-specific logging options.
+  for (const auto& id : {"DU", "DU-MNG", "UE-MNG", "DU-F1AP"}) {
+    auto& du_logger = srslog::fetch_basic_logger(id, true);
+    du_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.du_level));
+    du_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  }
+
+  for (const auto& id : {"CU-CP", "CU-CP-F1", "CU-CP-E1"}) {
+    auto& cu_cp_logger = srslog::fetch_basic_logger(id, false);
+    cu_cp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.cu_level));
+    cu_cp_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  }
+
+  for (const auto& id : {"CU-UP", "CU-UP-E1"}) {
+    auto& cu_up_logger = srslog::fetch_basic_logger(id, false);
+    cu_up_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.cu_level));
+    cu_up_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  }
+
+  // Set layer-specific logging options.
+  auto& phy_logger = srslog::fetch_basic_logger("PHY", false);
+  phy_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.phy_level));
+  phy_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+
+  auto& mac_logger = srslog::fetch_basic_logger("MAC", true);
+  mac_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.mac_level));
+  mac_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+
+  auto& rlc_logger = srslog::fetch_basic_logger("RLC", false);
+  rlc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rlc_level));
+  rlc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
   auto& pdcp_logger = srslog::fetch_basic_logger("PDCP", false);
-  pdcp_logger.set_level(srslog::basic_levels::debug);
-  pdcp_logger.set_hex_dump_max_size(32);
+  pdcp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.pdcp_level));
+  pdcp_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
-  auto& ngc_logger = srslog::fetch_basic_logger("NGC", false);
-  ngc_logger.set_level(srslog::basic_levels::debug);
-  ngc_logger.set_hex_dump_max_size(32);
+  auto& rrc_logger = srslog::fetch_basic_logger("RRC", false);
+  rrc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rrc_level));
+  rrc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
   worker_manager workers;
 
-  f1c_local_adapter f1c_cu_to_du_adapter("f1-cu2du"), f1c_du_to_cu_adapter("f1-du2cu");
+  f1c_local_adapter f1c_cu_to_du_adapter("CU-CP-F1"), f1c_du_to_cu_adapter("DU-F1");
   e1_local_adapter  e1_cp_to_up_adapter("CU-CP"), e1_up_to_cp_adapter("CU-UP");
 
   // Create F1-U connector

@@ -108,7 +108,7 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
   {
     const base_cell_appconfig& cell = config.cells_cfg.front().cell;
 
-    out_cfg.log_level                  = config.log_level;
+    out_cfg.log_level                  = config.log_cfg.phy_level;
     out_cfg.scs                        = scs;
     out_cfg.cp                         = cp;
     out_cfg.max_processing_delay_slots = 4;
@@ -198,7 +198,7 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
 {
   radio_configuration::radio out_cfg = {};
 
-  out_cfg.log_level        = config.log_level;
+  out_cfg.log_level        = config.log_cfg.phy_level;
   out_cfg.sampling_rate_hz = config.rf_driver_cfg.srate_MHz * 1e6;
   out_cfg.args             = config.rf_driver_cfg.device_args;
   out_cfg.otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
@@ -277,7 +277,7 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
 
     static constexpr unsigned dl_pipeline_depth = 4;
 
-    cfg.log_level = to_srs_log_level(config.log_level);
+    cfg.log_level = to_srs_log_level(config.log_cfg.phy_level);
     cfg.sector_id = i;
     cfg.nof_ports = nof_ports;
 

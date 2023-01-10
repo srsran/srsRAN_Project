@@ -15,6 +15,29 @@
 
 using namespace srsgnb;
 
+static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
+{
+  auto level_check = [](const std::string& value) -> std::string {
+    if (value == "info" || value == "debug" || value == "warning" || value == "error") {
+      return {};
+    }
+    return "Log level value not supported. Accepted values [info,debug,warning,error]";
+  };
+
+  app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
+  app.add_option("--app_level", log_params.app_level, "Generic log level")->capture_default_str()->check(level_check);
+  app.add_option("--du_level", log_params.du_level, "Log level for the DU")->capture_default_str()->check(level_check);
+  app.add_option("--cu_level", log_params.cu_level, "Log level for the CU")->capture_default_str()->check(level_check);
+  app.add_option("--phy_level", log_params.phy_level, "PHY log level")->capture_default_str()->check(level_check);
+  app.add_option("--mac_level", log_params.mac_level, "MAC log level")->capture_default_str()->check(level_check);
+  app.add_option("--rlc_level", log_params.rlc_level, "RLC log level")->capture_default_str()->check(level_check);
+  app.add_option("--pdcp_level", log_params.pdcp_level, "PDCP log level")->capture_default_str()->check(level_check);
+  app.add_option("--rrc_level", log_params.rrc_level, "RRC log level")->capture_default_str()->check(level_check);
+  app.add_option("--hex_max_size", log_params.hex_max_size, "Number of bytes to print in hex")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 1024));
+}
+
 static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
 {
   app.add_option("--addr", amf_params.ip_addr, "AMF IP address")->check(CLI::ValidIPV4)->required();
@@ -206,16 +229,12 @@ static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_param
 
 void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
-  app.add_option("--log_level", gnb_cfg.log_level, "Log level")
-      ->capture_default_str()
-      ->check([](const std::string& value) -> std::string {
-        if (value == "info" || value == "debug" || value == "warning" || value == "error") {
-          return {};
-        }
-        return "Log level value not supported. Accepted values [info,debug,warning,error]";
-      });
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
   app.add_option("--ran_node_name", gnb_cfg.ran_node_name, "RAN node name")->capture_default_str();
+
+  // Logging section.
+  CLI::App* log_subcmd = app.add_subcommand("log", "Logging configuration")->configurable();
+  configure_cli11_log_args(*log_subcmd, gnb_cfg.log_cfg);
 
   // AMF section.
   CLI::App* amf_subcmd = app.add_subcommand("amf", "AMF parameters")->configurable();

@@ -1,5 +1,6 @@
 #include "gnb_appconfig_validators.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/srslog/logger.h"
 
 using namespace srsgnb;
 
@@ -108,7 +109,7 @@ static bool validate_cells_appconfig(span<const cell_appconfig> config)
   return true;
 }
 
-/// Validates the given CU application configuration. Returns true on success, otherwise false.
+/// Validates the given AMF configuration. Returns true on success, otherwise false.
 static bool validate_amf_appconfig(const amf_appconfig& config)
 {
   // only check for non-empty AMF address and default port
@@ -118,10 +119,52 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
+/// Validates the given logging configuration. Returns true on success, otherwise false.
+static bool validate_log_appconfig(const log_appconfig& config)
+{
+  if (config.filename.empty()) {
+    return false;
+  }
+
+  // validate level selection
+  if (srslog::str_to_basic_level(config.app_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.du_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.cu_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.phy_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.mac_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.rlc_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.pdcp_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  if (srslog::str_to_basic_level(config.rrc_level) == srslog::basic_levels::none) {
+    return false;
+  }
+
+  return true;
+}
+
 bool srsgnb::validate_appconfig(const gnb_appconfig& config)
 {
-  if (config.log_level != "info" && config.log_level != "debug" && config.log_level != "warning" &&
-      config.log_level != "error") {
+  if (!validate_log_appconfig(config.log_cfg)) {
     return false;
   }
 

@@ -118,10 +118,23 @@ struct amf_appconfig {
   std::string bind_addr = "127.0.0.1";
 };
 
+struct log_appconfig {
+  std::string filename     = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
+  std::string app_level    = "info";         // Generic log level assigned to all layers without layer-specific level.
+  std::string du_level     = "info";
+  std::string cu_level     = "info";
+  std::string phy_level    = "info";
+  std::string mac_level    = "info";
+  std::string rlc_level    = "info";
+  std::string pdcp_level   = "info";
+  std::string rrc_level    = "info";
+  uint32_t    hex_max_size = 32; // Maximum number of bytes to write when dumping hex arrays.
+};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
-  /// Log level.
-  std::string log_level = "info";
+  /// Logging configuration.
+  log_appconfig log_cfg;
   /// gNodeB identifier.
   uint32_t gnb_id = 411;
   /// Node name.
