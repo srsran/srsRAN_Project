@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../coroutine.h"
+#include <utility>
 
 namespace srsgnb {
 
