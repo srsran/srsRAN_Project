@@ -78,7 +78,7 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
   increase_pending_pdus();
 
   executor.execute([this, pdu]() {
-    ssb_proc->process(pdu, *current_grid);
+    ssb_proc->process(*current_grid, pdu);
 
     decrease_pending_pdus_and_try_sending_grid();
   });

@@ -138,7 +138,7 @@ int main()
               sss->reset();
 
               // Process PDU.
-              pbch->process(pdu, grid);
+              pbch->process(grid, pdu);
 
               // Assert modules number of entries.
               TESTASSERT_EQ(encoder->get_nof_entries(), 1);

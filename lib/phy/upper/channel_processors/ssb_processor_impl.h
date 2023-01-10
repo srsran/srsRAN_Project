@@ -55,7 +55,7 @@ public:
     // Do nothing
   }
 
-  void process(const pdu_t& pdu, resource_grid_writer& grid) override;
+  void process(resource_grid_writer& grid, const pdu_t& pdu) override;
 };
 
 } // namespace srsgnb

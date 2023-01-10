@@ -198,7 +198,7 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
 {
   radio_configuration::radio out_cfg = {};
 
-  out_cfg.log_level        = config.log_cfg.phy_level;
+  out_cfg.log_level        = config.log_cfg.radio_level;
   out_cfg.sampling_rate_hz = config.rf_driver_cfg.srate_MHz * 1e6;
   out_cfg.args             = config.rf_driver_cfg.device_args;
   out_cfg.otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
@@ -277,9 +277,12 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
 
     static constexpr unsigned dl_pipeline_depth = 4;
 
-    cfg.log_level = to_srs_log_level(config.log_cfg.phy_level);
-    cfg.sector_id = i;
-    cfg.nof_ports = nof_ports;
+    cfg.log_level =
+        to_srs_log_level(config.log_cfg.phy_level.empty() ? config.log_cfg.app_level : config.log_cfg.phy_level);
+    cfg.enable_logging_broadcast = config.log_cfg.phy_broadcast;
+    cfg.logger_max_hex_size      = config.log_cfg.hex_max_size;
+    cfg.sector_id                = i;
+    cfg.nof_ports                = nof_ports;
 
     cfg.nof_slots_dl_rg   = 2 * dl_pipeline_depth;
     cfg.nof_dl_processors = 2 * dl_pipeline_depth;

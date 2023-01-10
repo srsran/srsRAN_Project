@@ -62,6 +62,23 @@ public:
         std::move(prach), std::move(pusch_proc), std::move(pucch_proc), executor);
   }
 
+  // See interface for documentation.
+  std::unique_ptr<uplink_processor>
+  create(const uplink_processor_config& config, srslog::basic_logger& logger, bool log_all_opportunities) override
+  {
+    std::unique_ptr<prach_detector> prach = prach_factory->create(logger, log_all_opportunities);
+    report_fatal_error_if_not(prach, "Invalid PRACH detector.");
+
+    std::unique_ptr<pusch_processor> pusch_proc = pusch_factory->create(logger);
+    report_fatal_error_if_not(pusch_proc, "Invalid PUSCH processor.");
+
+    std::unique_ptr<pucch_processor> pucch_proc = pucch_factory->create(logger);
+    report_fatal_error_if_not(pucch_proc, "Invalid PUCCH processor.");
+
+    return std::make_unique<uplink_processor_single_executor_impl>(
+        std::move(prach), std::move(pusch_proc), std::move(pucch_proc), executor);
+  }
+
   std::unique_ptr<uplink_pdu_validator> create_pdu_validator() override
   {
     return std::make_unique<uplink_processor_validator_impl>(
@@ -108,6 +125,32 @@ public:
                                                                      *config.executor);
   }
 
+  // See interface for documentation.
+  std::unique_ptr<downlink_processor>
+  create(const downlink_processor_config& config, srslog::basic_logger& logger, bool enable_broadcast) override
+  {
+    std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create(logger, enable_broadcast);
+    report_fatal_error_if_not(pdcch, "Invalid PDCCH processor.");
+
+    std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create(logger, enable_broadcast);
+    report_fatal_error_if_not(pdsch, "Invalid PDSCH processor.");
+
+    std::unique_ptr<ssb_processor> ssb;
+    if (enable_broadcast) {
+      ssb = ssb_proc_factory->create(logger);
+    } else {
+      ssb = ssb_proc_factory->create();
+    }
+    report_fatal_error_if_not(ssb, "Invalid SSB processor.");
+
+    return std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
+                                                                     std::move(pdcch),
+                                                                     std::move(pdsch),
+                                                                     std::move(ssb),
+                                                                     std::make_unique<csi_rs_processor_dummy>(),
+                                                                     *config.executor);
+  }
+
   std::unique_ptr<downlink_pdu_validator> create_pdu_validator() override
   {
     return std::make_unique<downlink_processor_validator_impl>(ssb_proc_factory->create_validator(),
@@ -131,10 +174,20 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
 
   for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
     downlink_processor_config processor_config;
-    processor_config.id                         = i;
-    processor_config.gateway                    = config.rg_gateway;
-    processor_config.executor                   = config.dl_executor;
-    std::unique_ptr<downlink_processor> dl_proc = factory->create(processor_config);
+    processor_config.id       = i;
+    processor_config.gateway  = config.rg_gateway;
+    processor_config.executor = config.dl_executor;
+    std::unique_ptr<downlink_processor> dl_proc;
+    if (config.log_level == srslog::basic_levels::none) {
+      dl_proc = factory->create(processor_config);
+    } else {
+      // Fetch and configure logger.
+      srslog::basic_logger& logger = srslog::fetch_basic_logger("DL-PHY" + std::to_string(i));
+      logger.set_level(config.log_level);
+      logger.set_hex_dump_max_size(config.logger_max_hex_size);
+
+      dl_proc = factory->create(processor_config, logger, config.enable_logging_broadcast);
+    }
     report_fatal_error_if_not(dl_proc, "Invalid downlink processor.");
     info.procs.push_back(std::move(dl_proc));
   }
@@ -286,7 +339,17 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_pr
   uplink_processor_pool_config::sector_ul_processors info = {0, subcarrier_spacing::kHz15, {}};
 
   for (unsigned i = 0, e = config.nof_ul_processors; i != e; ++i) {
-    std::unique_ptr<uplink_processor> ul_proc = factory.create({});
+    std::unique_ptr<uplink_processor> ul_proc;
+    if (config.log_level != srslog::basic_levels::none) {
+      // Fetch and configure logger.
+      srslog::basic_logger& logger = srslog::fetch_basic_logger("UL-PHY" + std::to_string(i));
+      logger.set_level(config.log_level);
+      logger.set_hex_dump_max_size(config.logger_max_hex_size);
+
+      ul_proc = factory.create({}, logger, config.enable_logging_broadcast);
+    } else {
+      ul_proc = factory.create({});
+    }
     report_fatal_error_if_not(ul_proc, "Invalid uplink processor.");
 
     info.procs.push_back(std::move(ul_proc));

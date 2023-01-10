@@ -68,7 +68,7 @@ int main()
     resource_grid_writer_spy grid(64, MAX_NSYMB_PER_SLOT * 5, SSB_BW_RB);
 
     // Process PDU
-    ssb->process(test_case.config, grid);
+    ssb->process(grid, test_case.config);
 
     // Load output golden data
     const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();

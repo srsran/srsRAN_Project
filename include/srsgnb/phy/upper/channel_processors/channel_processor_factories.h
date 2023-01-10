@@ -94,6 +94,7 @@ public:
   virtual ~pdcch_processor_factory()                              = default;
   virtual std::unique_ptr<pdcch_processor>     create()           = 0;
   virtual std::unique_ptr<pdcch_pdu_validator> create_validator() = 0;
+  std::unique_ptr<pdcch_processor>             create(srslog::basic_logger& logger, bool enable_logging_broadcast);
 };
 
 std::shared_ptr<pdcch_processor_factory>
@@ -133,6 +134,7 @@ public:
   virtual ~pdsch_processor_factory()                              = default;
   virtual std::unique_ptr<pdsch_processor>     create()           = 0;
   virtual std::unique_ptr<pdsch_pdu_validator> create_validator() = 0;
+  std::unique_ptr<pdsch_processor>             create(srslog::basic_logger& logger, bool enable_logging_broadcast);
 };
 
 std::shared_ptr<pdsch_processor_factory>
@@ -146,6 +148,7 @@ public:
   virtual ~prach_detector_factory()                                    = default;
   virtual std::unique_ptr<prach_detector>           create()           = 0;
   virtual std::unique_ptr<prach_detector_validator> create_validator() = 0;
+  std::unique_ptr<prach_detector>                   create(srslog::basic_logger& logger, bool log_all_opportunities);
 };
 
 std::shared_ptr<prach_detector_factory>
@@ -191,6 +194,7 @@ public:
   virtual ~pucch_processor_factory()                              = default;
   virtual std::unique_ptr<pucch_processor>     create()           = 0;
   virtual std::unique_ptr<pucch_pdu_validator> create_validator() = 0;
+  std::unique_ptr<pucch_processor>             create(srslog::basic_logger& logger);
 };
 
 std::shared_ptr<pucch_processor_factory>
@@ -236,6 +240,7 @@ public:
   virtual ~pusch_processor_factory()                              = default;
   virtual std::unique_ptr<pusch_processor>     create()           = 0;
   virtual std::unique_ptr<pusch_pdu_validator> create_validator() = 0;
+  std::unique_ptr<pusch_processor>             create(srslog::basic_logger& logger);
 };
 
 struct pusch_processor_factory_sw_configuration {
@@ -258,6 +263,7 @@ public:
   virtual ~ssb_processor_factory()                              = default;
   virtual std::unique_ptr<ssb_processor>     create()           = 0;
   virtual std::unique_ptr<ssb_pdu_validator> create_validator() = 0;
+  std::unique_ptr<ssb_processor>             create(srslog::basic_logger& logger);
 };
 
 struct ssb_processor_factory_sw_configuration {

@@ -14,7 +14,7 @@
 
 using namespace srsgnb;
 
-void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
+void ssb_processor_impl::process(resource_grid_writer& grid, const pdu_t& pdu)
 {
   // Calculate derivative parameters
   unsigned l_start_in_burst = ssb_get_l_first(pdu.pattern_case, pdu.ssb_idx);

@@ -29,7 +29,9 @@
 #include "uci_decoder_impl.h"
 #include "ulsch_demultiplex_impl.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsgnb/ran/rnti.h"
 
 using namespace srsgnb;
 
@@ -716,4 +718,265 @@ std::shared_ptr<uci_decoder_factory> srsgnb::create_uci_decoder_factory_sw(uci_d
 std::shared_ptr<ulsch_demultiplex_factory> srsgnb::create_ulsch_demultiplex_factory_sw()
 {
   return std::make_shared<ulsch_demultiplex_factory_sw>();
+}
+
+template <typename Func>
+static std::chrono::nanoseconds time_execution(Func&& func)
+{
+  auto start = std::chrono::steady_clock::now();
+  func();
+  auto end = std::chrono::steady_clock::now();
+
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+}
+
+static bool is_broadcast_rnti(uint16_t rnti)
+{
+  return ((rnti < rnti_t::MIN_CRNTI) || (rnti > rnti_t::MAX_CRNTI));
+}
+
+namespace fmt {
+template <>
+struct formatter<std::chrono::nanoseconds> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const std::chrono::nanoseconds& nanoseconds, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "t={:.1f}us", static_cast<float>(nanoseconds.count()) * 1e-3F);
+  }
+};
+} // namespace fmt
+
+namespace {
+
+class logging_pdcch_processor_decorator : public pdcch_processor
+{
+public:
+  logging_pdcch_processor_decorator(srslog::basic_logger&            logger_,
+                                    bool                             enable_logging_broadcast_,
+                                    std::unique_ptr<pdcch_processor> processor_) :
+    logger(logger_), enable_logging_broadcast(enable_logging_broadcast_), processor(std::move(processor_))
+  {
+    srsgnb_assert(processor, "Invalid processor.");
+  }
+
+  void process(resource_grid_writer& grid, const pdu_t& pdu) override
+  {
+    const auto&& func = [&]() { processor->process(grid, pdu); };
+
+    if (!enable_logging_broadcast && is_broadcast_rnti(pdu.dci_list.front().rnti)) {
+      func();
+      return;
+    }
+
+    std::chrono::nanoseconds time_ns = time_execution(func);
+
+    logger.info("PDCCH: {} {}", pdu, time_ns);
+  }
+
+private:
+  srslog::basic_logger&            logger;
+  bool                             enable_logging_broadcast;
+  std::unique_ptr<pdcch_processor> processor;
+};
+
+class logging_pdsch_processor_decorator : public pdsch_processor
+{
+public:
+  logging_pdsch_processor_decorator(srslog::basic_logger&            logger_,
+                                    bool                             enable_logging_broadcast_,
+                                    std::unique_ptr<pdsch_processor> processor_) :
+    logger(logger_), enable_logging_broadcast(enable_logging_broadcast_), processor(std::move(processor_))
+  {
+    srsgnb_assert(processor, "Invalid processor.");
+  }
+
+  void process(resource_grid_writer&                                        grid,
+               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
+               const pdu_t&                                                 pdu) override
+  {
+    const auto&& func = [&]() { processor->process(grid, data, pdu); };
+
+    if (!enable_logging_broadcast && is_broadcast_rnti(pdu.rnti)) {
+      func();
+      return;
+    }
+
+    std::chrono::nanoseconds time_ns = time_execution(func);
+
+    logger.info("PDSCH: {} {}", pdu, time_ns);
+  }
+
+private:
+  srslog::basic_logger&            logger;
+  bool                             enable_logging_broadcast;
+  std::unique_ptr<pdsch_processor> processor;
+};
+
+class logging_prach_detector_decorator : public prach_detector
+{
+public:
+  logging_prach_detector_decorator(srslog::basic_logger&           logger_,
+                                   bool                            log_all_opportunities_,
+                                   std::unique_ptr<prach_detector> detector_) :
+    logger(logger_), log_all_opportunities(log_all_opportunities_), detector(std::move(detector_))
+  {
+    srsgnb_assert(detector, "Invalid detector.");
+  }
+
+  prach_detection_result detect(const prach_buffer& input, const configuration& config) override
+  {
+    prach_detection_result result;
+    const auto&&           func = [&]() { result = detector->detect(input, config); };
+
+    std::chrono::nanoseconds time_ns = time_execution(func);
+
+    if (log_all_opportunities || !result.preambles.empty()) {
+      logger.info("PRACH: {} {} {}", config, result, time_ns);
+    }
+
+    return result;
+  }
+
+private:
+  srslog::basic_logger&           logger;
+  bool                            log_all_opportunities;
+  std::unique_ptr<prach_detector> detector;
+};
+
+class logging_pusch_processor_decorator : public pusch_processor
+{
+public:
+  logging_pusch_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<pusch_processor> processor_) :
+    logger(logger_), processor(std::move(processor_))
+  {
+    srsgnb_assert(processor, "Invalid processor.");
+  }
+
+  pusch_processor_result
+  process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) override
+  {
+    pusch_processor_result result;
+
+    std::chrono::nanoseconds time_ns =
+        time_execution([&]() { result = processor->process(data, softbuffer, grid, pdu); });
+
+    logger.info("PUSCH: {} {}", pdu, result, time_ns);
+
+    return result;
+  }
+
+private:
+  srslog::basic_logger&            logger;
+  std::unique_ptr<pusch_processor> processor;
+};
+
+class logging_pucch_processor_decorator : public pucch_processor
+{
+  template <typename Config>
+  pucch_processor_result process_(const resource_grid_reader& grid, const Config& config)
+  {
+    pucch_processor_result result;
+
+    std::chrono::nanoseconds time_ns = time_execution([&]() { result = processor->process(grid, config); });
+
+    logger.info("PUCCH: {} {}", config, result, time_ns);
+
+    return result;
+  }
+
+public:
+  logging_pucch_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<pucch_processor> processor_) :
+    logger(logger_), processor(std::move(processor_))
+  {
+    srsgnb_assert(processor, "Invalid processor.");
+  }
+
+  pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override
+  {
+    return process_(grid, config);
+  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override
+  {
+    return process_(grid, config);
+  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override
+  {
+    return process_(grid, config);
+  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) override
+  {
+    return process_(grid, config);
+  }
+  pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) override
+  {
+    return process_(grid, config);
+  }
+
+private:
+  srslog::basic_logger&            logger;
+  std::unique_ptr<pucch_processor> processor;
+};
+
+class logging_ssb_processor_decorator : public ssb_processor
+{
+public:
+  logging_ssb_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<ssb_processor> processor_) :
+    logger(logger_), processor(std::move(processor_))
+  {
+    srsgnb_assert(processor, "Invalid processor.");
+  }
+
+  void process(resource_grid_writer& grid, const pdu_t& pdu) override
+  {
+    const auto&& func = [&]() { processor->process(grid, pdu); };
+
+    std::chrono::nanoseconds time_ns = time_execution(func);
+
+    logger.info("SSB: {} {}", pdu, time_ns);
+  }
+
+private:
+  srslog::basic_logger&          logger;
+  std::unique_ptr<ssb_processor> processor;
+};
+
+} // namespace
+
+std::unique_ptr<pdcch_processor> pdcch_processor_factory::create(srslog::basic_logger& logger,
+                                                                 bool                  enable_logging_broadcast)
+{
+  return std::make_unique<logging_pdcch_processor_decorator>(logger, enable_logging_broadcast, create());
+}
+
+std::unique_ptr<pdsch_processor> pdsch_processor_factory::create(srslog::basic_logger& logger,
+                                                                 bool                  enable_logging_broadcast)
+{
+  return std::make_unique<logging_pdsch_processor_decorator>(logger, enable_logging_broadcast, create());
+}
+
+std::unique_ptr<prach_detector> prach_detector_factory::create(srslog::basic_logger& logger, bool log_all_opportunities)
+{
+  return std::make_unique<logging_prach_detector_decorator>(logger, log_all_opportunities, create());
+}
+
+std::unique_ptr<pusch_processor> pusch_processor_factory::create(srslog::basic_logger& logger)
+{
+  return std::make_unique<logging_pusch_processor_decorator>(logger, create());
+}
+
+std::unique_ptr<pucch_processor> pucch_processor_factory::create(srslog::basic_logger& logger)
+{
+  return std::make_unique<logging_pucch_processor_decorator>(logger, create());
+}
+
+std::unique_ptr<ssb_processor> ssb_processor_factory::create(srslog::basic_logger& logger)
+{
+  return std::make_unique<logging_ssb_processor_decorator>(logger, create());
 }

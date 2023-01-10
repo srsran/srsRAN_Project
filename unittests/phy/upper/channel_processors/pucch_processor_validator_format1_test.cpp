@@ -10,6 +10,7 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"

@@ -41,6 +41,16 @@ public:
   /// \return A unique pointer to the new uplink processor if successful or \c nullptr otherwise.
   virtual std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) = 0;
 
+  /// \brief Creates an uplink processor with the given configuration with logging capabilities.
+  ///
+  /// \param[in] config                Contains the configuration to create the uplink processor.
+  /// \param[in] logger                Logger instance for logging.
+  /// \param[in] log_all_opportunities Set to true for logging all PRACH opportunities. Otherwise, it logs only the
+  ///                                  detected preambles.
+  /// \return A unique pointer to the new uplink processor if successful or \c nullptr otherwise.
+  virtual std::unique_ptr<uplink_processor>
+  create(const uplink_processor_config& config, srslog::basic_logger& logger, bool log_all_opportunities) = 0;
+
   /// \brief Creates an uplink PDU validator.
   /// \return A unique pointer to the new uplink PDU validator if successful or \c nullptr otherwise.
   virtual std::unique_ptr<uplink_pdu_validator> create_pdu_validator() = 0;
@@ -83,18 +93,20 @@ class downlink_processor_factory
 public:
   virtual ~downlink_processor_factory() = default;
 
-  /// \brief Creates a return a downlink processor.
+  /// \brief Creates a downlink processor.
   virtual std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) = 0;
 
-  /// \brief Creates an downlink PDU validator.
+  /// \brief Creates a downlink processor with logging capabilities.
+  virtual std::unique_ptr<downlink_processor>
+  create(const downlink_processor_config& config, srslog::basic_logger& logger, bool enable_broadcast) = 0;
+
+  /// \brief Creates a downlink PDU validator.
   /// \return A unique pointer to the new downlink PDU validator if successful or \c nullptr otherwise.
   virtual std::unique_ptr<downlink_pdu_validator> create_pdu_validator() = 0;
 };
 
 /// Downlink processor software factory configuration.
 struct downlink_processor_factory_sw_config {
-  const std::string LDPC_ENCODER_TYPE_GENERIC = "generic";
-
   /// \brief LDPC encoder type
   ///
   /// Use of there options:
@@ -130,8 +142,14 @@ std::unique_ptr<downlink_processor_pool> create_dl_processor_pool(downlink_proce
 
 /// Upper PHY configuration parameters used to create a new upper PHY object.
 struct upper_phy_config {
-  /// Log level.
+  /// \brief Logging level.
+  /// - \c none: No logging is enabled, or
+  /// - \c info: all processing PDUs and their results are logged.
   srslog::basic_levels log_level;
+  /// Enable logging broadcast channels such as SSB, PDSCH and PDCCH channels with broadcast RNTIs.
+  bool enable_logging_broadcast;
+  /// Logger maximum hexadecimal dump size. Set to zero for none.
+  unsigned logger_max_hex_size;
   /// Radio sector identifier.
   unsigned sector_id;
   /// Port identifier within the sector.

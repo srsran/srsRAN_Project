@@ -54,4 +54,21 @@ private:
   values value;
 };
 
+inline const char* to_string(preamble_format format)
+{
+  switch (format) {
+    case preamble_format::FORMAT0:
+      return "0";
+    case preamble_format::FORMAT1:
+      return "1";
+    case preamble_format::FORMAT2:
+      return "2";
+    case preamble_format::FORMAT3:
+      return "3";
+    case preamble_format::OTHER:
+    default:
+      return "other";
+  }
+}
+
 } // namespace srsgnb

@@ -134,7 +134,7 @@ public:
         pdu.bch_payload       = {};
         pdu.ports             = {0};
 
-        ssb->process(pdu, rg);
+        ssb->process(rg, pdu);
         logger.info("SSB: phys_cell_id={}; ssb_idx={};", pdu.phys_cell_id, pdu.ssb_idx);
       }
     }

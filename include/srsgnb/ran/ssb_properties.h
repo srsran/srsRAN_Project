@@ -64,6 +64,26 @@ inline subcarrier_spacing to_subcarrier_spacing(ssb_pattern_case pattern_case)
   }
 }
 
+/// Returns the subcarrier spacing corresponding to an SS/PBCH block pattern.
+inline const char* to_string(ssb_pattern_case pattern_case)
+{
+  switch (pattern_case) {
+    case ssb_pattern_case::A:
+      return "A";
+    case ssb_pattern_case::B:
+      return "B";
+    case ssb_pattern_case::C:
+      return "C";
+    case ssb_pattern_case::D:
+      return "D";
+    case ssb_pattern_case::E:
+      return "E";
+    case ssb_pattern_case::invalid:
+    default:
+      return "invalid";
+  }
+}
+
 /// Returns the frequency range corresponding to an SS/PBCH block pattern.
 inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
 {
