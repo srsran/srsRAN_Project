@@ -17,13 +17,8 @@ using namespace asn1::f1ap;
 f1_ue_context_release_procedure::f1_ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,
                                                                  const f1ap_ue_context_release_command& cmd_,
                                                                  f1c_message_notifier&                  f1c_notif_,
-                                                                 f1ap_ue_transaction_manager&           ev_mng_,
                                                                  srslog::basic_logger&                  logger_) :
-  ue_ctxt_list(ue_ctx_list_),
-  ue_ctxt(ue_ctxt_list[cmd_.ue_index]),
-  f1c_notifier(f1c_notif_),
-  ev_mng(ev_mng_),
-  logger(logger_)
+  ue_ctxt_list(ue_ctx_list_), ue_ctxt(ue_ctxt_list[cmd_.ue_index]), f1c_notifier(f1c_notif_), logger(logger_)
 {
   command->gnb_cu_ue_f1ap_id.value = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
   command->gnb_du_ue_f1ap_id.value = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
@@ -34,7 +29,7 @@ void f1_ue_context_release_procedure::operator()(coro_context<async_task<ue_inde
 {
   CORO_BEGIN(ctx);
 
-  transaction_sink.subscribe_to(ev_mng.context_release_complete);
+  transaction_sink.subscribe_to(ue_ctxt.ev_mng.context_release_complete);
 
   // Send command to DU.
   send_ue_context_release_command();

@@ -23,10 +23,10 @@ f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
                            f1c_du_processor_notifier&  f1c_du_processor_notifier_,
                            f1c_du_management_notifier& f1c_du_management_notifier_) :
   logger(srslog::fetch_basic_logger("CU-F1AP")),
+  ue_ctx_list(timers),
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(f1c_du_processor_notifier_),
-  du_management_notifier(f1c_du_management_notifier_),
-  events(std::make_unique<f1ap_ue_transaction_manager>(timers))
+  du_management_notifier(f1c_du_management_notifier_)
 {
 }
 
@@ -107,8 +107,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 async_task<f1ap_ue_context_setup_response>
 f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request)
 {
-  return launch_async<f1_ue_context_setup_procedure>(
-      request.msg, ue_ctx_list[request.ue_index], pdu_notifier, *events, logger);
+  return launch_async<f1_ue_context_setup_procedure>(request.msg, ue_ctx_list[request.ue_index], pdu_notifier, logger);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)
@@ -122,14 +121,14 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
     });
   }
 
-  return launch_async<f1_ue_context_release_procedure>(ue_ctx_list, msg, pdu_notifier, *events, logger);
+  return launch_async<f1_ue_context_release_procedure>(ue_ctx_list, msg, pdu_notifier, logger);
 }
 
 async_task<cu_cp_ue_context_modification_response>
 f1ap_cu_impl::handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request)
 {
   return launch_async<f1_ue_context_modification_procedure>(
-      request, ue_ctx_list[request.ue_index], pdu_notifier, *events, logger);
+      request, ue_ctx_list[request.ue_index], pdu_notifier, logger);
 }
 
 void f1ap_cu_impl::handle_message(const f1c_message& msg)
@@ -251,13 +250,16 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
 {
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete: {
-      events->context_release_complete.set(outcome.value.ue_context_release_complete());
+      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_release_complete()->gnb_cu_ue_f1ap_id->value)]
+          .ev_mng.context_release_complete.set(outcome.value.ue_context_release_complete());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
-      events->context_setup_outcome.set(outcome.value.ue_context_setup_resp());
+      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_setup_resp()->gnb_cu_ue_f1ap_id->value)]
+          .ev_mng.context_setup_outcome.set(outcome.value.ue_context_setup_resp());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp: {
-      events->context_modification_outcome.set(outcome.value.ue_context_mod_resp());
+      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_mod_resp()->gnb_cu_ue_f1ap_id->value)]
+          .ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_resp());
     } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -268,10 +270,12 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
 {
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail: {
-      events->context_setup_outcome.set(outcome.value.ue_context_setup_fail());
+      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_setup_fail()->gnb_cu_ue_f1ap_id->value)]
+          .ev_mng.context_setup_outcome.set(outcome.value.ue_context_setup_fail());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_mod_fail: {
-      events->context_modification_outcome.set(outcome.value.ue_context_mod_fail());
+      ue_ctx_list[int_to_gnb_cu_ue_f1ap_id(outcome.value.ue_context_mod_fail()->gnb_cu_ue_f1ap_id->value)]
+          .ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_fail());
     } break;
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());

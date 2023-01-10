@@ -17,9 +17,8 @@ using namespace asn1::f1ap;
 f1_ue_context_setup_procedure::f1_ue_context_setup_procedure(const ue_context_setup_request_s& request_,
                                                              f1ap_ue_context&                  ue_ctx_,
                                                              f1c_message_notifier&             f1c_notif_,
-                                                             f1ap_ue_transaction_manager&      ev_mng_,
                                                              srslog::basic_logger&             logger_) :
-  request(request_), ue_ctx(ue_ctx_), f1c_notifier(f1c_notif_), ev_mng(ev_mng_), logger(logger_)
+  request(request_), ue_ctx(ue_ctx_), f1c_notifier(f1c_notif_), logger(logger_)
 {
 }
 
@@ -28,7 +27,7 @@ void f1_ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_c
   CORO_BEGIN(ctx);
 
   // Subscribe to respective publisher to receive UE CONTEXT SETUP RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ev_mng.context_setup_outcome);
+  transaction_sink.subscribe_to(ue_ctx.ev_mng.context_setup_outcome);
 
   // Send command to DU.
   send_ue_context_setup_request();

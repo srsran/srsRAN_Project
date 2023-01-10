@@ -25,8 +25,11 @@ protected:
     t = f1ap->handle_ue_context_setup_request(req);
     t_launcher.emplace(t);
 
+    EXPECT_EQ(this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.type().value,
+              f1ap_elem_procs_o::init_msg_c::types::ue_context_setup_request);
+
     test_ues[req.ue_index].cu_ue_id = int_to_gnb_cu_ue_f1ap_id(
-        this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.ue_context_mod_request()->gnb_cu_ue_f1ap_id.value);
+        this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id.value);
   }
 
   bool was_ue_context_setup_request_sent(gnb_du_ue_f1ap_id_t du_ue_id) const
