@@ -17,7 +17,7 @@ using namespace asn1::f1ap;
 f1_ue_context_release_procedure::f1_ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,
                                                                  const f1ap_ue_context_release_command& cmd_,
                                                                  f1c_message_notifier&                  f1c_notif_,
-                                                                 f1c_event_manager&                     ev_mng_,
+                                                                 f1ap_ue_transaction_manager&           ev_mng_,
                                                                  srslog::basic_logger&                  logger_) :
   ue_ctxt_list(ue_ctx_list_),
   ue_ctxt(ue_ctxt_list[cmd_.ue_index]),

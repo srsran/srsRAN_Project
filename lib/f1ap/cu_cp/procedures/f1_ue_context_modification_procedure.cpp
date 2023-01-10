@@ -20,7 +20,7 @@ f1_ue_context_modification_procedure::f1_ue_context_modification_procedure(
     const cu_cp_ue_context_modification_request& request_,
     f1ap_ue_context&                             ue_ctx_,
     f1c_message_notifier&                        f1c_notif_,
-    f1c_event_manager&                           ev_mng_,
+    f1ap_ue_transaction_manager&                 ev_mng_,
     srslog::basic_logger&                        logger_) :
   request(request_), ue_ctx(ue_ctx_), f1c_notifier(f1c_notif_), ev_mng(ev_mng_), logger(logger_)
 {
@@ -32,7 +32,7 @@ void f1_ue_context_modification_procedure::operator()(
   CORO_BEGIN(ctx);
 
   // Subscribe to respective publisher to receive UE CONTEXT MODIFICATION RESPONSE/FAILURE message.
-  transaction_receiver.subscribe_to(ev_mng.ue_context_modify_transaction_channel);
+  transaction_receiver.subscribe_to(ev_mng.context_modification_outcome);
 
   // Send command to DU.
   send_ue_context_modification_request();

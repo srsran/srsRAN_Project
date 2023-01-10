@@ -26,7 +26,7 @@ f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(f1c_du_processor_notifier_),
   du_management_notifier(f1c_du_management_notifier_),
-  events(std::make_unique<f1c_event_manager>(timers))
+  events(std::make_unique<f1ap_ue_transaction_manager>(timers))
 {
 }
 
@@ -257,7 +257,7 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
       events->f1ap_ue_context_setup_outcome.set(&outcome.value.ue_context_setup_resp());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp: {
-      events->ue_context_modify_transaction_channel.set(outcome.value.ue_context_mod_resp());
+      events->context_modification_outcome.set(outcome.value.ue_context_mod_resp());
     } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -271,7 +271,7 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
       events->f1ap_ue_context_setup_outcome.set(&outcome.value.ue_context_setup_fail());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_mod_fail: {
-      events->ue_context_modify_transaction_channel.set(outcome.value.ue_context_mod_fail());
+      events->context_modification_outcome.set(outcome.value.ue_context_mod_fail());
     } break;
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());

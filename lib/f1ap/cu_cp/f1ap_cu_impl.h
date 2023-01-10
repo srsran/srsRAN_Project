@@ -23,7 +23,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class f1c_event_manager;
+class f1ap_ue_transaction_manager;
 
 class f1ap_cu_impl final : public f1ap_cu
 {
@@ -110,7 +110,7 @@ private:
   f1c_du_processor_notifier&  du_processor_notifier;
   f1c_du_management_notifier& du_management_notifier;
 
-  std::unique_ptr<f1c_event_manager> events;
+  std::unique_ptr<f1ap_ue_transaction_manager> events;
 
   unsigned current_transaction_id = 0; // store current F1AP transaction id
 };

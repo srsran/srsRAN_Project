@@ -12,7 +12,7 @@
 
 #include "../f1ap_cu_impl.h"
 #include "common/f1ap_asn1_utils.h"
-#include "f1c_cu_event_manager.h"
+#include "cu_cp/ue_context/f1ap_cu_ue_event_manager.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/support/async/async_task.h"
@@ -26,7 +26,7 @@ public:
   f1_ue_context_setup_procedure(const asn1::f1ap::ue_context_setup_request_s& request_,
                                 f1ap_ue_context&                              ue_ctx_,
                                 f1c_message_notifier&                         f1c_notif_,
-                                f1c_event_manager&                            ev_mng_,
+                                f1ap_ue_transaction_manager&                  ev_mng_,
                                 srslog::basic_logger&                         logger_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx);
@@ -41,10 +41,10 @@ private:
   const asn1::f1ap::ue_context_setup_request_s request;
   f1ap_ue_context&                             ue_ctx;
   f1c_message_notifier&                        f1c_notifier;
-  f1c_event_manager&                           ev_mng;
+  f1ap_ue_transaction_manager&                 ev_mng;
   srslog::basic_logger&                        logger;
 
-  f1c_event_manager::f1_ue_context_setup_outcome_t f1_ue_ctxt_setup_outcome;
+  f1ap_ue_transaction_manager::f1_ue_context_setup_outcome_t f1_ue_ctxt_setup_outcome;
 };
 
 } // namespace srs_cu_cp
