@@ -103,6 +103,11 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
     drb.drb_f1u = du_params.f1u.f1u_gw.create_du_ul_bearer(drb.dluptnl_info_list[0].gtp_teid.value(),
                                                            drb.uluptnl_info_list[0].gtp_teid.value(),
                                                            drb.connector.f1u_rx_sdu_notif);
+    if (drb.drb_f1u == nullptr) {
+      // Failed to connect F1-U bearer to CU-UP.
+      ue->bearers.remove_drb(drbtoadd.drb_id);
+      continue;
+    }
 
     // >> Create RLC DRB entity.
     drb.rlc_bearer =

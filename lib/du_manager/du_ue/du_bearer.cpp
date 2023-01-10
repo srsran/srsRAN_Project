@@ -78,6 +78,12 @@ du_ue_drb& du_ue_bearer_manager::add_drb(drb_id_t drb_id, lcid_t lcid, const rlc
   return drbs_[drb_id];
 }
 
+void du_ue_bearer_manager::remove_drb(drb_id_t drb_id)
+{
+  srsgnb_assert(drbs().contains(drb_id), "DRB-Id={} does not exist", drb_id);
+  drbs_.erase(drb_id);
+}
+
 optional<lcid_t> du_ue_bearer_manager::allocate_lcid() const
 {
   static_vector<lcid_t, MAX_NOF_DRBS> used_lcids;
