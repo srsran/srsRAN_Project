@@ -25,7 +25,7 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
                            f1c_du_configurator&        du_mng_,
                            task_executor&              ctrl_exec_,
                            du_high_ue_executor_mapper& ue_exec_mapper_) :
-  logger(srslog::fetch_basic_logger("DU-F1AP")),
+  logger(srslog::fetch_basic_logger("DU-F1")),
   f1c_notifier(message_notifier_),
   ctrl_exec(ctrl_exec_),
   ue_exec_mapper(ue_exec_mapper_),

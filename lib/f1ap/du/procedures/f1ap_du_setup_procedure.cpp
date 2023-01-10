@@ -24,7 +24,7 @@ f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message&
   request(request_),
   cu_notifier(cu_notif_),
   ev_mng(ev_mng_),
-  logger(srslog::fetch_basic_logger("DU-F1AP")),
+  logger(srslog::fetch_basic_logger("DU-F1")),
   du_ctxt(du_ctxt_),
   f1_setup_wait_timer(timers.create_unique_timer())
 {
