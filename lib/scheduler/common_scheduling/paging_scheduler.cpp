@@ -178,9 +178,9 @@ bool paging_scheduler::schedule_paging_in_search_space_id_gt_0(cell_slot_resourc
                                                                unsigned                      i_s,
                                                                unsigned                      paging_msg_size)
 {
-  // Following values for Ns are valid as per TS 38.304, clause 7.1 and TS 38.331, clause 5.2.1 when pagingSearchSpace >
-  // 0
-  //    - Ns can be 1, 2 or 4 provided SearchSpace has sufficient PDCCH Monitoring Occasions to match nof. PO(s).
+  // Following values for Ns are valid as per TS 38.304, clause 7.1 and TS 38.331, clause 5.2.1 when
+  // pagingSearchSpace > 0
+  // - Ns can be 1, 2 or 4 provided SearchSpace has sufficient PDCCH Monitoring Occasions to match nof. PO(s).
 
   // - [Implementation defined] Currently, PDCCH allocator does not support more than one monitoring occasion per slot
   //   and the monitoring occasion should start at the first symbol of the slot. Therefore, DU must configuring paging
@@ -216,10 +216,10 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_slot_resource_alloc
                                                         unsigned                      i_s,
                                                         unsigned                      paging_msg_size)
 {
-  // Following values for Ns are valid as per TS 38.304, clause 7.1 and TS 38.331, clause 5.2.1 when pagingSearchSpace =
-  // 0
-  //    - Ns can be 1 when multiplexing pattern 1.
-  //    - Ns can be 2 when multiplexing pattern is 2 or 3 and SS/PBCH periodicity is 5ms
+  // Following values for Ns are valid as per TS 38.304, clause 7.1 and TS 38.331, clause 5.2.1 when
+  // pagingSearchSpace = 0
+  // - Ns can be 1 when multiplexing pattern 1.
+  // - Ns can be 2 when multiplexing pattern is 2 or 3 and SS/PBCH periodicity is 5ms
 
   // TS 38.304, clause 7.1, When SearchSpaceId = 0 is configured for pagingSearchSpace and Ns = 2, PO is either in the
   // first half frame (i_s = 0) or the second half frame (i_s = 1) of the PF.
@@ -382,7 +382,7 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
   slot_point sl = slot_point{to_numerology_value(scs_common), 0};
   // Compute all PDCCH Monitoring Occasions in a frame.
   for (unsigned slot_num = 0; slot_num < sl.nof_slots_per_frame(); slot_num++) {
-    sl += slot_num;
+    const slot_point ref_sl = sl + slot_num;
     // Ensure slot for Paging has DL enabled.
     if (not cell_cfg.is_dl_enabled(sl)) {
       continue;
@@ -391,13 +391,14 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
       // - [Implementation defined] Currently, PDCCH allocator does not support more than one monitoring occasion
       //   per slot.
       for (unsigned duration = 0; duration < ss_duration; duration++) {
-        sl += duration;
+        const slot_point add_pmo_slot = ref_sl + duration;
 
         // Ensure slot for Paging has DL enabled.
-        if (not cell_cfg.is_dl_enabled(sl)) {
+        if (not cell_cfg.is_dl_enabled(add_pmo_slot)) {
           continue;
         }
-        pdcch_monitoring_occasions.push_back(sl);
+        pdcch_monitoring_occasions.push_back(add_pmo_slot);
+        slot_num += ss_duration;
       }
     }
   }

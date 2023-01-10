@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/phy/upper/uplink_processor.h"
-#include "srsgnb/ran/slot_pdu_capacity_contants.h"
+#include "srsgnb/ran/slot_pdu_capacity_constants.h"
 #include <vector>
 
 namespace srsgnb {

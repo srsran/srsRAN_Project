@@ -24,7 +24,7 @@ namespace srsgnb {
 struct cell_config_builder_params {
   /// Physical Cell Identity.
   pci_t pci = 1;
-  /// subCarrierSpacingCommon, as per \c MIB, TS 38.311.
+  /// subCarrierSpacingCommon, as per \c MIB, TS 38.331.
   subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
   /// BS Channel Bandwidth, as per TS 38.104, Section 5.3.1.
   bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10;

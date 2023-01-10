@@ -239,7 +239,7 @@ struct sib_test_bench {
 /// \param[in] scs_common SCS corresponding to subCarrierSpacingCommon.
 /// \param[in] sib1_n0_slots array of n0 slots; the n-th array's value is the n0 corresponding to the n-th SSB beam.
 /// \param[in] pdcch_config_sib1 is the parameter (in the MIB) determining the n0 for each beam.
-/// \param[in] ssb_beam_bitmap corresponds to the ssb-PositionsInBurs in the TS 38.311, with L_max = 8.
+/// \param[in] ssb_beam_bitmap corresponds to the ssb-PositionsInBurst in the TS 38.331, with L_max = 8.
 void test_sib1_scheduler(subcarrier_spacing                   scs_common,
                          std::array<unsigned, MAX_NUM_BEAMS>& sib1_n0_slots,
                          uint8_t                              pdcch_config_sib1,

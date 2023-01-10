@@ -175,23 +175,22 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
     default:
       report_fatal_error("Invalid nof. paging occasions per paging frame set");
   }
-  if (cfg.pcch_cfg.first_pdcch_mo_of_po_type !=
-      srsgnb::pcch_config::first_pdcch_monitoring_occasion_of_po_type::not_set) {
+  if (cfg.pcch_cfg.first_pdcch_mo_of_po_type.has_value()) {
     out.pcch_cfg.first_pdcch_monitoring_occasion_of_po_present = true;
-    switch (cfg.pcch_cfg.first_pdcch_mo_of_po_type) {
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS15KHZoneT: {
+    switch (cfg.pcch_cfg.first_pdcch_mo_of_po_type.value()) {
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs15khzOneT: {
         auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs15_kh_zone_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);
         }
       } break;
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS30KHZoneT_SCS15KHZhalfT: {
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs30khzOneT_scs15khzHalfT: {
         auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs30_kh_zone_t_scs15_kh_zhalf_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);
         }
       } break;
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS60KHZoneT_SCS30KHZhalfT_SCS15KHZquarterT: {
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs60khzOneT_scs30khzHalfT_scs15khzQuarterT: {
         auto& first_pmo_of_po =
             out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs60_kh_zone_t_scs30_kh_zhalf_t_scs15_kh_zquarter_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
@@ -199,7 +198,7 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
         }
       } break;
       case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
-          sCS120KHZoneT_SCS60KHZhalfT_SCS30KHZquarterT_SCS15KHZoneEighthT: {
+          scs120khzOneT_scs60khzHalfT_scs30khzQuarterT_scs15khzOneEighthT: {
         auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
                                     .scs120_kh_zone_t_scs60_kh_zhalf_t_scs30_kh_zquarter_t_scs15_kh_zone_eighth_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
@@ -207,7 +206,7 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
         }
       } break;
       case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
-          sCS120KHZhalfT_SCS60KHZquarterT_SCS30KHZoneEighthT_SCS15KHZoneSixteenthT: {
+          scs120khzHalfT_scs60khzQuarterT_scs30khzOneEighthT_scs15khzOneSixteenthT: {
         auto& first_pmo_of_po =
             out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
                 .scs120_kh_zhalf_t_scs60_kh_zquarter_t_scs30_kh_zone_eighth_t_scs15_kh_zone_sixteenth_t();
@@ -216,21 +215,21 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
         }
       } break;
       case pcch_config::first_pdcch_monitoring_occasion_of_po_type::
-          sCS120KHZquarterT_SCS60KHZoneEighthT_SCS30KHZoneSixteenthT: {
+          scs120khzQuarterT_scs60khzOneEighthT_scs30khzOneSixteenthT: {
         auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po
                                     .scs120_kh_zquarter_t_scs60_kh_zone_eighth_t_scs30_kh_zone_sixteenth_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);
         }
       } break;
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS120KHZoneEighthT_SCS60KHZoneSixteenthT: {
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs120khzOneEighthT_scs60khzOneSixteenthT: {
         auto& first_pmo_of_po =
             out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs120_kh_zone_eighth_t_scs60_kh_zone_sixteenth_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);
         }
       } break;
-      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::sCS120KHZoneSixteenthT: {
+      case pcch_config::first_pdcch_monitoring_occasion_of_po_type::scs120khzOneSixteenthT: {
         auto& first_pmo_of_po = out.pcch_cfg.first_pdcch_monitoring_occasion_of_po.scs120_kh_zone_sixteenth_t();
         for (const auto& v : cfg.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value) {
           first_pmo_of_po.push_back(v);

@@ -15,11 +15,11 @@
 namespace srsgnb {
 
 struct paging_indication_message {
-  // Used by the paging scheduler to calculate the Paging Frame (from F1AP Paging Message).
+  /// Used by the paging scheduler to calculate the Paging Frame (from F1AP Paging Message).
   unsigned ue_identity_index_value;
-  // Paging DRX cycle in radio frames.
+  /// Paging DRX cycle in radio frames.
   optional<unsigned> paging_drx;
-  // Size of the paging message to be sent to UE.
+  /// Size of the paging message to be sent to UE.
   unsigned paging_msg_size;
 };
 

@@ -19,7 +19,7 @@
 #include "srsgnb/ran/prach/prach_constants.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/sib_configuration.h"
-#include "srsgnb/ran/slot_pdu_capacity_contants.h"
+#include "srsgnb/ran/slot_pdu_capacity_constants.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/sr_configuration.h"
 #include "srsgnb/ran/ssb_configuration.h"

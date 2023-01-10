@@ -161,7 +161,7 @@ struct pucch_resource_set {
   bool operator!=(const pucch_resource_set& rhs) const { return !(rhs == *this); }
 };
 
-/// \c PUCCH-Config, TS 38.311.
+/// \c PUCCH-Config, TS 38.331.
 struct pucch_config {
   /// \c PUCCH-ResourceSet, from 0 to 3.
   // NOTE: PUCCH resource set ID 0 can only contain PUCCH format 0 and 1.

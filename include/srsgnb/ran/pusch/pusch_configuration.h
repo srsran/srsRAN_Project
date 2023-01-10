@@ -19,7 +19,7 @@
 namespace srsgnb {
 
 /// \brief Used to configure the UE specific PUSCH parameters applicable to a particular BWP.
-/// \remark See TS 38.311, PUSCH-Config.
+/// \remark See TS 38.331, PUSCH-Config.
 struct pusch_config {
   /// Type of transmission schemes for PUSCH.
   enum class tx_config { codebook, non_codebook, not_set };

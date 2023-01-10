@@ -15,17 +15,18 @@
 namespace srsgnb {
 
 /// \brief Default paging cycle, used to derive 'T' in TS 38.304. Value rf32 corresponds to 32 radio frames and so on.
+/// \remark See TS 38.331, PagingCycle.
 enum class paging_cycle { rf32, rf64, rf128, rf256 };
 
 /// \brief Used to paging related configuration.
-/// \remark See TS 38.311, PCCH-Config.
+/// \remark See TS 38.331, PCCH-Config.
 struct pcch_config {
   /// \brief Maximum number of paging occasion per paging frame.
-  /// \remark See TS 38.311, maxPO-perPF.
+  /// \remark See TS 38.331, maxPO-perPF.
   static constexpr unsigned MAX_PO_PER_PF = 4;
 
   /// \brief The number of PDCCH monitoring occasions corresponding to an SSB within a Paging Occasion.
-  /// \remark See TS 38.311, nrofPDCCH-MonitoringOccasionPerSSB-InPO. This field is part of PCCH_Config IE and is
+  /// \remark See TS 38.331, nrofPDCCH-MonitoringOccasionPerSSB-InPO. This field is part of PCCH_Config IE and is
   /// present only if cell operates with shared spectrum channel access.
   /// \remark See TS 38.304, clause 7.1, if nrofPDCCH-MonitoringOccasionPerSSB-InPO is not configured its value is equal
   /// to 1.
@@ -33,21 +34,20 @@ struct pcch_config {
 
   /// \brief Number of paging occasions per paging frame.
   enum class nof_po_per_pf { four, two, one };
-  /// Number of paging frames per DRX cycle. nAndPagingFrameOffset in TS 38.311 in divided into \c nof_pf and \c
+  /// Number of paging frames per DRX cycle. nAndPagingFrameOffset in TS 38.331 in divided into \c nof_pf and \c
   /// paging_frame_offset. e.g. for value oneEighthT nof. paging frames per DRX cycle is 8.
   enum class nof_pf_per_drx_cycle { oneT, halfT, quarterT, oneEighthT, oneSixteethT };
 
   /// \brief Points out the type of first PDCCH monitoring occasion for paging of each PO of the PF.
   enum class first_pdcch_monitoring_occasion_of_po_type {
-    sCS15KHZoneT,
-    sCS30KHZoneT_SCS15KHZhalfT,
-    sCS60KHZoneT_SCS30KHZhalfT_SCS15KHZquarterT,
-    sCS120KHZoneT_SCS60KHZhalfT_SCS30KHZquarterT_SCS15KHZoneEighthT,
-    sCS120KHZhalfT_SCS60KHZquarterT_SCS30KHZoneEighthT_SCS15KHZoneSixteenthT,
-    sCS120KHZquarterT_SCS60KHZoneEighthT_SCS30KHZoneSixteenthT,
-    sCS120KHZoneEighthT_SCS60KHZoneSixteenthT,
-    sCS120KHZoneSixteenthT,
-    not_set
+    scs15khzOneT,
+    scs30khzOneT_scs15khzHalfT,
+    scs60khzOneT_scs30khzHalfT_scs15khzQuarterT,
+    scs120khzOneT_scs60khzHalfT_scs30khzQuarterT_scs15khzOneEighthT,
+    scs120khzHalfT_scs60khzQuarterT_scs30khzOneEighthT_scs15khzOneSixteenthT,
+    scs120khzQuarterT_scs60khzOneEighthT_scs30khzOneSixteenthT,
+    scs120khzOneEighthT_scs60khzOneSixteenthT,
+    scs120khzOneSixteenthT,
   };
 
   paging_cycle default_paging_cycle;
@@ -58,10 +58,9 @@ struct pcch_config {
 
   nof_po_per_pf ns;
 
-  /// See TS 38.311, firstPDCCH-MonitoringOccasionOfPO.
-  first_pdcch_monitoring_occasion_of_po_type first_pdcch_mo_of_po_type{
-      first_pdcch_monitoring_occasion_of_po_type::not_set};
-  static_vector<unsigned, MAX_PO_PER_PF> first_pdcch_monitoring_occasion_of_po_value;
+  /// See TS 38.331, firstPDCCH-MonitoringOccasionOfPO.
+  tiny_optional<first_pdcch_monitoring_occasion_of_po_type> first_pdcch_mo_of_po_type;
+  static_vector<unsigned, MAX_PO_PER_PF>                    first_pdcch_monitoring_occasion_of_po_value;
 };
 
 } // namespace srsgnb

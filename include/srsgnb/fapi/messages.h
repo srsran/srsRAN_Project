@@ -23,7 +23,7 @@
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/ran/slot_pdu_capacity_contants.h"
+#include "srsgnb/ran/slot_pdu_capacity_constants.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/ran/uci/uci_mapping.h"

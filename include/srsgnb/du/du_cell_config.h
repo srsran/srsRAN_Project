@@ -40,9 +40,9 @@ struct du_cell_config {
   unsigned searchspace0_idx;
 
   /// Parameters used to pack MIB.
-  /// "cellBarred" as per MIB, TS 38.311. true = barred; false = notBarred.
+  /// "cellBarred" as per MIB, TS 38.331. true = barred; false = notBarred.
   bool cell_barred;
-  /// "intraFreqReselection" as per MIB, TS 38.311. true = allowed; false = notAllowed.
+  /// "intraFreqReselection" as per MIB, TS 38.331. true = allowed; false = notAllowed.
   bool intra_freq_resel;
 
   /// Cell-specific DL and UL configuration used by common searchSpaces.
