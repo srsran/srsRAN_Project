@@ -14,7 +14,7 @@
 
 using namespace srsgnb;
 
-io_broker_epoll::io_broker_epoll(io_broker_config config) : logger(srslog::fetch_basic_logger("IO-BRK_EPOLL"))
+io_broker_epoll::io_broker_epoll(io_broker_config config) : logger(srslog::fetch_basic_logger("IO-EPL"))
 {
   // Init epoll socket
   epoll_fd = ::epoll_create1(0);

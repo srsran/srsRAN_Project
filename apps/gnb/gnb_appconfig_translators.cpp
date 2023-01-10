@@ -50,7 +50,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
       srsgnb_terminate("Unable to derive a valid SSB pointA and k_SSB for cell id ({}). Exiting.\n", cell.pci);
     }
 
-    srslog::basic_logger& logger = srslog::fetch_basic_logger("gNB appconfig translator", false);
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
     logger.set_level(srslog::basic_levels::info);
 
     logger.info("SSB derived parameters for cell: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "

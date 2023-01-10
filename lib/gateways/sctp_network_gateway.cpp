@@ -22,7 +22,7 @@ sctp_network_gateway::sctp_network_gateway(network_gateway_config            con
   config(config_),
   ctrl_notifier(ctrl_notfier_),
   data_notifier(data_notifier_),
-  logger(srslog::fetch_basic_logger("SCTP-NW-GW"))
+  logger(srslog::fetch_basic_logger("SCTP-GW"))
 {
 }
 

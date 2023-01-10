@@ -112,7 +112,7 @@ TEST_F(f1ap_cu_test, when_du_to_cu_rrc_container_missing_then_ue_not_added)
 TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Reduce F1AP and TEST logger loglevel to warning to reduce console output
-  srslog::fetch_basic_logger("CU-F1C").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("CU-CP-F1").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
@@ -125,7 +125,7 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
   }
 
   // Reset F1C and TEST logger loglevel
-  srslog::fetch_basic_logger("CU-F1C").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("CU-CP-F1").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   EXPECT_EQ(f1ap->get_nof_ues(), MAX_NOF_UES);

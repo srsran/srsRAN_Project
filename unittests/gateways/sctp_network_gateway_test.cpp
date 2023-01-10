@@ -22,8 +22,8 @@ protected:
     srslog::init();
 
     // init GW logger
-    srslog::fetch_basic_logger("SCTP-NW-GW", false).set_level(srslog::basic_levels::debug);
-    srslog::fetch_basic_logger("SCTP-NW-GW", false).set_hex_dump_max_size(100);
+    srslog::fetch_basic_logger("SCTP-GW", false).set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("SCTP-GW", false).set_hex_dump_max_size(100);
   }
 
   void TearDown() override

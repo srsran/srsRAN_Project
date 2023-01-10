@@ -22,7 +22,7 @@ using namespace srs_cu_cp;
 f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
                            f1c_du_processor_notifier&  f1c_du_processor_notifier_,
                            f1c_du_management_notifier& f1c_du_management_notifier_) :
-  logger(srslog::fetch_basic_logger("CU-F1AP")),
+  logger(srslog::fetch_basic_logger("CU-CP-F1")),
   ue_ctx_list(timers),
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(f1c_du_processor_notifier_),
