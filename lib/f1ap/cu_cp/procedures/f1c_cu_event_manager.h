@@ -12,8 +12,8 @@
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
+#include "srsgnb/support/async/async_event_source.h"
 #include "srsgnb/support/async/event_signal.h"
-#include "srsgnb/support/async/protocol_transaction_publisher.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -38,7 +38,7 @@ public:
   /// F1 UE Context Modification procedure outcome.
   using f1_ue_context_modification_outcome_t =
       expected<asn1::f1ap::ue_context_mod_resp_s, asn1::f1ap::ue_context_mod_fail_s>;
-  protocol_transaction_publisher<f1_ue_context_modification_outcome_t> ue_context_modify_transaction_channel;
+  async_event_source<f1_ue_context_modification_outcome_t> ue_context_modify_transaction_channel;
 };
 
 } // namespace srs_cu_cp

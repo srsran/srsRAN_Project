@@ -45,7 +45,7 @@ private:
   f1c_event_manager&                          ev_mng;
   srslog::basic_logger&                       logger;
 
-  protocol_transaction_subscriber<f1c_event_manager::f1_ue_context_modification_outcome_t> transaction_receiver;
+  async_single_event_observer<f1c_event_manager::f1_ue_context_modification_outcome_t> transaction_receiver;
 };
 
 } // namespace srs_cu_cp
