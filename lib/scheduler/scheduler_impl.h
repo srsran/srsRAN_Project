@@ -62,8 +62,7 @@ public:
   }
 
   /// Handle scheduling of paging message.
-  void handle_paging_indication(const paging_indication_message&    pi,
-                                const std::vector<du_cell_index_t>& paging_cell_list) override;
+  void handle_paging_indication(const paging_indication_message& pi) override;
 
 private:
   const scheduler_expert_config sched_cfg;

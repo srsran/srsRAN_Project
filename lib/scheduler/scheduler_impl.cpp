@@ -133,12 +133,8 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   return &cell.res_grid[0].result;
 }
 
-void scheduler_impl::handle_paging_indication(const paging_indication_message&    pi,
-                                              const std::vector<du_cell_index_t>& paging_cell_list)
+void scheduler_impl::handle_paging_indication(const paging_indication_message& pi)
 {
-  for (const auto& cell_idx : paging_cell_list) {
-    srsgnb_assert(cell_idx != INVALID_DU_CELL_INDEX, "Invalid Paging DU cell index");
-    auto& cell = cells[cell_idx];
-    cell.pg_sch.handle_paging_indication_message(pi);
-  }
+  auto& cell = cells[pi.cell_index];
+  cell.pg_sch.handle_paging_indication_message(pi);
 }

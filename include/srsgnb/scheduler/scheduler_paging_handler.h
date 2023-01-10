@@ -15,6 +15,8 @@
 namespace srsgnb {
 
 struct paging_indication_message {
+  /// DU cell index.
+  du_cell_index_t cell_index;
   /// Used by the paging scheduler to calculate the Paging Frame (from F1AP Paging Message).
   unsigned ue_identity_index_value;
   /// Paging DRX cycle in radio frames.
@@ -30,8 +32,7 @@ public:
   virtual ~scheduler_paging_handler() = default;
 
   /// Forward paging information to scheduler.
-  virtual void handle_paging_indication(const paging_indication_message&    pi,
-                                        const std::vector<du_cell_index_t>& paging_cell_list) = 0;
+  virtual void handle_paging_indication(const paging_indication_message& pi) = 0;
 };
 
 } // namespace srsgnb
