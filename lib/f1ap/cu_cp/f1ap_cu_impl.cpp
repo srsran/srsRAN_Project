@@ -22,7 +22,7 @@ using namespace srs_cu_cp;
 f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
                            f1c_du_processor_notifier&  f1c_du_processor_notifier_,
                            f1c_du_management_notifier& f1c_du_management_notifier_) :
-  logger(srslog::fetch_basic_logger("CU-F1C")),
+  logger(srslog::fetch_basic_logger("CU-F1AP")),
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(f1c_du_processor_notifier_),
   du_management_notifier(f1c_du_management_notifier_),
@@ -251,10 +251,10 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
 {
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete: {
-      events->f1ap_ue_context_release_complete.set(&outcome.value.ue_context_release_complete());
+      events->context_release_complete.set(outcome.value.ue_context_release_complete());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
-      events->f1ap_ue_context_setup_outcome.set(&outcome.value.ue_context_setup_resp());
+      events->context_setup_outcome.set(outcome.value.ue_context_setup_resp());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp: {
       events->context_modification_outcome.set(outcome.value.ue_context_mod_resp());
@@ -268,7 +268,7 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
 {
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail: {
-      events->f1ap_ue_context_setup_outcome.set(&outcome.value.ue_context_setup_fail());
+      events->context_setup_outcome.set(outcome.value.ue_context_setup_fail());
     } break;
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_mod_fail: {
       events->context_modification_outcome.set(outcome.value.ue_context_mod_fail());

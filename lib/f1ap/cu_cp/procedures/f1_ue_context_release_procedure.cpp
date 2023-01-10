@@ -34,14 +34,16 @@ void f1_ue_context_release_procedure::operator()(coro_context<async_task<ue_inde
 {
   CORO_BEGIN(ctx);
 
+  transaction_sink.subscribe_to(ev_mng.context_release_complete);
+
   // Send command to DU.
   send_ue_context_release_command();
 
   // Await CU response.
-  CORO_AWAIT_VALUE(f1_ue_ctxt_rel_outcome, ev_mng.f1ap_ue_context_release_complete);
+  CORO_AWAIT(transaction_sink);
 
   // Handle response from DU and return UE index
-  CORO_RETURN(create_ue_context_release_complete(*f1_ue_ctxt_rel_outcome));
+  CORO_RETURN(create_ue_context_release_complete(transaction_sink.response()));
 }
 
 void f1_ue_context_release_procedure::send_ue_context_release_command()

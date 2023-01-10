@@ -22,20 +22,21 @@ namespace srs_cu_cp {
 class f1ap_ue_transaction_manager
 {
 public:
-  f1ap_ue_transaction_manager(timer_manager& timers) : context_modification_outcome(timers) {}
+  f1ap_ue_transaction_manager(timer_manager& timers) :
+    context_setup_outcome(timers), context_modification_outcome(timers), context_release_complete(timers)
+  {
+  }
 
-  /// F1 Context Release Complete
-  using f1_ue_context_release_outcome_t = const asn1::f1ap::ue_context_release_complete_s*;
-  event_signal<f1_ue_context_release_outcome_t> f1ap_ue_context_release_complete;
+  /// F1AP UE Context Setup Response/Failure Event Source.
+  protocol_transaction_event_source<asn1::f1ap::ue_context_setup_resp_s, asn1::f1ap::ue_context_setup_fail_s>
+      context_setup_outcome;
 
-  /// F1 UE context setup procedure outcome.
-  using f1_ue_context_setup_outcome_t =
-      expected<const asn1::f1ap::ue_context_setup_resp_s*, const asn1::f1ap::ue_context_setup_fail_s*>;
-  event_signal<f1_ue_context_setup_outcome_t> f1ap_ue_context_setup_outcome;
-
-  /// F1 UE Context Modification procedure outcome.
+  /// F1AP UE Context Modification Response/Failure Event Source.
   protocol_transaction_event_source<asn1::f1ap::ue_context_mod_resp_s, asn1::f1ap::ue_context_mod_fail_s>
       context_modification_outcome;
+
+  /// F1AP UE Context Release Event Source.
+  protocol_transaction_event_source<asn1::f1ap::ue_context_release_complete_s> context_release_complete;
 };
 
 } // namespace srs_cu_cp

@@ -27,11 +27,14 @@ void f1_ue_context_setup_procedure::operator()(coro_context<async_task<f1ap_ue_c
 {
   CORO_BEGIN(ctx);
 
+  // Subscribe to respective publisher to receive UE CONTEXT SETUP RESPONSE/FAILURE message.
+  transaction_sink.subscribe_to(ev_mng.context_setup_outcome);
+
   // Send command to DU.
   send_ue_context_setup_request();
 
   // Await CU response.
-  CORO_AWAIT_VALUE(f1_ue_ctxt_setup_outcome, ev_mng.f1ap_ue_context_setup_outcome);
+  CORO_AWAIT(transaction_sink);
 
   // Handle response from DU and return UE index
   CORO_RETURN(create_ue_context_setup_result());
@@ -63,14 +66,17 @@ f1ap_ue_context_setup_response f1_ue_context_setup_procedure::create_ue_context_
 {
   f1ap_ue_context_setup_response res{};
 
-  if (f1_ue_ctxt_setup_outcome.has_value()) {
+  if (transaction_sink.successful()) {
     logger.info("Received F1AP UE Context Setup Response.");
-    res.response = *f1_ue_ctxt_setup_outcome.value();
+    res.response = transaction_sink.response();
     res.success  = true;
-  } else {
+  } else if (transaction_sink.failed()) {
     logger.info("Received F1AP UE Context Setup Failure. Cause: {}",
-                get_cause_str((*f1_ue_ctxt_setup_outcome.error())->cause.value));
-    res.failure = *f1_ue_ctxt_setup_outcome.error();
+                get_cause_str(transaction_sink.failure()->cause.value));
+    res.failure = transaction_sink.failure();
+    res.success = false;
+  } else {
+    logger.warning("F1AP UE Context Setup Timeout.");
     res.success = false;
   }
   return res;

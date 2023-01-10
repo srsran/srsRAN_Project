@@ -44,7 +44,8 @@ private:
   f1ap_ue_transaction_manager&                 ev_mng;
   srslog::basic_logger&                        logger;
 
-  f1ap_ue_transaction_manager::f1_ue_context_setup_outcome_t f1_ue_ctxt_setup_outcome;
+  protocol_transaction_outcome_observer<asn1::f1ap::ue_context_setup_resp_s, asn1::f1ap::ue_context_setup_fail_s>
+      transaction_sink;
 };
 
 } // namespace srs_cu_cp
