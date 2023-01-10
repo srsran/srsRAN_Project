@@ -83,11 +83,14 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
     auto& cu_cp_radio_bearer_cfg = cu_cp_rrc_reconf.radio_bearer_cfg.value();
 
     // srb to add mod list
-    for (const auto& srb_to_add : cu_cp_radio_bearer_cfg.srb_to_add_mod_list) {
-      srsgnb_assert(srb_to_add.srb_id != srb_id_t::nulltype, "Invalid SRB ID");
+    for (const auto& srb_to_add_pair : cu_cp_radio_bearer_cfg.srb_to_add_mod_list) {
+      const auto& srb_id     = srb_to_add_pair.first;
+      const auto& srb_to_add = srb_to_add_pair.second;
+
+      srsgnb_assert(srb_id != srb_id_t::nulltype, "Invalid SRB ID");
 
       asn1::rrc_nr::srb_to_add_mod_s asn1_srb_to_add;
-      asn1_srb_to_add.srb_id = srb_id_to_uint(srb_to_add.srb_id);
+      asn1_srb_to_add.srb_id = srb_id_to_uint(srb_id);
 
       asn1_srb_to_add.reestablish_pdcp_present = srb_to_add.reestablish_pdcp_present;
 
@@ -103,11 +106,14 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
     }
 
     // drb to add mod list
-    for (const auto& drb_to_add : cu_cp_radio_bearer_cfg.drb_to_add_mod_list) {
-      srsgnb_assert(drb_to_add.drb_id != drb_id_t::invalid, "Invalid DRB ID");
+    for (const auto& drb_to_add_pair : cu_cp_radio_bearer_cfg.drb_to_add_mod_list) {
+      const auto& drb_id     = drb_to_add_pair.first;
+      const auto& drb_to_add = drb_to_add_pair.second;
+
+      srsgnb_assert(drb_id != drb_id_t::invalid, "Invalid DRB ID");
 
       asn1::rrc_nr::drb_to_add_mod_s asn1_drb_to_add;
-      asn1_drb_to_add.drb_id = drb_id_to_uint(drb_to_add.drb_id);
+      asn1_drb_to_add.drb_id = drb_id_to_uint(drb_id);
 
       // PDCP config
       if (drb_to_add.pdcp_cfg.has_value()) {

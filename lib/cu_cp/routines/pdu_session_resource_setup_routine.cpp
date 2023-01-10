@@ -78,10 +78,9 @@ void pdu_session_resource_setup_routine::operator()(
 
       rrc_ue_drb_setup_message_item.drb_id = drb_to_add;
 
-      for (const auto& cu_up_gtp_tunnel : bearer_context_setup_response
-                                              .pdu_session_resource_setup_list[pdu_session_id_to_uint(
-                                                  rrc_ue_drb_manager.get_pdu_session_id(drb_to_add))]
-                                              .drb_setup_list_ng_ran[drb_id_to_uint(drb_to_add)]
+      for (const auto& cu_up_gtp_tunnel : bearer_context_setup_response.pdu_session_resource_setup_list
+                                              .at(rrc_ue_drb_manager.get_pdu_session_id(drb_to_add))
+                                              .drb_setup_list_ng_ran.at(drb_to_add)
                                               .ul_up_transport_params) {
         rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(cu_up_gtp_tunnel.up_tnl_info);
       }
@@ -90,12 +89,12 @@ void pdu_session_resource_setup_routine::operator()(
 
       const auto& mapped_flows = rrc_ue_drb_manager.get_mapped_qos_flows(drb_to_add);
       for (const auto& qos_flow : mapped_flows) {
-        qos_flow_setup_request_item mapped_flow = {};
-        mapped_flow.qos_flow_id                 = qos_flow;
-        rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb.push_back(mapped_flow);
+        qos_flow_setup_request_item mapped_flow                                        = {};
+        mapped_flow.qos_flow_id                                                        = qos_flow;
+        rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb[mapped_flow.qos_flow_id] = mapped_flow;
       }
 
-      ue_context_mod_request.cu_cp_drb_setup_msgs.push_back(rrc_ue_drb_setup_message_item);
+      ue_context_mod_request.cu_cp_drb_setup_msgs[drb_to_add] = rrc_ue_drb_setup_message_item;
     }
 
     CORO_AWAIT_VALUE(ue_context_modification_response,
@@ -136,8 +135,8 @@ void pdu_session_resource_setup_routine::operator()(
         drb_to_add_mod.cn_assoc                  = cu_cp_cn_assoc{};
         drb_to_add_mod.cn_assoc.value().sdap_cfg = rrc_ue_drb_manager.get_sdap_config(drb_to_add);
 
-        rrc_reconfig_args.radio_bearer_cfg = cu_cp_radio_bearer_config{};
-        rrc_reconfig_args.radio_bearer_cfg.value().drb_to_add_mod_list.push_back(drb_to_add_mod);
+        rrc_reconfig_args.radio_bearer_cfg                                         = cu_cp_radio_bearer_config{};
+        rrc_reconfig_args.radio_bearer_cfg.value().drb_to_add_mod_list[drb_to_add] = drb_to_add_mod;
 
         // set masterCellGroupConfig as received by DU
         rrc_reconfig_args.non_crit_ext = cu_cp_rrc_recfg_v1530_ies{};
@@ -145,9 +144,9 @@ void pdu_session_resource_setup_routine::operator()(
             ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
 
         // append first PDU sessions NAS PDU as received by AMF
-        if (not setup_msg.pdu_session_res_setup_items[0].pdu_session_nas_pdu.empty()) {
+        if (not setup_msg.pdu_session_res_setup_items.at(uint_to_pdu_session_id(0)).pdu_session_nas_pdu.empty()) {
           rrc_reconfig_args.non_crit_ext.value().ded_nas_msg_list.push_back(
-              setup_msg.pdu_session_res_setup_items[0].pdu_session_nas_pdu.copy());
+              setup_msg.pdu_session_res_setup_items.at(uint_to_pdu_session_id(0)).pdu_session_nas_pdu.copy());
         }
       }
     }
@@ -171,19 +170,17 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
   if (success) {
     for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
       cu_cp_pdu_session_res_setup_response_item item;
-      item.pdu_session_id = setup_item.pdu_session_id;
+      item.pdu_session_id = setup_item.first;
 
       auto& transfer = item.pdu_session_resource_setup_response_transfer;
       transfer.dlqos_flow_per_tnl_info.up_tp_layer_info =
-          bearer_context_setup_response
-              .pdu_session_resource_setup_list[pdu_session_id_to_uint(setup_item.pdu_session_id)]
-              .ng_dl_up_tnl_info;
+          bearer_context_setup_response.pdu_session_resource_setup_list.at(setup_item.first).ng_dl_up_tnl_info;
 
       cu_cp_associated_qos_flow qos_flow;
-      qos_flow.qos_flow_id = uint_to_qos_flow_id(1);
-      transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.push_back(qos_flow);
+      qos_flow.qos_flow_id = uint_to_qos_flow_id(1); // TODO: Remove hardcoded value
+      transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list[qos_flow.qos_flow_id] = qos_flow;
 
-      response_msg.pdu_session_res_setup_response_items.push_back(item);
+      response_msg.pdu_session_res_setup_response_items[setup_item.first] = item;
     }
 
     logger.debug("ue={}: \"{}\" finalized.", setup_msg.cu_cp_ue_id, name());
@@ -191,9 +188,9 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
     // mark all PDU sessions as failed
     for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
       cu_cp_pdu_session_res_setup_failed_item item;
-      item.pdu_session_id                                         = setup_item.pdu_session_id;
-      item.pdu_session_resource_setup_unsuccessful_transfer.cause = cu_cp_cause_t::protocol;
-      response_msg.pdu_session_res_failed_to_setup_items.push_back(item);
+      item.pdu_session_id                                                  = setup_item.first;
+      item.pdu_session_resource_setup_unsuccessful_transfer.cause          = cu_cp_cause_t::protocol;
+      response_msg.pdu_session_res_failed_to_setup_items[setup_item.first] = item;
     }
 
     logger.error("ue={}: \"{}\" failed.", setup_msg.cu_cp_ue_id, name());
@@ -220,10 +217,10 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
   for (const auto& pdu_session_to_setup : setup_msg.pdu_session_res_setup_items) {
     e1ap_pdu_session_res_to_setup_item e1ap_pdu_session_item;
 
-    e1ap_pdu_session_item.pdu_session_id    = pdu_session_to_setup.pdu_session_id;
-    e1ap_pdu_session_item.pdu_session_type  = pdu_session_to_setup.pdu_session_type;
-    e1ap_pdu_session_item.snssai            = pdu_session_to_setup.s_nssai;
-    e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_to_setup.ul_ngu_up_tnl_info;
+    e1ap_pdu_session_item.pdu_session_id    = pdu_session_to_setup.second.pdu_session_id;
+    e1ap_pdu_session_item.pdu_session_type  = pdu_session_to_setup.second.pdu_session_type;
+    e1ap_pdu_session_item.snssai            = pdu_session_to_setup.second.s_nssai;
+    e1ap_pdu_session_item.ng_ul_up_tnl_info = pdu_session_to_setup.second.ul_ngu_up_tnl_info;
 
     e1ap_pdu_session_item.security_ind.integrity_protection_ind       = "not_needed"; // TODO: Remove hardcoded value
     e1ap_pdu_session_item.security_ind.confidentiality_protection_ind = "not_needed"; // TODO: Remove hardcoded value
@@ -243,13 +240,13 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
       e1ap_cell_group_item.cell_group_id = 0; // TODO: Remove hardcoded value
       e1ap_drb_setup_item.cell_group_info.push_back(e1ap_cell_group_item);
 
-      for (const auto& qos_item : pdu_session_to_setup.qos_flow_setup_request_items) {
+      for (const auto& qos_item : pdu_session_to_setup.second.qos_flow_setup_request_items) {
         e1ap_qos_flow_qos_param_item e1ap_qos_item;
-        e1ap_qos_item.qos_flow_id = qos_item.qos_flow_id;
+        e1ap_qos_item.qos_flow_id = qos_item.first;
 
-        if (!qos_item.qos_characteristics.is_dynamic_5qi) {
+        if (!qos_item.second.qos_characteristics.is_dynamic_5qi) {
           e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
-          non_dyn_5qi.five_qi = qos_item.qos_characteristics.five_qi;
+          non_dyn_5qi.five_qi = qos_item.second.qos_characteristics.five_qi;
 
           // TODO: Add optional values
 
@@ -259,19 +256,19 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
         }
 
         e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level =
-            qos_item.qos_characteristics.prio_level_arp;
+            qos_item.second.qos_characteristics.prio_level_arp;
         e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap =
-            qos_item.qos_characteristics.pre_emption_cap;
+            qos_item.second.qos_characteristics.pre_emption_cap;
         e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
-            qos_item.qos_characteristics.pre_emption_vulnerability;
+            qos_item.second.qos_characteristics.pre_emption_vulnerability;
 
-        e1ap_drb_setup_item.qos_flow_info_to_be_setup.push_back(e1ap_qos_item);
+        e1ap_drb_setup_item.qos_flow_info_to_be_setup[e1ap_qos_item.qos_flow_id] = e1ap_qos_item;
       }
 
-      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.push_back(e1ap_drb_setup_item);
+      e1ap_pdu_session_item.drb_to_setup_list_ng_ran[drb_to_setup] = e1ap_drb_setup_item;
     }
 
-    e1ap_request.pdu_session_res_to_setup_list.push_back(e1ap_pdu_session_item);
+    e1ap_request.pdu_session_res_to_setup_list[pdu_session_to_setup.first] = e1ap_pdu_session_item;
   }
 }
 
@@ -286,13 +283,13 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_r
   for (const auto& pdu_session : bearer_context_setup_response.pdu_session_resource_setup_list) {
     e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
 
-    e1ap_mod_item.pdu_session_id = pdu_session.pdu_session_id;
+    e1ap_mod_item.pdu_session_id = pdu_session.first;
 
     for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
       e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
-      e1ap_drb_item.drb_id = drb_item.drb_id;
+      e1ap_drb_item.drb_id = drb_item.first;
 
-      for (const auto& dl_up_param : drb_item.dl_up_tnl_info_to_be_setup_list) {
+      for (const auto& dl_up_param : drb_item.second.dl_up_tnl_info_to_be_setup_list) {
         e1ap_up_params_item e1ap_dl_up_param;
 
         e1ap_dl_up_param.up_tnl_info   = dl_up_param.dl_up_tnl_info;
@@ -300,10 +297,10 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_r
 
         e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);
       }
-      e1ap_mod_item.drb_to_modify_list_ng_ran.push_back(e1ap_drb_item);
+      e1ap_mod_item.drb_to_modify_list_ng_ran[drb_item.first] = e1ap_drb_item;
     }
 
-    e1ap_bearer_context_mod.pdu_session_res_to_modify_list.push_back(e1ap_mod_item);
+    e1ap_bearer_context_mod.pdu_session_res_to_modify_list[pdu_session.first] = e1ap_mod_item;
   }
 
   e1ap_request.ng_ran_bearer_context_mod_request = e1ap_bearer_context_mod;

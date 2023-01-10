@@ -42,9 +42,9 @@ cu_cp_pdu_session_resource_setup_message fill_res_setup_request()
   qos_item.qos_characteristics.pre_emption_cap           = "not-pre-emptable";
   qos_item.qos_characteristics.pre_emption_vulnerability = "not-pre-emptable";
 
-  item.qos_flow_setup_request_items.push_back(qos_item);
+  item.qos_flow_setup_request_items[qos_item.qos_flow_id] = qos_item;
 
-  req.pdu_session_res_setup_items.push_back(item);
+  req.pdu_session_res_setup_items[item.pdu_session_id] = std::move(item);
 
   return req;
 };

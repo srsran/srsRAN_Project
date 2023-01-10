@@ -22,8 +22,14 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
   std::vector<drb_id_t> drb_to_add_list;
 
   // look for existing DRB using the same FiveQI (does it need to be the same PDU session?)
-  for (const auto& pdu_session : pdu.pdu_session_res_setup_items) {
-    for (const auto& qos_flow : pdu_session.qos_flow_setup_request_items) {
+  for (const auto& pdu_session_pair : pdu.pdu_session_res_setup_items) {
+    const auto& pdu_session_id = pdu_session_pair.first;
+    const auto& pdu_session    = pdu_session_pair.second;
+
+    for (const auto& qos_flow_pair : pdu_session.qos_flow_setup_request_items) {
+      const auto& qos_flow_id = qos_flow_pair.first;
+      const auto& qos_flow    = qos_flow_pair.second;
+
       // TODO: check if FiveQI has configuration
 
       // check if other DRB with same FiveQI exists
@@ -37,11 +43,11 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
 
         drb_context drb_ctx;
         drb_ctx.drb_id         = id;
-        drb_ctx.pdu_session_id = pdu_session.pdu_session_id;
+        drb_ctx.pdu_session_id = pdu_session_id;
         drb_ctx.default_drb    = drbs.empty() ? true : false; // make first DRB the default
         drb_ctx.five_qi        = qos_flow.qos_characteristics.five_qi;
         drb_ctx.pdcp_cfg       = set_rrc_pdcp_config(drb_ctx.five_qi);
-        drb_ctx.mapped_qos_flows.push_back(qos_flow.qos_flow_id);
+        drb_ctx.mapped_qos_flows.push_back(qos_flow_id);
         drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
 
         // add new DRB to list

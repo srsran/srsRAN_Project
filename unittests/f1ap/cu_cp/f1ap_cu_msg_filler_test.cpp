@@ -79,11 +79,11 @@ cu_cp_ue_context_modification_request generate_ue_context_mod_request()
   up_transport_layer_info gtp_tunnel = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(1)};
   drb_setup_msg.gtp_tunnels.push_back(gtp_tunnel);
 
-  qos_flow_setup_request_item mapped_flow = {};
-  mapped_flow.qos_flow_id                 = uint_to_qos_flow_id(1);
-  drb_setup_msg.qos_flows_mapped_to_drb.push_back(mapped_flow);
+  qos_flow_setup_request_item mapped_flow                        = {};
+  mapped_flow.qos_flow_id                                        = uint_to_qos_flow_id(1);
+  drb_setup_msg.qos_flows_mapped_to_drb[mapped_flow.qos_flow_id] = mapped_flow;
 
-  msg.cu_cp_drb_setup_msgs.push_back(drb_setup_msg);
+  msg.cu_cp_drb_setup_msgs[drb_setup_msg.drb_id] = drb_setup_msg;
 
   return msg;
 }

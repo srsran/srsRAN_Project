@@ -73,13 +73,13 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
 
 /// \brief Convert NGAP ASN1 PDU Session Resource Setup List SU REQ ASN1 struct to common type.
 /// \param[out] cu_cp_pdu_session_res_setup_msg The cu_cp_pdu_session_res_setup_msg struct to fill.
-/// \param[in] pdu_session_res_setup_su_req The pdu_session_res_setup_list_su_req ASN1 struct.
+/// \param[in] asn1_pdu_session_res_setup_msg The pdu_session_res_setup_list_su_req ASN1 struct.
 inline void fill_cu_cp_pdu_session_resource_setup_message(
     cu_cp_pdu_session_resource_setup_message& cu_cp_pdu_session_resource_setup_msg,
     const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_setup_item_su_req_s, 1U, 256U, true>&
-        pdu_session_res_setup_su_req)
+        asn1_pdu_session_res_setup_msg)
 {
-  for (auto asn1_session_item : pdu_session_res_setup_su_req) {
+  for (const auto& asn1_session_item : asn1_pdu_session_res_setup_msg) {
     cu_cp_pdu_session_res_setup_item setup_item;
 
     // pDUSessionID
@@ -100,29 +100,29 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
     setup_item.s_nssai.sst = asn1_session_item.s_nssai.sst.to_number();
 
     // pDUSessionResourceSetupRequestTransfer
-    asn1::ngap::pdu_session_res_setup_request_transfer_s setup_req_transfer;
+    asn1::ngap::pdu_session_res_setup_request_transfer_s asn1_setup_req_transfer;
     asn1::cbit_ref bref({asn1_session_item.pdu_session_res_setup_request_transfer.begin(),
                          asn1_session_item.pdu_session_res_setup_request_transfer.end()});
 
-    if (setup_req_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    if (asn1_setup_req_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
       //   logger.error("Couldn't unpack PDU Session Resource Setup Request Transfer PDU");
       return;
     }
 
     // id-PDUSessionAggregateMaximumBitRate
     setup_item.pdu_session_aggregate_maximum_bit_rate_dl =
-        setup_req_transfer->pdu_session_aggr_max_bit_rate.value.pdu_session_aggr_max_bit_rate_dl;
+        asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.value.pdu_session_aggr_max_bit_rate_dl;
     setup_item.pdu_session_aggregate_maximum_bit_rate_ul =
-        setup_req_transfer->pdu_session_aggr_max_bit_rate.value.pdu_session_aggr_max_bit_rate_ul;
+        asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.value.pdu_session_aggr_max_bit_rate_ul;
 
     // id-UL-NGU-UP-TNLInformation
-    setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(setup_req_transfer->ul_ngu_up_tnl_info.value);
+    setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(asn1_setup_req_transfer->ul_ngu_up_tnl_info.value);
 
     // id-PDUSessionType
-    setup_item.pdu_session_type = setup_req_transfer->pdu_session_type.value.to_string();
+    setup_item.pdu_session_type = asn1_setup_req_transfer->pdu_session_type.value.to_string();
 
     // id-QosFlowSetupRequestList
-    for (auto asn1_flow_item : setup_req_transfer->qos_flow_setup_request_list.value) {
+    for (const auto& asn1_flow_item : asn1_setup_req_transfer->qos_flow_setup_request_list.value) {
       qos_flow_setup_request_item qos_flow_setup_req_item;
 
       // qosFlowIdentifier
@@ -173,16 +173,16 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
         qos_flow_setup_req_item.erab_id.value() = asn1_flow_item.erab_id;
       }
 
-      setup_item.qos_flow_setup_request_items.push_back(qos_flow_setup_req_item);
+      setup_item.qos_flow_setup_request_items[qos_flow_setup_req_item.qos_flow_id] = qos_flow_setup_req_item;
     }
 
-    cu_cp_pdu_session_resource_setup_msg.pdu_session_res_setup_items.push_back(setup_item);
+    cu_cp_pdu_session_resource_setup_msg.pdu_session_res_setup_items[setup_item.pdu_session_id] = std::move(setup_item);
   }
 }
 
 /// \brief Convert common type PDU Session Resource Setup Response message to NGAP PDU Session Resource Setup Response
 /// message.
-/// \param[out] resp The NGAP PDU Session Resource Setup Response message.
+/// \param[out] resp The ASN1 NGAP PDU Session Resource Setup Response message.
 /// \param[in] cu_cp_resp The CU-CP PDU Session Resource Setup Response message.
 inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_resp_s&               resp,
                                               const cu_cp_pdu_session_resource_setup_response_message cu_cp_resp)
@@ -191,10 +191,13 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
   if (!cu_cp_resp.pdu_session_res_setup_response_items.empty()) {
     resp->pdu_session_res_setup_list_su_res_present = true;
 
-    for (auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_setup_response_items) {
+    for (const auto& cu_cp_resp_item_pair : cu_cp_resp.pdu_session_res_setup_response_items) {
+      const auto& pdu_session_id  = cu_cp_resp_item_pair.first;
+      const auto& cu_cp_resp_item = cu_cp_resp_item_pair.second;
+
       asn1::ngap::pdu_session_res_setup_item_su_res_s resp_item;
 
-      resp_item.pdu_session_id = pdu_session_id_to_uint(cu_cp_resp_item.pdu_session_id);
+      resp_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
 
       asn1::ngap::pdu_session_res_setup_resp_transfer_s response_transfer;
 
@@ -203,7 +206,7 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
           cu_cp_resp_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info);
 
       // Add AdditionalDLQosFlowPerTNLInformation
-      for (auto cu_cp_qos_flow_info :
+      for (const auto& cu_cp_qos_flow_info :
            cu_cp_resp_item.pdu_session_resource_setup_response_transfer.add_dl_qos_flow_per_tnl_info) {
         asn1::ngap::qos_flow_per_tnl_info_item_s ngap_qos_flow_info;
         ngap_qos_flow_info.qos_flow_per_tnl_info =
@@ -212,8 +215,10 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
       }
 
       // Add QosFlowFailedToSetupList
-      for (auto cu_cp_failed_item :
+      for (const auto& cu_cp_failed_item_pair :
            cu_cp_resp_item.pdu_session_resource_setup_response_transfer.qos_flow_failed_to_setup_list) {
+        const auto& cu_cp_failed_item = cu_cp_failed_item_pair.second;
+
         asn1::ngap::qos_flow_with_cause_item_s ngap_failed_item =
             cu_cp_qos_flow_failed_to_setup_item_to_ngap_qos_flow_with_cause_item(cu_cp_failed_item);
         response_transfer.qos_flow_failed_to_setup_list.push_back(ngap_failed_item);
@@ -241,7 +246,9 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
   // Fill PDU Session Resource Failed to Setup List
   if (!cu_cp_resp.pdu_session_res_failed_to_setup_items.empty()) {
     resp->pdu_session_res_failed_to_setup_list_su_res_present = true;
-    for (auto& cu_cp_setup_failed_item : cu_cp_resp.pdu_session_res_failed_to_setup_items) {
+    for (const auto& cu_cp_setup_failed_item_pair : cu_cp_resp.pdu_session_res_failed_to_setup_items) {
+      const auto& cu_cp_setup_failed_item = cu_cp_setup_failed_item_pair.second;
+
       asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s setup_failed_item;
 
       asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;

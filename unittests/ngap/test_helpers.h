@@ -137,10 +137,9 @@ public:
       CORO_BEGIN(ctx);
 
       if (last_request.pdu_session_res_setup_items.size() == 0) {
-        res.pdu_session_res_failed_to_setup_items.resize(1);
-        res.pdu_session_res_setup_response_items.resize(0);
+        res.pdu_session_res_failed_to_setup_items[uint_to_pdu_session_id(1)] = {};
       } else {
-        res.pdu_session_res_setup_response_items.resize(1);
+        res.pdu_session_res_setup_response_items[uint_to_pdu_session_id(1)] = {};
       }
 
       CORO_RETURN(res);

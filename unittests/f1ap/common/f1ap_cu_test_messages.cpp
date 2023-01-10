@@ -215,7 +215,7 @@ srsgnb::srs_cu_cp::generate_ue_context_modification_request(ue_index_t          
     drb_setup_msg.qos_info.five_qi        = 8;
     drb_setup_msg.qos_info.prio_level_arp = 1;
 
-    msg.cu_cp_drb_setup_msgs.push_back(drb_setup_msg);
+    msg.cu_cp_drb_setup_msgs[drb_id] = drb_setup_msg;
   }
 
   return msg;

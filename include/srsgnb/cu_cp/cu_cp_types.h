@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 namespace srsgnb {
@@ -295,21 +296,21 @@ struct cu_cp_s_nssai {
 };
 
 struct cu_cp_pdu_session_res_setup_item {
-  pdu_session_id_t                         pdu_session_id = pdu_session_id_t::invalid;
-  byte_buffer                              pdu_session_nas_pdu;
-  cu_cp_s_nssai                            s_nssai;
-  uint64_t                                 pdu_session_aggregate_maximum_bit_rate_dl;
-  uint64_t                                 pdu_session_aggregate_maximum_bit_rate_ul;
-  up_transport_layer_info                  ul_ngu_up_tnl_info;
-  std::string                              pdu_session_type;
-  std::vector<qos_flow_setup_request_item> qos_flow_setup_request_items = {};
+  pdu_session_id_t                                               pdu_session_id = pdu_session_id_t::invalid;
+  byte_buffer                                                    pdu_session_nas_pdu;
+  cu_cp_s_nssai                                                  s_nssai;
+  uint64_t                                                       pdu_session_aggregate_maximum_bit_rate_dl;
+  uint64_t                                                       pdu_session_aggregate_maximum_bit_rate_ul;
+  up_transport_layer_info                                        ul_ngu_up_tnl_info;
+  std::string                                                    pdu_session_type;
+  std::unordered_map<qos_flow_id_t, qos_flow_setup_request_item> qos_flow_setup_request_items;
 };
 
 struct cu_cp_pdu_session_resource_setup_message {
-  cu_cp_ue_id_t                                 cu_cp_ue_id                 = cu_cp_ue_id_t::invalid;
-  std::vector<cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items = {};
-  uint64_t                                      ue_aggregate_maximum_bit_rate_dl;
-  std::string                                   serving_plmn;
+  cu_cp_ue_id_t                                                          cu_cp_ue_id = cu_cp_ue_id_t::invalid;
+  std::unordered_map<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
+  uint64_t                                                               ue_aggregate_maximum_bit_rate_dl;
+  std::string                                                            serving_plmn;
 };
 
 struct cu_cp_associated_qos_flow {
@@ -323,8 +324,8 @@ struct cu_cp_qos_flow_failed_to_setup_item {
 };
 
 struct cu_cp_qos_flow_per_tnl_information {
-  up_transport_layer_info                up_tp_layer_info;
-  std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list = {};
+  up_transport_layer_info                                      up_tp_layer_info;
+  std::unordered_map<qos_flow_id_t, cu_cp_associated_qos_flow> associated_qos_flow_list;
 };
 
 struct cu_cp_security_result {
@@ -333,11 +334,11 @@ struct cu_cp_security_result {
 };
 
 struct cu_cp_pdu_session_resource_setup_response_transfer {
-  std::vector<cu_cp_qos_flow_per_tnl_information>  add_dl_qos_flow_per_tnl_info = {};
-  cu_cp_qos_flow_per_tnl_information               dlqos_flow_per_tnl_info;
-  std::vector<cu_cp_associated_qos_flow>           associated_qos_flow_list      = {};
-  std::vector<cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list = {};
-  optional<cu_cp_security_result>                  security_result;
+  std::vector<cu_cp_qos_flow_per_tnl_information>                        add_dl_qos_flow_per_tnl_info = {};
+  cu_cp_qos_flow_per_tnl_information                                     dlqos_flow_per_tnl_info;
+  std::unordered_map<qos_flow_id_t, cu_cp_associated_qos_flow>           associated_qos_flow_list;
+  std::unordered_map<qos_flow_id_t, cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list;
+  optional<cu_cp_security_result>                                        security_result;
 };
 
 struct cu_cp_pdu_session_res_setup_response_item {
@@ -356,27 +357,27 @@ struct cu_cp_pdu_session_res_setup_failed_item {
 };
 
 struct cu_cp_pdu_session_resource_setup_response_message {
-  std::vector<cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items  = {};
-  std::vector<cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items = {};
+  std::unordered_map<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
+  std::unordered_map<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
   // TODO: Add crit diagnostics
 };
 
 struct cu_cp_drb_setup_message {
-  drb_id_t                                 drb_id;
-  srsgnb::rlc_mode                         rlc;
-  cu_cp_qos_characteristics                qos_info;
-  std::vector<up_transport_layer_info>     gtp_tunnels = {};
-  cu_cp_s_nssai                            s_nssai;
-  std::vector<qos_flow_setup_request_item> qos_flows_mapped_to_drb = {};
+  drb_id_t                                                       drb_id;
+  srsgnb::rlc_mode                                               rlc;
+  cu_cp_qos_characteristics                                      qos_info;
+  std::vector<up_transport_layer_info>                           gtp_tunnels = {};
+  cu_cp_s_nssai                                                  s_nssai;
+  std::unordered_map<qos_flow_id_t, qos_flow_setup_request_item> qos_flows_mapped_to_drb;
 
   uint8_t dl_pdcp_sn_length; // id-DLPDCPSNLength 161
   uint8_t ul_pdcp_sn_length; // id-ULPDCPSNLength 192
 };
 
 struct cu_cp_ue_context_modification_request {
-  ue_index_t                           ue_index;
-  std::vector<cu_cp_drb_setup_message> cu_cp_drb_setup_msgs = {};
-  optional<uint64_t>                   ue_aggregate_maximum_bit_rate_ul;
+  ue_index_t                                            ue_index;
+  std::unordered_map<drb_id_t, cu_cp_drb_setup_message> cu_cp_drb_setup_msgs;
+  optional<uint64_t>                                    ue_aggregate_maximum_bit_rate_ul;
 };
 
 struct cu_cp_du_to_cu_rrc_info {
@@ -436,20 +437,20 @@ struct cu_cp_srbs_setup_modified_item {
 struct cu_cp_ue_context_modification_response {
   bool success = false;
   // ue context modification response
-  byte_buffer                                              res_coordination_transfer_container;
-  cu_cp_du_to_cu_rrc_info                                  du_to_cu_rrc_info;
-  std::vector<cu_cp_drbs_setup_modified_item>              drbs_setup_mod_list              = {};
-  std::vector<cu_cp_drbs_setup_modified_item>              drbs_modified_list               = {};
-  std::vector<cu_cp_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list = {};
-  std::vector<cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list = {};
-  std::vector<cu_cp_scell_failed_to_setup_mod_item>        scell_failed_to_setup_mod_list   = {};
-  std::vector<cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list  = {};
-  optional<std::string>                                    inactivity_monitoring_resp;
-  optional<srsgnb::rnti_t>                                 c_rnti;
-  std::vector<cu_cp_associated_scell_item>                 associated_scell_list = {};
-  std::vector<cu_cp_srbs_setup_modified_item>              srbs_setup_mod_list   = {};
-  std::vector<cu_cp_srbs_setup_modified_item>              srbs_modified_list    = {};
-  optional<std::string>                                    full_cfg;
+  byte_buffer                                                               res_coordination_transfer_container;
+  cu_cp_du_to_cu_rrc_info                                                   du_to_cu_rrc_info;
+  std::unordered_map<drb_id_t, cu_cp_drbs_setup_modified_item>              drbs_setup_mod_list;
+  std::unordered_map<drb_id_t, cu_cp_drbs_setup_modified_item>              drbs_modified_list;
+  std::unordered_map<srb_id_t, cu_cp_srbs_failed_to_be_setup_mod_item>      srbs_failed_to_be_setup_mod_list;
+  std::unordered_map<drb_id_t, cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_setup_mod_list;
+  std::vector<cu_cp_scell_failed_to_setup_mod_item>                         scell_failed_to_setup_mod_list = {};
+  std::unordered_map<drb_id_t, cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
+  optional<std::string>                                                     inactivity_monitoring_resp;
+  optional<srsgnb::rnti_t>                                                  c_rnti;
+  std::vector<cu_cp_associated_scell_item>                                  associated_scell_list = {};
+  std::unordered_map<srb_id_t, cu_cp_srbs_setup_modified_item>              srbs_setup_mod_list;
+  std::unordered_map<srb_id_t, cu_cp_srbs_setup_modified_item>              srbs_modified_list;
+  optional<std::string>                                                     full_cfg;
 
   // UE Context Modification Failure
   optional<cu_cp_cause_t> cause;
@@ -491,11 +492,11 @@ struct cu_cp_security_config {
 };
 
 struct cu_cp_radio_bearer_config {
-  std::vector<cu_cp_srb_to_add_mod> srb_to_add_mod_list = {};
-  std::vector<cu_cp_drb_to_add_mod> drb_to_add_mod_list = {};
-  std::vector<drb_id_t>             drb_to_release_list = {};
-  optional<cu_cp_security_config>   security_cfg;
-  bool                              srb3_to_release_present = false;
+  std::unordered_map<srb_id_t, cu_cp_srb_to_add_mod> srb_to_add_mod_list;
+  std::unordered_map<drb_id_t, cu_cp_drb_to_add_mod> drb_to_add_mod_list;
+  std::vector<drb_id_t>                              drb_to_release_list = {};
+  optional<cu_cp_security_config>                    security_cfg;
+  bool                                               srb3_to_release_present = false;
 };
 
 struct cu_cp_meas_config {

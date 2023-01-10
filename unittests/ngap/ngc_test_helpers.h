@@ -287,9 +287,6 @@ ngc_message generate_valid_initial_context_setup_request_message()
   init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(57344);
   init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(57344);
 
-  init_context_setup_req->security_key.value.from_string(
-      "6d008a88bca9bb81190ff8c552cf8680069821e3b50f5f29c45d2632323edb2d");
-
   return ngc_msg;
 }
 
@@ -303,9 +300,6 @@ ngc_message generate_invalid_initial_context_setup_request_message()
   init_context_setup_req->ue_security_cap->nr_integrity_protection_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(0);
-
-  init_context_setup_req->security_key.value.from_string(
-      "6d008a88bca9bb81190ff8c552cf8680069821e3b50f5f29c45d2632323edb2d");
 
   return ngc_msg;
 }
@@ -328,7 +322,7 @@ ngc_message generate_pdu_session_resource_setup_request_base()
   return ngc_msg;
 }
 
-ngc_message generate_valid_pdu_session_resource_setup_request_message()
+ngc_message generate_valid_pdu_session_resource_setup_request_message(pdu_session_id_t pdu_session_id)
 {
   ngc_message ngc_msg = generate_pdu_session_resource_setup_request_base();
 
@@ -336,7 +330,7 @@ ngc_message generate_valid_pdu_session_resource_setup_request_message()
 
   asn1::ngap::pdu_session_res_setup_item_su_req_s pdu_session_res_item;
 
-  pdu_session_res_item.pdu_session_id = 1;
+  pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
 
   // Add PDU Session NAS PDU
   pdu_session_res_item.pdu_session_nas_pdu.from_string(
