@@ -117,15 +117,18 @@ void pdu_session_resource_setup_routine::operator()(
     {
       for (const auto& drb_to_add : drb_to_add_list) {
         cu_cp_drb_to_add_mod drb_to_add_mod;
-        drb_to_add_mod.drb_id           = drb_to_add;
-        drb_to_add_mod.pdcp_cfg.value() = rrc_ue_drb_manager.get_pdcp_config(drb_to_add);
+        drb_to_add_mod.drb_id   = drb_to_add;
+        drb_to_add_mod.pdcp_cfg = rrc_ue_drb_manager.get_pdcp_config(drb_to_add);
 
         // Add CN association and SDAP config
-        drb_to_add_mod.cn_assoc.value().sdap_cfg.value() = rrc_ue_drb_manager.get_sdap_config(drb_to_add);
+        drb_to_add_mod.cn_assoc                  = cu_cp_cn_assoc{};
+        drb_to_add_mod.cn_assoc.value().sdap_cfg = rrc_ue_drb_manager.get_sdap_config(drb_to_add);
 
+        rrc_reconfig_args.radio_bearer_cfg = cu_cp_radio_bearer_config{};
         rrc_reconfig_args.radio_bearer_cfg.value().drb_to_add_mod_list.push_back(drb_to_add_mod);
 
         // set masterCellGroupConfig as received by DU
+        rrc_reconfig_args.non_crit_ext = cu_cp_rrc_recfg_v1530_ies{};
         rrc_reconfig_args.non_crit_ext.value().master_cell_group =
             ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
 
