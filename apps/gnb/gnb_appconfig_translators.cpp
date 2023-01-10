@@ -196,7 +196,7 @@ static std::vector<std::string> extract_zmq_ports(const std::string& driver_args
 radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&                  config,
                                                          const radio_configuration::validator& validator)
 {
-  radio_configuration::radio out_cfg;
+  radio_configuration::radio out_cfg = {};
 
   out_cfg.log_level        = config.log_level;
   out_cfg.sampling_rate_hz = config.rf_driver_cfg.srate_MHz * 1e6;
@@ -222,8 +222,8 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
     const base_cell_appconfig& cell = config.cells_cfg[sector_id].cell;
     for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
       // Create channel configuration and append it to the previous ones.
-      radio_configuration::channel tx_ch_config;
-      tx_ch_config.freq.center_frequency_hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
+      radio_configuration::channel tx_ch_config = {};
+      tx_ch_config.freq.center_frequency_hz     = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
 
       tx_ch_config.gain_dB = tx_gain;
       // Add the tx ports.
@@ -234,7 +234,7 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
       }
       tx_stream_config.channels.emplace_back(tx_ch_config);
 
-      radio_configuration::channel rx_ch_config;
+      radio_configuration::channel rx_ch_config = {};
       rx_ch_config.freq.center_frequency_hz =
           band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn));
       rx_ch_config.gain_dB = rx_gain;
