@@ -124,10 +124,7 @@ static bool validate_otw_format(radio_configuration::over_the_wire_format otw_fo
 
 static bool validate_radio_args(const std::string& radio_args)
 {
-  if (!radio_args.empty()) {
-    fmt::print("Radio general arguments are not currently supported.\n");
-    return false;
-  }
+  // TODO: add sensible check(s) for radio args
 
   return true;
 }
