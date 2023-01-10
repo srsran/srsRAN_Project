@@ -17,26 +17,25 @@ using namespace srsgnb;
 class async_single_event_observer_test : public ::testing::Test
 {
 protected:
-  timer_manager           timers{1};
-  async_event_source<int> transaction_channel{timers};
+  timer_manager                    timers{1};
+  async_event_source<int>          transaction_channel{timers};
+  async_single_event_observer<int> tr;
 };
 
 TEST_F(async_single_event_observer_test, when_transaction_subscriber_is_created_then_it_starts_unregistered)
 {
-  async_single_event_observer<int> tr;
   ASSERT_FALSE(tr.connected());
+  ASSERT_FALSE(tr.complete());
 }
 
 TEST_F(async_single_event_observer_test, when_no_events_have_been_set_then_subscriber_is_not_complete)
 {
-  async_single_event_observer<int> tr;
   tr.subscribe_to(transaction_channel);
   ASSERT_FALSE(tr.complete());
 }
 
 TEST_F(async_single_event_observer_test, when_publisher_is_triggered_then_subscriber_receives_result)
 {
-  async_single_event_observer<int> tr;
   tr.subscribe_to(transaction_channel);
 
   transaction_channel.set(2);
@@ -47,10 +46,10 @@ TEST_F(async_single_event_observer_test, when_publisher_is_triggered_then_subscr
 #ifdef ASSERTS_ENABLED
 TEST_F(async_single_event_observer_test, only_one_subscriber_per_publisher_allowed)
 {
-  async_single_event_observer<int> tr, tr2;
+  async_single_event_observer<int> tr2;
   tr.subscribe_to(transaction_channel);
 
-  eager_async_task<int> t = launch_async([&tr](coro_context<eager_async_task<int>>& ctx) {
+  eager_async_task<int> t = launch_async([this](coro_context<eager_async_task<int>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT(tr);
     CORO_RETURN(tr.result());
