@@ -384,7 +384,7 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
   for (unsigned slot_num = 0; slot_num < sl.nof_slots_per_frame(); slot_num++) {
     const slot_point ref_sl = sl + slot_num;
     // Ensure slot for Paging has DL enabled.
-    if (not cell_cfg.is_dl_enabled(sl)) {
+    if (not cell_cfg.is_dl_enabled(ref_sl)) {
       continue;
     }
     if ((slot_num - ss_slot_offset) % ss_periodicity == 0) {
