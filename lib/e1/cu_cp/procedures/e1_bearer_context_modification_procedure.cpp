@@ -42,7 +42,7 @@ void e1_bearer_context_modification_procedure::send_bearer_context_modification_
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     request.pdu.to_json(js);
-    logger.debug("Containerized UE Context Modification Request message: {}", js.to_string());
+    logger.debug("Containerized Bearer Context Modification Request message: {}", js.to_string());
   }
 
   // send UE context modification request message

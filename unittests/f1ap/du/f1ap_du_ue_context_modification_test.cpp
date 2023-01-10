@@ -93,10 +93,10 @@ TEST_F(f1ap_du_ue_context_modification_test,
       int_to_gtp_teid(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number()),
       this->f1c_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
   ASSERT_EQ(
-      drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().transport_layer_address.to_number(),
+      drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().transport_layer_address.to_string(),
       this->f1c_du_cfg_handler.next_ue_context_update_response.drbs_setup[0]
           .dluptnl_info_list[0]
-          .tp_address.to_number());
+          .tp_address.to_bitstring());
   ASSERT_EQ(resp->du_to_cu_rrc_info.value.cell_group_cfg,
             this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
