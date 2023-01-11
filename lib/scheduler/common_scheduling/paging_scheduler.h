@@ -13,12 +13,16 @@
 #include "../cell/cell_configuration.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
+#include <unordered_map>
 
 namespace srsgnb {
 
 /// Defines Paging scheduler that is used to allocate resources to send paging information to UE in a given slot.
 class paging_scheduler
 {
+  using ue_identity_index_type    = unsigned;
+  using paging_retries_count_type = unsigned;
+
 public:
   explicit paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
                             const cell_configuration&                       cell_cfg_,
@@ -27,13 +31,12 @@ public:
 
   /// \brief Performs paging (if any) scheduling for the current slot.
   ///
-  /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
-  /// \param[in] sl_point Slot for which the paging scheduler is called.
-  void schedule_paging(cell_slot_resource_allocator& res_grid, slot_point sl_point);
+  /// \param[out,in] res_grid Resource slot grid with current allocations and scheduling results.
+  void schedule_paging(cell_slot_resource_allocator& res_grid);
 
   /// Handles Paging indication message reported by upper layers.
   /// \param[in] paging_indication_message Per UE paging indication message to be scheduled.
-  void handle_paging_indication_message(paging_indication_message paging_indication);
+  void handle_paging_indication_message(const paging_indication_message& paging_indication);
 
 private:
   /// \brief Schedules paging for a UE in SearchSpace > 0 i.e pagingSearchSpace > 0 in its active BWP configuration.
@@ -41,60 +44,54 @@ private:
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   /// \param[in] sl_point Slot for which the paging scheduler is called.
   /// \param[in] pdsch_time_res Slot at which PDSCH needs to be scheduled.
-  /// \param[in] ue_id UE_ID used in Paging Frame and Paging Occasion formula.
+  /// \param[in] pg_msg Paging indication message.
   /// \param[in] i_s Index of the Paging Occasion.
-  /// \param[in] paging_msg_size Paging message size.
-  bool schedule_paging_in_search_space_id_gt_0(cell_slot_resource_allocator& res_grid,
-                                               slot_point                    sl_point,
-                                               unsigned                      pdsch_time_res,
-                                               unsigned                      ue_id,
-                                               unsigned                      i_s,
-                                               unsigned                      paging_msg_size);
+  bool schedule_paging_in_search_space_id_gt_0(cell_slot_resource_allocator&    res_grid,
+                                               slot_point                       sl_point,
+                                               unsigned                         pdsch_time_res,
+                                               const paging_indication_message& pg_msg,
+                                               unsigned                         i_s);
 
   /// \brief Schedules paging for a UE in SearchSpace 0 when pagingSearchSpace is 0 in its active BWP configuration.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   /// \param[in] sl_point Slot for which the paging scheduler is called.
   /// \param[in] pdsch_time_res Slot at which PDSCH needs to be scheduled.
-  /// \param[in] ue_id UE_ID used in Paging Frame and Paging Occasion formula.
+  /// \param[in] pg_msg Paging indication message.
   /// \param[in] i_s Index of the Paging Occasion.
-  /// \param[in] paging_msg_size Paging message size.
-  bool schedule_paging_in_search_space0(cell_slot_resource_allocator& res_grid,
-                                        slot_point                    sl_point,
-                                        unsigned                      pdsch_time_res,
-                                        unsigned                      ue_id,
-                                        unsigned                      i_s,
-                                        unsigned                      paging_msg_size);
+  bool schedule_paging_in_search_space0(cell_slot_resource_allocator&    res_grid,
+                                        slot_point                       sl_point,
+                                        unsigned                         pdsch_time_res,
+                                        const paging_indication_message& pg_msg,
+                                        unsigned                         i_s);
 
   /// \brief Searches in PDSCH and PDCCH for space to allocate Paging and Paging's DCI.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   /// \param[in] pdsch_time_res Slot at which PDSCH needs to be scheduled.
-  /// \param[in] ue_id UE_ID used in Paging Frame and Paging Occasion formula.
+  /// \param[in] pg_msg Paging indication message.
   /// \param[in] beam_idx SSB or beam index which the Paging corresponds to.
   /// \param[in] ss_id Search Space Id used in scheduling paging message.
-  /// \param[in] paging_msg_size Paging message size.
-  bool allocate_paging(cell_slot_resource_allocator& res_grid,
-                       unsigned                      pdsch_time_res,
-                       unsigned                      ue_id,
-                       unsigned                      beam_idx,
-                       search_space_id               ss_id,
-                       unsigned                      paging_msg_size);
+  bool allocate_paging(cell_slot_resource_allocator&    res_grid,
+                       unsigned                         pdsch_time_res,
+                       const paging_indication_message& pg_msg,
+                       unsigned                         beam_idx,
+                       search_space_id                  ss_id);
 
   /// \brief Fills the Paging n0 slots.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   /// \param[in] crbs_grant Paging grant in CRBs.
-  /// \param[in] pdsch_time_res Slot at which PDSCH needs to be scheduled.
-  /// \param[in] ue_id UE_ID used in Paging Frame and Paging Occasion formula.
+  /// \param[in] time_resource Slot at which PDSCH needs to be scheduled.
+  /// \param[in] pg_msg Paging indication message.
   /// \param[in] dmrs_info DMRS information related to the scheduled grant.
   /// \param[in] tbs TBS information of the Paging grant.
-  void fill_paging_grant(cell_slot_resource_allocator& res_grid,
-                         crb_interval                  crbs_grant,
-                         unsigned                      time_resource,
-                         unsigned                      ue_id,
-                         const dmrs_information&       dmrs_info,
-                         unsigned                      tbs);
+  void fill_paging_grant(cell_slot_resource_allocator&    res_grid,
+                         crb_interval                     crbs_grant,
+                         unsigned                         time_resource,
+                         const paging_indication_message& pg_msg,
+                         const dmrs_information&          dmrs_info,
+                         unsigned                         tbs);
 
   /// \brief Helper function to precompute Type2-PDCCH Monitoring slots when pagingSearchSpace > 0.
   ///
@@ -138,6 +135,8 @@ private:
 
   /// List of per UE paging indication message yet to be scheduled.
   std::vector<paging_indication_message> paging_pending_ues;
+  /// Mapping between \c UE_ID (UE_ID: 5G-S-TMSI mod 1024) used for calculating PF and PO to paging retries count.
+  std::unordered_map<ue_identity_index_type, paging_retries_count_type> paging_retries;
 
   srslog::basic_logger& logger;
 };

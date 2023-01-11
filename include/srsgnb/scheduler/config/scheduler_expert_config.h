@@ -51,6 +51,7 @@ struct scheduler_paging_expert_config {
   /// As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for Paging.
   sch_mcs_index     paging_mcs_index;
   aggregation_level paging_dci_aggr_lev;
+  unsigned          max_paging_retries;
 };
 
 /// \brief Scheduling statically configurable expert parameters.

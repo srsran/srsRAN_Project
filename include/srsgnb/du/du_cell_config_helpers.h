@@ -41,6 +41,7 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   /// As per TS 38.214, Section 5.1.3.1, only an MCS with modulation order 2 allowed for Paging.
   cfg.pg.paging_mcs_index    = 5;
   cfg.pg.paging_dci_aggr_lev = aggregation_level::n4;
+  cfg.pg.max_paging_retries  = 2;
 
   cfg.ue.max_nof_harq_retxs = 4;
   cfg.ue.fixed_dl_mcs       = 10;
