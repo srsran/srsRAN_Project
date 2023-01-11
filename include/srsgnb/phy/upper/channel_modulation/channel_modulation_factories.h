@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "srsgnb/phy/upper/channel_modulation/evm_calculator.h"
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include <memory>
 
@@ -22,6 +23,7 @@ public:
   virtual ~channel_modulation_factory()                                     = default;
   virtual std::unique_ptr<modulation_mapper>   create_modulation_mapper()   = 0;
   virtual std::unique_ptr<demodulation_mapper> create_demodulation_mapper() = 0;
+  virtual std::unique_ptr<evm_calculator>      create_evm_calculator()      = 0;
 };
 
 std::shared_ptr<channel_modulation_factory> create_channel_modulation_sw_factory();

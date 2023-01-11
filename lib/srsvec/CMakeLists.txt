@@ -10,12 +10,13 @@ set(SOURCES
         add.cpp
         aligned_vec.cpp
         bit.cpp
+        clip.cpp
         compare.cpp
         conversion.cpp
         dot_prod.cpp
         prod.cpp
         sc_prod.cpp
-        clip.cpp
+        subtract.cpp
         )
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srsvec)

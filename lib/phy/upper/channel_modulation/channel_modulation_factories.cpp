@@ -10,6 +10,7 @@
 
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "demodulation_mapper_impl.h"
+#include "evm_calculator_generic_impl.h"
 #include "modulation_mapper_impl.h"
 
 using namespace srsgnb;
@@ -26,6 +27,10 @@ public:
   std::unique_ptr<demodulation_mapper> create_demodulation_mapper() override
   {
     return std::make_unique<demodulation_mapper_impl>();
+  }
+  std::unique_ptr<evm_calculator> create_evm_calculator() override
+  {
+    return std::make_unique<evm_calculator_generic_impl>(create_modulation_mapper());
   }
 };
 
