@@ -44,6 +44,7 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
         drb_context drb_ctx;
         drb_ctx.drb_id         = id;
         drb_ctx.pdu_session_id = pdu_session_id;
+        drb_ctx.s_nssai        = pdu_session.s_nssai;
         drb_ctx.default_drb    = drbs.empty() ? true : false; // make first DRB the default
         drb_ctx.five_qi        = qos_flow.qos_characteristics.five_qi;
         drb_ctx.pdcp_cfg       = set_rrc_pdcp_config(drb_ctx.five_qi);
@@ -168,6 +169,15 @@ cu_cp_sdap_config drb_manager_impl::get_sdap_config(const drb_id_t drb_id)
     return {};
   }
   return drbs[drb_id].sdap_cfg;
+}
+
+cu_cp_s_nssai drb_manager_impl::get_s_nssai(const drb_id_t drb_id)
+{
+  if (drbs.find(drb_id) == drbs.end()) {
+    logger.error("DRB {} not found", drb_id);
+    return {};
+  }
+  return drbs[drb_id].s_nssai;
 }
 
 size_t drb_manager_impl::get_nof_drbs()

@@ -44,6 +44,9 @@ public:
   /// \brief Return PDU session ID for a given DRB.
   virtual pdu_session_id_t get_pdu_session_id(const drb_id_t drb_id) = 0;
 
+  /// \brief Return slice information for a given DRB.
+  virtual cu_cp_s_nssai get_s_nssai(const drb_id_t drb_id) = 0;
+
   /// \brief Return number of DRBs.
   virtual size_t get_nof_drbs() = 0;
 };
