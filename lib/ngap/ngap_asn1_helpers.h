@@ -251,6 +251,8 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
 
       asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s setup_failed_item;
 
+      setup_failed_item.pdu_session_id = pdu_session_id_to_uint(cu_cp_setup_failed_item_pair.second.pdu_session_id);
+
       asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
       setup_unsuccessful_transfer.cause =
           cu_cp_cause_to_ngap_cause(cu_cp_setup_failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause);
