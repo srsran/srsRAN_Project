@@ -90,17 +90,20 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
 
+  uint32_t ul_teid = 1;
+  uint32_t dl_teid = 2;
+
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier      cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier cu_delivery;
-  srs_cu_up::f1u_bearer*               cu_bearer = cu_gw->create_cu_dl_bearer(1, cu_delivery, cu_rx);
+  srs_cu_up::f1u_bearer*               cu_bearer = cu_gw->create_cu_bearer(ul_teid, cu_delivery, cu_rx);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer*          du_bearer = du_gw->create_du_ul_bearer(1, 2, du_rx);
+  srs_du::f1u_bearer*          du_bearer = du_gw->create_du_bearer(dl_teid, ul_teid, du_rx);
 
   // Create CU RX handler and attach it to the DU TX
-  cu_gw->attach_cu_ul_bearer(1, 2);
+  cu_gw->attach_dl_teid(ul_teid, dl_teid);
 
   // Check CU-UP -> DU path
   byte_buffer             cu_buf = make_byte_buffer("ABCD");

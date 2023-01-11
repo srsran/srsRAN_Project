@@ -114,17 +114,17 @@ private:
   dummy_f1u_bearer& bearer;
 
 public:
-  dummy_f1u_gateway(dummy_f1u_bearer& bearer_) : bearer(bearer_) {}
-  ~dummy_f1u_gateway() = default;
+  explicit dummy_f1u_gateway(dummy_f1u_bearer& bearer_) : bearer(bearer_) {}
+  ~dummy_f1u_gateway() override = default;
 
-  srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
-                                             srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
-                                             srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
+  srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ul_teid,
+                                          srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
+                                          srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
   {
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);
     return &bearer;
   };
-  void attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override{};
+  void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override{};
 };
 
 e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id)

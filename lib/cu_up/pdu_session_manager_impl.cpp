@@ -114,11 +114,11 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     new_drb->pdcp_bearer = srsgnb::create_pdcp_entity(pdcp_msg);
 
     // Create  F1-U bearer
-    uint32_t    dl_f1u_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
+    uint32_t    ul_f1u_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
     f1u_bearer* f1u_bearer =
-        f1u_gw.create_cu_dl_bearer(dl_f1u_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
+        f1u_gw.create_cu_bearer(ul_f1u_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
 
-    drb_result.gtp_tunnel.set_gtp_tunnel().gtp_teid.from_number(dl_f1u_teid);
+    drb_result.gtp_tunnel.set_gtp_tunnel().gtp_teid.from_number(ul_f1u_teid);
 
     srsgnb_assert(drb.qos_flow_info_to_be_setup.size() <= 1,
                   "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS "
@@ -174,8 +174,8 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
   pdu_session_modification_result pdu_session_result;
 
   for (const auto& drb_to_mod : session.drb_to_modify_list_ng_ran) {
-    uint32_t dl_f1u_teid = allocate_local_f1u_teid(session.pdu_session_id, drb_to_mod.drb_id);
-    f1u_gw.attach_cu_ul_bearer(dl_f1u_teid, drb_to_mod.dl_up_params[0].up_tnl_info.gtp_tunnel().gtp_teid.to_number());
+    uint32_t ul_f1u_teid = allocate_local_f1u_teid(session.pdu_session_id, drb_to_mod.drb_id);
+    f1u_gw.attach_dl_teid(ul_f1u_teid, drb_to_mod.dl_up_params[0].up_tnl_info.gtp_tunnel().gtp_teid.to_number());
   }
 
   return pdu_session_result;

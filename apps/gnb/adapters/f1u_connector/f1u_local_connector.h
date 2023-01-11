@@ -20,19 +20,19 @@
 
 namespace srsgnb {
 
-struct f1u_dl_cu_bearer {
+struct f1u_cu_bearer {
   std::unique_ptr<f1u_dl_local_adapter>  cu_tx      = nullptr;
   std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer = nullptr;
-  f1u_dl_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer_) :
+  f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer_) :
     cu_tx(std::move(cu_tx_)), f1u_bearer(std::move(f1u_bearer_))
   {
   }
 };
 
-struct f1u_ul_du_bearer {
+struct f1u_du_bearer {
   std::unique_ptr<f1u_ul_local_adapter> du_tx      = nullptr;
   std::unique_ptr<srs_du::f1u_bearer>   f1u_bearer = nullptr;
-  f1u_ul_du_bearer(std::unique_ptr<f1u_ul_local_adapter> du_tx_, std::unique_ptr<srs_du::f1u_bearer> f1u_bearer_) :
+  f1u_du_bearer(std::unique_ptr<f1u_ul_local_adapter> du_tx_, std::unique_ptr<srs_du::f1u_bearer> f1u_bearer_) :
     du_tx(std::move(du_tx_)), f1u_bearer(std::move(f1u_bearer_))
   {
   }
@@ -49,16 +49,15 @@ public:
   srs_du::f1u_du_gateway* get_f1u_du_gateway() { return this; }
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
 
-  srs_cu_up::f1u_bearer* create_cu_dl_bearer(uint32_t                             dl_teid,
-                                             srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
-                                             srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier) override;
-  void                   attach_cu_ul_bearer(uint32_t dl_teid, uint32_t ul_teid) override;
-  srs_du::f1u_bearer*
-  create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
+  srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ul_teid,
+                                          srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
+                                          srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier) override;
+  void                   attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override;
+  srs_du::f1u_bearer* create_du_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
 
 private:
-  srslog::basic_logger&                logger;
-  std::map<uint32_t, f1u_dl_cu_bearer> dl_map;
-  std::map<uint32_t, f1u_ul_du_bearer> ul_map;
+  srslog::basic_logger&             logger;
+  std::map<uint32_t, f1u_cu_bearer> cu_map; // Key is UL-TEID (i.e., the CU's local TEID)
+  std::map<uint32_t, f1u_du_bearer> du_map; // Key is DL-TEID (i.e., the DU's local TEID)
 };
 }; // namespace srsgnb
