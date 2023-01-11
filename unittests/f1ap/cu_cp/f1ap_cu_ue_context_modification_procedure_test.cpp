@@ -77,7 +77,31 @@ TEST_F(f1ap_cu_ue_context_modification_test, when_f1ap_receives_response_then_pr
   EXPECT_EQ(t.get().srbs_setup_mod_list.size(), 0);
 }
 
-/// Test the unsuccessful UE context modification procedure (gNB-CU initiated)
+TEST_F(f1ap_cu_ue_context_modification_test,
+       when_f1ap_receives_response_with_failed_drb_then_it_forwards_the_failed_drb_outwards)
+{
+  // Start UE CONTEXT MODIFICATION procedure and return back the Failure Response from the DU.
+  this->start_procedure(generate_ue_context_modification_request(testue.ue_index, {drb_id_t::drb1}));
+  f1c_message ue_context_modification_response =
+      generate_ue_context_modification_response(*testue.cu_ue_id, *testue.du_ue_id, to_rnti(0x4601), {drb_id_t::drb1});
+  auto& resp = *ue_context_modification_response.pdu.successful_outcome().value.ue_context_mod_resp();
+  resp.drbs_failed_to_be_setup_mod_list_present = true;
+  resp.drbs_failed_to_be_setup_mod_list.value.resize(1);
+  resp.drbs_failed_to_be_setup_mod_list.value[0].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
+  resp.drbs_failed_to_be_setup_mod_list.value[0]->drbs_failed_to_be_setup_mod_item().drb_id = 1;
+  resp.drbs_setup_mod_list_present                                                          = false;
+  resp.drbs_setup_mod_list.value.clear();
+  f1ap->handle_message(ue_context_modification_response);
+
+  // The UE CONTEXT MODIFICATION procedure finished unsuccessfully.
+  EXPECT_TRUE(t.ready());
+  EXPECT_TRUE(t.get().success);
+  EXPECT_EQ(t.get().drbs_setup_mod_list.size(), 0);
+  EXPECT_EQ(t.get().srbs_setup_mod_list.size(), 0);
+  EXPECT_EQ(t.get().drbs_failed_to_be_setup_mod_list.size(), 1);
+  EXPECT_EQ(t.get().drbs_failed_to_be_setup_mod_list.at(drb_id_t::drb1).drb_id, drb_id_t::drb1);
+}
+
 TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_failure_received_then_procedure_is_unsuccessful)
 {
   // Start UE CONTEXT MODIFICATION procedure and return back the Failure Response from the DU.
