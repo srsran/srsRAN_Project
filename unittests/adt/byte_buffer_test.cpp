@@ -307,7 +307,7 @@ TEST_P(two_vec_sizes_param, deep_copy)
   ASSERT_EQ_BUFFER(pdu2, bytes_concat);
 }
 
-TEST_P(two_vec_sizes_param, shallow_copy)
+TEST_P(two_vec_sizes_param, shallow_copy_and_append)
 {
   byte_buffer pdu;
   pdu.append(bytes1);
@@ -319,9 +319,29 @@ TEST_P(two_vec_sizes_param, shallow_copy)
     pdu2.append(bytes2);
     ASSERT_EQ(pdu2, pdu);
     ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
-    ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin());
+    ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copy byte_buffer::length() got corrupted";
   }
   ASSERT_EQ_BUFFER(pdu, concat_vec(bytes1, bytes2));
+  ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
+}
+
+TEST_P(three_vec_sizes_param, shallow_copy_prepend_and_append)
+{
+  byte_buffer pdu;
+  pdu.append(bytes1);
+
+  {
+    byte_buffer pdu2 = pdu.copy();
+    ASSERT_EQ_BUFFER(pdu2, pdu);
+    ASSERT_EQ_BUFFER(pdu2, bytes1);
+    pdu2.prepend(bytes2);
+    ASSERT_EQ(pdu2, pdu);
+    pdu2.append(bytes3);
+    ASSERT_EQ(pdu2, pdu);
+    ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin()) << "shallow copied-from byte_buffer::length() got corrupted";
+    ASSERT_EQ(pdu2.length(), pdu2.end() - pdu2.begin()) << "shallow copy byte_buffer::length() got corrupted";
+  }
+  ASSERT_EQ_BUFFER(pdu, concat_vec(bytes2, concat_vec(bytes1, bytes3)));
   ASSERT_EQ(pdu.length(), pdu.end() - pdu.begin());
 }
 
