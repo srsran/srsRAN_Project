@@ -13,7 +13,6 @@
 #include "config_generators.h"
 #include "include/srsgnb/du/du_cell_config_helpers.h"
 #include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
-#include "lib/mac/mac_ctrl/sched_config_helpers.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"

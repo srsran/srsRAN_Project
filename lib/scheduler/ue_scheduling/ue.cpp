@@ -35,7 +35,11 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
 
 void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg)
 {
-  // TODO.
+  log_channels_configs = msg.lc_config_list;
+  dl_lc_ch_mgr.configure(log_channels_configs);
+  ul_lc_ch_mgr.configure(log_channels_configs);
+
+  // TODO: Remaining fields.
 }
 
 unsigned ue::pending_dl_newtx_bytes() const

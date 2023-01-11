@@ -80,8 +80,8 @@ struct add_reconf_delete_ue_test_task {
     reconf_msg.ue_index    = to_du_ue_index(0);
     reconf_msg.crnti       = to_rnti(0x4601);
     reconf_msg.pcell_index = to_du_cell_index(0);
-    reconf_msg.bearers_to_addmod.emplace_back();
-    reconf_msg.bearers_to_addmod[0].lcid = LCID_SRB2;
+    reconf_msg.bearers.emplace_back();
+    reconf_msg.bearers[0].lcid = LCID_SRB2;
     reconf_msg.bearers_to_rem.emplace_back(LCID_SRB1);
 
     delete_msg.ue_index   = to_du_ue_index(0);

@@ -89,8 +89,8 @@ struct serving_cell_ue_configuration_request {
 struct sched_ue_creation_request_message {
   du_ue_index_t ue_index;
   rnti_t        crnti;
-  /// List of \c mac-LogicalChannelConfig, TS 38.331; contained in \c rlc-BearerToAddModList.
-  /// This is common to all cells belonging to \c masterCellGroup, TS 38.331.
+  /// \brief List of \c mac-LogicalChannelConfig currently configured for a given UE.
+  /// This is common to all cells belonging to \c masterCellGroup.
   std::vector<logical_channel_config> lc_config_list;
   /// \c schedulingRequestToAddModList, TS 38.331; part of \c schedulingRequestConfig, in \c mac-CellGroupConfig.
   /// This is common to all cells belonging to masterCellGroup, TS 38.331.
@@ -101,10 +101,16 @@ struct sched_ue_creation_request_message {
 
 /// UE Reconfiguration Request.
 struct sched_ue_reconfiguration_message {
-  du_ue_index_t                                   ue_index;
-  rnti_t                                          crnti;
-  du_cell_index_t                                 pcell_index;
-  optional<serving_cell_ue_configuration_request> serv_cell_cfg;
+  du_ue_index_t   ue_index;
+  rnti_t          crnti;
+  du_cell_index_t pcell_index;
+  /// \brief List of \c mac-LogicalChannelConfig currently configured for a given UE.
+  /// This is common to all cells belonging to \c masterCellGroup.
+  std::vector<logical_channel_config> lc_config_list;
+  /// \brief UE schedulingRequest Resources
+  std::vector<scheduling_request_to_addmod> sched_request_config_list;
+  /// List of configured cells.
+  std::vector<serving_cell_ue_configuration_request> cells;
 };
 
 /// UE Delete Request.

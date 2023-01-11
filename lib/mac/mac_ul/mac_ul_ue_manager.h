@@ -82,7 +82,7 @@ public:
     }
 
     // 2. Add/Mod UE Bearers
-    if (not addmod_bearers(request.ue_index, request.bearers_to_addmod)) {
+    if (not addmod_bearers(request.ue_index, request.bearers)) {
       log_proc_failure(logger,
                        request.ue_index,
                        request.crnti,

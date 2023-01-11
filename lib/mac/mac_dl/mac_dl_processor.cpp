@@ -93,7 +93,7 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     ue_mng.remove_bearers(request.ue_index, request.bearers_to_rem);
 
     // 3. AddMod UE DL bearers
-    ue_mng.addmod_bearers(request.ue_index, request.bearers_to_addmod);
+    ue_mng.addmod_bearers(request.ue_index, request.bearers);
 
     // 3. Change back to CTRL executor before returning
     CORO_AWAIT(execute_on(cfg.ctrl_exec));

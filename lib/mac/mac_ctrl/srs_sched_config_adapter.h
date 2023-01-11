@@ -11,7 +11,6 @@
 #pragma once
 
 #include "mac_scheduler_configurator.h"
-#include "sched_config_helpers.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/support/async/manual_event.h"
@@ -61,7 +60,7 @@ public:
       CORO_BEGIN(ctx);
 
       // Reconfigure UE in the scheduler.
-      srs_sched->handle_ue_reconfiguration_request(make_ue_reconfiguration_request(msg));
+      srs_sched->handle_ue_reconfiguration_request(make_scheduler_ue_reconfiguration_request(msg));
 
       // Await Scheduler notification.
       CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);
