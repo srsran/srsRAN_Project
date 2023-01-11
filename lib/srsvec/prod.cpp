@@ -53,7 +53,7 @@ static void prod_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_t len
 
 #if SRSRAN_SIMD_CF_SIZE
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
-    for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_CF_SIZE) {
+    for (std::size_t i_end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != i_end; i += SRSRAN_SIMD_CF_SIZE) {
       simd_cf_t a = srsran_simd_cfi_load(&x[i]);
       simd_cf_t b = srsran_simd_cfi_load(&y[i]);
 
@@ -62,7 +62,7 @@ static void prod_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_t len
       srsran_simd_cfi_store(&z[i], r);
     }
   } else {
-    for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_CF_SIZE) {
+    for (std::size_t i_end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != i_end; i += SRSRAN_SIMD_CF_SIZE) {
       simd_cf_t a = srsran_simd_cfi_loadu(&x[i]);
       simd_cf_t b = srsran_simd_cfi_loadu(&y[i]);
 
@@ -84,7 +84,7 @@ static void prod_conj_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_
 
 #if SRSRAN_SIMD_CF_SIZE
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
-    for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_CF_SIZE) {
+    for (std::size_t i_end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != i_end; i += SRSRAN_SIMD_CF_SIZE) {
       simd_cf_t a = srsran_simd_cfi_load(&x[i]);
       simd_cf_t b = srsran_simd_cfi_load(&y[i]);
 
@@ -93,7 +93,7 @@ static void prod_conj_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_
       srsran_simd_cfi_store(&z[i], r);
     }
   } else {
-    for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_CF_SIZE) {
+    for (std::size_t i_end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != i_end; i += SRSRAN_SIMD_CF_SIZE) {
       simd_cf_t a = srsran_simd_cfi_loadu(&x[i]);
       simd_cf_t b = srsran_simd_cfi_loadu(&y[i]);
 
