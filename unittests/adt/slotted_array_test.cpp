@@ -97,12 +97,12 @@ TYPED_TEST(slotted_array_tester, insert_in_already_inserted_position_does_not_al
   int      value = get_random_int(), value2 = get_random_int();
   unsigned idx = get_random_int(0, 19);
 
-  this->vec.insert(idx, this->create_elem(value));
-  this->vec.insert(idx, this->create_elem(value2));
+  ASSERT_TRUE(this->vec.insert(idx, this->create_elem(value)));
+  ASSERT_FALSE(this->vec.insert(idx, this->create_elem(value2)));
   ASSERT_EQ(this->vec.size(), 1);
   ASSERT_TRUE(this->vec.contains(idx));
-  ASSERT_EQ(this->vec[idx], this->create_elem(value2));
-  ASSERT_EQ(*this->vec.begin(), this->create_elem(value2));
+  ASSERT_EQ(this->vec[idx], this->create_elem(value));
+  ASSERT_EQ(*this->vec.begin(), this->create_elem(value));
 }
 
 TYPED_TEST(slotted_array_tester, iterator_skips_empty_positions)

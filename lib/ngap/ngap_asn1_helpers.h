@@ -173,10 +173,11 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
         qos_flow_setup_req_item.erab_id.value() = asn1_flow_item.erab_id;
       }
 
-      setup_item.qos_flow_setup_request_items[qos_flow_setup_req_item.qos_flow_id] = qos_flow_setup_req_item;
+      setup_item.qos_flow_setup_request_items.emplace(qos_flow_setup_req_item.qos_flow_id, qos_flow_setup_req_item);
     }
 
-    cu_cp_pdu_session_resource_setup_msg.pdu_session_res_setup_items[setup_item.pdu_session_id] = std::move(setup_item);
+    cu_cp_pdu_session_resource_setup_msg.pdu_session_res_setup_items.emplace(setup_item.pdu_session_id,
+                                                                             std::move(setup_item));
   }
 }
 

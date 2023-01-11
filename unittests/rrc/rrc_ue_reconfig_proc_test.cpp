@@ -87,7 +87,7 @@ protected:
 
     rb_cfg.security_cfg = security_config;
 
-    rb_cfg.drb_to_add_mod_list[drb_item.drb_id] = drb_item;
+    rb_cfg.drb_to_add_mod_list.emplace(drb_item.drb_id, drb_item);
 
     args.radio_bearer_cfg = rb_cfg;
 

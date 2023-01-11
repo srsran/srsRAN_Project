@@ -225,16 +225,21 @@ public:
   const_iterator begin() const { return const_iterator{vec, 0}; }
   const_iterator end() const { return const_iterator{vec, vec.size()}; }
 
-  /// Insert given object in given index
+  /// Insert element into the container if an element with the same index does not exist yet.
   /// \param idx Position of the constructed element in the array
   /// \param u object to insert
+  /// \return true if insertion took place. False if an element with the same index already existed.
   template <typename U>
-  void insert(size_t idx, U&& u)
+  bool insert(size_t idx, U&& u)
   {
     static_assert(std::is_convertible<U, value_type>::value, "Ctor T(U&&) does not exist.");
     srsgnb_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
-    this->nof_elems += this->contains(idx) ? 0 : 1;
+    if (contains(idx)) {
+      return false;
+    }
+    this->nof_elems++;
     this->vec[idx] = std::forward<U>(u);
+    return true;
   }
 
   /// Add or overwrite element with given index with a newly constructed object
@@ -371,10 +376,10 @@ public:
     index_mapper[idx] = objects.size() - 1;
   }
 
-  /// Insert element into the container if an element with the same ID does not exist yet.
+  /// Insert element into the container if an element with the same index does not exist yet.
   /// \param idx Position of the constructed element in the array
   /// \param u object to insert.
-  /// \return true if insertion took place. False if an element with the same ID already existed.
+  /// \return true if insertion took place. False if an element with the same index already existed.
   template <typename U>
   bool insert(size_t idx, U&& u)
   {
@@ -476,13 +481,13 @@ public:
   const_iterator begin() const { return sl_ar.begin(); }
   const_iterator end() const { return sl_ar.end(); }
 
-  /// Insert given object with a given Id.
   /// \param id ID the constructed element in the table.
-  /// \param u object to insert
+  /// \param u object to insert.
+  /// \return true if insertion took place. False if an element with the same ID already existed.
   template <typename U>
-  void insert(key_type id, U&& u)
+  bool insert(key_type id, U&& u)
   {
-    sl_ar.insert(to_index(id), std::forward<U>(u));
+    return sl_ar.insert(to_index(id), std::forward<U>(u));
   }
 
   /// Overwrite array element with given index with a newly constructed object
