@@ -114,6 +114,19 @@ class byte_buffer_slice;
 /// ownership, .copy() for shallow copies with shared ownership and .deep_copy() for byte-wise copies.
 class byte_buffer
 {
+  /// Control block of byte_buffer used to store the head and tail of the segment linked list and the number of total
+  /// bytes of the buffer.
+  struct control_block {
+    /// First segment of the linked list of segments.
+    std::unique_ptr<byte_buffer_segment> head;
+    /// Tail of linked list of segments. This value is != nullptr if the list is not empty.
+    byte_buffer_segment* tail = nullptr;
+    /// Length in bytes of the linked list of segments.
+    size_t pkt_len = 0;
+    /// Storage of control block segment, in case it gets detached from linked list.
+    std::unique_ptr<byte_buffer_segment> detached_ctrl_segment;
+  };
+
 public:
   using value_type     = uint8_t;
   using iterator       = detail::byte_buffer_iterator_impl<uint8_t>;
@@ -149,8 +162,10 @@ public:
   byte_buffer deep_copy() const
   {
     byte_buffer buf;
-    for (byte_buffer_segment* seg = head.get(); seg != nullptr; seg = seg->next()) {
-      buf.append(span<uint8_t>{seg->data(), seg->length()});
+    if (ctrl_blk_ptr != nullptr) {
+      for (byte_buffer_segment* seg = ctrl_blk_ptr->head.get(); seg != nullptr; seg = seg->next().get()) {
+        buf.append(span<uint8_t>{seg->data(), seg->length()});
+      }
     }
     return buf;
   }
@@ -178,14 +193,14 @@ public:
     }
     // segment-wise copy.
     for (size_t count = 0; count < bytes.size();) {
-      if (get_tail()->tailroom() == 0) {
+      if (ctrl_blk_ptr->tail->tailroom() == 0) {
         append_segment();
       }
-      size_t              to_write = std::min(get_tail()->tailroom(), bytes.size() - count);
+      size_t              to_write = std::min(ctrl_blk_ptr->tail->tailroom(), bytes.size() - count);
       span<const uint8_t> subspan  = bytes.subspan(count, to_write);
-      get_tail()->append(subspan);
+      ctrl_blk_ptr->tail->append(subspan);
       count += to_write;
-      head->metadata().pkt_len += to_write;
+      ctrl_blk_ptr->pkt_len += to_write;
     }
   }
 
@@ -199,28 +214,28 @@ public:
     if (empty() and not other.empty()) {
       append_segment();
     }
-    for (byte_buffer_segment* seg = other.head.get(); seg != nullptr; seg = seg->next()) {
+    for (byte_buffer_segment* seg = other.ctrl_blk_ptr->head.get(); seg != nullptr; seg = seg->next().get()) {
       auto other_it = seg->begin();
       while (other_it != seg->end()) {
-        if (get_tail()->tailroom() == 0) {
+        if (ctrl_blk_ptr->tail->tailroom() == 0) {
           append_segment();
         }
-        auto to_append = std::min(seg->end() - other_it, (iterator::difference_type)get_tail()->tailroom());
-        get_tail()->append(other_it, other_it + to_append);
+        auto to_append = std::min(seg->end() - other_it, (iterator::difference_type)ctrl_blk_ptr->tail->tailroom());
+        ctrl_blk_ptr->tail->append(other_it, other_it + to_append);
         other_it += to_append;
       }
-      head->metadata().pkt_len += seg->length();
+      ctrl_blk_ptr->pkt_len += seg->length();
     }
   }
 
   /// Appends bytes to the byte buffer. This function may allocate new segments.
   void append(uint8_t byte)
   {
-    if (empty() or get_tail()->tailroom() == 0) {
+    if (empty() or ctrl_blk_ptr->tail->tailroom() == 0) {
       append_segment();
     }
-    get_tail()->append(byte);
-    head->metadata().pkt_len++;
+    ctrl_blk_ptr->tail->append(byte);
+    ctrl_blk_ptr->pkt_len++;
   }
 
   /// Appends a view of bytes into current byte buffer.
@@ -244,20 +259,14 @@ public:
       append(bytes);
       return;
     }
-    if (head->headroom() < bytes.size() and head.use_count() > 1) {
-      // The head segment of the byte_buffer needs to be changed and the byte_buffer has been previously shallow
-      // copied. We need to perform a deep copy and detach this byte_buffer from previous shallow copies to avoid
-      // corrupting the latter.
-      *this = deep_copy();
-    }
     for (size_t count = 0; count < bytes.size();) {
-      if (head->headroom() == 0) {
+      if (ctrl_blk_ptr->head->headroom() == 0) {
         prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, bytes.size() - count));
       }
-      size_t              to_write = std::min(head->headroom(), bytes.size() - count);
+      size_t              to_write = std::min(ctrl_blk_ptr->head->headroom(), bytes.size() - count);
       span<const uint8_t> subspan  = bytes.subspan(bytes.size() - to_write - count, to_write);
-      head->prepend(subspan);
-      head->metadata().pkt_len += to_write;
+      ctrl_blk_ptr->head->prepend(subspan);
+      ctrl_blk_ptr->pkt_len += to_write;
       count += to_write;
     }
   }
@@ -273,10 +282,10 @@ public:
     if (empty()) {
       *this = std::move(after);
     } else {
-      head->metadata().pkt_len += after.head->metadata().pkt_len;
-      byte_buffer_segment* new_tail = after.get_tail();
-      get_tail()->metadata().next   = std::move(after.head);
-      set_tail(new_tail);
+      ctrl_blk_ptr->pkt_len += after.ctrl_blk_ptr->pkt_len;
+      byte_buffer_segment* new_tail = after.ctrl_blk_ptr->tail;
+      ctrl_blk_ptr->tail->next()    = std::move(after.ctrl_blk_ptr->head);
+      ctrl_blk_ptr->tail            = new_tail;
     }
     return *this;
   }
@@ -287,41 +296,30 @@ public:
     if (empty()) {
       *this = std::move(before);
     } else {
-      before.head->metadata().pkt_len += head->metadata().pkt_len;
-      byte_buffer_segment* new_tail      = get_tail();
-      before.get_tail()->metadata().next = std::move(head);
-      before.set_tail(new_tail);
-      head = std::move(before.head);
+      before.ctrl_blk_ptr->pkt_len += ctrl_blk_ptr->pkt_len;
+      byte_buffer_segment* new_tail     = ctrl_blk_ptr->tail;
+      before.ctrl_blk_ptr->tail->next() = std::move(ctrl_blk_ptr->head);
+      before.ctrl_blk_ptr->tail         = new_tail;
+      ctrl_blk_ptr                      = std::move(before.ctrl_blk_ptr);
     }
     return *this;
   }
 
   /// Clear byte buffer.
-  void clear()
-  {
-    if (head != nullptr) {
-      set_tail(nullptr);
-      head->metadata().pkt_len = 0;
-      head                     = nullptr;
-    }
-  }
+  void clear() { ctrl_blk_ptr.reset(); }
 
   /// Removes "nof_bytes" from the head of the byte_buffer.
   void trim_head(size_t nof_bytes)
   {
     srsgnb_sanity_check(length() >= nof_bytes, "Trying to trim more bytes than those available");
     for (size_t trimmed = 0; trimmed != nof_bytes;) {
-      size_t to_trim = std::min(nof_bytes - trimmed, head->length());
-      head->trim_head(to_trim);
-      head->metadata().pkt_len -= to_trim;
+      size_t to_trim = std::min(nof_bytes - trimmed, ctrl_blk_ptr->head->length());
+      ctrl_blk_ptr->head->trim_head(to_trim);
+      ctrl_blk_ptr->pkt_len -= to_trim;
       trimmed += to_trim;
-      if (head->length() == 0) {
+      if (ctrl_blk_ptr->head->length() == 0) {
         // Remove the first segment.
-        if (head->metadata().next != nullptr) {
-          head->metadata().next->metadata().pkt_len = length();
-          head->metadata().next->metadata().tail    = get_tail();
-        }
-        head = std::move(head->metadata().next);
+        ctrl_blk_ptr->head = std::move(ctrl_blk_ptr->head->next());
       }
     }
   }
@@ -336,23 +334,23 @@ public:
       return;
     }
 
-    if (get_tail()->length() >= nof_bytes) {
+    if (ctrl_blk_ptr->tail->length() >= nof_bytes) {
       // Simplest scenario where the last segment is larger than the number of bytes to trim.
-      get_tail()->trim_tail(nof_bytes);
-      head->metadata().pkt_len -= nof_bytes;
-      if (get_tail()->length() == 0) {
+      ctrl_blk_ptr->tail->trim_tail(nof_bytes);
+      ctrl_blk_ptr->pkt_len -= nof_bytes;
+      if (ctrl_blk_ptr->tail->length() == 0) {
         pop_last_segment();
       }
       return;
     }
     size_t new_len = length() - nof_bytes;
-    auto   seg     = head.get();
-    for (size_t count = 0; seg != nullptr; seg = seg->metadata().next.get()) {
+    auto   seg     = ctrl_blk_ptr->head.get();
+    for (size_t count = 0; seg != nullptr; seg = seg->next().get()) {
       if (count + seg->length() >= new_len) {
-        seg->metadata().next = nullptr;
+        seg->next() = nullptr;
         seg->resize(new_len - count);
-        set_tail(seg);
-        head->metadata().pkt_len = new_len;
+        ctrl_blk_ptr->tail    = seg;
+        ctrl_blk_ptr->pkt_len = new_len;
         break;
       }
       count += seg->length();
@@ -363,23 +361,29 @@ public:
   bool empty() const { return length() == 0; }
 
   /// Checks byte_buffer length.
-  size_t length() const { return head != nullptr ? head->metadata().pkt_len : 0; }
+  size_t length() const { return ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->pkt_len : 0; }
 
-  uint8_t&       back() { return get_tail()->back(); }
-  const uint8_t& back() const { return get_tail()->back(); }
+  uint8_t&       back() { return ctrl_blk_ptr->tail->back(); }
+  const uint8_t& back() const { return ctrl_blk_ptr->tail->back(); }
 
   const uint8_t& operator[](size_t i) const { return *(begin() + i); }
   uint8_t&       operator[](size_t i) { return *(begin() + i); }
 
-  iterator       begin() { return iterator{head.get(), 0}; }
-  const_iterator cbegin() const { return const_iterator{head.get(), 0}; }
-  const_iterator begin() const { return const_iterator{head.get(), 0}; }
+  iterator       begin() { return iterator{ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->head.get() : nullptr, 0}; }
+  const_iterator cbegin() const
+  {
+    return const_iterator{ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->head.get() : nullptr, 0};
+  }
+  const_iterator begin() const
+  {
+    return const_iterator{ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->head.get() : nullptr, 0};
+  }
   iterator       end() { return iterator{nullptr, 0}; }
   const_iterator end() const { return const_iterator{nullptr, 0}; }
   const_iterator cend() const { return const_iterator{nullptr, 0}; }
 
   /// Test if byte buffer is contiguous in memory, i.e. it has only one segment.
-  bool is_contiguous() const { return head.get() == get_tail(); }
+  bool is_contiguous() const { return empty() or ctrl_blk_ptr->head.get() == ctrl_blk_ptr->tail; }
 
   /// Moves the bytes stored in different segments of the byte_buffer into first segment.
   /// \return 0 if the data could fit in one segment. -1 otherwise, and the byte_buffer remains unaltered.
@@ -389,14 +393,14 @@ public:
       return 0;
     }
     size_t sz = length();
-    if (sz > byte_buffer_segment::capacity() - head->headroom()) {
+    if (sz > byte_buffer_segment::capacity() - ctrl_blk_ptr->head->headroom()) {
       return -1;
     }
-    for (byte_buffer_segment* seg = head->next(); seg != nullptr; seg = seg->next()) {
-      head->append(seg->begin(), seg->end());
+    for (byte_buffer_segment* seg = ctrl_blk_ptr->head->next().get(); seg != nullptr; seg = seg->next().get()) {
+      ctrl_blk_ptr->head->append(seg->begin(), seg->end());
     }
-    head->metadata().next.reset();
-    set_tail(head.get());
+    ctrl_blk_ptr->head->next() = nullptr;
+    ctrl_blk_ptr->tail         = ctrl_blk_ptr->head.get();
     return 0;
   }
 
@@ -409,33 +413,39 @@ public:
     }
     if (new_sz > prev_len) {
       for (size_t to_add = new_sz - prev_len; to_add > 0;) {
-        if (empty() or get_tail()->tailroom() == 0) {
+        if (empty() or ctrl_blk_ptr->tail->tailroom() == 0) {
           append_segment();
         }
-        size_t added = std::min(get_tail()->tailroom(), to_add);
-        get_tail()->resize(added);
+        size_t added = std::min(ctrl_blk_ptr->tail->tailroom(), to_add);
+        ctrl_blk_ptr->tail->resize(added);
         to_add -= added;
       }
     } else {
       size_t count = 0;
-      for (byte_buffer_segment* seg = head.get(); count < new_sz; seg = seg->next()) {
+      for (byte_buffer_segment* seg = ctrl_blk_ptr->head.get(); count < new_sz; seg = seg->next().get()) {
         size_t new_seg_len = std::min(seg->length(), new_sz - count);
         if (new_seg_len != seg->length()) {
           seg->resize(new_seg_len);
         }
         count += new_seg_len;
         if (count == new_sz) {
-          seg->metadata().next = nullptr;
-          set_tail(seg);
+          seg->next()        = nullptr;
+          ctrl_blk_ptr->tail = seg;
         }
       }
     }
-    head->metadata().pkt_len = new_sz;
+    ctrl_blk_ptr->pkt_len = new_sz;
   }
 
   /// Returns a non-owning list of segments that compose the byte_buffer.
-  byte_buffer_segment_range       segments() { return byte_buffer_segment_range(head.get(), 0, length()); }
-  const_byte_buffer_segment_range segments() const { return const_byte_buffer_segment_range(head.get(), 0, length()); }
+  byte_buffer_segment_range segments()
+  {
+    return byte_buffer_segment_range(ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->head.get() : nullptr, 0, length());
+  }
+  const_byte_buffer_segment_range segments() const
+  {
+    return const_byte_buffer_segment_range(ctrl_blk_ptr != nullptr ? ctrl_blk_ptr->head.get() : nullptr, 0, length());
+  }
 
   /// \brief Equality comparison between byte buffer view and another range.
   template <typename R>
@@ -463,36 +473,36 @@ private:
   void append_segment()
   {
     if (empty()) {
+      ctrl_blk_ptr = std::make_shared<control_block>();
       // For first segment of byte_buffer, add a headroom.
-      auto* p = new (std::nothrow) byte_buffer_segment(byte_buffer_segment::DEFAULT_HEADROOM);
+      std::unique_ptr<byte_buffer_segment> p{new (std::nothrow)
+                                                 byte_buffer_segment(byte_buffer_segment::DEFAULT_HEADROOM)};
       // TODO: Verify if allocation was successful. What to do if not?
       srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
-      head.reset(p);
-      set_tail(head.get());
+      ctrl_blk_ptr->tail = p.get();
+      ctrl_blk_ptr->head = std::move(p);
     } else {
       // No headroom needed for later segments.
-      auto* p = new (std::nothrow) byte_buffer_segment(0);
+      std::unique_ptr<byte_buffer_segment> p{new (std::nothrow) byte_buffer_segment(0)};
       // TODO: Verify if allocation was successful. What to do if not?
       srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
-      get_tail()->metadata().next.reset(p);
-      set_tail(get_tail()->next());
+      ctrl_blk_ptr->tail->next() = std::move(p);
+      ctrl_blk_ptr->tail         = ctrl_blk_ptr->tail->next().get();
     }
   }
 
   void prepend_segment(size_t headroom_size)
   {
-    auto* p = new (std::nothrow) byte_buffer_segment(headroom_size);
+    std::unique_ptr<byte_buffer_segment> p{new (std::nothrow) byte_buffer_segment(headroom_size)};
     // TODO: Verify if allocation was successful. What to do if not?
     srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
     if (empty()) {
-      head.reset(p);
-      set_tail(head.get());
+      ctrl_blk_ptr       = std::make_shared<control_block>();
+      ctrl_blk_ptr->tail = p.get();
+      ctrl_blk_ptr->head = std::move(p);
     } else {
-      byte_buffer_segment* t = get_tail();
-      p->metadata().pkt_len  = length();
-      p->metadata().next     = std::move(head);
-      head.reset(p);
-      set_tail(t);
+      p->next()          = std::move(ctrl_blk_ptr->head);
+      ctrl_blk_ptr->head = std::move(p);
     }
   }
 
@@ -500,29 +510,25 @@ private:
   /// Note: This operation is O(N), as it requires recomputing the tail.
   void pop_last_segment()
   {
-    if (get_tail() == nullptr) {
+    if (ctrl_blk_ptr->tail == nullptr) {
       return;
     }
-    if (head.get() == get_tail()) {
+    if (ctrl_blk_ptr->head.get() == ctrl_blk_ptr->tail) {
       // there is only one segment.
       clear();
       return;
     }
-    head->metadata().pkt_len -= get_tail()->length();
+    ctrl_blk_ptr->pkt_len -= ctrl_blk_ptr->tail->length();
     // recompute tail.
-    byte_buffer_segment* new_tail = head.get();
-    for (; new_tail->next() != get_tail(); new_tail = new_tail->next()) {
+    byte_buffer_segment* new_tail = ctrl_blk_ptr->head.get();
+    for (; new_tail->next().get() != ctrl_blk_ptr->tail; new_tail = new_tail->next().get()) {
     }
-    set_tail(new_tail);
-    new_tail->metadata().next = nullptr;
+    ctrl_blk_ptr->tail         = new_tail;
+    ctrl_blk_ptr->tail->next() = nullptr;
   }
 
-  void                       set_tail(byte_buffer_segment* new_tail) { head->metadata().tail = new_tail; }
-  const byte_buffer_segment* get_tail() const { return head->metadata().tail; }
-  byte_buffer_segment*       get_tail() { return head->metadata().tail; }
-
   // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need.
-  std::shared_ptr<byte_buffer_segment> head = nullptr;
+  std::shared_ptr<control_block> ctrl_blk_ptr = nullptr;
 };
 
 /// \brief This class represents a sub-interval or make_slice of a potentially larger byte_buffer.
@@ -717,21 +723,16 @@ private:
 
 inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
 {
-  if (not empty() and head->headroom() < nof_bytes and head.use_count() > 1) {
-    // The head segment needs to be changed and the byte_buffer has been previously shallow copied. To avoid the
-    // corruption of the state of the shallow copies, we need to perform a deep copy.
-    *this = deep_copy();
-  }
   size_t rem_bytes = nof_bytes;
   while (rem_bytes > 0) {
-    if (empty() or head->headroom() == 0) {
+    if (empty() or ctrl_blk_ptr->head->headroom() == 0) {
       prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, rem_bytes));
     }
-    size_t to_reserve = std::min(head->headroom(), rem_bytes);
-    head->reserve_prepend(to_reserve);
+    size_t to_reserve = std::min(ctrl_blk_ptr->head->headroom(), rem_bytes);
+    ctrl_blk_ptr->head->reserve_prepend(to_reserve);
     rem_bytes -= to_reserve;
   }
-  head->metadata().pkt_len += nof_bytes;
+  ctrl_blk_ptr->pkt_len += nof_bytes;
   return byte_buffer_view{begin(), begin() + nof_bytes};
 }
 
