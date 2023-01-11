@@ -296,6 +296,10 @@ int main(int argc, char** argv)
   rlc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rlc_level));
   rlc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
+  auto& f1u_logger = srslog::fetch_basic_logger("F1-U", false);
+  f1u_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.f1u_level));
+  f1u_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+
   auto& pdcp_logger = srslog::fetch_basic_logger("PDCP", false);
   pdcp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.pdcp_level));
   pdcp_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);

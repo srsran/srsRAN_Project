@@ -139,6 +139,7 @@ struct log_appconfig {
   std::string radio_level   = "info";
   std::string mac_level     = "info";
   std::string rlc_level     = "info";
+  std::string f1u_level     = "info";
   std::string pdcp_level    = "info";
   std::string rrc_level     = "info";
   uint32_t    hex_max_size  = 32;    // Maximum number of bytes to write when dumping hex arrays.

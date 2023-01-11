@@ -32,6 +32,7 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--radio_level", log_params.radio_level, "Radio log level")->capture_default_str()->check(level_check);
   app.add_option("--mac_level", log_params.mac_level, "MAC log level")->capture_default_str()->check(level_check);
   app.add_option("--rlc_level", log_params.rlc_level, "RLC log level")->capture_default_str()->check(level_check);
+  app.add_option("--f1u_level", log_params.f1u_level, "F1-U log level")->capture_default_str()->check(level_check);
   app.add_option("--pdcp_level", log_params.pdcp_level, "PDCP log level")->capture_default_str()->check(level_check);
   app.add_option("--rrc_level", log_params.rrc_level, "RRC log level")->capture_default_str()->check(level_check);
   app.add_option("--hex_max_size", log_params.hex_max_size, "Number of bytes to print in hex")
