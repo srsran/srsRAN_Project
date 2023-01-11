@@ -264,7 +264,7 @@ int main(int argc, char** argv)
     du_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
   }
 
-  for (const auto& id : {"CU-CP", "CU-CP-F1", "CU-CP-E1"}) {
+  for (const auto& id : {"CU-CP", "CU-CP-F1", "CU-CP-E1", "NGC"}) {
     auto& cu_cp_logger = srslog::fetch_basic_logger(id, false);
     cu_cp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.cu_level));
     cu_cp_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
