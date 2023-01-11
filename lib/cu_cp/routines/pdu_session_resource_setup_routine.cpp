@@ -106,6 +106,15 @@ void pdu_session_resource_setup_routine::operator()(
       logger.error("ue={}: \"{}\" failed to modify UE context at DU.", setup_msg.cu_cp_ue_id, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
+
+    // Fail procedure if (single) DRB couldn't be setup
+    if (not ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
+      logger.error("ue={}: \"{}\" couldn't setup {} DRBs at DU.",
+                   setup_msg.cu_cp_ue_id,
+                   name(),
+                   ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
   }
 
   // Inform CU-UP about the new TEID for UL F1u traffic
