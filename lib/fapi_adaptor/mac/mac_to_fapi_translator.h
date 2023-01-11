@@ -101,6 +101,9 @@ public:
   // See interface for documentation.
   void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override;
 
+  // See interface for documentation.
+  void on_cell_results_completion(slot_point slot) override;
+
   /// \brief Handles a new slot.
   ///
   /// When a new slot is notified, the PDSCH PDUs from the previous slot should be discarded and, in turn, the PDSCH PDU

@@ -59,10 +59,12 @@ public:
   optional<mac_dl_sched_result> last_sched_res;
   optional<mac_dl_data_result>  last_dl_data_res;
   optional<mac_ul_sched_result> last_ul_res;
+  bool                          is_complete = false;
 
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override { last_sched_res = dl_res; }
   void on_new_downlink_data(const mac_dl_data_result& dl_data) override { last_dl_data_res = dl_data; }
   void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override { last_ul_res = ul_res; }
+  void on_cell_results_completion(slot_point slot) override { is_complete = true; }
 };
 
 class mac_sdu_rx_test_notifier : public mac_sdu_rx_notifier

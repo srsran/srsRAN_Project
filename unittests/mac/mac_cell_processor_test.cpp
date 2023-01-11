@@ -73,10 +73,12 @@ TEST_P(mac_cell_processor_tester, when_zero_pdsch_grants_dl_data_request_is_not_
 {
   init(GetParam());
   slot_point sl_tx{0, 0};
+  ASSERT_FALSE(phy_notifier.is_complete);
   mac_cell.handle_slot_indication(sl_tx);
 
   ASSERT_TRUE(phy_notifier.last_sched_res.has_value());
   ASSERT_EQ(phy_notifier.last_dl_data_res.has_value(), is_pdsch_scheduled());
+  ASSERT_TRUE(phy_notifier.is_complete);
 }
 
 INSTANTIATE_TEST_SUITE_P(

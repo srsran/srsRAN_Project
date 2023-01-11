@@ -22,6 +22,7 @@ struct phy_cell_test_dummy : public mac_cell_result_notifier {
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override { last_dl_res = dl_res; }
   void on_new_downlink_data(const mac_dl_data_result& dl_data) override { last_dl_data = dl_data; }
   void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override { last_ul_res = ul_res; }
+  void on_cell_results_completion(slot_point slot) override {}
 };
 
 struct phy_test_dummy : public mac_result_notifier {

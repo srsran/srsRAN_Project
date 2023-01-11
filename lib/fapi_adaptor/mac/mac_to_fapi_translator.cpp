@@ -292,3 +292,8 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
   // Send the message.
   msg_gw.ul_dci_request(msg);
 }
+
+void mac_to_fapi_translator::on_cell_results_completion(slot_point slot)
+{
+  //: TODO: implement me
+}

@@ -182,6 +182,7 @@ public:
   virtual void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override {}
   virtual void on_new_downlink_data(const mac_dl_data_result& dl_data) override {}
   virtual void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override {}
+  virtual void on_cell_results_completion(slot_point slot) override {}
 };
 
 class dummy_mac_result_notifier : public mac_result_notifier

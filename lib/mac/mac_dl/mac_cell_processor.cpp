@@ -149,6 +149,9 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   mac_ul_res.ul_res = &sl_res->ul;
   phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 
+  // All results have been notified at this point.
+  phy_cell.on_cell_results_completion(sl_tx);
+
   // * End of Critical Path * //
 
   // Update DL buffer state for the allocated logical channels.

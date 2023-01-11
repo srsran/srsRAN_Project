@@ -83,6 +83,9 @@ public:
 
   /// Notifies slot scheduled PUCCH/PUSCH grants.
   virtual void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) = 0;
+
+  /// Notifies the completion of all cell results for the given slot.
+  virtual void on_cell_results_completion(slot_point slot) = 0;
 };
 
 class mac_result_notifier
