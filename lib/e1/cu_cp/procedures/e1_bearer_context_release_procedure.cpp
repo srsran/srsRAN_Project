@@ -17,7 +17,7 @@ using namespace asn1::e1ap;
 e1_bearer_context_release_procedure::e1_bearer_context_release_procedure(
     const e1ap_bearer_context_release_command& command_,
     e1_message_notifier&                       e1_notif_,
-    e1_event_manager&                          ev_mng_,
+    e1ap_bearer_transaction_manager&           ev_mng_,
     srslog::basic_logger&                      logger_) :
   command(command_), e1_notifier(e1_notif_), ev_mng(ev_mng_), logger(logger_)
 {
@@ -28,11 +28,14 @@ void e1_bearer_context_release_procedure::operator()(
 {
   CORO_BEGIN(ctx);
 
+  // Subscribe to respective publisher to receive BEARER CONTEXT RELEASE COMPLETE message.
+  transaction_sink.subscribe_to(ev_mng.context_release_complete);
+
   // Send command to CU-UP.
   send_bearer_context_release_command();
 
   // Await CU response.
-  CORO_AWAIT_VALUE(e1_bearer_ctxt_rel_outcome, ev_mng.e1ap_bearer_context_release_complete);
+  CORO_AWAIT(transaction_sink);
 
   // Handle response from CU-UP and return bearer index
   CORO_RETURN(create_bearer_context_release_complete());
@@ -60,8 +63,18 @@ e1ap_bearer_context_release_complete e1_bearer_context_release_procedure::create
 {
   e1ap_bearer_context_release_complete res{};
 
-  logger.info("Received E1AP Bearer Context Release Complete.");
-  res.msg = *e1_bearer_ctxt_rel_outcome;
+  if (transaction_sink.successful()) {
+    const asn1::e1ap::bearer_context_release_complete_s& resp = transaction_sink.response();
+    logger.info("Received E1AP Bearer Context Release Complete.");
+    if (logger.debug.enabled()) {
+      asn1::json_writer js;
+      resp.to_json(js);
+      logger.debug("Containerized Bearer Context Release Complete message: {}", js.to_string());
+    }
+    res.msg = resp;
+  } else {
+    logger.warning("E1AP Bearer Context Release Complete timeout.");
+  }
 
   return res;
 }

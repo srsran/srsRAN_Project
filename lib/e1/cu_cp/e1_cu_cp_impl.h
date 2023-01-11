@@ -81,7 +81,8 @@ private:
   e1_message_notifier&         pdu_notifier;
   e1_cu_up_processor_notifier& cu_up_notifier;
 
-  std::unique_ptr<e1_event_manager> events;
+  std::unique_ptr<e1ap_transaction_manager> events;
+  e1ap_bearer_transaction_manager           ev_mng;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id
 };

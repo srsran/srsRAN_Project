@@ -17,7 +17,7 @@ using namespace asn1::e1ap;
 
 cu_cp_e1_setup_procedure::cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
                                                    e1_message_notifier&          cu_up_notif_,
-                                                   e1_event_manager&             ev_mng_,
+                                                   e1ap_transaction_manager&     ev_mng_,
                                                    timer_manager&                timers,
                                                    srslog::basic_logger&         logger_) :
   request(request_),

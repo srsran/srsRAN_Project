@@ -12,7 +12,7 @@
 
 #include "../e1_cu_cp_impl.h"
 #include "common/e1ap_asn1_utils.h"
-#include "e1_cu_cp_event_manager.h"
+#include "e1ap_cu_cp_transaction_manager.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/support/async/async_task.h"
@@ -23,10 +23,10 @@ namespace srs_cu_cp {
 class e1_bearer_context_modification_procedure
 {
 public:
-  e1_bearer_context_modification_procedure(const e1_message&     request_,
-                                           e1_message_notifier&  e1_notif_,
-                                           e1_event_manager&     ev_mng_,
-                                           srslog::basic_logger& logger_);
+  e1_bearer_context_modification_procedure(const e1_message&                request_,
+                                           e1_message_notifier&             e1_notif_,
+                                           e1ap_bearer_transaction_manager& ev_mng_,
+                                           srslog::basic_logger&            logger_);
 
   void operator()(coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx);
 
@@ -37,12 +37,13 @@ private:
   /// Creates procedure result to send back to procedure caller.
   e1ap_bearer_context_modification_response create_bearer_context_modification_result();
 
-  const e1_message      request;
-  e1_message_notifier&  e1_notifier;
-  e1_event_manager&     ev_mng;
-  srslog::basic_logger& logger;
+  const e1_message                 request;
+  e1_message_notifier&             e1_notifier;
+  e1ap_bearer_transaction_manager& ev_mng;
+  srslog::basic_logger&            logger;
 
-  e1_event_manager::e1_bearer_context_modification_outcome_t bearer_ctxt_mod_outcome;
+  protocol_transaction_outcome_observer<asn1::e1ap::bearer_context_mod_resp_s, asn1::e1ap::bearer_context_mod_fail_s>
+      transaction_sink;
 };
 
 } // namespace srs_cu_cp

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../../common/e1ap_asn1_utils.h"
-#include "e1_cu_cp_event_manager.h"
+#include "e1ap_cu_cp_transaction_manager.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/support/async/async_task.h"
@@ -27,7 +27,7 @@ class cu_cp_e1_setup_procedure
 public:
   cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
                            e1_message_notifier&          cu_up_notif_,
-                           e1_event_manager&             ev_mng_,
+                           e1ap_transaction_manager&     ev_mng_,
                            timer_manager&                timers,
                            srslog::basic_logger&         logger_);
 
@@ -45,7 +45,7 @@ private:
 
   const cu_cp_e1_setup_request request;
   e1_message_notifier&         cu_up_notifier;
-  e1_event_manager&            ev_mng;
+  e1ap_transaction_manager&    ev_mng;
   srslog::basic_logger&        logger;
 
   unique_timer e1_setup_wait_timer;

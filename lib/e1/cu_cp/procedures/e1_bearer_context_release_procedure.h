@@ -12,7 +12,7 @@
 
 #include "../e1_cu_cp_impl.h"
 #include "common/e1ap_asn1_utils.h"
-#include "e1_cu_cp_event_manager.h"
+#include "e1ap_cu_cp_transaction_manager.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/support/async/async_task.h"
@@ -25,7 +25,7 @@ class e1_bearer_context_release_procedure
 public:
   e1_bearer_context_release_procedure(const e1ap_bearer_context_release_command& command_,
                                       e1_message_notifier&                       e1_notif_,
-                                      e1_event_manager&                          ev_mng_,
+                                      e1ap_bearer_transaction_manager&           ev_mng_,
                                       srslog::basic_logger&                      logger_);
 
   void operator()(coro_context<async_task<e1ap_bearer_context_release_complete>>& ctx);
@@ -39,10 +39,10 @@ private:
 
   const e1ap_bearer_context_release_command command;
   e1_message_notifier&                      e1_notifier;
-  e1_event_manager&                         ev_mng;
+  e1ap_bearer_transaction_manager&          ev_mng;
   srslog::basic_logger&                     logger;
 
-  e1_event_manager::e1_bearer_context_release_outcome_t e1_bearer_ctxt_rel_outcome = nullptr;
+  protocol_transaction_outcome_observer<asn1::e1ap::bearer_context_release_complete_s> transaction_sink;
 };
 
 } // namespace srs_cu_cp

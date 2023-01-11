@@ -15,11 +15,11 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
-e1_bearer_context_setup_procedure::e1_bearer_context_setup_procedure(const e1_message&     request_,
-                                                                     e1ap_ue_context&      ue_ctxt_,
-                                                                     e1_message_notifier&  e1_notif_,
-                                                                     e1_event_manager&     ev_mng_,
-                                                                     srslog::basic_logger& logger_) :
+e1_bearer_context_setup_procedure::e1_bearer_context_setup_procedure(const e1_message&                request_,
+                                                                     e1ap_ue_context&                 ue_ctxt_,
+                                                                     e1_message_notifier&             e1_notif_,
+                                                                     e1ap_bearer_transaction_manager& ev_mng_,
+                                                                     srslog::basic_logger&            logger_) :
   request(request_), ue_ctxt(ue_ctxt_), e1_notifier(e1_notif_), ev_mng(ev_mng_), logger(logger_)
 {
 }
@@ -28,13 +28,14 @@ void e1_bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_
 {
   CORO_BEGIN(ctx);
 
-  ev_mng.e1ap_bearer_context_setup_outcome.reset();
+  // Subscribe to respective publisher to receive BEARER CONTEXT SETUP RESPONSE/FAILURE message.
+  transaction_sink.subscribe_to(ev_mng.context_setup_outcome);
 
   // Send command to CU-UP.
   send_bearer_context_setup_request();
 
   // Await response.
-  CORO_AWAIT_VALUE(e1_bearer_ctxt_setup_outcome, ev_mng.e1ap_bearer_context_setup_outcome);
+  CORO_AWAIT(transaction_sink);
 
   // Handle response from CU-UP and return bearer index
   CORO_RETURN(create_bearer_context_setup_result());
@@ -56,29 +57,31 @@ e1ap_bearer_context_setup_response e1_bearer_context_setup_procedure::create_bea
 {
   e1ap_bearer_context_setup_response res{};
 
-  if (e1_bearer_ctxt_setup_outcome.has_value()) {
+  if (transaction_sink.successful()) {
+    const asn1::e1ap::bearer_context_setup_resp_s& resp = transaction_sink.response();
     logger.info("Received E1AP Bearer Context Setup Response.");
 
     if (logger.debug.enabled()) {
       asn1::json_writer js;
-      e1_bearer_ctxt_setup_outcome.value().to_json(js);
+      resp.to_json(js);
       logger.debug("Containerized Bearer Context Setup Response message: {}", js.to_string());
     }
 
     // Add CU-UP UE E1AP ID to UE context
-    ue_ctxt.cu_up_ue_e1ap_id =
-        int_to_gnb_cu_up_ue_e1ap_id(e1_bearer_ctxt_setup_outcome.value()->gnb_cu_up_ue_e1ap_id.value);
-    fill_e1ap_bearer_context_setup_response(res, e1_bearer_ctxt_setup_outcome.value());
-  } else {
-    logger.info("Received E1AP Bearer Context Setup Failure. Cause: {}",
-                get_cause_str(e1_bearer_ctxt_setup_outcome.error()->cause.value));
+    ue_ctxt.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(resp->gnb_cu_up_ue_e1ap_id.value);
+    fill_e1ap_bearer_context_setup_response(res, resp);
+  } else if (transaction_sink.failed()) {
+    const asn1::e1ap::bearer_context_setup_fail_s& fail = transaction_sink.failure();
+    logger.info("Received E1AP Bearer Context Setup Failure. Cause: {}", get_cause_str(fail->cause.value));
 
     // Add CU-UP UE E1AP ID to UE context
-    if (e1_bearer_ctxt_setup_outcome.error()->gnb_cu_up_ue_e1ap_id_present) {
-      ue_ctxt.cu_up_ue_e1ap_id =
-          int_to_gnb_cu_up_ue_e1ap_id(e1_bearer_ctxt_setup_outcome.error()->gnb_cu_up_ue_e1ap_id.value);
+    if (fail->gnb_cu_up_ue_e1ap_id_present) {
+      ue_ctxt.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(fail->gnb_cu_up_ue_e1ap_id.value);
     }
-    fill_e1ap_bearer_context_setup_response(res, e1_bearer_ctxt_setup_outcome.error());
+    fill_e1ap_bearer_context_setup_response(res, fail);
+  } else {
+    logger.warning("E1AP Bearer Context Setup Response timeout.");
+    res.success = false;
   }
 
   return res;

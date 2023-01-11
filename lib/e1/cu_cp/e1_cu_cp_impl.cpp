@@ -24,7 +24,8 @@ e1_cu_cp_impl::e1_cu_cp_impl(timer_manager&               timers_,
   timers(timers_),
   pdu_notifier(e1_pdu_notifier_),
   cu_up_notifier(e1_cu_up_processor_notifier_),
-  events(std::make_unique<e1_event_manager>(timers))
+  events(std::make_unique<e1ap_transaction_manager>(timers)),
+  ev_mng(timers)
 {
 }
 
@@ -96,7 +97,7 @@ e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_set
   fill_asn1_bearer_context_setup_request(bearer_context_setup_request, request);
   bearer_context_setup_request->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
 
-  return launch_async<e1_bearer_context_setup_procedure>(e1_msg, ue_ctxt, pdu_notifier, *events, logger);
+  return launch_async<e1_bearer_context_setup_procedure>(e1_msg, ue_ctxt, pdu_notifier, ev_mng, logger);
 }
 
 async_task<e1ap_bearer_context_modification_response>
@@ -115,13 +116,13 @@ e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_cont
 
   fill_asn1_bearer_context_modification_request(bearer_context_mod_request, request);
 
-  return launch_async<e1_bearer_context_modification_procedure>(e1_msg, pdu_notifier, *events, logger);
+  return launch_async<e1_bearer_context_modification_procedure>(e1_msg, pdu_notifier, ev_mng, logger);
 }
 
 async_task<e1ap_bearer_context_release_complete>
 e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command)
 {
-  return launch_async<e1_bearer_context_release_procedure>(command, pdu_notifier, *events, logger);
+  return launch_async<e1_bearer_context_release_procedure>(command, pdu_notifier, ev_mng, logger);
 }
 
 void e1_cu_cp_impl::handle_message(const e1_message& msg)
@@ -179,13 +180,13 @@ void e1_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outco
 {
   switch (outcome.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_release_complete: {
-      events->e1ap_bearer_context_release_complete.set(&outcome.value.bearer_context_release_complete());
+      ev_mng.context_release_complete.set(outcome.value.bearer_context_release_complete());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp: {
-      events->e1ap_bearer_context_setup_outcome.set(outcome.value.bearer_context_setup_resp());
+      ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_resp());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_mod_resp: {
-      events->e1ap_bearer_context_modification_outcome.set(outcome.value.bearer_context_mod_resp());
+      ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_resp());
     } break;
     default:
       // Handle successful outcomes with transaction id
@@ -204,10 +205,10 @@ void e1_cu_cp_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_o
 {
   switch (outcome.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_setup_fail: {
-      events->e1ap_bearer_context_setup_outcome.set(outcome.value.bearer_context_setup_fail());
+      ev_mng.context_setup_outcome.set(outcome.value.bearer_context_setup_fail());
     } break;
     case asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::bearer_context_mod_fail: {
-      events->e1ap_bearer_context_modification_outcome.set(outcome.value.bearer_context_mod_fail());
+      ev_mng.context_modification_outcome.set(outcome.value.bearer_context_mod_fail());
     } break;
     default:
       // Handle unsuccessful outcomes with transaction id
