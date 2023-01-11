@@ -93,6 +93,12 @@ public:
   mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
 };
 
+class fapi_slot_last_message_dummy : public fapi::slot_last_message_notifier
+{
+public:
+  void on_last_message(slot_point slot) override {}
+};
+
 /// Manages the workers of the app.
 struct worker_manager {
   static const uint32_t task_worker_queue_size = 128;
@@ -403,7 +409,9 @@ int main(int argc, char** argv)
                                             generate_carrier_config_tlv());
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
-  auto mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway());
+
+  fapi_slot_last_message_dummy last_msg_dummy;
+  auto mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway(), last_msg_dummy);
   report_fatal_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
   phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
   phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());

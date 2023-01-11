@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/fapi/slot_last_message_notifier.h"
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -20,8 +21,11 @@ namespace fapi_adaptor {
 
 /// Configuration parameters for the MAC&ndash;FAPI adaptor factory.
 struct mac_fapi_adaptor_factory_config {
-  mac_fapi_adaptor_factory_config(unsigned sector_id_, subcarrier_spacing scs_, fapi::slot_message_gateway& gateway_) :
-    sector_id(sector_id_), gateway(gateway_), scs(scs_)
+  mac_fapi_adaptor_factory_config(unsigned                          sector_id_,
+                                  subcarrier_spacing                scs_,
+                                  fapi::slot_message_gateway&       gateway_,
+                                  fapi::slot_last_message_notifier& last_msg_notifier_) :
+    sector_id(sector_id_), gateway(gateway_), last_msg_notifier(last_msg_notifier_), scs(scs_)
   {
   }
 
@@ -29,6 +33,8 @@ struct mac_fapi_adaptor_factory_config {
   unsigned sector_id;
   /// Slot-specific FAPI message gateway.
   std::reference_wrapper<fapi::slot_message_gateway> gateway;
+  /// Slot-specific last message notifier.
+  std::reference_wrapper<fapi::slot_last_message_notifier> last_msg_notifier;
   /// Subcarrier spacing as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs;
 };

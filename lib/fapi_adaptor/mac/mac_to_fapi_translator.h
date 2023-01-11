@@ -17,6 +17,7 @@
 namespace srsgnb {
 
 namespace fapi {
+class slot_last_message_notifier;
 class slot_message_gateway;
 } // namespace fapi
 
@@ -90,7 +91,10 @@ private:
 class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
-  explicit mac_to_fapi_translator(fapi::slot_message_gateway& msg_gw_) : msg_gw(msg_gw_) {}
+  mac_to_fapi_translator(fapi::slot_message_gateway& msg_gw_, fapi::slot_last_message_notifier& last_msg_notifier_) :
+    msg_gw(msg_gw_), last_msg_notifier(last_msg_notifier_)
+  {
+  }
 
   // See interface for documentation.
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
@@ -125,6 +129,8 @@ private:
 private:
   /// FAPI message gateway to the outside world.
   fapi::slot_message_gateway& msg_gw;
+  /// Slot-specific last message notifier.
+  fapi::slot_last_message_notifier& last_msg_notifier;
   /// PDSCH PDU registry helper object.
   pdsch_pdu_registry pdsch_registry;
   // Protects pdsch_registry.

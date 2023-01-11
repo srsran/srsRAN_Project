@@ -10,6 +10,7 @@
 
 #include "../../../lib/fapi_adaptor/mac/mac_to_fapi_translator.h"
 #include "messages/helpers.h"
+#include "srsgnb/fapi/slot_last_message_notifier.h"
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/support/srsgnb_test.h"
@@ -43,12 +44,19 @@ public:
   void tx_data_request(const fapi::tx_data_request_message& msg) override {}
 };
 
+class slot_last_message_notifier_dummy : public fapi::slot_last_message_notifier
+{
+public:
+  void on_last_message(slot_point slot) override {}
+};
+
 } // namespace
 
 static void test_valid_dl_sched_results_generate_correct_dl_tti_request()
 {
-  slot_message_gateway_spy gateway_spy;
-  mac_to_fapi_translator   translator(gateway_spy);
+  slot_message_gateway_spy         gateway_spy;
+  slot_last_message_notifier_dummy dummy_notifier;
+  mac_to_fapi_translator           translator(gateway_spy, dummy_notifier);
 
   TESTASSERT(!gateway_spy.has_dl_tti_request_method_called());
 

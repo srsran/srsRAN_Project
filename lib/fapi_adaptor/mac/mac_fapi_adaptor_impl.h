@@ -25,9 +25,13 @@ public:
   /// \brief Constructor for the MAC&ndash;FAPI bidirectional adaptor.
   ///
   /// \param[in] msg_gw FAPI message gateway.
+  /// \param[in] last_msg_notifier Slot-specific last message notifier.
   /// \param[in] sector_id_ Sector identifier.
   /// \param[in] subcarrier_spacing Subcarrier spacing, as per TS38.331 Section 6.2.2.
-  mac_fapi_adaptor_impl(fapi::slot_message_gateway& msg_gw, unsigned sector_id_, subcarrier_spacing scs);
+  mac_fapi_adaptor_impl(fapi::slot_message_gateway&       msg_gw,
+                        fapi::slot_last_message_notifier& last_msg_notifier,
+                        unsigned                          sector_id_,
+                        subcarrier_spacing                scs);
 
   // See interface for documentation.
   fapi::slot_data_message_notifier& get_slot_data_notifier() override;

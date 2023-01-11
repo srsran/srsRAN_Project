@@ -46,12 +46,14 @@ std::unique_ptr<phy_fapi_adaptor> srsgnb::build_phy_fapi_adaptor(unsigned       
   return adaptor_factory->create(phy_fapi_config);
 }
 
-std::unique_ptr<mac_fapi_adaptor>
-srsgnb::build_mac_fapi_adaptor(unsigned sector_id, subcarrier_spacing scs, fapi::slot_message_gateway& gateway)
+std::unique_ptr<mac_fapi_adaptor> srsgnb::build_mac_fapi_adaptor(unsigned                          sector_id,
+                                                                 subcarrier_spacing                scs,
+                                                                 fapi::slot_message_gateway&       gateway,
+                                                                 fapi::slot_last_message_notifier& last_msg_notifier)
 {
   std::unique_ptr<mac_fapi_adaptor_factory> adaptor_factory = create_mac_fapi_adaptor_factory();
   report_fatal_error_if_not(adaptor_factory, "Invalid MAC adaptor factory.");
 
-  mac_fapi_adaptor_factory_config mac_fapi_config(sector_id, scs, gateway);
+  mac_fapi_adaptor_factory_config mac_fapi_config(sector_id, scs, gateway, last_msg_notifier);
   return adaptor_factory->create(mac_fapi_config);
 }

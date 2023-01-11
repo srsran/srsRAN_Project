@@ -16,7 +16,8 @@ using namespace fapi_adaptor;
 
 std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(const mac_fapi_adaptor_factory_config& config)
 {
-  return std::make_unique<mac_fapi_adaptor_impl>(config.gateway.get(), config.sector_id, config.scs);
+  return std::make_unique<mac_fapi_adaptor_impl>(
+      config.gateway.get(), config.last_msg_notifier.get(), config.sector_id, config.scs);
 }
 
 std::unique_ptr<mac_fapi_adaptor_factory> srsgnb::fapi_adaptor::create_mac_fapi_adaptor_factory()

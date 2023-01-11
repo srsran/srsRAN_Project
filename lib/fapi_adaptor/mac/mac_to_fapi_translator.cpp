@@ -9,6 +9,7 @@
  */
 
 #include "mac_to_fapi_translator.h"
+#include "srsgnb/fapi/slot_last_message_notifier.h"
 #include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
@@ -295,5 +296,5 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
 
 void mac_to_fapi_translator::on_cell_results_completion(slot_point slot)
 {
-  //: TODO: implement me
+  last_msg_notifier.on_last_message(slot);
 }

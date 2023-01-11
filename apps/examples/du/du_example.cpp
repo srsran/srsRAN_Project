@@ -261,6 +261,12 @@ public:
   mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
 };
 
+class fapi_slot_last_message_dummy : public fapi::slot_last_message_notifier
+{
+public:
+  void on_last_message(slot_point slot) override {}
+};
+
 /// Manages the workers of the app.
 struct worker_manager {
   static const uint32_t task_worker_queue_size = 128;
@@ -597,6 +603,7 @@ int main(int argc, char** argv)
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
 
+  fapi_slot_last_message_dummy                      last_msg_notifier;
   std::unique_ptr<fapi::slot_message_gateway>       logging_slot_gateway;
   std::unique_ptr<fapi::slot_data_message_notifier> logging_slot_data_notifier;
   std::unique_ptr<fapi::slot_time_message_notifier> logging_slot_time_notifier;
@@ -606,7 +613,7 @@ int main(int argc, char** argv)
     logging_slot_gateway =
         fapi::logging_slot_gateway_decorator_factory().create(phy_adaptor->get_slot_message_gateway());
     report_fatal_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
-    mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway);
+    mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway, last_msg_notifier);
 
     // Create notification loggers.
     logging_slot_data_notifier =
@@ -620,7 +627,7 @@ int main(int argc, char** argv)
     phy_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
     phy_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
   } else {
-    mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway());
+    mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway(), last_msg_notifier);
     report_fatal_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
     phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
     phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());

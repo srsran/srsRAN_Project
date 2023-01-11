@@ -29,6 +29,9 @@ std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> build_phy_fapi_adaptor(unsigned 
                                                                        const fapi::carrier_config&   carrier_cfg);
 
 std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>
-build_mac_fapi_adaptor(unsigned sector_id, subcarrier_spacing scs, fapi::slot_message_gateway& gateway);
+build_mac_fapi_adaptor(unsigned                          sector_id,
+                       subcarrier_spacing                scs,
+                       fapi::slot_message_gateway&       gateway,
+                       fapi::slot_last_message_notifier& last_msg_notifier);
 
 } // namespace srsgnb
