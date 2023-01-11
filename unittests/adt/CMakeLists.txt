@@ -12,17 +12,13 @@ add_executable(bounded_bitset_test bounded_bitset_test.cpp)
 target_link_libraries(bounded_bitset_test srslog gtest gtest_main)
 add_test(bounded_bitset_test bounded_bitset_test)
 
-add_executable(byte_buffer_segment_test byte_buffer_segment_test.cpp)
-target_link_libraries(byte_buffer_segment_test srslog gtest gtest_main)
-gtest_discover_tests(byte_buffer_segment_test)
-
-add_executable(byte_buffer_test byte_buffer_test.cpp)
+add_executable(byte_buffer_test
+        byte_buffer_segment_test.cpp
+        byte_buffer_test.cpp
+        byte_buffer_slice_test.cpp
+        byte_buffer_slice_chain_test.cpp)
 target_link_libraries(byte_buffer_test srslog gtest gtest_main)
 gtest_discover_tests(byte_buffer_test)
-
-add_executable(byte_buffer_slice_test byte_buffer_slice_test.cpp)
-target_link_libraries(byte_buffer_slice_test srslog gtest gtest_main)
-gtest_discover_tests(byte_buffer_slice_test)
 
 add_executable(circular_buffer_test circular_buffer_test.cpp)
 target_link_libraries(circular_buffer_test srslog)
@@ -67,10 +63,6 @@ add_test(unique_function_test unique_function_test)
 add_executable(filter_view_test filter_view_test.cpp)
 target_link_libraries(filter_view_test srslog)
 add_test(filter_view_test filter_view_test)
-
-add_executable(byte_buffer_slice_chain_test byte_buffer_slice_chain_test.cpp)
-target_link_libraries(byte_buffer_slice_chain_test srslog)
-add_test(byte_buffer_slice_chain_test byte_buffer_slice_chain_test)
 
 add_executable(bounded_integer_test bounded_integer_test.cpp)
 target_link_libraries(bounded_integer_test srslog)

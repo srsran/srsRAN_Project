@@ -27,33 +27,33 @@ static_assert(is_byte_buffer_range<byte_buffer>::value, "Invalid metafunction is
 static_assert(is_byte_buffer_range<byte_buffer_view>::value, "Invalid metafunction is_byte_buffer_range");
 static_assert(is_byte_buffer_range<byte_buffer_slice>::value, "Invalid metafunction is_byte_buffer_range");
 
-const size_t small_vec_size = 6;
-const size_t large_vec_size = byte_buffer_segment::SEGMENT_SIZE * 4;
-size_t       random_vec_size(unsigned lb = 1, unsigned ub = large_vec_size)
+const size_t  small_vec_size = 6;
+const size_t  large_vec_size = byte_buffer_segment::SEGMENT_SIZE * 4;
+static size_t random_vec_size(unsigned lb = 1, unsigned ub = large_vec_size)
 {
   return test_rgen::uniform_int<unsigned>(lb, ub);
 }
 
 /// Creates a vector with size randomly generated within defined bounds.
-std::vector<uint8_t> make_vec(unsigned lb = 1, unsigned ub = byte_buffer_segment::SEGMENT_SIZE * 4)
+static std::vector<uint8_t> make_vec(unsigned lb = 1, unsigned ub = byte_buffer_segment::SEGMENT_SIZE * 4)
 {
   return test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(lb, ub));
 }
 
 /// Creates a small vector of bytes that fits in one segment.
-std::vector<uint8_t> make_small_vec()
+static std::vector<uint8_t> make_small_vec()
 {
   return make_vec(6, 6);
 }
 
 /// Creates a large vector of bytes that fills a segment TAILROOM.
-std::vector<uint8_t> make_large_vec()
+static std::vector<uint8_t> make_large_vec()
 {
   size_t sz = byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM;
   return make_vec(sz, sz);
 }
 
-std::vector<uint8_t> concat_vec(span<const uint8_t> before, span<const uint8_t> after)
+static std::vector<uint8_t> concat_vec(span<const uint8_t> before, span<const uint8_t> after)
 {
   std::vector<uint8_t> ret(before.size() + after.size());
   std::copy(before.begin(), before.end(), ret.begin());

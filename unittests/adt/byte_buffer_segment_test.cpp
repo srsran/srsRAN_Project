@@ -17,13 +17,13 @@ using namespace srsgnb;
 std::random_device rd;
 std::mt19937       g(rd());
 
-unsigned get_random_uint(unsigned min, unsigned max)
+static unsigned get_random_uint(unsigned min, unsigned max)
 {
   return std::uniform_int_distribution<unsigned>{min, max}(g);
 }
 
 /// Creates a small vector of bytes that fits in one segment.
-std::vector<uint8_t> make_small_vec()
+static std::vector<uint8_t> make_small_vec()
 {
   return {1, 2, 3, 4, 5, 6};
 }
