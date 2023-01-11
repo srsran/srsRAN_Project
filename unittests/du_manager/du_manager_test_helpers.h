@@ -152,12 +152,17 @@ public:
 class f1u_gateway_dummy : public f1u_du_gateway
 {
 public:
+  bool next_bearer_is_created = true;
+
   srs_du::f1u_bearer*
   create_du_ul_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override
   {
-    f1u_bearers.insert(std::make_pair(dl_teid, std::map<uint32_t, f1u_bearer_dummy>{}));
-    f1u_bearers[dl_teid].insert(std::make_pair(ul_teid, f1u_bearer_dummy{du_rx}));
-    return &f1u_bearers.at(dl_teid).at(ul_teid);
+    if (next_bearer_is_created and f1u_bearers.count(dl_teid) == 0) {
+      f1u_bearers.insert(std::make_pair(dl_teid, std::map<uint32_t, f1u_bearer_dummy>{}));
+      f1u_bearers[dl_teid].insert(std::make_pair(ul_teid, f1u_bearer_dummy{du_rx}));
+      return &f1u_bearers.at(dl_teid).at(ul_teid);
+    }
+    return nullptr;
   }
 
   std::map<uint32_t, std::map<uint32_t, f1u_bearer_dummy>> f1u_bearers;

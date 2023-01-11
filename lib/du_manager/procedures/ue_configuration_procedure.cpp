@@ -136,6 +136,10 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
   }
 
   for (const f1ap_drb_to_setup& drb : request.drbs_to_setup) {
+    if (not ue->bearers.drbs().contains(drb.drb_id)) {
+      // DRB failed to be setup in other layers.
+      continue;
+    }
     du_ue_drb& bearer = ue->bearers.drbs()[drb.drb_id];
     mac_ue_reconf_req.bearers_to_addmod.emplace_back();
     mac_logical_channel& lc_ch = mac_ue_reconf_req.bearers_to_addmod.back();
