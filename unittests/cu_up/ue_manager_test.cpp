@@ -31,7 +31,7 @@ protected:
     f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
 
     // create DUT object
-    ue_mng = std::make_unique<ue_manager>(test_logger, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
+    ue_mng = std::make_unique<ue_manager>(net_config, test_logger, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
   }
 
   void TearDown() override
@@ -45,6 +45,7 @@ protected:
   dummy_f1u_bearer                                     f1u_bearer;
   std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
   std::unique_ptr<ue_manager_ctrl>                     ue_mng;
+  network_interface_config                             net_config;
   srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST", false);
   timer_manager                                        timers;
 };

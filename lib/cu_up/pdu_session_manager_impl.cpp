@@ -18,12 +18,14 @@ using namespace srsgnb;
 using namespace srs_cu_up;
 
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                           ue_index_,
+                                                   network_interface_config&            net_config_,
                                                    srslog::basic_logger&                logger_,
                                                    timer_manager&                       timers_,
                                                    f1u_cu_up_gateway&                   f1u_gw_,
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                                                    gtpu_demux_ctrl&                     gtpu_rx_demux_) :
   ue_index(ue_index_),
+  net_config(net_config_),
   logger(logger_),
   timers(timers_),
   gtpu_tx_notifier(gtpu_tx_notifier_),
@@ -57,7 +59,10 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   // Allocate local TEID
   new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
 
-  pdu_session_result.gtp_tunnel.set_gtp_tunnel().gtp_teid.from_number(new_session->local_teid);
+  up_transport_layer_info n3_dl_tunnel_addr;
+  n3_dl_tunnel_addr.tp_address.from_string(net_config.n3_bind_addr);
+  n3_dl_tunnel_addr.gtp_teid = int_to_gtp_teid(new_session->local_teid);
+  up_transport_layer_info_to_asn1(pdu_session_result.gtp_tunnel, n3_dl_tunnel_addr);
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {};
@@ -118,7 +123,10 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     f1u_bearer* f1u_bearer =
         f1u_gw.create_cu_bearer(ul_f1u_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
 
-    drb_result.gtp_tunnel.set_gtp_tunnel().gtp_teid.from_number(ul_f1u_teid);
+    up_transport_layer_info f1u_ul_tunnel_addr;
+    f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
+    f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(ul_f1u_teid);
+    up_transport_layer_info_to_asn1(drb_result.gtp_tunnel, f1u_ul_tunnel_addr);
 
     srsgnb_assert(drb.qos_flow_info_to_be_setup.size() <= 1,
                   "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS "

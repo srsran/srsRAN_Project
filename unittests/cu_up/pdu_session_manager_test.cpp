@@ -31,7 +31,7 @@ protected:
 
     // create DUT object
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(
-        MIN_UE_INDEX, logger, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
+        MIN_UE_INDEX, net_config, logger, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
   }
 
   void TearDown() override
@@ -45,6 +45,7 @@ protected:
   dummy_f1u_bearer                                     f1u_bearer;
   std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
+  network_interface_config                             net_config;
   srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);
   timer_manager                                        timers;
 };

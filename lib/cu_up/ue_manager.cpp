@@ -13,12 +13,18 @@
 using namespace srsgnb;
 using namespace srs_cu_up;
 
-ue_manager::ue_manager(srslog::basic_logger&                logger_,
+ue_manager::ue_manager(network_interface_config&            net_config_,
+                       srslog::basic_logger&                logger_,
                        timer_manager&                       timers_,
                        f1u_cu_up_gateway&                   f1u_gw_,
                        gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                        gtpu_demux_ctrl&                     gtpu_rx_demux_) :
-  logger(logger_), timers(timers_), f1u_gw(f1u_gw_), gtpu_tx_notifier(gtpu_tx_notifier_), gtpu_rx_demux(gtpu_rx_demux_)
+  net_config(net_config_),
+  logger(logger_),
+  timers(timers_),
+  f1u_gw(f1u_gw_),
+  gtpu_tx_notifier(gtpu_tx_notifier_),
+  gtpu_rx_demux(gtpu_rx_demux_)
 {
 }
 
@@ -43,7 +49,7 @@ ue_context* ue_manager::add_ue()
 
   // Create UE object
   std::unique_ptr<ue_context> new_ctx =
-      std::make_unique<ue_context>(new_idx, logger, timers, f1u_gw, gtpu_tx_notifier, gtpu_rx_demux);
+      std::make_unique<ue_context>(new_idx, net_config, logger, timers, f1u_gw, gtpu_tx_notifier, gtpu_rx_demux);
 
   // add to DB
   ue_db.emplace(new_idx, std::move(new_ctx));

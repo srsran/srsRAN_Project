@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdu_session_manager.h"
+#include "srsgnb/cu_up/cu_up_configuration.h"
 #include "srsgnb/cu_up/cu_up_types.h"
 #include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
@@ -25,6 +26,7 @@ class pdu_session_manager_impl : public pdu_session_manager_ctrl
 {
 public:
   pdu_session_manager_impl(ue_index_t                           ue_index_,
+                           network_interface_config&            net_config_,
                            srslog::basic_logger&                logger_,
                            timer_manager&                       timers_,
                            f1u_cu_up_gateway&                   f1u_gw_,
@@ -43,6 +45,7 @@ private:
   uint32_t allocate_local_f1u_teid(uint8_t pdu_session_id, uint8_t drb_id);
 
   ue_index_t                                      ue_index;
+  network_interface_config&                       net_config;
   srslog::basic_logger&                           logger;
   timer_manager&                                  timers;
   gtpu_tunnel_tx_upper_layer_notifier&            gtpu_tx_notifier;
