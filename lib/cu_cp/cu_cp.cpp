@@ -9,7 +9,7 @@
  */
 
 #include "cu_cp.h"
-#include "procedures/initial_cu_cp_setup_procedure.h"
+#include "routines/initial_cu_cp_setup_routine.h"
 #include "srsgnb/cu_cp/cu_up_processor_factory.h"
 #include "srsgnb/cu_cp/du_processor_factory.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
@@ -51,7 +51,7 @@ cu_cp::~cu_cp()
 void cu_cp::start()
 {
   // start NG setup procedure.
-  main_ctrl_loop.schedule<initial_cu_cp_setup_procedure>(cfg.ngc_config, *ngc_entity, *this);
+  main_ctrl_loop.schedule<initial_cu_cp_setup_routine>(cfg.ngc_config, *ngc_entity, *this);
 
   // start E1 setup procedure(s)
   for (auto& cu_up : cu_up_db) {

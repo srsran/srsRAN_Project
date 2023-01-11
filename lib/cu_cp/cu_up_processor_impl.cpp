@@ -11,7 +11,7 @@
 #include "cu_up_processor_impl.h"
 #include "adapters/e1_adapters.h"
 #include "adapters/ngc_adapters.h"
-#include "procedures/initial_cu_up_processor_setup_procedure.h"
+#include "routines/initial_cu_up_processor_setup_routine.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp_factory.h"
 
 using namespace srsgnb;
@@ -37,7 +37,7 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t       
 void cu_up_processor_impl::start()
 {
   // Start E1 setup procedure
-  main_ctrl_loop.schedule<initial_cu_up_processor_setup_procedure>(context, *e1, cu_cp_notifier);
+  main_ctrl_loop.schedule<initial_cu_up_processor_setup_routine>(context, *e1, cu_cp_notifier);
 }
 
 void cu_up_processor_impl::stop() {}

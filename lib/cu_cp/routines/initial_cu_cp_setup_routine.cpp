@@ -8,21 +8,21 @@
  *
  */
 
-#include "initial_cu_cp_setup_procedure.h"
+#include "initial_cu_cp_setup_routine.h"
 #include "../../ngap/ngap_asn1_helpers.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-initial_cu_cp_setup_procedure::initial_cu_cp_setup_procedure(const ngc_configuration&       ngc_config_,
-                                                             ngc_connection_manager&        ngc_conn_mng_,
-                                                             cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_) :
+initial_cu_cp_setup_routine::initial_cu_cp_setup_routine(const ngc_configuration&       ngc_config_,
+                                                         ngc_connection_manager&        ngc_conn_mng_,
+                                                         cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_) :
   ngc_cfg(ngc_config_), ngc_conn_mng(ngc_conn_mng_), cu_cp_ngc_ev_notifier(cu_cp_ngc_ev_notifier_)
 {
 }
 
-void initial_cu_cp_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
+void initial_cu_cp_setup_routine::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -40,7 +40,7 @@ void initial_cu_cp_setup_procedure::operator()(coro_context<async_task<void>>& c
   CORO_RETURN();
 }
 
-async_task<ng_setup_response_message> initial_cu_cp_setup_procedure::start_ng_setup_request()
+async_task<ng_setup_response_message> initial_cu_cp_setup_routine::start_ng_setup_request()
 {
   // Prepare request to send to ng.
   ng_setup_request_message request_msg = {};
@@ -51,7 +51,7 @@ async_task<ng_setup_response_message> initial_cu_cp_setup_procedure::start_ng_se
   return ngc_conn_mng.handle_ng_setup_request(request_msg);
 }
 
-void initial_cu_cp_setup_procedure::handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp)
+void initial_cu_cp_setup_routine::handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp)
 {
   cu_cp_ngc_ev_notifier.on_amf_connection();
   // TODO

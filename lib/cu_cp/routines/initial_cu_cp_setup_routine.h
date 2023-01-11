@@ -18,12 +18,12 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class initial_cu_cp_setup_procedure
+class initial_cu_cp_setup_routine
 {
 public:
-  initial_cu_cp_setup_procedure(const ngc_configuration&       ngc_cfg_,
-                                ngc_connection_manager&        ngc_conn_mng_,
-                                cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_);
+  initial_cu_cp_setup_routine(const ngc_configuration&       ngc_cfg_,
+                              ngc_connection_manager&        ngc_conn_mng_,
+                              cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 

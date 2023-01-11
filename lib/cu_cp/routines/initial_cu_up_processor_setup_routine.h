@@ -17,12 +17,12 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class initial_cu_up_processor_setup_procedure
+class initial_cu_up_processor_setup_routine
 {
 public:
-  initial_cu_up_processor_setup_procedure(cu_up_processor_context&                   context_,
-                                          e1_connection_manager&                     e1_conn_mng_,
-                                          cu_up_processor_cu_up_management_notifier& cu_cp_notifier_);
+  initial_cu_up_processor_setup_routine(cu_up_processor_context&                   context_,
+                                        e1_connection_manager&                     e1_conn_mng_,
+                                        cu_up_processor_cu_up_management_notifier& cu_cp_notifier_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 

@@ -8,13 +8,13 @@
  *
  */
 
-#include "initial_cu_up_processor_setup_procedure.h"
+#include "initial_cu_up_processor_setup_routine.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-initial_cu_up_processor_setup_procedure::initial_cu_up_processor_setup_procedure(
+initial_cu_up_processor_setup_routine::initial_cu_up_processor_setup_routine(
     cu_up_processor_context&                   context_,
     e1_connection_manager&                     e1_conn_mng_,
     cu_up_processor_cu_up_management_notifier& cu_cp_notifier_) :
@@ -22,7 +22,7 @@ initial_cu_up_processor_setup_procedure::initial_cu_up_processor_setup_procedure
 {
 }
 
-void initial_cu_up_processor_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
+void initial_cu_up_processor_setup_routine::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -40,7 +40,7 @@ void initial_cu_up_processor_setup_procedure::operator()(coro_context<async_task
   CORO_RETURN();
 }
 
-async_task<cu_cp_e1_setup_response> initial_cu_up_processor_setup_procedure::start_cu_cp_e1_setup_request()
+async_task<cu_cp_e1_setup_response> initial_cu_up_processor_setup_routine::start_cu_cp_e1_setup_request()
 {
   // Prepare request to send to CU-CP E1 Setup Request message.
   cu_cp_e1_setup_request request          = {};
@@ -51,7 +51,7 @@ async_task<cu_cp_e1_setup_response> initial_cu_up_processor_setup_procedure::sta
   return e1_conn_mng.handle_cu_cp_e1_setup_request(request);
 }
 
-void initial_cu_up_processor_setup_procedure::handle_cu_cp_e1_setup_response(
+void initial_cu_up_processor_setup_routine::handle_cu_cp_e1_setup_response(
     const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& resp)
 {
   if (resp->gnb_cu_up_name_present) {
