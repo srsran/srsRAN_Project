@@ -237,7 +237,7 @@ public:
     this->vec[idx] = std::forward<U>(u);
   }
 
-  /// Overwrite array element with given index with a newly constructed object
+  /// Add or overwrite element with given index with a newly constructed object
   /// \param idx Position of the constructed element in the array
   /// \param args Arguments to pass to element ctor
   template <typename... Args>
@@ -371,14 +371,19 @@ public:
     index_mapper[idx] = objects.size() - 1;
   }
 
-  /// \brief Insert given object in given index. May allocate and cause pointer invalidation
+  /// Insert element into the container if an element with the same ID does not exist yet.
   /// \param idx Position of the constructed element in the array
-  /// \param u object to insert
+  /// \param u object to insert.
+  /// \return true if insertion took place. False if an element with the same ID already existed.
   template <typename U>
-  void insert(size_t idx, U&& u)
+  bool insert(size_t idx, U&& u)
   {
     static_assert(std::is_convertible<U, value_type>::value, "Ctor T(U&&) does not exist.");
+    if (contains(idx)) {
+      return false;
+    }
     emplace(idx, std::forward<U>(u));
+    return true;
   }
 
   /// Erase object pointed by the given index.
@@ -541,16 +546,17 @@ public:
   const_iterator begin() const { return sl_vec.begin(); }
   const_iterator end() const { return sl_vec.end(); }
 
-  /// Insert given object with a given Id.
+  /// Insert element into the container if an element with the same ID does not exist yet.
   /// \param id ID the constructed element in the table.
-  /// \param u object to insert
+  /// \param u object to insert.
+  /// \return true if insertion took place. False if an element with the same ID already existed.
   template <typename U>
-  void insert(key_type id, U&& u)
+  bool insert(key_type id, U&& u)
   {
-    sl_vec.insert(to_index(id), std::forward<U>(u));
+    return sl_vec.insert(to_index(id), std::forward<U>(u));
   }
 
-  /// Overwrite array element with given index with a newly constructed object
+  /// Insert or overwrite element with given ID with a newly constructed object.
   /// \param id ID of the constructed element in the table
   /// \param args Arguments to pass to element ctor
   template <typename... Args>

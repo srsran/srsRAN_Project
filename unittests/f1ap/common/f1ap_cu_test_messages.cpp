@@ -208,14 +208,14 @@ srsgnb::srs_cu_cp::generate_ue_context_modification_request(ue_index_t          
   msg.ue_aggregate_maximum_bit_rate_ul = 200000000;
 
   for (drb_id_t drb_id : drbs_to_add) {
-    cu_cp_drb_setup_message drb_setup_msg;
+    cu_cp_drb_setup_message drb_setup_msg{};
     drb_setup_msg.drb_id                  = drb_id;
     drb_setup_msg.rlc                     = srsgnb::rlc_mode::am;
     drb_setup_msg.qos_info.is_dynamic_5qi = true;
     drb_setup_msg.qos_info.five_qi        = 8;
     drb_setup_msg.qos_info.prio_level_arp = 1;
 
-    msg.cu_cp_drb_setup_msgs[drb_id] = drb_setup_msg;
+    msg.cu_cp_drb_setup_msgs.emplace(drb_id, drb_setup_msg);
   }
 
   return msg;

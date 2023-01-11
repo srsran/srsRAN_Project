@@ -126,7 +126,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
         drb_setup_mod_item.lcid = uint_to_lcid(asn1_drb_mod_item.lcid);
       }
 
-      res.drbs_setup_mod_list[drb_setup_mod_item.drb_id] = drb_setup_mod_item;
+      res.drbs_setup_mod_list.emplace(drb_setup_mod_item.drb_id, drb_setup_mod_item);
     }
   }
 
@@ -150,7 +150,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
         drb_setup_mod_item.lcid = uint_to_lcid(asn1_drb_mod_item.lcid);
       }
 
-      res.drbs_modified_list[drb_setup_mod_item.drb_id] = drb_setup_mod_item;
+      res.drbs_modified_list.emplace(drb_setup_mod_item.drb_id, drb_setup_mod_item);
     }
   }
 
@@ -164,7 +164,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       if (asn1_srb_failed_item.cause_present) {
         srb_failed_item.cause = f1ap_cause_to_cu_cp_cause(asn1_srb_failed_item.cause);
       }
-      res.srbs_failed_to_be_setup_mod_list[srb_failed_item.srb_id] = srb_failed_item;
+      res.srbs_failed_to_be_setup_mod_list.emplace(srb_failed_item.srb_id, srb_failed_item);
     }
   }
 
@@ -178,7 +178,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       if (asn1_drb_failed_item.cause_present) {
         drb_failed_item.cause = f1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
       }
-      res.drbs_failed_to_be_setup_mod_list[drb_failed_item.drb_id] = drb_failed_item;
+      res.drbs_failed_to_be_setup_mod_list.emplace(drb_failed_item.drb_id, drb_failed_item);
     }
   }
 
@@ -206,7 +206,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       if (asn1_drb_failed_item.cause_present) {
         drb_failed_item.cause = f1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
       }
-      res.drbs_failed_to_be_modified_list[drb_failed_item.drb_id] = drb_failed_item;
+      res.drbs_failed_to_be_modified_list.emplace(drb_failed_item.drb_id, drb_failed_item);
     }
   }
 
@@ -241,7 +241,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       srbs_setup_mod_item.srb_id = int_to_srb_id(asn1_srbs_setup_mod_item.srb_id);
       srbs_setup_mod_item.lcid   = uint_to_lcid(asn1_srbs_setup_mod_item.lcid);
 
-      res.srbs_setup_mod_list[srbs_setup_mod_item.srb_id] = srbs_setup_mod_item;
+      res.srbs_setup_mod_list.emplace(srbs_setup_mod_item.srb_id, srbs_setup_mod_item);
     }
   }
 
@@ -254,7 +254,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       srbs_modified_item.srb_id = int_to_srb_id(asn1_srbs_modified_item.srb_id);
       srbs_modified_item.lcid   = uint_to_lcid(asn1_srbs_modified_item.lcid);
 
-      res.srbs_modified_list[srbs_modified_item.srb_id] = srbs_modified_item;
+      res.srbs_modified_list.emplace(srbs_modified_item.srb_id, srbs_modified_item);
     }
   }
 
