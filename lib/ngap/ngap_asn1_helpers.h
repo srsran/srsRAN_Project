@@ -191,13 +191,10 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
   if (!cu_cp_resp.pdu_session_res_setup_response_items.empty()) {
     resp->pdu_session_res_setup_list_su_res_present = true;
 
-    for (const auto& cu_cp_resp_item_pair : cu_cp_resp.pdu_session_res_setup_response_items) {
-      const auto& pdu_session_id  = cu_cp_resp_item_pair.first;
-      const auto& cu_cp_resp_item = cu_cp_resp_item_pair.second;
-
+    for (const auto& cu_cp_resp_item : cu_cp_resp.pdu_session_res_setup_response_items) {
       asn1::ngap::pdu_session_res_setup_item_su_res_s resp_item;
 
-      resp_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
+      resp_item.pdu_session_id = pdu_session_id_to_uint(cu_cp_resp_item.pdu_session_id);
 
       asn1::ngap::pdu_session_res_setup_resp_transfer_s response_transfer;
 
@@ -215,10 +212,8 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
       }
 
       // Add QosFlowFailedToSetupList
-      for (const auto& cu_cp_failed_item_pair :
+      for (const auto& cu_cp_failed_item :
            cu_cp_resp_item.pdu_session_resource_setup_response_transfer.qos_flow_failed_to_setup_list) {
-        const auto& cu_cp_failed_item = cu_cp_failed_item_pair.second;
-
         asn1::ngap::qos_flow_with_cause_item_s ngap_failed_item =
             cu_cp_qos_flow_failed_to_setup_item_to_ngap_qos_flow_with_cause_item(cu_cp_failed_item);
         response_transfer.qos_flow_failed_to_setup_list.push_back(ngap_failed_item);
@@ -246,12 +241,10 @@ inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_
   // Fill PDU Session Resource Failed to Setup List
   if (!cu_cp_resp.pdu_session_res_failed_to_setup_items.empty()) {
     resp->pdu_session_res_failed_to_setup_list_su_res_present = true;
-    for (const auto& cu_cp_setup_failed_item_pair : cu_cp_resp.pdu_session_res_failed_to_setup_items) {
-      const auto& cu_cp_setup_failed_item = cu_cp_setup_failed_item_pair.second;
-
+    for (const auto& cu_cp_setup_failed_item : cu_cp_resp.pdu_session_res_failed_to_setup_items) {
       asn1::ngap::pdu_session_res_failed_to_setup_item_su_res_s setup_failed_item;
 
-      setup_failed_item.pdu_session_id = pdu_session_id_to_uint(cu_cp_setup_failed_item_pair.second.pdu_session_id);
+      setup_failed_item.pdu_session_id = pdu_session_id_to_uint(cu_cp_setup_failed_item.pdu_session_id);
 
       asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
       setup_unsuccessful_transfer.cause =

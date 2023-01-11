@@ -99,7 +99,7 @@ TEST_F(f1ap_cu_ue_context_modification_test,
   EXPECT_EQ(t.get().drbs_setup_mod_list.size(), 0);
   EXPECT_EQ(t.get().srbs_setup_mod_list.size(), 0);
   EXPECT_EQ(t.get().drbs_failed_to_be_setup_mod_list.size(), 1);
-  EXPECT_EQ(t.get().drbs_failed_to_be_setup_mod_list.at(drb_id_t::drb1).drb_id, drb_id_t::drb1);
+  EXPECT_EQ(t.get().drbs_failed_to_be_setup_mod_list[drb_id_t::drb1].drb_id, drb_id_t::drb1);
 }
 
 TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_failure_received_then_procedure_is_unsuccessful)

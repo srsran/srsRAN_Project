@@ -92,7 +92,9 @@ template <typename VectorData>
 class slotted_vector_iter_impl
 {
   using iterator_type = slotted_vector_iter_impl<VectorData>;
-  using elem_type     = typename VectorData::value_type;
+  using elem_type     = std::conditional_t<std::is_const<VectorData>::value,
+                                       const typename VectorData::value_type,
+                                       typename VectorData::value_type>;
 
 public:
   using iterator_category = std::forward_iterator_tag;
@@ -508,6 +510,76 @@ private:
   constexpr size_t to_index(key_type k) const { return IdToIntConversion::get_index(k); }
 
   slotted_array<T, N, EmbeddedStorage> sl_ar;
+};
+
+/// \brief Represents a slotted vector that is indexed via an ID type that is convertible to an integer (e.g. enum).
+template <typename IdType, typename T, typename IdToIntConversion = detail::cast_to_size_operator<IdType>>
+class slotted_id_vector : private IdToIntConversion
+{
+  static_assert(
+      std::is_convertible<decltype(std::declval<IdToIntConversion>().get_index(std::declval<IdType>())), size_t>::value,
+      "IdType must be convertible to size_t");
+
+public:
+  using key_type       = IdType;
+  using value_type     = typename slotted_vector<T>::value_type;
+  using iterator       = typename slotted_vector<T>::iterator;
+  using const_iterator = typename slotted_vector<T>::const_iterator;
+
+  using IdToIntConversion::IdToIntConversion;
+
+  bool contains(key_type id) const noexcept { return sl_vec.contains(to_index(id)); }
+
+  constexpr T&       operator[](key_type id) { return sl_vec[to_index(id)]; }
+  constexpr const T& operator[](key_type id) const { return sl_vec[to_index(id)]; }
+
+  constexpr bool   empty() const noexcept { return sl_vec.empty(); }
+  constexpr size_t size() const { return sl_vec.size(); }
+
+  iterator       begin() { return sl_vec.begin(); }
+  iterator       end() { return sl_vec.end(); }
+  const_iterator begin() const { return sl_vec.begin(); }
+  const_iterator end() const { return sl_vec.end(); }
+
+  /// Insert given object with a given Id.
+  /// \param id ID the constructed element in the table.
+  /// \param u object to insert
+  template <typename U>
+  void insert(key_type id, U&& u)
+  {
+    sl_vec.insert(to_index(id), std::forward<U>(u));
+  }
+
+  /// Overwrite array element with given index with a newly constructed object
+  /// \param id ID of the constructed element in the table
+  /// \param args Arguments to pass to element ctor
+  template <typename... Args>
+  void emplace(key_type id, Args&&... args)
+  {
+    sl_vec.emplace(to_index(id), std::forward<Args>(args)...);
+  }
+
+  /// Erase object pointed by the given index
+  /// \param id ID of the erased element in the table
+  bool erase(key_type id) noexcept { return sl_vec.erase(to_index(id)); }
+
+  /// Erase object pointed by the given iterator. Iterator must point to valid element
+  /// \param it container iterator
+  void erase(iterator it) noexcept { sl_vec.erase(it); }
+
+  /// Clear all elements of the container
+  void clear() noexcept { sl_vec.clear(); }
+
+  /// Find first position that is empty
+  key_type find_first_empty(key_type start_guess = 0) const
+  {
+    return IdToIntConversion::get_id(find_first_empty(to_index(start_guess)));
+  }
+
+private:
+  constexpr size_t to_index(key_type k) const { return IdToIntConversion::get_index(k); }
+
+  slotted_vector<T> sl_vec;
 };
 
 } // namespace srsgnb

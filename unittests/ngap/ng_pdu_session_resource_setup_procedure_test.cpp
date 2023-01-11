@@ -50,8 +50,7 @@ TEST_F(ngc_test, when_valid_pdu_session_resource_setup_request_received_then_pdu
                 ->pdu_session_res_setup_list_su_req.value.size(),
             du_processor_notifier->last_request.pdu_session_res_setup_items.size());
 
-  ASSERT_EQ(du_processor_notifier->last_request.pdu_session_res_setup_items.at(pdu_session_id).pdu_session_type,
-            "ipv4");
+  ASSERT_EQ(du_processor_notifier->last_request.pdu_session_res_setup_items[pdu_session_id].pdu_session_type, "ipv4");
 
   // Check that AMF notifier was called with right type
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::successful_outcome);

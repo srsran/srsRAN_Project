@@ -25,14 +25,11 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
 {
   // drb to be setup mod list
   asn1_request->drbs_to_be_setup_mod_list_present = msg.cu_cp_drb_setup_msgs.size() > 0;
-  for (const auto& drb_to_be_setup_pair : msg.cu_cp_drb_setup_msgs) {
-    const auto& drb_id          = drb_to_be_setup_pair.first;
-    const auto& drb_to_be_setup = drb_to_be_setup_pair.second;
-
+  for (const auto& drb_to_be_setup : msg.cu_cp_drb_setup_msgs) {
     asn1::protocol_ie_single_container_s<asn1::f1ap::drbs_to_be_setup_mod_item_ies_o> asn1_setup_item;
     auto& asn1_drb_to_setup_item = asn1_setup_item->drbs_to_be_setup_mod_item();
 
-    asn1_drb_to_setup_item.drb_id = drb_id_to_uint(drb_id);
+    asn1_drb_to_setup_item.drb_id = drb_id_to_uint(drb_to_be_setup.drb_id);
     switch (drb_to_be_setup.rlc) {
       case rlc_mode::am:
         asn1_drb_to_setup_item.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_am;
@@ -77,11 +74,9 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
       drb_info.snssai.sd.from_number(drb_to_be_setup.s_nssai.sd.value());
     }
 
-    for (const auto& qos_flow_pair : drb_to_be_setup.qos_flows_mapped_to_drb) {
-      const auto& qos_flow_id = qos_flow_pair.first;
-
+    for (const auto& qos_flow : drb_to_be_setup.qos_flows_mapped_to_drb) {
       asn1::f1ap::flows_mapped_to_drb_item_s asn1_flow;
-      asn1_flow.qos_flow_id               = qos_flow_id_to_uint(qos_flow_id);
+      asn1_flow.qos_flow_id               = qos_flow_id_to_uint(qos_flow.qos_flow_id);
       asn1_flow.qos_flow_level_qos_params = drb_info.drb_qos;
       drb_info.flows_mapped_to_drb_list.push_back(asn1_flow);
     }
