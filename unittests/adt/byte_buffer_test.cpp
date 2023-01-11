@@ -105,7 +105,7 @@ protected:
   std::vector<uint8_t> bytes3 = test_rgen::random_vector<uint8_t>(sz3);
 };
 
-TEST(byte_buffer, empty_byte_buffer_in_valid_state)
+TEST(byte_buffer_test, empty_byte_buffer_in_valid_state)
 {
   byte_buffer pdu;
   ASSERT_EQ_LEN(pdu, 0);
@@ -264,8 +264,7 @@ TEST(byte_buffer, iterator)
   // multiple segments
   std::vector<uint8_t> bytes2 = make_large_vec();
   pdu.append(bytes2);
-  std::vector<uint8_t> bytes_concat = bytes;
-  bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
+  std::vector<uint8_t> bytes_concat = concat_vec(bytes, bytes2);
 
   // iterator
   i = 0;
@@ -285,6 +284,15 @@ TEST(byte_buffer, iterator)
   TESTASSERT_EQ(bytes_concat.size(), pdu.length());
   TESTASSERT_EQ(bytes_concat.size(), (size_t)(pdu.end() - pdu.begin()));
   TESTASSERT_EQ(bytes_concat.size() - 2, (size_t)(pdu.end() - (pdu.begin() + 2)));
+}
+
+TEST(byte_buffer_test, deep_copy_works_for_empty_byte_buffer)
+{
+  byte_buffer pdu;
+  byte_buffer pdu2;
+  pdu2 = pdu.deep_copy();
+  ASSERT_TRUE(pdu.empty());
+  ASSERT_TRUE(pdu.empty());
 }
 
 TEST_P(two_vec_sizes_param, deep_copy)
