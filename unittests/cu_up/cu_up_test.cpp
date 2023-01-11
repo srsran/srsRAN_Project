@@ -50,12 +50,12 @@ protected:
 
     // create config
     cu_up_configuration cfg;
-    cfg.cu_up_executor = task_executor.get();
-    cfg.e1_notifier    = &e1_message_notifier;
-    cfg.f1u_gateway    = f1u_gw.get();
-    cfg.epoll_broker   = broker.get();
-    cfg.gtp_bind_addr  = "127.0.0.1";
-    cfg.upf_addr       = "127.0.1.100";
+    cfg.cu_up_executor       = task_executor.get();
+    cfg.e1_notifier          = &e1_message_notifier;
+    cfg.f1u_gateway          = f1u_gw.get();
+    cfg.epoll_broker         = broker.get();
+    cfg.net_cfg.n3_bind_addr = "127.0.0.1";
+    cfg.net_cfg.upf_addr     = "127.0.1.100";
 
     // create and start DUT
     cu_up = create_cu_up(cfg);

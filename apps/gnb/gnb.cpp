@@ -325,12 +325,14 @@ int main(int argc, char** argv)
 
   // Create CU-UP config.
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
-  cu_up_cfg.cu_up_executor = &workers.cu_exec.front();
-  cu_up_cfg.e1_notifier    = &e1_up_to_cp_adapter;
-  cu_up_cfg.f1u_gateway    = f1u_conn->get_f1u_cu_up_gateway();
-  cu_up_cfg.epoll_broker   = epoll_broker.get();
-  cu_up_cfg.gtp_bind_addr  = "127.0.1.1"; // FIXME: Read from main config
-  cu_up_cfg.upf_addr       = "0.0.0.0";   // TODO: Refactor to use UPF IP that we get from E1
+  cu_up_cfg.cu_up_executor       = &workers.cu_exec.front();
+  cu_up_cfg.e1_notifier          = &e1_up_to_cp_adapter;
+  cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
+  cu_up_cfg.epoll_broker         = epoll_broker.get();
+  cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
+  cu_up_cfg.net_cfg.f1u_bind_addr =
+      gnb_cfg.amf_cfg.bind_addr;                        // FIXME: check if this can be removed for co-located case
+  cu_up_cfg.net_cfg.upf_addr = gnb_cfg.amf_cfg.ip_addr; // TODO: Refactor to use UPF IP that we get from E1
 
   // create and start DUT
   std::unique_ptr<srsgnb::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));

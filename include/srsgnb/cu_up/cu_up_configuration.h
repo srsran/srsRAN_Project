@@ -19,15 +19,25 @@
 namespace srsgnb {
 namespace srs_cu_up {
 
+struct network_interface_config {
+  ///< IP address of UPF for NG-U connection (TODO: Refactor to use UPF IP that we get from E1).
+  std::string upf_addr = "0.0.0.0";
+
+  ///< Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
+  std::string n3_bind_addr = "127.0.1.1";
+
+  ///< Local IP address to bind for connection from DU to receive uplink user-plane traffic.
+  std::string f1u_bind_addr = "127.0.1.1";
+};
+
 /// Configuration passed to CU-UP.
 struct cu_up_configuration {
   task_executor*       cu_up_executor = nullptr;
   e1_message_notifier* e1_notifier    = nullptr; ///< Callback for incoming E1 messages.
   f1u_cu_up_gateway*   f1u_gateway    = nullptr;
   io_broker*           epoll_broker   = nullptr; ///< IO broker to receive messages from a network gateway
-  // TODO: Refactor to use UPF IP that we get from E1
-  std::string upf_addr      = "0.0.0.0";   ///< IP address of UPF for NG-U connection.
-  std::string gtp_bind_addr = "127.0.1.1"; ///< Local IP address to bind for GTP connection.
+
+  network_interface_config net_cfg;
 
   unsigned    cu_up_id   = 0;
   std::string cu_up_name = "srs_cu_up_01";

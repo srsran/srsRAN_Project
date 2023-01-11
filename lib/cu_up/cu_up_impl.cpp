@@ -37,9 +37,9 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   // TODO: Refactor to use UPF IP that we get from E1
   network_gateway_config ngu_gw_config = {};
   ngu_gw_config.type                   = network_gateway_type::udp;
-  ngu_gw_config.connect_address        = cfg.upf_addr;
+  ngu_gw_config.connect_address        = cfg.net_cfg.upf_addr;
   ngu_gw_config.connect_port           = 2152; ///< TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
-  ngu_gw_config.bind_address           = cfg.gtp_bind_addr;
+  ngu_gw_config.bind_address           = cfg.net_cfg.n3_bind_addr;
   ngu_gw_config.bind_port              = 2152; ///< TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
   // other params
 
