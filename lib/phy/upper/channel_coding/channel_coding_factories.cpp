@@ -26,21 +26,20 @@
 #include "short/short_block_detector_impl.h"
 #include "srsgnb/support/cpu_features.h"
 
-#ifdef __PCLMUL__
-#include "crc_calculator_clmul_impl.h"
-#endif // __PCLMUL__
 #ifdef __AVX2__
 #include "ldpc/ldpc_decoder_avx2.h"
 #include "ldpc/ldpc_encoder_avx2.h"
-#include "ldpc/ldpc_rate_dematcher_avx2_impl.h"
 #endif // __AVX2__
+
 #ifdef HAVE_AVX512
 #include "ldpc/ldpc_decoder_avx512.h"
 #endif // HAVE_AVX512
 
-#if ENABLE_AVX512
+#ifdef __x86_64__
+#include "crc_calculator_clmul_impl.h"
+#include "ldpc/ldpc_rate_dematcher_avx2_impl.h"
 #include "ldpc/ldpc_rate_dematcher_avx512_impl.h"
-#endif // ENABLE_AVX512
+#endif // __x86_64__
 
 using namespace srsgnb;
 
@@ -53,11 +52,13 @@ public:
 
   std::unique_ptr<crc_calculator> create(crc_generator_poly poly) override
   {
-#ifdef __PCLMUL__
-    if (((type == "auto") || (type == "clmul")) && cpu_supports_feature(cpu_feature::pclmul)) {
+#ifdef __x86_64__
+    bool supports_clmul = cpu_supports_feature(cpu_feature::pclmul) &&  cpu_supports_feature(cpu_feature::sse4_1);
+
+    if (((type == "auto") || (type == "clmul")) && supports_clmul) {
       return std::make_unique<crc_calculator_clmul_impl>(poly);
     }
-#endif // __PCLMUL__
+#endif // __x86_64__
 
     if ((type == "auto") || (type == "lut")) {
       return std::make_unique<crc_calculator_lut_impl>(poly);
@@ -121,19 +122,30 @@ public:
 
 class ldpc_rate_dematcher_factory_sw : public ldpc_rate_dematcher_factory
 {
+private:
+  std::string dematcher_type;
+
 public:
-  ldpc_rate_dematcher_factory_sw() = default;
+  explicit ldpc_rate_dematcher_factory_sw(std::string dematcher_type_) : dematcher_type(std::move(dematcher_type_)) {}
 
   std::unique_ptr<ldpc_rate_dematcher> create() override
   {
-#ifdef ENABLE_AVX512
-    return std::make_unique<ldpc_rate_dematcher_avx512_impl>();
-#endif // ENABLE_AVX512
-#ifdef ENABLE_AVX2
-    return std::make_unique<ldpc_rate_dematcher_avx2_impl>();
-#endif // ENABLE_AVX2
+#ifdef __x86_64__
+    bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
+    bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512bw);
 
-    return std::make_unique<ldpc_rate_dematcher_impl>();
+    if (((dematcher_type == "avx512") || (dematcher_type == "auto")) && supports_avx512)  {
+      return std::make_unique<ldpc_rate_dematcher_avx512_impl>();
+    }
+    if (((dematcher_type == "avx2") || (dematcher_type == "auto")) && supports_avx2) {
+      return std::make_unique<ldpc_rate_dematcher_avx2_impl>();
+    }
+#endif // __x86_64__
+    if ((dematcher_type == "generic") || (dematcher_type == "auto")) {
+      return std::make_unique<ldpc_rate_dematcher_impl>();
+    }
+    // Do not instantiate the dematcher if the hardware does not support the implementation.
+    return nullptr;
   }
 };
 
@@ -222,9 +234,10 @@ std::shared_ptr<ldpc_encoder_factory> srsgnb::create_ldpc_encoder_factory_sw(con
   return std::make_unique<ldpc_encoder_factory_sw>(enc_type);
 }
 
-std::shared_ptr<ldpc_rate_dematcher_factory> srsgnb::create_ldpc_rate_dematcher_factory_sw()
+std::shared_ptr<ldpc_rate_dematcher_factory>
+srsgnb::create_ldpc_rate_dematcher_factory_sw(const std::string& dematcher_type)
 {
-  return std::make_shared<ldpc_rate_dematcher_factory_sw>();
+  return std::make_shared<ldpc_rate_dematcher_factory_sw>(dematcher_type);
 }
 
 std::shared_ptr<ldpc_rate_matcher_factory> srsgnb::create_ldpc_rate_matcher_factory_sw()

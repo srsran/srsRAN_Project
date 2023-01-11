@@ -62,7 +62,7 @@ public:
   virtual std::unique_ptr<ldpc_rate_dematcher> create() = 0;
 };
 
-std::shared_ptr<ldpc_rate_dematcher_factory> create_ldpc_rate_dematcher_factory_sw();
+std::shared_ptr<ldpc_rate_dematcher_factory> create_ldpc_rate_dematcher_factory_sw(const std::string& dematcher_type);
 
 class ldpc_rate_matcher_factory
 {

@@ -208,7 +208,7 @@ static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_decoder_factory_sw_configuration decoder_config;
   decoder_config.crc_factory       = create_crc_calculator_factory_sw("auto");
   decoder_config.decoder_factory   = create_ldpc_decoder_factory_sw("generic");
-  decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw();
+  decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw("auto");
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
 
   uci_decoder_factory_sw_configuration uci_dec_config;

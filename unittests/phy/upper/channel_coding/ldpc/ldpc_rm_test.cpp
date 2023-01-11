@@ -18,6 +18,7 @@
 
 #include "ldpc_rate_matcher_test_data.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsgnb/support/cpu_features.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -68,7 +69,12 @@ std::ostream& operator<<(std::ostream& os, const span<const uint8_t>& data)
 
 namespace {
 
-using LDPCRateMatchingParams = test_case_t;
+#ifdef __x86_64__
+bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
+bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512bw) && cpu_supports_feature(cpu_feature::avx512f);
+#endif // __x86_64__
+
+using LDPCRateMatchingParams = std::tuple<std::string, test_case_t>;
 
 class LDPCRateMatchingFixture : public ::testing::TestWithParam<LDPCRateMatchingParams>
 {
@@ -76,11 +82,6 @@ protected:
   // Creates the factories just once.
   static void SetUpTestSuite()
   {
-    if (!rate_dematcher_factory) {
-      rate_dematcher_factory = create_ldpc_rate_dematcher_factory_sw();
-      ASSERT_NE(rate_dematcher_factory, nullptr) << "Cannot create dematcher factory.";
-    }
-
     if (!rate_matcher_factory) {
       rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
       ASSERT_NE(rate_matcher_factory, nullptr) << "Cannot create matcher factory.";
@@ -92,28 +93,51 @@ protected:
   {
     matcher = rate_matcher_factory->create();
     ASSERT_NE(matcher, nullptr) << "Cannot create rate matcher.";
-
-    dematcher = rate_dematcher_factory->create();
-    ASSERT_NE(dematcher, nullptr) << "Cannot create rate dematcher.";
   }
 
-  static std::shared_ptr<ldpc_rate_dematcher_factory> rate_dematcher_factory;
-  static std::shared_ptr<ldpc_rate_matcher_factory>   rate_matcher_factory;
-
-  std::unique_ptr<ldpc_rate_matcher>   matcher;
-  std::unique_ptr<ldpc_rate_dematcher> dematcher;
+  static std::shared_ptr<ldpc_rate_matcher_factory> rate_matcher_factory;
+  std::unique_ptr<ldpc_rate_matcher>                matcher;
 };
 
-std::shared_ptr<ldpc_rate_dematcher_factory> LDPCRateMatchingFixture::rate_dematcher_factory = nullptr;
-std::shared_ptr<ldpc_rate_matcher_factory>   LDPCRateMatchingFixture::rate_matcher_factory   = nullptr;
+std::shared_ptr<ldpc_rate_matcher_factory> LDPCRateMatchingFixture::rate_matcher_factory = nullptr;
 
 TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
 {
-  LDPCRateMatchingParams test_data = GetParam();
-  modulation_scheme      mod       = test_data.mod_scheme;
-  unsigned               rm_length = test_data.rm_length;
-  std::vector<uint8_t>   matched(rm_length);
-  unsigned               n_ref = test_data.is_lbrm ? test_data.n_ref : 0;
+  const LDPCRateMatchingParams& params = GetParam();
+
+  // Get the rate dematcher implementation type.
+  std::string rate_dematcher_type = std::get<0>(params);
+
+  // Create rate dematcher factory.
+  std::shared_ptr<ldpc_rate_dematcher_factory> rate_dematcher_factory =
+      create_ldpc_rate_dematcher_factory_sw(rate_dematcher_type);
+  ASSERT_NE(rate_dematcher_factory, nullptr) << "Cannot create dematcher factory.";
+
+  // Create rate dematcher.
+  std::unique_ptr<ldpc_rate_dematcher> dematcher = rate_dematcher_factory->create();
+
+#ifdef __x86_64__
+  if ((rate_dematcher_type == "avx2") && !supports_avx2) {
+    // Check that the factory did not instantiate the unsupported AVX2 implementation and skip the test case.
+    ASSERT_EQ(dematcher, nullptr);
+    GTEST_SKIP();
+  }
+
+  if ((rate_dematcher_type == "avx512") && !supports_avx512) {
+    // Check that the factory did not instantiate the unsupported AVX512 implementation and skip the test case.
+    ASSERT_EQ(dematcher, nullptr);
+    GTEST_SKIP();
+  }
+#endif // __x86_64__
+
+  // Check that the dematcher is successfully instantiated.
+  ASSERT_NE(dematcher, nullptr) << "Cannot create rate dematcher.";
+
+  test_case_t          test_data = std::get<1>(params);
+  modulation_scheme    mod       = test_data.mod_scheme;
+  unsigned             rm_length = test_data.rm_length;
+  std::vector<uint8_t> matched(rm_length);
+  unsigned             n_ref = test_data.is_lbrm ? test_data.n_ref : 0;
 
   std::vector<uint8_t>                   codeblock = test_data.full_cblock.read();
   codeblock_metadata::tb_common_metadata rm_cfg    = {};
@@ -126,7 +150,6 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
   // Compare the rate matched codeblocks with the benchmark ones.
   std::vector<uint8_t> matched_bm = test_data.rm_cblock.read();
   ASSERT_EQ(matched_bm.size(), rm_length);
-  // EXPECT_TRUE(std::equal(matched.cbegin(), matched.cend(), matched_bm.cbegin())) << "Wrong rate matching.";
   EXPECT_EQ(matched, matched_bm) << "Wrong rate matching.";
 
   // Transform rate-matched bits into log-likelihood ratios.
@@ -160,6 +183,12 @@ TEST_P(LDPCRateMatchingFixture, LDPCRateMatchingTest)
 
 INSTANTIATE_TEST_SUITE_P(LDPCRateMatchingSuite,
                          LDPCRateMatchingFixture,
-                         ::testing::ValuesIn(ldpc_rate_matcher_test_data));
-
+                         ::testing::Combine(::testing::Values("generic"
+#ifdef __x86_64__
+                                                              ,
+                                                              "avx2",
+                                                              "avx512"
+#endif // __x86_64__
+                                                              ),
+                                            ::testing::ValuesIn(ldpc_rate_matcher_test_data)));
 } // namespace

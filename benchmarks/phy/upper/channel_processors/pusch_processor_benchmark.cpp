@@ -26,6 +26,7 @@ using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;
 static unsigned                           nof_repetitions             = 10;
 static std::string                        selected_profile_name       = "default";
 static std::string                        ldpc_decoder_type           = "auto";
+static std::string                        rate_dematcher_type         = "auto";
 static bool                               silent                      = false;
 static unsigned                           nof_rx_ports                = 1;
 static unsigned                           nof_tx_layers               = 1;
@@ -124,9 +125,10 @@ static const std::vector<test_profile> profile_set = {
 
 static void usage(const char* prog)
 {
-  fmt::print("Usage: {} [-R repetitions] [-D LDPC type] [-P profile] [-s silent]\n", prog);
+  fmt::print("Usage: {} [-R repetitions] [-D LDPC type] [-M rate dematcher type] [-P profile] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-D LDPC decoder type. [Default {}]\n", ldpc_decoder_type);
+  fmt::print("\t-M Rate dematcher type. [Default {}]\n", rate_dematcher_type);
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
   for (const test_profile& profile : profile_set) {
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
@@ -138,13 +140,15 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:D:P:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "R:D:M:P:sh")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
         break;
       case 'D':
         ldpc_decoder_type = std::string(optarg);
+      case 'M':
+        rate_dematcher_type = std::string(optarg);
         break;
       case 'P':
         selected_profile_name = std::string(optarg);
@@ -245,7 +249,8 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   TESTASSERT(ldpc_dec_factory);
 
   // Create LDPC rate dematcher factory.
-  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rm_factory = create_ldpc_rate_dematcher_factory_sw();
+  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rm_factory =
+      create_ldpc_rate_dematcher_factory_sw(rate_dematcher_type);
   TESTASSERT(ldpc_rm_factory);
 
   // Create LDPC desegmenter factory.

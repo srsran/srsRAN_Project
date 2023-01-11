@@ -65,7 +65,8 @@ int main(int argc, char** argv)
   std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("auto");
   TESTASSERT(ldpc_decoder_factory);
 
-  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory = create_ldpc_rate_dematcher_factory_sw();
+  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory =
+      create_ldpc_rate_dematcher_factory_sw("auto");
   TESTASSERT(ldpc_rate_dematcher_factory);
 
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();

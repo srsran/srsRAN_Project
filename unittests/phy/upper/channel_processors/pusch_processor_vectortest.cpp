@@ -58,7 +58,7 @@ protected:
     ASSERT_NE(ldpc_dec_factory, nullptr);
 
     // Create LDPC rate dematcher factory.
-    std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rm_factory = create_ldpc_rate_dematcher_factory_sw();
+    std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rm_factory = create_ldpc_rate_dematcher_factory_sw("auto");
     ASSERT_NE(ldpc_rm_factory, nullptr);
 
     // Create LDPC desegmenter factory.

@@ -9,10 +9,10 @@
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding)
 
 set(CRC_CALCULATOR_SOURCES crc_calculator_lut_impl.cpp)
-if (${HAVE_AVX2})
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     list(APPEND CRC_CALCULATOR_SOURCES crc_calculator_clmul_impl.cpp)
-    set_source_files_properties(crc_calculator_clmul_impl.cpp PROPERTIES COMPILE_OPTIONS "-mpclmul;")
-endif (${HAVE_AVX2})
+    set_source_files_properties(crc_calculator_clmul_impl.cpp PROPERTIES COMPILE_OPTIONS "-mpclmul;-msse4.1")
+endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 
 add_library(srsgnb_crc_calculator STATIC ${CRC_CALCULATOR_SOURCES})
@@ -22,16 +22,6 @@ add_subdirectory(ldpc)
 add_subdirectory(short)
 
 add_library(srsgnb_channel_coding STATIC channel_coding_factories.cpp)
-
-if(ENABLE_AVX512)
-    get_source_file_property(DEFINITIONS channel_coding_factories.cpp COMPILE_DEFINITIONS)
-    set_source_files_properties(channel_coding_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS}; ENABLE_AVX512;")
-endif(ENABLE_AVX512)
-
-if(ENABLE_AVX2)
-    get_source_file_property(DEFINITIONS channel_coding_factories.cpp COMPILE_DEFINITIONS)
-    set_source_files_properties(channel_coding_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${DEFINITIONS}; ENABLE_AVX2;")
-endif(ENABLE_AVX2)
 
 target_link_libraries(srsgnb_channel_coding
         srsgnb_crc_calculator
