@@ -85,7 +85,8 @@ void pdu_session_resource_setup_routine::operator()(
         rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(cu_up_gtp_tunnel.up_tnl_info);
       }
 
-      rrc_ue_drb_setup_message_item.rlc = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
+      rrc_ue_drb_setup_message_item.s_nssai = rrc_ue_drb_manager.get_s_nssai(drb_to_add);
+      rrc_ue_drb_setup_message_item.rlc     = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
 
       const auto& mapped_flows = rrc_ue_drb_manager.get_mapped_qos_flows(drb_to_add);
       for (const auto& qos_flow : mapped_flows) {
