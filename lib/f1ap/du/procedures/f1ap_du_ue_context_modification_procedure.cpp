@@ -79,7 +79,7 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->du_to_cu_rrc_info_present                   = false;
 
   // > DRBs-SetupMod-List.
-  resp->drbs_setup_mod_list_present = not du_request.drbs_to_setup.empty();
+  resp->drbs_setup_mod_list_present = not du_response.drbs_setup.empty();
   resp->drbs_setup_mod_list.value.resize(du_response.drbs_setup.size());
   for (unsigned i = 0; i != du_response.drbs_setup.size(); ++i) {
     resp->drbs_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_SETUP_MOD_ITEM);
@@ -99,12 +99,14 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
   resp->drbs_modified_list_present               = false;
   resp->srbs_failed_to_be_setup_mod_list_present = false;
   // > DRBs-FailedToBeSetupMod-List.
-  resp->drbs_failed_to_be_setup_mod_list_present = not du_request.drbs_to_setup.empty();
+  resp->drbs_failed_to_be_setup_mod_list_present = not du_response.drbs_failed_to_setup.empty();
+  resp->drbs_failed_to_be_setup_mod_list->resize(du_response.drbs_failed_to_setup.size());
   for (unsigned i = 0; i != du_response.drbs_failed_to_setup.size(); ++i) {
     resp->drbs_failed_to_be_setup_mod_list.value[i].load_info_obj(ASN1_F1AP_ID_DRBS_FAILED_TO_BE_SETUP_MOD_ITEM);
     drbs_failed_to_be_setup_mod_item_s& asn1_drb =
         resp->drbs_failed_to_be_setup_mod_list.value[i]->drbs_failed_to_be_setup_mod_item();
-    asn1_drb.drb_id = drb_id_to_uint(du_response.drbs_failed_to_setup[i]);
+    asn1_drb.drb_id                      = drb_id_to_uint(du_response.drbs_failed_to_setup[i]);
+    asn1_drb.cause.set_transport().value = cause_transport_opts::transport_res_unavailable;
   }
   resp->scell_failedto_setup_mod_list_present   = false;
   resp->drbs_failed_to_be_modified_list_present = false;

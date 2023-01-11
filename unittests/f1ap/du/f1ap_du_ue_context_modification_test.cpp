@@ -83,6 +83,7 @@ TEST_F(f1ap_du_ue_context_modification_test,
   ASSERT_FALSE(resp->srbs_setup_mod_list_present);
   ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
   ASSERT_FALSE(resp->drbs_modified_list_present);
+  ASSERT_FALSE(resp->drbs_failed_to_be_setup_mod_list_present);
   ASSERT_TRUE(resp->drbs_setup_mod_list_present);
   ASSERT_EQ(resp->drbs_setup_mod_list->size(), 1);
   auto& drb_setup = resp->drbs_setup_mod_list.value[0].value().drbs_setup_mod_item();
@@ -96,6 +97,35 @@ TEST_F(f1ap_du_ue_context_modification_test,
       this->f1c_du_cfg_handler.next_ue_context_update_response.drbs_setup[0]
           .dluptnl_info_list[0]
           .tp_address.to_number());
+  ASSERT_EQ(resp->du_to_cu_rrc_info.value.cell_group_cfg,
+            this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
+}
+
+TEST_F(f1ap_du_ue_context_modification_test,
+       when_du_fails_to_create_drb_then_f1ap_adds_the_failed_drb_in_ue_context_modification_response)
+{
+  // Prepare DU manager response to F1AP with failed DRB.
+  this->f1c_du_cfg_handler.next_ue_context_update_response.result = true;
+  this->f1c_du_cfg_handler.next_ue_context_update_response.drbs_failed_to_setup.push_back(drb_id_t::drb1);
+  this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+
+  // Initiate procedure in F1AP.
+  f1c_message msg = generate_f1_ue_context_modification_request({drb_id_t::drb1});
+  f1ap->handle_message(msg);
+
+  // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP with failed DRB.
+  ASSERT_TRUE(was_ue_context_modification_response_sent());
+  ue_context_mod_resp_s& resp = this->msg_notifier.last_f1c_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  ASSERT_FALSE(resp->srbs_failed_to_be_setup_mod_list_present);
+  ASSERT_FALSE(resp->srbs_modified_list_present);
+  ASSERT_FALSE(resp->srbs_setup_mod_list_present);
+  ASSERT_FALSE(resp->drbs_failed_to_be_modified_list_present);
+  ASSERT_FALSE(resp->drbs_modified_list_present);
+  ASSERT_TRUE(resp->drbs_failed_to_be_setup_mod_list_present);
+  ASSERT_EQ(resp->drbs_failed_to_be_setup_mod_list->size(), 1);
+  ASSERT_EQ(resp->drbs_failed_to_be_setup_mod_list.value[0].value().drbs_failed_to_be_setup_mod_item().drb_id, 1);
+  ASSERT_FALSE(resp->drbs_setup_mod_list_present);
+  ASSERT_EQ(resp->drbs_setup_mod_list->size(), 0);
   ASSERT_EQ(resp->du_to_cu_rrc_info.value.cell_group_cfg,
             this->f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container);
 }
