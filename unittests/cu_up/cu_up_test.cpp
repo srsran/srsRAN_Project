@@ -173,6 +173,8 @@ TEST_F(cu_up_test, dl_data_flow)
 
 TEST_F(cu_up_test, ul_data_flow)
 {
+  cu_up_configuration cfg = get_default_cu_up_config();
+
   //> Test preamble: listen on a free port
 
   int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -181,22 +183,22 @@ TEST_F(cu_up_test, ul_data_flow)
   sockaddr_in upf_addr;
   upf_addr.sin_family      = AF_INET;
   upf_addr.sin_port        = htons(0); // Let the OS choose a free port to avoid resource conflicts with other tests
-  upf_addr.sin_addr.s_addr = inet_addr("127.0.1.100");
+  upf_addr.sin_addr.s_addr = inet_addr(cfg.net_cfg.upf_addr.c_str());
 
   int ret = 0;
 
   ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
-  ASSERT_GE(ret, 0) << strerror(errno);
+  ASSERT_GE(ret, 0) << "Failed to bind socket to " << cfg.net_cfg.upf_addr << ":0 - " << strerror(errno);
 
   // Find out the port that was assigned
-  socklen_t addr_len;
-  ret = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &addr_len);
-  ASSERT_GE(ret, 0) << strerror(errno);
+  socklen_t upf_addr_len = sizeof(upf_addr);
+  ret                    = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &upf_addr_len);
+  ASSERT_EQ(upf_addr_len, sizeof(upf_addr)) << "Mismatching upf_addr_len after getsockname()";
+  ASSERT_GE(ret, 0) << "Failed to read port of socket bound to " << cfg.net_cfg.upf_addr << ":0 - " << strerror(errno);
 
   //> Test main part: create CU-UP and transmit data
 
-  cu_up_configuration cfg = get_default_cu_up_config();
-  cfg.net_cfg.upf_port    = ntohs(upf_addr.sin_port);
+  cfg.net_cfg.upf_port = ntohs(upf_addr.sin_port);
   test_logger.debug("Using network_interface_config: {}", cfg.net_cfg);
   init(cfg);
 
