@@ -143,21 +143,21 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
 // Helper that updates the ULSCH info with TBS and MCS.
 static void update_ulsch_info(ulsch_configuration& ulsch_cfg, unsigned tbs_bytes, sch_mcs_description mcs_info)
 {
-  ulsch_cfg.tbs       = static_cast<units::bits>(tbs_bytes * 8U);
+  ulsch_cfg.tbs       = static_cast<units::bits>(tbs_bytes * NOF_BITS_PER_BYTE);
   ulsch_cfg.mcs_descr = mcs_info;
 }
 
 optional<pusch_mcs_tbs_params> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
                                                           const ue_cell_configuration& ue_cell_cfg,
                                                           unsigned                     payload_size_bytes,
-                                                          sch_mcs_index                starting_mcs,
+                                                          sch_mcs_index                max_mcs,
                                                           unsigned                     max_nof_prbs)
 {
   // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
   static const double max_supported_code_rate = 0.95;
   const unsigned      dmrs_prbs               = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
-  sch_mcs_description mcs_info = pusch_mcs_get_config(pusch_cfg.mcs_table, starting_mcs, pusch_cfg.tp_pi2bpsk_present);
+  sch_mcs_description mcs_info    = pusch_mcs_get_config(pusch_cfg.mcs_table, max_mcs, pusch_cfg.tp_pi2bpsk_present);
   unsigned            nof_symbols = pusch_cfg.symbols.length();
 
   // > Compute the number of required PRBs.
@@ -188,7 +188,7 @@ optional<pusch_mcs_tbs_params> srsgnb::compute_ul_mcs_tbs(const pusch_config_par
   float               effective_code_rate = get_ulsch_information(ulsch_cfg).get_effective_code_rate();
 
   // > Decrease the MCS and recompute TBS until the effective code rate is not above the 0.95 threshold.
-  sch_mcs_index mcs = starting_mcs;
+  sch_mcs_index mcs = max_mcs;
   while (effective_code_rate > max_supported_code_rate and mcs > 0) {
     --mcs;
     mcs_info = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);

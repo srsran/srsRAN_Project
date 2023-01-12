@@ -126,7 +126,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
 static optional<pusch_mcs_tbs_params> linear_search_prbs_tbs(const pusch_config_params&   pusch_cfg,
                                                              const ue_cell_configuration& ue_cell_cfg,
                                                              unsigned                     payload_size_bytes,
-                                                             sch_mcs_index                starting_mcs,
+                                                             sch_mcs_index                max_mcs,
                                                              unsigned                     max_nof_prbs)
 {
   const double                   max_supported_code_rate = 0.95;
@@ -138,8 +138,7 @@ static optional<pusch_mcs_tbs_params> linear_search_prbs_tbs(const pusch_config_
   unsigned tbs{0}, n_prbs{0};
   do {
     ++n_prbs;
-    sch_mcs_description mcs_info =
-        pusch_mcs_get_config(pusch_cfg.mcs_table, starting_mcs, pusch_cfg.tp_pi2bpsk_present);
+    sch_mcs_description mcs_info = pusch_mcs_get_config(pusch_cfg.mcs_table, max_mcs, pusch_cfg.tp_pi2bpsk_present);
 
     // Compute the TBS.
     tbs = tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
@@ -153,18 +152,18 @@ static optional<pusch_mcs_tbs_params> linear_search_prbs_tbs(const pusch_config_
   } while (tbs < payload_size_bytes and n_prbs < max_nof_prbs);
 
   // > Compute the effective code rate.
-  sch_mcs_description mcs_info  = pusch_mcs_get_config(pusch_cfg.mcs_table, starting_mcs, pusch_cfg.tp_pi2bpsk_present);
+  sch_mcs_description mcs_info  = pusch_mcs_get_config(pusch_cfg.mcs_table, max_mcs, pusch_cfg.tp_pi2bpsk_present);
   ulsch_configuration ulsch_cfg = build_ulsch_info(pusch_cfg, ue_cell_cfg, tbs, mcs_info, n_prbs);
   float               effective_code_rate = get_ulsch_information(ulsch_cfg).get_effective_code_rate();
 
   // > Return TBS, MCS and PRBs if the effective code rate is not above the threshold.
   if (effective_code_rate <= max_supported_code_rate) {
-    return output.emplace(pusch_mcs_tbs_params{.mcs = starting_mcs, .tbs = tbs, .n_prbs = n_prbs});
+    return output.emplace(pusch_mcs_tbs_params{.mcs = max_mcs, .tbs = tbs, .n_prbs = n_prbs});
   }
 
-  // > Try with MCS = starting_MCS, starting_MCS - 1, starting_MCS -2, ..., 0 until the effective code rate is above the
+  // > Try with MCS = max_MCS, max_MCS - 1, max_MCS -2, ..., 0 until the effective code rate is above the
   // threshold.
-  for (unsigned mcs = starting_mcs.to_uint(); mcs > 0;) {
+  for (unsigned mcs = max_mcs.to_uint(); mcs > 0;) {
     mcs_info = pusch_mcs_get_config(pusch_cfg.mcs_table, --mcs, pusch_cfg.tp_pi2bpsk_present);
 
     // Compute the TBS.
@@ -190,7 +189,7 @@ static optional<pusch_mcs_tbs_params> linear_search_prbs_tbs(const pusch_config_
 // Contains the input test parameters.
 struct mcs_test_entry {
   unsigned payload_size_bytes;
-  unsigned starting_mcs;
+  unsigned max_mcs;
   unsigned max_nof_prbs;
 };
 
@@ -206,7 +205,7 @@ public:
   mcs_test_entry make_random_test_entry()
   {
     return mcs_test_entry{.payload_size_bytes = test_rgen::uniform_int<unsigned>(min_payload_size, max_payload_size),
-                          .starting_mcs       = test_rgen::uniform_int<unsigned>(0, max_mcs),
+                          .max_mcs            = test_rgen::uniform_int<unsigned>(0, max_mcs),
                           .max_nof_prbs       = test_rgen::uniform_int<unsigned>(1, max_prbs)};
   }
 
@@ -233,14 +232,14 @@ TEST_F(mcs_tbs_calculator_rnd_test_bench, compare_with_lin_search)
     optional<pusch_mcs_tbs_params> test = compute_ul_mcs_tbs(pusch_cfg,
                                                              ue_cell_cfg,
                                                              test_entry.payload_size_bytes,
-                                                             sch_mcs_index(test_entry.starting_mcs),
+                                                             sch_mcs_index(test_entry.max_mcs),
                                                              test_entry.max_nof_prbs);
 
     // Run benchmark function.
     optional<pusch_mcs_tbs_params> benchmark = linear_search_prbs_tbs(pusch_cfg,
                                                                       ue_cell_cfg,
                                                                       test_entry.payload_size_bytes,
-                                                                      sch_mcs_index(test_entry.starting_mcs),
+                                                                      sch_mcs_index(test_entry.max_mcs),
                                                                       test_entry.max_nof_prbs);
 
     // Compare expected output with function under test.

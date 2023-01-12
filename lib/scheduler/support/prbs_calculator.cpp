@@ -13,6 +13,8 @@
 
 using namespace srsgnb;
 
+constexpr unsigned NOF_BITS_PER_BYTE = 8U;
+
 /// \brief Estimation of the N_info for payloads above 3824 bits.
 static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, float tcr)
 {
@@ -34,7 +36,7 @@ static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, f
 unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config)
 {
   // Convert size into bits, as per TS procedures for TBS.
-  unsigned payload_size = sch_config.payload_size_bytes * 8U;
+  unsigned payload_size = sch_config.payload_size_bytes * NOF_BITS_PER_BYTE;
 
   float                 nof_info_estimate;
   static const unsigned payload_step_threshold = 3824;
@@ -74,7 +76,7 @@ static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch
                                                        unsigned                          nof_prbs_estimate,
                                                        unsigned                          max_prb_inc_iterations = 5)
 {
-  unsigned                     payload_size_bits = pdsch_cfg.payload_size_bytes * 8U;
+  unsigned                     payload_size_bits = pdsch_cfg.payload_size_bytes * NOF_BITS_PER_BYTE;
   tbs_calculator_configuration tbs_cfg{pdsch_cfg.nof_symb_sh,
                                        pdsch_cfg.nof_dmrs_prb,
                                        pdsch_cfg.nof_oh_prb,
@@ -93,7 +95,7 @@ static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch
 
     // if tbs_bits_lb < payload_size, return the previous iteration as the solution.
     if (tbs_bits_lb < payload_size_bits) {
-      return {tbs_cfg.n_prb + 1, tbs_bits_ub / 8U};
+      return {tbs_cfg.n_prb + 1, tbs_bits_ub / NOF_BITS_PER_BYTE};
     }
     tbs_bits_ub = tbs_bits_lb;
   }
@@ -106,7 +108,7 @@ static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch
     tbs_bits_ub   = tbs_calculator_calculate(tbs_cfg);
   }
 
-  return {tbs_cfg.n_prb, tbs_bits_ub / 8U};
+  return {tbs_cfg.n_prb, tbs_bits_ub / NOF_BITS_PER_BYTE};
 }
 
 sch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_sch_config& sch_config)

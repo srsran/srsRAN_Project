@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/support/srsgnb_assert.h"
+
 namespace srsgnb {
 
 /// HARQ values for UCI PUCCH Format 0 or Format 1.
