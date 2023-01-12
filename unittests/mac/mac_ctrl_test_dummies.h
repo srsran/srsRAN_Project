@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../../lib/mac/mac_config_interfaces.h"
-#include "../../lib/mac/mac_ctrl/mac_scheduler_configurator.h"
+#include "lib/mac/mac_config_interfaces.h"
+#include "lib/mac/mac_ctrl/mac_scheduler_configurator.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"

@@ -8,6 +8,8 @@
 
 set_directory_properties(PROPERTIES LABELS "ran")
 
+include_directories(../..)
+
 add_library(du_test_suite ssb_coreset0_freq_pos_checker.cpp)
 target_link_libraries(du_test_suite srsgnb_ran gtest)
 

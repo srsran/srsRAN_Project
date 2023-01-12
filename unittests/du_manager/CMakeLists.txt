@@ -8,6 +8,8 @@
 
 set_directory_properties(PROPERTIES LABELS "du_manager")
 
+include_directories(../..)
+
 add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_manager_procedure_test_helpers.cpp)
 target_include_directories(du_manager_test_helpers PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_manager_test_helpers srsgnb_du_manager srsgnb_support srslog f1ap_asn1)

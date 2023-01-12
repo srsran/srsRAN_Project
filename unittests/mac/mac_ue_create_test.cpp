@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../lib/mac/mac_ctrl/ue_creation_procedure.h"
+#include "lib/mac/mac_ctrl/ue_creation_procedure.h"
 #include "mac_ctrl_test_dummies.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/async/manual_event.h"

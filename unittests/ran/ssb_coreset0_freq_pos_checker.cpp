@@ -9,10 +9,9 @@
  */
 
 #include "ssb_coreset0_freq_pos_checker.h"
-#include "../../lib/ran/ssb_freq_position_generator.h"
+#include "lib/ran/ssb_freq_position_generator.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
-#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
