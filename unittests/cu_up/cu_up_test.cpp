@@ -42,8 +42,8 @@ protected:
     srslog::init();
 
     // create worker thread and executer
-    task_worker task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
-    executor = make_task_executor(task_worker);
+    worker   = std::make_unique<task_worker>("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
+    executor = make_task_executor(*worker);
 
     f1u_gw = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     broker = create_io_broker(io_broker_type::epoll);
@@ -78,6 +78,7 @@ protected:
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
 
+  std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;
 
   void create_drb()
