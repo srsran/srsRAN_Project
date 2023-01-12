@@ -14,6 +14,7 @@
 #include "procedures/e1_bearer_context_modification_procedure.h"
 #include "procedures/e1_bearer_context_release_procedure.h"
 #include "procedures/e1_bearer_context_setup_procedure.h"
+#include "ue_context/e1ap_cu_cp_ue_context.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/ran/nr_cgi.h"
@@ -69,22 +70,14 @@ private:
   /// \param[in] msg The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome);
 
-  /// \brief Get the next available CU-CP UE ID.
-  /// \return The CU-CP UE ID.
-  gnb_cu_cp_ue_e1ap_id_t get_next_cu_cp_ue_id();
-
-  /// \brief Find the CU-CP UE ID by a given UE index.
-  /// \param[in] ue_index The UE index used to find the CU-CP UE ID.
-  /// \return The CU-CP UE ID.
-  gnb_cu_cp_ue_e1ap_id_t find_cu_cp_ue_id(ue_index_t ue_index);
-
   srslog::basic_logger& logger;
 
-  std::array<e1ap_ue_context, MAX_NOF_CU_UES> cu_cp_ue_id_to_e1ap_ue_context;
+  timer_manager& timers;
+
+  /// Repository of UE Contexts.
+  e1ap_ue_context_list ue_ctx_list;
 
   // nofifiers and handles
-
-  timer_manager&               timers;
   e1_message_notifier&         pdu_notifier;
   e1_cu_up_processor_notifier& cu_up_notifier;
 

@@ -70,12 +70,6 @@ public:
   handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) = 0;
 };
 
-struct e1ap_ue_context {
-  gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::invalid;
-  gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_t::invalid;
-  ue_index_t             ue_index         = INVALID_UE_INDEX;
-};
-
 struct bearer_creation_complete_message {
   ue_index_t ue_index;
 };

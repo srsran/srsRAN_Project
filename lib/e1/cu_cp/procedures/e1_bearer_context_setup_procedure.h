@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../e1_cu_cp_impl.h"
+#include "../ue_context/e1ap_cu_cp_ue_context.h"
 #include "common/e1ap_asn1_utils.h"
 #include "e1_cu_cp_event_manager.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
