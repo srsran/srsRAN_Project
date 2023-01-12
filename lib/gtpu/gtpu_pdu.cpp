@@ -108,16 +108,15 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
   // Trim header
   pdu.trim_head(decoder.nof_bytes());
 
-  // Temporary fix to remove Header Extension
   if (header.flags.ext_hdr) {
-    pdu.trim_head(8);
+    // if (read_ext_header() == false) {
+    //   return false;
+    // }
   }
-
-  // TODO handle extended headers
   return true;
 }
 
-bool gtpu_read_ext_header(const byte_buffer& pdu, uint8_t** ptr, gtpu_header& header, srslog::basic_logger& logger)
+bool gtpu_read_ext_header(const byte_buffer& pdu, gtpu_header& header, srslog::basic_logger& logger)
 {
   // TODO
   return true;
