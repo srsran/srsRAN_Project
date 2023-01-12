@@ -17,26 +17,24 @@
 namespace srsgnb {
 
 /// Parameters passed to MAC concerning a created logical channel.
-struct mac_logical_channel {
+struct mac_logical_channel_to_setup {
   lcid_t               lcid;
   mac_sdu_rx_notifier* ul_bearer;
   mac_sdu_tx_builder*  dl_bearer;
-  // MAC Logical Channel Config.
-  logical_channel_config lc_config;
 };
 
 /// Input parameters used to create a UE in the scheduler.
 struct mac_ue_create_request_message {
-  du_cell_index_t                  cell_index;
-  du_ue_index_t                    ue_index;
-  rnti_t                           crnti;
-  std::vector<mac_logical_channel> bearers;
-  const byte_buffer*               ul_ccch_msg;
-  unique_timer*                    ue_activity_timer;
-  mac_cell_group_config            mac_cell_group_cfg;
-  physical_cell_group_config       phy_cell_group_cfg;
+  du_cell_index_t                           cell_index;
+  du_ue_index_t                             ue_index;
+  rnti_t                                    crnti;
+  std::vector<mac_logical_channel_to_setup> bearers;
+  mac_cell_group_config                     mac_cell_group_cfg;
+  physical_cell_group_config                phy_cell_group_cfg;
+  const byte_buffer*                        ul_ccch_msg;
+  unique_timer*                             ue_activity_timer;
   // Scheduler-only params.
-  optional<serving_cell_config> serv_cell_cfg;
+  sched_ue_configuration_request sched_cfg;
 };
 
 /// Outcome of a MAC UE creation request procedure.
@@ -48,15 +46,15 @@ struct mac_ue_create_response_message {
 
 /// Input parameters used to reconfigure a UE in the scheduler.
 struct mac_ue_reconfiguration_request_message {
-  du_ue_index_t                    ue_index;
-  du_cell_index_t                  pcell_index;
-  rnti_t                           crnti;
-  std::vector<mac_logical_channel> bearers;
-  std::vector<lcid_t>              bearers_to_rem; // TODO: Remove.
-  mac_cell_group_config            mac_cell_group_cfg;
-  physical_cell_group_config       phy_cell_group_cfg;
+  du_ue_index_t                             ue_index;
+  du_cell_index_t                           pcell_index;
+  rnti_t                                    crnti;
+  std::vector<mac_logical_channel_to_setup> bearers;
+  std::vector<lcid_t>                       bearers_to_rem;
+  mac_cell_group_config                     mac_cell_group_cfg;
+  physical_cell_group_config                phy_cell_group_cfg;
   // Scheduler-only params.
-  optional<serving_cell_config> serv_cell_cfg;
+  sched_ue_configuration_request sched_cfg;
 };
 
 struct mac_ue_reconfiguration_response_message {

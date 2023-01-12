@@ -82,15 +82,15 @@ inline sched_ue_creation_request_message make_default_sched_ue_creation_request(
   msg.crnti    = to_rnti(0x4601);
 
   scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
-  msg.sched_request_config_list.push_back(sr_0);
+  msg.cfg.sched_request_config_list.push_back(sr_0);
 
-  msg.cells.resize(1);
-  msg.cells[0].cell_index    = to_du_cell_index(0);
-  msg.cells[0].serv_cell_cfg = config_helpers::make_default_initial_ue_serving_cell_config();
+  msg.cfg.cells.resize(1);
+  msg.cfg.cells[0].cell_index    = to_du_cell_index(0);
+  msg.cfg.cells[0].serv_cell_cfg = config_helpers::make_default_initial_ue_serving_cell_config();
 
-  msg.lc_config_list.resize(2);
-  msg.lc_config_list[0] = config_helpers::make_default_logical_channel_config(lcid_t::LCID_SRB0);
-  msg.lc_config_list[1] = config_helpers::make_default_logical_channel_config(lcid_t::LCID_SRB1);
+  msg.cfg.lc_config_list.resize(2);
+  msg.cfg.lc_config_list[0] = config_helpers::make_default_logical_channel_config(lcid_t::LCID_SRB0);
+  msg.cfg.lc_config_list[1] = config_helpers::make_default_logical_channel_config(lcid_t::LCID_SRB1);
 
   return msg;
 }

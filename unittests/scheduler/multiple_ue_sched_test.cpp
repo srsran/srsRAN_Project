@@ -198,19 +198,24 @@ protected:
 
   void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_)
   {
-    auto msg     = test_helpers::make_default_ue_creation_request();
-    msg.crnti    = to_rnti(allocate_rnti());
-    msg.ue_index = ue_index;
-    msg.serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack[0] = params.k1;
+    auto ue_creation_req     = make_default_sched_ue_creation_request();
+    ue_creation_req.ue_index = ue_index;
+    ue_creation_req.crnti    = to_rnti(allocate_rnti());
+    ue_creation_req.cfg.cells[0].serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack
+        [0] = params.k1;
 
-    auto lc_cfg     = config_helpers::make_default_logical_channel_config(lcid_);
-    lc_cfg.lc_group = lcgid_;
+    auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
+                           ue_creation_req.cfg.lc_config_list.end(),
+                           [lcid_](const auto& l) { return l.lcid == lcid_; });
+    if (it == ue_creation_req.cfg.lc_config_list.end()) {
+      ue_creation_req.cfg.lc_config_list.push_back(config_helpers::make_default_logical_channel_config(lcid_));
+      it = ue_creation_req.cfg.lc_config_list.end() - 1;
+    }
+    it->lc_group = lcgid_;
 
-    msg.bearers.push_back(mac_logical_channel{.lcid = lcid_, .lc_config = lc_cfg});
+    bench->sch.handle_ue_creation_request(ue_creation_req);
 
-    bench->sch.handle_ue_creation_request(make_scheduler_ue_creation_request(msg));
-
-    bench->ues[ue_index] = sched_test_ue{msg.crnti, {}};
+    bench->ues[ue_index] = sched_test_ue{ue_creation_req.crnti, {}};
   }
 
   sched_test_ue& get_ue(du_ue_index_t ue_idx) { return bench->ues.at(ue_idx); }

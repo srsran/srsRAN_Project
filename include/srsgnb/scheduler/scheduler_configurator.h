@@ -85,32 +85,28 @@ struct serving_cell_ue_configuration_request {
   optional<serving_cell_config> serv_cell_cfg;
 };
 
+/// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.
+struct sched_ue_configuration_request {
+  /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
+  std::vector<logical_channel_config> lc_config_list;
+  /// List of configured Scheduling Request resources. See \c schedulingRequestConfig, TS38.331.
+  std::vector<scheduling_request_to_addmod> sched_request_config_list;
+  /// List of configured cells within the \c masterCellGroup.
+  std::vector<serving_cell_ue_configuration_request> cells;
+};
+
 /// UE Creation Request.
 struct sched_ue_creation_request_message {
-  du_ue_index_t ue_index;
-  rnti_t        crnti;
-  /// \brief List of \c mac-LogicalChannelConfig currently configured for a given UE.
-  /// This is common to all cells belonging to \c masterCellGroup.
-  std::vector<logical_channel_config> lc_config_list;
-  /// \c schedulingRequestToAddModList, TS 38.331; part of \c schedulingRequestConfig, in \c mac-CellGroupConfig.
-  /// This is common to all cells belonging to masterCellGroup, TS 38.331.
-  std::vector<scheduling_request_to_addmod> sched_request_config_list;
-  /// List of configured cells.
-  std::vector<serving_cell_ue_configuration_request> cells;
+  du_ue_index_t                  ue_index;
+  rnti_t                         crnti;
+  sched_ue_configuration_request cfg;
 };
 
 /// UE Reconfiguration Request.
 struct sched_ue_reconfiguration_message {
-  du_ue_index_t   ue_index;
-  rnti_t          crnti;
-  du_cell_index_t pcell_index;
-  /// \brief List of \c mac-LogicalChannelConfig currently configured for a given UE.
-  /// This is common to all cells belonging to \c masterCellGroup.
-  std::vector<logical_channel_config> lc_config_list;
-  /// \brief UE schedulingRequest Resources
-  std::vector<scheduling_request_to_addmod> sched_request_config_list;
-  /// List of configured cells.
-  std::vector<serving_cell_ue_configuration_request> cells;
+  du_ue_index_t                  ue_index;
+  rnti_t                         crnti;
+  sched_ue_configuration_request cfg;
 };
 
 /// UE Delete Request.

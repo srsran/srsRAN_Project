@@ -21,7 +21,7 @@ namespace config_validators {
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
 error_type<std::string> validate_sched_ue_creation_request_message(const sched_ue_creation_request_message& msg)
 {
-  for (const auto& cell : msg.cells) {
+  for (const auto& cell : msg.cfg.cells) {
     if (cell.serv_cell_cfg.has_value()) {
       const auto& init_dl_bwp = cell.serv_cell_cfg.value().init_dl_bwp;
       if (init_dl_bwp.pdsch_cfg.has_value()) {

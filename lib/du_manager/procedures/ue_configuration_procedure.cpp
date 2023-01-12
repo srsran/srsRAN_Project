@@ -122,41 +122,53 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
 
 async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::update_mac_lcid_mux()
 {
+  // Create Request to MAC to reconfigure existing UE.
   mac_ue_reconfiguration_request_message mac_ue_reconf_req;
   mac_ue_reconf_req.ue_index           = request.ue_index;
+  mac_ue_reconf_req.crnti              = ue->rnti;
   mac_ue_reconf_req.pcell_index        = ue->pcell_index;
-  mac_ue_reconf_req.serv_cell_cfg      = ue->resources->spcell_cfg.spcell_cfg_ded;
   mac_ue_reconf_req.mac_cell_group_cfg = ue->resources->mcg_cfg;
   mac_ue_reconf_req.phy_cell_group_cfg = ue->resources->pcg_cfg;
 
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, "-- DEBUG: Number of logical channels: [");
-  for (auto& srb : ue->bearers.srbs()) {
+  for (srb_id_t srbid : request.srbs_to_setup) {
+    du_ue_srb& bearer = ue->bearers.srbs()[srbid];
     mac_ue_reconf_req.bearers.emplace_back();
-    mac_logical_channel& lc_ch = mac_ue_reconf_req.bearers.back();
-
-    lc_ch.lcid      = srb.lcid();
-    lc_ch.ul_bearer = &srb.connector.mac_rx_sdu_notifier;
-    lc_ch.dl_bearer = &srb.connector.mac_tx_sdu_notifier;
-    // Add MAC-LogicalChannel.
-    lc_ch.lc_config = config_helpers::make_default_logical_channel_config(lc_ch.lcid);
-    lc_ch.lc_config.sr_id.emplace(mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
-    fmt::format_to(fmtbuf, "{} ", srb.lcid());
+    auto& lc_ch     = mac_ue_reconf_req.bearers.back();
+    lc_ch.lcid      = bearer.lcid();
+    lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
+    lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
+  }
+  for (const auto& drb : request.drbs_to_setup) {
+    if (not ue->bearers.drbs().contains(drb.drb_id)) {
+      // The DRB failed to be setup. Carry on with other DRBs.
+      continue;
+    }
+    du_ue_drb& bearer = ue->bearers.drbs()[drb.drb_id];
+    mac_ue_reconf_req.bearers.emplace_back();
+    auto& lc_ch     = mac_ue_reconf_req.bearers.back();
+    lc_ch.lcid      = bearer.lcid;
+    lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
+    lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
   }
 
-  for (auto& drb : ue->bearers.drbs()) {
-    mac_ue_reconf_req.bearers.emplace_back();
-    mac_logical_channel& lc_ch = mac_ue_reconf_req.bearers.back();
-
-    lc_ch.lcid      = drb.lcid;
-    lc_ch.ul_bearer = &drb.connector.mac_rx_sdu_notifier;
-    lc_ch.dl_bearer = &drb.connector.mac_tx_sdu_notifier;
-    // Add MAC-LogicalChannel.
-    lc_ch.lc_config = config_helpers::make_default_logical_channel_config(lc_ch.lcid);
-    lc_ch.lc_config.sr_id.emplace(mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
-    fmt::format_to(fmtbuf, "{} ", drb.lcid);
+  // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
+  mac_ue_reconf_req.sched_cfg.cells.resize(1);
+  mac_ue_reconf_req.sched_cfg.cells[0].cell_index    = to_du_cell_index(0);
+  mac_ue_reconf_req.sched_cfg.cells[0].serv_cell_cfg = ue->resources->spcell_cfg.spcell_cfg_ded;
+  mac_ue_reconf_req.sched_cfg.sched_request_config_list =
+      mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config;
+  for (const du_ue_srb& bearer : ue->bearers.srbs()) {
+    mac_ue_reconf_req.sched_cfg.lc_config_list.emplace_back(
+        config_helpers::make_default_logical_channel_config(bearer.lcid()));
+    auto& sched_lc_ch = mac_ue_reconf_req.sched_cfg.lc_config_list.back();
+    sched_lc_ch.sr_id.emplace(mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
   }
-  logger.warning("{}]", to_c_str(fmtbuf));
+  for (const du_ue_drb& bearer : ue->bearers.drbs()) {
+    mac_ue_reconf_req.sched_cfg.lc_config_list.emplace_back(
+        config_helpers::make_default_logical_channel_config(bearer.lcid));
+    auto& sched_lc_ch = mac_ue_reconf_req.sched_cfg.lc_config_list.back();
+    sched_lc_ch.sr_id.emplace(mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
+  }
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }

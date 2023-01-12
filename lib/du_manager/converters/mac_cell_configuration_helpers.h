@@ -34,13 +34,13 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
   msg.crnti      = to_rnti(0x4601);
   msg.cell_index = to_du_cell_index(0);
 
-  msg.serv_cell_cfg.emplace(config_helpers::make_default_initial_ue_serving_cell_config());
-
   msg.mac_cell_group_cfg = config_helpers::make_initial_mac_cell_group_config();
 
   physical_cell_group_config& pcg_cfg = msg.phy_cell_group_cfg;
   pcg_cfg.p_nr_fr1                    = 10;
   pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
+
+  msg.sched_cfg.cells.push_back({to_du_cell_index(0), config_helpers::make_default_initial_ue_serving_cell_config()});
 
   return msg;
 }

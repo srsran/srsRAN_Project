@@ -160,8 +160,8 @@ TEST_F(du_manager_ue_creation_tester,
   // > UE SR Offsets passed to scheduler match the ones generated.
   ASSERT_FALSE(req1.mac_cell_group_cfg.scheduling_request_config.empty());
   ASSERT_FALSE(req2.mac_cell_group_cfg.scheduling_request_config.empty());
-  const auto& sr_res_list1 = req1.serv_cell_cfg->ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
-  const auto& sr_res_list2 = req2.serv_cell_cfg->ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+  const auto& sr_res_list1 = req1.sched_cfg.cells[0].serv_cell_cfg->ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+  const auto& sr_res_list2 = req2.sched_cfg.cells[0].serv_cell_cfg->ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
   ASSERT_FALSE(sr_res_list1.empty());
   ASSERT_FALSE(sr_res_list2.empty());
   ASSERT_EQ(sr_res_list1[0].offset, sr_offset1);

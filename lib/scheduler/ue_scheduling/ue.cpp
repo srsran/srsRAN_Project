@@ -21,11 +21,11 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   crnti(req.crnti),
   expert_cfg(expert_cfg_),
   cell_cfg_common(cell_cfg_common_),
-  log_channels_configs(req.lc_config_list),
-  sched_request_configs(req.sched_request_config_list)
+  log_channels_configs(req.cfg.lc_config_list),
+  sched_request_configs(req.cfg.sched_request_config_list)
 {
-  for (unsigned i = 0; i != req.cells.size(); ++i) {
-    du_cells[i] = std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cells[i]);
+  for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
+    du_cells[i] = std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i]);
     ue_cells.push_back(du_cells[i].get());
   }
 
@@ -35,25 +35,9 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
 
 void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg)
 {
-  fmt::memory_buffer fmtbuf0;
-  fmt::format_to(fmtbuf0, "To activate LCIDs=[");
-  for (const auto& lc : msg.lc_config_list) {
-    fmt::format_to(fmtbuf0, "lcid={} ", lc.lcid);
-  }
-  srslog::fetch_basic_logger("MAC").debug("-- DEBUG SCHED ue::handle_...: {}]", to_string(fmtbuf0));
-  log_channels_configs = msg.lc_config_list;
+  log_channels_configs = msg.cfg.lc_config_list;
   dl_lc_ch_mgr.configure(log_channels_configs);
   ul_lc_ch_mgr.configure(log_channels_configs);
-
-  fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, "Active LCIDs=[");
-  for (unsigned i = 0; i != MAX_LCID; ++i) {
-    if (dl_lc_ch_mgr.is_active(uint_to_lcid(i))) {
-      fmt::format_to(fmtbuf, "lcid={} ", i);
-    }
-  }
-  fmt::format_to(fmtbuf, "]");
-  srslog::fetch_basic_logger("MAC").debug("{}", to_string(fmtbuf));
 
   // TODO: Remaining fields.
 }
