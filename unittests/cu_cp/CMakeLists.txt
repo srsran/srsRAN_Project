@@ -5,6 +5,7 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+set_directory_properties(PROPERTIES LABELS "cu_cp")
 
 add_library(cu_cp_test_helpers test_helpers.cpp)
 target_link_libraries(cu_cp_test_helpers srsgnb_cu_cp srsgnb_support srslog f1ap_asn1 ngap_asn1)
