@@ -10,8 +10,8 @@
 
 #include "../../../lib/fapi_adaptor/mac/mac_to_fapi_translator.h"
 #include "messages/helpers.h"
-#include "srsgnb/fapi/slot_last_message_notifier.h"
 #include "srsgnb/fapi/messages.h"
+#include "srsgnb/fapi/slot_last_message_notifier.h"
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/support/srsgnb_test.h"
 

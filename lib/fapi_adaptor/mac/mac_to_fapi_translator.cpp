@@ -9,8 +9,8 @@
  */
 
 #include "mac_to_fapi_translator.h"
-#include "srsgnb/fapi/slot_last_message_notifier.h"
 #include "srsgnb/fapi/message_validators.h"
+#include "srsgnb/fapi/slot_last_message_notifier.h"
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
