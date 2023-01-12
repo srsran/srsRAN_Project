@@ -85,7 +85,7 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
 
 void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
 {
-  common_events.emplace(ue_request.ue_index, [this, ue_request = std::move(ue_request)](event_logger& ev_logger) {
+  common_events.emplace(ue_request.ue_index, [this, ue_request](event_logger& ev_logger) {
     ev_logger.enqueue("ue_cfg(ueId={})", ue_request.ue_index);
     log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Reconfiguration", "started.");
 

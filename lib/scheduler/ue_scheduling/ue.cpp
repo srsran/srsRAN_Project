@@ -35,9 +35,25 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
 
 void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg)
 {
+  fmt::memory_buffer fmtbuf0;
+  fmt::format_to(fmtbuf0, "To activate LCIDs=[");
+  for (const auto& lc : msg.lc_config_list) {
+    fmt::format_to(fmtbuf0, "lcid={} ", lc.lcid);
+  }
+  srslog::fetch_basic_logger("MAC").debug("-- DEBUG SCHED ue::handle_...: {}]", to_string(fmtbuf0));
   log_channels_configs = msg.lc_config_list;
   dl_lc_ch_mgr.configure(log_channels_configs);
   ul_lc_ch_mgr.configure(log_channels_configs);
+
+  fmt::memory_buffer fmtbuf;
+  fmt::format_to(fmtbuf, "Active LCIDs=[");
+  for (unsigned i = 0; i != MAX_LCID; ++i) {
+    if (dl_lc_ch_mgr.is_active(uint_to_lcid(i))) {
+      fmt::format_to(fmtbuf, "lcid={} ", i);
+    }
+  }
+  fmt::format_to(fmtbuf, "]");
+  srslog::fetch_basic_logger("MAC").debug("{}", to_string(fmtbuf));
 
   // TODO: Remaining fields.
 }

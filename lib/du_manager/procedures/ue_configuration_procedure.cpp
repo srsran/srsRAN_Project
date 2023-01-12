@@ -13,6 +13,7 @@
 #include "../converters/asn1_cell_group_config_helpers.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/rlc/rlc_factory.h"
+#include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;
@@ -122,32 +123,40 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
 async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::update_mac_lcid_mux()
 {
   mac_ue_reconfiguration_request_message mac_ue_reconf_req;
-  mac_ue_reconf_req.ue_index    = request.ue_index;
-  mac_ue_reconf_req.pcell_index = ue->pcell_index;
+  mac_ue_reconf_req.ue_index           = request.ue_index;
+  mac_ue_reconf_req.pcell_index        = ue->pcell_index;
+  mac_ue_reconf_req.serv_cell_cfg      = ue->resources->spcell_cfg.spcell_cfg_ded;
+  mac_ue_reconf_req.mac_cell_group_cfg = ue->resources->mcg_cfg;
+  mac_ue_reconf_req.phy_cell_group_cfg = ue->resources->pcg_cfg;
 
-  for (srb_id_t srbid : request.srbs_to_setup) {
-    du_ue_srb& bearer = ue->bearers.srbs()[srbid];
+  fmt::memory_buffer fmtbuf;
+  fmt::format_to(fmtbuf, "-- DEBUG: Number of logical channels: [");
+  for (auto& srb : ue->bearers.srbs()) {
     mac_ue_reconf_req.bearers.emplace_back();
     mac_logical_channel& lc_ch = mac_ue_reconf_req.bearers.back();
 
-    lc_ch.lcid      = bearer.lcid();
-    lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
-    lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
+    lc_ch.lcid      = srb.lcid();
+    lc_ch.ul_bearer = &srb.connector.mac_rx_sdu_notifier;
+    lc_ch.dl_bearer = &srb.connector.mac_tx_sdu_notifier;
+    // Add MAC-LogicalChannel.
+    lc_ch.lc_config = config_helpers::make_default_logical_channel_config(lc_ch.lcid);
+    lc_ch.lc_config.sr_id.emplace(mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
+    fmt::format_to(fmtbuf, "{} ", srb.lcid());
   }
 
-  for (const f1ap_drb_to_setup& drb : request.drbs_to_setup) {
-    if (not ue->bearers.drbs().contains(drb.drb_id)) {
-      // DRB failed to be setup in other layers.
-      continue;
-    }
-    du_ue_drb& bearer = ue->bearers.drbs()[drb.drb_id];
+  for (auto& drb : ue->bearers.drbs()) {
     mac_ue_reconf_req.bearers.emplace_back();
     mac_logical_channel& lc_ch = mac_ue_reconf_req.bearers.back();
 
-    lc_ch.lcid      = bearer.lcid;
-    lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
-    lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
+    lc_ch.lcid      = drb.lcid;
+    lc_ch.ul_bearer = &drb.connector.mac_rx_sdu_notifier;
+    lc_ch.dl_bearer = &drb.connector.mac_tx_sdu_notifier;
+    // Add MAC-LogicalChannel.
+    lc_ch.lc_config = config_helpers::make_default_logical_channel_config(lc_ch.lcid);
+    lc_ch.lc_config.sr_id.emplace(mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
+    fmt::format_to(fmtbuf, "{} ", drb.lcid);
   }
+  logger.warning("{}]", to_c_str(fmtbuf));
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }
