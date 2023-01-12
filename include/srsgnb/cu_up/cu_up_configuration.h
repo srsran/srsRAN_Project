@@ -55,3 +55,30 @@ struct cu_up_configuration {
 
 } // namespace srs_cu_up
 } // namespace srsgnb
+
+namespace fmt {
+
+// RLC UM RX config formatter
+template <>
+struct formatter<srsgnb::srs_cu_up::network_interface_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::srs_cu_up::network_interface_config cfg, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "upf_addr={}, upf_port={}, n3_bind_addr={}, n3_bind_port={}, f1u_bind_addr={}, f1u_bind_port={}",
+                     cfg.upf_addr,
+                     cfg.upf_port,
+                     cfg.n3_bind_addr,
+                     cfg.n3_bind_port,
+                     cfg.f1u_bind_addr,
+                     cfg.f1u_bind_port);
+  }
+};
+} // namespace fmt

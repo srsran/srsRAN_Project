@@ -196,6 +196,7 @@ TEST_F(cu_up_test, ul_data_flow)
 
   cu_up_configuration cfg = get_default_cu_up_config();
   cfg.net_cfg.upf_port    = ntohs(upf_addr.sin_port);
+  test_logger.debug("Using network_interface_config: {}", cfg.net_cfg);
   init(cfg);
 
   create_drb();
