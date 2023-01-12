@@ -152,12 +152,11 @@ void pdu_session_resource_setup_routine::operator()(
         rrc_reconfig_args.non_crit_ext = cu_cp_rrc_recfg_v1530_ies{};
         rrc_reconfig_args.non_crit_ext.value().master_cell_group =
             ue_context_modification_response.du_to_cu_rrc_info.cell_group_cfg.copy();
+      }
 
-        // append first PDU sessions NAS PDU as received by AMF
-        if (not setup_msg.pdu_session_res_setup_items[uint_to_pdu_session_id(0)].pdu_session_nas_pdu.empty()) {
-          rrc_reconfig_args.non_crit_ext.value().ded_nas_msg_list.push_back(
-              setup_msg.pdu_session_res_setup_items[uint_to_pdu_session_id(0)].pdu_session_nas_pdu.copy());
-        }
+      // append NAS PDUs as received by AMF
+      for (const auto& pdu_session : setup_msg.pdu_session_res_setup_items) {
+        rrc_reconfig_args.non_crit_ext.value().ded_nas_msg_list.push_back(pdu_session.pdu_session_nas_pdu.copy());
       }
     }
 
