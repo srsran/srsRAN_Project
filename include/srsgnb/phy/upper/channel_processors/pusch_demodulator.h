@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/channel_processors/ulsch_placeholder_list.h"
@@ -67,6 +68,12 @@ public:
     static_vector<uint8_t, MAX_PORTS> rx_ports;
   };
 
+  /// PUSCH demodulator result.
+  struct demodulation_status {
+    /// Measured EVM.
+    optional<float> evm;
+  };
+
   /// Default destructor.
   virtual ~pusch_demodulator() = default;
 
@@ -83,10 +90,10 @@ public:
   /// \param[in]  grid      Resource grid for the current slot.
   /// \param[in]  estimates Channel estimates for the REs allocated to the PUSCH transmission.
   /// \param[in]  config    Configuration parameters.
-  virtual void demodulate(span<log_likelihood_ratio>  codeword,
-                          const resource_grid_reader& grid,
-                          const channel_estimate&     estimates,
-                          const configuration&        config) = 0;
+  virtual demodulation_status demodulate(span<log_likelihood_ratio>  codeword,
+                                         const resource_grid_reader& grid,
+                                         const channel_estimate&     estimates,
+                                         const configuration&        config) = 0;
 };
 
 } // namespace srsgnb

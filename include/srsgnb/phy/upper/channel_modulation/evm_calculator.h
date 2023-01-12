@@ -25,7 +25,7 @@ public:
 
   /// \brief Calculates the EVM for a transmission.
   ///
-  /// \param[in] soft_bits  The soft-bits from the modulation demapper.
+  /// \param[in] soft_bits  The soft bits from the modulation demapper.
   /// \param[in] symbols    The complex-valued channel symbols, prior to the modulation demapper.
   /// \param[in] modulation The modulation scheme.
   /// \return The calculated EVM.

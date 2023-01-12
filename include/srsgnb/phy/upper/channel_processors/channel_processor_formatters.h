@@ -452,6 +452,24 @@ struct formatter<srsgnb::pusch_processor::pdu_t> {
 
 /// \brief Custom formatter for pusch_processor_result.
 template <>
+struct formatter<srsgnb::pusch_decoder_result> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pusch_decoder_result& result, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    format_to(ctx.out(), "crc={} iter={:.1f} ", result.tb_crc_ok ? "OK" : "KO", result.ldpc_decoder_stats.get_mean());
+    return ctx.out();
+  }
+};
+
+/// \brief Custom formatter for pusch_processor_result.
+template <>
 struct formatter<srsgnb::pusch_processor_result> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
@@ -463,7 +481,13 @@ struct formatter<srsgnb::pusch_processor_result> {
   auto format(const srsgnb::pusch_processor_result& result, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "pusch_processor_result");
+    if (result.data.has_value()) {
+      format_to(ctx.out(), "{} ", result.data.value());
+    }
+    if (result.evm.has_value()) {
+      format_to(ctx.out(), "evm={:.3f} ", result.evm.value());
+    }
+    return ctx.out();
   }
 };
 

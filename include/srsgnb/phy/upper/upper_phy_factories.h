@@ -150,6 +150,8 @@ struct upper_phy_config {
   bool enable_logging_broadcast;
   /// Logger maximum hexadecimal dump size. Set to zero for none.
   unsigned logger_max_hex_size;
+  /// Enables the EVM calculation for PUSCH.
+  bool enable_evm;
   /// Radio sector identifier.
   unsigned sector_id;
   /// Port identifier within the sector.

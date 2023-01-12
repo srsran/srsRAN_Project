@@ -14,6 +14,7 @@
 #pragma once
 
 #include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "srsgnb/phy/upper/channel_modulation/evm_calculator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
@@ -28,9 +29,11 @@ public:
   /// Constructor: sets up internal components and acquires their ownership.
   pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       equalizer_,
                          std::unique_ptr<demodulation_mapper>     demapper_,
+                         std::unique_ptr<evm_calculator>          evm_calc_,
                          std::unique_ptr<pseudo_random_generator> descrambler_) :
     equalizer(std::move(equalizer_)),
     demapper(std::move(demapper_)),
+    evm_calc(std::move(evm_calc_)),
     descrambler(std::move(descrambler_)),
     ch_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, MAX_PORTS}),
     eq_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
@@ -42,10 +45,10 @@ public:
   }
 
   // See interface for the documentation.
-  void demodulate(span<log_likelihood_ratio>  data,
-                  const resource_grid_reader& grid,
-                  const channel_estimate&     estimates,
-                  const configuration&        config) override;
+  demodulation_status demodulate(span<log_likelihood_ratio>  data,
+                                 const resource_grid_reader& grid,
+                                 const channel_estimate&     estimates,
+                                 const configuration&        config) override;
 
 private:
   /// \brief Gets channel data Resource Elements from the resource grid.
@@ -154,6 +157,8 @@ private:
   std::unique_ptr<channel_equalizer> equalizer;
   /// Demodulation mapper component: transforms channel symbols into log-likelihood ratios (i.e., soft bits).
   std::unique_ptr<demodulation_mapper> demapper;
+  /// EVM calculator. Optional, set to nullptr if not available.
+  std::unique_ptr<evm_calculator> evm_calc;
   /// Descrambler component.
   std::unique_ptr<pseudo_random_generator> descrambler;
 

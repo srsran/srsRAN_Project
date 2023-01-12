@@ -260,7 +260,7 @@ static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(con
 
   pusch_decoder_factory_sw_configuration decoder_config;
   decoder_config.crc_factory       = create_crc_calculator_factory_sw("auto");
-  decoder_config.decoder_factory   = create_ldpc_decoder_factory_sw("generic");
+  decoder_config.decoder_factory   = create_ldpc_decoder_factory_sw("auto");
   decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw("auto");
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
 
@@ -270,7 +270,7 @@ static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_processor_factory_sw_configuration pusch_config;
   pusch_config.estimator_factory = create_dmrs_pusch_estimator_factory_sw(prg_factory, ch_estimator_factory);
   pusch_config.demodulator_factory =
-      create_pusch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory);
+      create_pusch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory, config.enable_evm);
   pusch_config.demux_factory   = create_ulsch_demultiplex_factory_sw();
   pusch_config.decoder_factory = create_pusch_decoder_factory_sw(decoder_config);
   pusch_config.uci_dec_factory = create_uci_decoder_factory_sw(uci_dec_config);

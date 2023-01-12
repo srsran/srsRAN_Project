@@ -28,6 +28,8 @@ struct pusch_uci_field {
 struct pusch_processor_result {
   /// Channel state information.
   channel_state_information csi;
+  /// Error vector Magnitude (EVM) calculated from the modulation demapper soft bits.
+  optional<float> evm;
   /// SCH decoding information. Available only if the PUSCH transmission carried data.
   optional<pusch_decoder_result> data;
   /// Decoded HARQ-ACK information bits. Leave empty if no HARQ-ACK information bits are multiplexed with the UL-SCH.

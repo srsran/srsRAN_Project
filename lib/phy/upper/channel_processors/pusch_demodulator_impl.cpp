@@ -16,11 +16,13 @@
 
 using namespace srsgnb;
 
-void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
-                                        const resource_grid_reader& grid,
-                                        const channel_estimate&     estimates,
-                                        const configuration&        config)
+pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
+                                                                          const resource_grid_reader& grid,
+                                                                          const channel_estimate&     estimates,
+                                                                          const configuration&        config)
 {
+  demodulation_status status = {};
+
   // Number of OFDM symbols containing DM-RS in a slot.
   unsigned nof_dmrs_symbols = std::accumulate(config.dmrs_symb_pos.begin(), config.dmrs_symb_pos.end(), 0);
 
@@ -67,8 +69,15 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
   // Build LLRs from channel symbols.
   demapper->demodulate_soft(data, eq_re_flat, eq_vars_flat, config.modulation);
 
+  // Calculate EVM only if it is available.
+  if (evm_calc) {
+    status.evm.emplace(evm_calc->calculate(data, eq_re_flat, config.modulation));
+  }
+
   // Descramble.
   descramble(data, data, config);
+
+  return status;
 }
 
 void pusch_demodulator_impl::descramble(span<srsgnb::log_likelihood_ratio>              out,

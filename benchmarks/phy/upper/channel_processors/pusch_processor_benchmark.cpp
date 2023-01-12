@@ -27,6 +27,7 @@ static unsigned                           nof_repetitions             = 10;
 static std::string                        selected_profile_name       = "default";
 static std::string                        ldpc_decoder_type           = "auto";
 static std::string                        rate_dematcher_type         = "auto";
+static bool                               enable_evm                  = false;
 static bool                               silent                      = false;
 static unsigned                           nof_rx_ports                = 1;
 static unsigned                           nof_tx_layers               = 1;
@@ -129,6 +130,7 @@ static void usage(const char* prog)
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-D LDPC decoder type. [Default {}]\n", ldpc_decoder_type);
   fmt::print("\t-M Rate dematcher type. [Default {}]\n", rate_dematcher_type);
+  fmt::print("\t-E Toggle EVM enable/disable. [Default {}]\n", enable_evm ? "enable" : "disable");
   fmt::print("\t-P Benchmark profile. [Default {}]\n", selected_profile_name);
   for (const test_profile& profile : profile_set) {
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
@@ -140,7 +142,7 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:D:M:P:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "R:D:M:EP:sh")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -149,6 +151,9 @@ static int parse_args(int argc, char** argv)
         ldpc_decoder_type = std::string(optarg);
       case 'M':
         rate_dematcher_type = std::string(optarg);
+        break;
+      case 'E':
+        enable_evm = !enable_evm;
         break;
       case 'P':
         selected_profile_name = std::string(optarg);
@@ -276,7 +281,7 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
 
   // Create PUSCH demodulator factory.
   std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
-      create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory);
+      create_pusch_demodulator_factory_sw(eq_factory, chan_modulation_factory, prg_factory, enable_evm);
   TESTASSERT(pusch_demod_factory);
 
   // Create PUSCH demultiplexer factory.

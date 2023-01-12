@@ -216,7 +216,9 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   demod_config.rx_ports                    = pdu.rx_ports;
   demod_config.placeholders                = demultiplex->get_placeholders(demux_msg_info, demux_config);
   span<log_likelihood_ratio> codeword_llr  = span<log_likelihood_ratio>(temp_codeword_llr).first(nof_codeword_llr);
-  demodulator->demodulate(codeword_llr, grid, ch_estimate, demod_config);
+  pusch_demodulator::demodulation_status demod_status =
+      demodulator->demodulate(codeword_llr, grid, ch_estimate, demod_config);
+  result.evm = demod_status.evm;
 
   // Prepare buffers.
   span<log_likelihood_ratio> sch_llr = span<log_likelihood_ratio>(temp_sch_llr).first(info.nof_ul_sch_bits.value());

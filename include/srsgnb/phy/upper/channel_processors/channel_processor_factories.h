@@ -232,7 +232,8 @@ public:
 std::shared_ptr<pusch_demodulator_factory>
 create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
                                     std::shared_ptr<channel_modulation_factory>      demodulation_factory,
-                                    std::shared_ptr<pseudo_random_generator_factory> prg_factory);
+                                    std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                    bool                                             enable_evm = false);
 
 class pusch_processor_factory
 {

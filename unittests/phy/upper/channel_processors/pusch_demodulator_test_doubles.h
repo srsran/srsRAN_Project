@@ -25,10 +25,10 @@ public:
     configuration               config;
   };
 
-  void demodulate(span<log_likelihood_ratio>  data,
-                  const resource_grid_reader& grid,
-                  const channel_estimate&     estimates,
-                  const configuration&        config) override
+  demodulation_status demodulate(span<log_likelihood_ratio>  data,
+                                 const resource_grid_reader& grid,
+                                 const channel_estimate&     estimates,
+                                 const configuration&        config) override
   {
     entries.emplace_back();
     entry_t& entry  = entries.back();
@@ -36,6 +36,8 @@ public:
     entry.grid      = &grid;
     entry.estimates = &estimates;
     entry.config    = config;
+
+    return demodulation_status();
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }
