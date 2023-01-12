@@ -68,6 +68,7 @@ void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
     ind.crcs[i].ue_index       = ue_mng.get_ue_index(msg.crcs[i].rnti);
     ind.crcs[i].harq_id        = msg.crcs[i].harq_id;
     ind.crcs[i].tb_crc_success = msg.crcs[i].tb_crc_success;
+    ind.crcs[i].ul_sinr_metric = msg.crcs[i].ul_sinr_metric;
   }
   sched_obj.handle_crc_indication(ind);
 }

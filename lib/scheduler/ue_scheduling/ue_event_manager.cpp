@@ -167,6 +167,8 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
             // Notify metrics handler.
             metrics_handler.handle_crc_indication(crc);
           }
+          // Update PUSCH SNR reported from PHY.
+          ue_cc.update_pusch_snr(crc.ul_sinr_metric);
         });
   }
 }

@@ -29,10 +29,11 @@ struct mac_crc_pdu {
   bool    tb_crc_success;
   /// Codeblocks CRC status.
   bounded_bitset<MAX_CBS_PER_PDU> cb_crc_status;
-  uint16_t                        ul_sinr_metric;
-  phy_time_unit                   ta;
-  uint16_t                        rssi;
-  uint16_t                        rsrp;
+  /// PUSCH SINR, in dB.
+  double        ul_sinr_metric;
+  phy_time_unit ta;
+  uint16_t      rssi;
+  uint16_t      rsrp;
 };
 
 /// \brief List of UL CRC indications for a given slot and cell.

@@ -47,6 +47,7 @@ struct ul_crc_pdu_indication {
   du_ue_index_t ue_index;
   uint8_t       harq_id;
   bool          tb_crc_success;
+  double        ul_sinr_metric;
 };
 
 /// \brief UL HARQ CRC indication for a given UE PDU.

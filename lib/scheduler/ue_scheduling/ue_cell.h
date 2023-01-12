@@ -40,6 +40,10 @@ public:
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
 
+  const double get_pusch_snr() const { return sched_metrics.pusch_snr_db; }
+
+  void update_pusch_snr(double snr) { sched_metrics.pusch_snr_db = snr; }
+
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   unsigned required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
 
@@ -47,9 +51,16 @@ public:
   unsigned required_ul_prbs(unsigned time_resource, unsigned pending_bytes) const;
 
 private:
+  struct ue_cell_metrics {
+    /// Save the latest PUSCH SNR reported from PHY, in dB.
+    double pusch_snr_db;
+    // TODO: Add other metrics of interest for the scheduler.
+  };
+
   rnti_t                            crnti_;
   const scheduler_ue_expert_config& expert_cfg;
   ue_cell_configuration             ue_cfg;
+  ue_cell_metrics                   sched_metrics;
 };
 
 } // namespace srsgnb
