@@ -42,24 +42,28 @@ protected:
     srslog::init();
 
     // create worker thread and executer
-    task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
-    std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
+    task_worker task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
+    executor = make_task_executor(task_worker);
 
     f1u_gw = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     broker = create_io_broker(io_broker_type::epoll);
+  }
 
+  cu_up_configuration get_default_cu_up_config()
+  {
     // create config
     cu_up_configuration cfg;
-    cfg.cu_up_executor       = task_executor.get();
+    cfg.cu_up_executor       = executor.get();
     cfg.e1_notifier          = &e1_message_notifier;
     cfg.f1u_gateway          = f1u_gw.get();
     cfg.epoll_broker         = broker.get();
     cfg.net_cfg.n3_bind_addr = "127.0.0.1";
     cfg.net_cfg.upf_addr     = "127.0.1.100";
 
-    // create and start DUT
-    cu_up = create_cu_up(cfg);
+    return cfg;
   }
+
+  void init(const cu_up_configuration& cfg) { cu_up = create_cu_up(cfg); }
 
   void TearDown() override
   {
@@ -73,6 +77,8 @@ protected:
   std::unique_ptr<io_broker>                  broker;
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
+
+  std::unique_ptr<task_executor> executor;
 
   void create_drb()
   {
@@ -100,6 +106,8 @@ protected:
 /// Test the E1 connection
 TEST_F(cu_up_test, when_e1_connection_established_then_e1_connected)
 {
+  init(get_default_cu_up_config());
+
   // Connect E1
   cu_up->on_e1_connection_establish();
 
@@ -115,6 +123,9 @@ TEST_F(cu_up_test, when_e1_connection_established_then_e1_connected)
 
 TEST_F(cu_up_test, dl_data_flow)
 {
+  cu_up_configuration cfg = get_default_cu_up_config();
+  init(cfg);
+
   create_drb();
 
   int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -161,20 +172,33 @@ TEST_F(cu_up_test, dl_data_flow)
 
 TEST_F(cu_up_test, ul_data_flow)
 {
-  create_drb();
+  //> Test preamble: listen on a free port
 
   int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   ASSERT_GE(sock_fd, 0);
 
   sockaddr_in upf_addr;
   upf_addr.sin_family      = AF_INET;
-  upf_addr.sin_port        = htons(2152);
+  upf_addr.sin_port        = htons(0); // Let the OS choose a free port to avoid resource conflicts with other tests
   upf_addr.sin_addr.s_addr = inet_addr("127.0.1.100");
 
   int ret = 0;
 
   ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
   ASSERT_GE(ret, 0);
+
+  // Find out the port that was assigned
+  socklen_t addr_len;
+  ret = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &addr_len);
+  ASSERT_GE(ret, 0);
+
+  //> Test main part: create CU-UP and transmit data
+
+  cu_up_configuration cfg = get_default_cu_up_config();
+  cfg.net_cfg.upf_port    = ntohs(upf_addr.sin_port);
+  init(cfg);
+
+  create_drb();
 
   // send message 1
   const uint8_t t_pdu_arr1[] = {

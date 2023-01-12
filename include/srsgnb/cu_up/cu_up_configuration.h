@@ -20,14 +20,23 @@ namespace srsgnb {
 namespace srs_cu_up {
 
 struct network_interface_config {
-  ///< IP address of UPF for NG-U connection (TODO: Refactor to use UPF IP that we get from E1).
+  /// IP address of UPF for NG-U connection (TODO: Refactor to use UPF IP that we get from E1).
   std::string upf_addr = "0.0.0.0";
 
-  ///< Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
+  /// Port of UPF for NG-U connection (TODO: Refactor to use UPF port that we get from E1).
+  int upf_port = 2152; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
+
+  /// Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   std::string n3_bind_addr = "127.0.1.1";
 
-  ///< Local IP address to bind for connection from DU to receive uplink user-plane traffic.
+  /// Local port to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
+  int n3_bind_port = 2152; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
+
+  /// Local IP address to bind for connection from DU to receive uplink user-plane traffic.
   std::string f1u_bind_addr = "127.0.1.1";
+
+  /// Local port to bind for connection from DU to receive uplink user-plane traffic.
+  int f1u_bind_port = 2152; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
 };
 
 /// Configuration passed to CU-UP.

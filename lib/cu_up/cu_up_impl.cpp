@@ -38,9 +38,9 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   network_gateway_config ngu_gw_config = {};
   ngu_gw_config.type                   = network_gateway_type::udp;
   ngu_gw_config.connect_address        = cfg.net_cfg.upf_addr;
-  ngu_gw_config.connect_port           = 2152; ///< TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
+  ngu_gw_config.connect_port           = cfg.net_cfg.upf_port;
   ngu_gw_config.bind_address           = cfg.net_cfg.n3_bind_addr;
-  ngu_gw_config.bind_port              = 2152; ///< TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
+  ngu_gw_config.bind_port              = cfg.net_cfg.n3_bind_port;
   // other params
 
   network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_ctrl_gtpu_demux_adapter, gw_data_gtpu_demux_adapter};
