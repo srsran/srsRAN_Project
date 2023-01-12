@@ -11,7 +11,7 @@
 #pragma once
 
 #include "lib/e2/common/e2ap_asn1_packer.h"
-#include "srsgnb/asn1/e2ap.h"
+#include "srsgnb/asn1/e2ap/e2ap.h"
 #include "srsgnb/e2/common/e2_common.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/support/timers.h"

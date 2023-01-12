@@ -9,7 +9,7 @@
  */
 
 #include "e2ap_asn1_packer.h"
-#include "srsgnb/asn1/e2ap.h"
+#include "srsgnb/asn1/e2ap/e2ap.h"
 
 namespace srsgnb {
 

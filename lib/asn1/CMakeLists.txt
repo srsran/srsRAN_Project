@@ -31,7 +31,7 @@ target_link_libraries(e1ap_asn1 asn1_utils)
 INSTALL(TARGETS e1ap_asn1 DESTINATION ${LIBRARY_DIR})
 
 # E2AP ASN1
-add_library(e2ap_asn1 STATIC e2ap.cpp)
+add_library(e2ap_asn1 STATIC e2ap/e2ap.cpp)
 target_compile_options(e2ap_asn1 PRIVATE "-Os")
 target_link_libraries(e2ap_asn1 asn1_utils)
 INSTALL(TARGETS e2ap_asn1 DESTINATION ${LIBRARY_DIR})
