@@ -50,8 +50,8 @@ public:
 
     // If device type or name not given in args, select device from found list.
     if (not device_addr.has_key("type")) {
-      // Find available devices.
-      uhd::device_addrs_t devices = uhd::device::find(uhd::device_addr_t());
+      // Find available devices that match the given device address.
+      uhd::device_addrs_t devices = uhd::device::find(device_addr);
 
       // Stop if no device is found.
       if (devices.empty()) {
@@ -61,6 +61,7 @@ public:
 
       // Select the first available device.
       uhd::device_addr_t first_device_addr = devices.front();
+      Info("No device type given, found device with address '" << first_device_addr.to_string() << "'");
 
       // Append to the device address the device type.
       if (first_device_addr.has_key("type")) {
@@ -76,21 +77,21 @@ public:
       // If the device is X300.
       if (device_type == radio_uhd_device_type::types::X300) {
         // Set the default master clock rate.
-        if (device_addr.has_key("master_clock_rate")) {
+        if (!device_addr.has_key("master_clock_rate")) {
           device_addr.set("master_clock_rate", "184.32e6");
         }
         // Set the default send frame size.
-        if (device_addr.has_key("send_frame_size")) {
+        if (!device_addr.has_key("send_frame_size")) {
           device_addr.set("send_frame_size", "8000");
         }
         // Set the default receive frame size.
-        if (device_addr.has_key("recv_frame_size")) {
+        if (!device_addr.has_key("recv_frame_size")) {
           device_addr.set("recv_frame_size", "8000");
         }
       }
     }
 
-    Debug("Making USRP object with args '" << device_addr.to_string() << "'");
+    Info("Making USRP object with args '" << device_addr.to_string() << "'");
 
     return safe_execution([this, &device_addr]() { usrp = uhd::usrp::multi_usrp::make(device_addr); });
   }
