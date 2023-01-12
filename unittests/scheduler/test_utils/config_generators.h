@@ -85,7 +85,6 @@ inline sched_ue_creation_request_message make_default_sched_ue_creation_request(
   msg.cfg.sched_request_config_list.push_back(sr_0);
 
   msg.cfg.cells.resize(1);
-  msg.cfg.cells[0].cell_index    = to_du_cell_index(0);
   msg.cfg.cells[0].serv_cell_cfg = config_helpers::make_default_initial_ue_serving_cell_config();
 
   msg.cfg.lc_config_list.resize(2);

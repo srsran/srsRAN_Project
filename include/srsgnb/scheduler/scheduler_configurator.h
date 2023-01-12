@@ -78,35 +78,28 @@ struct sched_cell_configuration_request_message {
   std::vector<sched_grid_resource> pucch_guardbands;
 };
 
-/// \remark See TS 38.331, "ServingCellConfig".
-struct serving_cell_ue_configuration_request {
-  du_cell_index_t cell_index;
-  /// \c spCellConfig, as part of \c CellGroupConfig, TS 38.331.
-  optional<serving_cell_config> serv_cell_cfg;
-};
-
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.
-struct sched_ue_configuration_request {
+struct sched_ue_config_request {
   /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
   std::vector<logical_channel_config> lc_config_list;
   /// List of configured Scheduling Request resources. See \c schedulingRequestConfig, TS38.331.
   std::vector<scheduling_request_to_addmod> sched_request_config_list;
-  /// List of configured cells within the \c masterCellGroup.
-  std::vector<serving_cell_ue_configuration_request> cells;
+  /// UE-dedicated configuration for the PCell and SCells.
+  std::vector<cell_config_dedicated> cells;
 };
 
 /// UE Creation Request.
 struct sched_ue_creation_request_message {
-  du_ue_index_t                  ue_index;
-  rnti_t                         crnti;
-  sched_ue_configuration_request cfg;
+  du_ue_index_t           ue_index;
+  rnti_t                  crnti;
+  sched_ue_config_request cfg;
 };
 
 /// UE Reconfiguration Request.
 struct sched_ue_reconfiguration_message {
-  du_ue_index_t                  ue_index;
-  rnti_t                         crnti;
-  sched_ue_configuration_request cfg;
+  du_ue_index_t           ue_index;
+  rnti_t                  crnti;
+  sched_ue_config_request cfg;
 };
 
 /// UE Delete Request.

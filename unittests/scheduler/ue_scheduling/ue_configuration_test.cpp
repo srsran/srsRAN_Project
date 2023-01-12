@@ -14,7 +14,7 @@ TEST(ue_configuration, configuration_valid_on_creation)
 
   auto ue_create_msg = make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
 
-  ue_cell_configuration ue_cfg{cell_cfg, *ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  ue_cell_configuration ue_cfg{cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
   // Test Common Config.
   TESTASSERT(ue_cfg.find_dl_bwp_common(to_bwp_id(0)) != nullptr);
@@ -31,7 +31,7 @@ TEST(ue_configuration, configuration_valid_on_creation)
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) == nullptr);
   TESTASSERT_EQ(2, ue_cfg.search_space(to_search_space_id(2)).id);
   TESTASSERT(ue_cfg.search_space(to_search_space_id(2)) ==
-             ue_create_msg.cfg.cells[0].serv_cell_cfg->init_dl_bwp.pdcch_cfg->search_spaces[0]);
+             ue_create_msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]);
   TESTASSERT(ue_cfg.find_search_space(to_search_space_id(3)) == nullptr);
 }
 
@@ -40,18 +40,17 @@ TEST(ue_configuration, configuration_valid_on_reconfiguration)
   sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{msg};
   auto ue_create_msg = make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
-  ue_cell_configuration ue_cfg{cell_cfg, *ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  ue_cell_configuration ue_cfg{cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
-  serving_cell_ue_configuration_request ue_cell_reconf{};
-  ue_cell_reconf.serv_cell_cfg.emplace();
-  ue_cell_reconf.serv_cell_cfg->init_dl_bwp.pdcch_cfg.emplace();
-  ue_cell_reconf.serv_cell_cfg->init_dl_bwp.pdcch_cfg->coresets.emplace_back();
-  ue_cell_reconf.serv_cell_cfg->init_dl_bwp.pdcch_cfg->coresets.back() = config_helpers::make_default_coreset_config();
-  ue_cell_reconf.serv_cell_cfg->init_dl_bwp.pdcch_cfg->coresets.back().id = to_coreset_id(2);
+  cell_config_dedicated ue_cell_reconf{};
+  ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg.emplace();
+  ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.emplace_back();
+  ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back() = config_helpers::make_default_coreset_config();
+  ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back().id = to_coreset_id(2);
 
-  ue_cfg.reconfigure(*ue_cell_reconf.serv_cell_cfg);
+  ue_cfg.reconfigure(ue_cell_reconf.serv_cell_cfg);
 
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) != nullptr);
   TESTASSERT_EQ(2, ue_cfg.coreset(to_coreset_id(2)).id);
-  TESTASSERT(ue_cfg.coreset(to_coreset_id(2)) == ue_cell_reconf.serv_cell_cfg->init_dl_bwp.pdcch_cfg->coresets.back());
+  TESTASSERT(ue_cfg.coreset(to_coreset_id(2)) == ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back());
 }

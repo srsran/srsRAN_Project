@@ -18,13 +18,11 @@ using namespace srs_du;
 dummy_ue_resource_configurator_factory::dummy_ue_resource_configurator_factory()
 {
   next_context_update_result.rlc_bearers.resize(1);
-  next_context_update_result.rlc_bearers[0].lcid       = LCID_SRB1;
-  next_context_update_result.rlc_bearers[0].rlc_cfg    = make_default_srb_rlc_config();
-  next_context_update_result.spcell_cfg.serv_cell_idx  = SERVING_CELL_PCELL_IDX;
-  next_context_update_result.spcell_cfg.cell_index     = to_du_cell_index(0);
-  next_context_update_result.spcell_cfg.spcell_cfg_ded = config_helpers::make_default_initial_ue_serving_cell_config();
-  next_context_update_result.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
-  next_context_update_result.pcg_cfg                   = {}; // TODO
+  next_context_update_result.rlc_bearers[0].lcid    = LCID_SRB1;
+  next_context_update_result.rlc_bearers[0].rlc_cfg = make_default_srb_rlc_config();
+  next_context_update_result.cells.emplace(0, config_helpers::make_default_initial_ue_spcell_cell_config());
+  next_context_update_result.mcg_cfg = config_helpers::make_initial_mac_cell_group_config();
+  next_context_update_result.pcg_cfg = {}; // TODO
 }
 
 dummy_ue_resource_configurator_factory::dummy_resource_updater::dummy_resource_updater(
@@ -61,8 +59,9 @@ dummy_ue_resource_configurator_factory::create_ue_resource_configurator(du_ue_in
   last_ue_index = ue_index;
   last_ue_pcell = pcell_index;
   ue_resource_pool.emplace(ue_index, cell_group_config{});
-  ue_resource_pool[ue_index].spcell_cfg.cell_index    = pcell_index;
-  ue_resource_pool[ue_index].spcell_cfg.serv_cell_idx = SERVING_CELL_PCELL_IDX;
+  ue_resource_pool[ue_index].cells.emplace(0, config_helpers::make_default_initial_ue_spcell_cell_config());
+  ue_resource_pool[ue_index].cells[0].serv_cell_cfg.cell_index = pcell_index;
+  ue_resource_pool[ue_index].cells[0].serv_cell_idx            = SERVING_CELL_PCELL_IDX;
   return ue_ran_resource_configurator{std::make_unique<dummy_resource_updater>(*this, ue_index)};
 }
 

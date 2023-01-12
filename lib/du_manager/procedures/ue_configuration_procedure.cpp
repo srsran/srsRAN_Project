@@ -11,6 +11,7 @@
 #include "ue_configuration_procedure.h"
 #include "../../ran/gnb_format.h"
 #include "../converters/asn1_cell_group_config_helpers.h"
+#include "../converters/scheduler_configuration_helpers.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/rlc/rlc_factory.h"
 #include "srsgnb/scheduler/config/logical_channel_config_factory.h"
@@ -152,23 +153,7 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
   }
 
   // Create Scheduler UE Reconfig Request that will be embedded in the mac configuration request.
-  mac_ue_reconf_req.sched_cfg.cells.resize(1);
-  mac_ue_reconf_req.sched_cfg.cells[0].cell_index    = to_du_cell_index(0);
-  mac_ue_reconf_req.sched_cfg.cells[0].serv_cell_cfg = ue->resources->spcell_cfg.spcell_cfg_ded;
-  mac_ue_reconf_req.sched_cfg.sched_request_config_list =
-      mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config;
-  for (const du_ue_srb& bearer : ue->bearers.srbs()) {
-    mac_ue_reconf_req.sched_cfg.lc_config_list.emplace_back(
-        config_helpers::make_default_logical_channel_config(bearer.lcid()));
-    auto& sched_lc_ch = mac_ue_reconf_req.sched_cfg.lc_config_list.back();
-    sched_lc_ch.sr_id.emplace(mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
-  }
-  for (const du_ue_drb& bearer : ue->bearers.drbs()) {
-    mac_ue_reconf_req.sched_cfg.lc_config_list.emplace_back(
-        config_helpers::make_default_logical_channel_config(bearer.lcid));
-    auto& sched_lc_ch = mac_ue_reconf_req.sched_cfg.lc_config_list.back();
-    sched_lc_ch.sr_id.emplace(mac_ue_reconf_req.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
-  }
+  mac_ue_reconf_req.sched_cfg = create_scheduler_ue_config_request(*ue);
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_ue_reconf_req);
 }

@@ -78,8 +78,8 @@ protected:
 
   void set_sr_offset(du_ue_index_t ue_index, du_cell_index_t cell_idx, unsigned sr_offset)
   {
-    this->cell_res_alloc.next_context_update_result.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg
-        ->sr_res_list[0]
+    this->cell_res_alloc.next_context_update_result.cells[0]
+        .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0]
         .offset = sr_offset;
   }
 
@@ -134,12 +134,11 @@ TEST_F(du_manager_ue_creation_tester,
   // Test Preamble.
   // > Generate SR offsets for two UEs.
   du_ue_index_t ue_idx1 = to_du_ue_index(0), ue_idx2 = to_du_ue_index(1);
-  unsigned      sr_period = sr_periodicity_to_slot(
-      this->cell_res_alloc.next_context_update_result.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg
-          ->sr_res_list[0]
-          .period);
-  unsigned sr_offset1 = test_rgen::uniform_int<unsigned>(0, sr_period - 1);
-  unsigned sr_offset2 = test_rgen::uniform_int<unsigned>(0, sr_period - 1);
+  unsigned      sr_period  = sr_periodicity_to_slot(this->cell_res_alloc.next_context_update_result.cells[0]
+                                                  .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0]
+                                                  .period);
+  unsigned      sr_offset1 = test_rgen::uniform_int<unsigned>(0, sr_period - 1);
+  unsigned      sr_offset2 = test_rgen::uniform_int<unsigned>(0, sr_period - 1);
   // > Create first UE.
   set_sr_offset(ue_idx1, to_du_cell_index(0), sr_offset1);
   start_procedure(ue_idx1, to_rnti(0x4601));
@@ -160,8 +159,8 @@ TEST_F(du_manager_ue_creation_tester,
   // > UE SR Offsets passed to scheduler match the ones generated.
   ASSERT_FALSE(req1.mac_cell_group_cfg.scheduling_request_config.empty());
   ASSERT_FALSE(req2.mac_cell_group_cfg.scheduling_request_config.empty());
-  const auto& sr_res_list1 = req1.sched_cfg.cells[0].serv_cell_cfg->ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
-  const auto& sr_res_list2 = req2.sched_cfg.cells[0].serv_cell_cfg->ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+  const auto& sr_res_list1 = req1.sched_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+  const auto& sr_res_list2 = req2.sched_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
   ASSERT_FALSE(sr_res_list1.empty());
   ASSERT_FALSE(sr_res_list2.empty());
   ASSERT_EQ(sr_res_list1[0].offset, sr_offset1);

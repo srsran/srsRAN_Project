@@ -201,8 +201,8 @@ protected:
     auto ue_creation_req     = make_default_sched_ue_creation_request();
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
-    ue_creation_req.cfg.cells[0].serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack
-        [0] = params.k1;
+    ue_creation_req.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack[0] =
+        params.k1;
 
     auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
                            ue_creation_req.cfg.lc_config_list.end(),

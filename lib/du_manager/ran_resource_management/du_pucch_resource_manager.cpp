@@ -35,11 +35,11 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
 bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 {
   // TODO: Support multiple BWPs per cell.
-  cell_grp_cfg.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg = default_pucch_cfg;
-  auto& target_pucch_cfg = *cell_grp_cfg.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg;
+  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg = default_pucch_cfg;
+  auto& target_pucch_cfg = *cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg;
   auto& sr_res_list      = target_pucch_cfg.sr_res_list;
 
-  auto&    free_list = cells[cell_grp_cfg.spcell_cfg.cell_index].sr_offset_free_list;
+  auto&    free_list = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_offset_free_list;
   unsigned i         = 0;
   for (; i != sr_res_list.size(); ++i) {
     if (free_list.empty()) {
@@ -61,7 +61,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 
 void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cfg)
 {
-  for (auto& sr : cell_grp_cfg.spcell_cfg.spcell_cfg_ded.ul_config->init_ul_bwp.pucch_cfg->sr_res_list) {
-    cells[cell_grp_cfg.spcell_cfg.cell_index].sr_offset_free_list.push_back(sr.offset);
+  for (auto& sr : cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list) {
+    cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_offset_free_list.push_back(sr.offset);
   }
 }

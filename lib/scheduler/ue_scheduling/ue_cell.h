@@ -20,11 +20,11 @@ namespace srsgnb {
 class ue_cell
 {
 public:
-  ue_cell(du_ue_index_t                                ue_index_,
-          rnti_t                                       crnti_val,
-          const scheduler_ue_expert_config&            expert_cfg_,
-          const cell_configuration&                    cell_cfg_common_,
-          const serving_cell_ue_configuration_request& ue_serv_cell);
+  ue_cell(du_ue_index_t                     ue_index_,
+          rnti_t                            crnti_val,
+          const scheduler_ue_expert_config& expert_cfg_,
+          const cell_configuration&         cell_cfg_common_,
+          const serving_cell_config&        ue_serv_cell);
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;

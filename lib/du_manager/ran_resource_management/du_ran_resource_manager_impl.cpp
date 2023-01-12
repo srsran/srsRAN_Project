@@ -78,8 +78,8 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
     return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
   }
   ue_res_pool.emplace(ue_index);
-  auto& mcg                 = ue_res_pool[ue_index].cg_cfg;
-  mcg.spcell_cfg.cell_index = INVALID_DU_CELL_INDEX;
+  auto& mcg = ue_res_pool[ue_index].cg_cfg;
+  mcg.cells.clear();
 
   // UE initialized PCell.
   if (not allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX)) {
@@ -100,7 +100,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   du_ue_resource_update_response resp;
 
   // > Deallocate resources for previously configured cells that have now been removed or changed.
-  if (pcell_idx != ue_mcg.spcell_cfg.cell_index) {
+  if (ue_mcg.cells.contains(0) and ue_mcg.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
     // >> PCell changed. Deallocate PCell resources.
     deallocate_cell_resources(ue_index, SERVING_CELL_PCELL_IDX);
   }
@@ -110,8 +110,8 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   }
   for (const f1ap_scell_to_setup& scell : upd_req.scells_to_setup) {
     // >> If SCells to be modified changed DU Cell Index.
-    if (ue_mcg.scells.contains(scell.serv_cell_index) and
-        ue_mcg.scells[scell.serv_cell_index].cell_index != scell.cell_index) {
+    if (ue_mcg.cells.contains(scell.serv_cell_index) and
+        ue_mcg.cells[scell.serv_cell_index].serv_cell_cfg.cell_index != scell.cell_index) {
       deallocate_cell_resources(ue_index, scell.serv_cell_index);
     }
   }
@@ -155,7 +155,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   }
 
   // > Allocate resources for new or modified cells.
-  if (pcell_idx != ue_mcg.spcell_cfg.cell_index) {
+  if (not ue_mcg.cells.contains(0) or ue_mcg.cells[0].serv_cell_cfg.cell_index != pcell_idx) {
     // >> PCell changed. Allocate new PCell resources.
     if (not allocate_cell_resources(ue_index, pcell_idx, SERVING_CELL_PCELL_IDX)) {
       resp.release_required = true;
@@ -177,11 +177,8 @@ void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
   srsgnb_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
   cell_group_config& ue_mcg = ue_res_pool[ue_index].cg_cfg;
 
-  for (const auto& sc : ue_mcg.scells) {
-    deallocate_cell_resources(ue_index, sc.serv_cell_index);
-  }
-  if (ue_mcg.spcell_cfg.cell_index != INVALID_DU_CELL_INDEX) {
-    deallocate_cell_resources(ue_index, SERVING_CELL_PCELL_IDX);
+  for (const auto& sc : ue_mcg.cells) {
+    deallocate_cell_resources(ue_index, sc.serv_cell_idx);
   }
   ue_res_pool.erase(ue_index);
 }
@@ -194,11 +191,12 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
 
   if (serv_cell_index == SERVING_CELL_PCELL_IDX) {
     // It is a PCell.
-    srsgnb_assert(ue_res.spcell_cfg.cell_index == INVALID_DU_CELL_INDEX, "Reallocation of PCell detected");
-    ue_res.spcell_cfg.cell_index     = cell_index;
-    ue_res.spcell_cfg.serv_cell_idx  = SERVING_CELL_PCELL_IDX;
-    ue_res.spcell_cfg.spcell_cfg_ded = default_ue_cell_cfg;
-    ue_res.mcg_cfg                   = config_helpers::make_initial_mac_cell_group_config();
+    srsgnb_assert(not ue_res.cells.contains(0), "Reallocation of PCell detected");
+    ue_res.cells.emplace(to_du_cell_index(0));
+    ue_res.cells[0].serv_cell_idx            = SERVING_CELL_PCELL_IDX;
+    ue_res.cells[0].serv_cell_cfg            = default_ue_cell_cfg;
+    ue_res.cells[0].serv_cell_cfg.cell_index = cell_index;
+    ue_res.mcg_cfg                           = config_helpers::make_initial_mac_cell_group_config();
     // TODO: Move to helper.
     ue_res.pcg_cfg.p_nr_fr1            = 10;
     ue_res.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
@@ -208,10 +206,11 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
       return false;
     }
   } else {
-    srsgnb_assert(not ue_res.scells.contains(serv_cell_index), "Reallocation of SCell detected");
-    ue_res.scells.emplace(serv_cell_index);
-    ue_res.scells[serv_cell_index].cell_index      = cell_index;
-    ue_res.scells[serv_cell_index].serv_cell_index = serv_cell_index;
+    srsgnb_assert(not ue_res.cells.contains(serv_cell_index), "Reallocation of SCell detected");
+    ue_res.cells.emplace(serv_cell_index);
+    ue_res.cells[serv_cell_index].serv_cell_idx            = serv_cell_index;
+    ue_res.cells[serv_cell_index].serv_cell_cfg            = default_ue_cell_cfg;
+    ue_res.cells[serv_cell_index].serv_cell_cfg.cell_index = cell_index;
     // TODO: Allocate SCell params.
   }
   return true;
@@ -223,12 +222,12 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
 
   // Return resources back to free lists.
   if (serv_cell_index == SERVING_CELL_PCELL_IDX) {
-    srsgnb_assert(ue_res.spcell_cfg.cell_index != INVALID_DU_CELL_INDEX,
+    srsgnb_assert(not ue_res.cells.empty() and ue_res.cells[0].serv_cell_cfg.cell_index != INVALID_DU_CELL_INDEX,
                   "Double deallocation of same UE cell resources detected");
     pucch_res_mng.dealloc_resources(ue_res);
-    ue_res.spcell_cfg.cell_index = INVALID_DU_CELL_INDEX;
+    ue_res.cells[0].serv_cell_cfg.cell_index = INVALID_DU_CELL_INDEX;
   } else {
     // TODO: Remove of SCell params.
-    ue_res.scells.erase(serv_cell_index);
+    ue_res.cells.erase(serv_cell_index);
   }
 }

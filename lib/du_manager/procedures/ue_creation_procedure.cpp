@@ -10,6 +10,7 @@
 
 #include "ue_creation_procedure.h"
 #include "../converters/asn1_cell_group_config_helpers.h"
+#include "../converters/scheduler_configuration_helpers.h"
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
@@ -181,23 +182,7 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
   mac_ue_create_msg.ue_activity_timer = &ue_ctx->activity_timer;
 
   // Create Scheduler UE Config Request that will be embedded in the mac UE creation request.
-  mac_ue_create_msg.sched_cfg.cells.resize(1);
-  mac_ue_create_msg.sched_cfg.cells[0].cell_index    = to_du_cell_index(0);
-  mac_ue_create_msg.sched_cfg.cells[0].serv_cell_cfg = ue_ctx->resources->spcell_cfg.spcell_cfg_ded;
-  mac_ue_create_msg.sched_cfg.sched_request_config_list =
-      mac_ue_create_msg.mac_cell_group_cfg.scheduling_request_config;
-  for (const du_ue_srb& bearer : ue_ctx->bearers.srbs()) {
-    mac_ue_create_msg.sched_cfg.lc_config_list.emplace_back(
-        config_helpers::make_default_logical_channel_config(bearer.lcid()));
-    auto& sched_lc_ch = mac_ue_create_msg.sched_cfg.lc_config_list.back();
-    sched_lc_ch.sr_id.emplace(mac_ue_create_msg.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
-  }
-  for (const du_ue_drb& bearer : ue_ctx->bearers.drbs()) {
-    mac_ue_create_msg.sched_cfg.lc_config_list.emplace_back(
-        config_helpers::make_default_logical_channel_config(bearer.lcid));
-    auto& sched_lc_ch = mac_ue_create_msg.sched_cfg.lc_config_list.back();
-    sched_lc_ch.sr_id.emplace(mac_ue_create_msg.mac_cell_group_cfg.scheduling_request_config.back().sr_id);
-  }
+  mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx);
 
   // Request MAC to create new UE.
   return mac_mng.ue_cfg.handle_ue_create_request(mac_ue_create_msg);

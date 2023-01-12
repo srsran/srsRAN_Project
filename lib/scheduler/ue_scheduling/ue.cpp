@@ -25,7 +25,8 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   sched_request_configs(req.cfg.sched_request_config_list)
 {
   for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
-    du_cells[i] = std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i]);
+    du_cells[i] =
+        std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i].serv_cell_cfg);
     ue_cells.push_back(du_cells[i].get());
   }
 

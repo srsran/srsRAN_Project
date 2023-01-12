@@ -113,16 +113,14 @@ test_bench::test_bench(unsigned pucch_res_common, unsigned n_cces, sr_periodicit
   sched_ue_creation_request_message ue_req =
       make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
 
-  srsgnb_assert(
-      not ue_req.cfg.cells.empty() and ue_req.cfg.cells.back().serv_cell_cfg.has_value() and
-          ue_req.cfg.cells.back().serv_cell_cfg.value().ul_config.has_value() and
-          ue_req.cfg.cells.back().serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
-          ue_req.cfg.cells.back().serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list.size() ==
-              1,
-      "sched_ue_creation_request_message initialization is not complete.");
+  srsgnb_assert(not ue_req.cfg.cells.empty() and ue_req.cfg.cells.back().serv_cell_cfg.ul_config.has_value() and
+                    ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
+                    ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list.size() ==
+                        1,
+                "sched_ue_creation_request_message initialization is not complete.");
 
-  ue_req.cfg.cells.back().serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = period;
-  ue_req.cfg.cells.back().serv_cell_cfg.value().ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = offset;
+  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = period;
+  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = offset;
 
   ues.insert(main_ue_idx, std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
   last_allocated_rnti   = ue_req.crnti;

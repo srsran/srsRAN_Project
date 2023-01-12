@@ -40,7 +40,7 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
   pcg_cfg.p_nr_fr1                    = 10;
   pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
 
-  msg.sched_cfg.cells.push_back({to_du_cell_index(0), config_helpers::make_default_initial_ue_serving_cell_config()});
+  msg.sched_cfg.cells.push_back(config_helpers::make_default_initial_ue_spcell_cell_config());
 
   return msg;
 }

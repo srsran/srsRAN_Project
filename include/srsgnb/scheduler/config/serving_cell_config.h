@@ -211,6 +211,8 @@ struct pdsch_serving_cell_config {
 
 /// \c ServingCellConfig, as per TS38.331.
 struct serving_cell_config {
+  /// DU-specific cell identifier.
+  du_cell_index_t cell_index;
   /// Initial Downlink BWP.
   bwp_downlink_dedicated init_dl_bwp;
   /// List of UE DL BWPs. Size: (0..maxNrofBWPs=4)
@@ -219,6 +221,12 @@ struct serving_cell_config {
   optional<uplink_config> ul_config;
   /// \c pdsch-ServingCellConfig.
   optional<pdsch_serving_cell_config> pdsch_serv_cell_cfg;
+};
+
+/// UE-dedicated configuration for serving cell, as per TS38.331.
+struct cell_config_dedicated {
+  serv_cell_index_t   serv_cell_idx;
+  serving_cell_config serv_cell_cfg;
 };
 
 } // namespace srsgnb
