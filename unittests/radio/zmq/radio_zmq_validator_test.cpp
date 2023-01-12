@@ -80,7 +80,6 @@ const radio_configuration::radio radio_base_config = {base_clock_sources,
                                                       {base_rx_stream},
                                                       1.92e6,
                                                       radio_configuration::over_the_wire_format::DEFAULT,
-                                                      "",
                                                       "none"};
 
 struct test_case_t {
@@ -228,12 +227,6 @@ const std::vector<test_case_t> radio_zmq_validator_test_data = {
      "Only default OTW format is currently supported.\n"},
     {[] {
        radio_configuration::radio config = radio_base_config;
-       config.args                       = "some args";
-       return config;
-     },
-     "Radio general arguments are not currently supported.\n"},
-    {[] {
-       radio_configuration::radio config = radio_base_config;
        config.log_level                  = "some invalid log level";
        return config;
      },
@@ -252,7 +245,7 @@ protected:
     }
 
     // Create pseudo-random sequence generator.
-    factory = create_radio_factory("zmq");
+    factory = create_radio_factory("zmq", "");
     ASSERT_NE(factory, nullptr);
   }
 };

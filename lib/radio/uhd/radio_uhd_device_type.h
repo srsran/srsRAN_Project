@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace srsgnb {
 
 class radio_uhd_device_type
@@ -21,6 +23,10 @@ public:
   radio_uhd_device_type(types type_) : type(type_) {}
   radio_uhd_device_type(std::string mboard_name)
   {
+    for (char& c : mboard_name) {
+      c = std::toupper(c);
+    }
+
     if (mboard_name.find("B2") != std::string::npos) {
       type = types::B200;
     } else if (mboard_name.find("X3") != std::string::npos) {
@@ -48,6 +54,7 @@ public:
   }
   bool operator==(const radio_uhd_device_type& other) const { return type == other.type; }
   bool operator==(const types& other) const { return type == other; }
+       operator const types&() { return type; }
 
 private:
   types type = types::UNKNOWN;

@@ -70,7 +70,7 @@ static const unsigned max_nof_concurrent_requests = 10;
 static const unsigned ul_to_dl_subframe_offset    = 1;
 
 static std::string                               driver_name = "zmq";
-static std::string                               device_arguments;
+static std::string                               device_address;
 static std::vector<std::string>                  tx_channel_args;
 static std::vector<std::string>                  rx_channel_args;
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::DEFAULT;
@@ -78,8 +78,8 @@ static radio_configuration::clock_sources        clock_src  = {};
 static sampling_rate                             srate      = sampling_rate::from_MHz(61.44);
 static phy_time_unit                             time_advance_calibration = phy_time_unit::from_seconds(0.0);
 static const lower_phy_ta_offset                 ta_offset                = lower_phy_ta_offset::n0;
-static const double                              tx_gain                  = 60.0;
-static const double                              rx_gain                  = 70.0;
+static double                                    tx_gain                  = 60.0;
+static double                                    rx_gain                  = 70.0;
 
 /// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
 static const std::array<uint16_t, NOF_NUMEROLOGIES> nof_prb_dl_grid = {106, 51, 24, 0, 0};
@@ -114,7 +114,7 @@ static float amplitude_ceiling_dBFS = -0.1F;
 
 /// ZMQ configuration parameters.
 static std::string rx_address = "tcp://localhost:6000";
-static std::string tx_address = "tcp://*:5000";
+static std::string tx_address = "tcp://*:6000";
 
 /// Defines a set of configuration profiles.
 static const std::vector<configuration_profile> profiles = {
@@ -122,7 +122,7 @@ static const std::vector<configuration_profile> profiles = {
      "Single 20MHz FDD in band n7 using ZMQ.",
      []() {
        driver_name              = "zmq";
-       device_arguments         = "";
+       device_address           = "";
        srate                    = sampling_rate::from_MHz(61.44);
        time_advance_calibration = phy_time_unit::from_seconds(-16.0F / srate.to_Hz());
        dl_arfcn                 = 536020;
@@ -133,11 +133,11 @@ static const std::vector<configuration_profile> profiles = {
        tx_channel_args.emplace_back(tx_address);
        rx_channel_args.emplace_back(rx_address);
      }},
-    {"uhd_20MHz_n7",
-     "Single 20MHz FDD in band n7 using UHD.",
+    {"b200_20MHz_n7",
+     "Single 20MHz FDD in band n7 using UHD and B200.",
      []() {
        driver_name      = "uhd";
-       device_arguments = "type=b200";
+       device_address   = "type=b200";
        srate            = sampling_rate::from_MHz(23.04);
        dl_arfcn         = 536020;
        K_ssb            = 6;
@@ -147,9 +147,25 @@ static const std::vector<configuration_profile> profiles = {
        clock_src.clock  = radio_configuration::clock_sources::source::INTERNAL;
        clock_src.sync   = radio_configuration::clock_sources::source::INTERNAL;
      }},
+    {"x300_20MHz_n7",
+     "Single 20MHz FDD in band n7 using UHD and X300.",
+     []() {
+       driver_name      = "uhd";
+       device_address   = "type=x300,send_frame_size=8000,recv_frame_size=8000";
+       srate            = sampling_rate::from_MHz(184.32 / 8);
+       dl_arfcn         = 536020;
+       K_ssb            = 6;
+       offset_to_pointA = 40;
+       band             = nr_band::n7;
+       otw_format       = radio_configuration::over_the_wire_format::SC16;
+       clock_src.clock  = radio_configuration::clock_sources::source::EXTERNAL;
+       clock_src.sync   = radio_configuration::clock_sources::source::EXTERNAL;
+       tx_gain          = 5.0;
+       rx_gain          = 5.0;
+     }},
     {"zmq_20MHz_n41", "Single 20MHz TDD in band n41 using ZMQ.", []() {
        driver_name      = "zmq";
-       device_arguments = "";
+       device_address   = "";
        srate            = sampling_rate::from_MHz(61.44);
        dl_arfcn         = 520000;
        K_ssb            = 7;
@@ -485,7 +501,7 @@ static fapi::carrier_config generate_carrier_config_tlv()
 static std::unique_ptr<radio_session> build_radio(task_executor& executor, radio_notification_handler& radio_handler)
 {
   radio_params params;
-  params.device_args     = device_arguments;
+  params.device_args     = device_address;
   params.log_level       = log_level;
   params.srate           = srate;
   params.otw_format      = otw_format;
@@ -498,7 +514,7 @@ static std::unique_ptr<radio_session> build_radio(task_executor& executor, radio
   params.rx_gain         = rx_gain;
   params.rx_channel_args = rx_channel_args;
 
-  return create_radio(driver_name, params, executor, radio_handler);
+  return create_radio(driver_name, device_address, params, executor, radio_handler);
 }
 
 static void fill_cell_prach_cfg(du_cell_config& cell_cfg)

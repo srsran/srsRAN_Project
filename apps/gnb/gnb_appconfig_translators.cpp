@@ -8,8 +8,6 @@ using namespace srsgnb;
 static constexpr subcarrier_spacing scs       = subcarrier_spacing::kHz15;
 static constexpr cyclic_prefix      cp        = cyclic_prefix::NORMAL;
 static constexpr unsigned           nof_ports = 1U;
-static constexpr double             tx_gain   = 60.0;
-static constexpr double             rx_gain   = 70.0;
 
 srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig& config)
 {
@@ -121,6 +119,8 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
     // NOTE: ZMQ has a delay of 16 samples, so the time advance calibration is adjusted.
     if (config.rf_driver_cfg.device_driver == "zmq") {
       out_cfg.time_advance_calibration = phy_time_unit::from_seconds(-16.0 / out_cfg.srate.to_Hz());
+    } else if (config.rf_driver_cfg.device_address.find("type=x300") != std::string::npos) {
+      out_cfg.time_advance_calibration = phy_time_unit::from_seconds(108.0 / out_cfg.srate.to_Hz());
     }
 
     out_cfg.tx_scale =
@@ -200,32 +200,34 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
 
   out_cfg.log_level        = config.log_cfg.radio_level;
   out_cfg.sampling_rate_hz = config.rf_driver_cfg.srate_MHz * 1e6;
-  out_cfg.args             = config.rf_driver_cfg.device_args;
-  out_cfg.otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
-  out_cfg.clock.clock      = radio_configuration::clock_sources::source::DEFAULT;
-  out_cfg.clock.sync       = radio_configuration::clock_sources::source::DEFAULT;
+  out_cfg.otw_format       = radio_configuration::to_otw_format(config.rf_driver_cfg.otw_format);
+  out_cfg.clock.clock      = radio_configuration::to_clock_source(config.rf_driver_cfg.clock_source);
+  out_cfg.clock.sync       = radio_configuration::to_clock_source(config.rf_driver_cfg.synch_source);
 
-  if (config.rf_driver_cfg.device_driver == "uhd") {
-    out_cfg.otw_format  = radio_configuration::over_the_wire_format::SC12;
-    out_cfg.clock.clock = radio_configuration::clock_sources::source::INTERNAL;
-    out_cfg.clock.sync  = radio_configuration::clock_sources::source::INTERNAL;
-  }
+  const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(config.rf_driver_cfg.stream_arguments, "tx_port");
+  const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(config.rf_driver_cfg.stream_arguments, "rx_port");
 
-  const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(config.rf_driver_cfg.device_args, "tx_port");
-  const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(config.rf_driver_cfg.device_args, "rx_port");
-
+  // For each sector...
   for (unsigned sector_id = 0; sector_id != config.cells_cfg.size(); ++sector_id) {
-    // For each channel in the streams...
+    // Select cell configuration.
+    const base_cell_appconfig& cell = config.cells_cfg[sector_id].cell;
+
+    // Each cell is mapped to a different stream.
     radio_configuration::stream tx_stream_config;
     radio_configuration::stream rx_stream_config;
 
-    const base_cell_appconfig& cell = config.cells_cfg[sector_id].cell;
+    // Deduce center frequencies.
+    double cell_tx_freq_Hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
+    double cell_rx_freq_Hz = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn));
+
+    // For each port in the cell...
     for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config = {};
-      tx_ch_config.freq.center_frequency_hz     = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
+      tx_ch_config.freq.center_frequency_hz     = cell_tx_freq_Hz;
+      tx_ch_config.freq.lo_frequency_hz         = 0.0;
+      tx_ch_config.gain_dB                      = config.rf_driver_cfg.tx_gain_dB;
 
-      tx_ch_config.gain_dB = tx_gain;
       // Add the tx ports.
       if (config.rf_driver_cfg.device_driver == "zmq") {
         srsgnb_assert(sector_id * nof_ports + port_id < zmq_tx_addr.size(),
@@ -235,9 +237,10 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
       tx_stream_config.channels.emplace_back(tx_ch_config);
 
       radio_configuration::channel rx_ch_config = {};
-      rx_ch_config.freq.center_frequency_hz =
-          band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn));
-      rx_ch_config.gain_dB = rx_gain;
+      rx_ch_config.freq.center_frequency_hz     = cell_rx_freq_Hz;
+      rx_ch_config.freq.lo_frequency_hz         = 0.0;
+      rx_ch_config.gain_dB                      = config.rf_driver_cfg.rx_gain_dB;
+
       if (config.rf_driver_cfg.device_driver == "zmq") {
         srsgnb_assert(sector_id * nof_ports + port_id < zmq_rx_addr.size(),
                       "Reception channel arguments out of bounds");

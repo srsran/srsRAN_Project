@@ -11,19 +11,11 @@
 #pragma once
 
 #include "radio_uhd_exception_handler.h"
+#include "radio_uhd_multi_usrp.h"
 #include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsgnb/radio/radio_configuration.h"
 #include "srsgnb/radio/radio_notification_handler.h"
 #include <mutex>
-
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wall"
-#else // __clang__
-#pragma GCC diagnostic ignored "-Wsuggest-override"
-#endif // __clang__
-#include <uhd/usrp/multi_usrp.hpp>
-#pragma GCC diagnostic pop
 
 namespace srsgnb {
 class radio_uhd_rx_stream : public uhd_exception_handler

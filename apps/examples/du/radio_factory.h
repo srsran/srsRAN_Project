@@ -37,6 +37,7 @@ struct radio_params {
 };
 
 std::unique_ptr<radio_session> create_radio(const std::string&          radio_driver,
+                                            const std::string&          device_address,
                                             const radio_params&         params,
                                             task_executor&              executor,
                                             radio_notification_handler& radio_handler);

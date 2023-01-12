@@ -97,12 +97,39 @@ struct radio {
   double sampling_rate_hz;
   /// Indicates the baseband signal transport format between the device and the host.
   over_the_wire_format otw_format;
-  /// \brief Indicates any device specific parameters to create the session.
-  /// \remark Not all driver and/or devices support this feature.
-  std::string args;
   /// Logging level. Leave empty for default.
   std::string log_level;
 };
+
+/// Converts a string into a clock source. No error or invalid type is returned if the string is not valid.
+inline clock_sources::source to_clock_source(const std::string& str)
+{
+  if (str == "internal") {
+    return clock_sources::source::INTERNAL;
+  }
+  if (str == "external") {
+    return clock_sources::source::EXTERNAL;
+  }
+  if (str == "gpsdo") {
+    return clock_sources::source::GPSDO;
+  }
+  return clock_sources::source::DEFAULT;
+}
+
+/// Converts a string into a OTW format. No error or invalid type is returned if the string is not valid.
+inline over_the_wire_format to_otw_format(const std::string& str)
+{
+  if (str == "sc8") {
+    return over_the_wire_format::SC8;
+  }
+  if (str == "sc12") {
+    return over_the_wire_format::SC12;
+  }
+  if (str == "sc16") {
+    return over_the_wire_format::SC16;
+  }
+  return over_the_wire_format::DEFAULT;
+}
 
 /// Interface for validating a given radio configuration.
 class validator
@@ -111,7 +138,12 @@ public:
   /// Default destructor.
   virtual ~validator() = default;
 
-  /// Returns true if the given radio configuration is valid, otherwise false.
+  /// \brief Determines whether a radio configuration is valid.
+  ///
+  /// The call mi
+  ///
+  /// \param[in] config Configuration parameters.
+  /// \return True if the given radio configuration is valid for the given device, otherwise false.
   virtual bool is_configuration_valid(const radio& config) const = 0;
 };
 

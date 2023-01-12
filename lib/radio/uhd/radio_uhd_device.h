@@ -10,19 +10,11 @@
 
 #pragma once
 
+#include "radio_uhd_device_type.h"
 #include "radio_uhd_exception_handler.h"
 #include "radio_uhd_rx_stream.h"
 #include "radio_uhd_tx_stream.h"
 #include "srsgnb/radio/radio_session.h"
-
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wall"
-#else // __clang__
-#pragma GCC diagnostic ignored "-Wsuggest-override"
-#endif // __clang__
-#include <uhd/usrp/multi_usrp.hpp>
-#pragma GCC diagnostic pop
 
 namespace srsgnb {
 
@@ -30,28 +22,164 @@ class radio_uhd_device : public uhd_exception_handler
 {
 private:
   uhd::usrp::multi_usrp::sptr usrp = nullptr;
-  task_executor&              async_executor;
-  radio_notification_handler& notifier;
 
 public:
-  radio_uhd_device(task_executor& async_executor_, radio_notification_handler& notifier_) :
-    async_executor(async_executor_), notifier(notifier_)
-  {
-    // Do nothing.
-  }
+  struct properties {
+    radio_uhd_device_type                                device_type;
+    std::set<radio_configuration::clock_sources::source> supported_clock_sources = {
+        radio_configuration::clock_sources::source::DEFAULT};
+    std::set<radio_configuration::clock_sources::source> supported_sync_sources = {
+        radio_configuration::clock_sources::source::DEFAULT};
+    uhd::meta_range_t                                   tx_gain_range;
+    uhd::meta_range_t                                   rx_gain_range;
+    uhd::meta_range_t                                   tx_lo_freq_range;
+    uhd::meta_range_t                                   rx_lo_freq_range;
+    std::set<radio_configuration::over_the_wire_format> supported_otw_formats = {
+        radio_configuration::over_the_wire_format::DEFAULT};
+  };
 
-  bool usrp_make(const uhd::device_addr_t& dev_addr)
+  bool is_valid() const { return usrp != nullptr; }
+
+  bool usrp_make(const std::string& device_address)
   {
+    // Parse args into dictionary.
+    uhd::device_addr_t device_addr(device_address);
+
     // Destroy any previous USRP instance
     usrp = nullptr;
 
-    Debug("Making USRP object with args '" << dev_addr.to_string() << "'");
+    // If device type or name not given in args, select device from found list.
+    if (not device_addr.has_key("type")) {
+      // Find available devices.
+      uhd::device_addrs_t devices = uhd::device::find(uhd::device_addr_t());
 
-    return safe_execution([this, &dev_addr]() { usrp = uhd::usrp::multi_usrp::make(dev_addr); });
+      // Stop if no device is found.
+      if (devices.empty()) {
+        printf("Error: no radio devices found.\n");
+        return false;
+      }
+
+      // Select the first available device.
+      uhd::device_addr_t first_device_addr = devices.front();
+
+      // Append to the device address the device type.
+      if (first_device_addr.has_key("type")) {
+        device_addr.set("type", first_device_addr.get("type"));
+      }
+    }
+
+    // If device type is known, parse and select default address parameters.
+    if (device_addr.has_key("type")) {
+      // Get the device type.
+      radio_uhd_device_type device_type(device_addr.get("type"));
+
+      // If the device is X300.
+      if (device_type == radio_uhd_device_type::types::X300) {
+        // Set the default master clock rate.
+        if (device_addr.has_key("master_clock_rate")) {
+          device_addr.set("master_clock_rate", "184.32e6");
+        }
+        // Set the default send frame size.
+        if (device_addr.has_key("send_frame_size")) {
+          device_addr.set("send_frame_size", "8000");
+        }
+        // Set the default receive frame size.
+        if (device_addr.has_key("recv_frame_size")) {
+          device_addr.set("recv_frame_size", "8000");
+        }
+      }
+    }
+
+    Debug("Making USRP object with args '" << device_addr.to_string() << "'");
+
+    return safe_execution([this, &device_addr]() { usrp = uhd::usrp::multi_usrp::make(device_addr); });
   }
-  bool get_mboard_name(std::string& mboard_name)
+
+  bool get_properties(properties& props)
   {
-    return safe_execution([this, &mboard_name]() { mboard_name = usrp->get_mboard_name(); });
+    return safe_execution([this, &props]() {
+      uhd::fs_path DEVICE_NAME_PATH("/mboards/0/name");
+      uhd::fs_path CLOCK_SOURCES_PATH("/mboards/0/clock_source/options");
+      uhd::fs_path SYNC_SOURCES_PATH("/mboards/0/time_source/options");
+      uhd::fs_path TX_GAIN_PATH("/mboards/0/dboards/A/tx_frontends/0/gains/PGA0/range");
+      uhd::fs_path RX_GAIN_PATH("/mboards/0/dboards/A/rx_frontends/0/gains/PGA0/range");
+      uhd::fs_path TX_LO_FREQ_PATH("/mboards/0/dboards/A/tx_frontends/0/freq/range");
+      uhd::fs_path RX_LO_FREQ_PATH("/mboards/0/dboards/A/rx_frontends/0/freq/range");
+
+      // Get device tree
+      uhd::property_tree::sptr tree = usrp->get_device()->get_tree();
+
+      // Get device name.
+      std::string device_name = "unknown";
+      if (tree->exists(DEVICE_NAME_PATH)) {
+        device_name = tree->access<std::string>(DEVICE_NAME_PATH).get();
+      }
+      props.device_type = radio_uhd_device_type(device_name);
+
+      // Parse Clock sources
+      if (tree->exists(CLOCK_SOURCES_PATH)) {
+        const std::vector<std::string> clock_sources = tree->access<std::vector<std::string>>(CLOCK_SOURCES_PATH).get();
+        for (const std::string& source : clock_sources) {
+          if (source == "internal") {
+            props.supported_clock_sources.emplace(radio_configuration::clock_sources::source::INTERNAL);
+          } else if (source == "external") {
+            props.supported_clock_sources.emplace(radio_configuration::clock_sources::source::EXTERNAL);
+          } else if (source == "gpsdo") {
+            props.supported_clock_sources.emplace(radio_configuration::clock_sources::source::GPSDO);
+          }
+        }
+      }
+
+      // Parse Sync sources.
+      if (tree->exists(SYNC_SOURCES_PATH)) {
+        const std::vector<std::string> time_sources = tree->access<std::vector<std::string>>(SYNC_SOURCES_PATH).get();
+        for (const std::string& source : time_sources) {
+          if (source == "internal") {
+            props.supported_sync_sources.emplace(radio_configuration::clock_sources::source::INTERNAL);
+          } else if (source == "external") {
+            props.supported_sync_sources.emplace(radio_configuration::clock_sources::source::EXTERNAL);
+          } else if (source == "gpsdo") {
+            props.supported_sync_sources.emplace(radio_configuration::clock_sources::source::GPSDO);
+          }
+        }
+      }
+
+      // Get Tx gain range.
+      if (tree->exists(TX_GAIN_PATH)) {
+        props.tx_gain_range = tree->access<uhd::meta_range_t>(TX_GAIN_PATH).get();
+      }
+
+      // Get Rx gain range.
+      if (tree->exists(RX_GAIN_PATH)) {
+        props.rx_gain_range = tree->access<uhd::meta_range_t>(RX_GAIN_PATH).get();
+      }
+
+      // Get Tx LO frequency range.
+      if (tree->exists(RX_GAIN_PATH)) {
+        props.tx_lo_freq_range = tree->access<uhd::meta_range_t>(TX_LO_FREQ_PATH).get();
+      }
+
+      // Get Rx LO frequency range.
+      if (tree->exists(RX_GAIN_PATH)) {
+        props.rx_lo_freq_range = tree->access<uhd::meta_range_t>(RX_LO_FREQ_PATH).get();
+      }
+
+      // Parse over-the-wire formats.
+      switch (props.device_type) {
+        case radio_uhd_device_type::types::X300:
+          props.supported_otw_formats.emplace(radio_configuration::over_the_wire_format::SC16);
+          break;
+        case radio_uhd_device_type::types::B200:
+          props.supported_otw_formats.emplace(radio_configuration::over_the_wire_format::SC16);
+          props.supported_otw_formats.emplace(radio_configuration::over_the_wire_format::SC12);
+          break;
+        case radio_uhd_device_type::types::N300:
+        case radio_uhd_device_type::types::E3X0:
+        case radio_uhd_device_type::types::UNKNOWN:
+        default:
+          break;
+      }
+    });
   }
   bool get_mboard_sensor_names(std::vector<std::string>& sensors)
   {
@@ -79,6 +207,10 @@ public:
   bool set_time_unknown_pps(const uhd::time_spec_t& timespec)
   {
     return safe_execution([this, &timespec]() { usrp->set_time_unknown_pps(timespec); });
+  }
+  bool set_master_clock_rate(double mcr)
+  {
+    return safe_execution([this, &mcr]() { usrp->set_master_clock_rate(mcr); });
   }
   bool get_time_now(uhd::time_spec_t& timespec)
   {
@@ -120,7 +252,7 @@ public:
 #if UHD_VERSION < 3140099
     return safe_execution([this, &sync_src, &clock_src]() {
       usrp->set_time_source(sync_src);
-      usrp->set_time_source(clock_src);
+      usrp->set_clock_source(clock_src);
     });
 #else
     return safe_execution([this, &sync_source, &clock_source]() { usrp->set_sync_source(clock_source, sync_source); });
@@ -156,7 +288,9 @@ public:
   {
     return safe_execution([this, &timespec]() { usrp->set_command_time(timespec); });
   }
-  std::unique_ptr<radio_uhd_tx_stream> create_tx_stream(const radio_uhd_tx_stream::stream_description& description)
+  std::unique_ptr<radio_uhd_tx_stream> create_tx_stream(task_executor&                                 async_executor,
+                                                        radio_notification_handler&                    notifier,
+                                                        const radio_uhd_tx_stream::stream_description& description)
   {
     std::unique_ptr<radio_uhd_tx_stream> stream =
         std::make_unique<radio_uhd_tx_stream>(usrp, description, async_executor, notifier);
@@ -167,7 +301,8 @@ public:
 
     return nullptr;
   }
-  std::unique_ptr<radio_uhd_rx_stream> create_rx_stream(const radio_uhd_rx_stream::stream_description& description)
+  std::unique_ptr<radio_uhd_rx_stream> create_rx_stream(radio_notification_handler&                    notifier,
+                                                        const radio_uhd_rx_stream::stream_description& description)
   {
     std::unique_ptr<radio_uhd_rx_stream> stream = std::make_unique<radio_uhd_rx_stream>(usrp, description, notifier);
 

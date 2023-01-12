@@ -157,7 +157,7 @@ int main()
   std::string log_level = "warning";
 
   // Create ZMQ factory.
-  std::unique_ptr<radio_factory> factory = create_radio_factory("zmq");
+  std::unique_ptr<radio_factory> factory = create_radio_factory("zmq", "");
   TESTASSERT(factory != nullptr);
 
   // Asynchronous task executor.

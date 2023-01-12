@@ -122,13 +122,6 @@ static bool validate_otw_format(radio_configuration::over_the_wire_format otw_fo
   return true;
 }
 
-static bool validate_radio_args(const std::string& radio_args)
-{
-  // TODO: add sensible check(s) for radio args
-
-  return true;
-}
-
 static bool validate_log_level(const std::string& log_level)
 {
   // Converts to a logger level.
@@ -185,10 +178,6 @@ bool radio_config_zmq_config_validator::is_configuration_valid(const radio_confi
   }
 
   if (!validate_otw_format(config.otw_format)) {
-    return false;
-  }
-
-  if (!validate_radio_args(config.args)) {
     return false;
   }
 

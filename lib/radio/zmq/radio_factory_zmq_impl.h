@@ -22,6 +22,7 @@ public:
   /// Default constructor.
   radio_factory_zmq_impl() = default;
 
+  // See interface for documentation.
   const radio_configuration::validator& get_configuration_validator() override;
 
   // See interface for documentation.

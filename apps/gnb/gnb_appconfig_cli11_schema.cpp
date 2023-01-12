@@ -55,7 +55,13 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
 {
   app.add_option("--srate", rf_driver_params.srate_MHz, "Sample rate in MHz")->capture_default_str();
   app.add_option("--device_driver", rf_driver_params.device_driver, "Device driver name")->capture_default_str();
-  app.add_option("--device_args", rf_driver_params.device_args, "Device arguments")->capture_default_str();
+  app.add_option("--device_addr", rf_driver_params.device_address, "Optional device address.")->capture_default_str();
+  app.add_option("--device_args", rf_driver_params.stream_arguments, "Optional stream arguments.")
+      ->capture_default_str();
+  app.add_option("--tx_gain", rf_driver_params.tx_gain_dB, "Transmit gain in decibels.")->capture_default_str();
+  app.add_option("--rx_gain", rf_driver_params.rx_gain_dB, "Receive gain in decibels.")->capture_default_str();
+  app.add_option("--clock", rf_driver_params.clock_source, "Clock source.")->capture_default_str();
+  app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source.")->capture_default_str();
 }
 
 static void to_aggregation_level(aggregation_level& aggr_lvl, unsigned value)

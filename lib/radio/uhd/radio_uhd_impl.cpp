@@ -11,14 +11,7 @@
 #include "radio_uhd_impl.h"
 #include "radio_uhd_device.h"
 
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wall"
-#else // __clang__
-#pragma GCC diagnostic ignored "-Wsuggest-override"
-#endif // __clang__
 #include <uhd/utils/thread_priority.h>
-#pragma GCC diagnostic pop
 
 using namespace srsgnb;
 
@@ -266,9 +259,13 @@ bool radio_session_uhd_impl::start_rx_stream()
 }
 
 radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio& radio_config,
-                                               task_executor&                    async_executor,
-                                               radio_notification_handler&       notifier_) :
-  device(async_executor, notifier_), sampling_rate_hz(radio_config.sampling_rate_hz)
+                                               task_executor&                    async_executor_,
+                                               radio_notification_handler&       notifier_,
+                                               radio_uhd_device                  device_) :
+  device(std::move(device_)),
+  sampling_rate_hz(radio_config.sampling_rate_hz),
+  async_executor(async_executor_),
+  notifier(notifier_)
 {
   // Disable fast-path (U/L/O) messages.
   setenv("UHD_LOG_FASTPATH_DISABLE", "1", 0);
@@ -277,9 +274,6 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   if (uhd_set_thread_priority(uhd_default_thread_priority, true) != UHD_ERROR_NONE) {
     Warning("Failed to set UHD RT thread priority.");
   }
-
-  // Parse args into dictionary.
-  uhd::device_addr_t device_addr(radio_config.args);
 
   // Set the logging level.
 #ifdef UHD_LOG_INFO
@@ -306,51 +300,6 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   uhd::log::set_console_level(severity_level);
 #endif
 
-  // If device type or name not given in args, select device from found list.
-  if (not device_addr.has_key("type")) {
-    // Find available devices.
-    uhd::device_addrs_t devices = uhd::device::find(uhd::device_addr_t());
-
-    // Stop if no device is found.
-    if (devices.empty()) {
-      printf("Error: no radio devices found.\n");
-      return;
-    }
-
-    // Select the first available device.
-    uhd::device_addr_t first_device_addr = devices.front();
-
-    // Append to the device address the device type.
-    if (first_device_addr.has_key("type")) {
-      device_addr.set("type", first_device_addr.get("type"));
-    }
-  }
-
-  // Parse/Select master clock rate
-  if (not device_addr.has_key("master_clock_rate") and device_addr.has_key("type")) {
-    // Default master clock rate for B200 series
-    std::string mcr;
-    if (std::abs(std::remainder(23.04e6, radio_config.sampling_rate_hz)) < 1.0) {
-      mcr = "23.04e6";
-    } else if (std::abs(std::remainder(23.04e6, radio_config.sampling_rate_hz)) < 1.0) {
-      mcr = "30.72e6";
-    } else if (radio_config.sampling_rate_hz < 11.52e6) {
-      mcr = std::to_string(radio_config.sampling_rate_hz * 4);
-    } else {
-      mcr = std::to_string(radio_config.sampling_rate_hz);
-    }
-
-    if (device_addr["type"] == "x300") {
-      mcr = "184.32e6";
-    } else if (device_addr["type"] == "n3xx") {
-      mcr = "122.88e6";
-    } else if (device_addr["type"] == "e3x0") {
-      mcr = "30.72e6";
-    }
-
-    device_addr.set("master_clock_rate", mcr);
-  }
-
   unsigned total_rx_channel_count = 0;
   for (const radio_configuration::stream& stream_config : radio_config.rx_streams) {
     total_rx_channel_count += stream_config.channels.size();
@@ -361,24 +310,45 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     total_tx_channel_count += stream_config.channels.size();
   }
 
-  // Create UHD handler
-  printf("Opening USRP tx_channels=%d, rx_channels=%d, args: %s\n",
-         total_tx_channel_count,
-         total_rx_channel_count,
-         device_addr.to_string().c_str());
-
-  // Make USRP
-  if (!device.usrp_make(device_addr)) {
-    printf("Error: opening device. %s.\n", device.get_error_message().c_str());
+  if (!device.get_properties(properties)) {
+    fmt::print("Error getting properties.");
     return;
   }
 
-  // If device name is not set, get it from motherboard
-  std::string mboard_name;
-  if (!device.get_mboard_name(mboard_name)) {
-    return;
+  // Parse/Select master clock rate.
+  double mcr = 0.0f;
+  switch (properties.device_type) {
+    case radio_uhd_device_type::types::B200:
+      if (std::abs(std::remainder(23.04e6, radio_config.sampling_rate_hz)) < 1.0) {
+        mcr = 23.04e6;
+      } else if (std::abs(std::remainder(23.04e6, radio_config.sampling_rate_hz)) < 1.0) {
+        mcr = 30.72e6;
+      } else if (radio_config.sampling_rate_hz < 11.52e6) {
+        mcr = radio_config.sampling_rate_hz * 4.0;
+      } else {
+        mcr = radio_config.sampling_rate_hz;
+      }
+      break;
+    case radio_uhd_device_type::types::X300:
+      // X300 do not support setting the master clock rate in runtime.
+      break;
+    case radio_uhd_device_type::types::N300:
+      mcr = 122.88e6;
+      break;
+    case radio_uhd_device_type::types::E3X0:
+      mcr = 30.72e6;
+      break;
+    case radio_uhd_device_type::types::UNKNOWN:
+    default:
+      break;
   }
-  type = radio_uhd_device_type(mboard_name);
+
+  if (std::isnormal(mcr)) {
+    if (device.set_master_clock_rate(mcr)) {
+      fmt::print("Error setting master clock rate.\n");
+      return;
+    }
+  }
 
   bool        is_locked = false;
   std::string sensor_name;
@@ -453,7 +423,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     }
 
     // Create transmit stream.
-    if (tx_streams.emplace_back(device.create_tx_stream(stream_description)) == nullptr) {
+    if (tx_streams.emplace_back(device.create_tx_stream(async_executor, notifier, stream_description)) == nullptr) {
       return;
     }
 
@@ -502,7 +472,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     }
 
     // Create receive stream.
-    if (rx_streams.emplace_back(device.create_rx_stream(stream_description)) == nullptr) {
+    if (rx_streams.emplace_back(device.create_rx_stream(notifier, stream_description)) == nullptr) {
       return;
     }
 
@@ -575,9 +545,9 @@ baseband_gateway_receiver::metadata radio_session_uhd_impl::receive(baseband_gat
 {
   baseband_gateway_receiver::metadata ret = {};
   report_fatal_error_if_not(stream_id < rx_streams.size(),
-                            "Stream identifier (%d) exceeds the number of receive streams  (%d).",
+                            "Stream identifier ({}) exceeds the number of receive streams  ({}).",
                             stream_id,
-                            (int)rx_streams.size());
+                            rx_streams.size());
 
   if (!start_rx_stream()) {
     return ret;
@@ -599,18 +569,11 @@ std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_config
                                                               task_executor&                    async_task_executor,
                                                               radio_notification_handler&       notifier)
 {
-  std::unique_ptr<radio_session_uhd_impl> device =
-      std::make_unique<radio_session_uhd_impl>(config, async_task_executor, notifier);
-  if (!device->is_successful()) {
+  std::unique_ptr<radio_session_uhd_impl> session =
+      std::make_unique<radio_session_uhd_impl>(config, async_task_executor, notifier, device);
+  if (!session->is_successful()) {
     return nullptr;
   }
 
-  return std::move(device);
-}
-
-radio_config_uhd_config_validator srsgnb::radio_factory_uhd_impl::config_validator;
-
-const radio_configuration::validator& radio_factory_uhd_impl::get_configuration_validator()
-{
-  return config_validator;
+  return std::move(session);
 }
