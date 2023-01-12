@@ -104,13 +104,13 @@ TEST_F(ue_config_tester, when_du_manager_receives_ue_config_request_then_mac_and
   ASSERT_TRUE(this->mac.last_ue_reconf_msg.has_value());
   ASSERT_EQ(this->mac.last_ue_reconf_msg->ue_index, test_ue->ue_index);
   ASSERT_NE(this->ue_mng.find_ue(this->mac.last_ue_reconf_msg->ue_index), nullptr);
-  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers.size(), 2);
-  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers[0].lcid, LCID_SRB2);
-  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers[0].dl_bearer, nullptr);
-  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers[0].ul_bearer, nullptr);
-  ASSERT_FALSE(is_srb(this->mac.last_ue_reconf_msg->bearers[1].lcid));
-  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers[1].dl_bearer, nullptr);
-  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers[1].ul_bearer, nullptr);
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod.size(), 2);
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].lcid, LCID_SRB2);
+  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer, nullptr);
+  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer, nullptr);
+  ASSERT_FALSE(is_srb(this->mac.last_ue_reconf_msg->bearers_to_addmod[1].lcid));
+  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers_to_addmod[1].dl_bearer, nullptr);
+  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers_to_addmod[1].ul_bearer, nullptr);
 
   // Check F1AP received request to update UE configuration with valid params.
   ASSERT_TRUE(this->f1ap.last_ue_config.has_value());
@@ -152,7 +152,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Append data buffer.
   mac_rx_sdu.append(test_payload.copy());
   // > Push MAC Rx SDU through MAC logical channel.
-  mac.last_ue_reconf_msg->bearers[0].ul_bearer->on_new_sdu({mac_rx_sdu.copy()});
+  mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_rx_sdu.copy()});
   // > Check arrival of F1-C Tx SDU to F1-C bearer.
   ASSERT_EQ(test_payload, f1ap.f1_ues[test_ue->ue_index].f1c_bearers[srb_id_t::srb2].last_tx_sdu);
 
@@ -162,8 +162,8 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Push F1-C Rx SDU through F1-C bearer Rx SDU notifier.
   f1ap.last_ue_config->f1c_bearers_to_add[0].rx_sdu_notifier->on_new_sdu(std::move(f1c_rx_sdu));
   // > Check arrival of MAC Tx SDU to MAC logical channel.
-  auto mac_tx_sdu =
-      mac.last_ue_reconf_msg->bearers[0].dl_bearer->on_new_tx_sdu(test_payload.length() + dummy_rlc_header.size());
+  auto        mac_tx_sdu = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(test_payload.length() +
+                                                                                          dummy_rlc_header.size());
   byte_buffer extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.end());
   ASSERT_EQ(test_payload, extracted_payload);
 }
@@ -183,7 +183,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Append data buffer.
   mac_sdu.append(test_payload.copy());
   // > Push MAC Rx SDU through MAC logical channel.
-  mac.last_ue_reconf_msg->bearers[0].ul_bearer->on_new_sdu({mac_sdu.copy()});
+  mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_sdu.copy()});
   // > Check arrival of F1-U Tx SDU to F1-U bearer.
   ASSERT_EQ(test_payload, bearer.last_sdu);
 
@@ -195,8 +195,8 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Push F1-U Rx SDU through F1-U bearer Rx SDU notifier.
   bearer.du_rx.on_new_sdu(std::move(rx_sdu));
   // > Check arrival of MAC Tx SDU to MAC logical channel.
-  auto mac_tx_sdu =
-      mac.last_ue_reconf_msg->bearers[0].dl_bearer->on_new_tx_sdu(test_payload.length() + dummy_rlc_header.size());
+  auto        mac_tx_sdu = mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer->on_new_tx_sdu(test_payload.length() +
+                                                                                          dummy_rlc_header.size());
   byte_buffer extracted_payload(mac_tx_sdu.begin() + dummy_rlc_header.size(), mac_tx_sdu.end());
   ASSERT_EQ(test_payload, extracted_payload);
 }
@@ -211,10 +211,10 @@ TEST_F(ue_config_tester, when_f1u_gw_fails_to_create_bearer_then_du_ue_configura
   // Check MAC received request to update UE configuration without the DRB that could not be created.
   ASSERT_TRUE(this->mac.last_ue_reconf_msg.has_value());
   ASSERT_EQ(this->mac.last_ue_reconf_msg->ue_index, test_ue->ue_index);
-  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers.size(), 1);
-  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers[0].lcid, LCID_SRB2);
-  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers[0].dl_bearer, nullptr);
-  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers[0].ul_bearer, nullptr);
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod.size(), 1);
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].lcid, LCID_SRB2);
+  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer, nullptr);
+  ASSERT_NE(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer, nullptr);
 
   // Check F1AP received request to update UE configuration with valid params.
   ASSERT_TRUE(this->f1ap.last_ue_config.has_value());

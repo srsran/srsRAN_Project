@@ -16,7 +16,6 @@
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 #include <random>

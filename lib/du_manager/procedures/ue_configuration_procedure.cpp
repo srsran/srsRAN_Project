@@ -133,8 +133,8 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
 
   for (srb_id_t srbid : request.srbs_to_setup) {
     du_ue_srb& bearer = ue->bearers.srbs()[srbid];
-    mac_ue_reconf_req.bearers.emplace_back();
-    auto& lc_ch     = mac_ue_reconf_req.bearers.back();
+    mac_ue_reconf_req.bearers_to_addmod.emplace_back();
+    auto& lc_ch     = mac_ue_reconf_req.bearers_to_addmod.back();
     lc_ch.lcid      = bearer.lcid();
     lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;
@@ -145,8 +145,8 @@ async_task<mac_ue_reconfiguration_response_message> ue_configuration_procedure::
       continue;
     }
     du_ue_drb& bearer = ue->bearers.drbs()[drb.drb_id];
-    mac_ue_reconf_req.bearers.emplace_back();
-    auto& lc_ch     = mac_ue_reconf_req.bearers.back();
+    mac_ue_reconf_req.bearers_to_addmod.emplace_back();
+    auto& lc_ch     = mac_ue_reconf_req.bearers_to_addmod.back();
     lc_ch.lcid      = bearer.lcid;
     lc_ch.ul_bearer = &bearer.connector.mac_rx_sdu_notifier;
     lc_ch.dl_bearer = &bearer.connector.mac_tx_sdu_notifier;

@@ -1,7 +1,6 @@
 
 #include "lib/scheduler/ue_scheduling/ue_configuration.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
-#include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <gtest/gtest.h>
 

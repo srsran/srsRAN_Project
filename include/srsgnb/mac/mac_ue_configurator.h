@@ -49,7 +49,7 @@ struct mac_ue_reconfiguration_request_message {
   du_ue_index_t                             ue_index;
   du_cell_index_t                           pcell_index;
   rnti_t                                    crnti;
-  std::vector<mac_logical_channel_to_setup> bearers;
+  std::vector<mac_logical_channel_to_setup> bearers_to_addmod;
   std::vector<lcid_t>                       bearers_to_rem;
   mac_cell_group_config                     mac_cell_group_cfg;
   physical_cell_group_config                phy_cell_group_cfg;
