@@ -20,7 +20,8 @@ namespace srsgnb {
 /// Defines Paging scheduler that is used to allocate resources to send paging information to UE in a given slot.
 class paging_scheduler
 {
-  using ue_identity_index_type    = unsigned;
+  using five_g_s_tmsi             = uint64_t;
+  using full_i_rnti               = uint64_t;
   using paging_retries_count_type = unsigned;
 
 public:
@@ -46,6 +47,7 @@ private:
   /// \param[in] pdsch_time_res Slot at which PDSCH needs to be scheduled.
   /// \param[in] pg_msg Paging indication message.
   /// \param[in] i_s Index of the Paging Occasion.
+  /// \return True if paging scheduling is successful, false otherwise.
   bool schedule_paging_in_search_space_id_gt_0(cell_slot_resource_allocator&    res_grid,
                                                slot_point                       sl_point,
                                                unsigned                         pdsch_time_res,
@@ -59,6 +61,7 @@ private:
   /// \param[in] pdsch_time_res Slot at which PDSCH needs to be scheduled.
   /// \param[in] pg_msg Paging indication message.
   /// \param[in] i_s Index of the Paging Occasion.
+  /// \return True if paging scheduling is successful, false otherwise.
   bool schedule_paging_in_search_space0(cell_slot_resource_allocator&    res_grid,
                                         slot_point                       sl_point,
                                         unsigned                         pdsch_time_res,
@@ -72,6 +75,7 @@ private:
   /// \param[in] pg_msg Paging indication message.
   /// \param[in] beam_idx SSB or beam index which the Paging corresponds to.
   /// \param[in] ss_id Search Space Id used in scheduling paging message.
+  /// \return True if paging allocation is successful, false otherwise.
   bool allocate_paging(cell_slot_resource_allocator&    res_grid,
                        unsigned                         pdsch_time_res,
                        const paging_indication_message& pg_msg,
@@ -135,8 +139,10 @@ private:
 
   /// List of per UE paging indication message yet to be scheduled.
   std::vector<paging_indication_message> paging_pending_ues;
-  /// Mapping between \c UE_ID (UE_ID: 5G-S-TMSI mod 1024) used for calculating PF and PO to paging retries count.
-  std::unordered_map<ue_identity_index_type, paging_retries_count_type> paging_retries;
+  /// Mapping between NG-5G-S-TMSI (48 bits) to paging retries count for CN Paging.
+  std::unordered_map<five_g_s_tmsi, paging_retries_count_type> cn_paging_retries;
+  /// Mapping between I-RNTI-Value (40 bits) to paging retries count for RAN Paging.
+  std::unordered_map<full_i_rnti, paging_retries_count_type> ran_paging_retries;
 
   srslog::basic_logger& logger;
 };

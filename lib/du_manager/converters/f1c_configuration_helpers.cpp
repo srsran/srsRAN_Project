@@ -505,3 +505,30 @@ void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
     std::copy(buf.begin(), buf.end(), f1_cell.gnb_du_sys_info.sib1_msg.begin());
   }
 }
+
+asn1::rrc_nr::paging_s make_asn1_rrc_cell_cn_paging_msg(const uint64_t five_g_s_tmsi)
+{
+  asn1::rrc_nr::paging_record_s pg_rec{};
+  auto&                         rrc_pg_id = pg_rec.ue_id.set_ng_5_g_s_tmsi();
+  rrc_pg_id                               = rrc_pg_id.from_number(five_g_s_tmsi);
+
+  asn1::rrc_nr::paging_s rrc_pg{};
+  rrc_pg.paging_record_list.push_back(pg_rec);
+
+  return rrc_pg;
+}
+
+byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_pcch_pch_msg(uint64_t five_g_s_tmsi)
+{
+  byte_buffer   buf;
+  asn1::bit_ref bref{buf};
+
+  asn1::rrc_nr::pcch_msg_s pcch_msg{};
+  auto&                    pcch_c1 = pcch_msg.msg.set_c1();
+  // TODO: Support RAN Paging.
+  pcch_c1.set_paging() = make_asn1_rrc_cell_cn_paging_msg(five_g_s_tmsi);
+
+  const asn1::SRSASN_CODE ret = pcch_msg.pack(bref);
+  srsgnb_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack PCCH-PCH Paging message");
+  return buf;
+}

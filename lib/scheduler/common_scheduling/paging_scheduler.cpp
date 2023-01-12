@@ -23,55 +23,15 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
                                    const cell_configuration&                       cell_cfg_,
                                    pdcch_resource_allocator&                       pdcch_sch_,
                                    const sched_cell_configuration_request_message& msg) :
-  expert_cfg(expert_cfg_), cell_cfg(cell_cfg_), pdcch_sch(pdcch_sch_), logger(srslog::fetch_basic_logger("MAC"))
+  expert_cfg(expert_cfg_),
+  cell_cfg(cell_cfg_),
+  pdcch_sch(pdcch_sch_),
+  default_paging_cycle(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.default_paging_cycle)),
+  nof_pf_per_drx_cycle(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.nof_pf)),
+  paging_frame_offset(cell_cfg.dl_cfg_common.pcch_cfg.paging_frame_offset),
+  nof_po_per_pf(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.ns)),
+  logger(srslog::fetch_basic_logger("MAC"))
 {
-  switch (cell_cfg.dl_cfg_common.pcch_cfg.default_paging_cycle) {
-    case paging_cycle::rf32:
-      default_paging_cycle = 32;
-      break;
-    case paging_cycle::rf64:
-      default_paging_cycle = 64;
-      break;
-    case paging_cycle::rf128:
-      default_paging_cycle = 128;
-      break;
-    case paging_cycle::rf256:
-      default_paging_cycle = 256;
-      break;
-  }
-
-  switch (cell_cfg.dl_cfg_common.pcch_cfg.nof_pf) {
-    case pcch_config::nof_pf_per_drx_cycle::oneT:
-      nof_pf_per_drx_cycle = 1;
-      break;
-    case pcch_config::nof_pf_per_drx_cycle::halfT:
-      nof_pf_per_drx_cycle = 2;
-      break;
-    case pcch_config::nof_pf_per_drx_cycle::quarterT:
-      nof_pf_per_drx_cycle = 4;
-      break;
-    case pcch_config::nof_pf_per_drx_cycle::oneEighthT:
-      nof_pf_per_drx_cycle = 8;
-      break;
-    case pcch_config::nof_pf_per_drx_cycle::oneSixteethT:
-      nof_pf_per_drx_cycle = 16;
-      break;
-  }
-
-  paging_frame_offset = cell_cfg.dl_cfg_common.pcch_cfg.paging_frame_offset;
-
-  switch (cell_cfg.dl_cfg_common.pcch_cfg.ns) {
-    case pcch_config::nof_po_per_pf::four:
-      nof_po_per_pf = 4;
-      break;
-    case pcch_config::nof_po_per_pf::two:
-      nof_po_per_pf = 2;
-      break;
-    case pcch_config::nof_po_per_pf::one:
-      nof_po_per_pf = 1;
-      break;
-  }
-
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value()) {
     if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() == 0) {
       // PDCCH monitoring occasions for paging are same as for RMSI. See TS 38.304, clause 7.1.
@@ -134,11 +94,20 @@ void paging_scheduler::schedule_paging(cell_slot_resource_allocator& res_grid)
   // Check for maximum paging retries.
   auto it = paging_pending_ues.begin();
   while (it != paging_pending_ues.end()) {
-    if (paging_retries[it->ue_identity_index_value] > expert_cfg.pg.max_paging_retries) {
-      it = paging_pending_ues.erase(it);
-      paging_retries.erase(paging_retries.find(it->ue_identity_index_value));
+    if (it->paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
+      if (cn_paging_retries[it->paging_identity] >= expert_cfg.pg.max_paging_retries) {
+        it = paging_pending_ues.erase(it);
+        cn_paging_retries.erase(cn_paging_retries.find(it->paging_identity));
+      } else {
+        ++it;
+      }
     } else {
-      ++it;
+      if (ran_paging_retries[it->paging_identity] >= expert_cfg.pg.max_paging_retries) {
+        it = paging_pending_ues.erase(it);
+        ran_paging_retries.erase(ran_paging_retries.find(it->paging_identity));
+      } else {
+        ++it;
+      }
     }
   }
 
@@ -164,12 +133,20 @@ void paging_scheduler::schedule_paging(cell_slot_resource_allocator& res_grid)
          time_res_idx != cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size();
          ++time_res_idx) {
       if (paging_search_space == 0 && schedule_paging_in_search_space0(res_grid, sl_point, time_res_idx, pg_ind, i_s)) {
-        paging_retries[pg_ind.ue_identity_index_value]++;
+        if (pg_ind.paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
+          cn_paging_retries[pg_ind.paging_identity]++;
+        } else {
+          ran_paging_retries[pg_ind.paging_identity]++;
+        }
         break;
       }
       if (paging_search_space > 0 &&
           schedule_paging_in_search_space_id_gt_0(res_grid, sl_point, time_res_idx, pg_ind, i_s)) {
-        paging_retries[pg_ind.ue_identity_index_value]++;
+        if (pg_ind.paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
+          cn_paging_retries[pg_ind.paging_identity]++;
+        } else {
+          ran_paging_retries[pg_ind.paging_identity]++;
+        }
         break;
       }
     }
@@ -180,7 +157,11 @@ void paging_scheduler::handle_paging_indication_message(const paging_indication_
 {
   paging_pending_ues.push_back(paging_indication);
   // Initialize paging retry count to zero.
-  paging_retries[paging_indication.ue_identity_index_value] = 0;
+  if (paging_indication.paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
+    cn_paging_retries[paging_indication.paging_identity] = 0;
+  } else {
+    ran_paging_retries[paging_indication.paging_identity] = 0;
+  }
 }
 
 bool paging_scheduler::schedule_paging_in_search_space_id_gt_0(cell_slot_resource_allocator&    res_grid,
@@ -252,6 +233,9 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_slot_resource_alloc
       continue;
     }
 
+    // TODO: Support multi-beam operations. As per TS 38.304, clause 7.1, In multi-beam operations, the same paging
+    //  message are repeated in all transmitted beams.
+
     if (sl_point.to_uint() % paging_period_slots == type0_pdcch_css_n0_slots[ssb_idx].to_uint()) {
       // Ensure slot for Paging has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
@@ -286,6 +270,9 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
   static const unsigned nof_layers  = 1;
   // As per Section 5.1.3.2, TS 38.214, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by P-RNTI.
   static const unsigned nof_oh_prb = 0;
+  // As per TS 38.214, Table 5.1.3.2-2.
+  // TODO: TBS scaling is assumed to be 0. Need to set correct value.
+  static const unsigned tbs_scaling = 0;
 
   // Generate dmrs information to be passed to (i) the fnc that computes number of RE used for DMRS per RB and (ii) to
   // the fnc that fills the DCI.
@@ -293,8 +280,13 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   const sch_mcs_description mcs_descr = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.pg.paging_mcs_index);
-  const pdsch_prbs_tbs      paging_prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{
-      pg_msg.paging_msg_size, nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_descr, nof_layers});
+  const pdsch_prbs_tbs      paging_prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{pg_msg.paging_msg_size,
+                                                                                   nof_symb_sh,
+                                                                                   calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                                   nof_oh_prb,
+                                                                                   mcs_descr,
+                                                                                   nof_layers,
+                                                                                   tbs_scaling});
 
   // 1. Find available RBs in PDSCH for Paging grant.
   crb_interval paging_crbs;
@@ -422,6 +414,8 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
     nof_ssb_transmitted++;
   }
 
+  // NOTE: For active BWP not equal to Initial DL BWP, the value of firstPDCCH-MonitoringOccasionOfPO must be taken from
+  // PDCCH-ConfigCommon IE of the active BWP.
   const auto& first_pmo_of_po = cell_cfg.dl_cfg_common.pcch_cfg.first_pdcch_monitoring_occasion_of_po_value;
   for (unsigned po_idx = 0; po_idx < nof_po_per_pf; po_idx++) {
     for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {

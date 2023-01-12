@@ -21,8 +21,10 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
   }
 
-  if (not result.dl.bc.sibs.empty() or not result.dl.rar_grants.empty() or not result.dl.ue_grants.empty()) {
-    unsigned nof_pdschs = result.dl.bc.sibs.size() + result.dl.rar_grants.size() + result.dl.ue_grants.size();
+  if (not result.dl.bc.sibs.empty() or not result.dl.rar_grants.empty() or not result.dl.ue_grants.empty() or
+      not result.dl.paging_grants.empty()) {
+    unsigned nof_pdschs = result.dl.bc.sibs.size() + result.dl.rar_grants.size() + result.dl.ue_grants.size() +
+                          result.dl.paging_grants.size();
     fmt::format_to(fmtbuf, "\nPDSCH ({} grants):", nof_pdschs);
     for (const sib_information& sib : result.dl.bc.sibs) {
       fmt::format_to(fmtbuf,
@@ -69,6 +71,18 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                        lc.sched_bytes,
                        &lc == &ue_dl_grant.tb_list[0].lc_chs_to_sched.back() ? "]" : ", ");
       }
+    }
+    for (const dl_paging_allocation& pg : result.dl.paging_grants) {
+      fmt::format_to(
+          fmtbuf,
+          "\n- pg{}, pg-id={:#x}, prbs={}, symbols={}, tbs={}B, mcs={}, rv={}",
+          pg.paging_type_indicator == dl_paging_allocation::paging_identity_type::cn_ue_paging_identity ? "cn" : "ran",
+          pg.paging_identity,
+          pg.pdsch_cfg.prbs.prbs(),
+          pg.pdsch_cfg.symbols,
+          pg.pdsch_cfg.codewords[0].tb_size_bytes,
+          pg.pdsch_cfg.codewords[0].mcs_index,
+          pg.pdsch_cfg.codewords[0].rv_index);
     }
   }
 
@@ -153,6 +167,17 @@ void scheduler_result_logger::log_info(const sched_result& result)
                    ue_msg.pusch_cfg.rnti,
                    ue_msg.pusch_cfg.prbs.prbs(),
                    ue_msg.pusch_cfg.tb_size_bytes);
+  }
+  for (const dl_paging_allocation& pg_info : result.dl.paging_grants) {
+    fmt::format_to(fmtbuf,
+                   "{}PG{}: pg-id={:#x}, prbs={}, tbs={}B",
+                   fmtbuf.size() == 0 ? "" : ", ",
+                   pg_info.paging_type_indicator == dl_paging_allocation::paging_identity_type::cn_ue_paging_identity
+                       ? "cn"
+                       : "ran",
+                   pg_info.paging_identity,
+                   pg_info.pdsch_cfg.prbs.prbs(),
+                   pg_info.pdsch_cfg.codewords[0].tb_size_bytes);
   }
 
   if (fmtbuf.size() > 0) {

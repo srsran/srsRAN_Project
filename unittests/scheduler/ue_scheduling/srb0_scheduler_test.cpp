@@ -67,7 +67,7 @@ class srb0_scheduler_tester : public ::testing::TestWithParam<srb0_test_params>
 protected:
   slot_point            next_slot{0, 0};
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC", true);
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("MAC", true);
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST", true);
   optional<test_bench>  bench;
   srb0_test_params      params;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.

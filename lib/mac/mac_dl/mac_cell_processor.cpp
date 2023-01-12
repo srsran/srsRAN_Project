@@ -231,6 +231,8 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
     data_res.rar_pdus.emplace_back(rar_assembler.encode_rar_pdu(rar));
   }
 
+  // TODO: Assemble paging payload for paging grants.
+
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (unsigned tb_idx = 0; tb_idx != grant.tb_list.size(); ++tb_idx) {

@@ -59,6 +59,12 @@ grant_info srsgnb::get_pdsch_grant_info(const rar_information& rar)
   return grant_info{rar.pdsch_cfg.bwp_cfg->scs, rar.pdsch_cfg.symbols, crbs};
 }
 
+grant_info srsgnb::get_pdsch_grant_info(const dl_paging_allocation& pg)
+{
+  crb_interval crbs = prb_to_crb(*pg.pdsch_cfg.bwp_cfg, pg.pdsch_cfg.prbs.prbs());
+  return grant_info{pg.pdsch_cfg.bwp_cfg->scs, pg.pdsch_cfg.symbols, crbs};
+}
+
 grant_info srsgnb::get_pdsch_grant_info(const dl_msg_alloc& ue_grant)
 {
   crb_interval crbs = prb_to_crb(*ue_grant.pdsch_cfg.bwp_cfg, ue_grant.pdsch_cfg.prbs.prbs());
@@ -121,6 +127,13 @@ std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cel
     grants.back().type  = test_grant_info::UE_DL;
     grants.back().rnti  = ue_pdsch.pdsch_cfg.rnti;
     grants.back().grant = get_pdsch_grant_info(ue_pdsch);
+  }
+
+  for (const dl_paging_allocation& pg : dl_res.paging_grants) {
+    grants.emplace_back();
+    grants.back().type  = test_grant_info::PAGING;
+    grants.back().rnti  = pg.pdsch_cfg.rnti;
+    grants.back().grant = get_pdsch_grant_info(pg);
   }
 
   return grants;

@@ -11,12 +11,14 @@
 #pragma once
 
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/adt/static_vector.h"
+#include "srsgnb/adt/tiny_optional.h"
 
 namespace srsgnb {
 
 /// \brief Default paging cycle, used to derive 'T' in TS 38.304. Value rf32 corresponds to 32 radio frames and so on.
 /// \remark See TS 38.331, PagingCycle.
-enum class paging_cycle { rf32, rf64, rf128, rf256 };
+enum class paging_cycle { rf32 = 32, rf64 = 64, rf128 = 128, rf256 = 256 };
 
 /// \brief Used to paging related configuration.
 /// \remark See TS 38.331, PCCH-Config.
@@ -33,10 +35,10 @@ struct pcch_config {
   static constexpr unsigned NR_OF_PDCCH_MONITORING_OCCASION_PER_SSB_IN_PO = 1;
 
   /// \brief Number of paging occasions per paging frame.
-  enum class nof_po_per_pf { four, two, one };
+  enum class nof_po_per_pf { four = 4, two = 2, one = 1 };
   /// Number of paging frames per DRX cycle. nAndPagingFrameOffset in TS 38.331 in divided into \c nof_pf and \c
   /// paging_frame_offset. e.g. for value oneEighthT nof. paging frames per DRX cycle is 8.
-  enum class nof_pf_per_drx_cycle { oneT, halfT, quarterT, oneEighthT, oneSixteethT };
+  enum class nof_pf_per_drx_cycle { oneT = 1, halfT = 2, quarterT = 4, oneEighthT = 8, oneSixteethT = 16 };
 
   /// \brief Points out the type of first PDCCH monitoring occasion for paging of each PO of the PF.
   enum class first_pdcch_monitoring_occasion_of_po_type {

@@ -27,7 +27,10 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
 {
   TESTASSERT_EQ(pdcch.ctx.rnti, pdsch.rnti);
   TESTASSERT(*pdcch.ctx.bwp_cfg == *pdsch.bwp_cfg);
-  crb_interval coreset0_rb_lims = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  TESTASSERT(*pdcch.ctx.coreset_cfg == *pdsch.coreset_cfg);
+  const unsigned     rb_start = get_coreset_start_crb(*pdsch.coreset_cfg);
+  const crb_interval coreset_rb_lims{rb_start, rb_start + get_coreset_nof_prbs(*pdsch.coreset_cfg)};
+  const unsigned     rb_limits = pdsch.coreset_cfg->id == 0 ? coreset_rb_lims.length() : pdsch.bwp_cfg->crbs.length();
 
   uint8_t  time_assignment = 0;
   uint8_t  freq_assignment = 0;
@@ -38,7 +41,7 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
       time_assignment = pdcch.dci.si_f1_0.time_resource;
       freq_assignment = pdcch.dci.si_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.si_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, coreset0_rb_lims.length());
+      TESTASSERT_EQ(N_rb_dl_bwp, rb_limits);
       break;
     }
     case dci_dl_rnti_config_type::ra_f1_0: {
@@ -46,13 +49,19 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
       TESTASSERT(time_assignment < cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size());
       freq_assignment = pdcch.dci.ra_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.ra_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, coreset0_rb_lims.length());
+      TESTASSERT_EQ(N_rb_dl_bwp, rb_limits);
     } break;
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
       time_assignment = pdcch.dci.tc_rnti_f1_0.time_resource;
       freq_assignment = pdcch.dci.tc_rnti_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.tc_rnti_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, coreset0_rb_lims.length());
+      TESTASSERT_EQ(N_rb_dl_bwp, rb_limits);
+    } break;
+    case dci_dl_rnti_config_type::p_rnti_f1_0: {
+      time_assignment = pdcch.dci.p_rnti_f1_0.time_resource;
+      freq_assignment = pdcch.dci.p_rnti_f1_0.frequency_resource;
+      N_rb_dl_bwp     = pdcch.dci.p_rnti_f1_0.N_rb_dl_bwp;
+      TESTASSERT_EQ(N_rb_dl_bwp, rb_limits);
     } break;
     default:
       srsgnb_terminate("DCI type not supported");
@@ -98,6 +107,14 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
           return grant.pdsch_cfg.rnti == pdcch.ctx.rnti;
         });
         TESTASSERT(it != ue_grants.end());
+        assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
+      } break;
+      case dci_dl_rnti_config_type::p_rnti_f1_0: {
+        const auto& pg_grants = cell_res_grid[0].result.dl.paging_grants;
+        auto        it        = std::find_if(pg_grants.begin(), pg_grants.end(), [&pdcch](const auto& grant) {
+          return grant.pdsch_cfg.rnti == pdcch.ctx.rnti;
+        });
+        TESTASSERT(it != pg_grants.end());
         assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
       } break;
       default:

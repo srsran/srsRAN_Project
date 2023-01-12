@@ -18,7 +18,7 @@ namespace srsgnb {
 /// Parameters of a grant allocation in the cell resource grid.
 
 struct test_grant_info {
-  enum type_t { SSB, DL_PDCCH, UL_PDCCH, SIB, RAR, UE_DL, UE_UL, PUCCH, PRACH } type;
+  enum type_t { SSB, DL_PDCCH, UL_PDCCH, SIB, RAR, UE_DL, UE_UL, PUCCH, PRACH, PAGING } type;
   rnti_t     rnti;
   grant_info grant;
 };
@@ -48,6 +48,12 @@ grant_info get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const sib_in
 /// \param rar RAR allocation parameters.
 /// \return Parameters of the grant.
 grant_info get_pdsch_grant_info(const rar_information& rar);
+
+/// Extract PDSCH grant info of Paging allocation.
+///
+/// \param pg Paging allocation parameters.
+/// \return Parameters of the grant.
+grant_info get_pdsch_grant_info(const dl_paging_allocation& pg);
 
 /// Extract PDSCH grant info of UE DL allocation.
 ///
