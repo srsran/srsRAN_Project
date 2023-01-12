@@ -9,7 +9,6 @@
  */
 
 #include "srsgnb/srsvec/subtract.h"
-
 #include "simd.h"
 
 using namespace srsgnb;

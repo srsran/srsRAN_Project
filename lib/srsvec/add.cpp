@@ -9,7 +9,6 @@
  */
 
 #include "srsgnb/srsvec/add.h"
-
 #include "simd.h"
 
 using namespace srsgnb;
@@ -52,7 +51,7 @@ static void add_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::si
 
 #if SRSRAN_SIMD_S_SIZE
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
-    for (std::size_t i_end = (len / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i != i_end; i += SRSRAN_SIMD_F_SIZE) {
+    for (std::size_t i_end = (len / SRSRAN_SIMD_S_SIZE) * SRSRAN_SIMD_S_SIZE; i != i_end; i += SRSRAN_SIMD_S_SIZE) {
       simd_s_t a = srsran_simd_s_load(&x[i]);
       simd_s_t b = srsran_simd_s_load(&y[i]);
 
@@ -61,7 +60,7 @@ static void add_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::si
       srsran_simd_s_store(&z[i], r);
     }
   } else {
-    for (; i + SRSRAN_SIMD_S_SIZE < len + 1; i += SRSRAN_SIMD_S_SIZE) {
+    for (std::size_t i_end = (len / SRSRAN_SIMD_S_SIZE) * SRSRAN_SIMD_S_SIZE; i != i_end; i += SRSRAN_SIMD_S_SIZE) {
       simd_s_t a = srsran_simd_s_loadu(&x[i]);
       simd_s_t b = srsran_simd_s_loadu(&y[i]);
 
@@ -83,7 +82,7 @@ static void add_bbb_simd(const int8_t* x, const int8_t* y, int8_t* z, std::size_
 
 #if SRSRAN_SIMD_S_SIZE
   if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
-    for (; i + SRSRAN_SIMD_B_SIZE < len + 1; i += SRSRAN_SIMD_B_SIZE) {
+    for (std::size_t i_end = (len / SRSRAN_SIMD_B_SIZE) * SRSRAN_SIMD_B_SIZE; i != i_end; i += SRSRAN_SIMD_B_SIZE) {
       simd_b_t a = srsran_simd_b_load(&x[i]);
       simd_b_t b = srsran_simd_b_load(&y[i]);
 
@@ -92,7 +91,7 @@ static void add_bbb_simd(const int8_t* x, const int8_t* y, int8_t* z, std::size_
       srsran_simd_b_store(&z[i], r);
     }
   } else {
-    for (; i + SRSRAN_SIMD_B_SIZE < len + 1; i += SRSRAN_SIMD_B_SIZE) {
+    for (std::size_t i_end = (len / SRSRAN_SIMD_B_SIZE) * SRSRAN_SIMD_B_SIZE; i != i_end; i += SRSRAN_SIMD_B_SIZE) {
       simd_b_t a = srsran_simd_b_loadu(&x[i]);
       simd_b_t b = srsran_simd_b_loadu(&y[i]);
 
