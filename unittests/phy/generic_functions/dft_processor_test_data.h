@@ -28,8 +28,6 @@ static const std::vector<test_case_t> dft_processor_test_data = {
     // clang-format off
   {{128, dft_processor::direction::DIRECT}, {"test_data/dft_processor_test_input0.dat"}, {"test_data/dft_processor_test_output0.dat"}},
   {{128, dft_processor::direction::INVERSE}, {"test_data/dft_processor_test_input1.dat"}, {"test_data/dft_processor_test_output1.dat"}},
-  {{139, dft_processor::direction::DIRECT}, {"test_data/dft_processor_test_input2.dat"}, {"test_data/dft_processor_test_output2.dat"}},
-  {{139, dft_processor::direction::INVERSE}, {"test_data/dft_processor_test_input3.dat"}, {"test_data/dft_processor_test_output3.dat"}},
   {{256, dft_processor::direction::DIRECT}, {"test_data/dft_processor_test_input4.dat"}, {"test_data/dft_processor_test_output4.dat"}},
   {{256, dft_processor::direction::INVERSE}, {"test_data/dft_processor_test_input5.dat"}, {"test_data/dft_processor_test_output5.dat"}},
   {{384, dft_processor::direction::DIRECT}, {"test_data/dft_processor_test_input6.dat"}, {"test_data/dft_processor_test_output6.dat"}},
@@ -38,8 +36,6 @@ static const std::vector<test_case_t> dft_processor_test_data = {
   {{512, dft_processor::direction::INVERSE}, {"test_data/dft_processor_test_input9.dat"}, {"test_data/dft_processor_test_output9.dat"}},
   {{768, dft_processor::direction::DIRECT}, {"test_data/dft_processor_test_input10.dat"}, {"test_data/dft_processor_test_output10.dat"}},
   {{768, dft_processor::direction::INVERSE}, {"test_data/dft_processor_test_input11.dat"}, {"test_data/dft_processor_test_output11.dat"}},
-  {{839, dft_processor::direction::DIRECT}, {"test_data/dft_processor_test_input12.dat"}, {"test_data/dft_processor_test_output12.dat"}},
-  {{839, dft_processor::direction::INVERSE}, {"test_data/dft_processor_test_input13.dat"}, {"test_data/dft_processor_test_output13.dat"}},
   {{1024, dft_processor::direction::DIRECT}, {"test_data/dft_processor_test_input14.dat"}, {"test_data/dft_processor_test_output14.dat"}},
   {{1024, dft_processor::direction::INVERSE}, {"test_data/dft_processor_test_input15.dat"}, {"test_data/dft_processor_test_output15.dat"}},
   {{1536, dft_processor::direction::DIRECT}, {"test_data/dft_processor_test_input16.dat"}, {"test_data/dft_processor_test_output16.dat"}},

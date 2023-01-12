@@ -11,7 +11,6 @@
 #include "dft_processor_test_data.h"
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/test_utils.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -88,11 +87,6 @@ TEST_P(DFTprocessorFixture, DFTProcessorUnittest)
 
   // Create processor.
   std::unique_ptr<dft_processor> dft = dft_factory->create(config);
-
-  // Skip test case silently if it is not available.
-  if (dft == nullptr) {
-    GTEST_SKIP();
-  }
 
   // Provide the input data to the DFT.
   srsvec::copy(dft->get_input(), input);
