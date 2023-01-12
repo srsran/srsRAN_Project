@@ -28,6 +28,11 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
 {
 }
 
+void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg)
+{
+  ue_cfg.reconfigure(new_ue_cell_cfg);
+}
+
 unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const
 {
   static const unsigned     nof_layers = 1;

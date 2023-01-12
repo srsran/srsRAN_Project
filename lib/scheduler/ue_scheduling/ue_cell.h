@@ -38,6 +38,8 @@ public:
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
 
+  void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
+
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   unsigned required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
 

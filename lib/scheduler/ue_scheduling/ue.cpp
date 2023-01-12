@@ -40,6 +40,26 @@ void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& 
   dl_lc_ch_mgr.configure(log_channels_configs);
   ul_lc_ch_mgr.configure(log_channels_configs);
 
+  // Handle removed cells.
+  for (unsigned i = 0; i != du_cells.size(); ++i) {
+    if (du_cells[i] != nullptr) {
+      if (std::none_of(msg.cfg.cells.begin(), msg.cfg.cells.end(), [i](const cell_config_dedicated& c) {
+            return c.serv_cell_cfg.cell_index == to_du_cell_index(i);
+          })) {
+        // TODO: Handle SCell deletions.
+      }
+    }
+  }
+
+  // Handle new cells.
+  for (const auto& cell : msg.cfg.cells) {
+    if (du_cells[cell.serv_cell_cfg.cell_index] != nullptr) {
+      du_cells[cell.serv_cell_cfg.cell_index]->handle_reconfiguration_request(cell.serv_cell_cfg);
+    } else {
+      // TODO: Handle SCell creation.
+    }
+  }
+
   // TODO: Remaining fields.
 }
 
