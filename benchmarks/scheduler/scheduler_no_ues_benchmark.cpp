@@ -59,7 +59,7 @@ void benchmark_sib_scheduling()
       create_scheduler(config_helpers::make_default_scheduler_expert_config(), cfg_notif);
 
   // Add Cell.
-  sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
+  sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
@@ -81,13 +81,13 @@ void benchmark_rach_scheduling()
       create_scheduler(config_helpers::make_default_scheduler_expert_config(), cfg_notif);
 
   // Add Cell.
-  sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
+  sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
   auto&                   logger = srslog::fetch_basic_logger("MAC", true);
   slot_point              sl_tx{0, 0};
-  rach_indication_message rach_ind = generate_rach_ind_msg(sl_tx - 4, to_rnti(0x4601));
+  rach_indication_message rach_ind = test_helpers::generate_rach_ind_msg(sl_tx - 4, to_rnti(0x4601));
 
   // Run benchmark.
   bm->new_measure("SSB+SIB+RACH scheduling", 1, [&sch, &sl_tx, &rach_ind, &logger]() mutable {

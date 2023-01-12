@@ -19,7 +19,7 @@ class prach_tester : public ::testing::Test
 {
 protected:
   prach_tester() :
-    cell_cfg(make_default_sched_cell_configuration_request()),
+    cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
     prach_sch(cell_cfg),
     sl(0, 0),
     prach_cfg(prach_configuration_get(

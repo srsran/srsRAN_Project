@@ -110,8 +110,7 @@ test_bench::test_bench(unsigned pucch_res_common, unsigned n_cces, sr_periodicit
   uci_sched{cell_cfg, uci_alloc, ues},
   sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
 {
-  sched_ue_creation_request_message ue_req =
-      make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
+  sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request();
 
   srsgnb_assert(not ue_req.cfg.cells.empty() and ue_req.cfg.cells.back().serv_cell_cfg.ul_config.has_value() and
                     ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
@@ -142,8 +141,7 @@ const ue& test_bench::get_ue(du_ue_index_t ue_idx) const
 
 void test_bench::add_ue()
 {
-  sched_ue_creation_request_message ue_req =
-      make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
+  sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request();
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
   last_allocated_ue_idx =
       to_du_ue_index(static_cast<std::underlying_type<du_ue_index_t>::type>(last_allocated_ue_idx) + 1);

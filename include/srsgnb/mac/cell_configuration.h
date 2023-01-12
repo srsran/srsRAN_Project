@@ -26,10 +26,6 @@
 
 namespace srsgnb {
 
-struct mac_prach_configuration {
-  // TODO
-};
-
 struct tdd_configuration {
   // TODO
 };
@@ -43,10 +39,9 @@ struct mac_cell_creation_request {
   /// subcarrierSpacing for common, used for initial access and broadcast message.
   subcarrier_spacing scs_common;
 
-  carrier_configuration   dl_carrier;
-  carrier_configuration   ul_carrier;
-  ssb_configuration       ssb_cfg;
-  mac_prach_configuration prach_cfg;
+  carrier_configuration dl_carrier;
+  carrier_configuration ul_carrier;
+  ssb_configuration     ssb_cfg;
 
   /// Embedded scheduler cell configuration request.
   sched_cell_configuration_request_message sched_req;

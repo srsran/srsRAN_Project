@@ -98,7 +98,7 @@ private:
                                                                            subcarrier_spacing init_bwp_scs,
                                                                            uint8_t            k_ssb)
   {
-    sched_cell_configuration_request_message msg     = make_default_sched_cell_configuration_request();
+    sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request();
     msg.dl_carrier.arfcn                             = freq_arfcn;
     msg.dl_cfg_common.freq_info_dl.offset_to_point_a = offset_to_point_A;
     msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;

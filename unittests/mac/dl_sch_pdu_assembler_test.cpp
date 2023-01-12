@@ -8,8 +8,9 @@
  *
  */
 
-#include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
+#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_dl/dl_sch_pdu_assembler.h"
+#include "mac_test_helpers.h"
 #include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>

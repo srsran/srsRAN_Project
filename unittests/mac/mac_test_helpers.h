@@ -10,9 +10,11 @@
 
 #pragma once
 
-#include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
+#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
+#include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/mac/mac_cell_result.h"
+#include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -21,15 +23,45 @@ namespace srsgnb {
 namespace test_helpers {
 
 /// Generates default MAC Cell Configuration to be used in unit tests.
-inline mac_cell_creation_request make_default_mac_cell_config()
+inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_builder_params& params = {})
 {
-  du_cell_config default_du_cell_cfg = config_helpers::make_default_du_cell_config();
-  byte_buffer    dummy_sib1;
+  mac_cell_creation_request req{};
+
+  req.pci              = params.pci;
+  req.cell_index       = to_du_cell_index(0);
+  req.scs_common       = params.scs_common;
+  req.dl_carrier       = config_helpers::make_default_carrier_configuration(params);
+  req.ul_carrier       = config_helpers::make_default_carrier_configuration(params);
+  req.ssb_cfg          = config_helpers::make_default_ssb_config(params);
+  req.cell_barred      = false;
+  req.intra_freq_resel = false;
+  req.sched_req        = {}; // Note: MAC should not touch this field.
+
+  byte_buffer dummy_sib1;
   for (unsigned i = 0; i != 100; ++i) {
     dummy_sib1.append(i);
   }
-  mac_cell_creation_request req = make_mac_cell_config(to_du_cell_index(0), default_du_cell_cfg, std::move(dummy_sib1));
+  req.bcch_dl_sch_payload = std::move(dummy_sib1);
   return req;
+}
+
+inline mac_ue_create_request_message make_default_ue_creation_request()
+{
+  mac_ue_create_request_message msg{};
+
+  msg.ue_index   = to_du_ue_index(0);
+  msg.crnti      = to_rnti(0x4601);
+  msg.cell_index = to_du_cell_index(0);
+
+  msg.mac_cell_group_cfg = config_helpers::make_initial_mac_cell_group_config();
+
+  physical_cell_group_config& pcg_cfg = msg.phy_cell_group_cfg;
+  pcg_cfg.p_nr_fr1                    = 10;
+  pcg_cfg.pdsch_harq_codebook         = pdsch_harq_ack_codebook::dynamic;
+
+  msg.sched_cfg.cells.push_back(config_helpers::create_default_initial_ue_spcell_cell_config());
+
+  return msg;
 }
 
 class dummy_mac_scheduler : public mac_scheduler

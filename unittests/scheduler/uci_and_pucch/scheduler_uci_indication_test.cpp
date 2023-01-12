@@ -35,14 +35,15 @@ protected:
 
   void add_cell()
   {
-    sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
+    sched_cell_configuration_request_message cell_cfg_msg =
+        test_helpers::make_default_sched_cell_configuration_request();
     cell_cfg.emplace(cell_cfg_msg);
     sched->handle_cell_configuration_request(cell_cfg_msg);
   }
 
   void add_ue()
   {
-    sched_ue_creation_request_message ue_cfg_msg = make_default_sched_ue_creation_request();
+    sched_ue_creation_request_message ue_cfg_msg = test_helpers::create_default_sched_ue_creation_request();
     ue_cfg_msg.crnti                             = ue_rnti;
     sched->handle_ue_creation_request(ue_cfg_msg);
   }

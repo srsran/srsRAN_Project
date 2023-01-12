@@ -15,7 +15,8 @@
 namespace srsgnb {
 namespace config_helpers {
 
-logical_channel_config make_default_logical_channel_config(lcid_t lcid);
+/// \brief Creates a default logical channel configuration to be used by the scheduler.
+logical_channel_config create_default_logical_channel_config(lcid_t lcid);
 
-}
+} // namespace config_helpers
 } // namespace srsgnb

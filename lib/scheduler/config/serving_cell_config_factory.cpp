@@ -332,7 +332,7 @@ pdsch_serving_cell_config srsgnb::config_helpers::make_default_pdsch_serving_cel
   return serv_cell;
 }
 
-serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell_config()
+serving_cell_config srsgnb::config_helpers::create_default_initial_ue_serving_cell_config()
 {
   serving_cell_config serv_cell;
   serv_cell.cell_index = to_du_cell_index(0);
@@ -375,10 +375,10 @@ serving_cell_config srsgnb::config_helpers::make_default_initial_ue_serving_cell
   return serv_cell;
 }
 
-cell_config_dedicated srsgnb::config_helpers::make_default_initial_ue_spcell_cell_config()
+cell_config_dedicated srsgnb::config_helpers::create_default_initial_ue_spcell_cell_config()
 {
   cell_config_dedicated cfg;
   cfg.serv_cell_idx = to_serv_cell_index(0);
-  cfg.serv_cell_cfg = make_default_initial_ue_serving_cell_config();
+  cfg.serv_cell_cfg = create_default_initial_ue_serving_cell_config();
   return cfg;
 }

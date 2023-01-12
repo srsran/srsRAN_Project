@@ -12,7 +12,7 @@
 
 using namespace srsgnb;
 
-logical_channel_config srsgnb::config_helpers::make_default_logical_channel_config(lcid_t lcid)
+logical_channel_config srsgnb::config_helpers::create_default_logical_channel_config(lcid_t lcid)
 {
   logical_channel_config lc_ch;
   lc_ch.lcid                      = lcid;

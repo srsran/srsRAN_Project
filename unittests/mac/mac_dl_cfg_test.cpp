@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../lib/du_manager/converters/mac_cell_configuration_helpers.h"
+#include "../../lib/du_manager/converters/mac_config_helpers.h"
 #include "../../lib/mac/mac_dl/mac_dl_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"

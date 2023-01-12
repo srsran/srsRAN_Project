@@ -37,8 +37,8 @@ struct ra_test_bench {
   ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch};
   scheduler_result_logger        result_logger;
 
-  ra_test_bench(
-      const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
+  ra_test_bench(const sched_cell_configuration_request_message& cell_req =
+                    test_helpers::make_default_sched_cell_configuration_request()) :
     sched_cfg(config_helpers::make_default_scheduler_expert_config()), cell_cfg(cell_req)
   {
   }
@@ -65,8 +65,8 @@ protected:
     srslog::flush();
   }
 
-  void
-  setup_sched(const sched_cell_configuration_request_message& msg = make_default_sched_cell_configuration_request())
+  void setup_sched(const sched_cell_configuration_request_message& msg =
+                       test_helpers::make_default_sched_cell_configuration_request())
   {
     bench.emplace(msg);
 
@@ -176,7 +176,7 @@ protected:
   static sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode        mode,
                                                                                     const test_params& params)
   {
-    sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+    sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = std::get<0>(params);
 
     const auto& k2s        = std::get<1>(params);

@@ -21,7 +21,7 @@ class test_bench
 {
 public:
   explicit test_bench(subcarrier_spacing scs, bool is_tdd = false) :
-    cell_cfg{make_default_sched_cell_configuration_request_scs(scs, is_tdd)},
+    cell_cfg{test_helpers::make_default_sched_cell_configuration_request_scs(scs, is_tdd)},
     res_grid{cell_cfg},
     pucch_guard_sched{cell_cfg},
     sl_tx{to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs), 0}

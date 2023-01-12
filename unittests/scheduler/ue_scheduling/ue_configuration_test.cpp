@@ -9,10 +9,10 @@ using namespace srsgnb;
 
 TEST(ue_configuration, configuration_valid_on_creation)
 {
-  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{msg};
 
-  auto ue_create_msg = make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
+  auto ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
 
   ue_cell_configuration ue_cfg{cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
@@ -37,10 +37,10 @@ TEST(ue_configuration, configuration_valid_on_creation)
 
 TEST(ue_configuration, configuration_valid_on_reconfiguration)
 {
-  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{msg};
-  auto ue_create_msg = make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
-  ue_cell_configuration ue_cfg{cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
+  auto                                     ue_create_msg = test_helpers::create_default_sched_ue_creation_request();
+  ue_cell_configuration                    ue_cfg{cell_cfg, ue_create_msg.cfg.cells[0].serv_cell_cfg};
 
   cell_config_dedicated ue_cell_reconf{};
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg.emplace();

@@ -77,9 +77,9 @@ struct test_bench {
   std::unordered_map<du_ue_index_t, sched_test_ue> ues;
   const sched_result*                              sched_res{nullptr};
 
-  explicit test_bench(
-      const scheduler_expert_config&                  expert_cfg_,
-      const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
+  explicit test_bench(const scheduler_expert_config&                  expert_cfg_,
+                      const sched_cell_configuration_request_message& cell_req =
+                          test_helpers::make_default_sched_cell_configuration_request()) :
     expert_cfg{expert_cfg_}, cell_cfg{cell_req}, sch{expert_cfg, cfg_notif}
   {
     sch.handle_cell_configuration_request(cell_req);
@@ -109,9 +109,9 @@ protected:
     srslog::flush();
   }
 
-  void
-  setup_sched(const scheduler_expert_config&                  expert_cfg,
-              const sched_cell_configuration_request_message& msg = make_default_sched_cell_configuration_request())
+  void setup_sched(const scheduler_expert_config&                  expert_cfg,
+                   const sched_cell_configuration_request_message& msg =
+                       test_helpers::make_default_sched_cell_configuration_request())
   {
     const auto& dl_lst = msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     for (const auto& pdsch : dl_lst) {
@@ -157,7 +157,7 @@ protected:
 
   sched_cell_configuration_request_message create_random_cell_config_request() const
   {
-    sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+    sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
 
     if (params.duplx_mode == duplex_mode::TDD) {
@@ -198,7 +198,7 @@ protected:
 
   void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_)
   {
-    auto ue_creation_req     = make_default_sched_ue_creation_request();
+    auto ue_creation_req     = test_helpers::create_default_sched_ue_creation_request();
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
     ue_creation_req.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack[0] =
@@ -208,7 +208,7 @@ protected:
                            ue_creation_req.cfg.lc_config_list.end(),
                            [lcid_](const auto& l) { return l.lcid == lcid_; });
     if (it == ue_creation_req.cfg.lc_config_list.end()) {
-      ue_creation_req.cfg.lc_config_list.push_back(config_helpers::make_default_logical_channel_config(lcid_));
+      ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid_));
       it = ue_creation_req.cfg.lc_config_list.end() - 1;
     }
     it->lc_group = lcgid_;

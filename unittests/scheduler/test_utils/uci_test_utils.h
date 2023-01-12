@@ -12,7 +12,7 @@
 
 #include "config_generators.h"
 #include "include/srsgnb/du/du_cell_config_helpers.h"
-#include "lib/du_manager/converters/mac_cell_configuration_helpers.h"
+#include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
@@ -49,7 +49,7 @@ inline pdcch_dl_information make_default_dci(unsigned n_cces, const coreset_conf
 
 inline sched_cell_configuration_request_message make_custom_sched_cell_configuration_request(unsigned pucch_res_common)
 {
-  sched_cell_configuration_request_message req = make_default_sched_cell_configuration_request();
+  sched_cell_configuration_request_message req = test_helpers::make_default_sched_cell_configuration_request();
   req.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common = pucch_res_common;
   return req;
 }

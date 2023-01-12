@@ -11,7 +11,7 @@ void test_pdcch_sched_sib1()
 {
   test_delimit_logger delimiter{"Test PDCCH Allocation SIB1"};
 
-  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cfg{msg};
   cell_resource_allocator                  res_grid{cfg};
 
@@ -43,7 +43,7 @@ void test_pdcch_sched_rar()
 {
   test_delimit_logger delimiter{"Test PDCCH Allocation RAR"};
 
-  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
   cell_configuration                       cfg{msg};
   cell_resource_allocator                  res_grid{cfg};
 
@@ -80,11 +80,10 @@ void test_pdcch_sched_ue()
 {
   test_delimit_logger delimiter{"Test PDCCH Allocation UE DL"};
 
-  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
-  sched_ue_creation_request_message        ue_creation_msg =
-      make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
-  cell_configuration      cfg{msg};
-  cell_resource_allocator res_grid{cfg};
+  sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
+  sched_ue_creation_request_message        ue_creation_msg = test_helpers::create_default_sched_ue_creation_request();
+  cell_configuration                       cfg{msg};
+  cell_resource_allocator                  res_grid{cfg};
 
   ue_cell_configuration ue_cfg{cfg, ue_creation_msg.cfg.cells[0].serv_cell_cfg};
   bwp_id_t              bwpid = to_bwp_id(0);
@@ -132,7 +131,7 @@ void test_pdcch_sched_monitoring_period()
         unsigned randint  = std::uniform_int_distribution<unsigned>{0, 10240}(rgen);
         unsigned first_sl = (((randint / period) * period) + offset + 10239) % 10240;
 
-        sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+        sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
         msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].monitoring_slot_period = period;
         msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].monitoring_slot_offset = offset;
         msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].duration               = duration;

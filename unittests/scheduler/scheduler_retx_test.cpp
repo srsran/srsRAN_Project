@@ -27,7 +27,7 @@ struct test_params {
 class scheduler_retx_tester : public ::testing::TestWithParam<test_params>
 {
 protected:
-  scheduler_retx_tester() { bench.add_cell(make_default_sched_cell_configuration_request()); }
+  scheduler_retx_tester() { bench.add_cell(test_helpers::make_default_sched_cell_configuration_request()); }
 
   const ul_sched_info* run_until_next_pusch_alloc(unsigned max_slot_delay)
   {

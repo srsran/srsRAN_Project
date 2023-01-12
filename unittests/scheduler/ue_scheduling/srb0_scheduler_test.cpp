@@ -47,9 +47,9 @@ struct test_bench {
   ue_cell_grid_allocator        ue_alloc;
   ue_srb0_scheduler             srb0_sched;
 
-  explicit test_bench(
-      const scheduler_ue_expert_config&               expert_cfg_,
-      const sched_cell_configuration_request_message& cell_req = make_default_sched_cell_configuration_request()) :
+  explicit test_bench(const scheduler_ue_expert_config&               expert_cfg_,
+                      const sched_cell_configuration_request_message& cell_req =
+                          test_helpers::make_default_sched_cell_configuration_request()) :
     expert_cfg{expert_cfg_},
     cell_cfg{cell_req},
     res_grid{cell_cfg},
@@ -84,9 +84,9 @@ protected:
     srslog::flush();
   }
 
-  void
-  setup_sched(const scheduler_ue_expert_config&               expert_cfg,
-              const sched_cell_configuration_request_message& msg = make_default_sched_cell_configuration_request())
+  void setup_sched(const scheduler_ue_expert_config&               expert_cfg,
+                   const sched_cell_configuration_request_message& msg =
+                       test_helpers::make_default_sched_cell_configuration_request())
   {
     bench.emplace(expert_cfg, msg);
 
@@ -126,7 +126,7 @@ protected:
 
   sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode) const
   {
-    sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+    sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
 
     if (mode == duplex_mode::TDD) {
@@ -220,12 +220,11 @@ protected:
     // Add cell to UE cell grid allocator.
     bench->ue_alloc.add_cell(
         bench->cell_cfg.cell_index, bench->pdcch_sch, bench->pucch_alloc, bench->uci_alloc, bench->res_grid);
-    auto ue_create_req     = test_helpers::make_default_ue_creation_request();
+    auto ue_create_req     = test_helpers::create_default_sched_ue_creation_request();
     ue_create_req.crnti    = tc_rnti;
     ue_create_req.ue_index = ue_index;
     // Add UE to UE DB.
-    auto ue_creation_msg = make_scheduler_ue_creation_request(ue_create_req);
-    auto u               = std::make_unique<ue>(bench->expert_cfg, bench->cell_cfg, ue_creation_msg);
+    auto u = std::make_unique<ue>(bench->expert_cfg, bench->cell_cfg, ue_create_req);
     if (bench->ue_db.contains(ue_index)) {
       // UE already exists.
       return false;
