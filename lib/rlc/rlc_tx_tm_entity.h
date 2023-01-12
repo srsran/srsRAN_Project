@@ -104,6 +104,7 @@ public:
   void handle_buffer_state_update()
   {
     unsigned bytes = get_buffer_state();
+    logger.log_debug("Sending buffer state update to lower layer: {} B", bytes);
     lower_dn.on_buffer_state_update(bytes);
   }
 };

@@ -685,6 +685,7 @@ void rlc_tx_am_entity::handle_buffer_state_update()
 void rlc_tx_am_entity::handle_buffer_state_update_nolock()
 {
   uint32_t bytes = get_buffer_state_nolock();
+  logger.log_debug("Sending buffer state update to lower layer: {} B", bytes);
   lower_dn.on_buffer_state_update(bytes);
 }
 
