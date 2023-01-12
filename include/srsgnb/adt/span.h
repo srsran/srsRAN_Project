@@ -250,6 +250,9 @@ using const_span = span<const T>;
 namespace fmt {
 
 /// \brief Custom formatter for span<T>.
+///
+/// By default, the elements within the span are separated by a space character. A comma delimiter is available and can
+/// be selected by formatting with <tt>{:,}</tt>. The delimiter can be disabled by formatting with <tt>{:#}</tt>.
 template <typename T>
 struct formatter<srsgnb::span<T>> {
   // Stores parsed format string.
@@ -285,6 +288,12 @@ struct formatter<srsgnb::span<T>> {
       if (it == ',') {
         delimiter_buffer.clear();
         delimiter_buffer.append(COMMA_DELIMITER.begin(), COMMA_DELIMITER.end());
+        continue;
+      }
+
+      // Detect if the hash sign is in the context. This indicates no delimiter between entries.
+      if (it == '#') {
+        delimiter_buffer.clear();
         continue;
       }
 

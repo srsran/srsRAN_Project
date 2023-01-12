@@ -214,7 +214,8 @@ struct formatter<srsgnb::rb_allocation> {
       -> decltype(std::declval<FormatContext>().out())
   {
     if (rb_alloc.is_contiguous()) {
-      return format_to(ctx.out(), "{}:{}", rb_alloc.get_prb_begin(0), rb_alloc.get_nof_rb());
+      return format_to(
+          ctx.out(), "[{}, {})", rb_alloc.get_prb_begin(0), rb_alloc.get_prb_begin(0) + rb_alloc.get_nof_rb());
     }
 
     return format_to(ctx.out(), "non-contiguous");

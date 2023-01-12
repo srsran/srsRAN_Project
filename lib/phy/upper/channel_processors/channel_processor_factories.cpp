@@ -877,7 +877,12 @@ public:
     std::chrono::nanoseconds time_ns =
         time_execution([&]() { result = processor->process(data, softbuffer, grid, pdu); });
 
-    logger.info("PUSCH: {} {} {}", pdu, result, time_ns);
+    if (result.data->tb_crc_ok) {
+      // If CRC is OK, dump TB.
+      logger.info(data.data(), data.size(), "PUSCH: {} {}tbs={} {}", pdu, result, data.size(), time_ns);
+    } else {
+      logger.info("PUSCH: {} {}{}", pdu, result, time_ns);
+    }
 
     return result;
   }
@@ -896,7 +901,7 @@ class logging_pucch_processor_decorator : public pucch_processor
 
     std::chrono::nanoseconds time_ns = time_execution([&]() { result = processor->process(grid, config); });
 
-    logger.info("PUCCH: {} {}", config, result, time_ns);
+    logger.info("PUCCH: {} {}{}", config, result, time_ns);
 
     return result;
   }
