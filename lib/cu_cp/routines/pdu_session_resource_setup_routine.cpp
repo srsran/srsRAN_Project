@@ -90,12 +90,12 @@ void pdu_session_resource_setup_routine::operator()(
 
       const auto& mapped_flows = rrc_ue_drb_manager.get_mapped_qos_flows(drb_to_add);
       for (const auto& qos_flow : mapped_flows) {
-        qos_flow_setup_request_item mapped_flow                                        = {};
-        mapped_flow.qos_flow_id                                                        = qos_flow;
-        rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb[mapped_flow.qos_flow_id] = mapped_flow;
+        qos_flow_setup_request_item mapped_flow = {};
+        mapped_flow.qos_flow_id                 = qos_flow;
+        rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb.emplace(mapped_flow.qos_flow_id, mapped_flow);
       }
 
-      ue_context_mod_request.cu_cp_drb_setup_msgs[drb_to_add] = rrc_ue_drb_setup_message_item;
+      ue_context_mod_request.cu_cp_drb_setup_msgs.emplace(drb_to_add, rrc_ue_drb_setup_message_item);
     }
 
     CORO_AWAIT_VALUE(ue_context_modification_response,
@@ -145,8 +145,8 @@ void pdu_session_resource_setup_routine::operator()(
         drb_to_add_mod.cn_assoc                  = cu_cp_cn_assoc{};
         drb_to_add_mod.cn_assoc.value().sdap_cfg = rrc_ue_drb_manager.get_sdap_config(drb_to_add);
 
-        rrc_reconfig_args.radio_bearer_cfg                                         = cu_cp_radio_bearer_config{};
-        rrc_reconfig_args.radio_bearer_cfg.value().drb_to_add_mod_list[drb_to_add] = drb_to_add_mod;
+        rrc_reconfig_args.radio_bearer_cfg = cu_cp_radio_bearer_config{};
+        rrc_reconfig_args.radio_bearer_cfg.value().drb_to_add_mod_list.emplace(drb_to_add, drb_to_add_mod);
 
         // set masterCellGroupConfig as received by DU
         rrc_reconfig_args.non_crit_ext = cu_cp_rrc_recfg_v1530_ies{};
@@ -187,7 +187,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
 
       cu_cp_associated_qos_flow qos_flow;
       qos_flow.qos_flow_id = uint_to_qos_flow_id(1); // TODO: Remove hardcoded value
-      transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list[qos_flow.qos_flow_id] = qos_flow;
+      transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(qos_flow.qos_flow_id, qos_flow);
 
       response_msg.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, item);
     }
