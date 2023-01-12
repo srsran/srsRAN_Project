@@ -185,12 +185,12 @@ TEST_F(cu_up_test, ul_data_flow)
   int ret = 0;
 
   ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
-  ASSERT_GE(ret, 0);
+  ASSERT_GE(ret, 0) << strerror(errno);
 
   // Find out the port that was assigned
   socklen_t addr_len;
   ret = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &addr_len);
-  ASSERT_GE(ret, 0);
+  ASSERT_GE(ret, 0) << strerror(errno);
 
   //> Test main part: create CU-UP and transmit data
 
