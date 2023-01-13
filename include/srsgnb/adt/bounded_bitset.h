@@ -782,20 +782,22 @@ public:
   /// \param[in] mem_buffer Fmt memory buffer.
   /// \return The memory buffer passed as argument.
   template <typename OutputIt>
-  OutputIt to_string(OutputIt&& mem_buffer) const
+  OutputIt to_string(OutputIt&& mem_buffer, bool reverse) const
   {
     if (size() == 0) {
       return mem_buffer;
     }
 
+    reverse = reverse ^ FirstBitIsLeftmost;
+
     std::string s;
     s.assign(size(), '0');
-    if (not FirstBitIsLeftmost) {
-      for (size_t i = size(); i > 0; --i) {
+    if (!reverse) {
+      for (size_t i = size(); i != 0; --i) {
         fmt::format_to(mem_buffer, "{}", test(i - 1) ? '1' : '0');
       }
     } else {
-      for (size_t i = 0; i < size(); ++i) {
+      for (size_t i = 0; i != size(); ++i) {
         fmt::format_to(mem_buffer, "{}", test(i) ? '1' : '0');
       }
     }
@@ -1128,6 +1130,7 @@ namespace fmt {
 template <size_t N, bool FirstBitIsRightmost>
 struct formatter<srsgnb::bounded_bitset<N, FirstBitIsRightmost>> {
   enum { hexadecimal, binary } mode = binary;
+  enum { forward, reverse } order   = forward;
 
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
@@ -1136,6 +1139,9 @@ struct formatter<srsgnb::bounded_bitset<N, FirstBitIsRightmost>> {
     while (it != ctx.end() and *it != '}') {
       if (*it == 'x') {
         mode = hexadecimal;
+      }
+      if (*it == 'r') {
+        order = reverse;
       }
       ++it;
     }
@@ -1150,7 +1156,7 @@ struct formatter<srsgnb::bounded_bitset<N, FirstBitIsRightmost>> {
     if (mode == hexadecimal) {
       return s.template to_hex(ctx.out());
     }
-    return s.template to_string(ctx.out());
+    return s.template to_string(ctx.out(), order == reverse);
   }
 };
 } // namespace fmt

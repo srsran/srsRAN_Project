@@ -54,12 +54,36 @@ namespace fmt {
 
 /// \brief Custom formatter for symbol_slot_mask.
 template <>
-struct formatter<srsgnb::symbol_slot_mask> : public formatter<srsgnb::bounded_bitset<srsgnb::MAX_NSYMB_PER_SLOT>> {
+struct formatter<srsgnb::symbol_slot_mask> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::symbol_slot_mask& mask, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    fmt::format_to(ctx.out(), "{:br}", static_cast<srsgnb::bounded_bitset<srsgnb::MAX_NSYMB_PER_SLOT>>(mask));
+    return ctx.out();
+  }
 };
 
 /// \brief Custom formatter for re_prb_mask.
 template <>
-struct formatter<srsgnb::re_prb_mask> : public formatter<srsgnb::bounded_bitset<srsgnb::NRE>> {
+struct formatter<srsgnb::re_prb_mask> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::re_prb_mask& mask, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    fmt::format_to(ctx.out(), "{:br}", static_cast<srsgnb::bounded_bitset<srsgnb::NRE>>(mask));
+    return ctx.out();
+  }
 };
 
 } // namespace fmt
