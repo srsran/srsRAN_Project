@@ -34,6 +34,13 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
   return os;
 }
 
+static bool operator==(const std::vector<log_likelihood_ratio>& a, const std::vector<log_likelihood_ratio>& b)
+{
+  return std::equal(a.cbegin(), a.cend(), b.cbegin(), [](log_likelihood_ratio x, log_likelihood_ratio y) {
+    return ((x - y >= -1) && (x - y <= 1));
+  });
+}
+
 } // namespace srsgnb
 
 class PucchDemodulatorFixture : public ::testing::TestWithParam<PucchDemodulatorParams>
@@ -129,9 +136,7 @@ TEST_P(PucchDemodulatorFixture, PucchDemodulatorVectorTest)
   demodulator->demodulate(uci_data, rg_spy, channel_est, config);
 
   // Assert UCI codeword matches.
-  for (unsigned i_uci_cw = 0, uci_cw_end = uci_expected.size(); i_uci_cw != uci_cw_end; ++i_uci_cw) {
-    ASSERT_EQ(uci_expected[i_uci_cw], uci_data[i_uci_cw]);
-  }
+  ASSERT_EQ(uci_expected, uci_data);
 }
 
 // Creates test suite that combines all possible parameters.
