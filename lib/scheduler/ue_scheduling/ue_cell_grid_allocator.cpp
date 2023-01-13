@@ -168,14 +168,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Set MAC logical channels to schedule in this PDU.
   u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
 
-  logger.debug("SCHED: UE={}'s PDSCH allocation on slot={} completed: cell_id={}, MCS={}, PRBS=[{},{}), TBS={}",
+  logger.debug("SCHED: UE={}'s PDSCH allocation on slot={} at cell_id={} completed.",
                u.ue_index,
                pdsch_alloc.slot.to_uint(),
-               grant.cell_index,
-               mcs,
-               msg.pdsch_cfg.prbs.prbs().start(),
-               msg.pdsch_cfg.prbs.prbs().stop(),
-               msg.pdsch_cfg.codewords.front().tb_size_bytes);
+               grant.cell_index);
 
   return true;
 }
@@ -299,13 +295,9 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // In case there is a SR pending. Reset it.
   u.reset_sr_indication();
 
-  logger.debug("SCHED: UE={}'s PUSCH allocation on slot={} completed: cell_id={}, MCS={}, PRBS=[{},{}), TBS={}",
+  logger.debug("SCHED: UE={}'s PUSCH allocation on slot={} at cell_id={} completed.",
                u.ue_index,
                pusch_alloc.slot.to_uint(),
-               grant.cell_index,
-               mcs,
-               msg.pusch_cfg.prbs.prbs().start(),
-               msg.pusch_cfg.prbs.prbs().stop(),
-               msg.pusch_cfg.tb_size_bytes);
+               grant.cell_index);
   return true;
 }

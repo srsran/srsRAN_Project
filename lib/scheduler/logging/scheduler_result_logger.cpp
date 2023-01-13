@@ -82,6 +82,35 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                      ul_info.pusch_cfg.prbs.prbs(),
                      ul_info.pusch_cfg.symbols,
                      ul_info.pusch_cfg.rv_index);
+      if (ul_info.uci.has_value()) {
+        fmt::format_to(fmtbuf,
+                       "\n- uci: harq_bits={}, csi-1_bits={}, csi-2_bits={}",
+                       ul_info.uci.value().harq_ack_nof_bits,
+                       ul_info.uci.value().csi_part1_nof_bits,
+                       ul_info.uci.value().csi_part2_nof_bits);
+      }
+    }
+  }
+
+  if (not result.ul.pucchs.empty()) {
+    fmt::format_to(fmtbuf, "\nPUCCH ({} grants):", result.ul.puschs.size());
+    for (const pucch_info& pucch : result.ul.pucchs) {
+      if (pucch.resources.second_hop_prbs.empty()) {
+        fmt::format_to(fmtbuf,
+                       "\n- ue, rnti={:#x}, format={}, prbs={}, symbols={}",
+                       pucch.crnti,
+                       pucch.format,
+                       pucch.resources.prbs,
+                       pucch.resources.symbols);
+      } else {
+        fmt::format_to(fmtbuf,
+                       "\n- ue, rnti={:#x}, format={}, prbs={}, symbols={}, second_prbs={}",
+                       pucch.crnti,
+                       pucch.format,
+                       pucch.resources.prbs,
+                       pucch.resources.symbols,
+                       pucch.resources.second_hop_prbs);
+      }
     }
   }
 
