@@ -18,36 +18,48 @@ class async_single_event_observer_test : public ::testing::Test
 {
 protected:
   timer_manager                    timers{1};
-  async_event_source<int>          transaction_channel{timers};
+  async_event_source<int>          event_source{timers};
   async_single_event_observer<int> tr;
 };
 
-TEST_F(async_single_event_observer_test, when_transaction_subscriber_is_created_then_it_starts_unregistered)
+TEST_F(async_single_event_observer_test, when_transaction_sink_is_created_then_it_starts_unregistered)
 {
   ASSERT_FALSE(tr.connected());
   ASSERT_FALSE(tr.complete());
 }
 
-TEST_F(async_single_event_observer_test, when_no_events_have_been_set_then_subscriber_is_not_complete)
+TEST_F(async_single_event_observer_test, when_no_events_have_been_set_then_sink_is_not_complete)
 {
-  tr.subscribe_to(transaction_channel);
+  tr.subscribe_to(event_source);
   ASSERT_FALSE(tr.complete());
 }
 
-TEST_F(async_single_event_observer_test, when_publisher_is_triggered_then_subscriber_receives_result)
+TEST_F(async_single_event_observer_test, when_event_source_is_triggered_then_sink_receives_result)
 {
-  tr.subscribe_to(transaction_channel);
+  tr.subscribe_to(event_source);
 
-  transaction_channel.set(2);
+  event_source.set(2);
   ASSERT_TRUE(tr.complete());
   ASSERT_EQ(tr.result(), 2);
 }
 
+TEST_F(async_single_event_observer_test, when_sink_subscribes_multiple_times_then_previous_result_auto_resets)
+{
+  tr.subscribe_to(event_source);
+  event_source.set(2);
+
+  tr.subscribe_to(event_source);
+  event_source.set(3);
+
+  ASSERT_TRUE(tr.complete());
+  ASSERT_EQ(tr.result(), 3);
+}
+
 #ifdef ASSERTS_ENABLED
-TEST_F(async_single_event_observer_test, only_one_subscriber_per_publisher_allowed)
+TEST_F(async_single_event_observer_test, only_one_sink_per_event_source_allowed)
 {
   async_single_event_observer<int> tr2;
-  tr.subscribe_to(transaction_channel);
+  tr.subscribe_to(event_source);
 
   eager_async_task<int> t = launch_async([this](coro_context<eager_async_task<int>>& ctx) {
     CORO_BEGIN(ctx);
@@ -56,6 +68,6 @@ TEST_F(async_single_event_observer_test, only_one_subscriber_per_publisher_allow
   });
 
   ASSERT_FALSE(t.ready());
-  ASSERT_DEATH(tr2.subscribe_to(transaction_channel), ".*");
+  ASSERT_DEATH(tr2.subscribe_to(event_source), ".*");
 }
 #endif

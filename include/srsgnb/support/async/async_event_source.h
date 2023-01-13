@@ -30,7 +30,7 @@ public:
   async_event_source(async_event_source&&)                 = delete;
   async_event_source& operator=(const async_event_source&) = delete;
   async_event_source& operator=(async_event_source&&)      = delete;
-  ~async_event_source() { srsgnb_assert(not has_subscriber(), "Subscribers must not outlive event sources"); }
+  ~async_event_source() { srsgnb_assert(not has_subscriber(), "Observers must not outlive event sources"); }
 
   /// \brief Checks if there is any listener registered.
   bool has_subscriber() const { return sub != nullptr; }
@@ -55,8 +55,12 @@ private:
 
   void set_observer(async_single_event_observer<T>& sub_)
   {
-    srsgnb_assert(not has_subscriber(), "This class only allows one subscriber/listener per transaction");
-    srsgnb_assert(not sub_.event.is_set(), "Cannot subscribe already set subscriber");
+    srsgnb_assert(not has_subscriber(), "This class only allows one observer/sink/listener per transaction");
+    srsgnb_assert(not sub_.connected(), "The observer cannot be already registered");
+    if (sub_.complete()) {
+      // observer finished the previous transaction. Its last result can be reset.
+      sub_.reset();
+    }
     sub         = &sub_;
     sub->parent = this;
   }
@@ -121,6 +125,9 @@ public:
 
   /// \brief Checks if result has been set successfully by the event source.
   bool complete() const { return event.is_set(); }
+
+  /// \brief Clears the stored result.
+  void reset() { event.reset(); }
 
   /// \brief Result set by event source.
   const T& result() const&
