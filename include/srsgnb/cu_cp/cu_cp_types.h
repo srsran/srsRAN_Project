@@ -47,8 +47,6 @@ enum cu_up_index_t : uint16_t {
   INVALID_CU_UP_INDEX = MAX_NOF_CU_UPS
 };
 
-#define MAX_NOF_CU_UES (du_index_t::MAX_NOF_DUS * ue_index_t::MAX_NOF_UES)
-
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
 enum du_cell_index_t : uint16_t {
   MIN_DU_CELL_INDEX     = 0,
@@ -91,14 +89,12 @@ inline du_cell_index_t int_to_du_cell_index(std::underlying_type_t<du_cell_index
   return static_cast<du_cell_index_t>(idx);
 }
 
+#define MAX_NOF_CU_UES (du_index_t::MAX_NOF_DUS * ue_index_t::MAX_NOF_UES)
+
 /// \brief CU_CP_UE_ID internally used to identify the UE CU-CP-wide.
 /// \remark The CU_CP_UE_ID is derived from the DU index and the UE's index at the DU
 /// by (DU_INDEX * MAX_NOF_UES) + UE_INDEX
-enum class cu_cp_ue_id_t : uint64_t {
-  min     = 0,
-  max     = (MAX_NOF_DUS * MAX_NOF_UES) + MAX_NOF_UES,
-  invalid = (MAX_NOF_DUS * MAX_NOF_UES) + MAX_NOF_UES + 1
-};
+enum class cu_cp_ue_id_t : uint64_t { min = 0, max = MAX_NOF_CU_UES - 1, invalid = MAX_NOF_CU_UES };
 
 /// Convert CU_CP_UE_ID  type to integer.
 inline uint64_t cu_cp_ue_id_to_uint(cu_cp_ue_id_t id)
@@ -291,7 +287,7 @@ struct qos_flow_setup_request_item {
 };
 
 struct cu_cp_s_nssai {
-  optional<uint64_t> sd;
+  optional<uint32_t> sd;
   uint64_t           sst;
 };
 
