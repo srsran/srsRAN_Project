@@ -28,7 +28,7 @@ static void
 demodulate_soft_BPSK(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, span<const float> noise_vars)
 {
   // Maximum (absolute) value considered for quantization. Larger values will be clipped.
-  constexpr float RANGE_LIMIT_FLOAT = 600;
+  constexpr float RANGE_LIMIT_FLOAT = 24;
   std::transform(symbols.begin(), symbols.end(), noise_vars.begin(), llrs.begin(), [](cf_t z, float n) {
     return demod_BPSK_symbol(z, n, RANGE_LIMIT_FLOAT);
   });
@@ -38,7 +38,7 @@ static void
 demodulate_soft_PI_2_BPSK(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, span<const float> noise_vars)
 {
   // Maximum (absolute) value considered for quantization. Larger values will be clipped.
-  constexpr float RANGE_LIMIT_FLOAT = 600;
+  constexpr float RANGE_LIMIT_FLOAT = 24;
 
   // Even-indexed symbols.
   auto*       out = llrs.begin();

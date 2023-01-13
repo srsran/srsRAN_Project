@@ -16,13 +16,14 @@
 
 using namespace srsgnb;
 
-namespace {
+// Maximum (absolute) value considered for quantization. Larger values will be clipped.
+static constexpr float RANGE_LIMIT_FLOAT = 20;
 
 // Square root of 1/10.
 static const float M_SQRT1_10 = 1.0F / std::sqrt(10.0F);
 
 #ifdef HAVE_AVX2
-inline void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var, float range_limit)
+static void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
   // Load symbols.
   __m256 symbols_0 = _mm256_loadu_ps(reinterpret_cast<const float*>(symbol + 0));
@@ -89,11 +90,11 @@ inline void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
 
   // Store result.
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(llr),
-                      mm256::quantize_ps(l_value_0_, l_value_1_, l_value_2_, l_value_3_, range_limit));
+                      mm256::quantize_ps(l_value_0_, l_value_1_, l_value_2_, l_value_3_, RANGE_LIMIT_FLOAT));
 }
 #endif // HAVE_AVX2
 
-inline log_likelihood_ratio demod_16QAM_symbol_01(float x, float noise_var, float range_limit)
+static log_likelihood_ratio demod_16QAM_symbol_01(float x, float noise_var)
 {
   float l_value = 4 * M_SQRT1_10 * x;
   if (std::abs(x) > 2 * M_SQRT1_10) {
@@ -101,25 +102,20 @@ inline log_likelihood_ratio demod_16QAM_symbol_01(float x, float noise_var, floa
   }
 
   l_value /= noise_var;
-  return log_likelihood_ratio::quantize(l_value, range_limit);
+  return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-inline log_likelihood_ratio demod_16QAM_symbol_23(float x, float noise_var, float range_limit)
+static log_likelihood_ratio demod_16QAM_symbol_23(float x, float noise_var)
 {
   float l_value = 0.8F - 4 * M_SQRT1_10 * std::abs(x);
   l_value /= noise_var;
-  return log_likelihood_ratio::quantize(l_value, range_limit);
+  return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
-
-} // namespace
 
 void srsgnb::demodulate_soft_QAM16(span<log_likelihood_ratio> llrs,
                                    span<const cf_t>           symbols,
                                    span<const float>          noise_vars)
 {
-  // Maximum (absolute) value considered for quantization. Larger values will be clipped.
-  constexpr float RANGE_LIMIT_FLOAT = 300;
-
   const cf_t*           symbols_it   = symbols.begin();
   const float*          noise_it     = noise_vars.begin();
   log_likelihood_ratio* llr_it       = llrs.begin();
@@ -128,7 +124,7 @@ void srsgnb::demodulate_soft_QAM16(span<log_likelihood_ratio> llrs,
 #ifdef HAVE_AVX2
   // For AVX2, it generates 32 LLRs simultaneously. The input is read in batches of 8 symbols.
   for (std::size_t symbol_index_end = (symbols.size() / 8) * 8; symbol_index != symbol_index_end; symbol_index += 8) {
-    demod_QAM16_avx2(llr_it, symbols_it, noise_it, RANGE_LIMIT_FLOAT);
+    demod_QAM16_avx2(llr_it, symbols_it, noise_it);
 
     llr_it += 32;
     symbols_it += 8;
@@ -137,10 +133,10 @@ void srsgnb::demodulate_soft_QAM16(span<log_likelihood_ratio> llrs,
 #endif // HAVE_AVX2
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
-    *llr_it++ = demod_16QAM_symbol_01(std::real(*symbols_it), *noise_it, RANGE_LIMIT_FLOAT);
-    *llr_it++ = demod_16QAM_symbol_01(std::imag(*symbols_it), *noise_it, RANGE_LIMIT_FLOAT);
-    *llr_it++ = demod_16QAM_symbol_23(std::real(*symbols_it), *noise_it, RANGE_LIMIT_FLOAT);
-    *llr_it++ = demod_16QAM_symbol_23(std::imag(*symbols_it), *noise_it, RANGE_LIMIT_FLOAT);
+    *llr_it++ = demod_16QAM_symbol_01(std::real(*symbols_it), *noise_it);
+    *llr_it++ = demod_16QAM_symbol_01(std::imag(*symbols_it), *noise_it);
+    *llr_it++ = demod_16QAM_symbol_23(std::real(*symbols_it), *noise_it);
+    *llr_it++ = demod_16QAM_symbol_23(std::imag(*symbols_it), *noise_it);
     ++symbols_it;
     ++noise_it;
   }

@@ -53,7 +53,7 @@ int main()
     TESTASSERT_EQ(span<const log_likelihood_ratio>(soft_bits_expected),
                   span<const log_likelihood_ratio>(soft_bits),
                   "Soft bits are not sufficiently precise (mod={}).",
-                  test_case.scheme);
+                  to_string(test_case.scheme));
 
     std::vector<uint8_t> hard_bits(nof_bits);
     std::transform(soft_bits.cbegin(), soft_bits.cend(), hard_bits.begin(), [](log_likelihood_ratio a) {

@@ -17,12 +17,11 @@
 
 using namespace srsgnb;
 
-namespace {
 // Square root of 1/170.
 const float M_SQRT1_170 = 1.0F / std::sqrt(170.0F);
 
 // Maximum (absolute) value considered for quantization. Larger values will be clipped.
-constexpr float RANGE_LIMIT_FLOAT = 90;
+constexpr float RANGE_LIMIT_FLOAT = 20;
 
 const float                               INTERVAL_WIDTH_01 = 2 * M_SQRT1_170;
 constexpr unsigned                        NOF_INTERVALS_01  = 16;
@@ -140,7 +139,7 @@ const std::array<float, NOF_INTERVALS_67> INTERCEPT_67 =
     {28.0F / 85, -20.0F / 85, 12.0F / 85, -4.0F / 85, -4.0F / 85, 12.0F / 85, -20.0F / 85, 28.0F / 85};
 
 #ifdef HAVE_AVX2
-inline void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
+static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
   // Load symbols.
   __m256 symbols = _mm256_loadu_ps(reinterpret_cast<const float*>(symbol));
@@ -188,31 +187,29 @@ inline void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, con
 }
 #endif // HAVE_AVX2
 
-inline log_likelihood_ratio demod_256QAM_symbol_01(float value, float noise_var)
+static log_likelihood_ratio demod_256QAM_symbol_01(float value, float noise_var)
 {
   float l_value = interval_function(value, noise_var, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-inline log_likelihood_ratio demod_256QAM_symbol_23(float value, float noise_var)
+static log_likelihood_ratio demod_256QAM_symbol_23(float value, float noise_var)
 {
   float l_value = interval_function(value, noise_var, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-inline log_likelihood_ratio demod_256QAM_symbol_45(float value, float noise_var)
+static log_likelihood_ratio demod_256QAM_symbol_45(float value, float noise_var)
 {
   float l_value = interval_function(value, noise_var, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-inline log_likelihood_ratio demod_256QAM_symbol_67(float value, float noise_var)
+static log_likelihood_ratio demod_256QAM_symbol_67(float value, float noise_var)
 {
   float l_value = interval_function(value, noise_var, INTERVAL_WIDTH_67, NOF_INTERVALS_67, SLOPE_67, INTERCEPT_67);
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
-
-} // namespace
 
 void srsgnb::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
                                     span<const cf_t>           symbols,
