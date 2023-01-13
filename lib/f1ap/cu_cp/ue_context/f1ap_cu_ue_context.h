@@ -77,7 +77,7 @@ public:
 private:
   timer_manager& timers;
 
-  slotted_array<f1ap_ue_context, MAX_NOF_UES> ues;
+  slotted_array<f1ap_ue_context, MAX_NOF_UES> ues; // indexed by gnb_cu_ue_f1ap_id
 };
 
 } // namespace srs_cu_cp
