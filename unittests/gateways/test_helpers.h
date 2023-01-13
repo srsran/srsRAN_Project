@@ -85,21 +85,22 @@ int get_unused_port(const std::string& bind_addr, struct addrinfo& hints)
   // Obtain addrinfo that is compatible with IPv4 and IPv6
   ret = getaddrinfo(bind_addr.c_str(), nullptr, &hints, &addrinfo_results);
   if (ret != 0) {
-    printf("Failure in `getaddrinfo` for address `%s`: %s\n", bind_addr.c_str(), strerror(errno));
+    srslog::fetch_basic_logger("TEST").error(
+        "Failure in `getaddrinfo` for address `{}`: {}", bind_addr.c_str(), strerror(errno));
     return result_port;
   }
 
   // Create socket of proper type
   int sock_fd = socket(addrinfo_results->ai_family, addrinfo_results->ai_socktype, addrinfo_results->ai_protocol);
   if (sock_fd < 0) {
-    printf("Failed to create socket: %s\n", strerror(errno));
+    srslog::fetch_basic_logger("TEST").error("Failed to create socket: {}", strerror(errno));
     goto free_addrinfo_results;
   }
 
   // Bind socket to a free port.
   ret = bind(sock_fd, addrinfo_results->ai_addr, addrinfo_results->ai_addrlen);
   if (ret != 0) {
-    printf("Failed to bind socket to `%s`: %s\n", bind_addr.c_str(), strerror(errno));
+    srslog::fetch_basic_logger("TEST").error("Failed to bind socket to `{}`: {}", bind_addr.c_str(), strerror(errno));
     goto close_socket;
   }
 
@@ -107,11 +108,12 @@ int get_unused_port(const std::string& bind_addr, struct addrinfo& hints)
   tmp_addr_len = sizeof(tmp_addr);
   ret          = getsockname(sock_fd, (struct sockaddr*)&tmp_addr, &tmp_addr_len);
   if (ret != 0) {
-    printf("Failed to read port from socket bound to `%s`: %s\n", bind_addr.c_str(), strerror(errno));
+    srslog::fetch_basic_logger("TEST").error(
+        "Failed to read port from socket bound to `{}`: {}", bind_addr.c_str(), strerror(errno));
     goto close_socket;
   }
   if (tmp_addr_len > sizeof(tmp_addr)) {
-    printf("Insufficient tmp_addr_len for getsockname()\n");
+    srslog::fetch_basic_logger("TEST").error("Insufficient tmp_addr_len for getsockname()");
     goto close_socket;
   }
 
@@ -123,13 +125,13 @@ int get_unused_port(const std::string& bind_addr, struct addrinfo& hints)
       result_port = ntohs(((struct sockaddr_in6*)&tmp_addr)->sin6_port);
       break;
     default:
-      printf("Protocol family is neither IPv4 nor IPv6\n");
+      srslog::fetch_basic_logger("TEST").error("Protocol family is neither IPv4 nor IPv6");
   }
 
 close_socket:
   ret = close(sock_fd);
   if (ret != 0) {
-    printf("Failed to close socket with sock_fd=%d: %s\n", sock_fd, strerror(errno));
+    srslog::fetch_basic_logger("TEST").error("Failed to close socket with sock_fd={}: {}", sock_fd, strerror(errno));
   }
 free_addrinfo_results:
   freeaddrinfo(addrinfo_results);
