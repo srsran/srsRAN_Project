@@ -69,17 +69,8 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
         const pdsch_time_domain_resource_allocation& pdsch = pdsch_list[time_res];
         const cell_slot_resource_grid&               grid  = pdsch_alloc.dl_resource_grid(ue_cc.cell_index, pdsch.k0);
         prb_bitmap                                   used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
-        unsigned nof_req_prbs                                  = is_retx ? h->last_alloc_params().prbs.prbs().length()
+        unsigned     nof_req_prbs                              = is_retx ? h->last_alloc_params().prbs.prbs().length()
                                                                          : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
-        // As per TS 38.214, 5.1.2.2.2, length in terms of contiguously allocated resource blocks (L_RBs) shall not
-        // exceed N_BWP − RB_start.
-        // TODO:
-        //  Adapt nof_req_prbs when using USS, i.e. L'_RBs shall not exceed N^{DL,INITIAL_BWP}_RB - RB'_start
-        //  where L'_RBs = LRBs / K, RB'_start = RB_start / K, K is maximum value from set {1, 2, 4, 8}
-        //  satisfying the condition K <= floor(N^{DL,ACTIVE_BWP}_RB / N^{DL,INITIAL_BWP}_RB).
-        nof_req_prbs               = nof_req_prbs > (bwp_cfg.crbs.length() - bwp_cfg.crbs.start())
-                                         ? bwp_cfg.crbs.length() - bwp_cfg.crbs.start()
-                                         : nof_req_prbs;
         crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
         if (not ue_grant_crbs.empty()) {
           pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
@@ -139,15 +130,6 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
     prb_bitmap                     used_crbs = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
     unsigned                       nof_req_prbs =
         is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
-    // As per TS 38.214, 6.1.2.2.2, length in terms of contiguously allocated resource blocks (L_RBs) shall not
-    // exceed N_BWP − RB_start.
-    // TODO:
-    //  Adapt nof_req_prbs when using USS, i.e. L'_RBs shall not exceed N^{UL,INITIAL_BWP}_RB - RB'_start
-    //  where L'_RBs = LRBs / K, RB'_start = RB_start / K, K is maximum value from set {1, 2, 4, 8}
-    //  satisfying the condition K <= floor(N^{UL,ACTIVE_BWP}_RB / N^{UL,INITIAL_BWP}_RB).
-    nof_req_prbs = nof_req_prbs > (bwp_ul.generic_params.crbs.length() - bwp_ul.generic_params.crbs.start())
-                       ? bwp_ul.generic_params.crbs.length() - bwp_ul.generic_params.crbs.start()
-                       : nof_req_prbs;
     crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
     if (not ue_grant_crbs.empty()) {
       pusch_alloc.allocate_ul_grant(ue_pusch_grant{

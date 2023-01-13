@@ -59,9 +59,14 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     return false;
   }
 
-  subcarrier_spacing scs = bwp_dl_cmn.generic_params.scs;
+  bwp_configuration  bwp_cfg = bwp_dl_cmn.generic_params;
+  subcarrier_spacing scs     = bwp_dl_cmn.generic_params.scs;
   if (ss_cfg->type == search_space_configuration::type_t::common) {
-    scs = init_dl_bwp.generic_params.scs;
+    scs     = init_dl_bwp.generic_params.scs;
+    bwp_cfg = init_dl_bwp.generic_params;
+    if (ss_cfg->cs_id == to_coreset_id(0) && cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
+      bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+    }
   }
 
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
@@ -74,6 +79,13 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
     logger.warning("Failed to allocate PDSCH. Cause: No space available in scheduler output list");
+    return false;
+  }
+
+  // Verify CRBs allocation.
+  if (not bwp_cfg.crbs.contains(grant.crbs)) {
+    logger.warning(
+        "Failed to allocate PDSCH. Cause: CRBs allocated outside the BWP.", grant.crbs.length(), bwp_cfg.crbs.length());
     return false;
   }
 
@@ -107,7 +119,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, grant.crbs});
 
   // Allocate UE DL HARQ.
-  prb_interval            prbs = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
+  prb_interval            prbs = crb_to_prb(bwp_cfg, grant.crbs);
   dl_harq_process&        h_dl = ue_cc->harqs.dl_harq(grant.h_id);
   sch_mcs_index           mcs;
   dci_dl_rnti_config_type dci_cfg_type;
@@ -222,6 +234,14 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
 
+  // Verify CRBs allocation.
+  if (not bwp_ul_cmn.generic_params.crbs.contains(grant.crbs)) {
+    logger.warning("Failed to allocate PUSCH. Cause: CRBs allocated outside the BWP.",
+                   grant.crbs.length(),
+                   bwp_ul_cmn.generic_params.crbs.length());
+    return false;
+  }
+
   // Verify there is no RB collision.
   if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, grant.crbs)) {
     logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.");
@@ -259,7 +279,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Fill UL PDCCH DCI.
-  prb_interval prbs = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
+  prb_interval prbs = crb_to_prb(bwp_ul_cmn.generic_params, grant.crbs);
   build_dci_f0_0_c_rnti(pdcch->dci,
                         cell_cfg.dl_cfg_common.init_dl_bwp,
                         ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id()).generic_params,
