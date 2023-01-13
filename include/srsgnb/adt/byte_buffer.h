@@ -123,8 +123,6 @@ class byte_buffer
     byte_buffer_segment* tail = nullptr;
     /// Length in bytes of the linked list of segments.
     size_t pkt_len = 0;
-    /// Storage of control block segment, in case it gets detached from linked list.
-    std::unique_ptr<byte_buffer_segment> detached_ctrl_segment;
   };
 
 public:
