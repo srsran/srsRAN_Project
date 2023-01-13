@@ -29,7 +29,8 @@ dmrs_symbol_mask srsgnb::pusch_dmrs_symbol_mask_mapping_type_A_single_get(
     return mask;
   }
 
-  if (config.last_symbol < 13 && (config.last_symbol != 12 || config.additional_position < dmrs_additional_positions::pos3)) {
+  if (config.last_symbol < 13 &&
+      (config.last_symbol != 12 || config.additional_position < dmrs_additional_positions::pos3)) {
     mask.set(9);
     if (config.additional_position >= dmrs_additional_positions::pos2) {
       mask.set(6);
