@@ -8,15 +8,15 @@
  *
  */
 
-#include "ng_pdu_session_resource_setup_procedure.h"
+#include "ngap_pdu_session_resource_setup_routine.h"
 #include "../ngap/ngap_asn1_helpers.h"
-#include "ng_procedure_helpers.h"
+#include "ngap_routine_helpers.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
-ng_pdu_session_resource_setup_procedure::ng_pdu_session_resource_setup_procedure(
+ngap_pdu_session_resource_setup_routine::ngap_pdu_session_resource_setup_routine(
     ngc_ue&                                   ue_,
     cu_cp_pdu_session_resource_setup_message& request_,
     ngc_du_processor_control_notifier&        du_processor_ctrl_notif_,
@@ -30,7 +30,7 @@ ng_pdu_session_resource_setup_procedure::ng_pdu_session_resource_setup_procedure
 {
 }
 
-void ng_pdu_session_resource_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
+void ngap_pdu_session_resource_setup_routine::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -47,7 +47,7 @@ void ng_pdu_session_resource_setup_procedure::operator()(coro_context<async_task
   CORO_RETURN();
 }
 
-void ng_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response()
+void ngap_pdu_session_resource_setup_routine::send_pdu_session_resource_setup_response()
 {
   ngc_message ngc_msg = {};
 

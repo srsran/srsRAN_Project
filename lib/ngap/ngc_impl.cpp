@@ -11,10 +11,10 @@
 #include "ngc_impl.h"
 #include "ngap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
-#include "procedures/ng_initial_context_setup_procedure.h"
-#include "procedures/ng_pdu_session_resource_setup_procedure.h"
-#include "procedures/ng_procedure_helpers.h"
 #include "procedures/ng_setup_procedure.h"
+#include "routines/ngap_initial_context_setup_routine.h"
+#include "routines/ngap_pdu_session_resource_setup_routine.h"
+#include "routines/ngap_routine_helpers.h"
 #include "srsgnb/support/async/event_signal.h"
 
 using namespace srsgnb;
@@ -226,9 +226,9 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
     logger.debug("Received Initial Context Setup Request Message: {}", js.to_string());
   }
 
-  // start procedure
+  // start routine
   task_sched.schedule_async_task(cu_cp_ue_id,
-                                 launch_async<ng_initial_context_setup_procedure>(*ue, request, ngc_notifier, logger));
+                                 launch_async<ngap_initial_context_setup_routine>(*ue, request, ngc_notifier, logger));
 }
 
 void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
@@ -258,9 +258,9 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
   fill_cu_cp_pdu_session_resource_setup_message(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
-  // start procedure
+  // start routine
   task_sched.schedule_async_task(cu_cp_ue_id,
-                                 launch_async<ng_pdu_session_resource_setup_procedure>(
+                                 launch_async<ngap_pdu_session_resource_setup_routine>(
                                      *ue, msg, ue->get_du_processor_control_notifier(), ngc_notifier, logger));
 
   // Handle optional parameters

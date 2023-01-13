@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
-#include "ngc_event_manager.h"
 #include "srsgnb/cu_cp/ue_manager.h" // for ngc_ue
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/async/async_task.h"
@@ -19,10 +18,10 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class ng_pdu_session_resource_setup_procedure
+class ngap_pdu_session_resource_setup_routine
 {
 public:
-  ng_pdu_session_resource_setup_procedure(ngc_ue&                                   ue_,
+  ngap_pdu_session_resource_setup_routine(ngc_ue&                                   ue_,
                                           cu_cp_pdu_session_resource_setup_message& request_,
                                           ngc_du_processor_control_notifier&        du_processor_ctrl_notif_,
                                           ngc_message_notifier&                     amf_notif_,

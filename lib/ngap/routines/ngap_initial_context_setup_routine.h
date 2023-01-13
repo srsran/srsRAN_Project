@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
-#include "ngc_event_manager.h"
 #include "srsgnb/cu_cp/ue_manager.h" // for ngc_ue
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/async/async_task.h"
@@ -31,10 +30,10 @@ struct initial_context_response_message {
   optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
 };
 
-class ng_initial_context_setup_procedure
+class ngap_initial_context_setup_routine
 {
 public:
-  ng_initial_context_setup_procedure(ngc_ue&                                         ue_,
+  ngap_initial_context_setup_routine(ngc_ue&                                         ue_,
                                      const asn1::ngap::init_context_setup_request_s& request_,
                                      ngc_message_notifier&                           amf_notif_,
                                      srslog::basic_logger&                           logger_);
