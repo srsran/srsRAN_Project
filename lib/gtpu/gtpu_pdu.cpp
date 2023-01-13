@@ -17,6 +17,10 @@ bool gtpu_read_ext_header(bit_decoder&                            decoder,
                           std::unique_ptr<gtpu_extension_header>& ext,
                           srslog::basic_logger&                   logger);
 
+bool gtpu_read_ext_pdu_session_container(bit_decoder&                            decoder,
+                                         std::unique_ptr<gtpu_extension_header>& ext,
+                                         srslog::basic_logger&                   logger);
+
 /****************************************************************************
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 29.281 v10.1.0 Section 5
@@ -135,7 +139,7 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
       return false;
     }
     std::unique_ptr<gtpu_extension_header> ext = nullptr;
-    if (!gtpu_read_ext_header(decoder, 0, ext, logger)) {
+    if (!gtpu_read_ext_header(decoder, header.next_ext_hdr_type, ext, logger)) {
       return false;
     }
     // if (ext->next_header_type == GTPU_EXT_NO_MORE_EXTENSION_HEADERS)
@@ -151,8 +155,40 @@ bool gtpu_read_ext_header(bit_decoder&                            decoder,
                           std::unique_ptr<gtpu_extension_header>& ext,
                           srslog::basic_logger&                   logger)
 {
-  // TODO
+  switch (header_type) {
+    case GTPU_EXT_NO_MORE_EXTENSION_HEADERS:
+      logger.error("Called for header extension unpacking, but there is no extension to unpack");
+      return false;
+    case GTPU_EXT_RESERVED_0:
+    case GTPU_EXT_RESERVED_1:
+    case GTPU_EXT_RESERVED_2:
+    case GTPU_EXT_RESERVED_3:
+      logger.error("Header extension type is reserved");
+      return false;
+    case GTPU_EXT_HEADER_PDU_SESSION_CONTAINER:
+      return gtpu_read_ext_pdu_session_container(decoder, ext, logger);
+  }
 
+  return true;
+}
+
+bool gtpu_read_ext_pdu_session_container(bit_decoder&                            decoder,
+                                         std::unique_ptr<gtpu_extension_header>& ext,
+                                         srslog::basic_logger&                   logger)
+{
+  auto ext_ptr = std::make_unique<gtpu_extension_header_pdu_session_container>();
+  decoder.unpack(ext_ptr->length, 8);
+
+  // TODO check max size
+
+  // Extract container
+  ext_ptr->container.resize(ext_ptr->length * 4);
+  for (unsigned i = 0; i < ext_ptr->container.size(); ++i) {
+    decoder.unpack(ext_ptr->container[i], 8);
+  }
+
+  // Extract next extension header type
+  decoder.unpack(ext_ptr->next_extension_header_type, 8);
   return true;
 }
 } // namespace srsgnb

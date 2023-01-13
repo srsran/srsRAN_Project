@@ -50,21 +50,20 @@ constexpr unsigned GTPU_MSG_END_MARKER                               = 254;
 constexpr unsigned GTPU_MSG_DATA_PDU                                 = 255;
 
 // GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
-constexpr unsigned GTPU_EXT_NO_MORE_EXTENSION_HEADERS        = 0b00000000;
-constexpr unsigned GTPU_EXT_RESERVED_0                       = 0b00000001;
-constexpr unsigned GTPU_EXT_RESERVED_1                       = 0b00000010;
-constexpr unsigned GTPU_EXT_HEADER_LONG_PDCP_PDU_NUMBER_0    = 0b00000011;
-constexpr unsigned GTPU_EXT_HEADER_SERVICE_CLASS_INDICATOR   = 0b00100000;
-constexpr unsigned GTPU_EXT_HEADER_UDP_PORT                  = 0b11000000;
-constexpr unsigned GTPU_EXT_HEADER_RAN_CONTAINER             = 0b10000001;
-constexpr unsigned GTPU_EXT_HEADER_LONG_PDCP_PDU_NUMBER_1    = 0b10000010;
-constexpr unsigned GTPU_EXT_HEADER_XW_RAN_CONTAINER          = 0b10000011;
-constexpr unsigned GTPU_EXT_HEADER_NR_RAN_CONTAINER          = 0b10000100;
-constexpr unsigned GTPU_EXT_HEADER_PDU_SESSION_CONTAINER     = 0b10000101;
-constexpr unsigned GTPU_EXT_HEADER_PDU_SESSION_CONTAINER_LEN = 4;
-constexpr unsigned GTPU_EXT_HEADER_PDCP_PDU_NUMBER           = 0b11000000;
-constexpr unsigned GTPU_EXT_RESERVED_3                       = 0b11000001;
-constexpr unsigned GTPU_EXT_RESERVED_4                       = 0b11000010;
+constexpr unsigned GTPU_EXT_NO_MORE_EXTENSION_HEADERS      = 0b00000000;
+constexpr unsigned GTPU_EXT_RESERVED_0                     = 0b00000001;
+constexpr unsigned GTPU_EXT_RESERVED_1                     = 0b00000010;
+constexpr unsigned GTPU_EXT_HEADER_LONG_PDCP_PDU_NUMBER_0  = 0b00000011;
+constexpr unsigned GTPU_EXT_HEADER_SERVICE_CLASS_INDICATOR = 0b00100000;
+constexpr unsigned GTPU_EXT_HEADER_UDP_PORT                = 0b11000000;
+constexpr unsigned GTPU_EXT_HEADER_RAN_CONTAINER           = 0b10000001;
+constexpr unsigned GTPU_EXT_HEADER_LONG_PDCP_PDU_NUMBER_1  = 0b10000010;
+constexpr unsigned GTPU_EXT_HEADER_XW_RAN_CONTAINER        = 0b10000011;
+constexpr unsigned GTPU_EXT_HEADER_NR_RAN_CONTAINER        = 0b10000100;
+constexpr unsigned GTPU_EXT_HEADER_PDU_SESSION_CONTAINER   = 0b10000101;
+constexpr unsigned GTPU_EXT_HEADER_PDCP_PDU_NUMBER         = 0b11000000;
+constexpr unsigned GTPU_EXT_RESERVED_2                     = 0b11000001;
+constexpr unsigned GTPU_EXT_RESERVED_3                     = 0b11000010;
 
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
@@ -101,27 +100,27 @@ struct gtpu_extension_header_pdcp_pdu_number : gtpu_extension_header {
 };
 
 // TS 29.281 v16.2.0, section 5.2.2.2A
-struct gtpu_extension_header_long_pdcp_pdu_number {
+struct gtpu_extension_header_long_pdcp_pdu_number : gtpu_extension_header {
   uint32_t pdcp_pdu_number = 0;
 };
 
 // TS 29.281 v16.2.0, section 5.2.2.3
-struct gtpu_extension_header_service_class_indicator {
+struct gtpu_extension_header_service_class_indicator : gtpu_extension_header {
   uint16_t service_class_indicator = 0;
 };
 
 // TS 29.281 v16.2.0, section 5.2.2.4
-struct gtpu_extension_header_ran_container {
+struct gtpu_extension_header_ran_container : gtpu_extension_header {
   std::vector<uint8_t> container = {};
 };
 
 // TS 29.281 v16.2.0, section 5.2.2.5
-struct gtpu_extension_header_xw_ran_container {
+struct gtpu_extension_header_xw_ran_container : gtpu_extension_header {
   std::vector<uint8_t> container = {};
 };
 
 // TS 29.281 v16.2.0, section 5.2.2.6
-struct gtpu_extension_header_pdu_session_container {
+struct gtpu_extension_header_pdu_session_container : gtpu_extension_header {
   std::vector<uint8_t> container = {};
 };
 
