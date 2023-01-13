@@ -88,4 +88,4 @@ inline const char* get_message_type_str(const asn1::e2ap::e2_ap_pdu_c& pdu)
   }
   report_fatal_error("Invalid E2AP PDU type \"{}\"", pdu.type().to_string());
 }
-}
+} // namespace srsgnb

@@ -11,10 +11,9 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/e2/common/e2_common.h"
+#include "srsgnb/e2/common/e2.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/srslog/srslog.h"
-#include <cstdio>
 
 namespace srsgnb {
 
@@ -23,8 +22,10 @@ class e2ap_asn1_packer : public e2_message_handler
 public:
   explicit e2ap_asn1_packer(network_gateway_data_handler& gw, e2_message_handler& e2);
 
+  /// Received packed E2AP PDU that needs to be unpacked and forwarded.
   void handle_packed_pdu(const byte_buffer& pdu);
 
+  /// Receive populated ASN1 struct that needs to be packed and forwarded.
   void handle_message(const e2_message& msg) override;
 
 private:

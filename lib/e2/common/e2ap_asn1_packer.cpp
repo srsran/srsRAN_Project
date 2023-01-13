@@ -11,14 +11,13 @@
 #include "e2ap_asn1_packer.h"
 #include "srsgnb/asn1/e2ap/e2ap.h"
 
-namespace srsgnb {
+using namespace srsgnb;
 
 e2ap_asn1_packer::e2ap_asn1_packer(network_gateway_data_handler& gw_, e2_message_handler& e2_handler) :
   logger(srslog::fetch_basic_logger("E2-ASN1-PCK")), gw(gw_), e2(e2_handler)
 {
 }
 
-// Received packed E2AP PDU that needs to be unpacked and forwarded.
 void e2ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 {
   logger.info("Received PDU of {} bytes", bytes.length());
@@ -30,11 +29,10 @@ void e2ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
     return;
   }
 
-  // call packet handler
+  // Call packet handler.
   e2.handle_message(msg);
 }
 
-// Receive populated ASN1 struct that needs to be packed and forwarded.
 void e2ap_asn1_packer::handle_message(const e2_message& msg)
 {
   // pack PDU into temporary buffer
@@ -47,5 +45,3 @@ void e2ap_asn1_packer::handle_message(const e2_message& msg)
 
   gw.handle_pdu(tx_pdu);
 }
-
-} // namespace srsgnb
