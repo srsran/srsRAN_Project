@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(demodulation_mapper_test demodulation_mapper_test.cpp)
-target_link_libraries(demodulation_mapper_test srsgnb_channel_modulation srsvec srslog)
+target_link_libraries(demodulation_mapper_test srsgnb_channel_modulation srsvec srslog gtest gtest_main)
 add_test_vector(demodulation_mapper_test demodulation_mapper_test_data.tar.gz "")
 
 add_executable(evm_calculator_test evm_calculator_test.cpp)
