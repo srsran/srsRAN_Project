@@ -54,6 +54,9 @@ private:
   /// \brief Return socket file descriptor.
   int get_socket_fd() override;
 
+  /// \brief Return socket bind port.
+  int get_bind_port();
+
   // internal helpers
   using socket_buffer_type = uint8_t;
   void handle_data(span<socket_buffer_type> payload);

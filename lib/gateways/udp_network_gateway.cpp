@@ -217,6 +217,28 @@ int udp_network_gateway::get_socket_fd()
   return sock_fd;
 }
 
+int udp_network_gateway::get_bind_port()
+{
+  int gw_bind_port = 0;
+
+  if (not is_initialized()) {
+    logger.error("Socket of UDP network gateway not initialized.");
+    return gw_bind_port;
+  }
+
+  sockaddr_in gw_addr;
+  socklen_t   gw_addr_len = sizeof(gw_addr);
+
+  int ret = getsockname(sock_fd, (struct sockaddr*)&gw_addr, &gw_addr_len);
+  if (ret != 0) {
+    logger.error("Failed `getsockname` in UDP network gateway with sock_fd={}: {}", sock_fd, strerror(errno));
+  }
+  gw_bind_port = ntohs(gw_addr.sin_port);
+
+  logger.debug("Read bind port of UDP network gateway: {}", gw_bind_port);
+  return gw_bind_port;
+}
+
 bool udp_network_gateway::set_sockopts()
 {
   if (config.rx_timeout_sec > 0) {
