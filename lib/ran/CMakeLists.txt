@@ -20,13 +20,13 @@ add_library(srsgnb_ran
         prach/prach_frequency_mapping.cpp
         prach/prach_preamble_information.cpp
         pusch/pusch_mcs.cpp
+        pusch/pusch_uci_beta_offset.cpp
         pusch/ulsch_info.cpp
         band_helper.cpp
         resource_allocation/resource_allocation_frequency.cpp
         sch/sch_segmentation.cpp
         ssb_freq_position_generator.cpp
-        ssb_mapping.cpp
-        uci/uci_mapping.cpp)
+        ssb_mapping.cpp)
 target_link_libraries(srsgnb_ran)
 
 install(TARGETS srsgnb_ran EXPORT srsgnb_export)
