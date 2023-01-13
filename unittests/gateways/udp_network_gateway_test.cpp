@@ -82,8 +82,9 @@ TEST_F(udp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fails
   network_gateway_config config;
   config.type         = network_gateway_type::udp;
   config.bind_address = "1.1.1.1";
-  config.bind_port    = 8888;
+  config.bind_port    = get_unused_udp_port("0.0.0.0");
   config.reuse_addr   = true;
+  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_FALSE(server->create_and_bind());
 }
@@ -93,8 +94,9 @@ TEST_F(udp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fa
   network_gateway_config config;
   config.type         = network_gateway_type::udp;
   config.bind_address = "1:1::";
-  config.bind_port    = 8888;
+  config.bind_port    = get_unused_sctp_port("::1");
   config.reuse_addr   = true;
+  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_FALSE(server->create_and_bind());
 }
@@ -104,8 +106,9 @@ TEST_F(udp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
   network_gateway_config config;
   config.type         = network_gateway_type::udp;
   config.bind_address = "127.0.0.1";
-  config.bind_port    = 8888;
+  config.bind_port    = get_unused_udp_port(config.bind_address);
   config.reuse_addr   = true;
+  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_TRUE(server->create_and_bind());
 }
@@ -115,8 +118,9 @@ TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succee
   network_gateway_config config;
   config.type         = network_gateway_type::udp;
   config.bind_address = "::1";
-  config.bind_port    = 8888;
+  config.bind_port    = get_unused_udp_port(config.bind_address);
   config.reuse_addr   = true;
+  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_TRUE(server->create_and_bind());
 }
@@ -124,19 +128,21 @@ TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succee
 TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
   network_gateway_config server_config;
-  server_config.type              = network_gateway_type::udp;
-  server_config.bind_address      = "127.0.0.1";
-  server_config.bind_port         = 7777;
-  server_config.connect_address   = "127.0.1.1";
-  server_config.connect_port      = 7777;
+  server_config.type            = network_gateway_type::udp;
+  server_config.bind_address    = "127.0.0.1";
+  server_config.bind_port       = get_unused_udp_port(server_config.bind_address);
+  server_config.connect_address = "127.0.1.1";
+  server_config.connect_port    = get_unused_udp_port(server_config.connect_address);
+  ASSERT_NE(server_config.bind_port, 0);
+  ASSERT_NE(server_config.connect_port, 0);
   server_config.non_blocking_mode = true;
 
   network_gateway_config client_config;
   client_config.type              = network_gateway_type::udp;
-  client_config.bind_address      = "127.0.1.1";
-  client_config.bind_port         = 7777;
-  client_config.connect_address   = "127.0.0.1";
-  client_config.connect_port      = 7777;
+  client_config.bind_address      = server_config.connect_address;
+  client_config.bind_port         = server_config.connect_port;
+  client_config.connect_address   = server_config.bind_address;
+  client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
@@ -171,17 +177,19 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   network_gateway_config server_config;
   server_config.type              = network_gateway_type::udp;
   server_config.bind_address      = "::1";
-  server_config.bind_port         = 7777;
+  server_config.bind_port         = get_unused_udp_port(server_config.bind_address);
   server_config.connect_address   = "::1";
-  server_config.connect_port      = 7778;
+  server_config.connect_port      = get_unused_udp_port(server_config.connect_address);
   server_config.non_blocking_mode = true;
+  ASSERT_NE(server_config.bind_port, 0);
+  ASSERT_NE(server_config.connect_port, 0);
 
   network_gateway_config client_config;
   client_config.type              = network_gateway_type::udp;
-  client_config.bind_address      = "::1";
-  client_config.bind_port         = 7778;
-  client_config.connect_address   = "::1";
-  client_config.connect_port      = 7777;
+  client_config.bind_address      = server_config.connect_address;
+  client_config.bind_port         = server_config.connect_port;
+  client_config.connect_address   = server_config.bind_address;
+  client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
@@ -216,18 +224,20 @@ TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   network_gateway_config server_config;
   server_config.type              = network_gateway_type::udp;
   server_config.bind_address      = "localhost";
-  server_config.bind_port         = 5555;
+  server_config.bind_port         = get_unused_udp_port(server_config.bind_address);
   server_config.connect_address   = "localhost";
-  server_config.connect_port      = 5556;
+  server_config.connect_port      = get_unused_udp_port(server_config.connect_address);
   server_config.non_blocking_mode = true;
   server_config.reuse_addr        = true;
+  ASSERT_NE(server_config.bind_port, 0);
+  ASSERT_NE(server_config.connect_port, 0);
 
   network_gateway_config client_config;
   client_config.type              = network_gateway_type::udp;
   client_config.bind_address      = "localhost";
-  client_config.bind_port         = 5556;
+  client_config.bind_port         = server_config.connect_port;
   client_config.connect_address   = "localhost";
-  client_config.connect_port      = 5555;
+  client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
@@ -255,9 +265,4 @@ TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   server_data_notifier.pdu_queue.pop();
   // oversized PDU not expected to be received
   ASSERT_TRUE(server_data_notifier.pdu_queue.empty());
-}
-
-TEST_F(udp_network_gateway_tester, when_connection_loss_then_reconnect)
-{
-  // TODO: Add test for reconnect
 }

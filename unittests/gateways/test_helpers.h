@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include <arpa/inet.h>
 #include <functional> // for std::function/std::bind
 #include <gtest/gtest.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <queue>
 #include <stdio.h>
@@ -45,6 +47,110 @@ byte_buffer make_large_tx_byte_buffer()
 byte_buffer make_oversized_tx_byte_buffer()
 {
   return make_tx_byte_buffer(9500);
+}
+
+void fill_sctp_hints(struct addrinfo& hints)
+{
+  // support ipv4, ipv6 and hostnames
+  hints.ai_family    = AF_UNSPEC;
+  hints.ai_socktype  = SOCK_SEQPACKET;
+  hints.ai_flags     = 0;
+  hints.ai_protocol  = IPPROTO_SCTP;
+  hints.ai_canonname = nullptr;
+  hints.ai_addr      = nullptr;
+  hints.ai_next      = nullptr;
+}
+
+void fill_udp_hints(struct addrinfo& hints)
+{
+  // support ipv4, ipv6 and hostnames
+  hints.ai_family    = AF_UNSPEC;
+  hints.ai_socktype  = SOCK_DGRAM;
+  hints.ai_flags     = 0;
+  hints.ai_protocol  = IPPROTO_UDP;
+  hints.ai_canonname = nullptr;
+  hints.ai_addr      = nullptr;
+  hints.ai_next      = nullptr;
+}
+
+int get_unused_port(const std::string& bind_addr, struct addrinfo& hints)
+{
+  int result_port = 0;
+  int ret         = 0;
+
+  sockaddr_storage tmp_addr;
+  socklen_t        tmp_addr_len = 0;
+  struct addrinfo* addrinfo_results;
+
+  // Obtain addrinfo that is compatible with IPv4 and IPv6
+  ret = getaddrinfo(bind_addr.c_str(), nullptr, &hints, &addrinfo_results);
+  if (ret != 0) {
+    printf("Failure in `getaddrinfo` for address `%s`: %s\n", bind_addr.c_str(), strerror(errno));
+    return result_port;
+  }
+
+  // Create socket of proper type
+  int sock_fd = socket(addrinfo_results->ai_family, addrinfo_results->ai_socktype, addrinfo_results->ai_protocol);
+  if (sock_fd < 0) {
+    printf("Failed to create socket: %s\n", strerror(errno));
+    goto free_addrinfo_results;
+  }
+
+  // Bind socket to a free port.
+  ret = bind(sock_fd, addrinfo_results->ai_addr, addrinfo_results->ai_addrlen);
+  if (ret != 0) {
+    printf("Failed to bind socket to `%s`: %s\n", bind_addr.c_str(), strerror(errno));
+    goto close_socket;
+  }
+
+  // Find out the port that was assigned by the OS.
+  tmp_addr_len = sizeof(tmp_addr);
+  ret          = getsockname(sock_fd, (struct sockaddr*)&tmp_addr, &tmp_addr_len);
+  if (ret != 0) {
+    printf("Failed to read port from socket bound to `%s`: %s\n", bind_addr.c_str(), strerror(errno));
+    goto close_socket;
+  }
+  if (tmp_addr_len > sizeof(tmp_addr)) {
+    printf("Insufficient tmp_addr_len for getsockname()\n");
+    goto close_socket;
+  }
+
+  switch (addrinfo_results->ai_family) {
+    case AF_INET:
+      result_port = ntohs(((struct sockaddr_in*)&tmp_addr)->sin_port);
+      break;
+    case AF_INET6:
+      result_port = ntohs(((struct sockaddr_in6*)&tmp_addr)->sin6_port);
+      break;
+    default:
+      printf("Protocol family is neither IPv4 nor IPv6\n");
+  }
+
+close_socket:
+  ret = close(sock_fd);
+  if (ret != 0) {
+    printf("Failed to close socket with sock_fd=%d: %s\n", sock_fd, strerror(errno));
+  }
+free_addrinfo_results:
+  freeaddrinfo(addrinfo_results);
+
+  return result_port;
+}
+
+int get_unused_sctp_port(const std::string& bind_addr)
+{
+  struct addrinfo hints;
+  fill_sctp_hints(hints);
+
+  return get_unused_port(bind_addr, hints);
+}
+
+int get_unused_udp_port(const std::string& bind_addr)
+{
+  struct addrinfo hints;
+  fill_udp_hints(hints);
+
+  return get_unused_port(bind_addr, hints);
 }
 
 class dummy_network_gateway_control_notifier : public network_gateway_control_notifier

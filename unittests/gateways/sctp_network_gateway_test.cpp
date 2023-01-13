@@ -96,8 +96,9 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fail
 {
   network_gateway_config config;
   config.bind_address = "1.1.1.1";
-  config.bind_port    = 8888;
+  config.bind_port    = get_unused_sctp_port("0.0.0.0");
   config.reuse_addr   = true;
+  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_FALSE(bind_and_listen());
 }
@@ -106,8 +107,9 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_f
 {
   network_gateway_config config;
   config.bind_address = "1:1::";
-  config.bind_port    = 8888;
+  config.bind_port    = get_unused_sctp_port("::1");
   config.reuse_addr   = true;
+  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_FALSE(bind_and_listen());
 }
@@ -116,8 +118,9 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds
 {
   network_gateway_config config;
   config.bind_address = "127.0.0.1";
-  config.bind_port    = 8888;
+  config.bind_port    = get_unused_sctp_port(config.bind_address);
   config.reuse_addr   = true;
+  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_TRUE(bind_and_listen());
 }
@@ -126,8 +129,9 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succe
 {
   network_gateway_config config;
   config.bind_address = "::1";
-  config.bind_port    = 8888;
+  config.bind_port    = get_unused_sctp_port(config.bind_address);
   config.reuse_addr   = true;
+  ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
   ASSERT_TRUE(bind_and_listen());
 }
@@ -138,9 +142,10 @@ TEST_F(sctp_network_gateway_tester, when_socket_not_exists_then_connect_fails)
 
   network_gateway_config config;
   config.connect_address   = "127.0.0.1";
-  config.connect_port      = 6666;
+  config.connect_port      = get_unused_sctp_port(config.connect_address);
   config.non_blocking_mode = true;
   config.reuse_addr        = true;
+  ASSERT_NE(config.connect_port, 0);
   set_config(config, config);
 
   ASSERT_FALSE(connect());
@@ -152,9 +157,10 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
 
   network_gateway_config config;
   config.connect_address   = "::1";
-  config.connect_port      = 6666;
+  config.connect_port      = get_unused_sctp_port(config.connect_address);
   config.non_blocking_mode = true;
   config.reuse_addr        = true;
+  ASSERT_NE(config.connect_port, 0);
   set_config(config, config);
 
   ASSERT_FALSE(connect());
@@ -164,12 +170,13 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
   network_gateway_config server_config;
   server_config.bind_address = "127.0.0.1";
-  server_config.bind_port    = 7777;
+  server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
   server_config.reuse_addr   = true;
+  ASSERT_NE(server_config.bind_port, 0);
 
   network_gateway_config client_config;
-  client_config.connect_address   = "127.0.0.1";
-  client_config.connect_port      = 7777;
+  client_config.connect_address   = server_config.bind_address;
+  client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
@@ -203,12 +210,13 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
   network_gateway_config server_config;
   server_config.bind_address = "::1";
-  server_config.bind_port    = 7777;
+  server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
   server_config.reuse_addr   = true;
+  ASSERT_NE(server_config.bind_port, 0);
 
   network_gateway_config client_config;
-  client_config.connect_address   = "::1";
-  client_config.connect_port      = 7777;
+  client_config.connect_address   = server_config.bind_address;
+  client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
@@ -242,12 +250,13 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
   network_gateway_config server_config;
   server_config.bind_address = "localhost";
-  server_config.bind_port    = 5555;
+  server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
   server_config.reuse_addr   = true;
+  ASSERT_NE(server_config.bind_port, 0);
 
   network_gateway_config client_config;
-  client_config.connect_address   = "localhost";
-  client_config.connect_port      = 5555;
+  client_config.connect_address   = server_config.bind_address;
+  client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;
   set_config(server_config, client_config);
 
