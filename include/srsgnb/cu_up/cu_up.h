@@ -77,6 +77,9 @@ class cu_up_interface : public cu_up_e1_connection_notifier, public cu_up_e1_int
 {
 public:
   virtual ~cu_up_interface() = default;
+
+  /// \brief Get the N3 bind port.
+  virtual int get_n3_bind_port() = 0;
 };
 
 } // namespace srs_cu_up

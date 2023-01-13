@@ -27,13 +27,13 @@ struct network_interface_config {
   int upf_port = 2152; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
 
   /// Local IP address to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
-  std::string n3_bind_addr = "127.0.1.1";
+  std::string n3_bind_addr = "0.0.0.0";
 
   /// Local port to bind for connection from UPF to receive downlink user-plane traffic (N3 interface).
   int n3_bind_port = 2152; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
 
   /// Local IP address to bind for connection from DU to receive uplink user-plane traffic.
-  std::string f1u_bind_addr = "127.0.1.1";
+  std::string f1u_bind_addr = "0.0.0.0";
 
   /// Local port to bind for connection from DU to receive uplink user-plane traffic.
   int f1u_bind_port = 2152; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs

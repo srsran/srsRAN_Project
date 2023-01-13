@@ -34,7 +34,7 @@ public:
   bool recreate_and_reconnect() final;
   void receive() final;
   int  get_socket_fd() final;
-  int  get_bind_port();
+  int  get_bind_port() final;
 
 private:
   bool is_initialized();

@@ -55,7 +55,7 @@ private:
   int get_socket_fd() override;
 
   /// \brief Return socket bind port.
-  int get_bind_port();
+  int get_bind_port() override;
 
   // internal helpers
   using socket_buffer_type = uint8_t;

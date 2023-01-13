@@ -35,6 +35,9 @@ public:
   explicit cu_up(const cu_up_configuration& cfg_);
   ~cu_up();
 
+  // cu_up_interface
+  int get_n3_bind_port() override { return ngu_gw->get_bind_port(); }
+
   // cu_up_e1_interface
   e1_message_handler&     get_e1_message_handler() override { return *e1; }
   cu_cp_e1_setup_response handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg) override;

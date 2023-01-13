@@ -57,8 +57,9 @@ protected:
     cfg.e1_notifier          = &e1_message_notifier;
     cfg.f1u_gateway          = f1u_gw.get();
     cfg.epoll_broker         = broker.get();
-    cfg.net_cfg.n3_bind_addr = "127.0.0.1";
-    cfg.net_cfg.upf_addr     = "127.0.1.100";
+    cfg.net_cfg.n3_bind_addr = "0.0.0.0"; // Listen on any device.
+    cfg.net_cfg.n3_bind_port = 0;         // Random free port selected by the OS.
+    cfg.net_cfg.upf_addr     = "127.0.0.1";
 
     return cfg;
   }
@@ -134,7 +135,7 @@ TEST_F(cu_up_test, dl_data_flow)
 
   sockaddr_in cu_up_addr;
   cu_up_addr.sin_family      = AF_INET;
-  cu_up_addr.sin_port        = htons(2152);
+  cu_up_addr.sin_port        = htons(cu_up->get_n3_bind_port());
   cu_up_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
   const uint8_t gtpu_ping_vec[] = {
@@ -148,11 +149,13 @@ TEST_F(cu_up_test, dl_data_flow)
 
   // send message 1
   ret = sendto(sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
-  ASSERT_GE(ret, 0);
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << sock_fd << " to 127.0.0.1:" << cu_up->get_n3_bind_port()
+                    << " - " << strerror(errno);
 
   // send message 2
   ret = sendto(sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
-  ASSERT_GE(ret, 0);
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << sock_fd << " to 127.0.0.1:" << cu_up->get_n3_bind_port()
+                    << " - " << strerror(errno);
 
   close(sock_fd);
 
@@ -180,15 +183,17 @@ TEST_F(cu_up_test, ul_data_flow)
   int sock_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   ASSERT_GE(sock_fd, 0);
 
+  int         upf_port = 0; // Random free port selected by the OS: Avoid port conflicts with other tests.
   sockaddr_in upf_addr;
   upf_addr.sin_family      = AF_INET;
-  upf_addr.sin_port        = htons(0); // Let the OS choose a free port to avoid resource conflicts with other tests
+  upf_addr.sin_port        = htons(upf_port);
   upf_addr.sin_addr.s_addr = inet_addr(cfg.net_cfg.upf_addr.c_str());
 
   int ret = 0;
 
   ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
-  ASSERT_GE(ret, 0) << "Failed to bind socket to " << cfg.net_cfg.upf_addr << ":0 - " << strerror(errno);
+  ASSERT_GE(ret, 0) << "Failed to bind socket to " << cfg.net_cfg.upf_addr << ":" << upf_port << " - "
+                    << strerror(errno);
 
   // Find out the port that was assigned
   socklen_t upf_addr_len = sizeof(upf_addr);
