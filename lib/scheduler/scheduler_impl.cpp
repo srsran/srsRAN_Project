@@ -123,6 +123,9 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   // > Schedule UE DL and UL data.
   ue_sched->run_slot(sl_tx, cell_index);
 
+  // > Log the scheduler results.
+  sched_result_logger.log(cell.res_grid[0].result);
+
   // Return result for the slot.
   return &cell.res_grid[0].result;
 }

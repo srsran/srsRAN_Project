@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cell/scheduler_cell_manager.h"
+#include "logging/scheduler_result_logger.h"
 #include "ue_scheduling/ue_scheduler.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
@@ -63,6 +64,7 @@ public:
 private:
   const scheduler_expert_config sched_cfg;
   srslog::basic_logger&         logger;
+  scheduler_result_logger       sched_result_logger;
 
   /// Scheduler for UEs.
   std::unique_ptr<ue_scheduler>                 ue_sched;

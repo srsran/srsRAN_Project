@@ -94,8 +94,7 @@ protected:
   optional<test_bench>    bench;
   multiple_ue_test_params params;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
-  unsigned                max_k_value = 0;
-  scheduler_result_logger sched_res_logger;
+  unsigned max_k_value = 0;
 
   multiple_ue_sched_tester() : params{GetParam()} {};
 
@@ -141,7 +140,6 @@ protected:
     test_logger.set_context(next_slot.to_uint());
 
     bench->sched_res = bench->sch.slot_indication(next_slot, to_du_cell_index(0));
-    sched_res_logger.log(*bench->sched_res);
 
     // Check sched result consistency.
     test_scheduler_result_consistency(bench->cell_cfg, *bench->sched_res);

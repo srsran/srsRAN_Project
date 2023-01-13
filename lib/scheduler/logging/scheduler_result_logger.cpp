@@ -93,7 +93,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   if (not result.ul.pucchs.empty()) {
-    fmt::format_to(fmtbuf, "\nPUCCH ({} grants):", result.ul.puschs.size());
+    fmt::format_to(fmtbuf, "\nPUCCH ({} grants):", result.ul.pucchs.size());
     for (const pucch_info& pucch : result.ul.pucchs) {
       if (pucch.resources.second_hop_prbs.empty()) {
         fmt::format_to(fmtbuf,
