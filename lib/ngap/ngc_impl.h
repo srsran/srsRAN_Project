@@ -10,6 +10,10 @@
 
 #pragma once
 
+#include "procedures/ng_setup_procedure.h"
+#include "routines/ngap_initial_context_setup_routine.h"
+#include "routines/ngap_pdu_session_resource_setup_routine.h"
+#include "routines/ngap_routine_helpers.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/ue_manager.h"
 #include "srsgnb/ngap/ngc.h"
@@ -88,7 +92,7 @@ private:
   ngc_ue_manager&        ue_manager;
   ngc_message_notifier&  ngc_notifier;
 
-  std::unique_ptr<ngc_event_manager> events;
+  ngap_transaction_manager ev_mng;
 };
 
 } // namespace srs_cu_cp

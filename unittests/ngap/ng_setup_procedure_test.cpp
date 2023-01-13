@@ -65,6 +65,12 @@ TEST_F(ngc_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wit
   test_logger.info("Injecting NGSetupFailure with time to wait");
   ngc->handle_message(ng_setup_failure);
 
+  // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
+  for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
+    ASSERT_FALSE(t.ready());
+    this->timers.tick_all();
+  }
+
   // Status: AMF received NG Setup Request again.
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.init_msg().value.type().value,
@@ -108,6 +114,12 @@ TEST_F(ngc_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wit
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
 
+  // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
+  for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
+    ASSERT_FALSE(t.ready());
+    this->timers.tick_all();
+  }
+
   // Unsuccessful outcome after reinitiated NG Setup
   ng_setup_failure = generate_ng_setup_failure_message();
   test_logger.info("Injecting NGSetupFailure");
@@ -131,14 +143,16 @@ TEST_F(ngc_test, when_retry_limit_reached_then_amf_not_connected)
   ASSERT_EQ(msg_notifier->last_ngc_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
 
-  // Status: Procedure not yet ready.
-  ASSERT_FALSE(t.ready());
-
   // Action 2: NG setup failure received.
   ngc_message ng_setup_response_msg =
       generate_ng_setup_failure_message_with_time_to_wait(asn1::ngap::time_to_wait_opts::v10s);
 
   for (unsigned i = 0; i < request_msg.max_setup_retries + 1; i++) {
+    // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
+    for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
+      ASSERT_FALSE(t.ready());
+      this->timers.tick_all();
+    }
     ngc->handle_message(ng_setup_response_msg);
   }
 

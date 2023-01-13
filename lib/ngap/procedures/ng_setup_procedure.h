@@ -11,9 +11,10 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
-#include "ngc_event_manager.h"
+#include "ngap_transaction_manager.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/async_timer.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -23,7 +24,8 @@ class ng_setup_procedure
 public:
   ng_setup_procedure(const ng_setup_request_message& request_,
                      ngc_message_notifier&           amf_notif_,
-                     ngc_event_manager&              ev_mng_,
+                     ngap_transaction_manager&       ev_mng_,
+                     timer_manager&                  timers,
                      srslog::basic_logger&           logger_);
 
   void operator()(coro_context<async_task<ng_setup_response_message>>& ctx);
@@ -40,13 +42,15 @@ private:
 
   const ng_setup_request_message request;
   ngc_message_notifier&          amf_notifier;
-  ngc_event_manager&             ev_mng;
+  ngap_transaction_manager&      ev_mng;
   srslog::basic_logger&          logger;
+
+  unique_timer ng_setup_wait_timer;
 
   unsigned ng_setup_retry_no = 0;
   unsigned time_to_wait      = 0;
 
-  ngc_event_manager::ng_setup_outcome_t ng_setup_outcome;
+  protocol_transaction_outcome_observer<asn1::ngap::ng_setup_resp_s, asn1::ngap::ng_setup_fail_s> transaction_sink;
 };
 
 } // namespace srs_cu_cp

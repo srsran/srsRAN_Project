@@ -16,9 +16,14 @@ using namespace asn1::ngap;
 
 ng_setup_procedure::ng_setup_procedure(const ng_setup_request_message& request_,
                                        ngc_message_notifier&           amf_notif_,
-                                       ngc_event_manager&              ev_mng_,
+                                       ngap_transaction_manager&       ev_mng_,
+                                       timer_manager&                  timers,
                                        srslog::basic_logger&           logger_) :
-  request(request_), amf_notifier(amf_notif_), ev_mng(ev_mng_), logger(logger_)
+  request(request_),
+  amf_notifier(amf_notif_),
+  ev_mng(ev_mng_),
+  logger(logger_),
+  ng_setup_wait_timer(timers.create_unique_timer())
 {
 }
 
@@ -27,11 +32,14 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response_me
   CORO_BEGIN(ctx);
 
   while (true) {
+    // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.
+    transaction_sink.subscribe_to(ev_mng.ng_setup_outcome);
+
     // Send request to AMF.
     send_ng_setup_request();
 
     // Await AMF response.
-    CORO_AWAIT_VALUE(ng_setup_outcome, ev_mng.ng_setup_response);
+    CORO_AWAIT(transaction_sink);
 
     if (not retry_required()) {
       // No more attempts. Exit loop.
@@ -43,7 +51,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response_me
                 time_to_wait,
                 ng_setup_retry_no,
                 request.max_setup_retries);
-    // TODO: CORO_AWAIT(timer.wait(time_to_wait));
+    CORO_AWAIT(async_wait_for(ng_setup_wait_timer, time_to_wait * 1000));
   }
 
   // Forward procedure result to DU manager.
@@ -66,12 +74,12 @@ void ng_setup_procedure::send_ng_setup_request()
 
 bool ng_setup_procedure::retry_required()
 {
-  if (ng_setup_outcome.has_value()) {
+  if (transaction_sink.successful()) {
     // Success case.
     return false;
   }
 
-  const asn1::ngap::ng_setup_fail_s& ng_fail = *ng_setup_outcome.error();
+  const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
   if (not ng_fail->time_to_wait_present) {
     // AMF didn't command a waiting time.
     logger.error("AMF did not set any retry waiting time.");
@@ -91,12 +99,12 @@ ng_setup_response_message ng_setup_procedure::create_ng_setup_result()
 {
   ng_setup_response_message res{};
 
-  if (ng_setup_outcome.has_value()) {
+  if (transaction_sink.successful()) {
     logger.debug("Received NGC PDU with successful outcome.");
-    res.msg     = *ng_setup_outcome.value();
+    res.msg     = transaction_sink.response();
     res.success = true;
   } else {
-    const asn1::ngap::ng_setup_fail_s& ng_fail = *ng_setup_outcome.error();
+    const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
     logger.error("Received NGC PDU with unsuccessful outcome. Cause: {}", get_cause_str(ng_fail->cause.value));
     res.success = false;
   }

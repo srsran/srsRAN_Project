@@ -15,7 +15,6 @@
 #include "routines/ngap_initial_context_setup_routine.h"
 #include "routines/ngap_pdu_session_resource_setup_routine.h"
 #include "routines/ngap_routine_helpers.h"
-#include "srsgnb/support/async/event_signal.h"
 
 using namespace srsgnb;
 using namespace asn1::ngap;
@@ -30,7 +29,7 @@ ngc_impl::ngc_impl(ngc_configuration&     ngc_cfg_,
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngc_notifier(ngc_notifier_),
-  events(std::make_unique<ngc_event_manager>())
+  ev_mng(task_sched.get_timer_manager())
 {
 }
 
@@ -56,7 +55,7 @@ void ngc_impl::create_ngc_ue(du_index_t                         du_index,
 
 async_task<ng_setup_response_message> ngc_impl::handle_ng_setup_request(const ng_setup_request_message& request)
 {
-  return launch_async<ng_setup_procedure>(request, ngc_notifier, *events, logger);
+  return launch_async<ng_setup_procedure>(request, ngc_notifier, ev_mng, task_sched.get_timer_manager(), logger);
 }
 
 void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
@@ -291,7 +290,7 @@ void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::successful_outcome_c::types_opts::ng_setup_resp: {
-      events->ng_setup_response.set(&outcome.value.ng_setup_resp());
+      ev_mng.ng_setup_outcome.set(outcome.value.ng_setup_resp());
     } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
@@ -302,7 +301,7 @@ void ngc_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome
 {
   switch (outcome.value.type().value) {
     case ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::ng_setup_fail: {
-      events->ng_setup_response.set(&outcome.value.ng_setup_fail());
+      ev_mng.ng_setup_outcome.set(outcome.value.ng_setup_fail());
     } break;
     default:
       logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());

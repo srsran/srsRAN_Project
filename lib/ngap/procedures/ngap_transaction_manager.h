@@ -12,17 +12,20 @@
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/ngap/ngap.h"
+#include "srsgnb/support/async/async_event_source.h"
 #include "srsgnb/support/async/event_signal.h"
+#include "srsgnb/support/async/protocol_transaction_manager.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class ngc_event_manager
+class ngap_transaction_manager
 {
 public:
-  /// NG setup procedure outcome
-  using ng_setup_outcome_t = expected<const asn1::ngap::ng_setup_resp_s*, const asn1::ngap::ng_setup_fail_s*>;
-  event_signal<ng_setup_outcome_t> ng_setup_response;
+  ngap_transaction_manager(timer_manager& timers) : ng_setup_outcome(timers) {}
+
+  /// NG Setup Response/Failure Event Source.
+  protocol_transaction_event_source<asn1::ngap::ng_setup_resp_s, asn1::ngap::ng_setup_fail_s> ng_setup_outcome;
 };
 
 } // namespace srs_cu_cp
