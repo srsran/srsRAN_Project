@@ -121,8 +121,6 @@ TEST_F(cu_up_test, when_e1_connection_established_then_e1_connected)
 /* User Data Flow                                                                   */
 //////////////////////////////////////////////////////////////////////////////////////
 
-#if 0 // DISABLE FLAKY TEST DUE TO PORT CONFLICTS
-
 TEST_F(cu_up_test, dl_data_flow)
 {
   cu_up_configuration cfg = get_default_cu_up_config();
@@ -249,8 +247,6 @@ TEST_F(cu_up_test, ul_data_flow)
 
   close(sock_fd);
 }
-
-#endif
 
 int main(int argc, char** argv)
 {
