@@ -287,6 +287,36 @@ inline cu_cp_cause_t e1ap_cause_to_cu_cp_cause(asn1::e1ap::cause_c e1ap_cause)
   }
 }
 
+/// \brief Convert CU-CP cause to E1AP cause.
+/// \param cu_cp_cause The CU-CP cause.
+/// \return The E1AP cause.
+inline asn1::e1ap::cause_c cu_cp_cause_to_e1ap_cause(cu_cp_cause_t cu_cp_cause)
+{
+  asn1::e1ap::cause_c e1ap_cause;
+
+  switch (cu_cp_cause) {
+    case cu_cp_cause_t::radio_network:
+      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
+      return e1ap_cause;
+      break;
+    case cu_cp_cause_t::transport:
+      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::transport);
+      return e1ap_cause;
+      break;
+    case cu_cp_cause_t::protocol:
+      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::protocol);
+      return e1ap_cause;
+      break;
+    case cu_cp_cause_t::misc:
+      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::misc);
+      return e1ap_cause;
+      break;
+    default:
+      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::nulltype);
+      return e1ap_cause;
+  }
+}
+
 /// \brief Convert E1AP NG DL UP Unchanged to its boolean representation
 /// \param ng_dl_up_unchanged The E1AP NG DL UP Unchanged.
 /// \return The boolean representation of E1AP NG DL UP Unchanged.

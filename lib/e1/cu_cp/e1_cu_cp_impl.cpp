@@ -119,10 +119,22 @@ e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_cont
   return launch_async<e1_bearer_context_modification_procedure>(e1_msg, pdu_notifier, ev_mng, logger);
 }
 
-async_task<e1ap_bearer_context_release_complete>
+async_task<void>
 e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command)
 {
-  return launch_async<e1_bearer_context_release_procedure>(command, pdu_notifier, ev_mng, logger);
+  // Get UE context
+  e1ap_ue_context& ue_ctxt = ue_ctx_list[command.cu_cp_ue_id];
+
+  e1_message e1_msg;
+  e1_msg.pdu.set_init_msg();
+  e1_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
+  auto& bearer_context_release_cmd                       = e1_msg.pdu.init_msg().value.bearer_context_release_cmd();
+  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id.value = gnb_cu_cp_ue_e1ap_id_to_uint(ue_ctxt.cu_cp_ue_e1ap_id);
+  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id.value = gnb_cu_up_ue_e1ap_id_to_uint(ue_ctxt.cu_up_ue_e1ap_id);
+
+  fill_asn1_bearer_context_release_command(bearer_context_release_cmd, command);
+
+  return launch_async<e1_bearer_context_release_procedure>(e1_msg, pdu_notifier, ev_mng, logger);
 }
 
 void e1_cu_cp_impl::handle_message(const e1_message& msg)

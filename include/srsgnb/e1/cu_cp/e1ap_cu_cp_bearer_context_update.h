@@ -389,12 +389,8 @@ struct e1ap_bearer_context_modification_response {
 };
 
 struct e1ap_bearer_context_release_command {
-  cu_cp_ue_id_t                            cu_cp_ue_id;
-  asn1::e1ap::bearer_context_release_cmd_s msg;
-};
-
-struct e1ap_bearer_context_release_complete {
-  asn1::e1ap::bearer_context_release_complete_s msg;
+  cu_cp_ue_id_t cu_cp_ue_id;
+  cu_cp_cause_t cause;
 };
 
 } // namespace srs_cu_cp

@@ -28,7 +28,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    msg_notifier   = std::make_unique<dummy_e1_pdu_notifier>(nullptr);
+    msg_notifier   = std::make_unique<dummy_e1_pdu_notifier>();
     cu_up_notifier = std::make_unique<dummy_e1ap_cu_up_notifier>();
 
     e1 = create_e1(*msg_notifier, *cu_up_notifier);

@@ -8,7 +8,7 @@
  *
  */
 
-#include "e1_cu_cp_test_helpers.h"
+#include "e1ap_cu_cp_test_messages.h"
 #include "lib/e1/common/e1ap_asn1_packer.h"
 #include "test_helpers.h"
 #include "unittests/gateways/test_helpers.h"

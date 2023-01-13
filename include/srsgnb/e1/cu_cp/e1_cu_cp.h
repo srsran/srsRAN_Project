@@ -65,9 +65,7 @@ public:
 
   /// \brief Initiates the Bearer Context Release procedure as per TS 38.463 section 8.3.4.
   /// \param[in] msg The Bearer Context Release Command message to transmit.
-  /// \return Returns the e1ap_bearer_context_release_complete struct.
-  virtual async_task<e1ap_bearer_context_release_complete>
-  handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) = 0;
+  virtual async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) = 0;
 };
 
 struct bearer_creation_complete_message {

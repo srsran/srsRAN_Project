@@ -23,24 +23,24 @@ namespace srs_cu_cp {
 class e1_bearer_context_release_procedure
 {
 public:
-  e1_bearer_context_release_procedure(const e1ap_bearer_context_release_command& command_,
-                                      e1_message_notifier&                       e1_notif_,
-                                      e1ap_bearer_transaction_manager&           ev_mng_,
-                                      srslog::basic_logger&                      logger_);
+  e1_bearer_context_release_procedure(const e1_message&                command_,
+                                      e1_message_notifier&             e1_notif_,
+                                      e1ap_bearer_transaction_manager& ev_mng_,
+                                      srslog::basic_logger&            logger_);
 
-  void operator()(coro_context<async_task<e1ap_bearer_context_release_complete>>& ctx);
+  void operator()(coro_context<async_task<void>>& ctx);
 
 private:
   /// Send E1 Bearer Context Release Command to CU-UP.
   void send_bearer_context_release_command();
 
-  /// Creates procedure result to send back to procedure caller.
-  e1ap_bearer_context_release_complete create_bearer_context_release_complete();
+  /// Handles procedure result to send back to procedure caller.
+  void handle_bearer_context_release_complete();
 
-  const e1ap_bearer_context_release_command command;
-  e1_message_notifier&                      e1_notifier;
-  e1ap_bearer_transaction_manager&          ev_mng;
-  srslog::basic_logger&                     logger;
+  const e1_message                 command;
+  e1_message_notifier&             e1_notifier;
+  e1ap_bearer_transaction_manager& ev_mng;
+  srslog::basic_logger&            logger;
 
   protocol_transaction_outcome_observer<asn1::e1ap::bearer_context_release_complete_s> transaction_sink;
 };

@@ -111,7 +111,7 @@ public:
 class dummy_e1_pdu_notifier : public e1_message_notifier
 {
 public:
-  dummy_e1_pdu_notifier(e1_message_handler* handler_) : logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
+  dummy_e1_pdu_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
   void attach_handler(e1_message_handler* handler_) { handler = handler_; };
   void on_new_message(const e1_message& msg) override

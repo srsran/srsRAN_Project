@@ -36,7 +36,7 @@ protected:
     std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
     f1c_pdu_notifier = std::make_unique<dummy_f1c_pdu_notifier>();
-    e1_pdu_notifier  = std::make_unique<dummy_e1_pdu_notifier>(nullptr);
+    e1_pdu_notifier  = std::make_unique<dummy_e1_pdu_notifier>();
     ngc_amf_notifier = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
 
     // create CU-CP config
