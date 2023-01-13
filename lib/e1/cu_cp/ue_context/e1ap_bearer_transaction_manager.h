@@ -18,22 +18,6 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-using e1ap_outcome     = expected<asn1::e1ap::successful_outcome_s, asn1::e1ap::unsuccessful_outcome_s>;
-using e1ap_transaction = protocol_transaction<e1ap_outcome>;
-
-class e1ap_transaction_manager
-{
-public:
-  /// Transaction Response Container, which gets indexed by transaction_id.
-  constexpr static size_t                                          MAX_NOF_TRANSACTIONS = 256;
-  protocol_transaction_manager<e1ap_outcome, MAX_NOF_TRANSACTIONS> transactions;
-
-  explicit e1ap_transaction_manager(timer_manager& timers) :
-    transactions(timers, e1ap_outcome{asn1::e1ap::unsuccessful_outcome_s{}})
-  {
-  }
-};
-
 class e1ap_bearer_transaction_manager
 {
 public:

@@ -15,12 +15,11 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
-e1_bearer_context_setup_procedure::e1_bearer_context_setup_procedure(const e1_message&                request_,
-                                                                     e1ap_ue_context&                 ue_ctxt_,
-                                                                     e1_message_notifier&             e1_notif_,
-                                                                     e1ap_bearer_transaction_manager& ev_mng_,
-                                                                     srslog::basic_logger&            logger_) :
-  request(request_), ue_ctxt(ue_ctxt_), e1_notifier(e1_notif_), ev_mng(ev_mng_), logger(logger_)
+e1_bearer_context_setup_procedure::e1_bearer_context_setup_procedure(const e1_message&     request_,
+                                                                     e1ap_ue_context&      ue_ctxt_,
+                                                                     e1_message_notifier&  e1_notif_,
+                                                                     srslog::basic_logger& logger_) :
+  request(request_), ue_ctxt(ue_ctxt_), e1_notifier(e1_notif_), logger(logger_)
 {
 }
 
@@ -29,7 +28,7 @@ void e1_bearer_context_setup_procedure::operator()(coro_context<async_task<e1ap_
   CORO_BEGIN(ctx);
 
   // Subscribe to respective publisher to receive BEARER CONTEXT SETUP RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ev_mng.context_setup_outcome);
+  transaction_sink.subscribe_to(ue_ctxt.bearer_ev_mng.context_setup_outcome);
 
   // Send command to CU-UP.
   send_bearer_context_setup_request();

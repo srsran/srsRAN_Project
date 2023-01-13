@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "e1ap_bearer_transaction_manager.h"
 #include "srsgnb/adt/slotted_array.h"
 
 namespace srsgnb {
@@ -20,8 +21,10 @@ struct e1ap_ue_context {
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::invalid;
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_t::invalid;
 
-  e1ap_ue_context(cu_cp_ue_id_t cu_cp_ue_id_, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id_) :
-    cu_cp_ue_id(cu_cp_ue_id_), cu_cp_ue_e1ap_id(cu_cp_ue_e1ap_id_)
+  e1ap_bearer_transaction_manager bearer_ev_mng;
+
+  e1ap_ue_context(cu_cp_ue_id_t cu_cp_ue_id_, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id_, timer_manager& timers_) :
+    cu_cp_ue_id(cu_cp_ue_id_), cu_cp_ue_e1ap_id(cu_cp_ue_e1ap_id_), bearer_ev_mng(timers_)
   {
   }
 };
@@ -29,7 +32,7 @@ struct e1ap_ue_context {
 class e1ap_ue_context_list
 {
 public:
-  e1ap_ue_context_list() {}
+  e1ap_ue_context_list(timer_manager& timers_) : timers(timers_) {}
 
   bool contains(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const
   {
@@ -62,7 +65,7 @@ public:
 
   e1ap_ue_context& add_ue(cu_cp_ue_id_t cu_cp_ue_id, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
-    ues.emplace(gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id), cu_cp_ue_id, cu_cp_ue_e1ap_id);
+    ues.emplace(gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id), cu_cp_ue_id, cu_cp_ue_e1ap_id, timers);
     return ues[gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id)];
   }
 
@@ -78,6 +81,8 @@ public:
   }
 
 private:
+  timer_manager& timers;
+
   slotted_array<e1ap_ue_context, MAX_NOF_CU_UES> ues; // indexed by gnb_cu_cp_ue_e1ap_id
 };
 

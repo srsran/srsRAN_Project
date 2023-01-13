@@ -76,12 +76,11 @@ private:
   /// Repository of UE Contexts.
   e1ap_ue_context_list ue_ctx_list;
 
+  e1ap_transaction_manager ev_mng;
+
   // nofifiers and handles
   e1_message_notifier&         pdu_notifier;
-  e1_cu_up_processor_notifier& cu_up_notifier;
-
-  std::unique_ptr<e1ap_transaction_manager> events;
-  e1ap_bearer_transaction_manager           ev_mng;
+  e1_cu_up_processor_notifier& cu_up_processor_notifier;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id
 };
