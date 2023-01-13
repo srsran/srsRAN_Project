@@ -257,7 +257,7 @@ void pdsch_processor_impl::modulate(resource_grid_writer& grid, span<const bit_b
   modulator_config.dmrs_symb_pos      = pdu.dmrs_symbol_mask;
   modulator_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
   modulator_config.n_id                        = pdu.n_id;
-  modulator_config.scaling                     = convert_dB_to_amplitude(pdu.ratio_pdsch_data_to_sss_dB);
+  modulator_config.scaling                     = convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB);
   modulator_config.reserved                    = pdu.reserved;
   modulator_config.ports                       = pdu.ports;
 
@@ -280,7 +280,7 @@ void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu
   dmrs_config.type                 = pdu.dmrs;
   dmrs_config.scrambling_id        = pdu.scrambling_id;
   dmrs_config.n_scid               = pdu.n_scid;
-  dmrs_config.amplitude            = convert_dB_to_amplitude(pdu.ratio_pdsch_dmrs_to_sss_dB);
+  dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
   dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
   dmrs_config.rb_mask              = rb_mask_bitset;
   dmrs_config.ports.resize(pdu.ports.size());

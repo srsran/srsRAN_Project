@@ -169,7 +169,7 @@ int main()
           TESTASSERT_EQ(entry.config.start_symbol_index, pdu.start_symbol_index);
           TESTASSERT_EQ(entry.config.nof_symbols, pdu.nof_symbols);
           TESTASSERT_EQ(entry.config.n_id, pdu.n_id);
-          TESTASSERT(std::abs(entry.config.scaling - convert_dB_to_amplitude(pdu.ratio_pdsch_data_to_sss_dB)) < 1e-6);
+          TESTASSERT(std::abs(entry.config.scaling - convert_dB_to_amplitude(-pdu.ratio_pdsch_data_to_sss_dB)) < 1e-6);
           TESTASSERT(entry.config.reserved == pdu.reserved);
           TESTASSERT(entry.config.ports == pdu.ports);
           TESTASSERT(entry.grid_ptr == &rg_dummy);
@@ -193,7 +193,8 @@ int main()
           TESTASSERT(entry.config.type == pdu.dmrs);
           TESTASSERT_EQ(entry.config.scrambling_id, pdu.scrambling_id);
           TESTASSERT_EQ(entry.config.n_scid, pdu.n_scid);
-          TESTASSERT(std::abs(entry.config.amplitude - convert_dB_to_amplitude(pdu.ratio_pdsch_dmrs_to_sss_dB)) < 1e-6);
+          TESTASSERT(std::abs(entry.config.amplitude - convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB)) <
+                     1e-6);
           TESTASSERT(entry.config.symbols_mask == pdu.dmrs_symbol_mask);
           TESTASSERT(entry.config.rb_mask == rb_mask);
           TESTASSERT(srsvec::equal(entry.config.ports, pdu.ports));
