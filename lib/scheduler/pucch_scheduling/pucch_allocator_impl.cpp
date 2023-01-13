@@ -242,6 +242,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
 
   // No resources available for PUCCH.
   if (not pucch_res.has_config) {
+    logger.debug("PUCCH for TC-RNTI={:#x} not allocated due to resources not available", tcrnti);
     return pucch_harq_ack_output;
   }
 
@@ -253,6 +254,8 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   pucch_info& pucch_info = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   fill_pucch_harq_grant(pucch_info, tcrnti, pucch_res);
   pucch_harq_ack_output.pucch_pdu = &pucch_info;
+
+  logger.debug("PUCCH for TC-RNTI={:#x} allocated for slot={}.", tcrnti, slot_alloc.slot_tx().to_uint());
 
   return pucch_harq_ack_output;
 }
@@ -467,7 +470,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucc
   }
   int pucch_res_idx = resource_manager.get_pucch_res_indicator(sl_tx, rnti);
   if (pucch_res_idx < 0) {
-    srsgnb_assert(false, "This should not happen");
+    srsgnb_assert(pucch_res_idx >= 0, "PUCCH resource index should not be negative.");
     return output;
   }
   srsgnb_sanity_check(existing_harq_grant.format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for HARQ.");
@@ -480,6 +483,8 @@ pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucc
   existing_harq_grant.format_1.harq_ack_nof_bits++;
   output.pucch_pdu           = &existing_harq_grant;
   output.pucch_res_indicator = pucch_res_idx;
+
+  logger.debug("UE={:#x} - HARQ-ACK mltplxd on existing PUCCH, for slot={}", rnti, sl_tx.to_uint());
   return output;
 }
 

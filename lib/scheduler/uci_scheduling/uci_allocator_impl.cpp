@@ -99,6 +99,7 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
         ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
         nof_harq_ack_bits);
     uci_output.alloc_successful = true;
+    logger.debug("UCI for HARQ-ACK allocated on PUSCH, for UE={:#x}", crnti);
   } else {
     uci_output.pucch_grant =
         pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, pdsch_time_domain_resource, k1);
@@ -125,6 +126,8 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
       pusch_grant,
       ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
       pucch_uci.harq_ack_nof_bits);
+
+  logger.debug("UCI for UE={:#x} mltplxd on PUSCH for slot={}", crnti, slot_alloc.slot.to_uint());
 }
 
 void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
