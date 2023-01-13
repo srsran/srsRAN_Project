@@ -16,14 +16,8 @@
 /// Similarly, the codeblocks are fed to the decoder and the resulting messages are compared to the example ones.
 
 #include "ldpc_encoder_test_data.h"
-#include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
-#include "fmt/ostream.h"
 #include <gtest/gtest.h>
-#include <random>
-#include <string>
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
