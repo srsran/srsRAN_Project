@@ -27,7 +27,6 @@ public:
   /// Adds a new cell to the UE allocator.
   void add_cell(du_cell_index_t           cell_index,
                 pdcch_resource_allocator& pdcch_sched,
-                pucch_allocator&          pucch_alloc,
                 uci_allocator&            uci_alloc,
                 cell_resource_allocator&  cell_alloc);
 
@@ -51,7 +50,6 @@ private:
   struct cell_t {
     du_cell_index_t           cell_index;
     pdcch_resource_allocator* pdcch_sched;
-    pucch_allocator*          pucch_alloc;
     uci_allocator*            uci_alloc;
     cell_resource_allocator*  cell_alloc;
   };
@@ -59,8 +57,6 @@ private:
   bool has_cell(du_cell_index_t cell_index) const { return cells.contains(cell_index); }
 
   pdcch_resource_allocator& get_pdcch_sched(du_cell_index_t cell_index) { return *cells[cell_index].pdcch_sched; }
-
-  pucch_allocator& get_pucch_alloc(du_cell_index_t cell_index) { return *cells[cell_index].pucch_alloc; }
 
   uci_allocator& get_uci_alloc(du_cell_index_t cell_index) { return *cells[cell_index].uci_alloc; }
 

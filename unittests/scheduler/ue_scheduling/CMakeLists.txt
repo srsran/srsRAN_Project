@@ -12,6 +12,7 @@ add_executable(ue_scheduler_test
         harq_process_test.cpp
         srb0_scheduler_test.cpp
         ue_configuration_test.cpp
+        ue_grid_allocator_test.cpp
         ul_logical_channel_test.cpp)
 target_link_libraries(ue_scheduler_test
         srsgnb_sched

@@ -218,8 +218,7 @@ protected:
   bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index)
   {
     // Add cell to UE cell grid allocator.
-    bench->ue_alloc.add_cell(
-        bench->cell_cfg.cell_index, bench->pdcch_sch, bench->pucch_alloc, bench->uci_alloc, bench->res_grid);
+    bench->ue_alloc.add_cell(bench->cell_cfg.cell_index, bench->pdcch_sch, bench->uci_alloc, bench->res_grid);
     auto ue_create_req     = test_helpers::create_default_sched_ue_creation_request();
     ue_create_req.crnti    = tc_rnti;
     ue_create_req.ue_index = ue_index;

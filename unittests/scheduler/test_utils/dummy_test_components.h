@@ -11,6 +11,7 @@
 #pragma once
 
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
+#include "lib/scheduler/uci_scheduling/uci_allocator.h"
 #include "srsgnb/support/test_utils.h"
 
 namespace srsgnb {
@@ -18,6 +19,9 @@ namespace srsgnb {
 class dummy_pdcch_resource_allocator : public pdcch_resource_allocator
 {
 public:
+  rnti_t               last_dl_pdcch_rnti;
+  pdcch_dl_information next_ue_pdcch_alloc;
+
   pdcch_dl_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
                                            rnti_t                        rnti,
                                            search_space_id               ss_id,
@@ -40,8 +44,8 @@ public:
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("UE-dedicated PDCCHs not supported");
-    return nullptr;
+    last_dl_pdcch_rnti = rnti;
+    return &next_ue_pdcch_alloc;
   }
 
   pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
@@ -79,6 +83,34 @@ private:
 
   unsigned   next_ncce = 0;
   slot_point last_sl;
+};
+
+class dummy_uci_allocator : public uci_allocator
+{
+public:
+  uci_allocation next_uci_allocation;
+
+  uci_allocation alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
+                                   rnti_t                       crnti,
+                                   const ue_cell_configuration& ue_cell_cfg,
+                                   unsigned                     pdsch_time_domain_resource,
+                                   unsigned                     k1) override
+  {
+    return next_uci_allocation;
+  }
+
+  void multiplex_uci_on_pusch(ul_sched_info&                pusch_grant,
+                              cell_slot_resource_allocator& slot_alloc,
+                              const ue_cell_configuration&  ue_cell_cfg,
+                              rnti_t                        crnti) override
+  {
+  }
+
+  void uci_allocate_sr_opportunity(cell_slot_resource_allocator& slot_alloc,
+                                   rnti_t                        crnti,
+                                   const ue_cell_configuration&  ue_cell_cfg) override
+  {
+  }
 };
 
 class sched_cfg_dummy_notifier : public sched_configuration_notifier

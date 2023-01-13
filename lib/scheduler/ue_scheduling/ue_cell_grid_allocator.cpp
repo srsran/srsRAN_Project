@@ -26,11 +26,10 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config&
 
 void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
                                       pdcch_resource_allocator& pdcch_sched,
-                                      pucch_allocator&          pucch_alloc,
                                       uci_allocator&            uci_alloc,
                                       cell_resource_allocator&  cell_alloc)
 {
-  cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &pucch_alloc, &uci_alloc, &cell_alloc});
+  cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &uci_alloc, &cell_alloc});
 }
 
 bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
