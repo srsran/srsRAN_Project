@@ -21,7 +21,7 @@ using namespace srsgnb;
 
 udp_network_gateway::udp_network_gateway(network_gateway_config         config_,
                                          network_gateway_data_notifier& data_notifier_) :
-  config(config_), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-NW-GW"))
+  config(config_), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-GW"))
 {
 }
 
