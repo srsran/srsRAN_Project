@@ -16,9 +16,9 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// @brief  Convert CU-CP security result to NGAP security result.
-/// @param cu_cp_security_result The CU-CP security result.
-/// @return The NGAP security result.
+/// \brief  Convert CU-CP security result to NGAP security result.
+/// \param cu_cp_security_result The CU-CP security result.
+/// \return The NGAP security result.
 inline asn1::ngap::security_result_s
 cu_cp_security_result_to_ngap_security_result(cu_cp_security_result cu_cp_security_result)
 {
@@ -43,9 +43,9 @@ cu_cp_security_result_to_ngap_security_result(cu_cp_security_result cu_cp_securi
   return ngap_security_result;
 }
 
-/// @brief Convert CU-CP Associated QoS Flow to NGAP Associated QoS Flow Item.
-/// @param cu_cp_qos_flow The CU-CP Associated QoS Flow.
-/// @return The NGAP Associated QoS Flow Item.
+/// \brief Convert CU-CP Associated QoS Flow to NGAP Associated QoS Flow Item.
+/// \param cu_cp_qos_flow The CU-CP Associated QoS Flow.
+/// \return The NGAP Associated QoS Flow Item.
 inline asn1::ngap::associated_qos_flow_item_s
 cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(cu_cp_associated_qos_flow cu_cp_qos_flow)
 {
@@ -68,9 +68,9 @@ cu_cp_assoc_qos_flow_to_ngap_assoc_qos_flow_item(cu_cp_associated_qos_flow cu_cp
   return asn1_assoc_qos_item;
 }
 
-/// @brief Convert CU-CP QoS Flow Per TNL Info to NGAP QoS Flow Per TNL Info.
-/// @param cu_cp_qos_flow_info The CU-CP QoS Flow Per TNL Info.
-/// @return The NGAP QoS Flow Per TNL Info.
+/// \brief Convert CU-CP QoS Flow Per TNL Info to NGAP QoS Flow Per TNL Info.
+/// \param cu_cp_qos_flow_info The CU-CP QoS Flow Per TNL Info.
+/// \return The NGAP QoS Flow Per TNL Info.
 inline asn1::ngap::qos_flow_per_tnl_info_s
 cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_per_tnl_information cu_cp_qos_flow_info)
 {
@@ -88,9 +88,9 @@ cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_per_tnl
   return ngap_qos_flow_info;
 }
 
-/// @brief Convert CU-CP cause to NGAP cause.
-/// @param cu_cp_cause The CU-CP cause.
-/// @return The NGAP cause.
+/// \brief Convert CU-CP cause to NGAP cause.
+/// \param cu_cp_cause The CU-CP cause.
+/// \return The NGAP cause.
 inline asn1::ngap::cause_c cu_cp_cause_to_ngap_cause(cu_cp_cause_t cu_cp_cause)
 {
   asn1::ngap::cause_c ngap_cause;
@@ -118,9 +118,9 @@ inline asn1::ngap::cause_c cu_cp_cause_to_ngap_cause(cu_cp_cause_t cu_cp_cause)
   }
 }
 
-/// @brief Convert CU-CP QoS Flow Failed to Setup Item to NGAP QoS Flow With Cause Item.
-/// @param cu_cp_failed_item The CU-CP QoS Flow Failed to Setup Item.
-/// @return The NGAP QoS Flow With Cause Item.
+/// \brief Convert CU-CP QoS Flow Failed to Setup Item to NGAP QoS Flow With Cause Item.
+/// \param cu_cp_failed_item The CU-CP QoS Flow Failed to Setup Item.
+/// \return The NGAP QoS Flow With Cause Item.
 inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_item_to_ngap_qos_flow_with_cause_item(
     cu_cp_qos_flow_failed_to_setup_item cu_cp_failed_item)
 {
