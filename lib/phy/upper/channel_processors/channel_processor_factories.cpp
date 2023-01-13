@@ -820,7 +820,7 @@ public:
 
     std::chrono::nanoseconds time_ns = time_execution(func);
 
-    logger.info("PDSCH: {} {}", pdu, time_ns);
+    logger.info(data.front().data(), data.front().size(), "PDSCH: {} tbs={} {}", pdu, data.front().size(), time_ns);
   }
 
 private:
