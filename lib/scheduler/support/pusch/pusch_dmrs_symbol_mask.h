@@ -25,10 +25,14 @@ struct pusch_dmrs_symbol_mask_mapping_type_A_single_configuration {
   ///
   /// This value is given by higher layer parameter \c dmrs-AdditionalPosition. Possible values are {0, ..., 3}.
   dmrs_additional_positions additional_position;
-  /// \brief Indicates the PUSCH transmission duration in OFDM symbols, as per TS38.211, Section 6.4.1.1.3.
+  /// \brief Last OFDM symbol scheduled for PUSCH
   ///
-  /// Possible values are {1, ..., 14}.
-  unsigned duration;
+  /// It indicates the number of symbols between the first OFDM symbol of the slot and the last OFDM symbol of the
+  /// scheduled PUSCH resources in the slot for PUSCH in OFDM symbols. It corresponds to parameter \f$l_d\f$ as
+  /// per TS38.211, Section 6.4.1.1.3.
+  ///
+  /// Possible values are {5, ..., 14}.
+  bounded_integer<uint8_t, 5, 14> last_symbol;
 };
 
 /// \brief Calculates the DM-RS for PUSCH symbol mask for single duration.

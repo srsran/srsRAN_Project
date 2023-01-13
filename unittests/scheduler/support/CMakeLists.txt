@@ -15,7 +15,7 @@ target_link_libraries(pdsch_default_time_allocation_test srsgnb_sched srslog gte
 add_test(pdsch_default_time_allocation_test pdsch_default_time_allocation_test)
 
 add_executable(pdsch_dmrs_symbol_mask_test pdsch/pdsch_dmrs_symbol_mask_test.cpp)
-target_link_libraries(pdsch_dmrs_symbol_mask_test srsgnb_sched srslog)
+target_link_libraries(pdsch_dmrs_symbol_mask_test srsgnb_sched srslog gtest gtest_main)
 add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
 
 add_executable(pucch_default_resource_test pucch/pucch_default_resource_test.cpp)

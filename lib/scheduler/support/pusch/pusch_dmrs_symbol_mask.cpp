@@ -15,25 +15,21 @@ using namespace srsgnb;
 dmrs_symbol_mask srsgnb::pusch_dmrs_symbol_mask_mapping_type_A_single_get(
     const pusch_dmrs_symbol_mask_mapping_type_A_single_configuration& config)
 {
-  srsgnb_assert(config.typeA_pos == dmrs_typeA_position::pos2 || config.typeA_pos == dmrs_typeA_position::pos3,
-                "Invalid TypeA position {}",
-                config.typeA_pos);
-  srsgnb_assert(config.duration > 0 && config.duration <= 14, "Invalid transmission duration {}", config.duration);
   unsigned l0 = static_cast<unsigned>(config.typeA_pos);
 
   dmrs_symbol_mask mask(14);
   mask.set(l0);
 
-  if (config.duration < 8 || config.additional_position == dmrs_additional_positions::pos0) {
+  if (config.last_symbol < 8 || config.additional_position == dmrs_additional_positions::pos0) {
     return mask;
   }
 
-  if (config.duration < 10) {
+  if (config.last_symbol < 10) {
     mask.set(7);
     return mask;
   }
 
-  if (config.duration < 13 && (config.duration != 12 || config.additional_position < dmrs_additional_positions::pos3)) {
+  if (config.last_symbol < 13 && (config.last_symbol != 12 || config.additional_position < dmrs_additional_positions::pos3)) {
     mask.set(9);
     if (config.additional_position >= dmrs_additional_positions::pos2) {
       mask.set(6);

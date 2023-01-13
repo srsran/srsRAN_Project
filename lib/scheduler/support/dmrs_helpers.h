@@ -53,7 +53,7 @@ inline dmrs_information make_dmrs_info_common(const pdsch_config_common& pdsch_c
     pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
     dmrscfg.typeA_pos                         = dmrs_typeA_pos;
     dmrscfg.additional_position               = dmrs_additional_positions::pos2;
-    dmrscfg.duration                          = pdsch_time_res.symbols.stop();
+    dmrscfg.last_symbol                       = pdsch_time_res.symbols.stop();
     dmrscfg.lte_crs_match_around              = false;
     dmrscfg.ue_capable_additional_dmrs_dl_alt = false;
     dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
@@ -97,7 +97,7 @@ inline dmrs_information make_dmrs_info_common(const pusch_config_common& pusch_c
     pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration dmrscfg{};
     dmrscfg.typeA_pos                         = dmrs_typeA_pos;
     dmrscfg.additional_position               = dmrs_additional_positions::pos2;
-    dmrscfg.duration                          = pusch_time_res.symbols.stop();
+    dmrscfg.last_symbol                       = pusch_time_res.symbols.stop();
     dmrscfg.lte_crs_match_around              = false;
     dmrscfg.ue_capable_additional_dmrs_dl_alt = false;
     dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
