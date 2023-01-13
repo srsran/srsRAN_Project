@@ -12,6 +12,11 @@
 
 namespace srsgnb {
 
+bool gtpu_read_ext_header(bit_decoder&                            decoder,
+                          uint8_t                                 header_type,
+                          std::unique_ptr<gtpu_extension_header>& ext,
+                          srslog::basic_logger&                   logger);
+
 /****************************************************************************
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 29.281 v10.1.0 Section 5
@@ -105,20 +110,49 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
   // TEID
   decoder.unpack(header.teid, 32);
 
+  // Optional header fields
+  if (header.flags.ext_hdr || header.flags.seq_number || header.flags.n_pdu) {
+    // Sanity check PDU length
+    if (pdu.length() < GTPU_EXTENDED_HEADER_LEN) {
+      logger.error(pdu.begin(), pdu.end(), "Error extended GTP-U PDU is too small. Length={}", pdu.length());
+      return false;
+    }
+
+    // Sequence Number
+    decoder.unpack(header.seq_number, 16);
+
+    // N-PDU
+    decoder.unpack(header.n_pdu, 8);
+
+    // Next Extension Header Type
+    decoder.unpack(header.next_ext_hdr_type, 8);
+  }
+
+  // Read Header Extensions
+  if (header.flags.ext_hdr) {
+    if (header.next_ext_hdr_type == GTPU_EXT_NO_MORE_EXTENSION_HEADERS) {
+      logger.error(pdu.begin(), pdu.end(), "Error E flag is set, but there are no extra extensions");
+      return false;
+    }
+    std::unique_ptr<gtpu_extension_header> ext = nullptr;
+    if (!gtpu_read_ext_header(decoder, 0, ext, logger)) {
+      return false;
+    }
+    // if (ext->next_header_type == GTPU_EXT_NO_MORE_EXTENSION_HEADERS)
+  }
   // Trim header
   pdu.trim_head(decoder.nof_bytes());
 
-  if (header.flags.ext_hdr) {
-    // if (read_ext_header() == false) {
-    //   return false;
-    // }
-  }
   return true;
 }
 
-bool gtpu_read_ext_header(const byte_buffer& pdu, gtpu_header& header, srslog::basic_logger& logger)
+bool gtpu_read_ext_header(bit_decoder&                            decoder,
+                          uint8_t                                 header_type,
+                          std::unique_ptr<gtpu_extension_header>& ext,
+                          srslog::basic_logger&                   logger)
 {
   // TODO
+
   return true;
 }
 } // namespace srsgnb

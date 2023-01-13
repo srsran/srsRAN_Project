@@ -66,6 +66,13 @@ constexpr unsigned GTPU_EXT_HEADER_PDCP_PDU_NUMBER           = 0b11000000;
 constexpr unsigned GTPU_EXT_RESERVED_3                       = 0b11000001;
 constexpr unsigned GTPU_EXT_RESERVED_4                       = 0b11000010;
 
+/// Base class for GTP-U extension headers
+struct gtpu_extension_header {
+  uint8_t length                     = 0;
+  uint8_t next_extension_header_type = 0;
+};
+
+/// GTP-U header, including extensions
 struct gtpu_header {
   struct gtpu_flags {
     uint8_t version       = 1;
@@ -74,30 +81,22 @@ struct gtpu_header {
     bool    seq_number    = false;
     bool    n_pdu         = false;
   } flags;
-  uint8_t              message_type      = 0;
-  uint16_t             length            = 0;
-  uint32_t             teid              = 0;
-  uint16_t             seq_number        = 0;
-  uint8_t              n_pdu             = 0;
-  uint8_t              next_ext_hdr_type = 0;
-  std::vector<uint8_t> ext_buffer        = {};
-};
-
-struct gtpu_extension_header_container {};
-
-struct gtpu_extension_header {
-  uint8_t                                      length                     = 0;
-  std::vector<gtpu_extension_header_container> content                    = {};
-  uint8_t                                      next_extension_header_type = 0;
+  uint8_t                            message_type      = 0;
+  uint16_t                           length            = 0;
+  uint32_t                           teid              = 0;
+  uint16_t                           seq_number        = 0;
+  uint8_t                            n_pdu             = 0;
+  uint8_t                            next_ext_hdr_type = 0;
+  std::vector<gtpu_extension_header> ext_buffer        = {};
 };
 
 // TS 29.281 v16.2.0, section 5.2.2.1
-struct gtpu_extension_header_udp_port : gtpu_extension_header_container {
+struct gtpu_extension_header_udp_port : gtpu_extension_header {
   uint16_t port = 0;
 };
 
 // TS 29.281 v16.2.0, section 5.2.2.2
-struct gtpu_extension_header_pdcp_pdu_number {
+struct gtpu_extension_header_pdcp_pdu_number : gtpu_extension_header {
   uint16_t pdcp_pdu_number = 0;
 };
 
