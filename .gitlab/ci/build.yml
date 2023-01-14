@@ -9,7 +9,7 @@ stages:
 # Template job
 
 .build_and_unit:
-  image: $CR_REGISTRY_URI/testing-tools/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
+  image: ${CR_REGISTRY_URI}/${PROJECT}/srs-builder-gnb-${OS}:${DOCKER_BUILDER_VERSION}
   tags:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   stage: build and unit tests
@@ -31,6 +31,7 @@ stages:
     ENABLE_GCOV: "" # Empty for cmake default
     AUTO_DETECT_ISA: "False"
     PLATFORM: "amd64"
+    PROJECT: "testing-tools"
     # Test
     TEST_MODE: none # default, coverage, asan, tsan, valgrind, none
   needs: []
@@ -189,6 +190,10 @@ stages:
         COMPILER: clang
         BUILD_TYPE: Debug
         ENABLE_TSAN: "True"
+      - OS: rhel8
+        TEST_MODE: default
+        COMPILER: gcc
+        BUILD_TYPE: Release
 
 build cached:
   extends: .build_and_unit_main
@@ -273,6 +278,14 @@ build alt [ubuntu-20.04 arm64v8]:
   variables:
     OS: ubuntu-20.04
     PLATFORM: "arm64"
+  cache: []
+
+build alt [rhel8-latest amd64]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: rhel8
   cache: []
 
 # UHD
