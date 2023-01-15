@@ -531,11 +531,11 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
   if (request.ng_ran_bearer_context_mod_request.has_value()) {
     asn1_request->sys_bearer_context_mod_request_present = true;
     asn1_request->sys_bearer_context_mod_request.value.set_ng_ran_bearer_context_mod_request();
-    auto& ans1_bearer_context_mod =
+    auto& asn1_bearer_context_mod =
         asn1_request->sys_bearer_context_mod_request.value.ng_ran_bearer_context_mod_request();
 
     if (!request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.empty()) {
-      ans1_bearer_context_mod.pdu_session_res_to_modify_list_present = true;
+      asn1_bearer_context_mod.pdu_session_res_to_modify_list_present = true;
       for (const auto& res_to_mod_item_pair :
            request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
         const auto& res_to_mod_item = res_to_mod_item_pair.second;
@@ -560,7 +560,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
           asn1_res_to_mod_item.drb_to_modify_list_ng_ran.push_back(asn1_drb_to_mod_item);
         }
 
-        ans1_bearer_context_mod.pdu_session_res_to_modify_list.value.push_back(asn1_res_to_mod_item);
+        asn1_bearer_context_mod.pdu_session_res_to_modify_list.value.push_back(asn1_res_to_mod_item);
       }
     }
   }
