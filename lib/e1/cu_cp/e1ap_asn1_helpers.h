@@ -541,6 +541,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
         const auto& res_to_mod_item = res_to_mod_item_pair.second;
 
         asn1::e1ap::pdu_session_res_to_modify_item_s asn1_res_to_mod_item;
+        asn1_res_to_mod_item.pdu_session_id = pdu_session_id_to_uint(res_to_mod_item.pdu_session_id);
 
         for (const auto& drb_to_mod_item_pair : res_to_mod_item.drb_to_modify_list_ng_ran) {
           const auto& drb_id          = drb_to_mod_item_pair.first;
