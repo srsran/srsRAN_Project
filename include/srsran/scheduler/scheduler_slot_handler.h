@@ -308,7 +308,11 @@ struct dl_paging_allocation {
   enum paging_identity_type { ran_ue_paging_identity, cn_ue_paging_identity } paging_type_indicator;
   /// Paging identity assigned to UE. Possible values are \c I-RNTI-Value (Bit string of size 40) and \c NG-5G-S-TMSI
   /// (Bit string of size 48). See TS 38.331.
-  uint64_t          paging_identity;
+  uint64_t paging_identity;
+  /// UE_ID: 5G-S-TMSI mod 1024. Used by the paging scheduler to calculate the Paging Frame. This could be used generate
+  /// paging message with multiple paging records (one paging record per UE).
+  /// \remark See TS 38.304, clause 7.1.
+  unsigned          ue_id;
   pdsch_information pdsch_cfg;
 };
 

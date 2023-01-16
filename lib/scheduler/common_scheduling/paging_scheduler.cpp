@@ -415,6 +415,7 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&            pg_gra
           ? dl_paging_allocation::cn_ue_paging_identity
           : dl_paging_allocation::ran_ue_paging_identity;
   pg_grant.paging_identity = pg_msg.paging_identity;
+  pg_grant.ue_id           = pg_msg.ue_identity_index_value;
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = pg_grant.pdsch_cfg;
