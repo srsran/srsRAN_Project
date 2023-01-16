@@ -145,24 +145,6 @@ protected:
     return cfg;
   }
 
-  static srsgnb::pcch_config::nof_pf_per_drx_cycle get_nof_pf_per_drx_cycle_from_number(uint8_t nof_pf_per_drx_cycle)
-  {
-    switch (nof_pf_per_drx_cycle) {
-      case 1:
-        return srsgnb::pcch_config::nof_pf_per_drx_cycle::oneT;
-      case 2:
-        return srsgnb::pcch_config::nof_pf_per_drx_cycle::halfT;
-      case 4:
-        return srsgnb::pcch_config::nof_pf_per_drx_cycle::quarterT;
-      case 8:
-        return srsgnb::pcch_config::nof_pf_per_drx_cycle::oneEighthT;
-      case 16:
-        return srsgnb::pcch_config::nof_pf_per_drx_cycle::oneSixteethT;
-      default:
-        srsgnb_assertion_failure("Unsupported nof. paging frame per DRX cycle value");
-    }
-  }
-
   sched_cell_configuration_request_message create_random_cell_config_request() const
   {
     sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
