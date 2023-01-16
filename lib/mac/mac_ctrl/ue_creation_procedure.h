@@ -44,25 +44,27 @@ public:
     CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
 
-    // 1. Create UE in MAC CTRL.
+    // > Create UE in MAC CTRL.
     ctrl_ue_created = ctrl_unit.add_ue(req.ue_index, req.crnti, req.cell_index);
     if (not ctrl_ue_created) {
       CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
     }
 
-    // 2. Create UE UL context and channels.
+    // > Create UE UL context and channels.
     CORO_AWAIT_VALUE(add_ue_result, ul_unit.add_ue(req));
     if (not add_ue_result) {
       CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
     }
 
-    // 3. Create UE DL context and channels.
+    // > Create UE DL context and channels.
     CORO_AWAIT_VALUE(add_ue_result, dl_unit.add_ue(req));
 
-    // 4. Create UE context in Scheduler.
+    // > Create UE context in Scheduler.
     CORO_AWAIT(sched_configurator.handle_ue_creation_request(req));
 
-    // 4. After UE insertion in scheduler, send response to DU manager.
+    log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
+
+    // > After UE insertion in scheduler, send response to DU manager.
     CORO_RETURN(handle_mac_ue_create_result(add_ue_result));
   }
 

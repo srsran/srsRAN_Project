@@ -90,6 +90,11 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
 {
   // > Create DU UE DRB objects.
   for (const f1ap_drb_to_setup& drbtoadd : request.drbs_to_setup) {
+    if (drbtoadd.uluptnl_info_list.empty()) {
+      logger.warning("Failed to create DRB-Id={}. Cause: No UL UP TNL Info List provided.", drbtoadd.drb_id);
+      continue;
+    }
+
     auto it = std::find_if(ue->resources->rlc_bearers.begin(),
                            ue->resources->rlc_bearers.end(),
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
