@@ -28,40 +28,38 @@ namespace srsgnb {
 
 namespace detail {
 
-/// Helper Function to obtain maximum space in underlying container
+/// Helper Function to obtain maximum space in underlying container.
 template <typename T, size_t N>
-size_t get_max_size(const std::array<T, N>& a)
+constexpr size_t get_max_size(const std::array<T, N>& a) noexcept
 {
   return a.max_size();
 }
 template <typename T>
-size_t get_max_size(const std::vector<T>& a)
+size_t get_max_size(const std::vector<T>& a) noexcept
 {
   return a.capacity();
 }
 
-/**
- * Base common class for definition of circular buffer data structures with the following features:
- * - no allocations while pushing/popping new elements. Just an internal index update
- * - it provides helper methods to add/remove objects
- * - it provides an iterator interface to iterate over added elements in the buffer
- * - not thread-safe
- * @tparam Container underlying container type used as buffer (e.g. std::array<T, N> or std::vector<T>)
- */
+/// Base common class for definition of circular buffer data structures with the following features:
+/// - no allocations while pushing/popping new elements. Just an internal index update
+/// - it provides helper methods to add/remove objects
+/// - it provides an iterator interface to iterate over added elements in the buffer
+/// - not thread-safe.
+/// \tparam Container underlying container type used as buffer (e.g. std::array<T, N> or std::vector<T>).
 template <typename Container>
 class base_circular_buffer
 {
   using storage_t = typename Container::value_type;
   using T         = typename storage_t::value_type;
 
-  /// Iterator implementation
-  /// \tparam DataType can be T or const T
+  /// Iterator implementation.
+  /// \tparam DataType can be T or const T.
   template <typename DataType>
   class iterator_impl
   {
-    using parent_type = typename std::conditional<std::is_same<DataType, T>::value,
-                                                  base_circular_buffer<Container>,
-                                                  const base_circular_buffer<Container>>::type;
+    using parent_type = std::conditional_t<std::is_same<DataType, T>::value,
+                                           base_circular_buffer<Container>,
+                                           const base_circular_buffer<Container>>;
 
     iterator_impl(parent_type& parent_, size_t i) : parent(&parent_), idx(i)
     {
@@ -69,7 +67,7 @@ class base_circular_buffer
     }
 
   public:
-    using value_type        = DataType;
+    using value_type        = std::remove_const_t<DataType>;
     using reference         = DataType&;
     using pointer           = DataType*;
     using difference_type   = std::ptrdiff_t;
@@ -88,6 +86,7 @@ class base_circular_buffer
       return tmp;
     }
 
+    /// \brief Creates an iterator object that corresponds to the current iterator, incremented by \c n positions.
     iterator_impl<DataType> operator+(difference_type n)
     {
       iterator_impl<DataType> tmp(*this);
@@ -95,6 +94,7 @@ class base_circular_buffer
       return tmp;
     }
 
+    /// \brief Increment iterator by \c n positions.
     iterator_impl<DataType>& operator+=(difference_type n)
     {
       inc_(n);
@@ -184,7 +184,7 @@ class base_circular_buffer
   };
 
 public:
-  using value_type      = T;
+  using value_type      = std::remove_const_t<T>;
   using difference_type = typename Container::difference_type;
   using size_type       = std::size_t;
 
@@ -194,8 +194,9 @@ public:
   base_circular_buffer() = default;
   ~base_circular_buffer() { clear(); }
 
+  /// \brief Push an element to the circular buffer. Asserts if circular_buffer is full.
   template <typename U>
-  typename std::enable_if<std::is_constructible<T, U>::value>::type push(U&& t)
+  std::enable_if_t<std::is_constructible<T, U>::value> push(U&& t) noexcept
   {
     srsgnb_assert(not full(), "Circular buffer is full.");
     size_t wpos = get_wpos();
@@ -203,23 +204,18 @@ public:
     count++;
   }
 
-  bool try_push(T&& t)
+  /// \brief Tries to push an element to the circular buffer. If circular_buffer is full, returns false.
+  template <typename U>
+  bool try_push(U&& t) noexcept
   {
     if (full()) {
       return false;
     }
-    push(std::move(t));
+    push(std::forward<U>(t));
     return true;
   }
 
-  bool try_push(const T& t)
-  {
-    if (full()) {
-      return false;
-    }
-    push(t);
-    return true;
-  }
+  /// \brief Pops element from circular_buffer. If circular_buffer is empty, asserts.
   void pop()
   {
     srsgnb_assert(not empty(), "Cannot call pop() in empty circular buffer");
@@ -227,6 +223,8 @@ public:
     rpos = (rpos + 1) % max_size();
     count--;
   }
+
+  /// \brief Fetches the top position of circular_buffer. The function asserts if empty.
   T& top()
   {
     srsgnb_assert(not empty(), "Cannot call top() in empty circular buffer");
@@ -237,6 +235,8 @@ public:
     srsgnb_assert(not empty(), "Cannot call top() in empty circular buffer");
     return buffer[rpos].get();
   }
+
+  /// \brief Clears the content of the circular_buffer.
   void clear()
   {
     for (size_t i = 0; i < count; ++i) {
@@ -245,12 +245,19 @@ public:
     count = 0;
   }
 
-  bool   full() const { return count == max_size(); }
-  bool   empty() const { return count == 0; }
+  /// \brief Checks if circular_buffer is full.
+  bool full() const { return count == max_size(); }
+
+  /// \brief Checks if circular_buffer is empty.
+  bool empty() const { return count == 0; }
+
+  /// \brief Checks the number of elements currently stored in the circular_buffer.
   size_t size() const { return count; }
+
+  /// \brief Checks the maximum number of elements that can be stored in the circular_buffer.
   size_t max_size() const { return detail::get_max_size(buffer); }
 
-  /// Random Access
+  /// \brief Random access to position of the circular_buffer.
   T& operator[](size_t i)
   {
     srsgnb_assert(i < count, "Out-of-bounds access to circular buffer ({} >= {})", i, count);
@@ -296,15 +303,14 @@ protected:
   Container buffer;    ///< Container where elements are stored
 };
 
-/**
- * Base common class for definition of blocking queue data structures with the following features:
- * - it stores pushed/popped samples in an internal circular buffer
- * - provides blocking and non-blocking push/pop APIs
- * - thread-safe
- * @tparam CircBuffer underlying circular buffer data type (e.g. static_circular_buffer<T, N> or dyn_circular_buffer<T>)
- * @tparam PushingFunc function void(const T&) called while pushing an element to the queue
- * @tparam PoppingFunc function void(const T&) called while popping an element from the queue
- */
+/// \brief Base common class for definition of blocking queue data structures with the following features:
+/// - it stores pushed/popped samples in an internal circular buffer
+/// - provides blocking and non-blocking push/pop APIs
+/// - thread-safe
+/// \tparam CircBuffer underlying circular buffer data type (e.g. static_circular_buffer<T, N> or
+/// dyn_circular_buffer<T>)
+/// \tparam PushingFunc function void(const T&) called while pushing an element to the queue
+/// \tparam PoppingFunc function void(const T&) called while popping an element from the queue
 template <typename CircBuffer, typename PushingFunc, typename PoppingFunc>
 class base_blocking_queue
 {
@@ -505,14 +511,12 @@ protected:
 
 } // namespace detail
 
-/**
- * Circular buffer with fixed, embedded buffer storage via a std::array<T, N>.
- * - Single allocation at object creation for std::array. Given that the buffer size is known at compile-time, the
- *   circular iteration over the buffer may be more optimized (e.g. when N is a power of 2, % operator can be avoided)
- * - not thread-safe
- * @tparam T value type stored by buffer
- * @tparam N size of the queue
- */
+/// Circular buffer with fixed, embedded buffer storage via a std::array<T, N>.
+/// - Single allocation at object creation for std::array. Given that the buffer size is known at compile-time, the
+///   circular iteration over the buffer may be more optimized (e.g. when N is a power of 2, % operator can be avoided)
+/// - not thread-safe
+/// \tparam T value type stored by buffer
+/// \tparam N size of the queue
 template <typename T, size_t N>
 class static_circular_buffer : public detail::base_circular_buffer<std::array<detail::type_storage<T>, N>>
 {
@@ -562,12 +566,10 @@ public:
   }
 };
 
-/**
- * Circular buffer with buffer storage via a std::vector<T>.
- * - size can be defined at start-time.
- * - not thread-safe
- * @tparam T value type stored by buffer
- */
+/// Circular buffer with buffer storage via a std::vector<T>.
+/// - size can be defined at start-time.
+/// - not thread-safe
+/// \tparam T value type stored by buffer
 template <typename T>
 class dyn_circular_buffer : public detail::base_circular_buffer<std::vector<detail::type_storage<T>>>
 {
@@ -611,17 +613,15 @@ public:
   }
 };
 
-/**
- * Blocking queue with fixed, embedded buffer storage via a std::array<T, N>.
- * - Blocking push/pop API via push_blocking(...) and pop_blocking(...) methods
- * - Non-blocking push/pop API via try_push(...) and try_pop(...) methods
- * - Only one initial allocation for the std::array<T, N>
- * - thread-safe
- * @tparam T value type stored by buffer
- * @tparam N size of queue
- * @tparam PushingCallback function void(const T&) called while pushing an element to the queue
- * @tparam PoppingCallback function void(const T&) called while popping an element from the queue
- */
+/// Blocking queue with fixed, embedded buffer storage via a std::array<T, N>.
+/// - Blocking push/pop API via push_blocking(...) and pop_blocking(...) methods
+/// - Non-blocking push/pop API via try_push(...) and try_pop(...) methods
+/// - Only one initial allocation for the std::array<T, N>
+/// - thread-safe
+/// \tparam T value type stored by buffer
+/// \tparam N size of queue
+/// \tparam PushingCallback function void(const T&) called while pushing an element to the queue
+/// \tparam PoppingCallback function void(const T&) called while popping an element from the queue
 template <typename T,
           size_t N,
           typename PushingCallback = detail::noop_operator,
@@ -638,16 +638,14 @@ public:
   }
 };
 
-/**
- * Blocking queue with buffer storage represented via a std::vector<T>. Features:
- * - Blocking push/pop API via push_blocking(...) and pop_blocking(...) methods
- * - Non-blocking push/pop API via try_push(...) and try_pop(...) methods
- * - Size can be defined at runtime.
- * - thread-safe
- * @tparam T value type stored by buffer
- * @tparam PushingCallback function void(const T&) called while pushing an element to the queue
- * @tparam PoppingCallback function void(const T&) called while popping an element from the queue
- */
+/// Blocking queue with buffer storage represented via a std::vector<T>. Features:
+/// - Blocking push/pop API via push_blocking(...) and pop_blocking(...) methods
+/// - Non-blocking push/pop API via try_push(...) and try_pop(...) methods
+/// - Size can be defined at runtime.
+/// - thread-safe
+/// \tparam T value type stored by buffer
+/// \tparam PushingCallback function void(const T&) called while pushing an element to the queue
+/// \tparam PoppingCallback function void(const T&) called while popping an element from the queue
 template <typename T,
           typename PushingCallback = detail::noop_operator,
           typename PoppingCallback = detail::noop_operator>
