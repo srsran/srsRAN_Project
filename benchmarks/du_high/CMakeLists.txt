@@ -6,9 +6,10 @@
 #the distribution.
 #
 
-set_directory_properties(PROPERTIES LABELS "du_high")
+set_directory_properties(PROPERTIES LABELS "du_high|tsan")
 
 include_directories(../..)
 
 add_executable(du_high_benchmark du_high_benchmark.cpp)
 target_link_libraries(du_high_benchmark srsgnb_du_high f1_du_test_helpers gtest)
+add_test(du_high_benchmark du_high_benchmark)

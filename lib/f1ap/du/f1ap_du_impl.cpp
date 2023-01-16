@@ -33,7 +33,6 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
   ues(du_mng_, f1c_notifier),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_manager()))
 {
-  (void)ctrl_exec;
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
