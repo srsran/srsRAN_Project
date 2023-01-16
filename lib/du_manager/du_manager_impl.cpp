@@ -11,6 +11,7 @@
 #include "du_manager_impl.h"
 #include "procedures/initial_du_setup_procedure.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
+#include <future>
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -26,8 +27,17 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
 
 void du_manager_impl::start()
 {
-  // start F1 setup procedure.
-  main_ctrl_loop.schedule<initial_du_setup_procedure>(params, cell_mng);
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
+
+  params.services.du_mng_exec.execute([this, &p]() {
+    // start F1 setup procedure.
+    main_ctrl_loop.schedule<initial_du_setup_procedure>(params, cell_mng);
+    p.set_value();
+  });
+
+  // Block waiting for DU setup to complete.
+  fut.wait();
 }
 
 void du_manager_impl::stop()

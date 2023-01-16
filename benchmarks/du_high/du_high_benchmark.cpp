@@ -88,7 +88,7 @@ private:
                          ->drbs_to_be_setup_mod_list.value[0]
                          ->drbs_to_be_setup_mod_item();
         drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
-        ctrl_exec->defer([this, msg]() { f1c_msg_handler->handle_message(msg); });
+        f1c_msg_handler->handle_message(msg);
       } break;
       default:
         report_fatal_error("Unreachable code in this benchmark");
