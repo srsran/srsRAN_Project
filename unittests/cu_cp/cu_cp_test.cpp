@@ -46,6 +46,10 @@ protected:
     cfg.e1_notifier  = e1_pdu_notifier.get();
     cfg.ngc_notifier = ngc_amf_notifier.get();
 
+    cfg.ngc_config.ran_node_name = "srsgnb01";
+    cfg.ngc_config.plmn          = "00101";
+    cfg.ngc_config.tac           = 7;
+
     // create and start DUT
     cu_cp_obj = std::make_unique<cu_cp>(std::move(cfg));
     cu_cp_obj->start();
