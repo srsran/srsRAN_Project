@@ -167,7 +167,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Allocate PDCCH resources.
   pdcch_dl_information* pdcch = pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.id, aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space in PDCCH.");
+    logger.info("SCHED: Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
   }
 
@@ -176,7 +176,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   pucch_harq_ack_grant pucch_grant =
       pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1, *pdcch);
   if (pucch_grant.pucch_pdu == nullptr) {
-    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space in PUCCH.");
+    logger.info("SCHED: Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;
   }

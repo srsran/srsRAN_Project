@@ -100,7 +100,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       get_pdcch_sched(grant.cell_index)
           .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl);
   if (pdcch == nullptr) {
-    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space in PDCCH.");
+    logger.info("SCHED: Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
   }
 

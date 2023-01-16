@@ -165,8 +165,10 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
     case rlc_mode::um_bidir: {
       auto& um                          = out.rlc_cfg.set_um_bi_dir();
       um.ul_um_rlc.sn_field_len_present = true;
-      um.ul_um_rlc.sn_field_len.value   = asn1::rrc_nr::sn_field_len_um_opts::size12;
-      // TODO
+      asn1::number_to_enum(um.ul_um_rlc.sn_field_len, to_number(cfg.rlc_cfg.um.tx.sn_field_length));
+      um.dl_um_rlc.sn_field_len_present = true;
+      asn1::number_to_enum(um.dl_um_rlc.sn_field_len, to_number(cfg.rlc_cfg.um.rx.sn_field_length));
+      asn1::number_to_enum(um.dl_um_rlc.t_reassembly, cfg.rlc_cfg.um.rx.t_reassembly);
     } break;
     case rlc_mode::um_unidir_dl: {
       auto& um                          = out.rlc_cfg.set_um_uni_dir_dl();
