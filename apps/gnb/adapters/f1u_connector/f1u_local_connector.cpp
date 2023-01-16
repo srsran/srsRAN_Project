@@ -50,6 +50,17 @@ void f1u_local_connector::attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid)
   du_tun.du_tx->attach_cu_handler(cu_tun.f1u_bearer->get_rx_pdu_handler());
 }
 
+void f1u_local_connector::remove_cu_bearer(uint32_t ul_teid)
+{
+  auto bearer_it = cu_map.find(ul_teid);
+  if (bearer_it == cu_map.end()) {
+    logger.warning("Could not find UL-TEID at CU to remove. UL-TEID={}", ul_teid);
+    return;
+  }
+  logger.debug("Removing CU F1-U bearer. UL-TEID={}", ul_teid);
+  cu_map.erase(bearer_it);
+}
+
 srs_du::f1u_bearer*
 f1u_local_connector::create_du_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx)
 {

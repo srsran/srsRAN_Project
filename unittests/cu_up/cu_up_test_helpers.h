@@ -125,6 +125,7 @@ public:
     return &bearer;
   };
   void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override{};
+  void remove_cu_bearer(uint32_t ul_teid) override{};
 };
 
 e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id)

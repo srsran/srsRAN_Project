@@ -43,6 +43,7 @@ public:
   ~sdap_pdcp_adapter() = default;
 
   void connect_pdcp(pdcp_tx_upper_data_interface& pdcp_handler_) { pdcp_handler = &pdcp_handler_; }
+  void disconnect_pdcp() { pdcp_handler = nullptr; }
 
   void on_new_pdu(byte_buffer pdu) override
   {

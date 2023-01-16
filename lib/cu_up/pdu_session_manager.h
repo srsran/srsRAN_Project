@@ -48,6 +48,7 @@ struct pdu_session_modification_result {
   uint8_t                       pdu_session_id; // The PDU session ID.
   asn1::e1ap::cause_c           cause;          // Cause if setup was unsuccessful.
   std::vector<drb_setup_result> drb_setup_results;
+  std::vector<drb_setup_result> drb_modification_results;
 };
 
 class pdu_session_manager_ctrl
