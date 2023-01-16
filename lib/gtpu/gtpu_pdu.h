@@ -68,9 +68,8 @@ constexpr unsigned GTPU_EXT_RESERVED_3                     = 0b11000010;
 
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
-  uint8_t extension_header_type      = 0;
-  uint8_t length                     = 0;
-  uint8_t next_extension_header_type = 0;
+  uint8_t extension_header_type = 0;
+  uint8_t length                = 0;
 
   gtpu_extension_header()                                        = default;
   virtual ~gtpu_extension_header()                               = default;

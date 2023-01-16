@@ -15,10 +15,12 @@ namespace srsgnb {
 bool gtpu_read_ext_header(bit_decoder&                            decoder,
                           uint8_t                                 header_type,
                           std::unique_ptr<gtpu_extension_header>& ext,
+                          uint8_t&                                next_extension_header_type,
                           srslog::basic_logger&                   logger);
 
 bool gtpu_read_ext_pdu_session_container(bit_decoder&                            decoder,
                                          std::unique_ptr<gtpu_extension_header>& ext,
+                                         uint8_t&                                next_extension_header_type,
                                          srslog::basic_logger&                   logger);
 
 bool gtpu_write_ext_header(bit_encoder&                                  encoder,
@@ -167,12 +169,14 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
       logger.error(pdu.begin(), pdu.end(), "Error E flag is set, but there are no extra extensions");
       return false;
     }
-    std::unique_ptr<gtpu_extension_header> ext = nullptr;
-    if (!gtpu_read_ext_header(decoder, header.next_ext_hdr_type, ext, logger)) {
-      return false;
-    }
-    header.ext_list.push_back(std::move(ext));
-    // if (ext->next_header_type == GTPU_EXT_NO_MORE_EXTENSION_HEADERS)
+    uint8_t next_extension_header_type = 0;
+    do {
+      std::unique_ptr<gtpu_extension_header> ext = nullptr;
+      if (!gtpu_read_ext_header(decoder, header.next_ext_hdr_type, ext, next_extension_header_type, logger)) {
+        return false;
+      }
+      header.ext_list.push_back(std::move(ext));
+    } while (next_extension_header_type != GTPU_EXT_NO_MORE_EXTENSION_HEADERS);
   }
   // Trim header
   pdu.trim_head(decoder.nof_bytes());
@@ -183,6 +187,7 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
 bool gtpu_read_ext_header(bit_decoder&                            decoder,
                           uint8_t                                 header_type,
                           std::unique_ptr<gtpu_extension_header>& ext,
+                          uint8_t&                                next_extension_header_type,
                           srslog::basic_logger&                   logger)
 {
   switch (header_type) {
@@ -196,7 +201,7 @@ bool gtpu_read_ext_header(bit_decoder&                            decoder,
       logger.error("Header extension type is reserved");
       return false;
     case GTPU_EXT_HEADER_PDU_SESSION_CONTAINER:
-      return gtpu_read_ext_pdu_session_container(decoder, ext, logger);
+      return gtpu_read_ext_pdu_session_container(decoder, ext, next_extension_header_type, logger);
     default:
       logger.error("Unhandled header extension");
       return false;
@@ -232,6 +237,7 @@ bool gtpu_write_ext_header(bit_encoder&                                  encoder
 
 bool gtpu_read_ext_pdu_session_container(bit_decoder&                            decoder,
                                          std::unique_ptr<gtpu_extension_header>& ext,
+                                         uint8_t&                                next_extension_header_type,
                                          srslog::basic_logger&                   logger)
 {
   auto ext_ptr = std::make_unique<gtpu_extension_header_pdu_session_container>();
@@ -251,7 +257,7 @@ bool gtpu_read_ext_pdu_session_container(bit_decoder&                           
   }
 
   // Extract next extension header type
-  decoder.unpack(ext_ptr->next_extension_header_type, 8);
+  decoder.unpack(next_extension_header_type, 8);
 
   ext                        = std::move(ext_ptr);
   ext->extension_header_type = GTPU_EXT_HEADER_PDU_SESSION_CONTAINER;
