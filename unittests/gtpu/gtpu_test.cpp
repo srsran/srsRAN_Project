@@ -70,7 +70,8 @@ TEST_F(gtpu_test, pack_unpack)
   ASSERT_EQ(tst_vec.length(), tst_vec_no_header.length());
   ASSERT_EQ(tst_vec, tst_vec_no_header);
 
-  // logger.info("Unpacked GTP-U header: {}", hdr);
+  logger.info("Unpacked GTP-U header: {}", hdr);
+
   byte_buffer repack_buf = tst_vec_no_header.deep_copy();
 
   gtpu_write_header(repack_buf, hdr, gtpu_logger);
@@ -118,14 +119,13 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
 
   // Check extension header is correct
   ASSERT_EQ(hdr.ext_list.size(), 1);
-  ASSERT_EQ(hdr.ext_list[0]->extension_header_type, GTPU_EXT_HEADER_PDU_SESSION_CONTAINER);
-  gtpu_extension_header_pdu_session_container* ext =
-      dynamic_cast<gtpu_extension_header_pdu_session_container*>(hdr.ext_list[0].get());
-  ASSERT_EQ(ext->container.size(), 2);
-  ASSERT_EQ(ext->container[0], 0x00);
-  ASSERT_EQ(ext->container[1], 0x01);
+  ASSERT_EQ(hdr.ext_list[0].extension_header_type, GTPU_EXT_HEADER_PDU_SESSION_CONTAINER);
+  const gtpu_extension_header& ext = hdr.ext_list[0];
+  ASSERT_EQ(ext.container.size(), 2);
+  ASSERT_EQ(ext.container[0], 0x00);
+  ASSERT_EQ(ext.container[1], 0x01);
 
-  // logger.info("Unpacked GTP-U header: {}", hdr);
+  logger.info("Unpacked GTP-U header: {}", hdr);
 
   byte_buffer repack_buf = tst_vec_no_header.deep_copy();
 

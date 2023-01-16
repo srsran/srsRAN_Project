@@ -12,26 +12,16 @@
 
 namespace srsgnb {
 
-bool gtpu_read_ext_header(bit_decoder&                            decoder,
-                          uint8_t                                 header_type,
-                          std::unique_ptr<gtpu_extension_header>& ext,
-                          uint8_t&                                next_extension_header_type,
-                          srslog::basic_logger&                   logger);
+bool gtpu_read_ext_header(bit_decoder&           decoder,
+                          uint8_t                header_type,
+                          gtpu_extension_header& ext,
+                          uint8_t&               next_extension_header_type,
+                          srslog::basic_logger&  logger);
 
-bool gtpu_read_ext_pdu_session_container(bit_decoder&                            decoder,
-                                         std::unique_ptr<gtpu_extension_header>& ext,
-                                         uint8_t&                                next_extension_header_type,
-                                         srslog::basic_logger&                   logger);
-
-bool gtpu_write_ext_header(bit_encoder&                                  encoder,
-                           const std::unique_ptr<gtpu_extension_header>& ext,
-                           uint8_t                                       next_extension_header_type,
-                           srslog::basic_logger&                         logger);
-
-bool gtpu_write_ext_pdu_session_container(bit_encoder&                                  decoder,
-                                          const std::unique_ptr<gtpu_extension_header>& ext,
-                                          uint8_t                                       next_extension_header_type,
-                                          srslog::basic_logger&                         logger);
+bool gtpu_write_ext_header(bit_encoder&                 encoder,
+                           const gtpu_extension_header& ext,
+                           uint8_t                      next_extension_header_type,
+                           srslog::basic_logger&        logger);
 
 /****************************************************************************
  * Header pack/unpack helper functions
@@ -83,12 +73,12 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basi
     encoder.pack(header.next_ext_hdr_type, 8);
   }
 
-  // TODO write header extensions
-  for (uint16_t i = 0; i < header.ext_list.size(); ++i) {
+  // Write header extensions
+  for (unsigned i = 0; i < header.ext_list.size(); ++i) {
     if (i == (header.ext_list.size() - 1)) {
       gtpu_write_ext_header(encoder, header.ext_list[i], GTPU_EXT_NO_MORE_EXTENSION_HEADERS, logger);
     } else {
-      gtpu_write_ext_header(encoder, header.ext_list[i], header.ext_list[i + 1]->extension_header_type, logger);
+      gtpu_write_ext_header(encoder, header.ext_list[i], header.ext_list[i + 1].extension_header_type, logger);
     }
   }
 
@@ -171,11 +161,11 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
     }
     uint8_t next_extension_header_type = 0;
     do {
-      std::unique_ptr<gtpu_extension_header> ext = nullptr;
+      gtpu_extension_header ext = {};
       if (!gtpu_read_ext_header(decoder, header.next_ext_hdr_type, ext, next_extension_header_type, logger)) {
         return false;
       }
-      header.ext_list.push_back(std::move(ext));
+      header.ext_list.push_back(ext);
     } while (next_extension_header_type != GTPU_EXT_NO_MORE_EXTENSION_HEADERS);
   }
   // Trim header
@@ -184,11 +174,11 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
   return true;
 }
 
-bool gtpu_read_ext_header(bit_decoder&                            decoder,
-                          uint8_t                                 header_type,
-                          std::unique_ptr<gtpu_extension_header>& ext,
-                          uint8_t&                                next_extension_header_type,
-                          srslog::basic_logger&                   logger)
+bool gtpu_read_ext_header(bit_decoder&           decoder,
+                          uint8_t                header_type,
+                          gtpu_extension_header& ext,
+                          uint8_t&               next_extension_header_type,
+                          srslog::basic_logger&  logger)
 {
   switch (header_type) {
     case GTPU_EXT_NO_MORE_EXTENSION_HEADERS:
@@ -201,21 +191,41 @@ bool gtpu_read_ext_header(bit_decoder&                            decoder,
       logger.error("Header extension type is reserved");
       return false;
     case GTPU_EXT_HEADER_PDU_SESSION_CONTAINER:
-      return gtpu_read_ext_pdu_session_container(decoder, ext, next_extension_header_type, logger);
+      logger.debug("Unpacking PDU session container");
+      break;
     default:
       logger.error("Unhandled header extension");
       return false;
   }
 
+  decoder.unpack(ext.length, 8);
+
+  // The payload size is four bytes per the indicated length,
+  // minus one byte for the length field and one for the next
+  // extension header type. See section 5.2.1 of 29.281.
+  uint16_t payload = ext.length * 4 - 2;
+
+  // TODO check max size
+
+  // Extract container
+  ext.container.resize(payload);
+  for (unsigned i = 0; i < ext.container.size(); ++i) {
+    decoder.unpack(ext.container[i], 8);
+  }
+
+  // Extract next extension header type
+  decoder.unpack(next_extension_header_type, 8);
+
+  ext.extension_header_type = header_type;
   return true;
 }
 
-bool gtpu_write_ext_header(bit_encoder&                                  encoder,
-                           const std::unique_ptr<gtpu_extension_header>& ext,
-                           uint8_t                                       next_extension_header_type,
-                           srslog::basic_logger&                         logger)
+bool gtpu_write_ext_header(bit_encoder&                 encoder,
+                           const gtpu_extension_header& ext,
+                           uint8_t                      next_extension_header_type,
+                           srslog::basic_logger&        logger)
 {
-  switch (ext->extension_header_type) {
+  switch (ext.extension_header_type) {
     case GTPU_EXT_NO_MORE_EXTENSION_HEADERS:
       logger.error("Called for header extension packing, but there is no extension to unpack");
       return false;
@@ -226,65 +236,28 @@ bool gtpu_write_ext_header(bit_encoder&                                  encoder
       logger.error("Header extension type is reserved");
       return false;
     case GTPU_EXT_HEADER_PDU_SESSION_CONTAINER:
-      return gtpu_write_ext_pdu_session_container(encoder, ext, next_extension_header_type, logger);
+      logger.debug("Packing PDU session container");
+      break;
     default:
       logger.error("Unhandled header extension packing");
       return false;
   }
 
-  return true;
-}
+  uint8_t payload = 1 + ext.container.size() + 1;
+  srsgnb_assert(payload % 4 == 0, "Invalid GTP-U extension size");
 
-bool gtpu_read_ext_pdu_session_container(bit_decoder&                            decoder,
-                                         std::unique_ptr<gtpu_extension_header>& ext,
-                                         uint8_t&                                next_extension_header_type,
-                                         srslog::basic_logger&                   logger)
-{
-  auto ext_ptr = std::make_unique<gtpu_extension_header_pdu_session_container>();
-  decoder.unpack(ext_ptr->length, 8);
-
-  // The payload size is four bytes per the indicated length,
-  // minus one byte for the length field and one for the next
-  // extension header type. See section 5.2.1 of 29.281.
-  uint16_t payload = ext_ptr->length * 4 - 2;
-
-  // TODO check max size
-
-  // Extract container
-  ext_ptr->container.resize(payload);
-  for (unsigned i = 0; i < ext_ptr->container.size(); ++i) {
-    decoder.unpack(ext_ptr->container[i], 8);
-  }
-
-  // Extract next extension header type
-  decoder.unpack(next_extension_header_type, 8);
-
-  ext                        = std::move(ext_ptr);
-  ext->extension_header_type = GTPU_EXT_HEADER_PDU_SESSION_CONTAINER;
-  return true;
-}
-
-bool gtpu_write_ext_pdu_session_container(bit_encoder&                                  encoder,
-                                          const std::unique_ptr<gtpu_extension_header>& ext,
-                                          uint8_t                                       next_header_extension_type,
-                                          srslog::basic_logger&                         logger)
-{
-  const gtpu_extension_header_pdu_session_container* ext_ptr =
-      dynamic_cast<gtpu_extension_header_pdu_session_container*>(ext.get());
-
-  uint8_t payload = 1 + ext_ptr->container.size() + 1;
-  uint8_t length  = payload / 4;
+  uint8_t length = payload / 4;
 
   // Pack length
   encoder.pack(length, 8);
 
   // Pack container
-  for (unsigned i = 0; i < ext_ptr->container.size(); ++i) {
-    encoder.pack(ext_ptr->container[i], 8);
+  for (unsigned i = 0; i < ext.container.size(); ++i) {
+    encoder.pack(ext.container[i], 8);
   }
 
   // Pack next header extension type
-  encoder.pack(next_header_extension_type, 8);
+  encoder.pack(next_extension_header_type, 8);
   return true;
 }
 } // namespace srsgnb

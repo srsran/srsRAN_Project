@@ -68,15 +68,9 @@ constexpr unsigned GTPU_EXT_RESERVED_3                     = 0b11000010;
 
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
-  uint8_t extension_header_type = 0;
-  uint8_t length                = 0;
-
-  gtpu_extension_header()                                        = default;
-  virtual ~gtpu_extension_header()                               = default;
-  gtpu_extension_header(const gtpu_extension_header&)            = default;
-  gtpu_extension_header& operator=(const gtpu_extension_header&) = default;
-  gtpu_extension_header(gtpu_extension_header&&)                 = default;
-  gtpu_extension_header& operator=(gtpu_extension_header&&)      = default;
+  uint8_t              extension_header_type = 0;
+  uint8_t              length                = 0;
+  std::vector<uint8_t> container             = {};
 };
 
 /// GTP-U header, including extensions
@@ -88,48 +82,13 @@ struct gtpu_header {
     bool    seq_number    = false;
     bool    n_pdu         = false;
   } flags;
-  uint8_t                                             message_type      = 0;
-  uint16_t                                            length            = 0;
-  uint32_t                                            teid              = 0;
-  uint16_t                                            seq_number        = 0;
-  uint8_t                                             n_pdu             = 0;
-  uint8_t                                             next_ext_hdr_type = 0;
-  std::vector<std::unique_ptr<gtpu_extension_header>> ext_list          = {};
-};
-
-// TS 29.281 v16.2.0, section 5.2.2.1
-struct gtpu_extension_header_udp_port : gtpu_extension_header {
-  uint16_t port = 0;
-};
-
-// TS 29.281 v16.2.0, section 5.2.2.2
-struct gtpu_extension_header_pdcp_pdu_number : gtpu_extension_header {
-  uint16_t pdcp_pdu_number = 0;
-};
-
-// TS 29.281 v16.2.0, section 5.2.2.2A
-struct gtpu_extension_header_long_pdcp_pdu_number : gtpu_extension_header {
-  uint32_t pdcp_pdu_number = 0;
-};
-
-// TS 29.281 v16.2.0, section 5.2.2.3
-struct gtpu_extension_header_service_class_indicator : gtpu_extension_header {
-  uint16_t service_class_indicator = 0;
-};
-
-// TS 29.281 v16.2.0, section 5.2.2.4
-struct gtpu_extension_header_ran_container : gtpu_extension_header {
-  std::vector<uint8_t> container = {};
-};
-
-// TS 29.281 v16.2.0, section 5.2.2.5
-struct gtpu_extension_header_xw_ran_container : gtpu_extension_header {
-  std::vector<uint8_t> container = {};
-};
-
-// TS 29.281 v16.2.0, section 5.2.2.6
-struct gtpu_extension_header_pdu_session_container : gtpu_extension_header {
-  std::vector<uint8_t> container = {};
+  uint8_t                            message_type      = 0;
+  uint16_t                           length            = 0;
+  uint32_t                           teid              = 0;
+  uint16_t                           seq_number        = 0;
+  uint8_t                            n_pdu             = 0;
+  uint8_t                            next_ext_hdr_type = 0;
+  std::vector<gtpu_extension_header> ext_list          = {};
 };
 
 bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger);
