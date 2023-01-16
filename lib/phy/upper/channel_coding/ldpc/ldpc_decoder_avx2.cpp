@@ -286,12 +286,33 @@ static void inner_update_soft_bits(mm256::avx2_span        this_soft_bits,
                                    const mm256::avx2_span& this_var_to_check)
 {
   for (unsigned i_block = 0; i_block != NODE_SIZE_AVX2; ++i_block) {
+    // Get a mask of the infinite check-to-var messages.
+    __m256i check_to_var_epi8         = this_check_to_var.get_at(i_block);
+    __m256i is_check_plus_infty_epi8  = _mm256_cmpgt_epi8(check_to_var_epi8, LLR_MAX_epi8);
+    __m256i is_check_minus_infty_epi8 = _mm256_cmpgt_epi8(LLR_MIN_epi8, check_to_var_epi8);
+    // Get a mask of the infinite var-to_check messages.
+    __m256i var_to_check_epi8       = this_var_to_check.get_at(i_block);
+    __m256i is_var_plus_infty_epi8  = _mm256_cmpgt_epi8(var_to_check_epi8, LLR_MAX_epi8);
+    __m256i is_var_minus_infty_epi8 = _mm256_cmpgt_epi8(LLR_MIN_epi8, var_to_check_epi8);
     // Add check-to-variable and variable-to-check messages.
-    __m256i soft_epi8 = _mm256_adds_epi8(this_check_to_var.get_at(i_block), this_var_to_check.get_at(i_block));
-    // If they are above LLR_MAX (resp., below LLR_MIN), promote to LLR_INFINITY (resp., -LLR_INFINITY).
-    __m256i mask_epi8 = _mm256_cmpgt_epi8(soft_epi8, LLR_MAX_epi8);
-    soft_epi8         = _mm256_blendv_epi8(soft_epi8, LLR_INFINITY_epi8, mask_epi8);
-    mask_epi8         = _mm256_cmpgt_epi8(LLR_MIN_epi8, soft_epi8);
+    __m256i soft_epi8 = _mm256_adds_epi8(check_to_var_epi8, this_var_to_check.get_at(i_block));
+
+    // Soft bits are +INFINITY if they are larger than LLR_MAX or if at least one of the addends is (but not if the two
+    // addends are both infinity but with opposite signs).
+    __m256i mask_epi8        = _mm256_cmpgt_epi8(soft_epi8, LLR_MAX_epi8);
+    __m256i mask_inputs_epi8 = _mm256_andnot_si256(is_var_minus_infty_epi8, is_check_plus_infty_epi8);
+    __m256i mask_tmp_epi8    = _mm256_andnot_si256(is_check_minus_infty_epi8, is_var_plus_infty_epi8);
+    mask_inputs_epi8         = _mm256_or_si256(mask_inputs_epi8, mask_tmp_epi8);
+    mask_epi8                = _mm256_or_si256(mask_epi8, mask_inputs_epi8);
+    soft_epi8                = _mm256_blendv_epi8(soft_epi8, LLR_INFINITY_epi8, mask_epi8);
+
+    // Soft bits are -INFINITY if they are smaller than LLR_MIN or if at least one of the addends is (but not if the two
+    // addends are both infinity but with opposite signs).
+    mask_epi8        = _mm256_cmpgt_epi8(LLR_MIN_epi8, soft_epi8);
+    mask_inputs_epi8 = _mm256_andnot_si256(is_var_plus_infty_epi8, is_check_minus_infty_epi8);
+    mask_tmp_epi8    = _mm256_andnot_si256(is_check_plus_infty_epi8, is_var_minus_infty_epi8);
+    mask_inputs_epi8 = _mm256_or_si256(mask_inputs_epi8, mask_tmp_epi8);
+    mask_epi8        = _mm256_or_si256(mask_epi8, mask_inputs_epi8);
     this_soft_bits.set_at(i_block, _mm256_blendv_epi8(soft_epi8, LLR_NEG_INFINITY_epi8, mask_epi8));
   }
 }
@@ -329,7 +350,8 @@ static void inner_update_check_to_var_msgs(mm256::avx2_span        this_check_to
     __m256i check_to_var_epi8 =
         _mm256_blendv_epi8(min_var_to_check.get_at(i_block), second_min_var_to_check.get_at(i_block), mask_is_min_epi8);
     // Scale the message to compensate for approximations.
-    check_to_var_epi8 = mm256::scale_epi8(check_to_var_epi8, scaling_factor);
+    check_to_var_epi8 =
+        mm256::scale_epi8(check_to_var_epi8, scaling_factor, log_likelihood_ratio::max().to_value_type());
 
     // Sign of the cumulative product of all variable-to-check messages but the current one (same as multiplying the
     // sign of all messages by the sign of the current one).

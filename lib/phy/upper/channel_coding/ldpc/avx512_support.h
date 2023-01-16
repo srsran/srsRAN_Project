@@ -26,18 +26,24 @@ using avx512_array = detail::avx_array<detail::m512_wrapper, N>;
 using avx512_span = detail::avx_span<detail::m512_wrapper>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
+///
+/// Values of \c a larger than \c max or smaller than \c -max are forwarded unaltered.
 /// \param[in] a   Vector of packed 8-bit integers.
 /// \param[in] sf  Scaling factor (0, 1].
+/// \param[in] max Maximum input value (in absolute value) to which the scaling is applied [0, 127).
 /// \return    Vector of packed 8-bit integers with the scaling result.
-inline __m512i scale_epi8(__m512i a, float sf)
+inline __m512i scale_epi8(__m512i a, float sf, uint8_t max)
 {
   srsgnb_assert((sf > 0) && (sf <= 1), "Scaling factor out of range.");
+  srsgnb_assert(max < 127, "Parameter max out of range.");
 
   if (sf >= .9999) {
     return a;
   }
 
   static const __m512i mask_even_epi8 = _mm512_set1_epi16(0x00ff);
+  const __m512i        MAX_epi8       = _mm512_set1_epi8(max);
+  const __m512i        MIN_epi8       = _mm512_set1_epi8(-max);
   // FLOAT2INT = 2^16 = 65536
   static constexpr unsigned FLOAT2INT = 1U << 16U;
 
@@ -59,7 +65,15 @@ inline __m512i scale_epi8(__m512i a, float sf)
 
   // Combine even and odd bits. Note that the "odd" bytes of p_even_epi16 are equal to 0 (the result of multiplying a
   // byte by a 16-bit value will occupy at most 24 of the 32 bits).
-  return _mm512_xor_si512(p_even_epi16, p_odd_epi16);
+  __m512i product_epi8 = _mm512_xor_si512(p_even_epi16, p_odd_epi16);
+
+  // Replace values corresponding to "large" inputs with their original values.
+  __mmask64 mask_epi8 = _mm512_cmpgt_epi8_mask(a, MAX_epi8);
+  product_epi8        = _mm512_mask_blend_epi8(mask_epi8, product_epi8, a);
+  mask_epi8           = _mm512_cmpgt_epi8_mask(MIN_epi8, a);
+  product_epi8        = _mm512_mask_blend_epi8(mask_epi8, product_epi8, a);
+
+  return product_epi8;
 }
 
 } // namespace mm512
