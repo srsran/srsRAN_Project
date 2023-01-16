@@ -138,7 +138,8 @@ inline du_index_t get_du_index_from_cu_cp_ue_id(cu_cp_ue_id_t ngap_id)
 
 /// \brief RAN_UE_ID (non ASN1 type of RAN_UE_NGAP_ID).
 /// \remark See TS 38.413 Section 9.3.3.2: RAN_UE_NGAP_ID valid values: (0..2^32-1)
-enum class ran_ue_id_t : uint64_t { min = 0, max = std::numeric_limits<uint64_t>::max(), invalid = 0x1ffffffff };
+constexpr static uint64_t MAX_NOF_RAN_UES = ((uint64_t)1 << 32);
+enum class ran_ue_id_t : uint64_t { min = 0, max = MAX_NOF_RAN_UES - 1, invalid = 0x1ffffffff };
 
 /// Convert RAN_UE_ID type to integer.
 inline uint64_t ran_ue_id_to_uint(ran_ue_id_t id)

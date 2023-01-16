@@ -71,9 +71,9 @@ private:
   slotted_array<ue_context, MAX_NOF_UES> ue_db;
   std::map<rnti_t, ue_index_t>           rnti_to_ue_index;
 
-  slotted_array<ngc_ue, MAX_NOF_CU_UES>        ngc_ues;                  // ngc_ues indexed by cu_cp_ue_id
-  slotted_array<cu_cp_ue_id_t, MAX_NOF_CU_UES> ran_ue_id_to_cu_cp_ue_id; // cu_cp_ue_ids indexed by ran_ue_ids
-  slotted_array<cu_cp_ue_id_t, MAX_NOF_CU_UES> amf_ue_id_to_cu_cp_ue_id; // cu_cp_ue_ids indexed by amf_ue_ids
+  slotted_array<ngc_ue, MAX_NOF_CU_UES>          ngc_ues;                  // ngc_ues indexed by cu_cp_ue_id
+  std::unordered_map<ran_ue_id_t, cu_cp_ue_id_t> ran_ue_id_to_cu_cp_ue_id; // cu_cp_ue_ids indexed by ran_ue_ids
+  std::unordered_map<amf_ue_id_t, cu_cp_ue_id_t> amf_ue_id_to_cu_cp_ue_id; // cu_cp_ue_ids indexed by amf_ue_ids
 };
 
 } // namespace srs_cu_cp
