@@ -175,9 +175,10 @@ private:
       // Fetch MAC Tx SDU.
       byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(get_mac_sdu_payload_size(rem_bytes));
       if (sdu.empty()) {
-        // Potential causes include mismatch in RLC and MAC logical channel buffer state or the RLC Tx window is full.
-        // TODO: Handle.
-        logger.warning("rnti={:#x}, LCID={}: Failed to encode MAC SDU.", rnti, subpdu.lcid.to_lcid());
+        logger.debug("rnti={:#x}, LCID={}: Failed to encode MAC SDU in MAC opportunity of size={}.",
+                     rnti,
+                     subpdu.lcid.to_lcid(),
+                     get_mac_sdu_payload_size(rem_bytes));
         break;
       }
       srsgnb_assert(sdu.length() <= get_mac_sdu_payload_size(rem_bytes), "RLC Tx SDU exceeded MAC opportunity size");
@@ -194,11 +195,18 @@ private:
       srsgnb_assert(rem_bytes >= nwritten, "Too many bytes were packed in MAC SDU");
       rem_bytes -= nwritten;
     }
-    if (rem_bytes < MIN_MAC_SDU_SIZE and rem_bytes == get_mac_sdu_required_bytes(subpdu.sched_bytes)) {
-      logger.error("rnti={:#x}: Skipping MAC subPDU encoding. Cause: Allocated SDU size={} is too small to fit MAC "
-                   "subheader and payload.",
-                   rnti,
-                   subpdu.sched_bytes);
+    if (rem_bytes == get_mac_sdu_required_bytes(subpdu.sched_bytes)) {
+      // No SDU was encoded for this LCID.
+      // Causes for failure to create MAC SDU include: RLC Tx window is full, mismatch between the logical channel
+      // buffer states in the scheduler and RLC bearers, or the MAC opportunity is too small.
+      if (rem_bytes < MIN_MAC_SDU_SIZE) {
+        logger.warning("rnti={:#x}, LCID={}: Skipping MAC SDU encoding. Cause: Allocated SDU size={} is too small.",
+                       rnti,
+                       subpdu.lcid.to_lcid(),
+                       subpdu.sched_bytes);
+      } else {
+        logger.warning("rnti={:#x}, LCID={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU");
+      }
     }
   }
 
