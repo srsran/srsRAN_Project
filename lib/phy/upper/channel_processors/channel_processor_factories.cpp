@@ -32,6 +32,8 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/srsvec/bit.h"
+#include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
 
@@ -792,7 +794,23 @@ public:
 
     std::chrono::nanoseconds time_ns = time_execution(func);
 
-    logger.info("PDCCH: {} {}", pdu, time_ns);
+    static_bit_buffer<pdcch_constants::MAX_DCI_PAYLOAD_SIZE> data(pdu.dci.payload.size());
+    srsvec::zero(data.get_buffer());
+    srsvec::bit_pack(data, pdu.dci.payload);
+
+    if (logger.debug.enabled()) {
+      // Detailed log information, including a list of all PDU fields.
+      logger.debug(data.get_buffer().data(),
+                   divide_ceil(data.size(), 8),
+                   "PDCCH: {:s} {}\n  {:n}\n  {}",
+                   pdu,
+                   time_ns,
+                   pdu,
+                   time_ns);
+      return;
+    }
+    // Single line log entry.
+    logger.info(data.get_buffer().data(), divide_ceil(data.size(), 8), "PDCCH: {:s} {}", pdu, time_ns);
   }
 
 private:
@@ -825,7 +843,21 @@ public:
 
     std::chrono::nanoseconds time_ns = time_execution(func);
 
-    logger.info(data.front().data(), data.front().size(), "PDSCH: {} tbs={} {}", pdu, data.front().size(), time_ns);
+    if (logger.debug.enabled()) {
+      // Detailed log information, including a list of all PDU fields.
+      logger.debug(data.front().data(),
+                   data.front().size(),
+                   "PDSCH: {:s} tbs={} {}\n  {:n}\n  tbs={}\n  {}",
+                   pdu,
+                   data.front().size(),
+                   time_ns,
+                   pdu,
+                   data.front().size(),
+                   time_ns);
+      return;
+    }
+    // Single line log entry.
+    logger.info(data.front().data(), data.front().size(), "PDSCH: {:s} tbs={} {}", pdu, data.front().size(), time_ns);
   }
 
 private:
@@ -853,7 +885,13 @@ public:
     std::chrono::nanoseconds time_ns = time_execution(func);
 
     if (log_all_opportunities || !result.preambles.empty()) {
-      logger.info("PRACH: {} {} {}", config, result, time_ns);
+      if (logger.debug.enabled()) {
+        // Detailed log information, including a list of all PRACH config and result fields.
+        logger.debug("PRACH: {:s} {:s} {}\n  {:n}\n  {:n}\n  {}", config, result, time_ns, config, result, time_ns);
+      } else {
+        // Single line log entry.
+        logger.info("PRACH: {:s} {:s} {}", config, result, time_ns);
+      }
     }
 
     return result;
@@ -884,9 +922,29 @@ public:
 
     if (result.data->tb_crc_ok) {
       // If CRC is OK, dump TB.
-      logger.info(data.data(), data.size(), "PUSCH: {} {}tbs={} {}", pdu, result, data.size(), time_ns);
+      if (logger.debug.enabled()) {
+        // Detailed log information, including a list of all PDU fields.
+        logger.debug(data.data(),
+                     data.size(),
+                     "PUSCH: {:s} {:s} tbs={} {}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
+                     pdu,
+                     result,
+                     data.size(),
+                     time_ns,
+                     pdu,
+                     result,
+                     data.size(),
+                     time_ns);
+      } else {
+        // Single line log entry.
+        logger.info(data.data(), data.size(), "PUSCH: {:s} {:s} tbs={} {}", pdu, result, data.size(), time_ns);
+      }
     } else {
-      logger.info("PUSCH: {} {}tbs={} {}", pdu, result, data.size(), time_ns);
+      // CRC is KO, do not dump TB.
+      if (logger.debug.enabled()) {
+        logger.debug("PUSCH: {:s} {:s} {}\n  {:n}\n  {:n}\n  {}", pdu, result, time_ns, pdu, result, time_ns);
+      }
+      logger.info("PUSCH: {:s} {:s} {}", pdu, result, time_ns);
     }
 
     return result;
@@ -905,8 +963,13 @@ class logging_pucch_processor_decorator : public pucch_processor
     pucch_processor_result result;
 
     std::chrono::nanoseconds time_ns = time_execution([&]() { result = processor->process(grid, config); });
-
-    logger.info("PUCCH: {} {}{}", config, result, time_ns);
+    if (logger.debug.enabled()) {
+      // Detailed log information, including a list of all PUCCH configuration and result fields.
+      logger.debug("PUCCH: {:s} {:s} {}\n  {:n}\n  {:n}\n  {}", config, result, time_ns, config, result, time_ns);
+    } else {
+      // Single line log entry.
+      logger.info("PUCCH: {:s} {:s} {}", config, result, time_ns);
+    }
 
     return result;
   }
@@ -959,7 +1022,24 @@ public:
 
     std::chrono::nanoseconds time_ns = time_execution(func);
 
-    logger.info("SSB: {} {}", pdu, time_ns);
+    static_bit_buffer<BCH_PAYLOAD_SIZE> data(pdu.bch_payload.size());
+    srsvec::zero(data.get_buffer());
+    srsvec::bit_pack(data, pdu.bch_payload);
+
+    if (logger.debug.enabled()) {
+      // Detailed log information, including a list of all SSB PDU fields.
+      logger.debug(data.get_buffer().data(),
+                   divide_ceil(data.size(), 8),
+                   "SSB: {:s} {}\n  {:n}\n  {}",
+                   pdu,
+                   time_ns,
+                   pdu,
+                   time_ns);
+
+      return;
+    }
+    // Single line log entry.
+    logger.info(data.get_buffer().data(), divide_ceil(data.size(), 8), "SSB: {:s} {}", pdu, time_ns);
   }
 
 private:

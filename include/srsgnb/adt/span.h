@@ -249,7 +249,7 @@ using const_span = span<const T>;
 
 namespace fmt {
 
-/// \brief Custom formatter for span<T>.
+/// \brief Custom formatter for \c span<T>.
 ///
 /// By default, the elements within the span are separated by a space character. A comma delimiter is available and can
 /// be selected by formatting with <tt>{:,}</tt>. The delimiter can be disabled by formatting with <tt>{:#}</tt>.

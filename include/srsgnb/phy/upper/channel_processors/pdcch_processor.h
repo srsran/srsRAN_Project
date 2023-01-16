@@ -49,7 +49,7 @@ public:
     unsigned aggregation_level;
     // Ignore precoding and beamforming.
     // ...
-    /// Ratio of PDCCH Data EPRE to SSS EPRE in decibels.
+    /// Ratio of PDCCH DM-RS EPRE to SSS EPRE in decibels.
     float dmrs_power_offset_dB;
     /// Ratio of PDCCH Data EPRE to SSS EPRE in decibels.
     float data_power_offset_dB;
