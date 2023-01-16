@@ -108,6 +108,11 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
   // Trim header
   pdu.trim_head(decoder.nof_bytes());
 
+  // Temporary fix to remove Header Extension
+  if (header.flags.ext_hdr) {
+    pdu.trim_head(8);
+  }
+
   // TODO handle extended headers
   return true;
 }
