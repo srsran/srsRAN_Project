@@ -16,7 +16,7 @@
 
 using namespace srsgnb;
 
-/// \brief Receive an SDU from the upper layers, apply encription
+/// \brief Receive an SDU from the upper layers, apply encryption
 /// and integrity protection and pass the resulting PDU
 /// to the lower layers.
 ///
@@ -25,6 +25,7 @@ using namespace srsgnb;
 void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 {
   metrics_add_sdus(1, sdu.length());
+  logger.log_debug(sdu.begin(), sdu.end(), "RX SDU ({} B)", sdu.length());
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
@@ -92,7 +93,7 @@ void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer 
 {
   logger.log_info(buf.begin(),
                   buf.end(),
-                  "TX Data PDU ({}B), COUNT={}, HFN={}, SN={}, integrity={}, encryption={}",
+                  "TX Data PDU ({} B), COUNT={}, HFN={}, SN={}, integrity={}, encryption={}",
                   buf.length(),
                   count,
                   HFN(count),
