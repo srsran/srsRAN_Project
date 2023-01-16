@@ -157,8 +157,6 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
     if (not pucch_alloc.ul_res_grid.collides(first_hop_grant) &&
         not pucch_alloc.ul_res_grid.collides(second_hop_grant)) {
       // Set outputs before exiting the function.
-      pucch_alloc.ul_res_grid.fill(first_hop_grant);
-      pucch_alloc.ul_res_grid.fill(second_hop_grant);
       pucch_res_alloc_cfg ret_pucch_resource{
           .first_hop_res = first_hop_grant, .cs = cyclic_shift, .format = pucch_res.format};
       ret_pucch_resource.second_hop_res = second_hop_grant;
@@ -255,7 +253,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   fill_pucch_harq_grant(pucch_info, tcrnti, pucch_res);
   pucch_harq_ack_output.pucch_pdu = &pucch_info;
 
-  logger.debug("SCHED: PUCCH for TC-RNTI={:#x} allocated for slot={}.", tcrnti, slot_alloc.slot_tx().to_uint());
+  logger.debug("SCHED: PUCCH for TC-RNTI={:#x} allocated for slot={}.", tcrnti, pucch_slot_alloc.slot.to_uint());
 
   return pucch_harq_ack_output;
 }
