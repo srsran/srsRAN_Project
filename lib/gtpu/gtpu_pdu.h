@@ -34,8 +34,9 @@ namespace srsgnb {
  * 11     |            N-PDU              |
  * 12     |  Next Extension Header Type   |
  ***************************************************************************/
-constexpr unsigned GTPU_BASE_HEADER_LEN     = 8;
-constexpr unsigned GTPU_EXTENDED_HEADER_LEN = 12;
+constexpr unsigned GTPU_BASE_HEADER_LEN          = 8;
+constexpr unsigned GTPU_EXTENDED_HEADER_LEN      = 12;
+constexpr unsigned GTPU_NON_MANDATORY_HEADER_LEN = 4;
 
 constexpr unsigned GTPU_FLAGS_VERSION_MASK       = 0xe0;
 constexpr unsigned GTPU_FLAGS_VERSION_V1         = 0x01;
@@ -67,8 +68,16 @@ constexpr unsigned GTPU_EXT_RESERVED_3                     = 0b11000010;
 
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
+  uint8_t extension_header_type      = 0;
   uint8_t length                     = 0;
   uint8_t next_extension_header_type = 0;
+
+  gtpu_extension_header()                                        = default;
+  virtual ~gtpu_extension_header()                               = default;
+  gtpu_extension_header(const gtpu_extension_header&)            = default;
+  gtpu_extension_header& operator=(const gtpu_extension_header&) = default;
+  gtpu_extension_header(gtpu_extension_header&&)                 = default;
+  gtpu_extension_header& operator=(gtpu_extension_header&&)      = default;
 };
 
 /// GTP-U header, including extensions
@@ -80,13 +89,13 @@ struct gtpu_header {
     bool    seq_number    = false;
     bool    n_pdu         = false;
   } flags;
-  uint8_t                            message_type      = 0;
-  uint16_t                           length            = 0;
-  uint32_t                           teid              = 0;
-  uint16_t                           seq_number        = 0;
-  uint8_t                            n_pdu             = 0;
-  uint8_t                            next_ext_hdr_type = 0;
-  std::vector<gtpu_extension_header> ext_buffer        = {};
+  uint8_t                                             message_type      = 0;
+  uint16_t                                            length            = 0;
+  uint32_t                                            teid              = 0;
+  uint16_t                                            seq_number        = 0;
+  uint8_t                                             n_pdu             = 0;
+  uint8_t                                             next_ext_hdr_type = 0;
+  std::vector<std::unique_ptr<gtpu_extension_header>> ext_list          = {};
 };
 
 // TS 29.281 v16.2.0, section 5.2.2.1

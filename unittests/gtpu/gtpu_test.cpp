@@ -70,7 +70,7 @@ TEST_F(gtpu_test, pack_unpack)
   ASSERT_EQ(tst_vec.length(), tst_vec_no_header.length());
   ASSERT_EQ(tst_vec, tst_vec_no_header);
 
-  logger.info("Unpacked GTP-U header: {}", hdr);
+  // logger.info("Unpacked GTP-U header: {}", hdr);
   byte_buffer repack_buf = tst_vec_no_header.deep_copy();
 
   gtpu_write_header(repack_buf, hdr, gtpu_logger);
@@ -107,8 +107,8 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
   ASSERT_EQ(hdr.message_type, GTPU_MSG_DATA_PDU);
 
   // Check length
-  ASSERT_EQ(hdr.length, tst_vec_no_header.length());
-  /*
+  ASSERT_EQ(hdr.length, tst_vec_no_header.length() + ext_size + GTPU_NON_MANDATORY_HEADER_LEN);
+
   // Check TEID
   ASSERT_EQ(hdr.teid, 1);
 
@@ -116,14 +116,23 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
   ASSERT_EQ(tst_vec.length(), tst_vec_no_header.length());
   ASSERT_EQ(tst_vec, tst_vec_no_header);
 
-  logger.info("Unpacked GTP-U header: {}", hdr);
+  // Check extension header is correct
+  ASSERT_EQ(hdr.ext_list.size(), 1);
+  ASSERT_EQ(hdr.ext_list[0]->extension_header_type, GTPU_EXT_HEADER_PDU_SESSION_CONTAINER);
+  gtpu_extension_header_pdu_session_container* ext =
+      dynamic_cast<gtpu_extension_header_pdu_session_container*>(hdr.ext_list[0].get());
+  ASSERT_EQ(ext->container.size(), 2);
+  ASSERT_EQ(ext->container[0], 0x00);
+  ASSERT_EQ(ext->container[1], 0x01);
+
+  // logger.info("Unpacked GTP-U header: {}", hdr);
+
   byte_buffer repack_buf = tst_vec_no_header.deep_copy();
 
   gtpu_write_header(repack_buf, hdr, gtpu_logger);
   logger.info(repack_buf.begin(), repack_buf.end(), "Repackaged GTP-U packet");
   ASSERT_EQ(repack_buf.length(), orig_vec.length());
   ASSERT_EQ(repack_buf, orig_vec);
-  */
 }
 /// \brief Test correct creation of GTP-U entity
 TEST_F(gtpu_test, entity_creation)
