@@ -201,7 +201,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   ASSERT_EQ(test_payload, extracted_payload);
 }
 
-TEST_F(ue_config_tester, when_f1u_gw_fails_to_create_bearer_then_du_ue_configuration_fails)
+TEST_F(ue_config_tester, when_f1u_gw_fails_to_create_bearer_then_drb_is_included_in_failed_list)
 {
   this->f1u_gw.next_bearer_is_created = false;
 
@@ -215,6 +215,39 @@ TEST_F(ue_config_tester, when_f1u_gw_fails_to_create_bearer_then_du_ue_configura
   ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].lcid, LCID_SRB2);
   ASSERT_NE(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].dl_bearer, nullptr);
   ASSERT_NE(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer, nullptr);
+
+  // Check F1AP received request to update UE configuration with valid params.
+  ASSERT_TRUE(this->f1ap.last_ue_config.has_value());
+  ASSERT_EQ(this->f1ap.last_ue_config->ue_index, test_ue->ue_index);
+  ASSERT_EQ(this->f1ap.last_ue_config->f1c_bearers_to_add.size(), 1);
+  ASSERT_EQ(this->f1ap.last_ue_config->f1c_bearers_to_add[0].srb_id, srb_id_t::srb2);
+
+  // MAC finishes config.
+  ASSERT_FALSE(proc.ready());
+  mac_finishes_ue_config(test_ue->ue_index, true);
+
+  // Check DU manager response to UE Config Request from F1AP with failed DRB.
+  ASSERT_TRUE(proc.ready());
+  f1ap_ue_context_update_response resp = proc.get();
+  ASSERT_TRUE(resp.result);
+  ASSERT_EQ(resp.drbs_setup.size(), 0);
+  ASSERT_EQ(resp.drbs_failed_to_setup.size(), 1);
+  ASSERT_EQ(resp.drbs_failed_to_setup[0], drb_id_t::drb1);
+}
+
+TEST_F(ue_config_tester, when_config_is_invalid_of_drb_to_create_then_drb_is_included_in_failed_list)
+{
+  // Start Procedure.
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+  req.drbs_to_setup[0].uluptnl_info_list.clear();
+  start_procedure(req);
+
+  // Check MAC received request to update UE configuration without the DRB that could not be created.
+  ASSERT_TRUE(this->mac.last_ue_reconf_msg.has_value());
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->ue_index, test_ue->ue_index);
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod.size(), 1);
+  ASSERT_EQ(this->mac.last_ue_reconf_msg->bearers_to_addmod[0].lcid, LCID_SRB2);
 
   // Check F1AP received request to update UE configuration with valid params.
   ASSERT_TRUE(this->f1ap.last_ue_config.has_value());
