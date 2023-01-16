@@ -55,6 +55,12 @@ void ngc_impl::create_ngc_ue(du_index_t                         du_index,
 
 async_task<ng_setup_response> ngc_impl::handle_ng_setup_request(const ng_setup_request& request)
 {
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    request.msg.to_json(js);
+    logger.debug("Containerized NG Setup Request: {}", js.to_string());
+  }
+
   return launch_async<ng_setup_procedure>(request, ngc_notifier, ev_mng, task_sched.get_timer_manager(), logger);
 }
 
