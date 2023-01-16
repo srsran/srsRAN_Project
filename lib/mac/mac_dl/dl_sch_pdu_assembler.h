@@ -85,7 +85,10 @@ public:
   }
 
   /// Number of bytes of the MAC PDU.
-  size_t nof_bytes() const { return byte_offset; }
+  unsigned nof_bytes() const { return byte_offset; }
+
+  /// Remaining space in number of bytes in the PDU.
+  unsigned nof_empty_bytes() const { return pdu.size() - byte_offset; }
 
   /// Gets the held MAC PDU bytes.
   span<uint8_t> get() { return pdu.first(byte_offset); }
@@ -157,18 +160,22 @@ private:
   /// Assemble MAC subPDU with an SDU.
   void assemble_sdu(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu)
   {
-    // Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader and min payload size.
-    static const unsigned MIN_MAC_SDU_SIZE = MIN_MAC_SDU_SUBHEADER_SIZE + 1;
+    // Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader, min payload size and
+    // potential RLC header.
+    static const unsigned RLC_HEADER_SIZE_ESTIM = 2;
+    static const unsigned MIN_MAC_SDU_SIZE =
+        MIN_MAC_SDU_SUBHEADER_SIZE + 1 + (subpdu.lcid.value() != LCID_SRB0 ? RLC_HEADER_SIZE_ESTIM : 0);
 
     // Fetch RLC Bearer.
     mac_sdu_tx_builder* bearer = ue_mng.get_bearer(rnti, subpdu.lcid.to_lcid());
     srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
-    unsigned rem_bytes = get_mac_sdu_required_bytes(subpdu.sched_bytes);
+    unsigned rem_bytes = std::min(get_mac_sdu_required_bytes(subpdu.sched_bytes), ue_pdu.nof_empty_bytes());
     while (rem_bytes >= MIN_MAC_SDU_SIZE) {
       // Fetch MAC Tx SDU.
       byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(get_mac_sdu_payload_size(rem_bytes));
       if (sdu.empty()) {
+        // Potential causes include mismatch in RLC and MAC logical channel buffer state or the RLC Tx window is full.
         // TODO: Handle.
         logger.warning("rnti={:#x}, LCID={}: Failed to encode MAC SDU.", rnti, subpdu.lcid.to_lcid());
         break;

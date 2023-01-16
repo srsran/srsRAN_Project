@@ -35,10 +35,10 @@ inline unsigned get_mac_sdu_required_bytes(unsigned payload)
 
 inline unsigned get_mac_sdu_payload_size(unsigned mac_sdu_size)
 {
-  if (mac_sdu_size >= MAC_SDU_SUBHEADER_LENGTH_THRES + MAX_MAC_SDU_SUBHEADER_SIZE) {
-    return mac_sdu_size - MAX_MAC_SDU_SUBHEADER_SIZE;
+  if (mac_sdu_size <= MAC_SDU_SUBHEADER_LENGTH_THRES - 1 + MIN_MAC_SDU_SUBHEADER_SIZE) {
+    return mac_sdu_size - MIN_MAC_SDU_SUBHEADER_SIZE;
   }
-  return mac_sdu_size - MIN_MAC_SDU_SUBHEADER_SIZE;
+  return mac_sdu_size - MAX_MAC_SDU_SUBHEADER_SIZE;
 }
 
 } // namespace srsgnb

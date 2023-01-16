@@ -162,11 +162,13 @@ public:
 
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override
   {
+    static constexpr unsigned k1 = 4;
+
     if (dl_res.dl_res->ue_grants.empty()) {
       return;
     }
     mac_uci_indication_message uci{};
-    uci.sl_rx = dl_res.slot;
+    uci.sl_rx = dl_res.slot + k1;
     for (const dl_msg_alloc& ue_grant : dl_res.dl_res->ue_grants) {
       mac_uci_pdu& pdu = uci.ucis.emplace_back();
       pdu.type         = srsgnb::mac_uci_pdu::pdu_type::pucch_f0_or_f1;
@@ -303,8 +305,8 @@ void benchmark_one_ue_dl_only(benchmarker& bm)
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::warning);
