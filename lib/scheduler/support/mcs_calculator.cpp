@@ -29,6 +29,11 @@ static const std::array<double, 29> ul_snr_mcs_table = {
 
 sch_mcs_index srsgnb::map_snr_to_mcs_ul(double snr)
 {
+  // The objective of this function is to find the maximum MCS that can be used for a given SNR. A possible approach to
+  // this problem would be to get the iterator to the biggest element of the SNR vector not greater than the target SNR.
+  // Instead, we do the following: (i) we rely on the built-in function std::upper_bound(), which returns an iterator to
+  // the smallest element greater than the target SNR; (ii) we need to subtract 1 from the iterator returned by
+  // std::upper_bound(), to obtain wanted MCS.
   const unsigned MAX_MCS = 28;
   const unsigned MIN_MCS = 0;
 
@@ -36,30 +41,15 @@ sch_mcs_index srsgnb::map_snr_to_mcs_ul(double snr)
   if (snr <= ul_snr_mcs_table.front()) {
     return MIN_MCS;
   }
+  // NOTE: The sign > is not sufficient, as, with an input snr == ul_snr_mcs_table.back(), the std::upper_bound()
+  // below would return ul_snr_mcs_table.end(). To prevent this, we need the sign >= in the comparison.
   if (snr >= ul_snr_mcs_table.back()) {
     return MAX_MCS;
   }
 
-  // Binary search over the SNR to MCS table. The objective of this search is to find the maximum MCS that can be used
-  // for a given SNR. By means of bisection, the search looks for the SNR interval [SNR_n, SNR_{n+1}) that contains the
-  // input SNR, where SNR_n are the SNR values of the \ref ul_snr_mcs_table; the MCS that gets returned is the one
-  // corresponding to SNR_n.
-  size_t   lb_idx{0}, ub_idx{ul_snr_mcs_table.size() - 1};
-  size_t   mid_point;
-  unsigned mcs = static_cast<unsigned>(lb_idx);
-  // Keep looking until the upper_bound index and lower_bound index
-  while (ub_idx - lb_idx > 1) {
-    mid_point = lb_idx + (ub_idx - lb_idx) / 2;
-    // Look in the first half (left hand-side half) of the vector.
-    if (snr < ul_snr_mcs_table[mid_point]) {
-      ub_idx = mid_point;
-    }
-    // Look in the second half.
-    else {
-      lb_idx = mid_point;
-    }
-    // Save the MCS corresponding to the lower bound of the SNR interval.
-    mcs = lb_idx;
-  }
-  return mcs;
+  auto it_ub = std::upper_bound(ul_snr_mcs_table.begin(), ul_snr_mcs_table.end(), snr);
+
+  // NOTE: By design, it_ub > ul_snr_mcs_table.begin(). All SNR values such it_ub == ul_snr_mcs_table.begin() are
+  // handled above, in the "if (snr <= ul_snr_mcs_table.front())" statement above.
+  return it_ub - ul_snr_mcs_table.begin() - 1;
 }

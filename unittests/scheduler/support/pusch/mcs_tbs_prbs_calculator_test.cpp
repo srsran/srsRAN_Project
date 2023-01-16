@@ -9,7 +9,7 @@
  */
 
 #include "lib/scheduler/support/dmrs_helpers.h"
-#include "lib/scheduler/support/pusch/mcs_tbs_calculator.h"
+#include "lib/scheduler/support/pusch/mcs_tbs_prbs_calculator.h"
 #include "lib/scheduler/support/tbs_calculator.h"
 #include "lib/scheduler/ue_scheduling/ue_sch_pdu_builder.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
@@ -123,16 +123,16 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
 
 // Computes the MCS, TBS and required number of PRBs by a brute-force-like approach; this function will be used as a
 // benchmark for the results of the compute_ul_mcs_tbs() function under test.
-static optional<pusch_mcs_tbs_params> linear_search_prbs_tbs(const pusch_config_params&   pusch_cfg,
-                                                             const ue_cell_configuration& ue_cell_cfg,
-                                                             unsigned                     payload_size_bytes,
-                                                             sch_mcs_index                max_mcs,
-                                                             unsigned                     max_nof_prbs)
+static optional<pusch_mcs_tbs_prbs> linear_search_prbs_tbs(const pusch_config_params&   pusch_cfg,
+                                                           const ue_cell_configuration& ue_cell_cfg,
+                                                           unsigned                     payload_size_bytes,
+                                                           sch_mcs_index                max_mcs,
+                                                           unsigned                     max_nof_prbs)
 {
-  const double                   max_supported_code_rate = 0.95;
-  const unsigned                 dmrs_prbs               = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
-  unsigned                       nof_symbols             = pusch_cfg.symbols.length();
-  optional<pusch_mcs_tbs_params> output;
+  const double                 max_supported_code_rate = 0.95;
+  const unsigned               dmrs_prbs               = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  unsigned                     nof_symbols             = pusch_cfg.symbols.length();
+  optional<pusch_mcs_tbs_prbs> output;
 
   // > Find number of PRBs, first.
   unsigned tbs{0}, n_prbs{0};
@@ -158,7 +158,7 @@ static optional<pusch_mcs_tbs_params> linear_search_prbs_tbs(const pusch_config_
 
   // > Return TBS, MCS and PRBs if the effective code rate is not above the threshold.
   if (effective_code_rate <= max_supported_code_rate) {
-    return output.emplace(pusch_mcs_tbs_params{.mcs = max_mcs, .tbs = tbs, .n_prbs = n_prbs});
+    return output.emplace(pusch_mcs_tbs_prbs{.mcs = max_mcs, .tbs = tbs, .n_prbs = n_prbs});
   }
 
   // > Try with MCS = max_MCS, max_MCS - 1, max_MCS -2, ..., 0 until the effective code rate is above the
@@ -179,7 +179,7 @@ static optional<pusch_mcs_tbs_params> linear_search_prbs_tbs(const pusch_config_
     // Return TBS, MCS and PRBs if the effective code rate is not above the threshold.
     ulsch_cfg = build_ulsch_info(pusch_cfg, ue_cell_cfg, tbs, mcs_info, n_prbs);
     if (get_ulsch_information(ulsch_cfg).get_effective_code_rate() <= max_supported_code_rate) {
-      return output.emplace(pusch_mcs_tbs_params{.mcs = mcs, .tbs = tbs, .n_prbs = n_prbs});
+      return output.emplace(pusch_mcs_tbs_prbs{.mcs = mcs, .tbs = tbs, .n_prbs = n_prbs});
     }
   }
 
@@ -193,10 +193,10 @@ struct mcs_test_entry {
   unsigned max_nof_prbs;
 };
 
-class mcs_tbs_calculator_rnd_test_bench : public ::testing::TestWithParam<mcs_test_entry>
+class mcs_tbs_prbs_calculator_rnd_test_bench : public ::testing::TestWithParam<mcs_test_entry>
 {
 public:
-  mcs_tbs_calculator_rnd_test_bench() :
+  mcs_tbs_prbs_calculator_rnd_test_bench() :
     cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
@@ -222,25 +222,25 @@ protected:
   const unsigned max_mcs{28};
 };
 
-TEST_F(mcs_tbs_calculator_rnd_test_bench, compare_with_lin_search)
+TEST_F(mcs_tbs_prbs_calculator_rnd_test_bench, compare_with_lin_search)
 {
   const unsigned num_of_tests = 10000;
   for (unsigned n = 0; n != num_of_tests; ++n) {
     mcs_test_entry test_entry = make_random_test_entry();
 
     // Run test function.
-    optional<pusch_mcs_tbs_params> test = compute_ul_mcs_tbs(pusch_cfg,
-                                                             ue_cell_cfg,
-                                                             test_entry.payload_size_bytes,
-                                                             sch_mcs_index(test_entry.max_mcs),
-                                                             test_entry.max_nof_prbs);
+    optional<pusch_mcs_tbs_prbs> test = compute_ul_mcs_tbs(pusch_cfg,
+                                                           ue_cell_cfg,
+                                                           test_entry.payload_size_bytes,
+                                                           sch_mcs_index(test_entry.max_mcs),
+                                                           test_entry.max_nof_prbs);
 
     // Run benchmark function.
-    optional<pusch_mcs_tbs_params> benchmark = linear_search_prbs_tbs(pusch_cfg,
-                                                                      ue_cell_cfg,
-                                                                      test_entry.payload_size_bytes,
-                                                                      sch_mcs_index(test_entry.max_mcs),
-                                                                      test_entry.max_nof_prbs);
+    optional<pusch_mcs_tbs_prbs> benchmark = linear_search_prbs_tbs(pusch_cfg,
+                                                                    ue_cell_cfg,
+                                                                    test_entry.payload_size_bytes,
+                                                                    sch_mcs_index(test_entry.max_mcs),
+                                                                    test_entry.max_nof_prbs);
 
     // Compare expected output with function under test.
     ASSERT_EQ(benchmark.has_value(), test.has_value());
