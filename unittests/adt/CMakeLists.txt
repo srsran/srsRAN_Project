@@ -21,7 +21,7 @@ target_link_libraries(byte_buffer_test srslog gtest gtest_main)
 gtest_discover_tests(byte_buffer_test)
 
 add_executable(circular_buffer_test circular_buffer_test.cpp)
-target_link_libraries(circular_buffer_test srslog)
+target_link_libraries(circular_buffer_test srslog gtest gtest_main)
 add_test(circular_buffer_test circular_buffer_test)
 
 add_executable(circular_map_test circular_map_test.cpp)
