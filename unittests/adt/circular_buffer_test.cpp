@@ -102,6 +102,32 @@ TEST(circular_buffer_test, static_size)
   ASSERT_EQ(C::object_count(), 0);
 }
 
+TEST(dyn_circular_buffer_test, when_force_power2_flag_is_set_then_buffer_size_is_automatically_set_to_closes_power2)
+{
+  unsigned                       buffer_size = test_rgen::uniform_int<unsigned>(1, 1024);
+  dyn_circular_buffer<int, true> buf(buffer_size);
+  ASSERT_EQ(buf.size(), 0);
+  ASSERT_GE(buf.max_size(), buffer_size);
+  ASSERT_EQ(buf.max_size() & (buf.max_size() - 1), 0);
+}
+
+TEST(dyn_circular_buffer_test,
+     when_dtor_of_buffer_of_moveonly_objects_is_called_then_buffer_elements_destructors_are_called)
+{
+  unsigned buffer_size = test_rgen::uniform_int<unsigned>(1, 20);
+  unsigned nof_objs    = test_rgen::uniform_int<unsigned>(1, buffer_size);
+  using C              = moveonly_test_object;
+  ASSERT_EQ(C::object_count(), 0);
+  {
+    dyn_circular_buffer<C> circ_buffer(buffer_size);
+    for (unsigned i = 0; i != nof_objs; ++i) {
+      circ_buffer.push(C{test_rgen::uniform_int<int>()});
+    }
+    ASSERT_EQ(C::object_count(), nof_objs);
+  }
+  ASSERT_EQ(C::object_count(), 0);
+}
+
 TEST(circular_buffer_test, dynamic_size)
 {
   {
