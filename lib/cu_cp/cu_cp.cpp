@@ -26,12 +26,9 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
-  cfg(config_), main_ctrl_loop(128), ue_task_sched(timers), du_task_sched(timers), cu_up_task_sched(timers)
+  cfg(config_), cu_cp_task_sched(timers), ue_task_sched(timers), du_task_sched(timers), cu_up_task_sched(timers)
 {
   assert_cu_cp_configuration_valid(cfg);
-
-  // Create layers
-  ngc_entity = create_ngc(cfg.ngc_config, ngc_task_sched, ue_mng, *cfg.ngc_notifier);
 
   // connect event notifiers to layers
   f1c_ev_notifier.connect_cu_cp(*this);
@@ -41,6 +38,9 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   ngc_task_sched.connect_cu_cp(ue_task_sched);
   du_processor_task_sched.connect_cu_cp(ue_task_sched);
   cu_up_processor_task_sched.connect_cu_cp(cu_up_task_sched);
+
+  // Create layers
+  ngc_entity = create_ngc(cfg.ngc_config, ngc_task_sched, ue_mng, *cfg.ngc_notifier);
 }
 
 cu_cp::~cu_cp()
@@ -51,7 +51,7 @@ cu_cp::~cu_cp()
 void cu_cp::start()
 {
   // start NG setup procedure.
-  main_ctrl_loop.schedule<initial_cu_cp_setup_routine>(cfg.ngc_config, *ngc_entity, *this);
+  cu_cp_task_sched.schedule_async_task(launch_async<initial_cu_cp_setup_routine>(cfg.ngc_config, *ngc_entity, *this));
 
   // start E1 setup procedure(s)
   for (auto& cu_up : cu_up_db) {

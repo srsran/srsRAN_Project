@@ -17,6 +17,7 @@
 #include "adapters/rrc_ue_adapters.h"
 #include "cu_up_processor_impl.h"
 #include "du_processor_impl.h"
+#include "task_schedulers/cu_cp_task_scheduler.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
 #include "task_schedulers/du_task_scheduler.h"
 #include "task_schedulers/ue_task_scheduler.h"
@@ -113,9 +114,6 @@ private:
   cu_cp_configuration cfg;
   timer_manager       timers;
 
-  // Handler for DU tasks.
-  async_task_sequencer main_ctrl_loop;
-
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
 
@@ -126,6 +124,9 @@ private:
   slotted_array<std::unique_ptr<cu_up_processor_interface>, MAX_NOF_CU_UPS> cu_up_db;
 
   ue_manager ue_mng;
+
+  // CU-CP task scheduler
+  cu_cp_task_scheduler cu_cp_task_sched;
 
   // UE task scheduler
   ue_task_scheduler ue_task_sched;
