@@ -109,9 +109,9 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-ng_setup_request_message generate_ng_setup_request_message(ngc_configuration ngc_cfg)
+ng_setup_request generate_ng_setup_request(ngc_configuration ngc_cfg)
 {
-  ng_setup_request_message request_msg = {};
+  ng_setup_request request_msg = {};
   fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn, ngc_cfg.tac);
   return request_msg;
 }
@@ -122,10 +122,10 @@ TEST_F(ngap_integration_test, when_ng_setup_response_received_then_amf_connected
   // Action 1: Launch NG setup procedure
   ngc_configuration ngc_cfg = srsgnb::config_helpers::make_default_ngc_config();
 
-  ng_setup_request_message request_msg = generate_ng_setup_request_message(ngc_cfg);
+  ng_setup_request request_msg = generate_ng_setup_request(ngc_cfg);
   test_logger.info("Launching NG setup procedure...");
-  async_task<ng_setup_response_message>         t = ngc->handle_ng_setup_request(request_msg);
-  lazy_task_launcher<ng_setup_response_message> t_launcher(t);
+  async_task<ng_setup_response>         t = ngc->handle_ng_setup_request(request_msg);
+  lazy_task_launcher<ng_setup_response> t_launcher(t);
 
   // Status: Procedure not yet ready.
   ASSERT_FALSE(t.ready());

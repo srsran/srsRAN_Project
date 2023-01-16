@@ -12,7 +12,7 @@ target_link_libraries(cu_cp_test_helpers srsgnb_cu_cp srsgnb_support srslog f1ap
 target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
 
 add_executable(cu_cp_test cu_cp_test.cpp)
-target_link_libraries(cu_cp_test cu_cp_test_helpers f1_cu_test_helpers srsgnb_cu_cp srsgnb_support srslog f1ap_asn1 ngap_asn1 gtest gtest_main)
+target_link_libraries(cu_cp_test cu_cp_test_helpers f1_cu_test_helpers ngap_test_helpers srsgnb_cu_cp srsgnb_support srslog f1ap_asn1 ngap_asn1 gtest gtest_main)
 target_include_directories(cu_cp_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(cu_cp_test)
 

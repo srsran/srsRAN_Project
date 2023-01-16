@@ -40,10 +40,10 @@ void initial_cu_cp_setup_routine::operator()(coro_context<async_task<void>>& ctx
   CORO_RETURN();
 }
 
-async_task<ng_setup_response_message> initial_cu_cp_setup_routine::start_ng_setup_request()
+async_task<ng_setup_response> initial_cu_cp_setup_routine::start_ng_setup_request()
 {
   // Prepare request to send to ng.
-  ng_setup_request_message request_msg = {};
+  ng_setup_request request_msg = {};
 
   fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn, ngc_cfg.tac);
 

@@ -44,7 +44,7 @@ public:
                      ngc_du_processor_control_notifier& du_processor_ctrl_notifier) override;
 
   // ngc connection manager functions
-  async_task<ng_setup_response_message> handle_ng_setup_request(const ng_setup_request_message& request) override;
+  async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) override;
 
   void handle_initial_ue_message(const ngap_initial_ue_message& msg) override;
 

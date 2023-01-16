@@ -10,7 +10,7 @@
 
 #include "lib/ngap/ngap_asn1_utils.h"
 #include "lib/ngap/ngc_asn1_packer.h"
-#include "ngc_test_helpers.h"
+#include "ngap_test_messages.h"
 #include "test_helpers.h"
 #include "unittests/gateways/test_helpers.h"
 #include <gtest/gtest.h>
@@ -61,7 +61,7 @@ TEST_F(ngc_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
   ngc_message ngc_msg = {};
   ngc_msg.pdu.set_init_msg();
   ngc_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
-  ngc_msg.pdu.init_msg().value.ng_setup_request() = generate_ng_setup_request_message().msg;
+  ngc_msg.pdu.init_msg().value.ng_setup_request() = generate_ng_setup_request().msg;
 
   // Pack message and forward to gateway
   packer->handle_message(ngc_msg);
@@ -80,7 +80,7 @@ TEST_F(ngc_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
 TEST_F(ngc_asn1_packer_test, when_packing_successful_then_unpacking_successful)
 {
   // Action 1: Create valid ngc message
-  srs_cu_cp::ngc_message ng_setup_response = generate_ng_setup_response_message();
+  srs_cu_cp::ngc_message ng_setup_response = generate_ng_setup_response();
 
   // Action 2: Pack message and forward to gateway
   packer->handle_message(ng_setup_response);
@@ -96,7 +96,7 @@ TEST_F(ngc_asn1_packer_test, when_packing_successful_then_unpacking_successful)
 TEST_F(ngc_asn1_packer_test, when_packing_unsuccessful_then_message_not_forwarded)
 {
   // Action 1: Generate, pack and forward valid message to bring gw into known state
-  srs_cu_cp::ngc_message ng_setup_response = generate_ng_setup_response_message();
+  srs_cu_cp::ngc_message ng_setup_response = generate_ng_setup_response();
   packer->handle_message(ng_setup_response);
   // store size of valid pdu
   int valid_pdu_size = gw->last_pdu.length();

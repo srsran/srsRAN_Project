@@ -44,8 +44,7 @@ private:
 class dummy_ngc_amf_notifier : public ngc_message_notifier
 {
 public:
-  dummy_ngc_amf_notifier(ngc_message_handler* handler_) :
-    logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
+  dummy_ngc_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
   void attach_handler(ngc_message_handler* handler_) { handler = handler_; };
 

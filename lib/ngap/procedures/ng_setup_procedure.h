@@ -22,13 +22,13 @@ namespace srs_cu_cp {
 class ng_setup_procedure
 {
 public:
-  ng_setup_procedure(const ng_setup_request_message& request_,
-                     ngc_message_notifier&           amf_notif_,
-                     ngap_transaction_manager&       ev_mng_,
-                     timer_manager&                  timers,
-                     srslog::basic_logger&           logger_);
+  ng_setup_procedure(const ng_setup_request&   request_,
+                     ngc_message_notifier&     amf_notif_,
+                     ngap_transaction_manager& ev_mng_,
+                     timer_manager&            timers,
+                     srslog::basic_logger&     logger_);
 
-  void operator()(coro_context<async_task<ng_setup_response_message>>& ctx);
+  void operator()(coro_context<async_task<ng_setup_response>>& ctx);
 
 private:
   /// Send NG SETUP REQUEST to AMF.
@@ -38,12 +38,12 @@ private:
   bool retry_required();
 
   /// Creates procedure result to send back to procedure caller.
-  ng_setup_response_message create_ng_setup_result();
+  ng_setup_response create_ng_setup_result();
 
-  const ng_setup_request_message request;
-  ngc_message_notifier&          amf_notifier;
-  ngap_transaction_manager&      ev_mng;
-  srslog::basic_logger&          logger;
+  const ng_setup_request    request;
+  ngc_message_notifier&     amf_notifier;
+  ngap_transaction_manager& ev_mng;
+  srslog::basic_logger&     logger;
 
   unique_timer ng_setup_wait_timer;
 

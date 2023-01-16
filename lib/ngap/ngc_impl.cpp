@@ -53,7 +53,7 @@ void ngc_impl::create_ngc_ue(du_index_t                         du_index,
                ue_index);
 }
 
-async_task<ng_setup_response_message> ngc_impl::handle_ng_setup_request(const ng_setup_request_message& request)
+async_task<ng_setup_response> ngc_impl::handle_ng_setup_request(const ng_setup_request& request)
 {
   return launch_async<ng_setup_procedure>(request, ngc_notifier, ev_mng, task_sched.get_timer_manager(), logger);
 }

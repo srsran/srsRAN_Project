@@ -52,12 +52,12 @@ public:
   virtual void on_new_message(const ngc_message& msg) = 0;
 };
 
-struct ng_setup_request_message {
+struct ng_setup_request {
   asn1::ngap::ng_setup_request_s msg;
   unsigned                       max_setup_retries = 5;
 };
 
-struct ng_setup_response_message {
+struct ng_setup_response {
   asn1::ngap::ng_setup_resp_s msg;
   bool                        success;
 };
@@ -70,11 +70,11 @@ public:
 
   /// \brief Initiates the NG Setup procedure.
   /// \param[in] request The NGSetupRequest message to transmit.
-  /// \return Returns a ng_setup_response_message struct with the success member set to 'true' in case of a
+  /// \return Returns a ng_setup_response struct with the success member set to 'true' in case of a
   /// successful outcome, 'false' otherwise.
   /// \remark The CU transmits the NGSetupRequest as per TS 38.413 section 8.7.1
   /// and awaits the response. If a NGSetupFailure is received the NGC will handle the failure.
-  virtual async_task<ng_setup_response_message> handle_ng_setup_request(const ng_setup_request_message& request) = 0;
+  virtual async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) = 0;
 };
 
 struct ngc_ue_context {

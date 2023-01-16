@@ -75,8 +75,7 @@ protected:
     // create message handler for CU and DU to relay messages back and forth
     dummy_cu_cp_f1c_pdu_notifier      cu_msg_handler(nullptr, nullptr);
     dummy_f1c_pdu_notifier            du_msg_handler(nullptr);
-    srs_cu_cp::dummy_ngc_amf_notifier ngc_amf_notifier(nullptr);
-
+    srs_cu_cp::dummy_ngc_amf_notifier ngc_amf_notifier;
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
     cu_cfg.cu_executor  = task_executor.get();

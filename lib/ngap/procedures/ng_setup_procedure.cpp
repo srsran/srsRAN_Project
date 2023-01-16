@@ -14,11 +14,11 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
-ng_setup_procedure::ng_setup_procedure(const ng_setup_request_message& request_,
-                                       ngc_message_notifier&           amf_notif_,
-                                       ngap_transaction_manager&       ev_mng_,
-                                       timer_manager&                  timers,
-                                       srslog::basic_logger&           logger_) :
+ng_setup_procedure::ng_setup_procedure(const ng_setup_request&   request_,
+                                       ngc_message_notifier&     amf_notif_,
+                                       ngap_transaction_manager& ev_mng_,
+                                       timer_manager&            timers,
+                                       srslog::basic_logger&     logger_) :
   request(request_),
   amf_notifier(amf_notif_),
   ev_mng(ev_mng_),
@@ -27,7 +27,7 @@ ng_setup_procedure::ng_setup_procedure(const ng_setup_request_message& request_,
 {
 }
 
-void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response_message>>& ctx)
+void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -95,9 +95,9 @@ bool ng_setup_procedure::retry_required()
   return true;
 }
 
-ng_setup_response_message ng_setup_procedure::create_ng_setup_result()
+ng_setup_response ng_setup_procedure::create_ng_setup_result()
 {
-  ng_setup_response_message res{};
+  ng_setup_response res{};
 
   if (transaction_sink.successful()) {
     logger.debug("Received NGC PDU with successful outcome.");

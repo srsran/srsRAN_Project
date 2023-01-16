@@ -13,7 +13,7 @@
 #include "unittests/e1/common/test_helpers.h"
 #include "unittests/f1ap/common/test_helpers.h"
 #include "unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
-#include "unittests/ngap/ngc_test_helpers.h"
+#include "unittests/ngap/ngap_test_messages.h"
 #include "unittests/ngap/test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include <gtest/gtest.h>
@@ -37,7 +37,7 @@ protected:
 
     f1c_pdu_notifier = std::make_unique<dummy_f1c_pdu_notifier>();
     e1_pdu_notifier  = std::make_unique<dummy_e1_pdu_notifier>();
-    ngc_amf_notifier = std::make_unique<dummy_ngc_amf_notifier>(nullptr);
+    ngc_amf_notifier = std::make_unique<dummy_ngc_amf_notifier>();
 
     // create CU-CP config
     cu_cp_configuration cfg;
@@ -166,7 +166,7 @@ TEST_F(cu_cp_test, when_max_nof_cu_ups_connected_then_reject_new_connection)
 TEST_F(cu_cp_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Connect AMF by injecting a ng_setup_response
-  ngc_message ngc_msg = generate_ng_setup_response_message();
+  ngc_message ngc_msg = generate_ng_setup_response();
   cu_cp_obj->get_ngc_message_handler().handle_message(ngc_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
@@ -175,7 +175,7 @@ TEST_F(cu_cp_test, when_ng_setup_response_received_then_amf_connected)
 TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 {
   // Connect AMF by injecting a ng_setup_response
-  ngc_message ngc_msg = generate_ng_setup_response_message();
+  ngc_message ngc_msg = generate_ng_setup_response();
   cu_cp_obj->get_ngc_message_handler().handle_message(ngc_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
@@ -238,7 +238,7 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
 TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 {
   // Connect AMF by injecting a ng_setup_response
-  ngc_message ngc_msg = generate_ng_setup_response_message();
+  ngc_message ngc_msg = generate_ng_setup_response();
   cu_cp_obj->get_ngc_message_handler().handle_message(ngc_msg);
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());

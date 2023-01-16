@@ -6,62 +6,19 @@
 # the distribution.
 #
 
-add_executable(ng_setup_procedure_test ng_setup_procedure_test.cpp)
-target_link_libraries(ng_setup_procedure_test
-                      srsgnb_ngap
-                      srsgnb_support
-                      srslog
-                      ngap_asn1
-                      srsgnb_ran
-                      gtest
-                      gtest_main)
-target_include_directories(ng_setup_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
-gtest_discover_tests(ng_setup_procedure_test)
+add_library(ngap_test_helpers ngap_test_helpers.cpp ngap_test_messages.cpp)
+target_include_directories(ngap_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ngap_test_helpers srsgnb_support ngap_asn1 srslog)
 
-add_executable(ngc_asn1_packer_test ngc_asn1_packer_test.cpp)
-target_link_libraries(ngc_asn1_packer_test
-                      srsgnb_ngap
-                      srsgnb_support
-                      srslog
-                      ngap_asn1
-                      srsgnb_ran
-                      gtest
-                      gtest_main)
-target_include_directories(ngc_asn1_packer_test PRIVATE ${CMAKE_SOURCE_DIR})
-gtest_discover_tests(ngc_asn1_packer_test)
+set(SOURCES
+        ngap_asn1_packer_test.cpp
+        ng_setup_procedure_test.cpp
+        ngap_nas_message_routine_test.cpp
+        ngap_ue_context_management_routine_test.cpp
+        ngap_ue_context_management_routine_test.cpp
+        ngap_pdu_session_resource_setup_routine_test.cpp)
 
-add_executable(ng_nas_messages_procedure_test ng_nas_messages_procedure_test.cpp)
-target_link_libraries(ng_nas_messages_procedure_test
-                      srsgnb_ngap
-                      srsgnb_support
-                      srslog
-                      ngap_asn1
-                      srsgnb_ran
-                      gtest
-                      gtest_main)
-target_include_directories(ng_nas_messages_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
-gtest_discover_tests(ng_nas_messages_procedure_test)
-
-add_executable(ng_ue_context_management_procedure_test ng_ue_context_management_procedure_test.cpp)
-target_link_libraries(ng_ue_context_management_procedure_test
-                      srsgnb_ngap
-                      srsgnb_support
-                      srslog
-                      ngap_asn1
-                      srsgnb_ran
-                      gtest
-                      gtest_main)
-target_include_directories(ng_ue_context_management_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
-gtest_discover_tests(ng_ue_context_management_procedure_test)
-
-add_executable(ng_pdu_session_resource_setup_procedure_test ng_pdu_session_resource_setup_procedure_test.cpp)
-target_link_libraries(ng_pdu_session_resource_setup_procedure_test
-                      srsgnb_ngap
-                      srsgnb_support
-                      srslog
-                      ngap_asn1
-                      srsgnb_ran
-                      gtest
-                      gtest_main)
-target_include_directories(ng_pdu_session_resource_setup_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
-gtest_discover_tests(ng_pdu_session_resource_setup_procedure_test)
+add_executable(ngap_test ${SOURCES})
+target_include_directories(ngap_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ngap_test ngap_test_helpers srsgnb_ngap srsgnb_support ngap_asn1 srsgnb_ran srslog gtest gtest_main)
+gtest_discover_tests(ngap_test PROPERTIES "LABELS;ngap")
