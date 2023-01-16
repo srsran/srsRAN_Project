@@ -129,9 +129,9 @@ public:
     re_pattern_list reserved;
     /// \brief Ratio of PDSCH DM-RS EPRE to SSS EPRE in decibels.
     ///
-    /// Parameter \f$\beta _\mathrm{DMRS}\f$ in TS38.214 Section 6.2.2. It is converted to parameter \f$\beta _{PUSCH}
-    /// ^{DMRS}\f$ in TS38.211 Section 7.4.1.1.2 as \f$\beta _\mathrm{PUSCH} ^\mathrm{DMRS}=10^{-\frac {\beta
-    /// _\mathrm{DMRS}}{20} }\f$.
+    /// Parameter \f$\beta _\textup{DMRS}\f$ in TS38.214 Section 6.2.2. It is converted to parameter \f$\beta _{PUSCH}
+    /// ^{DMRS}\f$ in TS38.211 Section 7.4.1.1.2 as \f$\beta _\textup{PUSCH} ^\textup{DMRS}=10^{-\frac {\beta
+    /// _\textup{DMRS}}{20} }\f$.
     float ratio_pdsch_dmrs_to_sss_dB;
     /// Ratio of PDSCH data EPRE to SSS EPRE in decibels.
     float ratio_pdsch_data_to_sss_dB;

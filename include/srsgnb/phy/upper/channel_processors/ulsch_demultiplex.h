@@ -37,7 +37,7 @@ public:
     unsigned start_symbol_index;
     /// Number of allocated OFDM symbols.
     unsigned nof_symbols;
-    /// Number of reserved bits for HARQ-ACK. Parameter \f$G^\mathrm{HARQ-ACK}_\mathrm{rvd}\f$.
+    /// Number of reserved bits for HARQ-ACK. Parameter \f$G^\textup{HARQ-ACK}_\textup{rvd}\f$.
     unsigned nof_harq_ack_rvd;
     /// Transmission DM-RS Type.
     dmrs_type dmrs;
