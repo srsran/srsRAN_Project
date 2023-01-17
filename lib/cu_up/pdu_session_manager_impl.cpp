@@ -119,13 +119,14 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     new_drb->pdcp_bearer = srsgnb::create_pdcp_entity(pdcp_msg);
 
     // Create  F1-U bearer
-    uint32_t    ul_f1u_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
+    uint32_t    f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
     f1u_bearer* f1u_bearer =
-        f1u_gw.create_cu_bearer(ul_f1u_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
+        f1u_gw.create_cu_bearer(f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
+    new_drb->f1u_ul_teid = f1u_ul_teid;
 
     up_transport_layer_info f1u_ul_tunnel_addr;
     f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
-    f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(ul_f1u_teid);
+    f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(f1u_ul_teid);
     up_transport_layer_info_to_asn1(drb_result.gtp_tunnel, f1u_ul_tunnel_addr);
 
     srsgnb_assert(drb.qos_flow_info_to_be_setup.size() <= 1,
@@ -180,6 +181,7 @@ pdu_session_modification_result
 pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session)
 {
   pdu_session_modification_result pdu_session_result;
+  auto&                           pdu_session = pdu_sessions[session.pdu_session_id];
 
   // > DRB To Setup List
   for (const auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
@@ -206,8 +208,23 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
     drb_result.cause.set_radio_network();
     drb_result.drb_id = drb_to_mod.drb_id;
 
-    uint32_t ul_f1u_teid = allocate_local_f1u_teid(session.pdu_session_id, drb_to_mod.drb_id);
-    f1u_gw.attach_dl_teid(ul_f1u_teid, drb_to_mod.dl_up_params[0].up_tnl_info.gtp_tunnel().gtp_teid.to_number());
+    // find DRB in PDU session
+    auto drb_iter = pdu_session->drbs.find(drb_to_mod.drb_id);
+    if (drb_iter == pdu_session->drbs.end()) {
+      logger.warning(
+          "Cannot modify DRB: drb_id={} not found in pdu_session_id={}", drb_to_mod.drb_id, session.pdu_session_id);
+      pdu_session_result.drb_setup_results.push_back(drb_result);
+      continue;
+    }
+    srsgnb_assert(drb_to_mod.drb_id == drb_iter->second->drb_id,
+                  "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
+                  drb_to_mod.drb_id,
+                  session.pdu_session_id,
+                  drb_iter->second->drb_id);
+
+    // apply modification
+    f1u_gw.attach_dl_teid(drb_iter->second->f1u_ul_teid,
+                          drb_to_mod.dl_up_params[0].up_tnl_info.gtp_tunnel().gtp_teid.to_number());
     logger.info("Modified DRB. drb_id={}, pdu_session_id={}.", drb_to_mod.drb_id, session.pdu_session_id);
 
     // Add result
@@ -216,7 +233,6 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
   }
 
   // > DRB To Remove List
-  auto& pdu_session = pdu_sessions[session.pdu_session_id];
   for (const auto& drb_to_rem : session.drb_to_rem_list_ng_ran) {
     // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
     // disconnect SDAP->PDCP direct connection
@@ -227,18 +243,18 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
     if (drb_iter == pdu_session->drbs.end()) {
       logger.warning(
           "Cannot remove DRB: drb_id={} not found in pdu_session_id={}", drb_to_rem.drb_id, session.pdu_session_id);
-    } else {
-      srsgnb_assert(drb_to_rem.drb_id == drb_iter->second->drb_id,
-                    "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
-                    drb_to_rem.drb_id,
-                    session.pdu_session_id,
-                    drb_iter->second->drb_id);
-      pdu_session->drbs.erase(drb_iter);
+      continue;
     }
+    srsgnb_assert(drb_to_rem.drb_id == drb_iter->second->drb_id,
+                  "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
+                  drb_to_rem.drb_id,
+                  session.pdu_session_id,
+                  drb_iter->second->drb_id);
+    // remove F1-U bearer from F1-U gateway
+    f1u_gw.remove_cu_bearer(drb_iter->second->f1u_ul_teid);
 
-    // remove F1-U bearer
-    uint32_t ul_f1u_teid = allocate_local_f1u_teid(session.pdu_session_id, drb_to_rem.drb_id);
-    f1u_gw.remove_cu_bearer(ul_f1u_teid);
+    // remove DRB
+    pdu_session->drbs.erase(drb_iter);
 
     logger.info("Removed DRB. drb_id={}, pdu_session_id={}.", drb_to_rem.drb_id, session.pdu_session_id);
   }

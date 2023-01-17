@@ -24,7 +24,8 @@ namespace srs_cu_up {
 struct drb_context {
   drb_context(const asn1::e1ap::drb_to_setup_item_ng_ran_s& drb) : drb_id(drb.drb_id){};
 
-  int16_t drb_id;
+  int16_t  drb_id;
+  uint32_t f1u_ul_teid;
 
   std::unique_ptr<pdcp_entity> pdcp_bearer;
 

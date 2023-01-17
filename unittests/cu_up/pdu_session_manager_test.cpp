@@ -169,8 +169,6 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
   ASSERT_FALSE(f1u_gw->removed_ul_teid_list.empty());
-  f1u_gw->removed_ul_teid_list.pop_front(); // pop ul_teid from invalid bearer (this will be skipped in future)
-  ASSERT_FALSE(f1u_gw->removed_ul_teid_list.empty());
   ASSERT_EQ(f1u_gw->removed_ul_teid_list.front(), ul_teid);
   f1u_gw->removed_ul_teid_list.pop_front();
   ASSERT_TRUE(f1u_gw->removed_ul_teid_list.empty());
