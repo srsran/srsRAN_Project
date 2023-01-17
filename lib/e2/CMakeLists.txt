@@ -6,8 +6,12 @@
 # the distribution.
 #
 set(SOURCES
+    procedures/e2_setup_procedure.cpp
     common/e2ap_asn1_packer.cpp
-)
+    common/e2_factory.cpp
+    common/e2_impl.cpp
+ )
+
 
 
 add_library(srsgnb_e2 STATIC ${SOURCES})

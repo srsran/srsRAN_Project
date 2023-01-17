@@ -12,11 +12,66 @@
 
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include "srsgnb/asn1/e2ap/e2ap.h"
+#include "srsgnb/e2/common/e2.h"
+#include "srsgnb/e2/common/e2_factory.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {
+
+/// Reusable notifier class that a) stores the received PDU for test inspection and b)
+/// calls the registered PDU handler (if any). The handler can be added upon construction
+/// or later via the attach_handler() method.
+class dummy_e2_pdu_notifier : public e2_message_notifier
+{
+public:
+  dummy_e2_pdu_notifier(e2_message_handler* handler_) : logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
+
+  void attach_handler(e2_message_handler* handler_) { handler = handler_; };
+  void on_new_message(const e2_message& msg) override
+  {
+    logger.info("Received a E2AP PDU of type {}", msg.pdu.type().to_string());
+
+    last_e2_msg = msg; // store msg
+
+    if (handler != nullptr) {
+      logger.info("Forwarding E2AP PDU");
+      handler->handle_message(msg);
+    }
+  }
+  e2_message last_e2_msg;
+
+private:
+  srslog::basic_logger& logger;
+  e2_message_handler*   handler = nullptr;
+};
+
+/// Fixture class for E2AP
+class e2_test : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+
+    msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
+
+    e2 = create_e2(timers, *msg_notifier);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
+  std::unique_ptr<e2_interface>          e2;
+  timer_manager                          timers;
+  std::unique_ptr<dummy_e2_pdu_notifier> msg_notifier;
+  srslog::basic_logger&                  test_logger = srslog::fetch_basic_logger("TEST");
+};
 
 e2_message generate_e2_setup_request()
 {
@@ -67,6 +122,27 @@ e2_message generate_e2_setup_request()
   e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.from_string("72657370617274");
 
   return e2_msg;
+}
+
+e2_setup_request_message generate_e2_setup_request_message()
+{
+  e2_setup_request_message e2_msg            = {};
+  e2_msg.request->transaction_id.value.value = 1;
+  return e2_msg;
+}
+
+e2_message generate_e2_setup_response(unsigned transaction_id)
+{
+  e2_message e2_setup_response = {};
+  e2_setup_response.pdu.set_successful_outcome();
+  e2_setup_response.pdu.successful_outcome().load_info_obj(ASN1_E2AP_ID_E2SETUP);
+
+  auto& setup                       = e2_setup_response.pdu.successful_outcome().value.e2setup_resp();
+  setup->transaction_id.value.value = transaction_id;
+
+  setup->global_ric_id.value.plmn_id.from_number(131014);
+  setup->global_ric_id.value.ric_id.from_number(699598);
+  return e2_setup_response;
 }
 
 /// Dummy handler just printing the received PDU.
