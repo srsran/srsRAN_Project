@@ -32,7 +32,7 @@ public:
   /// \brief Register removal of a UE.
   void handle_ue_deletion(du_ue_index_t ue_index);
 
-  void handle_crc_indication(const ul_crc_indication& crc);
+  void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu);
 
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack);
 

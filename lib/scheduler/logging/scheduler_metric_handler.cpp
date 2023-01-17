@@ -34,13 +34,11 @@ void scheduler_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
   }
 }
 
-void scheduler_metrics_handler::handle_crc_indication(const ul_crc_indication& crc)
+void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& crc_pdu)
 {
-  for (const auto& pdu : crc.crcs) {
-    if (ues.contains(pdu.ue_index)) {
-      ues[pdu.ue_index].metrics.ul_nof_ok += pdu.tb_crc_success ? 1 : 0;
-      ues[pdu.ue_index].metrics.ul_nof_nok += pdu.tb_crc_success ? 0 : 1;
-    }
+  if (ues.contains(crc_pdu.ue_index)) {
+    ues[crc_pdu.ue_index].metrics.ul_nof_ok += crc_pdu.tb_crc_success ? 1 : 0;
+    ues[crc_pdu.ue_index].metrics.ul_nof_nok += crc_pdu.tb_crc_success ? 0 : 1;
   }
 }
 

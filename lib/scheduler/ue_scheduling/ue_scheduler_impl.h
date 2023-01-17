@@ -31,7 +31,9 @@ namespace srsgnb {
 class ue_scheduler_impl final : public ue_scheduler
 {
 public:
-  explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_, sched_configuration_notifier& mac_notif);
+  explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_,
+                             sched_configuration_notifier&     mac_notif,
+                             scheduler_metrics_handler&        metric_handler);
 
   void add_cell(const ue_scheduler_cell_params& params) override;
 

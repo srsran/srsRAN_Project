@@ -14,11 +14,12 @@
 using namespace srsgnb;
 
 ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_,
-                                     sched_configuration_notifier&     mac_notif) :
+                                     sched_configuration_notifier&     mac_notif,
+                                     scheduler_metrics_handler&        metric_handler) :
   expert_cfg(expert_cfg_),
   sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("MAC")})),
   ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("MAC")),
-  event_mng(expert_cfg, ue_db, mac_notif)
+  event_mng(expert_cfg, ue_db, mac_notif, metric_handler)
 {
 }
 

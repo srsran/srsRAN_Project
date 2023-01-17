@@ -72,6 +72,9 @@ private:
   srslog::basic_logger&         logger;
   scheduler_result_logger       sched_result_logger;
 
+  /// Slot metrics sink.
+  scheduler_metrics_handler metrics;
+
   /// Scheduler for UEs.
   std::unique_ptr<ue_scheduler>                 ue_sched;
   scheduler_ue_configurator&                    ue_cfg_handler;
@@ -80,9 +83,6 @@ private:
 
   /// Cell-specific resources and schedulers.
   scheduler_cell_manager cells;
-
-  /// Slot metrics sink.
-  scheduler_metrics_handler metrics;
 };
 
 } // namespace srsgnb

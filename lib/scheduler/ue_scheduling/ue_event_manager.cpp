@@ -10,6 +10,7 @@
 
 #include "ue_event_manager.h"
 #include "../../../lib/ran/gnb_format.h"
+#include "../logging/scheduler_metrics_handler.h"
 
 using namespace srsgnb;
 
@@ -58,8 +59,13 @@ private:
 
 ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
                                    ue_list&                          ue_db_,
-                                   sched_configuration_notifier&     mac_notifier_) :
-  expert_cfg(expert_cfg_), ue_db(ue_db_), mac_notifier(mac_notifier_), logger(srslog::fetch_basic_logger("MAC"))
+                                   sched_configuration_notifier&     mac_notifier_,
+                                   scheduler_metrics_handler&        metrics_handler_) :
+  expert_cfg(expert_cfg_),
+  ue_db(ue_db_),
+  mac_notifier(mac_notifier_),
+  metrics_handler(metrics_handler_),
+  logger(srslog::fetch_basic_logger("MAC"))
 {
 }
 
@@ -77,8 +83,14 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
     // Insert UE in UE repository.
     du_ue_index_t ueidx = u->ue_index;
     ue_db.insert(ueidx, std::move(u));
+    auto& inserted_ue = ue_db[ueidx];
+
+    // Notify metrics handler.
+    metrics_handler.handle_ue_creation(
+        inserted_ue.ue_index, inserted_ue.crnti, inserted_ue.get_pcell().cfg().cell_cfg_common.pci);
 
     log_ue_proc_event(logger.info, ue_event_prefix{} | ueidx, "Sched UE Configuration", "completed.");
+
     // Notify Scheduler UE configuration is complete.
     mac_notifier.on_ue_config_complete(ueidx);
   });
@@ -109,6 +121,9 @@ void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
     // Remove UE from repository.
     ue_db.erase(ue_index);
 
+    // Notify metrics.
+    metrics_handler.handle_ue_deletion(ue_index);
+
     log_ue_proc_event(logger.info, ue_event_prefix{} | ue_index, "Sched UE Deletion", "completed.");
 
     // Notify Scheduler UE configuration is complete.
@@ -131,21 +146,26 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 
     ev_logger.enqueue("ul_bsr(ueId={},bsr=[{}])", bsr_ind.ue_index, to_string(lcg_rep_buf));
     ue_db[bsr_ind.ue_index].handle_bsr_indication(bsr_ind);
+
+    // Notify metrics handler.
+    metrics_handler.handle_ul_bsr_indication(bsr_ind);
   });
 }
 
 void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  srsgnb_sanity_check(cell_exists(crc_ind.cell_index), "Invalid cell index");
+  srsgnb_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");
 
   for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
         crc_ind.crcs[i].ue_index, [this, crc = crc_ind.crcs[i]](ue_cell& ue_cc, event_logger& ev_logger) {
           ev_logger.enqueue("crc(ueId={},h_id={},value={})", crc.ue_index, crc.harq_id, crc.tb_crc_success);
-          // TODO: Derive TB.
-          int tbs = ue_cc.harqs.ul_harq(crc.harq_id).crc_info(crc.tb_crc_success);
+          const int tbs = ue_cc.harqs.ul_harq(crc.harq_id).crc_info(crc.tb_crc_success);
           if (tbs < 0) {
             logger.warning("SCHED: ACK for h_id={} that is inactive", crc.harq_id);
+          } else {
+            // Notify metrics handler.
+            metrics_handler.handle_crc_indication(crc);
           }
         });
   }
@@ -159,14 +179,19 @@ void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<c
       if (ue_cc.harqs.dl_harq(h_id).slot_ack() == uci_sl) {
         // TODO: Fetch the right HARQ id, TB, CBG.
         tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits[bit_idx]);
-        if (tbs > 0) {
-          logger.debug("SCHED: ueid={}, dl_h_id={} with TB size={} bytes ACKed.", ue_cc.ue_index, h_id, tbs);
+        if (tbs >= 0) {
+          metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, harq_bits[bit_idx]);
+          logger.debug("SCHED: UE={}, h_id={}: DL HARQ with tb_size={}B {}ACKed.",
+                       ue_cc.ue_index,
+                       h_id,
+                       tbs,
+                       harq_bits[bit_idx] ? "" : "N");
         }
         break;
       }
     }
     if (tbs < 0) {
-      logger.warning("SCHED: DL HARQ for ueId={}, uci slot={} not found.", ue_cc.ue_index, uci_sl);
+      logger.warning("SCHED: UE={} DL HARQ with uci slot={} not found.", ue_cc.ue_index, uci_sl);
     }
   }
 }

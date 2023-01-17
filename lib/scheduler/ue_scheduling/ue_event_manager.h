@@ -20,6 +20,7 @@
 namespace srsgnb {
 
 class event_logger;
+class scheduler_metrics_handler;
 
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
@@ -31,7 +32,8 @@ class ue_event_manager : public scheduler_ue_configurator,
 public:
   ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
                    ue_list&                          ue_db,
-                   sched_configuration_notifier&     mac_notifier);
+                   sched_configuration_notifier&     mac_notifier,
+                   scheduler_metrics_handler&        metrics_handler);
 
   void add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched);
 
@@ -84,6 +86,7 @@ private:
   const scheduler_ue_expert_config& expert_cfg;
   ue_list&                          ue_db;
   sched_configuration_notifier&     mac_notifier;
+  scheduler_metrics_handler&        metrics_handler;
   srslog::basic_logger&             logger;
 
   /// List of added and configured cells.

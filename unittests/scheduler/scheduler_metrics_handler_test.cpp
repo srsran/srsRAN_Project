@@ -90,17 +90,16 @@ TEST_F(scheduler_metrics_handler_tester, compute_nof_ul_oks_and_noks)
   unsigned nof_acks  = test_rgen::uniform_int<unsigned>(1, 100);
   unsigned nof_nacks = test_rgen::uniform_int<unsigned>(1, 100);
 
-  ul_crc_indication crc_ind;
-  auto&             crc_pdu = crc_ind.crcs.emplace_back();
-  crc_pdu.rnti              = to_rnti(0x4601);
-  crc_pdu.ue_index          = test_ue_index;
-  crc_pdu.tb_crc_success    = true;
+  ul_crc_pdu_indication crc_pdu;
+  crc_pdu.rnti           = to_rnti(0x4601);
+  crc_pdu.ue_index       = test_ue_index;
+  crc_pdu.tb_crc_success = true;
   for (unsigned i = 0; i != nof_acks; ++i) {
-    metrics.handle_crc_indication(crc_ind);
+    metrics.handle_crc_indication(crc_pdu);
   }
   crc_pdu.tb_crc_success = false;
   for (unsigned i = 0; i != nof_nacks; ++i) {
-    metrics.handle_crc_indication(crc_ind);
+    metrics.handle_crc_indication(crc_pdu);
   }
 
   scheduler_ue_metrics ue_metrics = this->get_next_metric();
