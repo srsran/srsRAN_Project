@@ -44,7 +44,7 @@ protected:
   std::unique_ptr<gtpu_demux_ctrl>                     gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_f1u_bearer                                     f1u_bearer;
-  std::unique_ptr<f1u_cu_up_gateway>                   f1u_gw;
+  std::unique_ptr<dummy_f1u_gateway>                   f1u_gw;
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
   network_interface_config                             net_config;
   srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);
@@ -112,7 +112,7 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   // no sessions added yet
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
 
-  // prepare request
+  // prepare setup request (to create bearer)
   asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = 0x0d;
   pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().gtp_teid.from_number(0x12345678);
@@ -144,4 +144,34 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, 0xee);
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  ASSERT_FALSE(f1u_gw->created_ul_teid_list.empty());
+  uint32_t ul_teid = f1u_gw->created_ul_teid_list.front();
+  f1u_gw->created_ul_teid_list.pop_front();
+  ASSERT_TRUE(f1u_gw->created_ul_teid_list.empty());
+
+  // prepare modification request (to remove bearers)
+  asn1::e1ap::pdu_session_res_to_modify_item_s pdu_session_modify_item;
+  pdu_session_modify_item.pdu_session_id = 0x0d;
+
+  asn1::e1ap::drb_to_rem_item_ng_ran_s invalid_drb_to_remove;
+  invalid_drb_to_remove.drb_id = 0x0f;
+
+  asn1::e1ap::drb_to_rem_item_ng_ran_s valid_drb_to_remove;
+  valid_drb_to_remove.drb_id = 0x0b;
+
+  pdu_session_modify_item.drb_to_rem_list_ng_ran.push_back(invalid_drb_to_remove);
+  pdu_session_modify_item.drb_to_rem_list_ng_ran.push_back(valid_drb_to_remove);
+
+  // attempt to remove bearers
+  pdu_session_modification_result modification_result = pdu_session_mng->modify_pdu_session(pdu_session_modify_item);
+  // check successful outcome
+  ASSERT_TRUE(setup_result.success);
+
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  ASSERT_FALSE(f1u_gw->removed_ul_teid_list.empty());
+  f1u_gw->removed_ul_teid_list.pop_front(); // pop ul_teid from invalid bearer (this will be skipped in future)
+  ASSERT_FALSE(f1u_gw->removed_ul_teid_list.empty());
+  ASSERT_EQ(f1u_gw->removed_ul_teid_list.front(), ul_teid);
+  f1u_gw->removed_ul_teid_list.pop_front();
+  ASSERT_TRUE(f1u_gw->removed_ul_teid_list.empty());
 }

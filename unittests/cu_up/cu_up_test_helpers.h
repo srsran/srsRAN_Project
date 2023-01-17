@@ -121,11 +121,16 @@ public:
                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                           srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
   {
+    created_ul_teid_list.push_back(ul_teid);
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);
     return &bearer;
   };
-  void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override{};
-  void remove_cu_bearer(uint32_t ul_teid) override{};
+  void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override { attached_ul_teid_list.push_back(ul_teid); };
+  void remove_cu_bearer(uint32_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); };
+
+  std::list<uint32_t> created_ul_teid_list  = {};
+  std::list<uint32_t> attached_ul_teid_list = {};
+  std::list<uint32_t> removed_ul_teid_list  = {};
 };
 
 e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id)
