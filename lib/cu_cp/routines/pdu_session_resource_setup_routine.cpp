@@ -78,10 +78,11 @@ void pdu_session_resource_setup_routine::operator()(
 
       rrc_ue_drb_setup_message_item.drb_id = drb_to_add;
 
-      for (const auto& cu_up_gtp_tunnel : bearer_context_setup_response.pdu_session_resource_setup_list
-                                              .at(rrc_ue_drb_manager.get_pdu_session_id(drb_to_add))
-                                              .drb_setup_list_ng_ran.at(drb_to_add)
-                                              .ul_up_transport_params) {
+      for (const auto& cu_up_gtp_tunnel :
+           bearer_context_setup_response
+               .pdu_session_resource_setup_list[rrc_ue_drb_manager.get_pdu_session_id(drb_to_add)]
+               .drb_setup_list_ng_ran[drb_to_add]
+               .ul_up_transport_params) {
         rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(cu_up_gtp_tunnel.up_tnl_info);
       }
 
@@ -183,7 +184,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
 
       auto& transfer = item.pdu_session_resource_setup_response_transfer;
       transfer.dlqos_flow_per_tnl_info.up_tp_layer_info =
-          bearer_context_setup_response.pdu_session_resource_setup_list.at(setup_item.pdu_session_id).ng_dl_up_tnl_info;
+          bearer_context_setup_response.pdu_session_resource_setup_list[setup_item.pdu_session_id].ng_dl_up_tnl_info;
 
       cu_cp_associated_qos_flow qos_flow;
       qos_flow.qos_flow_id = uint_to_qos_flow_id(1); // TODO: Remove hardcoded value
@@ -292,7 +293,7 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_r
   for (const auto& pdu_session : bearer_context_setup_response.pdu_session_resource_setup_list) {
     e1ap_pdu_session_res_to_modify_item e1ap_mod_item;
 
-    e1ap_mod_item.pdu_session_id = pdu_session.first;
+    e1ap_mod_item.pdu_session_id = pdu_session.pdu_session_id;
 
     for (const auto& drb_item : ue_context_modification_response.drbs_setup_mod_list) {
       e1ap_drb_to_modify_item_ng_ran e1ap_drb_item;
@@ -309,7 +310,7 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_r
       e1ap_mod_item.drb_to_modify_list_ng_ran[drb_item.drb_id] = e1ap_drb_item;
     }
 
-    e1ap_bearer_context_mod.pdu_session_res_to_modify_list[pdu_session.first] = e1ap_mod_item;
+    e1ap_bearer_context_mod.pdu_session_res_to_modify_list[pdu_session.pdu_session_id] = e1ap_mod_item;
   }
 
   e1ap_request.ng_ran_bearer_context_mod_request = e1ap_bearer_context_mod;

@@ -88,6 +88,8 @@ e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_set
   ue_ctx_list.add_ue(request.cu_cp_ue_id, cu_cp_ue_e1ap_id);
   e1ap_ue_context& ue_ctxt = ue_ctx_list[cu_cp_ue_e1ap_id];
 
+  logger.debug("Added UE (cu_cp_ue_id={}, cu_cp_ue_e1ap_id={}).", request.cu_cp_ue_id, cu_cp_ue_e1ap_id);
+
   e1_message e1_msg;
   e1_msg.pdu.set_init_msg();
   e1_msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);

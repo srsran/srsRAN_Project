@@ -47,17 +47,14 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   auto& ng_ran_bearer_context_setup_request =
       asn1_request->sys_bearer_context_setup_request.value.ng_ran_bearer_context_setup_request();
 
-  for (const auto& pdu_session_res_item_pair : request.pdu_session_res_to_setup_list) {
+  for (const auto& pdu_session_res_item : request.pdu_session_res_to_setup_list) {
     asn1::protocol_ie_field_s<asn1::e1ap::ng_ran_bearer_context_setup_request_o> bearer_request_item;
     auto& asn1_pdu_session_res_items = bearer_request_item.value().pdu_session_res_to_setup_list();
 
     asn1::e1ap::pdu_session_res_to_setup_item_s asn1_pdu_session_res_item;
 
-    const auto& pdu_session_id       = pdu_session_res_item_pair.first;
-    const auto& pdu_session_res_item = pdu_session_res_item_pair.second;
-
     // pdu session id
-    asn1_pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
+    asn1_pdu_session_res_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_res_item.pdu_session_id);
 
     // pdu session type
     asn1::string_to_enum(asn1_pdu_session_res_item.pdu_session_type, pdu_session_res_item.pdu_session_type);
@@ -81,13 +78,10 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
     }
 
     // drb to setup list ng ran
-    for (const auto& drb_to_setup_item_pair : pdu_session_res_item.drb_to_setup_list_ng_ran) {
+    for (const auto& drb_to_setup_item : pdu_session_res_item.drb_to_setup_list_ng_ran) {
       asn1::e1ap::drb_to_setup_item_ng_ran_s asn1_drb_to_setup_item;
 
-      const auto& drb_id            = drb_to_setup_item_pair.first;
-      const auto& drb_to_setup_item = drb_to_setup_item_pair.second;
-
-      asn1_drb_to_setup_item.drb_id = drb_id_to_uint(drb_id);
+      asn1_drb_to_setup_item.drb_id = drb_id_to_uint(drb_to_setup_item.drb_id);
 
       // sdap config
       asn1_drb_to_setup_item.sdap_cfg = sdap_config_to_e1ap_asn1(drb_to_setup_item.sdap_cfg);
@@ -120,13 +114,10 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
       }
 
       // qos flow info to be setup
-      for (const auto& qos_flow_info_item_pair : drb_to_setup_item.qos_flow_info_to_be_setup) {
-        const auto& qos_flow_id        = qos_flow_info_item_pair.first;
-        const auto& qos_flow_info_item = qos_flow_info_item_pair.second;
-
+      for (const auto& qos_flow_info_item : drb_to_setup_item.qos_flow_info_to_be_setup) {
         asn1::e1ap::qos_flow_qos_param_item_s asn1_qos_flow_info_item;
 
-        asn1_qos_flow_info_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
+        asn1_qos_flow_info_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_info_item.qos_flow_id);
 
         // qos flow level qos params
         auto& qos_flow_level_params = qos_flow_info_item.qos_flow_level_qos_params;
@@ -254,13 +245,10 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
         asn1_drb_to_setup_item.drb_data_forwarding_info_request_present = true;
         asn1::string_to_enum(asn1_drb_to_setup_item.drb_data_forwarding_info_request.data_forwarding_request,
                              drb_to_setup_item.drb_data_forwarding_info_request.value().data_forwarding_request);
-        for (const auto& qos_flow_map_item_pair :
+        for (const auto& qos_flow_map_item :
              drb_to_setup_item.drb_data_forwarding_info_request.value().qos_flows_forwarded_on_fwd_tunnels) {
-          const auto& qos_flow_id       = qos_flow_map_item_pair.first;
-          const auto& qos_flow_map_item = qos_flow_map_item_pair.second;
-
           asn1::e1ap::qos_flow_map_item_s asn1_qos_flow_map_item;
-          asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
+          asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_map_item.qos_flow_id);
           if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
             asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
             asn1::string_to_enum(asn1_qos_flow_map_item.qos_flow_map_ind, qos_flow_map_item.qos_flow_map_ind.value());
@@ -314,13 +302,10 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
       asn1::string_to_enum(
           asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request.data_forwarding_request,
           pdu_session_res_item.pdu_session_data_forwarding_info_request.value().data_forwarding_request);
-      for (const auto& qos_flow_map_item_pair :
+      for (const auto& qos_flow_map_item :
            pdu_session_res_item.pdu_session_data_forwarding_info_request.value().qos_flows_forwarded_on_fwd_tunnels) {
-        const auto& qos_flow_id       = qos_flow_map_item_pair.first;
-        const auto& qos_flow_map_item = qos_flow_map_item_pair.second;
-
         asn1::e1ap::qos_flow_map_item_s asn1_qos_flow_map_item;
-        asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_id);
+        asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_map_item.qos_flow_id);
         if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
           asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
           asn1::string_to_enum(asn1_qos_flow_map_item.qos_flow_map_ind, qos_flow_map_item.qos_flow_map_ind.value());
@@ -431,7 +416,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
           e1ap_qos_flow_item qos_flow_item;
           qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_item.qos_flow_id);
 
-          drb_setup_item.flow_setup_list[qos_flow_item.qos_flow_id] = qos_flow_item;
+          drb_setup_item.flow_setup_list.emplace(qos_flow_item.qos_flow_id, qos_flow_item);
         }
 
         // Add Flow Failed List
@@ -441,7 +426,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
           failed_qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_failed_qos_flow_item.qos_flow_id);
           failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(asn1_failed_qos_flow_item.cause);
 
-          drb_setup_item.flow_failed_list[failed_qos_flow_item.qos_flow_id] = failed_qos_flow_item;
+          drb_setup_item.flow_failed_list.emplace(failed_qos_flow_item.qos_flow_id, failed_qos_flow_item);
         }
 
         // Add DRB Data Forwarding Info Response
@@ -456,7 +441,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
           }
         }
 
-        res_setup_item.drb_setup_list_ng_ran[drb_setup_item.drb_id] = drb_setup_item;
+        res_setup_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, drb_setup_item);
       }
 
       // Add DRB Failed List NG RAN
@@ -465,7 +450,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
         drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
         drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
 
-        res_setup_item.drb_failed_list_ng_ran[drb_failed_item.drb_id] = drb_failed_item;
+        res_setup_item.drb_failed_list_ng_ran.emplace(drb_failed_item.drb_id, drb_failed_item);
       }
 
       // Add Security Result
@@ -496,7 +481,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
             e1ap_asn1_ng_dl_up_unchanged_to_bool(asn1_res_setup_item.ng_dl_up_unchanged);
       }
 
-      res.pdu_session_resource_setup_list[res_setup_item.pdu_session_id] = res_setup_item;
+      res.pdu_session_resource_setup_list.emplace(res_setup_item.pdu_session_id, res_setup_item);
     }
 
     // Add pdu session res failed list
@@ -507,7 +492,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
         failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
         failed_item.cause          = e1ap_cause_to_cu_cp_cause(asn1_failed_item.cause);
 
-        res.pdu_session_resource_failed_list[failed_item.pdu_session_id] = failed_item;
+        res.pdu_session_resource_failed_list.emplace(failed_item.pdu_session_id, failed_item);
       }
     }
   }
@@ -536,20 +521,15 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
 
     if (!request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.empty()) {
       asn1_bearer_context_mod.pdu_session_res_to_modify_list_present = true;
-      for (const auto& res_to_mod_item_pair :
+      for (const auto& res_to_mod_item :
            request.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
-        const auto& res_to_mod_item = res_to_mod_item_pair.second;
-
         asn1::e1ap::pdu_session_res_to_modify_item_s asn1_res_to_mod_item;
         asn1_res_to_mod_item.pdu_session_id = pdu_session_id_to_uint(res_to_mod_item.pdu_session_id);
 
-        for (const auto& drb_to_mod_item_pair : res_to_mod_item.drb_to_modify_list_ng_ran) {
-          const auto& drb_id          = drb_to_mod_item_pair.first;
-          const auto& drb_to_mod_item = drb_to_mod_item_pair.second;
-
+        for (const auto& drb_to_mod_item : res_to_mod_item.drb_to_modify_list_ng_ran) {
           asn1::e1ap::drb_to_modify_item_ng_ran_s asn1_drb_to_mod_item;
 
-          asn1_drb_to_mod_item.drb_id = drb_id_to_uint(drb_id);
+          asn1_drb_to_mod_item.drb_id = drb_id_to_uint(drb_to_mod_item.drb_id);
 
           for (const auto& dl_up_param : drb_to_mod_item.dl_up_params) {
             asn1::e1ap::up_params_item_s asn1_dl_up_param;
@@ -611,7 +591,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               e1ap_qos_flow_item qos_flow_item;
               qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_item.qos_flow_id);
 
-              drb_setup_item.flow_setup_list[qos_flow_item.qos_flow_id] = qos_flow_item;
+              drb_setup_item.flow_setup_list.emplace(qos_flow_item.qos_flow_id, qos_flow_item);
             }
 
             // Add Flow Failed List
@@ -621,7 +601,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               failed_qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_failed_qos_flow_item.qos_flow_id);
               failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(asn1_failed_qos_flow_item.cause);
 
-              drb_setup_item.flow_failed_list[failed_qos_flow_item.qos_flow_id] = failed_qos_flow_item;
+              drb_setup_item.flow_failed_list.emplace(failed_qos_flow_item.qos_flow_id, failed_qos_flow_item);
             }
 
             // Add DRB Data Forwarding Info Response
@@ -638,7 +618,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               }
             }
 
-            res_mod_item.drb_setup_list_ng_ran[drb_setup_item.drb_id] = drb_setup_item;
+            res_mod_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, drb_setup_item);
           }
 
           // Add DRB session resource failed list NG RAN
@@ -647,7 +627,7 @@ inline void fill_e1ap_bearer_context_modification_response(
             drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
             drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
 
-            res_mod_item.drb_failed_list_ng_ran[drb_failed_item.drb_id] = drb_failed_item;
+            res_mod_item.drb_failed_list_ng_ran.emplace(drb_failed_item.drb_id, drb_failed_item);
           }
 
           // Add Security Result
@@ -672,7 +652,7 @@ inline void fill_e1ap_bearer_context_modification_response(
             }
           }
 
-          res.pdu_session_resource_setup_list[res_mod_item.pdu_session_id] = res_mod_item;
+          res.pdu_session_resource_setup_list.emplace(res_mod_item.pdu_session_id, res_mod_item);
         }
       }
 
@@ -684,7 +664,7 @@ inline void fill_e1ap_bearer_context_modification_response(
           failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
           failed_item.cause          = e1ap_cause_to_cu_cp_cause(asn1_failed_item.cause);
 
-          res.pdu_session_resource_failed_list[failed_item.pdu_session_id] = failed_item;
+          res.pdu_session_resource_failed_list.emplace(failed_item.pdu_session_id, failed_item);
         }
       }
 
@@ -717,7 +697,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               e1ap_qos_flow_item qos_flow_item;
               qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_item.qos_flow_id);
 
-              drb_setup_item.flow_setup_list[qos_flow_item.qos_flow_id] = qos_flow_item;
+              drb_setup_item.flow_setup_list.emplace(qos_flow_item.qos_flow_id, qos_flow_item);
             }
 
             // Add Flow Failed List
@@ -727,7 +707,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               failed_qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_failed_qos_flow_item.qos_flow_id);
               failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(asn1_failed_qos_flow_item.cause);
 
-              drb_setup_item.flow_failed_list[failed_qos_flow_item.qos_flow_id] = failed_qos_flow_item;
+              drb_setup_item.flow_failed_list.emplace(failed_qos_flow_item.qos_flow_id, failed_qos_flow_item);
             }
 
             // Add DRB Data Forwarding Info Response
@@ -744,7 +724,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               }
             }
 
-            res_mod_item.drb_setup_list_ng_ran[drb_setup_item.drb_id] = drb_setup_item;
+            res_mod_item.drb_setup_list_ng_ran.emplace(drb_setup_item.drb_id, drb_setup_item);
           }
 
           // Add DRB session resource failed list NG RAN
@@ -753,7 +733,7 @@ inline void fill_e1ap_bearer_context_modification_response(
             drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
             drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
 
-            res_mod_item.drb_failed_list_ng_ran[drb_failed_item.drb_id] = drb_failed_item;
+            res_mod_item.drb_failed_list_ng_ran.emplace(drb_failed_item.drb_id, drb_failed_item);
           }
 
           // Add DRB modified list NG RAN
@@ -775,7 +755,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               e1ap_qos_flow_item qos_flow_item;
               qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_item.qos_flow_id);
 
-              drb_mod_item.flow_setup_list[qos_flow_item.qos_flow_id] = qos_flow_item;
+              drb_mod_item.flow_setup_list.emplace(qos_flow_item.qos_flow_id, qos_flow_item);
             }
 
             // Add Flow Failed List
@@ -785,7 +765,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               failed_qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_failed_qos_flow_item.qos_flow_id);
               failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(asn1_failed_qos_flow_item.cause);
 
-              drb_mod_item.flow_failed_list[failed_qos_flow_item.qos_flow_id] = failed_qos_flow_item;
+              drb_mod_item.flow_failed_list.emplace(failed_qos_flow_item.qos_flow_id, failed_qos_flow_item);
             }
 
             // Add PDCP SN status info
@@ -804,7 +784,7 @@ inline void fill_e1ap_bearer_context_modification_response(
                   e1ap_asn1_pdcp_count_to_pdcp_count(asn1_pdcp_sn_status_info.pdcp_status_transfer_dl);
             }
 
-            res_mod_item.drb_modified_list_ng_ran[drb_mod_item.drb_id] = drb_mod_item;
+            res_mod_item.drb_modified_list_ng_ran.emplace(drb_mod_item.drb_id, drb_mod_item);
           }
 
           // Add DRB failed to modify list NG RAN
@@ -813,7 +793,7 @@ inline void fill_e1ap_bearer_context_modification_response(
             drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
             drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
 
-            res_mod_item.drb_failed_to_modify_list_ng_ran[drb_failed_item.drb_id] = drb_failed_item;
+            res_mod_item.drb_failed_to_modify_list_ng_ran.emplace(drb_failed_item.drb_id, drb_failed_item);
           }
 
           // Add Security Result
@@ -838,7 +818,7 @@ inline void fill_e1ap_bearer_context_modification_response(
             }
           }
 
-          res.pdu_session_resource_modified_list[res_mod_item.pdu_session_id] = res_mod_item;
+          res.pdu_session_resource_modified_list.emplace(res_mod_item.pdu_session_id, res_mod_item);
         }
       }
 
@@ -851,7 +831,7 @@ inline void fill_e1ap_bearer_context_modification_response(
           failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
           failed_item.cause          = e1ap_cause_to_cu_cp_cause(asn1_failed_item.cause);
 
-          res.pdu_session_resource_failed_to_modify_list[failed_item.pdu_session_id] = failed_item;
+          res.pdu_session_resource_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
         }
       }
     }

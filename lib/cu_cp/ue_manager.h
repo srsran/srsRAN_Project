@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/ue_manager.h"
+#include <unordered_map>
 
 namespace srsgnb {
 
