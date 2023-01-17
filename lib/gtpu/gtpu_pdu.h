@@ -99,6 +99,22 @@ inline const char* to_string(gtpu_extension_header_type type)
   }
 };
 
+// 00 Comprehension of this extension header is not required. An Intermediate Node shall forward it to any Receiver
+// Endpoint
+// 01 Comprehension of this extension header is not required. An Intermediate Node shall discard the
+// Extension Header Content and not forward it to any Receiver Endpoint. Other extension headers shall be treated
+// independently of this extension header.
+// 10 Comprehension of this extension header is required by the Endpoint
+// Receiver but not by an Intermediate Node. An Intermediate Node shall forward the whole field to the Endpoint
+// Receiver.
+// 11 Comprehension of this header type is required by recipient (either Endpoint Receiver or Intermediate Node)
+enum class gtpu_comprehension : uint8_t {
+  not_required_intermediate_node_forward     = 0b00000000,
+  not_required_intermediate_node_discard     = 0b00000001,
+  required_at_endpoint_not_intermediate_node = 0b00000010,
+  required_at_endpoint_and_intermediate_node = 0b00000011
+};
+
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
   gtpu_extension_header_type extension_header_type = gtpu_extension_header_type::no_more_extension_headers;
@@ -130,7 +146,7 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basi
 
 bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_logger& logger);
 bool gtpu_supported_msg_type_check(const gtpu_header& header, srslog::basic_logger& logger);
-bool gtpu_supported_extension_header_check(const gtpu_extension_header_type& type, srslog::basic_logger& logger);
+bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, srslog::basic_logger& logger);
 
 } // namespace srsgnb
 

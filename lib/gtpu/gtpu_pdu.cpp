@@ -152,6 +152,10 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
 
     // Next Extension Header Type
     gtpu_unpack_ext_header_type(decoder, header.next_ext_hdr_type);
+
+    if (not gtpu_extension_header_comprehension_check(header.next_ext_hdr_type, logger)) {
+      return false;
+    }
   }
 
   // Read Header Extensions
@@ -164,6 +168,9 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
     do {
       gtpu_extension_header ext = {};
       ext.extension_header_type = next_extension_header_type;
+      if (not gtpu_extension_header_comprehension_check(ext.extension_header_type, logger)) {
+        return false;
+      }
       if (!gtpu_read_ext_header(decoder, ext, next_extension_header_type, logger)) {
         return false;
       }
@@ -263,10 +270,48 @@ bool gtpu_supported_msg_type_check(const gtpu_header& header, srslog::basic_logg
   if (header.message_type != GTPU_MSG_DATA_PDU && header.message_type != GTPU_MSG_ECHO_REQUEST &&
       header.message_type != GTPU_MSG_ECHO_RESPONSE && header.message_type != GTPU_MSG_ERROR_INDICATION &&
       header.message_type != GTPU_MSG_END_MARKER) {
-    logger.error("gtpu_header - Unhandled message type: 0x%x", header.message_type);
+    logger.error("gtpu_header - Unhandled message type: 0x{:x}", header.message_type);
     return false;
   }
   return true;
 }
 
+bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, srslog::basic_logger& logger)
+{
+  switch (type) {
+    case gtpu_extension_header_type::no_more_extension_headers:
+      return true;
+    case gtpu_extension_header_type::service_class_indicator:
+    case gtpu_extension_header_type::udp_port:
+    case gtpu_extension_header_type::ran_container:
+    case gtpu_extension_header_type::long_pdcp_pdu_number_0:
+    case gtpu_extension_header_type::long_pdcp_pdu_number_1:
+    case gtpu_extension_header_type::xw_ran_container:
+    case gtpu_extension_header_type::nr_ran_container:
+      break;
+    case gtpu_extension_header_type::pdu_session_container:
+      return true; // TODO add actual support for PDU session container
+    case gtpu_extension_header_type::pdcp_pdu_number:
+      return true; // TODO add actual support for PDCP PDU number
+    case gtpu_extension_header_type::reserved_0:
+    case gtpu_extension_header_type::reserved_1:
+    case gtpu_extension_header_type::reserved_2:
+    case gtpu_extension_header_type::reserved_3:
+      return false;
+    default:
+      break;
+  }
+  logger.debug("Extension header not comprehended. Type={}", type);
+
+  uint8_t comp = static_cast<uint8_t>(type) >> 6U;
+  bool    comp_not_needed =
+      !(comp == static_cast<uint8_t>(gtpu_comprehension::required_at_endpoint_not_intermediate_node) ||
+        comp == static_cast<uint8_t>(gtpu_comprehension::required_at_endpoint_and_intermediate_node));
+  if (comp_not_needed) {
+    logger.debug("Extension header not comprehended. Type={}", type);
+  } else {
+    logger.error("Extension header not comprehended. Type={}", type);
+  }
+  return comp_not_needed;
+}
 } // namespace srsgnb
