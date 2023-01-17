@@ -17,6 +17,8 @@ using namespace srsgnb;
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 constexpr size_t MAX_K0_DELAY = 32;
 
+static constexpr unsigned nof_bits_per_byte = 8U;
+
 mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg_req_,
                                        mac_scheduler&                   sched_,
                                        mac_dl_ue_manager&               ue_mng_,
@@ -95,6 +97,25 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
           pdu.harqs.resize(pucch.harq_info->harqs.size());
           for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
             pdu.harqs[j] = pucch.harq_info->harqs[j] == uci_pucch_f0_or_f1_harq_values::ack;
+          }
+        }
+        ind.ucis[i].pdu = pdu;
+      } break;
+      case mac_uci_pdu::pdu_type::pusch: {
+        const auto&                            pusch = msg.ucis[i].pusch;
+        uci_indication::uci_pdu::uci_pusch_pdu pdu{};
+        pdu.harqs.resize(0);
+        if (pusch.harq_info.value().harq_status == uci_pusch_detection_status::crc_pass) {
+          // MSB0 is interpreted as in 3GPP TS 38.212, section 6.2.1: "lowest order information bit [position 0] is
+          // mapped to the most significant bit".
+          for (unsigned j =
+                   static_cast<unsigned>(std::ceil(pusch.harq_info.value().payload_bits / nof_bits_per_byte)) - 1;
+               j >= 0;
+               --j) {
+            for (unsigned k = nof_bits_per_byte - 1; k >= 0; --k) {
+              // FirstBitIsLeftmost is false.
+              pdu.harqs.push_back(((pusch.harq_info.value().payload[j] >> k) & 1U) != 0U);
+            }
           }
         }
         ind.ucis[i].pdu = pdu;

@@ -65,7 +65,12 @@ struct uci_indication {
       bool                                   sr_detected;
       static_vector<bool, NOF_HARQS_PER_UCI> harqs;
     };
-    struct uci_pusch_pdu {};
+    struct uci_pusch_pdu {
+      constexpr static size_t MAX_HARQS_PER_UCI = 1706;
+
+      bounded_bitset<MAX_HARQS_PER_UCI> harqs;
+      // TODO: Add CSI Part 1 and Part 2.
+    };
 
     du_ue_index_t                                  ue_index;
     rnti_t                                         crnti;

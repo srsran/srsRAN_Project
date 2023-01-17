@@ -198,6 +198,28 @@ void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<c
   }
 }
 
+void ue_event_manager::handle_harq_ind(ue_cell&                                   ue_cc,
+                                       slot_point                                 uci_sl,
+                                       bounded_bitset<MAX_HARQS_PER_UCI_ON_PUSCH> harq_bits)
+{
+  for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
+    int tbs = -1;
+    for (unsigned h_id = 0; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
+      if (ue_cc.harqs.dl_harq(h_id).slot_ack() == uci_sl) {
+        // TODO: Fetch the right HARQ id, TB, CBG.
+        tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits.all(bit_idx, bit_idx + 1));
+        if (tbs > 0) {
+          logger.debug("SCHED: ueid={}, dl_h_id={} with TB size={} bytes ACKed.", ue_cc.ue_index, h_id, tbs);
+        }
+        break;
+      }
+    }
+    if (tbs < 0) {
+      logger.warning("SCHED: DL HARQ for ueId={}, uci slot={} not found.", ue_cc.ue_index, uci_sl);
+    }
+  }
+}
+
 void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 {
   srsgnb_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
@@ -221,6 +243,17 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
           ev_logger.enqueue("sr_ind(ueId={})", ue_index);
           ue_db[ue_index].handle_sr_indication();
         });
+      }
+    } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(ind.ucis[i].pdu)) {
+      const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(ind.ucis[i].pdu);
+      // Process DL HARQ ACKs.
+      if (pdu.harqs.size() > 0) {
+        cell_specific_events[ind.cell_index].emplace(
+            ind.ucis[i].ue_index,
+            [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc, event_logger& ev_logger) {
+              ev_logger.enqueue("uci_harq(ueId={},{} harqs)", ue_cc.ue_index, harq_bits.size());
+              handle_harq_ind(ue_cc, uci_sl, harq_bits);
+            });
       }
     }
   }
