@@ -192,6 +192,52 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerTest)
   }
 }
 
+bool xnor(bool a, bool b)
+{
+  return ((a && b) || (!a && !b));
+}
+
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroRE)
+{
+  // Load the test case data.
+  const test_case_t& t_case = GetParam();
+  ReadData(t_case);
+
+  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
+  if (t_case.equalizer_type != "ZF") {
+    GTEST_SKIP();
+  }
+
+  ReadData(t_case);
+
+  // Set some channel estimates to 0.
+  static constexpr unsigned stride        = 5;
+  unsigned                  nof_tx_layers = t_case.transmitted_symbols.nof_slices;
+  unsigned                  nof_rx_ports  = t_case.received_symbols.nof_slices;
+  unsigned                  nof_res       = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+      for (unsigned i_re = 0; i_re < nof_res; i_re += stride) {
+        test_ch_estimates[{i_re, i_port, i_layer}] = 0;
+      }
+    }
+  }
+
+  // Equalize the symbols coming from the Rx ports.
+  test_equalizer->equalize(
+      eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, test_noise_vars, t_case.scaling);
+
+  // Assert all zero channel estimates result in an infinite variance.
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    span<const cf_t>  reference = test_ch_estimates.get_view({0, i_layer});
+    span<const float> noise_var = eq_noise_vars_actual.get_view({i_layer});
+    ASSERT_TRUE(std::equal(reference.begin(), reference.end(), noise_var.begin(), [](cf_t a, float b) {
+      return xnor(a == cf_t(0, 0), std::isinf(b));
+    })) << fmt::format("Something wrong in Tx layer {}", i_layer);
+  }
+}
+
 INSTANTIATE_TEST_SUITE_P(ChannelEqualizerTest,
                          ChannelEqualizerFixture,
                          ::testing::ValuesIn(channel_equalizer_test_data),

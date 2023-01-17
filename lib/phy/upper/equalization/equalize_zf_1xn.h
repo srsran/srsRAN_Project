@@ -57,14 +57,14 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
     }
 
     // Calculate the reciprocal of the denominator. Set the symbols to zero in case of division by zero, NAN of INF.
-    float d_pinv     = tx_scaling * ch_mod_sq;
-    float d_pinv_rcp = 0.0F;
+    float d_pinv      = tx_scaling * ch_mod_sq;
+    float d_pinv_rcp  = std::numeric_limits<float>::infinity();
+    symbols_out[i_re] = 0;
     if (std::isnormal(d_pinv)) {
       d_pinv_rcp = 1.0F / d_pinv;
+      // Normalize the gain of the channel combined with the equalization to unity.
+      symbols_out[i_re] = re_out * d_pinv_rcp;
     }
-
-    // Normalize the gain of the channel combined with the equalization to unity.
-    symbols_out[i_re] = re_out * d_pinv_rcp;
 
     // Calculate noise variances.
     nvars_out[i_re] = d_pinv_rcp * (noise_var_est / tx_scaling);
