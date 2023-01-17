@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Benchmarks of the DU-high latency.
+
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "unittests/f1ap/du/f1ap_du_test_helpers.h"
@@ -20,7 +23,9 @@
 using namespace srsgnb;
 using namespace srs_du;
 
+/// \brief Parameters of the benchmark.
 struct bench_params {
+  /// \brief Number of runs for the benchmark. Each repetition corresponds to a slot.
   unsigned nof_repetitions = 100;
 };
 
@@ -47,7 +52,9 @@ static void parse_args(int argc, char** argv, bench_params& params)
   }
 }
 
-class cu_cp_bench_sim : public f1c_message_notifier
+/// \brief Simulator of the CU-CP from the perspective of the DU. This class should reply to the F1AP messages
+/// that the DU sends in order for the DU normal operation to proceed.
+class cu_cp_simulator : public f1c_message_notifier
 {
 public:
   task_executor*       ctrl_exec       = nullptr;
@@ -107,6 +114,7 @@ private:
   }
 };
 
+/// \brief Dummy F1-U bearer for the purpose of benchmark.
 class f1u_dummy_bearer : public f1u_bearer,
                          public f1u_rx_pdu_handler,
                          public f1u_tx_delivery_handler,
@@ -122,7 +130,8 @@ public:
   void handle_sdu(byte_buffer_slice_chain sdu) override {}
 };
 
-class cu_up_bench_sim : public f1u_du_gateway
+/// \brief Simulator of the CU-UP from the perspective of the DU.
+class cu_up_simulator : public f1u_du_gateway
 {
 public:
   f1u_dummy_bearer             bearer;
@@ -135,6 +144,7 @@ public:
   }
 };
 
+/// \brief Instantiation of the DU-high workers and executors for the benchmark.
 struct du_high_single_cell_worker_manager {
   static const uint32_t task_worker_queue_size = 10000;
 
@@ -155,7 +165,9 @@ struct du_high_single_cell_worker_manager {
   cell_dl_executor_mapper  dl_exec_mapper{&dl_exec};
 };
 
-class phy_bench_sim : public mac_result_notifier, public mac_cell_result_notifier
+/// \brief Emulator of the PHY, FAPI and UE from the perspective of the DU-high. This class should be able to provide
+/// the required UE signalling (e.g. HARQ ACKs) for the DU-high normal operation.
+class phy_simulator : public mac_result_notifier, public mac_cell_result_notifier
 {
 public:
   mac_cell_control_information_handler* ctrl_info_handler = nullptr;
@@ -176,6 +188,8 @@ public:
     if (dl_res.dl_res->ue_grants.empty()) {
       return;
     }
+
+    // Forwards HARQ-ACK to the DU-High "k1" slots after the current tx slot.
     mac_uci_indication_message uci{};
     uci.sl_rx = dl_res.slot + k1;
     for (const dl_msg_alloc& ue_grant : dl_res.dl_res->ue_grants) {
@@ -192,6 +206,7 @@ public:
   /// Notifies scheduled PDSCH PDUs.
   void on_new_downlink_data(const mac_dl_data_result& dl_data) override
   {
+    // Save the number of DL grants and bytes transmitted.
     nof_dl_grants += dl_data.ue_pdus.size();
     for (span<const uint8_t> data : dl_data.ue_pdus) {
       nof_dl_bytes += data.size();
@@ -201,7 +216,7 @@ public:
   /// Notifies slot scheduled PUCCH/PUSCH grants.
   void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override {}
 
-  /// Notifies the completion of all cell results for the given slot.
+  /// \brief Notifies the completion of all cell results for the given slot.
   void on_cell_results_completion(slot_point slot) override
   {
     {
@@ -211,6 +226,7 @@ public:
     cvar.notify_one();
   }
 
+  /// \brief This function blocks waiting for DU-high to finish the handling of the last slot_indication.
   void wait_slot_complete()
   {
     std::unique_lock<std::mutex> lock(mutex);
@@ -221,11 +237,13 @@ public:
   }
 };
 
+/// \brief TestBench for the DU-high.
 class du_high_bench
 {
 public:
   du_high_bench()
   {
+    // Instantiate a DU-high object.
     cfg.du_mng_executor = &workers.ctrl_exec;
     cfg.dl_executors    = &workers.dl_exec_mapper;
     cfg.ul_executors    = &workers.ul_exec_mapper;
@@ -243,6 +261,7 @@ public:
     // Create PDCP PDU.
     pdcp_pdu.append(test_rgen::random_vector<uint8_t>(1000));
 
+    // Start DU-high operation.
     du_hi->start();
 
     // Connect PHY back to DU-High.
@@ -251,16 +270,20 @@ public:
 
   ~du_high_bench() { workers.stop(); }
 
+  /// \brief Run a slot indication until completion.
   void run_slot()
   {
+    // Push slot indication to DU-high.
     du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_sl_tx);
 
+    // Wait DU-high to finish handling the slot.
     sim_phy.wait_slot_complete();
 
     ++next_sl_tx;
     slot_count++;
   }
 
+  /// \brief Add a UE to the DU-high and wait for the DU-high to finish the setup of the UE.
   void add_ue(rnti_t rnti)
   {
     using namespace std::chrono_literals;
@@ -277,19 +300,19 @@ public:
     for (; not sim_cu_cp.ue_created and count < 1000; ++count) {
       // Need to run one slot for scheduler to handle pending events.
       run_slot();
-      std::this_thread::sleep_for(50ms);
     }
     if (count == 1000) {
       report_fatal_error("Could not create UE");
     }
   }
 
+  // \brief Push a DL PDU to DU-high via F1-U interface.
   void push_pdcp_pdu() { sim_cu_up.du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.copy(), .pdcp_count = 0}); }
 
   du_high_configuration              cfg{};
-  cu_cp_bench_sim                    sim_cu_cp;
-  cu_up_bench_sim                    sim_cu_up;
-  phy_bench_sim                      sim_phy;
+  cu_cp_simulator                    sim_cu_cp;
+  cu_up_simulator                    sim_cu_up;
+  phy_simulator                      sim_phy;
   du_high_single_cell_worker_manager workers;
   std::unique_ptr<du_high>           du_hi;
   slot_point                         next_sl_tx{0, 0};
@@ -298,18 +321,20 @@ public:
   byte_buffer pdcp_pdu;
 };
 
-void benchmark_one_ue_dl_only(benchmarker& bm)
+/// \brief Benchmark DU-high for 1 UE, DL only traffic using an RLC UM bearer.
+void benchmark_one_ue_dl_only_rlc_um(benchmarker& bm)
 {
-  test_delimit_logger test_delim("DL only, 1 UE");
+  std::string         benchname = "DL only, 1 UE, RLC UM";
+  test_delimit_logger test_delim(benchname.c_str());
   du_high_bench       bench;
   bench.add_ue(to_rnti(0x4601));
 
   // Run benchmark.
-  bm.new_measure("DL, 1 UE", 1, [&bench]() mutable {
+  bm.new_measure(benchname, 1, [&bench]() mutable {
     // Push DL PDU.
     bench.push_pdcp_pdu();
 
-    // Run slot.
+    // Run slot to completion.
     bench.run_slot();
   });
 
@@ -321,20 +346,23 @@ void benchmark_one_ue_dl_only(benchmarker& bm)
 
 int main(int argc, char** argv)
 {
+  // Set DU-high logging.
   srslog::fetch_basic_logger("RLC").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("DU-F1").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::warning);
-
   srslog::init();
 
+  // Parses benchmark parameters.
   bench_params params{};
   parse_args(argc, argv, params);
 
+  // Start benchmarker.
   benchmarker bm("DU-High", params.nof_repetitions);
 
-  benchmark_one_ue_dl_only(bm);
+  // Run scenarios.
+  benchmark_one_ue_dl_only_rlc_um(bm);
 
   // Output results.
   bm.print_percentiles_time();
