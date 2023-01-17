@@ -138,7 +138,7 @@ void ue_configuration_procedure::remove_drbs_from_du_ue_context()
 
     // >> Get the DRB that is to be removed
     srsgnb_assert(ue->bearers.drbs().contains(drb_to_rem), "DRB-Id={} does not exist", drb_to_rem);
-    du_ue_drb& ue_drb = ue->bearers.drbs()[drb_to_rem];
+    du_ue_drb& ue_drb  = ue->bearers.drbs()[drb_to_rem];
     uint32_t   dl_teid = ue_drb.dluptnl_info_list[0].gtp_teid.value();
 
     // >> TODO: Disconnect the other Layers, e.g. MAC
