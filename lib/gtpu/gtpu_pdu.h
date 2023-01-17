@@ -51,7 +51,7 @@ constexpr unsigned GTPU_MSG_END_MARKER                               = 254;
 constexpr unsigned GTPU_MSG_DATA_PDU                                 = 255;
 
 // GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
-enum class gtpu_header_extension_type : uint8_t {
+enum class gtpu_extension_header_type : uint8_t {
   no_more_extension_headers = 0b00000000,
   reserved_0                = 0b00000001,
   reserved_1                = 0b00000010,
@@ -67,39 +67,41 @@ enum class gtpu_header_extension_type : uint8_t {
   reserved_2                = 0b11000001,
   reserved_3                = 0b11000010
 };
-inline const char* to_string(gtpu_header_extension_type type)
+inline const char* to_string(gtpu_extension_header_type type)
 {
   switch (type) {
-    case gtpu_header_extension_type::no_more_extension_headers:
+    case gtpu_extension_header_type::no_more_extension_headers:
       return "no more extension headers";
-    case gtpu_header_extension_type::service_class_indicator:
+    case gtpu_extension_header_type::service_class_indicator:
       return "service class indicator";
-    case gtpu_header_extension_type::udp_port:
+    case gtpu_extension_header_type::udp_port:
       return "UDP port";
-    case gtpu_header_extension_type::ran_container:
+    case gtpu_extension_header_type::ran_container:
       return "RAN container";
-    case gtpu_header_extension_type::long_pdcp_pdu_number_0:
-    case gtpu_header_extension_type::long_pdcp_pdu_number_1:
+    case gtpu_extension_header_type::long_pdcp_pdu_number_0:
+    case gtpu_extension_header_type::long_pdcp_pdu_number_1:
       return "long PDCP PDU number";
-    case gtpu_header_extension_type::xw_ran_container:
+    case gtpu_extension_header_type::xw_ran_container:
       return "XW RAN container";
-    case gtpu_header_extension_type::nr_ran_container:
+    case gtpu_extension_header_type::nr_ran_container:
       return "NR RAN container";
-    case gtpu_header_extension_type::pdu_session_container:
+    case gtpu_extension_header_type::pdu_session_container:
       return "PDU session container";
-    case gtpu_header_extension_type::pdcp_pdu_number:
+    case gtpu_extension_header_type::pdcp_pdu_number:
       return "PDCP PDU number";
-    case gtpu_header_extension_type::reserved_0:
-    case gtpu_header_extension_type::reserved_1:
-    case gtpu_header_extension_type::reserved_2:
-    case gtpu_header_extension_type::reserved_3:
+    case gtpu_extension_header_type::reserved_0:
+    case gtpu_extension_header_type::reserved_1:
+    case gtpu_extension_header_type::reserved_2:
+    case gtpu_extension_header_type::reserved_3:
       return "reserved";
+    default:
+      return "invalid";
   }
 };
 
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
-  gtpu_header_extension_type extension_header_type = gtpu_header_extension_type::no_more_extension_headers;
+  gtpu_extension_header_type extension_header_type = gtpu_extension_header_type::no_more_extension_headers;
   uint8_t                    length                = 0;
   std::vector<uint8_t>       container             = {};
 };
@@ -118,7 +120,7 @@ struct gtpu_header {
   uint32_t                           teid              = 0;
   uint16_t                           seq_number        = 0;
   uint8_t                            n_pdu             = 0;
-  gtpu_header_extension_type         next_ext_hdr_type = gtpu_header_extension_type::no_more_extension_headers;
+  gtpu_extension_header_type         next_ext_hdr_type = gtpu_extension_header_type::no_more_extension_headers;
   std::vector<gtpu_extension_header> ext_list          = {};
 };
 
@@ -126,35 +128,9 @@ bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger
 bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger);
 bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basic_logger& logger);
 
-inline bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_logger& logger)
-{
-  // flags
-  if (header.flags.version != GTPU_FLAGS_VERSION_V1) {
-    logger.error("gtpu_header - Unhandled GTP-U Version. Flags: {}", header.flags);
-    return false;
-  }
-  if (header.flags.protocol_type != GTPU_FLAGS_GTP_PROTOCOL) {
-    logger.error("gtpu_header - Unhandled Protocol Type. Flags: {}", header.flags);
-    return false;
-  }
-  if (header.flags.n_pdu) {
-    logger.error("gtpu_header - Unhandled Packet Number. Flags: {}", header.flags);
-    return false;
-  }
-  return true;
-}
-
-inline bool gtpu_supported_msg_type_check(const gtpu_header& header, srslog::basic_logger& logger)
-{
-  // msg_tpye
-  if (header.message_type != GTPU_MSG_DATA_PDU && header.message_type != GTPU_MSG_ECHO_REQUEST &&
-      header.message_type != GTPU_MSG_ECHO_RESPONSE && header.message_type != GTPU_MSG_ERROR_INDICATION &&
-      header.message_type != GTPU_MSG_END_MARKER) {
-    logger.error("gtpu_header - Unhandled message type: 0x%x", header.message_type);
-    return false;
-  }
-  return true;
-}
+bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_logger& logger);
+bool gtpu_supported_msg_type_check(const gtpu_header& header, srslog::basic_logger& logger);
+bool gtpu_supported_extension_header_check(const gtpu_extension_header_type& type, srslog::basic_logger& logger);
 
 } // namespace srsgnb
 
@@ -200,7 +176,7 @@ struct formatter<srsgnb::gtpu_header> {
 };
 
 template <>
-struct formatter<srsgnb::gtpu_header_extension_type> {
+struct formatter<srsgnb::gtpu_extension_header_type> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -208,7 +184,7 @@ struct formatter<srsgnb::gtpu_header_extension_type> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_header_extension_type& ext_type, FormatContext& ctx)
+  auto format(const srsgnb::gtpu_extension_header_type& ext_type, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", to_string(ext_type));

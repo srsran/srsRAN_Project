@@ -119,14 +119,14 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
 
   // Check extension header is correct
   ASSERT_EQ(hdr.ext_list.size(), 2);
-  ASSERT_EQ(hdr.ext_list[0].extension_header_type, gtpu_header_extension_type::pdcp_pdu_number);
+  ASSERT_EQ(hdr.ext_list[0].extension_header_type, gtpu_extension_header_type::pdcp_pdu_number);
   {
     const gtpu_extension_header& ext = hdr.ext_list[0];
     ASSERT_EQ(ext.container.size(), 2);
     ASSERT_EQ(ext.container[0], 0x00);
     ASSERT_EQ(ext.container[1], 0x01);
   }
-  ASSERT_EQ(hdr.ext_list[1].extension_header_type, gtpu_header_extension_type::pdu_session_container);
+  ASSERT_EQ(hdr.ext_list[1].extension_header_type, gtpu_extension_header_type::pdu_session_container);
   {
     const gtpu_extension_header& ext = hdr.ext_list[1];
     ASSERT_EQ(ext.container.size(), 2);
