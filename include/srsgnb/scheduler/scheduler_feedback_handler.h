@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/adt/variant.h"
 #include "srsgnb/mac/bsr_format.h"
 #include "srsgnb/mac/lcid_dl_sch.h"
 #include "srsgnb/ran/du_types.h"
@@ -59,10 +60,16 @@ struct ul_crc_indication {
 /// \brief UCI indication for a given UE.
 struct uci_indication {
   struct uci_pdu {
-    du_ue_index_t                                     ue_index;
-    rnti_t                                            crnti;
-    bool                                              sr_detected;
-    static_vector<bool, MAX_HARQ_VALUES_PER_HARQ_PDU> harqs;
+    struct uci_pucch_f0_or_f1_pdu {
+      constexpr static size_t                NOF_HARQS_PER_UCI = 2;
+      bool                                   sr_detected;
+      static_vector<bool, NOF_HARQS_PER_UCI> harqs;
+    };
+    struct uci_pusch_pdu {};
+
+    du_ue_index_t                                  ue_index;
+    rnti_t                                         crnti;
+    variant<uci_pucch_f0_or_f1_pdu, uci_pusch_pdu> pdu;
   };
   using uci_pdu_list = static_vector<uci_pdu, MAX_UCI_PDUS_PER_UCI_IND>;
 

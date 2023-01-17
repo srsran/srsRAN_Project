@@ -34,7 +34,9 @@ public:
   bool verify_sched_req_msg(du_ue_index_t ue_index)
   {
     for (unsigned i = 0; i != last_uci_ind.ucis.size(); ++i) {
-      if (last_uci_ind.ucis[i].ue_index == ue_index and last_uci_ind.ucis[i].sr_detected) {
+      if (last_uci_ind.ucis[i].ue_index == ue_index and
+          variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(last_uci_ind.ucis[i].pdu) and
+          variant_get<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(last_uci_ind.ucis[i].pdu).sr_detected) {
         return true;
       }
     }

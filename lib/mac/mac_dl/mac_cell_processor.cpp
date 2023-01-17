@@ -80,22 +80,24 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
   ind.cell_index = cell_cfg.cell_index;
   ind.ucis.resize(msg.ucis.size());
   for (unsigned i = 0; i != msg.ucis.size(); ++i) {
-    ind.ucis[i].ue_index    = ue_mng.get_ue_index(msg.ucis[i].rnti);
-    ind.ucis[i].crnti       = msg.ucis[i].rnti;
-    ind.ucis[i].sr_detected = false;
+    ind.ucis[i].ue_index = ue_mng.get_ue_index(msg.ucis[i].rnti);
+    ind.ucis[i].crnti    = msg.ucis[i].rnti;
 
     switch (msg.ucis[i].type) {
       case mac_uci_pdu::pdu_type::pucch_f0_or_f1: {
-        const auto& pucch = msg.ucis[i].pucch_f0_or_f1;
+        const auto&                                     pucch = msg.ucis[i].pucch_f0_or_f1;
+        uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
+        pdu.sr_detected = false;
         if (pucch.sr_info.has_value()) {
-          ind.ucis[i].sr_detected = pucch.sr_info->sr_detected;
+          pdu.sr_detected = pucch.sr_info->sr_detected;
         }
         if (pucch.harq_info.has_value()) {
-          ind.ucis[i].harqs.resize(pucch.harq_info->harqs.size());
-          for (unsigned j = 0; j != ind.ucis[i].harqs.size(); ++j) {
-            ind.ucis[i].harqs[j] = pucch.harq_info->harqs[j] == uci_pucch_f0_or_f1_harq_values::ack;
+          pdu.harqs.resize(pucch.harq_info->harqs.size());
+          for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
+            pdu.harqs[j] = pucch.harq_info->harqs[j] == uci_pucch_f0_or_f1_harq_values::ack;
           }
         }
+        ind.ucis[i].pdu = pdu;
       } break;
       default:
         report_fatal_error("Unsupported PUCCH format");

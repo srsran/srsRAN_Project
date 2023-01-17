@@ -220,8 +220,8 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
     uci.cell_index = ctx.cell_index_rx;
     uci.slot_rx    = ctx.slot_rx;
     uci.ucis.resize(1);
-    uci.ucis[0].ue_index    = ctx.ue_index;
-    uci.ucis[0].sr_detected = true;
+    uci.ucis[0].ue_index = ctx.ue_index;
+    uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu{.sr_detected = true};
     sched.handle_uci_indication(uci);
   });
 
