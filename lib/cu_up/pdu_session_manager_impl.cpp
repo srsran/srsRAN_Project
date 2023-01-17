@@ -182,7 +182,6 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
   pdu_session_modification_result pdu_session_result;
 
   // > DRB To Setup List
-
   for (const auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
     // prepare DRB creation result
     drb_setup_result drb_result = {};
@@ -200,7 +199,6 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
   }
 
   // > DRB To Modify List
-
   for (const auto& drb_to_mod : session.drb_to_modify_list_ng_ran) {
     // prepare DRB modification result
     drb_setup_result drb_result = {};
@@ -218,7 +216,6 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
   }
 
   // > DRB To Remove List
-
   auto& pdu_session = pdu_sessions[session.pdu_session_id];
   for (const auto& drb_to_rem : session.drb_to_rem_list_ng_ran) {
     // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.
