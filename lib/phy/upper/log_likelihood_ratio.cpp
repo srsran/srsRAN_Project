@@ -12,6 +12,10 @@
 #include "srsgnb/adt/optional.h"
 #include <cmath>
 
+#ifdef HAVE_SSE
+#include <immintrin.h>
+#endif // HAVE_SSE
+
 using namespace srsgnb;
 
 // Computes the sum when at least one of the summands is plus/minus infinity.
@@ -74,4 +78,64 @@ log_likelihood_ratio log_likelihood_ratio::quantize(float value, float range_lim
     clipped = std::copysign(range_limit, value);
   }
   return static_cast<value_type>(std::round(clipped / range_limit * LLR_MAX));
+}
+
+#ifdef HAVE_SSE
+static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len)
+{
+  // Number of bits in a byte.
+  static constexpr unsigned NBIT_BYTE = 8;
+
+  unsigned i_bit = 0;
+
+  for (; i_bit != (len / NBIT_BYTE) * NBIT_BYTE; i_bit += NBIT_BYTE) {
+    // Generate a mask from the LLR.
+    __m64 mask = _mm_cmpgt_pi8(_mm_set1_pi8(0), *reinterpret_cast<const __m64*>(&soft_bits[i_bit]));
+
+    // Reverse mask.
+    mask = _mm_shuffle_pi8(mask, _mm_set_pi8(0, 1, 2, 3, 4, 5, 6, 7));
+
+    // Obtain 8 packed hard bits from the mask.
+    uint8_t byte = _mm_movemask_pi8(mask);
+
+    // Insert hard bits into the bit buffer.
+    hard_bits.insert(byte, i_bit, NBIT_BYTE);
+  }
+
+  for (; i_bit != len; ++i_bit) {
+    unsigned hard_bit = soft_bits[i_bit] < 0 ? 1 : 0;
+
+    hard_bits.insert(hard_bit, i_bit, 1);
+  }
+}
+#endif // HAVE_SSE
+
+void srsgnb::hard_decision_packed(bit_buffer& hard_bits, span<const int8_t> soft_bits)
+{
+  srsgnb_assert(soft_bits.size() == hard_bits.size(),
+                "Input size (i.e., {}) and output size (i.e., {}) must be equal",
+                soft_bits.size(),
+                hard_bits.size());
+
+  unsigned nof_bits = hard_bits.size();
+
+#ifdef HAVE_SSE
+
+  hard_decision_simd(hard_bits, soft_bits.data(), nof_bits);
+
+#else
+  for (unsigned i_bit = 0; i_bit != nof_bits; ++i_bit) {
+    // Compute hard bit.
+    uint8_t hard_bit = soft_bits[i_bit] >= 0 ? 0 : 1;
+
+    // Insert into the bit buffer.
+    hard_bits.insert(hard_bit, i_bit, 1);
+  }
+#endif // HAVE_SSE
+}
+
+void srsgnb::hard_decision_packed(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
+{
+  span<const int8_t> soft_bits_span(reinterpret_cast<const int8_t*>(soft_bits.begin()), soft_bits.size());
+  srsgnb::hard_decision_packed(hard_bits, soft_bits_span);
 }

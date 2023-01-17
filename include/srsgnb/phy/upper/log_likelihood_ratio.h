@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/support/srsgnb_assert.h"
@@ -243,16 +244,14 @@ namespace detail {
 
 /// Checks if \c T is compatible with a span of log_likelihood_ratios.
 template <typename T, typename = void>
-struct is_llr_span_compatible : std::false_type {
-};
+struct is_llr_span_compatible : std::false_type {};
 
 /// Checks if \c T is compatible with a span of log_likelihood_ratios.
 template <typename T>
 struct is_llr_span_compatible<T,
                               std::enable_if_t<std::is_convertible<T, span<log_likelihood_ratio>>::value ||
                                                std::is_convertible<T, span<const log_likelihood_ratio>>::value>>
-  : std::true_type {
-};
+  : std::true_type {};
 
 } // namespace detail
 
@@ -300,6 +299,12 @@ inline int log_likelihood_ratio::norm_squared(const T& x)
   return std::accumulate(
       x.begin(), x.end(), 0, [](int a, log_likelihood_ratio b) { return a + b.to_int() * b.to_int(); });
 }
+
+/// \brief obtains hard bits from a vector of LLR.
+// TODO(joaquim): improve documentation.
+void hard_decision_packed(bit_buffer& hard_bits, span<const int8_t> soft_bits);
+void hard_decision_packed(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits);
+
 } // namespace srsgnb
 
 namespace fmt {
