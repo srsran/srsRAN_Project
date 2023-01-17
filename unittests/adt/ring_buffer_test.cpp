@@ -244,6 +244,28 @@ TYPED_TEST(copyable_ring_tester,
   ASSERT_EQ(ring1, ring2);
 }
 
+TYPED_TEST(copyable_ring_tester, operator_equal_for_different_scenarios)
+{
+  auto ring1 = this->create_semi_filled_ring();
+
+  auto ring_eq(ring1);
+  ASSERT_EQ(ring_eq, ring1);
+
+  auto ring_diff_val(ring1);
+  ring_diff_val[test_rgen::uniform_int<unsigned>(0, ring_diff_val.size() - 1)]++;
+  ASSERT_NE(ring_diff_val, ring1);
+
+  auto ring_shorter(ring1);
+  ring_shorter.pop();
+  ASSERT_NE(ring_shorter, ring1);
+
+  if (not ring1.full()) {
+    auto ring_longer(ring1);
+    ring_longer.push(this->create_value());
+    ASSERT_NE(ring_longer, ring1);
+  }
+}
+
 TEST(dyn_ring_buffer_test, when_force_power2_flag_is_set_then_buffer_size_is_automatically_set_to_closest_power_of_2)
 {
   unsigned               buffer_size = test_rgen::uniform_int<unsigned>(1, 1024);
@@ -268,6 +290,20 @@ TEST(dyn_ring_buffer_test,
     ASSERT_EQ(C::object_count(), nof_objs);
   }
   ASSERT_EQ(C::object_count(), 0);
+}
+
+TYPED_TEST(copyable_ring_tester, push_in_batches)
+{
+  auto                                             ring = this->create_empty_ring();
+  std::vector<typename decltype(ring)::value_type> vec;
+  unsigned                                         nof_objs = test_rgen::uniform_int<unsigned>(1, ring.max_size());
+  for (unsigned i = 0; i != nof_objs; ++i) {
+    vec.push_back(this->create_value());
+  }
+
+  ring.push(vec);
+  ASSERT_EQ(ring.size(), vec.size());
+  ASSERT_TRUE(std::equal(vec.begin(), vec.end(), ring.begin(), ring.end()));
 }
 
 TEST(blocking_queue_test, api)

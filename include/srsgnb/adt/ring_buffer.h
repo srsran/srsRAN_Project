@@ -13,6 +13,7 @@
 #include "srsgnb/adt/detail/operator.h"
 #include "srsgnb/adt/detail/type_storage.h"
 #include "srsgnb/adt/expected.h"
+#include "srsgnb/adt/span.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 #include <array>
@@ -31,7 +32,7 @@ namespace detail {
 template <typename Container, bool ForcePower2Size>
 class ring_buffer_storage;
 
-/// \brief Specialization of internal circular_buffer data storage for the case a std::array is used.
+/// \brief Specialization of internal ring_buffer data storage for the case a std::array is used.
 /// This specialization tries to leverage the fact that the buffer size is known at compile time. If \c N is a power
 /// of 2, the compiler should be able to convert the % operation into a bit-wise and.
 template <typename T, size_t N, bool ForcePower2Size>
@@ -71,12 +72,17 @@ public:
 
   static unsigned advance_pos_impl(unsigned pos, unsigned n) noexcept { return (pos + n) % max_size(); }
 
+  void set_size(size_t sz)
+  {
+    // do nothing.
+  }
+
   size_t           rpos  = 0; ///< Reading position
   size_t           count = 0; ///< Number of elements in the buffer
   std::array<T, N> buffer;
 };
 
-/// \brief Specialization of internal circular_buffer data storage for the case a std::vector is used.
+/// \brief Specialization of internal ring_buffer data storage for the case a std::vector is used.
 /// For this specialization, the compiler does not know the size of the buffer at compile time.
 template <typename T>
 class ring_buffer_storage<std::vector<T>, false>
@@ -110,8 +116,7 @@ public:
 
   void set_size(size_t sz)
   {
-    srsgnb_assert(buffer.empty() or sz == buffer.size(),
-                  "Dynamic resizes not supported when circular buffer is not empty");
+    srsgnb_assert(count == 0 or sz == buffer.size(), "Dynamic resizes not supported when circular buffer is not empty");
     buffer.resize(sz);
   }
 
@@ -122,7 +127,7 @@ public:
   std::vector<T> buffer;    ///< Container where elements are stored
 };
 
-/// \brief Specialization of internal circular_buffer data storage for the case a std::vector is used.
+/// \brief Specialization of internal ring_buffer data storage for the case a std::vector is used.
 /// For this specialization, the compiler does not know the size of the buffer at compile time, but it knows that it is
 /// a power of 2. Thus, it is able to avoid the % operator, and uses instead a bit-wise and.
 template <typename T>
@@ -282,7 +287,8 @@ public:
   constexpr base_ring_buffer() = default;
   ~base_ring_buffer() { clear(); }
   explicit base_ring_buffer(size_type sz) : buffer(sz) {}
-  base_ring_buffer(const base_ring_buffer& other) noexcept : buffer(other.size(), other.buffer.rpos, other.buffer.count)
+  base_ring_buffer(const base_ring_buffer& other) noexcept :
+    buffer(other.max_size(), other.buffer.rpos, other.buffer.count)
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     for (unsigned i = 0; i != buffer.count; ++i) {
@@ -296,6 +302,7 @@ public:
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     if (this != &other) {
       clear();
+      buffer.set_size(other.buffer.buffer.size());
       buffer.rpos  = other.buffer.rpos;
       buffer.count = other.buffer.count;
       for (unsigned i = 0; i != buffer.count; ++i) {
@@ -307,33 +314,45 @@ public:
   }
   base_ring_buffer& operator=(base_ring_buffer&& other) noexcept = default;
 
-  /// \brief Checks the maximum number of elements that can be stored in the circular_buffer.
+  /// \brief Checks the maximum number of elements that can be stored in the ring_buffer.
   constexpr size_t max_size() const noexcept { return buffer.max_size(); }
 
-  /// \brief Checks if circular_buffer is full.
+  /// \brief Checks if ring_buffer is full.
   bool full() const noexcept { return size() == max_size(); }
 
-  /// \brief Checks if circular_buffer is empty.
+  /// \brief Checks if ring_buffer is empty.
   constexpr bool empty() const noexcept { return buffer.count == 0; }
 
-  /// \brief Checks the number of elements currently stored in the circular_buffer.
+  /// \brief Checks the number of elements currently stored in the ring_buffer.
   constexpr size_t size() const noexcept { return buffer.count; }
 
-  /// \brief Push an element to the circular buffer. Asserts if circular_buffer is full.
-  template <typename U>
+  /// \brief Push an element to the ring buffer. Asserts if ring_buffer is full.
+  template <typename U, std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
   void push(U&& u) noexcept
   {
-    static_assert(std::is_convertible<U, T>::value, "Invalid type passed to ::push");
     srsgnb_assert(not full(), "Circular buffer is full.");
     buffer.buffer[get_wpos()].emplace(std::forward<U>(u));
     buffer.count++;
   }
 
-  /// \brief Tries to push an element to the circular buffer. If circular_buffer is full, returns false.
-  template <typename U>
+  /// \brief Push elements of a range into the ring buffer in a batch. Asserts if ring_buffer is full.
+  template <typename It>
+  void push(It b, It e) noexcept
+  {
+    static_assert(std::is_convertible<std::decay_t<decltype(*std::declval<It>())>, T>::value,
+                  "Invalid type passed to ::push");
+    for (auto it = b; it != e; ++it) {
+      push(*it);
+    }
+  }
+
+  /// \brief Push elements of a span into the ring buffer in a batch. Asserts if ring_buffer is full.
+  void push(span<value_type> range) noexcept { push(range.begin(), range.end()); }
+
+  /// \brief Tries to push an element to the circular buffer. If ring_buffer is full, returns false.
+  template <typename U, std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
   bool try_push(U&& u) noexcept
   {
-    static_assert(std::is_convertible<U, T>::value, "Invalid type passed to ::try_push");
     if (full()) {
       return false;
     }
@@ -341,7 +360,26 @@ public:
     return true;
   }
 
-  /// \brief Pops element from circular_buffer. If circular_buffer is empty, asserts.
+  /// \brief Pushes elements to the ring buffer in a batch. Stops when ring_buffer is full.
+  /// \return Number of elements pushed.
+  template <typename It>
+  unsigned try_push(It b, It e) noexcept
+  {
+    static_assert(std::is_convertible<typename It::value_type, T>::value, "Invalid type passed to ::push");
+    unsigned count = 0;
+    for (auto it = b; it != e; ++it) {
+      if (not push(*it)) {
+        return count;
+      }
+      ++count;
+    }
+    return count;
+  }
+
+  /// \brief Pushes elements of a span into the ring buffer in a batch. Stops when ring_buffer is full.
+  unsigned try_push(span<value_type> range) noexcept { return try_push(range.begin(), range.end()); }
+
+  /// \brief Pops element from ring_buffer. If ring_buffer is empty, asserts.
   void pop()
   {
     srsgnb_assert(not empty(), "Cannot call pop() in empty circular buffer");
@@ -350,7 +388,27 @@ public:
     buffer.count--;
   }
 
-  /// \brief Fetches the top position of circular_buffer. The function asserts if empty.
+  /// \brief Pops elements from ring_buffer into a range.
+  /// \return Number of popped elements.
+  template <typename It>
+  unsigned pop_into(It b, It e)
+  {
+    unsigned orig_size = size();
+    for (auto it = b; it != e; ++it) {
+      if (empty()) {
+        break;
+      }
+      *it = std::move(buffer.buffer[buffer.rpos].get());
+      pop();
+    }
+    return orig_size - size();
+  }
+
+  /// \brief Pops elements from ring_buffer into a span.
+  /// \return Number of popped elements.
+  unsigned pop_into(span<value_type> range) { return pop_into(range.begin(), range.end()); }
+
+  /// \brief Fetches the top position of ring_buffer. The function asserts if empty.
   T& top()
   {
     srsgnb_assert(not empty(), "Cannot call top() in empty circular buffer");
@@ -362,7 +420,7 @@ public:
     return buffer.buffer[buffer.rpos].get();
   }
 
-  /// \brief Clears the content of the circular_buffer.
+  /// \brief Clears the content of the ring_buffer.
   void clear()
   {
     for (unsigned i = 0; i != buffer.count; ++i) {
@@ -372,7 +430,7 @@ public:
     buffer.count = 0;
   }
 
-  /// \brief Random access to position of the circular_buffer.
+  /// \brief Random access to position of the ring_buffer.
   T& operator[](index_type i)
   {
     srsgnb_assert(i < size(), "Out-of-bounds access to circular buffer ({} >= {})", i, buffer.count);
