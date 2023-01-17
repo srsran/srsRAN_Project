@@ -40,6 +40,7 @@ protected:
     srslog::flush();
   }
 
+  timer_manager                                        timers;
   std::unique_ptr<gtpu_demux_ctrl>                     gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_f1u_bearer                                     f1u_bearer;
@@ -47,7 +48,6 @@ protected:
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
   network_interface_config                             net_config;
   srslog::basic_logger&                                logger = srslog::fetch_basic_logger("TEST", false);
-  timer_manager                                        timers;
 };
 
 /// PDU session handling tests (creation/deletion)
