@@ -11,7 +11,7 @@
 #pragma once
 
 #include "task_executor.h"
-#include "srsgnb/adt/ring_buffer.h"
+#include "srsgnb/adt/blocking_queue.h"
 #include "srsgnb/adt/unique_function.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/unique_thread.h"
@@ -87,7 +87,7 @@ private:
   srslog::basic_logger&       logger;
 
   // Queue of tasks.
-  srsgnb::dyn_blocking_queue<task_t> pending_tasks;
+  srsgnb::blocking_queue<task_t> pending_tasks;
 
   unique_thread t_handle;
 };

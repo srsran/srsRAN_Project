@@ -20,10 +20,11 @@ add_executable(byte_buffer_test
 target_link_libraries(byte_buffer_test srslog gtest gtest_main)
 gtest_discover_tests(byte_buffer_test)
 
-add_executable(ring_buffer_test ring_buffer_test.cpp)
+add_executable(ring_buffer_test ring_buffer_test.cpp blocking_queue_test.cpp)
 target_link_libraries(ring_buffer_test srslog gtest gtest_main)
 add_test(ring_buffer_test ring_buffer_test)
 set_tests_properties(ring_buffer_test PROPERTIES LABELS "tsan")
+gtest_discover_tests(ring_buffer_test)
 
 add_executable(circular_map_test circular_map_test.cpp)
 target_link_libraries(circular_map_test srslog)

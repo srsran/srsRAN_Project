@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "srsgnb/adt/blocking_queue.h"
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/ring_buffer.h"
 #include "srsgnb/rlc/rlc_tx.h"
 #include <cstdint>
 #include <functional>
@@ -120,7 +120,7 @@ private:
   std::atomic<uint32_t> unread_bytes = {0};
   std::atomic<uint32_t> n_sdus       = {0};
 
-  dyn_blocking_queue<rlc_sdu, push_callback, pop_callback> queue;
+  blocking_queue<rlc_sdu, push_callback, pop_callback> queue;
 };
 
 } // namespace srsgnb

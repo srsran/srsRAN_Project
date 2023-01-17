@@ -43,7 +43,7 @@ protected:
           int> = 0>
   ring_type create_empty_ring()
   {
-    ring_type ring{test_rgen::uniform_int<unsigned>(1, 1000)};
+    ring_type ring{test_rgen::uniform_int<unsigned>(2, 1000)};
     // randomize read position of the ring.
     unsigned nof_objs = test_rgen::uniform_int<unsigned>(0, ring.max_size());
     for (unsigned i = 0; i != nof_objs; ++i) {
@@ -320,80 +320,4 @@ TYPED_TEST(copyable_ring_tester, pop_in_batches)
   ASSERT_EQ(ring.pop_into(vec2), vec2.size());
   ASSERT_TRUE(ring.empty());
   ASSERT_EQ(vec2, vec);
-}
-
-TEST(blocking_queue_test, api)
-{
-  dyn_blocking_queue<int> queue(100);
-
-  std::thread t([&queue]() {
-    int count = 0;
-    while (true) {
-      int val = queue.pop_blocking();
-      if (queue.is_stopped()) {
-        break;
-      }
-      ASSERT_EQ(val, count);
-      count++;
-    }
-  });
-
-  for (int i = 0; i < 10000; ++i) {
-    queue.push_blocking(i);
-  }
-
-  queue.stop();
-  t.join();
-}
-
-TEST(blocking_queue_test, blocking_push_and_pop_in_separate_threads)
-{
-  std::thread t;
-
-  dyn_blocking_queue<int> queue(100);
-
-  t = std::thread([&queue]() {
-    int count = 0;
-    while (queue.push_blocking(count++)) {
-    }
-  });
-
-  for (int i = 0; i < 10000; ++i) {
-    ASSERT_EQ(queue.pop_blocking(), i);
-  }
-
-  queue.stop();
-  t.join();
-}
-
-TEST(blocking_queue_test, blocking_push_and_pop_in_batches_in_separate_threads)
-{
-  std::thread t;
-
-  std::vector<int> vec(test_rgen::uniform_int<unsigned>(1, 10000));
-  for (unsigned i = 0; i != vec.size(); ++i) {
-    vec[i] = i;
-  }
-
-  dyn_blocking_queue<int> queue(test_rgen::uniform_int<unsigned>(100, 1000));
-  t = std::thread([&queue, &vec]() {
-    for (unsigned i = 0; i < vec.size();) {
-      unsigned batch_size = test_rgen::uniform_int<unsigned>(1, vec.size() - i);
-      unsigned n          = queue.push_blocking(span<int>(vec).subspan(i, batch_size));
-      EXPECT_LE(n, batch_size);
-      i += n;
-    }
-  });
-
-  std::vector<int> vec2(vec.size());
-  for (unsigned i = 0; i < vec.size();) {
-    unsigned batch_size = test_rgen::uniform_int<unsigned>(1, vec.size() - i);
-    unsigned n          = queue.pop_blocking(vec2.begin() + i, vec2.begin() + i + batch_size);
-    i += n;
-  }
-
-  ASSERT_EQ(vec2, vec);
-
-  queue.stop();
-  t.join();
 }

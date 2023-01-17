@@ -11,7 +11,7 @@
 #pragma once
 
 #include "task_executor.h"
-#include "srsgnb/adt/ring_buffer.h"
+#include "srsgnb/adt/blocking_queue.h"
 
 namespace srsgnb {
 
@@ -101,8 +101,8 @@ private:
     srsgnb_assert(t_id == std::this_thread::get_id(), "run() caller thread should not change.");
   }
 
-  std::thread::id                 t_id;
-  dyn_blocking_queue<unique_task> pending_tasks;
+  std::thread::id             t_id;
+  blocking_queue<unique_task> pending_tasks;
 };
 
 } // namespace srsgnb

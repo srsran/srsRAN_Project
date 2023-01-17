@@ -11,6 +11,7 @@
 #pragma once
 
 #include "radio_zmq_tx_channel_fsm.h"
+#include "srsgnb/adt/blocking_queue.h"
 #include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsgnb/radio/radio_notification_handler.h"
 #include "srsgnb/srslog/srslog.h"
@@ -49,7 +50,7 @@ private:
   /// Logger.
   srslog::basic_logger& logger;
   /// Stores transmit buffer.
-  dyn_blocking_queue<radio_sample_type> circular_buffer;
+  blocking_queue<radio_sample_type> circular_buffer;
   /// Transmission buffer.
   std::vector<radio_sample_type> buffer;
   /// Notification handler.

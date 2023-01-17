@@ -11,7 +11,7 @@
 #pragma once
 
 #include "task_executor.h"
-#include "srsgnb/adt/ring_buffer.h"
+#include "srsgnb/adt/blocking_queue.h"
 
 namespace srsgnb {
 
@@ -48,7 +48,7 @@ public:
   }
 
 private:
-  dyn_blocking_queue<unique_task> pending_tasks;
+  blocking_queue<unique_task> pending_tasks;
 };
 
 } // namespace srsgnb

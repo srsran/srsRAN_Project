@@ -285,8 +285,10 @@ private:
 
   static uint32_t get_seed(uint32_t seed = 0)
   {
-    static uint32_t locked_seed = seed;
-    fmt::print("-- TEST random generator seed: {}\n", locked_seed);
+    static uint32_t locked_seed = [](uint32_t seed_) {
+      fmt::print("-- TEST random generator seed: {}\n", seed_);
+      return seed_;
+    }(seed);
     return locked_seed;
   }
 };
