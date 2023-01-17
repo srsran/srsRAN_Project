@@ -85,19 +85,44 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 
     switch (msg.ucis[i].type) {
       case mac_uci_pdu::pdu_type::pucch_f0_or_f1: {
-        const auto&                                     pucch = msg.ucis[i].pucch_f0_or_f1;
+        const auto& pucch = msg.ucis[i].pucch_f0_or_f1;
+
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
-        pdu.sr_detected = false;
         if (pucch.sr_info.has_value()) {
           pdu.sr_detected = pucch.sr_info->sr_detected;
         }
         if (pucch.harq_info.has_value()) {
-          pdu.harqs.resize(pucch.harq_info->harqs.size());
-          for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-            pdu.harqs[j] = pucch.harq_info->harqs[j] == uci_pucch_f0_or_f1_harq_values::ack;
+          // NOTES:
+          // - We report to the scheduler only the UCI HARQ-ACKs that contain either an ACK or NACK; we ignore the
+          // UCIc with DTX. In that case, the scheduler will not receive the notification and the HARQ will eventually
+          // retransmit the packet.
+          // - This is to handle the case of simultaneous SR + HARQ UCI, for which we receive 2 UCI PDUs from the PHY,
+          // 1 for SR + HARQ, 1 for HARQ only; note that only the SR + HARQ UCI is filled by the UE, meaning that we
+          // expect the received HARQ-only UCI to be DTX. If reported to the scheduler, the UCI with HARQ-ACK only would
+          // be erroneously treated as a NACK (as the scheduler only accepts ACK or NACK).
+
+          // NOTE: There is a potential error that need to be handled below, which occurs when there's the 2-bit report
+          // {DTX, (N)ACK}; if this were reported, we would skip the first bit (i.e. DTX) and report the second (i.e.
+          // (N)ACK). Since in the scheduler the HARQ-ACK bits for a given UCI are processed in sequence, the
+          // notification of the second bit of {DTX, (N)ACK} would be seen by the scheduler as the first bit of the
+          // expected 2-bit reporting. To prevent this, we assume that PUCCH Format 0 or 1 UCI is valid if none of the 1
+          // or 2 bits report is DTX (not detected).
+          auto is_valid_harq_ack{true};
+          for (unsigned n = 0; n < pucch.harq_info->harqs.size(); ++n) {
+            if (pucch.harq_info->harqs[n] == uci_pucch_f0_or_f1_harq_values::dtx) {
+              is_valid_harq_ack = false;
+              break;
+            }
+          }
+
+          if (is_valid_harq_ack) {
+            pdu.harqs.resize(pucch.harq_info->harqs.size());
+            for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
+              pdu.harqs[j] = pucch.harq_info->harqs[j] == uci_pucch_f0_or_f1_harq_values::ack;
+            }
           }
         }
-        ind.ucis[i].pdu = pdu;
+        ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
       } break;
       case mac_uci_pdu::pdu_type::pusch: {
         const auto&                            pusch = msg.ucis[i].pusch;
@@ -105,7 +130,7 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
         if (pusch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
           pdu.harqs = pusch.harq_info->payload;
         }
-        ind.ucis[i].pdu = pdu;
+        ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>(pdu);
       } break;
       default:
         report_fatal_error("Unsupported PUCCH format");
