@@ -12,16 +12,18 @@
 
 namespace srsgnb {
 
-bool gtpu_read_ext_header(bit_decoder&           decoder,
-                          uint8_t                header_type,
-                          gtpu_extension_header& ext,
-                          uint8_t&               next_extension_header_type,
-                          srslog::basic_logger&  logger);
+bool gtpu_read_ext_header(bit_decoder&                      decoder,
+                          const gtpu_header_extension_type& header_type,
+                          gtpu_extension_header&            ext,
+                          gtpu_header_extension_type&       next_extension_header_type,
+                          srslog::basic_logger&             logger);
 
 bool gtpu_write_ext_header(bit_encoder&                 encoder,
                            const gtpu_extension_header& ext,
-                           uint8_t                      next_extension_header_type,
+                           gtpu_header_extension_type   next_extension_header_type,
                            srslog::basic_logger&        logger);
+
+void gtpu_unpack_ext_header_type(bit_decoder& decoder, gtpu_header_extension_type& type);
 
 /****************************************************************************
  * Header pack/unpack helper functions
@@ -70,13 +72,13 @@ bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basi
     encoder.pack(header.n_pdu, 8);
 
     // Next Extension Header Type
-    encoder.pack(header.next_ext_hdr_type, 8);
+    encoder.pack(static_cast<uint8_t>(header.next_ext_hdr_type), 8);
   }
 
   // Write header extensions
   for (unsigned i = 0; i < header.ext_list.size(); ++i) {
     if (i == (header.ext_list.size() - 1)) {
-      gtpu_write_ext_header(encoder, header.ext_list[i], GTPU_EXT_NO_MORE_EXTENSION_HEADERS, logger);
+      gtpu_write_ext_header(encoder, header.ext_list[i], gtpu_header_extension_type::no_more_extension_headers, logger);
     } else {
       gtpu_write_ext_header(encoder, header.ext_list[i], header.ext_list[i + 1].extension_header_type, logger);
     }
@@ -150,23 +152,23 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
     decoder.unpack(header.n_pdu, 8);
 
     // Next Extension Header Type
-    decoder.unpack(header.next_ext_hdr_type, 8);
+    gtpu_unpack_ext_header_type(decoder, header.next_ext_hdr_type);
   }
 
   // Read Header Extensions
   if (header.flags.ext_hdr) {
-    if (header.next_ext_hdr_type == GTPU_EXT_NO_MORE_EXTENSION_HEADERS) {
+    if (header.next_ext_hdr_type == gtpu_header_extension_type::no_more_extension_headers) {
       logger.error(pdu.begin(), pdu.end(), "Error E flag is set, but there are no extra extensions");
       return false;
     }
-    uint8_t next_extension_header_type = 0;
+    gtpu_header_extension_type next_extension_header_type = gtpu_header_extension_type::no_more_extension_headers;
     do {
       gtpu_extension_header ext = {};
       if (!gtpu_read_ext_header(decoder, header.next_ext_hdr_type, ext, next_extension_header_type, logger)) {
         return false;
       }
       header.ext_list.push_back(ext);
-    } while (next_extension_header_type != GTPU_EXT_NO_MORE_EXTENSION_HEADERS);
+    } while (next_extension_header_type != gtpu_header_extension_type::no_more_extension_headers);
   }
   // Trim header
   pdu.trim_head(decoder.nof_bytes());
@@ -174,30 +176,15 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
   return true;
 }
 
-bool gtpu_read_ext_header(bit_decoder&           decoder,
-                          uint8_t                header_type,
-                          gtpu_extension_header& ext,
-                          uint8_t&               next_extension_header_type,
-                          srslog::basic_logger&  logger)
+bool gtpu_read_ext_header(bit_decoder&                      decoder,
+                          const gtpu_header_extension_type& header_type,
+                          gtpu_extension_header&            ext,
+                          gtpu_header_extension_type&       next_extension_header_type,
+                          srslog::basic_logger&             logger)
 {
-  switch (header_type) {
-    case GTPU_EXT_NO_MORE_EXTENSION_HEADERS:
-      logger.error("Called for header extension unpacking, but there is no extension to unpack");
-      return false;
-    case GTPU_EXT_RESERVED_0:
-    case GTPU_EXT_RESERVED_1:
-    case GTPU_EXT_RESERVED_2:
-    case GTPU_EXT_RESERVED_3:
-      logger.error("Header extension type is reserved");
-      return false;
-    case GTPU_EXT_HEADER_PDU_SESSION_CONTAINER:
-      logger.debug("Unpacking PDU session container");
-      break;
-    default:
-      logger.error("Unhandled header extension");
-      return false;
-  }
+  // TODO check valid read extension types
 
+  // Extract length indicator
   decoder.unpack(ext.length, 8);
 
   // The payload size is four bytes per the indicated length,
@@ -214,7 +201,7 @@ bool gtpu_read_ext_header(bit_decoder&           decoder,
   }
 
   // Extract next extension header type
-  decoder.unpack(next_extension_header_type, 8);
+  gtpu_unpack_ext_header_type(decoder, next_extension_header_type);
 
   ext.extension_header_type = header_type;
   return true;
@@ -222,26 +209,10 @@ bool gtpu_read_ext_header(bit_decoder&           decoder,
 
 bool gtpu_write_ext_header(bit_encoder&                 encoder,
                            const gtpu_extension_header& ext,
-                           uint8_t                      next_extension_header_type,
+                           gtpu_header_extension_type   next_extension_header_type,
                            srslog::basic_logger&        logger)
 {
-  switch (ext.extension_header_type) {
-    case GTPU_EXT_NO_MORE_EXTENSION_HEADERS:
-      logger.error("Called for header extension packing, but there is no extension to unpack");
-      return false;
-    case GTPU_EXT_RESERVED_0:
-    case GTPU_EXT_RESERVED_1:
-    case GTPU_EXT_RESERVED_2:
-    case GTPU_EXT_RESERVED_3:
-      logger.error("Header extension type is reserved");
-      return false;
-    case GTPU_EXT_HEADER_PDU_SESSION_CONTAINER:
-      logger.debug("Packing PDU session container");
-      break;
-    default:
-      logger.error("Unhandled header extension packing");
-      return false;
-  }
+  // TODO check valid write extension types
 
   uint8_t payload = 1 + ext.container.size() + 1;
   srsgnb_assert(payload % 4 == 0, "Invalid GTP-U extension size");
@@ -257,7 +228,14 @@ bool gtpu_write_ext_header(bit_encoder&                 encoder,
   }
 
   // Pack next header extension type
-  encoder.pack(next_extension_header_type, 8);
+  encoder.pack(static_cast<uint8_t>(next_extension_header_type), 8);
   return true;
+}
+
+void gtpu_unpack_ext_header_type(bit_decoder& decoder, gtpu_header_extension_type& type)
+{
+  uint8_t tmp = 0;
+  decoder.unpack(tmp, 8);
+  type = static_cast<gtpu_header_extension_type>(tmp);
 }
 } // namespace srsgnb

@@ -119,7 +119,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
 
   // Check extension header is correct
   ASSERT_EQ(hdr.ext_list.size(), 1);
-  ASSERT_EQ(hdr.ext_list[0].extension_header_type, GTPU_EXT_HEADER_PDU_SESSION_CONTAINER);
+  ASSERT_EQ(hdr.ext_list[0].extension_header_type, gtpu_header_extension_type::pdu_session_container);
   const gtpu_extension_header& ext = hdr.ext_list[0];
   ASSERT_EQ(ext.container.size(), 2);
   ASSERT_EQ(ext.container[0], 0x00);
@@ -134,6 +134,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
   ASSERT_EQ(repack_buf.length(), orig_vec.length());
   ASSERT_EQ(repack_buf, orig_vec);
 }
+
 /// \brief Test correct creation of GTP-U entity
 TEST_F(gtpu_test, entity_creation)
 {

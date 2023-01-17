@@ -51,26 +51,57 @@ constexpr unsigned GTPU_MSG_END_MARKER                               = 254;
 constexpr unsigned GTPU_MSG_DATA_PDU                                 = 255;
 
 // GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
-constexpr unsigned GTPU_EXT_NO_MORE_EXTENSION_HEADERS      = 0b00000000;
-constexpr unsigned GTPU_EXT_RESERVED_0                     = 0b00000001;
-constexpr unsigned GTPU_EXT_RESERVED_1                     = 0b00000010;
-constexpr unsigned GTPU_EXT_HEADER_LONG_PDCP_PDU_NUMBER_0  = 0b00000011;
-constexpr unsigned GTPU_EXT_HEADER_SERVICE_CLASS_INDICATOR = 0b00100000;
-constexpr unsigned GTPU_EXT_HEADER_UDP_PORT                = 0b11000000;
-constexpr unsigned GTPU_EXT_HEADER_RAN_CONTAINER           = 0b10000001;
-constexpr unsigned GTPU_EXT_HEADER_LONG_PDCP_PDU_NUMBER_1  = 0b10000010;
-constexpr unsigned GTPU_EXT_HEADER_XW_RAN_CONTAINER        = 0b10000011;
-constexpr unsigned GTPU_EXT_HEADER_NR_RAN_CONTAINER        = 0b10000100;
-constexpr unsigned GTPU_EXT_HEADER_PDU_SESSION_CONTAINER   = 0b10000101;
-constexpr unsigned GTPU_EXT_HEADER_PDCP_PDU_NUMBER         = 0b11000000;
-constexpr unsigned GTPU_EXT_RESERVED_2                     = 0b11000001;
-constexpr unsigned GTPU_EXT_RESERVED_3                     = 0b11000010;
+enum class gtpu_header_extension_type : uint8_t {
+  no_more_extension_headers = 0b00000000,
+  reserved_0                = 0b00000001,
+  reserved_1                = 0b00000010,
+  long_pdcp_pdu_number_0    = 0b00000011,
+  service_class_indicator   = 0b00100000,
+  udp_port                  = 0b01000000,
+  ran_container             = 0b10000001,
+  long_pdcp_pdu_number_1    = 0b10000010,
+  xw_ran_container          = 0b10000011,
+  nr_ran_container          = 0b10000100,
+  pdu_session_container     = 0b10000101,
+  pdcp_pdu_number           = 0b11000000,
+  reserved_2                = 0b11000001,
+  reserved_3                = 0b11000010
+};
+inline const char* to_string(gtpu_header_extension_type type)
+{
+  switch (type) {
+    case gtpu_header_extension_type::no_more_extension_headers:
+      return "no more extension headers";
+    case gtpu_header_extension_type::service_class_indicator:
+      return "service class indicator";
+    case gtpu_header_extension_type::udp_port:
+      return "UDP port";
+    case gtpu_header_extension_type::ran_container:
+      return "RAN container";
+    case gtpu_header_extension_type::long_pdcp_pdu_number_0:
+    case gtpu_header_extension_type::long_pdcp_pdu_number_1:
+      return "long PDCP PDU number";
+    case gtpu_header_extension_type::xw_ran_container:
+      return "XW RAN container";
+    case gtpu_header_extension_type::nr_ran_container:
+      return "NR RAN container";
+    case gtpu_header_extension_type::pdu_session_container:
+      return "PDU session container";
+    case gtpu_header_extension_type::pdcp_pdu_number:
+      return "PDCP PDU number";
+    case gtpu_header_extension_type::reserved_0:
+    case gtpu_header_extension_type::reserved_1:
+    case gtpu_header_extension_type::reserved_2:
+    case gtpu_header_extension_type::reserved_3:
+      return "reserved";
+  }
+};
 
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {
-  uint8_t              extension_header_type = 0;
-  uint8_t              length                = 0;
-  std::vector<uint8_t> container             = {};
+  gtpu_header_extension_type extension_header_type = gtpu_header_extension_type::no_more_extension_headers;
+  uint8_t                    length                = 0;
+  std::vector<uint8_t>       container             = {};
 };
 
 /// GTP-U header, including extensions
@@ -87,7 +118,7 @@ struct gtpu_header {
   uint32_t                           teid              = 0;
   uint16_t                           seq_number        = 0;
   uint8_t                            n_pdu             = 0;
-  uint8_t                            next_ext_hdr_type = 0;
+  gtpu_header_extension_type         next_ext_hdr_type = gtpu_header_extension_type::no_more_extension_headers;
   std::vector<gtpu_extension_header> ext_list          = {};
 };
 
@@ -165,6 +196,22 @@ struct formatter<srsgnb::gtpu_header> {
   auto format(const srsgnb::gtpu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "Flags[{}], Length={}, TEID={}", hdr.flags, hdr.length, hdr.teid);
+  }
+};
+
+template <>
+struct formatter<srsgnb::gtpu_header_extension_type> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::gtpu_header_extension_type& ext_type, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", to_string(ext_type));
   }
 };
 } // namespace fmt
