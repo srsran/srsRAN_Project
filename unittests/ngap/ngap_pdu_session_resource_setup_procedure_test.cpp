@@ -16,7 +16,7 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-class ngap_pdu_session_resource_setup_routine_test : public ngap_test
+class ngap_pdu_session_resource_setup_procedure_test : public ngap_test
 {
 protected:
   void start_procedure(const cu_cp_ue_id_t cu_cp_ue_id)
@@ -82,7 +82,7 @@ protected:
 };
 
 /// Test Initial Context Setup Request
-TEST_F(ngap_pdu_session_resource_setup_routine_test,
+TEST_F(ngap_pdu_session_resource_setup_procedure_test,
        when_valid_pdu_session_resource_setup_request_received_then_pdu_session_setup_succeeds)
 {
   // Test preamble
@@ -108,7 +108,7 @@ TEST_F(ngap_pdu_session_resource_setup_routine_test,
 }
 
 /// Test Initial Context Setup Request
-TEST_F(ngap_pdu_session_resource_setup_routine_test,
+TEST_F(ngap_pdu_session_resource_setup_procedure_test,
        when_invalid_pdu_session_resource_setup_request_received_then_pdu_session_setup_failed)
 {
   // Test preamble

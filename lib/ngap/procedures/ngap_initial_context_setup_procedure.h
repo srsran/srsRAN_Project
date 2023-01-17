@@ -30,13 +30,13 @@ struct initial_context_response_message {
   optional<asn1::ngap::crit_diagnostics_s> crit_diagnostics;
 };
 
-class ngap_initial_context_setup_routine
+class ngap_initial_context_setup_procedure
 {
 public:
-  ngap_initial_context_setup_routine(ngc_ue&                                         ue_,
-                                     const asn1::ngap::init_context_setup_request_s& request_,
-                                     ngc_message_notifier&                           amf_notif_,
-                                     srslog::basic_logger&                           logger_);
+  ngap_initial_context_setup_procedure(ngc_ue&                                         ue_,
+                                       const asn1::ngap::init_context_setup_request_s& request_,
+                                       ngc_message_notifier&                           amf_notif_,
+                                       srslog::basic_logger&                           logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 

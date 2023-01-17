@@ -11,8 +11,8 @@ set(SOURCES
         ngc_impl.cpp
         ngc_asn1_packer.cpp
         procedures/ng_setup_procedure.cpp
-        routines/ngap_initial_context_setup_routine.cpp
-        routines/ngap_pdu_session_resource_setup_routine.cpp
+        procedures/ngap_initial_context_setup_procedure.cpp
+        procedures/ngap_pdu_session_resource_setup_procedure.cpp
     )
 
 add_library(srsgnb_ngap STATIC ${SOURCES})

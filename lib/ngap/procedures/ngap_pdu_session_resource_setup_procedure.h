@@ -18,14 +18,14 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class ngap_pdu_session_resource_setup_routine
+class ngap_pdu_session_resource_setup_procedure
 {
 public:
-  ngap_pdu_session_resource_setup_routine(ngc_ue&                                   ue_,
-                                          cu_cp_pdu_session_resource_setup_message& request_,
-                                          ngc_du_processor_control_notifier&        du_processor_ctrl_notif_,
-                                          ngc_message_notifier&                     amf_notif_,
-                                          srslog::basic_logger&                     logger_);
+  ngap_pdu_session_resource_setup_procedure(ngc_ue&                                   ue_,
+                                            cu_cp_pdu_session_resource_setup_message& request_,
+                                            ngc_du_processor_control_notifier&        du_processor_ctrl_notif_,
+                                            ngc_message_notifier&                     amf_notif_,
+                                            srslog::basic_logger&                     logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 

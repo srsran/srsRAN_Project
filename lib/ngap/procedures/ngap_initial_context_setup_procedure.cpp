@@ -8,14 +8,14 @@
  *
  */
 
-#include "ngap_initial_context_setup_routine.h"
-#include "ngap_routine_helpers.h"
+#include "ngap_initial_context_setup_procedure.h"
+#include "ngap_procedure_helpers.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
-ngap_initial_context_setup_routine::ngap_initial_context_setup_routine(
+ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
     ngc_ue&                                         ue_,
     const asn1::ngap::init_context_setup_request_s& request_,
     ngc_message_notifier&                           amf_notif_,
@@ -24,7 +24,7 @@ ngap_initial_context_setup_routine::ngap_initial_context_setup_routine(
 {
 }
 
-void ngap_initial_context_setup_routine::operator()(coro_context<async_task<void>>& ctx)
+void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -56,7 +56,7 @@ void ngap_initial_context_setup_routine::operator()(coro_context<async_task<void
   CORO_RETURN();
 }
 
-void ngap_initial_context_setup_routine::send_initial_context_setup_response(
+void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
     const initial_context_response_message& msg)
 {
   ngc_message ngc_msg = {};
@@ -108,7 +108,8 @@ void ngap_initial_context_setup_routine::send_initial_context_setup_response(
   amf_notifier.on_new_message(ngc_msg);
 }
 
-void ngap_initial_context_setup_routine::send_initial_context_setup_failure(const initial_context_failure_message& msg)
+void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
+    const initial_context_failure_message& msg)
 {
   ngc_message ngc_msg = {};
 

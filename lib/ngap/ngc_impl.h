@@ -11,9 +11,8 @@
 #pragma once
 
 #include "procedures/ng_setup_procedure.h"
-#include "routines/ngap_initial_context_setup_routine.h"
-#include "routines/ngap_pdu_session_resource_setup_routine.h"
-#include "routines/ngap_routine_helpers.h"
+#include "procedures/ngap_initial_context_setup_procedure.h"
+#include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/ue_manager.h"
 #include "srsgnb/ngap/ngc.h"

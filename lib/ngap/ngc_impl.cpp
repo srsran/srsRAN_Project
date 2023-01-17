@@ -11,10 +11,7 @@
 #include "ngc_impl.h"
 #include "ngap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
-#include "procedures/ng_setup_procedure.h"
-#include "routines/ngap_initial_context_setup_routine.h"
-#include "routines/ngap_pdu_session_resource_setup_routine.h"
-#include "routines/ngap_routine_helpers.h"
+#include "procedures/ngap_procedure_helpers.h"
 
 using namespace srsgnb;
 using namespace asn1::ngap;
@@ -232,8 +229,8 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
   }
 
   // start routine
-  task_sched.schedule_async_task(cu_cp_ue_id,
-                                 launch_async<ngap_initial_context_setup_routine>(*ue, request, ngc_notifier, logger));
+  task_sched.schedule_async_task(
+      cu_cp_ue_id, launch_async<ngap_initial_context_setup_procedure>(*ue, request, ngc_notifier, logger));
 }
 
 void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
@@ -265,7 +262,7 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
 
   // start routine
   task_sched.schedule_async_task(cu_cp_ue_id,
-                                 launch_async<ngap_pdu_session_resource_setup_routine>(
+                                 launch_async<ngap_pdu_session_resource_setup_procedure>(
                                      *ue, msg, ue->get_du_processor_control_notifier(), ngc_notifier, logger));
 
   // Handle optional parameters

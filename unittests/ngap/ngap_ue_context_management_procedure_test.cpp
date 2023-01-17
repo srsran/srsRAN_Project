@@ -16,7 +16,7 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-class ngap_ue_context_management_routine_test : public ngap_test
+class ngap_ue_context_management_procedure_test : public ngap_test
 {
 protected:
   void start_procedure(const cu_cp_ue_id_t cu_cp_ue_id)
@@ -49,7 +49,7 @@ protected:
 };
 
 /// Test Initial Context Setup Request
-TEST_F(ngap_ue_context_management_routine_test, when_valid_initial_context_setup_request_received_then_response_send)
+TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_setup_request_received_then_response_send)
 {
   // Test preamble
   cu_cp_ue_id_t cu_cp_ue_id = uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
@@ -70,7 +70,7 @@ TEST_F(ngap_ue_context_management_routine_test, when_valid_initial_context_setup
 }
 
 /// Test Initial Context Setup Request
-TEST_F(ngap_ue_context_management_routine_test, when_invalid_initial_context_setup_request_received_then_failure_sent)
+TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_setup_request_received_then_failure_sent)
 {
   // Test preamble
   cu_cp_ue_id_t cu_cp_ue_id = uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
