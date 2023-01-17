@@ -40,7 +40,7 @@ public:
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr);
 
   /// \brief Handle results stored in the scheduler result and push new entry.
-  void push(slot_point sl_tx, const sched_result& slot_result);
+  void push_result(slot_point sl_tx, const sched_result& slot_result);
 
   /// \brief Checks whether a queue has been provided to send metrics.
   bool connected() const { return metric_queue != nullptr; }
@@ -53,7 +53,7 @@ private:
     unsigned             nof_pucch_snr_reports = 0;
     unsigned             nof_pusch_snr_reports = 0;
 
-    void compute_report(float time_elapsed_secs);
+    void compute_report(std::chrono::milliseconds metric_report_period);
 
     void reset();
   };
@@ -66,7 +66,6 @@ private:
 
   // derived.
   unsigned report_period_slots = 0;
-  float    report_period_secs  = 0;
 
   /// \brief This type is used so that multiple threads can access different positions concurrently.
   slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;

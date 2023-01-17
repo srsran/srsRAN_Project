@@ -74,7 +74,7 @@ void scheduler_metrics_handler::push_result()
   }
   for (ue_metric_context& ue : ues) {
     // Get stats of the UE metrics.
-    ue.compute_report(report_period_secs);
+    ue.compute_report(report_period);
 
     // TODO: use batch push.
     metric_queue->try_push(ue.metrics);
@@ -95,7 +95,7 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
     ue_metric_context& u = ues[it->second];
     for (auto& cw : dl_grant.pdsch_cfg.codewords) {
       u.metrics.dl_mcs += cw.mcs_index.to_uint();
-      u.metrics.dl_brate += static_cast<float>(cw.tb_size_bytes) * 8;
+      u.metrics.dl_brate_kbps += static_cast<double>(cw.tb_size_bytes * 8);
       u.nof_dl_cws++;
     }
   }
@@ -108,17 +108,16 @@ void scheduler_metrics_handler::handle_slot_result(const sched_result& slot_resu
     }
     ue_metric_context& u = ues[it->second];
     u.metrics.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
-    u.metrics.ul_brate += ul_grant.pusch_cfg.tb_size_bytes * 8;
+    u.metrics.ul_brate_kbps += static_cast<double>(ul_grant.pusch_cfg.tb_size_bytes * 8);
     u.nof_ul_pdschs++;
   }
 }
 
-void scheduler_metrics_handler::push(slot_point sl_tx, const sched_result& slot_result)
+void scheduler_metrics_handler::push_result(slot_point sl_tx, const sched_result& slot_result)
 {
   if (report_period_slots == 0) {
     // The SCS common is now known.
     usecs slot_dur      = std::chrono::duration_cast<usecs>(msecs{1U << sl_tx.numerology()});
-    report_period_secs  = report_period.count() / 1e3;
     report_period_slots = usecs{report_period} / slot_dur;
   }
 
@@ -131,12 +130,12 @@ void scheduler_metrics_handler::push(slot_point sl_tx, const sched_result& slot_
   }
 }
 
-void scheduler_metrics_handler::ue_metric_context::compute_report(float time_elapsed_secs)
+void scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period)
 {
   metrics.dl_mcs = std::roundf(static_cast<float>(metrics.dl_mcs) / nof_dl_cws);
   metrics.ul_mcs = std::roundf(static_cast<float>(metrics.ul_mcs) / nof_ul_pdschs);
-  metrics.dl_brate /= time_elapsed_secs;
-  metrics.ul_brate /= time_elapsed_secs;
+  metrics.dl_brate_kbps /= metric_report_period.count();
+  metrics.ul_brate_kbps /= metric_report_period.count();
   metrics.pusch_snr = std::roundf(static_cast<float>(metrics.pusch_snr) / nof_pusch_snr_reports);
   metrics.pucch_snr = std::roundf(static_cast<float>(metrics.pucch_snr) / nof_pucch_snr_reports);
   // TODO: update PUSCH and PUCCH SNR metrics based on indications.
@@ -147,8 +146,8 @@ void scheduler_metrics_handler::ue_metric_context::reset()
   // Note: for BSR and CQI we just keep the last without resetting the value at every slot.
   metrics.dl_mcs        = 0;
   metrics.ul_mcs        = 0;
-  metrics.dl_brate      = 0;
-  metrics.ul_brate      = 0;
+  metrics.dl_brate_kbps = 0;
+  metrics.ul_brate_kbps = 0;
   metrics.dl_nof_ok     = 0;
   metrics.dl_nof_nok    = 0;
   metrics.ul_nof_ok     = 0;

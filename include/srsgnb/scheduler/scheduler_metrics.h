@@ -21,13 +21,13 @@ struct scheduler_ue_metrics {
   rnti_t   rnti;
   unsigned cqi;
   unsigned dl_mcs;
-  float    dl_brate;
+  double   dl_brate_kbps;
   unsigned dl_nof_ok;
   unsigned dl_nof_nok;
   float    pusch_snr;
   float    pucch_snr;
   unsigned ul_mcs;
-  float    ul_brate;
+  double   ul_brate_kbps;
   unsigned ul_nof_ok;
   unsigned ul_nof_nok;
   unsigned bsr;
