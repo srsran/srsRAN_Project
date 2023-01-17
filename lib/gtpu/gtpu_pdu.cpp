@@ -12,11 +12,10 @@
 
 namespace srsgnb {
 
-bool gtpu_read_ext_header(bit_decoder&                      decoder,
-                          const gtpu_header_extension_type& header_type,
-                          gtpu_extension_header&            ext,
-                          gtpu_header_extension_type&       next_extension_header_type,
-                          srslog::basic_logger&             logger);
+bool gtpu_read_ext_header(bit_decoder&                decoder,
+                          gtpu_extension_header&      ext,
+                          gtpu_header_extension_type& next_extension_header_type,
+                          srslog::basic_logger&       logger);
 
 bool gtpu_write_ext_header(bit_encoder&                 encoder,
                            const gtpu_extension_header& ext,
@@ -161,10 +160,11 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
       logger.error(pdu.begin(), pdu.end(), "Error E flag is set, but there are no extra extensions");
       return false;
     }
-    gtpu_header_extension_type next_extension_header_type = gtpu_header_extension_type::no_more_extension_headers;
+    gtpu_header_extension_type next_extension_header_type = header.next_ext_hdr_type;
     do {
       gtpu_extension_header ext = {};
-      if (!gtpu_read_ext_header(decoder, header.next_ext_hdr_type, ext, next_extension_header_type, logger)) {
+      ext.extension_header_type = next_extension_header_type;
+      if (!gtpu_read_ext_header(decoder, ext, next_extension_header_type, logger)) {
         return false;
       }
       header.ext_list.push_back(ext);
@@ -176,16 +176,17 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
   return true;
 }
 
-bool gtpu_read_ext_header(bit_decoder&                      decoder,
-                          const gtpu_header_extension_type& header_type,
-                          gtpu_extension_header&            ext,
-                          gtpu_header_extension_type&       next_extension_header_type,
-                          srslog::basic_logger&             logger)
+bool gtpu_read_ext_header(bit_decoder&                decoder,
+                          gtpu_extension_header&      ext,
+                          gtpu_header_extension_type& next_extension_header_type,
+                          srslog::basic_logger&       logger)
 {
   // TODO check valid read extension types
 
   // Extract length indicator
   decoder.unpack(ext.length, 8);
+
+  // TODO check valid length for the extension type
 
   // The payload size is four bytes per the indicated length,
   // minus one byte for the length field and one for the next
@@ -202,8 +203,6 @@ bool gtpu_read_ext_header(bit_decoder&                      decoder,
 
   // Extract next extension header type
   gtpu_unpack_ext_header_type(decoder, next_extension_header_type);
-
-  ext.extension_header_type = header_type;
   return true;
 }
 

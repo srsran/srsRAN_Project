@@ -85,11 +85,11 @@ TEST_F(gtpu_test, pack_unpack)
 TEST_F(gtpu_test, pack_unpack_ext_hdr)
 {
   srsgnb::test_delimit_logger delimiter("GTP-U header extension unpack/pack test");
-  byte_buffer                 orig_vec{gtpu_ping_ext_vec};
-  byte_buffer                 tst_vec{gtpu_ping_ext_vec};
+  byte_buffer                 orig_vec{gtpu_ping_two_ext_vec};
+  byte_buffer                 tst_vec{gtpu_ping_two_ext_vec};
   uint16_t                    ext_size = 4;
-  byte_buffer                 tst_vec_no_header{tst_vec.begin() + GTPU_EXTENDED_HEADER_LEN + ext_size, tst_vec.end()};
-  gtpu_header                 hdr;
+  byte_buffer tst_vec_no_header{tst_vec.begin() + GTPU_EXTENDED_HEADER_LEN + 2 * ext_size, tst_vec.end()};
+  gtpu_header hdr;
 
   // Unpack SDU
   logger.info(orig_vec.begin(), orig_vec.end(), "Original SDU");
@@ -118,13 +118,21 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
   ASSERT_EQ(tst_vec, tst_vec_no_header);
 
   // Check extension header is correct
-  ASSERT_EQ(hdr.ext_list.size(), 1);
-  ASSERT_EQ(hdr.ext_list[0].extension_header_type, gtpu_header_extension_type::pdu_session_container);
-  const gtpu_extension_header& ext = hdr.ext_list[0];
-  ASSERT_EQ(ext.container.size(), 2);
-  ASSERT_EQ(ext.container[0], 0x00);
-  ASSERT_EQ(ext.container[1], 0x01);
-
+  ASSERT_EQ(hdr.ext_list.size(), 2);
+  ASSERT_EQ(hdr.ext_list[0].extension_header_type, gtpu_header_extension_type::pdcp_pdu_number);
+  {
+    const gtpu_extension_header& ext = hdr.ext_list[0];
+    ASSERT_EQ(ext.container.size(), 2);
+    ASSERT_EQ(ext.container[0], 0x00);
+    ASSERT_EQ(ext.container[1], 0x01);
+  }
+  ASSERT_EQ(hdr.ext_list[1].extension_header_type, gtpu_header_extension_type::pdu_session_container);
+  {
+    const gtpu_extension_header& ext = hdr.ext_list[1];
+    ASSERT_EQ(ext.container.size(), 2);
+    ASSERT_EQ(ext.container[0], 0x00);
+    ASSERT_EQ(ext.container[1], 0x01);
+  }
   logger.info("Unpacked GTP-U header: {}", hdr);
 
   byte_buffer repack_buf = tst_vec_no_header.deep_copy();
