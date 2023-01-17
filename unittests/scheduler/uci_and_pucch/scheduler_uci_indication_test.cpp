@@ -59,7 +59,7 @@ protected:
     ++next_slot;
   }
 
-  void notify_uci_ind(bool sr_ind, span<const bool> harq_bits)
+  void notify_uci_ind_on_pucch(bool sr_ind, span<const bool> harq_bits)
   {
     uci_indication uci_ind{};
     uci_ind.cell_index = to_du_cell_index(0);
@@ -70,6 +70,23 @@ protected:
     pdu.harqs.resize(harq_bits.size());
     for (unsigned i = 0; i != harq_bits.size(); ++i) {
       pdu.harqs[i] = harq_bits[i];
+    }
+    uci_ind.ucis[0].pdu = pdu;
+
+    sched->handle_uci_indication(uci_ind);
+  }
+
+  void notify_uci_ind_on_pusch(span<const bool> harq_bits)
+  {
+    uci_indication uci_ind{};
+    uci_ind.cell_index = to_du_cell_index(0);
+    uci_ind.slot_rx    = next_slot - 1;
+    uci_ind.ucis.resize(1);
+    uci_ind.ucis[0].ue_index = to_du_ue_index(0);
+    uci_indication::uci_pdu::uci_pusch_pdu pdu{};
+    pdu.harqs.resize(harq_bits.size());
+    for (unsigned i = 0; i != harq_bits.size(); ++i) {
+      pdu.harqs.set(i, harq_bits[i]);
     }
     uci_ind.ucis[0].pdu = pdu;
 
@@ -132,7 +149,7 @@ TEST_F(uci_sched_tester, no_retx_after_harq_ack)
   for (unsigned i = 0; i != MAX_COUNT; ++i) {
     run_slot();
     if (ue_pucch_scheduled()) {
-      notify_uci_ind(false, std::array<bool, 1>{true});
+      notify_uci_ind_on_pucch(false, std::array<bool, 1>{true});
       pucch_found = true;
       break;
     }
@@ -151,7 +168,7 @@ TEST_F(uci_sched_tester, pusch_scheduled_after_sr_indication)
 {
   // Maximum delay between the SR indication being forwarded to the scheduler and the scheduler generating an UL grant.
   static constexpr unsigned MAX_UL_GRANT_DELAY = 8;
-  notify_uci_ind(true, {});
+  notify_uci_ind_on_pucch(true, {});
 
   bool pusch_found = false;
   for (unsigned i = 0; i != MAX_UL_GRANT_DELAY; ++i) {
@@ -164,6 +181,32 @@ TEST_F(uci_sched_tester, pusch_scheduled_after_sr_indication)
     }
   }
   ASSERT_TRUE(pusch_found);
+}
+
+TEST_F(uci_sched_tester, uci_ind_on_pusch)
+{
+  static constexpr unsigned MAX_COUNT = 16;
+  // SR request.
+  notify_uci_ind_on_pucch(true, {});
+
+  bool pusch_found = false;
+  for (unsigned i = 0; i != MAX_COUNT; ++i) {
+    run_slot();
+    if (ue_pusch_scheduled()) {
+      notify_uci_ind_on_pusch(std::array<bool, 1>{true});
+      pusch_found = true;
+      break;
+    }
+  }
+
+  ASSERT_TRUE(pusch_found);
+
+  // No more DL grants after the ACK.
+  for (unsigned i = 0; i != MAX_COUNT; ++i) {
+    run_slot();
+    ASSERT_FALSE(ue_pdsch_scheduled());
+    ASSERT_FALSE(ue_pucch_scheduled());
+  }
 }
 
 int main(int argc, char** argv)
