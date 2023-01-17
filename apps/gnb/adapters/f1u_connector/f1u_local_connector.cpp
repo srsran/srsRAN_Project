@@ -83,3 +83,14 @@ f1u_local_connector::create_du_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du
   du_map.insert({dl_teid, std::move(du_bearer)});
   return ptr;
 }
+
+void f1u_local_connector::remove_du_bearer(uint32_t dl_teid)
+{
+  auto bearer_it = du_map.find(dl_teid);
+  if (bearer_it == du_map.end()) {
+    logger.warning("Could not find DL-TEID at DU to remove. DL-TEID={}", dl_teid);
+    return;
+  }
+  logger.debug("Removing DU F1-U bearer. DL-TEID={}", dl_teid);
+  du_map.erase(bearer_it);
+}

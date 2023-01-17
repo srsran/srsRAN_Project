@@ -142,6 +142,7 @@ public:
     du_notif = &du_rx;
     return &bearer;
   }
+  void remove_du_bearer(uint32_t dl_teid) override { du_notif = nullptr; }
 };
 
 /// \brief Instantiation of the DU-high workers and executors for the benchmark.

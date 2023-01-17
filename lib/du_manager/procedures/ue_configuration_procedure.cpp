@@ -42,6 +42,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   // > Update DU UE bearers.
   add_srbs_to_du_ue_context();
   add_drbs_to_du_ue_context();
+  remove_drbs_from_du_ue_context();
 
   // > Update MAC bearers.
   CORO_AWAIT(update_mac_lcid_mux());
@@ -123,6 +124,30 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
     // >> Connect DRB F1-U with RLC, and RLC with MAC logical channel notifier.
     drb.connector.connect(
         ue->ue_index, drb.drb_id, drb.lcid, *drb.drb_f1u, *drb.rlc_bearer, du_params.rlc.mac_ue_info_handler);
+  }
+}
+
+void ue_configuration_procedure::remove_drbs_from_du_ue_context()
+{
+  // > Remove DU UE DRB objects.
+  for (const drb_id_t& drb_to_rem : request.drbs_to_rem) {
+    auto it = std::find_if(ue->resources->rlc_bearers.begin(),
+                           ue->resources->rlc_bearers.end(),
+                           [&drb_to_rem](const rlc_bearer_config& e) { return e.drb_id == drb_to_rem; });
+    srsgnb_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
+
+    // >> Get the DRB that is to be removed
+    srsgnb_assert(ue->bearers.drbs().contains(drb_to_rem), "DRB-Id={} does not exist", drb_to_rem);
+    du_ue_drb& ue_drb = ue->bearers.drbs()[drb_to_rem];
+    uint32_t   dl_teid = ue_drb.dluptnl_info_list[0].gtp_teid.value();
+
+    // >> TODO: Disconnect the other Layers, e.g. MAC
+
+    // >> Disconnect F1-U bearer from F1-U gateway
+    du_params.f1u.f1u_gw.remove_du_bearer(dl_teid);
+
+    // >> Remove DRB.
+    ue->bearers.remove_drb(drb_to_rem);
   }
 }
 

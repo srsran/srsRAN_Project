@@ -64,6 +64,12 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
 
     du_request.drbs_to_setup.push_back(drb_obj);
   }
+
+  // >> Pass DRBs to remove
+  for (const auto& drb : msg->drbs_to_be_released_list.value) {
+    const asn1::f1ap::drbs_to_be_released_item_s& drb_item = drb.value().drbs_to_be_released_item();
+    du_request.drbs_to_rem.push_back((drb_id_t)drb_item.drb_id);
+  }
 }
 
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_response()

@@ -55,6 +55,7 @@ public:
   void                   attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override;
   void                   remove_cu_bearer(uint32_t ul_teid) override;
   srs_du::f1u_bearer* create_du_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
+  void                   remove_du_bearer(uint32_t dl_teid) override;
 
 private:
   srslog::basic_logger&             logger;

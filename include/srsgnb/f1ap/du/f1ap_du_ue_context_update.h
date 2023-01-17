@@ -48,6 +48,7 @@ struct f1ap_ue_context_update_request {
   du_ue_index_t                    ue_index;
   std::vector<srb_id_t>            srbs_to_setup;
   std::vector<f1ap_drb_to_setup>   drbs_to_setup;
+  std::vector<drb_id_t>            drbs_to_rem;
   std::vector<f1ap_scell_to_setup> scells_to_setup;
   std::vector<serv_cell_index_t>   scells_to_rem;
 };

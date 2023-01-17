@@ -30,6 +30,7 @@ private:
   /// and F1-U bearers.
   void add_srbs_to_du_ue_context();
   void add_drbs_to_du_ue_context();
+  void remove_drbs_from_du_ue_context();
 
   /// \brief Update MAC MUX and DEMUX tables of the respective UE, given the newly added/modified/removed bearers.
   async_task<mac_ue_reconfiguration_response_message> update_mac_lcid_mux();

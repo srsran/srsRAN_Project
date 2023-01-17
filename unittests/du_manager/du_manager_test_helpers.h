@@ -164,6 +164,16 @@ public:
     return nullptr;
   }
 
+  void remove_du_bearer(uint32_t dl_teid) override
+  {
+    auto bearer_it = f1u_bearers.find(dl_teid);
+    if (bearer_it == f1u_bearers.end()) {
+      srslog::fetch_basic_logger("TEST").warning("Could not find DL-TEID at DU to remove. DL-TEID={}", dl_teid);
+      return;
+    }
+    f1u_bearers.erase(bearer_it);
+  }
+
   std::map<uint32_t, std::map<uint32_t, f1u_bearer_dummy>> f1u_bearers;
 };
 
