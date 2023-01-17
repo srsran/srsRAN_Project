@@ -365,11 +365,12 @@ public:
   template <typename It>
   unsigned try_push(It b, It e) noexcept
   {
-    static_assert(std::is_convertible<typename It::value_type, T>::value, "Invalid type passed to ::push");
+    static_assert(std::is_convertible<std::decay_t<decltype(*std::declval<It>())>, T>::value,
+                  "Invalid type passed to ::push");
     unsigned count = 0;
     for (auto it = b; it != e; ++it) {
-      if (not push(*it)) {
-        return count;
+      if (not try_push(*it)) {
+        break;
       }
       ++count;
     }
@@ -520,10 +521,28 @@ public:
 
   bool          try_push(const T& t) { return push_(t, false); }
   error_type<T> try_push(T&& t) { return push_(std::move(t), false); }
+  template <typename It>
+  unsigned try_push(It b, It e)
+  {
+    return push_(b, e, false);
+  }
+  unsigned      try_push(span<T> t) { return try_push(t.begin(), t.end()); }
   bool          push_blocking(const T& t) { return push_(t, true); }
   error_type<T> push_blocking(T&& t) { return push_(std::move(t), true); }
-  bool          try_pop(T& obj) { return pop_(obj, false); }
-  T             pop_blocking(bool* success = nullptr)
+  template <typename It>
+  unsigned push_blocking(It b, It e)
+  {
+    return push_(b, e, true);
+  }
+  unsigned push_blocking(span<T> t) { return push_blocking(t.begin(), t.end()); }
+  bool     try_pop(T& obj) { return pop_(obj, false); }
+  template <typename It>
+  unsigned try_pop(It b, It e)
+  {
+    return pop_(b, e, false);
+  }
+  unsigned try_pop(span<T> t) { return try_pop(t.begin(), t.end()); }
+  T        pop_blocking(bool* success = nullptr)
   {
     T    obj{};
     bool ret = pop_(obj, true);
@@ -532,6 +551,12 @@ public:
     }
     return obj;
   }
+  template <typename It>
+  unsigned pop_blocking(It b, It e)
+  {
+    return pop_(b, e, true);
+  }
+  unsigned pop_blocking(span<T> t) { return pop_blocking(t.begin(), t.end()); }
   bool pop_wait_until(T& obj, const std::chrono::steady_clock::time_point& until) { return pop_(obj, true, &until); }
   void clear()
   {
@@ -595,9 +620,8 @@ protected:
 
   ~base_blocking_queue() { stop(); }
 
-  bool push_(const T& t, bool block_mode)
+  bool push_is_possible(std::unique_lock<std::mutex>& lock, bool block_mode)
   {
-    std::unique_lock<std::mutex> lock(mutex);
     if (not active) {
       return false;
     }
@@ -610,47 +634,66 @@ protected:
         cvar_full.wait(lock);
       }
       nof_waiting--;
-      if (not active) {
-        return false;
-      }
     }
-    push_func(t);
-    circ_buffer.push(t);
-    // Note: I have read diverging opinions about notifying before or after the unlock. In this case,
-    // it seems that TSAN complains if notify comes after.
-    cvar_empty.notify_one();
-    lock.unlock();
+    if (not active) {
+      return false;
+    }
     return true;
+  }
+
+  bool push_(const T& t, bool block_mode)
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    if (push_is_possible(lock, block_mode)) {
+      push_func(t);
+      circ_buffer.push(t);
+      // Note: I have read diverging opinions about notifying before or after the unlock. In this case,
+      // it seems that TSAN complains if notify comes after.
+      cvar_empty.notify_one();
+      lock.unlock();
+      return true;
+    }
+    return false;
   }
   srsgnb::error_type<T> push_(T&& t, bool block_mode)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (not active) {
-      return std::move(t);
+    if (push_is_possible(lock, block_mode)) {
+      push_func(t);
+      circ_buffer.push(std::move(t));
+      cvar_empty.notify_one();
+      lock.unlock();
+      return {};
     }
-    if (circ_buffer.full()) {
-      if (not block_mode) {
-        return std::move(t);
+    return std::move(t);
+  }
+  template <typename It>
+  unsigned push_(It b, It e, bool block_mode)
+  {
+    unsigned count = 0;
+    for (auto it = b; it != e;) {
+      std::unique_lock<std::mutex> lock(mutex);
+      if (not push_is_possible(lock, block_mode)) {
+        return count;
       }
-      nof_waiting++;
-      while (circ_buffer.full() and active) {
-        cvar_full.wait(lock);
+      unsigned n = circ_buffer.try_push(it, e);
+      if (n == 0) {
+        break;
       }
-      nof_waiting--;
-      if (not active) {
-        return std::move(t);
+      for (unsigned i = 0; i != n; ++i) {
+        push_func(*it);
+        ++it;
       }
+      count += n;
+      cvar_empty.notify_one();
     }
-    push_func(t);
-    circ_buffer.push(std::move(t));
-    cvar_empty.notify_one();
-    lock.unlock();
-    return {};
+    return count;
   }
 
-  bool pop_(T& obj, bool block, const std::chrono::steady_clock::time_point* until = nullptr)
+  bool pop_is_possible(std::unique_lock<std::mutex>&                lock,
+                       bool                                         block,
+                       const std::chrono::steady_clock::time_point* until = nullptr)
   {
-    std::unique_lock<std::mutex> lock(mutex);
     if (not active) {
       return false;
     }
@@ -670,12 +713,42 @@ protected:
         return false;
       }
     }
-    obj = std::move(circ_buffer.top());
-    pop_func(obj);
-    circ_buffer.pop();
-    lock.unlock();
-    cvar_full.notify_one();
     return true;
+  }
+  bool pop_(T& obj, bool block, const std::chrono::steady_clock::time_point* until = nullptr)
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    if (pop_is_possible(lock, block, until)) {
+      obj = std::move(circ_buffer.top());
+      pop_func(obj);
+      circ_buffer.pop();
+      cvar_full.notify_one();
+      lock.unlock();
+      return true;
+    }
+    return false;
+  }
+  template <typename It>
+  unsigned pop_(It b, It e, bool block, const std::chrono::steady_clock::time_point* until = nullptr)
+  {
+    unsigned count = 0;
+    for (auto it = b; it != e;) {
+      std::unique_lock<std::mutex> lock(mutex);
+      if (not pop_is_possible(lock, block, until)) {
+        break;
+      }
+      unsigned n = circ_buffer.pop_into(it, e);
+      if (n == 0) {
+        break;
+      }
+      for (unsigned i = 0; i != n; ++i) {
+        pop_func(*it);
+        ++it;
+      }
+      count += n;
+      cvar_full.notify_one();
+    }
+    return count;
   }
 };
 

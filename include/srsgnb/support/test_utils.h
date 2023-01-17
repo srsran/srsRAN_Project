@@ -236,7 +236,7 @@ public:
   /// \brief Get test pseudo-random generator.
   static std::mt19937& get()
   {
-    static std::mt19937& random_generator = init(std::random_device{}());
+    thread_local std::mt19937& random_generator = init(std::random_device{}());
     return random_generator;
   }
 
@@ -279,7 +279,7 @@ public:
 private:
   static std::mt19937& init(uint32_t seed)
   {
-    static std::mt19937 random_generator(get_seed(seed));
+    thread_local std::mt19937 random_generator(get_seed(seed));
     return random_generator;
   }
 
@@ -299,3 +299,23 @@ private:
   }();
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// \brief Formatter for moveonly_test_object.
+template <>
+struct formatter<srsgnb::moveonly_test_object> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+  template <typename FormatContext>
+  auto format(const srsgnb::moveonly_test_object& obj, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", obj.value());
+  }
+};
+
+} // namespace fmt

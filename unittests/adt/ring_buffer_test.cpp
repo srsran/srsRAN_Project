@@ -306,6 +306,22 @@ TYPED_TEST(copyable_ring_tester, push_in_batches)
   ASSERT_TRUE(std::equal(vec.begin(), vec.end(), ring.begin(), ring.end()));
 }
 
+TYPED_TEST(copyable_ring_tester, pop_in_batches)
+{
+  auto                                             ring = this->create_empty_ring();
+  std::vector<typename decltype(ring)::value_type> vec, vec2;
+  unsigned                                         nof_objs = test_rgen::uniform_int<unsigned>(1, ring.max_size());
+  for (unsigned i = 0; i != nof_objs; ++i) {
+    vec.push_back(this->create_value());
+  }
+  ring.push(vec);
+
+  vec2.resize(vec.size());
+  ASSERT_EQ(ring.pop_into(vec2), vec2.size());
+  ASSERT_TRUE(ring.empty());
+  ASSERT_EQ(vec2, vec);
+}
+
 TEST(blocking_queue_test, api)
 {
   dyn_blocking_queue<int> queue(100);
@@ -330,7 +346,7 @@ TEST(blocking_queue_test, api)
   t.join();
 }
 
-TEST(blocking_queue_test, api2)
+TEST(blocking_queue_test, blocking_push_and_pop_in_separate_threads)
 {
   std::thread t;
 
@@ -345,6 +361,38 @@ TEST(blocking_queue_test, api2)
   for (int i = 0; i < 10000; ++i) {
     ASSERT_EQ(queue.pop_blocking(), i);
   }
+
+  queue.stop();
+  t.join();
+}
+
+TEST(blocking_queue_test, blocking_push_and_pop_in_batches_in_separate_threads)
+{
+  std::thread t;
+
+  std::vector<int> vec(test_rgen::uniform_int<unsigned>(1, 10000));
+  for (unsigned i = 0; i != vec.size(); ++i) {
+    vec[i] = i;
+  }
+
+  dyn_blocking_queue<int> queue(test_rgen::uniform_int<unsigned>(100, 1000));
+  t = std::thread([&queue, &vec]() {
+    for (unsigned i = 0; i < vec.size();) {
+      unsigned batch_size = test_rgen::uniform_int<unsigned>(1, vec.size() - i);
+      unsigned n          = queue.push_blocking(span<int>(vec).subspan(i, batch_size));
+      EXPECT_LE(n, batch_size);
+      i += n;
+    }
+  });
+
+  std::vector<int> vec2(vec.size());
+  for (unsigned i = 0; i < vec.size();) {
+    unsigned batch_size = test_rgen::uniform_int<unsigned>(1, vec.size() - i);
+    unsigned n          = queue.pop_blocking(vec2.begin() + i, vec2.begin() + i + batch_size);
+    i += n;
+  }
+
+  ASSERT_EQ(vec2, vec);
 
   queue.stop();
   t.join();
