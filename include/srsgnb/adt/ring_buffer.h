@@ -29,32 +29,32 @@ namespace srsgnb {
 namespace detail {
 
 template <typename Container, bool ForcePower2Size>
-class circular_buffer_storage;
+class ring_buffer_storage;
 
 /// \brief Specialization of internal circular_buffer data storage for the case a std::array is used.
 /// This specialization tries to leverage the fact that the buffer size is known at compile time. If \c N is a power
 /// of 2, the compiler should be able to convert the % operation into a bit-wise and.
 template <typename T, size_t N, bool ForcePower2Size>
-class circular_buffer_storage<std::array<T, N>, ForcePower2Size>
+class ring_buffer_storage<std::array<T, N>, ForcePower2Size>
 {
   static_assert(not ForcePower2Size or ((N & (N - 1)) == 0), "N must be a power of 2 if ForcePower2Size is set");
 
 public:
-  constexpr circular_buffer_storage() = default;
-  circular_buffer_storage(size_t max_size_, size_t rpos_, size_t count_) : rpos(rpos_), count(count_) {}
-  circular_buffer_storage(circular_buffer_storage&& other) noexcept :
+  constexpr ring_buffer_storage() = default;
+  ring_buffer_storage(size_t /**/, size_t rpos_, size_t count_) : rpos(rpos_), count(count_) {}
+  ring_buffer_storage(ring_buffer_storage&& other) noexcept :
     rpos(std::exchange(other.rpos, 0)), count(std::exchange(other.count, 0))
   {
     static_assert(std::is_move_constructible<T>::value, "T must be move-constructible");
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i != count; ++i) {
       size_t idx = advance_pos_impl(rpos, i);
-      buffer[idx].emplace(std::move(buffer[idx].get()));
+      buffer[idx].emplace(std::move(other.buffer[idx].get()));
       other.buffer[idx].destroy();
     }
   }
-  circular_buffer_storage& operator=(circular_buffer_storage&& other) noexcept
+  ring_buffer_storage& operator=(ring_buffer_storage&& other) noexcept
   {
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i != count; ++i) {
       buffer[advance_pos_impl(rpos, i)].destroy();
     }
     rpos  = std::exchange(other.rpos, 0);
@@ -79,18 +79,16 @@ public:
 /// \brief Specialization of internal circular_buffer data storage for the case a std::vector is used.
 /// For this specialization, the compiler does not know the size of the buffer at compile time.
 template <typename T>
-class circular_buffer_storage<std::vector<T>, false>
+class ring_buffer_storage<std::vector<T>, false>
 {
 public:
-  explicit circular_buffer_storage(size_t sz = 0) : buffer(sz) {}
-  circular_buffer_storage(size_t max_size_, size_t rpos_, size_t count_) : rpos(rpos_), count(count_), buffer(max_size_)
-  {
-  }
-  circular_buffer_storage(circular_buffer_storage&& other) noexcept :
+  explicit ring_buffer_storage(size_t sz = 0) : buffer(sz) {}
+  ring_buffer_storage(size_t max_size_, size_t rpos_, size_t count_) : rpos(rpos_), count(count_), buffer(max_size_) {}
+  ring_buffer_storage(ring_buffer_storage&& other) noexcept :
     rpos(std::exchange(other.rpos, 0)), count(std::exchange(other.count, 0)), buffer(std::move(other.buffer))
   {
   }
-  circular_buffer_storage& operator=(circular_buffer_storage&& other) noexcept
+  ring_buffer_storage& operator=(ring_buffer_storage&& other) noexcept
   {
     for (unsigned i = 0; i != count; ++i) {
       buffer[this->advance_pos_impl(rpos, i)].destroy();
@@ -101,7 +99,7 @@ public:
     return *this;
   }
 
-  void swap(circular_buffer_storage& other) noexcept
+  void swap(ring_buffer_storage& other) noexcept
   {
     std::swap(rpos, other.rpos);
     std::swap(count, other.count);
@@ -128,9 +126,9 @@ public:
 /// For this specialization, the compiler does not know the size of the buffer at compile time, but it knows that it is
 /// a power of 2. Thus, it is able to avoid the % operator, and uses instead a bit-wise and.
 template <typename T>
-class circular_buffer_storage<std::vector<T>, true> : private circular_buffer_storage<std::vector<T>, false>
+class ring_buffer_storage<std::vector<T>, true> : private ring_buffer_storage<std::vector<T>, false>
 {
-  using super_type = circular_buffer_storage<std::vector<T>, false>;
+  using super_type = ring_buffer_storage<std::vector<T>, false>;
 
   static size_t to_next_pow2(size_t sz) { return pow(2, ceil(log(sz) / log(2))); }
 
@@ -141,7 +139,7 @@ public:
   using super_type::rpos;
   using super_type::super_type;
   using super_type::swap;
-  explicit circular_buffer_storage(size_t sz) : super_type(to_next_pow2(sz)) {}
+  explicit ring_buffer_storage(size_t sz) : super_type(to_next_pow2(sz)) {}
 
   void set_size(size_t sz)
   {
@@ -163,9 +161,9 @@ public:
 /// - not thread-safe.
 /// \tparam Container underlying container type used as buffer (e.g. std::array<T, N> or std::vector<T>).
 template <typename Container, bool ForcePower2Size>
-class base_circular_buffer
+class base_ring_buffer
 {
-  using buffer_type = circular_buffer_storage<Container, ForcePower2Size>;
+  using buffer_type = ring_buffer_storage<Container, ForcePower2Size>;
   using T           = typename Container::value_type::value_type;
 
   /// Iterator implementation.
@@ -174,12 +172,12 @@ class base_circular_buffer
   class iterator_impl
   {
     using parent_type = std::conditional_t<std::is_same<DataType, T>::value,
-                                           base_circular_buffer<Container, ForcePower2Size>,
-                                           const base_circular_buffer<Container, ForcePower2Size>>;
+                                           base_ring_buffer<Container, ForcePower2Size>,
+                                           const base_ring_buffer<Container, ForcePower2Size>>;
 
-    iterator_impl(parent_type& parent_, size_t i) : parent(&parent_), idx(i)
+    iterator_impl(parent_type& parent_, size_t ring_idx_) : parent(&parent_), ring_idx(ring_idx_)
     {
-      srsgnb_assert(linearlize_index() <= parent->max_size(), "Invalid iterator state");
+      srsgnb_assert(ring_idx <= parent->size(), "Invalid iterator position");
     }
 
   public:
@@ -217,90 +215,57 @@ class base_circular_buffer
       return *this;
     }
 
-    value_type*       operator->() { return &get(); }
-    const value_type* operator->() const { return &get(); }
-    value_type&       operator*() { return get(); }
-    const value_type& operator*() const { return get(); }
+    pointer   operator->() { return &get(); }
+    pointer   operator->() const { return &get(); }
+    reference operator*() { return get(); }
+    reference operator*() const { return get(); }
 
-    bool operator==(const iterator_impl<DataType>& it) const { return it.parent == parent and it.idx == idx; }
+    bool operator==(const iterator_impl<DataType>& it) const { return it.parent == parent and it.ring_idx == ring_idx; }
     bool operator!=(const iterator_impl<DataType>& it) const { return not(*this == it); }
 
-    difference_type operator-(const iterator_impl<DataType>& it) const
-    {
-      return linearlize_index() - it.linearlize_index();
-    }
+    difference_type operator-(const iterator_impl<DataType>& other) const { return ring_idx - other.ring_idx; }
 
   private:
-    friend class base_circular_buffer<Container, ForcePower2Size>;
+    friend class base_ring_buffer<Container, ForcePower2Size>;
 
     void assert_idx_within_bounds()
     {
-      srsgnb_assert(linearlize_index() < parent->size(),
+      srsgnb_assert(ring_idx < parent->size(),
                     "index={} is out-of-bounds [{}, {})",
-                    idx,
+                    ring_idx,
                     parent->buffer.rpos,
                     parent->size());
-    }
-
-    /// Checks whether current iterator points at end().
-    bool is_virtual_end() const { return idx == parent->max_size(); }
-
-    size_t linearlize_index() const
-    {
-      if (is_virtual_end()) {
-        // Iterator pointing at end.
-        return parent->max_size();
-      }
-      if (idx < parent->buffer.rpos) {
-        return idx + (parent->max_size() - parent->buffer.rpos);
-      }
-      return idx - parent->buffer.rpos;
     }
 
     void inc_()
     {
       srsgnb_assert(*this != parent->end(), "Incrementing iterator beyond end()");
-      ++idx;
-      if (idx == parent->max_size()) {
-        // Reached the end of circular_buffer container. Wrapping index around.
-        idx = 0;
-      }
-      if (idx == parent->get_wpos()) {
-        // Reached the virtual end of circular_buffer. Making iterator point to end().
-        idx = parent->max_size();
-      }
+      ring_idx++;
     }
 
     void inc_(difference_type n)
     {
       if (n > 0) {
-        srsgnb_assert(parent->end() - *this >= n, "Incrementing iterator beyond end()");
-        idx += n;
-        if (idx == parent->get_wpos()) {
-          idx = parent->max_size();
-        }
+        srsgnb_assert(ring_idx + n <= parent->size(), "Incrementing iterator beyond end()");
       } else if (n < 0) {
-        srsgnb_assert(*this - parent->begin() >= -n, "Decrementing iterator beyond begin()");
-        if (is_virtual_end()) {
-          idx = parent->get_wpos();
-        }
-        idx += n;
+        srsgnb_assert(ring_idx + n <= parent->size(), "Decrementing iterator beyond begin()");
       }
+      ring_idx += n;
     }
 
-    value_type& get()
+    reference get()
     {
       assert_idx_within_bounds();
-      return parent->buffer.buffer[idx].get();
+      return parent->buffer.buffer[parent->buffer.advance_pos_impl(parent->buffer.rpos, ring_idx)].get();
     }
-    const value_type& get() const
+    reference get() const
     {
       assert_idx_within_bounds();
-      return parent->buffer.buffer[idx].get();
+      return parent->buffer.buffer[parent->buffer.advance_pos_impl(parent->buffer.rpos, ring_idx)].get();
     }
 
     parent_type* parent;
-    size_t       idx;
+    unsigned     ring_idx; ///< When iterator is at begin(), ring_idx is zero.
   };
 
 public:
@@ -309,14 +274,15 @@ public:
   using difference_type = typename Container::difference_type;
   using size_type       = std::size_t;
 
+  static constexpr bool max_size_is_power_of_2 = ForcePower2Size;
+
   using iterator       = iterator_impl<T>;
   using const_iterator = iterator_impl<const T>;
 
-  constexpr base_circular_buffer() = default;
-  ~base_circular_buffer() { clear(); }
-  explicit base_circular_buffer(size_type sz) : buffer(sz) {}
-  base_circular_buffer(const base_circular_buffer& other) noexcept :
-    buffer(other.size(), other.buffer.rpos, other.buffer.count)
+  constexpr base_ring_buffer() = default;
+  ~base_ring_buffer() { clear(); }
+  explicit base_ring_buffer(size_type sz) : buffer(sz) {}
+  base_ring_buffer(const base_ring_buffer& other) noexcept : buffer(other.size(), other.buffer.rpos, other.buffer.count)
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     for (unsigned i = 0; i != buffer.count; ++i) {
@@ -324,8 +290,8 @@ public:
       buffer.buffer[n].emplace(other.buffer.buffer[n].get());
     }
   }
-  base_circular_buffer(base_circular_buffer&& other) noexcept = default;
-  base_circular_buffer& operator=(const base_circular_buffer& other) noexcept
+  base_ring_buffer(base_ring_buffer&& other) noexcept = default;
+  base_ring_buffer& operator=(const base_ring_buffer& other) noexcept
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     if (this != &other) {
@@ -339,7 +305,7 @@ public:
     }
     return *this;
   }
-  base_circular_buffer& operator=(base_circular_buffer&& other) noexcept = default;
+  base_ring_buffer& operator=(base_ring_buffer&& other) noexcept = default;
 
   /// \brief Checks the maximum number of elements that can be stored in the circular_buffer.
   constexpr size_t max_size() const noexcept { return buffer.max_size(); }
@@ -418,10 +384,16 @@ public:
     return buffer.buffer[buffer.advance_pos_impl(buffer.rpos, i)].get();
   }
 
-  iterator       begin() { return iterator(*this, empty() ? max_size() : buffer.rpos); }
-  const_iterator begin() const { return const_iterator(*this, empty() ? max_size() : buffer.rpos); }
-  iterator       end() { return iterator(*this, max_size()); }
-  const_iterator end() const { return const_iterator(*this, max_size()); }
+  iterator       begin() { return iterator(*this, 0); }
+  const_iterator begin() const { return const_iterator(*this, 0); }
+  iterator       end() { return iterator(*this, buffer.count); }
+  const_iterator end() const { return const_iterator(*this, buffer.count); }
+
+  bool operator==(const base_ring_buffer& other) const
+  {
+    return std::equal(begin(), end(), other.begin(), other.end());
+  }
+  bool operator!=(const base_ring_buffer& other) const { return not(*this == other); }
 
   /// \brief Apply predicate callable to elements until the predicate returns true.
   /// \param func Predicate functor.
@@ -651,29 +623,30 @@ protected:
 
 } // namespace detail
 
-/// Circular buffer with fixed, embedded buffer storage via a std::array<T, N>.
-/// - Single allocation at object creation for std::array. Given that the buffer size is known at compile-time, the
-///   circular iteration over the buffer may be more optimized (e.g. when N is a power of 2, % operator can be avoided)
-/// - not thread-safe
-/// \tparam T value type stored by buffer
-/// \tparam N size of the queue
+/// \brief Ring buffer with fixed, embedded data storage via a std::array<T, N>. It can contain up to N elements.
+/// - Given that the buffer size is known at compile-time, the circular iteration over the buffer may be more optimized
+/// (e.g. when N is a power of 2, % operator can be avoided).
+/// - not thread-safe.
+/// \tparam T value type stored by buffer.
+/// \tparam N Maximum capacity of the ring buffer.
 template <typename T, size_t N>
-class static_circular_buffer : public detail::base_circular_buffer<std::array<detail::type_storage<T>, N>, false>
+class static_ring_buffer : public detail::base_ring_buffer<std::array<detail::type_storage<T>, N>, false>
 {
-  using super_type = detail::base_circular_buffer<std::array<detail::type_storage<T>, N>, false>;
+  using super_type = detail::base_ring_buffer<std::array<detail::type_storage<T>, N>, false>;
 
 public:
   using super_type::super_type;
 };
 
-/// Circular buffer with buffer storage via a std::vector<T>.
+/// Ring buffer with storage via a std::vector<T>.
 /// - size can be defined at start-time.
-/// - not thread-safe
+/// - not thread-safe.
 /// \tparam T value type stored by buffer
+/// \tparam ForcePower2Size Whether the ring buffer size gets round up to the next power of 2.
 template <typename T, bool ForcePower2Size = false>
-class dyn_circular_buffer : public detail::base_circular_buffer<std::vector<detail::type_storage<T>>, ForcePower2Size>
+class ring_buffer : public detail::base_ring_buffer<std::vector<detail::type_storage<T>>, ForcePower2Size>
 {
-  using super_type = detail::base_circular_buffer<std::vector<detail::type_storage<T>>, ForcePower2Size>;
+  using super_type = detail::base_ring_buffer<std::vector<detail::type_storage<T>>, ForcePower2Size>;
 
 public:
   using super_type::super_type;
@@ -695,9 +668,9 @@ template <typename T,
           typename PushingCallback = detail::noop_operator,
           typename PoppingCallback = detail::noop_operator>
 class static_blocking_queue
-  : public detail::base_blocking_queue<static_circular_buffer<T, N>, PushingCallback, PoppingCallback>
+  : public detail::base_blocking_queue<static_ring_buffer<T, N>, PushingCallback, PoppingCallback>
 {
-  using base_t = detail::base_blocking_queue<static_circular_buffer<T, N>, PushingCallback, PoppingCallback>;
+  using base_t = detail::base_blocking_queue<static_ring_buffer<T, N>, PushingCallback, PoppingCallback>;
 
 public:
   explicit static_blocking_queue(PushingCallback push_callback = {}, PoppingCallback pop_callback = {}) :
@@ -717,10 +690,9 @@ public:
 template <typename T,
           typename PushingCallback = detail::noop_operator,
           typename PoppingCallback = detail::noop_operator>
-class dyn_blocking_queue
-  : public detail::base_blocking_queue<dyn_circular_buffer<T, true>, PushingCallback, PoppingCallback>
+class dyn_blocking_queue : public detail::base_blocking_queue<ring_buffer<T, true>, PushingCallback, PoppingCallback>
 {
-  using super_type = detail::base_blocking_queue<dyn_circular_buffer<T, true>, PushingCallback, PoppingCallback>;
+  using super_type = detail::base_blocking_queue<ring_buffer<T, true>, PushingCallback, PoppingCallback>;
 
 public:
   explicit dyn_blocking_queue(size_t size, PushingCallback push_callback = {}, PoppingCallback pop_callback = {}) :

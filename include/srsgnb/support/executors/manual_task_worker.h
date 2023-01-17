@@ -11,7 +11,7 @@
 #pragma once
 
 #include "task_executor.h"
-#include "srsgnb/adt/circular_buffer.h"
+#include "srsgnb/adt/ring_buffer.h"
 
 namespace srsgnb {
 

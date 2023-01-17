@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/circular_buffer.h"
+#include "srsgnb/adt/ring_buffer.h"
 #include "srsgnb/support/async/coroutine.h"
 #include "srsgnb/support/async/manual_event.h"
 
@@ -92,9 +92,9 @@ private:
     }
   }
 
-  awaiter_type*          front = nullptr;
-  awaiter_type*          last  = nullptr;
-  dyn_circular_buffer<T> queue;
+  awaiter_type*  front = nullptr;
+  awaiter_type*  last  = nullptr;
+  ring_buffer<T> queue;
 };
 
 } // namespace srsgnb

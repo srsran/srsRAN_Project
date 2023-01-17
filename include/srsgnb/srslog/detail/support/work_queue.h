@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/circular_buffer.h"
+#include "srsgnb/adt/ring_buffer.h"
 #include "srsgnb/srslog/detail/support/backend_capacity.h"
 #include "srsgnb/srslog/detail/support/thread_utils.h"
 
@@ -24,9 +24,9 @@ namespace detail {
 template <typename T, size_t capacity = SRSLOG_QUEUE_CAPACITY>
 class work_queue
 {
-  srsgnb::dyn_circular_buffer<T> queue;
-  mutable mutex                  m;
-  static constexpr size_t        threshold = capacity * 0.98;
+  srsgnb::ring_buffer<T>  queue;
+  mutable mutex           m;
+  static constexpr size_t threshold = capacity * 0.98;
 
 public:
   work_queue() : queue(capacity) {}
