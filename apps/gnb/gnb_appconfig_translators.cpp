@@ -335,6 +335,9 @@ scheduler_expert_config srsgnb::generate_scheduler_expert_config(const gnb_appco
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_si_mcs;
   out_cfg.si.sib1_dci_aggr_lev = pdcch.si_aggregation_level_index;
 
+  // Other parameters.
+  out_cfg.metrics_report_period = std::chrono::milliseconds{1000}; // TODO: Expose in the app config.
+
   error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {
     srsgnb_terminate("Invalid scheduler expert configuration detected. Exiting.\n");

@@ -6,6 +6,6 @@
 # the distribution.
 #
 
-set(SOURCES scheduler_result_logger.cpp)
+set(SOURCES scheduler_result_logger.cpp scheduler_metric_handler.cpp)
 add_library(scheduler_logger STATIC ${SOURCES})
 target_link_libraries(scheduler_logger srsgnb_ran srslog)

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cell/scheduler_cell_manager.h"
+#include "logging/scheduler_metrics_handler.h"
 #include "logging/scheduler_result_logger.h"
 #include "ue_scheduling/ue_scheduler.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
@@ -21,7 +22,9 @@ namespace srsgnb {
 class scheduler_impl final : public mac_scheduler
 {
 public:
-  explicit scheduler_impl(const scheduler_expert_config& sched_cfg, sched_configuration_notifier& notifier);
+  explicit scheduler_impl(const scheduler_expert_config& sched_cfg,
+                          sched_configuration_notifier&  notifier,
+                          scheduler_metrics_queue*       metrics_queue = nullptr);
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
 
@@ -77,6 +80,9 @@ private:
 
   /// Cell-specific resources and schedulers.
   scheduler_cell_manager cells;
+
+  /// Slot metrics sink.
+  scheduler_metrics_handler metrics;
 };
 
 } // namespace srsgnb

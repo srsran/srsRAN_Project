@@ -60,6 +60,7 @@ struct scheduler_expert_config {
   scheduler_ra_expert_config     ra;
   scheduler_paging_expert_config pg;
   scheduler_ue_expert_config     ue;
+  std::chrono::milliseconds      metrics_report_period;
 };
 
 } // namespace srsgnb

@@ -16,14 +16,17 @@
 
 using namespace srsgnb;
 
-scheduler_impl::scheduler_impl(const scheduler_expert_config& sched_cfg_, sched_configuration_notifier& notifier) :
+scheduler_impl::scheduler_impl(const scheduler_expert_config& sched_cfg_,
+                               sched_configuration_notifier&  notifier,
+                               scheduler_metrics_queue*       metrics_queue) :
   sched_cfg(sched_cfg_),
   logger(srslog::fetch_basic_logger("MAC")),
   ue_sched(std::make_unique<ue_scheduler_impl>(sched_cfg.ue, notifier)),
   ue_cfg_handler(ue_sched->get_ue_configurator()),
   feedback_handler(ue_sched->get_feedback_handler()),
   dl_bs_handler(ue_sched->get_dl_buffer_state_indication_handler()),
-  cells(sched_cfg)
+  cells(sched_cfg),
+  metrics(sched_cfg.metrics_report_period, metrics_queue)
 {
 }
 

@@ -46,3 +46,11 @@ target_link_libraries(multiple_ue_sched_test
         gtest
         gtest_main)
 gtest_discover_tests(multiple_ue_sched_test)
+
+add_executable(scheduler_metrics_handler_test scheduler_metrics_handler_test.cpp)
+target_link_libraries(scheduler_metrics_handler_test
+        srsgnb_sched
+        sched_config
+        gtest
+        gtest_main)
+gtest_discover_tests(scheduler_metrics_handler_test)
