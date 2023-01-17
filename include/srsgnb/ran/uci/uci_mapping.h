@@ -49,4 +49,7 @@ float beta_harq_ack_to_float(unsigned beta_uint_val);
 /// \return The corresponding float value as per Table 9.3-2, TS 38.213.
 float beta_csi_to_float(unsigned beta_uint_val);
 
+/// Indicates CRC result on UCI containing HARQ/CSI Part1/CSI Part 2 data.
+enum class uci_pusch_detection_status { crc_pass = 1, crc_fail, dtx, no_dtx, dtx_not_checked };
+
 } // namespace srsgnb

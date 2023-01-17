@@ -44,7 +44,49 @@ struct mac_crc_indication_message {
 
 struct mac_uci_pdu {
   enum class pdu_type : uint16_t { pusch, pucch_f0_or_f1, pucch_other };
-  struct pusch_type {};
+  struct pusch_type {
+    struct harq_information {
+      /// HARQ Detection Status values for UCI PUSCH.
+      using harq_detection_status = uci_pusch_detection_status;
+
+      /// Maximum number of supported bytes in this message.
+      static constexpr unsigned MAX_UCI_HARQ_LEN = 214;
+
+      /// Indicates CRC result on UCI.
+      harq_detection_status harq_status;
+      /// Length of HARQ payload in bits. Values {1,...,1706}.
+      uint16_t payload_bits;
+      /// Contents of HARQ, excluding any CRC.
+      static_vector<uint8_t, MAX_UCI_HARQ_LEN> payload;
+    };
+
+    struct csi_information {
+      /// CSI Part1/CSI Part2 Detection Status values for UCI PUSCH.
+      using csi_part1_or_part2_detection_status = uci_pusch_detection_status;
+
+      /// Maximum number of supported bytes in this message.
+      static constexpr unsigned MAX_CSI_PART1_OR_PART2_LEN = 214;
+
+      /// Indicates detection outcome on UCI/CSI.
+      csi_part1_or_part2_detection_status csi_status;
+      /// Length of CSI Part1/CSI Part2 payload in bits. Values {1,...,1706}.
+      uint16_t payload_bits;
+      /// Contents of UCI/CSI, excluding any CRC.
+      static_vector<uint8_t, MAX_CSI_PART1_OR_PART2_LEN> payload;
+    };
+
+    /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBFs.
+    float ul_sinr;
+    /// \brief Timing Advance measured for the UE. Values: {0, 63}.
+    optional<phy_time_unit> time_advance_offset;
+    /// RSSI report in dBFs;
+    optional<float> rssi;
+    /// RSRP report in dBFs;
+    optional<float>            rsrp;
+    optional<harq_information> harq_info;
+    optional<csi_information>  csi_part1_info;
+    optional<csi_information>  csi_part2_info;
+  };
   struct pucch_f0_or_f1_type {
     struct sr_information {
       bool sr_detected;
@@ -61,7 +103,7 @@ struct mac_uci_pdu {
     optional<phy_time_unit> time_advance_offset;
     /// RSSI report in dBFs;
     optional<float> rssi;
-    /// RSSI report in dBFs;
+    /// RSRP report in dBFs;
     optional<float>            rsrp;
     optional<sr_information>   sr_info;
     optional<harq_information> harq_info;
