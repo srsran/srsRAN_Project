@@ -17,6 +17,7 @@
 
 #include "ldpc_encoder_test_data.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsgnb/srsvec/zero.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -219,6 +220,17 @@ TEST_P(LDPCEncDecFixture, LDPCEncDecTest)
           << "Wrong recovered message.";
     }
   }
+}
+
+TEST_P(LDPCEncDecFixture, LDPCDecTestZeroLLR)
+{
+  // Check that a codeblock with all zero LLR returns message of all ones and an empty output.
+  std::vector<log_likelihood_ratio> llrs(max_cb_length);
+  srsvec::zero(llrs);
+  std::vector<uint8_t> decoded(msg_length);
+  optional<unsigned>   n_iters = decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
+  ASSERT_FALSE(n_iters.has_value());
+  ASSERT_TRUE(std::all_of(decoded.begin(), decoded.end(), [](uint8_t a) { return (a == 1); }));
 }
 
 INSTANTIATE_TEST_SUITE_P(LDPCEncDecSuite,

@@ -71,10 +71,15 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
   // Find the last soft bit in the buffer and trim the output.
   const log_likelihood_ratio* last =
       std::find_if(input.rbegin(), input.rend(), [](const log_likelihood_ratio& in) { return in != 0; }).base();
-  unsigned input_size = input.size();
-  if (last > input.begin()) {
-    input_size = static_cast<unsigned>(last - input.begin());
+  if (last == input.begin()) {
+    // If all input LLRs are zero, we won't be able to decode: set all bits to one (so that the CRC will fail).
+    if (crc == nullptr) {
+      std::fill(output.begin(), output.end(), 1);
+    }
+    return nullopt;
   }
+
+  unsigned input_size = static_cast<unsigned>(last - input.begin());
 
   load_soft_bits(input);
 

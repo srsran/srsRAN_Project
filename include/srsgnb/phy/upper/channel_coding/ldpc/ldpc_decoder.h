@@ -46,7 +46,8 @@ public:
 
   /// \brief Decodes a codeblock.
   ///
-  /// The CRC is verified after each iteration allowing, when successful, an early stop of the decoding process.
+  /// By passing a CRC calculator, the CRC is verified after each iteration allowing, when successful, an early stop of
+  /// the decoding process.
   ///
   /// \param[out] output  Reconstructed message of information bits.
   /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
@@ -55,6 +56,8 @@ public:
   /// \param[in]  cfg     Decoder configuration.
   /// \return If the decoding is successful, returns the number of LDPC iterations needed by the decoder. Otherwise, no
   ///         value is returned.
+  /// \note A codeblock of all zero-valued log-likelihood ratios will automatically will return an empty value (i.e.,
+  /// failed CRC) and set all the output bits to one.
   virtual optional<unsigned> decode(span<uint8_t>                    output,
                                     span<const log_likelihood_ratio> input,
                                     crc_calculator*                  crc,
