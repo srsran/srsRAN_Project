@@ -352,48 +352,47 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
  * Timers
  */
 
-void pdcp_entity_tx::stop_discard_timer(uint32_t max_sn)
+void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
 {
-  logger.log_debug("Stopping discard timer up to max_sn={}", max_sn);
   if (!(cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured)) {
-    logger.log_warning("Cannot stop discard timer for max_sn={}: discard_timer is not configured or infinite.");
+    logger.log_warning("Cannot stop discard timer for highest_sn={}: discard_timer is not configured or infinite.");
     return;
   }
-  uint32_t max_count = COUNT(HFN(st.last_stopped_discard_timer_count), max_sn);
-  if (max_count < st.last_stopped_discard_timer_count) {
-    // check if we have SN overflow, i.e. HFN has incremented since last call
-    if (HFN(st.tx_next) > HFN(st.last_stopped_discard_timer_count)) {
-      // Adjust max_count based on HFN of tx_next
-      max_count = COUNT(HFN(st.tx_next), max_sn);
-      // Sanity check
-      if (max_count >= st.tx_next) {
-        // Invalid max_sn: we have SN overflow situation, but max_sn is larger than SN(tx_next)
-        logger.log_error("Cannot stop discard timer for invalid max_count={} (from max_sn={}) after SN overflow: "
-                         "max_count >= tx_next={}; last_stopped_discard_timer_count={}",
-                         max_count,
-                         max_sn,
-                         st.tx_next,
-                         st.last_stopped_discard_timer_count);
-        return;
-      }
-    } else {
-      // No SN overflow, max_sn is too small
-      logger.log_warning("Cannot stop discard timer for invalid max_count={} (from max_sn={}): "
-                         "max_count < last_stopped_discard_timer_count={}",
-                         max_count,
-                         max_sn,
-                         st.last_stopped_discard_timer_count);
-      return;
-    }
+
+  /*
+   * Calculate HIGHEST_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
+   * TX_NEXT_DELIV is the COUNT value of the first PDCP SDU for which the delivery is not confirmed.
+   *
+   * - if HIGHEST_SN < SN(TX_NEXT_DELIV) – Window_Size:
+   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) + 1.
+   * - else if HIGHEST_SN >= SN(TX_NEXT_DELIV) + Window_Size:
+   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) – 1.
+   * - else:
+   *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV);
+   * - HIGHEST_COUNT = [HIGHEST_HFN, HIGHEST_SN].
+   */
+  uint32_t highest_hfn, highest_count;
+  if ((int64_t)highest_sn < (int64_t)SN(st.tx_next_deliv) - (int64_t)window_size) {
+    highest_hfn = HFN(st.tx_next_deliv) + 1;
+  } else if (highest_sn >= SN(st.tx_next_deliv) + window_size) {
+    highest_hfn = HFN(st.tx_next_deliv) - 1;
+  } else {
+    highest_hfn = HFN(st.tx_next_deliv);
   }
+  highest_count = COUNT(highest_hfn, highest_sn);
+  logger.log_debug("Stopping discard timer up to highest_count={}. highest_sn={}, st.tx_next_deliv={}",
+                   highest_count,
+                   highest_sn,
+                   st.tx_next_deliv);
+
   // Remove timers from map
-  uint32_t start_count = st.have_stopped_discard_timer ? st.last_stopped_discard_timer_count + 1 : 0;
-  for (uint32_t count = start_count; count <= max_count; count++) {
-    logger.log_debug("Stopping discard timer for COUNT={}", count);
+  for (uint32_t count = st.tx_next_deliv; count <= highest_count; count++) {
     discard_timers_map.erase(count);
+
+    // Update TX_NEXT_DELIV
+    st.tx_next_deliv = st.tx_next_deliv + 1;
+    logger.log_debug("Stopped discard timer for COUNT={}. st.tx_next_deliv={}", count, st.tx_next_deliv);
   }
-  st.last_stopped_discard_timer_count = max_count;
-  st.have_stopped_discard_timer       = true;
 }
 
 // Discard Timer Callback (discardTimer)

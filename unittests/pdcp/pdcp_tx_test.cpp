@@ -150,8 +150,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
   }
 }
 
-/// Test correct start of PDCP discard timers
-/// and stop from lower layers
+/// Test correct start of PDCP discard timers and stop from lower layers
 TEST_P(pdcp_tx_test, discard_timer_and_stop)
 {
   init(GetParam());
@@ -179,45 +178,56 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + 2, GetParam()));
     ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
 
-    // Notify delivery of second SDU again (should issue a warning)
+    // Notify delivery of second SDU again
+    // e.g. in case the UDP-based F1-U interface swaps the the order of transmit/delivery notifications
     pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + 1, GetParam()));
     ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
 
     // Notify delivery of remaining SDUs
-    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus, GetParam()));
+    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus - 1, GetParam()));
     ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
   };
 
   pdcp_tx_state st = {};
   if (config.sn_size == pdcp_sn_size::size12bits) {
-    st.tx_next                          = 0;
-    st.have_stopped_discard_timer       = false;
-    st.last_stopped_discard_timer_count = 0;
+    // test the beginning
+    st.tx_next       = 0;
+    st.tx_next_deliv = st.tx_next;
     test_discard_timer_stop(st);
 
-    st.tx_next                          = 2048;
-    st.have_stopped_discard_timer       = true;
-    st.last_stopped_discard_timer_count = 2047;
+    // test the center of SN range
+    st.tx_next       = 2046;
+    st.tx_next_deliv = st.tx_next;
     test_discard_timer_stop(st);
 
-    st.tx_next                          = 4096;
-    st.have_stopped_discard_timer       = true;
-    st.last_stopped_discard_timer_count = 4095;
+    // test the first wrap around
+    st.tx_next       = 4094;
+    st.tx_next_deliv = st.tx_next;
+    test_discard_timer_stop(st);
+
+    // test the second wrap around
+    st.tx_next       = 8190;
+    st.tx_next_deliv = st.tx_next;
     test_discard_timer_stop(st);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
-    st.tx_next                          = 0;
-    st.have_stopped_discard_timer       = false;
-    st.last_stopped_discard_timer_count = 0;
+    // test the beginning
+    st.tx_next       = 0;
+    st.tx_next_deliv = st.tx_next;
     test_discard_timer_stop(st);
 
-    st.tx_next                          = 131072;
-    st.have_stopped_discard_timer       = true;
-    st.last_stopped_discard_timer_count = 131071;
+    // test the center of SN range
+    st.tx_next       = 131070;
+    st.tx_next_deliv = st.tx_next;
     test_discard_timer_stop(st);
 
-    st.tx_next                          = 262144;
-    st.have_stopped_discard_timer       = true;
-    st.last_stopped_discard_timer_count = 262143;
+    // test the first wrap around
+    st.tx_next       = 262142;
+    st.tx_next_deliv = st.tx_next;
+    test_discard_timer_stop(st);
+
+    // test the second wrap around
+    st.tx_next       = 524286;
+    st.tx_next_deliv = st.tx_next;
     test_discard_timer_stop(st);
   } else {
     FAIL();

@@ -32,15 +32,11 @@ struct pdcp_tx_state {
   /// except for SRBs configured with state variables continuation.
   uint32_t tx_next = 0;
 
-  // > Additional state variables to avoid HFN de-synchronization
-
-  /// This flag indicates whether the PDCP entity has already stopped any discard timer before, e.g. in case of
-  /// successful delivery of a PDU.
-  bool have_stopped_discard_timer = false;
-
-  /// This variable indicates the COUNT value of the highest successfully delivered PDU in sequence for which the
-  /// discard timer was stopped.
-  uint32_t last_stopped_discard_timer_count = 0;
+  /// TX_NEXT_DELIV indicates the COUNT value of the first PDCP SDU for which the delivery is not confirmed.
+  /// This variable is not part of TS 38.331 Sec. 7.1 "State variables". It is used for an adapted version of
+  /// the TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side in order to reconstruction of COUNT value of
+  /// transmitted/delivered PDCP SDUs for which the discard timer shall be stopped.
+  uint32_t tx_next_deliv = 0;
 };
 
 /// Base class used for transmitting PDCP bearers.
@@ -84,30 +80,31 @@ public:
    */
   void handle_sdu(byte_buffer sdu) final;
 
-  void handle_pdu_transmit_notification(uint32_t max_tx_sn) final
+  void handle_pdu_transmit_notification(uint32_t highest_sn) final
   {
-    logger.log_debug("Handling PDU transmit notification for max_tx_sn={}", max_tx_sn);
-    if (max_tx_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-      logger.log_error("Invalid PDU transmit notification for max_tx_sn={} exceeds sn_size={}", max_tx_sn, cfg.sn_size);
+    logger.log_debug("Handling PDU transmit notification for highest_sn={}", highest_sn);
+    if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
+      logger.log_error(
+          "Invalid PDU transmit notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
       return;
     }
     if (is_um()) {
-      stop_discard_timer(max_tx_sn);
+      stop_discard_timer(highest_sn);
     }
   }
 
-  void handle_pdu_delivery_notification(uint32_t max_deliv_sn) final
+  void handle_pdu_delivery_notification(uint32_t highest_sn) final
   {
-    logger.log_debug("Handling PDU delivery notification for max_deliv_sn={}", max_deliv_sn);
-    if (max_deliv_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
+    logger.log_debug("Handling PDU delivery notification for highest_sn={}", highest_sn);
+    if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
       logger.log_error(
-          "Invalid PDU delivery notification for max_deliv_sn={} exceeds sn_size={}", max_deliv_sn, cfg.sn_size);
+          "Invalid PDU delivery notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
       return;
     }
     if (is_am()) {
-      stop_discard_timer(max_deliv_sn);
+      stop_discard_timer(highest_sn);
     } else {
-      logger.log_warning("Received PDU delivery notification on UM bearer. SN<={}", max_deliv_sn);
+      logger.log_warning("Received PDU delivery notification on UM bearer. SN<={}", highest_sn);
     }
   }
 
@@ -187,8 +184,8 @@ private:
   byte_buffer cipher_encrypt(byte_buffer_view buf, uint32_t count);
 
   /// \brief Stops all discard timer up to a PDCP PDU sequence number that is provided as argument.
-  /// \param max_sn Highest PDCP PDU sequence number to which all discard timers shall be stopped.
-  void stop_discard_timer(uint32_t max_sn);
+  /// \param highest_sn Highest PDCP PDU sequence number to which all discard timers shall be stopped.
+  void stop_discard_timer(uint32_t highest_sn);
 
   /// Discard timer information. We keep both the discard timer
   /// and a copy of the SDU for the data recovery procedure (for AM only).
