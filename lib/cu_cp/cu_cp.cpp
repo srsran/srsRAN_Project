@@ -26,7 +26,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
-  cfg(config_), cu_cp_task_sched(timers), ue_task_sched(timers), du_task_sched(timers), cu_up_task_sched(timers)
+  cfg(config_), ue_task_sched(timers), du_task_sched(timers), cu_up_task_sched(timers)
 {
   assert_cu_cp_configuration_valid(cfg);
 
@@ -41,6 +41,8 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
 
   // Create layers
   ngc_entity = create_ngc(cfg.ngc_config, ngc_task_sched, ue_mng, *cfg.ngc_notifier);
+
+  routine_mng = std::make_unique<cu_cp_routine_manager>(cfg.ngc_config, *ngc_entity, *this);
 }
 
 cu_cp::~cu_cp()
@@ -51,7 +53,7 @@ cu_cp::~cu_cp()
 void cu_cp::start()
 {
   // start NG setup procedure.
-  cu_cp_task_sched.schedule_async_task(launch_async<initial_cu_cp_setup_routine>(cfg.ngc_config, *ngc_entity, *this));
+  routine_mng->start_initial_cu_cp_setup_routine();
 
   // start E1 setup procedure(s)
   for (auto& cu_up : cu_up_db) {

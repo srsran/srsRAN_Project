@@ -15,9 +15,9 @@
 #include "adapters/f1c_adapters.h"
 #include "adapters/ngc_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
+#include "cu_cp_routine_manager.h"
 #include "cu_up_processor_impl.h"
 #include "du_processor_impl.h"
-#include "task_schedulers/cu_cp_task_scheduler.h"
 #include "task_schedulers/cu_up_task_scheduler.h"
 #include "task_schedulers/du_task_scheduler.h"
 #include "task_schedulers/ue_task_scheduler.h"
@@ -125,9 +125,6 @@ private:
 
   ue_manager ue_mng;
 
-  // CU-CP task scheduler
-  cu_cp_task_scheduler cu_cp_task_sched;
-
   // UE task scheduler
   ue_task_scheduler ue_task_sched;
 
@@ -166,6 +163,8 @@ private:
   slotted_array<ngc_du_processor_adapter, MAX_NOF_DUS> ngc_du_processor_ev_notifiers; // indexed by DU index
 
   std::atomic<bool> amf_connected = {false};
+
+  std::unique_ptr<cu_cp_routine_manager> routine_mng;
 };
 
 } // namespace srs_cu_cp
