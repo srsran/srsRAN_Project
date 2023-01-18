@@ -1,3 +1,12 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #pragma once
 
@@ -173,11 +182,23 @@ struct cast_to_size_operator {
 
 } // namespace detail
 
-/// Array of optional elements. The iteration is in order of indexes and correctly skips absent elements.
-/// Pointer/References/Iterators remain valid throughout the object lifetime.
-/// NOTE: The sorted iteration and pointer validation guarantees may add some overhead if the array is very fragmented.
-/// \tparam T type of objects
-/// \tparam N static size of max nof items
+/// \brief Array of optional elements, with the following characteristics:
+/// - Index-based lookup to elements,
+/// - The iteration is in order of indexes and correctly skips absent elements,
+/// - Stable - Pointer/References/Iterators remain valid throughout the object lifetime.
+/// - Memory overhead - The container creates an array/vector up-front of size \c N, even if its number of elements is
+/// still zero.
+/// - Fragmentation - The container has holes in its internal data storage for every absent indexes. This reduces
+/// the efficiency of operations like iteration in scenarios of high fragmentation.
+/// The advantages of this container include:
+/// - O(1) complexity for index-based lookup, creation, removal (just one array indexing),
+/// - No allocations during element creation or deletion,
+/// - Pointer stability of its elements.
+/// - Index-based lookup is thread-safe if different threads use different indexes.
+/// This container may be unsuitable for scenarios where \c N is large, due to the increased memory overhead and
+/// potential fragmentation.
+/// \tparam T type of the slotted_array elements.
+/// \tparam N static size of the maximum number of elements.
 /// \tparam EmbeddedStorage Whether the array is stored in the object (via std::array) or separately in the heap (via
 /// std::vector).
 template <typename T, size_t N, bool EmbeddedStorage = true>
@@ -206,6 +227,7 @@ public:
 
   bool contains(size_t idx) const noexcept { return idx < vec.size() and vec[idx].has_value(); }
 
+  /// \brief Index-based element lookup. This operation has O(1) complexity in the worst-case scenario.
   T& operator[](size_t idx) noexcept
   {
     srsgnb_assert(contains(idx), "Bad access for element with index={}", idx);
@@ -217,7 +239,10 @@ public:
     return *vec[idx];
   }
 
-  constexpr bool   empty() const noexcept { return nof_elems == 0; }
+  /// \brief Checks whether the container is empty.
+  constexpr bool empty() const noexcept { return nof_elems == 0; }
+
+  /// \brief Checks the number of elements stored in the container.
   constexpr size_t size() const noexcept { return nof_elems; }
 
   iterator       begin() { return iterator{vec, 0}; }
@@ -307,11 +332,23 @@ private:
   array_type vec;           ///< Container to store optional elements
 };
 
-/// \brief Container representing a vector of optional elements. The index of an inserted element, remains valid
-/// throughout the element lifetime.
-///
-/// Contrarily to slotted_array, this container may allocate and cause pointer/reference/iterator invalidation. On the
-/// other hand, it has the advantage of providing a more compact representation of its content.
+/// \brief Container representing a vector of optional elements. It has the following characteristics:
+/// - composed by two vectors, one "elements vector" for storing the container's elements and one "indexing vector" to
+/// convert external indexes to a index position in the first "elements vector",
+/// - Index-based lookup of elements, based internally on two vector index lookups,
+/// - The iteration is in order of indexes and correctly skips absent elements,
+/// - Unstable - Pointer/References/Iterators do not remain valid during addition/removal of elements in the container,
+/// - Memory overhead - Reduced memory overhead compared to \c static_array<T, N> because elements are now stored
+/// contiguously in memory in the "elements vector". However, some memory overhead is expected in the "indexing vector",
+/// - Fragmentation - There is only fragmentation in the "indexing vector".
+/// The advantages of this container include:
+/// - Less memory overhead and fragmentation than \c slotted_array<T, N>,
+/// - O(1) complexity for index-based lookup, consisting of two vector index accesses,
+/// - O(1) creation in the best case scenario via push_back. O(N) if the "elements vector" needs to be resized,
+/// - O(1) removal via erase-remove pattern.
+/// This container may be unsuitable for scenarios where indexes are very scattered, due to the increased memory
+/// overhead and fragmentation, or for scenarios where pointer stability is required.
+/// \tparam T type of the slotted_vector elements.
 template <typename T>
 class slotted_vector
 {
@@ -360,7 +397,8 @@ public:
     return objects[index_mapper[idx]];
   }
 
-  /// May allocate and cause pointer invalidation
+  /// \brief Inserts a new element in the container if the corresponding position was unoccupied. Overwrites an
+  /// existing element if the corresponding position was occupied. May allocate and cause pointer invalidation.
   template <typename... Args>
   void emplace(size_t idx, Args&&... args)
   {
@@ -371,7 +409,12 @@ public:
     }
     objects.emplace_back(std::forward<Args>(args)...);
     if (idx >= index_mapper.size()) {
-      index_mapper.resize(idx + 1, (size_t)absent_value);
+      if (idx == index_mapper.size()) {
+        // leverage std::vector growth policy, when elements are being inserted in order.
+        index_mapper.push_back((size_t)absent_value);
+      } else {
+        index_mapper.resize(idx + 1, (size_t)absent_value);
+      }
     }
     index_mapper[idx] = objects.size() - 1;
   }
