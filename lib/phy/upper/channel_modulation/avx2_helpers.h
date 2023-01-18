@@ -205,5 +205,22 @@ inline __m256 interval_function(__m256       value,
   return _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(slope, value), intercept), rcp_noise);
 }
 
+/// \brief Safe division.
+///
+/// \return <tt>dividend / divisor</tt> if \c divisor is not zero, \c 0 otherwise.
+inline __m256 safe_div(__m256 dividend, __m256 divisor)
+{
+  static const __m256 all_zero = _mm256_setzero_ps();
+  // _CMP_NEQ_OQ: compare not equal, ordered (nan is false) and quite (no exceptions raised).
+#if defined(__AVX512F__) && defined(__AVX512VL__)
+  __mmask8 mask = _mm256_cmp_ps_mask(divisor, all_zero, _CMP_NEQ_OQ);
+  return _mm256_maskz_div_ps(mask, dividend, divisor);
+#else
+  __m256 mask   = _mm256_cmp_ps(divisor, all_zero, _CMP_NEQ_OQ);
+  __m256 result = _mm256_div_ps(dividend, divisor);
+  return _mm256_blendv_ps(all_zero, result, mask);
+#endif
+}
+
 } // namespace mm256
 } // namespace srsgnb

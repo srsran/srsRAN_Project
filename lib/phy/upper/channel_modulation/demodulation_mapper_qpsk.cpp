@@ -32,24 +32,28 @@ static void demod_QPSK_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const
   __m256 noise_0 = _mm256_loadu_ps(noise_var + 0);
   __m256 noise_1 = _mm256_loadu_ps(noise_var + 8);
 
+  // Compute noise inverses.
+  __m256 rcp_noise_0 = mm256::safe_div(_mm256_set1_ps(1), noise_0);
+  __m256 rcp_noise_1 = mm256::safe_div(_mm256_set1_ps(1), noise_1);
+
   // Repeat noise values for real and imaginary parts.
-  __m256 noise_3 = _mm256_unpackhi_ps(noise_1, noise_1);
-  __m256 noise_2 = _mm256_unpacklo_ps(noise_1, noise_1);
-  noise_1        = _mm256_unpackhi_ps(noise_0, noise_0);
-  noise_0        = _mm256_unpacklo_ps(noise_0, noise_0);
+  __m256 rcp_noise_3 = _mm256_unpackhi_ps(rcp_noise_1, rcp_noise_1);
+  __m256 rcp_noise_2 = _mm256_unpacklo_ps(rcp_noise_1, rcp_noise_1);
+  rcp_noise_1        = _mm256_unpackhi_ps(rcp_noise_0, rcp_noise_0);
+  rcp_noise_0        = _mm256_unpacklo_ps(rcp_noise_0, rcp_noise_0);
 
   // Re-collocate SSE registers.
-  __m256 noise_0_ = _mm256_permute2f128_ps(noise_0, noise_1, 0x20);
-  __m256 noise_1_ = _mm256_permute2f128_ps(noise_0, noise_1, 0x31);
-  __m256 noise_2_ = _mm256_permute2f128_ps(noise_2, noise_3, 0x20);
-  __m256 noise_3_ = _mm256_permute2f128_ps(noise_2, noise_3, 0x31);
+  __m256 rcp_noise_0_ = _mm256_permute2f128_ps(rcp_noise_0, rcp_noise_1, 0x20);
+  __m256 rcp_noise_1_ = _mm256_permute2f128_ps(rcp_noise_0, rcp_noise_1, 0x31);
+  __m256 rcp_noise_2_ = _mm256_permute2f128_ps(rcp_noise_2, rcp_noise_3, 0x20);
+  __m256 rcp_noise_3_ = _mm256_permute2f128_ps(rcp_noise_2, rcp_noise_3, 0x31);
 
   // Calculate l_value.
   __m256 GAIN      = _mm256_set1_ps(2.0F * M_SQRT2f32);
-  __m256 l_value_0 = _mm256_div_ps(_mm256_mul_ps(GAIN, symbols_0), noise_0_);
-  __m256 l_value_1 = _mm256_div_ps(_mm256_mul_ps(GAIN, symbols_1), noise_1_);
-  __m256 l_value_2 = _mm256_div_ps(_mm256_mul_ps(GAIN, symbols_2), noise_2_);
-  __m256 l_value_3 = _mm256_div_ps(_mm256_mul_ps(GAIN, symbols_3), noise_3_);
+  __m256 l_value_0 = _mm256_mul_ps(_mm256_mul_ps(GAIN, symbols_0), rcp_noise_0_);
+  __m256 l_value_1 = _mm256_mul_ps(_mm256_mul_ps(GAIN, symbols_1), rcp_noise_1_);
+  __m256 l_value_2 = _mm256_mul_ps(_mm256_mul_ps(GAIN, symbols_2), rcp_noise_2_);
+  __m256 l_value_3 = _mm256_mul_ps(_mm256_mul_ps(GAIN, symbols_3), rcp_noise_3_);
 
   // Store result.
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(llr),
@@ -60,6 +64,9 @@ static void demod_QPSK_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const
 
 static log_likelihood_ratio demod_QPSK_symbol(float x, float noise_var)
 {
+  if (noise_var == 0) {
+    return log_likelihood_ratio(0);
+  }
   float l_value = 2.0F * M_SQRT2f32 * x / noise_var;
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }

@@ -20,6 +20,9 @@ using namespace srsgnb;
 
 static log_likelihood_ratio demod_BPSK_symbol(cf_t z, float noise_var, float range_limit)
 {
+  if (!std::isnormal(noise_var)) {
+    return 0;
+  }
   float l_value = 2.0F * M_SQRT2f32 * (std::real(z) + std::imag(z)) / noise_var;
   return log_likelihood_ratio::quantize(l_value, range_limit);
 };
@@ -64,8 +67,8 @@ void demodulation_mapper_impl::demodulate_soft(span<log_likelihood_ratio> llrs,
 {
   srsgnb_assert(symbols.size() == noise_vars.size(), "Inputs symbols and noise_vars must have the same length.");
   srsgnb_assert(symbols.size() * get_bits_per_symbol(mod) == llrs.size(), "Input and output lengths are incompatible.");
-  srsgnb_assert(std::all_of(noise_vars.begin(), noise_vars.end(), [](float f) { return f > 0; }),
-                "Input noise_vars must have positive entries.");
+  srsgnb_assert(std::all_of(noise_vars.begin(), noise_vars.end(), [](float f) { return (f >= 0); }),
+                "Input noise_vars must have non-negative entries.");
 
   switch (mod) {
     case modulation_scheme::BPSK:

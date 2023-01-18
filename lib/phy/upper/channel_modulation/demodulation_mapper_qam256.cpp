@@ -148,7 +148,10 @@ static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, con
   __m128 noise = _mm_loadu_ps(noise_var);
 
   // Make noise reciprocal.
+  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quite (no exceptions raised).
+  __m128 mask      = _mm_cmp_ps(noise, _mm_set1_ps(0), _CMP_GT_OQ);
   __m128 rcp_noise = _mm_div_ps(_mm_set1_ps(1), noise);
+  rcp_noise        = _mm_blendv_ps(_mm_set1_ps(0), rcp_noise, mask);
 
   // Repeat noise values for real and imaginary parts and put the results in an AVX register.
   __m256 rcp_noise_ = _mm256_set_m128(_mm_unpackhi_ps(rcp_noise, rcp_noise), _mm_unpacklo_ps(rcp_noise, rcp_noise));
@@ -187,27 +190,27 @@ static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, con
 }
 #endif // HAVE_AVX2
 
-static log_likelihood_ratio demod_256QAM_symbol_01(float value, float noise_var)
+static log_likelihood_ratio demod_256QAM_symbol_01(float value, float rcp_noise_var)
 {
-  float l_value = interval_function(value, noise_var, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  float l_value = interval_function(value, rcp_noise_var, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-static log_likelihood_ratio demod_256QAM_symbol_23(float value, float noise_var)
+static log_likelihood_ratio demod_256QAM_symbol_23(float value, float rcp_noise_var)
 {
-  float l_value = interval_function(value, noise_var, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  float l_value = interval_function(value, rcp_noise_var, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-static log_likelihood_ratio demod_256QAM_symbol_45(float value, float noise_var)
+static log_likelihood_ratio demod_256QAM_symbol_45(float value, float rcp_noise_var)
 {
-  float l_value = interval_function(value, noise_var, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  float l_value = interval_function(value, rcp_noise_var, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-static log_likelihood_ratio demod_256QAM_symbol_67(float value, float noise_var)
+static log_likelihood_ratio demod_256QAM_symbol_67(float value, float rcp_noise_var)
 {
-  float l_value = interval_function(value, noise_var, INTERVAL_WIDTH_67, NOF_INTERVALS_67, SLOPE_67, INTERCEPT_67);
+  float l_value = interval_function(value, rcp_noise_var, INTERVAL_WIDTH_67, NOF_INTERVALS_67, SLOPE_67, INTERCEPT_67);
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
@@ -232,15 +235,18 @@ void srsgnb::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
 #endif // HAVE_AVX2
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
-    float rcp_noise = 1 / (*noise_it);
-    *llr_it++       = demod_256QAM_symbol_01(std::real(*symbols_it), rcp_noise);
-    *llr_it++       = demod_256QAM_symbol_01(std::imag(*symbols_it), rcp_noise);
-    *llr_it++       = demod_256QAM_symbol_23(std::real(*symbols_it), rcp_noise);
-    *llr_it++       = demod_256QAM_symbol_23(std::imag(*symbols_it), rcp_noise);
-    *llr_it++       = demod_256QAM_symbol_45(std::real(*symbols_it), rcp_noise);
-    *llr_it++       = demod_256QAM_symbol_45(std::imag(*symbols_it), rcp_noise);
-    *llr_it++       = demod_256QAM_symbol_67(std::real(*symbols_it), rcp_noise);
-    *llr_it++       = demod_256QAM_symbol_67(std::imag(*symbols_it), rcp_noise);
+    float rcp_noise = 0;
+    if (*noise_it != 0) {
+      rcp_noise = 1 / (*noise_it);
+    }
+    *llr_it++ = demod_256QAM_symbol_01(std::real(*symbols_it), rcp_noise);
+    *llr_it++ = demod_256QAM_symbol_01(std::imag(*symbols_it), rcp_noise);
+    *llr_it++ = demod_256QAM_symbol_23(std::real(*symbols_it), rcp_noise);
+    *llr_it++ = demod_256QAM_symbol_23(std::imag(*symbols_it), rcp_noise);
+    *llr_it++ = demod_256QAM_symbol_45(std::real(*symbols_it), rcp_noise);
+    *llr_it++ = demod_256QAM_symbol_45(std::imag(*symbols_it), rcp_noise);
+    *llr_it++ = demod_256QAM_symbol_67(std::real(*symbols_it), rcp_noise);
+    *llr_it++ = demod_256QAM_symbol_67(std::imag(*symbols_it), rcp_noise);
     ++symbols_it;
     ++noise_it;
   }

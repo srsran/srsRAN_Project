@@ -36,7 +36,7 @@ static void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
   __m256 noise_0 = _mm256_loadu_ps(noise_var + 0);
 
   // Make noise reciprocal.
-  __m256 rcp_noise_0 = _mm256_div_ps(_mm256_set1_ps(1), noise_0);
+  __m256 rcp_noise_0 = mm256::safe_div(_mm256_set1_ps(1), noise_0);
 
   // Repeat noise values for real and imaginary parts.
   __m256 rcp_noise_1 = _mm256_unpackhi_ps(rcp_noise_0, rcp_noise_0);
@@ -96,6 +96,10 @@ static void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
 
 static log_likelihood_ratio demod_16QAM_symbol_01(float x, float noise_var)
 {
+  if (noise_var == 0) {
+    return log_likelihood_ratio(0);
+  }
+
   float l_value = 4 * M_SQRT1_10 * x;
   if (std::abs(x) > 2 * M_SQRT1_10) {
     l_value = 2 * l_value - std::copysign(0.8F, x);
@@ -107,6 +111,10 @@ static log_likelihood_ratio demod_16QAM_symbol_01(float x, float noise_var)
 
 static log_likelihood_ratio demod_16QAM_symbol_23(float x, float noise_var)
 {
+  if (noise_var == 0) {
+    return log_likelihood_ratio(0);
+  }
+
   float l_value = 0.8F - 4 * M_SQRT1_10 * std::abs(x);
   l_value /= noise_var;
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
