@@ -116,10 +116,15 @@ uint32_t freq_to_nr_arfcn(double freq);
 /// \return    The SSB pattern case if band and subcarrier spacing match, invalid otherwise.
 ssb_pattern_case get_ssb_pattern(nr_band band, subcarrier_spacing scs);
 
-/// \brief Selects the lowest SSB subcarrier spacing valid for this band.
-/// \param[in] band NR band number.
+/// \brief Selects the most suitable SSB subcarrier spacing valid for this band.
+///
+/// The most suitable SSB subcarrier spacing will be the one matching with the common subcarrier spacing if possible,
+/// otherwise the lowest SSB subcarrier spacing supported by the band.
+///
+/// \param[in] band       NR band number.
+/// \param[in] scs_common Cell common subcarrier spacing.
 /// \return The SSB subcarrier spacing.
-subcarrier_spacing get_lowest_ssb_scs(nr_band band);
+subcarrier_spacing get_most_suitable_ssb_scs(nr_band band, subcarrier_spacing scs_common);
 
 /// \brief     Returns boolean indicating whether the band is in paired spectrum.
 /// \remark    Paired spectrum is FDD, unpaired spectrum is TDD, SUL, SDL.

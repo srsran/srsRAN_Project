@@ -9,6 +9,7 @@
  */
 
 #include "prach_scheduler.h"
+#include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/prach/prach_cyclic_shifts.h"
 #include "srsgnb/ran/prach/prach_frequency_mapping.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
@@ -125,12 +126,23 @@ void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
 
 void prach_scheduler::allocate_slot_prach_pdus(cell_slot_resource_allocator& sl_res_grid)
 {
+  static const unsigned nof_symbols_per_slot = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended
+                                                   ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
+                                                   : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+
+  // Start slot within the subframe.
+  unsigned start_slot = prach_cfg.starting_symbol / nof_symbols_per_slot;
+
   if (not cell_cfg.is_ul_enabled(sl_res_grid.slot)) {
     // UL is not enabled in this slot.
     return;
   }
   if (sl_res_grid.slot.sfn() % prach_cfg.x != prach_cfg.y) {
     // PRACH is not enabled in this SFN.
+    return;
+  }
+  if (sl_res_grid.slot.subframe_slot_index() != start_slot) {
+    // PRACH does not start in this slot.
     return;
   }
   if (not prach_subframe_occasion_bitmap.test(sl_res_grid.slot.subframe_index())) {

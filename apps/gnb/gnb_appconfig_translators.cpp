@@ -5,9 +5,8 @@
 using namespace srsgnb;
 
 /// Static configuration that the gnb supports.
-static constexpr subcarrier_spacing scs       = subcarrier_spacing::kHz15;
-static constexpr cyclic_prefix      cp        = cyclic_prefix::NORMAL;
-static constexpr unsigned           nof_ports = 1U;
+static constexpr cyclic_prefix cp        = cyclic_prefix::NORMAL;
+static constexpr unsigned      nof_ports = 1U;
 
 srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig& config)
 {
@@ -34,7 +33,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     cell_config_builder_params param;
     const base_cell_appconfig& base_cell = cell.cell;
     param.pci                            = cell.pci;
-    param.scs_common                     = scs;
+    param.scs_common                     = base_cell.common_scs;
     param.channel_bw_mhz                 = base_cell.channel_bw_mhz;
     param.nof_crbs = band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, param.scs_common, frequency_range::FR1);
     param.dl_arfcn = base_cell.dl_arfcn;
@@ -42,7 +41,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
 
     static const uint8_t                              ss0_idx      = 0;
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-        base_cell.dl_arfcn, base_cell.band, param.nof_crbs, scs, scs, ss0_idx);
+        base_cell.dl_arfcn, base_cell.band, param.nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
 
     if (!ssb_freq_loc.has_value()) {
       srsgnb_terminate("Unable to derive a valid SSB pointA and k_SSB for cell id ({}). Exiting.\n", cell.pci);
@@ -51,25 +50,25 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
     logger.set_level(srslog::basic_levels::info);
 
-    logger.info("SSB derived parameters for cell: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
-                "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
-                cell.pci,
-                base_cell.dl_arfcn,
-                param.nof_crbs,
-                scs,
-                scs,
-                (*ssb_freq_loc).offset_to_point_A.to_uint(),
-                (*ssb_freq_loc).k_ssb.to_uint(),
-                (*ssb_freq_loc).ssb_arfcn,
-                (*ssb_freq_loc).coreset0_idx,
-                (*ssb_freq_loc).searchspace0_idx);
-
     param.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
     param.k_ssb             = (*ssb_freq_loc).k_ssb;
     param.coreset0_index    = (*ssb_freq_loc).coreset0_idx;
 
     // Create the configuration.
     out_cfg.push_back(config_helpers::make_default_du_cell_config(param));
+
+    logger.info("SSB derived parameters for cell: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
+                "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
+                cell.pci,
+                base_cell.dl_arfcn,
+                param.nof_crbs,
+                to_string(base_cell.common_scs),
+                to_string(out_cfg.back().ssb_cfg.scs),
+                (*ssb_freq_loc).offset_to_point_A.to_uint(),
+                (*ssb_freq_loc).k_ssb.to_uint(),
+                (*ssb_freq_loc).ssb_arfcn,
+                (*ssb_freq_loc).coreset0_idx,
+                (*ssb_freq_loc).searchspace0_idx);
 
     // Set the rest of the parameters.
     du_cell_config& out_cell = out_cfg.back();
@@ -107,7 +106,7 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
     const base_cell_appconfig& cell = config.cells_cfg.front().cell;
 
     out_cfg.log_level                  = config.log_cfg.phy_level;
-    out_cfg.scs                        = scs;
+    out_cfg.scs                        = config.common_cell_cfg.common_scs;
     out_cfg.cp                         = cp;
     out_cfg.max_processing_delay_slots = 4;
     out_cfg.ul_to_dl_subframe_offset   = 1;
@@ -124,7 +123,8 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
     }
 
     out_cfg.tx_scale =
-        1.0F / std::sqrt(NRE * band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, scs, frequency_range::FR1));
+        1.0F / std::sqrt(NRE * band_helper::get_n_rbs_from_bw(
+                                   cell.channel_bw_mhz, config.common_cell_cfg.common_scs, frequency_range::FR1));
     out_cfg.amplitude_config.ceiling_dBFS    = -0.1F;
     out_cfg.amplitude_config.enable_clipping = false;
     out_cfg.amplitude_config.full_scale_lin  = 1.F;
@@ -134,8 +134,9 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
   for (unsigned sector_id = 0; sector_id != config.cells_cfg.size(); ++sector_id) {
     lower_phy_sector_description sector_config;
     const base_cell_appconfig&   cell = config.cells_cfg[sector_id].cell;
-    sector_config.bandwidth_rb        = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, scs, frequency_range::FR1);
-    sector_config.dl_freq_hz          = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
+    sector_config.bandwidth_rb =
+        band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
+    sector_config.dl_freq_hz = band_helper::nr_arfcn_to_freq(cell.dl_arfcn);
     sector_config.ul_freq_hz = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(cell.dl_arfcn));
     for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
       lower_phy_sector_port_mapping port_mapping;
@@ -292,13 +293,16 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
     cfg.nof_dl_processors = 2 * dl_pipeline_depth;
     cfg.nof_ul_processors = 8 * dl_pipeline_depth;
 
-    cfg.dl_bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, scs, frequency_range::FR1);
-    cfg.ul_bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, scs, frequency_range::FR1);
+    cfg.active_scs                                                                = {};
+    cfg.active_scs[to_numerology_value(config.cells_cfg.front().cell.common_scs)] = true;
+
+    cfg.dl_bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
+    cfg.ul_bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
 
     cfg.softbuffer_config.max_softbuffers      = 4 * dl_pipeline_depth;
     cfg.softbuffer_config.max_nof_codeblocks   = 128;
     cfg.softbuffer_config.max_codeblock_size   = (1U << 18);
-    cfg.softbuffer_config.expire_timeout_slots = 100 * get_nof_slots_per_subframe(scs);
+    cfg.softbuffer_config.expire_timeout_slots = 100 * get_nof_slots_per_subframe(cell.common_scs);
 
     if (!is_valid_upper_phy_config(cfg)) {
       srsgnb_terminate("Invalid upper PHY configuration. Exiting.\n");

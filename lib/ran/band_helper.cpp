@@ -349,18 +349,28 @@ ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(nr_band band, subcarrier_s
   return ssb_pattern_case::invalid;
 }
 
-subcarrier_spacing srsgnb::band_helper::get_lowest_ssb_scs(nr_band band)
+subcarrier_spacing srsgnb::band_helper::get_most_suitable_ssb_scs(nr_band band, subcarrier_spacing scs_common)
 {
+  subcarrier_spacing lowest_scs = subcarrier_spacing::invalid;
+
   // Look for the given band and SCS
-  for (const nr_band_ssb_scs_case& ss_raster : nr_ssb_band_scs_case_table_fr1) {
-    // Check if band and SCS match!
-    if (ss_raster.band == band) {
-      return ss_raster.scs;
+  for (const nr_band_ssb_scs_case& ssb_case : nr_ssb_band_scs_case_table_fr1) {
+    // Check if band and SCS match.
+    if (ssb_case.band == band) {
+      // If the SCS match with common, then that's the most suitable.
+      if (scs_common == ssb_case.scs) {
+        return ssb_case.scs;
+      }
+
+      // If it is the first match of the band, then store as the lowest SCS.
+      if (lowest_scs == subcarrier_spacing::invalid) {
+        lowest_scs = ssb_case.scs;
+      }
     }
 
-    // As bands are in ascending order, do not waste more time if the current band is bigger
-    if (ss_raster.band > band) {
-      return subcarrier_spacing::invalid;
+    // As bands are in ascending order, do not waste more time if the current band is bigger.
+    if (ssb_case.band > band) {
+      return lowest_scs;
     }
   }
 
@@ -602,15 +612,14 @@ optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_
                                                                                          subcarrier_spacing scs_ssb,
                                                                                          uint8_t            ss0_idx)
 {
-  srsgnb_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n41 &&
-                    band != nr_band::n79,
-                "Bands n34, n38, n39, n41 and n79 not currently supported");
+  srsgnb_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n79,
+                "Bands n34, n38, n39 and n79 not currently supported");
   optional<ssb_coreset0_freq_location> result;
 
   // Get f_ref, point_A from dl_arfcn, band and bandwidth.
   ssb_freq_position_generator du_cfg{dl_arfcn, band, n_rbs, scs_common, scs_ssb};
 
-  // Iterate over different SSB candidates and select the valid CORESET#0 index with widest bandwidth.
+  // Iterate over different SSB candidates and select the valid CORESET#0 index with the widest bandwidth.
   unsigned          max_cset0_rbs = 0;
   ssb_freq_location ssb           = du_cfg.get_next_ssb_location();
   while (ssb.is_valid) {

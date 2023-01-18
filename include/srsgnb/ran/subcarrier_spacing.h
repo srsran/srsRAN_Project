@@ -53,6 +53,43 @@ constexpr inline subcarrier_spacing to_subcarrier_spacing(unsigned numerology)
   return static_cast<subcarrier_spacing>(numerology);
 }
 
+/// Convert a string to SCS.
+inline subcarrier_spacing to_subcarrier_spacing(const std::string& str)
+{
+  unsigned in_scs = static_cast<unsigned>(std::strtof(str.data(), nullptr));
+  for (unsigned numerology = 0, numerology_end = to_numerology_value(subcarrier_spacing::invalid);
+       numerology != numerology_end;
+       ++numerology) {
+    subcarrier_spacing scs     = to_subcarrier_spacing(numerology);
+    unsigned           scs_kHz = scs_to_khz(scs);
+
+    if ((in_scs == scs_kHz) || (in_scs == scs_kHz * 1000)) {
+      return scs;
+    }
+  }
+  return subcarrier_spacing::invalid;
+}
+
+/// Convert SCS to string.
+inline const char* to_string(subcarrier_spacing scs)
+{
+  switch (scs) {
+    case subcarrier_spacing::kHz15:
+      return "15kHz";
+    case subcarrier_spacing::kHz30:
+      return "30kHz";
+    case subcarrier_spacing::kHz60:
+      return "60kHz";
+    case subcarrier_spacing::kHz120:
+      return "120kHz";
+    case subcarrier_spacing::kHz240:
+      return "240kHz";
+    case subcarrier_spacing::invalid:
+    default:
+      return "invalid";
+  }
+}
+
 /// Calculates number of slots per subframe.
 constexpr inline unsigned get_nof_slots_per_subframe(subcarrier_spacing scs)
 {

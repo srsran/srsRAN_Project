@@ -176,30 +176,39 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
 {
   downlink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;
-  // :TODO: Only processors for SCS 15kHz are being created. Fix this in the future.
-  downlink_processor_pool_config::sector_dl_processor info = {0, subcarrier_spacing::kHz15, {}};
 
-  for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
-    downlink_processor_config processor_config;
-    processor_config.id       = i;
-    processor_config.gateway  = config.rg_gateway;
-    processor_config.executor = config.dl_executor;
-    std::unique_ptr<downlink_processor> dl_proc;
-    if (config.log_level == srslog::basic_levels::none) {
-      dl_proc = factory->create(processor_config);
-    } else {
-      // Fetch and configure logger.
-      srslog::basic_logger& logger = srslog::fetch_basic_logger("DL-PHY" + std::to_string(i), true);
-      logger.set_level(config.log_level);
-      logger.set_hex_dump_max_size(config.logger_max_hex_size);
-
-      dl_proc = factory->create(processor_config, logger, config.enable_logging_broadcast);
+  for (unsigned numerology = 0, numerology_end = to_numerology_value(subcarrier_spacing::invalid);
+       numerology != numerology_end;
+       ++numerology) {
+    // Skip SCS if not active.
+    if (!config.active_scs[numerology]) {
+      continue;
     }
-    report_fatal_error_if_not(dl_proc, "Invalid downlink processor.");
-    info.procs.push_back(std::move(dl_proc));
-  }
 
-  config_pool.dl_processors.push_back(std::move(info));
+    downlink_processor_pool_config::sector_dl_processor info = {0, to_subcarrier_spacing(numerology), {}};
+
+    for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
+      downlink_processor_config processor_config;
+      processor_config.id       = i;
+      processor_config.gateway  = config.rg_gateway;
+      processor_config.executor = config.dl_executor;
+      std::unique_ptr<downlink_processor> dl_proc;
+      if (config.log_level == srslog::basic_levels::none) {
+        dl_proc = factory->create(processor_config);
+      } else {
+        // Fetch and configure logger.
+        srslog::basic_logger& logger = srslog::fetch_basic_logger("DL-PHY" + std::to_string(i), true);
+        logger.set_level(config.log_level);
+        logger.set_hex_dump_max_size(config.logger_max_hex_size);
+
+        dl_proc = factory->create(processor_config, logger, config.enable_logging_broadcast);
+      }
+      report_fatal_error_if_not(dl_proc, "Invalid downlink processor.");
+      info.procs.push_back(std::move(dl_proc));
+    }
+
+    config_pool.dl_processors.push_back(std::move(info));
+  }
 
   return create_dl_processor_pool(std::move(config_pool));
 }
@@ -342,27 +351,34 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_pr
 {
   uplink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;
-  // :TODO: Only processors for SCS 15kHz are being created. Fix this in the future.
-  uplink_processor_pool_config::sector_ul_processors info = {0, subcarrier_spacing::kHz15, {}};
 
-  for (unsigned i = 0, e = config.nof_ul_processors; i != e; ++i) {
-    std::unique_ptr<uplink_processor> ul_proc;
-    if (config.log_level != srslog::basic_levels::none) {
-      // Fetch and configure logger.
-      srslog::basic_logger& logger = srslog::fetch_basic_logger("UL-PHY" + std::to_string(i), true);
-      logger.set_level(config.log_level);
-      logger.set_hex_dump_max_size(config.logger_max_hex_size);
-
-      ul_proc = factory.create({}, logger, config.enable_logging_broadcast);
-    } else {
-      ul_proc = factory.create({});
+  for (unsigned scs = 0, scs_end = static_cast<unsigned>(subcarrier_spacing::invalid); scs != scs_end; ++scs) {
+    // Skip SCS if not active.
+    if (!config.active_scs[scs]) {
+      continue;
     }
-    report_fatal_error_if_not(ul_proc, "Invalid uplink processor.");
 
-    info.procs.push_back(std::move(ul_proc));
+    uplink_processor_pool_config::sector_ul_processors info = {0, to_subcarrier_spacing(scs), {}};
+
+    for (unsigned i = 0, e = config.nof_ul_processors; i != e; ++i) {
+      std::unique_ptr<uplink_processor> ul_proc;
+      if (config.log_level != srslog::basic_levels::none) {
+        // Fetch and configure logger.
+        srslog::basic_logger& logger = srslog::fetch_basic_logger("UL-PHY" + std::to_string(i), true);
+        logger.set_level(config.log_level);
+        logger.set_hex_dump_max_size(config.logger_max_hex_size);
+
+        ul_proc = factory.create({}, logger, config.enable_logging_broadcast);
+      } else {
+        ul_proc = factory.create({});
+      }
+      report_fatal_error_if_not(ul_proc, "Invalid uplink processor.");
+
+      info.procs.push_back(std::move(ul_proc));
+    }
+
+    config_pool.ul_processors.push_back(std::move(info));
   }
-
-  config_pool.ul_processors.push_back(std::move(info));
 
   return create_uplink_processor_pool(std::move(config_pool));
 }

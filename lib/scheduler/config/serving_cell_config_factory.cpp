@@ -10,6 +10,7 @@
 
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
+#include "srsgnb/ran/duplex_mode.h"
 
 using namespace srsgnb;
 using namespace srsgnb::config_helpers;
@@ -203,7 +204,7 @@ ssb_configuration srsgnb::config_helpers::make_default_ssb_config(const cell_con
 {
   ssb_configuration cfg{};
 
-  cfg.scs               = band_helper::get_lowest_ssb_scs(band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
+  cfg.scs               = band_helper::get_most_suitable_ssb_scs(params.band, params.scs_common);
   cfg.offset_to_point_A = ssb_offset_to_pointA{params.offset_to_point_a};
   cfg.ssb_period        = ssb_periodicity::ms10;
   cfg.k_ssb             = params.k_ssb;

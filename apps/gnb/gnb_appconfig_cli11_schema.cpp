@@ -165,6 +165,15 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
 {
   app.add_option("--dl_arfcn", cell_params.dl_arfcn, "Donwlink ARFCN")->capture_default_str();
   app.add_option("--band", cell_params.band, "NR band")->capture_default_str();
+  app.add_option("--common_scs", cell_params.common_scs, "Cell common subcarrier spacing")
+      ->transform([](const std::string& value) {
+        subcarrier_spacing scs = to_subcarrier_spacing(value);
+        if (scs == subcarrier_spacing::invalid) {
+          return "Invalid common subcarrier spacing '" + value + "'";
+        }
+        return std::to_string(to_numerology_value(scs));
+      })
+      ->capture_default_str();
   app.add_option("--channel_bandwidth_MHz", cell_params.channel_bw_mhz, "Channel bandwidth in MHz")
       ->capture_default_str()
       ->check([](const std::string& value) -> std::string {

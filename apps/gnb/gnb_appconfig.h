@@ -49,7 +49,7 @@ struct prach_appconfig {
   /// PRACH root sequence index.
   unsigned prach_root_sequence_index = 1;
   /// Zero correlation zone
-  unsigned zero_correlation_zone = 2;
+  unsigned zero_correlation_zone = 0;
   unsigned fixed_msg3_mcs        = 0;
   unsigned max_msg3_harq_retx    = 4;
 };
@@ -114,6 +114,8 @@ struct base_cell_appconfig {
   pucch_appconfig pucch_cfg;
   /// PUSCH configuration.
   pusch_appconfig pusch_cfg;
+  /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
+  subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
 };
 
 /// Cell configuration

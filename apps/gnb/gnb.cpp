@@ -57,8 +57,7 @@ using namespace srsgnb;
 /// \cond
 
 /// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
-static const std::array<uint16_t, NOF_NUMEROLOGIES> nof_prb_ul_grid = {106, 51, 24, 0, 0};
-static std::string                                  config_file;
+static std::string config_file;
 
 static std::atomic<bool> is_running = {true};
 // NGAP configuration.
@@ -201,15 +200,18 @@ static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_co
   return config;
 }
 
-static fapi::carrier_config generate_carrier_config_tlv()
+static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& config)
 {
-  fapi::carrier_config config = {};
+  fapi::carrier_config fapi_config = {};
 
-  // NOTE; for now we only need to fill the nof_prb_ul_grid.
-  // :TODO: extract this to app config.
-  config.ul_grid_size = nof_prb_ul_grid;
+  // NOTE; for now we only need to fill the nof_prb_ul_grid for the common SCS.
+  fapi_config.ul_grid_size                                                         = {};
+  fapi_config.ul_grid_size[to_numerology_value(config.common_cell_cfg.common_scs)] = band_helper::get_n_rbs_from_bw(
+      config.common_cell_cfg.channel_bw_mhz,
+      config.common_cell_cfg.common_scs,
+      band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn)));
 
-  return config;
+  return fapi_config;
 }
 
 static std::unique_ptr<radio_session>
@@ -413,7 +415,7 @@ int main(int argc, char** argv)
                                             upper->get_downlink_pdu_validator(),
                                             upper->get_uplink_pdu_validator(),
                                             generate_prach_config_tlv(du_cfg),
-                                            generate_carrier_config_tlv());
+                                            generate_carrier_config_tlv(gnb_cfg));
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
 
