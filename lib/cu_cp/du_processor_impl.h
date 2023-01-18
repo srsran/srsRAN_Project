@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/du_processor_adapters.h"
 #include "adapters/f1c_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "ue_manager.h"
@@ -110,6 +111,7 @@ private:
   rrc_ue_control_notifier&            rrc_ue_ngc_ctrl_notifier;
   du_processor_ue_task_scheduler&     task_sched;
   du_processor_ue_manager&            ue_manager;
+  du_processor_f1c_adapter            f1c_ue_context_notifier;
 
   du_processor_context context;
   slotted_array<du_cell_context, MAX_NOF_DU_CELLS>

@@ -44,6 +44,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   f1c = create_f1ap(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
   f1c_ev_notifier.connect_du_processor(*this);
 
+  f1c_ue_context_notifier.connect_f1(&f1c->get_f1c_ue_context_manager());
+
   // create RRC
   rrc_du_creation_message rrc_creation_msg(
       cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngc_ctrl_notifier);
@@ -326,11 +328,12 @@ async_task<cu_cp_pdu_session_resource_setup_response_message>
 du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg)
 {
   ue_context* ue_ctxt = ue_manager.find_ue(get_ue_index_from_cu_cp_ue_id(msg.cu_cp_ue_id));
+  srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
   return launch_async<pdu_session_resource_setup_routine>(msg,
                                                           ue_ctxt->rrc->get_rrc_ue_secutity_config(),
                                                           e1ap_ctrl_notifier,
-                                                          f1c->get_f1c_ue_context_manager(),
+                                                          f1c_ue_context_notifier,
                                                           ue_ctxt->rrc->get_rrc_ue_control_message_handler(),
                                                           ue_ctxt->rrc->get_rrc_ue_drb_manager(),
                                                           logger);

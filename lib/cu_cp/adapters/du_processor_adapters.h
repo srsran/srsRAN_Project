@@ -99,5 +99,37 @@ private:
   e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
 };
 
+// Adapter between DU processor and F1C
+class du_processor_f1c_adapter : public f1c_ue_context_notifier
+{
+public:
+  du_processor_f1c_adapter() = default;
+
+  void connect_f1(f1c_ue_context_manager* handler_) { handler = handler_; }
+
+  async_task<f1ap_ue_context_setup_response>
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override
+  {
+    srsgnb_assert(handler != nullptr, "F1C handler must not be nullptr");
+    return handler->handle_ue_context_setup_request(request);
+  }
+
+  async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) override
+  {
+    srsgnb_assert(handler != nullptr, "F1C handler must not be nullptr");
+    return handler->handle_ue_context_release_command(msg);
+  }
+
+  virtual async_task<cu_cp_ue_context_modification_response>
+  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override
+  {
+    srsgnb_assert(handler != nullptr, "F1C handler must not be nullptr");
+    return handler->handle_ue_context_modification_request(request);
+  }
+
+private:
+  f1c_ue_context_manager* handler = nullptr;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb
