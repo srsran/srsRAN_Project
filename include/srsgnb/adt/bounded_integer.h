@@ -116,17 +116,14 @@ public:
     assert_bounds(base_class::value());
     return *this;
   }
-  bounded_integer& operator+=(bounded_integer<Integer, MIN_VALUE, MAX_VALUE> other) { return *this += other.value(); }
+  bounded_integer& operator+=(bounded_integer other) { return *this += other.value(); }
 
   bounded_integer operator+(Integer other) const
   {
     bounded_integer<Integer, MIN_VALUE, MAX_VALUE> ret{*this};
     return ret += other;
   }
-  bounded_integer operator+(bounded_integer<Integer, MIN_VALUE, MAX_VALUE> other) const
-  {
-    return *this + other.value();
-  }
+  bounded_integer operator+(bounded_integer other) const { return *this + other.value(); }
 
   bounded_integer& operator-=(Integer other)
   {
@@ -134,22 +131,19 @@ public:
     assert_bounds(base_class::value());
     return *this;
   }
-  bounded_integer& operator-=(bounded_integer<Integer, MIN_VALUE, MAX_VALUE> other) { return *this -= other.value(); }
+  bounded_integer& operator-=(bounded_integer other) { return *this -= other.value(); }
 
   bounded_integer operator-(Integer other) const
   {
     bounded_integer<Integer, MIN_VALUE, MAX_VALUE> ret{*this};
     return ret -= other;
   }
-  bounded_integer operator-(bounded_integer<Integer, MIN_VALUE, MAX_VALUE> other) const
-  {
-    return *this - other.value();
-  }
+  bounded_integer operator-(bounded_integer other) const { return *this - other.value(); }
 
 protected:
   constexpr void assert_bounds(Integer v) const
   {
-    srsgnb_assert(v >= MIN_VALUE && v <= MAX_VALUE, "Value={} out-of-bounds {{{},...,{}}}", v, MIN_VALUE, MAX_VALUE);
+    srsgnb_assert(v >= MIN_VALUE && v <= MAX_VALUE, "Value={} out-of-bounds [{}, {}]", v, MIN_VALUE, MAX_VALUE);
   }
 };
 

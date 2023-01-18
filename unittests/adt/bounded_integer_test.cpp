@@ -79,8 +79,8 @@ TEST(bounded_integer_test, increment_decrement_operator)
 
 TEST(bounded_integer_test, addition_subtraction_with_raw_integers)
 {
-  int                            num = test_rgen::uniform_int<int>(-5, 1000);
-  bounded_integer<int, -5, 1000> val(num);
+  int                             num = test_rgen::uniform_int<int>(-5, 995);
+  bounded_integer<int, -10, 1000> val(num);
 
   ASSERT_EQ(val, num);
   ASSERT_EQ(val + 5, num + 5);
@@ -97,10 +97,10 @@ TEST(bounded_integer_test, addition_subtraction_with_raw_integers)
 
 TEST(bounded_integer_test, addition_subtraction_with_other_bounded_integers)
 {
-  int                            num  = test_rgen::uniform_int<int>(-2, 500);
-  int                            num2 = test_rgen::uniform_int<int>(-2, 500);
-  bounded_integer<int, -5, 1000> val(num);
-  bounded_integer<int, -5, 1000> val2(num2);
+  int                               num  = test_rgen::uniform_int<int>(-500, 500);
+  int                               num2 = test_rgen::uniform_int<int>(-500, 500);
+  bounded_integer<int, -1000, 1000> val(num);
+  bounded_integer<int, -1000, 1000> val2(num2);
 
   ASSERT_EQ(val + val2, num + num2);
   ASSERT_EQ(val - val2, num - num2);
