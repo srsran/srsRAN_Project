@@ -26,21 +26,43 @@ struct type_storage {
     new (&buffer) T(std::forward<Args>(args)...);
   }
   /// Destroy object stored in embedded buffer. UB if object was not previously created
-  void destroy() noexcept { get().~T(); }
+  void destroy() noexcept
+  {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+    // Note: gcc12.2 gives a likely false alarm.
+    get().~T();
+#pragma GCC diagnostic pop
+  }
 
   /// Get created object handle. UB if object is not created
   // Note: In C++17, std::launder is required
-  T&       get() noexcept { return reinterpret_cast<T&>(buffer); }
-  const T& get() const noexcept { return reinterpret_cast<const T&>(buffer); }
+  T& get() noexcept
+  {
+    return reinterpret_cast<T&>(buffer);
+  }
+  const T& get() const noexcept
+  {
+    return reinterpret_cast<const T&>(buffer);
+  }
 
-  void*       addr() noexcept { return static_cast<void*>(&buffer); }
-  const void* addr() const noexcept { return static_cast<void*>(&buffer); }
-  explicit    operator void*() noexcept { return addr(); }
+  void* addr() noexcept
+  {
+    return static_cast<void*>(&buffer);
+  }
+  const void* addr() const noexcept
+  {
+    return static_cast<void*>(&buffer);
+  }
+  explicit operator void*() noexcept
+  {
+    return addr();
+  }
 
   constexpr static size_t obj_size   = sizeof(T) > MinSize ? sizeof(T) : MinSize;
   constexpr static size_t align_size = alignof(T) > AlignSize ? alignof(T) : AlignSize;
 
-  std::aligned_storage_t<obj_size, align_size> buffer; ///< Embedded memory buffer
+  alignas(align_size) char buffer[obj_size]; ///< Embedded memory buffer.
 };
 
 /// Helper method to copy optional object from rhs to lhs
