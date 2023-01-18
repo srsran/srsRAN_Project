@@ -141,10 +141,12 @@ static const std::vector<test_profile> profile_set = {
 
 static void usage(const char* prog)
 {
-  fmt::print("Usage: {} [-R repetitions] [-D LDPC type] [-M rate dematcher type] [-P profile] [-s silent]\n", prog);
+  fmt::print("Usage: {} [-R repetitions] [-B Batch size per thread] [-T number of threads] [-D LDPC type] [-M rate "
+             "dematcher type] [-P profile] [-s silent]\n",
+             prog);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
-  fmt::print("\t-T Number of threads [Default {}]\n", nof_threads);
+  fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
   fmt::print("\t-D LDPC decoder type. [Default {}]\n", ldpc_decoder_type);
   fmt::print("\t-M Rate dematcher type. [Default {}]\n", rate_dematcher_type);
   fmt::print("\t-E Toggle EVM enable/disable. [Default {}]\n", enable_evm ? "enable" : "disable");
