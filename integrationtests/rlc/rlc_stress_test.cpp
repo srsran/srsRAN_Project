@@ -47,6 +47,7 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id) :
   pdcp_entity_creation_message pdcp_msg  = {};
   pdcp_msg.config                        = pdcp_cnfg;
   pdcp_msg.tx_lower                      = f1.get();
+  pdcp_msg.tx_upper_cn                   = rrc.get();
   pdcp_msg.rx_upper_dn                   = traffic_sink.get();
   pdcp_msg.rx_upper_cn                   = rrc.get();
   pdcp_msg.timers                        = &timers;

@@ -16,7 +16,7 @@
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
-class rrc_dummy : public pdcp_rx_upper_control_notifier, pdcp_tx_upper_control_notifier
+class rrc_dummy : public pdcp_rx_upper_control_notifier, public pdcp_tx_upper_control_notifier
 {
   bearer_logger logger;
 
