@@ -149,8 +149,8 @@ private:
   static constexpr value_type MAX_VALUE_FR2 = 11;
 
   // Deleted base class methods.
-  using base_type::is_valid;
   using base_type::max;
+  using base_type::valid;
 
 public:
   using base_type::bounded_integer;

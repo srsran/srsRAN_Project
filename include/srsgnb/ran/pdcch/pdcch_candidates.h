@@ -48,7 +48,7 @@ struct pdcch_candidates_common_ss_configuration {
 /// \brief Generates a PDCCH candidate list for Common SS as per TS38.213 Section 10.1.
 ///
 /// Assertion is triggered if:
-/// - the aggregation level is invalid (\see srsgnb::aggregation_level::is_valid for more information),
+/// - the aggregation level is invalid (\see srsgnb::aggregation_level::valid for more information),
 /// - the number of CCE in the CORESET is zero, or
 /// - the number of candidates times the aggregation level exceeds the number of CCE in the CORESET.
 ///

@@ -34,6 +34,9 @@ using bounded_integer_base = strong_type<Integer,
 
 } // namespace detail
 
+/// Tag used to initialize a bounded_integer in invalid state.
+struct bounded_integer_invalid_tag {};
+
 /// This class represents an integer whose value is within the set of possible values: {MIN_VALUE, ..., MAX_VALUE}.
 template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
 class bounded_integer : public detail::bounded_integer_base<Integer>
@@ -46,8 +49,8 @@ class bounded_integer : public detail::bounded_integer_base<Integer>
 public:
   using base_class::base_class;
 
-  constexpr bounded_integer() : base_class(MAX_VALUE + 1) {}
-
+  constexpr bounded_integer() = default;
+  constexpr bounded_integer(bounded_integer_invalid_tag /**/) : base_class(MAX_VALUE + 1) {}
   constexpr bounded_integer(Integer v) : base_class(v) { assert_bounds(v); }
 
   bounded_integer& operator=(Integer v)
@@ -61,7 +64,7 @@ public:
   static constexpr Integer max() { return MAX_VALUE; }
 
   /// Checks whether the value is within the defined boundaries.
-  constexpr bool is_valid() const { return base_class::value() >= MIN_VALUE && base_class::value() <= MAX_VALUE; }
+  constexpr bool valid() const { return base_class::value() >= MIN_VALUE && base_class::value() <= MAX_VALUE; }
 
   /// Cast operator to primitive integer type.
   explicit constexpr operator Integer() const { return base_class::value(); }
@@ -107,6 +110,41 @@ public:
     assert_bounds(base_class::value());
     return tmp;
   }
+  bounded_integer& operator+=(Integer other)
+  {
+    base_class::value() += other;
+    assert_bounds(base_class::value());
+    return *this;
+  }
+  bounded_integer& operator+=(bounded_integer<Integer, MIN_VALUE, MAX_VALUE> other) { return *this += other.value(); }
+
+  bounded_integer operator+(Integer other) const
+  {
+    bounded_integer<Integer, MIN_VALUE, MAX_VALUE> ret{*this};
+    return ret += other;
+  }
+  bounded_integer operator+(bounded_integer<Integer, MIN_VALUE, MAX_VALUE> other) const
+  {
+    return *this + other.value();
+  }
+
+  bounded_integer& operator-=(Integer other)
+  {
+    base_class::value() -= other;
+    assert_bounds(base_class::value());
+    return *this;
+  }
+  bounded_integer& operator-=(bounded_integer<Integer, MIN_VALUE, MAX_VALUE> other) { return *this -= other.value(); }
+
+  bounded_integer operator-(Integer other) const
+  {
+    bounded_integer<Integer, MIN_VALUE, MAX_VALUE> ret{*this};
+    return ret -= other;
+  }
+  bounded_integer operator-(bounded_integer<Integer, MIN_VALUE, MAX_VALUE> other) const
+  {
+    return *this - other.value();
+  }
 
 protected:
   constexpr void assert_bounds(Integer v) const
@@ -126,7 +164,7 @@ struct formatter<srsgnb::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>> : publi
   auto format(const srsgnb::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& s, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    if (s.is_valid()) {
+    if (s.valid()) {
       return fmt::format_to(ctx.out(), "{}", static_cast<Integer>(s));
     }
     return fmt::format_to(ctx.out(), "INVALID");

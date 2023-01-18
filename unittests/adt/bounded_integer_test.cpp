@@ -11,6 +11,7 @@
 #include "srsgnb/adt/bounded_integer.h"
 #include "srsgnb/support/test_utils.h"
 #include <cstdint>
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 
@@ -20,75 +21,110 @@ static_assert(bounded_integer<int, 2, 5>::min() == 2, "Constexpr max() failed");
 static_assert(bounded_integer<int, 2, 5>::max() == 5, "Constexpr max() failed");
 static_assert(bounded_integer<int, 2, 5>(2) == bounded_integer<int, 2, 5>(2), "Constexpr comparison failed");
 
-void test_bounded_integer_default_ctor_is_invalid_number()
+TEST(bounded_integer_test, valid_method)
 {
-  bounded_integer<int, 4, 10> val;
-  TESTASSERT(not val.is_valid());
+  bounded_integer<unsigned, 5, 1000> val(test_rgen::uniform_int<unsigned>(5, 1000));
+  ASSERT_TRUE(val.valid());
 }
 
-void test_bounded_integer_valid_check_passes()
+TEST(bounded_integer_test, value_comparison)
 {
-  bounded_integer<unsigned, 1, 3> val(3);
-  TESTASSERT(val.is_valid());
+  unsigned                         num = test_rgen::uniform_int<unsigned>(2, 10);
+  bounded_integer<unsigned, 2, 10> val = num;
+  ASSERT_EQ(val, num);
+  ASSERT_EQ(num, val);
+  unsigned num2 = num + 1;
+  ASSERT_LT(val, num2);
+  ASSERT_GT(num2, val);
 }
 
-void test_bounded_integer_cast_to_integer()
+TEST(bounded_integer_test, cast_to_integer)
 {
-  bounded_integer<uint16_t, 2, 6> val = 3;
+  unsigned                        num = test_rgen::uniform_int<uint8_t>(2, 10);
+  bounded_integer<uint8_t, 2, 10> val = num;
 
-  uint16_t v = static_cast<uint16_t>(val);
-  TESTASSERT_EQ(3, v);
+  TESTASSERT_EQ(num, static_cast<uint8_t>(val));
+  TESTASSERT_EQ(num, val.to_uint());
 }
 
-void test_bounded_integer_copy_ctor_and_assignment_works()
+TEST(bounded_integer_test, copy_ctor)
 {
-  bounded_integer<uint8_t, 1, 10> val{2};
+  bounded_integer<unsigned, 5, 1000> val(test_rgen::uniform_int<unsigned>(5, 1000));
+  bounded_integer<unsigned, 5, 1000> val2{val};
 
-  bounded_integer<uint8_t, 1, 10> val2{val};
   TESTASSERT_EQ(val, val2);
-  TESTASSERT_EQ(2, val2.to_uint());
+}
 
-  val = 3;
-  TESTASSERT_NEQ(val, val2);
+TEST(bounded_integer_test, copy_assignment)
+{
+  bounded_integer<int, -5, 1000> val(test_rgen::uniform_int<int>(-5, 1000));
+  bounded_integer<int, -5, 1000> val2(test_rgen::uniform_int<int>(-5, 1000));
 
   val2 = val;
   TESTASSERT_EQ(val, val2);
-  TESTASSERT_EQ(3, val2.to_uint());
 }
 
-void test_bounded_integer_increment_and_decrement()
+TEST(bounded_integer_test, increment_decrement_operator)
 {
-  bounded_integer<uint8_t, 1, 10> val{2};
+  int                            num = test_rgen::uniform_int<int>(-5, 1000);
+  bounded_integer<int, -5, 1000> val(num);
 
-  TESTASSERT_EQ(++val, 3);
-  TESTASSERT_EQ(--val, 2);
-  TESTASSERT_EQ(val++, 2);
-  TESTASSERT_EQ(val, 3);
-  TESTASSERT_EQ(val--, 3);
-  TESTASSERT_EQ(val, 2);
+  ASSERT_EQ(val, num);
+  ASSERT_EQ(++val, num + 1);
+  ASSERT_EQ(--val, num);
+  ASSERT_EQ(val++, num);
+  ASSERT_EQ(val--, num + 1);
+  ASSERT_EQ(val, num);
 }
 
-void test_bounded_integer_formats_valid_numbers()
+TEST(bounded_integer_test, addition_subtraction_with_raw_integers)
 {
-  bounded_integer<int, 4, 10> val = 6;
-  std::string                 s   = fmt::format("{}", val);
-  TESTASSERT_EQ("6", s);
+  int                            num = test_rgen::uniform_int<int>(-5, 1000);
+  bounded_integer<int, -5, 1000> val(num);
+
+  ASSERT_EQ(val, num);
+  ASSERT_EQ(val + 5, num + 5);
+  ASSERT_EQ(val - 5, num - 5);
+  ASSERT_EQ(val, num);
+
+  val += 3;
+  num += 3;
+  ASSERT_EQ(val, num);
+  val -= 2;
+  num -= 2;
+  ASSERT_EQ(val, num);
 }
 
-void test_invalid_bounded_integer_format_is_not_number()
+TEST(bounded_integer_test, addition_subtraction_with_other_bounded_integers)
 {
-  bounded_integer<int, 4, 10> val;
+  int                            num  = test_rgen::uniform_int<int>(-2, 500);
+  int                            num2 = test_rgen::uniform_int<int>(-2, 500);
+  bounded_integer<int, -5, 1000> val(num);
+  bounded_integer<int, -5, 1000> val2(num2);
+
+  ASSERT_EQ(val + val2, num + num2);
+  ASSERT_EQ(val - val2, num - num2);
+
+  val += val2;
+  ASSERT_EQ(val, num + num2);
+  ASSERT_EQ(val2, num2);
+  val -= val2;
+  ASSERT_EQ(val, num);
+  ASSERT_EQ(val2, num2);
+}
+
+TEST(bounded_integer_test, fmt_format)
+{
+  int                            num = test_rgen::uniform_int<int>(-5, 1000);
+  bounded_integer<int, -5, 1000> val(num);
+
+  std::string s = fmt::format("{}", val);
+  ASSERT_EQ(s, std::to_string(num));
+}
+
+TEST(bounded_integer_test, fmt_format_when_out_of_bounds)
+{
+  bounded_integer<int, 4, 10> val{bounded_integer_invalid_tag{}};
   std::string                 s = fmt::format("{}", val);
   TESTASSERT_EQ("INVALID", s);
-}
-
-int main()
-{
-  test_bounded_integer_default_ctor_is_invalid_number();
-  test_bounded_integer_valid_check_passes();
-  test_bounded_integer_cast_to_integer();
-  test_bounded_integer_copy_ctor_and_assignment_works();
-  test_bounded_integer_increment_and_decrement();
-  test_bounded_integer_formats_valid_numbers();
-  test_invalid_bounded_integer_format_is_not_number();
 }

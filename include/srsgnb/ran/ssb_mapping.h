@@ -117,7 +117,7 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
                 scs_to_khz(common_scs));
 
   // Verify the offset to Point A and the subcarrier offset are valid.
-  srsgnb_assert(offset_to_pointA.is_valid(),
+  srsgnb_assert(offset_to_pointA.valid(),
                 "Invalid offset to Point A {} (max {})",
                 offset_to_pointA.to_uint(),
                 ssb_offset_to_pointA::max());
