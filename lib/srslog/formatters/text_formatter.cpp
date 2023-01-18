@@ -51,7 +51,10 @@ static void format_metadata(const detail::log_entry_metadata& metadata, fmt::mem
     fmt::format_to(buffer, "[{}] ", metadata.log_tag);
   }
   if (metadata.context.enabled) {
-    fmt::format_to(buffer, "[{:5}] ", metadata.context.value);
+    fmt::memory_buffer ctx_buffer;
+    fmt::format_to(ctx_buffer, "{}.{}", uint32_t(metadata.context.value64 >> 32), uint32_t(metadata.context.value64));
+    ctx_buffer.push_back('\0');
+    fmt::format_to(buffer, "[{: >8}] ", ctx_buffer.data());
   }
 }
 

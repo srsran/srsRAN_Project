@@ -120,9 +120,10 @@ static bool when_logging_then_filled_in_log_entry_is_pushed_into_the_backend()
 
   log_channel log("id", s, backend, {name, tag, true});
 
-  uint32_t ctx = 10;
+  uint32_t ctx1 = 10;
+  uint32_t ctx2 = 20;
 
-  log.set_context(ctx);
+  log.set_context(ctx1, ctx2);
   log("test", 42, "Hello");
 
   ASSERT_EQ(backend.push_invocation_count(), 1);
@@ -131,7 +132,7 @@ static bool when_logging_then_filled_in_log_entry_is_pushed_into_the_backend()
   ASSERT_EQ(&s, entry.s);
   ASSERT_NE(entry.format_func, nullptr);
   ASSERT_NE(entry.metadata.tp.time_since_epoch().count(), 0);
-  ASSERT_EQ(entry.metadata.context.value, ctx);
+  ASSERT_EQ(entry.metadata.context.value64, uint64_t(ctx1) << 32 | ctx2);
   ASSERT_EQ(entry.metadata.context.enabled, true);
   ASSERT_EQ(entry.metadata.fmtstring, std::string("test"));
   ASSERT_EQ(entry.metadata.log_name, name);
@@ -151,9 +152,10 @@ static bool when_logging_with_hex_dump_then_filled_in_log_entry_is_pushed_into_t
 
   log_channel log("id", s, backend, {name, tag, true});
 
-  uint32_t ctx = 4;
+  uint32_t ctx1 = 10;
+  uint32_t ctx2 = 20;
 
-  log.set_context(ctx);
+  log.set_context(ctx1, ctx2);
   log.set_hex_dump_max_size(4);
   uint8_t hex[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
   log(hex, sizeof(hex), "test", 42, "Hello");
@@ -164,7 +166,7 @@ static bool when_logging_with_hex_dump_then_filled_in_log_entry_is_pushed_into_t
   ASSERT_EQ(&s, entry.s);
   ASSERT_NE(entry.format_func, nullptr);
   ASSERT_NE(entry.metadata.tp.time_since_epoch().count(), 0);
-  ASSERT_EQ(entry.metadata.context.value, ctx);
+  ASSERT_EQ(entry.metadata.context.value64, uint64_t(ctx1) << 32 | ctx2);
   ASSERT_EQ(entry.metadata.context.enabled, true);
   ASSERT_EQ(entry.metadata.fmtstring, std::string("test"));
   ASSERT_EQ(entry.metadata.log_name, name);
@@ -215,8 +217,9 @@ static bool when_logging_with_context_then_filled_in_log_entry_is_pushed_into_th
 
   log_channel log("id", s, backend, {name, tag, true});
 
-  uint32_t ctx_value = 4;
-  log.set_context(ctx_value);
+  uint32_t ctx1 = 10;
+  uint32_t ctx2 = 20;
+  log.set_context(ctx1, ctx2);
 
   my_ctx ctx("myctx");
   log(ctx);
@@ -227,7 +230,7 @@ static bool when_logging_with_context_then_filled_in_log_entry_is_pushed_into_th
   ASSERT_EQ(&s, entry.s);
   ASSERT_NE(entry.format_func, nullptr);
   ASSERT_NE(entry.metadata.tp.time_since_epoch().count(), 0);
-  ASSERT_EQ(entry.metadata.context.value, ctx_value);
+  ASSERT_EQ(entry.metadata.context.value64, uint64_t(ctx1) << 32 | ctx2);
   ASSERT_EQ(entry.metadata.context.enabled, true);
   ASSERT_EQ(entry.metadata.log_name, name);
   ASSERT_EQ(entry.metadata.log_tag, tag);
@@ -246,8 +249,9 @@ static bool when_logging_with_context_and_message_then_filled_in_log_entry_is_pu
 
   log_channel log("id", s, backend, {name, tag, true});
 
-  uint32_t ctx_value = 4;
-  log.set_context(ctx_value);
+  uint32_t ctx1 = 10;
+  uint32_t ctx2 = 20;
+  log.set_context(ctx1, ctx2);
 
   my_ctx ctx("myctx");
   log(ctx, "test", 10, 3.3);
@@ -258,7 +262,7 @@ static bool when_logging_with_context_and_message_then_filled_in_log_entry_is_pu
   ASSERT_EQ(&s, entry.s);
   ASSERT_NE(entry.format_func, nullptr);
   ASSERT_NE(entry.metadata.tp.time_since_epoch().count(), 0);
-  ASSERT_EQ(entry.metadata.context.value, ctx_value);
+  ASSERT_EQ(entry.metadata.context.value64, uint64_t(ctx1) << 32 | ctx2);
   ASSERT_EQ(entry.metadata.context.enabled, true);
   ASSERT_EQ(entry.metadata.fmtstring, std::string("test"));
   ASSERT_EQ(entry.metadata.log_name, name);

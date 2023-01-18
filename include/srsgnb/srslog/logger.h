@@ -70,6 +70,15 @@ public:
     }
   }
 
+  /// Set the specified context value to all the channels of the logger.
+  void set_context(uint32_t a, uint32_t b)
+  {
+    detail::scoped_lock lock(m);
+    for (auto channel : channels) {
+      channel->set_context(a, b);
+    }
+  }
+
   /// Set the maximum number of bytes to can be printed in a hex dump to all the
   /// channels of the logger.
   void set_hex_dump_max_size(int x)

@@ -21,7 +21,7 @@ namespace detail {
 //: TODO: legacy struct, will get replaced by the new context framework.
 struct log_context {
   /// Generic context value.
-  uint32_t value;
+  uint64_t value64;
   /// When true, the context value will be printed in the log entry.
   bool enabled;
 };

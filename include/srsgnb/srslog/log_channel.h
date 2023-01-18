@@ -55,7 +55,7 @@ public:
     log_name(std::move(config.name)),
     log_tag(config.tag),
     should_print_context(config.should_print_context),
-    ctx_value(0),
+    ctx_value64(0),
     hex_max_size(0),
     is_enabled(true)
   {
@@ -75,7 +75,9 @@ public:
   const std::string& id() const { return log_id; }
 
   /// Set the log channel context to the specified value.
-  void set_context(uint32_t x) { ctx_value = x; }
+  void set_context(uint32_t x) {}
+  /// Set the log channel context to the specified value.
+  void set_context(uint32_t a, uint32_t b) { ctx_value64 = ((uint64_t(a) << 32) | uint64_t(b)); }
 
   /// Set the maximum number of bytes to can be printed in a hex dump.
   /// Set to -1 to indicate no hex dump limit.
@@ -104,7 +106,7 @@ public:
                                  formatter.format(std::move(metadata), buffer);
                                },
                                    {std::chrono::high_resolution_clock::now(),
-                                    {ctx_value, should_print_context},
+                                    {ctx_value64, should_print_context},
                                     fmtstr,
                                     store,
                                     log_name,
@@ -140,7 +142,7 @@ public:
                                  formatter.format(std::move(metadata), buffer_);
                                },
                                    {std::chrono::high_resolution_clock::now(),
-                                    {ctx_value, should_print_context},
+                                    {ctx_value64, should_print_context},
                                     fmtstr,
                                     store,
                                     log_name,
@@ -177,7 +179,7 @@ public:
                                  formatter.format(std::move(metadata), buffer);
                                },
                                    {std::chrono::high_resolution_clock::now(),
-                                    {ctx_value, should_print_context},
+                                    {ctx_value64, should_print_context},
                                     fmtstr,
                                     store,
                                     log_name,
@@ -202,7 +204,7 @@ public:
                                  formatter.format_ctx(ctx, std::move(metadata), buffer);
                                },
                                    {std::chrono::high_resolution_clock::now(),
-                                    {ctx_value, should_print_context},
+                                    {ctx_value64, should_print_context},
                                     nullptr,
                                     nullptr,
                                     log_name,
@@ -233,7 +235,7 @@ public:
                                  formatter.format_ctx(ctx, std::move(metadata), buffer);
                                },
                                    {std::chrono::high_resolution_clock::now(),
-                                    {ctx_value, should_print_context},
+                                    {ctx_value64, should_print_context},
                                     fmtstr,
                                     store,
                                     log_name,
@@ -248,7 +250,7 @@ private:
   const std::string     log_name;
   const char            log_tag;
   const bool            should_print_context;
-  std::atomic<uint32_t> ctx_value;
+  std::atomic<uint64_t> ctx_value64;
   std::atomic<int>      hex_max_size;
   std::atomic<bool>     is_enabled;
 };
