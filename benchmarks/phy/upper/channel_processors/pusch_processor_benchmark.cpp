@@ -14,7 +14,9 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
+#include <condition_variable>
 #include <getopt.h>
+#include <mutex>
 #include <random>
 
 using namespace srsgnb;
@@ -22,8 +24,13 @@ using namespace srsgnb;
 // A test case consists of a PUSCH PDU configuration and a Transport Block Size.
 using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;
 
+// Maximum number of threads given the CPU hardware.
+static const unsigned max_nof_threads = std::thread::hardware_concurrency();
+
 // General test configuration parameters.
 static unsigned                           nof_repetitions             = 10;
+static unsigned                           nof_threads                 = max_nof_threads;
+static unsigned                           batch_size_per_thread       = 100;
 static std::string                        selected_profile_name       = "default";
 static std::string                        ldpc_decoder_type           = "auto";
 static std::string                        rate_dematcher_type         = "auto";
@@ -35,6 +42,14 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
+
+// Thread shared variables.
+static std::mutex              mutex_pending_count;
+static std::mutex              mutex_finish_count;
+static std::condition_variable cvar_count;
+static std::atomic<bool>       thread_quit   = {};
+static unsigned                pending_count = 0;
+static unsigned                finish_count  = 0;
 
 // Test profile structure, initialized with default profile values.
 struct test_profile {
@@ -128,6 +143,8 @@ static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-R repetitions] [-D LDPC type] [-M rate dematcher type] [-P profile] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
+  fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
+  fmt::print("\t-T Number of threads [Default {}]\n", nof_threads);
   fmt::print("\t-D LDPC decoder type. [Default {}]\n", ldpc_decoder_type);
   fmt::print("\t-M Rate dematcher type. [Default {}]\n", rate_dematcher_type);
   fmt::print("\t-E Toggle EVM enable/disable. [Default {}]\n", enable_evm ? "enable" : "disable");
@@ -142,10 +159,16 @@ static void usage(const char* prog)
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:D:M:EP:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:B:D:M:EP:sh")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'T':
+        nof_threads = std::min(max_nof_threads, static_cast<unsigned>(std::strtol(optarg, nullptr, 10)));
+        break;
+      case 'B':
+        batch_size_per_thread = std::strtol(optarg, nullptr, 10);
         break;
       case 'D':
         ldpc_decoder_type = std::string(optarg);
@@ -331,11 +354,84 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   return std::make_tuple(std::move(processor), std::move(validator));
 }
 
+static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, const resource_grid_reader* grid)
+{
+  std::unique_ptr<pusch_processor> proc(std::get<0>(create_processor()));
+
+  // Compute the number of codeblocks.
+  unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bits(tbs), config.codeword.value().ldpc_base_graph);
+
+  // Softbuffer pool configuration.
+  rx_softbuffer_pool_config softbuffer_config = {};
+  softbuffer_config.max_softbuffers           = 1;
+  softbuffer_config.max_nof_codeblocks        = nof_codeblocks;
+  softbuffer_config.max_codeblock_size        = ldpc::MAX_CODEBLOCK_SIZE;
+  softbuffer_config.expire_timeout_slots =
+      100 * get_nof_slots_per_subframe(to_subcarrier_spacing(config.slot.numerology()));
+
+  rx_softbuffer_identifier softbuffer_id = {};
+  softbuffer_id.rnti                     = config.rnti;
+
+  // Create softbuffer pool.
+  std::unique_ptr<rx_softbuffer_pool> softbuffer_pool = create_rx_softbuffer_pool(softbuffer_config);
+
+  // Reserve softbuffer.
+  rx_softbuffer* softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
+
+  // Prepare receive data buffer.
+  std::vector<uint8_t> data(tbs / 8);
+
+  // Notify finish count.
+  {
+    std::unique_lock<std::mutex> lock(mutex_finish_count);
+    finish_count++;
+    cvar_count.notify_all();
+  }
+
+  while (!thread_quit) {
+    // Wait for pending.
+    {
+      std::unique_lock<std::mutex> lock(mutex_pending_count);
+      while (pending_count == 0) {
+        cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
+
+        // Quit if signaled.
+        if (thread_quit) {
+          return;
+        }
+      }
+      pending_count--;
+    }
+
+    // Process PDU.
+    proc->process(data, *softbuffer, *grid, config);
+
+    // Notify finish count.
+    {
+      std::unique_lock<std::mutex> lock(mutex_finish_count);
+      finish_count++;
+      cvar_count.notify_all();
+    }
+  }
+}
+
 int main(int argc, char** argv)
 {
   int ret = parse_args(argc, argv);
   if (ret < 0) {
     return ret;
+  }
+
+  // Inform of the benchmark configuration.
+  if (!silent) {
+    fmt::print("Launching benchmark for {} threads, {} times per thread and {} repetitions. Using {} profile, {} LDPC "
+               "decoder, and {} rate dematcher.\n",
+               nof_threads,
+               batch_size_per_thread,
+               nof_repetitions,
+               selected_profile_name,
+               ldpc_decoder_type,
+               rate_dematcher_type);
   }
 
   benchmarker perf_meas("PUSCH processor", nof_repetitions);
@@ -384,37 +480,41 @@ int main(int argc, char** argv)
     // Get the TBS in bits.
     unsigned tbs = std::get<1>(test_case);
 
-    // Create the PUSCH processor and validator.
-    std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_validator>> proc = create_processor();
-
-    std::unique_ptr<pusch_processor>     processor(std::move(std::get<0>(proc)));
-    std::unique_ptr<pusch_pdu_validator> validator(std::move(std::get<1>(proc)));
+    std::unique_ptr<pusch_pdu_validator> validator(std::move(std::get<1>(create_processor())));
 
     // Make sure the configuration is valid.
     TESTASSERT(validator->is_valid(config));
 
-    // Compute the number of codeblocks.
-    unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(units::bits(tbs), config.codeword.value().ldpc_base_graph);
+    // Reset finish counter.
+    finish_count = 0;
+    thread_quit  = false;
 
-    // Softbuffer pool configuration.
-    rx_softbuffer_pool_config softbuffer_config = {};
-    softbuffer_config.max_softbuffers           = 1;
-    softbuffer_config.max_nof_codeblocks        = nof_codeblocks;
-    softbuffer_config.max_codeblock_size        = ldpc::MAX_CODEBLOCK_SIZE;
-    softbuffer_config.expire_timeout_slots =
-        100 * get_nof_slots_per_subframe(to_subcarrier_spacing(config.slot.numerology()));
+    // Prepare threads for the current case.
+    std::vector<std::thread> threads(nof_threads);
+    for (unsigned thread_id = 0; thread_id != nof_threads; ++thread_id) {
+      // Select thread.
+      std::thread& thread = threads[thread_id];
 
-    rx_softbuffer_identifier softbuffer_id = {};
-    softbuffer_id.rnti                     = config.rnti;
+      // Create thread.
+      thread = std::thread(thread_process, config, tbs, grid.get());
 
-    // Create softbuffer pool.
-    std::unique_ptr<rx_softbuffer_pool> softbuffer_pool = create_rx_softbuffer_pool(softbuffer_config);
+      // Set affinity to ensure each thread runs in a separate logical core.
+      cpu_set_t cpuset;
+      CPU_ZERO(&cpuset);
+      CPU_SET(thread_id, &cpuset);
+      int rc = pthread_setaffinity_np(thread.native_handle(), sizeof(cpu_set_t), &cpuset);
+      if (rc != 0) {
+        fmt::print(stderr, "Error calling pthread_setaffinity_np: {}\n", rc);
+      }
+    }
 
-    // Reserve softbuffer.
-    rx_softbuffer* softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
-
-    // Prepare receive data buffer.
-    std::vector<uint8_t> data(tbs / 8);
+    // Wait for finish thread init.
+    {
+      std::unique_lock<std::mutex> lock(mutex_finish_count);
+      while (finish_count != nof_threads) {
+        cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
+      }
+    }
 
     // Calculate the peak throughput, considering that the number of bits is for a slot.
     double slot_duration_us     = 1e3 / static_cast<double>(pow2(config.slot.numerology()));
@@ -430,9 +530,29 @@ int main(int argc, char** argv)
                    peak_throughput_Mbps);
 
     // Run the benchmark.
-    perf_meas.new_measure(to_string(meas_description), tbs, [&proc = processor, &grid, &softbuffer, &data, &config]() {
-      proc->process(data, *softbuffer, *grid, config);
+    perf_meas.new_measure(to_string(meas_description), nof_threads * batch_size_per_thread * tbs, []() {
+      // Notify start.
+      {
+        std::unique_lock<std::mutex> lock(mutex_pending_count);
+        pending_count = nof_threads * batch_size_per_thread;
+        finish_count  = 0;
+        cvar_count.notify_all();
+      }
+
+      // Wait for finish.
+      {
+        std::unique_lock<std::mutex> lock(mutex_finish_count);
+        while (finish_count != nof_threads * batch_size_per_thread) {
+          cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
+        }
+      }
     });
+
+    thread_quit = true;
+
+    for (std::thread& thread : threads) {
+      thread.join();
+    }
   }
 
   if (!silent) {
