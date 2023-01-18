@@ -106,13 +106,11 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
         uci_indication::uci_pdu::uci_pusch_pdu pdu{};
         pdu.harqs.resize(0);
         if (pusch.harq_info.value().harq_status == uci_pusch_detection_status::crc_pass) {
-          // MSB0 is interpreted as in 3GPP TS 38.212, section 6.2.1: "lowest order information bit [position 0] is
-          // mapped to the most significant bit".
-          for (unsigned j =
-                   static_cast<unsigned>(std::ceil(pusch.harq_info.value().payload_bits / nof_bits_per_byte)) - 1;
+          // Lowest order information bit [position 0] is mapped to the most significant bit.
+          for (int j = static_cast<int>(std::ceil(pusch.harq_info.value().payload_bits / nof_bits_per_byte)) - 1;
                j >= 0;
                --j) {
-            for (unsigned k = nof_bits_per_byte - 1; k >= 0; --k) {
+            for (int k = nof_bits_per_byte - 1; k >= 0; --k) {
               // FirstBitIsLeftmost is false.
               pdu.harqs.push_back(((pusch.harq_info.value().payload[j] >> k) & 1U) != 0U);
             }

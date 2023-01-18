@@ -50,6 +50,17 @@ float beta_harq_ack_to_float(unsigned beta_uint_val);
 float beta_csi_to_float(unsigned beta_uint_val);
 
 /// Indicates CRC result on UCI containing HARQ/CSI Part1/CSI Part 2 data.
-enum class uci_pusch_detection_status { crc_pass = 1, crc_fail, dtx, no_dtx, dtx_not_checked };
+enum class uci_pusch_detection_status {
+  /// Used when CRC was attached.
+  crc_pass = 1,
+  /// Used when UE is expected to attach CRC.
+  crc_fail,
+  /// Undetected UCI.
+  dtx,
+  /// Indicates UCI detection.
+  no_dtx,
+  /// Indicates that PHY did not check for UCI DTX.
+  dtx_not_checked
+};
 
 } // namespace srsgnb

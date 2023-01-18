@@ -207,7 +207,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                                 
     for (unsigned h_id = 0; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
       if (ue_cc.harqs.dl_harq(h_id).slot_ack() == uci_sl) {
         // TODO: Fetch the right HARQ id, TB, CBG.
-        tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits.all(bit_idx, bit_idx + 1));
+        tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits.test(bit_idx));
         if (tbs > 0) {
           logger.debug("SCHED: ueid={}, dl_h_id={} with TB size={} bytes ACKed.", ue_cc.ue_index, h_id, tbs);
         }
