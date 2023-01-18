@@ -297,12 +297,10 @@ public:
 
     // Wait for UE Context Modification Response to arrive to CU.
     unsigned count = 0;
-    for (; not sim_cu_cp.ue_created and count < 1000; ++count) {
+    for (; not sim_cu_cp.ue_created; ++count) {
       // Need to run one slot for scheduler to handle pending events.
       run_slot();
-    }
-    if (count == 1000) {
-      report_fatal_error("Could not create UE");
+      std::this_thread::sleep_for(std::chrono::milliseconds{1});
     }
   }
 
