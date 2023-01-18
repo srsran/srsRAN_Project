@@ -63,19 +63,23 @@ private:
 
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
-  dummy_du_processor_e1ap_control_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_du_processor_e1ap_control_notifier(bool bearer_context_setup_outcome_) :
+    logger(srslog::fetch_basic_logger("TEST")), bearer_context_setup_outcome(bearer_context_setup_outcome_)
+  {
+  }
 
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
   {
     logger.info("Received a new bearer context setup request");
 
-    return launch_async([res = e1ap_bearer_context_setup_response{},
-                         msg](coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
+    return launch_async([res = e1ap_bearer_context_setup_response{}, msg, this](
+                            coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
-      if (msg.ue_dl_aggregate_maximum_bit_rate > 0) {
-        res.success = true;
-      }
+
+      // set outcome depending on configuration
+      res.success = bearer_context_setup_outcome;
+
       CORO_RETURN(res);
     });
   }
@@ -95,6 +99,7 @@ public:
 
 private:
   srslog::basic_logger& logger;
+  bool                  bearer_context_setup_outcome = false;
 };
 
 /// \brief Generate DU-to-CU RRC Container with CellGroupConfig.

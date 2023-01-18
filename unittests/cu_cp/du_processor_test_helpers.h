@@ -81,7 +81,7 @@ protected:
     cu_cp_notifier       = std::make_unique<dummy_du_processor_cu_cp_notifier>(nullptr);
     f1c_pdu_notifier     = std::make_unique<dummy_f1c_pdu_notifier>();
     f1c_du_mgmt_notifier = std::make_unique<dummy_f1c_du_management_notifier>();
-    e1ap_ctrl_notifier   = std::make_unique<dummy_du_processor_e1ap_control_notifier>();
+    e1ap_ctrl_notifier   = std::make_unique<dummy_du_processor_e1ap_control_notifier>(true);
     rrc_ue_ngc_notifier  = std::make_unique<dummy_rrc_ue_ngc_adapter>();
     ue_task_sched        = std::make_unique<dummy_du_processor_to_cu_cp_task_scheduler>(timers);
 
