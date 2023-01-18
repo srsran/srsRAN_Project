@@ -35,25 +35,5 @@ private:
   gtpu_demux_rx_upper_layer_interface* gtpu_demux = nullptr;
 };
 
-/// Adapter between Network Gateway (Control) and GTP-U demux
-///
-/// This interface is a dummy, since the GTP-U does not need any control info about connection establishment or loss
-class network_gateway_control_gtpu_demux_adapter : public srsgnb::network_gateway_control_notifier
-{
-public:
-  network_gateway_control_gtpu_demux_adapter()  = default;
-  ~network_gateway_control_gtpu_demux_adapter() = default;
-
-  void on_connection_established() override
-  {
-    // Nothing to do here
-  }
-
-  void on_connection_loss() override
-  {
-    // Nothing to do here
-  }
-};
-
 } // namespace srs_cu_up
 } // namespace srsgnb

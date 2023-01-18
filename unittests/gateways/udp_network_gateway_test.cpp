@@ -39,9 +39,9 @@ protected:
 
   void set_config(udp_network_gateway_config server_config, udp_network_gateway_config client_config)
   {
-    server = create_udp_network_gateway({server_config, server_control_notifier, server_data_notifier});
+    server = create_udp_network_gateway({server_config, server_data_notifier});
     ASSERT_NE(server, nullptr);
-    client = create_udp_network_gateway({client_config, client_control_notifier, client_data_notifier});
+    client = create_udp_network_gateway({client_config, client_data_notifier});
     ASSERT_NE(client, nullptr);
   }
 

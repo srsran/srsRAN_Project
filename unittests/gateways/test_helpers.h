@@ -157,7 +157,7 @@ int get_unused_udp_port(const std::string& bind_addr)
   return get_unused_port(bind_addr, hints);
 }
 
-class dummy_network_gateway_control_notifier : public network_gateway_control_notifier
+class dummy_network_gateway_control_notifier : public sctp_network_gateway_control_notifier
 {
 public:
   dummy_network_gateway_control_notifier() = default;
@@ -191,7 +191,8 @@ private:
   unsigned rx_bytes = 0;
 };
 
-class dummy_network_gateway_notifier : public network_gateway_control_notifier, public network_gateway_data_notifier
+class dummy_network_gateway_notifier : public sctp_network_gateway_control_notifier,
+                                       public network_gateway_data_notifier
 {
 public:
   dummy_network_gateway_notifier() : logger(srslog::fetch_basic_logger("TEST")){};

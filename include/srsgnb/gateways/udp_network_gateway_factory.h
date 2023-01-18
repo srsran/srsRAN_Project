@@ -17,15 +17,13 @@
 namespace srsgnb {
 
 struct udp_network_gateway_creation_message {
-  udp_network_gateway_creation_message(udp_network_gateway_config        config_,
-                                       network_gateway_control_notifier& ctrl_notifier_,
-                                       network_gateway_data_notifier&    data_notifier_) :
-    config(std::move(config_)), ctrl_notifier(ctrl_notifier_), data_notifier(data_notifier_)
+  udp_network_gateway_creation_message(udp_network_gateway_config     config_,
+                                       network_gateway_data_notifier& data_notifier_) :
+    config(std::move(config_)), data_notifier(data_notifier_)
   {
   }
-  udp_network_gateway_config        config;
-  network_gateway_control_notifier& ctrl_notifier;
-  network_gateway_data_notifier&    data_notifier;
+  udp_network_gateway_config     config;
+  network_gateway_data_notifier& data_notifier;
 };
 
 /// Creates an instance of an network gateway

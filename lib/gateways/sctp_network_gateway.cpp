@@ -18,9 +18,9 @@
 
 using namespace srsgnb;
 
-sctp_network_gateway::sctp_network_gateway(sctp_network_gateway_config       config_,
-                                           network_gateway_control_notifier& ctrl_notfier_,
-                                           network_gateway_data_notifier&    data_notifier_) :
+sctp_network_gateway::sctp_network_gateway(sctp_network_gateway_config            config_,
+                                           sctp_network_gateway_control_notifier& ctrl_notfier_,
+                                           network_gateway_data_notifier&         data_notifier_) :
   config(std::move(config_)),
   ctrl_notifier(ctrl_notfier_),
   data_notifier(data_notifier_),
@@ -356,7 +356,7 @@ void sctp_network_gateway::receive()
 
   int rx_bytes = ::sctp_recvmsg(sock_fd,
                                 tmp_mem.data(),
-                                network_gateway_udp_max_len,
+                                network_gateway_sctp_max_len,
                                 (struct sockaddr*)&client_addr,
                                 &client_addrlen,
                                 &sri,
@@ -498,7 +498,7 @@ void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
   }
 
   // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<uint8_t, network_gateway_udp_max_len> tmp_mem; // no init
+  std::array<uint8_t, network_gateway_sctp_max_len> tmp_mem; // no init
 
   span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
 

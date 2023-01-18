@@ -19,13 +19,16 @@
 
 namespace srsgnb {
 
+constexpr uint32_t network_gateway_sctp_max_len = 9100;
+
+/// \brief Configuration for SCTP network gateway
 struct sctp_network_gateway_config : common_network_gateway_config {
   std::string connect_address;
   int         connect_port = 0;
   // TODO add SCTP specific options
 };
 
-/// Interface to inject PDUs into gateway entity.
+/// \brief Interface to inject PDUs into gateway entity.
 class sctp_network_gateway_data_handler
 {
 public:
@@ -36,12 +39,39 @@ public:
   virtual void handle_pdu(const byte_buffer& pdu) = 0;
 };
 
-class sctp_network_gateway : public network_gateway, public sctp_network_gateway_data_handler
+/// Interface to trigger bind/listen/connect operations on gateway socket.
+class sctp_network_gateway_controller : public network_gateway_controller
 {
 public:
-  explicit sctp_network_gateway(sctp_network_gateway_config       config_,
-                                network_gateway_control_notifier& ctrl_notfier_,
-                                network_gateway_data_notifier&    data_notifier_);
+  virtual ~sctp_network_gateway_controller() = default;
+
+  /// \brief Recreate a formerly closed socket and reconnect to a known address and port.
+  virtual bool recreate_and_reconnect() = 0;
+
+  /// \brief Start listening on socket.
+  virtual bool listen() = 0;
+};
+
+/// Interface to inform upper layers about connection establishment, drops, etc.
+class sctp_network_gateway_control_notifier
+{
+public:
+  virtual ~sctp_network_gateway_control_notifier() = default;
+
+  /// \brief This callback is invoked when connect() succeeds (client) or a new client connected to a listening socket
+  /// (server).
+  virtual void on_connection_established() = 0;
+
+  /// \brief This callback is invoked when the connection is dropped or cannot be established in the first place.
+  virtual void on_connection_loss() = 0;
+};
+
+class sctp_network_gateway : public sctp_network_gateway_controller, public sctp_network_gateway_data_handler
+{
+public:
+  explicit sctp_network_gateway(sctp_network_gateway_config            config_,
+                                sctp_network_gateway_control_notifier& ctrl_notfier_,
+                                network_gateway_data_notifier&         data_notifier_);
   virtual ~sctp_network_gateway() { close_socket(); }
 
   /// \brief Create and connect socket to given address.
@@ -61,7 +91,7 @@ public:
   bool create_and_bind() override;
 
   /// \brief Start listening on socket.
-  bool listen();
+  bool listen() override;
 
 private:
   bool is_initialized();
@@ -86,10 +116,10 @@ private:
   bool subscripe_to_events();
   bool close_socket();
 
-  sctp_network_gateway_config       config; /// configuration
-  network_gateway_control_notifier& ctrl_notifier;
-  network_gateway_data_notifier&    data_notifier;
-  srslog::basic_logger&             logger;
+  sctp_network_gateway_config            config; /// configuration
+  sctp_network_gateway_control_notifier& ctrl_notifier;
+  network_gateway_data_notifier&         data_notifier;
+  srslog::basic_logger&                  logger;
 
   int sock_fd = -1;
 

@@ -73,10 +73,9 @@ private:
   std::unique_ptr<ue_manager>          ue_mng;
 
   // Adapters
-  network_gateway_data_gtpu_demux_adapter    gw_data_gtpu_demux_adapter;
-  network_gateway_control_gtpu_demux_adapter gw_ctrl_gtpu_demux_adapter;
-  gtpu_network_gateway_adapter               gtpu_gw_adapter;
-  e1ap_cu_up_adapter                         e1_cu_up_ev_notifier;
+  network_gateway_data_gtpu_demux_adapter gw_data_gtpu_demux_adapter;
+  gtpu_network_gateway_adapter            gtpu_gw_adapter;
+  e1ap_cu_up_adapter                      e1_cu_up_ev_notifier;
 };
 
 } // namespace srs_cu_up

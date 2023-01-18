@@ -18,6 +18,8 @@
 
 namespace srsgnb {
 
+constexpr uint32_t network_gateway_udp_max_len = 9100;
+
 struct udp_network_gateway_config : common_network_gateway_config {};
 
 /// Interface to inject PDUs into gateway entity.

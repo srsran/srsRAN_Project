@@ -22,7 +22,7 @@ namespace srs_cu_cp {
 /// \brief NGAP bridge that uses the IO broker to handle the SCTP connection
 class ngap_network_adapter : public ngc_message_notifier,
                              public ngc_message_handler,
-                             public network_gateway_control_notifier,
+                             public sctp_network_gateway_control_notifier,
                              public network_gateway_data_notifier
 {
 public:
