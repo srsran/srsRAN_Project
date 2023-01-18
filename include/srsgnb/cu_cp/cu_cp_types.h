@@ -287,9 +287,10 @@ struct qos_flow_setup_request_item {
   optional<std::string>     reflective_qos_attribute;
 };
 
+// Network slice information, see TS 38.413, Sec. 9.3.1.24
 struct cu_cp_s_nssai {
-  optional<uint32_t> sd;
-  uint64_t           sst;
+  uint8_t            sst; // Slice/Service type (max 8bits)
+  optional<uint32_t> sd;  // Slice Differentiator (max 24bits)
 };
 
 struct cu_cp_pdu_session_res_setup_item {
