@@ -61,8 +61,8 @@ static std::string config_file;
 
 static std::atomic<bool> is_running = {true};
 // NGAP configuration.
-static srsgnb::network_gateway_config ngap_nw_config;
-const std::string                     srsgnb_version = "0.1";
+static srsgnb::sctp_network_gateway_config ngap_nw_config;
+const std::string                          srsgnb_version = "0.1";
 
 static void populate_cli11_generic_args(CLI::App& app)
 {
@@ -333,8 +333,7 @@ int main(int argc, char** argv)
   cu_up_cfg.epoll_broker         = epoll_broker.get();
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
-      gnb_cfg.amf_cfg.bind_addr;                        // FIXME: check if this can be removed for co-located case
-  cu_up_cfg.net_cfg.upf_addr = gnb_cfg.amf_cfg.ip_addr; // TODO: Refactor to use UPF IP that we get from E1
+      gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
   std::unique_ptr<srsgnb::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));

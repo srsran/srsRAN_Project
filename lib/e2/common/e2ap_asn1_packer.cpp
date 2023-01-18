@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-e2ap_asn1_packer::e2ap_asn1_packer(network_gateway_data_handler& gw_, e2_message_handler& e2_handler) :
+e2ap_asn1_packer::e2ap_asn1_packer(sctp_network_gateway_data_handler& gw_, e2_message_handler& e2_handler) :
   logger(srslog::fetch_basic_logger("E2-ASN1-PCK")), gw(gw_), e2(e2_handler)
 {
 }

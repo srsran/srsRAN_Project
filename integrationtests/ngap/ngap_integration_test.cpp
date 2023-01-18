@@ -12,7 +12,7 @@
 #include "lib/ngap/ngap_asn1_helpers.h"
 #include "lib/ngap/ngc_asn1_packer.h"
 #include "unittests/ngap/test_helpers.h"
-#include "srsgnb/gateways/network_gateway_factory.h"
+#include "srsgnb/gateways/sctp_network_gateway_factory.h"
 #include "srsgnb/ngap/ngc_configuration_helpers.h"
 #include "srsgnb/ngap/ngc_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
@@ -34,10 +34,10 @@ class ngap_network_adapter : public ngc_message_notifier,
                              public network_gateway_data_notifier
 {
 public:
-  ngap_network_adapter(const network_gateway_config& nw_config_) :
+  ngap_network_adapter(const sctp_network_gateway_config& nw_config_) :
     nw_config(nw_config_),
     epoll_broker(create_io_broker(io_broker_type::epoll)),
-    gw(create_network_gateway({nw_config, *this, *this})),
+    gw(create_sctp_network_gateway({nw_config, *this, *this})),
     packer(*gw, *this)
   {
     gw->create_and_connect();
@@ -63,11 +63,11 @@ private:
   void on_connection_established() override { test_logger.info("on_connection_established"); }
 
   /// We require a network gateway and a packer
-  const network_gateway_config&    nw_config;
-  std::unique_ptr<io_broker>       epoll_broker;
-  std::unique_ptr<network_gateway> gw;
-  ngc_asn1_packer                  packer;
-  ngc_interface*                   ngc = nullptr;
+  const sctp_network_gateway_config&    nw_config;
+  std::unique_ptr<io_broker>            epoll_broker;
+  std::unique_ptr<sctp_network_gateway> gw;
+  ngc_asn1_packer                       packer;
+  ngc_interface*                        ngc = nullptr;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
@@ -85,7 +85,7 @@ protected:
     cfg.plmn          = "00101";
     cfg.tac           = 7;
 
-    network_gateway_config nw_config;
+    sctp_network_gateway_config nw_config;
     nw_config.connect_address   = "10.12.1.105";
     nw_config.connect_port      = 38412;
     nw_config.bind_address      = "10.8.1.10";

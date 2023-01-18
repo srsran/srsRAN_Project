@@ -11,7 +11,8 @@
 #pragma once
 
 #include "lib/ngap/ngc_asn1_packer.h"
-#include "srsgnb/gateways/network_gateway_factory.h"
+#include "srsgnb/gateways/sctp_network_gateway_factory.h"
+#include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/io_broker/io_broker.h"
 
 namespace srsgnb {
@@ -25,8 +26,11 @@ class ngap_network_adapter : public ngc_message_notifier,
                              public network_gateway_data_notifier
 {
 public:
-  ngap_network_adapter(io_broker& broker_, const network_gateway_config& nw_config_) :
-    broker(broker_), nw_config(nw_config_), gw(create_network_gateway({nw_config, *this, *this})), packer(*gw, *this)
+  ngap_network_adapter(io_broker& broker_, const sctp_network_gateway_config& nw_config_) :
+    broker(broker_),
+    nw_config(nw_config_),
+    gw(create_sctp_network_gateway({nw_config, *this, *this})),
+    packer(*gw, *this)
   {
     gw->create_and_connect();
     broker.register_fd(gw->get_socket_fd(), [this](int fd) { gw->receive(); });
@@ -66,12 +70,12 @@ private:
     logger.info("on_connection_established");
   }
 
-  io_broker&                       broker;
-  const network_gateway_config&    nw_config;
-  std::unique_ptr<network_gateway> gw;
-  ngc_asn1_packer                  packer;
-  ngc_message_handler*             ngc_msg_handler = nullptr;
-  ngc_event_handler*               ngc_evt_handler = nullptr;
+  io_broker&                            broker;
+  const sctp_network_gateway_config&    nw_config;
+  std::unique_ptr<sctp_network_gateway> gw;
+  ngc_asn1_packer                       packer;
+  ngc_message_handler*                  ngc_msg_handler = nullptr;
+  ngc_event_handler*                    ngc_evt_handler = nullptr;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("NGAP-ADAPTER");
 };

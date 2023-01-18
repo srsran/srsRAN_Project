@@ -163,7 +163,7 @@ private:
 };
 
 /// Dummy PDU handler
-class dummy_network_gateway_data_handler : public srsgnb::network_gateway_data_handler
+class dummy_network_gateway_data_handler : public srsgnb::sctp_network_gateway_data_handler
 {
 public:
   dummy_network_gateway_data_handler(){};

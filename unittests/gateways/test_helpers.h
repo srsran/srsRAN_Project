@@ -21,7 +21,9 @@
 #include <sys/types.h>
 #include <thread>
 
-#include "srsgnb/gateways/network_gateway_factory.h"
+#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/gateways/sctp_network_gateway_factory.h"
+#include "srsgnb/srslog/srslog.h"
 
 using namespace srsgnb;
 
@@ -203,7 +205,7 @@ private:
 };
 
 /// Dummy PDU handler
-class dummy_network_gateway_data_handler : public network_gateway_data_handler
+class dummy_network_gateway_data_handler : public sctp_network_gateway_data_handler
 {
 public:
   dummy_network_gateway_data_handler(){};

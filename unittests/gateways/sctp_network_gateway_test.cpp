@@ -9,7 +9,7 @@
  */
 
 #include "test_helpers.h"
-#include "srsgnb/gateways/network_gateway_factory.h"
+#include "srsgnb/gateways/sctp_network_gateway_factory.h"
 
 using namespace srsgnb;
 
@@ -37,21 +37,21 @@ protected:
     }
   }
 
-  void set_config(network_gateway_config server_config, network_gateway_config client_config)
+  void set_config(sctp_network_gateway_config server_config, sctp_network_gateway_config client_config)
   {
-    server = create_network_gateway({server_config, server_control_notifier, server_data_notifier});
+    server = create_sctp_network_gateway({server_config, server_control_notifier, server_data_notifier});
     ASSERT_NE(server, nullptr);
-    client = create_network_gateway({client_config, client_control_notifier, client_data_notifier});
+    client = create_sctp_network_gateway({client_config, client_control_notifier, client_data_notifier});
     ASSERT_NE(client, nullptr);
   }
 
   bool bind_and_listen()
   {
-    if (server->create_and_bind() != true) {
+    if (!server->create_and_bind()) {
       return false;
     }
 
-    if (server->listen() != true) {
+    if (!server->listen()) {
       return false;
     }
 
@@ -86,7 +86,7 @@ protected:
   dummy_network_gateway_data_notifier client_data_notifier;
 
 private:
-  std::unique_ptr<network_gateway> server, client;
+  std::unique_ptr<sctp_network_gateway> server, client;
 
   std::thread       rx_thread;
   std::atomic<bool> stop_token = {false};
@@ -94,7 +94,7 @@ private:
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fails)
 {
-  network_gateway_config config;
+  sctp_network_gateway_config config;
   config.bind_address = "1.1.1.1";
   config.bind_port    = get_unused_sctp_port("0.0.0.0");
   config.reuse_addr   = true;
@@ -105,7 +105,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_address_then_bind_fail
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fails)
 {
-  network_gateway_config config;
+  sctp_network_gateway_config config;
   config.bind_address = "1:1::";
   config.bind_port    = get_unused_sctp_port("::1");
   config.reuse_addr   = true;
@@ -116,7 +116,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_f
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds)
 {
-  network_gateway_config config;
+  sctp_network_gateway_config config;
   config.bind_address = "127.0.0.1";
   config.bind_port    = get_unused_sctp_port(config.bind_address);
   config.reuse_addr   = true;
@@ -127,7 +127,7 @@ TEST_F(sctp_network_gateway_tester, when_binding_on_localhost_then_bind_succeeds
 
 TEST_F(sctp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succeeds)
 {
-  network_gateway_config config;
+  sctp_network_gateway_config config;
   config.bind_address = "::1";
   config.bind_port    = get_unused_sctp_port(config.bind_address);
   config.reuse_addr   = true;
@@ -140,7 +140,7 @@ TEST_F(sctp_network_gateway_tester, when_socket_not_exists_then_connect_fails)
 {
   ASSERT_FALSE(client_control_notifier.get_connection_dropped());
 
-  network_gateway_config config;
+  sctp_network_gateway_config config;
   config.connect_address   = "127.0.0.1";
   config.connect_port      = get_unused_sctp_port(config.connect_address);
   config.non_blocking_mode = true;
@@ -155,7 +155,7 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
 {
   ASSERT_FALSE(client_control_notifier.get_connection_dropped());
 
-  network_gateway_config config;
+  sctp_network_gateway_config config;
   config.connect_address   = "::1";
   config.connect_port      = get_unused_sctp_port(config.connect_address);
   config.non_blocking_mode = true;
@@ -168,13 +168,13 @@ TEST_F(sctp_network_gateway_tester, when_v6_socket_not_exists_then_connect_fails
 
 TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
-  network_gateway_config server_config;
+  sctp_network_gateway_config server_config;
   server_config.bind_address = "127.0.0.1";
   server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
   server_config.reuse_addr   = true;
   ASSERT_NE(server_config.bind_port, 0);
 
-  network_gateway_config client_config;
+  sctp_network_gateway_config client_config;
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;
@@ -208,13 +208,13 @@ TEST_F(sctp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 
 TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
-  network_gateway_config server_config;
+  sctp_network_gateway_config server_config;
   server_config.bind_address = "::1";
   server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
   server_config.reuse_addr   = true;
   ASSERT_NE(server_config.bind_port, 0);
 
-  network_gateway_config client_config;
+  sctp_network_gateway_config client_config;
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;
@@ -248,13 +248,13 @@ TEST_F(sctp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 
 TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
-  network_gateway_config server_config;
+  sctp_network_gateway_config server_config;
   server_config.bind_address = "localhost";
   server_config.bind_port    = get_unused_sctp_port(server_config.bind_address);
   server_config.reuse_addr   = true;
   ASSERT_NE(server_config.bind_port, 0);
 
-  network_gateway_config client_config;
+  sctp_network_gateway_config client_config;
   client_config.connect_address   = server_config.bind_address;
   client_config.connect_port      = server_config.bind_port;
   client_config.non_blocking_mode = true;

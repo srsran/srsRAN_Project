@@ -45,8 +45,9 @@ protected:
     worker   = std::make_unique<task_worker>("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
     executor = make_task_executor(*worker);
 
-    f1u_gw = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
-    broker = create_io_broker(io_broker_type::epoll);
+    f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
+    broker       = create_io_broker(io_broker_type::epoll);
+    upf_addr_str = "127.0.0.1";
   }
 
   cu_up_configuration get_default_cu_up_config()
@@ -58,7 +59,6 @@ protected:
     cfg.f1u_gateway          = f1u_gw.get();
     cfg.epoll_broker         = broker.get();
     cfg.net_cfg.n3_bind_port = 0; // Random free port selected by the OS.
-    cfg.net_cfg.upf_addr     = "127.0.0.1";
 
     return cfg;
   }
@@ -80,6 +80,8 @@ protected:
 
   std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;
+
+  std::string upf_addr_str;
 
   void create_drb()
   {
@@ -185,20 +187,18 @@ TEST_F(cu_up_test, ul_data_flow)
   sockaddr_in upf_addr;
   upf_addr.sin_family      = AF_INET;
   upf_addr.sin_port        = htons(upf_port);
-  upf_addr.sin_addr.s_addr = inet_addr(cfg.net_cfg.upf_addr.c_str());
+  upf_addr.sin_addr.s_addr = inet_addr(upf_addr_str.c_str());
 
   int ret = 0;
 
   ret = bind(sock_fd, (sockaddr*)&upf_addr, sizeof(upf_addr));
-  ASSERT_GE(ret, 0) << "Failed to bind socket to `" << cfg.net_cfg.upf_addr << ":" << upf_port << "` - "
-                    << strerror(errno);
+  ASSERT_GE(ret, 0) << "Failed to bind socket to `" << upf_addr_str << ":" << upf_port << "` - " << strerror(errno);
 
   // Find out the port that was assigned
   socklen_t upf_addr_len = sizeof(upf_addr);
   ret                    = getsockname(sock_fd, (struct sockaddr*)&upf_addr, &upf_addr_len);
   ASSERT_EQ(upf_addr_len, sizeof(upf_addr)) << "Mismatching upf_addr_len after getsockname()";
-  ASSERT_GE(ret, 0) << "Failed to read port of socket bound to `" << cfg.net_cfg.upf_addr << ":0` - "
-                    << strerror(errno);
+  ASSERT_GE(ret, 0) << "Failed to read port of socket bound to `" << upf_addr_str << ":0` - " << strerror(errno);
 
   //> Test main part: create CU-UP and transmit data
 

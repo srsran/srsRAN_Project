@@ -8,7 +8,7 @@
  *
  */
 
-#include "udp_network_gateway.h"
+#include "srsgnb/gateways/udp_network_gateway.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/srslog.h"
 #include <arpa/inet.h>
@@ -17,11 +17,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <utility>
+
 using namespace srsgnb;
 
-udp_network_gateway::udp_network_gateway(network_gateway_config         config_,
+udp_network_gateway::udp_network_gateway(udp_network_gateway_config     config_,
                                          network_gateway_data_notifier& data_notifier_) :
-  config(config_), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-GW"))
+  config(std::move(config_)), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-GW"))
 {
 }
 
@@ -30,7 +32,7 @@ bool udp_network_gateway::is_initialized()
   return sock_fd != -1;
 }
 
-void udp_network_gateway::handle_pdu(const byte_buffer& pdu)
+void udp_network_gateway::handle_pdu(const byte_buffer& pdu, const ::sockaddr* dest_addr, ::socklen_t dest_len)
 {
   logger.debug("Sending PDU of {} bytes", pdu.length());
 
@@ -49,44 +51,12 @@ void udp_network_gateway::handle_pdu(const byte_buffer& pdu)
 
   span<const uint8_t> pdu_span = to_span(pdu, tmp_mem);
 
-  // Fixme: cache the results of getaddrinfo in case of success to speed up following calls.
-  struct addrinfo hints;
-  // support ipv4, ipv6 and hostnames
-  hints.ai_family    = local_ai_family;
-  hints.ai_socktype  = local_ai_socktype;
-  hints.ai_flags     = 0;
-  hints.ai_protocol  = local_ai_protocol;
-  hints.ai_canonname = nullptr;
-  hints.ai_addr      = nullptr;
-  hints.ai_next      = nullptr;
-
-  std::string      connect_port = std::to_string(config.connect_port);
-  struct addrinfo* results;
-
-  int ret = getaddrinfo(config.connect_address.c_str(), connect_port.c_str(), &hints, &results);
-  if (ret != 0) {
-    logger.error("Getaddrinfo error: {} - {}", config.connect_address, gai_strerror(ret));
-    return;
+  int bytes_sent = sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, dest_addr, dest_len);
+  if (bytes_sent == -1) {
+    logger.error("Couldn't send {} B of data on UDP socket: {}", pdu_span.size_bytes(), strerror(errno));
   }
 
-  struct addrinfo* result;
-  for (result = results; result != nullptr; result = result->ai_next) {
-    char ip_addr[NI_MAXHOST], port_nr[NI_MAXSERV];
-    getnameinfo(
-        result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
-    logger.debug("Sending PDU to {} port {}", ip_addr, port_nr);
-
-    int bytes_sent = sendto(sock_fd, pdu_span.data(), pdu_span.size_bytes(), 0, result->ai_addr, result->ai_addrlen);
-    if (bytes_sent == -1) {
-      logger.error("Couldn't send {} B of data on UDP socket: {}", pdu_span.size_bytes(), strerror(errno));
-      continue;
-    }
-
-    logger.debug("PDU was sent successfully");
-    break;
-  }
-
-  freeaddrinfo(results);
+  logger.debug("PDU was sent successfully");
 }
 
 bool udp_network_gateway::create_and_bind()
@@ -166,27 +136,6 @@ bool udp_network_gateway::create_and_bind()
   }
 
   return true;
-}
-
-bool udp_network_gateway::listen()
-{
-  // UDP does not listen for connections.
-  logger.info("Ignoring unsupported call of `listen()` on UDP gateway.");
-  return false;
-}
-
-bool udp_network_gateway::create_and_connect()
-{
-  // UDP is connectionless. Use `create_and_bind()` to bind socket.
-  logger.error("Ignoring unsupported call of `create_and_connect()` on UDP gateway.");
-  return false;
-}
-
-bool udp_network_gateway::recreate_and_reconnect()
-{
-  // UDP is connectionless. Use `create_and_bind()` to bind socket.
-  logger.error("Ignoring unsupported call of `recreate_and_reconnect()` on UDP gateway.");
-  return false;
 }
 
 void udp_network_gateway::receive()

@@ -8,8 +8,9 @@
 find_package(SCTP REQUIRED)
 
 add_library(srsgnb_gateway
-              network_gateway_factory.cpp
               sctp_network_gateway.cpp
               udp_network_gateway.cpp
+              sctp_network_gateway_factory.cpp
+              udp_network_gateway_factory.cpp
             )
 target_link_libraries(srsgnb_gateway srslog ${SCTP_LIBRARIES})

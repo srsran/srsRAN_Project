@@ -11,7 +11,7 @@
 #include "cu_up_impl.h"
 #include "srsgnb/e1/cu_up/e1_config_converters.h"
 #include "srsgnb/e1/cu_up/e1_cu_up_factory.h"
-#include "srsgnb/gateways/network_gateway_factory.h"
+#include "srsgnb/gateways/udp_network_gateway_factory.h"
 #include "srsgnb/gtpu/gtpu_demux_factory.h"
 #include "srsgnb/ran/bcd_helpers.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"
@@ -34,17 +34,14 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   /// > Create upper layers
 
   // Create NG-U gateway
-  // TODO: Refactor to use UPF IP that we get from E1
-  network_gateway_config ngu_gw_config = {};
-  ngu_gw_config.type                   = network_gateway_type::udp;
-  ngu_gw_config.connect_address        = cfg.net_cfg.upf_addr;
-  ngu_gw_config.connect_port           = cfg.net_cfg.upf_port;
-  ngu_gw_config.bind_address           = cfg.net_cfg.n3_bind_addr;
-  ngu_gw_config.bind_port              = cfg.net_cfg.n3_bind_port;
+  udp_network_gateway_config ngu_gw_config = {};
+  ngu_gw_config.bind_address               = cfg.net_cfg.n3_bind_addr;
+  ngu_gw_config.bind_port                  = cfg.net_cfg.n3_bind_port;
   // other params
 
-  network_gateway_creation_message ngu_gw_msg = {ngu_gw_config, gw_ctrl_gtpu_demux_adapter, gw_data_gtpu_demux_adapter};
-  ngu_gw                                      = create_network_gateway(ngu_gw_msg);
+  udp_network_gateway_creation_message ngu_gw_msg = {
+      ngu_gw_config, gw_ctrl_gtpu_demux_adapter, gw_data_gtpu_demux_adapter};
+  ngu_gw = create_udp_network_gateway(ngu_gw_msg);
   if (not ngu_gw->create_and_bind()) {
     logger.error("Failed to create and connect NG-U gateway.");
   }

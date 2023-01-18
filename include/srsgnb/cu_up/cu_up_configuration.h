@@ -20,9 +20,6 @@ namespace srsgnb {
 namespace srs_cu_up {
 
 struct network_interface_config {
-  /// IP address of UPF for NG-U connection (TODO: Refactor to use UPF IP that we get from E1).
-  std::string upf_addr = "0.0.0.0";
-
   /// Port of UPF for NG-U connection (TODO: Refactor to use UPF port that we get from E1).
   int upf_port = 2152; // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
 
@@ -58,7 +55,7 @@ struct cu_up_configuration {
 
 namespace fmt {
 
-// RLC UM RX config formatter
+// Network config formatter
 template <>
 struct formatter<srsgnb::srs_cu_up::network_interface_config> {
   template <typename ParseContext>
@@ -72,8 +69,7 @@ struct formatter<srsgnb::srs_cu_up::network_interface_config> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "upf_addr={}, upf_port={}, n3_bind_addr={}, n3_bind_port={}, f1u_bind_addr={}, f1u_bind_port={}",
-                     cfg.upf_addr,
+                     "upf_port={}, n3_bind_addr={}, n3_bind_port={}, f1u_bind_addr={}, f1u_bind_port={}",
                      cfg.upf_port,
                      cfg.n3_bind_addr,
                      cfg.n3_bind_port,

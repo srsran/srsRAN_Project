@@ -17,7 +17,7 @@
 #include "srsgnb/cu_up/cu_up.h"
 #include "srsgnb/cu_up/cu_up_configuration.h"
 #include "srsgnb/e1/cu_up/e1_cu_up.h"
-#include "srsgnb/gateways/network_gateway.h"
+#include "srsgnb/gateways/udp_network_gateway.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"
@@ -65,12 +65,12 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
   // Components
-  std::atomic<bool>                e1_connected = {false};
-  std::unique_ptr<e1_interface>    e1;
-  std::unique_ptr<network_gateway> ngu_gw;
-  std::unique_ptr<gtpu_demux>      ngu_demux;
-  timer_manager                    timer_db;
-  std::unique_ptr<ue_manager>      ue_mng;
+  std::atomic<bool>                    e1_connected = {false};
+  std::unique_ptr<e1_interface>        e1;
+  std::unique_ptr<udp_network_gateway> ngu_gw;
+  std::unique_ptr<gtpu_demux>          ngu_demux;
+  timer_manager                        timer_db;
+  std::unique_ptr<ue_manager>          ue_mng;
 
   // Adapters
   network_gateway_data_gtpu_demux_adapter    gw_data_gtpu_demux_adapter;

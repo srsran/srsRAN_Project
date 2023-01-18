@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/e2/e2.h"
-#include "srsgnb/gateways/network_gateway.h"
+#include "srsgnb/gateways/sctp_network_gateway.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
@@ -20,7 +20,7 @@ namespace srsgnb {
 class e2ap_asn1_packer : public e2_message_handler
 {
 public:
-  explicit e2ap_asn1_packer(network_gateway_data_handler& gw, e2_message_handler& e2);
+  explicit e2ap_asn1_packer(sctp_network_gateway_data_handler& gw, e2_message_handler& e2);
 
   /// Received packed E2AP PDU that needs to be unpacked and forwarded.
   void handle_packed_pdu(const byte_buffer& pdu);
@@ -29,9 +29,9 @@ public:
   void handle_message(const e2_message& msg) override;
 
 private:
-  srslog::basic_logger&         logger;
-  network_gateway_data_handler& gw;
-  e2_message_handler&           e2;
+  srslog::basic_logger&              logger;
+  sctp_network_gateway_data_handler& gw;
+  e2_message_handler&                e2;
 };
 
 } // namespace srsgnb

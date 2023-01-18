@@ -11,12 +11,12 @@
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
-#include "lib/gateways/sctp_network_gateway.h"
 #include "test_utils/du_high_worker_manager.h"
 #include "test_utils/dummy_test_components.h"
 #include "unittests/f1ap/common/test_helpers.h"
 #include "unittests/gateways/test_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
+#include "srsgnb/gateways/sctp_network_gateway.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -62,7 +62,7 @@ void test_f1_setup_network()
     f1c_network_adapter() : gw(gw_config, gw_notifier, gw_notifier), packer(gw, *this) {}
 
     /// We require a network gateway and a packer
-    network_gateway_config         gw_config;
+    sctp_network_gateway_config    gw_config;
     dummy_network_gateway_notifier gw_notifier;
     sctp_network_gateway           gw;
     f1ap_asn1_packer               packer;

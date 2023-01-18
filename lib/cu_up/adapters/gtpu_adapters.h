@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/gateways/network_gateway.h"
+#include "srsgnb/gateways/udp_network_gateway.h"
 #include "srsgnb/gtpu/gtpu_tunnel_rx.h"
 #include "srsgnb/gtpu/gtpu_tunnel_tx.h"
 #include "srsgnb/sdap/sdap.h"
@@ -25,16 +25,17 @@ public:
   gtpu_network_gateway_adapter()  = default;
   ~gtpu_network_gateway_adapter() = default;
 
-  void connect_network_gateway(network_gateway_data_handler& gw_handler_) { gw_handler = &gw_handler_; }
+  void connect_network_gateway(udp_network_gateway_data_handler& gw_handler_) { gw_handler = &gw_handler_; }
 
   void on_new_pdu(byte_buffer pdu) override
   {
     srsgnb_assert(gw_handler != nullptr, "Network Gateway handler must not be nullptr");
-    gw_handler->handle_pdu(std::move(pdu));
+    sockaddr_in tmp = {};
+    gw_handler->handle_pdu(std::move(pdu), (sockaddr*)&tmp, 0);
   }
 
 private:
-  network_gateway_data_handler* gw_handler = nullptr;
+  udp_network_gateway_data_handler* gw_handler = nullptr;
 };
 
 /// Adapter between GTP-U and SDAP

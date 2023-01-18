@@ -8,18 +8,20 @@
  *
  */
 
-#include "sctp_network_gateway.h"
+#include "srsgnb/gateways/sctp_network_gateway.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/sctp.h>
 #include <unistd.h>
 
+#include <utility>
+
 using namespace srsgnb;
 
-sctp_network_gateway::sctp_network_gateway(network_gateway_config            config_,
+sctp_network_gateway::sctp_network_gateway(sctp_network_gateway_config       config_,
                                            network_gateway_control_notifier& ctrl_notfier_,
                                            network_gateway_data_notifier&    data_notifier_) :
-  config(config_),
+  config(std::move(config_)),
   ctrl_notifier(ctrl_notfier_),
   data_notifier(data_notifier_),
   logger(srslog::fetch_basic_logger("SCTP-GW"))
