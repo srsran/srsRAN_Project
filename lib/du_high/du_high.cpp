@@ -9,9 +9,7 @@
  */
 
 #include "du_high.h"
-#include "adapters.h"
 #include "du_high_executor_strategies.h"
-#include "f1ap_adapters.h"
 #include "srsgnb/du_manager/du_manager_factory.h"
 #include "srsgnb/f1ap/du/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
@@ -47,13 +45,31 @@ private:
   mac_interface& mac;
 };
 
-du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(128), f1c_du_cfg_handler(timers)
+class scheduler_ue_metrics_null_notifier final : public scheduler_ue_metrics_notifier
+{
+public:
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override
+  {
+    // do nothing.
+  }
+};
+
+du_high::du_high(const du_high_configuration& config_) :
+  cfg(config_),
+  timers(128),
+  f1c_du_cfg_handler(timers),
+  metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
 {
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
-  mac        = create_mac(mac_config{
-      mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter, cfg.sched_cfg});
+  mac        = create_mac(mac_config{mac_ev_notifier,
+                              *cfg.ul_executors,
+                              *cfg.dl_executors,
+                              *cfg.du_mng_executor,
+                              *cfg.phy_adapter,
+                              cfg.sched_cfg,
+                              *metrics_notifier});
   f1ap       = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ul_executors);
   du_manager = create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells},
                                                    {timers, *cfg.du_mng_executor, *cfg.ul_executors, *cfg.dl_executors},

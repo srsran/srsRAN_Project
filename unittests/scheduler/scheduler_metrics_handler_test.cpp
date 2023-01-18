@@ -14,12 +14,23 @@
 
 using namespace srsgnb;
 
+class test_scheduler_ue_metrics_notifier : public scheduler_ue_metrics_notifier
+{
+public:
+  std::vector<scheduler_ue_metrics> last_report;
+
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override
+  {
+    last_report.assign(ue_metrics.begin(), ue_metrics.end());
+  }
+};
+
 class scheduler_metrics_handler_tester : public ::testing::Test
 {
 protected:
   scheduler_metrics_handler_tester(
       std::chrono::milliseconds period = std::chrono::milliseconds{test_rgen::uniform_int<unsigned>(1, 100)}) :
-    report_period(period), metrics(period, &metric_queue)
+    report_period(period), metrics(period, metrics_notif)
   {
     metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
   }
@@ -31,18 +42,18 @@ protected:
     slot_count++;
   }
 
-  scheduler_ue_metrics get_next_metric()
+  void get_next_metric()
   {
+    metrics_notif.last_report.clear();
     sched_result sched_res;
-    while (metric_queue.empty()) {
+    while (metrics_notif.last_report.empty()) {
       run_slot(sched_res);
     }
-    return metric_queue.pop_blocking(nullptr);
   }
 
-  std::chrono::milliseconds            report_period;
-  blocking_queue<scheduler_ue_metrics> metric_queue{16};
-  scheduler_metrics_handler            metrics;
+  std::chrono::milliseconds          report_period;
+  test_scheduler_ue_metrics_notifier metrics_notif;
+  scheduler_metrics_handler          metrics;
   du_ue_index_t test_ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_NOF_DU_UES - 1));
 
   slot_point next_sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10239)};
@@ -52,19 +63,20 @@ protected:
 TEST_F(scheduler_metrics_handler_tester, metrics_sent_with_defined_periodicity)
 {
   unsigned nof_reports = test_rgen::uniform_int<unsigned>(1, 10);
+  ASSERT_TRUE(metrics_notif.last_report.empty());
   for (unsigned i = 0; i != nof_reports; ++i) {
-    ASSERT_TRUE(metric_queue.empty());
-    scheduler_ue_metrics ue_metrics = get_next_metric();
-    ASSERT_TRUE(metric_queue.empty());
+    get_next_metric();
+    ASSERT_EQ(metrics_notif.last_report.size(), 1);
     ASSERT_EQ(slot_count, report_period.count() * (i + 1));
 
-    ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
+    ASSERT_EQ(metrics_notif.last_report[0].rnti, to_rnti(0x4601));
   }
 }
 
 TEST_F(scheduler_metrics_handler_tester, when_no_events_took_place_then_metrics_are_zero)
 {
-  scheduler_ue_metrics ue_metrics = this->get_next_metric();
+  this->get_next_metric();
+  scheduler_ue_metrics ue_metrics = metrics_notif.last_report[0];
 
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.dl_brate_kbps, 0);
@@ -75,8 +87,8 @@ TEST_F(scheduler_metrics_handler_tester, when_no_events_took_place_then_metrics_
   ASSERT_EQ(ue_metrics.dl_nof_nok, 0);
   ASSERT_EQ(ue_metrics.ul_nof_ok, 0);
   ASSERT_EQ(ue_metrics.ul_nof_nok, 0);
-  ASSERT_EQ(ue_metrics.pusch_snr, 0);
-  ASSERT_EQ(ue_metrics.pucch_snr, 0);
+  ASSERT_EQ(ue_metrics.pusch_snr_db, 0);
+  ASSERT_EQ(ue_metrics.pucch_snr_db, 0);
   ASSERT_EQ(ue_metrics.cqi, 0);
   ASSERT_EQ(ue_metrics.bsr, 0);
 }
@@ -93,12 +105,14 @@ TEST_F(scheduler_metrics_handler_tester, compute_nof_dl_oks_and_noks)
     metrics.handle_dl_harq_ack(test_ue_index, false);
   }
 
-  scheduler_ue_metrics ue_metrics = this->get_next_metric();
+  this->get_next_metric();
+  scheduler_ue_metrics ue_metrics = metrics_notif.last_report[0];
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.dl_nof_ok, nof_acks);
   ASSERT_EQ(ue_metrics.dl_nof_nok, nof_nacks);
 
-  ue_metrics = this->get_next_metric();
+  this->get_next_metric();
+  ue_metrics = metrics_notif.last_report[0];
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.dl_nof_ok, 0) << "Nof DL OKs not reset";
   ASSERT_EQ(ue_metrics.dl_nof_nok, 0) << "Nof DL NOKs not reset";
@@ -121,13 +135,15 @@ TEST_F(scheduler_metrics_handler_tester, compute_nof_ul_oks_and_noks)
     metrics.handle_crc_indication(crc_pdu);
   }
 
-  scheduler_ue_metrics ue_metrics = this->get_next_metric();
+  this->get_next_metric();
+  scheduler_ue_metrics ue_metrics = metrics_notif.last_report[0];
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.pci, pci_t{0});
   ASSERT_EQ(ue_metrics.ul_nof_ok, nof_acks);
   ASSERT_EQ(ue_metrics.ul_nof_nok, nof_nacks);
 
-  ue_metrics = this->get_next_metric();
+  this->get_next_metric();
+  ue_metrics = metrics_notif.last_report[0];
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.ul_nof_ok, 0) << "Nof DL OKs not reset";
   ASSERT_EQ(ue_metrics.ul_nof_nok, 0) << "Nof DL NOKs not reset";
@@ -157,14 +173,15 @@ TEST_F(scheduler_metrics_handler_tester, compute_mcs_and_brate)
     run_slot(res);
   }
 
-  scheduler_ue_metrics ue_metrics = metric_queue.pop_blocking();
+  scheduler_ue_metrics ue_metrics = metrics_notif.last_report[0];
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
-  ASSERT_EQ(ue_metrics.dl_mcs, dl_mcs.to_uint());
-  ASSERT_EQ(ue_metrics.ul_mcs, ul_mcs.to_uint());
+  ASSERT_EQ(ue_metrics.dl_mcs, dl_mcs);
+  ASSERT_EQ(ue_metrics.ul_mcs, ul_mcs);
   ASSERT_NEAR(ue_metrics.dl_brate_kbps, static_cast<double>(tot_dl_tbs * 8U) / report_period.count(), 0.001);
   ASSERT_NEAR(ue_metrics.ul_brate_kbps, static_cast<double>(tot_ul_tbs * 8U) / report_period.count(), 0.001);
 
-  ue_metrics = this->get_next_metric();
+  this->get_next_metric();
+  ue_metrics = metrics_notif.last_report[0];
   ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
   ASSERT_EQ(ue_metrics.dl_mcs, 0) << "DL MCS not reset";
   ASSERT_EQ(ue_metrics.ul_mcs, 0) << "UL MCS not reset";

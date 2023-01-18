@@ -24,7 +24,8 @@ class scheduler_metrics_handler
   using usecs = std::chrono::microseconds;
 
 public:
-  explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_queue* q = nullptr);
+  /// \brief Creates a scheduler UE metrics handler. In case the metrics_report_period is zero, no metrics are reported.
+  explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_ue_metrics_notifier& notifier);
 
   /// \brief Register creation of a UE.
   void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci);
@@ -42,26 +43,44 @@ public:
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point sl_tx, const sched_result& slot_result);
 
-  /// \brief Checks whether a queue has been provided to send metrics.
-  bool connected() const { return metric_queue != nullptr; }
+  /// \brief Checks whether the metrics reporting is active.
+  bool connected() const { return report_period != std::chrono::nanoseconds{0}; }
 
 private:
   struct ue_metric_context {
-    scheduler_ue_metrics metrics;
-    unsigned             nof_dl_cws            = 0;
-    unsigned             nof_ul_pdschs         = 0;
-    unsigned             nof_pucch_snr_reports = 0;
-    unsigned             nof_pusch_snr_reports = 0;
+    /// \brief In this struct we store all the metadata that is reset at every report.
+    struct non_persistent_data {
+      unsigned count_uci_harq_acks   = 0;
+      unsigned count_uci_harqs       = 0;
+      unsigned count_crc_acks        = 0;
+      unsigned count_crc_pdus        = 0;
+      unsigned dl_mcs                = 0;
+      unsigned nof_dl_cws            = 0;
+      unsigned ul_mcs                = 0;
+      unsigned nof_puschs            = 0;
+      uint64_t sum_dl_tb_bytes       = 0;
+      uint64_t sum_ul_tb_bytes       = 0;
+      unsigned sum_pusch_snrs        = 0;
+      unsigned sum_pucch_snrs        = 0;
+      unsigned nof_pucch_snr_reports = 0;
+      unsigned nof_pusch_snr_reports = 0;
+    };
+    pci_t               pci;
+    du_ue_index_t       ue_index;
+    rnti_t              rnti;
+    unsigned            last_cqi = 0;
+    unsigned            last_bsr = 0;
+    non_persistent_data data;
 
-    void compute_report(std::chrono::milliseconds metric_report_period);
+    scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period);
 
     void reset();
   };
 
-  void push_result();
+  void report_metrics();
   void handle_slot_result(const sched_result& slot_result);
 
-  scheduler_metrics_queue*        metric_queue = nullptr;
+  scheduler_ue_metrics_notifier&  notifier;
   const std::chrono::milliseconds report_period;
 
   // derived.
@@ -71,6 +90,7 @@ private:
   slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
   std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;
 
+  // \brief Counter of number of slots elapsed since the last report.
   unsigned slot_counter = 0;
 };
 

@@ -12,6 +12,7 @@
 
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator.h"
+#include "srsgnb/scheduler/scheduler_metrics.h"
 #include "srsgnb/support/test_utils.h"
 
 namespace srsgnb {
@@ -121,6 +122,12 @@ public:
 
   void on_ue_config_complete(du_ue_index_t ue_index) override { last_ue_index_cfg = ue_index; }
   void on_ue_delete_response(du_ue_index_t ue_index) override { last_ue_index_deleted = ue_index; }
+};
+
+class scheduler_ue_metrics_dummy_notifier : public scheduler_ue_metrics_notifier
+{
+public:
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
 };
 
 } // namespace srsgnb

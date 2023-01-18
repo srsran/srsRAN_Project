@@ -14,23 +14,15 @@
 #include "lib/scheduler/scheduler_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
+#include "test_utils/dummy_test_components.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/ran/duplex_mode.h"
+#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
-#include <random>
 #include <unordered_map>
 
 using namespace srsgnb;
-
-std::random_device rd;
-std::mt19937       g(rd());
-
-unsigned get_random_uint(unsigned min, unsigned max)
-{
-  srsgnb_assert(min <= max, "Minimum value is greater than maximum value");
-  return std::uniform_int_distribution<unsigned>{min, max}(g);
-}
 
 using dl_bsr_lc_report_list = static_vector<dl_buffer_state_indication_message, MAX_NOF_RB_LCIDS>;
 
@@ -57,13 +49,6 @@ struct multiple_ue_test_params {
   duplex_mode duplx_mode;
 };
 
-class sched_cfg_dummy_notifier : public sched_configuration_notifier
-{
-public:
-  void on_ue_config_complete(du_ue_index_t ue_index) override {}
-  void on_ue_delete_response(du_ue_index_t ue_index) override {}
-};
-
 // Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
   // Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
@@ -72,6 +57,7 @@ struct test_bench {
   scheduler_expert_config                          expert_cfg;
   cell_configuration                               cell_cfg;
   sched_cfg_dummy_notifier                         cfg_notif;
+  scheduler_ue_metrics_dummy_notifier              metric_notif;
   scheduler_impl                                   sch;
   std::unordered_map<du_ue_index_t, sched_test_ue> ues;
   const sched_result*                              sched_res{nullptr};
@@ -79,7 +65,7 @@ struct test_bench {
   explicit test_bench(const scheduler_expert_config&                  expert_cfg_,
                       const sched_cell_configuration_request_message& cell_req =
                           test_helpers::make_default_sched_cell_configuration_request()) :
-    expert_cfg{expert_cfg_}, cell_cfg{cell_req}, sch{expert_cfg, cfg_notif}
+    expert_cfg{expert_cfg_}, cell_cfg{cell_req}, sch{scheduler_config{expert_cfg, cfg_notif, metric_notif}}
   {
     sch.handle_cell_configuration_request(cell_req);
   }
@@ -273,9 +259,10 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
-    push_buffer_state_to_dl_ue(to_du_ue_index(idx),
-                               get_random_uint(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
-                               LCID_MIN_DRB);
+    push_buffer_state_to_dl_ue(
+        to_du_ue_index(idx),
+        test_rgen::uniform_int<unsigned>(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
+        LCID_MIN_DRB);
   }
 
   for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
@@ -324,9 +311,10 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
-    notify_ul_bsr_from_ue(to_du_ue_index(idx),
-                          get_random_uint(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
-                          static_cast<lcg_id_t>(0));
+    notify_ul_bsr_from_ue(
+        to_du_ue_index(idx),
+        test_rgen::uniform_int<unsigned>(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
+        static_cast<lcg_id_t>(0));
   }
 
   for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {

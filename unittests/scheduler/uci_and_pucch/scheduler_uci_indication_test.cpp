@@ -25,7 +25,9 @@ using namespace srsgnb;
 class uci_sched_tester : public ::testing::Test
 {
 protected:
-  uci_sched_tester() : sched(create_scheduler(config_helpers::make_default_scheduler_expert_config(), notif))
+  uci_sched_tester() :
+    sched(
+        create_scheduler(scheduler_config{config_helpers::make_default_scheduler_expert_config(), notif, metric_notif}))
   {
     add_cell();
     add_ue();
@@ -110,10 +112,11 @@ protected:
   constexpr static du_ue_index_t ue_id   = to_du_ue_index(0);
   constexpr static rnti_t        ue_rnti = to_rnti(0x4601);
 
-  srslog::basic_logger&          logger = srslog::fetch_basic_logger("MAC", true);
-  sched_cfg_dummy_notifier       notif;
-  optional<cell_configuration>   cell_cfg;
-  std::unique_ptr<mac_scheduler> sched;
+  srslog::basic_logger&               logger = srslog::fetch_basic_logger("MAC", true);
+  sched_cfg_dummy_notifier            notif;
+  scheduler_ue_metrics_dummy_notifier metric_notif;
+  optional<cell_configuration>        cell_cfg;
+  std::unique_ptr<mac_scheduler>      sched;
 
   slot_point          next_slot;
   const sched_result* last_sched_res = nullptr;

@@ -16,15 +16,14 @@
 #include "ue_scheduling/ue_scheduler.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
+#include "srsgnb/scheduler/scheduler_factory.h"
 
 namespace srsgnb {
 
 class scheduler_impl final : public mac_scheduler
 {
 public:
-  explicit scheduler_impl(const scheduler_expert_config& sched_cfg,
-                          sched_configuration_notifier&  notifier,
-                          scheduler_metrics_queue*       metrics_queue = nullptr);
+  explicit scheduler_impl(const scheduler_config& sched_cfg);
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
 

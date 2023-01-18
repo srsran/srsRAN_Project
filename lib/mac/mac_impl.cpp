@@ -21,7 +21,8 @@ mac_impl::mac_impl(const mac_config& mac_cfg) :
       mac_cfg.ctrl_exec,
       mac_cfg.phy_notifier),
   sched_cfg_adapter(cfg),
-  sched_obj(create_scheduler(mac_cfg.sched_cfg, sched_cfg_adapter.get_sched_notifier())),
+  sched_obj(create_scheduler(
+      scheduler_config{mac_cfg.sched_cfg, sched_cfg_adapter.get_sched_notifier(), mac_cfg.metric_notifier})),
   dl_unit(cfg, *sched_obj, rnti_table),
   ul_unit(cfg, *sched_obj, rnti_table),
   rach_hdl(*sched_obj, rnti_table),

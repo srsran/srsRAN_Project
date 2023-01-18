@@ -10,13 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/config/scheduler_expert_config.h"
+#include "srsgnb/scheduler/config/scheduler_config.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 
 namespace srsgnb {
 
 /// Create L2 scheduler object.
-std::unique_ptr<mac_scheduler> create_scheduler(const scheduler_expert_config& sched_cfg,
-                                                sched_configuration_notifier&  config_notifier);
+std::unique_ptr<mac_scheduler> create_scheduler(const scheduler_config& sched_cfg);
 
 } // namespace srsgnb

@@ -25,9 +25,10 @@ using namespace srsgnb;
 
 void test_no_ues()
 {
-  scheduler_expert_config  sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  sched_cfg_dummy_notifier cfg_notif;
-  scheduler_impl           sch{sched_cfg, cfg_notif};
+  scheduler_expert_config             sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  sched_cfg_dummy_notifier            cfg_notif;
+  scheduler_ue_metrics_dummy_notifier metrics_notif;
+  scheduler_impl                      sch{scheduler_config{sched_cfg, cfg_notif, metrics_notif}};
 
   // Action 1: Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
@@ -46,9 +47,10 @@ void test_no_ues()
 
 void test_rach_indication()
 {
-  scheduler_expert_config  sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  sched_cfg_dummy_notifier cfg_notif;
-  scheduler_impl           sch{sched_cfg, cfg_notif};
+  scheduler_expert_config             sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  sched_cfg_dummy_notifier            cfg_notif;
+  scheduler_ue_metrics_dummy_notifier metrics_notif;
+  scheduler_impl                      sch{scheduler_config{sched_cfg, cfg_notif, metrics_notif}};
 
   // Action 1: Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();

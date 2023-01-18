@@ -19,6 +19,7 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
+#include "srsgnb/scheduler/scheduler_metrics.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
@@ -51,6 +52,8 @@ private:
   timer_manager timers;
 
   f1c_du_configurator_adapter f1c_du_cfg_handler;
+
+  std::unique_ptr<scheduler_ue_metrics_notifier> metrics_notifier;
 
   std::unique_ptr<du_manager_interface> du_manager;
   std::unique_ptr<f1_interface>         f1ap;

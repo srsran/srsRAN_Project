@@ -23,6 +23,12 @@ public:
   void on_ue_delete_response(du_ue_index_t ue_index) override {}
 };
 
+class sched_dummy_metric_notifier final : public scheduler_ue_metrics_notifier
+{
+public:
+  void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
+};
+
 struct bench_params {
   unsigned nof_repetitions = 100;
 };
@@ -55,8 +61,9 @@ std::unique_ptr<benchmarker> bm;
 void benchmark_sib_scheduling()
 {
   sched_cfg_dummy_notifier       cfg_notif;
-  std::unique_ptr<mac_scheduler> sch =
-      create_scheduler(config_helpers::make_default_scheduler_expert_config(), cfg_notif);
+  sched_dummy_metric_notifier    metric_notif;
+  std::unique_ptr<mac_scheduler> sch = create_scheduler(
+      scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif, metric_notif});
 
   // Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
@@ -77,8 +84,9 @@ void benchmark_sib_scheduling()
 void benchmark_rach_scheduling()
 {
   sched_cfg_dummy_notifier       cfg_notif;
-  std::unique_ptr<mac_scheduler> sch =
-      create_scheduler(config_helpers::make_default_scheduler_expert_config(), cfg_notif);
+  sched_dummy_metric_notifier    metric_notif;
+  std::unique_ptr<mac_scheduler> sch = create_scheduler(
+      scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif, metric_notif});
 
   // Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = test_helpers::make_default_sched_cell_configuration_request();
