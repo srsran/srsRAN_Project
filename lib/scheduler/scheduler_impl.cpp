@@ -132,7 +132,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   // > Log the scheduler results.
   sched_result_logger.log(cell.res_grid[0].result);
 
-  // > Push the scheduelr results to the metrics handler.
+  // > Push the scheduler results to the metrics handler.
   metrics.push_result(sl_tx, cell.res_grid[0].result);
 
   // Return result for the slot.
