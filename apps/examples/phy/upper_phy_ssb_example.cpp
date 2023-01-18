@@ -88,7 +88,7 @@ public:
     srsgnb_assert(gateway, "Upper PHY is not connected to a gateway.");
 
     // Set logger context.
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("New TTI boundary.");
 
     // Wait for TTI boundary to be cleared.

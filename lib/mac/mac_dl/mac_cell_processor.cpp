@@ -107,7 +107,7 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
-  logger.set_context(sl_tx.to_uint());
+  logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 
   // * Start of Critical Path * //
 

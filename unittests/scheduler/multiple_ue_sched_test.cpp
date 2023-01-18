@@ -113,8 +113,8 @@ protected:
     bench.emplace(expert_cfg, msg);
 
     // Initialize.
-    mac_logger.set_context(next_slot.to_uint());
-    test_logger.set_context(next_slot.to_uint());
+    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
     bench->sched_res = bench->sch.slot_indication(next_slot, to_du_cell_index(0));
   }
 
@@ -122,8 +122,8 @@ protected:
   {
     next_slot++;
 
-    mac_logger.set_context(next_slot.to_uint());
-    test_logger.set_context(next_slot.to_uint());
+    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
     bench->sched_res = bench->sch.slot_indication(next_slot, to_du_cell_index(0));
 

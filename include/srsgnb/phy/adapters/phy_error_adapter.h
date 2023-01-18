@@ -30,7 +30,7 @@ public:
   // See interface for documentation.
   void on_late_resource_grid(const late_resource_grid_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.info("Unavailable data to transmit for sector {}, slot {} and symbol {}.",
                 context.sector,
                 context.slot,
@@ -40,7 +40,7 @@ public:
   // See interface for documentation.
   void on_prach_request_late(const prach_buffer_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.info("PRACH request late for sector {}, slot {} and start symbol {}.",
                 context.sector,
                 context.slot,
@@ -50,7 +50,7 @@ public:
   // See interface for documentation.
   void on_prach_request_overflow(const prach_buffer_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.info("PRACH request overflow for sector {}, slot {} and start symbol {}.",
                 context.sector,
                 context.slot,

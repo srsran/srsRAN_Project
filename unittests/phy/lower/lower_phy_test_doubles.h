@@ -38,7 +38,7 @@ public:
   // See interface for documentation.
   void on_late_resource_grid(const late_resource_grid_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug(
         "Sector {} - Detected late resource grid for symbol {}.", context.sector, context.symbol, context.symbol);
 
@@ -48,7 +48,7 @@ public:
   // See interface for documentation.
   void on_prach_request_late(const prach_buffer_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Sector {} - Detected PRACH request late for sector {}, slot {} and start symbol {}.",
                  context.sector,
                  context.slot,
@@ -60,7 +60,7 @@ public:
   // See interface for documentation.
   void on_prach_request_overflow(const prach_buffer_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Sector {} - Detected PRACH request overflow for sector {}, slot {} and start symbol {}.",
                  context.sector,
                  context.slot,
@@ -127,21 +127,21 @@ public:
   // See interface for documentation.
   void on_rx_symbol(const lower_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Sector {} - On Rx Symbol {}.", context.sector, context.nof_symbols);
   }
 
   // See interface for documentation.
   void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Sector {} - On Rx PRACH Window.", context.sector);
   }
 
   // See interface for documentation.
   void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Sector {} - On Rx SRS Symbol.", context.sector);
   }
 
@@ -200,7 +200,7 @@ public:
   // See interface for documentation.
   void on_tti_boundary(const lower_phy_timing_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("New TTI boundary.");
     tti_boundaries_events.push_back(context);
   }
@@ -208,7 +208,7 @@ public:
   // See interface for documentation.
   void on_ul_half_slot_boundary(const lower_phy_timing_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Half uplink slot boundary.");
     ul_half_slot_events.push_back(context);
   }
@@ -216,7 +216,7 @@ public:
   // See interface for documentation.
   void on_ul_full_slot_boundary(const lower_phy_timing_context& context) override
   {
-    logger.set_context(context.slot.system_slot());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     logger.debug("Full uplink slot boundary.");
     ul_full_slot_events.push_back(context);
   }

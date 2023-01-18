@@ -75,7 +75,7 @@ void benchmark_sib_scheduling()
   // Run benchmark.
   slot_point sl_tx{0, 0};
   bm->new_measure("SSB+SIB scheduling", 1, [&sch, &sl_tx, &logger]() mutable {
-    logger.set_context(sl_tx.to_uint());
+    logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
     sch->slot_indication(sl_tx, to_du_cell_index(0));
     ++sl_tx;
   });
@@ -99,7 +99,7 @@ void benchmark_rach_scheduling()
 
   // Run benchmark.
   bm->new_measure("SSB+SIB+RACH scheduling", 1, [&sch, &sl_tx, &rach_ind, &logger]() mutable {
-    logger.set_context(sl_tx.to_uint());
+    logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
     if (sl_tx.slot_index() != 0) {
       // Avoid slots with SIB1, otherwise there might not be space in PDCCH.
       sch->handle_rach_indication(rach_ind);

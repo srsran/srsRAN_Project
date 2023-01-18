@@ -190,7 +190,7 @@ void lower_phy_impl::process_symbol()
   // Detect slot boundary.
   if (symbol_slot_idx == 0) {
     // Update logger context.
-    logger.set_context(dl_slot_context.system_slot());
+    logger.set_context(dl_slot_context.sfn(), dl_slot_context.slot_index());
 
     // Notify slot boundary.
     lower_phy_timing_context timing_context = {};

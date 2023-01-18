@@ -88,8 +88,8 @@ protected:
 
   void run_slot()
   {
-    mac_logger.set_context(next_slot.to_uint());
-    test_logger.set_context(next_slot.to_uint());
+    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
     bench->res_grid.slot_indication(next_slot);
     next_slot++;

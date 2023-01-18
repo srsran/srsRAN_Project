@@ -51,7 +51,7 @@ public:
   // See interface for documentation.
   void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override
   {
-    logger.set_context(context.slot.to_uint());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
 
     downlink_proc->configure_resource_grid(context, grid);
   }

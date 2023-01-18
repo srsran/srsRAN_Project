@@ -66,8 +66,8 @@ struct ssb_test_bench {
         srsgnb_assert(cfg.ssb_case < ssb_pattern_case::invalid,
                       "Invalid SSB case. Only case A, B, and C are supported");
     }
-    test_logger.set_context(0);
-    mac_logger.set_context(0);
+    test_logger.set_context(0, 0);
+    mac_logger.set_context(0, 0);
     t = slot_point(numerology, 0);
     cell_res_grid.slot_indication(t);
   }
@@ -76,8 +76,8 @@ struct ssb_test_bench {
   {
     t++;
     cell_res_grid.slot_indication(t);
-    test_logger.set_context(t.to_uint());
-    mac_logger.set_context(t.to_uint());
+    test_logger.set_context(t.sfn(), t.slot_index());
+    mac_logger.set_context(t.sfn(), t.slot_index());
   }
 
   cell_slot_resource_allocator& get_slot_allocator() { return cell_res_grid; }

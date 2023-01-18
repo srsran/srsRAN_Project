@@ -33,7 +33,7 @@ public:
                      const prach_buffer&            buffer,
                      const prach_buffer_context&    context) override
   {
-    logger.set_context(context.slot.to_uint());
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
     uplink_proc->process_prach(notifier, buffer, context);
   }
 
@@ -44,7 +44,7 @@ public:
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override
   {
-    logger.set_context(pdu.pdu.slot.to_uint());
+    logger.set_context(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index());
     uplink_proc->process_pusch(data, softbuffer, notifier, grid, pdu);
   }
 
@@ -53,7 +53,7 @@ public:
                      const resource_grid_reader&    grid,
                      const pucch_pdu&               pdu) override
   {
-    logger.set_context(pdu.context.slot.to_uint());
+    logger.set_context(pdu.context.slot.sfn(), pdu.context.slot.slot_index());
     uplink_proc->process_pucch(notifier, grid, pdu);
   }
 

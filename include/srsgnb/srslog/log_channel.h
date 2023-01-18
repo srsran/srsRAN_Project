@@ -75,8 +75,6 @@ public:
   const std::string& id() const { return log_id; }
 
   /// Set the log channel context to the specified value.
-  void set_context(uint32_t x) {}
-  /// Set the log channel context to the specified value.
   void set_context(uint32_t a, uint32_t b) { ctx_value64 = ((uint64_t(a) << 32) | uint64_t(b)); }
 
   /// Set the maximum number of bytes to can be printed in a hex dump.

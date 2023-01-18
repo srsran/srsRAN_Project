@@ -62,15 +62,6 @@ public:
   }
 
   /// Set the specified context value to all the channels of the logger.
-  void set_context(uint32_t x)
-  {
-    detail::scoped_lock lock(m);
-    for (auto channel : channels) {
-      channel->set_context(x);
-    }
-  }
-
-  /// Set the specified context value to all the channels of the logger.
   void set_context(uint32_t a, uint32_t b)
   {
     detail::scoped_lock lock(m);

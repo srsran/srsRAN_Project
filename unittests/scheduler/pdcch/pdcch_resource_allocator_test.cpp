@@ -151,7 +151,7 @@ void test_pdcch_sched_monitoring_period()
         for (unsigned i = 0; i < duration + 2; ++i) {
           res_grid.slot_indication(sl_tx);
           pdcch_sch.slot_indication(sl_tx);
-          logger.set_context(sl_tx.to_uint());
+          logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
           logger.debug("Test: period={}, offset={}, duration={}", period, offset, duration);
 
           pdcch_dl_information* pdcch =

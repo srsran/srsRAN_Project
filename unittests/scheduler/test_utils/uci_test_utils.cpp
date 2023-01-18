@@ -152,7 +152,7 @@ void test_bench::add_ue()
 void test_bench::slot_indication(slot_point slot_tx)
 {
   pucch_alloc.slot_indication(slot_tx);
-  mac_logger.set_context(slot_tx.to_uint());
-  test_logger.set_context(slot_tx.to_uint());
+  mac_logger.set_context(slot_tx.sfn(), slot_tx.slot_index());
+  test_logger.set_context(slot_tx.sfn(), slot_tx.slot_index());
   res_grid.slot_indication(slot_tx);
 }

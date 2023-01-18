@@ -115,8 +115,8 @@ struct sib_test_bench {
     res_grid{cfg},
     sl_tx{to_numerology_value(init_bwp_scs), 0}
   {
-    test_logger.set_context(0);
-    mac_logger.set_context(0);
+    test_logger.set_context(0, 0);
+    mac_logger.set_context(0, 0);
     res_grid.slot_indication(sl_tx);
   }
 
@@ -198,8 +198,8 @@ struct sib_test_bench {
   void slot_indication()
   {
     sl_tx++;
-    mac_logger.set_context(sl_tx.to_uint());
-    test_logger.set_context(sl_tx.to_uint());
+    mac_logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
+    test_logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
     test_logger.info("Starting new slot {}", sl_tx);
     res_grid.slot_indication(sl_tx);
   }
