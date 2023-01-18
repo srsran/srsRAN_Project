@@ -11,8 +11,6 @@
 #include "srsgnb/e2/e2_factory.h"
 #include "e2_impl.h"
 
-/// Notice this would be the only place were we include concrete class implementation files.
-
 using namespace srsgnb;
 
 std::unique_ptr<e2_interface> srsgnb::create_e2(srsgnb::timer_manager& timers_, e2_message_notifier& e2_pdu_notifier_)

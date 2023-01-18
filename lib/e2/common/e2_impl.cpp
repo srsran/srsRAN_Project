@@ -25,7 +25,6 @@ e2_impl::e2_impl(timer_manager& timers_, e2_message_notifier& e2_pdu_notifier_) 
   events(std::make_unique<e2_event_manager>(timers))
 {
 }
-e2_impl::~e2_impl() {}
 
 async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(const e2_setup_request_message& request)
 {
@@ -67,6 +66,7 @@ void e2_impl::handle_message(const e2_message& msg)
       break;
     case asn1::e2ap::e2_ap_pdu_c::types_opts::unsuccessful_outcome:
       handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+      break;
     default:
       logger.error("Invalid E2 PDU type");
       break;
