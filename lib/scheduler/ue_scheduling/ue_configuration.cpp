@@ -2,6 +2,7 @@
 #include "ue_configuration.h"
 #include "../../asn1/asn1_diff_utils.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
+#include <algorithm>
 
 using namespace srsgnb;
 
@@ -50,6 +51,12 @@ void ue_cell_configuration::configure_bwp_common_cfg(bwp_id_t bwpid, const bwp_d
   for (const search_space_configuration& ss : bwp_dl_common.pdcch_common.search_spaces) {
     bwp_table[bwpid].search_spaces.push_back(&ss);
   }
+  // Sort based on CORESET ids.
+  std::sort(bwp_table[bwpid].search_spaces.begin(),
+            bwp_table[bwpid].search_spaces.end(),
+            [](const search_space_configuration* lhs, const search_space_configuration* rhs) -> bool {
+              return lhs->cs_id > rhs->cs_id;
+            });
 
   // Compute CORESET-Id lookup table.
   if (bwp_dl_common.pdcch_common.coreset0.has_value()) {
@@ -85,6 +92,12 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_down
   for (const search_space_configuration& ss : bwp_dl_ded.pdcch_cfg->search_spaces) {
     bwp_table[bwpid].search_spaces.push_back(&ss);
   }
+  // Sort based on CORESET ids.
+  std::sort(bwp_table[bwpid].search_spaces.begin(),
+            bwp_table[bwpid].search_spaces.end(),
+            [](const search_space_configuration* lhs, const search_space_configuration* rhs) -> bool {
+              return lhs->cs_id > rhs->cs_id;
+            });
 
   // Compute CORESET-Id lookup table.
   for (const coreset_configuration& cs : bwp_dl_ded.pdcch_cfg->coresets) {
