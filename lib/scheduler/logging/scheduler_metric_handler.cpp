@@ -130,12 +130,14 @@ void scheduler_metrics_handler::push_result(slot_point sl_tx, const sched_result
 
 void scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period)
 {
-  metrics.dl_mcs = std::roundf(static_cast<float>(metrics.dl_mcs) / nof_dl_cws);
-  metrics.ul_mcs = std::roundf(static_cast<float>(metrics.ul_mcs) / nof_ul_pdschs);
+  metrics.dl_mcs = nof_dl_cws > 0 ? std::roundf(static_cast<float>(metrics.dl_mcs) / nof_dl_cws) : 0;
+  metrics.ul_mcs = nof_ul_pdschs > 0 ? std::roundf(static_cast<float>(metrics.ul_mcs) / nof_ul_pdschs) : 0;
   metrics.dl_brate_kbps /= metric_report_period.count();
   metrics.ul_brate_kbps /= metric_report_period.count();
-  metrics.pusch_snr = std::roundf(static_cast<float>(metrics.pusch_snr) / nof_pusch_snr_reports);
-  metrics.pucch_snr = std::roundf(static_cast<float>(metrics.pucch_snr) / nof_pucch_snr_reports);
+  metrics.pusch_snr =
+      nof_pusch_snr_reports > 0 ? std::roundf(static_cast<float>(metrics.pusch_snr) / nof_pusch_snr_reports) : 0;
+  metrics.pucch_snr =
+      nof_pucch_snr_reports > 0 ? std::roundf(static_cast<float>(metrics.pucch_snr) / nof_pucch_snr_reports) : 0;
   // TODO: update PUSCH and PUCCH SNR metrics based on indications.
 }
 

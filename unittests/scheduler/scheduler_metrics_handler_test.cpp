@@ -62,6 +62,25 @@ TEST_F(scheduler_metrics_handler_tester, metrics_sent_with_defined_periodicity)
   }
 }
 
+TEST_F(scheduler_metrics_handler_tester, when_no_events_took_place_then_metrics_are_zero)
+{
+  scheduler_ue_metrics ue_metrics = this->get_next_metric();
+
+  ASSERT_EQ(ue_metrics.rnti, to_rnti(0x4601));
+  ASSERT_EQ(ue_metrics.dl_brate_kbps, 0);
+  ASSERT_EQ(ue_metrics.ul_brate_kbps, 0);
+  ASSERT_EQ(ue_metrics.dl_mcs, 0);
+  ASSERT_EQ(ue_metrics.ul_mcs, 0);
+  ASSERT_EQ(ue_metrics.dl_nof_ok, 0);
+  ASSERT_EQ(ue_metrics.dl_nof_nok, 0);
+  ASSERT_EQ(ue_metrics.ul_nof_ok, 0);
+  ASSERT_EQ(ue_metrics.ul_nof_nok, 0);
+  ASSERT_EQ(ue_metrics.pusch_snr, 0);
+  ASSERT_EQ(ue_metrics.pucch_snr, 0);
+  ASSERT_EQ(ue_metrics.cqi, 0);
+  ASSERT_EQ(ue_metrics.bsr, 0);
+}
+
 TEST_F(scheduler_metrics_handler_tester, compute_nof_dl_oks_and_noks)
 {
   unsigned nof_acks  = test_rgen::uniform_int<unsigned>(1, 100);
