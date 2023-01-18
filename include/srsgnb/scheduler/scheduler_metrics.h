@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsgnb/adt/blocking_queue.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/sch_mcs.h"
