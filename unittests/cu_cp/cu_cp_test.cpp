@@ -278,7 +278,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
   }
 
   // Disconnect AMF
-  cu_cp_obj->on_amf_connection_drop();
+  cu_cp_obj->handle_amf_connection_drop();
 
   ASSERT_FALSE(cu_cp_obj->amf_is_connected());
 

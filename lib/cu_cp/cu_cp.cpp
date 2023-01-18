@@ -33,6 +33,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   // connect event notifiers to layers
   f1c_ev_notifier.connect_cu_cp(*this);
   cu_up_processor_ev_notifier.connect_cu_cp(*this);
+  ngap_cu_cp_ev_notifier.connect_cu_cp(*this);
 
   // connect task schedulers
   ngc_task_sched.connect_cu_cp(ue_task_sched);
@@ -41,8 +42,9 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
 
   // Create layers
   ngc_entity = create_ngc(cfg.ngc_config, ngc_task_sched, ue_mng, *cfg.ngc_notifier);
+  ngap_adapter.connect_ngap(*ngc_entity);
 
-  routine_mng = std::make_unique<cu_cp_routine_manager>(cfg.ngc_config, *ngc_entity, *this);
+  routine_mng = std::make_unique<cu_cp_routine_manager>(cfg.ngc_config, ngap_adapter, ngap_cu_cp_ev_notifier);
 }
 
 cu_cp::~cu_cp()
@@ -150,7 +152,7 @@ void cu_cp::handle_cu_up_remove_request(const cu_up_index_t cu_up_index)
   remove_cu_up(cu_up_index);
 }
 
-void cu_cp::on_amf_connection()
+void cu_cp::handle_amf_connection()
 {
   amf_connected = true;
 
@@ -160,7 +162,7 @@ void cu_cp::on_amf_connection()
   }
 }
 
-void cu_cp::on_amf_connection_drop()
+void cu_cp::handle_amf_connection_drop()
 {
   amf_connected = false;
 

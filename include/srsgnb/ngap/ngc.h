@@ -77,6 +77,19 @@ public:
   virtual async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) = 0;
 };
 
+/// Interface to notify about NGAP connections to the CU-CP
+class ngap_cu_cp_connection_notifier
+{
+public:
+  virtual ~ngap_cu_cp_connection_notifier() = default;
+
+  /// \brief Notifies the CU-CP about a successful AMF connection.
+  virtual void on_amf_connection() = 0;
+
+  /// \brief Notifies the CU-CP about a dropped AMF connection.
+  virtual void on_amf_connection_drop() = 0;
+};
+
 struct ngc_ue_context {
   amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
   ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;

@@ -21,17 +21,28 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Interface to notify about NGC connections to the CU-CP
-class cu_cp_ngc_connection_notifier
+/// Interface to handle AMF connections
+class cu_cp_ngap_connection_handler
 {
 public:
-  virtual ~cu_cp_ngc_connection_notifier() = default;
+  virtual ~cu_cp_ngap_connection_handler() = default;
 
-  /// \brief Notifies the CU-CP about a successful AMF connection.
-  virtual void on_amf_connection() = 0;
+  /// \brief Handles a AMF connection notification.
+  virtual void handle_amf_connection() = 0;
 
-  /// \brief Notifies the CU-CP about a dropped AMF connection.
-  virtual void on_amf_connection_drop() = 0;
+  /// \brief Handles a AMF connection drop notfication.
+  virtual void handle_amf_connection_drop() = 0;
+};
+
+/// Methods used by CU-CP to initiate NGAP connection procedures.
+class cu_cp_ngap_control_notifier
+{
+public:
+  virtual ~cu_cp_ngap_control_notifier() = default;
+
+  /// \brief Notifies the NGAP to initiate a NG Setup Procedure.
+  /// \param[in] request The NG Setup Request.
+  virtual async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) = 0;
 };
 
 /// Interface to notify about DU connections to the CU-CP
@@ -146,7 +157,7 @@ class cu_cp_interface : public cu_cp_du_connection_notifier,
                         public cu_cp_cu_up_handler,
                         public cu_cp_cu_up_interface,
                         public cu_cp_ng_interface,
-                        public cu_cp_ngc_connection_notifier
+                        public cu_cp_ngap_connection_handler
 {
 public:
   virtual ~cu_cp_interface() = default;

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/cu_cp_adapters.h"
 #include "adapters/cu_up_processor_adapters.h"
 #include "adapters/du_processor_adapters.h"
 #include "adapters/f1c_adapters.h"
@@ -72,9 +73,9 @@ public:
   // CU-UP handler
   void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) override;
 
-  // ngc_connection_notifier
-  void on_amf_connection() override;
-  void on_amf_connection_drop() override;
+  // NGAP connection handler
+  void handle_amf_connection() override;
+  void handle_amf_connection_drop() override;
 
 private:
   /// \brief Adds a DU processor object to the CU-CP.
@@ -134,6 +135,9 @@ private:
   // CU-UP task scheduler
   cu_up_task_scheduler cu_up_task_sched;
 
+  // CU-CP to NGAP adapter
+  cu_cp_ngap_adapter ngap_adapter;
+
   // DU processor to CU-CP adapters
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
   du_processor_cu_cp_adapter           du_processor_ev_notifier;
@@ -150,8 +154,9 @@ private:
   // CU-UP processor to CU-CP adapter
   cu_up_processor_cu_cp_adapter cu_up_processor_ev_notifier;
 
-  // NGC to CU-CP adapter
+  // NGC to CU-CP adapters
   ngc_to_cu_cp_task_scheduler ngc_task_sched;
+  ngap_cu_cp_adapter          ngap_cu_cp_ev_notifier;
 
   // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_notifier;

@@ -21,19 +21,19 @@ namespace srs_cu_cp {
 class initial_cu_cp_setup_routine
 {
 public:
-  initial_cu_cp_setup_routine(const ngc_configuration&       ngc_cfg_,
-                              ngc_connection_manager&        ngc_conn_mng_,
-                              cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_);
+  initial_cu_cp_setup_routine(const ngc_configuration&        ngc_cfg_,
+                              cu_cp_ngap_control_notifier&    ngc_ctrl_notifier_,
+                              ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  async_task<ng_setup_response> start_ng_setup_request();
+  async_task<ng_setup_response> send_ng_setup_request();
   void                          handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp);
 
-  const ngc_configuration&       ngc_cfg;
-  ngc_connection_manager&        ngc_conn_mng;
-  cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier;
+  const ngc_configuration&        ngc_cfg;
+  cu_cp_ngap_control_notifier&    ngc_ctrl_notifier;
+  ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
 
   ng_setup_response response_msg = {};
 };

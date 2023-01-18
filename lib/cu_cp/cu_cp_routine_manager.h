@@ -23,17 +23,17 @@ namespace srs_cu_cp {
 class cu_cp_routine_manager
 {
 public:
-  explicit cu_cp_routine_manager(const ngc_configuration&       ngc_cfg_,
-                                 ngc_connection_manager&        ngc_conn_mng_,
-                                 cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier_);
+  explicit cu_cp_routine_manager(const ngc_configuration&        ngc_cfg_,
+                                 cu_cp_ngap_control_notifier&    ngc_ctrl_notifier_,
+                                 ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_);
   ~cu_cp_routine_manager() = default;
 
   void start_initial_cu_cp_setup_routine();
 
 private:
-  const ngc_configuration&       ngc_cfg;
-  ngc_connection_manager&        ngc_conn_mng;
-  cu_cp_ngc_connection_notifier& cu_cp_ngc_ev_notifier;
+  const ngc_configuration&        ngc_cfg;
+  cu_cp_ngap_control_notifier&    ngc_ctrl_notifier;
+  ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
 
   // cu-cp task event loop
   async_task_sequencer main_ctrl_loop;

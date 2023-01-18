@@ -54,6 +54,30 @@ private:
   ue_task_scheduler* cu_cp_task_sched = nullptr;
 };
 
+/// Adapter between NGAP and CU-CP
+class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier
+{
+public:
+  ngap_cu_cp_adapter() {}
+
+  void connect_cu_cp(cu_cp_ngap_connection_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
+
+  void on_amf_connection() override
+  {
+    srsgnb_assert(cu_cp_handler != nullptr, "CU-CP NGAP Connection handler must not be nullptr");
+    cu_cp_handler->handle_amf_connection();
+  }
+
+  void on_amf_connection_drop() override
+  {
+    srsgnb_assert(cu_cp_handler != nullptr, "CU-CP NGAP Connection handler must not be nullptr");
+    cu_cp_handler->handle_amf_connection_drop();
+  }
+
+private:
+  cu_cp_ngap_connection_handler* cu_cp_handler = nullptr;
+};
+
 /// Adapter between NGC and RRC UE
 class ngc_rrc_ue_adapter : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
 {
