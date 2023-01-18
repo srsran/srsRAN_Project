@@ -72,23 +72,24 @@ private:
     return {it->measurements.back(), it->size};
   }
 
-  /// Get percentile column width for execution time.
-  unsigned get_percentile_width_time() const
+  /// Get percentile column width for execution time, including one decimal point.
+  unsigned get_percentile_width_time(double scaling = 1.0) const
   {
-    unsigned max_meas_ns      = get_max_meas_time_ns().first;
-    unsigned percentile_width = static_cast<unsigned>(std::ceil(std::log10(static_cast<float>(max_meas_ns))));
-    percentile_width          = std::max(percentile_width, 8U);
-    return percentile_width;
+    unsigned max_meas_ns = get_max_meas_time_ns().first;
+    unsigned percentile_width =
+        static_cast<unsigned>(std::ceil(std::log10(static_cast<double>(max_meas_ns) * scaling)));
+    percentile_width = std::max(percentile_width, 6U);
+    return percentile_width + 2;
   }
 
   /// Get percentile column width for execution throughput.
-  unsigned get_percentile_width_throughput() const
+  unsigned get_percentile_width_throughput(double scaling) const
   {
     std::pair<unsigned, unsigned> max_meas = get_max_meas_time_ns();
     max_meas.first                         = std::max(max_meas.first, 1U);
     double throughput_max                  = convert_to_throughput(max_meas.first, max_meas.second);
 
-    unsigned percentile_width = static_cast<unsigned>(std::ceil(std::log10(static_cast<float>(throughput_max)))) + 2U;
+    unsigned percentile_width = static_cast<unsigned>(std::ceil(std::log10(throughput_max * scaling))) + 2U;
     percentile_width          = std::max(percentile_width, 8U);
     return percentile_width;
   }
@@ -156,64 +157,69 @@ public:
   }
 
   /// Prints the time execution measurements in nanoseconds.
-  void print_percentiles_time() const
+  void print_percentiles_time(std::string units = "nanoseconds", double scaling = 1.0) const
   {
     if (benchmark_results.empty()) {
       return;
     }
 
-    unsigned percentile_width = get_percentile_width_time();
+    // Get width plus 2 characters for 1 decimal position.
+    unsigned percentile_width = get_percentile_width_time(scaling);
     unsigned descr_width      = get_description_width();
 
-    print_percentile_header(descr_width, percentile_width, "nanoseconds");
+    print_percentile_header(descr_width, percentile_width, units);
     for (const benchmark_result& result : benchmark_results) {
-      fmt::print(" {:{}}|{:{}}|{:{}}|{:{}}|{:{}}|{:{}}|{:{}}|\n",
+      fmt::print(" {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
                  result.description,
                  descr_width,
-                 result.measurements[static_cast<size_t>(nof_repetitions * 0.5)],
+                 result.measurements[static_cast<size_t>(nof_repetitions * 0.5)] * scaling,
                  percentile_width,
-                 result.measurements[static_cast<size_t>(nof_repetitions * 0.75)],
+                 result.measurements[static_cast<size_t>(nof_repetitions * 0.75)] * scaling,
                  percentile_width,
-                 result.measurements[static_cast<size_t>(nof_repetitions * 0.9)],
+                 result.measurements[static_cast<size_t>(nof_repetitions * 0.9)] * scaling,
                  percentile_width,
-                 result.measurements[static_cast<size_t>(nof_repetitions * 0.99)],
+                 result.measurements[static_cast<size_t>(nof_repetitions * 0.99)] * scaling,
                  percentile_width,
-                 result.measurements[static_cast<size_t>(nof_repetitions * 0.999)],
+                 result.measurements[static_cast<size_t>(nof_repetitions * 0.999)] * scaling,
                  percentile_width,
-                 result.measurements.back(),
+                 result.measurements.back() * scaling,
                  percentile_width);
     }
   }
 
   /// \brief Prints the throughput measurements in millions of elements per seconds.
   /// \param[in] units Units counted in the throughput (ie. bits, symbols, etc.).
-  void print_percentiles_throughput(const std::string& units) const
+  void print_percentiles_throughput(const std::string& units, double scaling = 1.0) const
   {
     if (benchmark_results.empty()) {
       fmt::print("No benchmark results for {}.\n", title);
       return;
     }
 
-    unsigned percentile_width = get_percentile_width_throughput();
+    unsigned percentile_width = get_percentile_width_throughput(scaling);
     unsigned descr_width      = get_description_width();
 
     print_percentile_header(descr_width, percentile_width, "mega" + units + " per second");
     for (const benchmark_result& result : benchmark_results) {
-      fmt::print(" {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
-                 result.description,
-                 descr_width,
-                 convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.5)], result.size),
-                 percentile_width,
-                 convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.75)], result.size),
-                 percentile_width,
-                 convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.9)], result.size),
-                 percentile_width,
-                 convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.99)], result.size),
-                 percentile_width,
-                 convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.999)], result.size),
-                 percentile_width,
-                 convert_to_throughput(result.measurements.back(), result.size),
-                 percentile_width);
+      fmt::print(
+          " {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
+          result.description,
+          descr_width,
+          convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.5)], result.size) * scaling,
+          percentile_width,
+          convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.75)], result.size) *
+              scaling,
+          percentile_width,
+          convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.9)], result.size) * scaling,
+          percentile_width,
+          convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.99)], result.size) *
+              scaling,
+          percentile_width,
+          convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.999)], result.size) *
+              scaling,
+          percentile_width,
+          convert_to_throughput(result.measurements.back(), result.size) * scaling,
+          percentile_width);
     }
   }
 

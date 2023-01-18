@@ -24,6 +24,40 @@ using namespace srsgnb;
 // A test case consists of a PUSCH PDU configuration and a Transport Block Size.
 using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;
 
+enum class benchmark_modes : unsigned { silent, latency, throughput_total, throughput_thread, all, invalid };
+
+const char* to_string(benchmark_modes mode)
+{
+  switch (mode) {
+    case benchmark_modes::silent:
+      return "silent";
+    case benchmark_modes::latency:
+      return "latency";
+    case benchmark_modes::throughput_total:
+      return "throughput_total";
+    case benchmark_modes::throughput_thread:
+      return "throughput_thread";
+    case benchmark_modes::all:
+      return "all";
+    case benchmark_modes::invalid:
+    default:
+      return "invalid";
+  }
+}
+
+benchmark_modes to_benchmark_mode(const char* string)
+{
+  for (unsigned mode_i = static_cast<unsigned>(benchmark_modes::silent);
+       mode_i != static_cast<unsigned>(benchmark_modes::invalid);
+       ++mode_i) {
+    benchmark_modes mode = static_cast<benchmark_modes>(mode_i);
+    if (strcmp(to_string(mode), string) == 0) {
+      return mode;
+    }
+  }
+  return benchmark_modes::invalid;
+}
+
 // Maximum number of threads given the CPU hardware.
 static const unsigned max_nof_threads = std::thread::hardware_concurrency();
 
@@ -35,7 +69,7 @@ static std::string                        selected_profile_name       = "default
 static std::string                        ldpc_decoder_type           = "auto";
 static std::string                        rate_dematcher_type         = "auto";
 static bool                               enable_evm                  = false;
-static bool                               silent                      = false;
+static benchmark_modes                    benchmark_mode              = benchmark_modes::throughput_total;
 static unsigned                           nof_rx_ports                = 1;
 static unsigned                           nof_tx_layers               = 1;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
@@ -141,9 +175,17 @@ static const std::vector<test_profile> profile_set = {
 
 static void usage(const char* prog)
 {
-  fmt::print("Usage: {} [-R repetitions] [-B Batch size per thread] [-T number of threads] [-D LDPC type] [-M rate "
+  fmt::print("Usage: {} [-m benchmark mode] [-R repetitions] [-B Batch size per thread] [-T number of threads] [-D "
+             "LDPC type] [-M rate "
              "dematcher type] [-P profile] [-s silent]\n",
              prog);
+  fmt::print("\t-m Benchmark mode. [Default {}]\n", to_string(benchmark_mode));
+  fmt::print("\t\t {:<20}It does not print any result.\n", to_string(benchmark_modes::silent));
+  fmt::print("\t\t {:<20}Prints the overall average execution time.\n", to_string(benchmark_modes::latency));
+  fmt::print("\t\t {:<20}Prints the total aggregated throughput.\n", to_string(benchmark_modes::throughput_total));
+  fmt::print("\t\t {:<20}Prints the average single thread throughput.\n",
+             to_string(benchmark_modes::throughput_thread));
+  fmt::print("\t\t {:<20}Prints all the previous modes.\n", to_string(benchmark_modes::all));
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-B Batch size [Default {}]\n", batch_size_per_thread);
   fmt::print("\t-T Number of threads [Default {}, max. {}]\n", nof_threads, max_nof_threads);
@@ -154,14 +196,13 @@ static void usage(const char* prog)
   for (const test_profile& profile : profile_set) {
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
-  fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");
 }
 
 static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "R:T:B:D:M:EP:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "R:T:B:D:M:EP:m:h")) != -1) {
     switch (opt) {
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -183,8 +224,13 @@ static int parse_args(int argc, char** argv)
       case 'P':
         selected_profile_name = std::string(optarg);
         break;
-      case 's':
-        silent = (!silent);
+      case 'm':
+        benchmark_mode = to_benchmark_mode(optarg);
+        if (benchmark_mode == benchmark_modes::invalid) {
+          fmt::print(stderr, "Invalid benchmark mode '{}'\n", optarg);
+          usage(argv[0]);
+          return -1;
+        }
         break;
       case 'h':
       default:
@@ -425,7 +471,7 @@ int main(int argc, char** argv)
   }
 
   // Inform of the benchmark configuration.
-  if (!silent) {
+  if (benchmark_mode != benchmark_modes::silent) {
     fmt::print("Launching benchmark for {} threads, {} times per thread, and {} repetitions. Using {} profile, {} LDPC "
                "decoder, and {} rate dematcher.\n",
                nof_threads,
@@ -544,7 +590,7 @@ int main(int argc, char** argv)
       // Wait for finish.
       {
         std::unique_lock<std::mutex> lock(mutex_finish_count);
-        while (finish_count != nof_threads * batch_size_per_thread) {
+        while (finish_count != (nof_threads * batch_size_per_thread)) {
           cvar_count.wait_until(lock, std::chrono::system_clock::now() + std::chrono::milliseconds(2));
         }
       }
@@ -557,9 +603,20 @@ int main(int argc, char** argv)
     }
   }
 
-  if (!silent) {
-    // Print results.
-    perf_meas.print_percentiles_throughput("bits");
+  // Print latency.
+  if ((benchmark_mode == benchmark_modes::latency) || (benchmark_mode == benchmark_modes::all)) {
+    perf_meas.print_percentiles_time("microseconds average per thread",
+                                     1e-3 / static_cast<double>(nof_threads * batch_size_per_thread));
+  }
+
+  // Print total aggregated throughput.
+  if ((benchmark_mode == benchmark_modes::throughput_total) || (benchmark_mode == benchmark_modes::all)) {
+    perf_meas.print_percentiles_throughput("bits for all threads");
+  }
+
+  // Print average throughput per thread.
+  if ((benchmark_mode == benchmark_modes::throughput_thread) || (benchmark_mode == benchmark_modes::all)) {
+    perf_meas.print_percentiles_throughput("bits per thread", 1.0 / static_cast<double>(nof_threads));
   }
 
   return 0;
