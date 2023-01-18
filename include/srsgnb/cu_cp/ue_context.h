@@ -23,11 +23,13 @@ namespace srs_cu_cp {
 
 /// Additional context of a SRB containing PDCP, i.e. SRB1 and SRB2.
 struct cu_srb_pdcp_context {
-  std::unique_ptr<pdcp_entity>                 pdcp_bearer;
-  std::unique_ptr<pdcp_tx_lower_notifier>      pdcp_tx_notifier;
-  std::unique_ptr<pdcp_rx_upper_data_notifier> rrc_rx_notifier;
-  std::unique_ptr<rrc_tx_security_notifier>    rrc_tx_sec_notifier;
-  std::unique_ptr<rrc_rx_security_notifier>    rrc_rx_sec_notifier;
+  std::unique_ptr<pdcp_entity>                    pdcp_bearer;
+  std::unique_ptr<pdcp_tx_lower_notifier>         pdcp_tx_notifier;
+  std::unique_ptr<pdcp_tx_upper_control_notifier> rrc_tx_control_notifier;
+  std::unique_ptr<pdcp_rx_upper_data_notifier>    rrc_rx_data_notifier;
+  std::unique_ptr<pdcp_rx_upper_control_notifier> rrc_rx_control_notifier;
+  std::unique_ptr<rrc_tx_security_notifier>       rrc_tx_sec_notifier;
+  std::unique_ptr<rrc_rx_security_notifier>       rrc_rx_sec_notifier;
 };
 
 /// Context for a SRB with adapters between DU processor, F1C, RRC and optionally PDCP.

@@ -240,10 +240,15 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     // create PDCP context for this SRB
     srb.pdcp_context.emplace();
 
-    // add adapter for PDCP to talk to F1C (Tx) and RRC (Rx)
+    // add adapter for PDCP to talk to F1C (Tx), RRC data (Rx) and RRC control (Tx/Rx)
     srb.pdcp_context->pdcp_tx_notifier =
         std::make_unique<pdcp_du_processor_adapter>(*f1c, ue_ctxt->ue_index, msg.srb_id);
-    srb.pdcp_context->rrc_rx_notifier = std::make_unique<pdcp_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_dcch_pdu_handler());
+    srb.pdcp_context->rrc_tx_control_notifier =
+        std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
+    srb.pdcp_context->rrc_rx_data_notifier =
+        std::make_unique<pdcp_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_dcch_pdu_handler());
+    srb.pdcp_context->rrc_rx_control_notifier =
+        std::make_unique<pdcp_rx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
 
     // prepare PDCP creation message
     pdcp_entity_creation_message srb_pdcp{};
@@ -255,9 +260,9 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb_pdcp.config.rx.rb_type  = pdcp_rb_type::srb;
     srb_pdcp.config.rx.rlc_mode = pdcp_rlc_mode::am;
     srb_pdcp.tx_lower           = srb.pdcp_context->pdcp_tx_notifier.get();
-    srb_pdcp.tx_upper_cn        = nullptr; // TODO: add CN handler
-    srb_pdcp.rx_upper_dn        = srb.pdcp_context->rrc_rx_notifier.get();
-    srb_pdcp.rx_upper_cn        = nullptr; // TODO: add CN handler
+    srb_pdcp.tx_upper_cn        = srb.pdcp_context->rrc_tx_control_notifier.get();
+    srb_pdcp.rx_upper_dn        = srb.pdcp_context->rrc_rx_data_notifier.get();
+    srb_pdcp.rx_upper_cn        = srb.pdcp_context->rrc_rx_control_notifier.get();
     srb_pdcp.timers             = &timer_db;
 
     // create PDCP entity

@@ -19,7 +19,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between PDCP and RRC in UL direction (Rx)
+/// Adapter between PDCP Rx data and RRC in UL direction (Rx)
 class pdcp_rrc_ue_adapter : public pdcp_rx_upper_data_notifier
 {
 public:
@@ -29,6 +29,33 @@ public:
 
 private:
   rrc_ul_dcch_pdu_handler& rrc_handler;
+};
+
+/// Adapter between PDCP Rx control and RRC in UL direction (Rx)
+class pdcp_rx_control_rrc_ue_adapter : public pdcp_rx_upper_control_notifier
+{
+public:
+  explicit pdcp_rx_control_rrc_ue_adapter()
+  {
+    // TODO: connect a RRC handler
+    srslog::fetch_basic_logger("PDCP-RRC")
+        .info("No RRC handler for PDCP Rx control events. All events will be ignored.");
+  }
+
+  void on_protocol_failure() override
+  {
+    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_protocol_failure() from PDCP Rx: No RRC handler.");
+  }
+
+  void on_integrity_failure() override
+  {
+    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_integrity_failure() from PDCP Rx: No RRC handler.");
+  }
+
+  void on_max_count_reached() override
+  {
+    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_max_count_reached() from PDCP Rx: No RRC handler.");
+  }
 };
 
 /// Adapter between PDCP and DU processor for DL PDUs
@@ -62,6 +89,28 @@ private:
   f1c_rrc_message_handler& f1c_handler;
   const ue_index_t         ue_index;
   const srb_id_t           srb_id;
+};
+
+/// Adapter between PDCP Tx control and RRC
+class pdcp_tx_control_rrc_ue_adapter : public pdcp_tx_upper_control_notifier
+{
+public:
+  explicit pdcp_tx_control_rrc_ue_adapter()
+  {
+    // TODO: connect a RRC handler
+    srslog::fetch_basic_logger("PDCP-RRC")
+        .info("No RRC handler for PDCP Tx control events. All events will be ignored.");
+  }
+
+  void on_protocol_failure() override
+  {
+    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_protocol_failure() from PDCP Tx: No RRC handler.");
+  }
+
+  void on_max_count_reached() override
+  {
+    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_max_count_reached() from PDCP Tx: No RRC handler.");
+  }
 };
 
 } // namespace srs_cu_cp
