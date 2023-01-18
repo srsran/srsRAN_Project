@@ -112,7 +112,7 @@ private:
   /// \param[in] units            Units displayed in the header.
   void print_percentile_header(unsigned descr_width, unsigned percentile_width, const std::string& units) const
   {
-    fmt::print("\"{}\" performance for {} repetitions. All values in {}.\n"
+    fmt::print("\"{}\" performance for {} repetitions. All values are in {}.\n"
                " {:<{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|\n",
                title,
                nof_repetitions,

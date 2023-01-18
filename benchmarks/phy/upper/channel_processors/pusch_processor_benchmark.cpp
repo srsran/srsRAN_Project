@@ -426,7 +426,7 @@ int main(int argc, char** argv)
 
   // Inform of the benchmark configuration.
   if (!silent) {
-    fmt::print("Launching benchmark for {} threads, {} times per thread and {} repetitions. Using {} profile, {} LDPC "
+    fmt::print("Launching benchmark for {} threads, {} times per thread, and {} repetitions. Using {} profile, {} LDPC "
                "decoder, and {} rate dematcher.\n",
                nof_threads,
                batch_size_per_thread,
