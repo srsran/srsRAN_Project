@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/e2/common/e2_factory.h"
+#include "srsgnb/e2/e2_factory.h"
 #include "e2_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.

@@ -10,7 +10,7 @@
 
 #include "e2_impl.h"
 #include "srsgnb/asn1/e2ap/e2ap.h"
-#include "srsgnb/e2/common/e2.h"
+#include "srsgnb/e2/e2.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/support/timers.h"
 #include <memory>

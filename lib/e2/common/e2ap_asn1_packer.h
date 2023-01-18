@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/e2/common/e2.h"
+#include "srsgnb/e2/e2.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/srslog/srslog.h"
 
