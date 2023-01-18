@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/detail/operator.h"
+#include "srsgnb/adt/detail/operations.h"
 #include "srsgnb/adt/detail/type_storage.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/adt/span.h"
@@ -173,9 +173,9 @@ public:
   }
 };
 
-/// Base common class for definition of circular buffer data structures with the following features:
+/// Base common class for definition of ring buffer data structures with the following features:
 /// - no allocations while pushing/popping new elements. Just an internal index update
-/// - it provides helper methods to add/remove objects
+/// - it provides an api to push/pop elements like a queue
 /// - it provides an iterator interface to iterate over added elements in the buffer
 /// - not thread-safe.
 /// \tparam Container underlying container type used as buffer (e.g. std::array<T, N> or std::vector<T>).
@@ -506,12 +506,12 @@ protected:
 
 } // namespace detail
 
-/// Ring buffer with data storage via a std::vector<T>.
+/// Ring buffer with internal data storage via a std::vector<T>.
 /// - size can be defined at construction or via set_size.
 /// - not thread-safe.
 /// \tparam T value type stored by buffer
 /// \tparam RoundUpSizeToPowerOf2 Whether the ring buffer size gets round up to the next power of 2. When set to true,
-/// the compiler is able to avoid the % operation and use bitwise and instead.
+/// the compiler is able to avoid the % operation and use instead the "bitwise-and" operation.
 template <typename T, bool RoundUpSizeToPowerOf2 = true>
 using ring_buffer = detail::ring_buffer_impl<T, std::vector<T>, RoundUpSizeToPowerOf2>;
 

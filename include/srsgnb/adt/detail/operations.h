@@ -5,8 +5,8 @@ namespace srsgnb {
 
 namespace detail {
 
-// Do nothing operator
-struct noop_operator {
+// Do nothing operation functor.
+struct noop_operation {
   template <typename T>
   void operator()(T&& t) const
   {

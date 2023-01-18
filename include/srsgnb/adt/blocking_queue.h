@@ -21,25 +21,24 @@ namespace srsgnb {
 namespace detail {
 
 /// \brief Base common class for definition of blocking queue data structures with the following features:
-/// - it stores pushed/popped samples in an internal circular buffer
+/// - it stores pushed/popped samples in an internal ring buffer
 /// - provides blocking and non-blocking push/pop APIs
 /// - thread-safe
-/// \tparam CircBuffer underlying circular buffer data type (e.g. static_circular_buffer<T, N> or
-/// dyn_circular_buffer<T>)
+/// \tparam RingBuffer underlying ring buffer data type (e.g. static_ring_buffer<T, N> or ring_buffer<T>)
 /// \tparam PushingFunc function void(const T&) called while pushing an element to the queue
 /// \tparam PoppingFunc function void(const T&) called while popping an element from the queue
-template <typename CircBuffer, typename PushingFunc, typename PoppingFunc>
+template <typename RingBuffer, typename PushingFunc, typename PoppingFunc>
 class base_blocking_queue
 {
-  using T = typename CircBuffer::value_type;
+  using T = typename RingBuffer::value_type;
 
 public:
   /// \brief Creates a blocking_queue.
-  /// \param push_func_ Callable to be called on every inserted element.
-  /// \param pop_func_ Callable to be called on every popped element.
+  /// \param on_push_func Callable to be called on every inserted element.
+  /// \param on_pop_func Callable to be called on every popped element.
   template <typename... Args>
-  base_blocking_queue(PushingFunc push_func_, PoppingFunc pop_func_, Args&&... args) :
-    push_func(push_func_), pop_func(pop_func_), circ_buffer(std::forward<Args>(args)...)
+  base_blocking_queue(PushingFunc on_push_func, PoppingFunc on_pop_func, Args&&... args) :
+    push_func(on_push_func), pop_func(on_pop_func), ring_buf(std::forward<Args>(args)...)
   {
   }
   base_blocking_queue(const base_blocking_queue&)            = delete;
@@ -65,7 +64,7 @@ public:
       }
 
       // Empty queue
-      circ_buffer.clear();
+      ring_buf.clear();
     }
   }
 
@@ -181,28 +180,28 @@ public:
   size_t size() const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    return circ_buffer.size();
+    return ring_buf.size();
   }
 
   /// \brief Checks whether the queue is empty.
   bool empty() const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    return circ_buffer.empty();
+    return ring_buf.empty();
   }
 
   /// \brief Checks whether the queue is full.
   bool full() const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    return circ_buffer.full();
+    return ring_buf.full();
   }
 
   /// \brief Checks the maximum number of elements of the queue.
   size_t max_size() const
   {
     std::lock_guard<std::mutex> lock(mutex);
-    return circ_buffer.max_size();
+    return ring_buf.max_size();
   }
 
   /// \brief Checks whether the queue is inactive.
@@ -217,8 +216,8 @@ public:
   bool try_call_on_front(const F& f)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    if (not circ_buffer.empty()) {
-      f(circ_buffer.top());
+    if (not ring_buf.empty()) {
+      f(ring_buf.top());
       return true;
     }
     return false;
@@ -229,7 +228,7 @@ public:
   bool apply_first(const F& func)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    return circ_buffer.apply_first(func);
+    return ring_buf.apply_first(func);
   }
 
   PushingFunc push_func;
@@ -240,7 +239,7 @@ protected:
   uint8_t                 nof_waiting = 0;
   mutable std::mutex      mutex;
   std::condition_variable cvar_empty, cvar_full;
-  CircBuffer              circ_buffer;
+  RingBuffer              ring_buf;
 
   ~base_blocking_queue() { stop(); }
 
@@ -249,12 +248,12 @@ protected:
     if (not active) {
       return false;
     }
-    if (circ_buffer.full()) {
+    if (ring_buf.full()) {
       if (not block_mode) {
         return false;
       }
       nof_waiting++;
-      while (circ_buffer.full() and active) {
+      while (ring_buf.full() and active) {
         cvar_full.wait(lock);
       }
       nof_waiting--;
@@ -270,7 +269,7 @@ protected:
     std::unique_lock<std::mutex> lock(mutex);
     if (push_is_possible(lock, block_mode)) {
       push_func(t);
-      circ_buffer.push(t);
+      ring_buf.push(t);
       // Note: I have read diverging opinions about notifying before or after the unlock. In this case,
       // it seems that TSAN complains if notify comes after.
       cvar_empty.notify_one();
@@ -284,7 +283,7 @@ protected:
     std::unique_lock<std::mutex> lock(mutex);
     if (push_is_possible(lock, block_mode)) {
       push_func(t);
-      circ_buffer.push(std::move(t));
+      ring_buf.push(std::move(t));
       cvar_empty.notify_one();
       lock.unlock();
       return {};
@@ -300,7 +299,7 @@ protected:
       if (not push_is_possible(lock, block_mode)) {
         return count;
       }
-      unsigned n = circ_buffer.try_push(it, e);
+      unsigned n = ring_buf.try_push(it, e);
       if (n == 0) {
         break;
       }
@@ -321,18 +320,18 @@ protected:
     if (not active) {
       return false;
     }
-    if (circ_buffer.empty()) {
+    if (ring_buf.empty()) {
       if (not block) {
         return false;
       }
       nof_waiting++;
       if (until == nullptr) {
-        cvar_empty.wait(lock, [this]() { return not circ_buffer.empty() or not active; });
+        cvar_empty.wait(lock, [this]() { return not ring_buf.empty() or not active; });
       } else {
-        cvar_empty.wait_until(lock, *until, [this]() { return not circ_buffer.empty() or not active; });
+        cvar_empty.wait_until(lock, *until, [this]() { return not ring_buf.empty() or not active; });
       }
       nof_waiting--;
-      if (circ_buffer.empty()) {
+      if (ring_buf.empty()) {
         // either queue got deactivated or there was a timeout
         return false;
       }
@@ -343,9 +342,9 @@ protected:
   {
     std::unique_lock<std::mutex> lock(mutex);
     if (pop_is_possible(lock, block, until)) {
-      obj = std::move(circ_buffer.top());
+      obj = std::move(ring_buf.top());
       pop_func(obj);
-      circ_buffer.pop();
+      ring_buf.pop();
       cvar_full.notify_one();
       lock.unlock();
       return true;
@@ -361,7 +360,7 @@ protected:
       if (not pop_is_possible(lock, block, until)) {
         break;
       }
-      unsigned n = circ_buffer.pop_into(it, e);
+      unsigned n = ring_buf.pop_into(it, e);
       if (n == 0) {
         break;
       }
@@ -387,8 +386,8 @@ protected:
 /// \tparam PushingCallback function void(const T&) called while pushing an element to the queue
 /// \tparam PoppingCallback function void(const T&) called while popping an element from the queue
 template <typename T,
-          typename PushingCallback = detail::noop_operator,
-          typename PoppingCallback = detail::noop_operator>
+          typename PushingCallback = detail::noop_operation,
+          typename PoppingCallback = detail::noop_operation>
 class blocking_queue : public detail::base_blocking_queue<ring_buffer<T, true>, PushingCallback, PoppingCallback>
 {
   using super_type = detail::base_blocking_queue<ring_buffer<T, true>, PushingCallback, PoppingCallback>;
@@ -411,8 +410,8 @@ public:
 /// \tparam PoppingCallback function void(const T&) called while popping an element from the queue
 template <typename T,
           size_t N,
-          typename PushingCallback = detail::noop_operator,
-          typename PoppingCallback = detail::noop_operator>
+          typename PushingCallback = detail::noop_operation,
+          typename PoppingCallback = detail::noop_operation>
 class static_blocking_queue
   : public detail::base_blocking_queue<static_ring_buffer<T, N>, PushingCallback, PoppingCallback>
 {
