@@ -28,11 +28,15 @@ struct type_storage {
   /// Destroy object stored in embedded buffer. UB if object was not previously created
   void destroy() noexcept
   {
+#ifndef __clang__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
     // Note: gcc12.2 gives a likely false alarm.
     get().~T();
+#ifndef __clang__
 #pragma GCC diagnostic pop
+#endif
   }
 
   /// Get created object handle. UB if object is not created
