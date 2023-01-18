@@ -48,11 +48,15 @@ public:
   virtual e1_bearer_context_manager& get_e1_bearer_context_manager() = 0;
 };
 
-/// Methods used by CU-UP to notify about CU-UP specific events.
+/// Methods used by CU-UP processor to notify about CU-UP specific events.
 class cu_up_processor_cu_up_management_notifier
 {
 public:
   virtual ~cu_up_processor_cu_up_management_notifier() = default;
+
+  /// \brief Notifies the CU-CP about a new CU-UP connection.
+  virtual void on_new_cu_up_connection() = 0;
+
   /// \brief Notifies about a failed CU-CP E1 Setup procedure.
   /// The corresponding CU-UP processor will be removed now.
   /// \param[in] cu_up_index The index of the CU-UP processor to delete.

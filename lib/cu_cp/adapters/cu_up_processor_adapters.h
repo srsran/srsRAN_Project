@@ -49,16 +49,22 @@ private:
 class cu_up_processor_cu_cp_adapter : public cu_up_processor_cu_up_management_notifier
 {
 public:
-  void connect_cu_cp(cu_cp_cu_up_handler& cu_cp_mng_) { cu_up_handler = &cu_cp_mng_; }
+  void connect_cu_cp(cu_cp_cu_up_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
+
+  void on_new_cu_up_connection() override
+  {
+    srsgnb_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
+    cu_cp_handler->handle_new_cu_up_connection();
+  }
 
   void on_cu_up_remove_request_received(const cu_up_index_t cu_up_index) override
   {
-    srsgnb_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
-    cu_up_handler->handle_cu_up_remove_request(cu_up_index);
+    srsgnb_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
+    cu_cp_handler->handle_cu_up_remove_request(cu_up_index);
   }
 
 private:
-  cu_cp_cu_up_handler* cu_up_handler = nullptr;
+  cu_cp_cu_up_handler* cu_cp_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

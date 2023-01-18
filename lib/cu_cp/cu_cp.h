@@ -68,7 +68,7 @@ public:
   void handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override;
 
   // CU-UP connection notifier
-  void on_new_cu_up_connection() override;
+  void handle_new_cu_up_connection() override;
 
   // CU-UP handler
   void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) override;

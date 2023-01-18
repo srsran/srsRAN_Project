@@ -140,7 +140,7 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
                                 &rrc_ue->get_rrc_ue_init_security_context_handler());
 }
 
-void cu_cp::on_new_cu_up_connection()
+void cu_cp::handle_new_cu_up_connection()
 {
   cu_up_index_t cu_up_index = add_cu_up();
   logger.info("Added CU-UP {}", cu_up_index);

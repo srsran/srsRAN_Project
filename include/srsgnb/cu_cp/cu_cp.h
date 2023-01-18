@@ -96,21 +96,14 @@ public:
   virtual f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) = 0;
 };
 
-/// Interface to notify about CU-UP connections to the CU-CP
-class cu_cp_cu_up_connection_notifier
-{
-public:
-  virtual ~cu_cp_cu_up_connection_notifier() = default;
-
-  /// \brief Notifies the CU-CP about a new CU-UP connection.
-  virtual void on_new_cu_up_connection() = 0;
-};
-
-/// Interface used to handle CU-UP specific E1 procedure outcomes (e.g. E1 removal request)
+/// Interface used to handle CU-UP specific procedures
 class cu_cp_cu_up_handler
 {
 public:
   virtual ~cu_cp_cu_up_handler() = default;
+
+  /// \brief Handles a new CU-UP connection.
+  virtual void handle_new_cu_up_connection() = 0;
 
   /// \brief Handles a remove request. The corresponding CU-UP processor object will be removed.
   /// \param[in] cu_up_index The index of the CU-UP processor object to delete.
@@ -153,7 +146,6 @@ public:
 class cu_cp_interface : public cu_cp_du_connection_notifier,
                         public cu_cp_du_handler,
                         public cu_cp_du_interface,
-                        public cu_cp_cu_up_connection_notifier,
                         public cu_cp_cu_up_handler,
                         public cu_cp_cu_up_interface,
                         public cu_cp_ng_interface,

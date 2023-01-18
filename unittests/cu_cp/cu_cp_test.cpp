@@ -124,7 +124,7 @@ TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
 TEST_F(cu_cp_test, when_new_cu_up_connection_then_cu_up_added)
 {
   // Connect CU-UP
-  cu_cp_obj->on_new_cu_up_connection();
+  cu_cp_obj->handle_new_cu_up_connection();
 
   // check that CU-UP has been added
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
@@ -134,7 +134,7 @@ TEST_F(cu_cp_test, when_new_cu_up_connection_then_cu_up_added)
 TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
 {
   // Connect CU-UP
-  cu_cp_obj->on_new_cu_up_connection();
+  cu_cp_obj->handle_new_cu_up_connection();
 
   // Check that CU-UP has been added
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 1U);
@@ -151,13 +151,13 @@ TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
 TEST_F(cu_cp_test, when_max_nof_cu_ups_connected_then_reject_new_connection)
 {
   for (int it = MIN_CU_UP_INDEX; it < MAX_NOF_CU_UPS; it++) {
-    cu_cp_obj->on_new_cu_up_connection();
+    cu_cp_obj->handle_new_cu_up_connection();
   }
 
   // Check that MAX_NOF_CU_UPS are connected
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), MAX_NOF_CU_UPS);
 
-  cu_cp_obj->on_new_cu_up_connection();
+  cu_cp_obj->handle_new_cu_up_connection();
 
   // Check that MAX_NOF_CU_UPS are connected
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), MAX_NOF_CU_UPS);
