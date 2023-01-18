@@ -130,7 +130,7 @@ public:
   {
     cu_cp   = cu_cp_;
     handler = handler_;
-    cu_cp->on_new_du_connection();
+    cu_cp->handle_new_du_connection();
   };
   void on_new_message(const f1c_message& msg) override
   {

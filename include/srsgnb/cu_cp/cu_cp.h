@@ -45,21 +45,14 @@ public:
   virtual async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) = 0;
 };
 
-/// Interface to notify about DU connections to the CU-CP
-class cu_cp_du_connection_notifier
-{
-public:
-  virtual ~cu_cp_du_connection_notifier() = default;
-
-  /// \brief Notifies the CU-CP about a new DU connection.
-  virtual void on_new_du_connection() = 0;
-};
-
-/// Interface used to handle DU specific procedure outcomes
+/// Interface used to handle DU specific procedures
 class cu_cp_du_handler
 {
 public:
   virtual ~cu_cp_du_handler() = default;
+
+  /// \brief Handles a new DU connection.
+  virtual void handle_new_du_connection() = 0;
 
   /// \brief Handles a remove request. The corresponding DU processor object will be removed.
   /// \param[in] du_index The index of the DU processor object to delete.
@@ -143,8 +136,7 @@ public:
   virtual bool amf_is_connected() = 0;
 };
 
-class cu_cp_interface : public cu_cp_du_connection_notifier,
-                        public cu_cp_du_handler,
+class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_du_interface,
                         public cu_cp_cu_up_handler,
                         public cu_cp_cu_up_interface,

@@ -348,7 +348,7 @@ int main(int argc, char** argv)
 
   // create CU-CP.
   std::unique_ptr<srsgnb::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cp_cfg));
-  cu_cp_obj->on_new_du_connection();        // trigger DU addition
+  cu_cp_obj->handle_new_du_connection();    // trigger DU addition
   cu_cp_obj->handle_new_cu_up_connection(); // trigger CU-UP addition
 
   // Connect NGAP adpter to CU-CP to pass NGC messages.

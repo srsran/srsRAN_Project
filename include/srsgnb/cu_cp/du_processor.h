@@ -163,11 +163,14 @@ public:
   virtual timer_manager& get_timer_manager()                                                = 0;
 };
 
-/// Methods used by F1C to notify about DU specific events.
+/// Methods used by DU processor to notify about DU specific events.
 class du_processor_cu_cp_notifier
 {
 public:
   virtual ~du_processor_cu_cp_notifier() = default;
+
+  /// \brief Notifies the CU-CP about a new DU connection.
+  virtual void on_new_du_connection() = 0;
 
   /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] du_index The index of the DU the UE is connected to.

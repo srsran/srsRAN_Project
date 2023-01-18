@@ -60,17 +60,13 @@ public:
 
   bool amf_is_connected() override { return amf_connected; };
 
-  // DU connection notifier
-  void on_new_du_connection() override;
-
   // DU handler
+  void handle_new_du_connection() override;
   void handle_du_remove_request(const du_index_t du_index) override;
   void handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override;
 
-  // CU-UP connection notifier
-  void handle_new_cu_up_connection() override;
-
   // CU-UP handler
+  void handle_new_cu_up_connection() override;
   void handle_cu_up_remove_request(const cu_up_index_t cu_up_index) override;
 
   // NGAP connection handler
@@ -145,14 +141,12 @@ private:
   // DU Processor to E1 adapter
   du_processor_e1ap_adapter du_processor_e1ap_notifier;
 
-  // CU-UP processor to CU-CP adapter
+  // CU-UP processor to CU-CP adapters
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
+  cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;
 
   // F1C to CU-CP adapter
   f1c_cu_cp_adapter f1c_ev_notifier;
-
-  // CU-UP processor to CU-CP adapter
-  cu_up_processor_cu_cp_adapter cu_up_processor_ev_notifier;
 
   // NGC to CU-CP adapters
   ngc_to_cu_cp_task_scheduler ngc_task_sched;
