@@ -198,9 +198,9 @@ void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<c
   }
 }
 
-void ue_event_manager::handle_harq_ind(ue_cell&                                   ue_cc,
-                                       slot_point                                 uci_sl,
-                                       bounded_bitset<MAX_HARQS_PER_UCI_ON_PUSCH> harq_bits)
+void ue_event_manager::handle_harq_ind(ue_cell&                                          ue_cc,
+                                       slot_point                                        uci_sl,
+                                       const bounded_bitset<MAX_HARQS_PER_UCI_ON_PUSCH>& harq_bits)
 {
   for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
     int tbs = -1;

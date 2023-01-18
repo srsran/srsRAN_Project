@@ -912,16 +912,14 @@ struct crc_indication_message : public base_message {
   static_vector<crc_ind_pdu, MAX_NUM_CRCS_PER_SLOT> pdus;
 };
 
-enum class uci_detection_status : uint8_t { crc_pass = 1, crc_failure, dtx, no_dtx, dtx_not_checked };
-
 /// UCI CSI part1 information.
 struct uci_csi_part1 {
   /// Maximum number of supported CSI part 1 bytes in this message.
   static constexpr unsigned MAX_CSI_PART1_LEN = 214;
 
-  uci_detection_status                      detection_status;
-  uint16_t                                  bit_length;
-  static_vector<uint8_t, MAX_CSI_PART1_LEN> payload;
+  uci_pusch_or_pucch_f2_3_4_detection_status detection_status;
+  uint16_t                                   bit_length;
+  static_vector<uint8_t, MAX_CSI_PART1_LEN>  payload;
 };
 
 /// UCI CSI part2 information.
@@ -929,9 +927,9 @@ struct uci_csi_part2 {
   /// Maximum number of supported CSI part 2 bytes in this message.
   static constexpr unsigned MAX_CSI_PART2_LEN = 214;
 
-  uci_detection_status                      detection_status;
-  uint16_t                                  bit_length;
-  static_vector<uint8_t, MAX_CSI_PART2_LEN> payload;
+  uci_pusch_or_pucch_f2_3_4_detection_status detection_status;
+  uint16_t                                   bit_length;
+  static_vector<uint8_t, MAX_CSI_PART2_LEN>  payload;
 };
 
 /// UCI HARQ PDU information.
@@ -939,9 +937,9 @@ struct uci_harq_pdu {
   /// Maximum number of supported bytes in this message.
   static constexpr unsigned MAX_UCI_HARQ_LEN = 214;
 
-  uci_detection_status                     detection_status;
-  uint16_t                                 bit_length;
-  static_vector<uint8_t, MAX_UCI_HARQ_LEN> payload;
+  uci_pusch_or_pucch_f2_3_4_detection_status detection_status;
+  uint16_t                                   bit_length;
+  static_vector<uint8_t, MAX_UCI_HARQ_LEN>   payload;
 };
 
 /// PUSCH UCI PDU information.
@@ -1015,7 +1013,7 @@ struct uci_payload_pusch_pucch {
   /// Maximum number of supported bytes in this message.
   static constexpr unsigned MAX_UCI_PAYLOAD_LEN = 214;
 
-  uci_detection_status                        detection_status;
+  uci_pusch_or_pucch_f2_3_4_detection_status  detection_status;
   uint16_t                                    expected_uci_payload_size;
   static_vector<uint8_t, MAX_UCI_PAYLOAD_LEN> payload;
 };

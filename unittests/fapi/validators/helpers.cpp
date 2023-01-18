@@ -488,10 +488,10 @@ static unsigned generate_rssi_or_rsrp()
   return (value <= 1280U) ? value : 65535;
 }
 
-static uci_detection_status generate_detection_status()
+static uci_pusch_or_pucch_f2_3_4_detection_status generate_detection_status()
 {
   std::uniform_int_distribution<unsigned> dist(1, 5);
-  return static_cast<uci_detection_status>(dist(gen));
+  return static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(dist(gen));
 }
 
 static unsigned generate_bit_length()
@@ -506,8 +506,9 @@ static uci_harq_pdu generate_harq_pdu()
 
   pdu.detection_status = generate_detection_status();
   pdu.bit_length       = generate_bit_length();
-  if (pdu.detection_status == uci_detection_status::crc_pass || pdu.detection_status == uci_detection_status::no_dtx ||
-      pdu.detection_status == uci_detection_status::dtx_not_checked) {
+  if (pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass ||
+      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::no_dtx ||
+      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx_not_checked) {
     pdu.payload.resize(std::ceil(static_cast<float>(pdu.bit_length) / 8.F));
   }
 
@@ -520,8 +521,9 @@ static uci_csi_part1 generate_csi_part1_pdu()
 
   pdu.detection_status = generate_detection_status();
   pdu.bit_length       = generate_bit_length();
-  if (pdu.detection_status == uci_detection_status::crc_pass || pdu.detection_status == uci_detection_status::no_dtx ||
-      pdu.detection_status == uci_detection_status::dtx_not_checked) {
+  if (pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass ||
+      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::no_dtx ||
+      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx_not_checked) {
     pdu.payload.resize(std::ceil(static_cast<float>(pdu.bit_length) / 8.F));
   }
 
@@ -534,8 +536,9 @@ static uci_csi_part2 generate_csi_part2_pdu()
 
   pdu.detection_status = generate_detection_status();
   pdu.bit_length       = generate_bit_length();
-  if (pdu.detection_status == uci_detection_status::crc_pass || pdu.detection_status == uci_detection_status::no_dtx ||
-      pdu.detection_status == uci_detection_status::dtx_not_checked) {
+  if (pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass ||
+      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::no_dtx ||
+      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx_not_checked) {
     pdu.payload.resize(std::ceil(static_cast<float>(pdu.bit_length) / 8.F));
   }
 
@@ -632,9 +635,9 @@ static uci_payload_pusch_pucch generate_uci_payload()
 
   payload.detection_status          = generate_detection_status();
   payload.expected_uci_payload_size = generate_bit_length();
-  if (payload.detection_status == uci_detection_status::crc_pass ||
-      payload.detection_status == uci_detection_status::no_dtx ||
-      payload.detection_status == uci_detection_status::dtx_not_checked) {
+  if (payload.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass ||
+      payload.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::no_dtx ||
+      payload.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx_not_checked) {
     payload.payload.resize(std::ceil(static_cast<float>(payload.expected_uci_payload_size) / 8.F));
   }
 

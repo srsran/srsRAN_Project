@@ -17,8 +17,6 @@ using namespace srsgnb;
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 constexpr size_t MAX_K0_DELAY = 32;
 
-static constexpr unsigned nof_bits_per_byte = 8U;
-
 mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg_req_,
                                        mac_scheduler&                   sched_,
                                        mac_dl_ue_manager&               ue_mng_,
@@ -104,17 +102,8 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       case mac_uci_pdu::pdu_type::pusch: {
         const auto&                            pusch = msg.ucis[i].pusch;
         uci_indication::uci_pdu::uci_pusch_pdu pdu{};
-        pdu.harqs.resize(0);
-        if (pusch.harq_info.value().harq_status == uci_pusch_detection_status::crc_pass) {
-          // Lowest order information bit [position 0] is mapped to the most significant bit.
-          for (int j = static_cast<int>(std::ceil(pusch.harq_info.value().payload_bits / nof_bits_per_byte)) - 1;
-               j >= 0;
-               --j) {
-            for (int k = nof_bits_per_byte - 1; k >= 0; --k) {
-              // FirstBitIsLeftmost is false.
-              pdu.harqs.push_back(((pusch.harq_info.value().payload[j] >> k) & 1U) != 0U);
-            }
-          }
+        if (pusch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          pdu.harqs = pusch.harq_info->payload;
         }
         ind.ucis[i].pdu = pdu;
       } break;

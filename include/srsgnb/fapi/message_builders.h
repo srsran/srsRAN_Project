@@ -1350,8 +1350,9 @@ public:
   /// \brief Sets the HARQ PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table HARQ PDU for Format 2, Format 3 or
   /// Format 4 or for PUSCH.
-  uci_pusch_pdu_builder&
-  set_harq_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  uci_pusch_pdu_builder& set_harq_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
+                                             uint16_t                                   bit_length,
+                                             span<const uint8_t>                        payload)
   {
     pdu.pdu_bitmap.set(uci_pusch_pdu::HARQ_BIT);
 
@@ -1366,8 +1367,9 @@ public:
 
   /// \brief Sets the CSI part 1 PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part1 PDU.
-  uci_pusch_pdu_builder&
-  set_csi_part1_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  uci_pusch_pdu_builder& set_csi_part1_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
+                                                  uint16_t                                   bit_length,
+                                                  span<const uint8_t>                        payload)
   {
     pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART1_BIT);
 
@@ -1381,8 +1383,9 @@ public:
 
   /// \brief Sets the CSI part 2 PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part2 PDU.
-  uci_pusch_pdu_builder&
-  set_csi_part2_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  uci_pusch_pdu_builder& set_csi_part2_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
+                                                  uint16_t                                   bit_length,
+                                                  span<const uint8_t>                        payload)
   {
     pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART2_BIT);
 
@@ -1621,8 +1624,9 @@ public:
   /// \brief Sets the HARQ PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format 3 or
   /// Format 4 PDU.
-  uci_pucch_pdu_format_2_3_4_builder&
-  set_harq_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  uci_pucch_pdu_format_2_3_4_builder& set_harq_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
+                                                          uint16_t                                   bit_length,
+                                                          span<const uint8_t>                        payload)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::HARQ_BIT);
 
@@ -1637,8 +1641,9 @@ public:
 
   /// \brief Sets the CSI Part 1 PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part 1 PDU.
-  uci_pucch_pdu_format_2_3_4_builder&
-  set_csi_part1_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  uci_pucch_pdu_format_2_3_4_builder& set_csi_part1_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
+                                                               uint16_t                                   bit_length,
+                                                               span<const uint8_t>                        payload)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
 
@@ -1652,8 +1657,9 @@ public:
 
   /// \brief Sets the CSI Part 2 PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part 2 PDU.
-  uci_pucch_pdu_format_2_3_4_builder&
-  set_csi_part2_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  uci_pucch_pdu_format_2_3_4_builder& set_csi_part2_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
+                                                               uint16_t                                   bit_length,
+                                                               span<const uint8_t>                        payload)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
 
@@ -1668,8 +1674,9 @@ public:
   /// \brief Sets the UCI Part 1 Payload parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table UCI Payload for PUSCH or PUCCH
   /// transport.
-  uci_pucch_pdu_format_2_3_4_builder&
-  set_uci_part1_payload(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  uci_pucch_pdu_format_2_3_4_builder& set_uci_part1_payload(uci_pusch_or_pucch_f2_3_4_detection_status detection,
+                                                            uint16_t                                   bit_length,
+                                                            span<const uint8_t>                        payload)
   {
     srsgnb_assert(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT],
                   "Expected the UCI Part 1 payload to be enabled");
@@ -1685,8 +1692,9 @@ public:
   /// \brief Sets the UCI Part 2 Payload parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table UCI Payload for PUSCH or PUCCH
   /// transport.
-  uci_pucch_pdu_format_2_3_4_builder&
-  set_uci_part2_payload(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  uci_pucch_pdu_format_2_3_4_builder& set_uci_part2_payload(uci_pusch_or_pucch_f2_3_4_detection_status detection,
+                                                            uint16_t                                   bit_length,
+                                                            span<const uint8_t>                        payload)
   {
     srsgnb_assert(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT],
                   "Expected the UCI Part 2 payload to be enabled");

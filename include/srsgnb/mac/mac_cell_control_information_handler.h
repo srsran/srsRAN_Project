@@ -47,32 +47,28 @@ struct mac_uci_pdu {
   struct pusch_type {
     struct harq_information {
       /// HARQ Detection Status values for UCI PUSCH.
-      using harq_detection_status = uci_pusch_detection_status;
+      using harq_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
 
-      /// Maximum number of supported bytes in this message.
-      static constexpr unsigned MAX_UCI_HARQ_LEN = 214;
+      /// Maximum number of HARQs per UCI.
+      static constexpr unsigned MAX_HARQS_PER_UCI = 1706;
 
       /// Indicates CRC result on UCI.
       harq_detection_status harq_status;
-      /// Length of HARQ payload in bits. Values {1,...,1706}.
-      uint16_t payload_bits;
       /// Contents of HARQ, excluding any CRC.
-      static_vector<uint8_t, MAX_UCI_HARQ_LEN> payload;
+      bounded_bitset<MAX_HARQS_PER_UCI> payload;
     };
 
     struct csi_information {
       /// CSI Part1/CSI Part2 Detection Status values for UCI PUSCH.
-      using csi_part1_or_part2_detection_status = uci_pusch_detection_status;
+      using csi_part1_or_part2_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
 
-      /// Maximum number of supported bytes in this message.
-      static constexpr unsigned MAX_CSI_PART1_OR_PART2_LEN = 214;
+      /// Maximum number of CSI Part1(s) or CSI Part2(s) per UCI.
+      static constexpr unsigned MAX_CSI_PART1_OR_PART2_PER_UCI = 1706;
 
       /// Indicates detection outcome on UCI/CSI.
       csi_part1_or_part2_detection_status csi_status;
-      /// Length of CSI Part1/CSI Part2 payload in bits. Values {1,...,1706}.
-      uint16_t payload_bits;
       /// Contents of UCI/CSI, excluding any CRC.
-      static_vector<uint8_t, MAX_CSI_PART1_OR_PART2_LEN> payload;
+      bounded_bitset<MAX_CSI_PART1_OR_PART2_PER_UCI> payload;
     };
 
     /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBFs.

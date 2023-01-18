@@ -14,6 +14,14 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
+static constexpr unsigned NOF_BITS_PER_BYTE = 8U;
+
+/// Maximum length of payload in bits of the PDU carried by UCI PUSCH PDU. As per SCF-222 v4.0 section 3.4.9.1.
+constexpr size_t MAX_PAYLOAD_BITS_PER_UCI_ON_PUSCH = 1706;
+
+/// Maximum length of payload in bytes of the PDU carried by UCI PUSCH PDU. As per SCF-222 v4.0 section 3.4.9.1.
+constexpr size_t MAX_PAYLOAD_BYTES_PER_UCI_ON_PUSCH = 214;
+
 namespace {
 
 class mac_cell_rach_handler_dummy : public mac_cell_rach_handler
@@ -113,28 +121,47 @@ static float to_uci_ul_rsrp(unsigned rsrp)
   return static_cast<float>(rsrp - 1400) * 0.1F;
 }
 
+/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
+static void convert_fapi_to_mac_ul_sinr(int16_t fapi_ul_sinr, float& mac_ulsinr)
+{
+  if (fapi_ul_sinr != std::numeric_limits<decltype(fapi_ul_sinr)>::min()) {
+    mac_ulsinr = to_uci_ul_sinr(fapi_ul_sinr);
+  }
+}
+
+/// Converts the given FAPI Timing Advance Offset in nanoseconds to Physical layer time unit.
+static void convert_fapi_to_mac_ta_offset(int16_t fapi_ta_offset_ns, optional<phy_time_unit>& mac_ta_offset)
+{
+  if (fapi_ta_offset_ns != std::numeric_limits<decltype(fapi_ta_offset_ns)>::min()) {
+    mac_ta_offset = phy_time_unit::from_seconds(static_cast<float>(fapi_ta_offset_ns) * 1e-9);
+  }
+}
+
+/// Converts the given FAPI UCI RSSI to dBs as per SCF-222 v4.0 section 3.4.9.
+static void convert_fapi_to_mac_rssi(uint16_t fapi_rssi, optional<float>& mac_rssi)
+{
+  if (fapi_rssi != std::numeric_limits<decltype(fapi_rssi)>::max()) {
+    mac_rssi = to_uci_ul_rssi(fapi_rssi);
+  }
+}
+
+/// Converts the given FAPI UCI RSRP to dBs as per SCF-222 v4.0 section 3.4.9.
+static void convert_fapi_to_mac_rsrp(uint16_t fapi_rsrp, optional<float>& mac_rsrp)
+{
+  if (fapi_rsrp != std::numeric_limits<decltype(fapi_rsrp)>::max()) {
+    mac_rsrp = to_uci_ul_rsrp(fapi_rsrp);
+  }
+}
+
 static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_type&     mac_pucch,
                                                     const fapi::uci_pucch_pdu_format_0_1& fapi_pucch)
 {
   mac_pucch.is_f1 = fapi_pucch.pucch_format == fapi::uci_pucch_pdu_format_0_1::format_type::format_1;
 
-  if (fapi_pucch.ul_sinr_metric != std::numeric_limits<decltype(fapi_pucch.ul_sinr_metric)>::min()) {
-    mac_pucch.ul_sinr = to_uci_ul_sinr(fapi_pucch.ul_sinr_metric);
-  }
-
-  if (fapi_pucch.timing_advance_offset_ns !=
-      std::numeric_limits<decltype(fapi_pucch.timing_advance_offset_ns)>::min()) {
-    mac_pucch.time_advance_offset =
-        phy_time_unit::from_seconds(static_cast<float>(fapi_pucch.timing_advance_offset_ns) * 1e-9);
-  }
-
-  if (fapi_pucch.rssi != std::numeric_limits<decltype(fapi_pucch.rssi)>::max()) {
-    mac_pucch.rssi = to_uci_ul_rssi(fapi_pucch.rssi);
-  }
-
-  if (fapi_pucch.rsrp != std::numeric_limits<decltype(fapi_pucch.rsrp)>::max()) {
-    mac_pucch.rsrp = to_uci_ul_rsrp(fapi_pucch.rsrp);
-  }
+  convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric, mac_pucch.ul_sinr);
+  convert_fapi_to_mac_ta_offset(fapi_pucch.timing_advance_offset_ns, mac_pucch.time_advance_offset);
+  convert_fapi_to_mac_rssi(fapi_pucch.rssi, mac_pucch.rssi);
+  convert_fapi_to_mac_rsrp(fapi_pucch.rsrp, mac_pucch.rsrp);
 
   // Fill SR.
   if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_0_1::SR_BIT)) {
@@ -149,71 +176,53 @@ static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_
   }
 }
 
-static uci_pusch_detection_status
-convert_fapi_to_mac_uci_pusch_detection_status(const fapi::uci_detection_status& status)
+/// Converts the given FAPI UCI on PUSCH payload in array of bits to bitset representation.
+static void
+convert_fapi_uci_pusch_payload_to_mac(uint16_t                                                          payload_bits,
+                                      const static_vector<uint8_t, MAX_PAYLOAD_BYTES_PER_UCI_ON_PUSCH>& payload,
+                                      bounded_bitset<MAX_PAYLOAD_BITS_PER_UCI_ON_PUSCH>&                out)
 {
-  switch (status) {
-    case fapi::uci_detection_status::crc_pass:
-      return uci_pusch_detection_status::crc_pass;
-    case fapi::uci_detection_status::crc_failure:
-      return uci_pusch_detection_status::crc_fail;
-    case fapi::uci_detection_status::dtx:
-      return uci_pusch_detection_status::dtx;
-    case fapi::uci_detection_status::no_dtx:
-      return uci_pusch_detection_status::no_dtx;
-    case fapi::uci_detection_status::dtx_not_checked:
-      return uci_pusch_detection_status::dtx_not_checked;
+  // Resized to 0 since size is incremented upon appending. And, to also keep track of exact number of bits.
+  out.resize(0);
+  // Lowest order information bit [position 0] is mapped to the most significant bit. As per SCF-222 v4.0
+  // section 3.4.9.1.
+  for (int j = static_cast<int>(std::ceil(payload_bits / NOF_BITS_PER_BYTE)) - 1; j >= 0; --j) {
+    for (int k = NOF_BITS_PER_BYTE - 1; k >= 0; --k) {
+      // FirstBitIsLeftmost is false.
+      out.push_back(((payload[j] >> k) & 1U) != 0U);
+    }
   }
-  report_fatal_error("Invalid UCI detection status type {}", status);
 }
 
 static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch, const fapi::uci_pusch_pdu& fapi_pusch)
 {
-  if (fapi_pusch.ul_sinr_metric != std::numeric_limits<decltype(fapi_pusch.ul_sinr_metric)>::min()) {
-    mac_pusch.ul_sinr = to_uci_ul_sinr(fapi_pusch.ul_sinr_metric);
-  }
-
-  if (fapi_pusch.timing_advance_offset_ns !=
-      std::numeric_limits<decltype(fapi_pusch.timing_advance_offset_ns)>::min()) {
-    mac_pusch.time_advance_offset =
-        phy_time_unit::from_seconds(static_cast<float>(fapi_pusch.timing_advance_offset_ns) * 1e-9);
-  }
-
-  if (fapi_pusch.rssi != std::numeric_limits<decltype(fapi_pusch.rssi)>::max()) {
-    mac_pusch.rssi = to_uci_ul_rssi(fapi_pusch.rssi);
-  }
-
-  if (fapi_pusch.rsrp != std::numeric_limits<decltype(fapi_pusch.rsrp)>::max()) {
-    mac_pusch.rsrp = to_uci_ul_rsrp(fapi_pusch.rsrp);
-  }
+  convert_fapi_to_mac_ul_sinr(fapi_pusch.ul_sinr_metric, mac_pusch.ul_sinr);
+  convert_fapi_to_mac_ta_offset(fapi_pusch.timing_advance_offset_ns, mac_pusch.time_advance_offset);
+  convert_fapi_to_mac_rssi(fapi_pusch.rssi, mac_pusch.rssi);
+  convert_fapi_to_mac_rsrp(fapi_pusch.rsrp, mac_pusch.rsrp);
 
   // Fill HARQ.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::HARQ_BIT)) {
     mac_pusch.harq_info.emplace();
-    mac_pusch.harq_info.value().harq_status =
-        convert_fapi_to_mac_uci_pusch_detection_status(fapi_pusch.harq.detection_status);
-    mac_pusch.harq_info.value().payload_bits = fapi_pusch.harq.bit_length;
-    mac_pusch.harq_info.value().payload.assign(fapi_pusch.harq.payload.begin(), fapi_pusch.harq.payload.end());
+    mac_pusch.harq_info.value().harq_status = fapi_pusch.harq.detection_status;
+    convert_fapi_uci_pusch_payload_to_mac(
+        fapi_pusch.harq.bit_length, fapi_pusch.harq.payload, mac_pusch.harq_info.value().payload);
   }
 
   // Fill CSI Part 1.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::CSI_PART1_BIT)) {
     mac_pusch.csi_part1_info.emplace();
-    mac_pusch.csi_part1_info.value().csi_status =
-        convert_fapi_to_mac_uci_pusch_detection_status(fapi_pusch.csi_part1.detection_status);
-    mac_pusch.csi_part1_info.value().payload_bits = fapi_pusch.csi_part1.bit_length;
-    mac_pusch.csi_part1_info.value().payload.assign(fapi_pusch.csi_part1.payload.begin(),
-                                                    fapi_pusch.csi_part1.payload.end());
+    mac_pusch.csi_part1_info.value().csi_status = fapi_pusch.csi_part1.detection_status;
+    convert_fapi_uci_pusch_payload_to_mac(
+        fapi_pusch.csi_part1.bit_length, fapi_pusch.csi_part1.payload, mac_pusch.csi_part1_info.value().payload);
   }
 
   // Fill CSI Part 2.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::CSI_PART2_BIT)) {
     mac_pusch.csi_part2_info.emplace();
-    mac_pusch.csi_part2_info.value().csi_status =
-        convert_fapi_to_mac_uci_pusch_detection_status(fapi_pusch.csi_part2.detection_status);
-    mac_pusch.csi_part2_info.value().payload_bits = fapi_pusch.csi_part2.bit_length;
-    mac_pusch.csi_part2_info.value().payload.assign(fapi_pusch.csi_part2.payload.begin(),
-                                                    fapi_pusch.csi_part2.payload.end());
+    mac_pusch.csi_part2_info.value().csi_status = fapi_pusch.csi_part2.detection_status;
+    convert_fapi_uci_pusch_payload_to_mac(
+        fapi_pusch.csi_part2.bit_length, fapi_pusch.csi_part2.payload, mac_pusch.csi_part2_info.value().payload);
   }
 }
 

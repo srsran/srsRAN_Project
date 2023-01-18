@@ -50,11 +50,11 @@ float beta_harq_ack_to_float(unsigned beta_uint_val);
 float beta_csi_to_float(unsigned beta_uint_val);
 
 /// Indicates CRC result on UCI containing HARQ/CSI Part1/CSI Part 2 data.
-enum class uci_pusch_detection_status {
+enum class uci_pusch_or_pucch_f2_3_4_detection_status {
   /// Used when CRC was attached.
   crc_pass = 1,
   /// Used when UE is expected to attach CRC.
-  crc_fail,
+  crc_failure,
   /// Undetected UCI.
   dtx,
   /// Indicates UCI detection.
