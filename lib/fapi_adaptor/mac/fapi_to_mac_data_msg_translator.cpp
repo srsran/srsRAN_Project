@@ -176,7 +176,7 @@ static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_
   }
 }
 
-/// Converts the given FAPI UCI on PUSCH payload in array of bits to bitset representation.
+/// Converts the given FAPI UCI on PUSCH payload in array of bytes to bitset representation.
 static void
 convert_fapi_uci_pusch_payload_to_mac(uint16_t                                                          payload_bits,
                                       const static_vector<uint8_t, MAX_PAYLOAD_BYTES_PER_UCI_ON_PUSCH>& payload,
