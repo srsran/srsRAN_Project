@@ -21,14 +21,16 @@ class f1u_cu_up_test_frame : public f1u_tx_pdu_notifier, public f1u_rx_delivery_
 {
 public:
   std::list<nru_dl_message>          tx_msg_list;
-  std::list<uint32_t>                rx_delivered_sdu_list;
+  std::list<uint32_t>                rx_transmitted_list;
+  std::list<uint32_t>                rx_delivered_list;
   std::list<byte_buffer_slice_chain> rx_sdu_list;
 
   // f1u_tx_pdu_notifier interface
   void on_new_pdu(nru_dl_message msg) override { tx_msg_list.push_back(std::move(msg)); }
 
   // f1u_rx_delivery_notifier interface
-  void on_delivered_sdu(uint32_t count) override { rx_delivered_sdu_list.push_back(count); }
+  void on_transmit_notification(uint32_t highest_pdcp_sn) override { rx_transmitted_list.push_back(highest_pdcp_sn); }
+  void on_delivery_notification(uint32_t highest_pdcp_sn) override { rx_delivered_list.push_back(highest_pdcp_sn); }
 
   // f1u_rx_sdu_notifier interface
   void on_new_sdu(byte_buffer_slice_chain sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
@@ -82,7 +84,8 @@ protected:
 TEST_F(f1u_cu_up_test, create_new_entity)
 {
   EXPECT_TRUE(tester->tx_msg_list.empty());
-  EXPECT_TRUE(tester->rx_delivered_sdu_list.empty());
+  EXPECT_TRUE(tester->rx_transmitted_list.empty());
+  EXPECT_TRUE(tester->rx_delivered_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
 }
 
@@ -93,7 +96,8 @@ TEST_F(f1u_cu_up_test, tx_discard)
   f1u->discard_sdu(pdcp_count);
   f1u->discard_sdu(pdcp_count + 7);
 
-  EXPECT_TRUE(tester->rx_delivered_sdu_list.empty());
+  EXPECT_TRUE(tester->rx_transmitted_list.empty());
+  EXPECT_TRUE(tester->rx_delivered_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
@@ -134,7 +138,8 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
   sdu2.pdcp_count = pdcp_count + 1;
   f1u->handle_sdu(std::move(sdu2));
 
-  EXPECT_TRUE(tester->rx_delivered_sdu_list.empty());
+  EXPECT_TRUE(tester->rx_transmitted_list.empty());
+  EXPECT_TRUE(tester->rx_delivered_list.empty());
   EXPECT_TRUE(tester->rx_sdu_list.empty());
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
@@ -170,7 +175,8 @@ TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
   f1u->handle_pdu(std::move(msg2));
 
   EXPECT_TRUE(tester->tx_msg_list.empty());
-  EXPECT_TRUE(tester->rx_delivered_sdu_list.empty());
+  EXPECT_TRUE(tester->rx_transmitted_list.empty());
+  EXPECT_TRUE(tester->rx_delivered_list.empty());
 
   ASSERT_FALSE(tester->rx_sdu_list.empty());
   EXPECT_EQ(tester->rx_sdu_list.front(), rx_pdcp_pdu1);

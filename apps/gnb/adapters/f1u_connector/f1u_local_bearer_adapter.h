@@ -33,7 +33,8 @@ class f1u_tx_delivery_local_adapter : public srs_cu_up::f1u_rx_delivery_notifier
 {
 public:
   void attach_du_handler(srs_du::f1u_rx_pdu_handler& handler_) { handler = &handler_; }
-  void on_delivered_sdu(uint32_t count) override {}
+  void on_transmit_notification(uint32_t highest_pdcp_sn) override {}
+  void on_delivery_notification(uint32_t highest_pdcp_sn) override {}
 
 private:
   srs_du::f1u_rx_pdu_handler* handler = nullptr;

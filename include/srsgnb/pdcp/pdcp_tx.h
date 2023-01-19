@@ -76,7 +76,7 @@ public:
   /// In case of RLC UM, the PDCP will stop the discard timers for all PDUs up to highest_sn.
   ///
   /// \param highest_sn Highest transmitted PDCP PDU sequence number.
-  virtual void handle_pdu_transmit_notification(uint32_t highest_sn) = 0;
+  virtual void handle_transmit_notification(uint32_t highest_sn) = 0;
 
   /// \brief Informs the PDCP about the highest PDCP PDU sequence number of the PDCP PDU that was successfully
   /// delivered in sequence towards the UE.
@@ -85,7 +85,7 @@ public:
   /// In case of RLC UM, the PDCP will ignore this notification.
   ///
   /// \param highest_sn Highest in a sequence delivered PDCP PDU sequence number.
-  virtual void handle_pdu_delivery_notification(uint32_t highest_sn) = 0;
+  virtual void handle_delivery_notification(uint32_t highest_sn) = 0;
 };
 
 /// This interface represents the data entry point of the transmitting side of a PDCP entity.

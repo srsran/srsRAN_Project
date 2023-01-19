@@ -26,7 +26,14 @@ struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_noti
 };
 
 struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_delivery_notifier {
-  void on_delivered_sdu(uint32_t count) override { logger.info("CU-UP PDU with COUNT={} delivered", count); }
+  void on_transmit_notification(uint32_t highest_pdcp_sn) override
+  {
+    logger.info("CU-UP PDCP PDU transmitted up to highest_pdcp_sn={}", highest_pdcp_sn);
+  }
+  void on_delivery_notification(uint32_t highest_pdcp_sn) override
+  {
+    logger.info("CU-UP PDCP PDU delivered up to highest_pdcp_sn={}", highest_pdcp_sn);
+  }
   srslog::basic_logger& logger = srslog::fetch_basic_logger("F1-U", false);
 };
 

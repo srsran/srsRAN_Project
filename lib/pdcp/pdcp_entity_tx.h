@@ -80,12 +80,11 @@ public:
    */
   void handle_sdu(byte_buffer sdu) final;
 
-  void handle_pdu_transmit_notification(uint32_t highest_sn) final
+  void handle_transmit_notification(uint32_t highest_sn) final
   {
-    logger.log_debug("Handling PDU transmit notification for highest_sn={}", highest_sn);
+    logger.log_debug("Handling transmit notification for highest_sn={}", highest_sn);
     if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-      logger.log_error(
-          "Invalid PDU transmit notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
+      logger.log_error("Invalid transmit notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
       return;
     }
     if (is_um()) {
@@ -93,12 +92,11 @@ public:
     }
   }
 
-  void handle_pdu_delivery_notification(uint32_t highest_sn) final
+  void handle_delivery_notification(uint32_t highest_sn) final
   {
-    logger.log_debug("Handling PDU delivery notification for highest_sn={}", highest_sn);
+    logger.log_debug("Handling delivery notification for highest_sn={}", highest_sn);
     if (highest_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-      logger.log_error(
-          "Invalid PDU delivery notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
+      logger.log_error("Invalid delivery notification for highest_sn={} exceeds sn_size={}", highest_sn, cfg.sn_size);
       return;
     }
     if (is_am()) {

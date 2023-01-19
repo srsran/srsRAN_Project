@@ -55,7 +55,8 @@ class dummy_f1u_bearer : public f1u_bearer,
 {
 public:
   nru_dl_message          last_msg;
-  optional<uint32_t>      last_count;
+  optional<uint32_t>      last_highest_transmitted_pdcp_sn;
+  optional<uint32_t>      last_highest_delivered_pdcp_sn;
   byte_buffer_slice_chain last_sdu;
 
   f1u_rx_pdu_handler&      get_rx_pdu_handler() override { return *this; }
@@ -63,7 +64,14 @@ public:
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
 
   void handle_pdu(nru_dl_message msg) override { last_msg = std::move(msg); }
-  void handle_delivered_sdu(uint32_t count) override { last_count = count; }
+  void handle_transmit_notification(uint32_t highest_pdcp_sn) override
+  {
+    last_highest_transmitted_pdcp_sn = highest_pdcp_sn;
+  }
+  void handle_delivery_notification(uint32_t highest_pdcp_sn) override
+  {
+    last_highest_delivered_pdcp_sn = highest_pdcp_sn;
+  }
   void handle_sdu(byte_buffer_slice_chain sdu) override { last_sdu = std::move(sdu); }
 };
 
@@ -135,7 +143,8 @@ public:
   srs_du::f1u_rx_sdu_notifier& du_rx;
 
   optional<nru_dl_message> last_pdu;
-  optional<uint32_t>       last_delivered_sdu_count;
+  optional<uint32_t>       last_highest_transmitted_pdcp_sn;
+  optional<uint32_t>       last_highest_delivered_pdcp_sn;
   byte_buffer_slice_chain  last_sdu;
 
   f1u_bearer_dummy(srs_du::f1u_rx_sdu_notifier& du_rx_) : du_rx(du_rx_) {}
@@ -145,7 +154,14 @@ public:
   f1u_tx_sdu_handler&      get_tx_sdu_handler() override { return *this; }
 
   void handle_pdu(nru_dl_message msg) override { last_pdu = std::move(msg); }
-  void handle_delivered_sdu(uint32_t count) override { last_delivered_sdu_count = count; }
+  void handle_transmit_notification(uint32_t highest_pdcp_sn) override
+  {
+    last_highest_transmitted_pdcp_sn = highest_pdcp_sn;
+  }
+  void handle_delivery_notification(uint32_t highest_pdcp_sn) override
+  {
+    last_highest_delivered_pdcp_sn = highest_pdcp_sn;
+  }
   void handle_sdu(byte_buffer_slice_chain sdu) override { last_sdu = std::move(sdu); }
 };
 

@@ -171,20 +171,20 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     }
 
     // Notify delivery of first SDU
-    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next, GetParam()));
+    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next, GetParam()));
     ASSERT_EQ(nof_sdus - 1, pdcp_tx->nof_discard_timers());
 
     // Notify delivery up to third SDU
-    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + 2, GetParam()));
+    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 2, GetParam()));
     ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
 
     // Notify delivery of second SDU again
     // e.g. in case the UDP-based F1-U interface swaps the the order of transmit/delivery notifications
-    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + 1, GetParam()));
+    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 1, GetParam()));
     ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
 
     // Notify delivery of remaining SDUs
-    pdcp_tx->handle_pdu_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus - 1, GetParam()));
+    pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus - 1, GetParam()));
     ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
   };
 

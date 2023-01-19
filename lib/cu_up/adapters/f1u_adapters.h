@@ -35,7 +35,14 @@ public:
     pdcp_rx_handler->handle_pdu(std::move(sdu));
   }
 
-  void on_delivered_sdu(uint32_t count) override { pdcp_tx_handler->handle_pdu_delivery_notification(count); }
+  void on_transmit_notification(uint32_t highest_pdcp_sn) override
+  {
+    pdcp_tx_handler->handle_transmit_notification(highest_pdcp_sn);
+  }
+  void on_delivery_notification(uint32_t highest_pdcp_sn) override
+  {
+    pdcp_tx_handler->handle_delivery_notification(highest_pdcp_sn);
+  }
 
 private:
   pdcp_rx_lower_interface* pdcp_rx_handler = nullptr;

@@ -50,8 +50,14 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
   }
 }
 
-void f1u_bearer_impl::handle_delivered_sdu(uint32_t count)
+void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn)
 {
   // TODO: Do not forget to switch execution context.
-  fmt::print("F1-U bearer with DRB id={} delivered Tx SDU with count={}!\n", drb_id, count);
+  fmt::print("F1-U bearer with DRB id={} transmitted Tx PDCP PDU with highest_pdcp_sn={}!\n", drb_id, highest_pdcp_sn);
+}
+
+void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)
+{
+  // TODO: Do not forget to switch execution context.
+  fmt::print("F1-U bearer with DRB id={} delivered Tx PDCP PDU with highest_pdcp_sn={}!\n", drb_id, highest_pdcp_sn);
 }
