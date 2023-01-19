@@ -29,7 +29,7 @@ namespace srs_cu_cp {
 class ngc_to_cu_cp_task_scheduler : public ngc_ue_task_scheduler
 {
 public:
-  ngc_to_cu_cp_task_scheduler() {}
+  ngc_to_cu_cp_task_scheduler() = default;
 
   void connect_cu_cp(ue_task_scheduler& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
 
@@ -58,7 +58,7 @@ private:
 class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier
 {
 public:
-  ngap_cu_cp_adapter() {}
+  ngap_cu_cp_adapter() = default;
 
   void connect_cu_cp(cu_cp_ngap_connection_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
 
@@ -82,6 +82,8 @@ private:
 class ngc_rrc_ue_adapter : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
 {
 public:
+  ngc_rrc_ue_adapter() = default;
+
   void connect_rrc_ue(rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler_,
                       rrc_ue_control_message_handler*       rrc_ue_ctrl_handler_,
                       rrc_ue_init_security_context_handler* rrc_ue_security_handler_)
@@ -128,6 +130,8 @@ private:
 class ngc_du_processor_adapter : public ngc_du_processor_control_notifier
 {
 public:
+  ngc_du_processor_adapter() = default;
+
   void connect_du_processor(du_processor_ngap_interface* du_processor_pdu_session_handler_)
   {
     du_processor_pdu_session_handler = du_processor_pdu_session_handler_;
