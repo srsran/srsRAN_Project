@@ -118,10 +118,25 @@ struct formatter<srsgnb::units::bits> : public formatter<srsgnb::units::bits::va
 /// Formatter for byte units.
 template <>
 struct formatter<srsgnb::units::bytes> : public formatter<srsgnb::units::bytes::value_type> {
+  bool print_units = false;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    auto it = ctx.begin();
+    while (it != ctx.end() and *it != '}') {
+      if (*it == 'B') {
+        print_units = true;
+      }
+      ++it;
+    }
+    return it;
+  }
+
   template <typename FormatContext>
   auto format(srsgnb::units::bytes s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return fmt::format_to(ctx.out(), "{}{}", s.value(), srsgnb::units::bytes::tag_type::str());
+    return fmt::format_to(ctx.out(), "{}{}", s.value(), print_units ? srsgnb::units::bytes::tag_type::str() : "");
   }
 };
 
