@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/gateways/sctp_network_gateway.h"
+#include "sctp_network_gateway_impl.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/sctp.h>
@@ -18,9 +18,9 @@
 
 using namespace srsgnb;
 
-sctp_network_gateway::sctp_network_gateway(sctp_network_gateway_config            config_,
-                                           sctp_network_gateway_control_notifier& ctrl_notfier_,
-                                           network_gateway_data_notifier&         data_notifier_) :
+sctp_network_gateway_impl::sctp_network_gateway_impl(sctp_network_gateway_config            config_,
+                                                     sctp_network_gateway_control_notifier& ctrl_notfier_,
+                                                     network_gateway_data_notifier&         data_notifier_) :
   config(std::move(config_)),
   ctrl_notifier(ctrl_notfier_),
   data_notifier(data_notifier_),
@@ -28,7 +28,7 @@ sctp_network_gateway::sctp_network_gateway(sctp_network_gateway_config          
 {
 }
 
-bool sctp_network_gateway::set_sockopts()
+bool sctp_network_gateway_impl::set_sockopts()
 {
   if (not subscripe_to_events()) {
     logger.error("Couldn't subscribe to SCTP events");
@@ -54,7 +54,7 @@ bool sctp_network_gateway::set_sockopts()
 }
 
 /// \brief Subscribes to various SCTP events to handle accociation and shutdown gracefully.
-bool sctp_network_gateway::subscripe_to_events()
+bool sctp_network_gateway_impl::subscripe_to_events()
 {
   struct sctp_event_subscribe events = {};
   events.sctp_data_io_event          = 1;
@@ -68,7 +68,7 @@ bool sctp_network_gateway::subscripe_to_events()
   return true;
 }
 
-bool sctp_network_gateway::set_receive_timeout(unsigned rx_timeout_sec)
+bool sctp_network_gateway_impl::set_receive_timeout(unsigned rx_timeout_sec)
 {
   struct timeval tv;
   tv.tv_sec  = rx_timeout_sec;
@@ -82,7 +82,7 @@ bool sctp_network_gateway::set_receive_timeout(unsigned rx_timeout_sec)
   return true;
 }
 
-bool sctp_network_gateway::set_reuse_addr()
+bool sctp_network_gateway_impl::set_reuse_addr()
 {
   int one = 1;
   if (::setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
@@ -94,13 +94,13 @@ bool sctp_network_gateway::set_reuse_addr()
 
 /// \brief Verify that socket has been created and can be used.
 /// @return True if socket is valid, false otherwise.
-bool sctp_network_gateway::is_initialized()
+bool sctp_network_gateway_impl::is_initialized()
 {
   return sock_fd != -1;
 }
 
 /// \brief Create and bind socket to given address.
-bool sctp_network_gateway::create_and_bind()
+bool sctp_network_gateway_impl::create_and_bind()
 {
   struct addrinfo hints;
   // support ipv4, ipv6 and hostnames
@@ -179,7 +179,7 @@ bool sctp_network_gateway::create_and_bind()
   return true;
 }
 
-bool sctp_network_gateway::listen()
+bool sctp_network_gateway_impl::listen()
 {
   // Listen for connections
   int ret = ::listen(sock_fd, SOMAXCONN);
@@ -192,7 +192,7 @@ bool sctp_network_gateway::listen()
   return true;
 }
 
-bool sctp_network_gateway::create_and_connect()
+bool sctp_network_gateway_impl::create_and_connect()
 {
   // bind to address/port
   if (not config.bind_address.empty()) {
@@ -280,7 +280,7 @@ bool sctp_network_gateway::create_and_connect()
   return true;
 }
 
-bool sctp_network_gateway::recreate_and_reconnect()
+bool sctp_network_gateway_impl::recreate_and_reconnect()
 {
   // Recreate socket
   sock_fd = ::socket(server_ai_family, server_ai_socktype, server_ai_protocol);
@@ -329,7 +329,7 @@ bool sctp_network_gateway::recreate_and_reconnect()
 }
 
 /// Close socket handle and set FD to -1
-bool sctp_network_gateway::close_socket()
+bool sctp_network_gateway_impl::close_socket()
 {
   if (not is_initialized()) {
     logger.error("Socket not initialized");
@@ -346,7 +346,7 @@ bool sctp_network_gateway::close_socket()
   return true;
 }
 
-void sctp_network_gateway::receive()
+void sctp_network_gateway_impl::receive()
 {
   struct sctp_sndrcvinfo sri       = {};
   int                    msg_flags = 0;
@@ -379,12 +379,12 @@ void sctp_network_gateway::receive()
   }
 }
 
-int sctp_network_gateway::get_socket_fd()
+int sctp_network_gateway_impl::get_socket_fd()
 {
   return sock_fd;
 }
 
-int sctp_network_gateway::get_bind_port()
+int sctp_network_gateway_impl::get_bind_port()
 {
   int gw_bind_port = 0;
 
@@ -406,7 +406,7 @@ int sctp_network_gateway::get_bind_port()
   return gw_bind_port;
 }
 
-void sctp_network_gateway::handle_notification(span<socket_buffer_type> payload)
+void sctp_network_gateway_impl::handle_notification(span<socket_buffer_type> payload)
 {
   union sctp_notification* notif             = (union sctp_notification*)payload.data();
   uint32_t                 notif_header_size = sizeof(((union sctp_notification*)NULL)->sn_header);
@@ -476,14 +476,14 @@ void sctp_network_gateway::handle_notification(span<socket_buffer_type> payload)
   }
 }
 
-void sctp_network_gateway::handle_data(const span<socket_buffer_type> payload)
+void sctp_network_gateway_impl::handle_data(const span<socket_buffer_type> payload)
 {
   logger.info("Received data of {} bytes", payload.size_bytes());
   data_notifier.on_new_pdu(byte_buffer(payload.begin(), payload.end()));
 }
 
 ///< Process outgoing PDU and send over SCTP socket to peer.
-void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
+void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
 {
   logger.debug("Sending PDU of {} bytes", pdu.length());
 
@@ -519,7 +519,7 @@ void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
 }
 
 ///< Set socket to non-blocking-mode.
-bool sctp_network_gateway::set_non_blocking()
+bool sctp_network_gateway_impl::set_non_blocking()
 {
   int flags = fcntl(sock_fd, F_GETFL, 0);
   if (flags == -1) {
