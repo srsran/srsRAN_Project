@@ -42,11 +42,14 @@ private:
 
 class mac_ul_sch_pdu
 {
-  static constexpr size_t MAX_PDU_LIST = 16;
+  /// Implementation-defined limit for the number of subPDUs per PDU.
+  static constexpr size_t MAX_SUBPDUS_PER_PDU = 256;
+
+  using subpdu_list = static_vector<mac_ul_sch_subpdu, MAX_SUBPDUS_PER_PDU>;
 
 public:
-  using iterator       = static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST>::iterator;
-  using const_iterator = static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST>::const_iterator;
+  using iterator       = subpdu_list::iterator;
+  using const_iterator = subpdu_list::const_iterator;
 
   mac_ul_sch_pdu() = default;
 
@@ -64,7 +67,7 @@ public:
   const_iterator end() const { return subpdus.end(); }
 
 private:
-  static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST> subpdus;
+  subpdu_list subpdus;
 };
 
 /// Decode C-RNTI MAC CE

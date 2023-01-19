@@ -23,7 +23,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 {
   unsigned subpdu_len = subpdu_reader.length();
   if (subpdu_len == 0) {
-    srslog::fetch_basic_logger("MAC", true).warning("Invalid MAC PDU. Cause: Empty subPDU.");
+    srslog::fetch_basic_logger("MAC", true).warning("Invalid UL MAC PDU. Cause: Empty subPDU.");
     return false;
   }
   payload_view = {};
@@ -35,7 +35,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
   header_length = 1;
 
   if (not lcid_val.is_valid_lcid()) {
-    srslog::fetch_basic_logger("MAC").warning("Invalid MAC PDU. Cause: Unrecognized LCID={}.", lcid_val);
+    srslog::fetch_basic_logger("MAC").warning("Invalid UL MAC PDU. Cause: Unrecognized LCID={}.", lcid_val);
     return false;
   }
 
@@ -45,7 +45,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 
     if (subpdu_len < (F_bit ? 2 : 3)) {
       srslog::fetch_basic_logger("MAC").warning(
-          "Invalid MAC PDU. Cause: Not enough bytes remaining in PDU to decode length prefix.");
+          "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode length prefix.");
       return false;
     }
 
@@ -63,7 +63,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 
     if (subpdu_len < header_length + sdu_length) {
       srslog::fetch_basic_logger("MAC").warning(
-          "Invalid MAC PDU. Cause: Not enough bytes remaining in PDU to decode SDU payload ({} < {}).",
+          "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode SDU payload ({} < {}).",
           subpdu_len - header_length,
           sdu_length);
       return false;
@@ -81,7 +81,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 
       if (subpdu_len < header_length + sdu_length) {
         srslog::fetch_basic_logger("MAC").warning(
-            "Invalid MAC PDU. Cause: Not enough bytes remaining in PDU to decode CE payload ({} < {}).",
+            "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode CE payload ({} < {}).",
             subpdu_len - header_length,
             sdu_length);
         return false;
@@ -101,12 +101,16 @@ bool mac_ul_sch_pdu::unpack(const byte_buffer& payload)
 {
   byte_buffer_reader reader = payload;
   while (not reader.empty()) {
-    mac_ul_sch_subpdu subpdu{};
+    if (subpdus.full()) {
+      srslog::fetch_basic_logger("MAC", true).warning("Maximum number of subPDUs per UL MAC PDU was reached.");
+      return true;
+    }
+    mac_ul_sch_subpdu& subpdu = subpdus.emplace_back();
     if (not subpdu.unpack(reader)) {
+      // Discard all decoded subPDUs.
       clear();
       return false;
     }
-    subpdus.push_back(subpdu);
   }
 
   return true;
