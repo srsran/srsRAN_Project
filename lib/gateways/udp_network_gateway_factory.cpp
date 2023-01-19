@@ -9,12 +9,12 @@
  */
 
 #include "srsgnb/gateways/udp_network_gateway_factory.h"
-#include "srsgnb/gateways/udp_network_gateway.h"
+#include "udp_network_gateway_impl.h"
 #include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
 std::unique_ptr<udp_network_gateway> srsgnb::create_udp_network_gateway(udp_network_gateway_creation_message msg)
 {
-  return std::make_unique<udp_network_gateway>(msg.config, msg.data_notifier);
+  return std::make_unique<udp_network_gateway_impl>(msg.config, msg.data_notifier);
 }

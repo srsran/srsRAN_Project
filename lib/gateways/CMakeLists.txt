@@ -9,7 +9,7 @@ find_package(SCTP REQUIRED)
 
 add_library(srsgnb_gateway
               sctp_network_gateway.cpp
-              udp_network_gateway.cpp
+              udp_network_gateway_impl.cpp
               sctp_network_gateway_factory.cpp
               udp_network_gateway_factory.cpp
             )

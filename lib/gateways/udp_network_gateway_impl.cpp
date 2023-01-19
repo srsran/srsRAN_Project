@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/gateways/udp_network_gateway.h"
+#include "udp_network_gateway_impl.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/srslog.h"
 #include <arpa/inet.h>
@@ -21,18 +21,18 @@
 
 using namespace srsgnb;
 
-udp_network_gateway::udp_network_gateway(udp_network_gateway_config     config_,
-                                         network_gateway_data_notifier& data_notifier_) :
+udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config     config_,
+                                                   network_gateway_data_notifier& data_notifier_) :
   config(std::move(config_)), data_notifier(data_notifier_), logger(srslog::fetch_basic_logger("UDP-GW"))
 {
 }
 
-bool udp_network_gateway::is_initialized()
+bool udp_network_gateway_impl::is_initialized()
 {
   return sock_fd != -1;
 }
 
-void udp_network_gateway::handle_pdu(const byte_buffer& pdu, const ::sockaddr* dest_addr, ::socklen_t dest_len)
+void udp_network_gateway_impl::handle_pdu(const byte_buffer& pdu, const ::sockaddr* dest_addr, ::socklen_t dest_len)
 {
   logger.debug("Sending PDU of {} bytes", pdu.length());
 
@@ -59,7 +59,7 @@ void udp_network_gateway::handle_pdu(const byte_buffer& pdu, const ::sockaddr* d
   logger.debug("PDU was sent successfully");
 }
 
-bool udp_network_gateway::create_and_bind()
+bool udp_network_gateway_impl::create_and_bind()
 {
   struct addrinfo hints;
   // support ipv4, ipv6 and hostnames
@@ -138,7 +138,7 @@ bool udp_network_gateway::create_and_bind()
   return true;
 }
 
-void udp_network_gateway::receive()
+void udp_network_gateway_impl::receive()
 {
   if (!is_initialized()) {
     logger.error("Cannot receive on UDP gateway: Socket is not initialized.");
@@ -161,12 +161,12 @@ void udp_network_gateway::receive()
   }
 }
 
-int udp_network_gateway::get_socket_fd()
+int udp_network_gateway_impl::get_socket_fd()
 {
   return sock_fd;
 }
 
-int udp_network_gateway::get_bind_port()
+int udp_network_gateway_impl::get_bind_port()
 {
   int gw_bind_port = 0;
 
@@ -195,7 +195,7 @@ int udp_network_gateway::get_bind_port()
   return gw_bind_port;
 }
 
-std::string udp_network_gateway::get_bind_address()
+std::string udp_network_gateway_impl::get_bind_address()
 {
   std::string gw_bind_address = "no address";
 
@@ -227,7 +227,7 @@ std::string udp_network_gateway::get_bind_address()
   return gw_bind_address;
 }
 
-bool udp_network_gateway::set_sockopts()
+bool udp_network_gateway_impl::set_sockopts()
 {
   if (config.rx_timeout_sec > 0) {
     if (not set_receive_timeout(config.rx_timeout_sec)) {
@@ -247,7 +247,7 @@ bool udp_network_gateway::set_sockopts()
   return true;
 }
 
-bool udp_network_gateway::set_non_blocking()
+bool udp_network_gateway_impl::set_non_blocking()
 {
   int flags = fcntl(sock_fd, F_GETFL, 0);
   if (flags == -1) {
@@ -264,7 +264,7 @@ bool udp_network_gateway::set_non_blocking()
   return true;
 }
 
-bool udp_network_gateway::set_receive_timeout(unsigned rx_timeout_sec)
+bool udp_network_gateway_impl::set_receive_timeout(unsigned rx_timeout_sec)
 {
   struct timeval tv;
   tv.tv_sec  = rx_timeout_sec;
@@ -278,7 +278,7 @@ bool udp_network_gateway::set_receive_timeout(unsigned rx_timeout_sec)
   return true;
 }
 
-bool udp_network_gateway::set_reuse_addr()
+bool udp_network_gateway_impl::set_reuse_addr()
 {
   int one = 1;
   if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
@@ -288,7 +288,7 @@ bool udp_network_gateway::set_reuse_addr()
   return true;
 }
 
-bool udp_network_gateway::close_socket()
+bool udp_network_gateway_impl::close_socket()
 {
   if (not is_initialized()) {
     logger.error("Socket not initialized");
