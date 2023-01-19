@@ -15,6 +15,9 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
+/// CORESET0 is configured for the cell.
+static constexpr bool is_coreset0_configured_for_cell = true;
+
 void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const sib_information& mac_pdu)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
@@ -120,39 +123,60 @@ static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder& builder, const pd
 
 static void fill_coreset(fapi::dl_pdsch_pdu_builder&  builder,
                          const coreset_configuration& coreset_cfg,
-                         fapi::pdsch_trans_type       trans_type)
+                         const bwp_configuration&     bwp_cfg,
+                         fapi::pdsch_trans_type       trans_type,
+                         bool                         is_coreset0_config_for_cell)
 {
-  builder.set_maintenance_v3_bwp_parameters(
-      trans_type, coreset_cfg.coreset0_crbs().start(), coreset_cfg.coreset0_crbs().length());
+  unsigned coreset_start_point = 0;
+  unsigned initial_dl_bwp_size = 0;
+
+  switch (trans_type) {
+    case srsgnb::fapi::pdsch_trans_type::non_interleaved_common_ss:
+    case srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
+    case srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
+      coreset_start_point = coreset_cfg.get_coreset_start_crb();
+      break;
+    default:
+      break;
+  }
+
+  switch (trans_type) {
+    case srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
+    case srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
+      initial_dl_bwp_size =
+          (is_coreset0_config_for_cell) ? coreset_cfg.coreset0_crbs().length() : bwp_cfg.crbs.length();
+      break;
+    default:
+      break;
+  }
+
+  builder.set_maintenance_v3_bwp_parameters(trans_type, coreset_start_point, initial_dl_bwp_size);
 }
 
-static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id id,
-                                                   bool       is_interleaved,
-                                                   bool       is_dci_1_0_present_in_common_search_space,
-                                                   bool       is_dci_1_0_in_type0_pdcch_css,
-                                                   bool       is_coreset0_configured_for_cell)
+static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id            id,
+                                                   search_space_set_type ss,
+                                                   bool                  is_interleaved,
+                                                   bool                  is_dci_1_0,
+                                                   bool                  is_coreset0_config_for_cell)
 {
+  // Non-interleaved cases.
   if (!is_interleaved) {
-    // Non-interleaved.
-    if (is_dci_1_0_present_in_common_search_space) {
+    if (is_dci_1_0 && is_common_search_space(ss)) {
       return fapi::pdsch_trans_type::non_interleaved_common_ss;
     }
     return fapi::pdsch_trans_type::non_interleaved_other;
   }
 
-  // Interleaved cases.
-  if (id == to_coreset_id(0)) {
-    // CORESET0 Case.
-    if (is_dci_1_0_present_in_common_search_space) {
-      if (is_dci_1_0_in_type0_pdcch_css) {
-        return fapi::pdsch_trans_type::interleaved_common_type0_coreset0;
-      }
-      if (is_coreset0_configured_for_cell) {
-        return fapi::pdsch_trans_type::interleaved_common_any_coreset0_present;
-      }
-      return fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;
+  // Interleaved cases for DCI 1_0, CORESET0 and in Common Search Space.
+  if (id == to_coreset_id(0) && is_common_search_space(ss) && is_dci_1_0) {
+    if (ss == srsgnb::search_space_set_type::type0) {
+      return fapi::pdsch_trans_type::interleaved_common_type0_coreset0;
     }
+
+    return is_coreset0_config_for_cell ? fapi::pdsch_trans_type::interleaved_common_any_coreset0_present
+                                       : fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;
   }
+
   return fapi::pdsch_trans_type::interleaved_other;
 }
 
@@ -183,20 +207,14 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                             is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
                                            : fapi::vrb_to_prb_mapping_type::non_interleaved);
 
-  // :TODO: in the future we need the MAC to provide these variables.
-  // DCI 1_0 is in common search space.
-  static const bool is_dci_1_0_in_common_ss = true;
-  // DCI 1_0 is not in Type0-PDCCH common search space.
-  static const bool is_dci_1_0_in_type0_pdcch_css = false;
-  // CORESET0 is not configured for the cell.
-  static const bool is_coreset0_configured_for_cell = false;
-
   fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdsch_cfg.coreset_cfg->id,
+                                                           mac_pdu.pdsch_cfg.ss_set_type,
                                                            is_interleaved,
-                                                           is_dci_1_0_in_common_ss,
-                                                           is_dci_1_0_in_type0_pdcch_css,
+                                                           mac_pdu.pdsch_cfg.dci_fmt == dci_dl_format::f1_0,
                                                            is_coreset0_configured_for_cell);
-  fill_coreset(builder, *mac_pdu.pdsch_cfg.coreset_cfg, trans_type);
+
+  fill_coreset(
+      builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
 
   // :TODO Rate-Matching related parameters, not used now.
 }
@@ -234,20 +252,14 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                             is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
                                            : fapi::vrb_to_prb_mapping_type::non_interleaved);
 
-  // :TODO: in the future we need the MAC to provide these variables.
-  // DCI 1_0 is in common search space.
-  static const bool is_dci_1_0_in_common_ss = true;
-  // DCI 1_0 is not in Type0-PDCCH common search space.
-  static const bool is_dci_1_0_in_type0_pdcch_css = false;
-  // CORESET0 is not configured for the cell.
-  static const bool is_coreset0_configured_for_cell = false;
-
   fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdsch_cfg.coreset_cfg->id,
+                                                           mac_pdu.pdsch_cfg.ss_set_type,
                                                            is_interleaved,
-                                                           is_dci_1_0_in_common_ss,
-                                                           is_dci_1_0_in_type0_pdcch_css,
+                                                           mac_pdu.pdsch_cfg.dci_fmt == dci_dl_format::f1_0,
                                                            is_coreset0_configured_for_cell);
-  fill_coreset(builder, *mac_pdu.pdsch_cfg.coreset_cfg, trans_type);
+
+  fill_coreset(
+      builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
 
   // :TODO Rate-Matching related parameters, not used now.
 }
@@ -284,20 +296,14 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                             is_interleaved ? fapi::vrb_to_prb_mapping_type::interleaved_rb_size2
                                            : fapi::vrb_to_prb_mapping_type::non_interleaved);
 
-  // :TODO: in the future we need the MAC to provide these variables.
-  // DCI 1_0 is in common search space.
-  static const bool is_dci_1_0_in_common_ss = true;
-  // DCI 1_0 is not in Type0-PDCCH common search space.
-  static const bool is_dci_1_0_in_type0_pdcch_css = false;
-  // CORESET0 is not configured for the cell.
-  static const bool is_coreset0_configured_for_cell = false;
-
   fapi::pdsch_trans_type trans_type = get_pdsch_trans_type(mac_pdu.pdsch_cfg.coreset_cfg->id,
+                                                           mac_pdu.pdsch_cfg.ss_set_type,
                                                            is_interleaved,
-                                                           is_dci_1_0_in_common_ss,
-                                                           is_dci_1_0_in_type0_pdcch_css,
+                                                           mac_pdu.pdsch_cfg.dci_fmt == dci_dl_format::f1_0,
                                                            is_coreset0_configured_for_cell);
-  fill_coreset(builder, *mac_pdu.pdsch_cfg.coreset_cfg, trans_type);
+
+  fill_coreset(
+      builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
 
   // :TODO Rate-Matching related parameters, not used now.
 }

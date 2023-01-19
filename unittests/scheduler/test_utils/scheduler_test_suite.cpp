@@ -28,7 +28,7 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
   TESTASSERT_EQ(pdcch.ctx.rnti, pdsch.rnti);
   TESTASSERT(*pdcch.ctx.bwp_cfg == *pdsch.bwp_cfg);
   TESTASSERT(*pdcch.ctx.coreset_cfg == *pdsch.coreset_cfg);
-  const unsigned     rb_start = get_coreset_start_crb(*pdsch.coreset_cfg);
+  const unsigned     rb_start = pdsch.coreset_cfg->get_coreset_start_crb();
   const crb_interval coreset_rb_lims{rb_start, rb_start + get_coreset_nof_prbs(*pdsch.coreset_cfg)};
   const unsigned     rb_limits = pdsch.coreset_cfg->id == 0 ? coreset_rb_lims.length() : pdsch.bwp_cfg->crbs.length();
 

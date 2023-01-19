@@ -98,12 +98,23 @@ struct coreset_configuration {
 
   /// Computes \f$N_{CCE}\f$, as per TS 38.213, Section 9.2.1, which is the number of CCEs in a CORESET of a PDCCH
   /// reception with DCI format 1_0 or DCI format 1_1.
-  const unsigned get_nof_cces() const
+  unsigned get_nof_cces() const
   {
     // For \c frequencyDomainResources, TS 38.331, each 1 in the bitset corresponds to 6 RBs.
     unsigned nof_rbs = id == to_coreset_id(0) ? coreset0_rbs.length() : other_coreset_freq_resources.count() * 6;
     // A CCE corresponds to 6 REGs, where a REG is 1 RB x 1 symbol.
     return nof_rbs * duration / 6;
+  }
+
+  /// Computes the lowest RB used by the CORESET.
+  unsigned get_coreset_start_crb() const
+  {
+    static constexpr unsigned NOF_RBS_PER_GROUP = 6U;
+    if (id == to_coreset_id(0)) {
+      return coreset0_crbs().start();
+    }
+    uint64_t bits = other_coreset_freq_resources.to_uint64();
+    return find_first_lsb_one(bits) * NOF_RBS_PER_GROUP;
   }
 
 private:

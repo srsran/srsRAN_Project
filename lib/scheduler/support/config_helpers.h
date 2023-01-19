@@ -36,21 +36,10 @@ inline unsigned get_coreset_nof_prbs(const coreset_configuration& cs_cfg)
   return cs_cfg.freq_domain_resources().count() * NOF_RBS_PER_GROUP;
 }
 
-/// Computes the lowest RB used by the CORESET.
-inline unsigned get_coreset_start_crb(const coreset_configuration& cs_cfg)
-{
-  static constexpr unsigned NOF_RBS_PER_GROUP = 6U;
-  if (cs_cfg.id == to_coreset_id(0)) {
-    return cs_cfg.coreset0_crbs().start();
-  }
-  uint64_t bits = cs_cfg.freq_domain_resources().to_uint64();
-  return find_first_lsb_one(bits) * NOF_RBS_PER_GROUP;
-}
-
 /// Computes the CRB interval that delimits CORESET#0.
 inline crb_interval get_coreset0_crbs(const pdcch_config_common& pdcch_cfg)
 {
-  unsigned rb_start = get_coreset_start_crb(*pdcch_cfg.coreset0);
+  unsigned rb_start = pdcch_cfg.coreset0->get_coreset_start_crb();
   return {rb_start, rb_start + get_coreset_nof_prbs(*pdcch_cfg.coreset0)};
 }
 

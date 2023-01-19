@@ -42,8 +42,12 @@ inline prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
                                          unsigned                     ncce)
 {
   if (cs_cfg.id == 0) {
-    return cce_to_prb_mapping_coreset0(
-        get_coreset_start_crb(cs_cfg), get_coreset_nof_prbs(cs_cfg), cs_cfg.duration, pci, to_nof_cces(aggr_lvl), ncce);
+    return cce_to_prb_mapping_coreset0(cs_cfg.get_coreset_start_crb(),
+                                       get_coreset_nof_prbs(cs_cfg),
+                                       cs_cfg.duration,
+                                       pci,
+                                       to_nof_cces(aggr_lvl),
+                                       ncce);
   }
   if (cs_cfg.interleaved.has_value()) {
     return cce_to_prb_mapping_interleaved(bwp_cfg.crbs.start(),
