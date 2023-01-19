@@ -57,18 +57,20 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     // Create the configuration.
     out_cfg.push_back(config_helpers::make_default_du_cell_config(param));
 
-    logger.info("SSB derived parameters for cell: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
-                "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
-                cell.pci,
-                base_cell.dl_arfcn,
-                param.nof_crbs,
-                to_string(base_cell.common_scs),
-                to_string(out_cfg.back().ssb_cfg.scs),
-                (*ssb_freq_loc).offset_to_point_A.to_uint(),
-                (*ssb_freq_loc).k_ssb.to_uint(),
-                (*ssb_freq_loc).ssb_arfcn,
-                (*ssb_freq_loc).coreset0_idx,
-                (*ssb_freq_loc).searchspace0_idx);
+    logger.info(
+        "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
+        "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
+        cell.pci,
+        base_cell.band,
+        base_cell.dl_arfcn,
+        param.nof_crbs,
+        to_string(base_cell.common_scs),
+        to_string(out_cfg.back().ssb_cfg.scs),
+        (*ssb_freq_loc).offset_to_point_A.to_uint(),
+        (*ssb_freq_loc).k_ssb.to_uint(),
+        (*ssb_freq_loc).ssb_arfcn,
+        (*ssb_freq_loc).coreset0_idx,
+        (*ssb_freq_loc).searchspace0_idx);
 
     // Set the rest of the parameters.
     du_cell_config& out_cell = out_cfg.back();
