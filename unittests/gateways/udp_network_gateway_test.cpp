@@ -22,8 +22,8 @@ protected:
     srslog::init();
 
     // init GW logger
-    srslog::fetch_basic_logger("UDP-NW-GW", false).set_level(srslog::basic_levels::debug);
-    srslog::fetch_basic_logger("UDP-NW-GW", false).set_hex_dump_max_size(100);
+    srslog::fetch_basic_logger("UDP-GW", false).set_level(srslog::basic_levels::info);
+    srslog::fetch_basic_logger("UDP-GW", false).set_hex_dump_max_size(100);
   }
 
   void TearDown() override
@@ -61,10 +61,30 @@ protected:
 
   void run_client_receive() { client->receive(); }
 
-  void send_to_server(const byte_buffer& pdu)
+  void send_to_server(const byte_buffer& pdu, std::string dest_addr, uint16_t port)
   {
-    sockaddr_in tmp = {};
-    client->handle_pdu(pdu, (sockaddr*)&tmp, 0);
+    in_addr          inaddr_v4    = {};
+    in6_addr         inaddr_v6    = {};
+    sockaddr_storage addr_storage = {};
+    sockaddr*        addr         = (sockaddr*)&addr_storage;
+    socklen_t        sz           = {};
+
+    if (inet_pton(AF_INET, dest_addr.c_str(), &inaddr_v4) == 1) {
+      sockaddr_in* tmp = (sockaddr_in*)&addr_storage;
+      tmp->sin_family  = AF_INET;
+      tmp->sin_addr    = inaddr_v4;
+      tmp->sin_port    = htons(port);
+      sz               = sizeof(sockaddr_in);
+    } else if (inet_pton(AF_INET6, dest_addr.c_str(), &inaddr_v6) == 1) {
+      sockaddr_in6* tmp = (sockaddr_in6*)&addr_storage;
+      tmp->sin6_family  = AF_INET6;
+      tmp->sin6_addr    = inaddr_v6;
+      tmp->sin6_port    = htons(port);
+      sz                = sizeof(sockaddr_in6);
+    } else {
+      FAIL();
+    }
+    client->handle_pdu(pdu, addr, sz);
   }
 
 protected:
@@ -75,6 +95,15 @@ protected:
   dummy_network_gateway_data_notifier client_data_notifier;
 
   std::unique_ptr<udp_network_gateway> server, client;
+
+  std::string server_address_v4 = "127.0.0.1";
+  std::string client_address_v4 = "127.0.1.1";
+
+  std::string server_address_v6 = "::1";
+  std::string client_address_v6 = "::1";
+
+  std::string server_hostname = "localhost";
+  std::string client_hostname = "localhost";
 
 private:
   std::thread       rx_thread;
@@ -127,32 +156,38 @@ TEST_F(udp_network_gateway_tester, when_binding_on_v6_localhost_then_bind_succee
 
 TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 {
+  // create server config
+  uint16_t server_port = get_unused_udp_port(server_address_v4);
+  ASSERT_NE(server_port, 0);
+
   udp_network_gateway_config server_config;
-  server_config.bind_address = "127.0.0.1";
-  server_config.bind_port    = get_unused_udp_port(server_config.bind_address);
-  // server_config.connect_address = "127.0.1.1";
-  // server_config.connect_port    = get_unused_udp_port(server_config.connect_address);
-  ASSERT_NE(server_config.bind_port, 0);
+  server_config.bind_address      = server_address_v4;
+  server_config.bind_port         = server_port;
   server_config.non_blocking_mode = true;
 
+  // create client config
+  uint16_t client_port = get_unused_udp_port(client_address_v4);
+  ASSERT_NE(client_port, 0);
+
   udp_network_gateway_config client_config;
-  // client_config.bind_address      = server_config.connect_address;
-  // client_config.bind_port         = server_config.connect_port;
-  // client_config.connect_address   = server_config.bind_address;
-  // client_config.connect_port      = server_config.bind_port;
+  client_config.bind_address      = client_address_v4;
+  client_config.bind_port         = client_port;
   client_config.non_blocking_mode = true;
+
+  // set configs
   set_config(server_config, client_config);
 
+  // create and bind gateways
   ASSERT_TRUE(server->create_and_bind());
   ASSERT_TRUE(client->create_and_bind());
   start_receive_thread();
 
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small);
+  send_to_server(pdu_small, server_address_v4, server_port);
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large);
+  send_to_server(pdu_large, server_address_v4, server_port);
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized);
+  send_to_server(pdu_oversized, server_address_v4, server_port);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -171,20 +206,23 @@ TEST_F(udp_network_gateway_tester, when_config_valid_then_trx_succeeds)
 
 TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 {
+  // create server config
+  uint16_t server_port = get_unused_udp_port(server_address_v6);
+  ASSERT_NE(server_port, 0);
+
   udp_network_gateway_config server_config;
-  server_config.bind_address = "::1";
-  server_config.bind_port    = get_unused_udp_port(server_config.bind_address);
-  // server_config.connect_address   = "::1";
-  // server_config.connect_port      = get_unused_udp_port(server_config.connect_address);
+  server_config.bind_address      = server_address_v6;
+  server_config.bind_port         = server_port;
   server_config.non_blocking_mode = true;
-  ASSERT_NE(server_config.bind_port, 0);
+
+  uint16_t client_port = get_unused_udp_port(client_address_v6);
+  ASSERT_NE(client_port, 0);
 
   udp_network_gateway_config client_config;
-  // client_config.bind_address      = server_config.connect_address;
-  // client_config.bind_port         = server_config.connect_port;
-  // client_config.connect_address   = server_config.bind_address;
-  // client_config.connect_port      = server_config.bind_port;
+  client_config.bind_address      = client_address_v6;
+  client_config.bind_port         = client_port;
   client_config.non_blocking_mode = true;
+
   set_config(server_config, client_config);
 
   ASSERT_TRUE(server->create_and_bind());
@@ -192,11 +230,11 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
   start_receive_thread();
 
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small);
+  send_to_server(pdu_small, server_address_v6, server_port);
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large);
+  send_to_server(pdu_large, server_address_v6, server_port);
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized);
+  send_to_server(pdu_oversized, server_address_v6, server_port);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -215,33 +253,37 @@ TEST_F(udp_network_gateway_tester, when_v6_config_valid_then_trx_succeeds)
 
 TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 {
-  udp_network_gateway_config server_config;
-  server_config.bind_address = "localhost";
-  server_config.bind_port    = get_unused_udp_port(server_config.bind_address);
-  // server_config.connect_address   = "localhost";
-  // server_config.connect_port      = get_unused_udp_port(server_config.connect_address);
-  server_config.non_blocking_mode = true;
-  server_config.reuse_addr        = true;
-  ASSERT_NE(server_config.bind_port, 0);
+  // create server config
+  uint16_t server_port = get_unused_udp_port(server_hostname);
+  ASSERT_NE(server_port, 0);
 
+  udp_network_gateway_config server_config;
+  server_config.bind_address      = server_hostname;
+  server_config.bind_port         = server_port;
+  server_config.non_blocking_mode = true;
+
+  // create client config
+  uint16_t client_port = get_unused_udp_port(client_hostname);
+  ASSERT_NE(client_port, 0);
   udp_network_gateway_config client_config;
-  client_config.bind_address = "localhost";
-  // client_config.bind_port    = server_config.connect_port;
-  //  client_config.connect_address   = "localhost";
-  //  client_config.connect_port      = server_config.bind_port;
+  client_config.bind_address      = client_hostname;
+  client_config.bind_port         = client_port;
   client_config.non_blocking_mode = true;
+
+  // set client and server configs
   set_config(server_config, client_config);
 
   ASSERT_TRUE(server->create_and_bind());
   ASSERT_TRUE(client->create_and_bind());
   start_receive_thread();
 
+  std::string server_address = server->get_bind_address();
   byte_buffer pdu_small(make_small_tx_byte_buffer());
-  send_to_server(pdu_small);
+  send_to_server(pdu_small, server_address, server_port);
   byte_buffer pdu_large(make_large_tx_byte_buffer());
-  send_to_server(pdu_large);
+  send_to_server(pdu_large, server_address, server_port);
   byte_buffer pdu_oversized(make_oversized_tx_byte_buffer());
-  send_to_server(pdu_oversized);
+  send_to_server(pdu_oversized, server_address, server_port);
 
   // let the Rx thread pick up the message
   std::this_thread::sleep_for(std::chrono::milliseconds(250));

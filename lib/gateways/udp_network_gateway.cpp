@@ -175,17 +175,56 @@ int udp_network_gateway::get_bind_port()
     return gw_bind_port;
   }
 
-  sockaddr_in gw_addr;
-  socklen_t   gw_addr_len = sizeof(gw_addr);
+  sockaddr_storage gw_addr_storage;
+  sockaddr*        gw_addr     = (sockaddr*)&gw_addr_storage;
+  socklen_t        gw_addr_len = sizeof(gw_addr_storage);
 
-  int ret = getsockname(sock_fd, (struct sockaddr*)&gw_addr, &gw_addr_len);
+  int ret = getsockname(sock_fd, gw_addr, &gw_addr_len);
   if (ret != 0) {
     logger.error("Failed `getsockname` in UDP network gateway with sock_fd={}: {}", sock_fd, strerror(errno));
   }
-  gw_bind_port = ntohs(gw_addr.sin_port);
+  if (gw_addr->sa_family == AF_INET) {
+    gw_bind_port = ntohs(((sockaddr_in*)gw_addr)->sin_port);
+  } else if (gw_addr->sa_family == AF_INET6) {
+    gw_bind_port = ntohs(((sockaddr_in6*)gw_addr)->sin6_port);
+  } else {
+    logger.error("Unhandled address family in UDP network gateway with sock_fd={}: {}", sock_fd, strerror(errno));
+  }
 
   logger.debug("Read bind port of UDP network gateway: {}", gw_bind_port);
   return gw_bind_port;
+}
+
+std::string udp_network_gateway::get_bind_address()
+{
+  std::string gw_bind_address = "no address";
+
+  if (not is_initialized()) {
+    logger.error("Socket of UDP network gateway not initialized.");
+    return gw_bind_address;
+  }
+
+  sockaddr_storage gw_addr_storage = {};
+  sockaddr*        gw_addr         = (sockaddr*)&gw_addr_storage;
+  socklen_t        gw_addr_len     = sizeof(gw_addr_storage);
+
+  int ret = getsockname(sock_fd, gw_addr, &gw_addr_len);
+  if (ret != 0) {
+    logger.error("Failed `getsockname` in UDP network gateway with sock_fd={}: {}", sock_fd, strerror(errno));
+  }
+
+  char addr_str[INET6_ADDRSTRLEN] = {};
+  if (gw_addr->sa_family == AF_INET) {
+    inet_ntop(AF_INET, &((sockaddr_in*)gw_addr)->sin_addr, addr_str, INET6_ADDRSTRLEN);
+  } else if (gw_addr->sa_family == AF_INET6) {
+    inet_ntop(AF_INET6, &((sockaddr_in6*)gw_addr)->sin6_addr, addr_str, INET6_ADDRSTRLEN);
+  } else {
+    logger.error("Unhandled address family in UDP network gateway with sock_fd={}: {}", sock_fd, strerror(errno));
+  }
+  gw_bind_address = addr_str;
+
+  logger.debug("Read bind port of UDP network gateway: {}", gw_bind_address);
+  return gw_bind_address;
 }
 
 bool udp_network_gateway::set_sockopts()
