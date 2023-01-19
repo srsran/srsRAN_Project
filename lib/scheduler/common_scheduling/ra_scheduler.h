@@ -107,6 +107,8 @@ private:
   /// Schedule retransmission of Msg3.
   void schedule_msg3_retx(cell_resource_allocator& res_alloc, pending_msg3_t& msg3_ctx);
 
+  sch_prbs_tbs get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const;
+
   // args
   const scheduler_ra_expert_config& sched_cfg;
   const cell_configuration&         cell_cfg;
@@ -121,7 +123,8 @@ private:
   /// Pre-cached information related to RAR for a given PDSCH time resource.
   struct rar_param_cached_data {
     dmrs_information dmrs_info;
-    sch_prbs_tbs     prbs_tbs;
+    /// Number of PRBs and TBS required for different numbers of grants. Index=0 corresponds to 1 grant.
+    std::vector<sch_prbs_tbs> prbs_tbs_per_nof_grants;
   };
   std::vector<rar_param_cached_data> rar_data;
 
