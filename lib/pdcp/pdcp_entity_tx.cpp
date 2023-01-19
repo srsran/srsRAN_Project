@@ -355,13 +355,19 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
 {
   if (!(cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured)) {
-    logger.log_warning("Cannot stop discard timer for highest_sn={}: discard_timer is not configured or infinite.");
+    logger.log_warning("Cannot stop discard timer up to highest_sn={}: discard_timer is not configured or infinite.");
+    return;
+  }
+  if (discard_timers_map.empty()) {
+    logger.log_debug("Cannot stop discard timer up to highest_sn={}: discard_timers_map is empty.");
     return;
   }
 
+  // TX_NEXT_DELIV is the COUNT value of the first PDCP PDU for which the delivery is not confirmed.
+  uint32_t tx_next_deliv = discard_timers_map.begin()->first;
+
   /*
    * Calculate HIGHEST_COUNT. This is adapted from TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side.
-   * TX_NEXT_DELIV is the COUNT value of the first PDCP SDU for which the delivery is not confirmed.
    *
    * - if HIGHEST_SN < SN(TX_NEXT_DELIV) – Window_Size:
    *   - HIGHEST_HFN = HFN(TX_NEXT_DELIV) + 1.
@@ -372,26 +378,23 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
    * - HIGHEST_COUNT = [HIGHEST_HFN, HIGHEST_SN].
    */
   uint32_t highest_hfn, highest_count;
-  if ((int64_t)highest_sn < (int64_t)SN(st.tx_next_deliv) - (int64_t)window_size) {
-    highest_hfn = HFN(st.tx_next_deliv) + 1;
-  } else if (highest_sn >= SN(st.tx_next_deliv) + window_size) {
-    highest_hfn = HFN(st.tx_next_deliv) - 1;
+  if ((int64_t)highest_sn < (int64_t)SN(tx_next_deliv) - (int64_t)window_size) {
+    highest_hfn = HFN(tx_next_deliv) + 1;
+  } else if (highest_sn >= SN(tx_next_deliv) + window_size) {
+    highest_hfn = HFN(tx_next_deliv) - 1;
   } else {
-    highest_hfn = HFN(st.tx_next_deliv);
+    highest_hfn = HFN(tx_next_deliv);
   }
   highest_count = COUNT(highest_hfn, highest_sn);
   logger.log_debug("Stopping discard timer up to highest_count={}. highest_sn={}, st.tx_next_deliv={}",
                    highest_count,
                    highest_sn,
-                   st.tx_next_deliv);
+                   tx_next_deliv);
 
   // Remove timers from map
-  for (uint32_t count = st.tx_next_deliv; count <= highest_count; count++) {
+  for (uint32_t count = tx_next_deliv; count <= highest_count; count++) {
     discard_timers_map.erase(count);
-
-    // Update TX_NEXT_DELIV
-    st.tx_next_deliv = st.tx_next_deliv + 1;
-    logger.log_debug("Stopped discard timer for COUNT={}. st.tx_next_deliv={}", count, st.tx_next_deliv);
+    logger.log_debug("Stopped discard timer for COUNT={}", count);
   }
 }
 

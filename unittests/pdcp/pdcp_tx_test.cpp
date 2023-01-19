@@ -191,43 +191,35 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
   pdcp_tx_state st = {};
   if (config.sn_size == pdcp_sn_size::size12bits) {
     // test the beginning
-    st.tx_next       = 0;
-    st.tx_next_deliv = st.tx_next;
+    st.tx_next = 0;
     test_discard_timer_stop(st);
 
     // test the center of SN range
-    st.tx_next       = 2046;
-    st.tx_next_deliv = st.tx_next;
+    st.tx_next = 2046;
     test_discard_timer_stop(st);
 
     // test the first wrap around
-    st.tx_next       = 4094;
-    st.tx_next_deliv = st.tx_next;
+    st.tx_next = 4094;
     test_discard_timer_stop(st);
 
     // test the second wrap around
-    st.tx_next       = 8190;
-    st.tx_next_deliv = st.tx_next;
+    st.tx_next = 8190;
     test_discard_timer_stop(st);
   } else if (config.sn_size == pdcp_sn_size::size18bits) {
     // test the beginning
-    st.tx_next       = 0;
-    st.tx_next_deliv = st.tx_next;
+    st.tx_next = 0;
     test_discard_timer_stop(st);
 
     // test the center of SN range
-    st.tx_next       = 131070;
-    st.tx_next_deliv = st.tx_next;
+    st.tx_next = 131070;
     test_discard_timer_stop(st);
 
     // test the first wrap around
-    st.tx_next       = 262142;
-    st.tx_next_deliv = st.tx_next;
+    st.tx_next = 262142;
     test_discard_timer_stop(st);
 
     // test the second wrap around
-    st.tx_next       = 524286;
-    st.tx_next_deliv = st.tx_next;
+    st.tx_next = 524286;
     test_discard_timer_stop(st);
   } else {
     FAIL();

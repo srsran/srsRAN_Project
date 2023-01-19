@@ -31,12 +31,6 @@ struct pdcp_tx_state {
   /// This state variable indicates the COUNT value of the next PDCP SDU to be transmitted. The initial value is 0,
   /// except for SRBs configured with state variables continuation.
   uint32_t tx_next = 0;
-
-  /// TX_NEXT_DELIV indicates the COUNT value of the first PDCP SDU for which the delivery is not confirmed.
-  /// This variable is not part of TS 38.331 Sec. 7.1 "State variables". It is used for an adapted version of
-  /// the TS 38.331 Sec. 5.2.2 "Receive operation" of the Rx side in order to reconstruction of COUNT value of
-  /// transmitted/delivered PDCP SDUs for which the discard timer shall be stopped.
-  uint32_t tx_next_deliv = 0;
 };
 
 /// Base class used for transmitting PDCP bearers.
