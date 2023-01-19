@@ -128,7 +128,9 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cel
   dl_config_common cfg{};
 
   // Configure FrequencyInfoDL.
-  cfg.freq_info_dl.offset_to_point_a = params.offset_to_point_a.to_uint();
+  cfg.freq_info_dl.freq_band_list.emplace_back();
+  cfg.freq_info_dl.freq_band_list.back().band = params.band;
+  cfg.freq_info_dl.offset_to_point_a          = params.offset_to_point_a.to_uint();
   cfg.freq_info_dl.scs_carrier_list.emplace_back();
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
@@ -172,7 +174,9 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
   cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;
   cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = params.nof_crbs;
-  cfg.init_ul_bwp.generic_params                         = make_default_init_bwp(params);
+  cfg.freq_info_ul.freq_band_list.emplace_back();
+  cfg.freq_info_ul.freq_band_list.back().band = params.band;
+  cfg.init_ul_bwp.generic_params              = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
   cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;

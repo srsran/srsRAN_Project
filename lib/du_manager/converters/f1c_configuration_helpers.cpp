@@ -62,10 +62,13 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   using namespace asn1::rrc_nr;
   dl_cfg_common_sib_s out;
   // freq info DL
-  out.freq_info_dl.freq_band_list.resize(1);
-  out.freq_info_dl.freq_band_list[0].freq_band_ind_nr_present = true;
-  out.freq_info_dl.freq_band_list[0].freq_band_ind_nr         = 7;
-  out.freq_info_dl.offset_to_point_a                          = cfg.freq_info_dl.offset_to_point_a;
+  for (const auto& dl_band : cfg.freq_info_dl.freq_band_list) {
+    nr_multi_band_info_s asn1_band;
+    asn1_band.freq_band_ind_nr_present = true;
+    asn1_band.freq_band_ind_nr         = nr_band_to_uint(dl_band.band);
+    out.freq_info_dl.freq_band_list.push_back(asn1_band);
+  }
+  out.freq_info_dl.offset_to_point_a = cfg.freq_info_dl.offset_to_point_a;
   out.freq_info_dl.scs_specific_carrier_list.resize(cfg.freq_info_dl.scs_carrier_list.size());
   for (unsigned i = 0; i < cfg.freq_info_dl.scs_carrier_list.size(); ++i) {
     out.freq_info_dl.scs_specific_carrier_list[i].offset_to_carrier =
@@ -283,11 +286,14 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   using namespace asn1::rrc_nr;
 
   ul_cfg_common_sib_s out;
-  out.freq_info_ul.freq_band_list.resize(1);
-  out.freq_info_ul.freq_band_list[0].freq_band_ind_nr_present = true;
-  out.freq_info_ul.freq_band_list[0].freq_band_ind_nr         = 7;
-  out.freq_info_ul.absolute_freq_point_a_present              = true;
-  out.freq_info_ul.absolute_freq_point_a                      = cfg.freq_info_ul.absolute_freq_point_a;
+  for (const auto& ul_band : cfg.freq_info_ul.freq_band_list) {
+    nr_multi_band_info_s asn1_band;
+    asn1_band.freq_band_ind_nr_present = true;
+    asn1_band.freq_band_ind_nr         = nr_band_to_uint(ul_band.band);
+    out.freq_info_ul.freq_band_list.push_back(asn1_band);
+  }
+  out.freq_info_ul.absolute_freq_point_a_present = true;
+  out.freq_info_ul.absolute_freq_point_a         = cfg.freq_info_ul.absolute_freq_point_a;
   out.freq_info_ul.scs_specific_carrier_list.resize(cfg.freq_info_ul.scs_carrier_list.size());
   for (unsigned i = 0; i < cfg.freq_info_ul.scs_carrier_list.size(); ++i) {
     out.freq_info_ul.scs_specific_carrier_list[i].offset_to_carrier =

@@ -13,6 +13,7 @@
 #include "dmrs.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slotted_array.h"
+#include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pcch/pcch_configuration.h"
@@ -182,6 +183,11 @@ struct scs_specific_carrier {
   unsigned carrier_bandwidth;
 };
 
+/// \brief Used to indicate a frequency band
+struct freq_band_indicator {
+  nr_band band;
+};
+
 /// \brief This class provides basic parameters of a downlink carrier and transmission.
 /// \remark See TS 38.331, "FrequencyInfoDL-SIB".
 struct frequency_info_dl {
@@ -190,6 +196,9 @@ struct frequency_info_dl {
   /// Set of carriers for different subcarrier spacings. The network configures this for all SCSs that are used in
   /// DL BWPs in this serving cell. Size: (1..maxSCSs=5).
   std::vector<scs_specific_carrier> scs_carrier_list;
+
+  /// Set of frequency bands.
+  std::vector<freq_band_indicator> freq_band_list;
 };
 
 /// \brief Downlink Configuration, common to the serving cell.
@@ -207,6 +216,9 @@ struct frequency_info_ul {
   /// UL BWPs in this serving cell. Size: (1..maxSCSs=5).
   std::vector<scs_specific_carrier> scs_carrier_list;
   bool                              freq_shift_7p5khz_present;
+
+  /// Set of frequency bands.
+  std::vector<freq_band_indicator> freq_band_list;
   // TODO: Add other fields.
 };
 

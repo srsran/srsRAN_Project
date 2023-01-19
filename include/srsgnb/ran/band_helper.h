@@ -77,6 +77,11 @@ enum class nr_band {
   n261 = 261
 };
 
+constexpr inline uint16_t nr_band_to_uint(nr_band band)
+{
+  return static_cast<uint16_t>(band);
+}
+
 namespace band_helper {
 
 /// \brief     Gets the NR band duplex mode.
