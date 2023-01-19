@@ -40,7 +40,7 @@ public:
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
 
-  const double get_pusch_snr() const { return sched_metrics.pusch_snr_db; }
+  double get_pusch_snr() const { return sched_metrics.pusch_snr_db; }
 
   void update_pusch_snr(double snr) { sched_metrics.pusch_snr_db = snr; }
 
