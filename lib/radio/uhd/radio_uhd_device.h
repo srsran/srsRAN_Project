@@ -88,6 +88,11 @@ public:
         if (!device_addr.has_key("recv_frame_size")) {
           device_addr.set("recv_frame_size", "8000");
         }
+      } else if (device_type == radio_uhd_device_type::types::N300) {
+        // Set the default master clock rate.
+        if (!device_addr.has_key("master_clock_rate")) {
+          device_addr.set("master_clock_rate", "122.88e6");
+        }
       }
     }
 

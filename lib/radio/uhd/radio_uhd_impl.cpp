@@ -330,10 +330,8 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       }
       break;
     case radio_uhd_device_type::types::X300:
-      // X300 do not support setting the master clock rate in runtime.
-      break;
     case radio_uhd_device_type::types::N300:
-      mcr = 122.88e6;
+      // X300 and N300 do not support setting the master clock rate in runtime.
       break;
     case radio_uhd_device_type::types::E3X0:
       mcr = 30.72e6;
