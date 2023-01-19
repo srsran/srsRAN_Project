@@ -47,22 +47,22 @@ public:
   void connect_e1()
   {
     // TODO: Connect a E1 handler
-    srslog::fetch_basic_logger("PDCP-E1").info("No E1 handler for PDCP Rx control events. All events will be ignored.");
+    srslog::fetch_basic_logger("PDCP").info("No E1 handler for PDCP Rx control events. All events will be ignored.");
   }
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP-E1").warning("Ignoring on_protocol_failure() from PDCP Rx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Rx: No E1 handler.");
   }
 
   void on_integrity_failure() override
   {
-    srslog::fetch_basic_logger("PDCP-E1").warning("Ignoring on_integrity_failure() from PDCP Rx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_integrity_failure() from PDCP Rx: No E1 handler.");
   }
 
   void on_max_count_reached() override
   {
-    srslog::fetch_basic_logger("PDCP-E1").warning("Ignoring on_max_count_reached() from PDCP Rx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Rx: No E1 handler.");
   }
 };
 
@@ -101,17 +101,17 @@ public:
   void connect_e1()
   {
     // TODO: connect a E1 handler
-    srslog::fetch_basic_logger("PDCP-E1").info("No E1 handler for PDCP Tx control events. All events will be ignored.");
+    srslog::fetch_basic_logger("PDCP").info("No E1 handler for PDCP Tx control events. All events will be ignored.");
   }
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP-E1").warning("Ignoring on_protocol_failure() from PDCP Tx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Tx: No E1 handler.");
   }
 
   void on_max_count_reached() override
   {
-    srslog::fetch_basic_logger("PDCP-E1").warning("Ignoring on_max_count_reached() from PDCP Tx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Tx: No E1 handler.");
   }
 };
 

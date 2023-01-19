@@ -38,23 +38,22 @@ public:
   explicit pdcp_rx_control_rrc_ue_adapter()
   {
     // TODO: connect a RRC handler
-    srslog::fetch_basic_logger("PDCP-RRC")
-        .info("No RRC handler for PDCP Rx control events. All events will be ignored.");
+    srslog::fetch_basic_logger("PDCP").info("No RRC handler for PDCP Rx control events. All events will be ignored.");
   }
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_protocol_failure() from PDCP Rx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Rx: No RRC handler.");
   }
 
   void on_integrity_failure() override
   {
-    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_integrity_failure() from PDCP Rx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_integrity_failure() from PDCP Rx: No RRC handler.");
   }
 
   void on_max_count_reached() override
   {
-    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_max_count_reached() from PDCP Rx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Rx: No RRC handler.");
   }
 };
 
@@ -98,18 +97,17 @@ public:
   explicit pdcp_tx_control_rrc_ue_adapter()
   {
     // TODO: connect a RRC handler
-    srslog::fetch_basic_logger("PDCP-RRC")
-        .info("No RRC handler for PDCP Tx control events. All events will be ignored.");
+    srslog::fetch_basic_logger("PDCP").info("No RRC handler for PDCP Tx control events. All events will be ignored.");
   }
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_protocol_failure() from PDCP Tx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Tx: No RRC handler.");
   }
 
   void on_max_count_reached() override
   {
-    srslog::fetch_basic_logger("PDCP-RRC").warning("Ignoring on_max_count_reached() from PDCP Tx: No RRC handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Tx: No RRC handler.");
   }
 };
 
