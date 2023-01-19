@@ -13,6 +13,7 @@
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_configuration.h"
+#include "srsgnb/ran/tdd_ul_dl_config.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 
 namespace srsgnb {
@@ -48,6 +49,9 @@ struct du_cell_config {
   /// Cell-specific DL and UL configuration used by common searchSpaces.
   dl_config_common dl_cfg_common;
   ul_config_common ul_cfg_common;
+
+  /// Defines the TDD DL-UL pattern and periodicity. If no value is set, the cell is in FDD mode.
+  optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
 };
 
 } // namespace srsgnb

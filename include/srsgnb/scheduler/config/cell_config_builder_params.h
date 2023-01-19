@@ -12,6 +12,7 @@
 
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/bs_channel_bandwidth.h"
+#include "srsgnb/ran/duplex_mode.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
@@ -33,14 +34,17 @@ struct cell_config_builder_params {
   unsigned nof_crbs = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1);
   /// This ARFCN represents "f_ref" for DL, as per TS 38.211, Section 5.4.2.1.
   unsigned dl_arfcn = 365000;
-  /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2, TS 38.104.
-  nr_band band = nr_band::n3;
+  /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2, TS 38.104. If not specified, a valid band for the
+  /// provided DL ARFCN is automatically derived.
+  optional<nr_band> band;
   /// offsetToPointA, as per TS 38.211, Section 4.4.4.2; \ref ssb_offset_to_pointA.
   ssb_offset_to_pointA offset_to_point_a{12};
   /// This is \c controlResourceSetZero, as per TS38.213, Section 13.
   unsigned coreset0_index = 6;
   /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
   ssb_subcarrier_offset k_ssb = 0;
+  /// Duplex mode. Possible values: TDD or FDD.
+  duplex_mode dplx_mode = duplex_mode::FDD;
 };
 
 } // namespace srsgnb

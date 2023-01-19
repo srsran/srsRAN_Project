@@ -22,7 +22,7 @@ srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_bui
   cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
   cfg.arfcn          = params.dl_arfcn;
   cfg.nof_ant        = 1;
-  cfg.band           = params.band;
+  cfg.band           = params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   return cfg;
 }
 
@@ -56,9 +56,10 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
 /// \remark See TS 38.213, Table 13-1.
 coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
 {
-  coreset_configuration cfg                          = make_default_coreset_config(params);
-  cfg.id                                             = to_coreset_id(0);
-  min_channel_bandwidth               min_channel_bw = band_helper::get_min_channel_bw(params.band, params.scs_common);
+  coreset_configuration cfg            = make_default_coreset_config(params);
+  cfg.id                               = to_coreset_id(0);
+  min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(
+      params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn), params.scs_common);
   pdcch_type0_css_coreset_description desc =
       pdcch_type0_css_coreset_get(min_channel_bw, params.scs_common, params.scs_common, params.coreset0_index, 0);
 
@@ -129,8 +130,9 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cel
 
   // Configure FrequencyInfoDL.
   cfg.freq_info_dl.freq_band_list.emplace_back();
-  cfg.freq_info_dl.freq_band_list.back().band = params.band;
-  cfg.freq_info_dl.offset_to_point_a          = params.offset_to_point_a.to_uint();
+  cfg.freq_info_dl.freq_band_list.back().band =
+      params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  cfg.freq_info_dl.offset_to_point_a = params.offset_to_point_a.to_uint();
   cfg.freq_info_dl.scs_carrier_list.emplace_back();
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
@@ -175,8 +177,9 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;
   cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = params.nof_crbs;
   cfg.freq_info_ul.freq_band_list.emplace_back();
-  cfg.freq_info_ul.freq_band_list.back().band = params.band;
-  cfg.init_ul_bwp.generic_params              = make_default_init_bwp(params);
+  cfg.freq_info_ul.freq_band_list.back().band =
+      params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  cfg.init_ul_bwp.generic_params = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
   cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
@@ -208,7 +211,8 @@ ssb_configuration srsgnb::config_helpers::make_default_ssb_config(const cell_con
 {
   ssb_configuration cfg{};
 
-  cfg.scs               = band_helper::get_most_suitable_ssb_scs(params.band, params.scs_common);
+  cfg.scs = band_helper::get_most_suitable_ssb_scs(
+      params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn), params.scs_common);
   cfg.offset_to_point_A = ssb_offset_to_pointA{params.offset_to_point_a};
   cfg.ssb_period        = ssb_periodicity::ms10;
   cfg.k_ssb             = params.k_ssb;

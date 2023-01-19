@@ -23,15 +23,16 @@ sched_cell_configuration_request_message srsgnb::srs_du::make_sched_cell_config_
                                                                                     unsigned sib1_payload_size)
 {
   sched_cell_configuration_request_message sched_req{};
-  sched_req.cell_index     = cell_index;
-  sched_req.pci            = du_cfg.pci;
-  sched_req.dl_carrier     = du_cfg.dl_carrier;
-  sched_req.ul_carrier     = du_cfg.ul_carrier;
-  sched_req.dl_cfg_common  = du_cfg.dl_cfg_common;
-  sched_req.ul_cfg_common  = du_cfg.ul_cfg_common;
-  sched_req.scs_common     = du_cfg.scs_common;
-  sched_req.ssb_config     = du_cfg.ssb_cfg;
-  sched_req.dmrs_typeA_pos = du_cfg.dmrs_typeA_pos;
+  sched_req.cell_index           = cell_index;
+  sched_req.pci                  = du_cfg.pci;
+  sched_req.dl_carrier           = du_cfg.dl_carrier;
+  sched_req.ul_carrier           = du_cfg.ul_carrier;
+  sched_req.dl_cfg_common        = du_cfg.dl_cfg_common;
+  sched_req.ul_cfg_common        = du_cfg.ul_cfg_common;
+  sched_req.scs_common           = du_cfg.scs_common;
+  sched_req.ssb_config           = du_cfg.ssb_cfg;
+  sched_req.dmrs_typeA_pos       = du_cfg.dmrs_typeA_pos;
+  sched_req.tdd_ul_dl_cfg_common = du_cfg.tdd_ul_dl_cfg_common;
 
   sched_req.nof_beams     = 1;
   sched_req.nof_layers    = 1;

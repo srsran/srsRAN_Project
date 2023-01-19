@@ -65,6 +65,9 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
 
   cfg.dl_carrier       = make_default_carrier_configuration(params);
   cfg.ul_carrier       = make_default_carrier_configuration(params);
+  cfg.ul_carrier.arfcn = params.dplx_mode == duplex_mode::TDD
+                             ? cfg.dl_carrier.arfcn // same ARFCN for DL and UL in case of TDD.
+                             : band_helper::get_ul_arfcn_from_dl_arfcn(cfg.dl_carrier.arfcn);
   cfg.coreset0_idx     = params.coreset0_index;
   cfg.searchspace0_idx = 0U;
   cfg.dl_cfg_common    = make_default_dl_config_common(params);
@@ -74,6 +77,10 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
   cfg.dmrs_typeA_pos   = dmrs_typeA_position::pos2;
   cfg.cell_barred      = false;
   cfg.intra_freq_resel = false;
+
+  if (params.dplx_mode == duplex_mode::TDD) {
+    cfg.tdd_ul_dl_cfg_common.emplace(config_helpers::make_default_tdd_ul_dl_config_common(params));
+  }
 
   return cfg;
 }

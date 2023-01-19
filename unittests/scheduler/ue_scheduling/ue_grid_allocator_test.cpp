@@ -23,11 +23,12 @@ protected:
   ue_grid_allocator_tester() :
     cell_cfg([]() {
       cell_config_builder_params params;
-      params.dl_arfcn                                                = 536020;
-      params.nof_crbs                                                = 106;
-      params.coreset0_index                                          = 13;
+      params.dl_arfcn       = 536020;
+      params.nof_crbs       = 106;
+      params.coreset0_index = 13;
+      params.band           = band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
       optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-          params.dl_arfcn, params.band, params.nof_crbs, params.scs_common, params.scs_common, 0);
+          params.dl_arfcn, *params.band, params.nof_crbs, params.scs_common, params.scs_common, 0);
       params.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
       return test_helpers::make_default_sched_cell_configuration_request(params);
     }())
