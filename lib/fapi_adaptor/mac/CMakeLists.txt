@@ -16,6 +16,7 @@ set(SOURCES
         fapi_to_mac_time_msg_translator.cpp)
 
 add_library(srsgnb_fapi_to_mac_translator STATIC ${SOURCES})
+target_link_libraries(srsgnb_fapi_to_mac_translator srsvec)
 
 add_library(mac_fapi_adaptor STATIC mac_fapi_adaptor_impl.cpp)
 target_link_libraries(mac_fapi_adaptor srsgnb_mac_to_fapi_translator srsgnb_fapi_to_mac_translator)

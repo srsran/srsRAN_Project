@@ -17,6 +17,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_pdu_capacity_constants.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/uci/uci_constants.h"
 #include "srsgnb/ran/uci/uci_mapping.h"
 
 namespace srsgnb {
@@ -49,30 +50,32 @@ struct mac_uci_pdu {
       /// HARQ Detection Status values for UCI PUSCH.
       using harq_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
 
-      /// Maximum number of HARQs per UCI.
-      static constexpr unsigned MAX_HARQS_PER_UCI = 1706;
-
       /// Indicates CRC result on UCI.
       harq_detection_status harq_status;
       /// Contents of HARQ, excluding any CRC.
-      bounded_bitset<MAX_HARQS_PER_UCI> payload;
+      /// NOTE: Wherever bit is set 1 the \c harq_status applies. i.e. If \c harq_status == crc_pass, then all HARQs
+      /// with bit set 1 in \c payload has its status as crc_pass. \n
+      /// Example: If number of HARQ bits are 20 bits, then its represented as follows in \c payload.
+      /// [ HARQ_bit_19 ... HARQ_bit_0 ] => [ MSB ... LSB ].
+      bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload;
     };
 
     struct csi_information {
       /// CSI Part1/CSI Part2 Detection Status values for UCI PUSCH.
       using csi_part1_or_part2_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
 
-      /// Maximum number of CSI Part1(s) or CSI Part2(s) per UCI.
-      static constexpr unsigned MAX_CSI_PART1_OR_PART2_PER_UCI = 1706;
-
       /// Indicates detection outcome on UCI/CSI.
       csi_part1_or_part2_detection_status csi_status;
       /// Contents of UCI/CSI, excluding any CRC.
-      bounded_bitset<MAX_CSI_PART1_OR_PART2_PER_UCI> payload;
+      /// NOTE1: Wherever bit is set 1 the \c csi_status applies. i.e. If \c csi_status == crc_pass, then all CSIs
+      /// with bit set 1 in \c payload has its status as crc_pass. \n
+      /// Example: If number of CSI bits are 20 bits, then its represented as follows in \c payload.
+      /// [ CSI_bit_19 ... CSI_bit_0 ] => [ MSB ... LSB ].
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
     /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBFs.
-    float ul_sinr;
+    optional<float> ul_sinr;
     /// \brief Timing Advance measured for the UE. Values: {0, 63}.
     optional<phy_time_unit> time_advance_offset;
     /// RSSI report in dBFs;
@@ -94,7 +97,7 @@ struct mac_uci_pdu {
 
     bool is_f1;
     /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBFs.
-    float ul_sinr;
+    optional<float> ul_sinr;
     /// \brief Timing Advance measured for the UE. Values: {0, 63}.
     optional<phy_time_unit> time_advance_offset;
     /// RSSI report in dBFs;
