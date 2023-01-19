@@ -59,10 +59,7 @@ private:
 class dl_sch_pdu_assembler
 {
 public:
-  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ticking_ring_buffer_pool& pool_) :
-    ue_mng(ue_mng_), pdu_pool(pool_), logger(srslog::fetch_basic_logger("MAC"))
-  {
-  }
+  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ticking_ring_buffer_pool& pool_);
 
   /// \brief Encodes a MAC DL-SCH PDU with the provided scheduler information.
   /// \param rnti RNTI for which the MAC PDU was allocated.
@@ -73,11 +70,13 @@ public:
   span<const uint8_t> assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
 private:
-  /// Assemble MAC subPDU with an SDU.
-  void assemble_sdu(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu);
+  class dl_sch_pdu_logger;
+
+  /// Assemble MAC SDUs for a given LCID.
+  void assemble_sdus(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, dl_sch_pdu_logger& pdu_logger);
 
   /// Assemble MAC subPDU with a CE.
-  void assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu);
+  void assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, dl_sch_pdu_logger& pdu_logger);
 
   mac_dl_ue_manager&        ue_mng;
   ticking_ring_buffer_pool& pdu_pool;

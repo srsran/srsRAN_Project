@@ -11,6 +11,7 @@
 #include "dl_sch_pdu_assembler.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/support/error_handling.h"
+#include "srsgnb/support/format_utils.h"
 
 using namespace srsgnb;
 
@@ -82,18 +83,70 @@ void dl_sch_pdu::encode_subheader(bool F_bit, lcid_dl_sch_t lcid, unsigned heade
   }
 }
 
+// /////////////////////////
+
+class dl_sch_pdu_assembler::dl_sch_pdu_logger
+{
+public:
+  explicit dl_sch_pdu_logger(rnti_t rnti_, units::bytes tbs_, srslog::basic_logger& logger_) :
+    rnti(rnti_), tbs(tbs_), logger(logger_)
+  {
+  }
+
+  void add_sdu(lcid_t lcid, unsigned len)
+  {
+    if (not logger.info.enabled()) {
+      return;
+    }
+    fmt::format_to(fmtbuf, "{}SDU: LCID={} L={}", separator(), lcid, len);
+  }
+
+  void add_conres_id(const ue_con_res_id_t& conres)
+  {
+    if (not logger.info.enabled()) {
+      return;
+    }
+    fmt::format_to(fmtbuf, "{}CON_RES: id={:x}", separator(), fmt::join(conres, ""));
+  }
+
+  void log()
+  {
+    if (not logger.info.enabled()) {
+      return;
+    }
+    logger.info("DL PDU, rnti={:#x}, size={}: {}", rnti, tbs, to_c_str(fmtbuf));
+  }
+
+private:
+  const char* separator() const { return fmtbuf.size() == 0 ? "" : ", "; }
+
+  rnti_t                rnti;
+  units::bytes          tbs;
+  srslog::basic_logger& logger;
+  fmt::memory_buffer    fmtbuf;
+};
+
+// /////////////////////////
+
+dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ticking_ring_buffer_pool& pool_) :
+  ue_mng(ue_mng_), pdu_pool(pool_), logger(srslog::fetch_basic_logger("MAC"))
+{
+}
+
 span<const uint8_t>
 dl_sch_pdu_assembler::assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
 {
   span<uint8_t> pdu_bytes = pdu_pool.allocate_buffer(tb_size_bytes);
   dl_sch_pdu    ue_pdu(pdu_bytes);
 
+  dl_sch_pdu_logger pdu_logger{rnti, units::bytes{tb_size_bytes}, logger};
+
   // Encode added subPDUs.
   for (const dl_msg_lc_info& sched_lch : tb_info.lc_chs_to_sched) {
     if (sched_lch.lcid.is_sdu()) {
-      assemble_sdu(ue_pdu, rnti, sched_lch);
+      assemble_sdus(ue_pdu, rnti, sched_lch, pdu_logger);
     } else {
-      assemble_ce(ue_pdu, rnti, sched_lch);
+      assemble_ce(ue_pdu, rnti, sched_lch, pdu_logger);
     }
   }
 
@@ -106,10 +159,15 @@ dl_sch_pdu_assembler::assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, u
     return {};
   }
 
+  pdu_logger.log();
+
   return ue_pdu.get();
 }
 
-void dl_sch_pdu_assembler::assemble_sdu(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu)
+void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
+                                         rnti_t                rnti,
+                                         const dl_msg_lc_info& subpdu,
+                                         dl_sch_pdu_logger&    pdu_logger)
 {
   // Note: Do not attempt to build an SDU if there is not enough space for the MAC subheader, min payload size and
   // potential RLC header.
@@ -144,6 +202,10 @@ void dl_sch_pdu_assembler::assemble_sdu(dl_sch_pdu& ue_pdu, rnti_t rnti, const d
       break;
     }
     srsgnb_assert(rem_bytes >= nwritten, "Too many bytes were packed in MAC SDU");
+
+    // Log SDU.
+    pdu_logger.add_sdu(subpdu.lcid.to_lcid(), nwritten);
+
     rem_bytes -= nwritten;
   }
   if (rem_bytes == get_mac_sdu_required_bytes(subpdu.sched_bytes)) {
@@ -161,13 +223,17 @@ void dl_sch_pdu_assembler::assemble_sdu(dl_sch_pdu& ue_pdu, rnti_t rnti, const d
   }
 }
 
-void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu)
+void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
+                                       rnti_t                rnti,
+                                       const dl_msg_lc_info& subpdu,
+                                       dl_sch_pdu_logger&    pdu_logger)
 {
   switch (subpdu.lcid.value()) {
     case lcid_dl_sch_t::UE_CON_RES_ID: {
       ue_con_res_id_t conres = ue_mng.get_con_res_id(rnti);
       std::copy(conres.begin(), conres.end(), conres.begin());
       ue_pdu.add_ue_con_res_id(conres);
+      pdu_logger.add_conres_id(conres);
     } break;
     default:
       report_fatal_error("Invalid MAC CE LCID={}", subpdu.lcid);

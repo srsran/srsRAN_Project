@@ -17,6 +17,13 @@
 
 using namespace srsgnb;
 
+auto& test_logger = []() -> srslog::basic_logger& {
+  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
+  srslog::init();
+  return srslog::fetch_basic_logger("TEST");
+}();
+
 TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
 {
   // MAC PDU with DL-SCH subheader with UE Contention Resolution Identity MAC CE field (6 B payload + 1 B header)
