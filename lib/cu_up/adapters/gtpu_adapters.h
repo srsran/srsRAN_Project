@@ -27,11 +27,10 @@ public:
 
   void connect_network_gateway(udp_network_gateway_data_handler& gw_handler_) { gw_handler = &gw_handler_; }
 
-  void on_new_pdu(byte_buffer pdu) override
+  void on_new_pdu(byte_buffer pdu, const sockaddr_storage& addr) override
   {
     srsgnb_assert(gw_handler != nullptr, "Network Gateway handler must not be nullptr");
-    sockaddr_in tmp = {};
-    gw_handler->handle_pdu(std::move(pdu), (sockaddr*)&tmp, 0);
+    gw_handler->handle_pdu(std::move(pdu), (sockaddr*)&addr, sizeof(sockaddr_storage));
   }
 
 private:

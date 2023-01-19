@@ -46,7 +46,7 @@ public:
       return;
     }
     logger.debug(buf.begin(), buf.end(), "TX GTP-U SDU");
-    upper_dn.on_new_pdu(std::move(buf));
+    upper_dn.on_new_pdu(std::move(buf), cfg.peer_addr);
   }
 
 private:

@@ -52,9 +52,12 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     return pdu_session_result;
   }
 
-  pdu_sessions[session.pdu_session_id] = std::make_unique<pdu_session>(session);
-  auto&       new_session              = pdu_sessions[session.pdu_session_id];
-  const auto& peer_teid                = new_session->tunnel_info.gtp_tunnel().gtp_teid.to_number();
+  pdu_sessions[session.pdu_session_id]         = std::make_unique<pdu_session>(session);
+  std::unique_ptr<pdu_session>& new_session    = pdu_sessions[session.pdu_session_id];
+  const auto&                   ul_tunnel_info = new_session->ul_tunnel_info;
+
+  // Get uplink transport address
+  logger.info("asdf UL TEID={}, ADDR={}", ul_tunnel_info.gtp_teid.value(), ul_tunnel_info.tp_address);
 
   // Allocate local TEID
   new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
@@ -72,7 +75,8 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
 
   // Create GTPU entity
   gtpu_tunnel_creation_message msg = {};
-  msg.cfg.tx.peer_teid             = peer_teid;
+  msg.cfg.tx.peer_teid             = ul_tunnel_info.gtp_teid.value();
+  msg.cfg.tx.peer_addr             = ul_tunnel_info.tp_address.native();
   msg.cfg.rx.local_teid            = new_session->local_teid;
   msg.rx_lower                     = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                     = &gtpu_tx_notifier;

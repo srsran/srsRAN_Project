@@ -36,13 +36,13 @@ public:
 };
 
 /// Dummy adapter between GTP-U and Network Gateway
-class dummy_gtpu_network_gateway_adapter : public gtpu_tunnel_tx_upper_layer_notifier
+class dummy_gtpu_network_gateway_adapter final : public gtpu_tunnel_tx_upper_layer_notifier
 {
 public:
-  dummy_gtpu_network_gateway_adapter()  = default;
-  ~dummy_gtpu_network_gateway_adapter() = default;
+  dummy_gtpu_network_gateway_adapter()           = default;
+  ~dummy_gtpu_network_gateway_adapter() override = default;
 
-  void on_new_pdu(byte_buffer pdu) override {}
+  void on_new_pdu(byte_buffer /*buf*/, const ::sockaddr_storage& /*addr*/) override {}
 };
 
 class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,

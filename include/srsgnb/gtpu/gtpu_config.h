@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <sys/socket.h>
 
 namespace srsgnb {
 
@@ -23,7 +24,8 @@ struct gtpu_config {
     uint32_t local_teid;
   } rx;
   struct gtpu_tx_config {
-    uint32_t peer_teid;
+    uint32_t         peer_teid;
+    sockaddr_storage peer_addr;
   } tx;
 };
 } // namespace srsgnb

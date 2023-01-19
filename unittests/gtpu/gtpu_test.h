@@ -50,7 +50,7 @@ public:
 };
 class gtpu_test_tx_upper : public gtpu_tunnel_tx_upper_layer_notifier
 {
-  void on_new_pdu(byte_buffer buf) final { last_tx = std::move(buf); }
+  void on_new_pdu(byte_buffer buf, const ::sockaddr_storage& /*addr*/) final { last_tx = std::move(buf); }
 
 public:
   byte_buffer last_tx;

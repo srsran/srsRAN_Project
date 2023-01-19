@@ -15,6 +15,7 @@
 #include "drb_context.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/gtpu/gtpu_tunnel_factory.h"
+#include "srsgnb/ran/up_transport_layer_info.h"
 
 namespace srsgnb {
 namespace srs_cu_up {
@@ -29,7 +30,7 @@ struct pdu_session {
     snssai(session.snssai),
     security_ind(session.security_ind),
     pdu_session_res_ambr(session.pdu_session_res_dl_ambr),
-    tunnel_info(session.ng_ul_up_tnl_info){};
+    ul_tunnel_info(asn1_to_up_transport_layer_info(session.ng_ul_up_tnl_info)){};
 
   std::unique_ptr<sdap_entity> sdap;
   std::unique_ptr<gtpu_tunnel> gtpu;
@@ -49,8 +50,8 @@ struct pdu_session {
   uint64_t                       pdu_session_res_ambr = 0;
 
   // Tunneling info used by all DRBs/QoS flows in this PDU session
-  asn1::e1ap::up_tnl_info_c tunnel_info; // the peer GTP-U address and TEID
-  uint32_t                  local_teid;  // the local teid used by the gNB for this PDU session
+  up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID
+  uint32_t                local_teid;     // the local teid used by the gNB for this PDU session
 
   drb_context* default_drb = nullptr; // non-owning pointer to default DRB, if any
 

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
+#include <sys/socket.h>
 
 /*
  * This file will hold the interfaces and notifiers for the GTP-U tunnel.
@@ -65,7 +66,7 @@ public:
 
   /// \brief Interface for the GTP-U to pass PDUs to the IO gateway
   /// \param sdu PDU to be transmitted.
-  virtual void on_new_pdu(byte_buffer buf) = 0;
+  virtual void on_new_pdu(byte_buffer buf, const ::sockaddr_storage& addr) = 0;
 };
 
 } // namespace srsgnb
