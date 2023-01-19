@@ -570,6 +570,30 @@ TEST(mac_ul_pdu, decode_bad_mac_pdu)
   ASSERT_EQ(pdu.nof_subpdus(), 0);
 }
 
+TEST(mac_ul_pdu, handle_the_case_when_a_pdu_has_too_many_subpdus)
+{
+  constexpr unsigned nof_subpdus_per_pdu = 1000;
+
+  size_t      L    = 1;
+  lcid_t      lcid = srsgnb::LCID_SRB1;
+  byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
+
+  byte_buffer msg;
+  bit_encoder enc(msg);
+
+  for (unsigned i = 0; i != nof_subpdus_per_pdu; ++i) {
+    enc.pack(0, 1);    // R.
+    enc.pack(0, 1);    // F.
+    enc.pack(lcid, 6); // LCID.
+    enc.pack(L, 8);    // L.
+    msg.append(payload);
+  }
+
+  mac_ul_sch_pdu pdu;
+  pdu.unpack(msg); // Should not crash.
+  ASSERT_GT(pdu.nof_subpdus(), 0);
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
