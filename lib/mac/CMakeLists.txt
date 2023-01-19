@@ -15,6 +15,7 @@ set(SOURCES mac_factory.cpp
             mac_dl/mac_dl_processor.cpp
             mac_dl/mac_cell_processor.cpp
             mac_dl/rar_pdu_assembler.cpp
+            mac_dl/dl_sch_pdu_assembler.cpp
             mac_ul/mac_ul_sch_pdu.cpp
             mac_ul/ul_bsr.cpp
             mac_ul/pdu_rx_handler.cpp
