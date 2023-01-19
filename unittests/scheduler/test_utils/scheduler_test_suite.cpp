@@ -199,6 +199,10 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&      cell
     TESTASSERT(rar_it != rars.end());
     const rar_information& rar = *rar_it;
 
+    ASSERT_EQ(rar.pdsch_cfg.codewords.size(), 1);
+    const units::bytes rar_pdu_size{8}; // MAC RAR PDU subheader + length (See TS38.321, 6.1.5 and 6.2.3).
+    ASSERT_GE(rar.pdsch_cfg.codewords[0].tb_size_bytes, rar_pdu_size.value() * rar.grants.size());
+
     // For all RAR grants within the same RAR, check that they are consistent with the respective Msg3 PUSCHs.
     for (const rar_ul_grant& rar_grant : rar.grants) {
       TESTASSERT(rar_grant.time_resource_assignment < pusch_td_list.size());

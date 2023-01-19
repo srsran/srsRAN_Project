@@ -617,7 +617,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
 
 sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, unsigned nof_ul_grants) const
 {
-  return rar_data[time_res_idx].prbs_tbs_per_nof_grants[nof_ul_grants - 1];
+  return rar_data[time_res_idx].prbs_tbs_per_nof_grants[std::min(nof_ul_grants, (unsigned)MAX_RAR_PDUS_PER_SLOT) - 1];
 }
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const

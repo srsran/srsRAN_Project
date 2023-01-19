@@ -22,6 +22,7 @@ class dummy_pdcch_resource_allocator : public pdcch_resource_allocator
 public:
   rnti_t               last_dl_pdcch_rnti;
   pdcch_dl_information next_ue_pdcch_alloc;
+  pdcch_ul_information next_ue_ul_pdcch_alloc;
 
   pdcch_dl_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
                                            rnti_t                        rnti,
@@ -65,8 +66,7 @@ public:
                                               search_space_id               ss_id,
                                               aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("Common UL PDCCHs not supported");
-    return nullptr;
+    return &next_ue_ul_pdcch_alloc;
   }
 
 private:

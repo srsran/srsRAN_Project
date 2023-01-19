@@ -14,20 +14,12 @@
 #include "unittests/scheduler/test_utils/dummy_test_components.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
-#include <random>
 
 using namespace srsgnb;
 
 namespace {
-
-std::random_device rd;
-std::mt19937       g(rd());
-
-unsigned get_random_uint(unsigned min, unsigned max)
-{
-  return std::uniform_int_distribution<unsigned>{min, max}(g);
-}
 
 struct ra_test_bench {
   scheduler_expert_config        sched_cfg;
@@ -53,8 +45,6 @@ protected:
   static constexpr unsigned tx_rx_delay = 4U;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned max_k_value = 0;
-
-  ra_scheduler_tester() { set_random_slot(); }
 
   ~ra_scheduler_tester() override
   {
@@ -99,7 +89,7 @@ protected:
     bench->result_logger.log(bench->res_grid[0].result);
 
     // Check sched result consistency.
-    test_result_consistency();
+    ASSERT_NO_FATAL_FAILURE(test_result_consistency());
   }
 
   /// \brief consistency checks that can be common to all test cases.
@@ -110,7 +100,7 @@ protected:
     // Check all RARs have an associated PDCCH (the previous test already checks if all PDCCHs have an associated PDSCH,
     // but not the other way around).
     for (const rar_information& rar : scheduled_rars(0)) {
-      TESTASSERT(std::any_of(scheduled_dl_pdcchs().begin(), scheduled_dl_pdcchs().end(), [&rar](const auto& pdcch) {
+      ASSERT_TRUE(std::any_of(scheduled_dl_pdcchs().begin(), scheduled_dl_pdcchs().end(), [&rar](const auto& pdcch) {
         return pdcch.ctx.rnti == rar.pdsch_cfg.rnti;
       }));
     }
@@ -133,17 +123,16 @@ protected:
     ASSERT_TRUE(bench->res_grid[0].result.dl.bc.sibs.empty());
   }
 
-  void set_random_slot() { next_slot = {0, get_random_uint(0, 10239)}; }
-
   rach_indication_message::preamble create_preamble()
   {
-    static unsigned       next_rnti = get_random_uint(MIN_CRNTI, MAX_CRNTI);
-    static const unsigned rnti_inc  = get_random_uint(1, 5);
+    static unsigned       next_rnti = test_rgen::uniform_int<unsigned>(MIN_CRNTI, MAX_CRNTI);
+    static const unsigned rnti_inc  = test_rgen::uniform_int<unsigned>(1, 5);
 
     rach_indication_message::preamble preamble{};
-    preamble.preamble_id  = get_random_uint(0, 63);
-    preamble.time_advance = phy_time_unit::from_seconds(std::uniform_real_distribution<double>{0, 2005e-6}(g));
-    preamble.tc_rnti      = to_rnti(next_rnti);
+    preamble.preamble_id = test_rgen::uniform_int<unsigned>(0, 63);
+    preamble.time_advance =
+        phy_time_unit::from_seconds(std::uniform_real_distribution<double>{0, 2005e-6}(test_rgen::get()));
+    preamble.tc_rnti = to_rnti(next_rnti);
     next_rnti += rnti_inc;
     return preamble;
   }
@@ -182,7 +171,7 @@ protected:
     const auto& k2s        = std::get<1>(params);
     auto&       pusch_list = msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     if (k2s.empty()) {
-      pusch_list[0].k2 = get_random_uint(2, 4);
+      pusch_list[0].k2 = test_rgen::uniform_int<unsigned>(2, 4);
     } else {
       pusch_list.resize(k2s.size(), pusch_list[0]);
       for (unsigned i = 0; i != k2s.size(); ++i) {
@@ -353,17 +342,17 @@ protected:
 
   slot_point result_slot_tx() const { return bench->res_grid[0].slot; }
 
-  slot_point              next_slot{0, 0};
+  slot_point              next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
   srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("MAC", true);
   srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST");
   optional<ra_test_bench> bench;
 };
 
 /// This test verifies that the cell resource grid remains empty when no RACH indications arrive to the RA scheduler.
-TEST_P(ra_scheduler_tester, no_output_if_no_rachs)
+TEST_P(ra_scheduler_tester, when_no_rach_indication_received_then_no_rar_allocated)
 {
-  setup_sched(
-      create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, GetParam()));
+  setup_sched(create_random_cell_config_request(
+      test_rgen::uniform_int<unsigned>(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, GetParam()));
   run_slot();
   ASSERT_TRUE(no_rar_grants_scheduled());
 }
@@ -376,7 +365,8 @@ TEST_P(ra_scheduler_tester, schedules_one_rar_per_slot_when_multi_preambles_with
   setup_sched(create_random_cell_config_request(duplex_mode::FDD, GetParam()));
 
   // Forward single RACH occasion with multiple preambles.
-  rach_indication_message one_rach = create_rach_indication(get_random_uint(1, MAX_PREAMBLES_PER_PRACH_OCCASION));
+  rach_indication_message one_rach =
+      create_rach_indication(test_rgen::uniform_int<unsigned>(1, MAX_PREAMBLES_PER_PRACH_OCCASION));
   handle_rach(one_rach);
 
   for (unsigned nof_sched_grants = 0, slot_count = 0; nof_sched_grants < one_rach.occasions[0].preambles.size();
@@ -408,7 +398,7 @@ TEST_P(ra_scheduler_tester, schedules_multiple_rars_per_slot_when_multiple_prach
   setup_sched(create_random_cell_config_request(duplex_mode::FDD, GetParam()));
 
   // Forward multiple RACH occasions with one preamble.
-  unsigned                nof_occasions = get_random_uint(1, MAX_PRACH_OCCASIONS_PER_SLOT);
+  unsigned                nof_occasions = test_rgen::uniform_int<unsigned>(1, MAX_PRACH_OCCASIONS_PER_SLOT);
   rach_indication_message rach_ind      = create_rach_indication(0);
   for (unsigned i = 0; i != nof_occasions; ++i) {
     rach_ind.occasions.emplace_back();
@@ -452,7 +442,7 @@ TEST_P(ra_scheduler_tester, schedules_rar_in_valid_slots_when_tdd)
 
   // Forward single RACH occasion with multiple preambles.
   // Note: The number of preambles is small enough to fit all grants in one slot.
-  rach_indication_message rach_ind = create_rach_indication(get_random_uint(1, 10));
+  rach_indication_message rach_ind = create_rach_indication(test_rgen::uniform_int<unsigned>(1, 10));
   handle_rach(rach_ind);
 
   for (unsigned nof_sched_grants = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size();) {
