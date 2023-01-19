@@ -57,7 +57,7 @@ private:
   void update_variable_to_check_messages(unsigned check_node) override;
   void update_check_to_variable_messages(unsigned check_node) override;
   void update_soft_bits(unsigned check_node) override;
-  void get_hard_bits(span<uint8_t> out) override;
+  void get_hard_bits(bit_buffer& out) override;
 
   /// \brief Helper function for update_variable_to_check_messages().
   ///

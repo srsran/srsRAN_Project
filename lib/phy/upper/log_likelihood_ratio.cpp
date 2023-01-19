@@ -81,14 +81,14 @@ log_likelihood_ratio log_likelihood_ratio::quantize(float value, float range_lim
 }
 
 #ifdef HAVE_SSE
-static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len)
+static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len, unsigned write_offset)
 {
-  // Number of bits in a byte.
-  static constexpr unsigned NBIT_BYTE = 8;
+  // Number of bits processed on each loop cycle.
+  static constexpr unsigned NBIT = 8;
 
   unsigned i_bit = 0;
 
-  for (; i_bit != (len / NBIT_BYTE) * NBIT_BYTE; i_bit += NBIT_BYTE) {
+  for (; i_bit != (len / NBIT) * NBIT; i_bit += NBIT) {
     // Generate a mask from the LLR.
     __m64 mask = _mm_cmpgt_pi8(_mm_set1_pi8(0), *reinterpret_cast<const __m64*>(&soft_bits[i_bit]));
 
@@ -99,29 +99,31 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
     uint8_t byte = _mm_movemask_pi8(mask);
 
     // Insert hard bits into the bit buffer.
-    hard_bits.insert(byte, i_bit, NBIT_BYTE);
+    hard_bits.insert(byte, write_offset + i_bit, NBIT);
   }
 
   for (; i_bit != len; ++i_bit) {
     unsigned hard_bit = soft_bits[i_bit] < 0 ? 1 : 0;
 
-    hard_bits.insert(hard_bit, i_bit, 1);
+    hard_bits.insert(hard_bit, write_offset + i_bit, 1);
   }
 }
 #endif // HAVE_SSE
 
-void srsgnb::hard_decision_packed(bit_buffer& hard_bits, span<const int8_t> soft_bits)
+void srsgnb::hard_decision(bit_buffer& hard_bits, span<const int8_t> soft_bits, unsigned write_offset)
 {
-  srsgnb_assert(soft_bits.size() == hard_bits.size(),
-                "Input size (i.e., {}) and output size (i.e., {}) must be equal",
+  // Make sure that there is enough space in the output to accommodate the hard bits.
+  srsgnb_assert(soft_bits.size() <= hard_bits.size() - write_offset,
+                "Input size (i.e., {}) does not fit into the output buffer with size {} at offset {}",
                 soft_bits.size(),
-                hard_bits.size());
+                hard_bits.size(),
+                write_offset);
 
-  unsigned nof_bits = hard_bits.size();
+  unsigned nof_bits = soft_bits.size();
 
 #ifdef HAVE_SSE
 
-  hard_decision_simd(hard_bits, soft_bits.data(), nof_bits);
+  hard_decision_simd(hard_bits, soft_bits.data(), nof_bits, write_offset);
 
 #else
   for (unsigned i_bit = 0; i_bit != nof_bits; ++i_bit) {
@@ -129,13 +131,24 @@ void srsgnb::hard_decision_packed(bit_buffer& hard_bits, span<const int8_t> soft
     uint8_t hard_bit = soft_bits[i_bit] >= 0 ? 0 : 1;
 
     // Insert into the bit buffer.
-    hard_bits.insert(hard_bit, i_bit, 1);
+    hard_bits.insert(hard_bit, write_offset + i_bit, 1);
   }
 #endif // HAVE_SSE
 }
 
-void srsgnb::hard_decision_packed(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
+void srsgnb::hard_decision(bit_buffer& hard_bits, span<const int8_t> soft_bits)
+{
+  srsgnb::hard_decision(hard_bits, soft_bits, 0);
+}
+
+void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits, unsigned write_offset)
 {
   span<const int8_t> soft_bits_span(reinterpret_cast<const int8_t*>(soft_bits.begin()), soft_bits.size());
-  srsgnb::hard_decision_packed(hard_bits, soft_bits_span);
+  srsgnb::hard_decision(hard_bits, soft_bits_span, write_offset);
+}
+
+void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
+{
+  span<const int8_t> soft_bits_span(reinterpret_cast<const int8_t*>(soft_bits.begin()), soft_bits.size());
+  srsgnb::hard_decision(hard_bits, soft_bits_span, 0);
 }

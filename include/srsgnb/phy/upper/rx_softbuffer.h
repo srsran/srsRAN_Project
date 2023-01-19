@@ -54,7 +54,7 @@ public:
   /// \return A view of the codeblock data bits (the information message).
   /// \remark The codeblock identifier must not exceed get_max_nof_codeblocks()-1.
   /// \note Data bits do not include filler bits, codeblock-specific CRC bits or zero-padding bits.
-  virtual span<uint8_t> get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) = 0;
+  virtual bit_buffer get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) = 0;
 };
 
 } // namespace srsgnb

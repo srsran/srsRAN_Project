@@ -52,7 +52,7 @@ int main()
     build_random_softbits(soft_bits);
 
     // Compute hard bit sequence;
-    hard_decision_packed(hard_bits_actual, soft_bits);
+    hard_decision(hard_bits_actual, soft_bits);
 
     // Compute expected hard bit sequence.
     hard_decision_golden(hard_bits_expected, soft_bits);

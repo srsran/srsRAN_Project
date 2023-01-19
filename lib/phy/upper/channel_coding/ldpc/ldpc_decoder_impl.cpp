@@ -43,7 +43,7 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   select_strategy();
 }
 
-optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    output,
+optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      output,
                                              span<const log_likelihood_ratio> input,
                                              crc_calculator*                  crc,
                                              const configuration&             cfg)
@@ -74,7 +74,7 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
   if (last == input.begin()) {
     // If all input LLRs are zero, we won't be able to decode: set all bits to one (so that the CRC will fail).
     if (crc == nullptr) {
-      std::fill(output.begin(), output.end(), 1);
+      std::fill(output.get_buffer().begin(), output.get_buffer().end(), 1);
     }
     return nullopt;
   }
@@ -110,7 +110,7 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
       get_hard_bits(output);
 
       // Early stop
-      if (crc->calculate_bit(output.first(nof_significant_bits)) == 0) {
+      if (crc->calculate(output.first(nof_significant_bits)) == 0) {
         return i_iteration + 1;
       }
     }
@@ -266,10 +266,10 @@ void ldpc_decoder_generic::update_soft_bits(unsigned check_node)
   }
 }
 
-void ldpc_decoder_generic::get_hard_bits(span<uint8_t> out)
+void ldpc_decoder_generic::get_hard_bits(bit_buffer& out)
 {
   unsigned out_length = out.size();
-  std::transform(soft_bits.cbegin(), soft_bits.cbegin() + out_length, out.begin(), [](log_likelihood_ratio sb) {
-    return sb.to_hard_bit();
-  });
+
+  span<log_likelihood_ratio> llrs(soft_bits.begin(), out_length);
+  srsgnb::hard_decision(out, llrs);
 }

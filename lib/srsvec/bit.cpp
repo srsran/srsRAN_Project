@@ -288,3 +288,58 @@ void srsgnb::srsvec::copy_offset(srsgnb::bit_buffer& output, span<const uint8_t>
     buffer[nof_full_words] = static_cast<uint8_t>(remainder_bits) & mask_msb_ones<uint8_t>(nof_remainder_bits);
   }
 }
+
+void srsgnb::srsvec::copy_offset(srsgnb::bit_buffer&       output,
+                                 unsigned                  out_offset,
+                                 const srsgnb::bit_buffer& input,
+                                 unsigned                  in_offset,
+                                 unsigned                  nof_bits)
+{
+  srsgnb_assert(input.size() - in_offset >= nof_bits,
+                "Input buffer size (i.e., {}) and reading offset (i.e., {}) cannot accomodate copy size of {} bits.",
+                input.size(),
+                in_offset,
+                nof_bits);
+
+  srsgnb_assert(input.size() - in_offset >= nof_bits,
+                "Output buffer size (i.e., {}) and writing offset (i.e., {}) cannot accomodate copy size of {} bits.",
+                output.size(),
+                out_offset,
+                nof_bits);
+
+  // 8 bit per word.
+  static constexpr unsigned bits_per_word_log2 = 3U;
+  static constexpr unsigned bits_per_word      = 1U << bits_per_word_log2;
+
+  unsigned in_start_word = in_offset >> bits_per_word_log2;
+  unsigned in_start_mod  = in_offset & (bits_per_word - 1);
+
+  unsigned out_start_word = out_offset >> bits_per_word_log2;
+  unsigned out_start_mod  = out_offset & (bits_per_word - 1);
+
+  unsigned nof_bits_remainder = nof_bits & (bits_per_word - 1);
+
+  if ((!in_start_mod) && (!out_start_mod) && (!nof_bits_remainder)) {
+    // Determine the number of bit words to copy.
+    unsigned nof_words = nof_bits / bits_per_word;
+
+    // Get the buffer views.
+    span<uint8_t>       out_buffer = output.get_buffer().subspan(out_start_word, nof_words);
+    span<const uint8_t> in_buffer  = input.get_buffer().subspan(in_start_word, nof_words);
+
+    // Copy data.
+    std::memcpy(out_buffer.begin(), in_buffer.begin(), nof_words);
+  } else {
+    for (unsigned i_bit = 0, remaining_bits = nof_bits; remaining_bits != 0;) {
+      // Extract at most one byte from the input.
+      unsigned bits_to_extract = std::min(remaining_bits, 8U);
+      uint8_t  byte            = input.extract(i_bit + in_offset, bits_to_extract);
+
+      // Insert the extracted bits into the output buffer.
+      output.insert(byte, i_bit + out_offset, bits_to_extract);
+
+      remaining_bits -= bits_to_extract;
+      i_bit += bits_to_extract;
+    }
+  }
+}

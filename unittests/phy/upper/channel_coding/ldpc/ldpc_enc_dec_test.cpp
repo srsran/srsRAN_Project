@@ -17,6 +17,7 @@
 
 #include "ldpc_encoder_test_data.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/zero.h"
 #include <gtest/gtest.h>
 
@@ -38,9 +39,6 @@ constexpr log_likelihood_ratio LLRS_AMPL = 10;
 const auto compute_llrs = [](uint8_t b) {
   return ((b == ldpc::FILLER_BIT) ? LLRS_AMPL : log_likelihood_ratio::copysign(LLRS_AMPL, 1 - 2 * b));
 };
-
-// Checks whether two messages are equal: filler bits are counted as logical zeros.
-const auto is_msg_equal = [](uint8_t a, uint8_t b) { return ((a == b) || ((a == 0) && (b == FILLER_BIT))); };
 
 using LDPCEncDecParams = std::tuple<std::string, test_case_t>;
 
@@ -212,12 +210,22 @@ TEST_P(LDPCEncDecFixture, LDPCEncDecTest)
       EXPECT_TRUE(std::equal(encoded.begin(), encoded.end(), cblock_i.begin())) << "Wrong codeblock.";
 
       // Check the decoder - we need to transform hard bits into soft bits.
-      std::vector<uint8_t>              decoded(msg_length);
+      dynamic_bit_buffer                decoded(msg_length);
       std::vector<log_likelihood_ratio> llrs(length);
       std::transform(cblock_i.begin(), cblock_i.begin() + length, llrs.begin(), compute_llrs);
       decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
-      EXPECT_TRUE(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal))
-          << "Wrong recovered message.";
+
+      // Pack the expected message.
+      dynamic_bit_buffer msg_i_packed(msg_i.size());
+      srsvec::bit_pack(msg_i_packed, msg_i);
+
+      for (unsigned i_bit = 0, i_byte = 0; i_bit < msg_length; ++i_byte, i_bit = i_byte * 8) {
+        unsigned nof_extracted_bits = std::min(8U, msg_length - i_bit);
+        uint8_t  actual_byte        = decoded.extract(i_bit, nof_extracted_bits);
+        uint8_t  expected_byte      = msg_i_packed.extract(i_bit, nof_extracted_bits);
+        EXPECT_TRUE(expected_byte == actual_byte) << fmt::format(
+            "Byte {} does not match. Expected: {:08B}, actual: {:08B}", i_byte, expected_byte, actual_byte);
+      }
     }
   }
 }
@@ -227,10 +235,11 @@ TEST_P(LDPCEncDecFixture, LDPCDecTestZeroLLR)
   // Check that a codeblock with all zero LLR returns message of all ones and an empty output.
   std::vector<log_likelihood_ratio> llrs(max_cb_length);
   srsvec::zero(llrs);
-  std::vector<uint8_t> decoded(msg_length);
-  optional<unsigned>   n_iters = decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
+  dynamic_bit_buffer decoded(msg_length);
+  optional<unsigned> n_iters = decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
   ASSERT_FALSE(n_iters.has_value());
-  ASSERT_TRUE(std::all_of(decoded.begin(), decoded.end(), [](uint8_t a) { return (a == 1); }));
+  ASSERT_TRUE(
+      std::all_of(decoded.get_buffer().begin(), decoded.get_buffer().end(), [](uint8_t a) { return (a == 1); }));
 }
 
 INSTANTIATE_TEST_SUITE_P(LDPCEncDecSuite,

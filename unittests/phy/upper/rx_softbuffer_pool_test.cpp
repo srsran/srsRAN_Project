@@ -204,7 +204,7 @@ static void test_softbuffer_contents()
   for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
     // Get codeblock soft and data bits.
     span<log_likelihood_ratio> buffer      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
-    span<uint8_t>              data_buffer = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
+    bit_buffer                 data_buffer = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
 
     // Make sure size matches.
     TESTASSERT(buffer.size() == cb_size);
@@ -215,7 +215,7 @@ static void test_softbuffer_contents()
       int8_t data     = (cb_id << 4) | bit_idx;
       buffer[bit_idx] = data;
       if (bit_idx < data_size) {
-        data_buffer[bit_idx] = bit_idx & 1U;
+        data_buffer.insert(bit_idx & 1U, bit_idx, 1);
       }
     }
   }
@@ -229,19 +229,19 @@ static void test_softbuffer_contents()
     // Get codeblock soft bits.
     span<log_likelihood_ratio> buffer0      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
     span<log_likelihood_ratio> buffer1      = softbuffer1->get_codeblock_soft_bits(cb_id, cb_size);
-    span<uint8_t>              data_buffer0 = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
-    span<uint8_t>              data_buffer1 = softbuffer1->get_codeblock_data_bits(cb_id, data_size);
+    bit_buffer                 data_buffer0 = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
+    bit_buffer                 data_buffer1 = softbuffer1->get_codeblock_data_bits(cb_id, data_size);
 
     // Make sure the data pointers match.
     TESTASSERT(buffer0.data() == buffer1.data());
-    TESTASSERT(data_buffer0.data() == data_buffer1.data());
+    TESTASSERT(data_buffer0.get_buffer().data() == data_buffer1.get_buffer().data());
 
     // Validate data persists in the codeblock.
     for (unsigned bit_idx = 0; bit_idx != cb_size; ++bit_idx) {
       log_likelihood_ratio data = static_cast<int>((cb_id << 4) | bit_idx);
       TESTASSERT_EQ(buffer0[bit_idx], data);
       if (bit_idx < data_size) {
-        TESTASSERT_EQ(data_buffer0[bit_idx], bit_idx & 1U);
+        TESTASSERT_EQ(data_buffer0.extract(bit_idx, 1), bit_idx & 1U);
       }
     }
   }

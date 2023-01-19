@@ -189,6 +189,18 @@ public:
     return bit_buffer(buffer, count);
   }
 
+  /// \brief Creates another bit buffer pointing at the last \c count bits.
+  /// \remark An assertion is triggered if the bits are not aligned with a bit word boundary.
+  bit_buffer last(unsigned count)
+  {
+    srsgnb_assert((size() - count) % bits_per_word == 0, "Only bit word boundaries are supported.");
+
+    unsigned buffer_start = (size() - count) / bits_per_word;
+    unsigned buffer_len   = std::ceil(static_cast<float>(count) / static_cast<float>(bits_per_word));
+
+    return bit_buffer(buffer.subspan(buffer_start, buffer_len), count);
+  }
+
   /// Gets the current bit buffer size.
   size_t size() const { return current_size; }
 

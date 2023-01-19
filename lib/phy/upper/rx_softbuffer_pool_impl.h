@@ -30,7 +30,7 @@ private:
     /// Contains the codeblock soft bits.
     std::vector<log_likelihood_ratio> soft_bits;
     /// Contains the codeblock data bits.
-    std::vector<uint8_t> data_bits;
+    dynamic_bit_buffer data_bits{0};
   };
 
   /// Stores all codeblock entries.
@@ -98,7 +98,7 @@ public:
   /// \brief Gets a codeblock data-bit buffer.
   /// \param[in] cb_id Indicates the codeblock identifier.
   /// \return A view to the codeblock data-bit buffer.
-  span<uint8_t> get_data_bits(unsigned cb_id)
+  bit_buffer& get_data_bits(unsigned cb_id)
   {
     report_fatal_error_if_not(
         cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
@@ -244,7 +244,7 @@ public:
   }
 
   // See interface for documentation.
-  span<uint8_t> get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
+  bit_buffer get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
   {
     report_fatal_error_if_not(is_reserved(), "Softbuffer is not reserved.");
     report_fatal_error_if_not(codeblock_id < codeblock_ids.size(),

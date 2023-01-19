@@ -31,7 +31,7 @@ public:
   ldpc_decoder_impl() = default;
 
   // See interface for the documentation.
-  optional<unsigned> decode(span<uint8_t>                    output,
+  optional<unsigned> decode(bit_buffer&                      output,
                             span<const log_likelihood_ratio> input,
                             crc_calculator*                  crc,
                             const configuration&             cfg) override;
@@ -59,7 +59,7 @@ private:
   virtual void update_soft_bits(unsigned check_node) = 0;
 
   /// Converts soft bits into hard bits and returns the decoded message.
-  virtual void get_hard_bits(span<uint8_t> out) = 0;
+  virtual void get_hard_bits(bit_buffer& out) = 0;
 
 protected:
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
@@ -101,7 +101,7 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   void update_variable_to_check_messages(unsigned check_node) override;
   void update_check_to_variable_messages(unsigned check_node) override;
   void update_soft_bits(unsigned check_node) override;
-  void get_hard_bits(span<uint8_t> out) override;
+  void get_hard_bits(bit_buffer& out) override;
 
   /// \brief Helper function for update_variable_to_check_messages().
   ///

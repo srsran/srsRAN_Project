@@ -97,7 +97,7 @@ int main(int argc, char** argv)
             codeblock.begin(), codeblock.end(), [&]() { return static_cast<int8_t>((rgen() & 1) * 20 - 10); });
 
         // Prepare message storage.
-        std::vector<uint8_t> message(msg_length);
+        dynamic_bit_buffer message(msg_length);
 
         srsgnb::codeblock_metadata cfg_dec  = {};
         cfg_dec.tb_common.lifting_size      = ls;

@@ -21,11 +21,11 @@ public:
   rx_softbuffer_spy() = default;
 
   rx_softbuffer_spy(unsigned max_codeblock_size, unsigned nof_codeblocks) :
-    soft_bits({max_codeblock_size, nof_codeblocks}),
-    hard_bits({max_codeblock_size, nof_codeblocks}),
-    crc(nof_codeblocks)
+    soft_bits({max_codeblock_size, nof_codeblocks}), crc(nof_codeblocks)
   {
-    // Do nothing.
+    for (unsigned i_cb = 0; i_cb != nof_codeblocks; ++i_cb) {
+      hard_bits.emplace_back(dynamic_bit_buffer(max_codeblock_size));
+    }
   }
 
   unsigned int get_nof_codeblocks() const override
@@ -44,10 +44,10 @@ public:
     ++count;
     return soft_bits.get_view<1>({codeblock_id}).first(data_size);
   }
-  span<uint8_t> get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
+  bit_buffer get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
   {
     ++count;
-    return hard_bits.get_view<1>({codeblock_id}).first(data_size);
+    return hard_bits[codeblock_id].first(data_size);
   }
 
   /// Clears all counters.
@@ -65,7 +65,7 @@ private:
   mutable unsigned const_count = 0;
 
   dynamic_tensor<2, log_likelihood_ratio> soft_bits;
-  dynamic_tensor<2, uint8_t>              hard_bits;
+  std::vector<dynamic_bit_buffer>         hard_bits;
   std::vector<uint8_t>                    crc;
 };
 

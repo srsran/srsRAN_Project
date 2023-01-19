@@ -222,16 +222,14 @@ void ldpc_decoder_avx2::update_soft_bits(unsigned check_node)
   }
 }
 
-void ldpc_decoder_avx2::get_hard_bits(span<uint8_t> out)
+void ldpc_decoder_avx2::get_hard_bits(bit_buffer& out)
 {
   for (unsigned i_node_lifted = 0, max_node_lifted = bg_K * node_size_avx2, i_out = 0; i_node_lifted != max_node_lifted;
        i_node_lifted += node_size_avx2, i_out += lifting_size) {
     span<const log_likelihood_ratio> current_soft(
         reinterpret_cast<log_likelihood_ratio*>(soft_bits.data_at(i_node_lifted, 0)), lifting_size);
-    span<uint8_t> current_out = out.subspan(i_out, lifting_size);
-    std::transform(current_soft.begin(), current_soft.end(), current_out.begin(), [](log_likelihood_ratio sb) {
-      return sb.to_hard_bit();
-    });
+
+    srsgnb::hard_decision(out, current_soft, i_out);
   }
 }
 
