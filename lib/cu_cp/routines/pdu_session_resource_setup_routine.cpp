@@ -272,13 +272,13 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
         e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
             qos_item.qos_characteristics.pre_emption_vulnerability;
 
-        e1ap_drb_setup_item.qos_flow_info_to_be_setup[e1ap_qos_item.qos_flow_id] = e1ap_qos_item;
+        e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
       }
 
-      e1ap_pdu_session_item.drb_to_setup_list_ng_ran[drb_to_setup] = e1ap_drb_setup_item;
+      e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(drb_to_setup, e1ap_drb_setup_item);
     }
 
-    e1ap_request.pdu_session_res_to_setup_list[pdu_session_to_setup.pdu_session_id] = e1ap_pdu_session_item;
+    e1ap_request.pdu_session_res_to_setup_list.emplace(pdu_session_to_setup.pdu_session_id, e1ap_pdu_session_item);
   }
 }
 
@@ -307,10 +307,10 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_r
 
         e1ap_drb_item.dl_up_params.push_back(e1ap_dl_up_param);
       }
-      e1ap_mod_item.drb_to_modify_list_ng_ran[drb_item.drb_id] = e1ap_drb_item;
+      e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(drb_item.drb_id, e1ap_drb_item);
     }
 
-    e1ap_bearer_context_mod.pdu_session_res_to_modify_list[pdu_session.pdu_session_id] = e1ap_mod_item;
+    e1ap_bearer_context_mod.pdu_session_res_to_modify_list.emplace(pdu_session.pdu_session_id, e1ap_mod_item);
   }
 
   e1ap_request.ng_ran_bearer_context_mod_request = e1ap_bearer_context_mod;
