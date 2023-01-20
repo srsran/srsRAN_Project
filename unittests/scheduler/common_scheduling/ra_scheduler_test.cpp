@@ -16,6 +16,7 @@
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
+#include <ostream>
 
 using namespace srsgnb;
 
@@ -27,6 +28,12 @@ struct test_params {
   uint8_t              k0;
   std::vector<uint8_t> k2s;
 };
+
+std::ostream& operator<<(std::ostream& out, const test_params& params)
+{
+  out << fmt::format("scs={}kHz, k0={}, k2s=[{}]", scs_to_khz(params.scs), params.k0, fmt::join(params.k2s, ", "));
+  return out;
+}
 
 class base_ra_scheduler_test : public ::testing::TestWithParam<test_params>
 {
@@ -84,6 +91,9 @@ protected:
     if (dplx_mode == srsgnb::duplex_mode::TDD) {
       builder_params.dl_arfcn = 520000;
       builder_params.band     = nr_band::n41;
+    }
+    if (params.scs == srsgnb::subcarrier_spacing::kHz30) {
+      builder_params.channel_bw_mhz = srsgnb::bs_channel_bandwidth_fr1::MHz20;
     }
     builder_params.nof_crbs =
         band_helper::get_n_rbs_from_bw(builder_params.channel_bw_mhz, builder_params.scs_common, frequency_range::FR1);
@@ -385,12 +395,16 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
       create_rach_indication(test_rgen::uniform_int<unsigned>(1, MAX_PREAMBLES_PER_PRACH_OCCASION));
   handle_rach_ind(one_rach);
 
-  for (unsigned nof_sched_grants = 0, slot_count = 0; nof_sched_grants < one_rach.occasions[0].preambles.size();
-       ++slot_count) {
-    ASSERT_TRUE(++slot_count < 20);
+  unsigned   ra_win_size  = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window;
+  slot_point last_slot_tx = next_slot_rx() + ra_win_size;
+
+  unsigned nof_sched_grants = 0;
+  for (; nof_sched_grants < one_rach.occasions[0].preambles.size() and next_slot < last_slot_tx;) {
     run_slot();
+
     // RAR PDSCH allocated.
-    ASSERT_EQ(scheduled_rars(0).size(), 1);
+    ASSERT_EQ(scheduled_rars(0).size(), 1)
+        << fmt::format("Only {}<{} RACHs were handled", nof_sched_grants, one_rach.occasions[0].preambles.size());
     unsigned nof_grants = 0;
     ASSERT_TRUE(rars_consistent_with_rach_indication(scheduled_rars(0), one_rach, nof_grants));
     ASSERT_EQ(nof_grants, scheduled_rars(0)[0].grants.size())
@@ -404,6 +418,17 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
 
     nof_sched_grants += nof_grants;
   }
+
+  ASSERT_LE(nof_sched_grants, one_rach.occasions[0].preambles.size()) << "Too many RARs allocated";
+  if (nof_sched_grants < one_rach.occasions[0].preambles.size()) {
+    ASSERT_EQ(next_slot, last_slot_tx) << "Not all RARs have been allocated but the RA window hasn't finished";
+  }
+
+  // For the next slot, no RAR should be scheduled.
+  run_slot();
+  ASSERT_TRUE(scheduled_rars(0).empty());
+  ASSERT_TRUE(scheduled_puschs(0).empty());
+  ASSERT_TRUE(scheduled_dl_pdcchs().empty());
 }
 
 /// This test verifies the correct scheduling of a RAR and Msg3 in an FDD frame, when multiple RACH Preambles are

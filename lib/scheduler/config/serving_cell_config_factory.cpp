@@ -150,7 +150,8 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols  = {2, 14};
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols  = {cfg.init_dl_bwp.pdcch_common.coreset0->duration,
+                                                                      14};
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
