@@ -113,8 +113,8 @@ struct coreset_configuration {
     if (id == to_coreset_id(0)) {
       return coreset0_crbs().start();
     }
-    uint64_t bits = other_coreset_freq_resources.to_uint64();
-    return find_first_lsb_one(bits) * NOF_RBS_PER_GROUP;
+    const uint64_t lowest_bit = other_coreset_freq_resources.find_lowest(0, other_coreset_freq_resources.size());
+    return lowest_bit * NOF_RBS_PER_GROUP;
   }
 
 private:

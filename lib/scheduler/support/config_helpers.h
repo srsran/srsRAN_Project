@@ -36,17 +36,6 @@ inline unsigned get_coreset_nof_prbs(const coreset_configuration& cs_cfg)
   return cs_cfg.freq_domain_resources().count() * NOF_RBS_PER_GROUP;
 }
 
-/// Computes the lowest RB used by the CORESET.
-inline unsigned get_coreset_start_crb(const coreset_configuration& cs_cfg)
-{
-  static constexpr unsigned NOF_RBS_PER_GROUP = 6U;
-  if (cs_cfg.id == to_coreset_id(0)) {
-    return cs_cfg.coreset0_crbs().start();
-  }
-  const uint64_t lowest_bit = cs_cfg.freq_domain_resources().find_lowest(0, cs_cfg.freq_domain_resources().size());
-  return lowest_bit * NOF_RBS_PER_GROUP;
-}
-
 /// Computes the highest RB used by the CORESET.
 inline unsigned get_coreset_end_crb(const coreset_configuration& cs_cfg)
 {
@@ -61,7 +50,7 @@ inline unsigned get_coreset_end_crb(const coreset_configuration& cs_cfg)
 /// Computes the CRB interval that delimits CORESET.
 inline crb_interval get_coreset_crbs(const coreset_configuration& cs_cfg)
 {
-  return {get_coreset_start_crb(cs_cfg), get_coreset_end_crb(cs_cfg)};
+  return {cs_cfg.get_coreset_start_crb(), get_coreset_end_crb(cs_cfg)};
 }
 
 /// Computes the CRB interval that delimits CORESET#0.
