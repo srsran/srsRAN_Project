@@ -164,8 +164,10 @@ void radio_zmq_rx_channel::receive_response()
                             buffer.size(),
                             nsamples);
 
-  for (unsigned count = 0; count != nsamples; ++count) {
-    while (state_fsm.is_running() && !circular_buffer.try_push(buffer[count])) {
+  unsigned to_send = nsamples;
+  for (unsigned count = 0; count != nsamples;) {
+    unsigned pushed = circular_buffer.try_push(&buffer[count], &buffer[count + to_send]);
+    while (state_fsm.is_running() && pushed == 0) {
       // Notify buffer overflow.
       radio_notification_handler::event_description event;
       event.stream_id  = stream_id;
@@ -177,7 +179,13 @@ void radio_zmq_rx_channel::receive_response()
       // Wait some time before trying again.
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS;
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
+      pushed = circular_buffer.try_push(&buffer[count], &buffer[count + to_send]);
     }
+    if (!state_fsm.is_running()) {
+      break;
+    }
+    count += pushed;
+    to_send -= pushed;
   }
 
   // If successful transition to wait for data.
@@ -207,13 +215,20 @@ void radio_zmq_rx_channel::receive(span<radio_sample_type> data)
   logger.debug("Requested to receive {} samples.", data.size());
 
   // For each sample...
-  for (radio_sample_type& sample : data) {
+  unsigned count;
+  for (count = 0; count < data.size();) {
     // Try to push sample.
-    while (state_fsm.is_running() && !circular_buffer.try_pop(sample)) {
+    unsigned popped = circular_buffer.try_pop(data.begin() + count, data.end());
+    while (state_fsm.is_running() && popped == 0) {
       // Wait some time before trying again.
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS;
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
+      popped = circular_buffer.try_pop(data.begin() + count, data.end());
     }
+    if (!state_fsm.is_running()) {
+      break;
+    }
+    count += popped;
   }
 }
 

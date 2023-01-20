@@ -63,7 +63,7 @@ private:
   std::mutex transmit_alignment_mutex;
 
   /// Transmits a single sample.
-  void transmit_sample(radio_sample_type sample);
+  void transmit_samples(span<radio_sample_type> data);
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx channel.
