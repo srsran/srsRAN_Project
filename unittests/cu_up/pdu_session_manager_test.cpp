@@ -59,7 +59,9 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   // prepare request
   asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = 1;
-  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().gtp_teid.from_number(0x12345678);
+  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().transport_layer_address.from_string(
+      "01111111000000000000000000000001");
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x12345678);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -89,7 +91,9 @@ TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_
   // prepare request
   asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = 1;
-  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().gtp_teid.from_number(0x12345678);
+  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().transport_layer_address.from_string(
+      "01111111000000000000000000000001");
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x12345678);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -115,7 +119,9 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   // prepare setup request (to create bearer)
   asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
   pdu_session_setup_item.pdu_session_id = 0x0d;
-  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().gtp_teid.from_number(0x12345678);
+  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().transport_layer_address.from_string(
+      "01111111000000000000000000000001");
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x12345678);
 
   asn1::e1ap::drb_to_setup_item_ng_ran_s drb_to_setup;
   drb_to_setup.drb_id                                   = 0x0b;
