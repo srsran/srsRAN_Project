@@ -73,16 +73,36 @@ void uplink_processor_single_executor_impl::process_pusch(span<uint8_t>         
     ul_pusch_results result;
     result.slot = pdu.pdu.slot;
     result.csi  = proc_result.csi;
+    result.rnti = to_rnti(pdu.pdu.rnti);
 
     if (proc_result.data.has_value()) {
       ul_pusch_results::pusch_data& results_data = result.data.emplace();
-      results_data.rnti                          = to_rnti(pdu.pdu.rnti);
-      results_data.harq_id                       = pdu.harq_id;
-      results_data.decoder_result                = *proc_result.data;
-      results_data.payload                       = (proc_result.data->tb_crc_ok) ? data : span<const uint8_t>();
+
+      results_data.harq_id        = pdu.harq_id;
+      results_data.decoder_result = *proc_result.data;
+      results_data.payload        = (proc_result.data->tb_crc_ok) ? data : span<const uint8_t>();
     }
 
-    // :TODO: Add the UCI to the notifier results when available.
+    // UCI HARQ information.
+    if (!proc_result.harq_ack.payload.empty()) {
+      ul_pusch_results::pusch_uci& results_uci = result.uci.emplace();
+
+      results_uci.harq_ack.emplace(proc_result.harq_ack);
+    }
+
+    // UCI CSI1 information.
+    if (!proc_result.csi_part1.payload.empty()) {
+      ul_pusch_results::pusch_uci& results_uci = result.uci.has_value() ? result.uci.value() : result.uci.emplace();
+
+      results_uci.csi1.emplace(proc_result.csi_part1);
+    }
+
+    // UCI CSI2 information.
+    if (!proc_result.csi_part2.payload.empty()) {
+      ul_pusch_results::pusch_uci& results_uci = result.uci.has_value() ? result.uci.value() : result.uci.emplace();
+
+      results_uci.csi2.emplace(proc_result.csi_part2);
+    }
 
     // Notify the PUSCH results.
     notifier.on_new_pusch_results(result);

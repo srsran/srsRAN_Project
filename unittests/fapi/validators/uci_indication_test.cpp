@@ -97,31 +97,34 @@ INSTANTIATE_TEST_SUITE_P(RSRP,
                                                           test_case_data{65534, false},
                                                           test_case_data{65535, true})));
 
-INSTANTIATE_TEST_SUITE_P(HARQDetection,
-                         validate_uci_pusch_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
-                                              "HARQ detection status",
-                                              [](uci_pusch_pdu& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pusch_pdu::HARQ_BIT);
-                                                pdu.harq.detection_status =
-                                                    static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
-                                                pdu.harq.bit_length = 1;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{3, true},
-                                                          test_case_data{5, true},
-                                                          test_case_data{6, false})));
+INSTANTIATE_TEST_SUITE_P(
+    HARQDetection,
+    validate_uci_pusch_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
+                         "HARQ detection status",
+                         [](uci_pusch_pdu& pdu, int value) {
+                           pdu.pdu_bitmap.set(uci_pusch_pdu::HARQ_BIT);
+                           pdu.harq.detection_status = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
+                           if (pdu.harq.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+                               pdu.harq.detection_status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+                             pdu.harq.payload = {};
+                           }
+                         }}),
+                     testing::Values(test_case_data{0, false},
+                                     test_case_data{1, true},
+                                     test_case_data{3, true},
+                                     test_case_data{5, true},
+                                     test_case_data{6, false})));
 
-INSTANTIATE_TEST_SUITE_P(HARQBitLength,
+INSTANTIATE_TEST_SUITE_P(HARQ_bit_length,
                          validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "Expected HARQ bit length",
                                               [](uci_pusch_pdu& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pusch_pdu::HARQ_BIT);
-                                                pdu.harq.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.harq.bit_length = value;
+                                                pdu.harq.expected_bit_length = value;
+                                                pdu.harq.payload =
+                                                    bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>(value);
                                               }}),
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, true},
@@ -129,31 +132,61 @@ INSTANTIATE_TEST_SUITE_P(HARQBitLength,
                                                           test_case_data{1706, true},
                                                           test_case_data{1707, false})));
 
-INSTANTIATE_TEST_SUITE_P(CSIPart1Detection,
+INSTANTIATE_TEST_SUITE_P(
+    HARQ_payload_bit_length_valid,
+    validate_uci_pusch_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
+                         "Expected HARQ payload",
+                         [](uci_pusch_pdu& pdu, int value) {
+                           if (value != 2) {
+                             pdu.harq.expected_bit_length = value;
+                           }
+                           pdu.harq.payload = bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>(value);
+                         }}),
+                     testing::Values(test_case_data{1, true}, test_case_data{2, false}, test_case_data{3, true})));
+
+INSTANTIATE_TEST_SUITE_P(HARQ_payload_bit_length_invalid,
                          validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
-                                              "CSI Part 1 detection status",
+                                              "Expected HARQ payload",
                                               [](uci_pusch_pdu& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART1_BIT);
-                                                pdu.csi_part1.detection_status =
-                                                    static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
-                                                pdu.csi_part1.bit_length = 1;
+                                                pdu.harq.detection_status =
+                                                    srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
+                                                pdu.harq.payload =
+                                                    bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>(value);
                                               }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{3, true},
-                                                          test_case_data{5, true},
-                                                          test_case_data{6, false})));
+                                          testing::Values(test_case_data{0, true}, test_case_data{1, false})));
 
-INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
+INSTANTIATE_TEST_SUITE_P(
+    CSIPart1Detection,
+    validate_uci_pusch_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
+                         "CSI Part 1 detection status",
+                         [](uci_pusch_pdu& pdu, int value) {
+                           pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART1_BIT);
+                           pdu.csi_part1.detection_status =
+                               static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
+                           if (pdu.csi_part1.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+                               pdu.csi_part1.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+                             pdu.csi_part1.payload = {};
+                           }
+                         }}),
+                     testing::Values(test_case_data{0, false},
+                                     test_case_data{1, true},
+                                     test_case_data{3, true},
+                                     test_case_data{5, true},
+                                     test_case_data{6, false})));
+
+INSTANTIATE_TEST_SUITE_P(CSI1_bit_length,
                          validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "Expected CSI part1 bit length",
                                               [](uci_pusch_pdu& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART1_BIT);
-                                                pdu.csi_part1.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.csi_part1.bit_length = value;
+                                                pdu.csi_part1.expected_bit_length = value;
+                                                pdu.csi_part1.payload =
+                                                    bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>(value);
                                               }}),
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, true},
@@ -161,31 +194,36 @@ INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
                                                           test_case_data{1706, true},
                                                           test_case_data{1707, false})));
 
-INSTANTIATE_TEST_SUITE_P(CSIPart2Detection,
-                         validate_uci_pusch_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
-                                              "CSI Part 2 detection status",
-                                              [](uci_pusch_pdu& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART2_BIT);
-                                                pdu.csi_part2.detection_status =
-                                                    static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
-                                                pdu.csi_part2.bit_length = 1;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{3, true},
-                                                          test_case_data{5, true},
-                                                          test_case_data{6, false})));
+INSTANTIATE_TEST_SUITE_P(
+    CSIPart2Detection,
+    validate_uci_pusch_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
+                         "CSI Part 2 detection status",
+                         [](uci_pusch_pdu& pdu, int value) {
+                           pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART2_BIT);
+                           pdu.csi_part2.detection_status =
+                               static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
+                           if (pdu.csi_part2.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+                               pdu.csi_part2.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+                             pdu.csi_part2.payload = {};
+                           }
+                         }}),
+                     testing::Values(test_case_data{0, false},
+                                     test_case_data{1, true},
+                                     test_case_data{3, true},
+                                     test_case_data{5, true},
+                                     test_case_data{6, false})));
 
-INSTANTIATE_TEST_SUITE_P(CSIPart2BitLength,
+INSTANTIATE_TEST_SUITE_P(CSI2_bit_length,
                          validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
                                               "Expected CSI part2 bit length",
                                               [](uci_pusch_pdu& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART2_BIT);
-                                                pdu.csi_part2.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.csi_part2.bit_length = value;
+                                                pdu.csi_part2.expected_bit_length = value;
+                                                pdu.csi_part2.payload =
+                                                    bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>(value);
                                               }}),
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, true},
@@ -211,12 +249,11 @@ TEST(validate_uci_pusch_pdu_field, invalid_pdu_fails)
   pdu.timing_advance_offset_ns = std::numeric_limits<int16_t>::max();
   pdu.rssi                     = -16801;
   pdu.harq.detection_status    = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(6);
-  pdu.csi_part2.bit_length     = 1707;
 
   validator_report report(0, 0);
   ASSERT_FALSE(validate_uci_pusch_pdu(pdu, report));
   // Assert no reports were generated.
-  ASSERT_EQ(report.reports.size(), 4u);
+  ASSERT_EQ(report.reports.size(), 3u);
 }
 
 class validate_uci_pucch_format01_pdu_field
@@ -502,56 +539,49 @@ INSTANTIATE_TEST_SUITE_P(SRBitlength,
                                                           test_case_data{4, true},
                                                           test_case_data{5, false})));
 
-INSTANTIATE_TEST_SUITE_P(HARQDetection,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "HARQ detection status",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::HARQ_BIT);
-                                                pdu.harq.detection_status =
-                                                    static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
-                                                pdu.harq.bit_length = 1;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{3, true},
-                                                          test_case_data{5, true},
-                                                          test_case_data{6, false})));
+INSTANTIATE_TEST_SUITE_P(
+    HARQDetection,
+    validate_uci_pucch_format234_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
+                         "HARQ detection status",
+                         [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
+                           pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::HARQ_BIT);
+                           pdu.harq.detection_status = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
+                           if (pdu.harq.detection_status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
+                               pdu.harq.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure) {
+                             pdu.harq.payload = {};
+                           }
+                         }}),
+                     testing::Values(test_case_data{0, false},
+                                     test_case_data{1, true},
+                                     test_case_data{3, true},
+                                     test_case_data{5, true},
+                                     test_case_data{6, false})));
 
-INSTANTIATE_TEST_SUITE_P(HARQBitLength,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "Expected HARQ bit length",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::HARQ_BIT);
-                                                pdu.harq.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.harq.bit_length = value;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{850, true},
-                                                          test_case_data{1706, true},
-                                                          test_case_data{1707, false})));
-
-INSTANTIATE_TEST_SUITE_P(CSIPart1Detection,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "CSI Part 1 detection status",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
-                                                pdu.csi_part1.detection_status =
-                                                    static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
-                                                pdu.csi_part1.bit_length = 1;
-                                                pdu.uci_part1.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.uci_part1.expected_uci_payload_size = 1;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{3, true},
-                                                          test_case_data{5, true},
-                                                          test_case_data{6, false})));
+INSTANTIATE_TEST_SUITE_P(
+    CSIPart1Detection,
+    validate_uci_pucch_format234_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
+                         "CSI Part 1 detection status",
+                         [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
+                           pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
+                           pdu.csi_part1.detection_status =
+                               static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
+                           if (pdu.csi_part1.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
+                               pdu.csi_part1.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure) {
+                             pdu.csi_part1.payload = {};
+                           }
+                           pdu.uci_part1.detection_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+                           pdu.uci_part1.expected_uci_payload_size = 1;
+                         }}),
+                     testing::Values(test_case_data{0, false},
+                                     test_case_data{1, true},
+                                     test_case_data{3, true},
+                                     test_case_data{5, true},
+                                     test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
                          validate_uci_pucch_format234_pdu_field,
@@ -560,55 +590,43 @@ INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
                                                 pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
                                                 pdu.csi_part1.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.csi_part1.bit_length = value;
+                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+                                                pdu.csi_part1.expected_bit_length = value;
+                                                pdu.csi_part1.payload =
+                                                    bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>(
+                                                        value);
                                                 pdu.uci_part1.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
+                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
                                                 pdu.uci_part1.expected_uci_payload_size = 1;
                                               }}),
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, true},
                                                           test_case_data{850, true},
-                                                          test_case_data{1706, true},
-                                                          test_case_data{1707, false})));
+                                                          test_case_data{1706, true})));
 
-INSTANTIATE_TEST_SUITE_P(CSIPart2Detection,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "CSI Part 2 detection status",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
-                                                pdu.csi_part2.detection_status =
-                                                    static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
-                                                pdu.csi_part2.bit_length = 1;
-                                                pdu.uci_part2.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.uci_part2.expected_uci_payload_size = 1;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{3, true},
-                                                          test_case_data{5, true},
-                                                          test_case_data{6, false})));
-
-INSTANTIATE_TEST_SUITE_P(CSIPart2BitLength,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "Expected CSI part2 bit length",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
-                                                pdu.csi_part2.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.uci_part2.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.uci_part2.expected_uci_payload_size = 1;
-                                                pdu.csi_part2.bit_length                = value;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{850, true},
-                                                          test_case_data{1706, true},
-                                                          test_case_data{1707, false})));
+INSTANTIATE_TEST_SUITE_P(
+    CSIPart2Detection,
+    validate_uci_pucch_format234_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
+                         "CSI Part 2 detection status",
+                         [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
+                           pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
+                           pdu.csi_part2.detection_status =
+                               static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
+                           if (pdu.csi_part2.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx ||
+                               pdu.csi_part2.detection_status ==
+                                   srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure) {
+                             pdu.csi_part2.payload = {};
+                           }
+                           pdu.uci_part2.detection_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+                           pdu.uci_part2.expected_uci_payload_size = 1;
+                         }}),
+                     testing::Values(test_case_data{0, false},
+                                     test_case_data{1, true},
+                                     test_case_data{3, true},
+                                     test_case_data{5, true},
+                                     test_case_data{6, false})));
 
 INSTANTIATE_TEST_SUITE_P(UCIPart1Detection,
                          validate_uci_pucch_format234_pdu_field,
@@ -616,9 +634,6 @@ INSTANTIATE_TEST_SUITE_P(UCIPart1Detection,
                                               "UCI detection status",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
                                                 pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
-                                                pdu.csi_part1.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.csi_part1.bit_length = 1;
                                                 pdu.uci_part1.detection_status =
                                                     static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
                                                 pdu.uci_part1.expected_uci_payload_size = 1;
@@ -629,34 +644,12 @@ INSTANTIATE_TEST_SUITE_P(UCIPart1Detection,
                                                           test_case_data{5, true},
                                                           test_case_data{6, false})));
 
-INSTANTIATE_TEST_SUITE_P(UCIPart1BitLength,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "Expected UCI payload size",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
-                                                pdu.csi_part1.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.csi_part1.bit_length = 1;
-                                                pdu.uci_part1.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.uci_part1.expected_uci_payload_size = value;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{850, true},
-                                                          test_case_data{1706, true},
-                                                          test_case_data{1707, false})));
-
 INSTANTIATE_TEST_SUITE_P(UCIPart2Detection,
                          validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
                                               "UCI detection status",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
                                                 pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
-                                                pdu.csi_part2.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.csi_part2.bit_length = 1;
                                                 pdu.uci_part2.detection_status =
                                                     static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
                                                 pdu.uci_part2.expected_uci_payload_size = 1;
@@ -666,25 +659,6 @@ INSTANTIATE_TEST_SUITE_P(UCIPart2Detection,
                                                           test_case_data{3, true},
                                                           test_case_data{5, true},
                                                           test_case_data{6, false})));
-
-INSTANTIATE_TEST_SUITE_P(UCIPart2BitLength,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "Expected UCI payload size",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
-                                                pdu.csi_part2.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.csi_part2.bit_length = 1;
-                                                pdu.uci_part2.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
-                                                pdu.uci_part2.expected_uci_payload_size = value;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{850, true},
-                                                          test_case_data{1706, true},
-                                                          test_case_data{1707, false})));
 
 TEST(validate_uci_pucch_format234_pdu, valid_pdu_passes)
 {
@@ -748,7 +722,7 @@ INSTANTIATE_TEST_SUITE_P(slot,
                                                           test_case_data{159, true},
                                                           test_case_data{160, false})));
 
-TEST(validate_uci_indication_field, valid_indication_passes)
+TEST(validate_uci_indication, valid_indication_passes)
 {
   auto msg = build_valid_uci_indication();
 
@@ -756,18 +730,17 @@ TEST(validate_uci_indication_field, valid_indication_passes)
   ASSERT_TRUE(result);
 }
 
-TEST(validate_uci_indication_field, invalid_indication_fails)
+TEST(validate_uci_indication, invalid_indication_fails)
 {
   auto msg = build_valid_uci_indication();
 
   // Add 3 errors.
-  msg.sfn                                               = 1024;
-  msg.pdus[0].pusch_pdu.rssi                            = 1281;
-  msg.pdus[2].pucch_pdu_f234.csi_part1.detection_status = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(0);
+  msg.sfn                    = 1024;
+  msg.pdus[0].pusch_pdu.rssi = 1281;
 
   const auto& result = validate_uci_indication(msg);
   ASSERT_FALSE(result);
   // Assert no reports were generated.
   const auto& report = result.error();
-  ASSERT_EQ(report.reports.size(), 3u);
+  ASSERT_EQ(report.reports.size(), 2u);
 }

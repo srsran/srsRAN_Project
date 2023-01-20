@@ -504,13 +504,9 @@ static uci_harq_pdu generate_harq_pdu()
 {
   uci_harq_pdu pdu;
 
-  pdu.detection_status = generate_detection_status();
-  pdu.bit_length       = generate_bit_length();
-  if (pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass ||
-      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::no_dtx ||
-      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx_not_checked) {
-    pdu.payload.resize(std::ceil(static_cast<float>(pdu.bit_length) / 8.F));
-  }
+  pdu.detection_status    = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+  pdu.expected_bit_length = generate_bit_length();
+  pdu.payload.resize(pdu.expected_bit_length);
 
   return pdu;
 }
@@ -519,13 +515,9 @@ static uci_csi_part1 generate_csi_part1_pdu()
 {
   uci_csi_part1 pdu;
 
-  pdu.detection_status = generate_detection_status();
-  pdu.bit_length       = generate_bit_length();
-  if (pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass ||
-      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::no_dtx ||
-      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx_not_checked) {
-    pdu.payload.resize(std::ceil(static_cast<float>(pdu.bit_length) / 8.F));
-  }
+  pdu.detection_status    = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+  pdu.expected_bit_length = generate_bit_length();
+  pdu.payload.resize(pdu.expected_bit_length);
 
   return pdu;
 }
@@ -534,13 +526,9 @@ static uci_csi_part2 generate_csi_part2_pdu()
 {
   uci_csi_part2 pdu;
 
-  pdu.detection_status = generate_detection_status();
-  pdu.bit_length       = generate_bit_length();
-  if (pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass ||
-      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::no_dtx ||
-      pdu.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx_not_checked) {
-    pdu.payload.resize(std::ceil(static_cast<float>(pdu.bit_length) / 8.F));
-  }
+  pdu.detection_status    = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+  pdu.expected_bit_length = generate_bit_length();
+  pdu.payload.resize(pdu.expected_bit_length);
 
   return pdu;
 }
@@ -1002,7 +990,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   uci.harq_ack_bit_length  = 3;
   uci.csi_part1_bit_length = 4;
   uci.flags_csi_part2      = 65535;
-  uci.alpha_scaling        = 3;
+  uci.alpha_scaling        = alpha_scaling_opt::f0p5;
   uci.beta_offset_harq_ack = 12;
   uci.beta_offset_csi1     = 16;
   uci.beta_offset_csi2     = 17;

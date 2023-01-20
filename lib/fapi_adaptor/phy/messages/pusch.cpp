@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/fapi_adaptor/phy/messages/pusch.h"
+#include "srsgnb/ran/pusch/pusch_uci_beta_offset.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
@@ -51,6 +52,31 @@ static void fill_rb_allocation(pusch_processor::pdu_t& proc_pdu, const fapi::ul_
   proc_pdu.freq_alloc = rb_allocation::make_type0(vrb_bitmap, {});
 }
 
+/// Fills the \c UCI parameters of the PUSCH PDU.
+static void fill_uci(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu& fapi_pdu)
+{
+  if (!fapi_pdu.pdu_bitmap.test(fapi::ul_pusch_pdu::PUSCH_UCI_BIT)) {
+    // Set every bitlength to 0.
+    proc_pdu.uci.nof_harq_ack  = 0U;
+    proc_pdu.uci.nof_csi_part1 = 0U;
+    proc_pdu.uci.nof_csi_part2 = 0U;
+
+    return;
+  }
+
+  // Fill the UCI parameters.
+  pusch_processor::uci_description& phy_uci  = proc_pdu.uci;
+  const fapi::ul_pusch_uci&         fapi_uci = fapi_pdu.pusch_uci;
+
+  phy_uci.nof_harq_ack          = fapi_uci.harq_ack_bit_length;
+  phy_uci.nof_csi_part1         = fapi_uci.csi_part1_bit_length;
+  phy_uci.nof_csi_part2         = fapi_uci.flags_csi_part2;
+  phy_uci.alpha_scaling         = alpha_scaling_to_float(fapi_uci.alpha_scaling);
+  phy_uci.beta_offset_harq_ack  = beta_harq_ack_to_float(fapi_uci.beta_offset_harq_ack);
+  phy_uci.beta_offset_csi_part1 = beta_csi_to_float(fapi_uci.beta_offset_csi1);
+  phy_uci.beta_offset_csi_part2 = beta_csi_to_float(fapi_uci.beta_offset_csi2);
+}
+
 void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu& pdu,
                                                      const fapi::ul_pusch_pdu&    fapi_pdu,
                                                      uint16_t                     sfn,
@@ -87,8 +113,7 @@ void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
 
   fill_codeword(pdu, fapi_pdu);
 
-  // :TODO: Fill UCI.
-  proc_pdu.uci = {};
+  fill_uci(proc_pdu, fapi_pdu);
 
   // :TODO: Check the ports.
   proc_pdu.rx_ports = {0};

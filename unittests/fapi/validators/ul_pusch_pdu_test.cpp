@@ -358,7 +358,7 @@ INSTANTIATE_TEST_SUITE_P(alpha_scaling,
                          testing::Combine(testing::Values(pdu_field_data<ul_pusch_pdu>{
                                               "Alpha scaling",
                                               [](ul_pusch_pdu& pdu, int value) {
-                                                pdu.pusch_uci.alpha_scaling = value;
+                                                pdu.pusch_uci.alpha_scaling = static_cast<alpha_scaling_opt>(value);
                                               }}),
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{1, true},

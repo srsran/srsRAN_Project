@@ -16,8 +16,6 @@
 using namespace srsgnb;
 using namespace fapi_adaptor;
 
-static constexpr unsigned NOF_BITS_PER_BYTE = 8U;
-
 namespace {
 
 class mac_cell_rach_handler_dummy : public mac_cell_rach_handler
@@ -175,24 +173,6 @@ static void convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_uci_pdu::pucch_f0_or_f1_
   }
 }
 
-/// Converts the given FAPI UCI on PUSCH payload in array of bytes to bitset representation.
-static bounded_bitset<srsgnb::uci_constants::MAX_NOF_PAYLOAD_BITS>
-convert_fapi_uci_pusch_payload_to_mac(uint16_t payload_bits, span<const uint8_t> payload)
-{
-  // Convert array of bytes to array of bits.
-  static_vector<uint8_t, srsgnb::uci_constants::MAX_NOF_PAYLOAD_BITS> unpacked_bits = {};
-  unpacked_bits.resize(payload.size() * NOF_BITS_PER_BYTE);
-  srsgnb::srsvec::bit_unpack(unpacked_bits, payload);
-  // Trim to actual payload size in bits.
-  unpacked_bits.resize(payload_bits);
-  // Lowest order information bit [position 0] is mapped to the most significant bit. As per SCF-222 v4.0
-  // section 3.4.9.1.
-  // NOTE: Reversing makes sure first bit is not the leftmost bit when storing in bounded_bitset.
-  std::reverse(unpacked_bits.begin(), unpacked_bits.end());
-  // Represent array of bits as bounded_bitset.
-  return {static_cast<bool>(unpacked_bits.begin()), static_cast<bool>(unpacked_bits.end())};
-}
-
 static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch, const fapi::uci_pusch_pdu& fapi_pusch)
 {
   mac_pusch.ul_sinr = convert_fapi_to_mac_ul_sinr(fapi_pusch.ul_sinr_metric);
@@ -204,24 +184,21 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::HARQ_BIT)) {
     mac_pusch.harq_info.emplace();
     mac_pusch.harq_info.value().harq_status = fapi_pusch.harq.detection_status;
-    mac_pusch.harq_info.value().payload =
-        convert_fapi_uci_pusch_payload_to_mac(fapi_pusch.harq.bit_length, fapi_pusch.harq.payload);
+    mac_pusch.harq_info.value().payload     = fapi_pusch.harq.payload;
   }
 
   // Fill CSI Part 1.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::CSI_PART1_BIT)) {
     mac_pusch.csi_part1_info.emplace();
     mac_pusch.csi_part1_info.value().csi_status = fapi_pusch.csi_part1.detection_status;
-    mac_pusch.csi_part1_info.value().payload =
-        convert_fapi_uci_pusch_payload_to_mac(fapi_pusch.csi_part1.bit_length, fapi_pusch.csi_part1.payload);
+    mac_pusch.csi_part1_info.value().payload    = fapi_pusch.csi_part1.payload;
   }
 
   // Fill CSI Part 2.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::CSI_PART2_BIT)) {
     mac_pusch.csi_part2_info.emplace();
     mac_pusch.csi_part2_info.value().csi_status = fapi_pusch.csi_part2.detection_status;
-    mac_pusch.csi_part2_info.value().payload =
-        convert_fapi_uci_pusch_payload_to_mac(fapi_pusch.csi_part2.bit_length, fapi_pusch.csi_part2.payload);
+    mac_pusch.csi_part2_info.value().payload    = fapi_pusch.csi_part2.payload;
   }
 }
 

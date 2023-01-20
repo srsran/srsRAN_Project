@@ -54,16 +54,16 @@ TEST(uci_indication_builder, valid_pusch_pdu_harq_passes)
   uci_pusch_pdu         pdu;
   uci_pusch_pdu_builder builder(pdu);
 
-  uci_pusch_or_pucch_f2_3_4_detection_status status     = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(5);
-  unsigned                                   bit_length = 1023;
-  static_vector<uint8_t, uci_harq_pdu::MAX_UCI_HARQ_LEN> payload = {2, 3, 4, 5};
+  uci_pusch_or_pucch_f2_3_4_detection_status       status = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(5);
+  unsigned                                         bit_length = 1023;
+  bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload(bit_length);
 
-  builder.set_harq_parameters(status, bit_length, {payload});
+  builder.set_harq_parameters(status, payload.size(), payload);
 
   const auto& harq = pdu.harq;
   ASSERT_TRUE(pdu.pdu_bitmap[uci_pusch_pdu::HARQ_BIT]);
   ASSERT_EQ(status, harq.detection_status);
-  ASSERT_EQ(bit_length, harq.bit_length);
+  ASSERT_EQ(bit_length, harq.expected_bit_length);
   ASSERT_EQ(payload, harq.payload);
 }
 
@@ -74,14 +74,14 @@ TEST(uci_indication_builder, valid_pusch_pdu_csi_part1_passes)
 
   uci_pusch_or_pucch_f2_3_4_detection_status status     = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(1);
   unsigned                                   bit_length = 129;
-  static_vector<uint8_t, uci_csi_part1::MAX_CSI_PART1_LEN> payload = {2, 3, 4, 5};
+  bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload(bit_length);
 
-  builder.set_csi_part1_parameters(status, bit_length, {payload});
+  builder.set_csi_part1_parameters(status, payload.size(), payload);
 
   const auto& csi = pdu.csi_part1;
   ASSERT_TRUE(pdu.pdu_bitmap[uci_pusch_pdu::CSI_PART1_BIT]);
   ASSERT_EQ(status, csi.detection_status);
-  ASSERT_EQ(bit_length, csi.bit_length);
+  ASSERT_EQ(bit_length, csi.expected_bit_length);
   ASSERT_EQ(payload, csi.payload);
 }
 
@@ -92,14 +92,14 @@ TEST(uci_indication_builder, valid_pusch_pdu_csi_part2_passes)
 
   uci_pusch_or_pucch_f2_3_4_detection_status status     = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(3);
   unsigned                                   bit_length = 98;
-  static_vector<uint8_t, uci_csi_part2::MAX_CSI_PART2_LEN> payload = {2, 3, 4, 5};
+  bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload(bit_length);
 
-  builder.set_csi_part2_parameters(status, bit_length, {payload});
+  builder.set_csi_part2_parameters(status, payload.size(), payload);
 
   const auto& csi = pdu.csi_part2;
   ASSERT_TRUE(pdu.pdu_bitmap[uci_pusch_pdu::CSI_PART2_BIT]);
   ASSERT_EQ(status, csi.detection_status);
-  ASSERT_EQ(bit_length, csi.bit_length);
+  ASSERT_EQ(bit_length, csi.expected_bit_length);
   ASSERT_EQ(payload, csi.payload);
 }
 
@@ -237,16 +237,16 @@ TEST(uci_indication_builder, valid_pucch_f234_pdu_harq_passes)
   uci_pucch_pdu_format_2_3_4         pdu;
   uci_pucch_pdu_format_2_3_4_builder builder(pdu);
 
-  uci_pusch_or_pucch_f2_3_4_detection_status status     = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(4);
-  unsigned                                   bit_length = 40;
-  static_vector<uint8_t, uci_harq_pdu::MAX_UCI_HARQ_LEN> payload = {2, 3, 4, 5};
+  uci_pusch_or_pucch_f2_3_4_detection_status       status = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(4);
+  unsigned                                         bit_length = 40;
+  bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload(bit_length);
 
-  builder.set_harq_parameters(status, bit_length, {payload});
+  builder.set_harq_parameters(status, payload.size(), payload);
 
   const auto& harq = pdu.harq;
   ASSERT_TRUE(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::HARQ_BIT]);
   ASSERT_EQ(status, harq.detection_status);
-  ASSERT_EQ(bit_length, harq.bit_length);
+  ASSERT_EQ(bit_length, harq.expected_bit_length);
   ASSERT_EQ(payload, harq.payload);
 }
 
@@ -257,14 +257,14 @@ TEST(uci_indication_builder, valid_pucch_f234_pdu_csi_part1_passes)
 
   uci_pusch_or_pucch_f2_3_4_detection_status status     = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(3);
   unsigned                                   bit_length = 28;
-  static_vector<uint8_t, uci_csi_part1::MAX_CSI_PART1_LEN> payload = {2, 3, 4, 5};
+  bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload(bit_length);
 
-  builder.set_csi_part1_parameters(status, bit_length, {payload});
+  builder.set_csi_part1_parameters(status, payload.size(), payload);
 
   const auto& csi = pdu.csi_part1;
   ASSERT_TRUE(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT]);
   ASSERT_EQ(status, csi.detection_status);
-  ASSERT_EQ(bit_length, csi.bit_length);
+  ASSERT_EQ(bit_length, csi.expected_bit_length);
   ASSERT_EQ(payload, csi.payload);
 }
 
@@ -275,14 +275,14 @@ TEST(uci_indication_builder, valid_pucch_f234_pdu_csi_part2_passes)
 
   uci_pusch_or_pucch_f2_3_4_detection_status status     = static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(2);
   unsigned                                   bit_length = 15;
-  static_vector<uint8_t, uci_csi_part2::MAX_CSI_PART2_LEN> payload = {2, 3, 4, 5};
+  bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload(bit_length);
 
-  builder.set_csi_part2_parameters(status, bit_length, {payload});
+  builder.set_csi_part2_parameters(status, payload.size(), payload);
 
   const auto& csi = pdu.csi_part2;
   ASSERT_TRUE(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT]);
   ASSERT_EQ(status, csi.detection_status);
-  ASSERT_EQ(bit_length, csi.bit_length);
+  ASSERT_EQ(bit_length, csi.expected_bit_length);
   ASSERT_EQ(payload, csi.payload);
 }
 
@@ -296,7 +296,8 @@ TEST(uci_indication_builder, valid_pucch_f234_pdu_csi_payoad_part1_passes)
   static_vector<uint8_t, uci_payload_pusch_pucch::MAX_UCI_PAYLOAD_LEN> payload = {2, 3, 4, 5};
 
   // Builder won't allow to add an UCI PDU if it's not present a CSI PDU.
-  builder.set_csi_part1_parameters(status, bit_length, {});
+  builder.set_csi_part1_parameters(
+      status, bit_length, bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>(bit_length));
   builder.set_uci_part1_payload(status, bit_length, {payload});
 
   const auto& uci = pdu.uci_part1;
@@ -316,7 +317,8 @@ TEST(uci_indication_builder, valid_pucch_f234_pdu_csi_payoad_part2_passes)
   static_vector<uint8_t, uci_payload_pusch_pucch::MAX_UCI_PAYLOAD_LEN> payload = {2, 3, 4, 5};
 
   // Builder won't allow to add an UCI PDU if it's not present a CSI PDU.
-  builder.set_csi_part2_parameters(status, bit_length, {});
+  builder.set_csi_part2_parameters(
+      status, bit_length, bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>(bit_length));
   builder.set_uci_part2_payload(status, bit_length, {payload});
 
   const auto& uci = pdu.uci_part2;

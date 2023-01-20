@@ -48,6 +48,9 @@ private:
   /// Notifies a new FAPI \e Rx_Data.indication through the data notifier.
   void notify_rx_data_indication(const ul_pusch_results& result);
 
+  /// Notifies a new FAPI \e UCI.indication through the data notifier.
+  void notify_uci_pusch_indication(const ul_pusch_results& result);
+
 private:
   /// FAPI slot-based, data-specific message notifier.
   std::reference_wrapper<fapi::slot_data_message_notifier> data_notifier;

@@ -106,7 +106,7 @@ static bool validate_harq_detection_status(uci_pdu_type pdu_type, unsigned value
       MIN_VALUE, MAX_VALUE, value, "HARQ detection status", msg_type, static_cast<unsigned>(pdu_type), report);
 }
 
-/// Validates the expected HARQ bit length detection status property of the HARQ PDU for format 2, 3 or 4 or for PUSCH,
+/// Validates the expected HARQ bit length property of the HARQ PDU for format 2, 3 or 4 or for PUSCH,
 /// as per SCF-222 v4.0 section 3.4.9.4.
 static bool validate_harq_expected_bit_length(uci_pdu_type pdu_type, unsigned value, validator_report& report)
 {
@@ -115,6 +115,34 @@ static bool validate_harq_expected_bit_length(uci_pdu_type pdu_type, unsigned va
 
   return validate_field(
       MIN_VALUE, MAX_VALUE, value, "Expected HARQ bit length", msg_type, static_cast<unsigned>(pdu_type), report);
+}
+
+/// Validates the expected HARQ payload property of the HARQ PDU for format 2, 3 or 4 or for PUSCH,
+/// as per SCF-222 v4.0 section 3.4.9.4.
+static bool validate_harq_payload_size(uci_pdu_type                               pdu_type,
+                                       unsigned                                   expected_payload_bit_length,
+                                       unsigned                                   actual_payload_bit_length,
+                                       uci_pusch_or_pucch_f2_3_4_detection_status status,
+                                       validator_report&                          report)
+{
+  if (status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+      status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+    static const unsigned EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE = 0;
+
+    return validate_field_eq(EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE,
+                             actual_payload_bit_length,
+                             "Expected HARQ payload",
+                             msg_type,
+                             static_cast<unsigned>(pdu_type),
+                             report);
+  }
+
+  return validate_field_eq(expected_payload_bit_length,
+                           actual_payload_bit_length,
+                           "Expected HARQ payload",
+                           msg_type,
+                           static_cast<unsigned>(pdu_type),
+                           report);
 }
 
 /// Validates the CSI part 1 detection status property of the CSI part 1 PDU, as per SCF-222 v4.0 section 3.4.9.4.
@@ -127,7 +155,7 @@ static bool validate_csi_part1_detection_status(uci_pdu_type pdu_type, unsigned 
       MIN_VALUE, MAX_VALUE, value, "CSI Part 1 detection status", msg_type, static_cast<unsigned>(pdu_type), report);
 }
 
-/// Validates the expected CSI part 1 bit length detection status property of the CSI part 1 PDU, as per SCF-222 v4.0
+/// Validates the expected CSI part 1 bit length property of the CSI part 1 PDU, as per SCF-222 v4.0
 /// section 3.4.9.4.
 static bool validate_csi_part1_expected_bit_length(uci_pdu_type pdu_type, unsigned value, validator_report& report)
 {
@@ -136,6 +164,34 @@ static bool validate_csi_part1_expected_bit_length(uci_pdu_type pdu_type, unsign
 
   return validate_field(
       MIN_VALUE, MAX_VALUE, value, "Expected CSI part1 bit length", msg_type, static_cast<unsigned>(pdu_type), report);
+}
+
+/// Validates the expected CSI1 payload property of the CSI part 1 PDU for format 2, 3 or 4 or for PUSCH,
+/// as per SCF-222 v4.0 section 3.4.9.4.
+static bool validate_csi1_payload_size(uci_pdu_type                               pdu_type,
+                                       unsigned                                   expected_payload_bit_length,
+                                       unsigned                                   actual_payload_bit_length,
+                                       uci_pusch_or_pucch_f2_3_4_detection_status status,
+                                       validator_report&                          report)
+{
+  if (status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+      status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+    static const unsigned EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE = 0;
+
+    return validate_field_eq(EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE,
+                             actual_payload_bit_length,
+                             "Expected CSI Part 1 payload",
+                             msg_type,
+                             static_cast<unsigned>(pdu_type),
+                             report);
+  }
+
+  return validate_field_eq(expected_payload_bit_length,
+                           actual_payload_bit_length,
+                           "Expected CSI Part 1 payload",
+                           msg_type,
+                           static_cast<unsigned>(pdu_type),
+                           report);
 }
 
 /// Validates the CSI part 2 detection status property of the CSI part 2 PDU, as per SCF-222 v4.0 section 3.4.9.4.
@@ -148,7 +204,7 @@ static bool validate_csi_part2_detection_status(uci_pdu_type pdu_type, unsigned 
       MIN_VALUE, MAX_VALUE, value, "CSI Part 2 detection status", msg_type, static_cast<unsigned>(pdu_type), report);
 }
 
-/// Validates the expected CSI part 2 bit length detection status property of the CSI part 2 PDU, as per SCF-222 v4.0
+/// Validates the expected CSI part 2 bit length property of the CSI part 2 PDU, as per SCF-222 v4.0
 /// section 3.4.9.4.
 static bool validate_csi_part2_expected_bit_length(uci_pdu_type pdu_type, unsigned value, validator_report& report)
 {
@@ -157,6 +213,34 @@ static bool validate_csi_part2_expected_bit_length(uci_pdu_type pdu_type, unsign
 
   return validate_field(
       MIN_VALUE, MAX_VALUE, value, "Expected CSI part2 bit length", msg_type, static_cast<unsigned>(pdu_type), report);
+}
+
+/// Validates the expected CSI2 payload property of the CSI part 2 PDU for format 2, 3 or 4 or for PUSCH,
+/// as per SCF-222 v4.0 section 3.4.9.4.
+static bool validate_csi2_payload_size(uci_pdu_type                               pdu_type,
+                                       unsigned                                   expected_payload_bit_length,
+                                       unsigned                                   actual_payload_bit_length,
+                                       uci_pusch_or_pucch_f2_3_4_detection_status status,
+                                       validator_report&                          report)
+{
+  if (status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+      status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+    static const unsigned EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE = 0;
+
+    return validate_field_eq(EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE,
+                             actual_payload_bit_length,
+                             "Expected CSI Part 2 payload",
+                             msg_type,
+                             static_cast<unsigned>(pdu_type),
+                             report);
+  }
+
+  return validate_field_eq(expected_payload_bit_length,
+                           actual_payload_bit_length,
+                           "Expected CSI Part 2 payload",
+                           msg_type,
+                           static_cast<unsigned>(pdu_type),
+                           report);
 }
 
 bool srsgnb::fapi::validate_uci_pusch_pdu(const uci_pusch_pdu& pdu, validator_report& report)
@@ -177,24 +261,33 @@ bool srsgnb::fapi::validate_uci_pusch_pdu(const uci_pusch_pdu& pdu, validator_re
   // Validate HARQ when it is present.
   if (pdu.pdu_bitmap[uci_pusch_pdu::HARQ_BIT]) {
     result &= validate_harq_detection_status(pdu_type, static_cast<unsigned>(pdu.harq.detection_status), report);
-    result &= validate_harq_expected_bit_length(pdu_type, pdu.harq.bit_length, report);
-    // NOTE: HARQ payload property will not be checked.
+    result &= validate_harq_expected_bit_length(pdu_type, pdu.harq.expected_bit_length, report);
+    result &= validate_harq_payload_size(
+        pdu_type, pdu.harq.expected_bit_length, pdu.harq.payload.size(), pdu.harq.detection_status, report);
   }
 
   // Validate CSI part 1 when it is present.
   if (pdu.pdu_bitmap[uci_pusch_pdu::CSI_PART1_BIT]) {
     result &=
         validate_csi_part1_detection_status(pdu_type, static_cast<unsigned>(pdu.csi_part1.detection_status), report);
-    result &= validate_csi_part1_expected_bit_length(pdu_type, pdu.csi_part1.bit_length, report);
-    // NOTE: CSI part 1 payload property will not be checked.
+    result &= validate_csi_part1_expected_bit_length(pdu_type, pdu.csi_part1.expected_bit_length, report);
+    result &= validate_csi1_payload_size(pdu_type,
+                                         pdu.csi_part1.expected_bit_length,
+                                         pdu.csi_part1.payload.size(),
+                                         pdu.csi_part1.detection_status,
+                                         report);
   }
 
   // Validate CSI part 2 when it is present.
   if (pdu.pdu_bitmap[uci_pusch_pdu::CSI_PART2_BIT]) {
     result &=
         validate_csi_part2_detection_status(pdu_type, static_cast<unsigned>(pdu.csi_part2.detection_status), report);
-    result &= validate_csi_part2_expected_bit_length(pdu_type, pdu.csi_part2.bit_length, report);
-    // NOTE: CSI part 2 payload property will not be checked.
+    result &= validate_csi_part2_expected_bit_length(pdu_type, pdu.csi_part2.expected_bit_length, report);
+    result &= validate_csi2_payload_size(pdu_type,
+                                         pdu.csi_part2.expected_bit_length,
+                                         pdu.csi_part2.payload.size(),
+                                         pdu.csi_part2.detection_status,
+                                         report);
   }
 
   return result;
@@ -405,16 +498,21 @@ bool srsgnb::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2
   // Validate HARQ when it is present.
   if (pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::HARQ_BIT]) {
     result &= validate_harq_detection_status(pdu_type, static_cast<unsigned>(pdu.harq.detection_status), report);
-    result &= validate_harq_expected_bit_length(pdu_type, pdu.harq.bit_length, report);
-    // NOTE: HARQ payload property will not be checked.
+    result &= validate_harq_expected_bit_length(pdu_type, pdu.harq.expected_bit_length, report);
+    result &= validate_harq_payload_size(
+        pdu_type, pdu.harq.expected_bit_length, pdu.harq.payload.size(), pdu.harq.detection_status, report);
   }
 
   // Validate CSI part 1 when it is present.
   if (pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT]) {
     result &=
         validate_csi_part1_detection_status(pdu_type, static_cast<unsigned>(pdu.csi_part1.detection_status), report);
-    result &= validate_csi_part1_expected_bit_length(pdu_type, pdu.csi_part1.bit_length, report);
-    // NOTE: CSI part 1 payload property will not be checked.
+    result &= validate_csi_part1_expected_bit_length(pdu_type, pdu.csi_part1.expected_bit_length, report);
+    result &= validate_csi1_payload_size(pdu_type,
+                                         pdu.csi_part1.expected_bit_length,
+                                         pdu.csi_part1.payload.size(),
+                                         pdu.csi_part1.detection_status,
+                                         report);
 
     // Check the UCI part 1 payload.
     result &= validate_uci_detection_status(static_cast<unsigned>(pdu.uci_part1.detection_status), report);
@@ -425,8 +523,12 @@ bool srsgnb::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2
   if (pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT]) {
     result &=
         validate_csi_part2_detection_status(pdu_type, static_cast<unsigned>(pdu.csi_part2.detection_status), report);
-    result &= validate_csi_part2_expected_bit_length(pdu_type, pdu.csi_part2.bit_length, report);
-    // NOTE: CSI part 2 payload property will not be checked.
+    result &= validate_csi_part2_expected_bit_length(pdu_type, pdu.csi_part2.expected_bit_length, report);
+    result &= validate_csi2_payload_size(pdu_type,
+                                         pdu.csi_part2.expected_bit_length,
+                                         pdu.csi_part2.payload.size(),
+                                         pdu.csi_part2.detection_status,
+                                         report);
 
     // Check the UCI part 2 payload.
     result &= validate_uci_detection_status(static_cast<unsigned>(pdu.uci_part2.detection_status), report);

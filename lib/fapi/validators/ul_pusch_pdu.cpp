@@ -527,7 +527,7 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
     result &= validate_harq_ack_bit_len(uci.harq_ack_bit_length, report);
     result &= validate_csi_part1_bit_len(uci.csi_part1_bit_length, report);
     result &= validate_flag_csi_part2(uci.flags_csi_part2, report);
-    result &= validate_alpha_scaling(uci.alpha_scaling, report);
+    result &= validate_alpha_scaling(static_cast<unsigned>(uci.alpha_scaling), report);
     result &= validate_beta_offset_harq_ack(uci.beta_offset_harq_ack, report);
     result &= validate_beta_offset_csi1(uci.beta_offset_csi1, report);
     result &= validate_beta_offset_csi2(uci.beta_offset_csi2, report);

@@ -35,8 +35,6 @@ struct ul_prach_results {
 struct ul_pusch_results {
   /// PUSCH data processing results, metadata and payload.
   struct pusch_data {
-    /// Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
-    rnti_t rnti;
     /// HARQ process ID.
     unsigned harq_id;
     /// PUSCH decoder result.
@@ -48,6 +46,18 @@ struct ul_pusch_results {
     span<const uint8_t> payload;
   };
 
+  /// PUSCH UCI processing results.
+  struct pusch_uci {
+    /// HARQ ACK results.
+    optional<pusch_uci_field> harq_ack;
+    /// CSI Part 1 results.
+    optional<pusch_uci_field> csi1;
+    /// CSI Part 2 results.
+    optional<pusch_uci_field> csi2;
+  };
+
+  /// Parameter \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
+  rnti_t rnti;
   /// Slot description (also specifies the numerology).
   slot_point slot;
   /// Channel state information.
@@ -56,6 +66,10 @@ struct ul_pusch_results {
   ///
   /// \note This parameter is present if the PUSCH PDU contains data.
   optional<pusch_data> data;
+  /// \brief PUSCH UCI.
+  ///
+  /// \note This parameter is present if the PUSCH PDU contains UCI.
+  optional<pusch_uci> uci;
 };
 
 /// PUCCH results structure.

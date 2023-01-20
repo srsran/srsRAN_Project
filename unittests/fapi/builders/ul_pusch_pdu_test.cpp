@@ -186,37 +186,16 @@ TEST(ul_pusch_pdu_builder, valid_data_parameters_passes)
   ASSERT_EQ(cb_present, data.cb_present_and_position);
 }
 
-static unsigned get_alpha_scaling_value(float alpha_scaling)
-{
-  if (std::fabs(alpha_scaling - 0.5F) < 0.001) {
-    return 0U;
-  }
-
-  if (std::fabs(alpha_scaling - 0.65F) < 0.001) {
-    return 1U;
-  }
-
-  if (std::fabs(alpha_scaling - 0.8F) < 0.001) {
-    return 2U;
-  }
-
-  if (std::fabs(alpha_scaling - 1.F) < 0.001) {
-    return 3U;
-  }
-
-  srsgnb_assert(0, "Invalid alpha scaling value ({})", alpha_scaling);
-  return 0U;
-}
-
 TEST(ul_pusch_pdu_builder, valid_uci_parameters_passes)
 {
-  unsigned           harq_ack_bit_len     = 3;
-  unsigned           csi_part1_bit_len    = 5;
-  unsigned           flag_csi_part2       = 54;
-  std::vector<float> alpha_scaling_vector = {0.5F, 0.65F, 0.8F, 1.F};
-  unsigned           beta_offset_harq_ack = 12;
-  unsigned           beta_offset_csi1     = 2;
-  unsigned           beta_offset_csi2     = 3;
+  unsigned                       harq_ack_bit_len     = 3;
+  unsigned                       csi_part1_bit_len    = 5;
+  unsigned                       flag_csi_part2       = 54;
+  std::vector<alpha_scaling_opt> alpha_scaling_vector = {
+      alpha_scaling_opt::f0p5, alpha_scaling_opt::f0p65, alpha_scaling_opt::f0p8, alpha_scaling_opt::f1};
+  unsigned beta_offset_harq_ack = 12;
+  unsigned beta_offset_csi1     = 2;
+  unsigned beta_offset_csi2     = 3;
 
   for (auto alpha_scaling : alpha_scaling_vector) {
     ul_pusch_pdu         pdu;
@@ -238,7 +217,7 @@ TEST(ul_pusch_pdu_builder, valid_uci_parameters_passes)
     ASSERT_EQ(harq_ack_bit_len, uci.harq_ack_bit_length);
     ASSERT_EQ(csi_part1_bit_len, uci.csi_part1_bit_length);
     ASSERT_EQ(flag_csi_part2, uci.flags_csi_part2);
-    ASSERT_EQ(get_alpha_scaling_value(alpha_scaling), uci.alpha_scaling);
+    ASSERT_EQ(alpha_scaling, uci.alpha_scaling);
   }
 }
 

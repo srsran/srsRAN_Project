@@ -314,9 +314,10 @@ prach_occasion_info unittests::build_valid_prach_occassion()
   return prach;
 }
 
-pusch_information unittests::build_valid_pusch_pdu()
+ul_sched_info unittests::build_valid_pusch_pdu()
 {
-  pusch_information pusch;
+  ul_sched_info      info;
+  pusch_information& pusch = info.pusch_cfg;
 
   static bwp_configuration bwp_cfg = {false, subcarrier_spacing::kHz15, {10, 10}};
 
@@ -344,7 +345,17 @@ pusch_information unittests::build_valid_pusch_pdu()
   pusch.tb_size_bytes              = 11;
   pusch.num_cb                     = 0;
 
-  return pusch;
+  // UCI.
+  uci_info& uci            = info.uci.emplace();
+  uci.harq_ack_nof_bits    = 1;
+  uci.csi_part1_nof_bits   = 2;
+  uci.csi_part2_nof_bits   = 3;
+  uci.alpha                = alpha_scaling_opt::f0p5;
+  uci.beta_offset_harq_ack = 4;
+  uci.beta_offset_csi_1    = 5;
+  uci.beta_offset_csi_2    = 6;
+
+  return info;
 }
 
 pucch_info unittests::build_valid_pucch_format_1_pdu()

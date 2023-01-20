@@ -1351,48 +1351,49 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table HARQ PDU for Format 2, Format 3 or
   /// Format 4 or for PUSCH.
   uci_pusch_pdu_builder& set_harq_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
-                                             uint16_t                                   bit_length,
-                                             span<const uint8_t>                        payload)
+                                             uint16_t                                   expected_bit_length,
+                                             const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
   {
     pdu.pdu_bitmap.set(uci_pusch_pdu::HARQ_BIT);
 
-    auto& harq            = pdu.harq;
-    harq.detection_status = detection;
-    harq.bit_length       = bit_length;
-
-    harq.payload.assign(payload.begin(), payload.end());
+    auto& harq               = pdu.harq;
+    harq.detection_status    = detection;
+    harq.expected_bit_length = expected_bit_length;
+    harq.payload             = payload;
 
     return *this;
   }
 
   /// \brief Sets the CSI part 1 PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part1 PDU.
-  uci_pusch_pdu_builder& set_csi_part1_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
-                                                  uint16_t                                   bit_length,
-                                                  span<const uint8_t>                        payload)
+  uci_pusch_pdu_builder&
+  set_csi_part1_parameters(uci_pusch_or_pucch_f2_3_4_detection_status                            detection,
+                           uint16_t                                                              expected_bit_length,
+                           const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
   {
     pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART1_BIT);
 
-    auto& csi            = pdu.csi_part1;
-    csi.detection_status = detection;
-    csi.bit_length       = bit_length;
-    csi.payload.assign(payload.begin(), payload.end());
+    auto& csi               = pdu.csi_part1;
+    csi.detection_status    = detection;
+    csi.expected_bit_length = expected_bit_length;
+    csi.payload             = payload;
 
     return *this;
   }
 
   /// \brief Sets the CSI part 2 PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part2 PDU.
-  uci_pusch_pdu_builder& set_csi_part2_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
-                                                  uint16_t                                   bit_length,
-                                                  span<const uint8_t>                        payload)
+  uci_pusch_pdu_builder&
+  set_csi_part2_parameters(uci_pusch_or_pucch_f2_3_4_detection_status                            detection,
+                           uint16_t                                                              expected_bit_length,
+                           const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
   {
     pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART2_BIT);
 
-    auto& csi            = pdu.csi_part2;
-    csi.detection_status = detection;
-    csi.bit_length       = bit_length;
-    csi.payload.assign(payload.begin(), payload.end());
+    auto& csi               = pdu.csi_part2;
+    csi.detection_status    = detection;
+    csi.expected_bit_length = expected_bit_length;
+    csi.payload             = payload;
 
     return *this;
   }
@@ -1624,49 +1625,51 @@ public:
   /// \brief Sets the HARQ PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format 3 or
   /// Format 4 PDU.
-  uci_pucch_pdu_format_2_3_4_builder& set_harq_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
-                                                          uint16_t                                   bit_length,
-                                                          span<const uint8_t>                        payload)
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_harq_parameters(uci_pusch_or_pucch_f2_3_4_detection_status              detection,
+                      uint16_t                                                expected_bit_length,
+                      const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::HARQ_BIT);
 
-    auto& harq            = pdu.harq;
-    harq.detection_status = detection;
-    harq.bit_length       = bit_length;
-
-    harq.payload.assign(payload.begin(), payload.end());
+    auto& harq               = pdu.harq;
+    harq.detection_status    = detection;
+    harq.expected_bit_length = expected_bit_length;
+    harq.payload             = payload;
 
     return *this;
   }
 
   /// \brief Sets the CSI Part 1 PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part 1 PDU.
-  uci_pucch_pdu_format_2_3_4_builder& set_csi_part1_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
-                                                               uint16_t                                   bit_length,
-                                                               span<const uint8_t>                        payload)
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_csi_part1_parameters(uci_pusch_or_pucch_f2_3_4_detection_status                            detection,
+                           uint16_t                                                              expected_bit_length,
+                           const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
 
-    auto& csi            = pdu.csi_part1;
-    csi.detection_status = detection;
-    csi.bit_length       = bit_length;
-    csi.payload.assign(payload.begin(), payload.end());
+    auto& csi               = pdu.csi_part1;
+    csi.detection_status    = detection;
+    csi.expected_bit_length = expected_bit_length;
+    csi.payload             = payload;
 
     return *this;
   }
 
   /// \brief Sets the CSI Part 2 PDU parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part 2 PDU.
-  uci_pucch_pdu_format_2_3_4_builder& set_csi_part2_parameters(uci_pusch_or_pucch_f2_3_4_detection_status detection,
-                                                               uint16_t                                   bit_length,
-                                                               span<const uint8_t>                        payload)
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_csi_part2_parameters(uci_pusch_or_pucch_f2_3_4_detection_status                            detection,
+                           uint16_t                                                              expected_bit_length,
+                           const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
 
-    auto& csi            = pdu.csi_part2;
-    csi.detection_status = detection;
-    csi.bit_length       = bit_length;
-    csi.payload.assign(payload.begin(), payload.end());
+    auto& csi               = pdu.csi_part2;
+    csi.detection_status    = detection;
+    csi.expected_bit_length = expected_bit_length;
+    csi.payload             = payload;
 
     return *this;
   }
@@ -2102,29 +2105,6 @@ class ul_pusch_pdu_builder
 {
   ul_pusch_pdu& pdu;
 
-  /// Convert alpha scaling property from float to FAPI unsigned.
-  static unsigned convert_alpha_scaling(float alpha_scaling)
-  {
-    if (std::fabs(alpha_scaling - 0.5F) < 0.001F) {
-      return 0U;
-    }
-
-    if (std::fabs(alpha_scaling - 0.65F) < 0.001F) {
-      return 1U;
-    }
-
-    if (std::fabs(alpha_scaling - 0.8F) < 0.001F) {
-      return 2U;
-    }
-
-    if (std::fabs(alpha_scaling - 1.F) < 0.001F) {
-      return 3U;
-    }
-
-    srsgnb_assert(0, "Invalid alpha scaling value ({})", alpha_scaling);
-    return 0U;
-  }
-
 public:
   explicit ul_pusch_pdu_builder(ul_pusch_pdu& pdu_) : pdu(pdu_)
   {
@@ -2351,13 +2331,13 @@ public:
 
   /// Adds optional PUSCH UCI information to the PUSCH PDU and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH UCI information.
-  ul_pusch_pdu_builder& add_optional_pusch_uci(uint16_t harq_ack_bit_len,
-                                               uint16_t csi_part1_bit_len,
-                                               uint16_t flag_csi_part2_bit_len,
-                                               float    alpha_scaling,
-                                               uint8_t  beta_offset_harq_ack,
-                                               uint8_t  beta_offset_csi_1,
-                                               uint8_t  beta_offset_csi_2)
+  ul_pusch_pdu_builder& add_optional_pusch_uci(uint16_t          harq_ack_bit_len,
+                                               uint16_t          csi_part1_bit_len,
+                                               uint16_t          flag_csi_part2_bit_len,
+                                               alpha_scaling_opt alpha_scaling,
+                                               uint8_t           beta_offset_harq_ack,
+                                               uint8_t           beta_offset_csi_1,
+                                               uint8_t           beta_offset_csi_2)
   {
     pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT);
 
@@ -2366,7 +2346,7 @@ public:
     uci.harq_ack_bit_length  = harq_ack_bit_len;
     uci.csi_part1_bit_length = csi_part1_bit_len;
     uci.flags_csi_part2      = flag_csi_part2_bit_len;
-    uci.alpha_scaling        = convert_alpha_scaling(alpha_scaling);
+    uci.alpha_scaling        = alpha_scaling;
     uci.beta_offset_harq_ack = beta_offset_harq_ack;
     uci.beta_offset_csi1     = beta_offset_csi_1;
     uci.beta_offset_csi2     = beta_offset_csi_2;

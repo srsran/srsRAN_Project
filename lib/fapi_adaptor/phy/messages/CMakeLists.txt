@@ -15,4 +15,4 @@ set(SOURCES
         ssb.cpp)
 
 add_library(srsgnb_fapi_phy_message_adaptors STATIC ${SOURCES})
-target_link_libraries(srsgnb_fapi_phy_message_adaptors srsvec srsgnb_upper_phy_support)
+target_link_libraries(srsgnb_fapi_phy_message_adaptors srsvec srsgnb_upper_phy_support srsgnb_ran)

@@ -27,7 +27,7 @@ void upper_phy_rx_results_notifier_wrapper::on_new_pusch_results(const ul_pusch_
   // Free the soft buffer in the pool when the PUSCH PDU is successfully decoded.
   if (result.data && result.data->decoder_result.tb_crc_ok) {
     rx_softbuffer_identifier id;
-    id.rnti        = result.data->rnti;
+    id.rnti        = result.rnti;
     id.harq_ack_id = result.data->harq_id;
 
     softbuffer_pool.free_softbuffer(id);

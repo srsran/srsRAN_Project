@@ -26,6 +26,8 @@
 #include "srsgnb/ran/slot_pdu_capacity_constants.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/ran/uci/uci_configuration.h"
+#include "srsgnb/ran/uci/uci_constants.h"
 #include "srsgnb/ran/uci/uci_mapping.h"
 #include "srsgnb/support/units.h"
 #include <array>
@@ -511,13 +513,13 @@ struct ul_pusch_data {
 
 /// Uplink PUSCH UCI information.
 struct ul_pusch_uci {
-  uint16_t harq_ack_bit_length;
-  uint16_t csi_part1_bit_length;
-  uint16_t flags_csi_part2;
-  uint8_t  alpha_scaling;
-  uint8_t  beta_offset_harq_ack;
-  uint8_t  beta_offset_csi1;
-  uint8_t  beta_offset_csi2;
+  uint16_t          harq_ack_bit_length;
+  uint16_t          csi_part1_bit_length;
+  uint16_t          flags_csi_part2;
+  alpha_scaling_opt alpha_scaling;
+  uint8_t           beta_offset_harq_ack;
+  uint8_t           beta_offset_csi1;
+  uint8_t           beta_offset_csi2;
 };
 
 enum class ul_ptrs_power_type : uint8_t { dB0, dB3, dB4_77, dB6 };
@@ -914,32 +916,23 @@ struct crc_indication_message : public base_message {
 
 /// UCI CSI part1 information.
 struct uci_csi_part1 {
-  /// Maximum number of supported CSI part 1 bytes in this message.
-  static constexpr unsigned MAX_CSI_PART1_LEN = 214;
-
-  uci_pusch_or_pucch_f2_3_4_detection_status detection_status;
-  uint16_t                                   bit_length;
-  static_vector<uint8_t, MAX_CSI_PART1_LEN>  payload;
+  uci_pusch_or_pucch_f2_3_4_detection_status                     detection_status;
+  uint16_t                                                       expected_bit_length;
+  bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
 };
 
 /// UCI CSI part2 information.
 struct uci_csi_part2 {
-  /// Maximum number of supported CSI part 2 bytes in this message.
-  static constexpr unsigned MAX_CSI_PART2_LEN = 214;
-
-  uci_pusch_or_pucch_f2_3_4_detection_status detection_status;
-  uint16_t                                   bit_length;
-  static_vector<uint8_t, MAX_CSI_PART2_LEN>  payload;
+  uci_pusch_or_pucch_f2_3_4_detection_status                     detection_status;
+  uint16_t                                                       expected_bit_length;
+  bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
 };
 
 /// UCI HARQ PDU information.
 struct uci_harq_pdu {
-  /// Maximum number of supported bytes in this message.
-  static constexpr unsigned MAX_UCI_HARQ_LEN = 214;
-
-  uci_pusch_or_pucch_f2_3_4_detection_status detection_status;
-  uint16_t                                   bit_length;
-  static_vector<uint8_t, MAX_UCI_HARQ_LEN>   payload;
+  uci_pusch_or_pucch_f2_3_4_detection_status       detection_status;
+  uint16_t                                         expected_bit_length;
+  bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload;
 };
 
 /// PUSCH UCI PDU information.
