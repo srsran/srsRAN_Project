@@ -88,8 +88,9 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
         const auto& pucch = msg.ucis[i].pucch_f0_or_f1;
 
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
+        pdu.sr_detected = false;
         if (pucch.sr_info.has_value()) {
-          pdu.sr_detected = pucch.sr_info->sr_detected;
+          pdu.sr_detected = pucch.sr_info.value().sr_detected;
         }
         if (pucch.harq_info.has_value()) {
           // NOTES:
@@ -107,18 +108,17 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
           // notification of the second bit of {DTX, (N)ACK} would be seen by the scheduler as the first bit of the
           // expected 2-bit reporting. To prevent this, we assume that PUCCH Format 0 or 1 UCI is valid if none of the 1
           // or 2 bits report is DTX (not detected).
-          auto is_valid_harq_ack{true};
-          for (unsigned n = 0; n < pucch.harq_info->harqs.size(); ++n) {
-            if (pucch.harq_info->harqs[n] == uci_pucch_f0_or_f1_harq_values::dtx) {
-              is_valid_harq_ack = false;
-              break;
-            }
-          }
+
+          const auto& harq_pdus = pucch.harq_info.value().harqs;
+          bool        is_valid_harq_ack =
+              std::find_if(harq_pdus.begin(), harq_pdus.end(), [](uci_pucch_f0_or_f1_harq_values harq_ack_value) {
+                return harq_ack_value == uci_pucch_f0_or_f1_harq_values::dtx;
+              }) == harq_pdus.end();
 
           if (is_valid_harq_ack) {
-            pdu.harqs.resize(pucch.harq_info->harqs.size());
+            pdu.harqs.resize(harq_pdus.size());
             for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-              pdu.harqs[j] = pucch.harq_info->harqs[j] == uci_pucch_f0_or_f1_harq_values::ack;
+              pdu.harqs[j] = harq_pdus[j] == uci_pucch_f0_or_f1_harq_values::ack;
             }
           }
         }
