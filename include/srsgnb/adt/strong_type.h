@@ -53,6 +53,30 @@ public:
   explicit operator U() const { return static_cast<U>(static_cast<const T&>(*this).value()); }
 };
 
+/// Base class that defines the multiplication operators for the given type.
+template <typename T, typename U>
+class strong_multiplication_with_type
+{
+public:
+  friend constexpr T& operator*=(T& lhs, U rhs)
+  {
+    lhs.value() *= rhs;
+    return lhs;
+  }
+
+  friend constexpr T operator*(T lhs, U rhs)
+  {
+    lhs *= rhs;
+    return lhs;
+  }
+
+  friend constexpr T operator*(U lhs, T rhs)
+  {
+    rhs *= lhs;
+    return rhs;
+  }
+};
+
 } // namespace detail
 
 /// \brief Template class for strong typing arithmetic types.
@@ -103,6 +127,17 @@ struct strong_equality_with {
 
   template <typename T>
   class strong_property : public detail::strong_equality_with_type<T, Ts>...
+  {
+  };
+};
+
+/// Multiplication operator definitions for strong types and the list of types in the template argument pack.
+template <typename... Ts>
+struct strong_multiplication_with {
+  static_assert(std::is_arithmetic<Ts...>::value, "All Ts should be arithmetic types");
+
+  template <typename T>
+  class strong_property : public detail::strong_multiplication_with_type<T, Ts>...
   {
   };
 };

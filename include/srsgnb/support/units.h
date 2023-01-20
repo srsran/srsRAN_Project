@@ -37,10 +37,18 @@ class bytes;
 /// \brief Abstraction of bit as a unit of digital information.
 ///
 /// An object of this type will represent an amount of digital information expressed in bits.
-class bits : public strong_type<unsigned, detail::bit_tag, strong_arithmetic, strong_increment_decrement>
+class bits : public strong_type<unsigned,
+                                detail::bit_tag,
+                                strong_arithmetic,
+                                strong_increment_decrement,
+                                strong_multiplication_with<unsigned>>
 {
   /// Type alias for the base class of the bits units class.
-  using bits_base = strong_type<unsigned, detail::bit_tag, strong_arithmetic, strong_increment_decrement>;
+  using bits_base = strong_type<unsigned,
+                                detail::bit_tag,
+                                strong_arithmetic,
+                                strong_increment_decrement,
+                                strong_multiplication_with<unsigned>>;
 
 public:
   using bits_base::bits_base;
@@ -61,10 +69,18 @@ public:
 ///
 /// An object of this class will represent an amount of digital information expressed in bytes. The class also provides
 /// a method to convert such amount into a number of information bits.
-class bytes : public strong_type<unsigned, detail::byte_tag, strong_arithmetic, strong_increment_decrement>
+class bytes : public strong_type<unsigned,
+                                 detail::byte_tag,
+                                 strong_arithmetic,
+                                 strong_increment_decrement,
+                                 strong_multiplication_with<unsigned>>
 {
   /// Type alias for the base class of the byte units class.
-  using bytes_base = strong_type<unsigned, detail::byte_tag, strong_arithmetic, strong_increment_decrement>;
+  using bytes_base = strong_type<unsigned,
+                                 detail::byte_tag,
+                                 strong_arithmetic,
+                                 strong_increment_decrement,
+                                 strong_multiplication_with<unsigned>>;
 
 public:
   using bytes_base::bytes_base;

@@ -130,3 +130,14 @@ TEST(strong_type_test, conversion)
   strong_int a{2};
   ASSERT_EQ(static_cast<unsigned>(a), 2);
 }
+
+TEST(strong_type_test, multiplication_with_type)
+{
+  using strong_int = strong_type<int, struct strong_int_tag, strong_multiplication_with<int>>;
+
+  strong_int a{3};
+  ASSERT_EQ((a * 3).value(), 9);
+  ASSERT_EQ((3 * a).value(), 9);
+  a *= 2;
+  ASSERT_EQ(a.value(), 6);
+}
