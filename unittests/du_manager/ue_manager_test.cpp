@@ -13,6 +13,7 @@
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -37,16 +38,31 @@ struct test_bench {
                            {mac_dummy, mac_dummy}};
 };
 
+class du_ue_manager_tester : public ::testing::Test
+{
+protected:
+  du_ue_manager_tester()
+  {
+    srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+  }
+  ~du_ue_manager_tester() { srslog::flush(); }
+
+  test_bench bench;
+
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+};
+
 enum class test_outcome { success, ue_create_failure };
 
 /// Test the scenario where concurrent UECreateRequest and UECreateDelete messages arrive at UE manager
-void test_ue_concurrent_procedures(test_outcome outcome)
+void test_ue_concurrent_procedures(test_bench& bench, test_outcome outcome)
 {
   test_delimit_logger   delimiter{"Test UE concurrent procedures. Outcome: {}",
                                 outcome == test_outcome::success ? "Success" : "UE create failure"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  test_bench bench;
   bench.f1ap_dummy.next_ue_create_response.result = true;
   bench.f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
 
@@ -123,12 +139,16 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   // TODO: Check F1AP delete
 }
 
+TEST_F(du_ue_manager_tester, concurrent_procedures)
+{
+  test_ue_concurrent_procedures(this->bench, test_outcome::success);
+  test_ue_concurrent_procedures(this->bench, test_outcome::ue_create_failure);
+}
+
 /// Test the scenario where a ue delete request arrives for an inexistent ue_index
-void test_inexistent_ue_removal()
+TEST_F(du_ue_manager_tester, inexistent_ue_removal)
 {
   test_delimit_logger delimiter{"Test inexistent UE removal"};
-
-  test_bench bench;
 
   du_ue_manager ue_mng{bench.params, bench.cell_res_alloc};
   TESTASSERT(ue_mng.get_ues().empty());
@@ -151,14 +171,12 @@ enum class test_duplicate_ue_creation_mode { mac_ue_create_auto, mac_ue_create_m
 /// - only one UE is created in the DU manager.
 /// - The MAC and F1 and correctly triggered to create a UE object.
 /// - The MAC is notified that the buffered UL CCCH can be forwarded to upper layers.
-void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
+void test_duplicate_ue_creation(test_bench& bench, test_duplicate_ue_creation_mode mode)
 {
   test_delimit_logger delimiter{"Test duplicate UE creation. Mode: {}",
                                 mode == test_duplicate_ue_creation_mode::mac_ue_create_auto ? "auto" : "manual"};
 
   du_ue_index_t first_ue_index = MAX_NOF_DU_UES;
-
-  test_bench bench;
 
   bench.f1ap_dummy.next_ue_create_response.result = true;
   bench.f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
@@ -233,17 +251,8 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   TESTASSERT_EQ(ul_ccch_ind.cell_index, ue_mng.get_ues()[first_ue_index].pcell_index);
 }
 
-int main()
+TEST_F(du_ue_manager_tester, duplicate_ue_creation)
 {
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("DU-MNG").set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-
-  srslog::init();
-
-  test_ue_concurrent_procedures(test_outcome::success);
-  test_ue_concurrent_procedures(test_outcome::ue_create_failure);
-  test_inexistent_ue_removal();
-  test_duplicate_ue_creation(test_duplicate_ue_creation_mode::mac_ue_create_auto);
-  test_duplicate_ue_creation(test_duplicate_ue_creation_mode::mac_ue_create_manual);
+  test_duplicate_ue_creation(this->bench, test_duplicate_ue_creation_mode::mac_ue_create_auto);
+  test_duplicate_ue_creation(this->bench, test_duplicate_ue_creation_mode::mac_ue_create_manual);
 }

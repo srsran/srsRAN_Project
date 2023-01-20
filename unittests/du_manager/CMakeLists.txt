@@ -19,9 +19,16 @@ target_link_libraries(du_bearer_test du_manager_test_helpers srsgnb_du_manager s
 gtest_discover_tests(du_bearer_test)
 
 add_executable(ue_manager_test ue_manager_test.cpp)
-target_link_libraries(ue_manager_test srsgnb_du_manager srsgnb_support srslog f1ap_asn1 du_manager_test_helpers)
+target_link_libraries(ue_manager_test
+        srsgnb_du_manager
+        srsgnb_support
+        srslog
+        f1ap_asn1
+        du_manager_test_helpers
+        gtest
+        gtest_main)
 target_include_directories(ue_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
-add_test(ue_manager_test ue_manager_test)
+gtest_discover_tests(ue_manager_test)
 
 add_executable(serving_cell_config_converter_test ../du_manager/serving_cell_config_converter_test.cpp)
 target_link_libraries(serving_cell_config_converter_test srsgnb_du_manager srsgnb_support asn1_utils rrc_nr_asn1 srslog gtest gtest_main)
