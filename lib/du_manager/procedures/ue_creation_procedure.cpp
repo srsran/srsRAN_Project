@@ -34,10 +34,10 @@ ue_creation_procedure::ue_creation_procedure(du_ue_index_t                      
   f1ap_mng(f1ap_mng_),
   du_res_alloc(cell_res_alloc_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
-  ue_ctx(std::make_unique<du_ue>(ue_index,
-                                 ccch_ind_msg.cell_index,
-                                 ccch_ind_msg.crnti,
-                                 du_res_alloc.create_ue_resource_configurator(ue_index, msg.cell_index)))
+  ue_ctx(ue_mng.add_ue(std::make_unique<du_ue>(ue_index,
+                                               ccch_ind_msg.cell_index,
+                                               ccch_ind_msg.crnti,
+                                               du_res_alloc.create_ue_resource_configurator(ue_index, msg.cell_index))))
 {
 }
 
@@ -45,11 +45,19 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
+  // > Check if UE context was created in the DU manager.
+  if (ue_ctx == nullptr) {
+    log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Repeated RNTI.");
+    clear_ue();
+    CORO_EARLY_RETURN();
+  }
+
   log_proc_started(logger, ue_ctx->ue_index, msg.crnti, "UE Create");
 
   // > Initialize bearers and PHY/MAC PCell resources of the DU UE.
   if (not setup_du_ue_resources()) {
     log_proc_failure(logger, MAX_NOF_DU_UES, msg.crnti, name(), "Failure to allocate DU UE.");
+    clear_ue();
     CORO_EARLY_RETURN();
   }
 
@@ -78,37 +86,29 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   // > Start UE activity timer.
   ue_ctx->activity_timer.run();
 
-  // > Create UE context in DU manager.
-  du_ue_index_t ue_index = ue_ctx->ue_index;
-  if (ue_mng.add_ue(std::move(ue_ctx)) == nullptr) {
-    log_proc_failure(logger, ue_index, msg.crnti, "UE failed to be created in DU manager.");
-    clear_ue();
-    CORO_EARLY_RETURN();
-  }
-
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
   if (not msg.subpdu.empty()) {
-    mac_mng.ue_cfg.handle_ul_ccch_msg(ue_index, std::move(msg.subpdu));
+    mac_mng.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, std::move(msg.subpdu));
   }
 
-  log_proc_completed(logger, ue_index, msg.crnti, "UE Create");
+  log_proc_completed(logger, ue_ctx->ue_index, msg.crnti, "UE Create");
   CORO_RETURN();
+}
+
+void ue_creation_procedure::clear_ue()
+{
+  if (f1_resp.result) {
+    // TODO: Remove UE from F1AP.
+  }
+
+  if (ue_ctx != nullptr) {
+    // Clear UE from DU Manager UE repository.
+    ue_mng.remove_ue(ue_ctx->ue_index);
+  }
 }
 
 bool ue_creation_procedure::setup_du_ue_resources()
 {
-  // > Verify if UE-Id was successfully allocated.
-  if (ue_ctx->ue_index >= INVALID_DU_UE_INDEX) {
-    log_proc_failure(logger, INVALID_DU_UE_INDEX, msg.crnti, name(), "Failure to allocate DU UE Index.");
-    return false;
-  }
-
-  // > Verify if RNTI is not duplicate.
-  if (ue_mng.find_rnti(ue_ctx->rnti) != nullptr) {
-    log_proc_failure(logger, INVALID_DU_UE_INDEX, msg.crnti, name(), "Repeated RNTI.");
-    return false;
-  }
-
   // > Verify that the UE resource configurator is correctly setup.
   if (ue_ctx->resources.empty()) {
     log_proc_failure(logger, INVALID_DU_UE_INDEX, msg.crnti, name(), "Unable to allocate UE Resource Config instance.");

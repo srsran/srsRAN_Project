@@ -72,8 +72,10 @@ du_ue* du_ue_manager::find_rnti(rnti_t rnti)
 
 du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
 {
-  srsgnb_assert(ue_ctx->rnti != INVALID_RNTI, "Invalid RNTI");
-  srsgnb_assert(ue_ctx->ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_ctx->ue_index);
+  if (ue_ctx->ue_index >= INVALID_DU_UE_INDEX or ue_ctx->rnti == INVALID_RNTI) {
+    // UE identifiers are invalid.
+    return nullptr;
+  }
 
   if (ue_db.contains(ue_ctx->ue_index) or rnti_to_ue_index[ue_ctx->rnti % MAX_NOF_DU_UES] != INVALID_DU_UE_INDEX) {
     // UE already existed with same ue_index

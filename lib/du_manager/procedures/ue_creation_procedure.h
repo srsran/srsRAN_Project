@@ -59,13 +59,8 @@ public:
   static const char* name() { return "UE Create"; }
 
 private:
-  void clear_ue()
-  {
-    if (f1_resp.result) {
-      // TODO: F1 UE removal.
-    }
-    // TODO: MAC RNTI needs to be cleared.
-  }
+  /// Remove UE from DU Manager UE repository.
+  void clear_ue();
 
   /// Setups DU manager resources used by DU UE being created.
   bool setup_du_ue_resources();
@@ -89,7 +84,7 @@ private:
   du_ran_resource_manager&                     du_res_alloc;
   srslog::basic_logger&                        logger;
 
-  std::unique_ptr<du_ue>         ue_ctx;
+  du_ue*                         ue_ctx = nullptr;
   mac_ue_create_response_message mac_resp{};
   f1ap_ue_creation_response      f1_resp{};
 };

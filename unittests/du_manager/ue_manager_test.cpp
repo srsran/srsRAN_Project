@@ -74,6 +74,8 @@ protected:
     mac_dummy.wait_ue_delete.ready_ev.set();
   }
 
+  bool is_ue_creation_complete() const { return not mac_dummy.last_pushed_ul_ccch_msg.empty(); }
+
   du_ue_index_t get_last_ue_index() const
   {
     srsgnb_assert(f1ap_dummy.last_ue_create.has_value(), "No UE creation request was provided");
@@ -116,6 +118,10 @@ TEST_F(du_ue_manager_tester, when_ue_create_request_is_received_du_manager_reque
   // TEST: MAC received UE creation request.
   TESTASSERT(mac_dummy.last_ue_create_msg.has_value());
   TESTASSERT_EQ(ccch_ind.crnti, mac_dummy.last_ue_create_msg->crnti);
+
+  // TEST: DU UE manager registers UE being created.
+  ASSERT_TRUE(ue_mng.get_ues().contains(ue_index));
+  ASSERT_EQ(ue_mng.get_ues()[ue_index].rnti, 0x4601);
 }
 
 TEST_F(du_ue_manager_tester,
@@ -124,19 +130,15 @@ TEST_F(du_ue_manager_tester,
   // Action 1: UL CCCH Message received.
   ul_ccch_indication_message ccch_ind = create_ul_ccch_message(to_rnti(0x4601));
   push_ul_ccch_message(ccch_ind);
-  du_ue_index_t ue_index = get_last_ue_index();
 
-  // TEST: While MAC does not respond, no UE is created.
-  TESTASSERT(ue_mng.get_ues().empty());
+  // TEST: While MAC does not respond, UE creation is not complete.
+  ASSERT_FALSE(is_ue_creation_complete());
 
   // Action 2: MAC UE creation completed.
   mac_completes_ue_creation(true);
 
   // TEST: DU manager completes DU UE creation procedure with success.
-  TESTASSERT(not ue_mng.get_ues().empty());
-  TESTASSERT(ue_mng.get_ues().contains(ue_index));
-  TESTASSERT(ue_mng.get_ues()[ue_index].rnti == 0x4601);
-  TESTASSERT(not mac_dummy.last_pushed_ul_ccch_msg.empty());
+  ASSERT_TRUE(is_ue_creation_complete());
 }
 
 TEST_F(du_ue_manager_tester, when_mac_fails_to_create_ue_then_no_ue_is_created_in_du)
@@ -147,8 +149,8 @@ TEST_F(du_ue_manager_tester, when_mac_fails_to_create_ue_then_no_ue_is_created_i
   mac_completes_ue_creation(false);
 
   // TEST: DU manager completes DU UE creation procedure with failure.
-  TESTASSERT(mac_dummy.last_pushed_ul_ccch_msg.empty());
-  TESTASSERT(ue_mng.get_ues().empty());
+  ASSERT_TRUE(ue_mng.get_ues().empty());
+  ASSERT_FALSE(is_ue_creation_complete());
 }
 
 TEST_F(du_ue_manager_tester, inexistent_ue_index_removal_is_handled)
@@ -157,8 +159,8 @@ TEST_F(du_ue_manager_tester, inexistent_ue_index_removal_is_handled)
   push_f1ap_ue_delete_request(to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_NOF_DU_UES - 1)));
 
   // There should not be any reply from MAC and F1AP should receive failure signal
-  TESTASSERT(ue_mng.get_ues().empty());
-  TESTASSERT(not mac_dummy.last_ue_delete_msg.has_value());
+  ASSERT_TRUE(ue_mng.get_ues().empty());
+  ASSERT_FALSE(mac_dummy.last_ue_delete_msg.has_value());
   // TODO: F1AP check
 }
 
@@ -189,106 +191,63 @@ TEST_F(du_ue_manager_tester,
 }
 
 TEST_F(du_ue_manager_tester,
-       when_requests_for_ue_creation_are_received_concurrently_then_the_created_ues_have_different_indexes)
+       when_requests_for_ue_creation_are_received_sequentially_then_the_created_ues_have_different_indexes)
 {
-  // Action: UL CCCH Messages received concurrently.
+  // Action 1: UL CCCH Message received and UE creation completes.
   push_ul_ccch_message(create_ul_ccch_message(to_rnti(0x4601)));
   du_ue_index_t ue_index1 = get_last_ue_index();
+  ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index1);
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4601);
+  mac_completes_ue_creation(true);
+
+  // Action 2: UL CCCH Message received concurrently.
   push_ul_ccch_message(create_ul_ccch_message(to_rnti(0x4602)));
   du_ue_index_t ue_index2 = get_last_ue_index();
+  ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index2);
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4602);
+  mac_completes_ue_creation(true);
 
+  // TEST: UEs should have different UE indexes.
+  ASSERT_NE(ue_index1, ue_index2);
+  ASSERT_EQ(ue_mng.get_ues().size(), 2);
+}
+
+TEST_F(du_ue_manager_tester,
+       when_requests_for_ue_creation_are_received_concurrently_then_the_created_ues_have_different_indexes)
+{
+  // Action 1: UL CCCH Message received.
+  push_ul_ccch_message(create_ul_ccch_message(to_rnti(0x4601)));
+  du_ue_index_t ue_index1 = get_last_ue_index();
+  ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index1);
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4601);
+
+  // Action 2: UL CCCH Message received concurrently.
+  push_ul_ccch_message(create_ul_ccch_message(to_rnti(0x4602)));
+  du_ue_index_t ue_index2 = get_last_ue_index();
+  ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index2);
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4602);
+
+  // TEST: UEs should have different UE indexes.
   ASSERT_NE(ue_index1, ue_index2);
 }
 
-///// Different scenarios for testing duplicate UE creation
-// enum class test_duplicate_ue_creation_mode { mac_ue_create_auto, mac_ue_create_manual };
-//
-///// Test the scenario where two UEs with the same RNTI are added. The following checks take place:
-///// - only one UE is created in the DU manager.
-///// - The MAC and F1 and correctly triggered to create a UE object.
-///// - The MAC is notified that the buffered UL CCCH can be forwarded to upper layers.
-// void test_duplicate_ue_creation(test_bench& bench, test_duplicate_ue_creation_mode mode)
-//{
-//   test_delimit_logger delimiter{"Test duplicate UE creation. Mode: {}",
-//                                 mode == test_duplicate_ue_creation_mode::mac_ue_create_auto ? "auto" : "manual"};
-//
-//   du_ue_index_t first_ue_index = MAX_NOF_DU_UES;
-//
-//   bench.f1ap_dummy.next_ue_create_response.result = true;
-//   bench.f1ap_dummy.next_ue_create_response.f1c_bearers_added.resize(2);
-//
-//   bench.mac_dummy.wait_ue_create.result.ue_index   = first_ue_index;
-//   bench.mac_dummy.wait_ue_create.result.cell_index = to_du_cell_index(0);
-//   bench.mac_dummy.wait_ue_create.result.result     = true;
-//   if (mode == test_duplicate_ue_creation_mode::mac_ue_create_auto) {
-//     bench.mac_dummy.wait_ue_create.ready_ev.set();
-//   }
-//
-//   du_ue_manager ue_mng{bench.params, bench.cell_res_alloc};
-//   TESTASSERT(ue_mng.get_ues().empty());
-//
-//   // Action 1: Start creation of UE by notifying UL CCCH decoding.
-//   ul_ccch_indication_message ul_ccch_ind{};
-//   ul_ccch_ind.cell_index = to_du_cell_index(0);
-//   ul_ccch_ind.crnti      = to_rnti(0x4601);
-//   ul_ccch_ind.subpdu     = {1, 2, 3, 4, 5};
-//   ue_mng.handle_ue_create_request(ul_ccch_ind);
-//
-//   // TEST: F1 started creating first UE.
-//   TESTASSERT(bench.f1ap_dummy.last_ue_create.has_value());
-//   first_ue_index = bench.f1ap_dummy.last_ue_create.value().ue_index;
-//   TESTASSERT(bench.f1ap_dummy.last_ue_create.value().ue_index < MAX_NOF_DU_UES);
-//
-//   // TEST: MAC started creating first UE.
-//   TESTASSERT(bench.mac_dummy.last_ue_create_msg.has_value());
-//   TESTASSERT_EQ(first_ue_index, bench.mac_dummy.last_ue_create_msg->ue_index);
-//   TESTASSERT_EQ(ul_ccch_ind.crnti, bench.mac_dummy.last_ue_create_msg->crnti);
-//   if (mode == test_duplicate_ue_creation_mode::mac_ue_create_auto) {
-//     // TEST: First UE create procedure is complete
-//     TESTASSERT(not bench.mac_dummy.last_pushed_ul_ccch_msg.empty());
-//     TESTASSERT_EQ(1, ue_mng.get_ues().size());
-//   }
-//
-//   // Action 2: Start creation of second UE.
-//   bench.mac_dummy.last_ue_create_msg.reset();
-//   bench.f1ap_dummy.last_ue_create.reset();
-//   bench.mac_dummy.last_pushed_ul_ccch_msg.clear();
-//   ul_ccch_indication_message ul_ccch_ind2 = ul_ccch_ind;
-//   ue_mng.handle_ue_create_request(ul_ccch_ind2);
-//
-//   if (mode == test_duplicate_ue_creation_mode::mac_ue_create_auto) {
-//     // TEST: UE manager does not initiate second UE creation in MAC or F1 due to repeated RNTI.
-//     TESTASSERT(not bench.f1ap_dummy.last_ue_create.has_value());
-//     TESTASSERT(not bench.mac_dummy.last_ue_create_msg.has_value());
-//     TESTASSERT(bench.mac_dummy.last_pushed_ul_ccch_msg.empty());
-//   } else {
-//     // TEST: MAC didn't start creating second UE because first UE is still being created.
-//     TESTASSERT(not bench.f1ap_dummy.last_ue_create.has_value());
-//     TESTASSERT(not bench.mac_dummy.last_ue_create_msg.has_value());
-//   }
-//
-//   if (mode == test_duplicate_ue_creation_mode::mac_ue_create_manual) {
-//     // Action 4: Finish all the MAC UE creations.
-//     bench.mac_dummy.wait_ue_create.ready_ev.set();
-//
-//     // TEST: First UE creation is complete. Second was aborted due to repeated RNTI.
-//     TESTASSERT(not bench.f1ap_dummy.last_ue_create.has_value());
-//     TESTASSERT(not bench.mac_dummy.last_ue_create_msg.has_value());
-//
-//     // TEST: First UE creation once finishes, notifies MAC that UL CCCH can be pushed to upper layers.
-//     TESTASSERT(not bench.mac_dummy.last_pushed_ul_ccch_msg.empty());
-//   }
-//
-//   // TEST: Only one UE should have been created
-//   TESTASSERT_EQ(1, ue_mng.get_ues().size());
-//   TESTASSERT(ue_mng.get_ues().contains(first_ue_index));
-//   TESTASSERT_EQ(first_ue_index, ue_mng.get_ues()[first_ue_index].ue_index);
-//   TESTASSERT_EQ(ul_ccch_ind.crnti, ue_mng.get_ues()[first_ue_index].rnti);
-//   TESTASSERT_EQ(ul_ccch_ind.cell_index, ue_mng.get_ues()[first_ue_index].pcell_index);
-// }
-//
-// TEST_F(du_ue_manager_tester, duplicate_ue_creation)
-//{
-//   test_duplicate_ue_creation(this->bench, test_duplicate_ue_creation_mode::mac_ue_create_auto);
-//   test_duplicate_ue_creation(this->bench, test_duplicate_ue_creation_mode::mac_ue_create_manual);
-// }
+TEST_F(du_ue_manager_tester,
+       when_requests_for_ue_creation_are_received_with_duplicate_crnti_then_only_one_request_is_handled)
+{
+  // Action: Two UL CCCH Messages with the same TC-RNTI received.
+  push_ul_ccch_message(create_ul_ccch_message(to_rnti(0x4601)));
+  du_ue_index_t ue_index1 = get_last_ue_index();
+  push_ul_ccch_message(create_ul_ccch_message(to_rnti(0x4601)));
+  mac_completes_ue_creation(true);
+
+  // TEST: MAC only processes the first request.
+  ASSERT_TRUE(mac_dummy.last_ue_create_msg.has_value());
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().ue_index, ue_index1);
+  ASSERT_EQ(mac_dummy.last_ue_create_msg.value().crnti, 0x4601);
+  ASSERT_TRUE(is_ue_creation_complete());
+  ASSERT_EQ(ue_mng.get_ues().size(), 1);
+}
