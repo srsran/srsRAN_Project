@@ -50,6 +50,8 @@ constexpr unsigned GTPU_MSG_SUPPORTED_EXTENSION_HEADERS_NOTIFICATION = 31;
 constexpr unsigned GTPU_MSG_END_MARKER                               = 254;
 constexpr unsigned GTPU_MSG_DATA_PDU                                 = 255;
 
+constexpr unsigned GTPU_PORT = 2152;
+
 // GTP-U extension header types. See TS 29.281 v16.2.0, figure 5.2.1-3
 enum class gtpu_extension_header_type : uint8_t {
   no_more_extension_headers = 0b00000000,

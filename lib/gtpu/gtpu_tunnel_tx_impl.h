@@ -14,7 +14,9 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/gtpu/gtpu_config.h"
 #include "srsgnb/gtpu/gtpu_tunnel_tx.h"
+#include <arpa/inet.h>
 #include <cstdint>
+#include <netinet/in.h>
 
 namespace srsgnb {
 
@@ -26,6 +28,16 @@ public:
     logger(srslog::fetch_basic_logger("GTPU")), cfg(cfg_), upper_dn(upper_dn_)
   {
     // Validate configuration
+    if (inet_pton(AF_INET, cfg.peer_addr.c_str(), &((::sockaddr_in*)&peer_sockaddr)->sin_addr) == 1) {
+      ((::sockaddr_in*)&peer_sockaddr)->sin_family = AF_INET;
+      ((::sockaddr_in*)&peer_sockaddr)->sin_port   = htons(GTPU_PORT);
+    } else if (inet_pton(AF_INET6, cfg.peer_addr.c_str(), &((::sockaddr_in6*)&peer_sockaddr)->sin6_addr) == 1) {
+      ((::sockaddr_in6*)&peer_sockaddr)->sin6_family = AF_INET6;
+      ((::sockaddr_in6*)&peer_sockaddr)->sin6_port   = htons(GTPU_PORT);
+    } else {
+      logger.error("Could not get peer address. Configured address={}, errno={}", cfg.peer_addr, strerror(errno));
+    }
+
     logger.info("GTPU TX entity configured. Configuration={}", cfg);
   }
 
@@ -46,12 +58,13 @@ public:
       return;
     }
     logger.debug(buf.begin(), buf.end(), "TX GTP-U SDU");
-    upper_dn.on_new_pdu(std::move(buf), cfg.peer_addr);
+    upper_dn.on_new_pdu(std::move(buf), peer_sockaddr);
   }
 
 private:
   srslog::basic_logger&                logger;
   const gtpu_config::gtpu_tx_config    cfg;
   gtpu_tunnel_tx_upper_layer_notifier& upper_dn;
+  sockaddr_storage                     peer_sockaddr;
 };
 } // namespace srsgnb

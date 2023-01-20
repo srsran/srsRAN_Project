@@ -57,7 +57,10 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   const auto&                   ul_tunnel_info = new_session->ul_tunnel_info;
 
   // Get uplink transport address
-  logger.info("asdf UL TEID={}, ADDR={}", ul_tunnel_info.gtp_teid.value(), ul_tunnel_info.tp_address);
+  logger.debug("PDU session {} uplink tunnel info: TEID={}, address={}",
+               session.pdu_session_id,
+               ul_tunnel_info.gtp_teid.value(),
+               ul_tunnel_info.tp_address);
 
   // Allocate local TEID
   new_session->local_teid = allocate_local_teid(new_session->pdu_session_id);
@@ -76,7 +79,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   // Create GTPU entity
   gtpu_tunnel_creation_message msg = {};
   msg.cfg.tx.peer_teid             = ul_tunnel_info.gtp_teid.value();
-  msg.cfg.tx.peer_addr             = ul_tunnel_info.tp_address.native();
+  msg.cfg.tx.peer_addr             = ul_tunnel_info.tp_address.to_string();
   msg.cfg.rx.local_teid            = new_session->local_teid;
   msg.rx_lower                     = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                     = &gtpu_tx_notifier;
@@ -160,7 +163,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
       auto& qos_flow                           = drb.qos_flow_info_to_be_setup[k];
       new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
       auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
-      logger.info(
+      logger.debug(
           "Created QoS flow with qos_flow_id={} and five_qi={}", new_qos_flow->qos_flow_id, new_qos_flow->five_qi);
 
       // TODO: somehow take the FiveQI and configure SDAP

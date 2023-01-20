@@ -24,8 +24,8 @@ struct gtpu_config {
     uint32_t local_teid;
   } rx;
   struct gtpu_tx_config {
-    uint32_t         peer_teid;
-    sockaddr_storage peer_addr;
+    uint32_t    peer_teid;
+    std::string peer_addr;
   } tx;
 };
 } // namespace srsgnb
@@ -65,7 +65,7 @@ struct formatter<srsgnb::gtpu_config::gtpu_tx_config> {
   auto format(const srsgnb::gtpu_config::gtpu_tx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "peer teid={}", cfg.peer_teid);
+    return format_to(ctx.out(), "peer teid={}, peer addr={}", cfg.peer_teid, cfg.peer_addr);
   }
 };
 
