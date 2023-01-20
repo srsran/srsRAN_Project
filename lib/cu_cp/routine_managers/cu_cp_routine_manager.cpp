@@ -9,7 +9,7 @@
  */
 
 #include "cu_cp_routine_manager.h"
-#include "routines/initial_cu_cp_setup_routine.h"
+#include "../routines/initial_cu_cp_setup_routine.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
