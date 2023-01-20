@@ -23,6 +23,7 @@ namespace srsgnb {
 struct f1u_cu_bearer {
   std::unique_ptr<f1u_dl_local_adapter>  cu_tx      = nullptr;
   std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer = nullptr;
+  optional<uint32_t>                     dl_teid; ///< holds the dl_teid to disconnect UL at DU upon bearer removal
   f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer_) :
     cu_tx(std::move(cu_tx_)), f1u_bearer(std::move(f1u_bearer_))
   {

@@ -48,16 +48,36 @@ void f1u_local_connector::attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid)
   auto& du_tun = du_map.at(dl_teid);
   auto& cu_tun = cu_map.at(ul_teid);
   du_tun.du_tx->attach_cu_handler(cu_tun.f1u_bearer->get_rx_pdu_handler());
+  cu_tun.dl_teid = dl_teid;
 }
 
 void f1u_local_connector::remove_cu_bearer(uint32_t ul_teid)
 {
+  // Find bearer from ul_teid
   auto bearer_it = cu_map.find(ul_teid);
   if (bearer_it == cu_map.end()) {
-    logger.warning("Could not find UL-TEID at CU to remove. UL-TEID={}", ul_teid);
+    logger.warning("Could not find UL-TEID={} at CU to remove.", ul_teid);
     return;
   }
-  logger.debug("Removing CU F1-U bearer. UL-TEID={}", ul_teid);
+
+  // Disconnect UL path of DU first if we have a dl_teid for lookup
+  if (bearer_it->second.dl_teid.has_value()) {
+    auto du_bearer_it = du_map.find(bearer_it->second.dl_teid.value());
+    if (du_bearer_it == du_map.end()) {
+      logger.warning("Could not find DL-TEID={} at DU to disconnect DU F1-U bearer from CU handler. UL-TEID={}",
+                     bearer_it->second.dl_teid,
+                     ul_teid);
+      return;
+    }
+    logger.debug(
+        "Disconnecting DU F1-U bearer with DL-TEID={} from CU handler. UL-TEID={}", bearer_it->second.dl_teid, ul_teid);
+    du_bearer_it->second.du_tx->detach_cu_handler();
+  } else {
+    logger.warning("No DL-TEID provided to disconnect DU F1-U bearer from CU handler. UL-TEID={}", ul_teid);
+  }
+
+  // Remove DL path
+  logger.debug("Removing CU F1-U bearer with UL-TEID={}.", ul_teid);
   cu_map.erase(bearer_it);
 }
 
