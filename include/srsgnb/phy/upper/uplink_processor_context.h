@@ -20,8 +20,6 @@ namespace srsgnb {
 struct ul_pucch_f0_f1_context {
   /// Scheduling request opportunity indicator.
   bool is_sr_opportunity;
-  /// Number of expected HARQ bits.
-  unsigned nof_expected_harq_bits;
 };
 
 /// PUCCH context.

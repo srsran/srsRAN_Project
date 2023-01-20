@@ -33,7 +33,7 @@ public:
   struct configuration {
     /// Number of Scheduling Request (SR) information bits.
     unsigned nof_sr;
-    /// Number of HARQ-ACk information bits.
+    /// Number of HARQ-ACK information bits.
     unsigned nof_harq_ack;
     /// Number of CSI-Part1 information bits.
     unsigned nof_csi_part1;
@@ -77,6 +77,18 @@ public:
   {
     return span<const uint8_t>(data).first(nof_sr_bits + nof_harq_ack_bits + nof_csi_part1_bits + nof_csi_part2_bits);
   }
+
+  /// Returns the number of expected Scheduling Request (SR) information bits.
+  unsigned get_expected_nof_sr_bits() const { return nof_sr_bits; }
+
+  /// Returns the number of expected HARQ-ACK information bits.
+  unsigned get_expected_nof_harq_ack_bits() const { return nof_harq_ack_bits; }
+
+  /// Returns the number of expected of CSI-Part1 information bits.
+  unsigned get_expected_nof_csi_part1_bits() const { return nof_csi_part1_bits; }
+
+  /// Returns the number of expected of CSI-Part2 information bits.
+  unsigned get_expected_nof_csi_part2_bits() const { return nof_csi_part2_bits; }
 
   /// Gets a read-write view of the SR bits.
   span<uint8_t> get_sr_bits() { return span<uint8_t>(data).subspan(nof_harq_ack_bits, nof_sr_bits); }

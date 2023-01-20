@@ -32,7 +32,6 @@ static void check_context_f0_or_f1_parameters(const ul_pucch_context& context, c
   ASSERT_TRUE(context.context_f0_f1.has_value());
   const ul_pucch_f0_f1_context& ctx = context.context_f0_f1.value();
   ASSERT_EQ(fapi_pdu.sr_bit_len == 1, ctx.is_sr_opportunity);
-  ASSERT_EQ(fapi_pdu.bit_len_harq == 1, ctx.nof_expected_harq_bits);
 }
 
 TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat1PDUPass)

@@ -970,7 +970,7 @@ struct sr_pdu_format_0_1 {
 
 /// UCI HARQ PDU for format 0 or 1.
 struct uci_harq_format_0_1 {
-  /// Maximum number of HARQ.
+  /// Maximum number of HARQs.
   static constexpr unsigned MAX_NUM_HARQ = 2U;
 
   uint8_t                                                     harq_confidence_level;

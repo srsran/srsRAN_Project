@@ -11,6 +11,7 @@
 #include "phy_to_fapi_results_event_translator.h"
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi/message_validators.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
@@ -156,7 +157,7 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
   data_notifier.get().on_rx_data_indication(msg);
 }
 
-/// Fills the SR parameters for PUCCH Format 0 or Format 1 using the given builder and results.
+/// Fills the SR parameters for PUCCH Format 0 or Format 1 using the given builder and result.
 static void fill_format_0_1_sr(fapi::uci_pucch_pdu_format_0_1_builder& builder, const ul_pucch_results& result)
 {
   srsgnb_assert(result.context.context_f0_f1.has_value(), "Context for PUCCH Format 0 or Format 1 is empty");
@@ -167,31 +168,28 @@ static void fill_format_0_1_sr(fapi::uci_pucch_pdu_format_0_1_builder& builder, 
     return;
   }
 
-  // Set the SR detection based on the UCI status.
+  // Set the SR detection status based on the UCI status.
   const pucch_uci_message& msg = result.processor_result.message;
   builder.set_sr_parameters(msg.get_status() == uci_status::valid, {});
 }
 
-/// Fills the HARQ parameters for PUCCH Format 0 or Format 1 using the given builder and results.
-static void fill_format_0_1_harq(fapi::uci_pucch_pdu_format_0_1_builder& builder, const ul_pucch_results& result)
+/// Fills the HARQ parameters for PUCCH Format 0 or Format 1 using the given builder and message.
+static void fill_format_0_1_harq(fapi::uci_pucch_pdu_format_0_1_builder& builder, const pucch_uci_message& message)
 {
-  srsgnb_assert(result.context.context_f0_f1.has_value(), "Context for PUCCH Format 0 or Format 1 is empty");
-
-  const ul_pucch_f0_f1_context& context = result.context.context_f0_f1.value();
-  if (context.nof_expected_harq_bits == 0) {
+  unsigned nof_harq_bits = message.get_expected_nof_harq_ack_bits();
+  if (nof_harq_bits == 0) {
     return;
   }
 
   // Initialize with DTX.
   static_vector<uci_pucch_f0_or_f1_harq_values, fapi::uci_harq_format_0_1::MAX_NUM_HARQ> harq(
-      context.nof_expected_harq_bits, uci_pucch_f0_or_f1_harq_values::dtx);
+      nof_harq_bits, uci_pucch_f0_or_f1_harq_values::dtx);
 
-  const pucch_uci_message& msg = result.processor_result.message;
   // Write the contents when the uci status is valid.
-  if (msg.get_status() == uci_status::valid) {
-    for (unsigned i = 0; i != context.nof_expected_harq_bits; ++i) {
-      harq[i] = (msg.get_harq_ack_bits()[i] == 1U) ? uci_pucch_f0_or_f1_harq_values::ack
-                                                   : uci_pucch_f0_or_f1_harq_values::nack;
+  if (message.get_status() == uci_status::valid) {
+    for (unsigned i = 0; i != nof_harq_bits; ++i) {
+      harq[i] = (message.get_harq_ack_bits()[i] == 1U) ? uci_pucch_f0_or_f1_harq_values::ack
+                                                       : uci_pucch_f0_or_f1_harq_values::nack;
     }
   }
 
@@ -202,9 +200,9 @@ static void fill_format_0_1_harq(fapi::uci_pucch_pdu_format_0_1_builder& builder
 /// Adds a PUCCH Format 0 or Format 1 PDU to the given builder using the data provided by result.
 static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& builder, const ul_pucch_results& result)
 {
-  const ul_pucch_context& context = result.context;
   // Do not use the handle for now.
-  static const unsigned                  handle = 0;
+  static const unsigned                  handle  = 0;
+  const ul_pucch_context&                context = result.context;
   fapi::uci_pucch_pdu_format_0_1_builder builder_format01 =
       builder.add_format_0_1_pucch_pdu(handle, context.rnti, context.format);
 
@@ -212,11 +210,116 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
   // :TODO: Use the CSI parameters when they're valid.
   builder_format01.set_metrics_parameters({csi_info.sinr_dB}, {}, {}, {}, {});
 
-  // Fill HARQ parameters.
-  fill_format_0_1_harq(builder_format01, result);
-
   // Fill SR parameters.
   fill_format_0_1_sr(builder_format01, result);
+
+  // Fill HARQ parameters.
+  fill_format_0_1_harq(builder_format01, result.processor_result.message);
+}
+
+/// Converts and returns the given UCI status to FAPI UCI STATUS.
+static uci_pusch_or_pucch_f2_3_4_detection_status to_fapi_uci_detection_status(uci_status status)
+{
+  switch (status) {
+    case uci_status::invalid:
+      return uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure;
+    case uci_status::valid:
+      return uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+    case uci_status::unknown:
+    default:
+      return uci_pusch_or_pucch_f2_3_4_detection_status::dtx;
+  }
+}
+
+/// Fills the HARQ parameters for PUCCH Format 2/3/4 using the given builder and message.
+static void fill_format_2_3_4_harq(fapi::uci_pucch_pdu_format_2_3_4_builder& builder, const pucch_uci_message& message)
+{
+  units::bits harq_len = units::bits(message.get_expected_nof_harq_ack_bits());
+  if (harq_len.value() == 0) {
+    return;
+  }
+
+  uci_pusch_or_pucch_f2_3_4_detection_status status = to_fapi_uci_detection_status(message.get_status());
+
+  // Write an empty payload on detection failure.
+  if (status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+      status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+    builder.set_harq_parameters(status, harq_len.value(), {});
+    return;
+  }
+
+  static_vector<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> tmp;
+  tmp.resize(harq_len.round_up_to_bytes().value());
+  srsvec::bit_pack(tmp, message.get_harq_ack_bits());
+
+  builder.set_harq_parameters(status, harq_len.value(), tmp);
+}
+
+/// Fills the SR parameters for PUCCH Format 2/3/4 using the given builder and message.
+static void fill_format_2_3_4_sr(fapi::uci_pucch_pdu_format_2_3_4_builder& builder, const pucch_uci_message& message)
+{
+  if (message.get_status() != uci_status::valid) {
+    return;
+  }
+
+  units::bits sr_len = units::bits(message.get_expected_nof_sr_bits());
+
+  if (sr_len.value() == 0) {
+    return;
+  }
+
+  static_vector<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> tmp;
+  tmp.resize(sr_len.round_up_to_bytes().value());
+  srsvec::bit_pack(tmp, message.get_sr_bits());
+
+  builder.set_sr_parameters(sr_len.value(), tmp);
+}
+
+/// Fills the CSI-Part1 parameters for PUCCH Format 2/3/4 using the given builder and message.
+static void fill_format_2_3_4_csi_part1(fapi::uci_pucch_pdu_format_2_3_4_builder& builder,
+                                        const pucch_uci_message&                  message)
+{
+  units::bits csi_len = units::bits(message.get_expected_nof_csi_part1_bits());
+  if (csi_len.value() == 0) {
+    return;
+  }
+
+  uci_pusch_or_pucch_f2_3_4_detection_status status = to_fapi_uci_detection_status(message.get_status());
+
+  // Write an empty payload on detection failure.
+  if (status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+      status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+    builder.set_csi_part1_parameters(status, csi_len.value(), {});
+    return;
+  }
+
+  static_vector<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> tmp;
+  tmp.resize(csi_len.round_up_to_bytes().value());
+  srsvec::bit_pack(tmp, message.get_csi_part1_bits());
+
+  builder.set_csi_part1_parameters(status, csi_len.value(), tmp);
+}
+
+/// Adds a PUCCH Format 2 PDU to the given builder using the data provided by result.
+static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder, const ul_pucch_results& result)
+{
+  // Do not use the handle for now.
+  static const unsigned                    handle = 0;
+  fapi::uci_pucch_pdu_format_2_3_4_builder builder_format234 =
+      builder.add_format_2_3_4_pucch_pdu(handle, result.context.rnti, result.context.format);
+
+  const channel_state_information& csi_info = result.processor_result.csi;
+  // :TODO: Use the CSI parameters when they're valid.
+  builder_format234.set_metrics_parameters({csi_info.sinr_dB}, {}, {}, {}, {});
+
+  // Fill SR parameters.
+  fill_format_2_3_4_sr(builder_format234, result.processor_result.message);
+
+  // Fill HARQ parameters.
+  fill_format_2_3_4_harq(builder_format234, result.processor_result.message);
+
+  // Fill CSI-Part1 parameters.
+  fill_format_2_3_4_csi_part1(builder_format234, result.processor_result.message);
 }
 
 void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_results& result)
@@ -227,10 +330,16 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
   const ul_pucch_context& context = result.context;
   builder.set_basic_parameters(context.slot.sfn(), context.slot.slot_index());
 
-  if (context.format == pucch_format::FORMAT_0 || context.format == pucch_format::FORMAT_1) {
-    add_format_0_1_pucch_pdu(builder, result);
-  } else {
-    // :TODO: add the rest of the formats.
+  switch (context.format) {
+    case pucch_format::FORMAT_0:
+    case pucch_format::FORMAT_1:
+      add_format_0_1_pucch_pdu(builder, result);
+      break;
+    case pucch_format::FORMAT_2:
+      add_format_2_pucch_pdu(builder, result);
+      break;
+    default:
+      srsgnb_assert(0, "Unexpected PUCCH format {}", context.format);
   }
 
   error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);
