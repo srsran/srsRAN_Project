@@ -128,8 +128,6 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
     return;
   }
 
-  logger.warning("Could not reserve a softbuffer for PUSCH PDU with RNTI={}, HARQ={} and slot={}",
-                 id.rnti,
-                 id.harq_ack_id,
-                 proc_pdu.slot);
+  logger.set_context(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index());
+  logger.warning("Could not reserve a softbuffer for PUSCH PDU with RNTI={}, HARQ={}", id.rnti, id.harq_ack_id);
 }

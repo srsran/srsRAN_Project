@@ -286,11 +286,12 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
 
     cfg.log_level =
         to_srs_log_level(config.log_cfg.phy_level.empty() ? config.log_cfg.app_level : config.log_cfg.phy_level);
-    cfg.enable_logging_broadcast = config.log_cfg.phy_broadcast;
-    cfg.logger_max_hex_size      = config.log_cfg.hex_max_size;
-    cfg.enable_evm               = (cfg.log_level >= srslog::basic_levels::info);
-    cfg.sector_id                = i;
-    cfg.nof_ports                = nof_ports;
+    cfg.enable_logging_broadcast   = config.log_cfg.phy_broadcast;
+    cfg.rx_symbol_printer_filename = config.log_cfg.phy_rx_symbols_filename;
+    cfg.logger_max_hex_size        = config.log_cfg.hex_max_size;
+    cfg.enable_evm                 = (cfg.log_level >= srslog::basic_levels::info);
+    cfg.sector_id                  = i;
+    cfg.nof_ports                  = nof_ports;
 
     cfg.nof_slots_dl_rg   = 2 * dl_pipeline_depth;
     cfg.nof_dl_processors = 2 * dl_pipeline_depth;

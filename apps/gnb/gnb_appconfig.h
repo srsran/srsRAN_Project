@@ -142,8 +142,9 @@ struct log_appconfig {
   std::string f1u_level     = "info";
   std::string pdcp_level    = "info";
   std::string rrc_level     = "info";
-  uint32_t    hex_max_size  = 32;    // Maximum number of bytes to write when dumping hex arrays.
-  bool        phy_broadcast = false; // Set to true to log broadcasting messages and all PRACH opportunities.
+  uint32_t    hex_max_size  = 32;           // Maximum number of bytes to write when dumping hex arrays.
+  bool        phy_broadcast = false;        // Set to true to log broadcasting messages and all PRACH opportunities.
+  std::string phy_rx_symbols_filename = ""; // Set to a valid file path to print the received symbols.
 };
 
 /// Monolithic gnb application configuration.

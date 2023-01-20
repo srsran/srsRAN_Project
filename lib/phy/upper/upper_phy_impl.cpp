@@ -9,6 +9,7 @@
  */
 
 #include "upper_phy_impl.h"
+#include "upper_phy_rx_symbol_handler_printer_decorator.h"
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
 
 using namespace srsgnb;
@@ -27,7 +28,7 @@ public:
 static upper_phy_timing_notifier_dummy notifier_dummy;
 
 upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
-  logger(srslog::fetch_basic_logger("Upper PHY")),
+  logger(srslog::fetch_basic_logger("Upper PHY", true)),
   sector_id(config.sector_id),
   dl_processor_pool(std::move(config.dl_processor_pool)),
   dl_rg_pool(std::move(config.dl_rg_pool)),
@@ -40,7 +41,11 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
   pdu_repository(config.nof_slots_ul_pdu_repository),
   rx_results_notifier(*softbuffer_pool),
-  rx_symbol_handler(*ul_processor_pool, pdu_repository, *softbuffer_pool, rx_results_notifier, logger),
+  rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(*ul_processor_pool,
+                                                                       pdu_repository,
+                                                                       *softbuffer_pool,
+                                                                       rx_results_notifier,
+                                                                       logger)),
   timing_handler(notifier_dummy, *softbuffer_pool)
 {
   srsgnb_assert(dl_processor_pool, "Invalid downlink processor pool");
@@ -54,13 +59,19 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
 
   logger.set_level(config.log_level);
 
+  // Configure RX symbol handler for printing the resource grid.
+  if (!config.rx_symbol_printer_filename.empty()) {
+    rx_symbol_handler = std::make_unique<upper_phy_rx_symbol_handler_printer_decorator>(
+        std::move(rx_symbol_handler), logger, config.rx_symbol_printer_filename, config.ul_bw_rb);
+  }
+
   // :TODO: Add a logger here.
   (void)sector_id;
 }
 
 upper_phy_rx_symbol_handler& upper_phy_impl::get_rx_symbol_handler()
 {
-  return rx_symbol_handler;
+  return *rx_symbol_handler;
 }
 
 upper_phy_timing_handler& upper_phy_impl::get_timing_handler()

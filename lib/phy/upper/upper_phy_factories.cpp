@@ -18,6 +18,7 @@
 #include "upper_phy_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
+#include "upper_phy_rx_symbol_handler_printer_decorator.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/support/error_handling.h"
@@ -410,7 +411,9 @@ public:
   {
     upper_phy_impl_config phy_config;
     phy_config.sector_id                   = config.sector_id;
+    phy_config.ul_bw_rb                    = config.ul_bw_rb;
     phy_config.log_level                   = config.log_level;
+    phy_config.rx_symbol_printer_filename  = config.rx_symbol_printer_filename;
     phy_config.rx_symbol_request_notifier  = config.rx_symbol_request_notifier;
     phy_config.nof_slots_ul_pdu_repository = config.nof_ul_processors * 2;
 

@@ -14,11 +14,6 @@
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-#define PRINT_UL_GRID 0
-#if PRINT_UL_GRID
-#include "srsgnb/phy/support/resource_grid_printer.h"
-#endif // PRINT_UL_GRID
-
 using namespace srsgnb;
 
 /// \brief Returns a PRACH detector slot configuration using the given PRACH buffer context.
@@ -106,14 +101,6 @@ void uplink_processor_single_executor_impl::process_pusch(span<uint8_t>         
 
     // Notify the PUSCH results.
     notifier.on_new_pusch_results(result);
-
-#if PRINT_UL_GRID
-    fmt::memory_buffer filename_buffer;
-    fmt::format_to(filename_buffer, "/tmp/ul_rg_{}.bin", pdu.pdu.slot);
-    print(filename_buffer.data(), grid, pdu.pdu.start_symbol_index + pdu.pdu.nof_symbols, 106, 0);
-
-    fmt::print("pdu=[{}];\n", pdu.pdu);
-#endif // PRINT_UL_GRID
   });
 }
 

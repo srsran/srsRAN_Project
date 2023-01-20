@@ -152,6 +152,8 @@ struct upper_phy_config {
   unsigned logger_max_hex_size;
   /// Enables the EVM calculation for PUSCH.
   bool enable_evm;
+  /// Receive symbol printer. Leave empty to disable.
+  std::string rx_symbol_printer_filename;
   /// Radio sector identifier.
   unsigned sector_id;
   /// Port identifier within the sector.

@@ -881,7 +881,7 @@ public:
       // If CRC is OK, dump TB.
       logger.info(data.data(), data.size(), "PUSCH: {} {}tbs={} {}", pdu, result, data.size(), time_ns);
     } else {
-      logger.info("PUSCH: {} {}{}", pdu, result, time_ns);
+      logger.info("PUSCH: {} {}tbs={} {}", pdu, result, data.size(), time_ns);
     }
 
     return result;

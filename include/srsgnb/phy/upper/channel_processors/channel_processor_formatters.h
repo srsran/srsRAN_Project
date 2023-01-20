@@ -286,7 +286,7 @@ struct formatter<srsgnb::pucch_processor::format2_configuration> {
                      config.bwp_start_rb,
                      config.bwp_start_rb + config.bwp_size_rb,
                      config.starting_prb,
-                     config.nof_prb,
+                     config.starting_prb + config.nof_prb,
                      config.start_symbol_index,
                      config.start_symbol_index + config.nof_symbols,
                      config.rnti,

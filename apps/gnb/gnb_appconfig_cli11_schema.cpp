@@ -42,6 +42,10 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
                  log_params.phy_broadcast,
                  "Enable logging in the physical layer of broadcast messages and all PRACH opportunities")
       ->always_capture_default();
+  app.add_option("--phy_rx_symbols_filename",
+                 log_params.phy_rx_symbols_filename,
+                 "Set to a valid file path to print the received symbols.")
+      ->always_capture_default();
 }
 
 static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)

@@ -28,6 +28,8 @@ namespace srsgnb {
 struct upper_phy_impl_config {
   /// Base station sector identifier.
   unsigned sector_id;
+  /// Uplink bandwidth in resource blocks.
+  unsigned ul_bw_rb;
   /// Downlink processor pool.
   std::unique_ptr<downlink_processor_pool> dl_processor_pool;
   /// Downlink resource grid pool.
@@ -44,6 +46,8 @@ struct upper_phy_impl_config {
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
   /// Log level.
   srslog::basic_levels log_level;
+  /// Receive symbol printer. Leave empty to disable.
+  std::string rx_symbol_printer_filename;
   /// Number of slots supported by the uplink PDU repository.
   size_t nof_slots_ul_pdu_repository;
   /// Downlink PDU validator.
@@ -152,7 +156,7 @@ private:
   /// Upper PHY results notifier.
   upper_phy_rx_results_notifier_wrapper rx_results_notifier;
   /// Received symbols handler.
-  upper_phy_rx_symbol_handler_impl rx_symbol_handler;
+  std::unique_ptr<upper_phy_rx_symbol_handler> rx_symbol_handler;
   /// Timing events handler.
   upper_phy_timing_handler_impl timing_handler;
 };
