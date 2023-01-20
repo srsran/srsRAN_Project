@@ -17,13 +17,17 @@ using namespace srs_du;
 f1u_bearer_impl::f1u_bearer_impl(drb_id_t             drb_id_,
                                  f1u_rx_sdu_notifier& rx_sdu_notifier_,
                                  f1u_tx_pdu_notifier& tx_pdu_notifier_) :
-  drb_id(drb_id_), rx_sdu_notifier(rx_sdu_notifier_), tx_pdu_notifier(tx_pdu_notifier_)
+  logger("F1-U", 0, lcid_t(LCID_MIN_DRB)), // TODO: What do we use here?
+  drb_id(drb_id_),
+  rx_sdu_notifier(rx_sdu_notifier_),
+  tx_pdu_notifier(tx_pdu_notifier_)
 {
+  (void)drb_id;
 }
 
 void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
 {
-  fmt::print("F1-U bearer with DRB id={} received SDU!\n", drb_id);
+  logger.log_debug("F1-U bearer received SDU");
   nru_ul_message msg = {};
   msg.t_pdu          = std::move(sdu);
   tx_pdu_notifier.on_new_pdu(std::move(msg));
@@ -31,7 +35,7 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
 
 void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 {
-  fmt::print("F1-U bearer with DRB id={} received PDU!\n", drb_id);
+  logger.log_debug("F1-U bearer received PDU");
   if (!msg.t_pdu.empty()) {
     pdcp_tx_pdu tx_sdu = {};
     tx_sdu.buf         = std::move(msg.t_pdu);
@@ -53,11 +57,11 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn)
 {
   // TODO: Do not forget to switch execution context.
-  fmt::print("F1-U bearer with DRB id={} transmitted Tx PDCP PDU with highest_pdcp_sn={}!\n", drb_id, highest_pdcp_sn);
+  logger.log_debug("F1-U bearer transmitted Tx PDCP PDU with highest_pdcp_sn={}", highest_pdcp_sn);
 }
 
 void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)
 {
   // TODO: Do not forget to switch execution context.
-  fmt::print("F1-U bearer with DRB id={} delivered Tx PDCP PDU with highest_pdcp_sn={}!\n", drb_id, highest_pdcp_sn);
+  logger.log_debug("F1-U bearer delivered Tx PDCP PDU with highest_pdcp_sn={}", highest_pdcp_sn);
 }

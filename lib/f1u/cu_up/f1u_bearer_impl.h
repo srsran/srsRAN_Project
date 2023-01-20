@@ -14,6 +14,7 @@
 #include "srsgnb/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsgnb/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsgnb/f1u/cu_up/f1u_tx_pdu_notifier.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
@@ -25,16 +26,7 @@ public:
   f1u_bearer_impl(drb_id_t                  drb_id_,
                   f1u_tx_pdu_notifier&      tx_pdu_notifier_,
                   f1u_rx_delivery_notifier& rx_delivery_notifier_,
-                  f1u_rx_sdu_notifier&      rx_sdu_notifier_) :
-    drb_id(drb_id_),
-    tx_pdu_notifier(tx_pdu_notifier_),
-    rx_delivery_notifier(rx_delivery_notifier_),
-    rx_sdu_notifier(rx_sdu_notifier_)
-  {
-    (void)tx_pdu_notifier;
-    (void)rx_delivery_notifier;
-    (void)rx_sdu_notifier;
-  }
+                  f1u_rx_sdu_notifier&      rx_sdu_notifier_);
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
@@ -44,6 +36,7 @@ public:
   void discard_sdu(uint32_t count) override;
 
 private:
+  bearer_logger             logger;
   drb_id_t                  drb_id;
   f1u_tx_pdu_notifier&      tx_pdu_notifier;
   f1u_rx_delivery_notifier& rx_delivery_notifier;

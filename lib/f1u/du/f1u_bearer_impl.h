@@ -13,6 +13,7 @@
 #include "srsgnb/f1u/du/f1u_bearer.h"
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
@@ -36,6 +37,7 @@ public:
   void handle_pdu(nru_dl_message msg) override;
 
 private:
+  bearer_logger        logger;
   drb_id_t             drb_id;
   f1u_rx_sdu_notifier& rx_sdu_notifier;
   f1u_tx_pdu_notifier& tx_pdu_notifier;
