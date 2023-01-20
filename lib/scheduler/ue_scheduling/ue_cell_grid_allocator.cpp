@@ -66,7 +66,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   if (ss_cfg->type == search_space_configuration::type_t::common) {
     scs     = init_dl_bwp.generic_params.scs;
     bwp_cfg = init_dl_bwp.generic_params;
-    if (ss_cfg->cs_id == to_coreset_id(0) && cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
+    // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
+    if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
       bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
     }
   }
@@ -221,9 +222,12 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   subcarrier_spacing                    scs          = bwp_ul_cmn.generic_params.scs;
   pusch_time_domain_resource_allocation pusch_td_cfg = bwp_ul_cmn.pusch_cfg_common->pusch_td_alloc_list[time_resource];
+  bwp_configuration                     bwp_cfg      = bwp_ul_cmn.generic_params;
   if (ss_cfg->type == search_space_configuration::type_t::common) {
     scs          = init_ul_bwp.generic_params.scs;
     pusch_td_cfg = init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource];
+    // See TS 38.214, 6.1.2.2.2, Uplink resource allocation type 1.
+    bwp_cfg = init_ul_bwp.generic_params;
   }
 
   // Fetch PDCCH and PDSCH resource grid allocators.
@@ -237,10 +241,9 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Verify CRBs allocation.
-  if (not bwp_ul_cmn.generic_params.crbs.contains(grant.crbs)) {
-    logger.warning("Failed to allocate PUSCH. Cause: CRBs allocated outside the BWP.",
-                   grant.crbs.length(),
-                   bwp_ul_cmn.generic_params.crbs.length());
+  if (not bwp_cfg.crbs.contains(grant.crbs)) {
+    logger.warning(
+        "Failed to allocate PUSCH. Cause: CRBs allocated outside the BWP.", grant.crbs.length(), bwp_cfg.crbs.length());
     return false;
   }
 
@@ -307,7 +310,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, crbs});
 
   // Compute the available PRBs in the grid for this transmission.
-  prb_interval prbs = crb_to_prb(bwp_ul_cmn.generic_params, grant.crbs);
+  prb_interval prbs = crb_to_prb(bwp_cfg, grant.crbs);
 
   // Allocate UE UL HARQ.
   if (h_ul.empty()) {

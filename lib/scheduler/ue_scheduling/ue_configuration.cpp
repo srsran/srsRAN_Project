@@ -2,6 +2,7 @@
 #include "ue_configuration.h"
 #include "../../asn1/asn1_diff_utils.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
+#include "../support/pusch/pusch_default_time_allocation.h"
 #include <algorithm>
 
 using namespace srsgnb;
@@ -145,4 +146,31 @@ ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
   return pdsch_default_time_allocations_default_A_table(
       bwp_row.dl_bwp_common->generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
       cell_cfg_common.dmrs_typeA_pos);
+}
+
+span<const pusch_time_domain_resource_allocation>
+ue_cell_configuration::get_pusch_time_domain_list(search_space_id ss_id) const
+{
+  srsgnb_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
+  const search_space_configuration& ss_cfg  = *search_spaces[ss_id];
+  const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
+
+  if (ss_cfg.type != search_space_configuration::type_t::common or ss_cfg.cs_id != to_coreset_id(0)) {
+    if (bwp_row.ul_bwp_ded->pusch_cfg.has_value() and
+        (not bwp_row.ul_bwp_ded->pusch_cfg.value().pusch_td_alloc_list.empty())) {
+      // UE dedicated pusch-TimeDomain list.
+      return bwp_row.ul_bwp_ded->pusch_cfg.value().pusch_td_alloc_list;
+    }
+  }
+
+  if (bwp_row.ul_bwp_common->pusch_cfg_common.has_value() and
+      (not bwp_row.ul_bwp_common->pusch_cfg_common.value().pusch_td_alloc_list.empty())) {
+    // common pusch-TimeDomain list.
+    return bwp_row.ul_bwp_common->pusch_cfg_common.value().pusch_td_alloc_list;
+  }
+
+  // default A table case.
+  return pusch_default_time_allocations_default_A_table(
+      bwp_row.ul_bwp_common->generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
+      bwp_row.ul_bwp_common->generic_params.scs);
 }

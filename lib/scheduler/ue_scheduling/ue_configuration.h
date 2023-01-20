@@ -61,8 +61,10 @@ public:
     return bwp_table[bwpid].search_spaces;
   }
 
-  /// Get UE list of pdsch-TimeDomainAllocationList as per TS38.214 clause 5.1.2.1.1.
+  /// Get UE list of pdsch-TimeDomainAllocationList as per TS 38.214 clause 5.1.2.1.1.
   span<const pdsch_time_domain_resource_allocation> get_pdsch_time_domain_list(search_space_id ss_id) const;
+  /// Get UE list of pusch-TimeDomainAllocationList as per TS 38.214 clause 6.1.2.1.1.
+  span<const pusch_time_domain_resource_allocation> get_pusch_time_domain_list(search_space_id ss_id) const;
 
   /// Fetches UL BWP common configuration based on BWP-Id.
   const bwp_uplink_common* find_ul_bwp_common(bwp_id_t bwp_id) const { return bwp_table[bwp_id].ul_bwp_common; }

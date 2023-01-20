@@ -59,6 +59,7 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
 
       bwp_configuration bwp_cfg = ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).generic_params;
       if (ss_cfg->type == search_space_configuration::type_t::common) {
+        // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
         bwp_cfg = ue_cc.cfg().dl_bwp_common(to_bwp_id(0)).generic_params;
         if (cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
           bwp_cfg.crbs = get_coreset0_crbs(cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdcch_common);
@@ -73,15 +74,17 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
                                                                          : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
         crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
         if (not ue_grant_crbs.empty()) {
-          pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
-                                                       ue_cc.cell_index,
-                                                       h->id,
-                                                       ss_cfg->id,
-                                                       time_res,
-                                                       ue_grant_crbs,
-                                                       dci_dl_format::f1_0,
-                                                       aggregation_level::n4});
-          return true;
+          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
+                                                                                  ue_cc.cell_index,
+                                                                                  h->id,
+                                                                                  ss_cfg->id,
+                                                                                  time_res,
+                                                                                  ue_grant_crbs,
+                                                                                  dci_dl_format::f1_0,
+                                                                                  aggregation_level::n4});
+          if (res_allocated) {
+            return true;
+          }
         }
       }
     }
@@ -114,26 +117,28 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
       continue;
     }
 
-    const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(to_search_space_id(2));
-    if (ss_cfg == nullptr) {
-      return false;
-    }
+    for (const search_space_configuration* ss_cfg : ue_cc.cfg().get_search_spaces(ue_cc.active_bwp_id())) {
+      span<const pusch_time_domain_resource_allocation> pusch_list = ue_cc.cfg().get_pusch_time_domain_list(ss_cfg->id);
+      // See TS 38.212, 7.3.1.0 DCI size alignment.
+      const bwp_uplink_common& bwp_ul = ue_cell_cfg.ul_bwp_common(
+          ss_cfg->type == search_space_configuration::type_t::common ? to_bwp_id(0) : ue_cc.active_bwp_id());
 
-    // See TS 38.212, 7.3.1.0 DCI size alignment.
-    const bwp_uplink_common& bwp_ul = ue_cell_cfg.ul_bwp_common(
-        ss_cfg->type == search_space_configuration::type_t::common ? to_bwp_id(0) : ue_cc.active_bwp_id());
-
-    unsigned          time_res = 0; // TODO: Find best candidate.
-    unsigned          k2       = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].k2; // TODO: Take from config.
-    ofdm_symbol_range pusch_symbols          = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
-    const cell_slot_resource_grid& grid      = pusch_alloc.ul_resource_grid(ue_cc.cell_index, k2);
-    prb_bitmap                     used_crbs = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
-    unsigned                       nof_req_prbs =
-        is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
-    crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
-    if (not ue_grant_crbs.empty()) {
-      pusch_alloc.allocate_ul_grant(ue_pusch_grant{
-          &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, to_search_space_id(2), aggregation_level::n4});
+      for (unsigned time_res = 0; time_res != pusch_list.size(); ++time_res) {
+        unsigned                       k2            = pusch_list[time_res].k2;
+        ofdm_symbol_range              pusch_symbols = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
+        const cell_slot_resource_grid& grid          = pusch_alloc.ul_resource_grid(ue_cc.cell_index, k2);
+        prb_bitmap                     used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
+        unsigned                       nof_req_prbs =
+            is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
+        crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
+        if (not ue_grant_crbs.empty()) {
+          const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
+              &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, ss_cfg->id, aggregation_level::n4});
+          if (res_allocated) {
+            return true;
+          }
+        }
+      }
     }
   }
   return false;
