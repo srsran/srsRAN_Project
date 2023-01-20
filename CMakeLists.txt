@@ -45,6 +45,7 @@ option(ENABLE_FFTW           "Enable FFTW"                              ON)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
 option(BUILD_TESTS           "Compile tests"                            ON)
+option(ENABLE_GPROF          "Enable gprof"                             OFF)
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
 set_property(CACHE ASSERT_LEVEL PROPERTY STRINGS AUTO MINIMAL NORMAL PARANOID)
@@ -86,6 +87,10 @@ else(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fno-trapping-math -fno-math-errno -DBUILD_TYPE_RELEASE")
   endif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+
+if(ENABLE_GPROF)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+endif(ENABLE_GPROF)
 
 if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   if (HAVE_SSE)
