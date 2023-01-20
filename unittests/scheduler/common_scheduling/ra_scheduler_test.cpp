@@ -21,32 +21,38 @@ using namespace srsgnb;
 
 namespace {
 
-struct ra_test_bench {
-  scheduler_expert_config        sched_cfg;
-  cell_configuration             cell_cfg;
-  cell_resource_allocator        res_grid{cell_cfg};
-  dummy_pdcch_resource_allocator pdcch_sch;
-  ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch};
-  scheduler_result_logger        result_logger;
-
-  ra_test_bench(const sched_cell_configuration_request_message& cell_req =
-                    test_helpers::make_default_sched_cell_configuration_request()) :
-    sched_cfg(config_helpers::make_default_scheduler_expert_config()), cell_cfg(cell_req)
-  {
-  }
+/// Parameters used by FDD and TDD tests.
+struct test_params {
+  subcarrier_spacing   scs;
+  uint8_t              k0;
+  std::vector<uint8_t> k2s;
 };
 
-// k0 and list of k2 values.
-using test_params = std::tuple<uint8_t, std::vector<uint8_t>>;
-
-class ra_scheduler_tester : public ::testing::TestWithParam<test_params>
+class base_ra_scheduler_test : public ::testing::TestWithParam<test_params>
 {
 protected:
   static constexpr unsigned tx_rx_delay = 4U;
-  // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
-  unsigned max_k_value = 0;
 
-  ~ra_scheduler_tester() override
+  base_ra_scheduler_test(duplex_mode dplx_mode) : params(GetParam()), cell_cfg(get_sched_req(dplx_mode, params))
+  {
+    mac_logger.set_level(srslog::basic_levels::debug);
+    test_logger.set_level(srslog::basic_levels::info);
+
+    auto& dl_lst = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    for (auto& pdsch : dl_lst) {
+      if (pdsch.k0 > max_k_value) {
+        max_k_value = pdsch.k0;
+      }
+    }
+    auto& ul_lst = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    for (auto& pusch : ul_lst) {
+      if (pusch.k2 > max_k_value) {
+        max_k_value = pusch.k2;
+      }
+    }
+  }
+
+  ~base_ra_scheduler_test() override
   {
     // Log pending allocations before finishing test.
     for (unsigned i = 0; i != max_k_value; ++i) {
@@ -55,47 +61,54 @@ protected:
     srslog::flush();
   }
 
-  void setup_sched(const sched_cell_configuration_request_message& msg =
-                       test_helpers::make_default_sched_cell_configuration_request())
-  {
-    bench.emplace(msg);
-
-    auto& dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-    for (auto& pdsch : dl_lst) {
-      if (pdsch.k0 > max_k_value) {
-        max_k_value = pdsch.k0;
-      }
-    }
-    auto& ul_lst = bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-    for (auto& pusch : ul_lst) {
-      if (pusch.k2 > max_k_value) {
-        max_k_value = pusch.k2;
-      }
-    }
-  }
-
-  void handle_rach(const rach_indication_message& rach) { bench->ra_sch.handle_rach_indication(rach); }
-
   void run_slot()
   {
     mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
     test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
-    bench->res_grid.slot_indication(next_slot);
+    res_grid.slot_indication(next_slot);
     next_slot++;
 
-    bench->ra_sch.run_slot(bench->res_grid);
+    ra_sch.run_slot(res_grid);
 
-    bench->result_logger.log(bench->res_grid[0].result);
+    result_logger.log(res_grid[0].result);
 
     // Check sched result consistency.
     ASSERT_NO_FATAL_FAILURE(test_result_consistency());
   }
 
+  static sched_cell_configuration_request_message get_sched_req(duplex_mode dplx_mode, const test_params& params)
+  {
+    cell_config_builder_params builder_params{};
+    builder_params.scs_common = params.scs;
+    if (dplx_mode == srsgnb::duplex_mode::TDD) {
+      builder_params.dl_arfcn = 520000;
+      builder_params.band     = nr_band::n41;
+    }
+    builder_params.nof_crbs =
+        band_helper::get_n_rbs_from_bw(builder_params.channel_bw_mhz, builder_params.scs_common, frequency_range::FR1);
+    sched_cell_configuration_request_message req =
+        test_helpers::make_default_sched_cell_configuration_request(builder_params);
+
+    req.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
+
+    auto& pusch_list = req.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    if (params.k2s.empty()) {
+      pusch_list[0].k2 = test_rgen::uniform_int<unsigned>(2, 4);
+    } else {
+      pusch_list.resize(params.k2s.size(), pusch_list[0]);
+      for (unsigned i = 0; i != params.k2s.size(); ++i) {
+        pusch_list[i].k2 = params.k2s[i];
+      }
+    }
+
+    return req;
+  }
+
   /// \brief consistency checks that can be common to all test cases.
   void test_result_consistency()
   {
-    test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);
+    test_scheduler_result_consistency(cell_cfg, res_grid);
 
     // Check all RARs have an associated PDCCH (the previous test already checks if all PDCCHs have an associated PDSCH,
     // but not the other way around).
@@ -110,8 +123,7 @@ protected:
     for (const rar_information& rar : scheduled_rars(0)) {
       nof_grants += rar.grants.size();
     }
-    for (unsigned i = 0; i != bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size();
-         ++i) {
+    for (unsigned i = 0; i != cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size(); ++i) {
       unsigned nof_msg3_matches = 0;
       ASSERT_TRUE(msg3_consistent_with_rars(scheduled_rars(0), scheduled_puschs(i), nof_msg3_matches))
           << "Msg3 PUSCHs parameters must match the content of the RAR grants";
@@ -119,9 +131,13 @@ protected:
     }
     ASSERT_EQ(nof_grants, nof_puschs);
 
-    ASSERT_TRUE(bench->res_grid[0].result.dl.ue_grants.empty());
-    ASSERT_TRUE(bench->res_grid[0].result.dl.bc.sibs.empty());
+    ASSERT_TRUE(res_grid[0].result.dl.ue_grants.empty());
+    ASSERT_TRUE(res_grid[0].result.dl.bc.sibs.empty());
   }
+
+  slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }
+
+  void handle_rach_ind(const rach_indication_message& rach) { ra_sch.handle_rach_indication(rach); }
 
   rach_indication_message::preamble create_preamble()
   {
@@ -155,55 +171,30 @@ protected:
     return rach_ind;
   }
 
-  slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }
-
   const pusch_time_domain_resource_allocation& get_pusch_td_resource(uint8_t time_resource) const
   {
-    return bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource];
+    return cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource];
   }
 
-  static sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode        mode,
-                                                                                    const test_params& params)
-  {
-    sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
-    msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = std::get<0>(params);
-
-    const auto& k2s        = std::get<1>(params);
-    auto&       pusch_list = msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-    if (k2s.empty()) {
-      pusch_list[0].k2 = test_rgen::uniform_int<unsigned>(2, 4);
-    } else {
-      pusch_list.resize(k2s.size(), pusch_list[0]);
-      for (unsigned i = 0; i != k2s.size(); ++i) {
-        pusch_list[i].k2 = k2s[i];
-      }
-    }
-    if (mode == srsgnb::duplex_mode::TDD) {
-      msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
-    }
-    return msg;
-  }
-
-  span<const pdcch_dl_information> scheduled_dl_pdcchs() { return bench->res_grid[0].result.dl.dl_pdcchs; }
+  span<const pdcch_dl_information> scheduled_dl_pdcchs() const { return res_grid[0].result.dl.dl_pdcchs; }
 
   span<const rar_information> scheduled_rars(uint8_t time_resource) const
   {
-    unsigned k0 = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].k0;
-    return bench->res_grid[k0].result.dl.rar_grants;
+    unsigned k0 = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].k0;
+    return res_grid[k0].result.dl.rar_grants;
   }
 
   span<const ul_sched_info> scheduled_puschs(uint8_t time_resource) const
   {
-    return bench
-        ->res_grid[get_msg3_delay(get_pusch_td_resource(time_resource),
-                                  bench->cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)]
+    return res_grid[get_msg3_delay(get_pusch_td_resource(time_resource),
+                                   cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)]
         .result.ul.puschs;
   }
 
   bool no_rar_grants_scheduled() const
   {
     for (unsigned i = 0; i != max_k_value; ++i) {
-      const auto& result = bench->res_grid[i].result;
+      const auto& result = res_grid[i].result;
       if (not(result.dl.dl_pdcchs.empty() and result.dl.rar_grants.empty() and result.dl.ul_pdcchs.empty() and
               result.ul.puschs.empty())) {
         return false;
@@ -216,7 +207,7 @@ protected:
                                                   const rach_indication_message::preamble& preamb)
   {
     return rar_grant.temp_crnti == preamb.tc_rnti and rar_grant.rapid == preamb.preamble_id and
-           rar_grant.ta == preamb.time_advance.to_Ta(bench->cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
+           rar_grant.ta == preamb.time_advance.to_Ta(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
   }
 
   /// \brief Checks whether the parameters of the scheduled RAR grants, namely "rapid" and "TA", match those found
@@ -257,6 +248,38 @@ protected:
     return true;
   }
 
+  /// \brief For a slot to be valid for RAR in TDD mode, the RAR PDCCH, RAR PDSCH and Msg3 PUSCH must fall in DL, DL
+  /// and UL slots, respectively.
+  bool is_slot_valid_for_rar() const
+  {
+    if (not cell_cfg.is_tdd()) {
+      // FDD case.
+      return true;
+    }
+    slot_point pdcch_slot = res_grid[0].slot;
+
+    if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
+      // slot for PDCCH is not DL slot.
+      return false;
+    }
+    const auto& pdsch_list = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    if (std::none_of(pdsch_list.begin(), pdsch_list.end(), [this, &pdcch_slot](const auto& pdsch) {
+          return cell_cfg.is_dl_enabled(pdcch_slot + pdsch.k0);
+        })) {
+      // slot for PDSCH is not DL slot.
+      return false;
+    }
+    const auto& pusch_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
+          return cell_cfg.is_ul_enabled(pdcch_slot +
+                                        get_msg3_delay(pusch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
+        })) {
+      // slot for Msg3 PUSCH is not UL slot.
+      return false;
+    }
+    return true;
+  }
+
   bool msg3_consistent_with_rars(span<const rar_information> rars,
                                  span<const ul_sched_info>   ul_grants,
                                  unsigned&                   nof_matches)
@@ -270,12 +293,12 @@ protected:
         if (it != ul_grants.end()) {
           const pusch_information& pusch           = it->pusch_cfg;
           uint8_t                  freq_assignment = ra_frequency_type1_get_riv(
-              ra_frequency_type1_configuration{bench->cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+              ra_frequency_type1_configuration{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
                                                pusch.prbs.prbs().start(),
                                                pusch.prbs.prbs().length()});
           bool grant_matches = pusch.symbols == get_pusch_td_resource(grant.time_resource_assignment).symbols and
                                freq_assignment == grant.freq_resource_assignment and
-                               *pusch.bwp_cfg == bench->cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+                               *pusch.bwp_cfg == cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
           if (not grant_matches) {
             return false;
           }
@@ -286,50 +309,18 @@ protected:
     return true;
   }
 
-  /// \brief For a slot to be valid for RAR in TDD mode, the RAR PDCCH, RAR PDSCH and Msg3 PUSCH must fall in DL, DL
-  /// and UL slots, respectively.
-  bool is_slot_valid_for_rar() const
-  {
-    if (not bench->cell_cfg.is_tdd()) {
-      // FDD case.
-      return true;
-    }
-    slot_point pdcch_slot = bench->res_grid[0].slot;
-
-    if (not bench->cell_cfg.is_dl_enabled(pdcch_slot)) {
-      // slot for PDCCH is not DL slot.
-      return false;
-    }
-    const auto& pdsch_list = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
-    if (std::none_of(pdsch_list.begin(), pdsch_list.end(), [this, &pdcch_slot](const auto& pdsch) {
-          return bench->cell_cfg.is_dl_enabled(pdcch_slot + pdsch.k0);
-        })) {
-      // slot for PDSCH is not DL slot.
-      return false;
-    }
-    const auto& pusch_list = bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-    if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
-          return bench->cell_cfg.is_ul_enabled(
-              pdcch_slot + get_msg3_delay(pusch, bench->cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs));
-        })) {
-      // slot for Msg3 PUSCH is not UL slot.
-      return false;
-    }
-    return true;
-  }
-
   bool is_in_rar_window(slot_point rach_slot_rx) const
   {
     slot_point rar_win_start;
     for (unsigned i = 1; i != rach_slot_rx.nof_slots_per_frame(); ++i) {
-      if (bench->cell_cfg.is_dl_enabled(rach_slot_rx + i)) {
+      if (cell_cfg.is_dl_enabled(rach_slot_rx + i)) {
         rar_win_start = rach_slot_rx + i;
         break;
       }
     }
-    slot_interval rar_win = {
-        rar_win_start,
-        rar_win_start + bench->cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window};
+    slot_interval rar_win = {rar_win_start,
+                             rar_win_start +
+                                 cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window};
     return rar_win.contains(result_slot_tx());
   }
 
@@ -340,19 +331,46 @@ protected:
     return rar_it != rars.end() ? &*rar_it : nullptr;
   }
 
-  slot_point result_slot_tx() const { return bench->res_grid[0].slot; }
+  slot_point result_slot_tx() const { return res_grid[0].slot; }
 
-  slot_point              next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
-  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("MAC", true);
-  srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST");
-  optional<ra_test_bench> bench;
+  test_params           params;
+  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC", true);
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+
+  scheduler_expert_config        sched_cfg{config_helpers::make_default_scheduler_expert_config()};
+  cell_configuration             cell_cfg;
+  cell_resource_allocator        res_grid{cell_cfg};
+  dummy_pdcch_resource_allocator pdcch_sch;
+  ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch};
+  scheduler_result_logger        result_logger;
+
+  slot_point next_slot{to_numerology_value(params.scs),
+                       test_rgen::uniform_int<unsigned>(0, (10240 << to_numerology_value(params.scs)) - 1)};
+
+  // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
+  unsigned max_k_value = 0;
+};
+
+class fdd_test : public base_ra_scheduler_test
+{
+protected:
+  fdd_test() : base_ra_scheduler_test(duplex_mode::FDD) {}
+};
+
+class tdd_test : public base_ra_scheduler_test
+{
+protected:
+  tdd_test() : base_ra_scheduler_test(duplex_mode::TDD) {}
 };
 
 /// This test verifies that the cell resource grid remains empty when no RACH indications arrive to the RA scheduler.
-TEST_P(ra_scheduler_tester, when_no_rach_indication_received_then_no_rar_allocated)
+TEST_P(fdd_test, when_no_rach_indication_received_then_no_rar_allocated)
 {
-  setup_sched(create_random_cell_config_request(
-      test_rgen::uniform_int<unsigned>(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD, GetParam()));
+  run_slot();
+  ASSERT_TRUE(no_rar_grants_scheduled());
+}
+TEST_P(tdd_test, when_no_rach_indication_received_then_no_rar_allocated)
+{
   run_slot();
   ASSERT_TRUE(no_rar_grants_scheduled());
 }
@@ -360,14 +378,12 @@ TEST_P(ra_scheduler_tester, when_no_rach_indication_received_then_no_rar_allocat
 /// This test verifies the correct scheduling of a RAR and Msg3s in an FDD frame, when multiple RACH preambles
 /// are received for the same PRACH occasion.
 /// The scheduler is expected to allocate one RAR and multiple MSG3 grants.
-TEST_P(ra_scheduler_tester, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach_occasion)
+TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach_occasion)
 {
-  setup_sched(create_random_cell_config_request(duplex_mode::FDD, GetParam()));
-
   // Forward single RACH occasion with multiple preambles.
   rach_indication_message one_rach =
       create_rach_indication(test_rgen::uniform_int<unsigned>(1, MAX_PREAMBLES_PER_PRACH_OCCASION));
-  handle_rach(one_rach);
+  handle_rach_ind(one_rach);
 
   for (unsigned nof_sched_grants = 0, slot_count = 0; nof_sched_grants < one_rach.occasions[0].preambles.size();
        ++slot_count) {
@@ -393,10 +409,8 @@ TEST_P(ra_scheduler_tester, schedules_one_rar_per_slot_when_multi_preambles_with
 /// This test verifies the correct scheduling of a RAR and Msg3 in an FDD frame, when multiple RACH Preambles are
 /// received, each in a different PRACH occasion.
 /// The scheduler is expected to allocate several RARs (with different RA-RNTIs), each composed by one Msg3.
-TEST_P(ra_scheduler_tester, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
+TEST_P(fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
 {
-  setup_sched(create_random_cell_config_request(duplex_mode::FDD, GetParam()));
-
   // Forward multiple RACH occasions with one preamble.
   unsigned                nof_occasions = test_rgen::uniform_int<unsigned>(1, MAX_PRACH_OCCASIONS_PER_SLOT);
   rach_indication_message rach_ind      = create_rach_indication(0);
@@ -406,7 +420,7 @@ TEST_P(ra_scheduler_tester, schedules_multiple_rars_per_slot_when_multiple_prach
     rach_ind.occasions.back().frequency_index = i;
     rach_ind.occasions.back().preambles.emplace_back(create_preamble());
   }
-  handle_rach(rach_ind);
+  handle_rach_ind(rach_ind);
 
   unsigned nof_sched_grants = 0;
   for (unsigned slot_count = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size(); ++slot_count) {
@@ -435,15 +449,12 @@ TEST_P(ra_scheduler_tester, schedules_multiple_rars_per_slot_when_multiple_prach
 /// scheduling opportunities where the RAR PDCCH and PDSCH fall in a DL slot and the Msg3 falls in an UL slot.
 /// The scheduler will need to search in the PUSCH-TimeDomainResourceList provided in the cell config for a k2
 /// value that allows it to fit the Msg3 in an UL slot.
-TEST_P(ra_scheduler_tester, schedules_rar_in_valid_slots_when_tdd)
+TEST_P(tdd_test, schedules_rar_in_valid_slots_when_tdd)
 {
-  // This k2 configuration ensures that can schedule the RAR+Msg3 in the TDD frame regardless of the PRACH slot.
-  setup_sched(create_random_cell_config_request(duplex_mode::TDD, GetParam()));
-
   // Forward single RACH occasion with multiple preambles.
   // Note: The number of preambles is small enough to fit all grants in one slot.
   rach_indication_message rach_ind = create_rach_indication(test_rgen::uniform_int<unsigned>(1, 10));
-  handle_rach(rach_ind);
+  handle_rach_ind(rach_ind);
 
   for (unsigned nof_sched_grants = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size();) {
     run_slot();
@@ -470,10 +481,22 @@ TEST_P(ra_scheduler_tester, schedules_rar_in_valid_slots_when_tdd)
 }
 
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
-                         ra_scheduler_tester,
-                         ::testing::Combine(::testing::Range<uint8_t>(1, 4), // k0
-                                            ::testing::Values(std::vector<uint8_t>{2},
-                                                              std::vector<uint8_t>{2, 4}))); // k2
+                         fdd_test,
+                         ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2}},
+                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2}},
+                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2}}));
+//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2}},
+//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2}},
+//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2}}));
+
+INSTANTIATE_TEST_SUITE_P(ra_scheduler,
+                         tdd_test,
+                         ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2, 4}},
+                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2, 4}},
+                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2, 4}}));
+//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}},
+//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2, 4}},
+//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2, 4}}));
 
 } // namespace
 
