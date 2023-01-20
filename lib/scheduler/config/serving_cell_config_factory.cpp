@@ -290,9 +290,11 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_res_set.pucch_res_id_list.emplace_back(1);
   pucch_res_set.pucch_res_id_list.emplace_back(2);
 
+  unsigned nof_rbs = params.nof_crbs;
+
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id                 = 0,
-                           .starting_prb           = params.nof_crbs - 1,
+                           .starting_prb           = nof_rbs - 1,
                            .second_hop_prb         = 0,
                            .intraslot_freq_hopping = true,
                            .format                 = pucch_format::FORMAT_1};
@@ -307,19 +309,19 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
   res1.res_id          = 1;
   res1.starting_prb    = 1;
-  res1.second_hop_prb  = params.nof_crbs - 2;
+  res1.second_hop_prb  = nof_rbs - res1.starting_prb - 1;
   // >>> PUCCH resource 2.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
   res2.res_id          = 2;
-  res2.starting_prb    = params.nof_crbs - 2;
   res2.second_hop_prb  = 1;
+  res2.starting_prb    = nof_rbs - res2.second_hop_prb - 1;
   // >>> PUCCH resource 3.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res3 = pucch_cfg.pucch_res_list.back();
   res3.res_id          = 3;
   res3.starting_prb    = 0;
-  res3.second_hop_prb  = params.nof_crbs - 1;
+  res3.second_hop_prb  = nof_rbs - 1;
 
   // TODO: add more PUCCH resources.
 
