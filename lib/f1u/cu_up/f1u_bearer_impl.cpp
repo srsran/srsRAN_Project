@@ -25,9 +25,7 @@ f1u_bearer_impl::f1u_bearer_impl(drb_id_t                  drb_id_,
   rx_sdu_notifier(rx_sdu_notifier_)
 {
   (void)drb_id;
-  (void)tx_pdu_notifier;
   (void)rx_delivery_notifier;
-  (void)rx_sdu_notifier;
 }
 
 void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
