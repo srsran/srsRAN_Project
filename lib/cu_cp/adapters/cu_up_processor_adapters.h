@@ -67,5 +67,21 @@ private:
   cu_cp_cu_up_handler* cu_cp_handler = nullptr;
 };
 
+/// Adapter between CU-UP Processor and E1AP, to initialize connection procedures
+class cu_up_processor_e1ap_adapter : public cu_up_processor_e1ap_control_notifier
+{
+public:
+  void connect_e1ap(e1_connection_manager& e1_conn_mng_) { e1_conn_mng = &e1_conn_mng_; }
+
+  async_task<cu_cp_e1_setup_response> on_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) override
+  {
+    srsgnb_assert(e1_conn_mng != nullptr, "e1_conn_mng must not be nullptr");
+    return e1_conn_mng->handle_cu_cp_e1_setup_request(request);
+  }
+
+private:
+  e1_connection_manager* e1_conn_mng = nullptr;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

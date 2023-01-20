@@ -21,7 +21,7 @@ class initial_cu_up_processor_setup_routine
 {
 public:
   initial_cu_up_processor_setup_routine(cu_up_processor_context&                   context_,
-                                        e1_connection_manager&                     e1_conn_mng_,
+                                        cu_up_processor_e1ap_control_notifier&     e1_conn_notifier_,
                                         cu_up_processor_cu_up_management_notifier& cu_cp_notifier_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -32,7 +32,7 @@ private:
 
   cu_up_processor_context& context;
 
-  e1_connection_manager&                     e1_conn_mng;
+  cu_up_processor_e1ap_control_notifier&     e1_conn_notifier;
   cu_up_processor_cu_up_management_notifier& cu_cp_notifier;
 
   cu_cp_e1_setup_response response = {};

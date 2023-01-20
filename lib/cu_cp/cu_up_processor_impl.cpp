@@ -28,8 +28,9 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t       
   // create e1
   e1 = create_e1(task_sched.get_timer_manager(), e1_notifier, e1_ev_notifier);
   e1_ev_notifier.connect_cu_up_processor(*this);
+  e1ap_adapter.connect_e1ap(*e1);
 
-  routine_mng = std::make_unique<cu_up_processor_routine_manager>(context, *e1, cu_cp_notifier, task_sched);
+  routine_mng = std::make_unique<cu_up_processor_routine_manager>(context, e1ap_adapter, cu_cp_notifier, task_sched);
 }
 
 void cu_up_processor_impl::start()

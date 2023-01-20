@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/cu_up_processor_adapters.h"
 #include "adapters/e1_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "routine_managers/cu_up_processor_routine_manager.h"
@@ -70,6 +71,9 @@ private:
 
   // E1 to CU-UP processor adapter
   e1_cu_up_processor_adapter e1_ev_notifier;
+
+  // CU-UP Processor to E1AP adapter
+  cu_up_processor_e1ap_adapter e1ap_adapter;
 
   std::unique_ptr<cu_up_processor_routine_manager> routine_mng;
 };

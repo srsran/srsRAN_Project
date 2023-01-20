@@ -48,6 +48,17 @@ public:
   virtual e1_bearer_context_manager& get_e1_bearer_context_manager() = 0;
 };
 
+/// Methods used by CU-UP Processor to initiate E1 connection procedures.
+class cu_up_processor_e1ap_control_notifier
+{
+public:
+  virtual ~cu_up_processor_e1ap_control_notifier() = default;
+
+  /// \brief Notifies the E1AP to initiate a E1 Setup Procedure.
+  /// \param[in] request The E1 Setup Request.
+  virtual async_task<cu_cp_e1_setup_response> on_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) = 0;
+};
+
 /// Methods used by CU-UP processor to notify about CU-UP specific events.
 class cu_up_processor_cu_up_management_notifier
 {
