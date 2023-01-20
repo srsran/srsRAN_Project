@@ -155,6 +155,8 @@ struct pusch_config {
   optional<dmrs_uplink_config>  pusch_mapping_type_b_dmrs;
   optional<pusch_power_control> pusch_pwr_ctrl;
   resource_allocation           res_alloc;
+  /// PUSCH time domain resource allocations. Size: (0..maxNrofUL-Allocations=16).
+  std::vector<pusch_time_domain_resource_allocation> pusch_td_alloc_list;
   /// Indicates which MCS table the UE shall use for PUSCH.
   pusch_mcs_table mcs_table{pusch_mcs_table::qam64};
   /// The UE specific selection of transformer precoder for PUSCH. When the field is not set the UE applies the value of
@@ -175,7 +177,7 @@ struct pusch_config {
            pusch_mapping_type_a_dmrs == rhs.pusch_mapping_type_a_dmrs &&
            pusch_mapping_type_b_dmrs == rhs.pusch_mapping_type_b_dmrs && pusch_pwr_ctrl == rhs.pusch_pwr_ctrl &&
            res_alloc == rhs.res_alloc && trans_precoder == rhs.trans_precoder && cb_subset == rhs.cb_subset &&
-           max_rank == rhs.max_rank && uci_cfg == rhs.uci_cfg;
+           max_rank == rhs.max_rank && uci_cfg == rhs.uci_cfg && pusch_td_alloc_list == rhs.pusch_td_alloc_list;
   }
   bool operator!=(const pusch_config& rhs) const { return !(rhs == *this); }
 };

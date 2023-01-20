@@ -54,10 +54,14 @@ pusch_config make_initial_pusch_config()
       .sri_pusch_pathloss_ref_rs_id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
       .sri_p0_pusch_alphaset_id     = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(0),
       .closed_loop_idx = pusch_config::pusch_power_control::sri_pusch_pwr_ctrl::sri_pusch_closed_loop_index::i0});
-  cfg.res_alloc      = pusch_config::resource_allocation::resource_allocation_type_1;
-  cfg.trans_precoder = pusch_config::transform_precoder::disabled;
-  cfg.cb_subset      = pusch_config::codebook_subset::non_coherent;
-  cfg.max_rank       = 1;
+  cfg.res_alloc = pusch_config::resource_allocation::resource_allocation_type_1;
+  cfg.pusch_td_alloc_list.resize(1);
+  cfg.pusch_td_alloc_list[0].k2       = 4;
+  cfg.pusch_td_alloc_list[0].map_type = sch_mapping_type::typeA;
+  cfg.pusch_td_alloc_list[0].symbols  = {0, 14};
+  cfg.trans_precoder                  = pusch_config::transform_precoder::disabled;
+  cfg.cb_subset                       = pusch_config::codebook_subset::non_coherent;
+  cfg.max_rank                        = 1;
 
   cfg.uci_cfg.emplace();
   auto& uci_cfg   = cfg.uci_cfg.value();
@@ -589,6 +593,9 @@ TEST(serving_cell_config_converter_test, test_initial_pusch_cfg_conversion)
                   .init_ul_bwp.pusch_cfg.value()
                   .pusch_pwr_ctrl.value()
                   .p0_alphasets.size());
+
+    ASSERT_TRUE(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pusch_cfg.setup().pusch_time_domain_alloc_list_present);
+    ASSERT_TRUE(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pusch_cfg.setup().pusch_time_domain_alloc_list.is_setup());
   }
 }
 
@@ -630,6 +637,9 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pusch_cfg_conversion)
   // Erase/Release.
   dest_pusch_cfg.pusch_pwr_ctrl.value().sri_pusch_mapping.erase(
       dest_pusch_cfg.pusch_pwr_ctrl.value().sri_pusch_mapping.begin());
+
+  dest_pusch_cfg.pusch_td_alloc_list.push_back(pusch_time_domain_resource_allocation{
+      .k2 = 4, .map_type = srsgnb::sch_mapping_type::typeB, .symbols = ofdm_symbol_range{2, 12}});
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
@@ -674,6 +684,9 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pusch_cfg_conversion)
                   .init_ul_bwp.pusch_cfg.value()
                   .pusch_pwr_ctrl.value()
                   .p0_alphasets.size());
+
+    ASSERT_TRUE(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pusch_cfg.setup().pusch_time_domain_alloc_list_present);
+    ASSERT_TRUE(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pusch_cfg.setup().pusch_time_domain_alloc_list.is_setup());
   }
 }
 

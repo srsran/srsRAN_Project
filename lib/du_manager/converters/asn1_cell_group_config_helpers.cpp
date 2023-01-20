@@ -1175,6 +1175,27 @@ void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_on_pusc
   }
 }
 
+asn1::rrc_nr::pusch_time_domain_res_alloc_s
+make_asn1_rrc_pusch_time_domain_alloc_list(const pusch_time_domain_resource_allocation& cfg)
+{
+  pusch_time_domain_res_alloc_s out{};
+  out.k2_present = true;
+  switch (cfg.map_type) {
+    case sch_mapping_type::typeA:
+      out.map_type = pusch_time_domain_res_alloc_s::map_type_opts::type_a;
+      break;
+    case sch_mapping_type::typeB:
+      out.map_type = pusch_time_domain_res_alloc_s::map_type_opts::type_b;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid SCH mapping Type={}", cfg.map_type);
+  }
+
+  out.start_symbol_and_len = ofdm_symbol_range_to_sliv(cfg.symbols);
+
+  return out;
+}
+
 void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_config& src, const pusch_config& dest)
 {
   if (dest.data_scrambling_id_pusch.has_value()) {
@@ -1241,6 +1262,20 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
       break;
     default:
       srsgnb_assertion_failure("Invalid PUSCH Resource Allocation={}", dest.res_alloc);
+  }
+
+  // PUSCH Time Domain Allocation.
+  if ((not dest.pusch_td_alloc_list.empty() && src.pusch_td_alloc_list.empty()) ||
+      (not dest.pusch_td_alloc_list.empty() && not src.pusch_td_alloc_list.empty() &&
+       dest.pusch_td_alloc_list != src.pusch_td_alloc_list)) {
+    out.pusch_time_domain_alloc_list_present = true;
+    auto& alloc_list                         = out.pusch_time_domain_alloc_list.set_setup();
+    for (const auto& td_alloc : dest.pusch_td_alloc_list) {
+      alloc_list.push_back(make_asn1_rrc_pusch_time_domain_alloc_list(td_alloc));
+    }
+  } else if (not src.pusch_td_alloc_list.empty() && dest.pusch_td_alloc_list.empty()) {
+    out.pusch_time_domain_alloc_list_present = true;
+    out.pusch_time_domain_alloc_list.set_release();
   }
 
   if (dest.mcs_table != srsgnb::pusch_mcs_table::qam64) {
