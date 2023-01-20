@@ -21,23 +21,21 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t       
                                            cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
                                            e1_message_notifier&                       e1_notifier_,
                                            cu_up_processor_task_scheduler&            task_sched_) :
-  cfg(cu_up_processor_config_),
-  cu_cp_notifier(cu_cp_notifier_),
-  e1_notifier(e1_notifier_),
-  task_sched(task_sched_),
-  main_ctrl_loop(128)
+  cfg(cu_up_processor_config_), cu_cp_notifier(cu_cp_notifier_), e1_notifier(e1_notifier_), task_sched(task_sched_)
 {
   context.cu_cp_name = cfg.name;
 
   // create e1
   e1 = create_e1(task_sched.get_timer_manager(), e1_notifier, e1_ev_notifier);
   e1_ev_notifier.connect_cu_up_processor(*this);
+
+  routine_mng = std::make_unique<cu_up_processor_routine_manager>(context, *e1, cu_cp_notifier, task_sched);
 }
 
 void cu_up_processor_impl::start()
 {
   // Start E1 setup procedure
-  main_ctrl_loop.schedule<initial_cu_up_processor_setup_routine>(context, *e1, cu_cp_notifier);
+  routine_mng->start_initial_cu_up_processor_setup_routine();
 }
 
 void cu_up_processor_impl::stop() {}

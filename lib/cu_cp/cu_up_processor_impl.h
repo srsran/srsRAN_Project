@@ -12,6 +12,7 @@
 
 #include "adapters/e1_adapters.h"
 #include "adapters/ngap_adapters.h"
+#include "routine_managers/cu_up_processor_routine_manager.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/cu_up_processor_config.h"
@@ -70,8 +71,7 @@ private:
   // E1 to CU-UP processor adapter
   e1_cu_up_processor_adapter e1_ev_notifier;
 
-  // Handler for CU-UP processor tasks.
-  async_task_sequencer main_ctrl_loop;
+  std::unique_ptr<cu_up_processor_routine_manager> routine_mng;
 };
 
 } // namespace srs_cu_cp
