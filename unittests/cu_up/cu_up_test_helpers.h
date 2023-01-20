@@ -172,7 +172,7 @@ e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id
 
   pdu_session_res_to_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel();
   auto& gtp_tunnel = pdu_session_res_to_setup_item.ng_ul_up_tnl_info.gtp_tunnel();
-  gtp_tunnel.transport_layer_address.from_number(2887058566);
+  gtp_tunnel.transport_layer_address.from_string("01111111000000000000000000000001");
   gtp_tunnel.gtp_teid.from_string("00000036");
 
   asn1::e1ap::drb_to_setup_item_ng_ran_s drb_to_setup_item_ng_ran;

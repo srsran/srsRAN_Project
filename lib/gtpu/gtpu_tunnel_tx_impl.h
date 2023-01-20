@@ -30,10 +30,10 @@ public:
     // Validate configuration
     if (inet_pton(AF_INET, cfg.peer_addr.c_str(), &((::sockaddr_in*)&peer_sockaddr)->sin_addr) == 1) {
       ((::sockaddr_in*)&peer_sockaddr)->sin_family = AF_INET;
-      ((::sockaddr_in*)&peer_sockaddr)->sin_port   = htons(GTPU_PORT);
+      ((::sockaddr_in*)&peer_sockaddr)->sin_port   = htons(cfg.peer_port);
     } else if (inet_pton(AF_INET6, cfg.peer_addr.c_str(), &((::sockaddr_in6*)&peer_sockaddr)->sin6_addr) == 1) {
       ((::sockaddr_in6*)&peer_sockaddr)->sin6_family = AF_INET6;
-      ((::sockaddr_in6*)&peer_sockaddr)->sin6_port   = htons(GTPU_PORT);
+      ((::sockaddr_in6*)&peer_sockaddr)->sin6_port   = htons(cfg.peer_port);
     } else {
       logger.error("Could not get peer address. Configured address={}, errno={}", cfg.peer_addr, strerror(errno));
     }

@@ -18,6 +18,10 @@
 
 namespace srsgnb {
 
+/// Port specified for Encapsulated T-PDUs,
+/// TS 29.281 Sec. 4.4.2.3
+constexpr unsigned GTPU_PORT = 2152;
+
 /// \brief Configurable parameters for the GTP-U
 struct gtpu_config {
   struct gtpu_rx_config {
@@ -26,6 +30,7 @@ struct gtpu_config {
   struct gtpu_tx_config {
     uint32_t    peer_teid;
     std::string peer_addr;
+    uint16_t    peer_port;
   } tx;
 };
 } // namespace srsgnb
@@ -65,7 +70,8 @@ struct formatter<srsgnb::gtpu_config::gtpu_tx_config> {
   auto format(const srsgnb::gtpu_config::gtpu_tx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "peer teid={}, peer addr={}", cfg.peer_teid, cfg.peer_addr);
+    return format_to(
+        ctx.out(), "peer teid={}, peer addr={}, peer port={}", cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
   }
 };
 
