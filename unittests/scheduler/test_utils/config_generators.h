@@ -34,7 +34,7 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
   sched_req.ul_cfg_common  = config_helpers::make_default_ul_config_common(params);
   sched_req.ssb_config     = config_helpers::make_default_ssb_config(params);
   sched_req.dmrs_typeA_pos = dmrs_typeA_position::pos2;
-  if (params.dplx_mode == duplex_mode::TDD) {
+  if (not band_helper::is_paired_spectrum(sched_req.dl_carrier.band)) {
     sched_req.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
   }
 
