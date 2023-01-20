@@ -19,7 +19,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// \brief Service provided by CU-CP handle routines.
+/// \brief Service provided by CU-CP to handle routines.
 class cu_cp_routine_manager
 {
 public:
