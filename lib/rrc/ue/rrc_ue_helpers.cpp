@@ -14,12 +14,6 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-bool rrc_ue_impl::init_pucch()
-{
-  // TODO: add PUCCH allocation
-  return true;
-}
-
 void rrc_ue_impl::on_ue_delete_request()
 {
   // FIXME: this enqueues a new CORO on top of an existing one.

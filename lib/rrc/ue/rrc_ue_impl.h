@@ -89,9 +89,6 @@ private:
   void on_new_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_ccch_msg) override;
   void on_new_security_config(security::sec_as_config sec_cfg) override;
 
-  /// allocates PUCCH resources at the cell resource manager
-  bool init_pucch();
-
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
 
