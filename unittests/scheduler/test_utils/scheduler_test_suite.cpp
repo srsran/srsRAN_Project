@@ -28,9 +28,12 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
   TESTASSERT_EQ(pdcch.ctx.rnti, pdsch.rnti);
   TESTASSERT(*pdcch.ctx.bwp_cfg == *pdsch.bwp_cfg);
   TESTASSERT(*pdcch.ctx.coreset_cfg == *pdsch.coreset_cfg);
-  const unsigned     rb_start = pdsch.coreset_cfg->get_coreset_start_crb();
-  const crb_interval coreset_rb_lims{rb_start, rb_start + get_coreset_nof_prbs(*pdsch.coreset_cfg)};
-  const unsigned     rb_limits = pdsch.coreset_cfg->id == 0 ? coreset_rb_lims.length() : pdsch.bwp_cfg->crbs.length();
+  bwp_configuration bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
+  // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
+  if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
+    bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  }
+  const crb_interval cs_zero_crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 
   uint8_t  time_assignment = 0;
   uint8_t  freq_assignment = 0;
@@ -41,7 +44,7 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
       time_assignment = pdcch.dci.si_f1_0.time_resource;
       freq_assignment = pdcch.dci.si_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.si_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, rb_limits);
+      TESTASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
       break;
     }
     case dci_dl_rnti_config_type::ra_f1_0: {
@@ -49,19 +52,19 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
       TESTASSERT(time_assignment < cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size());
       freq_assignment = pdcch.dci.ra_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.ra_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, rb_limits);
+      TESTASSERT_EQ(N_rb_dl_bwp, bwp_cfg.crbs.length());
     } break;
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
       time_assignment = pdcch.dci.tc_rnti_f1_0.time_resource;
       freq_assignment = pdcch.dci.tc_rnti_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.tc_rnti_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, rb_limits);
+      TESTASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
     } break;
     case dci_dl_rnti_config_type::p_rnti_f1_0: {
       time_assignment = pdcch.dci.p_rnti_f1_0.time_resource;
       freq_assignment = pdcch.dci.p_rnti_f1_0.frequency_resource;
       N_rb_dl_bwp     = pdcch.dci.p_rnti_f1_0.N_rb_dl_bwp;
-      TESTASSERT_EQ(N_rb_dl_bwp, rb_limits);
+      TESTASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
     } break;
     default:
       srsgnb_terminate("DCI type not supported");
