@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/channel_processors/pucch_demodulator.h"
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/ran/pucch/pucch_mapping.h"
+#include "srsgnb/ran/pucch/pucch_constants.h"
 
 namespace srsgnb {
 
@@ -82,7 +82,7 @@ private:
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and receive port.
   static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
                 cf_t,
-                PUCCH_MAX_NOF_RE * MAX_PORTS,
+                pucch_constants::MAX_NOF_RE * MAX_PORTS,
                 channel_equalizer::re_list::dims>
       ch_re;
 
@@ -90,7 +90,7 @@ private:
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and transmit layer.
   static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
                 cf_t,
-                PUCCH_MAX_NOF_RE,
+                pucch_constants::MAX_NOF_RE,
                 channel_equalizer::re_list::dims>
       eq_re;
 
@@ -98,7 +98,7 @@ private:
   /// \remark The symbols are arranged in two dimensions, i.e., resource element and transmit layer.
   static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
                 float,
-                PUCCH_MAX_NOF_RE,
+                pucch_constants::MAX_NOF_RE,
                 channel_equalizer::re_list::dims>
       eq_noise_vars;
 
@@ -108,7 +108,7 @@ private:
   static_tensor<std::underlying_type_t<channel_equalizer::ch_est_list::dims>(
                     channel_equalizer::ch_est_list::dims::nof_dims),
                 cf_t,
-                PUCCH_MAX_NOF_RE * MAX_PORTS,
+                pucch_constants::MAX_NOF_RE * MAX_PORTS,
                 channel_equalizer::ch_est_list::dims>
       ch_estimates;
 

@@ -157,7 +157,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   } else {
     dims.nof_symbols = dmrs_pucch_symbols(config, 0);
   }
-  dims.nof_slices = PUCCH_MAX_LAYERS;
+  dims.nof_slices = pucch_constants::MAX_LAYERS;
 
   // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);

@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
-#include "srsgnb/ran/pucch/pucch_mapping.h"
+#include "srsgnb/ran/pucch/pucch_constants.h"
 
 namespace srsgnb {
 

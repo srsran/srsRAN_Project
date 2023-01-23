@@ -12,6 +12,7 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
+#include "srsgnb/ran/pucch/pucch_constants.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
@@ -20,7 +21,10 @@ using namespace srsgnb;
 namespace {
 
 // Maximum channel dimensions used to construct the PUCCH processor.
-channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB, MAX_NSYMB_PER_SLOT - 1, 1, PUCCH_MAX_LAYERS};
+channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB,
+                                                                MAX_NSYMB_PER_SLOT - 1,
+                                                                1,
+                                                                pucch_constants::MAX_LAYERS};
 
 // Maximum number of UCI payload bits supported by the current PUCCH Format 2 implementation.
 constexpr unsigned PUCCH_F2_IMPL_MAX_NBITS = 11;
@@ -54,7 +58,7 @@ const pucch_processor::format2_configuration base_format_2_config = {
     // N_ID_0.
     0,
     // Number of HARQ-ACK bits.
-    PUCCH_FORMAT2_MIN_UCI_NBITS,
+    pucch_constants::FORMAT2_MIN_UCI_NBITS,
     // Number of SR bits.
     0,
     // Number of CSI Part 1 bits.
@@ -158,15 +162,6 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
         [] {
           test_params entry          = {};
           entry.config               = base_format_2_config;
-          entry.config.nof_csi_part1 = 1;
-          entry.assert_message       = fmt::format(R"(CSI Part 1 is not currently supported\.)");
-          return entry;
-        },
-    },
-    {
-        [] {
-          test_params entry          = {};
-          entry.config               = base_format_2_config;
           entry.config.nof_csi_part2 = 1;
           entry.assert_message       = fmt::format(R"(CSI Part 2 is not currently supported\.)");
           return entry;
@@ -185,15 +180,25 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
         [] {
           test_params entry          = {};
           entry.config               = base_format_2_config;
-          entry.config.nof_harq_ack  = PUCCH_FORMAT2_MIN_UCI_NBITS - 1;
+          entry.config.nof_harq_ack  = pucch_constants::FORMAT2_MIN_UCI_NBITS - 1;
           entry.config.nof_sr        = 0;
           entry.config.nof_csi_part1 = 0;
           entry.config.nof_csi_part2 = 0;
           entry.assert_message       = fmt::format(
               R"(UCI Payload length\, i\.e\.\, {} is not supported\. Payload length must be {} to {} bits\.)",
               entry.config.nof_harq_ack + entry.config.nof_sr + entry.config.nof_csi_part1 + entry.config.nof_csi_part2,
-              PUCCH_FORMAT2_MIN_UCI_NBITS,
+              pucch_constants::FORMAT2_MIN_UCI_NBITS,
               PUCCH_F2_IMPL_MAX_NBITS);
+          return entry;
+        },
+    },
+    {
+        [] {
+          test_params entry         = {};
+          entry.config              = base_format_2_config;
+          entry.config.nof_harq_ack = uci_constants::MAX_NOF_HARQ_BITS;
+          entry.assert_message =
+              R"(The effective code rate \(i\.e\., [0-9]*\.[0-9]*) exceeds the maximum allowed 0\.8\.)";
           return entry;
         },
     },
@@ -208,12 +213,11 @@ const std::vector<test_case_t> pucch_processor_validator_test_data = {
           entry.assert_message       = fmt::format(
               R"(UCI Payload length\, i\.e\.\, {} is not supported\. Payload length must be {} to {} bits\.)",
               entry.config.nof_harq_ack + entry.config.nof_sr + entry.config.nof_csi_part1 + entry.config.nof_csi_part2,
-              PUCCH_FORMAT2_MIN_UCI_NBITS,
+              pucch_constants::FORMAT2_MIN_UCI_NBITS,
               PUCCH_F2_IMPL_MAX_NBITS);
           return entry;
         },
-    },
-};
+    }};
 
 class PucchProcessorFixture : public ::testing::TestWithParam<test_case_t>
 {

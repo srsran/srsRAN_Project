@@ -24,18 +24,19 @@ void pucch_demodulator_impl::demodulate(span<srsgnb::log_likelihood_ratio>      
   unsigned nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
 
   // Number of data Resource Elements in a slot for a single Rx port.
-  unsigned nof_re_port = static_cast<unsigned>(PUCCH_FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols);
+  unsigned nof_re_port =
+      static_cast<unsigned>(pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols);
 
   // Assert that allocations are valid.
-  srsgnb_assert(config.nof_prb && config.nof_prb <= PUCCH_FORMAT2_MAX_NPRB,
+  srsgnb_assert(config.nof_prb && config.nof_prb <= pucch_constants::FORMAT2_MAX_NPRB,
                 "Invalid Number of PRB allocated to PUCCH Format 2, i.e., {}. Valid range is 1 to {}.",
                 config.nof_prb,
-                PUCCH_FORMAT2_MAX_NPRB);
+                pucch_constants::FORMAT2_MAX_NPRB);
 
-  srsgnb_assert(config.nof_symbols && config.nof_symbols <= PUCCH_FORMAT2_MAX_NSYMB,
+  srsgnb_assert(config.nof_symbols && config.nof_symbols <= pucch_constants::FORMAT2_MAX_NSYMB,
                 "Invalid Number of OFDM symbols allocated to PUCCH Format 2, i.e., {}. Valid range is 1 to {}.",
                 config.nof_symbols,
-                PUCCH_FORMAT2_MAX_NSYMB);
+                pucch_constants::FORMAT2_MAX_NSYMB);
 
   // Resize data and channel estimation buffers.
   ch_re.resize({nof_re_port, nof_rx_ports});

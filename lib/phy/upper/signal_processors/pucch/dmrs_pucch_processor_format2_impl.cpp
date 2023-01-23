@@ -75,9 +75,9 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
                                                  const resource_grid_reader&           grid,
                                                  const dmrs_pucch_processor::config_t& config)
 {
-  srsgnb_assert((!config.intra_slot_hopping || (config.nof_symbols > PUCCH_FORMAT2_MIN_NSYMB)),
+  srsgnb_assert((!config.intra_slot_hopping || (config.nof_symbols > pucch_constants::FORMAT2_MIN_NSYMB)),
                 "Frequency hopping requires {} OFDM symbols.",
-                PUCCH_FORMAT2_MAX_NSYMB);
+                pucch_constants::FORMAT2_MAX_NSYMB);
 
   unsigned nof_rx_ports = config.ports.size();
 
@@ -85,7 +85,7 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   re_measurement_dimensions dims;
   dims.nof_subc    = config.nof_prb * NOF_DMRS_PER_RB;
   dims.nof_symbols = config.nof_symbols;
-  dims.nof_slices  = PUCCH_MAX_LAYERS;
+  dims.nof_slices  = pucch_constants::MAX_LAYERS;
 
   // Resize DM-RS symbol buffer.
   temp_symbols.resize(dims);

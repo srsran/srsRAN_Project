@@ -31,36 +31,4 @@ enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_
 /// TS38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 
-/// PUCCH does not make use of spatial multiplexing.
-static constexpr unsigned PUCCH_MAX_LAYERS = 1;
-
-/// Maximum number of symbols (without DM-RS) that NR-PUCCH Format 1 can transmit.
-static constexpr unsigned PUCCH_FORMAT1_N_MAX = 7;
-
-/// Minimum number of symbols that NR-PUCCH Format 2 can transmit.
-static constexpr unsigned PUCCH_FORMAT2_MIN_NSYMB = 1;
-
-/// Maximum number of symbols that NR-PUCCH Format 2 can transmit.
-static constexpr unsigned PUCCH_FORMAT2_MAX_NSYMB = 2;
-
-/// Maximum number of PRBs allocated for NR-PUCCH Format 2.
-static constexpr unsigned PUCCH_FORMAT2_MAX_NPRB = 16;
-
-/// Minimum number of UCI payload bits carried by a PUCCH Format 2 resource.
-static constexpr unsigned PUCCH_FORMAT2_MIN_UCI_NBITS = 3;
-
-/// Number of control data subcarriers per Resource Block for PUCCH Format 2, as per TS38.213 Section 9.1.5.2.
-static constexpr unsigned PUCCH_FORMAT2_NOF_DATA_SC = 8;
-
-/// \brief Maximum number of resource elements used by PUCCH.
-///
-/// It corresponds to PUCCH Format 3 with a bandwidth of 16 PRBs and a duration of 14 symbols, two of which are occupied
-/// by the DM-RS.
-static constexpr unsigned PUCCH_MAX_NOF_RE = NRE * 16 * (14 - 2);
-
-/// \brief Maximum number of LLRs corresponding to a PUCCH.
-///
-/// Derives from \ref PUCCH_MAX_NOF_RE assuming QPSK modulation.
-static constexpr unsigned PUCCH_MAX_NOF_LLR = PUCCH_MAX_NOF_RE * 2;
-
 } // namespace srsgnb

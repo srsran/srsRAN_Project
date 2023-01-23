@@ -347,10 +347,10 @@ public:
                   "Number of receive ports, i.e., {}, exceeds maximum supported receive ports, i.e., {}.",
                   channel_estimate_dimensions.nof_rx_ports,
                   static_cast<unsigned>(MAX_PUCCH_RX_PORTS));
-    srsgnb_assert(channel_estimate_dimensions.nof_tx_layers <= PUCCH_MAX_LAYERS,
+    srsgnb_assert(channel_estimate_dimensions.nof_tx_layers <= pucch_constants::MAX_LAYERS,
                   "Number of transmit layers, i.e., {}, exceeds maximum PUCCH transmit layers, i.e., {}.",
                   channel_estimate_dimensions.nof_tx_layers,
-                  PUCCH_MAX_LAYERS);
+                  pucch_constants::MAX_LAYERS);
   }
 
   std::unique_ptr<pucch_processor> create() override

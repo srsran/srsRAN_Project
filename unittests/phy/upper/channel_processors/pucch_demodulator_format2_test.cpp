@@ -11,6 +11,7 @@
 #include "pucch_demodulator_format2_test_data.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/ran/pucch/pucch_constants.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -98,7 +99,7 @@ protected:
 
     // Prepare the resource grid.
     unsigned nof_test_symbols = test_case.context.config.rx_ports.size() * test_case.context.config.nof_symbols *
-                                test_case.context.config.nof_prb * PUCCH_FORMAT2_NOF_DATA_SC;
+                                test_case.context.config.nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC;
 
     std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_case.symbols.read();
     ASSERT_EQ(grid_entries.size(), nof_test_symbols)

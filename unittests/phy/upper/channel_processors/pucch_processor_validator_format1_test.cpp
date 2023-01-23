@@ -12,6 +12,7 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
+#include "srsgnb/ran/pucch/pucch_constants.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
@@ -23,7 +24,7 @@ namespace {
 static channel_estimate::channel_estimate_dimensions max_dimensions = {MAX_RB,
                                                                        MAX_NSYMB_PER_SLOT - 1,
                                                                        1,
-                                                                       PUCCH_MAX_LAYERS};
+                                                                       pucch_constants::MAX_LAYERS};
 
 /// Minimum number of symbols (including DM-RS) that NR-PUCCH Format 1 can transmit.
 static constexpr unsigned PUCCH_FORMAT1_MIN_NSYMB = 4;

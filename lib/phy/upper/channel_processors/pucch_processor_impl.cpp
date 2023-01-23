@@ -9,6 +9,8 @@
  */
 
 #include "pucch_processor_impl.h"
+#include "srsgnb/ran/pucch/pucch_constants.h"
+#include "srsgnb/ran/pucch/pucch_info.h"
 
 using namespace srsgnb;
 
@@ -46,7 +48,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
   dims.nof_symbols   = get_nsymb_per_slot(config.cp);
   dims.nof_rx_ports  = config.ports.size();
-  dims.nof_tx_layers = PUCCH_MAX_LAYERS;
+  dims.nof_tx_layers = pucch_constants::MAX_LAYERS;
 
   estimates.resize(dims);
 
@@ -118,7 +120,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
   dims.nof_symbols   = get_nsymb_per_slot(config.cp);
   dims.nof_rx_ports  = config.ports.size();
-  dims.nof_tx_layers = PUCCH_MAX_LAYERS;
+  dims.nof_tx_layers = pucch_constants::MAX_LAYERS;
 
   estimates.resize(dims);
 
@@ -127,8 +129,9 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   result.csi = estimates.get_channel_state_information();
 
-  span<log_likelihood_ratio> llr = span<log_likelihood_ratio>(temp_llr).first(
-      PUCCH_FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols * get_bits_per_symbol(modulation_scheme::QPSK));
+  span<log_likelihood_ratio> llr =
+      span<log_likelihood_ratio>(temp_llr).first(pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb *
+                                                 config.nof_symbols * get_bits_per_symbol(modulation_scheme::QPSK));
 
   // PUCCH Format 2 demodulator configuration.
   pucch_demodulator::format2_configuration demod_config = {};
@@ -248,7 +251,6 @@ void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_
       max_sizes.nof_rx_ports);
 
   // CSI is not currently supported.
-  srsgnb_assert(config.nof_csi_part1 == 0, "CSI Part 1 is not currently supported.");
   srsgnb_assert(config.nof_csi_part2 == 0, "CSI Part 2 is not currently supported.");
 
   // PUCCH Format 2 frequency hopping is not currently supported.
@@ -257,10 +259,18 @@ void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_
   // Expected UCI payload length.
   unsigned uci_payload_len = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
 
-  srsgnb_assert((uci_payload_len >= PUCCH_FORMAT2_MIN_UCI_NBITS) && (uci_payload_len <= FORMAT2_MAX_UCI_NBITS),
+  // Calculate effective code rate.
+  float effective_code_rate = pucch_format2_code_rate(config.nof_prb, config.nof_symbols, uci_payload_len);
+  srsgnb_assert(effective_code_rate <= pucch_constants::MAX_CODE_RATE,
+                "The effective code rate (i.e., {}) exceeds the maximum allowed {}.",
+                effective_code_rate,
+                static_cast<float>(pucch_constants::MAX_CODE_RATE));
+
+  srsgnb_assert((uci_payload_len >= pucch_constants::FORMAT2_MIN_UCI_NBITS) &&
+                    (uci_payload_len <= FORMAT2_MAX_UCI_NBITS),
                 "UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
                 uci_payload_len,
-                PUCCH_FORMAT2_MIN_UCI_NBITS,
+                pucch_constants::FORMAT2_MIN_UCI_NBITS,
                 static_cast<unsigned>(FORMAT2_MAX_UCI_NBITS));
 }
 
@@ -299,7 +309,11 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format1_configura
 
 bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configuration& config) const
 {
+  // Count total number of payload bits.
   unsigned nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
+
+  // Calculate effective code rate.
+  float effective_code_rate = pucch_format2_code_rate(config.nof_prb, config.nof_symbols, nof_uci_bits);
 
   // The BWP size exceeds the grid dimensions.
   if ((config.bwp_start_rb + config.bwp_size_rb) > ce_dims.nof_prb) {
@@ -322,8 +336,8 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configura
     return false;
   }
 
-  // CSI is not supported.
-  if ((config.nof_csi_part1 != 0) || (config.nof_csi_part2 != 0)) {
+  // CSI-Part2 is not supported.
+  if (config.nof_csi_part2 != 0) {
     return false;
   }
 
@@ -332,8 +346,14 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configura
     return false;
   }
 
+  // The code rate shall not exceed the maximum.
+  if (effective_code_rate > pucch_constants::MAX_CODE_RATE) {
+    return false;
+  }
+
   // UCI payload exceeds the UCI payload size boundaries.
-  if (nof_uci_bits < PUCCH_FORMAT2_MIN_UCI_NBITS || nof_uci_bits > pucch_processor_impl::FORMAT2_MAX_UCI_NBITS) {
+  if (nof_uci_bits < pucch_constants::FORMAT2_MIN_UCI_NBITS ||
+      nof_uci_bits > pucch_processor_impl::FORMAT2_MAX_UCI_NBITS) {
     return false;
   }
 

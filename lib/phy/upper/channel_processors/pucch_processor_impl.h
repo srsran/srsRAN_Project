@@ -15,6 +15,7 @@
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
+#include "srsgnb/ran/pucch/pucch_constants.h"
 
 namespace srsgnb {
 
@@ -128,7 +129,7 @@ private:
   /// Maximum RB, symbol and channel sizes handled by the processor.
   channel_estimate::channel_estimate_dimensions max_sizes;
   /// Temporal LLR storage.
-  std::array<log_likelihood_ratio, PUCCH_MAX_NOF_LLR> temp_llr;
+  std::array<log_likelihood_ratio, pucch_constants::MAX_NOF_LLR> temp_llr;
 };
 
 } // namespace srsgnb
