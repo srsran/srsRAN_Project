@@ -13,7 +13,6 @@
 #include "adapters/pdcp_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "helpers/f1c_asn1_helpers.h"
-#include "routines/pdu_session_resource_setup_routine.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/ran/nr_cgi_helpers.h"
@@ -53,6 +52,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   rrc_du_adapter.connect_rrc_du(&rrc->get_rrc_du_ue_repository());
 
   rrc_ue_ev_notifier.connect_du_processor(*this);
+
+  routine_mng = std::make_unique<du_processor_routine_manager>(e1ap_ctrl_notifier, f1c_ue_context_notifier, logger);
 }
 
 void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& msg)
@@ -335,11 +336,9 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
   ue_context* ue_ctxt = ue_manager.find_ue(get_ue_index_from_cu_cp_ue_id(msg.cu_cp_ue_id));
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
-  return launch_async<pdu_session_resource_setup_routine>(msg,
-                                                          rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_secutity_config(),
-                                                          e1ap_ctrl_notifier,
-                                                          f1c_ue_context_notifier,
-                                                          *ue_ctxt->rrc_ue_notifier.get(),
-                                                          rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_drb_manager(),
-                                                          logger);
+  return routine_mng->start_pdu_session_resource_setup_routine(
+      msg,
+      rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_secutity_config(),
+      *ue_ctxt->rrc_ue_notifier.get(),
+      rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_drb_manager());
 }

@@ -13,6 +13,7 @@
 #include "adapters/du_processor_adapters.h"
 #include "adapters/f1c_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
+#include "routine_managers/du_processor_routine_manager.h"
 #include "ue_manager.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
@@ -133,6 +134,9 @@ private:
 
   // DU processor to RRC DU adapter
   du_processor_rrc_du_adapter rrc_du_adapter;
+
+  // DU processor routine manager
+  std::unique_ptr<du_processor_routine_manager> routine_mng;
 };
 
 } // namespace srs_cu_cp
