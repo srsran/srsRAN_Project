@@ -133,7 +133,8 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   // NOTE:
   // - [Implementation defined] We restrict number of Paged UEs per paging opportunity to 1 for simplification.
   // Reason: When paging more than one UE during the same paging opportunity, the one paging message is used for all
-  // UEs with one paging record per UE in the Paging message.
+  // UEs with one paging record per UE in the Paging message. This would require slightly complex logic while allocating
+  // PDSCH.
   for (const auto& pg_ind : paging_pending_ues) {
     const unsigned drx_cycle = pg_ind.paging_drx.has_value() ? pg_ind.paging_drx.value() : default_paging_cycle;
 
