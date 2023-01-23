@@ -140,7 +140,6 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
 
   // 4. Delegate filling SIB1 grants to helper function.
   fill_sib1_grant(res_grid, sib1_crbs, time_resource, dmrs_info, sib1_prbs_tbs.tbs_bytes);
-  logger.info("SCHED: SIB1, cell={}, SSB beam idx: {}, crbs={}", res_grid.cfg.cell_index, beam_idx, sib1_crbs);
   return true;
 }
 

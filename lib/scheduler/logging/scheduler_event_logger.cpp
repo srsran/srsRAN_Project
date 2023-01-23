@@ -113,12 +113,11 @@ void scheduler_event_logger::enqueue_impl(const ul_bsr_indication_message& bsr)
 {
   if (mode == debug) {
     fmt::format_to(
-        fmtbuf, "\n- BSR: UE={}, rnti={:#x}, type={}, values={{", bsr.ue_index, bsr.crnti, to_string(bsr.type));
+        fmtbuf, "\n- BSR: UE={}, rnti={:#x}, type={}, payload:", bsr.ue_index, bsr.crnti, to_string(bsr.type));
     for (unsigned i = 0; i != bsr.reported_lcgs.size(); ++i) {
       fmt::format_to(
-          fmtbuf, "{}{}:{}", i == 0 ? "" : ", ", bsr.reported_lcgs[i].lcg_id, bsr.reported_lcgs[i].nof_bytes);
+          fmtbuf, "{}{}: {}", i == 0 ? "" : ", ", bsr.reported_lcgs[i].lcg_id, bsr.reported_lcgs[i].nof_bytes);
     }
-    fmt::format_to(fmtbuf, "}}");
   } else if (logger.info.enabled()) {
     fmt::format_to(fmtbuf, "{}UE={} UL BSR", separator(), bsr.ue_index);
   }
