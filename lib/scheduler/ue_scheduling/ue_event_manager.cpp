@@ -14,49 +14,6 @@
 
 using namespace srsgnb;
 
-/// Class used to enqueue all processed events in a slot and log them in a single batch.
-class srsgnb::event_logger
-{
-public:
-  event_logger(du_cell_index_t cell_index_, srslog::basic_logger& logger_) :
-    cell_index(cell_index_), enabled(logger_.info.enabled()), logger(logger_)
-  {
-  }
-  event_logger(const event_logger&)            = delete;
-  event_logger(event_logger&&)                 = delete;
-  event_logger& operator=(const event_logger&) = delete;
-  event_logger& operator=(event_logger&&)      = delete;
-  ~event_logger()
-  {
-    if (enabled and fmtbuf.size() > 0) {
-      if (cell_index < MAX_NOF_DU_CELLS) {
-        logger.info("Processed events, cell_index={}: [{}]", cell_index, to_c_str(fmtbuf));
-      } else {
-        logger.info("Processed events: [{}]", to_c_str(fmtbuf));
-      }
-    }
-  }
-
-  template <typename... Args>
-  void enqueue(const char* fmtstr, Args&&... args)
-  {
-    if (enabled) {
-      if (fmtbuf.size() > 0) {
-        fmt::format_to(fmtbuf, ", ");
-      }
-      fmt::format_to(fmtbuf, fmtstr, std::forward<Args>(args)...);
-    }
-  }
-
-private:
-  du_cell_index_t       cell_index;
-  bool                  enabled;
-  srslog::basic_logger& logger;
-  fmt::memory_buffer    fmtbuf;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
                                    ue_list&                          ue_db_,
                                    sched_configuration_notifier&     mac_notifier_,
