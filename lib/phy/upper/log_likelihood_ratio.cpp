@@ -12,9 +12,9 @@
 #include "srsgnb/adt/optional.h"
 #include <cmath>
 
-#ifdef HAVE_SSE
+#ifdef __AVX2__
 #include <immintrin.h>
-#endif // HAVE_SSE
+#endif // __AVX2__
 
 using namespace srsgnb;
 
@@ -80,50 +80,88 @@ log_likelihood_ratio log_likelihood_ratio::quantize(float value, float range_lim
   return static_cast<value_type>(std::round(clipped / range_limit * LLR_MAX));
 }
 
-#ifdef HAVE_SSE
-static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len, unsigned write_offset)
+#ifdef __AVX2__
+// Hard decision function with bit packing.
+static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len)
 {
   // Number of bits processed on each loop cycle.
-  static constexpr unsigned NBIT = 8;
+  static constexpr unsigned AVX2_B_SIZE = 32;
 
   unsigned i_bit = 0;
 
-  for (; i_bit != (len / NBIT) * NBIT; i_bit += NBIT) {
+  // Destination buffer.
+  span<uint8_t> packed_buffer = hard_bits.get_buffer();
+
+  for (; i_bit != (len / AVX2_B_SIZE) * AVX2_B_SIZE; i_bit += AVX2_B_SIZE) {
     // Generate a mask from the LLR.
-    __m64 mask = _mm_cmpgt_pi8(_mm_set1_pi8(0), *reinterpret_cast<const __m64*>(&soft_bits[i_bit]));
+    __m256i mask = _mm256_loadu_si256((__m256i*)(&soft_bits[i_bit]));
 
-    // Reverse mask.
-    mask = _mm_shuffle_pi8(mask, _mm_set_pi8(0, 1, 2, 3, 4, 5, 6, 7));
+    // Shuffle mask. The position of each byte is maintained, but its bits are reversed.
+    mask = _mm256_shuffle_epi8(mask,
+                               _mm256_set_epi8(24,
+                                               25,
+                                               26,
+                                               27,
+                                               28,
+                                               29,
+                                               30,
+                                               31,
+                                               16,
+                                               17,
+                                               18,
+                                               19,
+                                               20,
+                                               21,
+                                               22,
+                                               23,
+                                               8,
+                                               9,
+                                               10,
+                                               11,
+                                               12,
+                                               13,
+                                               14,
+                                               15,
+                                               0,
+                                               1,
+                                               2,
+                                               3,
+                                               4,
+                                               5,
+                                               6,
+                                               7));
 
-    // Obtain 8 packed hard bits from the mask.
-    uint8_t byte = _mm_movemask_pi8(mask);
+    // Obtain 32 packed hard bits from the mask.
+    uint32_t bytes = _mm256_movemask_epi8(mask);
 
-    // Insert hard bits into the bit buffer.
-    hard_bits.insert(byte, write_offset + i_bit, NBIT);
+    // Write the packed bits into 4 bytes of the internal buffer.
+    *(reinterpret_cast<uint32_t*>(packed_buffer.begin())) = bytes;
+
+    // Advance buffer.
+    packed_buffer = packed_buffer.last(packed_buffer.size() - (AVX2_B_SIZE / 8));
   }
 
   for (; i_bit != len; ++i_bit) {
-    unsigned hard_bit = soft_bits[i_bit] < 0 ? 1 : 0;
+    uint8_t hard_bit = soft_bits[i_bit] < 0 ? 1 : 0;
 
-    hard_bits.insert(hard_bit, write_offset + i_bit, 1);
+    hard_bits.insert(hard_bit, i_bit, 1);
   }
 }
-#endif // HAVE_SSE
+#endif // __AVX2__
 
-void srsgnb::hard_decision(bit_buffer& hard_bits, span<const int8_t> soft_bits, unsigned write_offset)
+void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
 {
   // Make sure that there is enough space in the output to accommodate the hard bits.
-  srsgnb_assert(soft_bits.size() <= hard_bits.size() - write_offset,
-                "Input size (i.e., {}) does not fit into the output buffer with size {} at offset {}",
+  srsgnb_assert(soft_bits.size() <= hard_bits.size(),
+                "Input size (i.e., {}) does not fit into the output buffer with size {}",
                 soft_bits.size(),
-                hard_bits.size(),
-                write_offset);
+                hard_bits.size());
 
   unsigned nof_bits = soft_bits.size();
 
-#ifdef HAVE_SSE
+#ifdef __AVX2__
 
-  hard_decision_simd(hard_bits, soft_bits.data(), nof_bits, write_offset);
+  hard_decision_simd(hard_bits, reinterpret_cast<const int8_t*>(soft_bits.data()), nof_bits);
 
 #else
   for (unsigned i_bit = 0; i_bit != nof_bits; ++i_bit) {
@@ -131,24 +169,7 @@ void srsgnb::hard_decision(bit_buffer& hard_bits, span<const int8_t> soft_bits, 
     uint8_t hard_bit = soft_bits[i_bit] >= 0 ? 0 : 1;
 
     // Insert into the bit buffer.
-    hard_bits.insert(hard_bit, write_offset + i_bit, 1);
+    hard_bits.insert(hard_bit, i_bit, 1);
   }
-#endif // HAVE_SSE
-}
-
-void srsgnb::hard_decision(bit_buffer& hard_bits, span<const int8_t> soft_bits)
-{
-  srsgnb::hard_decision(hard_bits, soft_bits, 0);
-}
-
-void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits, unsigned write_offset)
-{
-  span<const int8_t> soft_bits_span(reinterpret_cast<const int8_t*>(soft_bits.begin()), soft_bits.size());
-  srsgnb::hard_decision(hard_bits, soft_bits_span, write_offset);
-}
-
-void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
-{
-  span<const int8_t> soft_bits_span(reinterpret_cast<const int8_t*>(soft_bits.begin()), soft_bits.size());
-  srsgnb::hard_decision(hard_bits, soft_bits_span, 0);
+#endif // __AVX2__
 }

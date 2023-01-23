@@ -308,18 +308,17 @@ void srsgnb::srsvec::copy_offset(srsgnb::bit_buffer&       output,
                 nof_bits);
 
   // 8 bit per word.
-  static constexpr unsigned bits_per_word_log2 = 3U;
-  static constexpr unsigned bits_per_word      = 1U << bits_per_word_log2;
+  static constexpr unsigned bits_per_word = 8U;
 
-  unsigned in_start_word = in_offset >> bits_per_word_log2;
-  unsigned in_start_mod  = in_offset & (bits_per_word - 1);
+  unsigned in_start_word = in_offset / bits_per_word;
+  unsigned in_start_mod  = in_offset % bits_per_word;
 
-  unsigned out_start_word = out_offset >> bits_per_word_log2;
-  unsigned out_start_mod  = out_offset & (bits_per_word - 1);
+  unsigned out_start_word = out_offset / bits_per_word;
+  unsigned out_start_mod  = out_offset % bits_per_word;
 
-  unsigned nof_bits_remainder = nof_bits & (bits_per_word - 1);
+  unsigned remaining_bits = nof_bits;
 
-  if ((!in_start_mod) && (!out_start_mod) && (!nof_bits_remainder)) {
+  if ((in_start_mod == 0) && (out_start_mod == 0)) {
     // Determine the number of bit words to copy.
     unsigned nof_words = nof_bits / bits_per_word;
 
@@ -328,18 +327,21 @@ void srsgnb::srsvec::copy_offset(srsgnb::bit_buffer&       output,
     span<const uint8_t> in_buffer  = input.get_buffer().subspan(in_start_word, nof_words);
 
     // Copy data.
-    std::memcpy(out_buffer.begin(), in_buffer.begin(), nof_words);
-  } else {
-    for (unsigned i_bit = 0, remaining_bits = nof_bits; remaining_bits != 0;) {
-      // Extract at most one byte from the input.
-      unsigned bits_to_extract = std::min(remaining_bits, 8U);
-      uint8_t  byte            = input.extract(i_bit + in_offset, bits_to_extract);
+    srsvec::copy(out_buffer, in_buffer);
 
-      // Insert the extracted bits into the output buffer.
-      output.insert(byte, i_bit + out_offset, bits_to_extract);
+    // Compute the remaining bits to copy.
+    remaining_bits -= nof_words * bits_per_word;
+  }
 
-      remaining_bits -= bits_to_extract;
-      i_bit += bits_to_extract;
-    }
+  for (unsigned i_bit = 0; remaining_bits != 0;) {
+    // Extract at most one byte from the input.
+    unsigned bits_to_extract = std::min(remaining_bits, 8U);
+    uint8_t  byte            = input.extract(i_bit + in_offset, bits_to_extract);
+
+    // Insert the extracted bits into the output buffer.
+    output.insert(byte, i_bit + out_offset, bits_to_extract);
+
+    remaining_bits -= bits_to_extract;
+    i_bit += bits_to_extract;
   }
 }

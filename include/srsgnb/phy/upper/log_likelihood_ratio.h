@@ -302,14 +302,14 @@ inline int log_likelihood_ratio::norm_squared(const T& x)
       x.begin(), x.end(), 0, [](int a, log_likelihood_ratio b) { return a + b.to_int() * b.to_int(); });
 }
 
-// TODO(joaquim): improve documentation.
-
-/// \brief obtains hard bits from a vector of soft bits.
-void hard_decision(bit_buffer& hard_bits, span<const int8_t> soft_bits);
-void hard_decision(bit_buffer& hard_bits, span<const int8_t> soft_bits, unsigned write_offset);
-/// \brief obtains hard bits from a vector of LLR.
+/// \brief Obtains hard bits from a vector of soft bits.
+///
+/// Performs hard decision on a vector of soft bits. The resulting bits are packed and stored in an \ref
+/// srsgnb::bit_buffer.
+///
+/// \param[out] hard_bits Buffer of hard bits.
+/// \param[in] soft_bits Buffer of soft bits.
 void hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits);
-void hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits, unsigned write_offset);
 
 } // namespace srsgnb
 

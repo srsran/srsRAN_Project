@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace srsgnb;
@@ -36,7 +36,7 @@ static void hard_decision_golden(bit_buffer& hard_bits, span<const log_likelihoo
   }
 }
 
-int main()
+TEST(HardDecision, valid_results)
 {
   for (unsigned rep = 0; rep != nof_repetitions; ++rep) {
     // Buffer to hold soft bits.
@@ -52,21 +52,15 @@ int main()
     build_random_softbits(soft_bits);
 
     // Compute hard bit sequence;
-    hard_decision(hard_bits_actual, soft_bits);
+    srsgnb::hard_decision(hard_bits_actual, soft_bits);
 
     // Compute expected hard bit sequence.
     hard_decision_golden(hard_bits_expected, soft_bits);
 
     for (unsigned i_bit = 0; i_bit != bitword_len; ++i_bit) {
       // Assert results.
-      TESTASSERT_EQ(hard_bits_expected.extract(i_bit, 1),
-                    hard_bits_actual.extract(i_bit, 1),
-                    "Bit {} does not match. Expected: {}, actual: {}",
-                    i_bit,
-                    hard_bits_expected.extract(i_bit, 1),
-                    hard_bits_actual.extract(i_bit, 1));
+      ASSERT_EQ(hard_bits_expected.extract(i_bit, 1), hard_bits_actual.extract(i_bit, 1))
+          << "Bit " << i_bit << " does not match.";
     }
   }
-
-  return 0;
 }

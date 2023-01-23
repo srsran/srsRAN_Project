@@ -196,7 +196,7 @@ public:
     srsgnb_assert((size() - count) % bits_per_word == 0, "Only bit word boundaries are supported.");
 
     unsigned buffer_start = (size() - count) / bits_per_word;
-    unsigned buffer_len   = std::ceil(static_cast<float>(count) / static_cast<float>(bits_per_word));
+    unsigned buffer_len   = divide_ceil(count, bits_per_word);
 
     return bit_buffer(buffer.subspan(buffer_start, buffer_len), count);
   }
@@ -286,7 +286,7 @@ class dynamic_bit_buffer : public bit_buffer
 {
 public:
   /// Creates a dynamic bit buffer that contains \c nof_bits.
-  dynamic_bit_buffer(unsigned nof_bits) : buffer(calculate_nof_words(nof_bits)) { set_buffer(buffer, nof_bits); }
+  dynamic_bit_buffer(unsigned nof_bits = 0) : buffer(calculate_nof_words(nof_bits)) { set_buffer(buffer, nof_bits); }
 
   /// Resizes the bit buffer.
   void resize(unsigned new_size)

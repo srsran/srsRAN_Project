@@ -9,6 +9,7 @@
  */
 
 #include "evm_calculator_generic_impl.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/srsvec/subtract.h"
 
@@ -20,7 +21,7 @@ float evm_calculator_generic_impl::calculate(span<const log_likelihood_ratio> so
 {
   // Perform hard-decision.
   bit_buffer hard_bits = temp_hard_bits.first(soft_bits.size());
-  srsgnb::hard_decision(hard_bits, soft_bits);
+  hard_decision(hard_bits, soft_bits);
 
   // Modulate.
   span<cf_t> modulated = temp_modulated.first(symbols.size());

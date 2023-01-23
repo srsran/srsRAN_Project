@@ -8,10 +8,14 @@
  *
  */
 
+/// \file
+/// \brief Bit manipulation function declarations.
+
 #pragma once
 
 #include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
 
 namespace srsgnb {
@@ -67,17 +71,19 @@ void bit_pack(bit_buffer& packed, span<const uint8_t> unpacked);
 /// \param[in]  startpos Bit position index to start the copy.
 void copy_offset(bit_buffer& output, span<const uint8_t> input, unsigned startpos);
 
-/// \brief Copies \c nof_bits bits from \c input, starting at \c in_offset, into \c output, starting at out_offset.
+/// \brief Copies bits from one buffer to another.
+///
+/// Copies \c nof_bits bits from \c input, starting at \c in_offset, into \c output, starting at \c out_offset.
 /// \param[out] output   Destination of the copy.
 /// \param[in]  out_offset Output bit position index to start the copy.
 /// \param[in]  input    Data source to copy.
 /// \param[in]  in_offset Input bit position index to start the copy.
 /// \param[in]  nof_bits Number of bits to copy.
-void copy_offset(srsgnb::bit_buffer&       output,
-                 unsigned                  out_offset,
-                 const srsgnb::bit_buffer& input,
-                 unsigned                  in_offset,
-                 unsigned                  nof_bits);
+void copy_offset(bit_buffer&       output,
+                 unsigned          out_offset,
+                 const bit_buffer& input,
+                 unsigned          in_offset,
+                 unsigned          nof_bits);
 
 } // namespace srsvec
 } // namespace srsgnb

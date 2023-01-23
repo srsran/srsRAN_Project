@@ -10,6 +10,7 @@
 
 #include "pusch_decoder_impl.h"
 #include "srsgnb/srsvec/bit.h"
+#include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
@@ -105,21 +106,6 @@ static optional<unsigned> decode_cblk(bit_buffer&                         output
   return nullopt;
 }
 
-// Checks the TB CRC (multiple codeblocks case).
-static bool is_tb_crc_ok(span<const uint8_t>              transport_block_bytes,
-                         const bit_buffer&                crc_bits,
-                         std::unique_ptr<crc_calculator>& crc_calc)
-{
-  crc_calculator_checksum_t checksum_tbs = crc_calc->calculate_byte(transport_block_bytes);
-  unsigned                  checksum_cmp = 0;
-
-  for (unsigned i_byte = 0, i_byte_end = LONG_CRC_LENGTH / 8; i_byte != i_byte_end; ++i_byte) {
-    checksum_cmp |= crc_bits.get_byte(i_byte) << (8 * (i_byte_end - i_byte - 1U));
-  }
-
-  return (checksum_cmp == checksum_tbs);
-}
-
 void pusch_decoder_impl::decode(span<uint8_t>                    transport_block,
                                 pusch_decoder_result&            stats,
                                 rx_softbuffer*                   soft_codeword,
@@ -204,14 +190,14 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
     // When only one codeblock, the CRC of codeblock and transport block are the same.
     stats.tb_crc_ok = cb_crcs[0];
     if (stats.tb_crc_ok) {
-      std::memcpy(transport_block.data(), tmp_tb_bits.first(tb_size).get_buffer().data(), transport_block.size());
+      srsvec::copy(transport_block, tmp_tb_bits.get_buffer().first(transport_block.size()));
     }
   } else if (std::all_of(cb_crcs.begin(), cb_crcs.end(), [](bool a) { return a; })) {
     // When more than one codeblock, we need to check the global transport block CRC. Note that there is no need to
     // compute the CRC if any of the codeblocks was not decoded correctly.
-    std::memcpy(transport_block.data(), tmp_tb_bits.first(tb_size).get_buffer().data(), transport_block.size());
+    srsvec::copy(transport_block, tmp_tb_bits.get_buffer().first(transport_block.size()));
 
-    if (is_tb_crc_ok(transport_block, tmp_tb_bits.last(LONG_CRC_LENGTH), crc_set.crc24A)) {
+    if (crc_set.crc24A->calculate(tmp_tb_bits) == 0) {
       stats.tb_crc_ok = true;
     } else {
       // If the checksum is wrong, then at least one of the codeblocks is a false negative. Reset all of them.

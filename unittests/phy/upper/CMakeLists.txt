@@ -30,8 +30,8 @@ target_link_libraries(downlink_processor_test srsgnb_downlink_processor srslog s
 add_test(downlink_processor_test downlink_processor_test)
 
 add_executable(hard_decision_test hard_decision_test.cpp)
-target_link_libraries(hard_decision_test log_likelihood_ratio srslog)
-add_test(hard_decision_test hard_decision_test)
+target_link_libraries(hard_decision_test log_likelihood_ratio srslog gtest gtest_main)
+gtest_discover_tests(hard_decision_test)
 
 add_executable(log_likelihood_ratio_test log_likelihood_ratio_test.cpp)
 target_link_libraries(log_likelihood_ratio_test log_likelihood_ratio srslog)
