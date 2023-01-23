@@ -995,10 +995,10 @@ struct uci_pucch_pdu_format_0_1 {
 /// SR PDU for format 2, 3, or 4.
 struct sr_pdu_format_2_3_4 {
   /// Maximum number of supported bytes in this message.
-  static constexpr unsigned MAX_SR_PAYLOAD_SIZE = 1;
+  static constexpr unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
 
-  uint16_t                                    sr_bitlen;
-  static_vector<uint8_t, MAX_SR_PAYLOAD_SIZE> sr_payload;
+  uint16_t                                 sr_bitlen;
+  bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS> sr_payload;
 };
 
 /// UCI payload for PUSCH or PUCCH.

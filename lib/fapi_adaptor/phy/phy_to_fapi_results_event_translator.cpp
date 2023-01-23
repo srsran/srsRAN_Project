@@ -332,11 +332,9 @@ static void fill_format_2_3_4_sr(fapi::uci_pucch_pdu_format_2_3_4_builder& build
     return;
   }
 
-  static_vector<uint8_t, uci_constants::MAX_NOF_PAYLOAD_BITS> tmp;
-  tmp.resize(sr_len.round_up_to_bytes().value());
-  srsvec::bit_pack(tmp, message.get_sr_bits());
-
-  builder.set_sr_parameters(sr_len.value(), tmp);
+  builder.set_sr_parameters(sr_len.value(),
+                            bounded_bitset<fapi::sr_pdu_format_2_3_4::MAX_SR_PAYLOAD_SIZE_BITS>(
+                                message.get_sr_bits().begin(), message.get_sr_bits().end()));
 }
 
 /// Fills the CSI-Part1 parameters for PUCCH Format 2/3/4 using the given builder and message.

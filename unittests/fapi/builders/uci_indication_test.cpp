@@ -218,10 +218,10 @@ TEST(uci_indication_builder, valid_pucch_f234_pdu_sr_passes)
   uci_pucch_pdu_format_2_3_4         pdu;
   uci_pucch_pdu_format_2_3_4_builder builder(pdu);
 
-  unsigned                                                         bit_len = 3;
-  static_vector<uint8_t, sr_pdu_format_2_3_4::MAX_SR_PAYLOAD_SIZE> payload = {2};
+  unsigned                                                      bit_len = 3;
+  bounded_bitset<sr_pdu_format_2_3_4::MAX_SR_PAYLOAD_SIZE_BITS> payload(2);
 
-  builder.set_sr_parameters(bit_len, {payload});
+  builder.set_sr_parameters(bit_len, payload);
 
   const auto& sr_pdu = pdu.sr;
   ASSERT_TRUE(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::SR_BIT]);
