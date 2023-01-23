@@ -217,8 +217,7 @@ static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& con
 static std::unique_ptr<radio_session>
 build_radio(task_executor& executor, radio_notification_handler& radio_handler, const gnb_appconfig& config)
 {
-  std::unique_ptr<radio_factory> factory =
-      create_radio_factory(config.rf_driver_cfg.device_driver, config.rf_driver_cfg.device_address);
+  std::unique_ptr<radio_factory> factory = create_radio_factory(config.rf_driver_cfg.device_driver);
   report_fatal_error_if_not(factory, "Invalid radio factory.");
 
   // Create radio configuration. Assume 1 sector per stream.

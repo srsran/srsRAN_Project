@@ -11,6 +11,7 @@
 #pragma once
 
 #include "radio_uhd_logger.h"
+#include "fmt/format.h"
 #include <boost/exception/diagnostic_information.hpp>
 #include <string>
 
@@ -32,12 +33,21 @@ private:
   std::string error_message;
 
 protected:
-  bool is_on_error() const { return !error_message.empty(); }
-  void clear_error() { error_message.clear(); }
+  template <typename S, typename... Args>
+  void on_error(const S& format_str, Args&&... args)
+  {
+    fmt::memory_buffer str_buf;
+    fmt::format_to(str_buf, format_str, std::forward<Args>(args)...);
+    error_message = to_string(str_buf);
+  }
 
   template <typename F>
   bool safe_execution(F task)
   {
+    // Clears the error message.
+    error_message.clear();
+
+    static_assert(std::is_convertible<F, std::function<void()>>::value, "The function signature must be void()");
     // Try to execute task and catch exception.
     try {
       task();
@@ -55,9 +65,7 @@ protected:
       return false;
     }
 
-    // No exception caught, then it clears error message.
-    error_message.clear();
-    return true;
+    return is_successful();
   }
 
 public:

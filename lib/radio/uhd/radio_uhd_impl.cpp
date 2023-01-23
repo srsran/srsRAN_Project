@@ -21,27 +21,27 @@ bool radio_session_uhd_impl::set_time_to_gps_time()
 
   std::vector<std::string> sensors;
   if (device.get_mboard_sensor_names(sensors) != UHD_ERROR_NONE) {
-    printf("Error: not possible to read sensors. %s.\n", device.get_error_message().c_str());
+    fmt::print("Error: failed to read sensors. {}\n", device.get_error_message());
     return false;
   }
 
   // Find sensor name. Error if it is not available.
   if (std::find(sensors.begin(), sensors.end(), sensor_name) == sensors.end()) {
-    printf("Error: sensor %s not found\n", sensor_name.c_str());
+    fmt::print("Error: sensor {} not found.\n", sensor_name);
     return false;
   }
 
   // Get actual sensor value
   double frac_secs = 0.0;
   if (!device.get_sensor(sensor_name, frac_secs)) {
-    printf("Error: not possible to read sensor %s. %s.\n", sensor_name.c_str(), device.get_error_message().c_str());
+    fmt::print("Error: not possible to read sensor {}. {}\n", sensor_name, device.get_error_message());
     return false;
   }
 
   // Get time and set
-  printf("Setting USRP time to %fs\n", frac_secs);
+  fmt::print("Setting USRP time to {}s\n", frac_secs);
   if (device.set_time_unknown_pps(uhd::time_spec_t(frac_secs)) != UHD_ERROR_NONE) {
-    printf("Error: failed to set time. %s.\n", device.get_error_message().c_str());
+    fmt::print("Error: failed to set time. {}\n", device.get_error_message());
     return false;
   }
 
@@ -60,20 +60,20 @@ bool radio_session_uhd_impl::wait_sensor_locked(bool&              is_locked,
   if (is_mboard) {
     // motherboard sensor
     if (!device.get_mboard_sensor_names(sensors)) {
-      printf("Error: getting mboard sensor names. %s.", device.get_error_message().c_str());
+      fmt::print("Error: getting mboard sensor names. {}", device.get_error_message());
       return false;
     }
   } else {
     // daughterboard sensor
     if (!device.get_rx_sensor_names(sensors)) {
-      printf("Error: getting Rx sensor names. %s.", device.get_error_message().c_str());
+      fmt::print("Error: getting Rx sensor names. {}", device.get_error_message());
       return false;
     }
   }
 
   // Find sensor name. Error if it is not available.
   if (std::find(sensors.begin(), sensors.end(), sensor_name) == sensors.end()) {
-    printf("Error: sensor %s not found\n", sensor_name.c_str());
+    fmt::print("Error: sensor {} not found.\n", sensor_name);
     return false;
   }
 
@@ -81,12 +81,12 @@ bool radio_session_uhd_impl::wait_sensor_locked(bool&              is_locked,
     // Get actual sensor value
     if (is_mboard) {
       if (!device.get_sensor(sensor_name, is_locked)) {
-        printf("Error: reading mboard sensor %s. %s.\n", sensor_name.c_str(), device.get_error_message().c_str());
+        fmt::print("Error: reading mboard sensor {}. {}.\n", sensor_name, device.get_error_message());
         return false;
       }
     } else {
       if (!device.get_rx_sensor(sensor_name, is_locked)) {
-        printf("Error: reading rx sensor %s. %s.\n", sensor_name.c_str(), device.get_error_message().c_str());
+        fmt::print("Error: reading rx sensor {}. {}.\n", sensor_name, device.get_error_message());
         return false;
       }
     }
@@ -102,29 +102,14 @@ bool radio_session_uhd_impl::wait_sensor_locked(bool&              is_locked,
 bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned int port_idx, double gain_dB)
 {
   if (port_idx >= tx_port_map.size()) {
-    printf("Error: transmit port index (%d) exceeds the number of ports (%d).\n", port_idx, (int)tx_port_map.size());
-    return false;
-  }
-
-  uhd::gain_range_t range;
-  if (!device.get_tx_gain_range(range, port_idx)) {
-    printf("Error: getting gain range for transmitter ch=%d. %s.\n", port_idx, device.get_error_message().c_str());
-    return false;
-  }
-
-  // Check gain range.
-  if (gain_dB > range.stop() || gain_dB < range.start()) {
-    printf("Error: transmitter %d gain %.2f is out-of-range (%.2f to %.2f)\n",
-           port_idx,
-           gain_dB,
-           range.start(),
-           range.stop());
+    fmt::print(
+        "Error: transmit port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)tx_port_map.size());
     return false;
   }
 
   // Setup gain.
   if (!device.set_tx_gain(port_idx, gain_dB)) {
-    printf("Error: setting gain for transmitter %d. %s.\n", port_idx, device.get_error_message().c_str());
+    fmt::print("Error: setting gain for transmitter {}. {}\n", port_idx, device.get_error_message());
   }
 
   return true;
@@ -133,29 +118,13 @@ bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned int port_idx, doub
 bool radio_session_uhd_impl::set_rx_gain_unprotected(unsigned int port_idx, double gain_dB)
 {
   if (port_idx >= rx_port_map.size()) {
-    printf("Error: receive port index (%d) exceeds the number of ports (%d).\n", port_idx, (int)rx_port_map.size());
-    return false;
-  }
-
-  uhd::gain_range_t range;
-  if (!device.get_rx_gain_range(range, port_idx)) {
-    printf("Error: getting gain range for receiver ch=%d. %s.\n", port_idx, device.get_error_message().c_str());
-    return false;
-  }
-
-  // Check gain range.
-  if (gain_dB > range.stop() || gain_dB < range.start()) {
-    printf("Error: receiver %d gain %.2f is out-of-range (%.2f to %.2f)\n",
-           port_idx,
-           gain_dB,
-           range.start(),
-           range.stop());
+    fmt::print("Error: receive port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)rx_port_map.size());
     return false;
   }
 
   // Setup gain.
   if (!device.set_rx_gain(port_idx, gain_dB)) {
-    printf("Error: setting gain for receiver %d. %s.\n", port_idx, device.get_error_message().c_str());
+    fmt::print("Error: setting gain for receiver {}. {}\n", port_idx, device.get_error_message());
     return false;
   }
 
@@ -165,29 +134,15 @@ bool radio_session_uhd_impl::set_rx_gain_unprotected(unsigned int port_idx, doub
 bool radio_session_uhd_impl::set_tx_freq(unsigned int port_idx, radio_configuration::lo_frequency frequency)
 {
   if (port_idx >= tx_port_map.size()) {
-    printf("Error: transmit port index (%d) exceeds the number of ports (%d).\n", port_idx, (int)tx_port_map.size());
-    return false;
-  }
-
-  uhd::freq_range_t range;
-  if (!device.get_tx_freq_range(range, port_idx)) {
-    printf("Error: getting frequency range for transmitter ch=%d. %s.\n", port_idx, device.get_error_message().c_str());
-    return false;
-  }
-
-  // Check gain range.
-  if (frequency.center_frequency_hz > range.stop() || frequency.center_frequency_hz < range.start()) {
-    printf("Error: transmitter %d frequency %.2f MHz is out-of-range (%.2f to %.2f MHz)\n",
-           port_idx,
-           frequency.center_frequency_hz,
-           range.start() / 1e6,
-           range.stop() / 1e6);
+    fmt::print(
+        "Error: transmit port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)tx_port_map.size());
     return false;
   }
 
   // Setup frequency.
   if (!device.set_tx_freq(port_idx, frequency)) {
-    printf("Error: setting frequency for transmitter %d. %s.\n", port_idx, device.get_error_message().c_str());
+    fmt::print("Error: setting frequency for transmitter {}. {}\n", port_idx, device.get_error_message());
+    return false;
   }
 
   return true;
@@ -196,29 +151,13 @@ bool radio_session_uhd_impl::set_tx_freq(unsigned int port_idx, radio_configurat
 bool radio_session_uhd_impl::set_rx_freq(unsigned int port_idx, radio_configuration::lo_frequency frequency)
 {
   if (port_idx >= rx_port_map.size()) {
-    printf("Error: receive port index (%d) exceeds the number of ports (%d).\n", port_idx, (int)tx_port_map.size());
-    return false;
-  }
-
-  uhd::freq_range_t range;
-  if (!device.get_rx_freq_range(range, port_idx)) {
-    printf("Error: getting frequency range for receiver ch=%d. %s.\n", port_idx, device.get_error_message().c_str());
-    return false;
-  }
-
-  // Check gain range.
-  if (frequency.center_frequency_hz > range.stop() || frequency.center_frequency_hz < range.start()) {
-    printf("Error: receiver %d frequency %.2f MHz is out-of-range (%.2f to %.2f MHz)\n",
-           port_idx,
-           frequency.center_frequency_hz,
-           range.start() / 1e6,
-           range.stop() / 1e6);
+    fmt::print("Error: receive port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)tx_port_map.size());
     return false;
   }
 
   // Setup frequency.
   if (!device.set_rx_freq(port_idx, frequency)) {
-    printf("Error: setting frequency for receiver %d. %s.\n", port_idx, device.get_error_message().c_str());
+    fmt::print("Error: setting frequency for receiver {}. {}.\n", port_idx, device.get_error_message());
     return false;
   }
 
@@ -242,7 +181,7 @@ bool radio_session_uhd_impl::start_rx_stream()
 
   // Get current USRP time as timestamp.
   if (!device.get_time_now(time_spec)) {
-    printf("Error: getting time to start stream. %s.\n", device.get_error_message().c_str());
+    fmt::print("Error: getting time to start stream. {}.\n", device.get_error_message());
     return false;
   }
   // Add delay to current time.
@@ -260,12 +199,8 @@ bool radio_session_uhd_impl::start_rx_stream()
 
 radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                                                task_executor&                    async_executor_,
-                                               radio_notification_handler&       notifier_,
-                                               radio_uhd_device                  device_) :
-  device(std::move(device_)),
-  sampling_rate_hz(radio_config.sampling_rate_hz),
-  async_executor(async_executor_),
-  notifier(notifier_)
+                                               radio_notification_handler&       notifier_) :
+  sampling_rate_hz(radio_config.sampling_rate_hz), async_executor(async_executor_), notifier(notifier_)
 {
   // Disable fast-path (U/L/O) messages.
   setenv("UHD_LOG_FASTPATH_DISABLE", "1", 0);
@@ -310,14 +245,15 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     total_tx_channel_count += stream_config.channels.size();
   }
 
-  if (!device.get_properties(properties)) {
-    fmt::print("Error getting properties.");
+  // Open device.
+  if (!device.usrp_make(radio_config.args)) {
+    fmt::print("Failed to open device with address '{}': {}\n", radio_config.args, device.get_error_message());
     return;
   }
 
   // Parse/Select master clock rate.
   double mcr = 0.0f;
-  switch (properties.device_type) {
+  switch (device.get_type()) {
     case radio_uhd_device_type::types::B200:
       if (std::abs(std::remainder(23.04e6, radio_config.sampling_rate_hz)) < 1.0) {
         mcr = 23.04e6;
@@ -375,18 +311,17 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     bool not_error = wait_sensor_locked(is_locked, sensor_name, true, 300);
     // Print Not lock error if the return was successful, wait_sensor_locked prints the error before returning
     if (not is_locked and !not_error) {
-      printf(
-          "Could not lock reference clock source. Sensor: %s=%s\n", sensor_name.c_str(), is_locked ? "true" : "false");
+      fmt::print("Could not lock reference clock source. Sensor: {}={}\n", sensor_name, is_locked ? "true" : "false");
     }
   }
 
   // Set default Tx/Rx rates.
   if (!device.set_tx_rate(radio_config.sampling_rate_hz)) {
-    printf("Error: setting Tx sampling rate. %s.", device.get_error_message().c_str());
+    fmt::print("Error: setting Tx sampling rate. {}.", device.get_error_message());
     return;
   }
   if (!device.set_rx_rate(radio_config.sampling_rate_hz)) {
-    printf("Error: setting Rx sampling rate. %s.", device.get_error_message().c_str());
+    fmt::print("Error: setting Rx sampling rate. {}.", device.get_error_message());
     return;
   }
 
@@ -437,11 +372,13 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       set_tx_gain_unprotected(port_idx, channel.gain_dB);
 
       // Setup frequency.
-      set_tx_freq(port_idx, channel.freq);
+      if (!set_tx_freq(port_idx, channel.freq)) {
+        return;
+      }
 
       // Inform about ignored argument.
       if (!channel.args.empty()) {
-        printf("Warning: transmitter %d unused args.\n", port_idx);
+        fmt::print("Warning: transmitter {} unused args.\n", port_idx);
       }
     }
   }
@@ -494,14 +431,14 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
       // Inform about ignored argument.
       if (!channel.args.empty()) {
-        printf("Warning: transmitter %d unused args.\n", port_idx);
+        fmt::print("Warning: transmitter {} unused args.\n", port_idx);
       }
     }
   }
 
   // Restore thread priorities.
   if (uhd_set_thread_priority(0, false) != UHD_ERROR_NONE) {
-    printf("Error: setting UHD thread priority.");
+    fmt::print("Error: setting UHD thread priority.\n");
     return;
   }
 
@@ -530,7 +467,7 @@ void radio_session_uhd_impl::transmit(unsigned int                              
                                       baseband_gateway_buffer&                      data)
 {
   report_fatal_error_if_not(stream_id < tx_streams.size(),
-                            "Stream identifier (%d) exceeds the number of transmit streams  (%d).",
+                            "Stream identifier ({}) exceeds the number of transmit streams  ({}).",
                             stream_id,
                             (int)rx_streams.size());
 
@@ -568,10 +505,12 @@ std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_config
                                                               radio_notification_handler&       notifier)
 {
   std::unique_ptr<radio_session_uhd_impl> session =
-      std::make_unique<radio_session_uhd_impl>(config, async_task_executor, notifier, device);
+      std::make_unique<radio_session_uhd_impl>(config, async_task_executor, notifier);
   if (!session->is_successful()) {
     return nullptr;
   }
 
   return std::move(session);
 }
+
+radio_config_uhd_config_validator radio_factory_uhd_impl::config_validator;

@@ -16,18 +16,19 @@
 
 namespace srsgnb {
 
-/// Radio configuration validator for uhd based radios.
+/// \brief Radio configuration validator for uhd based radios.
+///
+/// This validator validates that parameters values are generally valid, for example frequencies are valid numbers and
+/// positive or stream arguments follow a certain pattern. However, it does not validate whether the actual values are
+/// supported by the UHD device.
+///
+/// It is up to the user to select parameters within ranges. These can be consulted using the UHD application \e
+/// uhd_usrp_probe.
 class radio_config_uhd_config_validator : public radio_configuration::validator
 {
 public:
-  // Set device properties.
-  void set_properties(radio_uhd_device::properties properties_) { properties = std::move(properties_); }
-
   // See interface for documentation.
   bool is_configuration_valid(const radio_configuration::radio& config) const override;
-
-private:
-  radio_uhd_device::properties properties;
 };
 
 } // namespace srsgnb

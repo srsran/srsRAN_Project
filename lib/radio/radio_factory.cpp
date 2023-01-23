@@ -21,27 +21,20 @@
 using namespace srsgnb;
 
 struct radio_factory_entry {
-  std::string                                                       name;
-  std::function<std::unique_ptr<radio_factory>(const std::string&)> make;
+  std::string                                     name;
+  std::function<std::unique_ptr<radio_factory>()> make;
 };
 
-static std::vector<radio_factory_entry> radio_factory_available_factories = {{
+static const std::vector<radio_factory_entry> radio_factory_available_factories = {{
 #ifdef ENABLE_UHD
-    {"uhd", [](const std::string& device_address) { return std::make_unique<radio_factory_uhd_impl>(device_address); }},
+    {"uhd", []() { return std::make_unique<radio_factory_uhd_impl>(); }},
 #endif // ENABLE_UHD
 #ifdef ENABLE_ZMQ
-    {"zmq",
-     [](const std::string& device_address) {
-       if (!device_address.empty()) {
-         fmt::print("ZMQ device type does not support a device address argument. Given '{}'.\n", device_address);
-         return std::unique_ptr<radio_factory_zmq_impl>();
-       }
-       return std::make_unique<radio_factory_zmq_impl>();
-     }},
+    {"zmq", []() { return std::make_unique<radio_factory_zmq_impl>(); }},
 #endif // ENABLE_UHD
 }};
 
-std::unique_ptr<radio_factory> srsgnb::create_radio_factory(std::string driver_name, std::string device_address)
+std::unique_ptr<radio_factory> srsgnb::create_radio_factory(std::string driver_name)
 {
   if (radio_factory_available_factories.empty()) {
     fmt::print("No available radio factories found.\n");
@@ -56,7 +49,7 @@ std::unique_ptr<radio_factory> srsgnb::create_radio_factory(std::string driver_n
   // Iterate all available driver names.
   for (const radio_factory_entry& entry : radio_factory_available_factories) {
     if (entry.name == driver_name) {
-      return entry.make(device_address);
+      return entry.make();
     }
   }
 

@@ -97,6 +97,9 @@ struct radio {
   double sampling_rate_hz;
   /// Indicates the baseband signal transport format between the device and the host.
   over_the_wire_format otw_format;
+  /// \brief Indicates any device specific parameters to create the session.
+  /// \remark Not all driver and/or devices support this feature.
+  std::string args;
   /// Logging level. Leave empty for default.
   std::string log_level;
 };

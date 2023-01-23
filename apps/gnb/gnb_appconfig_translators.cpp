@@ -120,7 +120,7 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
     // NOTE: ZMQ has a delay of 16 samples, so the time advance calibration is adjusted.
     if (config.rf_driver_cfg.device_driver == "zmq") {
       out_cfg.time_advance_calibration = phy_time_unit::from_seconds(-16.0 / out_cfg.srate.to_Hz());
-    } else if (config.rf_driver_cfg.device_address.find("type=x300") != std::string::npos) {
+    } else if (config.rf_driver_cfg.device_arguments.find("type=x300") != std::string::npos) {
       out_cfg.time_advance_calibration = phy_time_unit::from_seconds(108.0 / out_cfg.srate.to_Hz());
     }
 
@@ -207,8 +207,8 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
   out_cfg.clock.clock      = radio_configuration::to_clock_source(config.rf_driver_cfg.clock_source);
   out_cfg.clock.sync       = radio_configuration::to_clock_source(config.rf_driver_cfg.synch_source);
 
-  const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(config.rf_driver_cfg.stream_arguments, "tx_port");
-  const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(config.rf_driver_cfg.stream_arguments, "rx_port");
+  const std::vector<std::string>& zmq_tx_addr = extract_zmq_ports(config.rf_driver_cfg.device_arguments, "tx_port");
+  const std::vector<std::string>& zmq_rx_addr = extract_zmq_ports(config.rf_driver_cfg.device_arguments, "rx_port");
 
   // For each sector...
   for (unsigned sector_id = 0; sector_id != config.cells_cfg.size(); ++sector_id) {

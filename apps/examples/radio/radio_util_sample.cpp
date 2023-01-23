@@ -24,7 +24,7 @@ static std::string                               rx_filename             = "";
 static double                                    duration_s              = 0.1;
 static std::string                               log_level               = "info";
 static std::string                               driver_name             = "uhd";
-static std::string                               device_address          = "type=b200";
+static std::string                               device_arguments        = "type=b200";
 static std::vector<std::string>                  tx_channel_arguments    = {};
 static std::vector<std::string>                  rx_channel_arguments    = {};
 static double                                    sampling_rate_hz        = 23.04e6;
@@ -56,7 +56,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
     {"b200_50MHz",
      "Single channel B200 USRP 50MHz bandwidth.",
      []() {
-       device_address   = "type=b200";
+       device_arguments = "type=b200";
        sampling_rate_hz = 61.44e6;
        otw_format       = radio_configuration::over_the_wire_format::SC12;
        block_size       = sampling_rate_hz / 15e3;
@@ -64,7 +64,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
     {"b200_20MHz_2x2",
      "Dual channel B200 USRP 20MHz bandwidth.",
      []() {
-       device_address          = "type=b200";
+       device_arguments        = "type=b200";
        otw_format              = radio_configuration::over_the_wire_format::SC12;
        block_size              = sampling_rate_hz / 15e3;
        nof_channels_per_stream = 1;
@@ -74,7 +74,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
     {"x300_20MHz",
      "Single channel X3x0 USRP 20MHz bandwidth.",
      []() {
-       device_address   = "type=x300";
+       device_arguments = "type=x300,master_clock_rate=184.32e6,send_frame_size=8000,recv_frame_size=8000";
        sampling_rate_hz = 23.04e6;
        otw_format       = radio_configuration::over_the_wire_format::SC16;
        block_size       = sampling_rate_hz / 15e3;
@@ -84,7 +84,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
     {"x300_50MHz",
      "Single channel X3x0 USRP 50MHz bandwidth.",
      []() {
-       device_address   = "type=x300";
+       device_arguments = "type=x300,master_clock_rate=184.32e6,send_frame_size=8000,recv_frame_size=8000";
        sampling_rate_hz = 92.16e6;
        otw_format       = radio_configuration::over_the_wire_format::SC16;
        block_size       = sampling_rate_hz / 15e3;
@@ -94,7 +94,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
     {"x300_100MHz",
      "Single channel X3x0 USRP 100MHz bandwidth.",
      []() {
-       device_address   = "type=x300";
+       device_arguments = "type=x300,master_clock_rate=184.32e6,send_frame_size=8000,recv_frame_size=8000";
        sampling_rate_hz = 184.32e6;
        otw_format       = radio_configuration::over_the_wire_format::SC16;
        block_size       = sampling_rate_hz / 15e3;
@@ -104,7 +104,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
     {"x300_20MHz_2x2",
      "Dual channel X3x0 USRP 20MHz bandwidth.",
      []() {
-       device_address          = "type=x300";
+       device_arguments        = "type=x300,master_clock_rate=184.32e6,send_frame_size=8000,recv_frame_size=8000";
        sampling_rate_hz        = 23.04e6;
        otw_format              = radio_configuration::over_the_wire_format::SC16;
        block_size              = sampling_rate_hz / 15e3;
@@ -117,7 +117,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
     {"x300_50MHz_2x2",
      "Dual channel X3x0 USRP 50MHz bandwidth.",
      []() {
-       device_address          = "type=x300";
+       device_arguments        = "type=x300,master_clock_rate=184.32e6,send_frame_size=8000,recv_frame_size=8000";
        sampling_rate_hz        = 92.16e6;
        otw_format              = radio_configuration::over_the_wire_format::SC16;
        block_size              = sampling_rate_hz / 15e3;
@@ -130,7 +130,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
     {"x300_100MHz_2x2",
      "Dual channel X3x0 USRP 100MHz bandwidth.",
      []() {
-       device_address          = "type=x300";
+       device_arguments        = "type=x300,master_clock_rate=184.32e6,send_frame_size=8000,recv_frame_size=8000";
        sampling_rate_hz        = 184.32e6;
        otw_format              = radio_configuration::over_the_wire_format::SC16;
        block_size              = sampling_rate_hz / 15e3;
@@ -144,7 +144,7 @@ static const std::vector<benchmark_configuration_profile> benchmark_profiles = {
      "Single channel ZMQ.",
      []() {
        driver_name          = "zmq";
-       device_address       = "";
+       device_arguments     = "";
        tx_channel_arguments = {"tcp://*:5554"};
        rx_channel_arguments = {"tcp://localhost:5554"};
        sampling_rate_hz     = 23.04e6;
@@ -242,13 +242,14 @@ int main(int argc, char** argv)
   std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
 
   // Create radio factory.
-  std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name, device_address);
+  std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
   report_fatal_error_if_not(factory, "Driver %s is not available.", driver_name.c_str());
 
   // Create radio configuration.
   radio_configuration::radio config = {};
   config.sampling_rate_hz           = sampling_rate_hz;
   config.otw_format                 = otw_format;
+  config.args                       = device_arguments;
   config.log_level                  = log_level;
   radio_configuration::stream rx_stream_config;
 

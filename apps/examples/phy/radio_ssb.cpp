@@ -66,7 +66,7 @@ static double                                    rx_gain                    = 60
 static unsigned                                  nof_ports                  = 1;
 static unsigned                                  nof_sectors                = 1;
 static std::string                               driver_name                = "uhd";
-static std::string                               device_address             = "type=b200";
+static std::string                               device_arguments           = "type=b200";
 static std::vector<std::string>                  tx_channel_args            = {};
 static std::vector<std::string>                  rx_channel_args            = {};
 static sampling_rate                             srate                      = sampling_rate::from_MHz(23.04);
@@ -94,31 +94,31 @@ static const std::vector<configuration_profile> profiles = {
     {"b200_50MHz",
      "Single channel B200 USRP 50MHz bandwidth.",
      []() {
-       device_address = "type=b200";
-       srate          = sampling_rate::from_MHz(61.44);
-       bw_rb          = 270;
-       otw_format     = radio_configuration::over_the_wire_format::SC12;
+       device_arguments = "type=b200";
+       srate            = sampling_rate::from_MHz(61.44);
+       bw_rb            = 270;
+       otw_format       = radio_configuration::over_the_wire_format::SC12;
      }},
     {"x300_50MHz",
      "Single channel X3x0 USRP 50MHz bandwidth.",
      []() {
-       device_address = "type=x300";
-       srate          = sampling_rate::from_MHz(92.16);
-       tx_gain        = 10;
-       rx_gain        = 10;
+       device_arguments = "type=x300";
+       srate            = sampling_rate::from_MHz(92.16);
+       tx_gain          = 10;
+       rx_gain          = 10;
      }},
     {"zmq_20MHz_n7",
      "Single 20MHz FDD in band n7 using ZMQ.",
      []() {
-       driver_name     = "zmq";
-       device_address  = "";
-       scs             = subcarrier_spacing::kHz15;
-       srate           = sampling_rate::from_MHz(61.44);
-       bw_rb           = 106;
-       otw_format      = radio_configuration::over_the_wire_format::DEFAULT;
-       dl_center_freq  = 2680.1e6;
-       ssb_center_freq = 2679.65e6;
-       ssb_pattern     = ssb_pattern_case::A;
+       driver_name      = "zmq";
+       device_arguments = "";
+       scs              = subcarrier_spacing::kHz15;
+       srate            = sampling_rate::from_MHz(61.44);
+       bw_rb            = 106;
+       otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+       dl_center_freq   = 2680.1e6;
+       ssb_center_freq  = 2679.65e6;
+       ssb_pattern      = ssb_pattern_case::A;
 
        if (zmq_loopback) {
          // Prepare ZMQ addresses using in-process communication instead of TCP. It avoids port collision and allows
@@ -143,15 +143,15 @@ static const std::vector<configuration_profile> profiles = {
     {"zmq_20MHz_n78",
      "Single 20MHz TDD in band n78 using ZMQ.",
      []() {
-       driver_name     = "zmq";
-       device_address  = "";
-       scs             = subcarrier_spacing::kHz30;
-       srate           = sampling_rate::from_MHz(61.44);
-       bw_rb           = 52;
-       otw_format      = radio_configuration::over_the_wire_format::DEFAULT;
-       dl_center_freq  = 3489.42e6;
-       ssb_center_freq = 3488.16e6;
-       ssb_pattern     = ssb_pattern_case::C;
+       driver_name      = "zmq";
+       device_arguments = "";
+       scs              = subcarrier_spacing::kHz30;
+       srate            = sampling_rate::from_MHz(61.44);
+       bw_rb            = 52;
+       otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+       dl_center_freq   = 3489.42e6;
+       ssb_center_freq  = 3488.16e6;
+       ssb_pattern      = ssb_pattern_case::C;
 
        if (zmq_loopback) {
          // Prepare ZMQ addresses using in-process communication instead of TCP. It avoids port collision and allows
@@ -304,6 +304,7 @@ static radio_configuration::radio create_radio_configuration()
   radio_configuration::radio radio_config = {};
   radio_config.sampling_rate_hz           = srate.to_Hz<double>();
   radio_config.otw_format                 = otw_format;
+  radio_config.args                       = device_arguments;
   radio_config.log_level                  = log_level;
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     // For each channel in the streams...
@@ -406,7 +407,7 @@ int main(int argc, char** argv)
   std::unique_ptr<task_executor> rt_task_executor = make_task_executor(rt_task_worker);
 
   // Create radio factory.
-  std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name, device_address);
+  std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
   report_fatal_error_if_not(factory, "Driver {} is not available.", driver_name.c_str());
 
   // Create radio configuration. Assume 1 sector per stream.

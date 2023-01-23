@@ -35,8 +35,6 @@ private:
   using port_to_stream_channel = std::pair<unsigned, unsigned>;
   /// Indicates the current state.
   std::atomic<states> state;
-  /// Device properties.
-  radio_uhd_device::properties properties;
   /// Wraps the UHD device functions.
   radio_uhd_device device;
   /// Indexes the transmitter port indexes into stream and channel index as first and second.
@@ -101,8 +99,7 @@ public:
   /// Constructs a radio session based on UHD.
   radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                          task_executor&                    async_executor,
-                         radio_notification_handler&       notifier_,
-                         radio_uhd_device                  device_);
+                         radio_notification_handler&       notifier_);
 
   /// \brief Indicates that the radio session was initialized succesfully.
   /// \return True if no exception is caught during initialization. Otherwise false.
@@ -141,25 +138,6 @@ public:
 class radio_factory_uhd_impl : public radio_factory
 {
 public:
-  radio_factory_uhd_impl(const std::string& device_address)
-  {
-    // Open device.
-    if (!device.usrp_make(device_address)) {
-      fmt::print("Failed to open device with address '{}': {}\n", device_address, device.get_error_message());
-      return;
-    }
-
-    // Get device properties.
-    radio_uhd_device::properties properties;
-    if (!device.get_properties(properties)) {
-      fmt::print("Failed to get device properties.\n", device_address, device.get_error_message());
-      return;
-    }
-
-    // Set validator device properties.
-    config_validator.set_properties(std::move(properties));
-  }
-
   // See interface for documentation
   const radio_configuration::validator& get_configuration_validator() override { return config_validator; };
 
@@ -169,8 +147,7 @@ public:
                                         radio_notification_handler&       notifier) override;
 
 private:
-  radio_uhd_device                  device;
-  radio_config_uhd_config_validator config_validator;
+  static radio_config_uhd_config_validator config_validator;
 };
 
 } // namespace srsgnb

@@ -51,12 +51,11 @@ static radio_configuration::radio create_radio_configuration(const radio_params&
 }
 
 std::unique_ptr<radio_session> srsgnb::create_radio(const std::string&          radio_driver,
-                                                    const std::string&          device_address,
                                                     const radio_params&         params,
                                                     task_executor&              executor,
                                                     radio_notification_handler& radio_handler)
 {
-  std::unique_ptr<radio_factory> factory = create_radio_factory(radio_driver, device_address);
+  std::unique_ptr<radio_factory> factory = create_radio_factory(radio_driver);
   report_fatal_error_if_not(factory, "Invalid radio factory {}.", radio_driver);
 
   // Create radio configuration. Assume 1 sector per stream.

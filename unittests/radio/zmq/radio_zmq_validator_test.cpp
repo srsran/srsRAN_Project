@@ -245,7 +245,7 @@ protected:
     }
 
     // Create pseudo-random sequence generator.
-    factory = create_radio_factory("zmq", "");
+    factory = create_radio_factory("zmq");
     ASSERT_NE(factory, nullptr);
   }
 };

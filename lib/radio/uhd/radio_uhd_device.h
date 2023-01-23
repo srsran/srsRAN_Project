@@ -16,28 +16,26 @@
 #include "radio_uhd_tx_stream.h"
 #include "srsgnb/radio/radio_session.h"
 
+/// Determines whether a value is valid within a range.
+static bool radio_uhd_device_validate_range(const uhd::meta_range_t& range, double value)
+{
+  return (range.clip(value) == value);
+}
+
+static double to_MHz(double value_Hz)
+{
+  return value_Hz * 1e-6;
+}
+
 namespace srsgnb {
 
 class radio_uhd_device : public uhd_exception_handler
 {
 private:
   uhd::usrp::multi_usrp::sptr usrp = nullptr;
+  radio_uhd_device_type       type = radio_uhd_device_type::types::UNKNOWN;
 
 public:
-  struct properties {
-    radio_uhd_device_type                                device_type;
-    std::set<radio_configuration::clock_sources::source> supported_clock_sources = {
-        radio_configuration::clock_sources::source::DEFAULT};
-    std::set<radio_configuration::clock_sources::source> supported_sync_sources = {
-        radio_configuration::clock_sources::source::DEFAULT};
-    uhd::meta_range_t                                   tx_gain_range;
-    uhd::meta_range_t                                   rx_gain_range;
-    uhd::meta_range_t                                   tx_lo_freq_range;
-    uhd::meta_range_t                                   rx_lo_freq_range;
-    std::set<radio_configuration::over_the_wire_format> supported_otw_formats = {
-        radio_configuration::over_the_wire_format::DEFAULT};
-  };
-
   bool is_valid() const { return usrp != nullptr; }
 
   bool usrp_make(const std::string& device_address)
@@ -72,10 +70,10 @@ public:
     // If device type is known, parse and select default address parameters.
     if (device_addr.has_key("type")) {
       // Get the device type.
-      radio_uhd_device_type device_type(device_addr.get("type"));
+      type = radio_uhd_device_type(device_addr.get("type"));
 
       // If the device is X300.
-      if (device_type == radio_uhd_device_type::types::X300) {
+      if (type == radio_uhd_device_type::types::X300) {
         // Set the default master clock rate.
         if (!device_addr.has_key("master_clock_rate")) {
           device_addr.set("master_clock_rate", "184.32e6");
@@ -88,7 +86,7 @@ public:
         if (!device_addr.has_key("recv_frame_size")) {
           device_addr.set("recv_frame_size", "8000");
         }
-      } else if (device_type == radio_uhd_device_type::types::N300) {
+      } else if (type == radio_uhd_device_type::types::N300) {
         // Set the default master clock rate.
         if (!device_addr.has_key("master_clock_rate")) {
           device_addr.set("master_clock_rate", "122.88e6");
@@ -100,94 +98,8 @@ public:
 
     return safe_execution([this, &device_addr]() { usrp = uhd::usrp::multi_usrp::make(device_addr); });
   }
-
-  bool get_properties(properties& props)
-  {
-    return safe_execution([this, &props]() {
-      uhd::fs_path DEVICE_NAME_PATH("/mboards/0/name");
-      uhd::fs_path CLOCK_SOURCES_PATH("/mboards/0/clock_source/options");
-      uhd::fs_path SYNC_SOURCES_PATH("/mboards/0/time_source/options");
-      uhd::fs_path TX_GAIN_PATH("/mboards/0/dboards/A/tx_frontends/0/gains/PGA0/range");
-      uhd::fs_path RX_GAIN_PATH("/mboards/0/dboards/A/rx_frontends/0/gains/PGA0/range");
-      uhd::fs_path TX_LO_FREQ_PATH("/mboards/0/dboards/A/tx_frontends/0/freq/range");
-      uhd::fs_path RX_LO_FREQ_PATH("/mboards/0/dboards/A/rx_frontends/0/freq/range");
-
-      // Get device tree
-      uhd::property_tree::sptr tree = usrp->get_device()->get_tree();
-
-      // Get device name.
-      std::string device_name = "unknown";
-      if (tree->exists(DEVICE_NAME_PATH)) {
-        device_name = tree->access<std::string>(DEVICE_NAME_PATH).get();
-      }
-      props.device_type = radio_uhd_device_type(device_name);
-
-      // Parse Clock sources
-      if (tree->exists(CLOCK_SOURCES_PATH)) {
-        const std::vector<std::string> clock_sources = tree->access<std::vector<std::string>>(CLOCK_SOURCES_PATH).get();
-        for (const std::string& source : clock_sources) {
-          if (source == "internal") {
-            props.supported_clock_sources.emplace(radio_configuration::clock_sources::source::INTERNAL);
-          } else if (source == "external") {
-            props.supported_clock_sources.emplace(radio_configuration::clock_sources::source::EXTERNAL);
-          } else if (source == "gpsdo") {
-            props.supported_clock_sources.emplace(radio_configuration::clock_sources::source::GPSDO);
-          }
-        }
-      }
-
-      // Parse Sync sources.
-      if (tree->exists(SYNC_SOURCES_PATH)) {
-        const std::vector<std::string> time_sources = tree->access<std::vector<std::string>>(SYNC_SOURCES_PATH).get();
-        for (const std::string& source : time_sources) {
-          if (source == "internal") {
-            props.supported_sync_sources.emplace(radio_configuration::clock_sources::source::INTERNAL);
-          } else if (source == "external") {
-            props.supported_sync_sources.emplace(radio_configuration::clock_sources::source::EXTERNAL);
-          } else if (source == "gpsdo") {
-            props.supported_sync_sources.emplace(radio_configuration::clock_sources::source::GPSDO);
-          }
-        }
-      }
-
-      // Get Tx gain range.
-      if (tree->exists(TX_GAIN_PATH)) {
-        props.tx_gain_range = tree->access<uhd::meta_range_t>(TX_GAIN_PATH).get();
-      }
-
-      // Get Rx gain range.
-      if (tree->exists(RX_GAIN_PATH)) {
-        props.rx_gain_range = tree->access<uhd::meta_range_t>(RX_GAIN_PATH).get();
-      }
-
-      // Get Tx LO frequency range.
-      if (tree->exists(RX_GAIN_PATH)) {
-        props.tx_lo_freq_range = tree->access<uhd::meta_range_t>(TX_LO_FREQ_PATH).get();
-      }
-
-      // Get Rx LO frequency range.
-      if (tree->exists(RX_GAIN_PATH)) {
-        props.rx_lo_freq_range = tree->access<uhd::meta_range_t>(RX_LO_FREQ_PATH).get();
-      }
-
-      // Parse over-the-wire formats.
-      switch (props.device_type) {
-        case radio_uhd_device_type::types::X300:
-          props.supported_otw_formats.emplace(radio_configuration::over_the_wire_format::SC16);
-          break;
-        case radio_uhd_device_type::types::B200:
-          props.supported_otw_formats.emplace(radio_configuration::over_the_wire_format::SC16);
-          props.supported_otw_formats.emplace(radio_configuration::over_the_wire_format::SC12);
-          break;
-        case radio_uhd_device_type::types::N300:
-        case radio_uhd_device_type::types::E3X0:
-        case radio_uhd_device_type::types::UNKNOWN:
-        default:
-          break;
-      }
-    });
-  }
-  bool get_mboard_sensor_names(std::vector<std::string>& sensors)
+  radio_uhd_device_type get_type() const { return type; }
+  bool                  get_mboard_sensor_names(std::vector<std::string>& sensors)
   {
     return safe_execution([this, &sensors]() { sensors = usrp->get_mboard_sensor_names(); });
   }
@@ -216,7 +128,16 @@ public:
   }
   bool set_master_clock_rate(double mcr)
   {
-    return safe_execution([this, &mcr]() { usrp->set_master_clock_rate(mcr); });
+    return safe_execution([this, &mcr]() {
+      uhd::meta_range_t range = usrp->get_master_clock_rate_range();
+
+      if (!radio_uhd_device_validate_range(range, mcr)) {
+        on_error("Master clock rate {} MHz is out-of-range. Range is {}.", to_MHz(mcr), range.to_pp_string());
+        return;
+      }
+
+      usrp->set_master_clock_rate(mcr);
+    });
   }
   bool get_time_now(uhd::time_spec_t& timespec)
   {
@@ -257,6 +178,17 @@ public:
     Debug("Setting PPS source to '" << sync_src << "' and clock source to '" << clock_src << "'");
 #if UHD_VERSION < 3140099
     return safe_execution([this, &sync_src, &clock_src]() {
+      std::vector<std::string> time_sources = usrp->get_time_sources(0);
+      if (std::find(time_sources.begin(), time_sources.end(), sync_src) == time_sources.end()) {
+        on_error("Invalid time source {}. Supported: {}", sync_src, span<const std::string>(time_sources));
+        return;
+      }
+      std::vector<std::string> clock_sources = usrp->get_clock_sources(0);
+      if (std::find(clock_sources.begin(), clock_sources.end(), clock_src) == clock_sources.end()) {
+        on_error("Invalid clock source {}. Supported: {}", clock_src, span<const std::string>(clock_sources));
+        return;
+      }
+
       usrp->set_time_source(sync_src);
       usrp->set_clock_source(clock_src);
     });
@@ -264,31 +196,35 @@ public:
     return safe_execution([this, &sync_source, &clock_source]() { usrp->set_sync_source(clock_source, sync_source); });
 #endif
   }
-  bool get_tx_gain_range(uhd::gain_range_t& range, unsigned ch)
-  {
-    return safe_execution([this, &range, ch]() { range = usrp->get_tx_gain_range(ch); });
-  }
-  bool get_rx_gain_range(uhd::gain_range_t& range, unsigned ch)
-  {
-    return safe_execution([this, &range, ch]() { range = usrp->get_rx_gain_range(ch); });
-  }
-  bool get_tx_freq_range(uhd::freq_range_t& range, unsigned ch)
-  {
-    return safe_execution([this, &range, ch]() { range = usrp->get_tx_freq_range(ch); });
-  }
-  bool get_rx_freq_range(uhd::gain_range_t& range, unsigned ch)
-  {
-    return safe_execution([this, &range, ch]() { range = usrp->get_rx_freq_range(ch); });
-  }
   bool set_rx_rate(double rate)
   {
-    Debug("Setting Rx Rate to " << rate / 1e6 << "MHz");
-    return safe_execution([this, rate]() { usrp->set_rx_rate(rate); });
+    Debug("Setting Rx Rate to " << to_MHz(rate) << "MHz");
+
+    return safe_execution([this, rate]() {
+      uhd::meta_range_t range = usrp->get_rx_rates();
+
+      if (!radio_uhd_device_validate_range(range, rate)) {
+        on_error("Rx Rate {} MHz is out-of-range. Range is {}.", to_MHz(rate), range.to_pp_string());
+        return;
+      }
+
+      usrp->set_rx_rate(rate);
+    });
   }
   bool set_tx_rate(double rate)
   {
-    Debug("Setting Tx Rate to " << rate / 1e6 << "MHz");
-    return safe_execution([this, rate]() { usrp->set_tx_rate(rate); });
+    Debug("Setting Tx Rate to " << to_MHz(rate) << "MHz");
+
+    return safe_execution([this, rate]() {
+      uhd::meta_range_t range = usrp->get_tx_rates();
+
+      if (!radio_uhd_device_validate_range(range, rate)) {
+        on_error("Tx Rate {} MHz is out-of-range. Range is {}.", to_MHz(rate), range.to_pp_string());
+        return;
+      }
+
+      usrp->set_tx_rate(rate);
+    });
   }
   bool set_command_time(const uhd::time_spec_t& timespec)
   {
@@ -323,17 +259,35 @@ public:
   {
     Debug("Setting channel " << ch << " Tx gain to " << gain << " dB");
 
-    return safe_execution([this, ch, gain]() { usrp->set_tx_gain(gain, ch); });
+    return safe_execution([this, ch, gain]() {
+      uhd::freq_range_t range = usrp->get_tx_gain_range(ch);
+
+      if (!radio_uhd_device_validate_range(range, gain)) {
+        on_error("Tx gain {} dB is out-of-range. Range is {}.", gain, range.to_pp_string());
+        return;
+      }
+
+      usrp->set_tx_gain(gain, ch);
+    });
   }
   bool set_rx_gain(size_t ch, double gain)
   {
     Debug("Setting channel " << ch << " Rx gain to " << gain << " dB");
 
-    return safe_execution([this, ch, gain]() { usrp->set_rx_gain(gain, ch); });
+    return safe_execution([this, ch, gain]() {
+      uhd::freq_range_t range = usrp->get_rx_gain_range(ch);
+
+      if (!radio_uhd_device_validate_range(range, gain)) {
+        on_error("Rx gain {} dB is out-of-range. Range is {}.", gain, range.to_pp_string());
+        return;
+      }
+
+      usrp->set_rx_gain(gain, ch);
+    });
   }
   bool set_tx_freq(uint32_t ch, const radio_configuration::lo_frequency& config)
   {
-    Debug("Setting channel " << ch << " Tx frequency to " << config.center_frequency_hz / 1e6 << " MHz");
+    Debug("Setting channel " << ch << " Tx frequency to " << to_MHz(config.center_frequency_hz) << " MHz");
 
     // Create tune request.
     uhd::tune_request_t tune_request(config.center_frequency_hz);
@@ -345,11 +299,21 @@ public:
       tune_request.dsp_freq_policy = uhd::tune_request_t::POLICY_AUTO;
     }
 
-    return safe_execution([this, ch, &tune_request]() { usrp->set_tx_freq(tune_request, ch); });
+    return safe_execution([this, ch, &tune_request]() {
+      uhd::freq_range_t range = usrp->get_tx_freq_range(ch);
+
+      if (!radio_uhd_device_validate_range(range, tune_request.rf_freq)) {
+        on_error(
+            "Tx RF frequency {} MHz is out-of-range. Range is {}.", to_MHz(tune_request.rf_freq), range.to_pp_string());
+        return;
+      }
+
+      usrp->set_tx_freq(tune_request, ch);
+    });
   }
   bool set_rx_freq(uint32_t ch, const radio_configuration::lo_frequency& config)
   {
-    Debug("Setting channel " << ch << " Rx frequency to " << config.center_frequency_hz / 1e6 << " MHz");
+    Debug("Setting channel " << ch << " Rx frequency to " << to_MHz(config.center_frequency_hz) << " MHz");
 
     // Create tune request.
     uhd::tune_request_t tune_request(config.center_frequency_hz);
@@ -361,7 +325,17 @@ public:
       tune_request.dsp_freq_policy = uhd::tune_request_t::POLICY_AUTO;
     }
 
-    return safe_execution([this, ch, &tune_request]() { usrp->set_rx_freq(tune_request, ch); });
+    return safe_execution([this, ch, &tune_request]() {
+      uhd::freq_range_t range = usrp->get_rx_freq_range(ch);
+
+      if (!radio_uhd_device_validate_range(range, tune_request.rf_freq)) {
+        on_error(
+            "Rx RF frequency {} MHz is out-of-range. Range is {}.", to_MHz(tune_request.rf_freq), range.to_pp_string());
+        return;
+      }
+
+      usrp->set_rx_freq(tune_request, ch);
+    });
   }
 };
 

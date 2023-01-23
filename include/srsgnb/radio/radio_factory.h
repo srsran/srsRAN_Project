@@ -35,9 +35,8 @@ public:
 
 /// \brief Creates a radio factory.
 ///
-/// \param[in] driver_name
-/// \param[in] device_address
-/// \return A valid radio factory if the provided driver name and address are valid.
-std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name, std::string device_address);
+/// \param[in] driver_name Selects the type of radio factory for example \e uhd or \e zmq.
+/// \return A valid radio factory if the provided driver name are valid.
+std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name);
 
 } // namespace srsgnb

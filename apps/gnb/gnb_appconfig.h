@@ -27,9 +27,7 @@ struct rf_driver_appconfig {
   /// RF driver name.
   std::string device_driver = "zmq";
   /// RF driver arguments.
-  std::string device_address = "";
-  /// RF stream arguments arguments.
-  std::string stream_arguments = "tx_port=tcp://*:5000,rx_port=tcp://localhost:6000";
+  std::string device_arguments = "tx_port=tcp://*:5000,rx_port=tcp://localhost:6000";
   /// All transmit channel gain in decibels.
   double tx_gain_dB = 50.0;
   /// All receive channel gain in decibels.
