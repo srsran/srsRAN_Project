@@ -165,7 +165,8 @@ void radio_zmq_rx_channel::receive_response()
                             nsamples);
 
   unsigned to_send = nsamples;
-  for (unsigned count = 0; count != nsamples;) {
+  unsigned count   = 0;
+  while (count < nsamples && state_fsm.is_running()) {
     unsigned pushed = circular_buffer.try_push(&buffer[count], &buffer[count + to_send]);
     while (state_fsm.is_running() && pushed == 0) {
       // Notify buffer overflow.
@@ -180,9 +181,6 @@ void radio_zmq_rx_channel::receive_response()
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS;
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
       pushed = circular_buffer.try_push(&buffer[count], &buffer[count + to_send]);
-    }
-    if (!state_fsm.is_running()) {
-      break;
     }
     count += pushed;
     to_send -= pushed;

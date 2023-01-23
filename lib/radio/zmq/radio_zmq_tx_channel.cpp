@@ -213,8 +213,8 @@ void radio_zmq_tx_channel::run_async()
 
 void radio_zmq_tx_channel::transmit_samples(span<radio_sample_type> data)
 {
-  unsigned count;
-  for (count = 0; count < data.size();) {
+  unsigned count = 0;
+  while (count < data.size() && state_fsm.is_running()) {
     unsigned pushed = circular_buffer.try_push(data.begin() + count, data.end());
     while (state_fsm.is_running() && !pushed) {
       // Notify buffer overflow.
@@ -229,9 +229,6 @@ void radio_zmq_tx_channel::transmit_samples(span<radio_sample_type> data)
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS;
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
       pushed = circular_buffer.try_push(data.begin() + count, data.end());
-    }
-    if (!state_fsm.is_running()) {
-      break;
     }
     count += pushed;
   }
@@ -253,7 +250,7 @@ void radio_zmq_tx_channel::align(uint64_t timestamp)
 
   std::array<cf_t, 1024> zero_buffer = {};
   // Transmit zeros until the sample count reaches the timestamp.
-  while (sample_count < timestamp) {
+  while (sample_count < timestamp && state_fsm.is_running()) {
     unsigned   to_send = std::min(zero_buffer.size(), timestamp - sample_count);
     span<cf_t> zeros   = span<cf_t>(zero_buffer.begin(), to_send);
     transmit_samples(zeros);
