@@ -36,12 +36,37 @@ bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate&
   return false;
 }
 
+/// @brief Fetches SearchSpace configurations prioritized based on nof. candidates for a given aggregation level in a UE
+/// cell.
+/// @param ue_cc UE's cell context.
+/// @param agg_lvl Aggregation level.
+/// @return List of SearchSpace configuration.
+static static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP>
+get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level agg_lvl)
+{
+  auto search_spaces = ue_cc.cfg().get_search_spaces(ue_cc.active_bwp_id());
+  std::sort(search_spaces.begin(),
+            search_spaces.end(),
+            [agg_lvl](const search_space_configuration* lhs, const search_space_configuration* rhs) -> bool {
+              if (lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] ==
+                  rhs->nof_candidates[to_aggregation_level_index(agg_lvl)]) {
+                // In case nof. candidates are equal, choose the SS with CORESET > 0.
+                return lhs->cs_id > rhs->cs_id;
+              }
+              return lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] >
+                     rhs->nof_candidates[to_aggregation_level_index(agg_lvl)];
+            });
+  return search_spaces;
+}
+
 /// Allocate UE PDSCH grant.
 static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
 {
   if (not is_retx and not u.has_pending_dl_newtx_bytes()) {
     return false;
   }
+  // TODO: Set aggregation level based on link quality.
+  const aggregation_level agg_lvl = srsgnb::aggregation_level::n4;
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
@@ -54,7 +79,7 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
 
     // Search for available symbolxRB resources in different SearchSpaces.
     const cell_configuration& cell_cfg_cmn = ue_cc.cfg().cell_cfg_common;
-    for (const search_space_configuration* ss_cfg : ue_cc.cfg().get_search_spaces(ue_cc.active_bwp_id())) {
+    for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
       span<const pdsch_time_domain_resource_allocation> pdsch_list = ue_cc.cfg().get_pdsch_time_domain_list(ss_cfg->id);
 
       bwp_configuration bwp_cfg = ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).generic_params;
@@ -74,14 +99,8 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
                                                                          : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
         crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
         if (not ue_grant_crbs.empty()) {
-          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
-                                                                                  ue_cc.cell_index,
-                                                                                  h->id,
-                                                                                  ss_cfg->id,
-                                                                                  time_res,
-                                                                                  ue_grant_crbs,
-                                                                                  dci_dl_format::f1_0,
-                                                                                  aggregation_level::n4});
+          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{
+              &u, ue_cc.cell_index, h->id, ss_cfg->id, time_res, ue_grant_crbs, dci_dl_format::f1_0, agg_lvl});
           if (res_allocated) {
             return true;
           }
@@ -102,6 +121,8 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
       return false;
     }
   }
+  // TODO: Set aggregation level based on link quality.
+  const aggregation_level agg_lvl = srsgnb::aggregation_level::n4;
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
@@ -117,7 +138,7 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
       continue;
     }
 
-    for (const search_space_configuration* ss_cfg : ue_cc.cfg().get_search_spaces(ue_cc.active_bwp_id())) {
+    for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
       span<const pusch_time_domain_resource_allocation> pusch_list = ue_cc.cfg().get_pusch_time_domain_list(ss_cfg->id);
       // See TS 38.212, 7.3.1.0 DCI size alignment.
       const bwp_uplink_common& bwp_ul = ue_cell_cfg.ul_bwp_common(
@@ -132,8 +153,8 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
             is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
         crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
         if (not ue_grant_crbs.empty()) {
-          const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
-              &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, ss_cfg->id, aggregation_level::n4});
+          const bool res_allocated = pusch_alloc.allocate_ul_grant(
+              ue_pusch_grant{&u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, ss_cfg->id, agg_lvl});
           if (res_allocated) {
             return true;
           }
