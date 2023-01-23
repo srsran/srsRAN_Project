@@ -149,6 +149,22 @@ public:
   virtual void handle_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
 };
 
+/// Interface to notify an RRC UE about control messages.
+class du_processor_rrc_ue_control_message_notifier
+{
+public:
+  virtual ~du_processor_rrc_ue_control_message_notifier() = default;
+
+  /// \brief Notify the RRC UE about an update of the GUAMI.
+  /// \param[in] msg The new GUAMI.
+  virtual void on_new_guami(const guami& msg) = 0;
+
+  /// \brief Notify the RRC UE about an RRC Reconfiguration Request.
+  /// \param[in] msg The new RRC Reconfiguration Request.
+  /// \returns The result of the rrc reconfiguration.
+  virtual async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg) = 0;
+};
+
 /// Handler for an NGAP entity to communicate with the DU processor
 class du_processor_ngap_interface
 {

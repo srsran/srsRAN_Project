@@ -26,7 +26,7 @@ public:
                                      const srsgnb::security::sec_as_config&          security_cfg_,
                                      du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
                                      du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
-                                     rrc_ue_control_message_handler&                 rrc_ue_ctrl_handler_,
+                                     du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
                                      drb_manager&                                    rrc_ue_drb_manager_,
                                      srslog::basic_logger&                           logger_);
 
@@ -45,11 +45,11 @@ private:
 
   std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
 
-  du_processor_e1ap_control_notifier&    e1ap_ctrl_notifier;    // to trigger bearer context setup at CU-UP
-  du_processor_f1ap_ue_context_notifier& f1ap_ue_ctxt_notifier; // to trigger UE context modification at DU
-  rrc_ue_control_message_handler&        rrc_ue_notifier;       // to trigger RRC Reconfiguration at UE
-  drb_manager&                           rrc_ue_drb_manager;    // to get RRC DRB config
-  srslog::basic_logger&                  logger;
+  du_processor_e1ap_control_notifier&           e1ap_ctrl_notifier;    // to trigger bearer context setup at CU-UP
+  du_processor_f1ap_ue_context_notifier&        f1ap_ue_ctxt_notifier; // to trigger UE context modification at DU
+  du_processor_rrc_ue_control_message_notifier& rrc_ue_notifier;       // to trigger RRC Reconfiguration at UE
+  drb_manager&                                  rrc_ue_drb_manager;    // to get RRC DRB config
+  srslog::basic_logger&                         logger;
 
   // (sub-)routine requests
   e1ap_bearer_context_setup_request           bearer_context_setup_request;

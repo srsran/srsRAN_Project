@@ -19,7 +19,7 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const srsgnb::security::sec_as_config&          security_cfg_,
     du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
-    rrc_ue_control_message_handler&                 rrc_ue_notifier_,
+    du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
     drb_manager&                                    rrc_ue_drb_manager_,
     srslog::basic_logger&                           logger_) :
   setup_msg(setup_msg_),
@@ -200,7 +200,7 @@ void pdu_session_resource_setup_routine::operator()(
       }
     }
 
-    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.handle_rrc_reconfiguration_request(rrc_reconfig_args));
+    CORO_AWAIT_VALUE(rrc_reconfig_result, rrc_ue_notifier.on_rrc_reconfiguration_request(rrc_reconfig_args));
 
     // Handle UE Context Modification Response
     if (not rrc_reconfig_result) {

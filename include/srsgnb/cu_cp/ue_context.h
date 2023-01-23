@@ -53,7 +53,8 @@ struct ue_context {
   std::array<cu_srb_context, MAX_NOF_SRBS> srbs;
   slotted_vector<cu_drb_context>           drbs;
 
-  std::unique_ptr<rrc_ue_task_scheduler> task_sched;
+  std::unique_ptr<rrc_ue_task_scheduler>                        task_sched;
+  std::unique_ptr<du_processor_rrc_ue_control_message_notifier> rrc_ue_notifier;
 };
 
 } // namespace srs_cu_cp

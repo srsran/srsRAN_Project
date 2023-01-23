@@ -162,5 +162,26 @@ private:
   rrc_du_ue_repository* rrc_du_handler = nullptr;
 };
 
+// Adapter between DU processor and RRC UE
+class du_processor_rrc_ue_adapter : public du_processor_rrc_ue_control_message_notifier
+{
+public:
+  explicit du_processor_rrc_ue_adapter(rrc_ue_control_message_handler& rrc_ue_handler_) :
+    rrc_ue_handler(rrc_ue_handler_)
+  {
+  }
+
+  virtual void on_new_guami(const guami& msg) override { return rrc_ue_handler.handle_new_guami(msg); }
+
+  virtual async_task<bool>
+  on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg) override
+  {
+    return rrc_ue_handler.handle_rrc_reconfiguration_request(msg);
+  }
+
+private:
+  rrc_ue_control_message_handler& rrc_ue_handler;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb
