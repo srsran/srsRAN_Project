@@ -32,8 +32,8 @@ public:
 
   /// \brief Performs paging (if any) scheduling for the current slot.
   ///
-  /// \param[out,in] res_grid Resource slot grid with current allocations and scheduling results.
-  void schedule_paging(cell_slot_resource_allocator& res_grid);
+  /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
+  void schedule_paging(cell_resource_allocator& res_grid);
 
   /// Handles Paging indication message reported by upper layers.
   /// \param[in] paging_indication_message Per UE paging indication message to be scheduled.
@@ -48,7 +48,7 @@ private:
   /// \param[in] pg_msg Paging indication message.
   /// \param[in] i_s Index of the Paging Occasion.
   /// \return True if paging scheduling is successful, false otherwise.
-  bool schedule_paging_in_search_space_id_gt_0(cell_slot_resource_allocator&    res_grid,
+  bool schedule_paging_in_search_space_id_gt_0(cell_resource_allocator&         res_grid,
                                                slot_point                       sl_point,
                                                unsigned                         pdsch_time_res,
                                                const paging_indication_message& pg_msg,
@@ -62,7 +62,7 @@ private:
   /// \param[in] pg_msg Paging indication message.
   /// \param[in] i_s Index of the Paging Occasion.
   /// \return True if paging scheduling is successful, false otherwise.
-  bool schedule_paging_in_search_space0(cell_slot_resource_allocator&    res_grid,
+  bool schedule_paging_in_search_space0(cell_resource_allocator&         res_grid,
                                         slot_point                       sl_point,
                                         unsigned                         pdsch_time_res,
                                         const paging_indication_message& pg_msg,
@@ -76,7 +76,7 @@ private:
   /// \param[in] beam_idx SSB or beam index which the Paging corresponds to.
   /// \param[in] ss_id Search Space Id used in scheduling paging message.
   /// \return True if paging allocation is successful, false otherwise.
-  bool allocate_paging(cell_slot_resource_allocator&    res_grid,
+  bool allocate_paging(cell_resource_allocator&         res_grid,
                        unsigned                         pdsch_time_res,
                        const paging_indication_message& pg_msg,
                        unsigned                         beam_idx,
@@ -84,14 +84,14 @@ private:
 
   /// \brief Fills the Paging n0 slots.
   ///
-  /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
-  /// \param[in] pdcch Allocated PDCCH for Paging.
+  /// \param[out,in] pg_grant Paging grant to be filled.
+  /// \param[out,in] pdcch Allocated PDCCH for Paging.
   /// \param[in] crbs_grant Paging grant in CRBs.
   /// \param[in] time_resource Slot at which PDSCH needs to be scheduled.
   /// \param[in] pg_msg Paging indication message.
   /// \param[in] dmrs_info DMRS information related to the scheduled grant.
   /// \param[in] tbs TBS information of the Paging grant.
-  void fill_paging_grant(cell_slot_resource_allocator&    res_grid,
+  void fill_paging_grant(dl_paging_allocation&            pg_grant,
                          pdcch_dl_information&            pdcch,
                          crb_interval                     crbs_grant,
                          unsigned                         time_resource,

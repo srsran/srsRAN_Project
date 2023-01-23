@@ -128,7 +128,7 @@ protected:
 
     bench->res_grid.slot_indication(next_slot);
     bench->pdcch_sch.slot_indication(next_slot);
-    bench->pg_sch.schedule_paging(bench->res_grid[0]);
+    bench->pg_sch.schedule_paging(bench->res_grid);
 
     // Log scheduling results.
     sched_res_logger.log(bench->res_grid[0].result);

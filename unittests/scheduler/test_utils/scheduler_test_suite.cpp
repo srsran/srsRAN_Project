@@ -113,7 +113,9 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
       } break;
       case dci_dl_rnti_config_type::p_rnti_f1_0: {
-        const auto& pg_grants = cell_res_grid[0].result.dl.paging_grants;
+        uint8_t k0 =
+            cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource].k0;
+        const auto& pg_grants = cell_res_grid[k0].result.dl.paging_grants;
         auto        it        = std::find_if(pg_grants.begin(), pg_grants.end(), [&pdcch](const auto& grant) {
           return grant.pdsch_cfg.rnti == pdcch.ctx.rnti;
         });
