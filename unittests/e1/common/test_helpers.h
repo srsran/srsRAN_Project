@@ -12,7 +12,6 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/cu_up/cu_up.h"
 #include "srsgnb/cu_up/cu_up_types.h"
 #include "srsgnb/e1/common/e1_common.h"

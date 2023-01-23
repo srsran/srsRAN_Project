@@ -12,9 +12,10 @@
 
 #include "drb_manager_impl.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/rrc/drb_manager.h"
 #include "srsgnb/rrc/rrc_cell_context.h"
+#include "srsgnb/rrc/rrc_ue.h"
+#include "srsgnb/rrc/rrc_ue_config.h"
 
 namespace srsgnb {
 

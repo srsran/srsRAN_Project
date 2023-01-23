@@ -12,7 +12,6 @@
 
 #include "rrc_cell_context.h"
 #include "rrc_ue.h"
-#include "srsgnb/cu_cp/ue_context.h"
 
 namespace srsgnb {
 
