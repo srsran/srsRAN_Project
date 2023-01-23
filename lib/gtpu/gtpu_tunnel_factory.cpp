@@ -17,5 +17,5 @@ using namespace srsgnb;
 
 std::unique_ptr<gtpu_tunnel> srsgnb::create_gtpu_tunnel(gtpu_tunnel_creation_message& msg)
 {
-  return std::make_unique<gtpu_tunnel_impl>(msg.cfg, *msg.rx_lower, *msg.tx_upper);
+  return std::make_unique<gtpu_tunnel_impl>(msg.ue_index, msg.cfg, *msg.rx_lower, *msg.tx_upper);
 }

@@ -46,7 +46,7 @@ TEST_F(gtpu_test, pack_unpack)
 
   // Unpack SDU
   logger.info(orig_vec.begin(), orig_vec.end(), "Original SDU");
-  bool read_ok = gtpu_read_and_strip_header(hdr, tst_vec, gtpu_logger);
+  bool read_ok = gtpu_read_and_strip_header(hdr, tst_vec, gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);
   logger.info(tst_vec.begin(), tst_vec.end(), "Unpacked PDU");
 
@@ -74,7 +74,7 @@ TEST_F(gtpu_test, pack_unpack)
 
   byte_buffer repack_buf = tst_vec_no_header.deep_copy();
 
-  gtpu_write_header(repack_buf, hdr, gtpu_logger);
+  gtpu_write_header(repack_buf, hdr, gtpu_tx_logger);
   logger.info(repack_buf.begin(), repack_buf.end(), "Repackaged GTP-U packet");
   ASSERT_EQ(repack_buf.length(), orig_vec.length());
   ASSERT_EQ(repack_buf, orig_vec);
@@ -93,7 +93,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
 
   // Unpack SDU
   logger.info(orig_vec.begin(), orig_vec.end(), "Original SDU");
-  bool read_ok = gtpu_read_and_strip_header(hdr, tst_vec, gtpu_logger);
+  bool read_ok = gtpu_read_and_strip_header(hdr, tst_vec, gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);
   logger.info(tst_vec.begin(), tst_vec.end(), "Unpacked PDU");
 
@@ -137,7 +137,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
 
   byte_buffer repack_buf = tst_vec_no_header.deep_copy();
 
-  gtpu_write_header(repack_buf, hdr, gtpu_logger);
+  gtpu_write_header(repack_buf, hdr, gtpu_tx_logger);
   logger.info(repack_buf.begin(), repack_buf.end(), "Repackaged GTP-U packet");
   ASSERT_EQ(repack_buf.length(), orig_vec.length());
   ASSERT_EQ(repack_buf, orig_vec);
@@ -169,7 +169,7 @@ TEST_F(gtpu_test, rx_sdu)
   byte_buffer orig_vec{gtpu_ping_vec};
   byte_buffer strip_vec{gtpu_ping_vec};
   gtpu_header tmp;
-  bool        read_ok = gtpu_read_and_strip_header(tmp, strip_vec, gtpu_logger);
+  bool        read_ok = gtpu_read_and_strip_header(tmp, strip_vec, gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);
 
   gtpu_tunnel_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
@@ -193,7 +193,7 @@ TEST_F(gtpu_test, tx_pdu)
   byte_buffer orig_vec{gtpu_ping_vec};
   byte_buffer strip_vec{gtpu_ping_vec};
   gtpu_header tmp;
-  bool        read_ok = gtpu_read_and_strip_header(tmp, strip_vec, gtpu_logger);
+  bool        read_ok = gtpu_read_and_strip_header(tmp, strip_vec, gtpu_rx_logger);
   ASSERT_EQ(read_ok, true);
 
   gtpu_tunnel_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();

@@ -78,6 +78,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
 
   // Create GTPU entity
   gtpu_tunnel_creation_message msg = {};
+  msg.ue_index                     = ue_index;
   msg.cfg.tx.peer_teid             = ul_tunnel_info.gtp_teid.value();
   msg.cfg.tx.peer_addr             = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port             = net_config.upf_port;

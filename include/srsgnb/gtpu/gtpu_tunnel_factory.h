@@ -19,6 +19,7 @@
 namespace srsgnb {
 
 struct gtpu_tunnel_creation_message {
+  uint32_t                             ue_index;
   gtpu_config                          cfg;
   gtpu_tunnel_rx_lower_layer_notifier* rx_lower;
   gtpu_tunnel_tx_upper_layer_notifier* tx_upper;

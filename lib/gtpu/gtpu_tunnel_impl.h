@@ -21,13 +21,14 @@ namespace srsgnb {
 class gtpu_tunnel_impl : public gtpu_tunnel
 {
 public:
-  gtpu_tunnel_impl(gtpu_config                          cfg,
+  gtpu_tunnel_impl(uint32_t                             ue_index,
+                   gtpu_config                          cfg,
                    gtpu_tunnel_rx_lower_layer_notifier& rx_lower,
                    gtpu_tunnel_tx_upper_layer_notifier& tx_upper) :
     logger(srslog::fetch_basic_logger("GTPU"))
   {
-    rx = std::make_unique<gtpu_tunnel_rx>(cfg.rx, rx_lower);
-    tx = std::make_unique<gtpu_tunnel_tx>(cfg.tx, tx_upper);
+    rx = std::make_unique<gtpu_tunnel_rx>(ue_index, cfg.rx, rx_lower);
+    tx = std::make_unique<gtpu_tunnel_tx>(ue_index, cfg.tx, tx_upper);
   }
   ~gtpu_tunnel_impl() override = default;
 

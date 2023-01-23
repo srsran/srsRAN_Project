@@ -8,6 +8,7 @@
  *
  */
 #include "gtpu_pdu.h"
+#include "gtpu_tunnel_logger.h"
 #include "srsgnb/support/bit_encoding.h"
 
 namespace srsgnb {
@@ -15,12 +16,12 @@ namespace srsgnb {
 bool gtpu_read_ext_header(bit_decoder&                decoder,
                           gtpu_extension_header&      ext,
                           gtpu_extension_header_type& next_extension_header_type,
-                          srslog::basic_logger&       logger);
+                          gtpu_tunnel_logger&         logger);
 
 bool gtpu_write_ext_header(bit_encoder&                 encoder,
                            const gtpu_extension_header& ext,
                            gtpu_extension_header_type   next_extension_header_type,
-                           srslog::basic_logger&        logger);
+                           gtpu_tunnel_logger&          logger);
 
 void gtpu_unpack_ext_header_type(bit_decoder& decoder, gtpu_extension_header_type& type);
 
@@ -28,17 +29,17 @@ void gtpu_unpack_ext_header_type(bit_decoder& decoder, gtpu_extension_header_typ
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 29.281 v10.1.0 Section 5
  ***************************************************************************/
-bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basic_logger& logger)
+bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_logger& logger)
 {
   // flags
   if (!gtpu_supported_flags_check(header, logger)) {
-    logger.error("gtpu_write_header - Unhandled GTP-U Flags. Flags: {}", header.flags);
+    logger.log_error("gtpu_write_header - Unhandled GTP-U Flags. Flags: {}", header.flags);
     return false;
   }
 
   // msg type
   if (!gtpu_supported_msg_type_check(header, logger)) {
-    logger.error("gtpu_write_header - Unhandled GTP-U Message Type. Message Type: {}", header.message_type);
+    logger.log_error("gtpu_write_header - Unhandled GTP-U Message Type. Message Type: {}", header.message_type);
     return false;
   }
 
@@ -103,10 +104,10 @@ bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger
   return true;
 }
 
-bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger)
+bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, gtpu_tunnel_logger& logger)
 {
   if (pdu.length() < GTPU_BASE_HEADER_LEN) {
-    logger.error(pdu.begin(), pdu.end(), "Error GTP-U PDU is too small. Length={}", pdu.length());
+    logger.log_error(pdu.begin(), pdu.end(), "Error GTP-U PDU is too small. Length={}", pdu.length());
     return false;
   }
 
@@ -123,7 +124,7 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
 
   // Check supported flags
   if (!gtpu_supported_flags_check(header, logger)) {
-    logger.error("gtpu_read_header - Unhandled GTP-U Flags. Flags: {}", header.flags);
+    logger.log_error("gtpu_read_header - Unhandled GTP-U Flags. Flags: {}", header.flags);
     return false;
   }
 
@@ -140,7 +141,7 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
   if (header.flags.ext_hdr || header.flags.seq_number || header.flags.n_pdu) {
     // Sanity check PDU length
     if (pdu.length() < GTPU_EXTENDED_HEADER_LEN) {
-      logger.error(pdu.begin(), pdu.end(), "Error extended GTP-U PDU is too small. Length={}", pdu.length());
+      logger.log_error(pdu.begin(), pdu.end(), "Error extended GTP-U PDU is too small. Length={}", pdu.length());
       return false;
     }
 
@@ -161,7 +162,7 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
   // Read Header Extensions
   if (header.flags.ext_hdr) {
     if (header.next_ext_hdr_type == gtpu_extension_header_type::no_more_extension_headers) {
-      logger.error(pdu.begin(), pdu.end(), "Error E flag is set, but there are no extra extensions");
+      logger.log_error(pdu.begin(), pdu.end(), "Error E flag is set, but there are no extra extensions");
       return false;
     }
     gtpu_extension_header_type next_extension_header_type = header.next_ext_hdr_type;
@@ -186,7 +187,7 @@ bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::b
 bool gtpu_read_ext_header(bit_decoder&                decoder,
                           gtpu_extension_header&      ext,
                           gtpu_extension_header_type& next_extension_header_type,
-                          srslog::basic_logger&       logger)
+                          gtpu_tunnel_logger&         logger)
 {
   // TODO check valid read extension types
 
@@ -216,7 +217,7 @@ bool gtpu_read_ext_header(bit_decoder&                decoder,
 bool gtpu_write_ext_header(bit_encoder&                 encoder,
                            const gtpu_extension_header& ext,
                            gtpu_extension_header_type   next_extension_header_type,
-                           srslog::basic_logger&        logger)
+                           gtpu_tunnel_logger&          logger)
 {
   // TODO check valid write extension types
 
@@ -246,37 +247,37 @@ void gtpu_unpack_ext_header_type(bit_decoder& decoder, gtpu_extension_header_typ
 }
 
 /// Supported feature helpers
-bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_logger& logger)
+bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& logger)
 {
   // flags
   if (header.flags.version != GTPU_FLAGS_VERSION_V1) {
-    logger.error("gtpu_header - Unhandled GTP-U Version. Flags: {}", header.flags);
+    logger.log_error("gtpu_header - Unhandled GTP-U Version. Flags: {}", header.flags);
     return false;
   }
   if (header.flags.protocol_type != GTPU_FLAGS_GTP_PROTOCOL) {
-    logger.error("gtpu_header - Unhandled Protocol Type. Flags: {}", header.flags);
+    logger.log_error("gtpu_header - Unhandled Protocol Type. Flags: {}", header.flags);
     return false;
   }
   if (header.flags.n_pdu) {
-    logger.error("gtpu_header - Unhandled Packet Number. Flags: {}", header.flags);
+    logger.log_error("gtpu_header - Unhandled Packet Number. Flags: {}", header.flags);
     return false;
   }
   return true;
 }
 
-bool gtpu_supported_msg_type_check(const gtpu_header& header, srslog::basic_logger& logger)
+bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger)
 {
   // msg_tpye
   if (header.message_type != GTPU_MSG_DATA_PDU && header.message_type != GTPU_MSG_ECHO_REQUEST &&
       header.message_type != GTPU_MSG_ECHO_RESPONSE && header.message_type != GTPU_MSG_ERROR_INDICATION &&
       header.message_type != GTPU_MSG_END_MARKER) {
-    logger.error("gtpu_header - Unhandled message type: 0x{:x}", header.message_type);
+    logger.log_error("gtpu_header - Unhandled message type: 0x{:x}", header.message_type);
     return false;
   }
   return true;
 }
 
-bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, srslog::basic_logger& logger)
+bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, gtpu_tunnel_logger& logger)
 {
   switch (type) {
     case gtpu_extension_header_type::no_more_extension_headers:
@@ -301,16 +302,16 @@ bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type&
     default:
       break;
   }
-  logger.debug("Extension header not comprehended. Type={}", type);
+  logger.log_debug("Extension header not comprehended. Type={}", type);
 
   uint8_t comp = static_cast<uint8_t>(type) >> 6U;
   bool    comp_not_needed =
       !(comp == static_cast<uint8_t>(gtpu_comprehension::required_at_endpoint_not_intermediate_node) ||
         comp == static_cast<uint8_t>(gtpu_comprehension::required_at_endpoint_and_intermediate_node));
   if (comp_not_needed) {
-    logger.debug("Extension header not comprehended. Type={}", type);
+    logger.log_debug("Extension header not comprehended. Type={}", type);
   } else {
-    logger.error("Extension header not comprehended. Type={}", type);
+    logger.log_error("Extension header not comprehended. Type={}", type);
   }
   return comp_not_needed;
 }

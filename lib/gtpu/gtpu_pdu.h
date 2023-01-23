@@ -9,6 +9,7 @@
  */
 #pragma once
 
+#include "gtpu_tunnel_logger.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/srslog/srslog.h"
 #include <cstdint>
@@ -141,12 +142,12 @@ struct gtpu_header {
 };
 
 bool gtpu_read_teid(uint32_t& teid, const byte_buffer& pdu, srslog::basic_logger& logger);
-bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, srslog::basic_logger& logger);
-bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, srslog::basic_logger& logger);
+bool gtpu_read_and_strip_header(gtpu_header& header, byte_buffer& pdu, gtpu_tunnel_logger& logger);
+bool gtpu_write_header(byte_buffer& pdu, const gtpu_header& header, gtpu_tunnel_logger& logger);
 
-bool gtpu_supported_flags_check(const gtpu_header& header, srslog::basic_logger& logger);
-bool gtpu_supported_msg_type_check(const gtpu_header& header, srslog::basic_logger& logger);
-bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, srslog::basic_logger& logger);
+bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
+bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
+bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, gtpu_tunnel_logger& logger);
 
 } // namespace srsgnb
 

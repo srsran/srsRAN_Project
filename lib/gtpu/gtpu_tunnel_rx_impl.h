@@ -11,6 +11,7 @@
 #pragma once
 
 #include "gtpu_pdu.h"
+#include "gtpu_tunnel_logger.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/gtpu/gtpu_config.h"
 #include "srsgnb/gtpu/gtpu_tunnel_rx.h"
@@ -22,11 +23,11 @@ namespace srsgnb {
 class gtpu_tunnel_rx : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
-  gtpu_tunnel_rx(gtpu_config::gtpu_rx_config cfg_, gtpu_tunnel_rx_lower_layer_notifier& rx_lower_) :
-    logger(srslog::fetch_basic_logger("GTPU")), cfg(cfg_), lower_dn(rx_lower_)
+  gtpu_tunnel_rx(uint32_t ue_index, gtpu_config::gtpu_rx_config cfg_, gtpu_tunnel_rx_lower_layer_notifier& rx_lower_) :
+    logger("GTPU", gtpu_tunnel_log_prefix{ue_index, "local", cfg_.local_teid}), cfg(cfg_), lower_dn(rx_lower_)
   {
     // Validate configuration
-    logger.info("GTPU DL entity configured. Configuration={}", cfg);
+    logger.log_info("GTPU DL entity configured. Configuration={}", cfg);
   }
 
   /*
@@ -37,18 +38,18 @@ public:
     gtpu_header hdr;
     bool        read_ok = gtpu_read_and_strip_header(hdr, buf, logger);
     if (!read_ok) {
-      logger.error("Error reading GTP-U header, discarding.");
+      logger.log_error("Error reading GTP-U header, discarding.");
       return;
     }
     if (hdr.teid != cfg.local_teid) {
-      logger.error("Mismatched TEID, discarding. Header TEID={}, local TEID={}", hdr.teid, cfg.local_teid);
+      logger.log_error("Mismatched TEID, discarding. Header TEID={}", hdr.teid);
       return;
     }
     lower_dn.on_new_sdu(std::move(buf));
   }
 
 private:
-  srslog::basic_logger&                logger;
+  gtpu_tunnel_logger                   logger;
   const gtpu_config::gtpu_rx_config    cfg;
   gtpu_tunnel_rx_lower_layer_notifier& lower_dn;
 };

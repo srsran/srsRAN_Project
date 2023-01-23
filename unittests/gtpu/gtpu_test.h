@@ -96,5 +96,7 @@ protected:
 
   // GTP-U logger
   srslog::basic_logger& gtpu_logger;
+  gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {0, "local", 1}};
+  gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {0, "peer", 1}};
 };
 } // namespace srsgnb
