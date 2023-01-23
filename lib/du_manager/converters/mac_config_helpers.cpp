@@ -9,14 +9,15 @@
  */
 
 #include "mac_config_helpers.h"
-#include "scheduler_configuration_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 
 using namespace srsgnb;
 
 /// Derives MAC Cell Configuration from DU Cell Configuration.
-mac_cell_creation_request
-srsgnb::make_mac_cell_config(du_cell_index_t cell_index, const du_cell_config& du_cfg, byte_buffer bcch_dl_sch_payload)
+mac_cell_creation_request srsgnb::make_mac_cell_config(du_cell_index_t       cell_index,
+                                                       const du_cell_config& du_cfg,
+                                                       byte_buffer           bcch_dl_sch_payload,
+                                                       const sched_cell_configuration_request_message& sched_cell_cfg)
 {
   mac_cell_creation_request mac_cfg{};
   mac_cfg.cell_index          = cell_index;
@@ -28,6 +29,6 @@ srsgnb::make_mac_cell_config(du_cell_index_t cell_index, const du_cell_config& d
   mac_cfg.cell_barred         = du_cfg.cell_barred;
   mac_cfg.intra_freq_resel    = du_cfg.intra_freq_resel;
   mac_cfg.bcch_dl_sch_payload = std::move(bcch_dl_sch_payload);
-  mac_cfg.sched_req = srs_du::make_sched_cell_config_req(cell_index, du_cfg, mac_cfg.bcch_dl_sch_payload.length());
+  mac_cfg.sched_req           = sched_cell_cfg;
   return mac_cfg;
 }

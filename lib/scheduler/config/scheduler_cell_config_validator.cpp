@@ -64,6 +64,18 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   return {};
 }
 
+static error_type<std::string> validate_pucch_cfg_common(const sched_cell_configuration_request_message& msg)
+{
+  for (const auto& pucch_guard : msg.pucch_guardbands) {
+    VERIFY(msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.contains(pucch_guard.prbs),
+           "PUCCH guardbands={} fall outside of the initial BWP RBs={}",
+           pucch_guard.prbs,
+           msg.ul_cfg_common.init_ul_bwp.generic_params.crbs);
+  }
+
+  return {};
+}
+
 /// \brief Validates \c sched_cell_configuration_request_message used to add a cell.
 /// \param[in] msg scheduler cell configuration message to be validated.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
@@ -83,6 +95,8 @@ error_type<std::string> srsgnb::config_validators::validate_sched_cell_configura
   }
 
   HANDLE_CODE(validate_rach_cfg_common(msg));
+
+  HANDLE_CODE(validate_pucch_cfg_common(msg));
 
   // TODO: Validate other parameters.
   return {};

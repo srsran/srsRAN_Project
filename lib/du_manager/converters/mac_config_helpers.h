@@ -17,7 +17,9 @@ namespace srsgnb {
 struct du_cell_config;
 
 /// Derives MAC Cell Configuration from DU Cell Configuration.
-mac_cell_creation_request
-make_mac_cell_config(du_cell_index_t cell_index, const du_cell_config& du_cfg, byte_buffer bcch_dl_sch_payload);
+mac_cell_creation_request make_mac_cell_config(du_cell_index_t                                 cell_index,
+                                               const du_cell_config&                           du_cfg,
+                                               byte_buffer                                     bcch_dl_sch_payload,
+                                               const sched_cell_configuration_request_message& sched_cell_cfg);
 
 } // namespace srsgnb

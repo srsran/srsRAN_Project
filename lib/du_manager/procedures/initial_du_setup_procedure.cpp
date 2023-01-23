@@ -11,14 +11,16 @@
 #include "initial_du_setup_procedure.h"
 #include "../converters/f1c_configuration_helpers.h"
 #include "../converters/mac_config_helpers.h"
+#include "../converters/scheduler_configuration_helpers.h"
 #include "../du_cell_manager.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
+#include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
 
 using namespace srsgnb;
 using namespace srs_du;
 
 initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_params& params_, du_cell_manager& cell_mng_) :
-  params(params_), cell_mng(cell_mng_)
+  params(params_), cell_mng(cell_mng_), logger(srslog::fetch_basic_logger("DU-MNG"))
 {
 }
 
@@ -37,11 +39,15 @@ void initial_du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // Configure DU Cells.
   for (unsigned idx = 0; idx < cell_mng.nof_cells(); ++idx) {
-    du_cell_index_t cell_index = to_du_cell_index(idx);
-    params.mac.cell_mng.add_cell(
-        make_mac_cell_config(cell_index,
-                             cell_mng.get_cell_cfg(cell_index),
-                             srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(cell_mng.get_cell_cfg(cell_index))));
+    du_cell_index_t         cell_index   = to_du_cell_index(idx);
+    const du_cell_config&   du_cfg       = cell_mng.get_cell_cfg(cell_index);
+    byte_buffer             sib1_payload = srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(du_cfg);
+    auto                    sched_cfg = srs_du::make_sched_cell_config_req(cell_index, du_cfg, sib1_payload.length());
+    error_type<std::string> result    = config_validators::validate_sched_cell_configuration_request_message(sched_cfg);
+    if (result.is_error()) {
+      report_fatal_error("Invalid cell={} configuration. Cause: {}", cell_index, result.error());
+    }
+    params.mac.cell_mng.add_cell(make_mac_cell_config(cell_index, du_cfg, std::move(sib1_payload), sched_cfg));
   }
 
   // Activate DU Cells.

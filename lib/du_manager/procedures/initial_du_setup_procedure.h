@@ -32,6 +32,7 @@ private:
 
   const du_manager_params& params;
   du_cell_manager&         cell_mng;
+  srslog::basic_logger&    logger;
 
   f1_setup_response_message response_msg = {};
 };
