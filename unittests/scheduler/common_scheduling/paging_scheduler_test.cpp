@@ -191,8 +191,23 @@ protected:
 
 TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_gt_0)
 {
-  setup_sched(create_expert_config(params.max_paging_mcs, params.max_paging_retries),
-              create_random_cell_config_request());
+  auto cell_cfg_request = create_random_cell_config_request();
+  // Modify to have more than one Paging occasion per PF.
+  cell_cfg_request.dl_cfg_common.pcch_cfg.ns = srsgnb::pcch_config::nof_po_per_pf::four;
+  // >> PDCCH-Config.
+  cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.emplace();
+  // >> Add CORESET#1.
+  cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value() =
+      config_helpers::make_default_coreset_config();
+  cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id = to_coreset_id(1);
+  cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().pdcch_dmrs_scrambling_id.emplace();
+  cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().pdcch_dmrs_scrambling_id.value() = 0;
+  // >> Add SearchSpace#2.
+  cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.push_back(
+      config_helpers::make_default_ue_search_space_config());
+  // >> Set Paging to use SS#2.
+  cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id = to_search_space_id(2);
+  setup_sched(create_expert_config(params.max_paging_mcs, params.max_paging_retries), cell_cfg_request);
 
   // Notify scheduler of paging message.
   const uint64_t fiveg_s_tmsi = generate_five_g_s_tmsi();
