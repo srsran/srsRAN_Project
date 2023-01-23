@@ -55,7 +55,9 @@ grant_info srsgnb::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, cons
 
 grant_info srsgnb::get_pdsch_grant_info(const rar_information& rar)
 {
-  crb_interval crbs = prb_to_crb(*rar.pdsch_cfg.bwp_cfg, rar.pdsch_cfg.prbs.prbs());
+  bwp_configuration bwp_cfg = *rar.pdsch_cfg.bwp_cfg;
+  bwp_cfg.crbs              = rar.pdsch_cfg.coreset_cfg->coreset0_crbs();
+  crb_interval crbs         = prb_to_crb(bwp_cfg, rar.pdsch_cfg.prbs.prbs());
   return grant_info{rar.pdsch_cfg.bwp_cfg->scs, rar.pdsch_cfg.symbols, crbs};
 }
 

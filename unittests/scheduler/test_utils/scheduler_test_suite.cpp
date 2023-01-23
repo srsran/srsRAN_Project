@@ -286,8 +286,10 @@ void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const ce
   for (const test_grant_info& test_grant : dl_grants) {
     if (test_grant.type != srsgnb::test_grant_info::DL_PDCCH) {
       TESTASSERT(cell_res_grid[0].dl_res_grid.all_set(test_grant.grant),
-                 "The allocation with rnti={:#x} was not registered in the cell resource grid",
-                 test_grant.rnti);
+                 "The allocation with rnti={:#x}, type={}, crbs={} was not registered in the cell resource grid",
+                 test_grant.rnti,
+                 test_grant.type,
+                 test_grant.grant.crbs);
     }
   }
 }

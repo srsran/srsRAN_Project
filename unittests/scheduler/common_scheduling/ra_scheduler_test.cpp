@@ -509,19 +509,19 @@ INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                          fdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2}},
                                            test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2}},
-                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2}}));
-//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2}},
-//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2}},
-//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2}}));
+                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2}},
+                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2}},
+                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2}},
+                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2}}));
 
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                          tdd_test,
                          ::testing::Values(test_params{.scs = subcarrier_spacing::kHz15, .k0 = 0, .k2s = {2, 4}},
                                            test_params{.scs = subcarrier_spacing::kHz15, .k0 = 2, .k2s = {2, 4}},
-                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2, 4}}));
-//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}},
-//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2, 4}},
-//                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2, 4}}));
+                                           test_params{.scs = subcarrier_spacing::kHz15, .k0 = 4, .k2s = {2, 4}},
+                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 0, .k2s = {2, 4}},
+                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 2, .k2s = {2, 4}},
+                                           test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2, 4}}));
 
 } // namespace
 
