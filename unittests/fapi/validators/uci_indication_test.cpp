@@ -161,7 +161,7 @@ INSTANTIATE_TEST_SUITE_P(
     CSIPart1Detection,
     validate_uci_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
-                         "CSI Part 1 detection status",
+                         "CSI-Part1 detection status",
                          [](uci_pusch_pdu& pdu, int value) {
                            pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART1_BIT);
                            pdu.csi_part1.detection_status =
@@ -182,7 +182,7 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(CSI1_bit_length,
                          validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
-                                              "Expected CSI part1 bit length",
+                                              "Expected CSI-Part1 bit length",
                                               [](uci_pusch_pdu& pdu, int value) {
                                                 pdu.csi_part1.expected_bit_length = value;
                                                 pdu.csi_part1.payload =
@@ -198,7 +198,7 @@ INSTANTIATE_TEST_SUITE_P(
     CSIPart2Detection,
     validate_uci_pusch_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
-                         "CSI Part 2 detection status",
+                         "CSI-Part2 detection status",
                          [](uci_pusch_pdu& pdu, int value) {
                            pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART2_BIT);
                            pdu.csi_part2.detection_status =
@@ -219,7 +219,7 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(CSI2_bit_length,
                          validate_uci_pusch_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pusch_pdu>{
-                                              "Expected CSI part2 bit length",
+                                              "Expected CSI-Part2 bit length",
                                               [](uci_pusch_pdu& pdu, int value) {
                                                 pdu.csi_part2.expected_bit_length = value;
                                                 pdu.csi_part2.payload =
@@ -563,7 +563,7 @@ INSTANTIATE_TEST_SUITE_P(
     CSIPart1Detection,
     validate_uci_pucch_format234_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                         "CSI Part 1 detection status",
+                         "CSI-Part1 detection status",
                          [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
                            pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
                            pdu.csi_part1.detection_status =
@@ -586,7 +586,7 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
                          validate_uci_pucch_format234_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "Expected CSI part1 bit length",
+                                              "Expected CSI-Part1 bit length",
                                               [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
                                                 pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
                                                 pdu.csi_part1.detection_status =
@@ -608,7 +608,7 @@ INSTANTIATE_TEST_SUITE_P(
     CSIPart2Detection,
     validate_uci_pucch_format234_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                         "CSI Part 2 detection status",
+                         "CSI-Part2 detection status",
                          [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
                            pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
                            pdu.csi_part2.detection_status =

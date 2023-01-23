@@ -48,8 +48,8 @@ private:
   /// Notifies a new FAPI \e Rx_Data.indication through the data notifier.
   void notify_rx_data_indication(const ul_pusch_results& result);
 
-  /// Notifies a new FAPI \e UCI.indication through the data notifier.
-  void notify_uci_pusch_indication(const ul_pusch_results& result);
+  ///  Notifies a new FAPI \e UCI.indication through the data notifier that carries a PUSCH PDU.
+  void notify_pusch_uci_indication(const ul_pusch_results& result);
 
 private:
   /// FAPI slot-based, data-specific message notifier.

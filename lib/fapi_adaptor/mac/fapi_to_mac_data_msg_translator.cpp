@@ -182,23 +182,23 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
 
   // Fill HARQ.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::HARQ_BIT)) {
-    mac_pusch.harq_info.emplace();
-    mac_pusch.harq_info.value().harq_status = fapi_pusch.harq.detection_status;
-    mac_pusch.harq_info.value().payload     = fapi_pusch.harq.payload;
+    mac_uci_pdu::pusch_type::harq_information& harq = mac_pusch.harq_info.emplace();
+    harq.harq_status                                = fapi_pusch.harq.detection_status;
+    harq.payload                                    = fapi_pusch.harq.payload;
   }
 
   // Fill CSI Part 1.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::CSI_PART1_BIT)) {
-    mac_pusch.csi_part1_info.emplace();
-    mac_pusch.csi_part1_info.value().csi_status = fapi_pusch.csi_part1.detection_status;
-    mac_pusch.csi_part1_info.value().payload    = fapi_pusch.csi_part1.payload;
+    mac_uci_pdu::pusch_type::csi_information& csi = mac_pusch.csi_part1_info.emplace();
+    csi.csi_status                                = fapi_pusch.csi_part1.detection_status;
+    csi.payload                                   = fapi_pusch.csi_part1.payload;
   }
 
   // Fill CSI Part 2.
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::CSI_PART2_BIT)) {
-    mac_pusch.csi_part2_info.emplace();
-    mac_pusch.csi_part2_info.value().csi_status = fapi_pusch.csi_part2.detection_status;
-    mac_pusch.csi_part2_info.value().payload    = fapi_pusch.csi_part2.payload;
+    mac_uci_pdu::pusch_type::csi_information& csi = mac_pusch.csi_part2_info.emplace();
+    csi.csi_status                                = fapi_pusch.csi_part2.detection_status;
+    csi.payload                                   = fapi_pusch.csi_part2.payload;
   }
 }
 
