@@ -260,7 +260,7 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
                                        search_space_id                  ss_id)
 {
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
-  if (res_grid.result.dl.paging_grants.full()) {
+  if (res_grid.result.dl.paging_grants.full() or res_grid.result.dl.dl_pdcchs.full()) {
     logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space available in scheduler output list");
     return false;
   }
