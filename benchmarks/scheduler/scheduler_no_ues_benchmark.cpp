@@ -111,8 +111,8 @@ void benchmark_rach_scheduling()
       ul_crc_indication crc;
       crc.cell_index = to_du_cell_index(0);
       for (const ul_sched_info& ulinfo : res->ul.puschs) {
-        crc.crcs.push_back(
-            ul_crc_pdu_indication{ulinfo.pusch_cfg.rnti, INVALID_DU_UE_INDEX, ulinfo.pusch_cfg.harq_id, true});
+        crc.crcs.push_back(ul_crc_pdu_indication{
+            ulinfo.pusch_cfg.rnti, INVALID_DU_UE_INDEX, to_harq_id(ulinfo.pusch_cfg.harq_id), true});
       }
       sch->handle_crc_indication(crc);
     }

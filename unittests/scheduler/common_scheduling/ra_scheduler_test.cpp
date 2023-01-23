@@ -9,6 +9,7 @@
  */
 
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
+#include "lib/scheduler/logging/scheduler_event_logger.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/dummy_test_components.h"
@@ -349,9 +350,10 @@ protected:
 
   scheduler_expert_config        sched_cfg{config_helpers::make_default_scheduler_expert_config()};
   cell_configuration             cell_cfg;
+  scheduler_event_logger         ev_logger;
   cell_resource_allocator        res_grid{cell_cfg};
   dummy_pdcch_resource_allocator pdcch_sch;
-  ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch};
+  ra_scheduler                   ra_sch{sched_cfg.ra, cell_cfg, pdcch_sch, ev_logger};
   scheduler_result_logger        result_logger;
 
   slot_point next_slot{to_numerology_value(params.scs),

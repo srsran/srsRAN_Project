@@ -48,7 +48,7 @@ protected:
     crc_ind.crcs.resize(1);
     crc_ind.crcs[0].rnti           = to_rnti(ue_rnti);
     crc_ind.crcs[0].ue_index       = is_msg3 ? INVALID_DU_UE_INDEX : to_du_ue_index(0);
-    crc_ind.crcs[0].harq_id        = harq_id;
+    crc_ind.crcs[0].harq_id        = to_harq_id(harq_id);
     crc_ind.crcs[0].tb_crc_success = ack;
     bench.sched->handle_crc_indication(crc_ind);
   }

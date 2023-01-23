@@ -20,11 +20,11 @@ scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
   sched_cfg(sched_cfg_.expert_params),
   logger(srslog::fetch_basic_logger("MAC")),
   metrics(sched_cfg.metrics_report_period, sched_cfg_.metrics_notifier),
-  ue_sched(std::make_unique<ue_scheduler_impl>(sched_cfg.ue, sched_cfg_.config_notifier, metrics)),
+  ue_sched(std::make_unique<ue_scheduler_impl>(sched_cfg.ue, sched_cfg_.config_notifier, metrics, sched_ev_logger)),
   ue_cfg_handler(ue_sched->get_ue_configurator()),
   feedback_handler(ue_sched->get_feedback_handler()),
   dl_bs_handler(ue_sched->get_dl_buffer_state_indication_handler()),
-  cells(sched_cfg)
+  cells(sched_cfg, sched_ev_logger)
 {
 }
 
@@ -126,6 +126,9 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
 
   // > Schedule UE DL and UL data.
   ue_sched->run_slot(sl_tx, cell_index);
+
+  // > Log processed events.
+  sched_ev_logger.log();
 
   // > Log the scheduler results.
   sched_result_logger.log(cell.res_grid[0].result);

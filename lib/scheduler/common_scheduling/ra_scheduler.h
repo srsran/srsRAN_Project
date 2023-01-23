@@ -21,6 +21,8 @@
 
 namespace srsgnb {
 
+class scheduler_event_logger;
+
 /// Get MSG3 Delay.
 /// \param[in] pusch_td_res_alloc PUSCH-TimeDomainResourceAllocation.
 /// \param[in] pusch_scs SCS used by initial UL BWP.
@@ -40,7 +42,8 @@ class ra_scheduler
 public:
   explicit ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
                         const cell_configuration&         cfg_,
-                        pdcch_resource_allocator&         pdcch_sched_);
+                        pdcch_resource_allocator&         pdcch_sched_,
+                        scheduler_event_logger&           ev_logger_);
 
   /// Enqueue RACH indication
   /// \remark See TS 38.321, 5.1.3 - RAP transmission.
@@ -113,6 +116,7 @@ private:
   const scheduler_ra_expert_config& sched_cfg;
   const cell_configuration&         cell_cfg;
   pdcch_resource_allocator&         pdcch_sch;
+  scheduler_event_logger&           ev_logger;
 
   // derived from args
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");

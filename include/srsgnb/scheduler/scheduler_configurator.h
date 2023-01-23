@@ -104,9 +104,8 @@ struct sched_ue_reconfiguration_message {
 
 /// UE Delete Request.
 struct sched_ue_delete_message {
-  du_ue_index_t   ue_index;
-  rnti_t          crnti;
-  du_cell_index_t pcell_index;
+  du_ue_index_t ue_index;
+  rnti_t        crnti;
 };
 
 /// RACH indication Message. It contains all the RACHs detected in a given slot and cell.

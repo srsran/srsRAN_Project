@@ -20,6 +20,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_pdu_capacity_constants.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/harq_id.h"
 
 namespace srsgnb {
 
@@ -46,7 +47,7 @@ struct ul_crc_pdu_indication {
   /// UE index associated to the UL CRC. In case there is no UE with the respective RNTI (e.g. Msg3), this value is
   /// set to INVALID_DU_UE_INDEX.
   du_ue_index_t ue_index;
-  uint8_t       harq_id;
+  harq_id_t     harq_id;
   bool          tb_crc_success;
   double        ul_sinr_metric;
 };

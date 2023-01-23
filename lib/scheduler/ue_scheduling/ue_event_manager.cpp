@@ -9,7 +9,7 @@
  */
 
 #include "ue_event_manager.h"
-#include "../../../lib/ran/gnb_format.h"
+#include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 
 using namespace srsgnb;
@@ -60,11 +60,13 @@ private:
 ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
                                    ue_list&                          ue_db_,
                                    sched_configuration_notifier&     mac_notifier_,
-                                   scheduler_metrics_handler&        metrics_handler_) :
+                                   scheduler_metrics_handler&        metrics_handler_,
+                                   scheduler_event_logger&           ev_logger_) :
   expert_cfg(expert_cfg_),
   ue_db(ue_db_),
   mac_notifier(mac_notifier_),
   metrics_handler(metrics_handler_),
+  ev_logger(ev_logger_),
   logger(srslog::fetch_basic_logger("MAC"))
 {
 }
@@ -76,20 +78,20 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
       std::make_unique<ue>(expert_cfg, *du_cells[ue_request.cfg.cells[0].serv_cell_cfg.cell_index].cfg, ue_request);
 
   // Defer UE object addition to ue list to the slot indication handler.
-  common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)](event_logger& ev_logger) mutable {
-    ev_logger.enqueue("ue_add(ueId={})", u->ue_index);
-    log_ue_proc_event(logger.info, ue_event_prefix{} | u->ue_index, "Sched UE Configuration", "started.");
-
+  common_events.emplace(MAX_NOF_DU_UES, [this, u = std::move(u)]() mutable {
     // Insert UE in UE repository.
-    du_ue_index_t ueidx = u->ue_index;
+    du_ue_index_t   ueidx       = u->ue_index;
+    rnti_t          rnti        = u->crnti;
+    du_cell_index_t pcell_index = u->get_pcell().cell_index;
     ue_db.insert(ueidx, std::move(u));
     auto& inserted_ue = ue_db[ueidx];
+
+    // Log Event.
+    ev_logger.enqueue(scheduler_event_logger::ue_creation_event{ueidx, rnti, pcell_index});
 
     // Notify metrics handler.
     metrics_handler.handle_ue_creation(
         inserted_ue.ue_index, inserted_ue.crnti, inserted_ue.get_pcell().cfg().cell_cfg_common.pci);
-
-    log_ue_proc_event(logger.info, ue_event_prefix{} | ueidx, "Sched UE Configuration", "completed.");
 
     // Notify Scheduler UE configuration is complete.
     mac_notifier.on_ue_config_complete(ueidx);
@@ -98,14 +100,12 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
 
 void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
 {
-  common_events.emplace(ue_request.ue_index, [this, ue_request](event_logger& ev_logger) {
-    ev_logger.enqueue("ue_cfg(ueId={})", ue_request.ue_index);
-    log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Reconfiguration", "started.");
-
+  common_events.emplace(ue_request.ue_index, [this, ue_request]() {
     // Configure existing UE.
     ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request);
 
-    log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Reconfiguration", "completed.");
+    // Log event.
+    ev_logger.enqueue(ue_request);
 
     // Notify Scheduler UE configuration is complete.
     mac_notifier.on_ue_config_complete(ue_request.ue_index);
@@ -114,17 +114,20 @@ void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfig
 
 void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
 {
-  common_events.emplace(ue_index, [this, ue_index](event_logger& ev_logger) {
-    ev_logger.enqueue("ue_rem(ueId={})", ue_index);
-    log_ue_proc_event(logger.info, ue_event_prefix{} | ue_index, "Sched UE Deletion", "started.");
+  common_events.emplace(ue_index, [this, ue_index]() {
+    if (not ue_db.contains(ue_index)) {
+      logger.warning("SCHED: Received request to delete UE={} that does not exist", ue_index);
+    }
+    rnti_t rnti = ue_db[ue_index].crnti;
 
     // Remove UE from repository.
     ue_db.erase(ue_index);
 
+    // Log event.
+    ev_logger.enqueue(sched_ue_delete_message{ue_index, rnti});
+
     // Notify metrics.
     metrics_handler.handle_ue_deletion(ue_index);
-
-    log_ue_proc_event(logger.info, ue_event_prefix{} | ue_index, "Sched UE Deletion", "completed.");
 
     // Notify Scheduler UE configuration is complete.
     mac_notifier.on_ue_delete_response(ue_index);
@@ -135,17 +138,12 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 {
   srsgnb_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
-  common_events.emplace(bsr_ind.ue_index, [this, bsr_ind](event_logger& ev_logger) {
-    auto lcg_rep_buf = fmt::memory_buffer();
-    std::for_each(bsr_ind.reported_lcgs.begin(), bsr_ind.reported_lcgs.end(), [&lcg_rep_buf](const auto& rep) -> void {
-      if (lcg_rep_buf.size() > 0) {
-        fmt::format_to(lcg_rep_buf, ", ");
-      }
-      fmt::format_to(std::back_inserter(lcg_rep_buf), "(lcg={},bytes={})", rep.lcg_id, rep.nof_bytes);
-    });
-
-    ev_logger.enqueue("ul_bsr(ueId={},bsr=[{}])", bsr_ind.ue_index, to_string(lcg_rep_buf));
+  common_events.emplace(bsr_ind.ue_index, [this, bsr_ind]() {
+    // Handle event.
     ue_db[bsr_ind.ue_index].handle_bsr_indication(bsr_ind);
+
+    // Log event.
+    ev_logger.enqueue(bsr_ind);
 
     // Notify metrics handler.
     metrics_handler.handle_ul_bsr_indication(bsr_ind);
@@ -158,17 +156,22 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
   for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
-        crc_ind.crcs[i].ue_index, [this, crc = crc_ind.crcs[i]](ue_cell& ue_cc, event_logger& ev_logger) {
-          ev_logger.enqueue("crc(ueId={},h_id={},value={})", crc.ue_index, crc.harq_id, crc.tb_crc_success);
+        crc_ind.crcs[i].ue_index, [this, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
           const int tbs = ue_cc.harqs.ul_harq(crc.harq_id).crc_info(crc.tb_crc_success);
           if (tbs < 0) {
-            logger.warning("SCHED: ACK for h_id={} that is inactive", crc.harq_id);
-          } else {
-            // Notify metrics handler.
-            metrics_handler.handle_crc_indication(crc);
+            logger.warning("SCHED: CRC received for UE={}, h_id={} that is inactive", crc.ue_index, crc.harq_id);
+            return;
           }
+
           // Update PUSCH SNR reported from PHY.
           ue_cc.update_pusch_snr(crc.ul_sinr_metric);
+
+          // Log event.
+          ev_logger.enqueue(scheduler_event_logger::crc_event{
+              crc.ue_index, crc.rnti, ue_cc.cell_index, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_metric});
+
+          // Notify metrics handler.
+          metrics_handler.handle_crc_indication(crc);
         });
   }
 }
@@ -182,18 +185,22 @@ void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<c
         // TODO: Fetch the right HARQ id, TB, CBG.
         tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits[bit_idx]);
         if (tbs >= 0) {
+          // Log Event.
+          ev_logger.enqueue(scheduler_event_logger::harq_ack_event{ue_cc.ue_index,
+                                                                   ue_cc.rnti(),
+                                                                   ue_cc.cell_index,
+                                                                   to_harq_id(h_id),
+                                                                   harq_bits[bit_idx],
+                                                                   units::bytes{(unsigned)tbs}});
+
+          // Notify metric.
           metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, harq_bits[bit_idx]);
-          logger.debug("SCHED: UE={}, h_id={}: DL HARQ with tb_size={}B {}ACKed.",
-                       ue_cc.ue_index,
-                       h_id,
-                       tbs,
-                       harq_bits[bit_idx] ? "" : "N");
         }
         break;
       }
     }
     if (tbs < 0) {
-      logger.warning("SCHED: UE={} DL HARQ with uci slot={} not found.", ue_cc.ue_index, uci_sl);
+      logger.warning("SCHED: UE={} DL HARQ-ACK with uci slot={} not found.", ue_cc.ue_index, uci_sl);
     }
   }
 }
@@ -208,8 +215,14 @@ void ue_event_manager::handle_harq_ind(ue_cell&                                 
       if (ue_cc.harqs.dl_harq(h_id).slot_ack() == uci_sl) {
         // TODO: Fetch the right HARQ id, TB, CBG.
         tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits.test(bit_idx));
-        if (tbs > 0) {
-          logger.debug("SCHED: ueid={}, dl_h_id={} with TB size={} bytes ACKed.", ue_cc.ue_index, h_id, tbs);
+        if (tbs >= 0) {
+          // Log Event.
+          ev_logger.enqueue(scheduler_event_logger::harq_ack_event{ue_cc.ue_index,
+                                                                   ue_cc.rnti(),
+                                                                   ue_cc.cell_index,
+                                                                   to_harq_id(h_id),
+                                                                   harq_bits.test(bit_idx),
+                                                                   units::bytes{(unsigned)tbs}});
         }
         break;
       }
@@ -230,18 +243,21 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       // Process DL HARQ ACKs.
       if (not pdu.harqs.empty()) {
         cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index,
-            [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc, event_logger& ev_logger) {
-              ev_logger.enqueue("uci_harq(ueId={},{} harqs)", ue_cc.ue_index, harq_bits.size());
+            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc) {
               handle_harq_ind(ue_cc, uci_sl, harq_bits);
             });
       }
 
       // Process SRs.
       if (pdu.sr_detected) {
-        common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this](event_logger& ev_logger) {
-          ev_logger.enqueue("sr_ind(ueId={})", ue_index);
-          ue_db[ue_index].handle_sr_indication();
+        common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this]() {
+          auto& u = ue_db[ue_index];
+
+          // Handle SR indication.
+          u.handle_sr_indication();
+
+          // Log SR event.
+          ev_logger.enqueue(scheduler_event_logger::sr_event{ue_index, u.crnti});
         });
       }
     } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(ind.ucis[i].pdu)) {
@@ -249,9 +265,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       // Process DL HARQ ACKs.
       if (pdu.harqs.size() > 0) {
         cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index,
-            [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc, event_logger& ev_logger) {
-              ev_logger.enqueue("uci_harq(ueId={},{} harqs)", ue_cc.ue_index, harq_bits.size());
+            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc) {
               handle_harq_ind(ue_cc, uci_sl, harq_bits);
             });
       }
@@ -261,29 +275,32 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
 void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
-  common_events.emplace(ce.ue_index, [this, ce](event_logger& ev_logger) {
-    ev_logger.enqueue("mac_ce(ueId={},ce={})", ce.ue_index, ce.ce_lcid);
+  common_events.emplace(ce.ue_index, [this, ce]() {
     ue_db[ce.ue_index].handle_dl_mac_ce_indication(ce);
+
+    // Log event.
+    ev_logger.enqueue(ce);
   });
 }
 
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
-  common_events.emplace(bs.ue_index, [this, bs](event_logger& ev_logger) {
-    ev_logger.enqueue("mac_bs(ueId={},lcid={},bs={})", bs.ue_index, bs.lcid, bs.bs);
+  common_events.emplace(bs.ue_index, [this, bs]() {
     ue& u = ue_db[bs.ue_index];
+
     u.handle_dl_buffer_state_indication(bs);
     if (bs.lcid == LCID_SRB0) {
       // Signal SRB0 scheduler with the new SRB0 buffer state.
       du_cells[u.get_pcell().cell_index].srb0_sched->handle_dl_buffer_state_indication(bs.ue_index);
     }
+
+    // Log event.
+    ev_logger.enqueue(bs);
   });
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
 {
-  event_logger ev_logger{MAX_NOF_DU_CELLS, logger};
-
   if (last_sl != sl) {
     // Pop pending common events.
     common_events.slot_indication();
@@ -299,7 +316,7 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
     }
     if (ev.ue_index == MAX_NOF_DU_UES) {
       // The UE is being created.
-      ev.callback(ev_logger);
+      ev.callback();
       ev.callback = {};
     } else {
       if (not ue_db.contains(ev.ue_index)) {
@@ -310,7 +327,7 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
       }
       if (ue_db[ev.ue_index].get_pcell().cell_index == cell_index) {
         // If we are currently processing PCell.
-        ev.callback(ev_logger);
+        ev.callback();
         ev.callback = {};
       }
     }
@@ -319,8 +336,6 @@ void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)
 
 void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)
 {
-  event_logger ev_logger{cell_index, logger};
-
   // Pop and process pending cell-specific events.
   cell_specific_events[cell_index].slot_indication();
   auto events = cell_specific_events[cell_index].get_events();
@@ -335,7 +350,7 @@ void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)
       log_invalid_cc(ev.ue_index, cell_index);
       continue;
     }
-    ev.callback(*ue_cc, ev_logger);
+    ev.callback(*ue_cc);
   }
 }
 

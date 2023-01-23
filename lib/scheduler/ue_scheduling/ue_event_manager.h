@@ -22,6 +22,7 @@ namespace srsgnb {
 
 class event_logger;
 class scheduler_metrics_handler;
+class scheduler_event_logger;
 
 /// \brief Class used to manage events that arrive to the scheduler and are directed at UEs.
 /// This class acts as a facade for several of the ue_scheduler subcomponents, managing the asynchronous configuration
@@ -34,7 +35,8 @@ public:
   ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
                    ue_list&                          ue_db,
                    sched_configuration_notifier&     mac_notifier,
-                   scheduler_metrics_handler&        metrics_handler);
+                   scheduler_metrics_handler&        metrics_handler,
+                   scheduler_event_logger&           ev_logger);
 
   void add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched);
 
@@ -57,8 +59,8 @@ public:
 
 private:
   struct common_event_t {
-    du_ue_index_t                        ue_index = MAX_NOF_DU_UES;
-    unique_function<void(event_logger&)> callback;
+    du_ue_index_t           ue_index = MAX_NOF_DU_UES;
+    unique_function<void()> callback;
 
     template <typename Callable>
     common_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
@@ -66,8 +68,8 @@ private:
     }
   };
   struct cell_event_t {
-    du_ue_index_t                                  ue_index = MAX_NOF_DU_UES;
-    unique_function<void(ue_cell&, event_logger&)> callback;
+    du_ue_index_t                   ue_index = MAX_NOF_DU_UES;
+    unique_function<void(ue_cell&)> callback;
 
     template <typename Callable>
     cell_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
@@ -91,6 +93,7 @@ private:
   ue_list&                          ue_db;
   sched_configuration_notifier&     mac_notifier;
   scheduler_metrics_handler&        metrics_handler;
+  scheduler_event_logger&           ev_logger;
   srslog::basic_logger&             logger;
 
   /// List of added and configured cells.

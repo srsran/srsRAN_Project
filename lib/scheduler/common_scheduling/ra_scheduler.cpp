@@ -9,7 +9,7 @@
  */
 
 #include "ra_scheduler.h"
-#include "../../ran/gnb_format.h"
+#include "../logging/scheduler_event_logger.h"
 #include "../pdcch_scheduling/pdcch_config_helpers.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "../support/dmrs_helpers.h"
@@ -53,10 +53,12 @@ uint16_t srsgnb::get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned f
 
 ra_scheduler::ra_scheduler(const scheduler_ra_expert_config& sched_cfg_,
                            const cell_configuration&         cellcfg_,
-                           pdcch_resource_allocator&         pdcch_sch_) :
+                           pdcch_resource_allocator&         pdcch_sch_,
+                           scheduler_event_logger&           ev_logger_) :
   sched_cfg(sched_cfg_),
   cell_cfg(cellcfg_),
   pdcch_sch(pdcch_sch_),
+  ev_logger(ev_logger_),
   ra_win_nof_slots(cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
   pending_msg3s(MAX_NOF_MSG3)
@@ -201,12 +203,13 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
     }
 
     for (const auto& prach_preamble : prach_occ.preambles) {
-      logger.info("SCHED: New PRACH slot={}, preamble={}, ra-rnti=0x{:x}, temp_crnti=0x{:x}, ta_cmd={}",
-                  msg.slot_rx,
-                  prach_preamble.preamble_id,
-                  ra_rnti,
-                  prach_preamble.tc_rnti,
-                  prach_preamble.time_advance.to_Ta(get_ul_bwp_cfg().scs));
+      // Log event.
+      ev_logger.enqueue(scheduler_event_logger::prach_event{msg.slot_rx,
+                                                            msg.cell_index,
+                                                            prach_preamble.preamble_id,
+                                                            to_rnti(ra_rnti),
+                                                            prach_preamble.tc_rnti,
+                                                            prach_preamble.time_advance.to_Ta(get_ul_bwp_cfg().scs)});
 
       // Check if TC-RNTI value to be scheduled is already under use
       if (not pending_msg3s[prach_preamble.tc_rnti % MAX_NOF_MSG3].harq.empty()) {
