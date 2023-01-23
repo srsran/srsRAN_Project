@@ -49,7 +49,8 @@ inline pdcch_dl_information make_default_dci(unsigned n_cces, const coreset_conf
 
 inline sched_cell_configuration_request_message make_custom_sched_cell_configuration_request(unsigned pucch_res_common)
 {
-  sched_cell_configuration_request_message req = test_helpers::make_default_sched_cell_configuration_request();
+  sched_cell_configuration_request_message req =
+      test_helpers::make_default_sched_cell_configuration_request(test_helpers::make_custom_intial_params());
   req.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common = pucch_res_common;
   return req;
 }
