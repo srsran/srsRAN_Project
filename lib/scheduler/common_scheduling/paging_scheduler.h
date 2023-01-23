@@ -85,12 +85,14 @@ private:
   /// \brief Fills the Paging n0 slots.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
+  /// \param[in] pdcch Allocated PDCCH for Paging.
   /// \param[in] crbs_grant Paging grant in CRBs.
   /// \param[in] time_resource Slot at which PDSCH needs to be scheduled.
   /// \param[in] pg_msg Paging indication message.
   /// \param[in] dmrs_info DMRS information related to the scheduled grant.
   /// \param[in] tbs TBS information of the Paging grant.
   void fill_paging_grant(cell_slot_resource_allocator&    res_grid,
+                         pdcch_dl_information&            pdcch,
                          crb_interval                     crbs_grant,
                          unsigned                         time_resource,
                          const paging_indication_message& pg_msg,
@@ -135,7 +137,7 @@ private:
 
   /// BWP configuration of CORESET used for Paging (applies for both pagingSearchSpace = 0 and pagingSearchSpace > 0).
   /// It's used for CRB-to-PRB conversion.
-  bwp_configuration coreset_bwp_cfg;
+  bwp_configuration bwp_cfg;
 
   /// List of per UE paging indication message yet to be scheduled.
   std::vector<paging_indication_message> paging_pending_ues;

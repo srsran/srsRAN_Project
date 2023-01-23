@@ -44,9 +44,6 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         type0_pdcch_css_n0_slots[i_ssb] =
             precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
       }
-      // Define a BWP configuration limited by CORESET#0 RBs.
-      coreset_bwp_cfg      = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
-      coreset_bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
     } else {
       for (const auto& cfg : cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
         if (cfg.id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()) {
@@ -63,13 +60,15 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
           (not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value())) {
         srsgnb_assertion_failure("CORESET0 configuration for Paging Search Space not configured in DL BWP.");
       }
-
-      coreset_bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
-      if (ss_cfg.cs_id == to_coreset_id(0)) {
-        coreset_bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-      }
-
       precompute_type2_pdcch_slots(msg.scs_common);
+    }
+
+    bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
+    if (ss_cfg.type == search_space_configuration::type_t::common) {
+      // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
+      if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
+        bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+      }
     }
   } else {
     srsgnb_assertion_failure("Paging Search Space not configured in DL BWP.");
@@ -260,6 +259,12 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
                                        unsigned                         beam_idx,
                                        search_space_id                  ss_id)
 {
+  // Verify there is space in PDSCH and PDCCH result lists for new allocations.
+  if (res_grid.result.dl.paging_grants.full()) {
+    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space available in scheduler output list");
+    return false;
+  }
+
   // NOTE:
   // - [Implementation defined] Need to take into account PDSCH Time Domain Resource Allocation in UE's active DL BWP,
   //   for now only initial DL BWP is considered for simplification in this function.
@@ -292,7 +297,7 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
   crb_interval paging_crbs;
   {
     const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
-    const prb_bitmap& used_crbs      = res_grid.dl_res_grid.used_crbs(coreset_bwp_cfg, pdsch_td_cfg.symbols);
+    const prb_bitmap& used_crbs      = res_grid.dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
     paging_crbs                      = find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
     if (paging_crbs.length() < nof_paging_rbs) {
       logger.error("Not enough PDSCH space for Paging in beam idx: {}", beam_idx);
@@ -313,37 +318,36 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
       grant_info{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, pdsch_td_cfg.symbols, paging_crbs});
 
   // 4. Delegate filling Paging grants to helper function.
-  fill_paging_grant(res_grid, paging_crbs, pdsch_time_res, pg_msg, dmrs_info, paging_prbs_tbs.tbs_bytes);
+  fill_paging_grant(res_grid, *pdcch, paging_crbs, pdsch_time_res, pg_msg, dmrs_info, paging_prbs_tbs.tbs_bytes);
 
   logger.info("Paging, cell={}, SSB beam idx: {}, crbs={}", res_grid.cfg.cell_index, beam_idx, paging_crbs);
   return true;
 }
 
 void paging_scheduler::fill_paging_grant(cell_slot_resource_allocator&    res_grid,
+                                         pdcch_dl_information&            pdcch,
                                          crb_interval                     crbs_grant,
                                          unsigned                         time_resource,
                                          const paging_indication_message& pg_msg,
                                          const dmrs_information&          dmrs_info,
                                          unsigned                         tbs)
 {
-  // Add DCI to list to dl_pdcch.
-  srsgnb_assert(not res_grid.result.dl.dl_pdcchs.empty(), "No DL PDCCH grant found in the DL sched results.");
-  auto&              paging_pdcch = res_grid.result.dl.dl_pdcchs.back();
-  const prb_interval paging_prbs  = crb_to_prb(coreset_bwp_cfg, crbs_grant);
+  const prb_interval paging_prbs = crb_to_prb(bwp_cfg, crbs_grant);
 
+  auto& dci = pdcch.dci;
   // Fill Paging DCI.
-  paging_pdcch.dci.type             = dci_dl_rnti_config_type::p_rnti_f1_0;
-  paging_pdcch.dci.p_rnti_f1_0      = {};
-  dci_1_0_p_rnti_configuration& dci = paging_pdcch.dci.p_rnti_f1_0;
-  dci.N_rb_dl_bwp                   = coreset_bwp_cfg.crbs.length();
-  dci.short_messages_indicator      = dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
-  dci.frequency_resource            = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, paging_prbs.start(), paging_prbs.length()});
-  dci.time_resource = time_resource;
+  dci.type        = dci_dl_rnti_config_type::p_rnti_f1_0;
+  dci.p_rnti_f1_0 = {};
+  // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for P-RNTI.
+  dci.p_rnti_f1_0.N_rb_dl_bwp = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common).length();
+  dci.p_rnti_f1_0.short_messages_indicator = dci_1_0_p_rnti_configuration::payload_info::scheduling_information;
+  dci.p_rnti_f1_0.frequency_resource       = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{dci.p_rnti_f1_0.N_rb_dl_bwp, paging_prbs.start(), paging_prbs.length()});
+  dci.p_rnti_f1_0.time_resource = time_resource;
   // As per Table 7.3.1.2.2-5, TS 38.212, 0 = non-interleaved, 1 = interleaved.
   // TODO: Verify if interleaved is suitable for Paging.
-  dci.vrb_to_prb_mapping       = 0;
-  dci.modulation_coding_scheme = expert_cfg.pg.paging_mcs_index.to_uint();
+  dci.p_rnti_f1_0.vrb_to_prb_mapping       = 0;
+  dci.p_rnti_f1_0.modulation_coding_scheme = expert_cfg.pg.paging_mcs_index.to_uint();
 
   // Add Paging to list of Paging information to pass to lower layers.
   dl_paging_allocation& paging = res_grid.result.dl.paging_grants.emplace_back();
@@ -355,22 +359,23 @@ void paging_scheduler::fill_paging_grant(cell_slot_resource_allocator&    res_gr
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = paging.pdsch_cfg;
-  pdsch.rnti               = paging_pdcch.ctx.rnti;
-  pdsch.bwp_cfg            = paging_pdcch.ctx.bwp_cfg;
-  pdsch.coreset_cfg        = paging_pdcch.ctx.coreset_cfg;
-  pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
-  pdsch.prbs    = paging_prbs;
+  pdsch.rnti               = pdcch.ctx.rnti;
+  pdsch.bwp_cfg            = pdcch.ctx.bwp_cfg;
+  pdsch.coreset_cfg        = pdcch.ctx.coreset_cfg;
+  pdsch.symbols =
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.p_rnti_f1_0.time_resource].symbols;
+  pdsch.prbs = paging_prbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
   pdsch.n_id = cell_cfg.pci;
 
   pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.mcs_index         = dci.modulation_coding_scheme;
+  cw.mcs_index         = dci.p_rnti_f1_0.modulation_coding_scheme;
   cw.mcs_table         = pdsch_mcs_table::qam64;
   cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
   cw.tb_size_bytes     = static_cast<uint32_t>(tbs);
   pdsch.dmrs           = dmrs_info;
-  pdsch.is_interleaved = paging_pdcch.dci.si_f1_0.vrb_to_prb_mapping > 0;
-  pdsch.ss_set_type    = search_space_set_type::type0;
+  pdsch.is_interleaved = dci.p_rnti_f1_0.vrb_to_prb_mapping > 0;
+  pdsch.ss_set_type    = search_space_set_type::type2;
   pdsch.dci_fmt        = dci_dl_format::f1_0;
 }
 
