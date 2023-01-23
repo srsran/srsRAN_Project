@@ -63,13 +63,9 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
       precompute_type2_pdcch_slots(msg.scs_common);
     }
 
-    bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
-    if (ss_cfg.type == search_space_configuration::type_t::common) {
-      // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
-      if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-        bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-      }
-    }
+    // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
+    bwp_cfg      = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
+    bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
   } else {
     srsgnb_assertion_failure("Paging Search Space not configured in DL BWP.");
   }
@@ -389,7 +385,7 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
   // Initialize slot point to 0.
   slot_point sl = slot_point{to_numerology_value(scs_common), 0};
   // Compute all PDCCH Monitoring Occasions in a frame.
-  for (unsigned slot_num = 0; slot_num < sl.nof_slots_per_frame(); slot_num++) {
+  for (unsigned slot_num = 0; slot_num < sl.nof_slots_per_frame(); slot_num += ss_duration) {
     const slot_point ref_sl = sl + slot_num;
     // Ensure slot for Paging has DL enabled.
     if (not cell_cfg.is_dl_enabled(ref_sl)) {
@@ -406,7 +402,6 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
           continue;
         }
         pdcch_monitoring_occasions.push_back(add_pmo_slot);
-        slot_num += ss_duration;
       }
     }
   }
