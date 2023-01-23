@@ -52,7 +52,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer_slice pdu)
 
 void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
 {
-  // 1. Perform various checks to make sure we can serve the RRC Setup Request
+  // Perform various checks to make sure we can serve the RRC Setup Request
   if (not rrc_du.is_rrc_connect_allowed()) {
     logger.error("RRC connections not allowed. Sending Connection Reject");
     send_rrc_reject(rrc_reject_max_wait_time_s);
@@ -60,15 +60,7 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
     return;
   }
 
-  // 1.1 Check and allocate PUCCH resources
-  if (not rrc_du.get_pucch_resources()) {
-    logger.warning("Could not allocate PUCCH resources for rnti=0x{}. Sending Connection Reject", context.c_rnti);
-    send_rrc_reject(rrc_reject_max_wait_time_s);
-    on_ue_delete_request();
-    return;
-  }
-
-  // 1.2 Extract the setup ID and cause
+  // Extract the setup ID and cause
   const rrc_setup_request_ies_s& request_ies = request_msg.rrc_setup_request;
   switch (request_ies.ue_id.type().value) {
     case init_ue_id_c::types_opts::ng_5_g_s_tmsi_part1:

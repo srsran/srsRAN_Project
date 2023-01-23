@@ -64,12 +64,6 @@ void rrc_du_impl::release_ues()
   // release all UEs connected to this RRC entity
 }
 
-int rrc_du_impl::get_pucch_resources()
-{
-  // TODO: add proper allocation, return success for now
-  return 1;
-}
-
 bool rrc_du_impl::is_rrc_connect_allowed()
 {
   return !reject_users;

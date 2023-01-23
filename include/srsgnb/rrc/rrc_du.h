@@ -27,15 +27,12 @@ struct rrc_ue_creation_message {
 };
 
 /// \brief Interface class for the main RRC DU object used by the RRC UE objects.
-/// This interface provides PUCCH resources and the RRC connection permission.
+/// This interface provides the RRC connection permission.
 class rrc_du_ue_manager
 {
 public:
   rrc_du_ue_manager()          = default;
   virtual ~rrc_du_ue_manager() = default;
-
-  /// Request the allocation of PUCCH resources for the UE.
-  virtual int get_pucch_resources() = 0;
 
   /// Check if the parent allows RRC connections.
   virtual bool is_rrc_connect_allowed() = 0;

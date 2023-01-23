@@ -36,12 +36,10 @@ public:
   void              handle_amf_connection_drop() override;
 
   // rrc_du_ue_manager
-  int  get_pucch_resources() override;
   bool is_rrc_connect_allowed() override;
 
 private:
   // helpers
-  bool             init_pucch();
   const rrc_cfg_t& cfg;
 
   bool reject_users = true; ///< Reject all connection attempts, i.e. when AMF is not connected.
