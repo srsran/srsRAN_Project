@@ -77,22 +77,20 @@ void scheduler_result_logger::log_debug(const sched_result& result)
         pg.pdsch_cfg.codewords[0].rv_index);
   }
 
-  if (not result.ul.puschs.empty()) {
-    for (const ul_sched_info& ul_info : result.ul.puschs) {
+  for (const ul_sched_info& ul_info : result.ul.puschs) {
+    fmt::format_to(fmtbuf,
+                   "\n- PUSCH: c-rnti={:#x}, h_id={}, prbs={}, symbols={}, rv_idx={}",
+                   ul_info.pusch_cfg.rnti,
+                   ul_info.pusch_cfg.harq_id,
+                   ul_info.pusch_cfg.prbs.prbs(),
+                   ul_info.pusch_cfg.symbols,
+                   ul_info.pusch_cfg.rv_index);
+    if (ul_info.uci.has_value()) {
       fmt::format_to(fmtbuf,
-                     "\n- PUSCH: c-rnti={:#x}, h_id={}, prbs={}, symbols={}, rv_idx={}",
-                     ul_info.pusch_cfg.rnti,
-                     ul_info.pusch_cfg.harq_id,
-                     ul_info.pusch_cfg.prbs.prbs(),
-                     ul_info.pusch_cfg.symbols,
-                     ul_info.pusch_cfg.rv_index);
-      if (ul_info.uci.has_value()) {
-        fmt::format_to(fmtbuf,
-                       ", uci: harq_bits={}, csi-1_bits={}, csi-2_bits={}",
-                       ul_info.uci.value().harq_ack_nof_bits,
-                       ul_info.uci.value().csi_part1_nof_bits,
-                       ul_info.uci.value().csi_part2_nof_bits);
-      }
+                     ", uci: harq_bits={}, csi-1_bits={}, csi-2_bits={}",
+                     ul_info.uci.value().harq_ack_nof_bits,
+                     ul_info.uci.value().csi_part1_nof_bits,
+                     ul_info.uci.value().csi_part2_nof_bits);
     }
   }
 
