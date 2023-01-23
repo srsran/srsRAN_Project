@@ -15,6 +15,7 @@
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsgnb/rrc/rrc_du.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -129,6 +130,36 @@ public:
 
 private:
   f1c_ue_context_manager* handler = nullptr;
+};
+
+// Adapter between DU processor and RRC DU
+class du_processor_rrc_du_adapter : public du_processor_rrc_du_ue_notifier
+{
+public:
+  du_processor_rrc_du_adapter() = default;
+
+  void connect_rrc_du(rrc_du_ue_repository* rrc_du_handler_) { rrc_du_handler = rrc_du_handler_; }
+
+  virtual rrc_ue_interface* on_ue_creation_request(rrc_ue_creation_message msg) override
+  {
+    srsgnb_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    return rrc_du_handler->add_ue(msg);
+  }
+
+  virtual void on_ue_context_release_command(ue_index_t ue_index) override
+  {
+    srsgnb_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    return rrc_du_handler->remove_ue(ue_index);
+  }
+
+  virtual void on_release_ues() override
+  {
+    srsgnb_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
+    return rrc_du_handler->release_ues();
+  }
+
+private:
+  rrc_du_ue_repository* rrc_du_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

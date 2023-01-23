@@ -38,6 +38,9 @@ public:
   // rrc_du_ue_manager
   bool is_rrc_connect_allowed() override;
 
+  rrc_du_ue_manager&    get_rrc_du_ue_manager() override { return *this; }
+  rrc_du_ue_repository& get_rrc_du_ue_repository() override { return *this; }
+
 private:
   // helpers
   const rrc_cfg_t& cfg;

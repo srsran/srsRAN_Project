@@ -122,14 +122,17 @@ private:
   timer_manager timer_db;
 
   // Components
-  std::unique_ptr<f1ap_cu>              f1c;
-  std::unique_ptr<rrc_du_ue_repository> rrc;
+  std::unique_ptr<f1ap_cu>          f1c;
+  std::unique_ptr<rrc_du_interface> rrc;
 
   // F1C to DU processor adapter
   f1c_du_processor_adapter f1c_ev_notifier;
 
   // RRC UE to DU processor adapter
   rrc_ue_du_processor_adapter rrc_ue_ev_notifier;
+
+  // DU processor to RRC DU adapter
+  du_processor_rrc_du_adapter rrc_du_adapter;
 };
 
 } // namespace srs_cu_cp

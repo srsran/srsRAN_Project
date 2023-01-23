@@ -50,6 +50,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   rrc_du_creation_message rrc_creation_msg(
       cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngc_ctrl_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
+  rrc_du_adapter.connect_rrc_du(&rrc->get_rrc_du_ue_repository());
 
   rrc_ue_ev_notifier.connect_du_processor(*this);
 }
@@ -200,7 +201,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
-  ue_ctxt->rrc                         = rrc->add_ue(std::move(rrc_ue_create_msg));
+  ue_ctxt->rrc                         = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
 
   // Notifiy CU-CP about the creation of the RRC UE
   cu_cp_notifier.on_rrc_ue_created(context.du_index, ue_ctxt->ue_index, ue_ctxt->rrc);
@@ -317,7 +318,7 @@ void du_processor_impl::handle_ue_context_release_command(const ue_context_relea
       }));
 
   // Remove UE from RRC
-  rrc->remove_ue(msg.ue_index);
+  rrc_du_adapter.on_ue_context_release_command(msg.ue_index);
 
   // Remove UE from UE database
   logger.info("Removing UE (id={})", msg.ue_index);

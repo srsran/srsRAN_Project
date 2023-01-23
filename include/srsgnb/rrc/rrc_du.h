@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rrc_cell_context.h"
+#include "rrc_ue.h"
 #include "srsgnb/cu_cp/ue_context.h"
 
 namespace srsgnb {
@@ -62,6 +63,9 @@ class rrc_du_interface : public rrc_du_ue_manager, public rrc_du_ue_repository
 {
 public:
   virtual ~rrc_du_interface() = default;
+
+  virtual rrc_du_ue_manager&    get_rrc_du_ue_manager()    = 0;
+  virtual rrc_du_ue_repository& get_rrc_du_ue_repository() = 0;
 };
 
 } // namespace srs_cu_cp
