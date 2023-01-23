@@ -79,29 +79,6 @@ struct f1ap_ue_context_release_complete {
   asn1::f1ap::ue_context_release_complete_s msg;
 };
 
-/// Interface to notifiy UE context management procedures.
-class f1c_ue_context_notifier
-{
-public:
-  virtual ~f1c_ue_context_notifier() = default;
-
-  /// Establish the UE context in F1.
-  virtual async_task<f1ap_ue_context_setup_response>
-  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) = 0;
-
-  /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
-  /// \param[in] msg The UE Context Release message to transmit.
-  /// \return Retruns the index of the released UE.
-  virtual async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) = 0;
-
-  /// \brief Initiates the UE Context Modification procedure as per TS 38.473 section 8.3.4.
-  /// \param[in] request The UE Context Modification message to transmit.
-  /// \return Returns a cu_cp_ue_context_modification_response_message struct with the success member set to
-  /// 'true' in case of a successful outcome, 'false' otherwise.
-  virtual async_task<cu_cp_ue_context_modification_response>
-  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) = 0;
-};
-
 /// Handle F1C UE context management procedures as defined in TS 38.473 section 8.3.
 class f1c_ue_context_manager
 {

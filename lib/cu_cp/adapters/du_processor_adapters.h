@@ -100,7 +100,7 @@ private:
 };
 
 // Adapter between DU processor and F1C
-class du_processor_f1c_adapter : public f1c_ue_context_notifier
+class du_processor_f1c_adapter : public du_processor_f1ap_ue_context_notifier
 {
 public:
   du_processor_f1c_adapter() = default;

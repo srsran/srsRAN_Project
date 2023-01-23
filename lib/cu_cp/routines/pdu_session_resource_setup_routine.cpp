@@ -18,14 +18,14 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_message& setup_msg_,
     const srsgnb::security::sec_as_config&          security_cfg_,
     du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
-    f1c_ue_context_notifier&                        f1c_ue_ctxt_notif_,
+    du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
     rrc_ue_control_message_handler&                 rrc_ue_notifier_,
     drb_manager&                                    rrc_ue_drb_manager_,
     srslog::basic_logger&                           logger_) :
   setup_msg(setup_msg_),
   security_cfg(security_cfg_),
   e1ap_ctrl_notifier(e1ap_ctrl_notif_),
-  f1c_ue_ctxt_notifier(f1c_ue_ctxt_notif_),
+  f1ap_ue_ctxt_notifier(f1ap_ue_ctxt_notif_),
   rrc_ue_notifier(rrc_ue_notifier_),
   rrc_ue_drb_manager(rrc_ue_drb_manager_),
   logger(logger_)
@@ -139,7 +139,7 @@ void pdu_session_resource_setup_routine::operator()(
     }
 
     CORO_AWAIT_VALUE(ue_context_modification_response,
-                     f1c_ue_ctxt_notifier.on_ue_context_modification_request(ue_context_mod_request));
+                     f1ap_ue_ctxt_notifier.on_ue_context_modification_request(ue_context_mod_request));
 
     // Handle UE Context Modification Response
     if (not ue_context_modification_response.success) {
