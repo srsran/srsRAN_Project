@@ -21,3 +21,5 @@ set(SOURCES
 
 add_library(srsgnb_rrc STATIC ${SOURCES})
 target_link_libraries(srsgnb_rrc srsgnb_security rrc_nr_asn1)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})

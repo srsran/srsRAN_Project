@@ -12,7 +12,6 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/rrc/rrc_du.h"
 #include "srsgnb/support/async/async_task_loop.h"
 
@@ -71,92 +70,33 @@ public:
   bool                        cipher_enabled = false;
 };
 
-class dummy_du_processor_rrc_ue_interface : public du_processor_rrc_ue_interface
-{
-public:
-  dummy_du_processor_rrc_ue_interface(ue_context& ue_ctxt_, rrc_du_interface& rrc_du_) :
-    ue_ctxt(ue_ctxt_), rrc_du(rrc_du_){};
-
-  void create_srb(const srb_creation_message& msg) override
-  {
-    // create SRB1 or SRB2 PDU handler
-    std::unique_ptr<dummy_rrc_pdu_notifier>         tx_pdu_notifier      = nullptr;
-    std::unique_ptr<dummy_rrc_tx_security_notifier> tx_security_notifier = nullptr;
-    std::unique_ptr<dummy_rrc_rx_security_notifier> rx_security_notifier = nullptr;
-    if (msg.srb_id == srb_id_t::srb1) {
-      tx_pdu_notifier          = std::make_unique<dummy_rrc_pdu_notifier>();
-      tx_security_notifier     = std::make_unique<dummy_rrc_tx_security_notifier>();
-      rx_security_notifier     = std::make_unique<dummy_rrc_rx_security_notifier>();
-      srb1_tx_pdu_handler      = tx_pdu_notifier.get();
-      srb1_tx_security_handler = tx_security_notifier.get();
-      srb1_rx_security_handler = rx_security_notifier.get();
-      srb1_created             = true;
-    } else if (msg.srb_id == srb_id_t::srb2) {
-      tx_pdu_notifier          = std::make_unique<dummy_rrc_pdu_notifier>();
-      tx_security_notifier     = std::make_unique<dummy_rrc_tx_security_notifier>();
-      rx_security_notifier     = std::make_unique<dummy_rrc_rx_security_notifier>();
-      srb2_tx_pdu_handler      = tx_pdu_notifier.get();
-      srb2_tx_security_handler = tx_security_notifier.get();
-      srb2_rx_security_handler = rx_security_notifier.get();
-      srb2_created             = true;
-    } else {
-      return;
-    }
-
-    // create PDCP context for this SRB
-    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context.emplace();
-
-    // connect SRB with RRC to "PDCP" adapter
-    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier                   = std::move(tx_pdu_notifier);
-    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier = std::move(tx_security_notifier);
-    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier = std::move(rx_security_notifier);
-    rrc_du.get_ue(ue_ctxt.ue_index)
-        ->connect_srb_notifier(msg.srb_id,
-                               *ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
-                               ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
-                               ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier.get());
-    last_srb = msg;
-  }
-
-  void handle_ue_context_release_command(const ue_context_release_command_message& msg) override
-  {
-    last_ue_ctxt_rel_cmd = msg;
-  }
-
-  ue_context_release_command_message last_ue_ctxt_rel_cmd;
-  srb_creation_message               last_srb;
-  dummy_rrc_pdu_notifier*            srb0_tx_pdu_handler = nullptr; // Object to handle the generated RRC message (SRB0)
-  dummy_rrc_pdu_notifier*            srb1_tx_pdu_handler = nullptr; // Object to handle the generated RRC message (SRB1)
-  dummy_rrc_pdu_notifier*            srb2_tx_pdu_handler = nullptr; // Object to handle the generated RRC message (SRB2)
-  dummy_rrc_tx_security_notifier* srb1_tx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
-  dummy_rrc_rx_security_notifier* srb1_rx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
-  dummy_rrc_tx_security_notifier* srb2_tx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
-  dummy_rrc_rx_security_notifier* srb2_rx_security_handler = nullptr; // Object to handle the tx security control (SRB2)
-  bool                            srb1_created             = false;
-  bool                            srb2_created             = false;
-
-private:
-  ue_context&       ue_ctxt;
-  rrc_du_interface& rrc_du;
-};
-
 class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
-  void connect(dummy_du_processor_rrc_ue_interface& du_processor_rrc_ue_)
+  void on_create_srb(const srb_creation_message& msg) override
   {
-    du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
+    logger.info("Received SRB creation message");
+    if (msg.srb_id == srb_id_t::srb1) {
+      srb1_created = true;
+    } else if (msg.srb_id == srb_id_t::srb2) {
+      srb2_created = true;
+    }
+    last_srb_creation_message = std::move(msg);
   }
-
-  void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
 
   void on_ue_context_release_command(const ue_context_release_command_message& msg) override
   {
-    du_processor_rrc_ue_handler->handle_ue_context_release_command(msg);
+    logger.info("Received UE Context Release Command");
+    last_ue_context_release_command_message = std::move(msg);
   }
 
+  srb_creation_message               last_srb_creation_message;
+  bool                               srb1_created = false;
+  bool                               srb2_created = false;
+  ue_context_release_command_message last_ue_context_release_command_message;
+
 private:
-  dummy_du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
 class dummy_rrc_ue_ngc_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
