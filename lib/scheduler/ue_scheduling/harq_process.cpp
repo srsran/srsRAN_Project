@@ -204,7 +204,7 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 harq_entity::harq_entity(rnti_t rnti_, unsigned nof_harq_procs, unsigned max_ack_wait_in_slots) :
-  rnti(rnti_), logger(srslog::fetch_basic_logger("MAC"))
+  rnti(rnti_), logger(srslog::fetch_basic_logger("SCHED"))
 {
   // Create HARQs
   dl_harqs.reserve(nof_harq_procs);
@@ -223,11 +223,10 @@ void harq_entity::slot_indication(slot_point slot_tx_)
     dl_h.slot_indication(slot_tx);
     if (not was_empty and dl_h.empty()) {
       // Toggle in HARQ state means that the HARQ was discarded
-      logger.info(
-          "SCHED: rnti={:#x}, DL HARQ id={}, TB={} - Discarding HARQ. Cause: Maximum number of retx exceeded ({})",
-          rnti,
-          dl_h.id,
-          dl_h.max_nof_harq_retxs(0));
+      logger.info("rnti={:#x}, DL HARQ id={}, TB={} - Discarding HARQ. Cause: Maximum number of retx exceeded ({})",
+                  rnti,
+                  dl_h.id,
+                  dl_h.max_nof_harq_retxs(0));
     }
   }
   for (ul_harq_process& ul_h : ul_harqs) {
@@ -235,11 +234,10 @@ void harq_entity::slot_indication(slot_point slot_tx_)
     ul_h.slot_indication(slot_tx);
     if (not was_empty and ul_h.empty()) {
       // Toggle in HARQ state means that the HARQ was discarded
-      logger.info(
-          "SCHED: rnti={:#x}, UL HARQ id={}, TB={} - Discarding HARQ. Cause: Maximum number of retx exceeded ({})",
-          rnti,
-          ul_h.id,
-          ul_h.max_nof_harq_retxs());
+      logger.info("rnti={:#x}, UL HARQ id={}, TB={} - Discarding HARQ. Cause: Maximum number of retx exceeded ({})",
+                  rnti,
+                  ul_h.id,
+                  ul_h.max_nof_harq_retxs());
     }
   }
 }

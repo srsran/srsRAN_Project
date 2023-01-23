@@ -15,7 +15,8 @@
 
 using namespace srsgnb;
 
-ssb_scheduler::ssb_scheduler(const cell_configuration& cfg_) : cell_cfg(cfg_), logger(srslog::fetch_basic_logger("MAC"))
+ssb_scheduler::ssb_scheduler(const cell_configuration& cfg_) :
+  cell_cfg(cfg_), logger(srslog::fetch_basic_logger("SCHED"))
 {
   ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
 }
@@ -46,7 +47,7 @@ void ssb_scheduler::schedule_ssb(cell_slot_resource_allocator& res_grid)
   ssb_information_list& ssb_list = res_grid.result.dl.bc.ssb_info;
 
   if (ssb_list.full()) {
-    logger.error("SCHED: Failed to allocate SSB");
+    logger.error("Failed to allocate SSB");
     return;
   }
 

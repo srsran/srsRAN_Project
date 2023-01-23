@@ -70,7 +70,7 @@ void benchmark_sib_scheduling()
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
-  auto& logger = srslog::fetch_basic_logger("MAC", true);
+  auto& logger = srslog::fetch_basic_logger("SCHED", true);
 
   // Run benchmark.
   slot_point sl_tx{0, 0};

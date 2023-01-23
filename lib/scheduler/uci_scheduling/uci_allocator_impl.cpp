@@ -16,7 +16,7 @@ using namespace srsgnb;
 ////////////    C-tors and d-tors    ////////////
 
 uci_allocator_impl::uci_allocator_impl(pucch_allocator& pucch_alloc_) :
-  pucch_alloc{pucch_alloc_}, logger(srslog::fetch_basic_logger("MAC"))
+  pucch_alloc{pucch_alloc_}, logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
 
@@ -144,7 +144,7 @@ void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocato
 
   // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
   if (has_pusch_grants) {
-    logger.debug("SCHED: SR allocation skipped for RNTI {:#x} due to PUSCH grant allocated.", crnti);
+    logger.debug("SR allocation skipped for RNTI {:#x} due to PUSCH grant allocated.", crnti);
     return;
   }
 

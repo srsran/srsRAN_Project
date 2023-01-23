@@ -19,7 +19,7 @@ using namespace srsgnb;
 
 prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   cell_cfg(cfg_),
-  logger(srslog::fetch_basic_logger("MAC")),
+  logger(srslog::fetch_basic_logger("SCHED")),
   prach_cfg(prach_configuration_get(frequency_range::FR1,
                                     cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
                                     rach_cfg_common().rach_cfg_generic.prach_config_index))
@@ -153,7 +153,7 @@ void prach_scheduler::allocate_slot_prach_pdus(cell_slot_resource_allocator& sl_
   for (cached_prach_occasion& cached_prach : cached_prachs) {
     // Reserve RBs and symbols of the PRACH occasion in the resource grid.
     if (sl_res_grid.ul_res_grid.collides(cached_prach.grant_resources)) {
-      logger.warning("SCHED: Cannot allocate PRACH occasion. Cause: Lack of space in resource grid.");
+      logger.warning("Cannot allocate PRACH occasion. Cause: Lack of space in resource grid.");
       continue;
     }
     sl_res_grid.ul_res_grid.fill(cached_prach.grant_resources);

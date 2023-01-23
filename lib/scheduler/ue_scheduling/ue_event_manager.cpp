@@ -30,9 +30,9 @@ public:
   {
     if (enabled and fmtbuf.size() > 0) {
       if (cell_index < MAX_NOF_DU_CELLS) {
-        logger.info("SCHED: Processed events, cell_index={}: [{}]", cell_index, to_c_str(fmtbuf));
+        logger.info("Processed events, cell_index={}: [{}]", cell_index, to_c_str(fmtbuf));
       } else {
-        logger.info("SCHED: Processed events: [{}]", to_c_str(fmtbuf));
+        logger.info("Processed events: [{}]", to_c_str(fmtbuf));
       }
     }
   }
@@ -67,7 +67,7 @@ ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_
   mac_notifier(mac_notifier_),
   metrics_handler(metrics_handler_),
   ev_logger(ev_logger_),
-  logger(srslog::fetch_basic_logger("MAC"))
+  logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
 
@@ -116,7 +116,7 @@ void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
 {
   common_events.emplace(ue_index, [this, ue_index]() {
     if (not ue_db.contains(ue_index)) {
-      logger.warning("SCHED: Received request to delete UE={} that does not exist", ue_index);
+      logger.warning("Received request to delete UE={} that does not exist", ue_index);
     }
     rnti_t rnti = ue_db[ue_index].crnti;
 
@@ -159,7 +159,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
         crc_ind.crcs[i].ue_index, [this, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
           const int tbs = ue_cc.harqs.ul_harq(crc.harq_id).crc_info(crc.tb_crc_success);
           if (tbs < 0) {
-            logger.warning("SCHED: CRC received for UE={}, h_id={} that is inactive", crc.ue_index, crc.harq_id);
+            logger.warning("CRC received for UE={}, h_id={} that is inactive", crc.ue_index, crc.harq_id);
             return;
           }
 
@@ -200,7 +200,7 @@ void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<c
       }
     }
     if (tbs < 0) {
-      logger.warning("SCHED: UE={} DL HARQ-ACK with uci slot={} not found.", ue_cc.ue_index, uci_sl);
+      logger.warning("UE={} DL HARQ-ACK with uci slot={} not found.", ue_cc.ue_index, uci_sl);
     }
   }
 }
@@ -228,7 +228,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                                 
       }
     }
     if (tbs < 0) {
-      logger.warning("SCHED: DL HARQ for ueId={}, uci slot={} not found.", ue_cc.ue_index, uci_sl);
+      logger.warning("DL HARQ for ueId={}, uci slot={} not found.", ue_cc.ue_index, uci_sl);
     }
   }
 }
@@ -380,10 +380,10 @@ bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
 
 void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index) const
 {
-  logger.warning("SCHED: Event for ueId={} ignored. Cause: UE with provided ueId does not exist", ue_index);
+  logger.warning("Event for ueId={} ignored. Cause: UE with provided ueId does not exist", ue_index);
 }
 
 void ue_event_manager::log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const
 {
-  logger.warning("SCHED: Event for ueId={} ignored. Cause: Cell {} is not configured.", ue_index, cell_index);
+  logger.warning("Event for ueId={} ignored. Cause: Cell {} is not configured.", ue_index, cell_index);
 }

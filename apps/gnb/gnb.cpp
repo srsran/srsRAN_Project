@@ -290,9 +290,11 @@ int main(int argc, char** argv)
   phy_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.phy_level));
   phy_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
-  auto& mac_logger = srslog::fetch_basic_logger("MAC", true);
-  mac_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.mac_level));
-  mac_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  for (const auto& id : {"MAC", "SCHED"}) {
+    auto& mac_logger = srslog::fetch_basic_logger(id, true);
+    mac_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.mac_level));
+    mac_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+  }
 
   auto& rlc_logger = srslog::fetch_basic_logger("RLC", false);
   rlc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rlc_level));

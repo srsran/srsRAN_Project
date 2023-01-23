@@ -532,6 +532,7 @@ int main(int argc, char** argv)
 {
   srslog::init();
   srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::info);
+  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::info);
   du_logger.set_level(srslog::basic_levels::info);
 
   // Parse arguments.

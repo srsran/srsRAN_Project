@@ -18,7 +18,7 @@ using namespace srsgnb;
 
 scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
   sched_cfg(sched_cfg_.expert_params),
-  logger(srslog::fetch_basic_logger("MAC")),
+  logger(srslog::fetch_basic_logger("SCHED")),
   metrics(sched_cfg.metrics_report_period, sched_cfg_.metrics_notifier),
   ue_sched(std::make_unique<ue_scheduler_impl>(sched_cfg.ue, sched_cfg_.config_notifier, metrics, sched_ev_logger)),
   ue_cfg_handler(ue_sched->get_ue_configurator()),
@@ -31,7 +31,7 @@ scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
   srsgnb_assert(not config_validators::validate_sched_cell_configuration_request_message(msg).is_error(),
-                "SCHED: Invalid cell configuration request message. Cause: {}",
+                "Invalid cell configuration request message. Cause: {}",
                 config_validators::validate_sched_cell_configuration_request_message(msg).error().c_str());
 
   cells.add_cell(msg.cell_index, msg);
@@ -42,7 +42,7 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
                                               &cells[msg.cell_index].uci_alloc,
                                               &cells[msg.cell_index].res_grid});
 
-  logger.info("SCHED: Cell with cell_index={} was configured.", msg.cell_index);
+  logger.info("Cell with cell_index={} was configured.", msg.cell_index);
 
   return true;
 }
@@ -50,7 +50,7 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
   srsgnb_assert(not config_validators::validate_sched_ue_creation_request_message(ue_request).is_error(),
-                "SCHED: Invalid UE creation request message. Cause: {}",
+                "Invalid UE creation request message. Cause: {}",
                 config_validators::validate_sched_ue_creation_request_message(ue_request).error().c_str());
 
   ue_cfg_handler.handle_ue_creation_request(ue_request);

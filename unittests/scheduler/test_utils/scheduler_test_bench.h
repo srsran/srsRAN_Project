@@ -56,7 +56,7 @@ public:
   }
 
   const unsigned                      tx_rx_delay;
-  srslog::basic_logger&               logger = srslog::fetch_basic_logger("MAC", true);
+  srslog::basic_logger&               logger = srslog::fetch_basic_logger("SCHED", true);
   sched_cfg_dummy_notifier            notif;
   scheduler_ue_metrics_dummy_notifier metric_notif;
   std::unique_ptr<mac_scheduler>      sched;

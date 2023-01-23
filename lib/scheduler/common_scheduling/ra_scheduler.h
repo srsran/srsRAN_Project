@@ -119,7 +119,7 @@ private:
   scheduler_event_logger&           ev_logger;
 
   // derived from args
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
   /// RA window size in number of slots.
   const unsigned    ra_win_nof_slots;
   bwp_configuration initial_active_dl_bwp;

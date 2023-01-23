@@ -89,7 +89,7 @@ public:
   uci_allocator_impl    uci_alloc;
   uci_scheduler_impl    uci_sched;
   slot_point            sl_tx;
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC", true);
+  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 

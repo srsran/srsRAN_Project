@@ -18,8 +18,8 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
                                      scheduler_metrics_handler&        metric_handler,
                                      scheduler_event_logger&           sched_ev_logger) :
   expert_cfg(expert_cfg_),
-  sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("MAC")})),
-  ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("MAC")),
+  sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("SCHED")})),
+  ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
   event_mng(expert_cfg, ue_db, mac_notif, metric_handler, sched_ev_logger)
 {
 }

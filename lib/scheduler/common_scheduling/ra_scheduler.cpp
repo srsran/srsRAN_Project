@@ -328,7 +328,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
       if (pdcch_slot >= rar_req.rar_window.stop()) {
         fmt::memory_buffer str_buffer;
         fmt::format_to(str_buffer,
-                       "SCHED: Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
+                       "Could not transmit RAR within the window={}, prach_slot={}, slot_tx={}",
                        rar_req.rar_window,
                        rar_req.prach_slot_rx,
                        pdcch_slot);
@@ -587,7 +587,7 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   pdcch_ul_information* pdcch =
       pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, msg3_ctx.preamble.tc_rnti, ss_id, aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.warning("SCHED: Failed to schedule PDCCH for Msg3 retx");
+    logger.warning("Failed to schedule PDCCH for Msg3 retx");
     return;
   }
 
@@ -625,5 +625,5 @@ sch_prbs_tbs ra_scheduler::get_nof_pdsch_prbs_required(unsigned time_res_idx, un
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const
 {
-  logger.debug("SCHED: RAR allocation for ra-rnti={:#x} was postponed. Cause: {}", rar.ra_rnti, cause_str);
+  logger.debug("RAR allocation for ra-rnti={:#x} was postponed. Cause: {}", rar.ra_rnti, cause_str);
 }

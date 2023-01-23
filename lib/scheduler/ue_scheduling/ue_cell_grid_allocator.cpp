@@ -43,7 +43,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Verify UE carrier is active.
   ue_cell* ue_cc = u.find_cell(grant.cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active()) {
-    logger.warning("SCHED: PDSCH allocation failed. Cause: The UE={} carrier with cell_index={} is inactive",
+    logger.warning("PDSCH allocation failed. Cause: The UE={} carrier with cell_index={} is inactive",
                    u.ue_index,
                    grant.cell_index);
     return false;
@@ -57,7 +57,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Find a SearchSpace candidate.
   const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
   if (ss_cfg == nullptr) {
-    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
+    logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
   }
 
@@ -80,7 +80,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space available in scheduler output list");
+    logger.warning("Failed to allocate PDSCH. Cause: No space available in scheduler output list");
     return false;
   }
 
@@ -93,7 +93,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // Verify there is no RB collision.
   if (pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, grant.crbs)) {
-    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space available in scheduler RB resource grid.");
+    logger.warning("Failed to allocate PDSCH. Cause: No space available in scheduler RB resource grid.");
     return false;
   }
 
@@ -102,7 +102,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       get_pdcch_sched(grant.cell_index)
           .alloc_dl_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl);
   if (pdcch == nullptr) {
-    logger.info("SCHED: Failed to allocate PDSCH. Cause: No space in PDCCH.");
+    logger.info("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
   }
 
@@ -112,7 +112,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       get_uci_alloc(grant.cell_index)
           .alloc_uci_harq_ue(get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1);
   if (not uci.alloc_successful) {
-    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space in PUCCH.");
+    logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;
   }
@@ -181,7 +181,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Set MAC logical channels to schedule in this PDU.
   u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
 
-  logger.debug("SCHED: UE={}'s PDSCH allocation on slot={} at cell_id={} completed.",
+  logger.debug("UE={}'s PDSCH allocation on slot={} at cell_id={} completed.",
                u.ue_index,
                pdsch_alloc.slot.to_uint(),
                grant.cell_index);
@@ -201,7 +201,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // Verify UE carrier is active.
   ue_cell* ue_cc = u.find_cell(grant.cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active()) {
-    logger.warning("SCHED: PUSCH allocation failed. Cause: The UE={} carrier with cell_index={} is inactive",
+    logger.warning("PUSCH allocation failed. Cause: The UE={} carrier with cell_index={} is inactive",
                    u.ue_index,
                    grant.cell_index);
     return false;
@@ -215,7 +215,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // Find a SearchSpace candidate.
   const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
   if (ss_cfg == nullptr) {
-    logger.warning("SCHED: Failed to allocate PUSCH. Cause: No valid SearchSpace found.");
+    logger.warning("Failed to allocate PUSCH. Cause: No valid SearchSpace found.");
     return false;
   }
 
@@ -232,7 +232,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    logger.warning("SCHED: Failed to allocate PUSCH. Cause: No space available in scheduler output list");
+    logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler output list");
     return false;
   }
 
@@ -246,7 +246,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Verify there is no RB collision.
   if (pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, grant.crbs)) {
-    logger.warning("SCHED: Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.");
+    logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler RB resource grid.");
     return false;
   }
 
@@ -255,7 +255,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
       get_pdcch_sched(grant.cell_index)
           .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl);
   if (pdcch == nullptr) {
-    logger.warning("SCHED: Failed to allocate PUSCH. Cause: No space in PDCCH.");
+    logger.warning("Failed to allocate PUSCH. Cause: No space in PDCCH.");
     return false;
   }
 
@@ -365,7 +365,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // In case there is a SR pending. Reset it.
   u.reset_sr_indication();
 
-  logger.debug("SCHED: UE={}'s PUSCH allocation on slot={} at cell_id={} completed.",
+  logger.debug("UE={}'s PUSCH allocation on slot={} at cell_id={} completed.",
                u.ue_index,
                pusch_alloc.slot.to_uint(),
                grant.cell_index);

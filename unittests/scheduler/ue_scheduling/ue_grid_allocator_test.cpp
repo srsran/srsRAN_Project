@@ -70,7 +70,7 @@ protected:
   cell_resource_allocator        res_grid{cell_cfg};
 
   ue_list                ues;
-  ue_cell_grid_allocator alloc{expert_cfg, ues, srslog::fetch_basic_logger("MAC")};
+  ue_cell_grid_allocator alloc{expert_cfg, ues, srslog::fetch_basic_logger("SCHED")};
 };
 
 TEST_F(ue_grid_allocator_tester, when_coreset0_grant_inside_coreset0_rb_lims_then_allocation_is_successful)

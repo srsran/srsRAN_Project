@@ -75,7 +75,7 @@ class multiple_ue_sched_tester : public ::testing::TestWithParam<multiple_ue_tes
 {
 protected:
   slot_point              next_slot{0, 0};
-  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("MAC", true);
+  srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST", true);
   optional<test_bench>    bench;
   multiple_ue_test_params params;
@@ -401,7 +401,7 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
   srslog::init();
 

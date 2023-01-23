@@ -97,7 +97,7 @@ pucch_resource_manager::rnti_pucch_res_id_slot_record& pucch_resource_manager::g
 /////////////     PUCCH ALLOCATOR     /////////////
 
 pucch_allocator_impl::pucch_allocator_impl(const cell_configuration& cell_cfg_) :
-  cell_cfg(cell_cfg_), logger(srslog::fetch_basic_logger("MAC"))
+  cell_cfg(cell_cfg_), logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
 
@@ -240,7 +240,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
 
   // No resources available for PUCCH.
   if (not pucch_res.has_config) {
-    logger.debug("SCHED: PUCCH for TC-RNTI={:#x} not allocated due to resources not available", tcrnti);
+    logger.debug("PUCCH for TC-RNTI={:#x} not allocated due to resources not available", tcrnti);
     return pucch_harq_ack_output;
   }
 
@@ -253,7 +253,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   fill_pucch_harq_grant(pucch_info, tcrnti, pucch_res);
   pucch_harq_ack_output.pucch_pdu = &pucch_info;
 
-  logger.debug("SCHED: PUCCH for TC-RNTI={:#x} allocated for slot={}.", tcrnti, pucch_slot_alloc.slot.to_uint());
+  logger.debug("PUCCH for TC-RNTI={:#x} allocated for slot={}.", tcrnti, pucch_slot_alloc.slot.to_uint());
 
   return pucch_harq_ack_output;
 }
@@ -356,7 +356,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   const pucch_resource* pucch_sr_res = resource_manager.get_next_sr_res_available(
       pucch_slot_alloc.slot, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_sr_res == nullptr) {
-    logger.warning("SCHED: SR allocation skipped for RNTI {:#x} for slot={} due to PUCCH ded. resource not available.",
+    logger.warning("SR allocation skipped for RNTI {:#x} for slot={} due to PUCCH ded. resource not available.",
                    crnti,
                    pucch_slot_alloc.slot.to_uint());
     return;
@@ -368,19 +368,17 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
       pucch_harq_it != pucch_slot_alloc.result.ul.pucchs.end() ? pucch_harq_it : nullptr;
 
   if (existing_pucch_harq_grant != nullptr and existing_pucch_harq_grant->format_1.harq_ack_nof_bits > 2) {
-    logger.warning(
-        "SCHED: SR occasion allocation for RNTI {:#x} for slot={} skipped. CAUSE: max HARQ-ACK bits reached.",
-        crnti,
-        pucch_slot_alloc.slot.to_uint());
+    logger.warning("SR occasion allocation for RNTI {:#x} for slot={} skipped. CAUSE: max HARQ-ACK bits reached.",
+                   crnti,
+                   pucch_slot_alloc.slot.to_uint());
     return;
   }
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.warning(
-        "SCHED: SR occasion allocation for RNTI {:#x} for slot={} skipped. CAUSE: no more PUCCH grants available.",
-        crnti,
-        pucch_slot_alloc.slot.to_uint());
+    logger.warning("SR occasion allocation for RNTI {:#x} for slot={} skipped. CAUSE: no more PUCCH grants available.",
+                   crnti,
+                   pucch_slot_alloc.slot.to_uint());
     return;
   }
 
@@ -396,8 +394,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   fill_pucch_ded_res_grant(
       pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
-  logger.debug(
-      "SCHED: SR occasion for RNTI {:#x} for slot={} scheduling completed.", crnti, pucch_slot_alloc.slot.to_uint());
+  logger.debug("SR occasion for RNTI {:#x} for slot={} scheduling completed.", crnti, pucch_slot_alloc.slot.to_uint());
 }
 
 struct existing_pucch_grants {
@@ -431,7 +428,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   // Check if there is space for one more additional PUCCH HARQ grant.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     logger.warning(
-        "SCHED: PUCCH HARQ-ACK grant for RNTI {:#x} for slot={} not allocated. CAUSE: no more PUCCH grants available.",
+        "PUCCH HARQ-ACK grant for RNTI {:#x} for slot={} not allocated. CAUSE: no more PUCCH grants available.",
         crnti,
         pucch_slot_alloc.slot.to_uint());
     return pucch_harq_ack_output;
@@ -440,7 +437,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   pucch_harq_resource_alloc_record pucch_harq_res_info = resource_manager.get_next_harq_res_available(
       pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_harq_res_info.pucch_res == nullptr) {
-    logger.warning("SCHED: PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} skipped due to PUCCH ded. resources "
+    logger.warning("PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} skipped due to PUCCH ded. resources "
                    "not available.",
                    crnti,
                    pucch_slot_alloc.slot.to_uint());
@@ -462,7 +459,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   fill_pucch_ded_res_grant(
       pucch_pdu, crnti, *pucch_harq_res_info.pucch_res, HARQ_BITS_IN_NEW_PUCCH_GRANT, sr_nof_bits::no_sr);
   logger.debug(
-      "SCHED: PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} completed.", crnti, pucch_slot_alloc.slot.to_uint());
+      "PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} completed.", crnti, pucch_slot_alloc.slot.to_uint());
   pucch_harq_ack_output.pucch_pdu           = &pucch_pdu;
   pucch_harq_ack_output.pucch_res_indicator = static_cast<unsigned>(pucch_harq_res_info.pucch_res_indicator);
 
@@ -494,7 +491,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucc
   output.pucch_pdu           = &existing_harq_grant;
   output.pucch_res_indicator = pucch_res_idx;
 
-  logger.debug("SCHED: UE={:#x}'s HARQ-ACK mltplxd on existing PUCCH for slot={}", rnti, sl_tx.to_uint());
+  logger.debug("UE={:#x}'s HARQ-ACK mltplxd on existing PUCCH for slot={}", rnti, sl_tx.to_uint());
   return output;
 }
 

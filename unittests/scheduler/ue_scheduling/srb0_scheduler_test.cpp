@@ -56,7 +56,7 @@ struct test_bench {
     pdcch_sch{cell_cfg},
     pucch_alloc{cell_cfg},
     uci_alloc{pucch_alloc},
-    ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("MAC", true)),
+    ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
     srb0_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db)
   {
   }
@@ -66,7 +66,7 @@ class srb0_scheduler_tester : public ::testing::TestWithParam<srb0_test_params>
 {
 protected:
   slot_point            next_slot{0, 0};
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC", true);
+  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST", true);
   optional<test_bench>  bench;
   srb0_test_params      params;
@@ -386,7 +386,7 @@ INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 

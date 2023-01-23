@@ -30,7 +30,7 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
   nof_pf_per_drx_cycle(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.nof_pf)),
   paging_frame_offset(cell_cfg.dl_cfg_common.pcch_cfg.paging_frame_offset),
   nof_po_per_pf(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.ns)),
-  logger(srslog::fetch_basic_logger("MAC"))
+  logger(srslog::fetch_basic_logger("SCHED"))
 {
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.has_value()) {
     if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value() == 0) {
@@ -239,7 +239,7 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_slot_resource_alloc
     if (sl_point.to_uint() % paging_period_slots == type0_pdcch_css_n0_slots[ssb_idx].to_uint()) {
       // Ensure slot for Paging has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
-        logger.error("SCHED: Could not allocated paging for beam idx {} as slot is not DL enabled.", ssb_idx);
+        logger.error("Could not allocated paging for beam idx {} as slot is not DL enabled.", ssb_idx);
         return false;
       }
 
@@ -295,7 +295,7 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
     const prb_bitmap& used_crbs      = res_grid.dl_res_grid.used_crbs(coreset_bwp_cfg, pdsch_td_cfg.symbols);
     paging_crbs                      = find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
     if (paging_crbs.length() < nof_paging_rbs) {
-      logger.error("SCHED: Not enough PDSCH space for Paging in beam idx: {}", beam_idx);
+      logger.error("Not enough PDSCH space for Paging in beam idx: {}", beam_idx);
       return false;
     }
   }
@@ -304,7 +304,7 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_pdcch_common(res_grid, rnti_t::P_RNTI, ss_id, expert_cfg.pg.paging_dci_aggr_lev);
   if (pdcch == nullptr) {
-    logger.warning("SCHED: Could not allocated Paging's DCI in PDCCH for beam idx: {}", beam_idx);
+    logger.warning("Could not allocated Paging's DCI in PDCCH for beam idx: {}", beam_idx);
     return false;
   }
 
@@ -315,7 +315,7 @@ bool paging_scheduler::allocate_paging(cell_slot_resource_allocator&    res_grid
   // 4. Delegate filling Paging grants to helper function.
   fill_paging_grant(res_grid, paging_crbs, pdsch_time_res, pg_msg, dmrs_info, paging_prbs_tbs.tbs_bytes);
 
-  logger.info("SCHED: Paging, cell={}, SSB beam idx: {}, crbs={}", res_grid.cfg.cell_index, beam_idx, paging_crbs);
+  logger.info("Paging, cell={}, SSB beam idx: {}, crbs={}", res_grid.cfg.cell_index, beam_idx, paging_crbs);
   return true;
 }
 

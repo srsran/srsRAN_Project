@@ -15,10 +15,10 @@ using namespace srsgnb;
 void scheduler_event_logger::log_impl()
 {
   if (mode == debug) {
-    logger.debug("SCHED: Processed slot events:{}", to_c_str(fmtbuf));
+    logger.debug("Processed slot events:{}", to_c_str(fmtbuf));
     fmtbuf.clear();
   } else {
-    logger.info("SCHED: Processed slot events: {}", to_c_str(fmtbuf));
+    logger.info("Processed slot events: {}", to_c_str(fmtbuf));
     fmtbuf.clear();
   }
 }

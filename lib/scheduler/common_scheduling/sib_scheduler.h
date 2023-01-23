@@ -56,7 +56,7 @@ private:
                        unsigned                      tbs);
 
   /// SIB1 Logger.
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
 
   /// Parameters for SIB1 scheduling.
   const scheduler_si_expert_config& expert_cfg;

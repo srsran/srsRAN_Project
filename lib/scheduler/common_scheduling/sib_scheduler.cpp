@@ -73,7 +73,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
     if (sl_point.to_uint() % sib1_period_slots == sib1_n0_slots[ssb_idx].to_uint()) {
       // Ensure slot for SIB1 has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
-        logger.error("SCHED: Could not allocated SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
+        logger.error("Could not allocated SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
         return;
       }
 
@@ -115,7 +115,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
     sib1_crbs = find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {
       // early exit
-      logger.error("SCHED: Not enough PDSCH space for SIB1 in beam idx: {}", beam_idx);
+      logger.error("Not enough PDSCH space for SIB1 in beam idx: {}", beam_idx);
       return false;
     }
   }
@@ -127,7 +127,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
                                      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
                                      expert_cfg.sib1_dci_aggr_lev);
   if (pdcch == nullptr) {
-    logger.warning("SCHED: Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
+    logger.warning("Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
     return false;
   }
 

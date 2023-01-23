@@ -75,7 +75,7 @@ void test_rach_indication()
 
 int main()
 {
-  srslog::fetch_basic_logger("MAC", true).set_level(srslog::basic_levels::info);
+  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::info);
 
   srslog::init();
 

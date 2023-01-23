@@ -29,7 +29,7 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
   pucch_alloc(pucch_alloc_),
   ues(ues_),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
-  logger(srslog::fetch_basic_logger("MAC"))
+  logger(srslog::fetch_basic_logger("SCHED"))
 {
   if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
     // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 for TC-RNTI.
@@ -85,7 +85,7 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
   }
 
   // No resource found in UE's carriers and Search spaces.
-  logger.warning("SCHED: Not enough PDSCH space for SRB0 message. Will re-try in next slot");
+  logger.warning("Not enough PDSCH space for SRB0 message. Will re-try in next slot");
   return false;
 }
 
@@ -147,7 +147,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
 
   if (mcs_idx > expert_cfg.max_msg4_mcs) {
-    logger.warning("SCHED: MCS index chosen ({}) exceeds maximum allowed MCS index ({}) for rnti={:#x}.",
+    logger.warning("MCS index chosen ({}) exceeds maximum allowed MCS index ({}) for rnti={:#x}.",
                    mcs_idx,
                    expert_cfg.max_msg4_mcs,
                    u.crnti);
@@ -157,7 +157,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
   prb_interval ue_grant_prbs = crb_to_prb(initial_active_dl_bwp, ue_grant_crbs);
   if (ue_grant_prbs.length() < prbs_tbs.nof_prbs) {
-    logger.warning("SCHED: Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
+    logger.warning("Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
                    u.crnti,
                    ue_grant_prbs.length(),
                    prbs_tbs.nof_prbs);
@@ -167,7 +167,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Allocate PDCCH resources.
   pdcch_dl_information* pdcch = pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.id, aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.info("SCHED: Failed to allocate PDSCH. Cause: No space in PDCCH.");
+    logger.info("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
   }
 
@@ -176,7 +176,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   pucch_harq_ack_grant pucch_grant =
       pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1, *pdcch);
   if (pucch_grant.pucch_pdu == nullptr) {
-    logger.info("SCHED: Failed to allocate PDSCH. Cause: No space in PUCCH.");
+    logger.info("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;
   }

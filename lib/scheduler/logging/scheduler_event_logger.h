@@ -54,7 +54,7 @@ public:
   };
 
   scheduler_event_logger() :
-    logger(srslog::fetch_basic_logger("MAC")),
+    logger(srslog::fetch_basic_logger("SCHED")),
     mode(logger.debug.enabled() ? mode_t::debug : (logger.info.enabled() ? mode_t::info : mode_t::none))
   {
   }

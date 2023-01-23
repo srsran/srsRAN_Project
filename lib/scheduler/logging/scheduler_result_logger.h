@@ -18,7 +18,7 @@ namespace srsgnb {
 class scheduler_result_logger
 {
 public:
-  scheduler_result_logger() : logger(srslog::fetch_basic_logger("MAC")) {}
+  scheduler_result_logger() : logger(srslog::fetch_basic_logger("SCHED")) {}
 
   void log(const sched_result& result);
 

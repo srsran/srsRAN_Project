@@ -74,7 +74,7 @@ public:
 
 protected:
   slot_point                        next_slot{0, 0};
-  srslog::basic_logger&             mac_logger  = srslog::fetch_basic_logger("MAC", true);
+  srslog::basic_logger&             mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger&             test_logger = srslog::fetch_basic_logger("TEST", true);
   optional<paging_sched_test_bench> bench;
   paging_scheduler_test_params      params;
