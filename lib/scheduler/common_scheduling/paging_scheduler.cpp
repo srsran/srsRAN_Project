@@ -91,26 +91,44 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   while (it != paging_pending_ues.end()) {
     if (it->paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
       if (cn_paging_retries[it->paging_identity] >= expert_cfg.pg.max_paging_retries) {
-        it = paging_pending_ues.erase(it);
         cn_paging_retries.erase(cn_paging_retries.find(it->paging_identity));
+        it = paging_pending_ues.erase(it);
       } else {
         ++it;
       }
     } else {
       if (ran_paging_retries[it->paging_identity] >= expert_cfg.pg.max_paging_retries) {
-        it = paging_pending_ues.erase(it);
         ran_paging_retries.erase(ran_paging_retries.find(it->paging_identity));
+        it = paging_pending_ues.erase(it);
       } else {
         ++it;
       }
     }
   }
 
+  // Sort based on paging attempts so that we give equal opportunities to all UEs.
+  std::sort(paging_pending_ues.begin(),
+            paging_pending_ues.end(),
+            [this](const paging_indication_message& lhs, const paging_indication_message& rhs) -> bool {
+              unsigned lhs_pg_attmpts = 0;
+              unsigned rhs_pg_attmpts = 0;
+              if (cn_paging_retries.find(lhs.paging_identity) != cn_paging_retries.end()) {
+                lhs_pg_attmpts = cn_paging_retries[lhs.paging_identity];
+              } else {
+                lhs_pg_attmpts = ran_paging_retries[lhs.paging_identity];
+              }
+              if (cn_paging_retries.find(rhs.paging_identity) != cn_paging_retries.end()) {
+                rhs_pg_attmpts = cn_paging_retries[rhs.paging_identity];
+              } else {
+                rhs_pg_attmpts = ran_paging_retries[rhs.paging_identity];
+              }
+              return lhs_pg_attmpts < rhs_pg_attmpts;
+            });
+
   // NOTE:
   // - [Implementation defined] We restrict number of Paged UEs per paging opportunity to 1 for simplification.
   // Reason: When paging more than one UE during the same paging opportunity, the one paging message is used for all
   // UEs with one paging record per UE in the Paging message.
-  unsigned nof_scheduled_ue = 0;
   for (const auto& pg_ind : paging_pending_ues) {
     const unsigned drx_cycle = pg_ind.paging_drx.has_value() ? pg_ind.paging_drx.value() : default_paging_cycle;
 
@@ -138,8 +156,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
         } else {
           ran_paging_retries[pg_ind.paging_identity]++;
         }
-        nof_scheduled_ue++;
-        break;
+        return;
       }
       if (paging_search_space > 0 &&
           schedule_paging_in_search_space_id_gt_0(res_grid, sl_point, time_res_idx, pg_ind, i_s)) {
@@ -148,34 +165,10 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
         } else {
           ran_paging_retries[pg_ind.paging_identity]++;
         }
-        nof_scheduled_ue++;
-        break;
+        return;
       }
     }
-    // See above implementation defined notes.
-    if (nof_scheduled_ue == 1) {
-      break;
-    }
   }
-
-  // Sort based on paging attempts so that we give equal opportunities to all UEs.
-  std::sort(paging_pending_ues.begin(),
-            paging_pending_ues.end(),
-            [this](const paging_indication_message& lhs, const paging_indication_message& rhs) -> bool {
-              unsigned lhs_pg_attmpts = 0;
-              unsigned rhs_pg_attmpts = 0;
-              if (cn_paging_retries.find(lhs.paging_identity) != cn_paging_retries.end()) {
-                lhs_pg_attmpts = cn_paging_retries[lhs.paging_identity];
-              } else {
-                lhs_pg_attmpts = ran_paging_retries[lhs.paging_identity];
-              }
-              if (cn_paging_retries.find(rhs.paging_identity) != cn_paging_retries.end()) {
-                rhs_pg_attmpts = cn_paging_retries[rhs.paging_identity];
-              } else {
-                rhs_pg_attmpts = ran_paging_retries[rhs.paging_identity];
-              }
-              return lhs_pg_attmpts < rhs_pg_attmpts;
-            });
 }
 
 void paging_scheduler::handle_paging_indication_message(const paging_indication_message& paging_indication)
