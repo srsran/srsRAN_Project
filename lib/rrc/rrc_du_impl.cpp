@@ -29,7 +29,7 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t&              cfg_,
 
 rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
 {
-  if (ue_db.contains(msg.ue_index)) {
+  if (ue_db.find(msg.ue_index) != ue_db.end()) {
     // UE already exists with same ue_index
     return nullptr;
   }
@@ -50,7 +50,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
                                               msg.srbs,
                                               msg.du_to_cu_container,
                                               *msg.ue_task_sched));
-  auto& u = ue_db[ue_index];
+  auto& u = ue_db.at(ue_index);
   return u.get();
 }
 

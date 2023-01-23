@@ -201,10 +201,10 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
-  ue_ctxt->rrc                         = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
+  auto* rrc_ue                         = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
 
   // Notifiy CU-CP about the creation of the RRC UE
-  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue_ctxt->ue_index, ue_ctxt->rrc);
+  cu_cp_notifier.on_rrc_ue_created(context.du_index, ue_ctxt->ue_index, rrc_ue);
 
   // 6. Create SRB0 bearer and notifier
   srb_creation_message srb0_msg{};
@@ -233,12 +233,13 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
     // create direct connection with UE manager to RRC adapter
-    srb.rx_notifier     = std::make_unique<f1c_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_ccch_pdu_handler());
+    srb.rx_notifier = std::make_unique<f1c_rrc_ue_adapter>(rrc->get_ue(ue_ctxt->ue_index)->get_ul_ccch_pdu_handler());
     srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_pdu_adapter>(*f1c, ue_ctxt->ue_index);
 
     // update notifier in RRC
-    ue_ctxt->rrc->connect_srb_notifier(
-        msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, nullptr, nullptr);
+    rrc->get_ue(ue_ctxt->ue_index)
+        ->connect_srb_notifier(
+            msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, nullptr, nullptr);
   } else if (msg.srb_id <= srb_id_t::srb2) {
     // create PDCP context for this SRB
     srb.pdcp_context.emplace();
@@ -249,7 +250,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb.pdcp_context->rrc_tx_control_notifier =
         std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
     srb.pdcp_context->rrc_rx_data_notifier =
-        std::make_unique<pdcp_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_dcch_pdu_handler());
+        std::make_unique<pdcp_rrc_ue_adapter>(rrc->get_ue(ue_ctxt->ue_index)->get_ul_dcch_pdu_handler());
     srb.pdcp_context->rrc_rx_control_notifier =
         std::make_unique<pdcp_rx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
 
@@ -283,11 +284,11 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
         srb.pdcp_context->pdcp_bearer->get_rx_upper_control_interface());
 
     // update notifier in RRC
-    ue_ctxt->rrc->connect_srb_notifier(
-        msg.srb_id,
-        *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
-        ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
-        ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier.get());
+    rrc->get_ue(ue_ctxt->ue_index)
+        ->connect_srb_notifier(msg.srb_id,
+                               *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
+                               ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
+                               ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier.get());
 
     // update notifier in F1C
     f1c->connect_srb_notifier(ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier);
@@ -331,11 +332,12 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
   ue_context* ue_ctxt = ue_manager.find_ue(get_ue_index_from_cu_cp_ue_id(msg.cu_cp_ue_id));
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
-  return launch_async<pdu_session_resource_setup_routine>(msg,
-                                                          ue_ctxt->rrc->get_rrc_ue_secutity_config(),
-                                                          e1ap_ctrl_notifier,
-                                                          f1c_ue_context_notifier,
-                                                          ue_ctxt->rrc->get_rrc_ue_control_message_handler(),
-                                                          ue_ctxt->rrc->get_rrc_ue_drb_manager(),
-                                                          logger);
+  return launch_async<pdu_session_resource_setup_routine>(
+      msg,
+      rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_secutity_config(),
+      e1ap_ctrl_notifier,
+      f1c_ue_context_notifier,
+      rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_control_message_handler(),
+      rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_drb_manager(),
+      logger);
 }

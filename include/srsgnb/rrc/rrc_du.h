@@ -54,6 +54,9 @@ public:
   /// \param[in] ue_index The index of the UE object to remove.
   virtual void remove_ue(ue_index_t ue_index) = 0;
 
+  /// Get a RRC UE object.
+  virtual rrc_ue_interface* get_ue(ue_index_t ue_index) = 0;
+
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;
 };

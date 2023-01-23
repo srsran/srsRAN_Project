@@ -13,7 +13,7 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
-#include "srsgnb/rrc/rrc_ue.h"
+#include "srsgnb/rrc/rrc_du.h"
 #include "srsgnb/support/async/async_task_loop.h"
 
 namespace srsgnb {
@@ -74,7 +74,8 @@ public:
 class dummy_du_processor_rrc_ue_interface : public du_processor_rrc_ue_interface
 {
 public:
-  dummy_du_processor_rrc_ue_interface(ue_context& ue_ctxt_) : ue_ctxt(ue_ctxt_){};
+  dummy_du_processor_rrc_ue_interface(ue_context& ue_ctxt_, rrc_du_interface& rrc_du_) :
+    ue_ctxt(ue_ctxt_), rrc_du(rrc_du_){};
 
   void create_srb(const srb_creation_message& msg) override
   {
@@ -109,10 +110,11 @@ public:
     ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier                   = std::move(tx_pdu_notifier);
     ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier = std::move(tx_security_notifier);
     ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier = std::move(rx_security_notifier);
-    ue_ctxt.rrc->connect_srb_notifier(msg.srb_id,
-                                      *ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
-                                      ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
-                                      ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier.get());
+    rrc_du.get_ue(ue_ctxt.ue_index)
+        ->connect_srb_notifier(msg.srb_id,
+                               *ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
+                               ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
+                               ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier.get());
     last_srb = msg;
   }
 
@@ -134,7 +136,8 @@ public:
   bool                            srb2_created             = false;
 
 private:
-  ue_context& ue_ctxt;
+  ue_context&       ue_ctxt;
+  rrc_du_interface& rrc_du;
 };
 
 class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier

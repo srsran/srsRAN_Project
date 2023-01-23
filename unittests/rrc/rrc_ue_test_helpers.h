@@ -28,11 +28,11 @@ class rrc_ue_test_helper
 protected:
   void init()
   {
-    // create RRC entity
-    du_proc_rrc_ue = std::make_unique<dummy_du_processor_rrc_ue_interface>(ue_ctxt);
-
+    // create RRC DU entity
     rrc_du_creation_message msg(cfg, rrc_ue_ev_notifier, rrc_ue_ngc_notifier, rrc_ue_ngc_notifier);
     rrc = srsgnb::srs_cu_cp::create_rrc_du(msg);
+
+    du_proc_rrc_ue = std::make_unique<dummy_du_processor_rrc_ue_interface>(ue_ctxt, *rrc.get());
     rrc_ue_ev_notifier.connect(*du_proc_rrc_ue);
 
     // create single UE context and add RRC user
@@ -44,14 +44,14 @@ protected:
     rrc_ue_create_msg.c_rnti   = ue_ctxt.c_rnti;
     rrc_ue_create_msg.du_to_cu_container.resize(1);
     rrc_ue_create_msg.ue_task_sched = ue_ctxt.task_sched.get();
-    ue_ctxt.rrc                     = rrc->add_ue(std::move(rrc_ue_create_msg));
-    ASSERT_NE(ue_ctxt.rrc, nullptr);
+    auto* rrc_ue                    = rrc->add_ue(std::move(rrc_ue_create_msg));
+    ASSERT_NE(rrc_ue, nullptr);
 
     // connect SRB0 with RRC to "F1" adapter
     auto srb0_pdu_handler                                        = std::make_unique<dummy_rrc_pdu_notifier>();
     du_proc_rrc_ue->srb0_tx_pdu_handler                          = srb0_pdu_handler.get();
     ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier = std::move(srb0_pdu_handler);
-    ue_ctxt.rrc->connect_srb_notifier(
+    rrc_ue->connect_srb_notifier(
         srb_id_t::srb0, *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier, nullptr, nullptr);
 
     task_sched_handle = static_cast<dummy_ue_task_scheduler*>(ue_ctxt.task_sched.get());
@@ -72,9 +72,9 @@ protected:
     return dl_ccch.msg.c1().type();
   }
 
-  rrc_ue_init_security_context_handler* get_rrc_ue_security_handler() { return ue_ctxt.rrc; }
+  rrc_ue_init_security_context_handler* get_rrc_ue_security_handler() { return rrc->get_ue(ue_ctxt.ue_index); }
 
-  rrc_ue_reconfiguration_handler* get_rrc_ue_reconfiguration_handler() { return ue_ctxt.rrc; }
+  rrc_ue_reconfiguration_handler* get_rrc_ue_reconfiguration_handler() { return rrc->get_ue(ue_ctxt.ue_index); }
 
   void connect_amf()
   {
@@ -85,13 +85,13 @@ protected:
   void receive_setup_request()
   {
     // inject RRC setup into UE object
-    ue_ctxt.rrc->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
+    rrc->get_ue(ue_ctxt.ue_index)->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
   }
 
   void receive_setup_complete()
   {
     // inject RRC setup complete
-    ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
+    rrc->get_ue(ue_ctxt.ue_index)->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
   }
 
   void check_srb1_exists() { ASSERT_EQ(du_proc_rrc_ue->srb1_created, true); }
@@ -114,7 +114,7 @@ protected:
   void receive_smc_complete()
   {
     // inject RRC SMC complete into UE object
-    ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_smc_complete_pdu});
+    rrc->get_ue(ue_ctxt.ue_index)->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_smc_complete_pdu});
   }
 
   void check_smc_pdu()
@@ -168,7 +168,7 @@ protected:
   void receive_reconfig_complete()
   {
     // inject RRC Reconfiguration complete into UE object
-    ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_reconfig_complete_pdu});
+    rrc->get_ue(ue_ctxt.ue_index)->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_reconfig_complete_pdu});
   }
 
 private:
@@ -181,7 +181,7 @@ private:
   dummy_rrc_ue_ngc_adapter                             rrc_ue_ngc_notifier;
   timer_manager                                        timers;
   dummy_ue_task_scheduler*                             task_sched_handle = nullptr;
-  std::unique_ptr<rrc_du_ue_repository>                rrc;
+  std::unique_ptr<rrc_du_interface>                    rrc;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

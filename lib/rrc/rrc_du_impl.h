@@ -13,6 +13,7 @@
 #include "ue/rrc_ue_impl.h"
 #include "srsgnb/rrc/rrc_config.h"
 #include "srsgnb/rrc/rrc_du.h"
+#include <unordered_map>
 
 namespace srsgnb {
 
@@ -38,6 +39,12 @@ public:
   // rrc_du_ue_manager
   bool is_rrc_connect_allowed() override;
 
+  rrc_ue_interface* get_ue(ue_index_t ue_index) override
+  {
+    srsgnb_assert(ue_db.find(ue_index) != ue_db.end(), "UE not found");
+    return ue_db.at(ue_index).get();
+  }
+
   rrc_du_ue_manager&    get_rrc_du_ue_manager() override { return *this; }
   rrc_du_ue_repository& get_rrc_du_ue_repository() override { return *this; }
 
@@ -52,7 +59,7 @@ private:
   rrc_ue_control_notifier&      ngc_ctrl_notifier;       // Control notifier to the NGC
 
   // RRC-internal user database indexed by ue_index
-  slotted_array<std::unique_ptr<rrc_ue_impl>, MAX_NOF_UES> ue_db;
+  std::unordered_map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;
 };
 
 } // namespace srs_cu_cp
