@@ -20,7 +20,7 @@ class rlc_um_entity : public rlc_base_entity
 {
 public:
   rlc_um_entity(du_ue_index_t                        du_index,
-                lcid_t                               lcid,
+                rb_id_t                              rb_id,
                 const rlc_um_config&                 config,
                 rlc_rx_upper_layer_data_notifier&    rx_upper_dn,
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
@@ -28,12 +28,12 @@ public:
                 rlc_tx_lower_layer_notifier&         tx_lower_dn,
                 timer_manager&                       timers,
                 task_executor&                       ue_executor) :
-    rlc_base_entity(du_index, lcid)
+    rlc_base_entity(du_index, rb_id)
   {
-    tx = std::make_unique<rlc_tx_um_entity>(du_index, lcid, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn);
+    tx = std::make_unique<rlc_tx_um_entity>(du_index, rb_id, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn);
     logger.log_info("RLC TX UM configured: sn_field_length={}", config.tx);
 
-    rx = std::make_unique<rlc_rx_um_entity>(du_index, lcid, config.rx, rx_upper_dn, timers, ue_executor);
+    rx = std::make_unique<rlc_rx_um_entity>(du_index, rb_id, config.rx, rx_upper_dn, timers, ue_executor);
     logger.log_info("RLC RX UM configured: {}", config.rx);
   }
 };

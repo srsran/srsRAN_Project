@@ -93,24 +93,10 @@ protected:
     config.tx.sn_field_length = sn_size;
 
     // Create RLC entities
-    rlc1 = std::make_unique<rlc_um_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
-                                           lcid_t::LCID_SRB0,
-                                           config,
-                                           tester1,
-                                           tester1,
-                                           tester1,
-                                           tester1,
-                                           timers,
-                                           ue_worker);
-    rlc2 = std::make_unique<rlc_um_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
-                                           lcid_t::LCID_SRB0,
-                                           config,
-                                           tester2,
-                                           tester2,
-                                           tester2,
-                                           tester2,
-                                           timers,
-                                           ue_worker);
+    rlc1 = std::make_unique<rlc_um_entity>(
+        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, config, tester1, tester1, tester1, tester1, timers, ue_worker);
+    rlc2 = std::make_unique<rlc_um_entity>(
+        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, config, tester2, tester2, tester2, tester2, timers, ue_worker);
 
     // Bind interfaces
     rlc1_rx_lower = rlc1->get_rx_lower_layer_interface();

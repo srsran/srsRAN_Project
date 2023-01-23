@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "lib/rlc/rlc_bearer_logger.h"
 #include "rlc_stress_test_args.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/srslog/srslog.h"
@@ -25,13 +25,13 @@ class f1_dummy : public pdcp_tx_lower_notifier,
                  public rlc_tx_upper_layer_control_notifier,
                  public rlc_rx_upper_layer_data_notifier
 {
-  bearer_logger logger;
+  rlc_bearer_logger logger;
 
   rlc_tx_upper_layer_data_interface* rlc_tx_upper  = nullptr;
   pdcp_rx_lower_interface*           pdcp_rx_lower = nullptr;
 
 public:
-  f1_dummy(uint32_t id) : logger("F1", id, lcid_t{}) {}
+  f1_dummy(uint32_t id) : logger("F1", {id, drb_id_t::drb1}) {}
 
   // PDCP -> F1 -> RLC
   void on_new_pdu(pdcp_tx_pdu pdu) final

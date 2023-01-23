@@ -15,20 +15,20 @@
 
 using namespace srsgnb;
 pthread_barrier_t barrier;
-stress_stack::stress_stack(const stress_test_args& args_, uint32_t id) :
+stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t rb_id) :
   stack_id(id),
   args(args_),
   ue_name("UE-Worker-" + std::to_string(id)),
   pcell_name("PCell-Worker-" + std::to_string(id)),
   ue_worker{ue_name, task_worker_queue_size, true},
   pcell_worker{pcell_name, task_worker_queue_size, true},
-  logger("STACK", id, lcid_t{})
+  logger("STACK", {id, rb_id})
 {
   ue_executor    = make_task_executor(ue_worker);
   pcell_executor = make_task_executor(pcell_worker);
 
   // MAC
-  mac = std::make_unique<mac_dummy>(args_, id);
+  mac = std::make_unique<mac_dummy>(args_, id, rb_id);
 
   // F1
   f1 = std::make_unique<f1_dummy>(id);
@@ -37,14 +37,16 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id) :
   rrc = std::make_unique<rrc_dummy>(id);
 
   // Trafic generators
-  traffic_sink   = std::make_unique<stress_traffic_sink>(id);
-  traffic_source = std::make_unique<stress_traffic_source>(args_, id);
+  traffic_sink   = std::make_unique<stress_traffic_sink>(id, rb_id);
+  traffic_source = std::make_unique<stress_traffic_source>(args_, id, rb_id);
 
   sec_cfg = get_security_config_from_args(args_);
 
   // PDCP
   pdcp_config                  pdcp_cnfg = get_pdcp_config_from_args(id, args_);
   pdcp_entity_creation_message pdcp_msg  = {};
+  pdcp_msg.ue_index                      = id;
+  pdcp_msg.rb_id                         = rb_id;
   pdcp_msg.config                        = pdcp_cnfg;
   pdcp_msg.tx_lower                      = f1.get();
   pdcp_msg.tx_upper_cn                   = rrc.get();
@@ -66,7 +68,7 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id) :
   rlc_config                  rlc_cnfg = get_rlc_config_from_args(args_);
   rlc_entity_creation_message rlc_msg  = {};
   rlc_msg.ue_index                     = static_cast<du_ue_index_t>(stack_id);
-  rlc_msg.lcid                         = lcid_t{};
+  rlc_msg.rb_id                        = rb_id;
   rlc_msg.rx_upper_dn                  = f1.get();
   rlc_msg.tx_upper_cn                  = f1.get();
   rlc_msg.tx_upper_dn                  = f1.get();
@@ -172,8 +174,8 @@ void stress_test(const stress_test_args& args)
   auto& log_stack = srslog::fetch_basic_logger("STACK", false);
 
   // Create the stack emulators
-  stress_stack stack_emulator_0(args, 0);
-  stress_stack stack_emulator_1(args, 1);
+  stress_stack stack_emulator_0(args, 0, drb_id_t::drb1);
+  stress_stack stack_emulator_1(args, 1, drb_id_t::drb1);
   stack_emulator_0.set_peer_stack(&stack_emulator_1);
   stack_emulator_1.set_peer_stack(&stack_emulator_0);
 

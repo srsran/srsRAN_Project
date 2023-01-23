@@ -13,12 +13,12 @@
 using namespace srsgnb;
 
 rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
-                                   lcid_t                            lcid,
+                                   rb_id_t                           rb_id,
                                    const rlc_rx_um_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                                    timer_manager&                    timers,
                                    task_executor&                    ue_executor) :
-  rlc_rx_entity(du_index, lcid, upper_dn_),
+  rlc_rx_entity(du_index, rb_id, upper_dn_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "rlc_bearer_logger.h"
 #include "rlc_rx_metrics_container.h"
-#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
 
@@ -22,12 +22,12 @@ namespace srsgnb {
 class rlc_rx_entity : public rlc_rx_lower_layer_interface, public rlc_rx_metrics
 {
 protected:
-  rlc_rx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn_) :
-    logger("RLC", du_index, lcid), upper_dn(upper_dn_)
+  rlc_rx_entity(du_ue_index_t du_index, rb_id_t rb_id, rlc_rx_upper_layer_data_notifier& upper_dn_) :
+    logger("RLC", {du_index, rb_id}), upper_dn(upper_dn_)
   {
   }
 
-  bearer_logger                     logger;
+  rlc_bearer_logger                 logger;
   rlc_rx_metrics_container          metrics;
   rlc_rx_upper_layer_data_notifier& upper_dn;
 

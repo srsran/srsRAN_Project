@@ -97,7 +97,7 @@ protected:
     sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
 
     // Create RLC entities
-    pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, test_frame, test_frame, timers);
+    pdcp_tx = std::make_unique<pdcp_entity_tx>(0, srb_id_t::srb1, config, test_frame, test_frame, timers);
     pdcp_tx->set_status_provider(&test_frame);
   }
 

@@ -105,7 +105,7 @@ protected:
 
     // Create RLC AM TX entity
     rlc = std::make_unique<rlc_tx_am_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, *tester, *tester, *tester, timers, pcell_worker);
+        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, config, *tester, *tester, *tester, timers, pcell_worker);
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());

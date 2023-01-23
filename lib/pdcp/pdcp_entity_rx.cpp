@@ -16,13 +16,13 @@
 using namespace srsgnb;
 
 pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
-                               lcid_t                          lcid_,
+                               rb_id_t                         rb_id_,
                                pdcp_config::pdcp_rx_config     cfg_,
                                pdcp_rx_upper_data_notifier&    upper_dn_,
                                pdcp_rx_upper_control_notifier& upper_cn_,
                                timer_manager&                  timers_) :
-  pdcp_entity_tx_rx_base(lcid_, cfg_.rb_type, cfg_.sn_size),
-  logger("PDCP", ue_index, lcid_),
+  pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
+  logger("PDCP", {ue_index, rb_id_}),
   cfg(cfg_),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
@@ -322,13 +322,13 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
     case security::integrity_algorithm::nia0:
       break;
     case security::integrity_algorithm::nia1:
-      security_nia1(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
+      security_nia1(mac_exp, k_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia2:
-      security_nia2(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
+      security_nia2(mac_exp, k_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     case security::integrity_algorithm::nia3:
-      security_nia3(mac_exp, k_int, count, lcid - 1, direction, buf.begin(), buf.end());
+      security_nia3(mac_exp, k_int, count, bearer_id, direction, buf.begin(), buf.end());
       break;
     default:
       break;
@@ -347,7 +347,7 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
                buf.end(),
                "Integrity check input - COUNT: {}, Bearer ID: {}, Direction: {}",
                count,
-               lcid,
+               bearer_id,
                direction);
     logger.log(level, (uint8_t*)k_int.data(), 16, "Integrity check key:");
     logger.log(level, (uint8_t*)mac_exp.data(), 4, "MAC {} (expected):", is_valid ? "match" : "mismatch");
@@ -365,7 +365,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
   // If control plane use RRC integrity key. If data use user plane key
   const security::sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
-  logger.log_debug("Cipher decrypt input: COUNT: {}, Bearer ID: {}, Direction: {}", count, lcid, direction);
+  logger.log_debug("Cipher decrypt input: COUNT: {}, Bearer ID: {}, Direction: {}", count, bearer_id, direction);
   logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key:");
   logger.log_debug(msg_begin, msg_end, "Cipher decrypt input msg");
 
@@ -376,13 +376,13 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
       ct.append(msg_begin, msg_end);
       break;
     case security::ciphering_algorithm::nea1:
-      ct = security_nea1(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
+      ct = security_nea1(k_enc, count, bearer_id, direction, msg_begin, msg_end);
       break;
     case security::ciphering_algorithm::nea2:
-      ct = security_nea2(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
+      ct = security_nea2(k_enc, count, bearer_id, direction, msg_begin, msg_end);
       break;
     case security::ciphering_algorithm::nea3:
-      ct = security_nea3(k_enc, count, lcid - 1, direction, msg_begin, msg_end);
+      ct = security_nea3(k_enc, count, bearer_id, direction, msg_begin, msg_end);
       break;
     default:
       break;

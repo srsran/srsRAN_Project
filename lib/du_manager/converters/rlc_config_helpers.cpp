@@ -117,7 +117,7 @@ srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                  
 {
   rlc_entity_creation_message msg;
   fill_rlc_entity_creation_message_common(msg, ue_index, pcell_index, bearer, du_services);
-  msg.lcid = srb_id_to_lcid(bearer.srb_id);
+  msg.rb_id = bearer.srb_id;
   return msg;
 }
 
@@ -130,6 +130,6 @@ srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                  
 {
   rlc_entity_creation_message msg;
   fill_rlc_entity_creation_message_common(msg, ue_index, pcell_index, bearer, du_services);
-  msg.lcid = bearer.lcid;
+  msg.rb_id = bearer.drb_id;
   return msg;
 }

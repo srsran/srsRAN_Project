@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/format_utils.h"
 
@@ -22,13 +21,17 @@ namespace srsgnb {
 /// \param log_name name of the logger we want to use (e.g. RLC, PDCP, etc.)
 /// \param du_index UE identifier within the DU
 /// \param lcid LCID for the bearer
-class bearer_logger
+template <typename Prefix>
+class prefixed_logger
 {
 public:
-  bearer_logger(const std::string& log_name, uint32_t ue_index_, lcid_t lcid_) :
-    ue_index(ue_index_), lcid(lcid_), logger(srslog::fetch_basic_logger(log_name, false))
+  prefixed_logger(const std::string& log_name, Prefix prefix_) :
+    logger(srslog::fetch_basic_logger(log_name, false)), prefix(prefix_)
   {
   }
+
+  void   set_prefix(Prefix prefix_) { prefix = prefix_; }
+  Prefix get_prefix() const { return prefix; }
 
   template <typename... Args>
   void log_debug(const char* fmt, Args&&... args) const
@@ -168,11 +171,9 @@ public:
     }
   }
 
-  const uint32_t ue_index;
-  const lcid_t   lcid;
-
 private:
   srslog::basic_logger& logger;
+  Prefix                prefix;
 
   template <typename... Args>
   void log_helper(srslog::log_channel& channel, const char* fmt, Args&&... args) const
@@ -182,7 +183,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel("UE={}, LCID={}: {}", ue_index, lcid, to_c_str(buffer));
+    channel("{}{}", prefix, to_c_str(buffer));
   }
 
   template <typename It, typename... Args>
@@ -193,7 +194,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel(it_begin, it_end, "UE={}, LCID={}: {}", ue_index, lcid, to_c_str(buffer));
+    channel(it_begin, it_end, "{}{}", prefix, to_c_str(buffer));
   }
 
   template <typename... Args>
@@ -204,7 +205,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel(msg, len, "UE={}, LCID={}: {}", ue_index, lcid, to_c_str(buffer));
+    channel(msg, len, "{}{}", prefix, to_c_str(buffer));
   }
 };
 

@@ -117,14 +117,14 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     // Create PDCP entity
     srsgnb::pdcp_entity_creation_message pdcp_msg = {};
     pdcp_msg.ue_index                             = ue_index;
-    pdcp_msg.lcid        = lcid_t(LCID_MIN_DRB); // What do we use here? There is no LCID in the CU-UP
-    pdcp_msg.config      = make_pdcp_drb_config(drb.pdcp_cfg);
-    pdcp_msg.tx_lower    = &new_drb->pdcp_to_f1u_adapter;
-    pdcp_msg.tx_upper_cn = &new_drb->pdcp_tx_to_e1_adapter;
-    pdcp_msg.rx_upper_dn = &new_drb->pdcp_to_sdap_adapter;
-    pdcp_msg.rx_upper_cn = &new_drb->pdcp_rx_to_e1_adapter;
-    pdcp_msg.timers      = &timers;
-    new_drb->pdcp_bearer = srsgnb::create_pdcp_entity(pdcp_msg);
+    pdcp_msg.rb_id                                = uint_to_drb_id(drb.drb_id);
+    pdcp_msg.config                               = make_pdcp_drb_config(drb.pdcp_cfg);
+    pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
+    pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1_adapter;
+    pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
+    pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1_adapter;
+    pdcp_msg.timers                               = &timers;
+    new_drb->pdcp_bearer                          = srsgnb::create_pdcp_entity(pdcp_msg);
 
     // Connect "PDCP-E1" adapter to E1
     new_drb->pdcp_tx_to_e1_adapter.connect_e1(); // TODO: pass actual E1 handler

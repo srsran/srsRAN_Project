@@ -26,7 +26,7 @@ namespace srsgnb {
 
 struct pdcp_entity_creation_message {
   uint32_t                        ue_index;
-  lcid_t                          lcid;
+  rb_id_t                         rb_id;
   pdcp_config                     config;
   pdcp_tx_lower_notifier*         tx_lower;
   pdcp_tx_upper_control_notifier* tx_upper_cn;

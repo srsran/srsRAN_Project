@@ -261,7 +261,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     // prepare PDCP creation message
     pdcp_entity_creation_message srb_pdcp{};
     srb_pdcp.ue_index           = msg.ue_index;
-    srb_pdcp.lcid               = srb_id_to_lcid(msg.srb_id);
+    srb_pdcp.rb_id              = msg.srb_id;
     srb_pdcp.config             = pdcp_make_default_srb_config(); // TODO: allow non-default PDCP SRB configs
     srb_pdcp.config.tx.rb_type  = pdcp_rb_type::srb;
     srb_pdcp.config.tx.rlc_mode = pdcp_rlc_mode::am;

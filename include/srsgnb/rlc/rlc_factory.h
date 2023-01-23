@@ -22,7 +22,7 @@ namespace srsgnb {
 
 struct rlc_entity_creation_message {
   du_ue_index_t                        ue_index;
-  lcid_t                               lcid;
+  rb_id_t                              rb_id;
   rlc_config                           config;
   rlc_rx_upper_layer_data_notifier*    rx_upper_dn;
   rlc_tx_upper_layer_data_notifier*    tx_upper_dn;

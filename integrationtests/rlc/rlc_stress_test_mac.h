@@ -10,18 +10,17 @@
 
 #pragma once
 
+#include "lib/rlc/rlc_bearer_logger.h"
 #include "rlc_stress_test_args.h"
-#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
-#include "srsgnb/srslog/srslog.h"
 #include <random>
 
 namespace srsgnb {
 class mac_dummy : public rlc_tx_lower_layer_notifier
 {
   const stress_test_args& args;
-  bearer_logger           logger;
+  rlc_bearer_logger       logger;
 
   std::mt19937                          rgen;
   std::uniform_real_distribution<float> real_dist;
@@ -32,8 +31,8 @@ class mac_dummy : public rlc_tx_lower_layer_notifier
   rlc_rx_lower_layer_interface* rlc_rx_lower = nullptr;
 
 public:
-  mac_dummy(const stress_test_args& args_, uint32_t id) :
-    args(args_), logger("MAC", id, lcid_t{}), rgen(args_.seed), bsr(0)
+  mac_dummy(const stress_test_args& args_, uint32_t ue_id, rb_id_t rb_id) :
+    args(args_), logger("MAC", {ue_id, rb_id}), rgen(args_.seed), bsr(0)
   {
   }
 

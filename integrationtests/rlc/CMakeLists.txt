@@ -9,8 +9,11 @@
 set_directory_properties(PROPERTIES LABELS "rlc")
 
 add_library(rlc_stress_test_mac rlc_stress_test_mac.cpp)
+target_include_directories(rlc_stress_test_mac PRIVATE ${CMAKE_SOURCE_DIR})
 add_library(rlc_stress_test_traffic rlc_stress_test_traffic.cpp)
+target_include_directories(rlc_stress_test_traffic PRIVATE ${CMAKE_SOURCE_DIR})
 add_executable(rlc_stress_test rlc_stress_test.cpp)
+target_include_directories(rlc_stress_test PRIVATE ${CMAKE_SOURCE_DIR})
 
 target_link_libraries(rlc_stress_test rlc_stress_test_traffic rlc_stress_test_mac srsgnb_cu_cp srsgnb_rlc srsgnb_support srslog )
 target_include_directories(rlc_stress_test PRIVATE ${CMAKE_SOURCE_DIR})

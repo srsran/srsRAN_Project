@@ -120,7 +120,7 @@ private:
 
 public:
   rlc_rx_am_entity(du_ue_index_t                     du_index,
-                   lcid_t                            lcid,
+                   rb_id_t                           rb_id,
                    const rlc_rx_am_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                    timer_manager&                    timers,

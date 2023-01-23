@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "pdcp_bearer_logger.h"
 #include "pdcp_entity_tx_rx_base.h"
 #include "pdcp_interconnect.h"
 #include "pdcp_pdu.h"
@@ -18,7 +19,6 @@
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
-#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/support/timers.h"
 #include <map>
 
@@ -47,7 +47,7 @@ class pdcp_entity_rx : public pdcp_entity_tx_rx_base,
 {
 public:
   pdcp_entity_rx(uint32_t                        ue_index,
-                 lcid_t                          lcid_,
+                 rb_id_t                         rb_id_,
                  pdcp_config::pdcp_rx_config     cfg_,
                  pdcp_rx_upper_data_notifier&    upper_dn_,
                  pdcp_rx_upper_control_notifier& upper_cn_,
@@ -100,7 +100,7 @@ public:
   void set_state(pdcp_rx_state st_) { st = st_; }
 
 private:
-  bearer_logger                     logger;
+  pdcp_bearer_logger                logger;
   const pdcp_config::pdcp_rx_config cfg;
 
   security::sec_128_as_config  sec_cfg           = {};

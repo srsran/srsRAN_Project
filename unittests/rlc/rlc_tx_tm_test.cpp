@@ -73,9 +73,8 @@ protected:
     // Create test frame
     tester = std::make_unique<rlc_tx_tm_test_frame>();
 
-    // Create RLC AM TX entity
-    rlc = std::make_unique<rlc_tx_tm_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, *tester, *tester, *tester);
+    // Create RLC TM TX entity
+    rlc = std::make_unique<rlc_tx_tm_entity>(du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, *tester, *tester, *tester);
   }
 
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("TEST", false);

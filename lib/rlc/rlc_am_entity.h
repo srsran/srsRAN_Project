@@ -20,7 +20,7 @@ class rlc_am_entity : public rlc_base_entity
 {
 public:
   rlc_am_entity(du_ue_index_t                        du_index,
-                lcid_t                               lcid,
+                rb_id_t                              rb_id,
                 const rlc_am_config&                 config,
                 rlc_rx_upper_layer_data_notifier&    rx_upper_dn,
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
@@ -29,15 +29,15 @@ public:
                 timer_manager&                       timers,
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor) :
-    rlc_base_entity(du_index, lcid)
+    rlc_base_entity(du_index, rb_id)
   {
     // Create AM entities
     std::unique_ptr<rlc_tx_am_entity> tx_am = std::make_unique<rlc_tx_am_entity>(
-        du_index, lcid, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers, pcell_executor);
+        du_index, rb_id, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers, pcell_executor);
     logger.log_info("RLC TX AM configured: {}", config.tx);
 
     std::unique_ptr<rlc_rx_am_entity> rx_am =
-        std::make_unique<rlc_rx_am_entity>(du_index, lcid, config.rx, rx_upper_dn, timers, ue_executor);
+        std::make_unique<rlc_rx_am_entity>(du_index, rb_id, config.rx, rx_upper_dn, timers, ue_executor);
     logger.log_info("RLC RX AM configured: {}", config.rx);
 
     // Tx/Rx interconnect

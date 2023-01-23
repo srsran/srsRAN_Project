@@ -84,7 +84,7 @@ protected:
 
     // Create PDCP RX entity
     test_frame = std::make_unique<pdcp_rx_test_frame>();
-    pdcp_rx    = std::make_unique<pdcp_entity_rx>(0, LCID_SRB1, config, *test_frame, *test_frame, timers);
+    pdcp_rx    = std::make_unique<pdcp_entity_rx>(0, srb_id_t::srb1, config, *test_frame, *test_frame, timers);
     pdcp_rx->set_status_handler(test_frame.get());
 
     srslog::flush();

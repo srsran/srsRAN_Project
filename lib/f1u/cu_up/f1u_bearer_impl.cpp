@@ -18,13 +18,11 @@ f1u_bearer_impl::f1u_bearer_impl(drb_id_t                  drb_id_,
                                  f1u_tx_pdu_notifier&      tx_pdu_notifier_,
                                  f1u_rx_delivery_notifier& rx_delivery_notifier_,
                                  f1u_rx_sdu_notifier&      rx_sdu_notifier_) :
-  logger("F1-U", 0, lcid_t(LCID_MIN_DRB)), // TODO: What do we use here? There is no LCID in the CU-UP
-  drb_id(drb_id_),
+  logger("F1-U", {0, drb_id_}),
   tx_pdu_notifier(tx_pdu_notifier_),
   rx_delivery_notifier(rx_delivery_notifier_),
   rx_sdu_notifier(rx_sdu_notifier_)
 {
-  (void)drb_id;
   (void)rx_delivery_notifier;
 }
 

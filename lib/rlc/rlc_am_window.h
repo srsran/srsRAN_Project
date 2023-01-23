@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "rlc_bearer_logger.h"
 #include "srsgnb/adt/circular_map.h"
-#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cstdint>
 
@@ -40,7 +40,7 @@ template <class T, std::size_t WINDOW_SIZE>
 class rlc_am_window final : public rlc_am_window_base<T>
 {
 public:
-  rlc_am_window(bearer_logger& logger_) : logger(logger_) {}
+  rlc_am_window(rlc_bearer_logger& logger_) : logger(logger_) {}
   ~rlc_am_window() = default;
 
   T& add_sn(size_t sn) override
@@ -73,7 +73,7 @@ public:
   bool has_sn(uint32_t sn) const override { return window.contains(sn); }
 
 private:
-  bearer_logger&                                 logger;
+  rlc_bearer_logger&                             logger;
   srsgnb::circular_map<uint32_t, T, WINDOW_SIZE> window;
 };
 

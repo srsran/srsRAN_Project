@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "pdcp_bearer_logger.h"
 #include "pdcp_entity_tx_rx_base.h"
 #include "pdcp_interconnect.h"
 #include "pdcp_pdu.h"
@@ -18,7 +19,6 @@
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/security/security.h"
 #include "srsgnb/support/timers.h"
 #include <map>
@@ -44,13 +44,13 @@ class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
 {
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
-                 lcid_t                          lcid_,
+                 rb_id_t                         rb_id_,
                  pdcp_config::pdcp_tx_config     cfg_,
                  pdcp_tx_lower_notifier&         lower_dn_,
                  pdcp_tx_upper_control_notifier& upper_cn_,
                  timer_manager&                  timers_) :
-    pdcp_entity_tx_rx_base(lcid_, cfg_.rb_type, cfg_.sn_size),
-    logger("PDCP", ue_index, lcid_),
+    pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
+    logger("PDCP", {ue_index, rb_id_}),
     cfg(cfg_),
     lower_dn(lower_dn_),
     upper_cn(upper_cn_),
@@ -152,7 +152,7 @@ public:
   void data_recovery() final;
 
 private:
-  bearer_logger               logger;
+  pdcp_bearer_logger          logger;
   pdcp_config::pdcp_tx_config cfg;
 
   pdcp_rx_status_provider*        status_provider = nullptr;

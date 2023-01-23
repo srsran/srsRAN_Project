@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/optional.h"
 #include <cstdint>
 #include <type_traits>
 
@@ -122,4 +123,47 @@ constexpr inline drb_id_t uint_to_drb_id(uint16_t id)
   return static_cast<drb_id_t>(id);
 }
 
+class rb_id_t
+{
+public:
+  rb_id_t() = default;
+  rb_id_t(srb_id_t srb_id_) : srb_id(srb_id_) {}
+  rb_id_t(drb_id_t drb_id_) : drb_id(drb_id_){};
+
+  bool is_srb() { return srb_id.has_value(); }
+  bool is_drb() { return drb_id.has_value(); }
+
+  srb_id_t get_srb_id() { return srb_id.value(); }
+  drb_id_t get_drb_id() { return drb_id.value(); }
+
+private:
+  optional<srb_id_t> srb_id;
+  optional<drb_id_t> drb_id;
+};
+
 } // namespace srsgnb
+
+namespace fmt {
+
+// rb_id formatter
+template <>
+struct formatter<srsgnb::rb_id_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    if (o.is_drb()) {
+      return format_to(ctx.out(), "DRB{}", drb_id_to_uint(o.get_drb_id()));
+    }
+    if (o.is_srb()) {
+      return format_to(ctx.out(), "SRB{}", srb_id_to_uint(o.get_srb_id()));
+    }
+    return format_to(ctx.out(), "Invalid");
+  }
+};
+} // namespace fmt

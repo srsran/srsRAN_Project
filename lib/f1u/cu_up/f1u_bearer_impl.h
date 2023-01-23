@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "f1u_bearer_logger.h"
 #include "srsgnb/f1u/cu_up/f1u_bearer.h"
 #include "srsgnb/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "srsgnb/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsgnb/f1u/cu_up/f1u_tx_pdu_notifier.h"
-#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
@@ -36,8 +36,7 @@ public:
   void discard_sdu(uint32_t count) override;
 
 private:
-  bearer_logger             logger;
-  drb_id_t                  drb_id;
+  f1u_bearer_logger         logger;
   f1u_tx_pdu_notifier&      tx_pdu_notifier;
   f1u_rx_delivery_notifier& rx_delivery_notifier;
   f1u_rx_sdu_notifier&      rx_sdu_notifier;

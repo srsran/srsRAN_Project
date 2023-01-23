@@ -33,7 +33,7 @@ namespace srsgnb {
 class stress_stack
 {
 public:
-  stress_stack(const stress_test_args& args_, uint32_t id);
+  stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t rb_id);
 
   ~stress_stack() = default;
 
@@ -102,6 +102,6 @@ private:
   std::unique_ptr<stress_traffic_source> traffic_source = nullptr;
 
   // Logging
-  srsgnb::bearer_logger logger;
+  srsgnb::rlc_bearer_logger logger;
 };
 } // namespace srsgnb

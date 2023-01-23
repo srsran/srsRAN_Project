@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "lib/rlc/rlc_bearer_logger.h"
 #include "rlc_stress_test_args.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/srslog/srslog.h"
 #include <random>
 
@@ -21,10 +21,10 @@ namespace srsgnb {
 
 class stress_traffic_sink : public pdcp_rx_upper_data_notifier
 {
-  bearer_logger logger;
+  rlc_bearer_logger logger;
 
 public:
-  stress_traffic_sink(uint32_t id) : logger("TRAFF", id, lcid_t{}) {}
+  stress_traffic_sink(uint32_t ue_id, rb_id_t rb_id) : logger("TRAFF", {ue_id, rb_id}) {}
 
   // pdcp_rx_upper_data_notifier interface
   void on_new_sdu(byte_buffer pdu) final;
@@ -41,11 +41,11 @@ class stress_traffic_source
 
   pdcp_tx_upper_data_interface* pdcp_tx_upper = nullptr;
 
-  srsgnb::bearer_logger logger;
+  rlc_bearer_logger logger;
 
 public:
-  explicit stress_traffic_source(const stress_test_args& args_, uint32_t id) :
-    args(args_), rgen(args_.seed), int_dist(args_.min_sdu_size, args_.max_sdu_size), logger("TRAFF", id, lcid_t{})
+  explicit stress_traffic_source(const stress_test_args& args_, uint32_t ue_id, rb_id_t rb_id) :
+    args(args_), rgen(args_.seed), int_dist(args_.min_sdu_size, args_.max_sdu_size), logger("TRAFF", {ue_id, rb_id})
   {
   }
 

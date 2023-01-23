@@ -17,12 +17,8 @@ using namespace srs_du;
 f1u_bearer_impl::f1u_bearer_impl(drb_id_t             drb_id_,
                                  f1u_rx_sdu_notifier& rx_sdu_notifier_,
                                  f1u_tx_pdu_notifier& tx_pdu_notifier_) :
-  logger("F1-U", 0, lcid_t(LCID_MIN_DRB)), // TODO: What do we use here?
-  drb_id(drb_id_),
-  rx_sdu_notifier(rx_sdu_notifier_),
-  tx_pdu_notifier(tx_pdu_notifier_)
+  logger("F1-U", {0, drb_id_}), rx_sdu_notifier(rx_sdu_notifier_), tx_pdu_notifier(tx_pdu_notifier_)
 {
-  (void)drb_id;
 }
 
 void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
