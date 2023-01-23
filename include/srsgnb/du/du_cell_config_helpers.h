@@ -17,7 +17,6 @@
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 #include "srsgnb/scheduler/config/cell_config_builder_params.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
-
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/support/error_handling.h"
 
@@ -79,6 +78,8 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
   if (not band_helper::is_paired_spectrum(cfg.dl_carrier.band)) {
     cfg.tdd_ul_dl_cfg_common.emplace(config_helpers::make_default_tdd_ul_dl_config_common(params));
   }
+
+  cfg.ue_ded_serv_cell_cfg = create_default_initial_ue_serving_cell_config(params);
 
   return cfg;
 }

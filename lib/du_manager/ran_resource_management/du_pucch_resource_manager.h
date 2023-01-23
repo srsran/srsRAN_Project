@@ -21,7 +21,7 @@ namespace srs_du {
 class du_pucch_resource_manager
 {
 public:
-  explicit du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_, const pucch_config& default_pucch_cfg_);
+  explicit du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_);
   du_pucch_resource_manager(const du_pucch_resource_manager&)            = delete;
   du_pucch_resource_manager(du_pucch_resource_manager&&)                 = delete;
   du_pucch_resource_manager& operator=(const du_pucch_resource_manager&) = delete;
@@ -35,7 +35,7 @@ public:
   void dealloc_resources(cell_group_config& cell_grp_cfg);
 
 private:
-  const pucch_config& default_pucch_cfg;
+  const pucch_config default_pucch_cfg;
 
   struct cell_resource_context {
     /// Pool of PUCCH SR offsets currently available to be allocated to UEs.

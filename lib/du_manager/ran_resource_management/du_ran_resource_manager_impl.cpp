@@ -61,12 +61,8 @@ du_ue_resource_update_response du_ue_ran_resource_updater_impl::update(du_cell_i
 
 ///////////////////////////
 
-du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config> cell_cfg_list_,
-                                                           const serving_cell_config& default_ue_cell_cfg_) :
-  cell_cfg_list(cell_cfg_list_),
-  default_ue_cell_cfg(default_ue_cell_cfg_),
-  logger(srslog::fetch_basic_logger("DU-MNG")),
-  pucch_res_mng(cell_cfg_list, *default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg)
+du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config> cell_cfg_list_) :
+  cell_cfg_list(cell_cfg_list_), logger(srslog::fetch_basic_logger("DU-MNG")), pucch_res_mng(cell_cfg_list)
 {
 }
 
@@ -194,7 +190,7 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
     srsgnb_assert(not ue_res.cells.contains(0), "Reallocation of PCell detected");
     ue_res.cells.emplace(to_du_cell_index(0));
     ue_res.cells[0].serv_cell_idx            = SERVING_CELL_PCELL_IDX;
-    ue_res.cells[0].serv_cell_cfg            = default_ue_cell_cfg;
+    ue_res.cells[0].serv_cell_cfg            = cell_cfg_list[0].ue_ded_serv_cell_cfg;
     ue_res.cells[0].serv_cell_cfg.cell_index = cell_index;
     ue_res.mcg_cfg                           = config_helpers::make_initial_mac_cell_group_config();
     // TODO: Move to helper.
@@ -209,7 +205,7 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
     srsgnb_assert(not ue_res.cells.contains(serv_cell_index), "Reallocation of SCell detected");
     ue_res.cells.emplace(serv_cell_index);
     ue_res.cells[serv_cell_index].serv_cell_idx            = serv_cell_index;
-    ue_res.cells[serv_cell_index].serv_cell_cfg            = default_ue_cell_cfg;
+    ue_res.cells[serv_cell_index].serv_cell_cfg            = cell_cfg_list[serv_cell_index].ue_ded_serv_cell_cfg;
     ue_res.cells[serv_cell_index].serv_cell_cfg.cell_index = cell_index;
     // TODO: Allocate SCell params.
   }

@@ -13,15 +13,15 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_,
-                                                     const pucch_config&        default_pucch_cfg_) :
-  default_pucch_cfg(default_pucch_cfg_), cells(cell_cfg_list_.size())
+du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_) :
+  default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()),
+  cells(cell_cfg_list_.size())
 {
   srsgnb_assert(not default_pucch_cfg.sr_res_list.empty(), "There must be at least one SR Resource");
 
   // Compute fundamental SR period.
   // TODO: Handle more than one SR period.
-  unsigned sr_period = sr_periodicity_to_slot(default_pucch_cfg_.sr_res_list[0].period);
+  unsigned sr_period = sr_periodicity_to_slot(default_pucch_cfg.sr_res_list[0].period);
 
   // Setup RAN resources per cell.
   for (auto& cell : cells) {

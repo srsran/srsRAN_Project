@@ -45,10 +45,10 @@ pusch_config make_default_pusch_config();
 pdsch_serving_cell_config make_default_pdsch_serving_cell_config();
 
 /// \brief Creates a default UE Serving Cell configuration.
-serving_cell_config create_default_initial_ue_serving_cell_config();
+serving_cell_config create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params = {});
 
 /// \brief Creates a default UE PSCell configuration.
-cell_config_dedicated create_default_initial_ue_spcell_cell_config();
+cell_config_dedicated create_default_initial_ue_spcell_cell_config(const cell_config_builder_params& params = {});
 
 } // namespace config_helpers
 } // namespace srsgnb

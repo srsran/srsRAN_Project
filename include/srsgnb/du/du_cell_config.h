@@ -15,10 +15,12 @@
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
+#include "srsgnb/scheduler/config/serving_cell_config.h"
 
 namespace srsgnb {
 
-/// Initial, common Cell Configuration used in DU.
+/// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for
+/// other layers (e.g. scheduler).
 struct du_cell_config {
   pci_t       pci;
   std::string plmn;
@@ -52,6 +54,9 @@ struct du_cell_config {
 
   /// Defines the TDD DL-UL pattern and periodicity. If no value is set, the cell is in FDD mode.
   optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
+
+  /// UE-dedicated serving cell configuration.
+  serving_cell_config ue_ded_serv_cell_cfg;
 };
 
 } // namespace srsgnb

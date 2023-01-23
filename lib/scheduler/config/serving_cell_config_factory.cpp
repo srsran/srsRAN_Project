@@ -348,7 +348,8 @@ pdsch_serving_cell_config srsgnb::config_helpers::make_default_pdsch_serving_cel
   return serv_cell;
 }
 
-serving_cell_config srsgnb::config_helpers::create_default_initial_ue_serving_cell_config()
+serving_cell_config
+srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params)
 {
   serving_cell_config serv_cell;
   serv_cell.cell_index = to_du_cell_index(0);
@@ -357,7 +358,7 @@ serving_cell_config srsgnb::config_helpers::create_default_initial_ue_serving_ce
   serv_cell.init_dl_bwp.pdcch_cfg.emplace();
   pdcch_config& pdcch_cfg = serv_cell.init_dl_bwp.pdcch_cfg.value();
   // >> Add CORESET#1.
-  pdcch_cfg.coresets.push_back(make_default_coreset_config());
+  pdcch_cfg.coresets.push_back(make_default_coreset_config(params));
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
   pdcch_cfg.coresets[0].pdcch_dmrs_scrambling_id.emplace();
   pdcch_cfg.coresets[0].pdcch_dmrs_scrambling_id.value() = 0;
@@ -391,10 +392,11 @@ serving_cell_config srsgnb::config_helpers::create_default_initial_ue_serving_ce
   return serv_cell;
 }
 
-cell_config_dedicated srsgnb::config_helpers::create_default_initial_ue_spcell_cell_config()
+cell_config_dedicated
+srsgnb::config_helpers::create_default_initial_ue_spcell_cell_config(const cell_config_builder_params& params)
 {
   cell_config_dedicated cfg;
   cfg.serv_cell_idx = to_serv_cell_index(0);
-  cfg.serv_cell_cfg = create_default_initial_ue_serving_cell_config();
+  cfg.serv_cell_cfg = create_default_initial_ue_serving_cell_config(params);
   return cfg;
 }
