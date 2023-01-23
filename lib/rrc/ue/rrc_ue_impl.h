@@ -15,7 +15,6 @@
 #include "procedures/rrc_setup_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
-#include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/rrc/rrc_ue.h"
 
@@ -27,8 +26,7 @@ namespace srs_cu_cp {
 class rrc_ue_impl final : public rrc_ue_interface
 {
 public:
-  rrc_ue_impl(rrc_du_ue_manager&                     parent_,
-              rrc_ue_du_processor_notifier&          du_proc_notif_,
+  rrc_ue_impl(rrc_ue_du_processor_notifier&          du_proc_notif_,
               rrc_ue_nas_notifier&                   nas_notif_,
               rrc_ue_control_notifier&               ngc_ctrl_notif_,
               const ue_index_t                       ue_index_,
@@ -37,7 +35,8 @@ public:
               const rrc_ue_cfg_t&                    cfg_,
               const srb_notifiers_array&             srbs_,
               const asn1::unbounded_octstring<true>& du_to_cu_container,
-              rrc_ue_task_scheduler&                 task_sched);
+              rrc_ue_task_scheduler&                 task_sched,
+              bool&                                  reject_users_);
   ~rrc_ue_impl() = default;
 
   // rrc_ul_ccch_pdu_handler
@@ -121,13 +120,13 @@ private:
   log_rx_pdu_fail(uint16_t rnti, const char* source, byte_buffer_view pdu, const char* cause_str, bool log_hex = true);
 
   rrc_ue_context_t              context;
-  rrc_du_ue_manager&            rrc_du;                // reference to the parant RRC object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
   rrc_ue_nas_notifier&          nas_notifier;          // PDU notifier to the NGC
   rrc_ue_control_notifier&      ngc_ctrl_notifier;     // Control message notifier to the NGC
   srb_notifiers_array           srbs;                  // set notifiers for all SRBs
   byte_buffer                   du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&        task_sched;
+  bool&                         reject_users;
   srslog::basic_logger&         logger;
 
   // RRC procedures handling

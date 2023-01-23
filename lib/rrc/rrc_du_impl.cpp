@@ -39,8 +39,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
   // create UE object
   ue_index_t ue_index = msg.ue_index;
   ue_db.emplace(ue_index,
-                std::make_unique<rrc_ue_impl>(*this,
-                                              rrc_ue_du_proc_notifier,
+                std::make_unique<rrc_ue_impl>(rrc_ue_du_proc_notifier,
                                               nas_notifier,
                                               ngc_ctrl_notifier,
                                               msg.ue_index,
@@ -49,7 +48,8 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
                                               cfg.ue_default_cfg,
                                               msg.srbs,
                                               msg.du_to_cu_container,
-                                              *msg.ue_task_sched));
+                                              *msg.ue_task_sched,
+                                              reject_users));
   auto& u = ue_db.at(ue_index);
   return u.get();
 }

@@ -53,7 +53,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer_slice pdu)
 void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
 {
   // Perform various checks to make sure we can serve the RRC Setup Request
-  if (not rrc_du.is_rrc_connect_allowed()) {
+  if (reject_users) {
     logger.error("RRC connections not allowed. Sending Connection Reject");
     send_rrc_reject(rrc_reject_max_wait_time_s);
     on_ue_delete_request();

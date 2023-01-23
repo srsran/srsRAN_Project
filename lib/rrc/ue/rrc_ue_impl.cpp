@@ -16,8 +16,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
-                         rrc_ue_du_processor_notifier&          du_proc_notif_,
+rrc_ue_impl::rrc_ue_impl(rrc_ue_du_processor_notifier&          du_proc_notif_,
                          rrc_ue_nas_notifier&                   nas_notif_,
                          rrc_ue_control_notifier&               ngc_ctrl_notif_,
                          const ue_index_t                       ue_index_,
@@ -26,15 +25,16 @@ rrc_ue_impl::rrc_ue_impl(rrc_du_ue_manager&                     rrc_du_,
                          const rrc_ue_cfg_t&                    cfg_,
                          const srb_notifiers_array&             srbs_,
                          const asn1::unbounded_octstring<true>& du_to_cu_container_,
-                         rrc_ue_task_scheduler&                 task_sched_) :
+                         rrc_ue_task_scheduler&                 task_sched_,
+                         bool&                                  reject_users_) :
   context(ue_index_, c_rnti_, cell_, cfg_),
-  rrc_du(rrc_du_),
   du_processor_notifier(du_proc_notif_),
   nas_notifier(nas_notif_),
   ngc_ctrl_notifier(ngc_ctrl_notif_),
   srbs(srbs_),
   du_to_cu_container(du_to_cu_container_),
   task_sched(task_sched_),
+  reject_users(reject_users_),
   logger(cfg_.logger),
   event_mng(std::make_unique<rrc_ue_event_manager>(task_sched_.get_timer_manager()))
 {
