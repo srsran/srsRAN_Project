@@ -51,9 +51,10 @@ grant_info get_pdsch_grant_info(const rar_information& rar);
 
 /// Extract PDSCH grant info of Paging allocation.
 ///
+/// \param bwp_cfg Initial DL BWP with CORESET#0 configuration.
 /// \param pg Paging allocation parameters.
 /// \return Parameters of the grant.
-grant_info get_pdsch_grant_info(const dl_paging_allocation& pg);
+grant_info get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const dl_paging_allocation& pg);
 
 /// Extract PDSCH grant info of UE DL allocation.
 ///

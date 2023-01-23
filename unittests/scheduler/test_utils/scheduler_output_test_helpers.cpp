@@ -61,9 +61,12 @@ grant_info srsgnb::get_pdsch_grant_info(const rar_information& rar)
   return grant_info{rar.pdsch_cfg.bwp_cfg->scs, rar.pdsch_cfg.symbols, crbs};
 }
 
-grant_info srsgnb::get_pdsch_grant_info(const dl_paging_allocation& pg)
+grant_info srsgnb::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const dl_paging_allocation& pg)
 {
-  crb_interval crbs = prb_to_crb(*pg.pdsch_cfg.bwp_cfg, pg.pdsch_cfg.prbs.prbs());
+  // See TS 38.212, section 7.3.1.2.1. DCI Format 1_0.
+  bwp_configuration coreset0_bwp_cfg = bwp_cfg.generic_params;
+  coreset0_bwp_cfg.crbs              = bwp_cfg.pdcch_common.coreset0->coreset0_crbs();
+  crb_interval crbs                  = prb_to_crb(coreset0_bwp_cfg, pg.pdsch_cfg.prbs.prbs());
   return grant_info{pg.pdsch_cfg.bwp_cfg->scs, pg.pdsch_cfg.symbols, crbs};
 }
 
@@ -135,7 +138,7 @@ std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cel
     grants.emplace_back();
     grants.back().type  = test_grant_info::PAGING;
     grants.back().rnti  = pg.pdsch_cfg.rnti;
-    grants.back().grant = get_pdsch_grant_info(pg);
+    grants.back().grant = get_pdsch_grant_info(cell_cfg.dl_cfg_common.init_dl_bwp, pg);
   }
 
   return grants;
