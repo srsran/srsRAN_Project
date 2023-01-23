@@ -138,7 +138,8 @@ public:
   f1u_dummy_bearer             bearer;
   srs_du::f1u_rx_sdu_notifier* du_notif = nullptr;
 
-  f1u_bearer* create_du_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override
+  f1u_bearer*
+  create_du_bearer(uint32_t ue_index, uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override
   {
     du_notif = &du_rx;
     return &bearer;

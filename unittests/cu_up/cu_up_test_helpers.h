@@ -117,7 +117,8 @@ public:
   explicit dummy_f1u_gateway(dummy_f1u_bearer& bearer_) : bearer(bearer_) {}
   ~dummy_f1u_gateway() override = default;
 
-  srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ul_teid,
+  srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ue_index,
+                                          uint32_t                             ul_teid,
                                           srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
                                           srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
   {

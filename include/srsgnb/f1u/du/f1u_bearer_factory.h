@@ -20,8 +20,10 @@ namespace srsgnb {
 namespace srs_du {
 
 /// \brief Creates an F1-U bearer for the DU.
-std::unique_ptr<f1u_bearer>
-create_f1u_bearer(drb_id_t drb_id, f1u_rx_sdu_notifier& rx_sdu_notifier, f1u_tx_pdu_notifier& tx_pdu_notifier);
+std::unique_ptr<f1u_bearer> create_f1u_bearer(uint32_t             ue_index,
+                                              drb_id_t             drb_id,
+                                              f1u_rx_sdu_notifier& rx_sdu_notifier,
+                                              f1u_tx_pdu_notifier& tx_pdu_notifier);
 
 } // namespace srs_du
 } // namespace srsgnb

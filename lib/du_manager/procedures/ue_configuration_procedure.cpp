@@ -108,7 +108,8 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
     drb.dluptnl_info_list.resize(1); // TODO: Handle more than one.
     drb.dluptnl_info_list[0].gtp_teid   = int_to_gtp_teid((ue->ue_index << 5U) + (unsigned)drb.drb_id);
     drb.dluptnl_info_list[0].tp_address = transport_layer_address{"127.0.0.1"}; // TODO: Set IP.
-    drb.drb_f1u = du_params.f1u.f1u_gw.create_du_bearer(drb.dluptnl_info_list[0].gtp_teid.value(),
+    drb.drb_f1u                         = du_params.f1u.f1u_gw.create_du_bearer(ue->ue_index,
+                                                        drb.dluptnl_info_list[0].gtp_teid.value(),
                                                         drb.uluptnl_info_list[0].gtp_teid.value(),
                                                         drb.connector.f1u_rx_sdu_notif);
     if (drb.drb_f1u == nullptr) {

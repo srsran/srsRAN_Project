@@ -63,7 +63,7 @@ protected:
     logger.info("Creating F1-U bearer");
     tester          = std::make_unique<f1u_du_test_frame>();
     drb_id_t drb_id = drb_id_t::drb1;
-    f1u             = std::make_unique<f1u_bearer_impl>(drb_id, *tester, *tester);
+    f1u             = std::make_unique<f1u_bearer_impl>(0, drb_id, *tester, *tester);
   }
 
   void TearDown() override

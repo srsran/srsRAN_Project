@@ -134,7 +134,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     // Create  F1-U bearer
     uint32_t    f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
     f1u_bearer* f1u_bearer =
-        f1u_gw.create_cu_bearer(f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
+        f1u_gw.create_cu_bearer(ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
     new_drb->f1u_ul_teid = f1u_ul_teid;
 
     up_transport_layer_info f1u_ul_tunnel_addr;

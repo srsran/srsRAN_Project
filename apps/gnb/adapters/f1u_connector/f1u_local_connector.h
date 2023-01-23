@@ -50,14 +50,16 @@ public:
   srs_du::f1u_du_gateway* get_f1u_du_gateway() { return this; }
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
 
-  srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ul_teid,
+  srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ue_index,
+                                          uint32_t                             ul_teid,
                                           srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                           srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier) override;
   void                   attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override;
   void                   remove_cu_bearer(uint32_t ul_teid) override;
 
-  srs_du::f1u_bearer* create_du_bearer(uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
-  void                remove_du_bearer(uint32_t dl_teid) override;
+  srs_du::f1u_bearer*
+  create_du_bearer(uint32_t ue_index, uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
+  void remove_du_bearer(uint32_t dl_teid) override;
 
 private:
   srslog::basic_logger&             logger;

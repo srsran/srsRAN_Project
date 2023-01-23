@@ -29,7 +29,8 @@ public:
   f1u_cu_up_gateway(f1u_cu_up_gateway&&)                 = default;
   f1u_cu_up_gateway& operator=(f1u_cu_up_gateway&&)      = default;
 
-  virtual srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ul_teid,
+  virtual srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ue_index,
+                                                  uint32_t                             ul_teid,
                                                   srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
                                                   srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier) = 0;
 

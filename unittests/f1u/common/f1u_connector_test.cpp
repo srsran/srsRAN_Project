@@ -103,11 +103,11 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   // Create CU TX notifier adapter
   dummy_f1u_cu_up_rx_sdu_notifier      cu_rx;
   dummy_f1u_cu_up_rx_delivery_notifier cu_delivery;
-  srs_cu_up::f1u_bearer*               cu_bearer = cu_gw->create_cu_bearer(ul_teid, cu_delivery, cu_rx);
+  srs_cu_up::f1u_bearer*               cu_bearer = cu_gw->create_cu_bearer(0, ul_teid, cu_delivery, cu_rx);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
-  srs_du::f1u_bearer*          du_bearer = du_gw->create_du_bearer(dl_teid, ul_teid, du_rx);
+  srs_du::f1u_bearer*          du_bearer = du_gw->create_du_bearer(0, dl_teid, ul_teid, du_rx);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_teid, dl_teid);
