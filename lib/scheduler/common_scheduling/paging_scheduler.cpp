@@ -64,8 +64,13 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
     }
 
     // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
-    bwp_cfg      = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
-    bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+    bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
+    if (ss_cfg.type == search_space_configuration::type_t::common) {
+      // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
+      if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
+        bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+      }
+    }
   } else {
     srsgnb_assertion_failure("Paging Search Space not configured in DL BWP.");
   }
