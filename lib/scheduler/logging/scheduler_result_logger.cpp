@@ -30,7 +30,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const rar_information& rar : result.dl.rar_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- RAR PDSCH: ra-rnti={:#x}, prbs={}, symbols={}, tbs={}B, mcs={}, rv={}, grants ({}): ",
+                   "\n- RAR PDSCH: ra-rnti={:#x}, prbs={}, symbols={}, tbs={}bytes, mcs={}, rv={}, grants ({}): ",
                    rar.pdsch_cfg.rnti,
                    rar.pdsch_cfg.prbs.prbs(),
                    rar.pdsch_cfg.symbols,
@@ -40,7 +40,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    rar.grants.size());
     for (const rar_ul_grant& grant : rar.grants) {
       fmt::format_to(fmtbuf,
-                     "{}tc-rnti={:#x}: rapid={}, ta={}}}{}",
+                     "{}tc-rnti={:#x}: rapid={}, ta={}",
                      (&grant == &rar.grants.front()) ? "" : ", ",
                      grant.temp_crnti,
                      grant.rapid,
