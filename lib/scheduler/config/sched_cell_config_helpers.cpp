@@ -15,17 +15,15 @@
 using namespace srsgnb;
 using namespace srsgnb::config_helpers;
 
-std::vector<sched_grid_resource> srsgnb::config_helpers::build_pucch_guardbands_list()
+std::vector<sched_grid_resource> srsgnb::config_helpers::build_pucch_guardbands_list(const uplink_config& ul_cfg)
 {
-  uplink_config ul_config = make_default_ue_uplink_config();
-
   std::vector<sched_grid_resource> pucch_guardbands{};
 
   auto list_contain_resource = [&pucch_guardbands](const sched_grid_resource& res) {
     return std::find(pucch_guardbands.begin(), pucch_guardbands.end(), res) != pucch_guardbands.end();
   };
 
-  for (const auto& pucch_res : ul_config.init_ul_bwp.pucch_cfg->pucch_res_list) {
+  for (const auto& pucch_res : ul_cfg.init_ul_bwp.pucch_cfg->pucch_res_list) {
     sched_grid_resource res_0, res_1;
     res_0.prbs.set(pucch_res.starting_prb, pucch_res.starting_prb + 1);
 

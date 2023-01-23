@@ -38,7 +38,7 @@ ul_config_common make_default_ul_config_common(const cell_config_builder_params&
 
 ssb_configuration make_default_ssb_config(const cell_config_builder_params& params = {});
 
-uplink_config make_default_ue_uplink_config();
+uplink_config make_default_ue_uplink_config(const cell_config_builder_params& params = {});
 
 pusch_config make_default_pusch_config();
 

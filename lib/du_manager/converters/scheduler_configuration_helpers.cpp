@@ -43,7 +43,7 @@ sched_cell_configuration_request_message srsgnb::srs_du::make_sched_cell_config_
   sched_req.searchspace0      = du_cfg.searchspace0_idx;
   sched_req.sib1_payload_size = sib1_payload_size;
 
-  sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list();
+  sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list(*du_cfg.ue_ded_serv_cell_cfg.ul_config);
 
   return sched_req;
 }

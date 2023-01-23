@@ -274,7 +274,7 @@ pusch_config srsgnb::config_helpers::make_default_pusch_config()
   return cfg;
 }
 
-uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
+uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_config_builder_params& params)
 {
   // > UL Config.
   uplink_config ul_config{};
@@ -290,7 +290,7 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
 
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id                 = 0,
-                           .starting_prb           = 51,
+                           .starting_prb           = params.nof_crbs - 1,
                            .second_hop_prb         = 0,
                            .intraslot_freq_hopping = true,
                            .format                 = pucch_format::FORMAT_1};
@@ -305,19 +305,19 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config()
   pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
   res1.res_id          = 1;
   res1.starting_prb    = 1;
-  res1.second_hop_prb  = 50;
+  res1.second_hop_prb  = params.nof_crbs - 2;
   // >>> PUCCH resource 2.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
   res2.res_id          = 2;
-  res2.starting_prb    = 50;
+  res2.starting_prb    = params.nof_crbs - 2;
   res2.second_hop_prb  = 1;
   // >>> PUCCH resource 3.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res3 = pucch_cfg.pucch_res_list.back();
   res3.res_id          = 3;
   res3.starting_prb    = 0;
-  res3.second_hop_prb  = 51;
+  res3.second_hop_prb  = params.nof_crbs - 1;
 
   // TODO: add more PUCCH resources.
 
@@ -384,7 +384,7 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
       prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
 
   // > UL Config.
-  serv_cell.ul_config.emplace(make_default_ue_uplink_config());
+  serv_cell.ul_config.emplace(make_default_ue_uplink_config(params));
 
   // > pdsch-ServingCellConfig.
   serv_cell.pdsch_serv_cell_cfg.emplace(make_default_pdsch_serving_cell_config());

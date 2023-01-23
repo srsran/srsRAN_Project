@@ -16,6 +16,7 @@
 #include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 #include "srsgnb/scheduler/config/sched_cell_config_helpers.h"
 #include "srsgnb/scheduler/config/serving_cell_config.h"
+#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 
 namespace srsgnb {
@@ -35,7 +36,7 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
   sched_req.ssb_config     = config_helpers::make_default_ssb_config(params);
   sched_req.dmrs_typeA_pos = dmrs_typeA_position::pos2;
   if (not band_helper::is_paired_spectrum(sched_req.dl_carrier.band)) {
-    sched_req.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
+    sched_req.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common(params);
   }
 
   sched_req.nof_beams     = 1;
@@ -47,7 +48,8 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
   sched_req.searchspace0      = 0U;
   sched_req.sib1_payload_size = 101; // Random size.
 
-  sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list();
+  sched_req.pucch_guardbands =
+      config_helpers::build_pucch_guardbands_list(config_helpers::make_default_ue_uplink_config(params));
 
   return sched_req;
 }
