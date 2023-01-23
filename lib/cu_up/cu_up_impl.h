@@ -36,7 +36,12 @@ public:
   ~cu_up();
 
   // cu_up_interface
-  int get_n3_bind_port() override { return ngu_gw->get_bind_port(); }
+  int get_n3_bind_port() override
+  {
+    uint16_t port = {};
+    ngu_gw->get_bind_port(port);
+    return port;
+  }
 
   // cu_up_e1_interface
   e1_message_handler&     get_e1_message_handler() override { return *e1; }

@@ -34,11 +34,11 @@ private:
   void handle_pdu(const byte_buffer& pdu, const ::sockaddr* dest_addr, ::socklen_t dest_len) override;
 
   // udp_network_gateway_controller interface
-  bool        create_and_bind() final;
-  void        receive() final;
-  int         get_socket_fd() final;
-  int         get_bind_port() final;
-  std::string get_bind_address() final;
+  bool create_and_bind() override;
+  void receive() override;
+  int  get_socket_fd() override;
+  bool get_bind_port(uint16_t& port) override;
+  bool get_bind_address(std::string& ip_address) override;
 
   // socket helpers
   bool set_non_blocking();

@@ -277,7 +277,8 @@ TEST_F(udp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
   ASSERT_TRUE(client->create_and_bind());
   start_receive_thread();
 
-  std::string server_address = server->get_bind_address();
+  std::string server_address = {};
+  ASSERT_TRUE(server->get_bind_address(server_address));
   byte_buffer pdu_small(make_small_tx_byte_buffer());
   send_to_server(pdu_small, server_address, server_port);
   byte_buffer pdu_large(make_large_tx_byte_buffer());
