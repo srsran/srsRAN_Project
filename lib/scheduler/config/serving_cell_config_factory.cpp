@@ -193,7 +193,7 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->msg3_transform_precoder                       = false;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm                     = 1;
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 2;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 3;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10U << to_numerology_value(params.scs_common);
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
@@ -283,22 +283,33 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   ul_config.init_ul_bwp.pucch_cfg.emplace();
 
   // >> PUCCH.
-  auto& pucch_cfg                = ul_config.init_ul_bwp.pucch_cfg.value();
-  auto& pucch_res_set            = pucch_cfg.pucch_res_set.emplace_back();
-  pucch_res_set.pucch_res_set_id = 0;
-  pucch_res_set.pucch_res_id_list.emplace_back(0);
-  pucch_res_set.pucch_res_id_list.emplace_back(1);
-  pucch_res_set.pucch_res_id_list.emplace_back(2);
+  auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cfg.value();
+  // PUCCH Resource Set ID 0.
+  auto& pucch_res_set_0            = pucch_cfg.pucch_res_set.emplace_back();
+  pucch_res_set_0.pucch_res_set_id = 0;
+  pucch_res_set_0.pucch_res_id_list.emplace_back(0);
+  pucch_res_set_0.pucch_res_id_list.emplace_back(1);
+  pucch_res_set_0.pucch_res_id_list.emplace_back(2);
+
+  auto& pucch_res_set_1            = pucch_cfg.pucch_res_set.emplace_back();
+  pucch_res_set_1.pucch_res_set_id = 1;
+  pucch_res_set_1.pucch_res_id_list.emplace_back(3);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(4);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(5);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(6);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(7);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(8);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(9);
 
   unsigned nof_rbs = params.nof_crbs;
 
+  // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.
   pucch_resource res_basic{.res_id                 = 0,
                            .starting_prb           = nof_rbs - 1,
                            .second_hop_prb         = 0,
                            .intraslot_freq_hopping = true,
                            .format                 = pucch_format::FORMAT_1};
-  res_basic.format                        = pucch_format::FORMAT_1;
   res_basic.format_1.initial_cyclic_shift = 0;
   res_basic.format_1.nof_symbols          = 14;
   res_basic.format_1.starting_sym_idx     = 0;
@@ -316,12 +327,53 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   res2.res_id          = 2;
   res2.second_hop_prb  = 1;
   res2.starting_prb    = nof_rbs - res2.second_hop_prb - 1;
+
+  // PUCCH resource format 2, for HARQ-ACK and CSI.
   // >>> PUCCH resource 3.
+  pucch_resource res_basic_f2{
+      .starting_prb = 2, .second_hop_prb = 0, .intraslot_freq_hopping = false, .format = pucch_format::FORMAT_2};
+  res_basic_f2.res_id                    = 3;
+  res_basic_f2.format_2.nof_prbs         = 1;
+  res_basic_f2.format_2.nof_symbols      = 2;
+  res_basic_f2.format_2.starting_sym_idx = 0;
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  // >>> PUCCH resource 4.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res4           = pucch_cfg.pucch_res_list.back();
+  res4.res_id                    = 4;
+  res4.format_2.starting_sym_idx = 2;
+  // >>> PUCCH resource 5.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res5           = pucch_cfg.pucch_res_list.back();
+  res5.res_id                    = 5;
+  res5.format_2.starting_sym_idx = 4;
+  // >>> PUCCH resource 6.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res6           = pucch_cfg.pucch_res_list.back();
+  res6.res_id                    = 6;
+  res6.format_2.starting_sym_idx = 6;
+  // >>> PUCCH resource 7.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res7           = pucch_cfg.pucch_res_list.back();
+  res7.res_id                    = 7;
+  res7.format_2.starting_sym_idx = 8;
+  // >>> PUCCH resource 8.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res8           = pucch_cfg.pucch_res_list.back();
+  res8.res_id                    = 8;
+  res8.format_2.starting_sym_idx = 10;
+  // >>> PUCCH resource 9.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res9           = pucch_cfg.pucch_res_list.back();
+  res9.res_id                    = 9;
+  res9.format_2.starting_sym_idx = 12;
+
+  // >>> PUCCH resource 10.
   pucch_cfg.pucch_res_list.push_back(res_basic);
-  pucch_resource& res3 = pucch_cfg.pucch_res_list.back();
-  res3.res_id          = 3;
-  res3.starting_prb    = 0;
-  res3.second_hop_prb  = nof_rbs - 1;
+  pucch_resource& res10 = pucch_cfg.pucch_res_list.back();
+  res10.res_id          = 10;
+  res10.starting_prb    = 0;
+  res10.second_hop_prb  = nof_rbs - 1;
 
   // TODO: add more PUCCH resources.
 

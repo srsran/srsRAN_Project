@@ -23,31 +23,6 @@ public:
   test_pucch_resource_manager() :
     pucch_cfg{config_helpers::make_default_ue_uplink_config().init_ul_bwp.pucch_cfg.value()}, sl_tx(slot_point(0, 0))
   {
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 4,
-                                                         .starting_prb           = 3,
-                                                         .second_hop_prb         = 9,
-                                                         .intraslot_freq_hopping = true,
-                                                         .format                 = pucch_format::FORMAT_1});
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 5,
-                                                         .starting_prb           = 4,
-                                                         .second_hop_prb         = 10,
-                                                         .intraslot_freq_hopping = true,
-                                                         .format                 = pucch_format::FORMAT_1});
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 6,
-                                                         .starting_prb           = 5,
-                                                         .second_hop_prb         = 11,
-                                                         .intraslot_freq_hopping = true,
-                                                         .format                 = pucch_format::FORMAT_1});
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 7,
-                                                         .starting_prb           = 6,
-                                                         .second_hop_prb         = 12,
-                                                         .intraslot_freq_hopping = true,
-                                                         .format                 = pucch_format::FORMAT_1});
-    pucch_cfg.pucch_res_list.emplace_back(pucch_resource{.res_id                 = 8,
-                                                         .starting_prb           = 7,
-                                                         .second_hop_prb         = 13,
-                                                         .intraslot_freq_hopping = true,
-                                                         .format                 = pucch_format::FORMAT_1});
     res_manager.slot_indication(sl_tx);
   };
 
@@ -102,56 +77,6 @@ TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_4)
   allocate_ues(3);
   const pucch_harq_resource_alloc_record record =
       res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4604), pucch_cfg);
-
-  ASSERT_EQ(3, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[3], record.pucch_res);
-}
-
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_5)
-{
-  allocate_ues(4);
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4605), pucch_cfg);
-
-  ASSERT_EQ(4, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[4], record.pucch_res);
-}
-
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_6)
-{
-  allocate_ues(5);
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4606), pucch_cfg);
-
-  ASSERT_EQ(5, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[5], record.pucch_res);
-}
-
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_7)
-{
-  allocate_ues(6);
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4607), pucch_cfg);
-
-  ASSERT_EQ(6, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[6], record.pucch_res);
-}
-
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_8)
-{
-  allocate_ues(7);
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4608), pucch_cfg);
-
-  ASSERT_EQ(7, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[7], record.pucch_res);
-}
-
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_9)
-{
-  allocate_ues(8);
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4609), pucch_cfg);
 
   ASSERT_EQ(nullptr, record.pucch_res);
 }

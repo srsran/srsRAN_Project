@@ -40,6 +40,13 @@ srsgnb::config_helpers::build_pucch_guardbands_list(const cell_config_builder_pa
                             pucch_res.format_1.starting_sym_idx + pucch_res.format_1.nof_symbols);
           break;
         }
+        case pucch_format::FORMAT_2: {
+          res_0.symbols.set(pucch_res.format_2.starting_sym_idx,
+                            pucch_res.format_2.starting_sym_idx + pucch_res.format_2.nof_symbols / 2);
+          res_1.symbols.set(pucch_res.format_2.starting_sym_idx + pucch_res.format_2.nof_symbols / 2,
+                            pucch_res.format_2.starting_sym_idx + pucch_res.format_2.nof_symbols);
+          break;
+        }
         default:
           srsgnb_terminate("Only PUCCH format 1 currently supported");
       }
@@ -48,6 +55,11 @@ srsgnb::config_helpers::build_pucch_guardbands_list(const cell_config_builder_pa
         case pucch_format::FORMAT_1: {
           res_0.symbols.set(pucch_res.format_1.starting_sym_idx,
                             pucch_res.format_1.starting_sym_idx + pucch_res.format_1.nof_symbols);
+          break;
+        }
+        case pucch_format::FORMAT_2: {
+          res_0.symbols.set(pucch_res.format_2.starting_sym_idx,
+                            pucch_res.format_2.starting_sym_idx + pucch_res.format_2.nof_symbols);
           break;
         }
         default:

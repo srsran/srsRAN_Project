@@ -98,13 +98,6 @@ TEST_P(test_pucch_harq_common_output, test_pucch_output_info)
   pucch_harq_ack_grant pucch_test = t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
 
-  auto asd = *pucch_test.pucch_pdu;
-
-  if (pucch_expected.resources.prbs != asd.resources.prbs or
-      pucch_expected.resources.second_hop_prbs != asd.resources.second_hop_prbs) {
-    printf("Hello");
-  }
-
   ASSERT_TRUE(pucch_test.pucch_pdu != nullptr);
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, *pucch_test.pucch_pdu));
 }
@@ -264,13 +257,7 @@ TEST_F(test_pucch_sr_allocator, test_pucch_sr_only_output_info)
   t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
       t_bench.res_grid[0], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
-  auto asd = t_bench.res_grid[0].result.ul.pucchs.back();
-
   ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
-  if (pucch_expected.resources.prbs != asd.resources.prbs or
-      pucch_expected.resources.second_hop_prbs != asd.resources.second_hop_prbs) {
-    printf("Hello");
-  }
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
 }
 

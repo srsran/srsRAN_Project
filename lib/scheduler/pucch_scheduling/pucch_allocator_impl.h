@@ -55,7 +55,7 @@ private:
   static const size_t RES_MANAGER_RING_BUFFER_SIZE =
       get_allocator_ring_size_gt_min(SCHEDULER_MAX_K0 + SCHEDULER_MAX_K1);
 
-  static const size_t MAX_HARQ_PUCCH_RESOURCES = 8;
+  static const size_t MAX_HARQ_PUCCH_RESOURCES{8};
 
   // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot.
   struct rnti_pucch_res_id_slot_record {
