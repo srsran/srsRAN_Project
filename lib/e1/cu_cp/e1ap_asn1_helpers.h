@@ -548,8 +548,8 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
 }
 
 inline void fill_e1ap_bearer_context_modification_response(
-    e1ap_bearer_context_modification_response_message& res,
-    const asn1::e1ap::bearer_context_mod_resp_s&       asn1_bearer_context_modification_resp)
+    e1ap_bearer_context_modification_response&   res,
+    const asn1::e1ap::bearer_context_mod_resp_s& asn1_bearer_context_modification_resp)
 {
   if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp_present) {
     // Fail if E-UTRAN bearer context setup is returned
@@ -839,8 +839,8 @@ inline void fill_e1ap_bearer_context_modification_response(
 }
 
 inline void fill_e1ap_bearer_context_modification_response(
-    e1ap_bearer_context_modification_response_message& res,
-    const asn1::e1ap::bearer_context_mod_fail_s&       asn1_bearer_context_modification_fail)
+    e1ap_bearer_context_modification_response&   res,
+    const asn1::e1ap::bearer_context_mod_fail_s& asn1_bearer_context_modification_fail)
 {
   res.success = false;
   res.cause   = e1ap_cause_to_cu_cp_cause(asn1_bearer_context_modification_fail->cause.value);

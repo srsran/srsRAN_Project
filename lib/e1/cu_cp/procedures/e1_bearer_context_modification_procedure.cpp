@@ -9,6 +9,7 @@
  */
 
 #include "e1_bearer_context_modification_procedure.h"
+#include "../e1ap_asn1_helpers.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
@@ -65,8 +66,7 @@ e1_bearer_context_modification_procedure::create_bearer_context_modification_res
       resp.to_json(js);
       logger.debug("Containerized Bearer Context Modification Response message: {}", js.to_string());
     }
-    res.response = resp;
-    res.success  = true;
+    fill_e1ap_bearer_context_modification_response(res, resp);
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
     logger.info("Received E1AP Bearer Context Modification Failure. Cause: {}", get_cause_str(fail->cause.value));
@@ -75,8 +75,7 @@ e1_bearer_context_modification_procedure::create_bearer_context_modification_res
       fail.to_json(js);
       logger.debug("Containerized Bearer Context Modification Failure message: {}", js.to_string());
     }
-    res.failure = fail;
-    res.success = false;
+    fill_e1ap_bearer_context_modification_response(res, fail);
   } else {
     logger.warning("E1AP Bearer Context Modification Response timeout.");
     res.success = false;

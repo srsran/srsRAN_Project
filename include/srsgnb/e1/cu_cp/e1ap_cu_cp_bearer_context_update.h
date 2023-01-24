@@ -366,7 +366,7 @@ struct e1ap_pdu_session_resource_modified_item {
   optional<e1ap_data_forwarding_info>                        pdu_session_data_forwarding_info_resp;
 };
 
-struct e1ap_bearer_context_modification_response_message {
+struct e1ap_bearer_context_modification_response {
   bool success;
   // Bearer Context Modification Response
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>
@@ -380,11 +380,6 @@ struct e1ap_bearer_context_modification_response_message {
 
   // Common
   optional<e1ap_crit_diagnostics> crit_diagnostics;
-};
-struct e1ap_bearer_context_modification_response {
-  asn1::e1ap::bearer_context_mod_resp_s response;
-  asn1::e1ap::bearer_context_mod_fail_s failure;
-  bool                                  success;
 };
 
 struct e1ap_bearer_context_release_command {
