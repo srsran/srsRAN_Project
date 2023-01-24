@@ -201,6 +201,7 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
 {
   radio_configuration::radio out_cfg = {};
 
+  out_cfg.args             = config.rf_driver_cfg.device_arguments;
   out_cfg.log_level        = config.log_cfg.radio_level;
   out_cfg.sampling_rate_hz = config.rf_driver_cfg.srate_MHz * 1e6;
   out_cfg.otw_format       = radio_configuration::to_otw_format(config.rf_driver_cfg.otw_format);

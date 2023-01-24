@@ -17,6 +17,7 @@ using namespace srsgnb;
 static radio_configuration::radio create_radio_configuration(const radio_params& params)
 {
   radio_configuration::radio radio_config = {};
+  radio_config.args                       = params.device_args;
   radio_config.sampling_rate_hz           = params.srate.to_Hz<double>();
   radio_config.otw_format                 = params.otw_format;
   radio_config.log_level                  = params.log_level;
