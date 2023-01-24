@@ -84,8 +84,7 @@ inline bwp_configuration get_resource_alloc_type_1_dl_bwp_size(dci_dl_rnti_confi
       return bwp_cfg;
     }
     // UE Search Space.
-    bwp_cfg = active_dl_bwp.generic_params;
-    return bwp_cfg;
+    return active_dl_bwp.generic_params;
   }
   report_fatal_error("Unsupported DL DCI format={}", dci_type);
 }
