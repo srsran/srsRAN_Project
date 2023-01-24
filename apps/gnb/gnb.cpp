@@ -271,7 +271,7 @@ int main(int argc, char** argv)
 
   // Set component-specific logging options.
   for (const auto& id : {"DU", "DU-MNG", "UE-MNG", "DU-F1"}) {
-    auto& du_logger = srslog::fetch_basic_logger(id, true);
+    auto& du_logger = srslog::fetch_basic_logger(id, false);
     du_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.du_level));
     du_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
   }
