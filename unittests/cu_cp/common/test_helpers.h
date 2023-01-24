@@ -40,7 +40,9 @@ private:
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
-  dummy_du_processor_cu_cp_notifier(cu_cp_du_handler* cu_cp_handler_ = nullptr) : cu_cp_handler(cu_cp_handler_) {}
+  explicit dummy_du_processor_cu_cp_notifier(cu_cp_du_handler* cu_cp_handler_ = nullptr) : cu_cp_handler(cu_cp_handler_)
+  {
+  }
 
   void attach_handler(cu_cp_du_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
 
@@ -66,6 +68,8 @@ public:
 
   void set_bearer_context_setup_outcome(bool outcome) { bearer_context_setup_outcome = outcome; }
 
+  void set_bearer_context_modification_outcome(bool outcome) { bearer_context_modification_outcome = outcome; }
+
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
   {
@@ -75,8 +79,19 @@ public:
                             coro_context<async_task<e1ap_bearer_context_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      // set outcome depending on configuration
-      res.success = bearer_context_setup_outcome;
+      if (bearer_context_setup_outcome) {
+        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(
+            test_rgen::uniform_int<uint64_t>(gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::min),
+                                             gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::max) - 1));
+
+        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(
+            test_rgen::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
+                                             gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1));
+
+        res = generate_e1ap_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+      } else {
+        res.success = false;
+      }
 
       CORO_RETURN(res);
     });
@@ -87,17 +102,121 @@ public:
   {
     logger.info("Received a new bearer context modification request");
 
-    return launch_async([res = e1ap_bearer_context_modification_response{}](
-                            coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
+    return launch_async([res = e1ap_bearer_context_modification_response{},
+                         this](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
+
+      if (bearer_context_modification_outcome) {
+        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(
+            test_rgen::uniform_int<uint64_t>(gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::min),
+                                             gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::max) - 1));
+
+        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(
+            test_rgen::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
+                                             gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1));
+
+        res = generate_e1ap_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+      } else {
+        res.success = false;
+      }
 
       CORO_RETURN(res);
     });
   }
 
 private:
-  srslog::basic_logger& logger                       = srslog::fetch_basic_logger("TEST");
-  bool                  bearer_context_setup_outcome = false;
+  srslog::basic_logger& logger                              = srslog::fetch_basic_logger("TEST");
+  bool                  bearer_context_setup_outcome        = false;
+  bool                  bearer_context_modification_outcome = false;
+};
+
+struct dummy_du_processor_f1ap_ue_context_notifier : public du_processor_f1ap_ue_context_notifier {
+public:
+  dummy_du_processor_f1ap_ue_context_notifier() {}
+
+  void set_ue_context_setup_outcome(bool outcome) { ue_context_setup_outcome = outcome; }
+
+  void set_ue_context_modification_outcome(bool outcome) { ue_context_modification_outcome = outcome; }
+
+  async_task<f1ap_ue_context_setup_response>
+  on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override
+  {
+    logger.info("Received a new UE context setup request");
+
+    return launch_async([res = f1ap_ue_context_setup_response{},
+                         this](coro_context<async_task<f1ap_ue_context_setup_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      res.success = ue_context_setup_outcome;
+
+      CORO_RETURN(res);
+    });
+  }
+
+  async_task<cu_cp_ue_context_modification_response>
+  on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override
+  {
+    logger.info("Received a new UE context modification request");
+
+    return launch_async([res = cu_cp_ue_context_modification_response{},
+                         this](coro_context<async_task<cu_cp_ue_context_modification_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      if (ue_context_modification_outcome) {
+        gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(
+            test_rgen::uniform_int<uint64_t>(gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::min),
+                                             gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max) - 1));
+
+        gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(
+            test_rgen::uniform_int<uint64_t>(gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::min),
+                                             gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::max) - 1));
+
+        res = generate_cu_cp_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
+      } else {
+        res.success = false;
+      }
+
+      CORO_RETURN(res);
+    });
+  }
+
+  async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) override
+  {
+    logger.info("Received a new UE context release command");
+
+    return launch_async([msg](coro_context<async_task<ue_index_t>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(msg.ue_index);
+    });
+  }
+
+private:
+  srslog::basic_logger& logger                          = srslog::fetch_basic_logger("TEST");
+  bool                  ue_context_setup_outcome        = false;
+  bool                  ue_context_modification_outcome = false;
+};
+
+struct dummy_du_processor_rrc_ue_control_message_notifier : public du_processor_rrc_ue_control_message_notifier {
+public:
+  dummy_du_processor_rrc_ue_control_message_notifier() {}
+
+  void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
+
+  void on_new_guami(const guami& msg) override { logger.info("Received a new GUAMI"); }
+
+  async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
+  {
+    logger.info("Received a new RRC reconfiguration request");
+
+    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(rrc_reconfiguration_outcome);
+    });
+  }
+
+private:
+  srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
+  bool                  rrc_reconfiguration_outcome = false;
 };
 
 /// \brief Generate DU-to-CU RRC Container with CellGroupConfig.

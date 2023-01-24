@@ -37,5 +37,18 @@ ue_context_release_command_message generate_ue_context_release_command(ue_index_
 /// \brief Generate a dummy PDU Session Resource Setup message.
 cu_cp_pdu_session_resource_setup_request generate_pdu_session_resource_setup();
 
+/// \brief Generate a dummy E1AP Bearer Context Setup Response.
+e1ap_bearer_context_setup_response generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                               gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+
+/// \brief Generate a dummy E1AP Bearer Context Modification Response.
+e1ap_bearer_context_modification_response
+generate_e1ap_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+
+/// \brief Generate a dummy CU-CP UE Context Modification Response.
+cu_cp_ue_context_modification_response
+generate_cu_cp_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id, gnb_du_ue_f1ap_id_t du_ue_f1ap_id);
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

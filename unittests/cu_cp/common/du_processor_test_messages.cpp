@@ -92,3 +92,44 @@ cu_cp_pdu_session_resource_setup_request srsgnb::srs_cu_cp::generate_pdu_session
 
   return req;
 };
+
+e1ap_bearer_context_setup_response
+srsgnb::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                               gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+{
+  e1ap_bearer_context_setup_response resp;
+
+  e1_message asn1_res = generate_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+
+  fill_e1ap_bearer_context_setup_response(resp, asn1_res.pdu.successful_outcome().value.bearer_context_setup_resp());
+
+  return resp;
+};
+
+e1ap_bearer_context_modification_response
+srsgnb::srs_cu_cp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+                                                                      gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
+{
+  e1ap_bearer_context_modification_response resp;
+
+  e1_message asn1_res = generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+
+  fill_e1ap_bearer_context_modification_response(resp,
+                                                 asn1_res.pdu.successful_outcome().value.bearer_context_mod_resp());
+
+  return resp;
+};
+
+cu_cp_ue_context_modification_response
+srsgnb::srs_cu_cp::generate_cu_cp_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
+                                                                   gnb_du_ue_f1ap_id_t du_ue_f1ap_id)
+{
+  cu_cp_ue_context_modification_response resp;
+
+  f1c_message asn1_res = generate_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
+
+  fill_f1ap_ue_context_modification_response_message(resp,
+                                                     asn1_res.pdu.successful_outcome().value.ue_context_mod_resp());
+
+  return resp;
+};
