@@ -93,7 +93,7 @@ struct trivial_storage {
 
 template <typename T, size_t Capacity>
 struct non_trivial_storage {
-  static_assert(not std::is_trivial<T>::value, "Implementation only works for trivial types");
+  static_assert(not std::is_trivial<T>::value, "Implementation only works for non-trivial types");
 
   using element_storage_t = std::aligned_storage_t<sizeof(T), alignof(T)>;
   using array_type        = std::conditional_t<std::is_const<T>::value,
