@@ -58,12 +58,20 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 
 void f1u_bearer_impl::handle_transmit_notification(uint32_t highest_pdcp_sn)
 {
-  // TODO: Do not forget to switch execution context.
-  logger.log_debug("F1-U bearer transmitted Tx PDCP PDU with highest_pdcp_sn={}", highest_pdcp_sn);
+  logger.log_debug("Notifying highest transmitted pdcp_sn={}", highest_pdcp_sn);
+  nru_dl_data_delivery_status status = {};
+  status.highest_transmitted_pdcp_sn = highest_pdcp_sn;
+  nru_ul_message msg                 = {};
+  msg.data_delivery_status           = std::move(status);
+  tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 
 void f1u_bearer_impl::handle_delivery_notification(uint32_t highest_pdcp_sn)
 {
-  // TODO: Do not forget to switch execution context.
-  logger.log_debug("F1-U bearer delivered Tx PDCP PDU with highest_pdcp_sn={}", highest_pdcp_sn);
+  logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", highest_pdcp_sn);
+  nru_dl_data_delivery_status status = {};
+  status.highest_delivered_pdcp_sn   = highest_pdcp_sn;
+  nru_ul_message msg                 = {};
+  msg.data_delivery_status           = std::move(status);
+  tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
