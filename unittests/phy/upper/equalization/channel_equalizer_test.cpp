@@ -39,7 +39,7 @@ using ch_dims = channel_equalizer::ch_est_list::dims;
 class ChannelEqualizerFixture : public ::testing::TestWithParam<ChannelEqualizerParams>
 {
 protected:
-  static constexpr float MAX_ERROR_EQ = 1e-5;
+  static constexpr float MAX_ERROR_EQ = 1e-3;
 
   static constexpr unsigned MAX_RX_RE   = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS;
   static constexpr unsigned MAX_TX_RE   = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * pusch_constants::MAX_NOF_LAYERS;
@@ -197,7 +197,7 @@ bool xnor(bool a, bool b)
   return ((a && b) || (!a && !b));
 }
 
-TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroRE)
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
@@ -210,11 +210,37 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroRE)
 
   ReadData(t_case);
 
-  // Set some channel estimates to 0.
-  static constexpr unsigned stride        = 5;
-  unsigned                  nof_tx_layers = t_case.transmitted_symbols.nof_slices;
-  unsigned                  nof_rx_ports  = t_case.received_symbols.nof_slices;
-  unsigned                  nof_res       = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
+  unsigned nof_tx_layers = t_case.transmitted_symbols.nof_slices;
+  unsigned nof_rx_ports  = t_case.received_symbols.nof_slices;
+
+  // Create noise variances set to zero.
+  std::vector<float> zero_noise_vars(nof_rx_ports);
+  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
+    zero_noise_vars[i_rx] = 0.0F;
+  }
+
+  // Equalize the symbols coming from the Rx ports using the modified noise variances.
+  test_equalizer->equalize(
+      eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, zero_noise_vars, t_case.scaling);
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
+    span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
+
+    // Assert that the noise variances are set to infinity when the input noise variance is zero.
+    ASSERT_TRUE(std::all_of(noise_var.begin(), noise_var.end(), [](float nvar) { return std::isinf(nvar); }))
+        << fmt::format("Noise variances are not set to infinity when input noise variance is zero for Tx layer {}",
+                       i_layer);
+
+    // Assert that the equalized symbols are set to zero when the input noise variance is zero.
+    ASSERT_TRUE(std::all_of(eq_symbols.begin(), eq_symbols.end(), [](cf_t symb) { return symb == cf_t(0, 0); }))
+        << fmt::format("Equalized symbols are not set to zero when input noise variance is zero for Tx layer {}",
+                       i_layer);
+  }
+
+  // Set some channel estimates to zero.
+  static constexpr unsigned stride  = 5;
+  unsigned                  nof_res = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
 
   for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
@@ -224,17 +250,213 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroRE)
     }
   }
 
-  // Equalize the symbols coming from the Rx ports.
+  // Equalize the symbols coming from the Rx ports with the modified channel estimates.
   test_equalizer->equalize(
       eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, test_noise_vars, t_case.scaling);
 
-  // Assert all zero channel estimates result in an infinite variance.
   for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
-    span<const cf_t>  reference = test_ch_estimates.get_view({0, i_layer});
-    span<const float> noise_var = eq_noise_vars_actual.get_view({i_layer});
+    span<const cf_t>  reference  = test_ch_estimates.get_view({0, i_layer});
+    span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
+    span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
+    // Assert that the noise variances are set to infinity when the channel estimate is zero.
     ASSERT_TRUE(std::equal(reference.begin(), reference.end(), noise_var.begin(), [](cf_t a, float b) {
       return xnor(a == cf_t(0, 0), std::isinf(b));
-    })) << fmt::format("Something wrong in Tx layer {}", i_layer);
+    })) << fmt::format("Noise variances are not set to infinity when estimate is zero for Tx layer {}", i_layer);
+
+    // Assert that the equalized symbols are set to zero when the channel estimate is zero.
+    ASSERT_TRUE(std::equal(reference.begin(), reference.end(), eq_symbols.begin(), [](cf_t a, cf_t b) {
+      return xnor(a == cf_t(0, 0), b == cf_t(0, 0));
+    })) << fmt::format("Equalized symbols are not zero when estimate is zero for Tx layer {}", i_layer);
+  }
+}
+
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
+{
+  // Load the test case data.
+  const test_case_t& t_case = GetParam();
+  ReadData(t_case);
+
+  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
+  if (t_case.equalizer_type != "ZF") {
+    GTEST_SKIP();
+  }
+
+  ReadData(t_case);
+
+  unsigned nof_tx_layers = t_case.transmitted_symbols.nof_slices;
+  unsigned nof_rx_ports  = t_case.received_symbols.nof_slices;
+
+  // Create noise variances set to infinity.
+  std::vector<float> inf_noise_vars(nof_rx_ports);
+  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
+    inf_noise_vars[i_rx] = std::numeric_limits<float>::infinity();
+  }
+
+  // Equalize the symbols coming from the Rx ports using the modified noise variances.
+  test_equalizer->equalize(
+      eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, inf_noise_vars, t_case.scaling);
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
+    span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
+
+    // Assert that the noise variances are set to infinity when the input noise variance is infinity.
+    ASSERT_TRUE(std::all_of(noise_var.begin(), noise_var.end(), [](float nvar) { return std::isinf(nvar); }))
+        << fmt::format("Noise variances are not set to infinity when input noise variance is infinity for Tx layer {}",
+                       i_layer);
+
+    // Assert that the equalized symbols are set to zero when the input noise variance is infinity.
+    ASSERT_TRUE(std::all_of(eq_symbols.begin(), eq_symbols.end(), [](cf_t symb) { return symb == cf_t(0, 0); }))
+        << fmt::format("Equalized symbols are not set to zero when input noise variance is infinity for Tx layer {}",
+                       i_layer);
+  }
+
+  // Set some channel estimates to infinity.
+  static constexpr unsigned stride  = 5;
+  unsigned                  nof_res = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+      for (unsigned i_re = 0; i_re < nof_res; i_re += stride) {
+        test_ch_estimates[{i_re, i_port, i_layer}] =
+            cf_t(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+      }
+    }
+  }
+
+  // Equalize the symbols coming from the Rx ports with the modified channel estimates.
+  test_equalizer->equalize(
+      eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, test_noise_vars, t_case.scaling);
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    span<const cf_t>  reference  = test_ch_estimates.get_view({0, i_layer});
+    span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
+    span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
+    // Assert that the noise variances are set to infinity when the channel estimate is zero.
+    ASSERT_TRUE(std::equal(reference.begin(), reference.end(), noise_var.begin(), [](cf_t a, float b) {
+      return xnor((std::isinf(a.real())) && (std::isinf(a.imag())), std::isinf(b));
+    })) << fmt::format("Noise variances are not set to infinity when estimate is infinity for Tx layer {}", i_layer);
+
+    // Assert that the equalized symbols are set to zero when the channel estimate is zero.
+    ASSERT_TRUE(std::equal(reference.begin(), reference.end(), eq_symbols.begin(), [](cf_t a, cf_t b) {
+      return xnor((std::isinf(a.real())) && (std::isinf(a.imag())), b == cf_t(0, 0));
+    })) << fmt::format("Equalized symbols are not zero when estimate is infinity for Tx layer {}", i_layer);
+  }
+}
+
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanEst)
+{
+  // Load the test case data.
+  const test_case_t& t_case = GetParam();
+  ReadData(t_case);
+
+  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
+  if (t_case.equalizer_type != "ZF") {
+    GTEST_SKIP();
+  }
+
+  ReadData(t_case);
+
+  unsigned nof_tx_layers = t_case.transmitted_symbols.nof_slices;
+  unsigned nof_rx_ports  = t_case.received_symbols.nof_slices;
+
+  // Create noise vars set to NaN.
+  std::vector<float> nan_noise_vars(nof_rx_ports);
+  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
+    nan_noise_vars[i_rx] = std::numeric_limits<float>::quiet_NaN();
+  }
+
+  // Equalize the symbols coming from the Rx ports using the modified noise variances.
+  test_equalizer->equalize(
+      eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, nan_noise_vars, t_case.scaling);
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
+    span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
+
+    // Assert that the noise variances are set to infinity when the input noise variance is NaN.
+    ASSERT_TRUE(std::all_of(noise_var.begin(), noise_var.end(), [](float nvar) { return std::isinf(nvar); }))
+        << fmt::format("Noise variances are not set to infinity when input noise variance is NaN for Tx layer {}",
+                       i_layer);
+
+    // Assert that the equalized symbols are set to zero when the input noise variance is NaN.
+    ASSERT_TRUE(std::all_of(eq_symbols.begin(), eq_symbols.end(), [](cf_t symb) { return symb == cf_t(0, 0); }))
+        << fmt::format("Equalized symbols are not set to zero when input noise variance is NaN for Tx layer {}",
+                       i_layer);
+  }
+
+  // Set some channel estimates to NaN.
+  static constexpr unsigned stride  = 5;
+  unsigned                  nof_res = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+      for (unsigned i_re = 0; i_re < nof_res; i_re += stride) {
+        test_ch_estimates[{i_re, i_port, i_layer}] =
+            cf_t(std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN());
+      }
+    }
+  }
+
+  // Equalize the symbols coming from the Rx ports with the modified channel estimates.
+  test_equalizer->equalize(
+      eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, test_noise_vars, t_case.scaling);
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    span<const cf_t>  reference  = test_ch_estimates.get_view({0, i_layer});
+    span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
+    span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
+    // Assert that the noise variances are set to infinity when the channel estimate is zero.
+    ASSERT_TRUE(std::equal(reference.begin(), reference.end(), noise_var.begin(), [](cf_t a, float b) {
+      return xnor((std::isnan(a.real())) && (std::isnan(a.imag())), std::isinf(b));
+    })) << fmt::format("Noise variances are not set to infinity when estimate is NaN for Tx layer {}", i_layer);
+
+    // Assert that the equalized symbols are set to zero when the channel estimate is zero.
+    ASSERT_TRUE(std::equal(reference.begin(), reference.end(), eq_symbols.begin(), [](cf_t a, cf_t b) {
+      return xnor((std::isnan(a.real())) && (std::isnan(a.imag())), b == cf_t(0, 0));
+    })) << fmt::format("Equalized symbols are not zero when estimate is NaN for Tx layer {}", i_layer);
+  }
+}
+
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerNegNvar)
+{
+  // Load the test case data.
+  const test_case_t& t_case = GetParam();
+  ReadData(t_case);
+
+  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
+  if (t_case.equalizer_type != "ZF") {
+    GTEST_SKIP();
+  }
+
+  ReadData(t_case);
+
+  unsigned nof_tx_layers = t_case.transmitted_symbols.nof_slices;
+  unsigned nof_rx_ports  = t_case.received_symbols.nof_slices;
+
+  // Create noise vars set to a negative value
+  std::vector<float> neg_noise_vars(nof_rx_ports);
+  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
+    neg_noise_vars[i_rx] = -1.0F;
+  }
+
+  // Equalize the symbols coming from the Rx ports using the modified noise variances.
+  test_equalizer->equalize(
+      eq_symbols_actual, eq_noise_vars_actual, rx_symbols, test_ch_estimates, neg_noise_vars, t_case.scaling);
+
+  for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
+    span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
+    span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
+
+    // Assert that the noise variances are set to infinity when the input noise variance is negative.
+    ASSERT_TRUE(std::all_of(noise_var.begin(), noise_var.end(), [](float nvar) { return std::isinf(nvar); }))
+        << fmt::format("Noise variances are not set to infinity when input noise variance is negative for Tx layer {}",
+                       i_layer);
+
+    // Assert that the equalized symbols are set to zero when the input noise variance is negative.
+    ASSERT_TRUE(std::all_of(eq_symbols.begin(), eq_symbols.end(), [](cf_t symb) { return symb == cf_t(0, 0); }))
+        << fmt::format("Equalized symbols are not set to zero when input noise variance is negative for Tx layer {}",
+                       i_layer);
   }
 }
 

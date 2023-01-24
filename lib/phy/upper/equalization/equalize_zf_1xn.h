@@ -15,6 +15,10 @@
 
 #include "channel_equalizer_zf_impl.h"
 
+#ifdef __AVX2__
+#include "../../../srsvec/simd.h"
+#endif
+
 namespace srsgnb {
 
 /// \brief Implementation of a Zero Forcing equalizer for a SIMO 1 X \c RX_PORTS channel.
@@ -40,7 +44,74 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
   span<float> nvars_out   = noise_vars.get_view({});
   span<cf_t>  symbols_out = eq_symbols.get_view({});
 
-  for (unsigned i_re = 0; i_re != nof_re; ++i_re) {
+  unsigned i_re = 0;
+
+#ifdef __AVX2__
+  // Views over the input data.
+  std::array<span<const cf_t>, MAX_PORTS> port_symbols;
+  std::array<span<const cf_t>, MAX_PORTS> port_ests;
+
+  for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
+    port_symbols[i_port] = ch_symbols.get_view({i_port});
+    port_ests[i_port]    = ch_estimates.get_view({i_port, 0});
+  }
+
+  // Create registers with zero and infinity values.
+  simd_f_t zero     = srsran_simd_f_zero();
+  simd_f_t infinity = srsran_simd_f_set1(std::numeric_limits<float>::infinity());
+
+  for (unsigned i_re_end = (nof_re / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i_re != i_re_end;
+       i_re += SRSRAN_SIMD_CF_SIZE) {
+    simd_f_t  ch_mod_sq = srsran_simd_f_zero();
+    simd_cf_t re_out    = srsran_simd_cf_zero();
+
+    for (unsigned i_port = 0; i_port != RX_PORTS; ++i_port) {
+      // Get the input RE and channel estimate coefficients.
+      simd_cf_t re_in  = srsran_simd_cfi_loadu(&(port_symbols[i_port][i_re]));
+      simd_cf_t ch_est = srsran_simd_cfi_loadu(&(port_ests[i_port][i_re]));
+
+      // Compute the channel square norm, by accumulating the channel square absolute values.
+      ch_mod_sq += srsran_simd_f_add(srsran_simd_f_mul(srsran_simd_cf_re(ch_est), srsran_simd_cf_re(ch_est)),
+                                     srsran_simd_f_mul(srsran_simd_cf_im(ch_est), srsran_simd_cf_im(ch_est)));
+
+      // Apply the matched channel filter to each received RE and accumulate the results.
+      re_out = srsran_simd_cf_add(re_out, srsran_simd_cf_conjprod(re_in, ch_est));
+    }
+
+    // Calculate the denominator of the pseudo-inverse.
+    simd_f_t d_pinv = srsran_simd_f_mul(srsran_simd_f_set1(tx_scaling), ch_mod_sq);
+
+    // Compute reciprocal of the denominator.
+    simd_f_t d_pinv_rcp = srsran_simd_f_rcp(d_pinv);
+
+    // Detect abnormal computation parameters. This detects whenever the channel estimate is zero or NaN.
+    simd_sel_t isnormal_mask = srsran_simd_f_max(d_pinv, zero);
+
+    // Detect abnormal computation parameters. This detects whenever the channel estimate is infinity.
+    isnormal_mask = srsran_simd_f_select(zero, isnormal_mask, srsran_simd_f_max(infinity, d_pinv));
+
+    // Calculate noise variances.
+    simd_f_t vars_out = srsran_simd_f_mul(d_pinv_rcp, srsran_simd_f_set1(noise_var_est / tx_scaling));
+
+    // Detect whenever the post-equalization noise variances are zero, negative or NaN.
+    isnormal_mask = srsran_simd_f_select(zero, isnormal_mask, srsran_simd_f_max(vars_out, zero));
+
+    // Detect whenever the post-equalizatino noise variances are set to infinity.
+    isnormal_mask = srsran_simd_f_select(zero, isnormal_mask, srsran_simd_f_max(infinity, vars_out));
+
+    // If abnormal calculation parameters are detected, the noise variances are set to infinity.
+    srsran_simd_f_storeu(&nvars_out[i_re], srsran_simd_f_select(infinity, vars_out, isnormal_mask));
+
+    // Normalize the gain of the channel combined with the equalization to unity.
+    re_out = srsran_simd_cf_mul(re_out, d_pinv_rcp);
+
+    // If abnormal calculation parameters are detected, the equalized symbols are set to zero.
+    srsran_simd_cfi_storeu(&symbols_out[i_re],
+                           srsran_simd_cf_select(srsran_simd_cf_set1({0, 0}), re_out, isnormal_mask));
+  }
+#endif // __AVX2__
+
+  for (; i_re != nof_re; ++i_re) {
     float ch_mod_sq = 0.0F;
     cf_t  re_out    = 0.0F;
 
@@ -56,18 +127,23 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
       re_out += re_in * std::conj(ch_est);
     }
 
-    // Calculate the reciprocal of the denominator. Set the symbols to zero in case of division by zero, NAN of INF.
-    float d_pinv      = tx_scaling * ch_mod_sq;
-    float d_pinv_rcp  = std::numeric_limits<float>::infinity();
+    // Return values in case of abnormal computation parameters. These include negative, zero, NAN or INF noise
+    // variances and zero, NAN or INF channel estimation coefficients.
     symbols_out[i_re] = 0;
-    if (std::isnormal(d_pinv)) {
-      d_pinv_rcp = 1.0F / d_pinv;
+    nvars_out[i_re]   = std::numeric_limits<float>::infinity();
+
+    float d_pinv = tx_scaling * ch_mod_sq;
+
+    if (std::isnormal(d_pinv) && std::isnormal(noise_var_est) && (noise_var_est > 0.0F)) {
+      // Calculate the reciprocal of the denominator.
+      float d_pinv_rcp = 1.0F / d_pinv;
+
       // Normalize the gain of the channel combined with the equalization to unity.
       symbols_out[i_re] = re_out * d_pinv_rcp;
-    }
 
-    // Calculate noise variances.
-    nvars_out[i_re] = d_pinv_rcp * (noise_var_est / tx_scaling);
+      // Calculate noise variances.
+      nvars_out[i_re] = d_pinv_rcp * (noise_var_est / tx_scaling);
+    }
   }
 }
 

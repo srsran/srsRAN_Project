@@ -1282,6 +1282,33 @@ static inline simd_f_t srsran_simd_f_select(simd_f_t a, simd_f_t b, simd_sel_t s
 #endif /* HAVE_AVX512 */
 }
 
+static inline simd_cf_t srsran_simd_cf_select(simd_cf_t a, simd_cf_t b, simd_sel_t selector)
+{
+  simd_cf_t ret;
+#ifdef HAVE_AVX512
+  ret.re = _mm512_mask_blend_ps(selector, (__m512)a.re, (__m512)b.re);
+  ret.im = _mm512_mask_blend_ps(selector, (__m512)a.im, (__m512)b.im);
+#else /* HAVE_AVX512 */
+#ifdef HAVE_AVX2
+  /* Permute for AVX registers (mis SSE registers) */
+  selector = _mm256_permutevar8x32_ps(selector, _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7));
+  ret.re   = _mm256_blendv_ps(a.re, b.re, selector);
+  ret.im   = _mm256_blendv_ps(a.im, b.im, selector);
+#else
+#ifdef HAVE_SSE
+  ret.re = _mm_blendv_ps(a.re, b.re, selector);
+  ret.im = _mm_blendv_ps(a.im, b.im, selector);
+#else /* HAVE_SSE */
+#ifdef HAVE_NEON
+  ret.val[0] = vbslq_f32(selector, b.val[0], a.val[1]);
+  ret.val[1] = vbslq_f32(selector, b.val[1], a.val[1]);
+#endif /* HAVE_NEON */
+#endif /* HAVE_SSE */
+#endif /* HAVE_AVX2 */
+#endif /* HAVE_AVX512 */
+  return ret;
+}
+
 static inline simd_i_t srsran_simd_i_select(simd_i_t a, simd_i_t b, simd_sel_t selector)
 {
 #ifdef HAVE_AVX512

@@ -74,9 +74,12 @@ public:
   /// \param[in]  tx_scaling          Transmission gain scaling factor.
   /// \note The sizes of \c eq_symbols, \c eq_noise_vars, \c ch_symbols and \c noise_var_estimates must be consistent
   /// with the \c ch_estimates channel dimensions.
-  /// \warning If, for a given transmitted symbol, the combined channel across all paths results in a non-normal value
-  /// (zero, infinity or NaN), the corresponding equalized modulation symbol and equalized noise variance will be set to
+  /// \warning If, for a given transmitted RE, the combined channel across all paths results in a non-normal value
+  /// (zero, infinity or NaN), the corresponding equalized modulation RE and equalized noise variance will be set to
   /// zero and infinity, respectively.
+  /// \warning If the \c noise_var_estimates noise variances have non-normal values (zero, negative, infinity or NaN),
+  /// the corresponding equalized modulation REs and equalized noise variances will be set to zero and infinity,
+  /// respectively.
   virtual void equalize(re_list&           eq_symbols,
                         noise_var_list&    eq_noise_vars,
                         const re_list&     ch_symbols,
