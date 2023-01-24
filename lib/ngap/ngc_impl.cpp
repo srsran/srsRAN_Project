@@ -209,6 +209,7 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
   byte_buffer nas_pdu;
   nas_pdu.resize(msg->nas_pdu.value.size());
   std::copy(msg->nas_pdu.value.begin(), msg->nas_pdu.value.end(), nas_pdu.begin());
+  logger.debug(nas_pdu.begin(), nas_pdu.end(), "DL NAS Transport PDU ({} B)", nas_pdu.length());
 
   ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
 }

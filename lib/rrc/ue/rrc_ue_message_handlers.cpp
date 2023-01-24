@@ -141,7 +141,7 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 
 void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
 {
-  logger.info("Received DL NAS Transport message");
+  logger.debug("Received DL NAS Transport message ({} B)", msg.nas_pdu.length());
 
   dl_dcch_msg_s           dl_dcch_msg;
   dl_info_transfer_ies_s& dl_info_transfer =
