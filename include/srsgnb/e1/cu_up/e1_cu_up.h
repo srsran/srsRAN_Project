@@ -29,22 +29,22 @@ struct e1ap_bearer_context_setup_request {
 /// \brief Response to a bearer context setup request including UE index for E1 map.
 struct e1ap_bearer_context_setup_response {
   bool                                        success;
-  ue_index_t                                  ue_index; // Valid UE index if setup was successful.
+  ue_index_t                                  ue_index = INVALID_UE_INDEX; // Valid UE index if setup was successful.
   asn1::e1ap::sys_bearer_context_setup_resp_c sys_bearer_context_setup_resp;
   asn1::e1ap::cause_c                         cause; // Cause if setup was unsuccessful.
 };
 
 /// \brief Request to modify a bearer context.
 struct e1ap_bearer_context_modification_request {
-  ue_index_t                                   ue_index;
+  ue_index_t                                   ue_index = INVALID_UE_INDEX;
   asn1::e1ap::sys_bearer_context_mod_request_c request;
   // TODO: add optional fields
 };
 
 /// \brief Response to a bearer context modification request including UE index for E1 map.
 struct e1ap_bearer_context_modification_response {
-  bool                                      success;
-  ue_index_t                                ue_index; // Valid UE index if modification was successful.
+  bool       success;
+  ue_index_t ue_index = INVALID_UE_INDEX; // Valid UE index if modification was successful.
   asn1::e1ap::sys_bearer_context_mod_resp_c sys_bearer_context_modification_resp;
   asn1::e1ap::cause_c                       cause; // Cause if modification was unsuccessful.
 };
