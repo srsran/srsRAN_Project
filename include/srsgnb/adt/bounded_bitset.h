@@ -492,7 +492,7 @@ public:
       return;
     }
 
-    if (all(startpos, endpos)) {
+    if ((value && all(startpos, endpos)) || (!value && none(startpos, endpos))) {
       for (size_t bitpos = startpos; bitpos != endpos; ++bitpos) {
         function(bitpos);
       }
@@ -670,6 +670,10 @@ public:
   /// \brief Checks if at no bit in the bitset is set to 1.
   /// \return Returns true if no bit equal to 1 was found.
   bool none() const noexcept { return !any(); }
+
+  /// \brief Checks whether no bit is set within the given index range.
+  /// \return True if no bit is equal to 1, false otherwise.
+  bool none(size_t start, size_t stop) const noexcept { return !any(start, stop); }
 
   /// \brief Determines whether all bits with value set to \c value are contiguous.
   ///
