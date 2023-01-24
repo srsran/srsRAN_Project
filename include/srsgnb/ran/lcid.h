@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/optional.h"
+#include "fmt/core.h"
 #include <cstdint>
 #include <type_traits>
 
@@ -123,29 +123,36 @@ constexpr inline drb_id_t uint_to_drb_id(uint16_t id)
   return static_cast<drb_id_t>(id);
 }
 
+/// Radio Bearer type, either SRB or DRB.
+enum class rb_type_t { srb, drb };
+
+/// Radio Bearer Identity, e.g. SRB1, DRB1, DRB2,...
 class rb_id_t
 {
 public:
   rb_id_t() = default;
-  rb_id_t(srb_id_t srb_id_) : srb_id(srb_id_) {}
-  rb_id_t(drb_id_t drb_id_) : drb_id(drb_id_){};
+  rb_id_t(srb_id_t srb_id_) : rb_type(rb_type_t::srb), srb_id(srb_id_) {}
+  rb_id_t(drb_id_t drb_id_) : rb_type(rb_type_t::drb), drb_id(drb_id_){};
 
-  bool is_srb() { return srb_id.has_value(); }
-  bool is_drb() { return drb_id.has_value(); }
+  bool is_srb() { return rb_type == rb_type_t::srb; }
+  bool is_drb() { return rb_type == rb_type_t::drb; }
 
-  srb_id_t get_srb_id() { return srb_id.value(); }
-  drb_id_t get_drb_id() { return drb_id.value(); }
+  srb_id_t get_srb_id() { return srb_id; }
+  drb_id_t get_drb_id() { return drb_id; }
 
 private:
-  optional<srb_id_t> srb_id;
-  optional<drb_id_t> drb_id;
+  rb_type_t rb_type;
+  union {
+    srb_id_t srb_id;
+    drb_id_t drb_id;
+  };
 };
 
 } // namespace srsgnb
 
 namespace fmt {
 
-// rb_id formatter
+// rb_id_t formatter
 template <>
 struct formatter<srsgnb::rb_id_t> {
   template <typename ParseContext>
