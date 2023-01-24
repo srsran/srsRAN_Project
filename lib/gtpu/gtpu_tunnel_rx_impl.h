@@ -45,6 +45,7 @@ public:
       logger.log_error("Mismatched TEID, discarding. Header TEID={}", hdr.teid);
       return;
     }
+    logger.log_info(buf.begin(), buf.end(), "RX GTP-U SDU (len={} B, teid={})", buf.length(), hdr.teid);
     lower_dn.on_new_sdu(std::move(buf));
   }
 

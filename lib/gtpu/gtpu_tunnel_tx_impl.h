@@ -57,7 +57,7 @@ public:
       logger.log_error("Error writing GTP-U header, discarding.");
       return;
     }
-    logger.log_debug(buf.begin(), buf.end(), "TX GTP-U SDU");
+    logger.log_info(buf.begin(), buf.end(), "TX GTP-U PDU (len={} B, teid={})", buf.length(), hdr.teid);
     upper_dn.on_new_pdu(std::move(buf), peer_sockaddr);
   }
 
