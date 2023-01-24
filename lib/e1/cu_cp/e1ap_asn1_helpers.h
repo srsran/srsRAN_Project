@@ -551,6 +551,7 @@ inline void fill_e1ap_bearer_context_modification_response(
     e1ap_bearer_context_modification_response&   res,
     const asn1::e1ap::bearer_context_mod_resp_s& asn1_bearer_context_modification_resp)
 {
+  res.success = true;
   if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp_present) {
     // Fail if E-UTRAN bearer context setup is returned
     if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp->type() ==
@@ -676,7 +677,9 @@ inline void fill_e1ap_bearer_context_modification_response(
           res_mod_item.pdu_session_id = uint_to_pdu_session_id(asn1_res_mod_item.pdu_session_id);
 
           // Add NG DL UP TNL Info
-          res_mod_item.ng_dl_up_tnl_info = asn1_to_up_transport_layer_info(asn1_res_mod_item.ng_dl_up_tnl_info);
+          if (asn1_res_mod_item.ng_dl_up_tnl_info_present) {
+            res_mod_item.ng_dl_up_tnl_info = asn1_to_up_transport_layer_info(asn1_res_mod_item.ng_dl_up_tnl_info);
+          }
 
           // Add DRB Setup List NG RAN
           for (const auto& asn1_drb_setup_item : asn1_res_mod_item.drb_setup_list_ng_ran) {
