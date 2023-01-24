@@ -1610,12 +1610,13 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.3 in Table UCI PUCCH Format 2, Format 3 or
   /// Format 4 PDU.
   uci_pucch_pdu_format_2_3_4_builder&
-  set_sr_parameters(uint16_t bit_length, bounded_bitset<sr_pdu_format_2_3_4::MAX_SR_PAYLOAD_SIZE_BITS> sr_payload)
+  set_sr_parameters(uint16_t                                                             bit_length,
+                    const bounded_bitset<sr_pdu_format_2_3_4::MAX_SR_PAYLOAD_SIZE_BITS>& sr_payload)
   {
     pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::SR_BIT);
 
     auto& sr_pdu = pdu.sr;
-    
+
     sr_pdu.sr_bitlen  = bit_length;
     sr_pdu.sr_payload = sr_payload;
 
