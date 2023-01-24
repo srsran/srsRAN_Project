@@ -15,6 +15,17 @@ using namespace srsgnb;
 
 /////////////    RESOURCE MANAGER     /////////////
 
+pucch_resource_manager::pucch_resource_manager()
+{
+  auto reset_slot_record = [](rnti_pucch_res_id_slot_record& res_counter) {
+    std::for_each(res_counter.ues_using_format1_res.begin(), res_counter.ues_using_format1_res.end(), [](rnti_t& rnti) {
+      rnti = INVALID_RNTI;
+    });
+  };
+
+  std::for_each(resource_slots.begin(), resource_slots.end(), reset_slot_record);
+}
+
 void pucch_resource_manager::slot_indication(slot_point slot_tx)
 {
   // Update Slot.
@@ -24,7 +35,9 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
 
   res_counter.sr_resource_available   = true;
   res_counter.next_pucch_harq_res_idx = 0;
-  res_counter.rnti_records.clear();
+  std::for_each(res_counter.ues_using_format1_res.begin(), res_counter.ues_using_format1_res.end(), [](rnti_t& rnti) {
+    rnti = INVALID_RNTI;
+  });
 }
 
 pucch_harq_resource_alloc_record
@@ -33,14 +46,75 @@ pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t
   srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PDCCH being allocated to far into the future");
 
-  const auto&                    pucch_res_list = pucch_cfg.pucch_res_list;
-  rnti_pucch_res_id_slot_record& res_counter    = get_slot_resource_counter(slot_harq);
-  unsigned                       pucch_format_1_res_set_size =
-      std::min(pucch_cfg.pucch_res_set[0].pucch_res_id_list.size(), static_cast<size_t>(MAX_HARQ_PUCCH_RESOURCES));
-  if (res_counter.next_pucch_harq_res_idx < pucch_format_1_res_set_size) {
-    res_counter.rnti_records.emplace_back(crnti);
-    return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_res_list[res_counter.next_pucch_harq_res_idx],
-                                            .pucch_res_indicator = res_counter.next_pucch_harq_res_idx++};
+  // Get resource list of wanted slot.
+  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
+
+  auto available_resource = std::find_if(res_counter.ues_using_format1_res.begin(),
+                                         res_counter.ues_using_format1_res.end(),
+                                         [](const rnti_t rnti) { return rnti == INVALID_RNTI; });
+
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+
+  const unsigned pucch_resource_set_format1_idx = 0;
+
+  if (available_resource != res_counter.ues_using_format1_res.end() and
+      static_cast<unsigned>(available_resource - res_counter.ues_using_format1_res.begin()) <
+          pucch_cfg.pucch_res_set[pucch_resource_set_format1_idx].pucch_res_id_list.size()) {
+    unsigned pucch_res_indicator =
+        static_cast<unsigned>(available_resource - res_counter.ues_using_format1_res.begin());
+    *available_resource = crnti;
+    unsigned pucch_res_idx_from_list =
+        pucch_cfg.pucch_res_set[pucch_resource_set_format1_idx].pucch_res_id_list[pucch_res_indicator];
+    return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_res_list[pucch_res_idx_from_list],
+                                            .pucch_res_indicator = pucch_res_indicator};
+  }
+  return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
+};
+
+bool pucch_resource_manager::release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
+{
+  auto& allocated_ues = get_slot_resource_counter(slot_harq).ues_using_format1_res;
+  auto  target_res = std::find_if(allocated_ues.begin(), allocated_ues.end(), [target_rnti = crnti](const rnti_t rnti) {
+    return rnti == target_rnti;
+  });
+
+  // If the resources was found, then release it (i.e., remove the C-RNTI of the user allocated to it).
+  if (target_res != allocated_ues.end()) {
+    *target_res = INVALID_RNTI;
+    return true;
+  }
+
+  return false;
+}
+
+pucch_harq_resource_alloc_record pucch_resource_manager::get_next_format2_res_available(slot_point          slot_harq,
+                                                                                        rnti_t              crnti,
+                                                                                        const pucch_config& pucch_cfg)
+{
+  srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+                      "PDCCH being allocated to far into the future");
+
+  // Get resource list of wanted slot.
+  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
+
+  auto available_resource = std::find_if(res_counter.ues_using_format2_res.begin(),
+                                         res_counter.ues_using_format2_res.end(),
+                                         [](const rnti_t rnti) { return rnti == INVALID_RNTI; });
+
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+
+  const unsigned pucch_resource_set_format2_idx = 1;
+
+  if (available_resource != res_counter.ues_using_format1_res.end() and
+      static_cast<unsigned>(available_resource - res_counter.ues_using_format1_res.begin()) <
+          pucch_cfg.pucch_res_set[pucch_resource_set_format2_idx].pucch_res_id_list.size()) {
+    unsigned pucch_res_indicator =
+        static_cast<unsigned>(available_resource - res_counter.ues_using_format1_res.begin());
+    *available_resource = crnti;
+    unsigned pucch_res_idx_from_list =
+        pucch_cfg.pucch_res_set[pucch_resource_set_format2_idx].pucch_res_id_list[pucch_res_indicator];
+    return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_res_list[pucch_res_idx_from_list],
+                                            .pucch_res_indicator = pucch_res_indicator};
   }
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 };
@@ -78,15 +152,13 @@ const pucch_resource* pucch_resource_manager::get_next_sr_res_available(slot_poi
 
 int pucch_resource_manager::get_pucch_res_indicator(slot_point slot_tx, rnti_t crnti)
 {
-  auto& ue_recs = get_slot_resource_counter(slot_tx).rnti_records;
+  const auto& ue_recs = get_slot_resource_counter(slot_tx).ues_using_format1_res;
 
-  for (size_t res_idx = 0; res_idx != ue_recs.size(); res_idx++) {
-    if (crnti == ue_recs[res_idx]) {
-      return static_cast<int>(res_idx);
-    }
-  }
+  auto ue_resource = std::find_if(
+      ue_recs.begin(), ue_recs.end(), [target_rnti = crnti](const rnti_t rnti) { return rnti == target_rnti; });
+
   // -1 indicates that the there is no UE record for given RNTI.
-  return -1;
+  return ue_resource != ue_recs.end() ? static_cast<int>(ue_resource - ue_recs.begin()) : -1;
 }
 
 pucch_resource_manager::rnti_pucch_res_id_slot_record& pucch_resource_manager::get_slot_resource_counter(slot_point sl)

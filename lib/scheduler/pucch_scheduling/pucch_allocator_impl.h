@@ -29,6 +29,8 @@ struct pucch_harq_resource_alloc_record {
 class pucch_resource_manager
 {
 public:
+  pucch_resource_manager();
+
   // Reset all resources to "unused".
   void slot_indication(slot_point slot_tx);
 
@@ -39,6 +41,11 @@ public:
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
   pucch_harq_resource_alloc_record
   get_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+
+  bool release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+
+  pucch_harq_resource_alloc_record
+  get_next_format2_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// Returns the pointer to the configuration of the PUCCH resource to be used for SR.
   /// \remark There is only one resource used for SR.
@@ -64,14 +71,19 @@ private:
     // Keeps track of the next PUCCH resource (indexed by the PUCCH resource indicator) to be allocated.
     unsigned next_pucch_harq_res_idx{0};
     // Keeps track of the RNTI of the UE using a given PUCCH resource (indexed by the PUCCH resource indicator).
-    static_vector<rnti_t, MAX_HARQ_PUCCH_RESOURCES> rnti_records;
+    std::array<rnti_t, MAX_HARQ_PUCCH_RESOURCES> ues_using_format1_res;
+
+    // Keeps track of the RNTI of the UE using a given PUCCH resource (indexed by the PUCCH resource indicator).
+    std::array<rnti_t, MAX_HARQ_PUCCH_RESOURCES> ues_using_format2_res;
   };
 
   // Returns the resource manager allocation record for a given slot.
   rnti_pucch_res_id_slot_record& get_slot_resource_counter(slot_point sl);
 
+  using pucch_resource_sl_rec = std::array<rnti_pucch_res_id_slot_record, RES_MANAGER_RING_BUFFER_SIZE>;
+
   // Ring buffer of rnti_pucch_res_id_slot_record for PUCCH resources.
-  std::array<rnti_pucch_res_id_slot_record, RES_MANAGER_RING_BUFFER_SIZE> resource_slots;
+  pucch_resource_sl_rec resource_slots;
 
   // Keeps track of the last slot_point used by the resource manager.
   slot_point last_sl_ind;
