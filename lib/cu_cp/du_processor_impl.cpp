@@ -203,6 +203,10 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
   auto* rrc_ue                         = rrc_du_adapter.on_ue_creation_request(std::move(rrc_ue_create_msg));
+  if (rrc_ue == nullptr) {
+    logger.error("Could not create RRC UE");
+    return ue_creation_complete_msg;
+  }
 
   ue_ctxt->rrc_ue_notifier =
       std::make_unique<du_processor_rrc_ue_adapter>(rrc_ue->get_rrc_ue_control_message_handler());

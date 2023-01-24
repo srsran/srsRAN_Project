@@ -29,29 +29,29 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t&              cfg_,
 
 rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
 {
-  if (ue_db.find(msg.ue_index) != ue_db.end()) {
-    // UE already exists with same ue_index
-    return nullptr;
-  }
-
   // TODO: check if du_to_cu_container is valid, reject if not
 
   // create UE object
   ue_index_t ue_index = msg.ue_index;
-  ue_db.emplace(ue_index,
-                std::make_unique<rrc_ue_impl>(rrc_ue_du_proc_notifier,
-                                              nas_notifier,
-                                              ngc_ctrl_notifier,
-                                              msg.ue_index,
-                                              msg.c_rnti,
-                                              msg.cell,
-                                              cfg.ue_default_cfg,
-                                              msg.srbs,
-                                              msg.du_to_cu_container,
-                                              *msg.ue_task_sched,
-                                              reject_users));
-  auto& u = ue_db.at(ue_index);
-  return u.get();
+  auto       res      = ue_db.emplace(ue_index,
+                           std::make_unique<rrc_ue_impl>(rrc_ue_du_proc_notifier,
+                                                         nas_notifier,
+                                                         ngc_ctrl_notifier,
+                                                         msg.ue_index,
+                                                         msg.c_rnti,
+                                                         msg.cell,
+                                                         cfg.ue_default_cfg,
+                                                         msg.srbs,
+                                                         msg.du_to_cu_container,
+                                                         *msg.ue_task_sched,
+                                                         reject_users));
+
+  if (res.second) {
+    auto& u = ue_db.at(ue_index);
+    return u.get();
+  } else {
+    return nullptr;
+  }
 }
 
 void rrc_du_impl::remove_ue(ue_index_t ue_index)
