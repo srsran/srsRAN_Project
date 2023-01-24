@@ -16,7 +16,7 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 rrc_reconfiguration_procedure::rrc_reconfiguration_procedure(rrc_ue_context_t& context_,
-                                                             const cu_cp_rrc_reconfiguration_procedure_message& args_,
+                                                             const cu_cp_rrc_reconfiguration_procedure_request& args_,
                                                              rrc_ue_reconfiguration_proc_notifier& rrc_ue_notifier_,
                                                              rrc_ue_event_manager&                 event_mng_,
                                                              srslog::basic_logger&                 logger_) :

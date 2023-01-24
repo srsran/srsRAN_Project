@@ -254,10 +254,10 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
   }
 
   // Convert to common type
-  cu_cp_pdu_session_resource_setup_message msg;
+  cu_cp_pdu_session_resource_setup_request msg;
   msg.cu_cp_ue_id  = cu_cp_ue_id;
   msg.serving_plmn = ngc_cfg.plmn;
-  fill_cu_cp_pdu_session_resource_setup_message(msg, request->pdu_session_res_setup_list_su_req.value);
+  fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
   // start routine

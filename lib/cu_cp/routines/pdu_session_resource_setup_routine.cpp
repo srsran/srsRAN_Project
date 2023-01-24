@@ -15,7 +15,7 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
-    const cu_cp_pdu_session_resource_setup_message& setup_msg_,
+    const cu_cp_pdu_session_resource_setup_request& setup_msg_,
     const srsgnb::security::sec_as_config&          security_cfg_,
     du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
@@ -35,13 +35,13 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
 }
 
 void pdu_session_resource_setup_routine::operator()(
-    coro_context<async_task<cu_cp_pdu_session_resource_setup_response_message>>& ctx)
+    coro_context<async_task<cu_cp_pdu_session_resource_setup_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
   logger.debug("ue={}: \"{}\" initialized.", setup_msg.cu_cp_ue_id, name());
 
-  // initial sanitfy check, making sure we catch implementation limitations
+  // initial sanity check, making sure we catch implementation limitations
   if (setup_msg.pdu_session_res_setup_items.size() != 1) {
     logger.error("ue={}: \"{}\" supports only one PDU Session ({} requested).",
                  setup_msg.cu_cp_ue_id,
@@ -49,8 +49,6 @@ void pdu_session_resource_setup_routine::operator()(
                  setup_msg.pdu_session_res_setup_items.size());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
   }
-
-  // TODO: Retrieve PDCP and SDAP configs
 
   {
     // prepare BearerContextSetupRequest
@@ -213,7 +211,7 @@ void pdu_session_resource_setup_routine::operator()(
   CORO_RETURN(handle_pdu_session_resource_setup_result(true));
 }
 
-cu_cp_pdu_session_resource_setup_response_message
+cu_cp_pdu_session_resource_setup_response
 pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(bool success)
 {
   if (success) {

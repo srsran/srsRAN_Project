@@ -161,8 +161,8 @@ public:
   virtual ~ngc_du_processor_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
-  virtual async_task<cu_cp_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& request) = 0;
+  virtual async_task<cu_cp_pdu_session_resource_setup_response>
+  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
 };
 
 /// Interface to control the NGC.

@@ -67,8 +67,8 @@ public:
   void handle_ue_context_release_command(const ue_context_release_command_message& msg) override;
 
   // du_processor_ngap_interface
-  async_task<cu_cp_pdu_session_resource_setup_response_message>
-  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg) override;
+  async_task<cu_cp_pdu_session_resource_setup_response>
+  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
 
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {

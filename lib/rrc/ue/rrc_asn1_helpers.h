@@ -67,7 +67,7 @@ inline expected<uint8_t> get_transaction_id(const asn1::rrc_nr::ul_dcch_msg_s& m
 /// \param[in] cu_cp_rrc_reconf The common type struct.
 inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&                  asn1_rrc_reconf,
                                               uint8_t                                     rrc_transaction_id,
-                                              cu_cp_rrc_reconfiguration_procedure_message cu_cp_rrc_reconf)
+                                              cu_cp_rrc_reconfiguration_procedure_request cu_cp_rrc_reconf)
 {
   using namespace asn1::rrc_nr;
 

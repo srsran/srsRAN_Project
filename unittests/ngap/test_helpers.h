@@ -124,15 +124,15 @@ class dummy_ngc_du_processor_notifier : public ngc_du_processor_control_notifier
 public:
   dummy_ngc_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  async_task<cu_cp_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& request) override
+  async_task<cu_cp_pdu_session_resource_setup_response>
+  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
     logger.info("Received a new pdu session resource setup request");
 
     last_request = std::move(request);
 
-    return launch_async([this, res = cu_cp_pdu_session_resource_setup_response_message{}](
-                            coro_context<async_task<cu_cp_pdu_session_resource_setup_response_message>>& ctx) mutable {
+    return launch_async([this, res = cu_cp_pdu_session_resource_setup_response{}](
+                            coro_context<async_task<cu_cp_pdu_session_resource_setup_response>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
       if (last_request.pdu_session_res_setup_items.size() == 0) {
@@ -147,7 +147,7 @@ public:
     });
   }
 
-  cu_cp_pdu_session_resource_setup_message last_request;
+  cu_cp_pdu_session_resource_setup_request last_request;
 
 private:
   srslog::basic_logger& logger;

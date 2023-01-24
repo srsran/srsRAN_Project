@@ -36,7 +36,7 @@ public:
   drb_manager_impl(const drb_manager_cfg& cfg);
   ~drb_manager_impl() = default;
 
-  std::vector<drb_id_t>      calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_message& pdu) override;
+  std::vector<drb_id_t>      calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu) override;
   cu_cp_pdcp_config          get_pdcp_config(const drb_id_t drb_id) override;
   cu_cp_sdap_config          get_sdap_config(const drb_id_t drb_id) override;
   std::vector<qos_flow_id_t> get_mapped_qos_flows(const drb_id_t drb_id) override;

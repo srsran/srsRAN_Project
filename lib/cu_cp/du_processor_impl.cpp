@@ -334,8 +334,8 @@ void du_processor_impl::handle_ue_context_release_command(const ue_context_relea
   ue_manager.remove_ue(msg.ue_index);
 }
 
-async_task<cu_cp_pdu_session_resource_setup_response_message>
-du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg)
+async_task<cu_cp_pdu_session_resource_setup_response>
+du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg)
 {
   ue_context* ue_ctxt = ue_manager.find_ue(get_ue_index_from_cu_cp_ue_id(msg.cu_cp_ue_id));
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");

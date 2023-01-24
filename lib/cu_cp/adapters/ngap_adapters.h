@@ -137,8 +137,8 @@ public:
     du_processor_pdu_session_handler = du_processor_pdu_session_handler_;
   }
 
-  async_task<cu_cp_pdu_session_resource_setup_response_message>
-  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_message& request) override
+  async_task<cu_cp_pdu_session_resource_setup_response>
+  on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
     srsgnb_assert(du_processor_pdu_session_handler != nullptr, "du_processor_pdu_session_handler must not be nullptr");
 

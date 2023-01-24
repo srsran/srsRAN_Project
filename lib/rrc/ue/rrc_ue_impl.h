@@ -63,7 +63,7 @@ public:
 
   // rrc_ue_control_message_handler
   void             handle_new_guami(const guami& msg) override;
-  async_task<bool> handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg) override;
+  async_task<bool> handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override;
 
 private:
   // message handlers
@@ -93,7 +93,7 @@ private:
   async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
 
   // triggers a RRC reconfiguration of the UE
-  async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_message& msg) override;
+  async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_request& msg) override;
 
   // Helper to create PDU from RRC message
   template <class T>

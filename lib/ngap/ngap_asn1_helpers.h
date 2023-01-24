@@ -74,8 +74,8 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
 /// \brief Convert NGAP ASN1 PDU Session Resource Setup List SU REQ ASN1 struct to common type.
 /// \param[out] cu_cp_pdu_session_res_setup_msg The cu_cp_pdu_session_res_setup_msg struct to fill.
 /// \param[in] asn1_pdu_session_res_setup_msg The pdu_session_res_setup_list_su_req ASN1 struct.
-inline void fill_cu_cp_pdu_session_resource_setup_message(
-    cu_cp_pdu_session_resource_setup_message& cu_cp_pdu_session_resource_setup_msg,
+inline void fill_cu_cp_pdu_session_resource_setup_request(
+    cu_cp_pdu_session_resource_setup_request& cu_cp_pdu_session_resource_setup_msg,
     const asn1::dyn_seq_of<asn1::ngap::pdu_session_res_setup_item_su_req_s, 1U, 256U, true>&
         asn1_pdu_session_res_setup_msg)
 {
@@ -185,8 +185,8 @@ inline void fill_cu_cp_pdu_session_resource_setup_message(
 /// message.
 /// \param[out] resp The ASN1 NGAP PDU Session Resource Setup Response message.
 /// \param[in] cu_cp_resp The CU-CP PDU Session Resource Setup Response message.
-inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_resp_s&               resp,
-                                              const cu_cp_pdu_session_resource_setup_response_message cu_cp_resp)
+inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_resp_s&       resp,
+                                              const cu_cp_pdu_session_resource_setup_response cu_cp_resp)
 {
   // Fill PDU Session Resource Setup Response List
   if (!cu_cp_resp.pdu_session_res_setup_response_items.empty()) {

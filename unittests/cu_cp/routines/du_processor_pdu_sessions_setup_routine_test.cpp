@@ -58,13 +58,13 @@ TEST_F(du_processor_test, when_empty_pdu_session_setup_is_sent_response_is_sent)
   attach_ue();
 
   // Prepare args
-  cu_cp_pdu_session_resource_setup_message msg = {}; // empty message
+  cu_cp_pdu_session_resource_setup_request msg = {}; // empty message
   msg.cu_cp_ue_id                              = uint_to_cu_cp_ue_id(0);
 
   // Trigger PDU session setup
-  async_task<cu_cp_pdu_session_resource_setup_response_message> t =
+  async_task<cu_cp_pdu_session_resource_setup_response> t =
       du_processor_obj->handle_new_pdu_session_resource_setup_request(msg);
-  lazy_task_launcher<cu_cp_pdu_session_resource_setup_response_message> t_launcher(t);
+  lazy_task_launcher<cu_cp_pdu_session_resource_setup_response> t_launcher(t);
 
   // it should be ready immediately
   ASSERT_TRUE(t.ready());

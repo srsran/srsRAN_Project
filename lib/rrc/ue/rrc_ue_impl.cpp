@@ -90,7 +90,7 @@ async_task<bool> rrc_ue_impl::handle_init_security_context(const rrc_init_securi
   return launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger);
 }
 
-async_task<bool> rrc_ue_impl::start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_message& msg)
+async_task<bool> rrc_ue_impl::start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_request& msg)
 {
   //  Launch RRC Reconfiguration procedure
   return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);

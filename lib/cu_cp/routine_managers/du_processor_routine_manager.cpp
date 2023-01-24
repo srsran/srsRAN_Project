@@ -22,9 +22,9 @@ du_processor_routine_manager::du_processor_routine_manager(
 {
 }
 
-async_task<cu_cp_pdu_session_resource_setup_response_message>
+async_task<cu_cp_pdu_session_resource_setup_response>
 du_processor_routine_manager::start_pdu_session_resource_setup_routine(
-    const cu_cp_pdu_session_resource_setup_message& setup_msg,
+    const cu_cp_pdu_session_resource_setup_request& setup_msg,
     const srsgnb::security::sec_as_config&          security_cfg,
     du_processor_rrc_ue_control_message_notifier&   rrc_ue_ctrl_notifier,
     drb_manager&                                    rrc_ue_drb_manager)

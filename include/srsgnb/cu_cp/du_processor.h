@@ -162,7 +162,7 @@ public:
   /// \brief Notify the RRC UE about an RRC Reconfiguration Request.
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The result of the rrc reconfiguration.
-  virtual async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg) = 0;
+  virtual async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor
@@ -172,8 +172,8 @@ public:
   virtual ~du_processor_ngap_interface() = default;
 
   /// \brief Handle the reception of a new PDU Session Resource Setup List.
-  virtual async_task<cu_cp_pdu_session_resource_setup_response_message>
-  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_message& msg) = 0;
+  virtual async_task<cu_cp_pdu_session_resource_setup_response>
+  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) = 0;
 };
 
 /// Interface to notify the E1AP about control messages.

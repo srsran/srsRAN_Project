@@ -165,7 +165,7 @@ void rrc_ue_impl::handle_new_guami(const guami& msg)
   context.current_guami = msg;
 }
 
-async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg)
+async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg)
 {
   return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);
 }

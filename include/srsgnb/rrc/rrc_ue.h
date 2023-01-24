@@ -250,7 +250,7 @@ public:
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool>
-  handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg) = 0;
+  handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
 };
 
 struct rrc_init_security_context {
@@ -278,7 +278,7 @@ public:
 
   /// \brief Start a RRC reconfiguration procedure.
   /// \param[in] msg The procedure parameters.
-  virtual async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_message& msg) = 0;
+  virtual async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
 };
 
 /// Combined entry point for the RRC UE handling.

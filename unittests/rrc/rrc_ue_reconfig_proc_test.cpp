@@ -49,10 +49,10 @@ protected:
     srslog::flush();
   }
 
-  /// \brief Constructs full RRC Reconfig message with radioBearerConfig, masterCellGroup and NAS PDU
-  cu_cp_rrc_reconfiguration_procedure_message fill_rrc_reconfiguration_procedure_message()
+  /// \brief Constructs full RRC Reconfig request with radioBearerConfig, masterCellGroup and NAS PDU
+  cu_cp_rrc_reconfiguration_procedure_request generate_rrc_reconfiguration_procedure_request()
   {
-    cu_cp_rrc_reconfiguration_procedure_message args;
+    cu_cp_rrc_reconfiguration_procedure_request args;
 
     // add dummy radio bearer config
     cu_cp_radio_bearer_config rb_cfg;
@@ -108,7 +108,7 @@ protected:
 TEST_F(rrc_ue_reconfig, when_reconfig_complete_received_proc_successful)
 {
   // Prepare args
-  cu_cp_rrc_reconfiguration_procedure_message args = fill_rrc_reconfiguration_procedure_message();
+  cu_cp_rrc_reconfiguration_procedure_request args = generate_rrc_reconfiguration_procedure_request();
 
   // Trigger Reconfig
   async_task<bool>         t = get_rrc_ue_reconfiguration_handler()->start_rrc_reconfiguration(args);

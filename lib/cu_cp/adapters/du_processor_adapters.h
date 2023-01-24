@@ -174,7 +174,7 @@ public:
   virtual void on_new_guami(const guami& msg) override { return rrc_ue_handler.handle_new_guami(msg); }
 
   virtual async_task<bool>
-  on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_message& msg) override
+  on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
   {
     return rrc_ue_handler.handle_rrc_reconfiguration_request(msg);
   }

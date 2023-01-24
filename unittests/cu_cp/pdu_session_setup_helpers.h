@@ -16,9 +16,9 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 // Creates a PDU Session Resource Setup Request with a single PDU session and QoS flow
-cu_cp_pdu_session_resource_setup_message fill_res_setup_request()
+cu_cp_pdu_session_resource_setup_request fill_res_setup_request()
 {
-  cu_cp_pdu_session_resource_setup_message req;
+  cu_cp_pdu_session_resource_setup_request req;
 
   req.cu_cp_ue_id = uint_to_cu_cp_ue_id(0);
 

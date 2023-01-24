@@ -17,7 +17,7 @@ using namespace asn1::ngap;
 
 ngap_pdu_session_resource_setup_procedure::ngap_pdu_session_resource_setup_procedure(
     ngc_ue&                                   ue_,
-    cu_cp_pdu_session_resource_setup_message& request_,
+    cu_cp_pdu_session_resource_setup_request& request_,
     ngc_du_processor_control_notifier&        du_processor_ctrl_notif_,
     ngc_message_notifier&                     amf_notif_,
     srslog::basic_logger&                     logger_) :

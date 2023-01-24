@@ -304,7 +304,7 @@ struct cu_cp_pdu_session_res_setup_item {
   slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item> qos_flow_setup_request_items;
 };
 
-struct cu_cp_pdu_session_resource_setup_message {
+struct cu_cp_pdu_session_resource_setup_request {
   cu_cp_ue_id_t                                                         cu_cp_ue_id = cu_cp_ue_id_t::invalid;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                                              ue_aggregate_maximum_bit_rate_dl;
@@ -354,7 +354,7 @@ struct cu_cp_pdu_session_res_setup_failed_item {
   cu_cp_pdu_session_resource_setup_unsuccessful_transfer pdu_session_resource_setup_unsuccessful_transfer;
 };
 
-struct cu_cp_pdu_session_resource_setup_response_message {
+struct cu_cp_pdu_session_resource_setup_response {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
   // TODO: Add crit diagnostics
@@ -529,7 +529,7 @@ struct cu_cp_rrc_recfg_v1530_ies {
   // optional<cu_cp_rrc_recfg_v1540_ies> non_crit_ext;
 };
 
-struct cu_cp_rrc_reconfiguration_procedure_message {
+struct cu_cp_rrc_reconfiguration_procedure_request {
   optional<cu_cp_radio_bearer_config> radio_bearer_cfg;
   byte_buffer                         secondary_cell_group;
   optional<cu_cp_meas_config>         meas_cfg;
