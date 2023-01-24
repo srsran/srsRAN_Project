@@ -1180,6 +1180,7 @@ make_asn1_rrc_pusch_time_domain_alloc_list(const pusch_time_domain_resource_allo
 {
   pusch_time_domain_res_alloc_s out{};
   out.k2_present = true;
+  out.k2         = cfg.k2;
   switch (cfg.map_type) {
     case sch_mapping_type::typeA:
       out.map_type = pusch_time_domain_res_alloc_s::map_type_opts::type_a;
