@@ -9,6 +9,7 @@
  */
 
 #include "du_processor_test_helpers.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
@@ -22,36 +23,36 @@ using namespace asn1::f1ap;
 TEST_F(du_processor_test, when_valid_f1setup_received_then_f1_setup_response_sent)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Check response is F1SetupResponse
-  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1ap_pdu_c::types_opts::options::successful_outcome);
-  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.successful_outcome().value.type(),
+  ASSERT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), f1ap_pdu_c::types_opts::options::successful_outcome);
+  ASSERT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.successful_outcome().value.type(),
             f1ap_elem_procs_o::successful_outcome_c::types_opts::options::f1_setup_resp);
 }
 
 TEST_F(du_processor_test, when_du_served_cells_list_missing_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with missing du served cells list
-  f1_setup_request_message f1_setup_request_msg                  = generate_f1_setup_request_message_base();
+  f1_setup_request_message f1_setup_request_msg                  = generate_f1_setup_request_base();
   f1_setup_request_msg.request->gnb_du_served_cells_list_present = false;
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
-  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
-  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
+  ASSERT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
+  ASSERT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
             f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
 TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with missing gnb du sys info
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
   f1_setup_request_msg.request->gnb_du_served_cells_list.value[0]->gnb_du_served_cells_item().gnb_du_sys_info_present =
       false;
 
@@ -59,15 +60,15 @@ TEST_F(du_processor_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
-  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
-  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
+  ASSERT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
+  ASSERT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
             f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
 TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
 {
   // Generate F1SetupRequest with too many cells
-  f1_setup_request_message f1_setup_request_msg                  = generate_f1_setup_request_message_base();
+  f1_setup_request_message f1_setup_request_msg                  = generate_f1_setup_request_base();
   f1_setup_request_msg.request->gnb_du_served_cells_list_present = true;
   f1_setup_request_msg.request->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST;
   f1_setup_request_msg.request->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
@@ -84,8 +85,8 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Check the generated PDU is indeed the F1 Setup failure
-  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
-  ASSERT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
+  ASSERT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.type(), f1ap_pdu_c::types_opts::options::unsuccessful_outcome);
+  ASSERT_EQ(f1c_pdu_notifier.last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
             f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
@@ -96,13 +97,13 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
 TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(MIN_CRNTI, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -114,13 +115,13 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(MIN_CRNTI, 1);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 1);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -132,13 +133,13 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
 TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(INVALID_RNTI, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(INVALID_RNTI, 12345678);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -150,13 +151,13 @@ TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
 TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(MIN_CRNTI, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -174,7 +175,7 @@ TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
 TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
@@ -188,7 +189,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
     // Generate ue_creation message
     rnti_t              c_rnti          = to_rnti(ue_index + 1); // 0 is not a valid RNTI
-    ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(c_rnti, 12345678);
+    ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
 
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
@@ -206,7 +207,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   // Add one more UE to DU processor
   // Generate ue_creation message
   rnti_t              c_rnti          = to_rnti(MAX_NOF_UES + 1);
-  ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(c_rnti, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -221,13 +222,13 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_deleted)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
 
   // Generate ue_creation message
-  ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(MIN_CRNTI, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(MIN_CRNTI, 12345678);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
@@ -247,7 +248,7 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
 TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_removed_from_full_ue_db_then_ue_added)
 {
   // Generate valid F1SetupRequest
-  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request_message();
+  f1_setup_request_message f1_setup_request_msg = generate_valid_f1_setup_request();
 
   // Pass message to DU processor
   du_processor_obj->handle_f1_setup_request(f1_setup_request_msg);
@@ -261,7 +262,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
     // Generate ue_creation message
     rnti_t              c_rnti          = to_rnti(ue_index + 1); // 0 is not a valid RNTI
-    ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(c_rnti, 12345678);
+    ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
 
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
@@ -287,7 +288,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   // Add one more UE to DU processor
   // Generate ue_creation message
   rnti_t              c_rnti          = to_rnti(MAX_NOF_UES + 1);
-  ue_creation_message ue_creation_msg = generate_valid_ue_creation_message(c_rnti, 12345678);
+  ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);

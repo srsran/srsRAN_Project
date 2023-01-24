@@ -10,11 +10,13 @@
 
 #pragma once
 
-#include "../../lib/cu_cp/adapters/du_processor_adapters.h"
+#include "du_processor_test_messages.h"
+#include "lib/cu_cp/adapters/du_processor_adapters.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/support/async/async_task_loop.h"
+#include "srsgnb/support/test_utils.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -38,10 +40,7 @@ private:
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
 public:
-  dummy_du_processor_cu_cp_notifier(cu_cp_du_handler* cu_cp_handler_) :
-    logger(srslog::fetch_basic_logger("TEST")), cu_cp_handler(cu_cp_handler_)
-  {
-  }
+  dummy_du_processor_cu_cp_notifier(cu_cp_du_handler* cu_cp_handler_ = nullptr) : cu_cp_handler(cu_cp_handler_) {}
 
   void attach_handler(cu_cp_du_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
 
@@ -57,16 +56,15 @@ public:
   }
 
 private:
-  srslog::basic_logger& logger;
+  srslog::basic_logger& logger        = srslog::fetch_basic_logger("TEST");
   cu_cp_du_handler*     cu_cp_handler = nullptr;
 };
 
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
-  dummy_du_processor_e1ap_control_notifier(bool bearer_context_setup_outcome_) :
-    logger(srslog::fetch_basic_logger("TEST")), bearer_context_setup_outcome(bearer_context_setup_outcome_)
-  {
-  }
+  dummy_du_processor_e1ap_control_notifier() {}
+
+  void set_bearer_context_setup_outcome(bool outcome) { bearer_context_setup_outcome = outcome; }
 
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
@@ -98,7 +96,7 @@ public:
   }
 
 private:
-  srslog::basic_logger& logger;
+  srslog::basic_logger& logger                       = srslog::fetch_basic_logger("TEST");
   bool                  bearer_context_setup_outcome = false;
 };
 

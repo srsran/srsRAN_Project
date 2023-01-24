@@ -7,9 +7,10 @@
 #
 set_directory_properties(PROPERTIES LABELS "cu_cp")
 
-add_library(cu_cp_test_helpers test_helpers.cpp)
-target_link_libraries(cu_cp_test_helpers srsgnb_cu_cp srsgnb_support srslog f1ap_asn1 ngap_asn1)
-target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
+include_directories(../..)
+
+add_subdirectory(common)
+add_subdirectory(du_processor)
 
 add_executable(cu_cp_test cu_cp_test.cpp)
 target_link_libraries(cu_cp_test cu_cp_test_helpers f1_cu_test_helpers ngap_test_helpers srsgnb_cu_cp srsgnb_support srslog f1ap_asn1 ngap_asn1 gtest gtest_main)
@@ -20,10 +21,3 @@ add_executable(cu_cp_config_test cu_cp_config_test.cpp)
 target_link_libraries(cu_cp_config_test cu_cp_test_helpers srsgnb_cu_cp gtest gtest_main)
 target_include_directories(cu_cp_config_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(cu_cp_config_test)
-
-add_executable(du_processor_test du_processor_test.cpp)
-target_link_libraries(du_processor_test f1ap_test_helpers cu_cp_test_helpers srsgnb_cu_cp srsgnb_support srslog f1ap_asn1 gtest gtest_main)
-target_include_directories(du_processor_test PRIVATE ${CMAKE_SOURCE_DIR})
-gtest_discover_tests(du_processor_test)
-
-add_subdirectory(routines)

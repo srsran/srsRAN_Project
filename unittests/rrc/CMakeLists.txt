@@ -28,5 +28,5 @@ target_include_directories(rrc_ue_reconfig_proc_test PRIVATE ${CMAKE_SOURCE_DIR}
 gtest_discover_tests(rrc_ue_reconfig_proc_test)
 
 add_executable(drb_manager_test drb_manager_test.cpp)
-target_link_libraries(drb_manager_test rrc_ue_test_helpers srsgnb_rrc srsgnb_e1 srsgnb_support srslog gtest gtest_main)
+target_link_libraries(drb_manager_test rrc_ue_test_helpers du_processor_test_helpers srsgnb_rrc srsgnb_e1 srsgnb_support srslog gtest gtest_main)
 gtest_discover_tests(drb_manager_test)

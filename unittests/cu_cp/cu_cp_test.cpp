@@ -8,8 +8,8 @@
  *
  */
 
+#include "common/test_helpers.h"
 #include "lib/cu_cp/cu_cp.h"
-#include "test_helpers.h"
 #include "unittests/e1/common/test_helpers.h"
 #include "unittests/f1ap/common/test_helpers.h"
 #include "unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
