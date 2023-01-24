@@ -44,7 +44,7 @@ uint16_t srsgnb::get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned f
   // t_id = index of first slot of the PRACH (0 <= t_id < 80)
   // f_id = index of the PRACH in the freq domain (0 <= f_id < 8) (for FDD, f_id=0)
   // ul_carrier_id = 0 for NUL and 1 for SUL carrier
-  uint16_t ra_rnti = 1U + symbol_index + 14U * sl_rx.slot_index() + 14U * 80U * frequency_index +
+  uint16_t ra_rnti = 1U + symbol_index + 14U * sl_rx.subframe_index() + 14U * 80U * frequency_index +
                      (14U * 80U * 8U * (is_sul ? 1U : 0U));
   return ra_rnti;
 }
