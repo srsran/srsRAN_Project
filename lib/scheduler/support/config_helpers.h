@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/scheduler/config/bwp_configuration.h"
+#include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {
 

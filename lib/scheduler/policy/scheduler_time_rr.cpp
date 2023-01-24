@@ -12,11 +12,11 @@
 
 using namespace srsgnb;
 
-/// @brief Algorithm to select next UE to allocate in a time-domain RR fashion
-/// @param ue_db map of "slot_ue"
-/// @param rr_count starting index to select next UE
-/// @param p callable with signature "bool(slot_ue&)" that returns true if UE allocation was successful
-/// @return true if a UE was allocated
+/// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
+/// \param[in] ue_db map of "slot_ue"
+/// \param[in] rr_count starting index to select next UE
+/// \param[in] p callable with signature "bool(slot_ue&)" that returns true if UE allocation was successful
+/// \return true if a UE was allocated
 template <typename Predicate>
 bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate& p)
 {
@@ -36,11 +36,11 @@ bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate&
   return false;
 }
 
-/// @brief Gets SearchSpace configurations prioritized based on nof. candidates for a given aggregation level in a UE
+/// \brief Gets SearchSpace configurations prioritized based on nof. candidates for a given aggregation level in a UE
 /// cell.
-/// @param ue_cc UE's cell context.
-/// @param agg_lvl Aggregation level.
-/// @return List of SearchSpace configuration.
+/// \param[in] ue_cc UE's cell context.
+/// \param[in] agg_lvl Aggregation level.
+/// \return List of SearchSpace configuration.
 static static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP>
 get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level agg_lvl)
 {
@@ -81,7 +81,8 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
     // Search for available symbolxRB resources in different SearchSpaces.
     const cell_configuration& cell_cfg_cmn = ue_cc.cfg().cell_cfg_common;
     for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
-      span<const pdsch_time_domain_resource_allocation> pdsch_list = ue_cc.cfg().get_pdsch_time_domain_list(ss_cfg->id);
+      const span<const pdsch_time_domain_resource_allocation> pdsch_list =
+          ue_cc.cfg().get_pdsch_time_domain_list(ss_cfg->id);
 
       bwp_configuration bwp_cfg = ue_cc.cfg().dl_bwp_common(ue_cc.active_bwp_id()).generic_params;
       if (ss_cfg->type == search_space_configuration::type_t::common) {
@@ -95,10 +96,10 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
       for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {
         const pdsch_time_domain_resource_allocation& pdsch = pdsch_list[time_res];
         const cell_slot_resource_grid&               grid  = pdsch_alloc.dl_resource_grid(ue_cc.cell_index, pdsch.k0);
-        prb_bitmap                                   used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
-        unsigned     nof_req_prbs                              = is_retx ? h->last_alloc_params().prbs.prbs().length()
+        const prb_bitmap                             used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
+        const unsigned     nof_req_prbs                        = is_retx ? h->last_alloc_params().prbs.prbs().length()
                                                                          : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
-        crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
+        const crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
         if (not ue_grant_crbs.empty()) {
           const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{
               &u, ue_cc.cell_index, h->id, ss_cfg->id, time_res, ue_grant_crbs, dci_dl_format::f1_0, agg_lvl});
@@ -140,19 +141,20 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
     }
 
     for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
-      span<const pusch_time_domain_resource_allocation> pusch_list = ue_cc.cfg().get_pusch_time_domain_list(ss_cfg->id);
+      const span<const pusch_time_domain_resource_allocation> pusch_list =
+          ue_cc.cfg().get_pusch_time_domain_list(ss_cfg->id);
       // See TS 38.212, 7.3.1.0 DCI size alignment.
       const bwp_uplink_common& bwp_ul = ue_cell_cfg.ul_bwp_common(
           ss_cfg->type == search_space_configuration::type_t::common ? to_bwp_id(0) : ue_cc.active_bwp_id());
 
       for (unsigned time_res = 0; time_res != pusch_list.size(); ++time_res) {
-        unsigned                       k2            = pusch_list[time_res].k2;
-        ofdm_symbol_range              pusch_symbols = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
+        const unsigned                 k2            = pusch_list[time_res].k2;
+        const ofdm_symbol_range        pusch_symbols = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
         const cell_slot_resource_grid& grid          = pusch_alloc.ul_resource_grid(ue_cc.cell_index, k2);
-        prb_bitmap                     used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
-        unsigned                       nof_req_prbs =
+        const prb_bitmap               used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
+        const unsigned                 nof_req_prbs =
             is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
-        crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
+        const crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
         if (not ue_grant_crbs.empty()) {
           const bool res_allocated = pusch_alloc.allocate_ul_grant(
               ue_pusch_grant{&u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, ss_cfg->id, agg_lvl});

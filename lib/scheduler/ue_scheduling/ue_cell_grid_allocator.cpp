@@ -49,10 +49,13 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     return false;
   }
 
-  const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
-  const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_downlink_common&   init_dl_bwp = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
-  const bwp_downlink_common&   bwp_dl_cmn  = ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id());
+  const ue_cell_configuration&  ue_cell_cfg = ue_cc->cfg();
+  const cell_configuration&     cell_cfg    = ue_cell_cfg.cell_cfg_common;
+  const bwp_downlink_common&    init_dl_bwp = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
+  const bwp_downlink_common&    bwp_dl_cmn  = ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id());
+  dl_harq_process&              h_dl        = ue_cc->harqs.dl_harq(grant.h_id);
+  const dci_dl_rnti_config_type dci_type =
+      h_dl.empty() ? dci_dl_rnti_config_type::c_rnti_f1_0 : h_dl.last_alloc_params().dci_cfg_type;
 
   // Find a SearchSpace candidate.
   const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
@@ -61,19 +64,12 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     return false;
   }
 
-  bwp_configuration  bwp_cfg = bwp_dl_cmn.generic_params;
-  subcarrier_spacing scs     = bwp_dl_cmn.generic_params.scs;
-  if (ss_cfg->type == search_space_configuration::type_t::common) {
-    scs     = init_dl_bwp.generic_params.scs;
-    bwp_cfg = init_dl_bwp.generic_params;
-    // See TS 38.214, 5.1.2.2.2, Downlink resource allocation type 1.
-    if (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-      bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-    }
-  }
-
-  const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
-      ue_cc->cfg().get_pdsch_time_domain_list(grant.ss_id)[grant.time_res_index];
+  const bwp_configuration bwp_cfg =
+      get_resource_alloc_type_1_dl_bwp_size(dci_type, init_dl_bwp, bwp_dl_cmn, ss_cfg->type);
+  const subcarrier_spacing                                scs = bwp_cfg.scs;
+  const span<const pdsch_time_domain_resource_allocation> pdsch_list =
+      ue_cell_cfg.get_pdsch_time_domain_list(ss_cfg->id);
+  const pdsch_time_domain_resource_allocation& pdsch_td_cfg = pdsch_list[grant.time_res_index];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
@@ -122,26 +118,23 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, grant.crbs});
 
   // Allocate UE DL HARQ.
-  prb_interval            prbs = crb_to_prb(bwp_cfg, grant.crbs);
-  dl_harq_process&        h_dl = ue_cc->harqs.dl_harq(grant.h_id);
-  sch_mcs_index           mcs;
-  dci_dl_rnti_config_type dci_cfg_type;
+  prb_interval  prbs = crb_to_prb(bwp_cfg, grant.crbs);
+  sch_mcs_index mcs;
   if (h_dl.empty()) {
     // It is a new tx.
-    mcs          = *expert_cfg.fixed_dl_mcs; // TODO: Support dynamic MCS.
-    dci_cfg_type = dci_dl_rnti_config_type::c_rnti_f1_0;
+    // TODO: Support dynamic MCS.
+    mcs = *expert_cfg.fixed_dl_mcs;
 
     h_dl.new_tx(pdsch_alloc.slot, k1, expert_cfg.max_nof_harq_retxs);
   } else {
     // It is a retx.
-    mcs          = h_dl.last_alloc_params().tb[0]->mcs;
-    dci_cfg_type = h_dl.last_alloc_params().dci_cfg_type;
+    mcs = h_dl.last_alloc_params().tb[0]->mcs;
 
     h_dl.new_retx(pdsch_alloc.slot, k1);
   }
 
   // Fill DL PDCCH DCI PDU.
-  switch (dci_cfg_type) {
+  switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_dci_f1_0_tc_rnti(
           pdcch->dci, init_dl_bwp, prbs, grant.time_res_index, k1, uci.pucch_grant.pucch_res_indicator, mcs, h_dl);
@@ -212,6 +205,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
   const bwp_uplink_common&     init_ul_bwp = ue_cell_cfg.ul_bwp_common(to_bwp_id(0));
   const bwp_uplink_common&     bwp_ul_cmn  = ue_cell_cfg.ul_bwp_common(ue_cc->active_bwp_id());
+  // TODO: Get correct DCI format.
+  const dci_ul_rnti_config_type dci_type = dci_ul_rnti_config_type::c_rnti_f0_0;
 
   // Find a SearchSpace candidate.
   const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
@@ -220,15 +215,12 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
 
-  subcarrier_spacing                    scs          = bwp_ul_cmn.generic_params.scs;
-  pusch_time_domain_resource_allocation pusch_td_cfg = bwp_ul_cmn.pusch_cfg_common->pusch_td_alloc_list[time_resource];
-  bwp_configuration                     bwp_cfg      = bwp_ul_cmn.generic_params;
-  if (ss_cfg->type == search_space_configuration::type_t::common) {
-    scs          = init_ul_bwp.generic_params.scs;
-    pusch_td_cfg = init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource];
-    // See TS 38.214, 6.1.2.2.2, Uplink resource allocation type 1.
-    bwp_cfg = init_ul_bwp.generic_params;
-  }
+  const bwp_configuration bwp_cfg =
+      get_resource_alloc_type_1_ul_bwp_size(dci_type, init_ul_bwp, bwp_ul_cmn, ss_cfg->type);
+  const subcarrier_spacing                                scs = bwp_cfg.scs;
+  const span<const pusch_time_domain_resource_allocation> pusch_list =
+      ue_cell_cfg.get_pusch_time_domain_list(ss_cfg->id);
+  const pusch_time_domain_resource_allocation pusch_td_cfg = pusch_list[time_resource];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
@@ -264,7 +256,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 
   // Fetch PUSCH parameters based on type of transmission.
   pusch_config_params pusch_cfg;
-  switch (pdcch->dci.type) {
+  switch (dci_type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, time_resource);
       break;
