@@ -36,7 +36,7 @@ bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate&
   return false;
 }
 
-/// @brief Fetches SearchSpace configurations prioritized based on nof. candidates for a given aggregation level in a UE
+/// @brief Gets SearchSpace configurations prioritized based on nof. candidates for a given aggregation level in a UE
 /// cell.
 /// @param ue_cc UE's cell context.
 /// @param agg_lvl Aggregation level.
@@ -50,7 +50,8 @@ get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level a
             [agg_lvl](const search_space_configuration* lhs, const search_space_configuration* rhs) -> bool {
               if (lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] ==
                   rhs->nof_candidates[to_aggregation_level_index(agg_lvl)]) {
-                // In case nof. candidates are equal, choose the SS with CORESET > 0.
+                // In case nof. candidates are equal, choose the SS with higher CORESET Id (i.e. try to use CORESET#0 as
+                // less as possible).
                 return lhs->cs_id > rhs->cs_id;
               }
               return lhs->nof_candidates[to_aggregation_level_index(agg_lvl)] >
