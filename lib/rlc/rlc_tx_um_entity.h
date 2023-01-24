@@ -13,6 +13,7 @@
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 #include "rlc_um_pdu.h"
+#include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
 
@@ -55,13 +56,16 @@ private:
   const uint32_t head_len_first     = 0;
   const uint32_t head_len_not_first = 0;
 
+  task_executor& ue_executor;
+
 public:
   rlc_tx_um_entity(du_ue_index_t                        du_index,
                    rb_id_t                              rb_id,
                    const rlc_tx_um_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
-                   rlc_tx_lower_layer_notifier&         lower_dn_);
+                   rlc_tx_lower_layer_notifier&         lower_dn_,
+                   task_executor&                       ue_executor_);
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu_) override;

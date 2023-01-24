@@ -21,6 +21,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
                                    timer_manager&                       timers,
+                                   task_executor&                       ue_executor_,
                                    task_executor&                       pcell_executor_) :
   rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
@@ -31,6 +32,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
   poll_retransmit_timer(timers.create_unique_timer()),
   is_poll_retransmit_timer_expired(false),
+  ue_executor(ue_executor_),
   pcell_executor(pcell_executor_)
 {
   metrics.metrics_set_mode(rlc_mode::am);
@@ -168,7 +170,11 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
   if (sdu.pdcp_count.has_value()) {
-    upper_dn.on_transmitted_sdu(sdu.pdcp_count.value());
+    // Redirect upper layer notification to ue_executor
+    auto handle_func = [this, pdcp_sn = std::move(sdu.pdcp_count.value())]() mutable {
+      upper_dn.on_transmitted_sdu(pdcp_sn);
+    };
+    ue_executor.execute(std::move(handle_func));
   }
 
   // Segment new SDU if necessary
@@ -547,7 +553,11 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     }
   }
   if (max_deliv_pdcp_sn.has_value()) {
-    upper_dn.on_delivered_sdu(max_deliv_pdcp_sn.value()); // notify upper layer
+    // Redirect upper layer notification to ue_executor
+    auto handle_func = [this, pdcp_sn = std::move(max_deliv_pdcp_sn.value())]() mutable {
+      upper_dn.on_delivered_sdu(pdcp_sn);
+    };
+    ue_executor.execute(std::move(handle_func));
   }
   logger.log_debug("Processed status report ACKs. ACK_SN={}. Tx_Next_Ack={}", status.ack_sn, st.tx_next_ack);
 

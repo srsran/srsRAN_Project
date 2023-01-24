@@ -33,7 +33,7 @@ public:
   {
     // Create AM entities
     std::unique_ptr<rlc_tx_am_entity> tx_am = std::make_unique<rlc_tx_am_entity>(
-        du_index, rb_id, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers, pcell_executor);
+        du_index, rb_id, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers, ue_executor, pcell_executor);
     logger.log_info("RLC TX AM configured: {}", config.tx);
 
     std::unique_ptr<rlc_rx_am_entity> rx_am =
