@@ -9,6 +9,7 @@
  */
 
 #include "rrc_ue_test_helpers.h"
+#include "rrc_ue_test_messages.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
@@ -17,24 +18,6 @@
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
-
-/// Converts a hex string (e.g. 01FA02) to a sec_as_key.
-security::sec_as_key make_sec_as_key(std::string hex_str)
-{
-  byte_buffer          key_buf = make_byte_buffer(hex_str);
-  security::sec_as_key key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
-
-/// Converts a hex string (e.g. 01FA02) to a sec_128_as_key.
-security::sec_128_as_key make_sec_128_as_key(std::string hex_str)
-{
-  byte_buffer              key_buf = make_byte_buffer(hex_str);
-  security::sec_128_as_key key     = {};
-  std::copy(key_buf.begin(), key_buf.end(), key.begin());
-  return key;
-}
 
 /// Fixture class RRC Setup tests preparation
 class rrc_ue_smc : public rrc_ue_test_helper, public ::testing::Test
