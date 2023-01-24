@@ -80,6 +80,7 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   est_cfg.first_symbol = config.first_symbol;
   est_cfg.nof_symbols  = config.nof_symbols;
   est_cfg.rx_ports     = config.rx_ports;
+  est_cfg.scaling      = config.scaling;
 
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
     ch_estimator->compute(estimate, grid, i_port, temp_symbols, est_cfg);
@@ -91,7 +92,7 @@ void dmrs_pusch_estimator_impl::sequence_generation(span<cf_t>           sequenc
                                                     const configuration& config) const
 {
   // Get signal amplitude.
-  float amplitude = M_SQRT1_2 / config.scaling;
+  float amplitude = M_SQRT1_2;
 
   // Extract parameters to calculate the PRG initial state.
   unsigned nslot    = config.slot.slot_index();

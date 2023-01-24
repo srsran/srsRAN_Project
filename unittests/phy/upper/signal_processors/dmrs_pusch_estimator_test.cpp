@@ -12,6 +12,7 @@
 #include "dmrs_pusch_estimator_test_data.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsgnb/srsvec/zero.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
@@ -41,20 +42,19 @@ std::ostream& operator<<(std::ostream& os, dmrs_pusch_estimator::configuration c
 
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
-  fmt::print(os, "config={} symbols={};", test_case.config, test_case.symbols.get_file_name());
+  fmt::print(os, "config={} symbols={};", test_case.config, test_case.rx_symbols.get_file_name());
   return os;
 }
 
 } // namespace srsgnb
 
 namespace {
-const float ASSERT_MAX_ERROR = 1E-5;
 
 class DmrsPuschEstimatorFixture : public ::testing::TestWithParam<test_case_t>
 {
 protected:
   std::unique_ptr<dmrs_pusch_estimator> estimator;
-  std::unique_ptr<resource_grid>        grid;
+  resource_grid_reader_spy              grid;
 
   void SetUp() override
   {
@@ -77,82 +77,155 @@ protected:
     estimator = estimator_factory->create();
     ASSERT_TRUE(estimator);
 
-    // Create grid.
-    grid = create_resource_grid(
-        test_case.config.rx_ports.size(), MAX_NSYMB_PER_SLOT, NRE * test_case.config.rb_mask.size());
-    ASSERT_TRUE(grid);
-
-    // Write zeros in grid.
-    grid->set_all_zero();
-
     // Setup resource grid symbols.
-    std::vector<resource_grid_reader_spy::expected_entry_t> rg_entries = test_case.symbols.read();
-    for (unsigned i_port = 0, i_port_end = test_case.config.rx_ports.size(); i_port != i_port_end; ++i_port) {
-      // Create vector of coordinates and values for the port.
-      std::vector<resource_grid_coordinate> coordinates(0);
-      std::vector<cf_t>                     values(0);
-
-      // Reserve to avoid continuous memory allocation.
-      coordinates.reserve(rg_entries.size());
-      values.reserve(rg_entries.size());
-
-      // Select the grid entries that match the port.
-      for (const resource_grid_reader_spy::expected_entry_t& rg_entry : rg_entries) {
-        if (rg_entry.port == i_port) {
-          resource_grid_coordinate coordinate;
-          coordinate.subcarrier = rg_entry.subcarrier;
-          coordinate.symbol     = rg_entry.symbol;
-          coordinates.emplace_back(coordinate);
-          values.emplace_back(rg_entry.value);
-        }
-      }
-
-      // Put elements in the grid for the selected port.
-      grid->put(i_port, coordinates, values);
-    }
+    std::vector<resource_grid_reader_spy::expected_entry_t> rg_entries = test_case.rx_symbols.read();
+    grid.write(rg_entries);
   }
 };
 } // namespace
+
+static constexpr float tolerance = 0.001;
+
+TEST_P(DmrsPuschEstimatorFixture, Position)
+{
+  // This test only looks to whether the estimator places the DM-RS pilots in the correct position. To this end, the
+  // received channel samples have been generated assuming that layers are transmitted on orthogonal channels (one layer
+  // - one port), with no impairments. Then, the estimated channel should be one at the pilot coordinates and zero
+  // elsewhere.
+
+  dmrs_pusch_estimator::configuration config = GetParam().config;
+
+  // This is a 'dmrs-position' test.
+  if (GetParam().label != test_label::dmrs_creation) {
+    return;
+  }
+
+  // The current estimator does not support Type2 DM-RS.
+  // As well, the MIMO case must be double-checked.
+  if ((config.type == dmrs_type::TYPE2) || (config.nof_tx_layers > 1)) {
+    GTEST_SKIP();
+  }
+
+  ASSERT_EQ(config.rx_ports.size(), config.nof_tx_layers)
+      << "This simulation assumes an equal number of Rx ports and Tx layers.";
+
+  // Prepare channel estimate (just to be sure, reset all entries).
+  channel_estimate::channel_estimate_dimensions ch_estimate_dims;
+  ch_estimate_dims.nof_prb       = config.rb_mask.size();
+  ch_estimate_dims.nof_symbols   = config.nof_symbols + config.first_symbol;
+  ch_estimate_dims.nof_rx_ports  = config.rx_ports.size();
+  ch_estimate_dims.nof_tx_layers = config.nof_tx_layers;
+
+  channel_estimate ch_est(ch_estimate_dims);
+
+  for (unsigned i_port = 0; i_port != ch_estimate_dims.nof_rx_ports; ++i_port) {
+    for (unsigned i_layer = 0; i_layer != ch_estimate_dims.nof_tx_layers; ++i_layer) {
+      span<cf_t> path = ch_est.get_path_ch_estimate(i_port, i_layer);
+      srsvec::zero(path);
+    }
+  }
+
+  // Estimate.
+  estimator->estimate(ch_est, grid, config);
+
+  // First, assert the channel estimate dimensions haven't changed.
+  ch_estimate_dims = ch_est.size();
+  ASSERT_EQ(ch_estimate_dims.nof_prb, config.rb_mask.size()) << "Wrong number of PRBs.";
+  ASSERT_EQ(ch_estimate_dims.nof_symbols, config.nof_symbols + config.first_symbol) << "Wrong number of symbols.";
+  ASSERT_EQ(ch_estimate_dims.nof_rx_ports, config.rx_ports.size()) << "Wrong number of Rx ports.";
+  ASSERT_EQ(ch_estimate_dims.nof_tx_layers, config.nof_tx_layers) << "Wrong number of Tx layers.";
+
+  for (unsigned i_port = 0; i_port != ch_estimate_dims.nof_rx_ports; ++i_port) {
+    for (unsigned i_layer = 0; i_layer != ch_estimate_dims.nof_tx_layers; ++i_layer) {
+      for (unsigned i_symbol = 0; i_symbol != ch_estimate_dims.nof_symbols; ++i_symbol) {
+        span<const cf_t> current_symbol = ch_est.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
+        if ((i_port != i_layer) || (i_symbol < config.first_symbol)) {
+          ASSERT_TRUE(std::all_of(current_symbol.begin(), current_symbol.end(), [](cf_t a) {
+            return (a == cf_t(0, 0));
+          })) << "REs should be zero on cross paths and on not allocated symbols.";
+          continue;
+        }
+        cf_t value        = cf_t(1, 0);
+        bool is_ok        = true;
+        auto check_symbol = [current_symbol, &value, &is_ok](unsigned i_prb) {
+          unsigned         i_re        = i_prb * NRE;
+          span<const cf_t> current_prb = current_symbol.subspan(i_re, NRE);
+          is_ok                        = is_ok && std::all_of(current_prb.begin(), current_prb.end(), [value](cf_t a) {
+                    return (std::abs(a - value) < tolerance);
+                  });
+        };
+        config.rb_mask.for_each(0, config.rb_mask.size(), check_symbol);
+        ASSERT_TRUE(is_ok) << "All estimates in allocated REs should be 1.";
+
+        value = cf_t(0, 0);
+        is_ok = true;
+        config.rb_mask.for_each(0, config.rb_mask.size(), check_symbol, false);
+        ASSERT_TRUE(is_ok) << "All estimates in non-allocated REs should be 0.";
+      }
+    }
+  }
+}
+
+static bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> expected,
+                             const channel_estimate&                                computed)
+{
+  unsigned         old_symbol = 15;
+  span<const cf_t> computed_symbol;
+
+  for (const auto& this_expected : expected) {
+    unsigned i_symbol = this_expected.symbol;
+    unsigned i_sc     = this_expected.subcarrier;
+    cf_t     value    = this_expected.value;
+
+    if (i_symbol != old_symbol) {
+      old_symbol      = i_symbol;
+      computed_symbol = computed.get_symbol_ch_estimate(i_symbol, 0, 0);
+    }
+
+    if (std::abs(computed_symbol[i_sc] - value) > tolerance) {
+      return false;
+    }
+  }
+  return true;
+}
 
 TEST_P(DmrsPuschEstimatorFixture, Average)
 {
   dmrs_pusch_estimator::configuration config = GetParam().config;
 
+  // This is a 'dmrs-position' test.
+  if (GetParam().label != test_label::ch_estimation) {
+    return;
+  }
+
   // The current estimator does not support Type2 DM-RS.
-  if (config.type == dmrs_type::TYPE2) {
+  // As well, the MIMO case must be double-checked.
+  if ((config.type == dmrs_type::TYPE2) || (config.nof_tx_layers > 1)) {
     GTEST_SKIP();
   }
 
-  // Prepare channel estimate.
-  channel_estimate::channel_estimate_dimensions ch_estimate_dims;
-  ch_estimate_dims.nof_prb       = config.rb_mask.count();
-  ch_estimate_dims.nof_symbols   = config.nof_symbols;
-  ch_estimate_dims.nof_rx_ports  = config.rx_ports.size();
-  ch_estimate_dims.nof_tx_layers = config.nof_tx_layers;
-  channel_estimate ch_est(ch_estimate_dims);
+  unsigned nof_allocated_res = config.rb_mask.count() * NRE * config.nof_symbols;
+
+  // Read expected channel estimates.
+  std::vector<resource_grid_reader_spy::expected_entry_t> expected_estimates = GetParam().ch_estimates.read();
+  ASSERT_EQ(expected_estimates.size(), nof_allocated_res) << fmt::format(
+      "Number of channel estimates mismatch: configured {}, provided {}", nof_allocated_res, expected_estimates.size());
+
+  channel_estimate ch_est;
 
   // Estimate.
-  estimator->estimate(ch_est, *grid, config);
+  estimator->estimate(ch_est, grid, config);
 
-  // Current estimator is provisional.
-  GTEST_SKIP();
+  // First, assert the channel estimate gets the proper dimensions.
+  channel_estimate::channel_estimate_dimensions ch_estimate_dims = ch_est.size();
+  ASSERT_EQ(ch_estimate_dims.nof_prb, config.rb_mask.size()) << "Wrong number of PRBs.";
+  ASSERT_EQ(ch_estimate_dims.nof_symbols, config.nof_symbols + config.first_symbol) << "Wrong number of symbols.";
+  ASSERT_EQ(ch_estimate_dims.nof_rx_ports, config.rx_ports.size()) << "Wrong number of Rx ports.";
+  ASSERT_EQ(ch_estimate_dims.nof_tx_layers, config.nof_tx_layers) << "Wrong number of Tx layers.";
 
-  // Check the results. The dummy channel estimator sets all RE elements corresponding to one TX-RX path to a number
-  // equal to 10 * Rx port index + layer index.
-  for (unsigned i_layer = 0; i_layer != config.nof_tx_layers; ++i_layer) {
-    for (unsigned i_port = 0, nof_rx_ports = config.rx_ports.size(); i_port != nof_rx_ports; ++i_port) {
-      // Extract the layer and port path.
-      span<const cf_t> path = ch_est.get_path_ch_estimate(i_port, i_layer);
-
-      // Expect an identity matrix.
-      cf_t expected = (i_layer == i_port) ? cf_t(1) : cf_t(0);
-
-      for (cf_t value : path) {
-        ASSERT_NEAR(expected.real(), value.real(), ASSERT_MAX_ERROR);
-        ASSERT_NEAR(expected.imag(), value.imag(), ASSERT_MAX_ERROR);
-      }
-    }
-  }
+  // Assert that the channel estimates are correct.
+  ASSERT_TRUE(are_estimates_ok(expected_estimates, ch_est));
+  ASSERT_NEAR(ch_est.get_rsrp(0, 0), GetParam().est_rsrp, tolerance);
 }
 
 // Creates test suite with al the test cases.
