@@ -311,6 +311,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
     unsigned msg3_delay = get_msg3_delay(pusch_td_alloc, get_ul_bwp_cfg().scs);
     if (cell_cfg.is_ul_enabled(pdcch_slot + msg3_delay)) {
       pusch_slots_available = true;
+      break;
     }
   }
   if (not pusch_slots_available) {

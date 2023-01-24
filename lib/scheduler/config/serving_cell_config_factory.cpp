@@ -193,7 +193,7 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm                     = 1;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 2;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window               = 10;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10U << to_numerology_value(params.scs_common);
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(1);
   cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2       = 4;
