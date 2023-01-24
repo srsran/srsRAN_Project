@@ -219,7 +219,7 @@ e1_message srsgnb::srs_cu_cp::generate_bearer_context_setup_response(gnb_cu_cp_u
   gtp_tunnel.gtp_teid.from_string("00000283");
 
   asn1::e1ap::drb_setup_item_ng_ran_s drb_setup_item_ng_ran = {};
-  drb_setup_item_ng_ran.drb_id                              = 4;
+  drb_setup_item_ng_ran.drb_id                              = 1;
 
   asn1::e1ap::up_params_item_s up_params_item = {};
   up_params_item.up_tnl_info.set_gtp_tunnel();
@@ -290,10 +290,9 @@ e1_message srsgnb::srs_cu_cp::generate_bearer_context_modification_response(gnb_
 
   asn1::e1ap::pdu_session_res_modified_item_s pdu_session_res_modified_item = {};
   asn1::e1ap::drb_modified_item_ng_ran_s      drb_modified_item_ng_ran;
-  drb_modified_item_ng_ran.drb_id             = 4;
+  drb_modified_item_ng_ran.drb_id             = 1;
   asn1::e1ap::up_params_item_s up_params_item = {};
-  up_params_item.up_tnl_info.set_gtp_tunnel();
-  auto& gtp_tunnel = up_params_item.up_tnl_info.gtp_tunnel();
+  auto&                        gtp_tunnel     = up_params_item.up_tnl_info.set_gtp_tunnel();
   gtp_tunnel.transport_layer_address.from_number(2887058953);
   gtp_tunnel.gtp_teid.from_string("80000283");
   up_params_item.cell_group_id = 0;
