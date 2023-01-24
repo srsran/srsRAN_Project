@@ -64,7 +64,7 @@ void test_init_unique_thread_prio()
 {
   test_delimit_logger delimit{"Initialized unique thread with priority"};
 
-  unique_thread t("T1", srsgnb::os_thread_realtime_priority::MAX_PRIO, []() { print_this_thread_priority(); });
+  unique_thread t("T1", srsgnb::os_thread_realtime_priority::max(), []() { print_this_thread_priority(); });
 }
 
 int main()

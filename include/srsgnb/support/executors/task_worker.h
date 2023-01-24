@@ -37,7 +37,7 @@ public:
   task_worker(std::string                      thread_name_,
               uint32_t                         queue_size,
               bool                             start_postponed = false,
-              os_thread_realtime_priority      prio_           = os_thread_realtime_priority::NO_REALTIME,
+              os_thread_realtime_priority      prio_           = os_thread_realtime_priority::no_realtime(),
               const os_sched_affinity_bitmask& mask_           = {});
   task_worker(const task_worker&)            = delete;
   task_worker(task_worker&&)                 = delete;
@@ -49,7 +49,7 @@ public:
   void stop();
 
   /// Initialize task worker, if not yet running.
-  void start(os_thread_realtime_priority      prio_ = os_thread_realtime_priority::NO_REALTIME,
+  void start(os_thread_realtime_priority      prio_ = os_thread_realtime_priority::no_realtime(),
              const os_sched_affinity_bitmask& mask_ = {});
 
   void push_task(task_t&& task)
@@ -82,7 +82,7 @@ private:
 
   // args
   std::string                 worker_name;
-  os_thread_realtime_priority prio = os_thread_realtime_priority::NO_REALTIME;
+  os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
   os_sched_affinity_bitmask   mask = {};
   srslog::basic_logger&       logger;
 

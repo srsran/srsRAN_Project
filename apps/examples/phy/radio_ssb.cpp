@@ -403,7 +403,7 @@ int main(int argc, char** argv)
   std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
 
   // Lower PHY RT task executor.
-  task_worker                    rt_task_worker("phy_rt_thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
+  task_worker                    rt_task_worker("phy_rt_thread", 1, false, os_thread_realtime_priority::max());
   std::unique_ptr<task_executor> rt_task_executor = make_task_executor(rt_task_worker);
 
   // Create radio factory.

@@ -30,18 +30,8 @@ static bool thread_set_param(pthread_t t, os_thread_realtime_priority prio)
 {
   sched_param param{};
 
-  int policy = 0;
-  if (prio != srsgnb::os_thread_realtime_priority::NO_REALTIME) {
-    // Subtract one to the priority offset to avoid scheduling threads with the highest priority that could contend with
-    // OS critical tasks.
-    param.sched_priority = sched_get_priority_max(SCHED_FIFO) + (int)prio - 32;
-    policy               = SCHED_FIFO;
-  } else {
-    param.sched_priority = 0;
-    policy               = SCHED_OTHER;
-  }
-
-  if (pthread_setschedparam(t, policy, &param) != 0) {
+  param.sched_priority = prio.native();
+  if (pthread_setschedparam(t, prio.native_sched_policy(), &param) != 0) {
     fprintf(stderr,
             "Warning: Scheduling priority of thread \"%s\" not changed. Cause: Not enough privileges.\n",
             this_thread_name());
@@ -146,7 +136,7 @@ std::thread unique_thread::make_thread(const std::string&               name,
     // Set thread OS priority and affinity.
     // Note: TSAN seems to have issues with thread attributes when running as normal user, disable them in that case.
 #ifndef HAVE_TSAN
-    if (prio != os_thread_realtime_priority::NO_REALTIME) {
+    if (prio != os_thread_realtime_priority::no_realtime()) {
       thread_set_param(tself, prio);
     }
     if (cpu_mask.any()) {

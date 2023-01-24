@@ -69,7 +69,7 @@ protected:
     srslog::init();
 
     // create worker thread and executer
-    task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
+    task_worker                    task_worker("thread", 1, false);
     std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
     // create message handler for CU and DU to relay messages back and forth

@@ -32,7 +32,7 @@ protected:
     srslog::init();
 
     // create worker thread and executer
-    task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
+    task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::no_realtime());
     std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
     f1c_pdu_notifier = std::make_unique<dummy_f1c_pdu_notifier>();

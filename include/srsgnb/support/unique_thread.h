@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/adt/strong_type.h"
 #include "srsgnb/adt/unique_function.h"
 #include <string>
 #include <thread>
@@ -22,7 +23,37 @@ size_t compute_host_nof_hardware_threads();
 
 /// OS thread RT scheduling priority.
 /// Note: posix defines a minimum spread between sched_get_priority_max() and sched_get_priority_min() of 32.
-enum class os_thread_realtime_priority : int { NO_REALTIME = 0, MIN_PRIO = 1, MAX_PRIO = 32 };
+struct os_thread_realtime_priority_tag {};
+class os_thread_realtime_priority
+  : public strong_type<int, struct os_thread_realtime_priority_tag, strong_equality, strong_comparison>
+{
+public:
+  /// Creates non-realtime thread priority
+  os_thread_realtime_priority() : strong_type(0) {}
+
+  /// Creates realtime thread priority value based on priority.
+  /// \param[in] ratio Priority value between 0 (min) and 1 (max).
+  explicit os_thread_realtime_priority(float ratio) : strong_type(ratio_to_prio(ratio)) {}
+
+  static os_thread_realtime_priority max() { return os_thread_realtime_priority{1.0f}; }
+  static os_thread_realtime_priority min() { return os_thread_realtime_priority{0.0f}; }
+  static os_thread_realtime_priority no_realtime() { return os_thread_realtime_priority{}; }
+
+  int native() const { return strong_type::value(); }
+
+  int native_sched_policy() const { return *this == no_realtime() ? SCHED_OTHER : SCHED_FIFO; }
+
+private:
+  static int ratio_to_prio(float ratio)
+  {
+    srsgnb_assert(ratio >= 0 and ratio <= 1, "Invalid percentage={}", ratio);
+    int min = sched_get_priority_min(SCHED_FIFO);
+    // Subtract one to the priority offset to avoid scheduling threads with the highest priority that could contend with
+    // OS critical tasks.
+    int max = sched_get_priority_max(SCHED_FIFO) - 1;
+    return (int)std::round(ratio * (max - min)) + min;
+  }
+};
 
 /// CPU affinity bitmap.
 struct os_sched_affinity_bitmask {
@@ -72,7 +103,7 @@ public:
   template <typename Callable>
   unique_thread(std::string name_, const os_sched_affinity_bitmask& cpu_mask, Callable&& c) :
     name(std::move(name_)),
-    thread_handle(make_thread(name, std::forward<Callable>(c), os_thread_realtime_priority::NO_REALTIME, cpu_mask))
+    thread_handle(make_thread(name, std::forward<Callable>(c), os_thread_realtime_priority::no_realtime(), cpu_mask))
   {
   }
 
@@ -117,7 +148,7 @@ private:
   /// Starts thread with provided name and attributes.
   static std::thread make_thread(const std::string&               name,
                                  unique_function<void()>          callable,
-                                 os_thread_realtime_priority      prio     = os_thread_realtime_priority::NO_REALTIME,
+                                 os_thread_realtime_priority      prio     = os_thread_realtime_priority::no_realtime(),
                                  const os_sched_affinity_bitmask& cpu_mask = {});
 
   /// Thread name.

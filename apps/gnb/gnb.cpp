@@ -128,7 +128,7 @@ struct worker_manager {
   pcell_ul_executor_mapper ul_exec_mapper{&ul_execs};
   cell_dl_executor_mapper  dl_exec_mapper{&dl_execs};
   // Lower PHY RT task executor.
-  task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::MAX_PRIO};
+  task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
   task_worker_executor rt_task_executor{{rt_task_worker}};
   // PRACH lower PHY executor
   task_worker          lower_prach_worker{"Lower PHY PRACH worker", task_worker_queue_size};
