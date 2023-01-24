@@ -237,11 +237,11 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
     // create direct connection with UE manager to RRC adapter
-    srb.rx_notifier = std::make_unique<f1c_rrc_ue_adapter>(rrc->get_ue(ue_ctxt->ue_index)->get_ul_ccch_pdu_handler());
+    srb.rx_notifier = std::make_unique<f1c_rrc_ue_adapter>(rrc->find_ue(ue_ctxt->ue_index)->get_ul_ccch_pdu_handler());
     srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_pdu_adapter>(*f1c, ue_ctxt->ue_index);
 
     // update notifier in RRC
-    rrc->get_ue(ue_ctxt->ue_index)
+    rrc->find_ue(ue_ctxt->ue_index)
         ->connect_srb_notifier(
             msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, nullptr, nullptr);
   } else if (msg.srb_id <= srb_id_t::srb2) {
@@ -254,7 +254,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb.pdcp_context->rrc_tx_control_notifier =
         std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
     srb.pdcp_context->rrc_rx_data_notifier =
-        std::make_unique<pdcp_rrc_ue_adapter>(rrc->get_ue(ue_ctxt->ue_index)->get_ul_dcch_pdu_handler());
+        std::make_unique<pdcp_rrc_ue_adapter>(rrc->find_ue(ue_ctxt->ue_index)->get_ul_dcch_pdu_handler());
     srb.pdcp_context->rrc_rx_control_notifier =
         std::make_unique<pdcp_rx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
 
@@ -288,7 +288,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
         srb.pdcp_context->pdcp_bearer->get_rx_upper_control_interface());
 
     // update notifier in RRC
-    rrc->get_ue(ue_ctxt->ue_index)
+    rrc->find_ue(ue_ctxt->ue_index)
         ->connect_srb_notifier(msg.srb_id,
                                *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
                                ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
@@ -338,7 +338,7 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
 
   return routine_mng->start_pdu_session_resource_setup_routine(
       msg,
-      rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_secutity_config(),
+      rrc->find_ue(ue_ctxt->ue_index)->get_rrc_ue_secutity_config(),
       *ue_ctxt->rrc_ue_notifier.get(),
-      rrc->get_ue(ue_ctxt->ue_index)->get_rrc_ue_drb_manager());
+      rrc->find_ue(ue_ctxt->ue_index)->get_rrc_ue_drb_manager());
 }

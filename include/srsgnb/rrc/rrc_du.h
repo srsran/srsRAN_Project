@@ -54,7 +54,7 @@ public:
   virtual void remove_ue(ue_index_t ue_index) = 0;
 
   /// Get a RRC UE object.
-  virtual rrc_ue_interface* get_ue(ue_index_t ue_index) = 0;
+  virtual rrc_ue_interface* find_ue(ue_index_t ue_index) = 0;
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;

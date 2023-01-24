@@ -39,7 +39,7 @@ public:
   // rrc_du_ue_manager
   bool is_rrc_connect_allowed() override;
 
-  rrc_ue_interface* get_ue(ue_index_t ue_index) override
+  rrc_ue_interface* find_ue(ue_index_t ue_index) override
   {
     srsgnb_assert(ue_db.find(ue_index) != ue_db.end(), "UE not found");
     return ue_db.at(ue_index).get();
