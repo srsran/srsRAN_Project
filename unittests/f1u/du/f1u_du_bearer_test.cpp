@@ -88,18 +88,20 @@ TEST_F(f1u_du_test, rx_discard)
 {
   constexpr uint32_t pdcp_count = 123;
 
-  nru_dl_message msg1                               = {};
-  msg1.dl_user_data.dl_discard_blocks               = true;
-  msg1.dl_user_data.dl_discard_nof_blocks           = 1;
-  msg1.dl_user_data.discard_blocks[0].pdcp_sn_start = pdcp_count;
-  msg1.dl_user_data.discard_blocks[0].block_size    = 1;
+  nru_dl_message msg1              = {};
+  msg1.dl_user_data.discard_blocks = nru_pdcp_sn_discard_blocks{};
+  nru_pdcp_sn_discard_block block1 = {};
+  block1.pdcp_sn_start             = pdcp_count;
+  block1.block_size                = 1;
+  msg1.dl_user_data.discard_blocks.value().push_back(std::move(block1));
   f1u->handle_pdu(std::move(msg1));
 
-  nru_dl_message msg2                               = {};
-  msg2.dl_user_data.dl_discard_blocks               = true;
-  msg2.dl_user_data.dl_discard_nof_blocks           = 1;
-  msg2.dl_user_data.discard_blocks[0].pdcp_sn_start = pdcp_count + 9;
-  msg2.dl_user_data.discard_blocks[0].block_size    = 1;
+  nru_dl_message msg2              = {};
+  msg2.dl_user_data.discard_blocks = nru_pdcp_sn_discard_blocks{};
+  nru_pdcp_sn_discard_block block2 = {};
+  block2.pdcp_sn_start             = pdcp_count + 9;
+  block2.block_size                = 1;
+  msg2.dl_user_data.discard_blocks.value().push_back(std::move(block2));
   f1u->handle_pdu(std::move(msg2));
 
   EXPECT_TRUE(tester->rx_sdu_list.empty());
@@ -169,15 +171,15 @@ TEST_F(f1u_du_test, tx_pdcp_pdus)
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu1);
-  EXPECT_FALSE(tester->tx_msg_list.front().has_data_delivery_status);
-  EXPECT_FALSE(tester->tx_msg_list.front().has_assistance_information);
+  EXPECT_FALSE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
 
   tester->tx_msg_list.pop_front();
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu2);
-  EXPECT_FALSE(tester->tx_msg_list.front().has_data_delivery_status);
-  EXPECT_FALSE(tester->tx_msg_list.front().has_assistance_information);
+  EXPECT_FALSE(tester->tx_msg_list.front().data_delivery_status.has_value());
+  EXPECT_FALSE(tester->tx_msg_list.front().assistance_information.has_value());
 
   tester->tx_msg_list.pop_front();
 

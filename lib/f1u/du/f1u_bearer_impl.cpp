@@ -24,7 +24,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t             ue_index,
 
 void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
 {
-  logger.log_debug("F1-U bearer received SDU");
+  logger.log_debug("F1-U bearer received SDU with size={}", sdu.length());
   nru_ul_message msg = {};
   msg.t_pdu          = std::move(sdu);
   tx_pdu_notifier.on_new_pdu(std::move(msg));
@@ -33,18 +33,23 @@ void f1u_bearer_impl::handle_sdu(byte_buffer_slice_chain sdu)
 void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
 {
   logger.log_debug("F1-U bearer received PDU");
+  // handle T-PDU
   if (!msg.t_pdu.empty()) {
+    logger.log_debug("Delivering T-PDU of size={}, pdcp_count={}", msg.t_pdu.length(), msg.pdcp_count);
     pdcp_tx_pdu tx_sdu = {};
     tx_sdu.buf         = std::move(msg.t_pdu);
     tx_sdu.pdcp_count  = msg.pdcp_count;
     rx_sdu_notifier.on_new_sdu(tx_sdu);
   }
-  if (msg.dl_user_data.dl_discard_blocks) {
-    uint8_t nof_blocks = std::min(msg.dl_user_data.dl_discard_nof_blocks, nru_max_nof_pdcp_sn_discard_blocks);
-    for (uint8_t block_idx = 0; block_idx < nof_blocks; block_idx++) {
-      const nru_pdcp_sn_discard_block& block       = msg.dl_user_data.discard_blocks[block_idx];
+  // handle discard notifications
+  if (msg.dl_user_data.discard_blocks.has_value()) {
+    nru_pdcp_sn_discard_blocks& blocks     = msg.dl_user_data.discard_blocks.value();
+    size_t                      nof_blocks = blocks.size();
+    for (size_t block_idx = 0; block_idx < nof_blocks; block_idx++) {
+      const nru_pdcp_sn_discard_block& block       = blocks[block_idx];
       uint32_t                         pdcp_sn_end = block.pdcp_sn_start + block.block_size;
       for (uint32_t pdcp_sn = block.pdcp_sn_start; pdcp_sn < pdcp_sn_end; pdcp_sn++) {
+        logger.log_debug("Notifying PDU discard for pdcp_sn={}", pdcp_sn);
         rx_sdu_notifier.on_discard_sdu(pdcp_sn);
       }
     }

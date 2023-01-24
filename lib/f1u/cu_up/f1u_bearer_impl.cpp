@@ -30,15 +30,44 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                  ue_index,
 void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
 {
   logger.log_debug("F1-U bearer received PDU");
+  // handle T-PDU
   if (!msg.t_pdu.empty()) {
+    logger.log_debug("Delivering T-PDU of size={}", msg.t_pdu.length());
     rx_sdu_notifier.on_new_sdu(std::move(msg.t_pdu));
   }
-  // TODO: notify successfully delivered PDCP SNs
+  // handle transmit notifications
+  if (msg.data_delivery_status.has_value()) {
+    nru_dl_data_delivery_status& status = msg.data_delivery_status.value();
+    // Highest successfully delivered PDCP SN
+    if (status.highest_delivered_pdcp_sn.has_value()) {
+      uint32_t pdcp_sn = status.highest_delivered_pdcp_sn.value();
+      logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", pdcp_sn);
+      rx_delivery_notifier.on_delivery_notification(pdcp_sn);
+    }
+    // Highest transmitted PDCP SN
+    if (status.highest_transmitted_pdcp_sn.has_value()) {
+      uint32_t pdcp_sn = status.highest_transmitted_pdcp_sn.value();
+      logger.log_debug("Notifying highest transmitted pdcp_sn={}", pdcp_sn);
+      rx_delivery_notifier.on_transmit_notification(pdcp_sn);
+    }
+    // Highest successfully delivered retransmitted PDCP SN
+    if (status.highest_delivered_retransmitted_pdcp_sn.has_value()) {
+      uint32_t pdcp_sn = status.highest_delivered_retransmitted_pdcp_sn.value();
+      logger.log_warning("Unhandled highest successfully delivered retransmitted pdcp_sn={}", pdcp_sn);
+      // TODO
+    }
+    // Highest retransmitted PDCP SN
+    if (status.highest_retransmitted_pdcp_sn.has_value()) {
+      uint32_t pdcp_sn = status.highest_retransmitted_pdcp_sn.value();
+      logger.log_warning("Unhandled highest retransmitted pdcp_sn={}", pdcp_sn);
+      // TODO
+    }
+  }
 }
 
 void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
 {
-  logger.log_debug("F1-U bearer received SDU with PDCP count={}", sdu.pdcp_count);
+  logger.log_debug("F1-U bearer received SDU with PDCP count={}, size={}", sdu.pdcp_count, sdu.buf.length());
   nru_dl_message msg = {};
   msg.t_pdu          = std::move(sdu.buf);
   msg.pdcp_count     = sdu.pdcp_count;
@@ -48,10 +77,11 @@ void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
 void f1u_bearer_impl::discard_sdu(uint32_t count)
 {
   logger.log_debug("F1-U bearer received order to discard SDU with count={}", count);
-  nru_dl_message msg                               = {};
-  msg.dl_user_data.dl_discard_blocks               = true;
-  msg.dl_user_data.dl_discard_nof_blocks           = 1;
-  msg.dl_user_data.discard_blocks[0].pdcp_sn_start = count;
-  msg.dl_user_data.discard_blocks[0].block_size    = 1;
+  nru_dl_message msg              = {};
+  msg.dl_user_data.discard_blocks = nru_pdcp_sn_discard_blocks{};
+  nru_pdcp_sn_discard_block block = {};
+  block.pdcp_sn_start             = count;
+  block.block_size                = 1;
+  msg.dl_user_data.discard_blocks.value().push_back(std::move(block));
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
