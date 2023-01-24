@@ -22,7 +22,7 @@ public:
   f1u_bearer_log_prefix(uint32_t ue_index, drb_id_t drb_id)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "UE={}, DRB={}: ", ue_index, drb_id);
+    fmt::format_to(buffer, "UE={}, {}: ", ue_index, drb_id);
     prefix = srsgnb::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }

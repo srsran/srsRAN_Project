@@ -21,7 +21,7 @@ public:
   pdcp_bearer_log_prefix(uint32_t ue_index, rb_id_t rb_id)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "UE={}, RB={}: ", ue_index, rb_id);
+    fmt::format_to(buffer, "UE={}, {}: ", ue_index, rb_id);
     prefix = srsgnb::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
