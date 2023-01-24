@@ -96,7 +96,8 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     rsrp /= static_cast<float>(nof_dmrs_pilots);
     estimate.set_rsrp(rsrp, port, i_layer);
 
-    float epre = rsrp * convert_dB_to_power(cfg.beta_dmrs_dB);
+    srsgnb_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");
+    float epre = rsrp / cfg.scaling / cfg.scaling;
     estimate.set_epre(epre, port, i_layer);
 
     noise_var /= static_cast<float>(WINDOW_SIZE * symbols_size.nof_symbols - 1);
@@ -152,7 +153,7 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsgnb::channel_esti
   }
 
   // Average and apply DM-RS-to-data gain.
-  float beta_scaling = convert_dB_to_amplitude(-cfg.beta_dmrs_dB);
+  float beta_scaling = cfg.scaling;
   for (cf_t& value : pilots_lse) {
     rsrp += abs_sq(value) / static_cast<float>(nof_dmrs_symbols);
     value /= (static_cast<float>(nof_dmrs_symbols) * beta_scaling);

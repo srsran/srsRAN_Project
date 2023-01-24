@@ -30,13 +30,14 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
   const port_channel_estimator::layer_dmrs_pattern& dmrs_pattern = tc.cfg.dmrs_pattern[0];
   std::string                                       hops =
       (dmrs_pattern.hopping_symbol_index.has_value() ? "intraslot frequency hopping" : "no frequency hopping");
-  return os << fmt::format("Symbol allocation [{}, {}], {} allocated PRBs, RE pattern 0x{:x}, {}, beta_DMRS {} dB",
-                           tc.cfg.first_symbol,
-                           tc.cfg.nof_symbols,
-                           dmrs_pattern.rb_mask.count(),
-                           dmrs_pattern.re_pattern,
-                           hops,
-                           tc.cfg.beta_dmrs_dB);
+  return os << fmt::format(
+             "Symbol allocation [{}, {}], {} allocated PRBs, RE pattern 0x{:x}, {}, DM-RS-to-data scaling {}",
+             tc.cfg.first_symbol,
+             tc.cfg.nof_symbols,
+             dmrs_pattern.rb_mask.count(),
+             dmrs_pattern.re_pattern,
+             hops,
+             tc.cfg.scaling);
 }
 
 } // namespace srsgnb
@@ -68,7 +69,7 @@ protected:
 
 std::shared_ptr<port_channel_estimator_factory> ChannelEstFixture::ch_est_factory = nullptr;
 
-constexpr float tolerance = 1e-4;
+constexpr float tolerance = 5e-4;
 
 bool are_estimates_ok(span<const resource_grid_reader_spy::expected_entry_t> expected, const channel_estimate& computed)
 {

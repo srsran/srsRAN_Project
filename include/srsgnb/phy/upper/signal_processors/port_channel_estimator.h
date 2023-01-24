@@ -66,11 +66,11 @@ public:
     static_vector<layer_dmrs_pattern, pusch_constants::MAX_NOF_LAYERS> dmrs_pattern;
     /// List of receive ports.
     static_vector<uint8_t, DMRS_MAX_NPORTS> rx_ports;
-    /// \brief Ratio of data EPRE to DM-RS EPRE in dB.
+    /// \brief DM-RS scaling factor with respect to data amplitude.
     ///
-    /// Should be equal to zero for PUCCH and equal to parameter \f$\beta_{\textup{DMRS}}\f$ (see TS38.214
-    /// Section 6.2.2) for PUSCH.
-    float beta_dmrs_dB = 0.0F;
+    /// Should be equal to one for PUCCH and equal to parameter \f$\beta_{\textup{PUSCH}}^{\textup{DMRS}}\f$ (see
+    /// TS38.214 Section 6.2.2) for PUSCH.
+    float scaling = 1;
   };
 
   /// Default destructor.
