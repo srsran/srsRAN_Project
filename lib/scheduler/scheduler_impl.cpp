@@ -101,6 +101,11 @@ void scheduler_impl::handle_uci_indication(const uci_indication& uci)
 
 const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
+  if (cell_index == to_du_cell_index(0)) {
+    // Set scheduler logger context.
+    logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
+  }
+
   auto& cell = cells[cell_index];
 
   // > Reset cell resource grid state.
