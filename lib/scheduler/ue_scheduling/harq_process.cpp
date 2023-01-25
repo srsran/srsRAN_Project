@@ -156,7 +156,13 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
     srsgnb_assert(tb(tb_idx).nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during DL HARQ retxs");
     srsgnb_assert(tb(tb_idx).nof_retxs == 0 or prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
-                  "TBS cannot change during DL HARQ retxs");
+                  "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, PRBs={}. New MCS={}, PRBs={}",
+                  prev_tx_params.tb[tb_idx]->tbs_bytes,
+                  cw.tb_size_bytes,
+                  prev_tx_params.tb[tb_idx]->mcs,
+                  prev_tx_params.prbs.prbs(),
+                  cw.mcs_index,
+                  pdsch.prbs.prbs());
     prev_tx_params.tb[tb_idx]->mcs_table = cw.mcs_table;
     prev_tx_params.tb[tb_idx]->mcs       = cw.mcs_index;
     prev_tx_params.tb[tb_idx]->tbs_bytes = cw.tb_size_bytes;

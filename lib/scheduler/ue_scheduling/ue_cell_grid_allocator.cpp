@@ -81,10 +81,20 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     return false;
   }
 
-  // Verify CRBs allocation.
+  // Verify CRBs fit in the chosen BWP.
   if (not bwp_cfg.crbs.contains(grant.crbs)) {
     logger.warning(
         "Failed to allocate PDSCH. Cause: CRBs allocated outside the BWP.", grant.crbs.length(), bwp_cfg.crbs.length());
+    return false;
+  }
+
+  // In case of retx, ensure the number of PRBs for the grant did not change.
+  if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().prbs.prbs().length()) {
+    logger.warning("Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during retx. Harq-id={}, "
+                   "nof_prbs={}!={}",
+                   h_dl.id,
+                   h_dl.last_alloc_params().prbs.prbs().length(),
+                   grant.crbs.length());
     return false;
   }
 
