@@ -410,29 +410,16 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
   // >>> PUCCH resource 2.
-  pucch_resource res_basic{.res_id                 = 4,
-                           .starting_prb           = 0,
-                           .second_hop_prb         = 0,
+  pucch_resource res_basic{.res_id                 = 12,
+                           .starting_prb           = 40,
+                           .second_hop_prb         = 50,
                            .intraslot_freq_hopping = false,
-                           .format                 = pucch_format::FORMAT_2};
-  res_basic.format                        = pucch_format::FORMAT_2;
-  res_basic.format_1.initial_cyclic_shift = 0;
-  res_basic.format_1.nof_symbols          = 1;
-  res_basic.format_1.starting_sym_idx     = 13;
-  res_basic.format_1.time_domain_occ      = 0;
+                           .format                 = pucch_format::FORMAT_3};
+  res_basic.format                    = pucch_format::FORMAT_2;
+  res_basic.format_3.nof_symbols      = 1;
+  res_basic.format_4.starting_sym_idx = 13;
+  res_basic.format_4.occ_length       = srsgnb::pucch_f4_occ_len::n2;
   dest_pucch_cfg.pucch_res_list.push_back(res_basic);
-
-  pucch_resource res_basic2{.res_id                 = 5,
-                            .starting_prb           = 40,
-                            .second_hop_prb         = 50,
-                            .intraslot_freq_hopping = true,
-                            .format                 = pucch_format::FORMAT_3};
-  res_basic.format                        = pucch_format::FORMAT_3;
-  res_basic.format_1.initial_cyclic_shift = 0;
-  res_basic.format_1.nof_symbols          = 2;
-  res_basic.format_1.starting_sym_idx     = 7;
-  res_basic.format_1.time_domain_occ      = 0;
-  dest_pucch_cfg.pucch_res_list.push_back(res_basic2);
 
   // Remove first element.
   dest_pucch_cfg.pucch_res_list.erase(dest_pucch_cfg.pucch_res_list.begin());
@@ -485,11 +472,9 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_set_to_add_mod_list.size(), 1);
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_set_to_release_list.size(), 1);
 
-    ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list.size(), 2);
+    ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list.size(), 1);
     auto& pucch_res1 = rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list[0];
-    ASSERT_EQ(pucch_res1.pucch_res_id, 4);
-    auto& pucch_res2 = rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list[1];
-    ASSERT_EQ(pucch_res2.pucch_res_id, 5);
+    ASSERT_EQ(pucch_res1.pucch_res_id, 12);
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_release_list.size(), 1);
 
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().sched_request_res_to_add_mod_list.size(), 1);
