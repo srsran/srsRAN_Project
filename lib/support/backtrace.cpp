@@ -17,10 +17,9 @@ void srsgnb::enable_backtrace()
 {
   static backward::SignalHandling sh;
 }
-#else // HAVE_BACKWARD
+#else  // HAVE_BACKWARD
 void srsgnb::enable_backtrace()
 {
   // Ignore.
-#warning "blablabla"
 }
 #endif // HAVE_BACKWARD
