@@ -10,6 +10,7 @@
 #pragma once
 
 #include "srsgnb/support/prefixed_logger.h"
+#include "fmt/format.h"
 #include <cstring>
 
 namespace srsgnb {

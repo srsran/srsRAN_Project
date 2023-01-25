@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/support/srsgnb_assert.h"
+#include "fmt/format.h"
 #include <cstdint>
 #include <memory>
 #include <string>

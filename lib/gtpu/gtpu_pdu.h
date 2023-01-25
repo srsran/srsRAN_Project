@@ -11,7 +11,7 @@
 
 #include "gtpu_tunnel_logger.h"
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/srslog/srslog.h"
+#include "fmt/format.h"
 #include <cstdint>
 
 namespace srsgnb {
