@@ -49,6 +49,12 @@ struct e1ap_bearer_context_modification_response {
   asn1::e1ap::cause_c                       cause; // Cause if modification was unsuccessful.
 };
 
+/// \brief Request to release a bearer context.
+struct e1ap_bearer_context_release_command {
+  ue_index_t          ue_index = INVALID_UE_INDEX;
+  asn1::e1ap::cause_c cause; // Cause of the release.
+};
+
 struct e1ap_ue_context {
   gnb_cu_cp_ue_e1ap_id_t cu_cp_e1_ue_id = gnb_cu_cp_ue_e1ap_id_t::invalid;
   ue_index_t             ue_index       = INVALID_UE_INDEX;
@@ -96,6 +102,10 @@ public:
   /// \return Returns a bearer context response message containing the index of the created UE context.
   virtual e1ap_bearer_context_modification_response
   on_bearer_context_modification_request_received(const e1ap_bearer_context_modification_request& msg) = 0;
+
+  /// \brief Notifies the UE manager to release a UE context.
+  /// \param[in] msg The received bearer context release command.
+  virtual void on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) = 0;
 };
 
 /// Combined entry point for E1 handling.

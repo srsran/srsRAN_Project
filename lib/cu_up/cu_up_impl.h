@@ -44,12 +44,17 @@ public:
   }
 
   // cu_up_e1_interface
-  e1_message_handler&     get_e1_message_handler() override { return *e1; }
+  e1_message_handler& get_e1_message_handler() override { return *e1; }
+
   cu_cp_e1_setup_response handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& msg) override;
+
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
+
   e1ap_bearer_context_modification_response
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override;
+
+  void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
 
   // cu_up_e1_connection_notifier
   void on_e1_connection_establish() override;

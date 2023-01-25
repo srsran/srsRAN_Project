@@ -198,6 +198,11 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
   return response;
 }
 
+void cu_up::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg)
+{
+  ue_mng->remove_ue(msg.ue_index);
+}
+
 void cu_up::on_e1_connection_establish()
 {
   e1_connected = true;

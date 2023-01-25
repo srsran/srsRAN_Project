@@ -43,6 +43,12 @@ public:
     return cu_up_handler->handle_bearer_context_modification_request(msg);
   }
 
+  void on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) override
+  {
+    srsgnb_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
+    return cu_up_handler->handle_bearer_context_release_command(msg);
+  }
+
 private:
   cu_up_e1_interface* cu_up_handler = nullptr;
 };

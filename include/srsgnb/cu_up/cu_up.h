@@ -54,6 +54,10 @@ public:
   virtual e1ap_bearer_context_modification_response
   handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) = 0;
 
+  /// \brief Handle bearer release command and remove the associated UE context.
+  /// \param[in] msg The original bearer release command.
+  virtual void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) = 0;
+
   /// \brief Get the E1 message handler interface.
   virtual e1_message_handler& get_e1_message_handler() = 0;
 

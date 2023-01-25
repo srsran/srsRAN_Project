@@ -14,7 +14,7 @@
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1/cu_up/e1_cu_up.h"
 #include "srsgnb/support/timers.h"
-#include <memory>
+#include <unordered_map>
 
 namespace srsgnb {
 namespace srs_cu_up {
@@ -56,6 +56,11 @@ private:
   /// \param[in] msg The E1 Bearer Context Modification message.
   void handle_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& msg);
 
+  /// \brief Notify about the reception of an Bearer Context Release Command message.
+  /// This starts the UE context release at the UE manager and E1.
+  /// \param[in] msg The E1 Bearer Context Release Command.
+  void handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg);
+
   /// \brief Notify about the reception of an successful outcome.
   /// \param[in] msg The received successful outcome message.
   void handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome);
@@ -75,7 +80,8 @@ private:
 
   srslog::basic_logger& logger;
 
-  std::array<e1ap_ue_context, MAX_NOF_UES> cu_up_ue_id_to_e1ap_ue_context; // indexed by gnb_cu_up_ue_e1ap_id
+  std::unordered_map<gnb_cu_up_ue_e1ap_id_t, e1ap_ue_context>
+      cu_up_ue_id_to_e1ap_ue_context; // indexed by gnb_cu_up_ue_e1ap_id
 
   // nofifiers and handles
 
