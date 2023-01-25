@@ -12,16 +12,17 @@
 #include "lib/scheduler/pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "unittests/scheduler/uci_and_pucch/uci_test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
 
 // Test bench with all that is needed for the PUCCH guardbands scheduler.
-class test_bench
+class test_bench_guardbands
 {
 public:
-  explicit test_bench(subcarrier_spacing scs, bool is_tdd = false) :
-    cell_cfg{test_helpers::make_default_sched_cell_configuration_request_scs(scs, is_tdd)},
+  explicit test_bench_guardbands(subcarrier_spacing scs, bool is_tdd = false) :
+    cell_cfg{make_default_sched_cell_configuration_request_scs(scs, is_tdd)},
     res_grid{cell_cfg},
     pucch_guard_sched{cell_cfg},
     sl_tx{to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs), 0}
@@ -51,7 +52,7 @@ public:
   }
 
 protected:
-  test_bench t_bench{GetParam().first, GetParam().second};
+  test_bench_guardbands t_bench{GetParam().first, GetParam().second};
   // Run the test for more than a multiple of MAX system frame number, so as to test the resource grid wrap-around for
   // that val.
   const unsigned test_tot_frames{2049};
