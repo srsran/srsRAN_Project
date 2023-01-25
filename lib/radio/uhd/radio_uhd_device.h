@@ -16,10 +16,25 @@
 #include "radio_uhd_tx_stream.h"
 #include "srsgnb/radio/radio_session.h"
 
-/// Determines whether a value is valid within a range.
-static bool radio_uhd_device_validate_range(const uhd::meta_range_t& range, double value)
+/// \brief Determines whether a frequency is valid within a range.
+///
+/// A frequency is considered valid within a range if the range clips the frequency value within 1 Hz error.
+static bool radio_uhd_device_validate_freq_range(const uhd::freq_range_t& range, double freq)
 {
-  return (range.clip(value) == value);
+  uint64_t clipped_freq = static_cast<uint64_t>(range.clip(freq));
+  uint64_t uint_freq    = static_cast<uint64_t>(freq);
+  return (clipped_freq == uint_freq);
+}
+
+/// \brief Determines whether a gain is valid within a range.
+///
+/// A gain is considered valid within a range if the range clips the frequency value within 0.01 error.
+static bool radio_uhd_device_validate_gain_range(const uhd::gain_range_t& range, double gain)
+{
+  uint64_t clipped_gain = static_cast<uint64_t>(range.clip(gain, true) * 100);
+  uint64_t uint_gain    = static_cast<uint64_t>(gain * 100);
+
+  return (clipped_gain == uint_gain);
 }
 
 static double to_MHz(double value_Hz)
@@ -72,25 +87,38 @@ public:
       // Get the device type.
       type = radio_uhd_device_type(device_addr.get("type"));
 
-      // If the device is X300.
-      if (type == radio_uhd_device_type::types::X300) {
-        // Set the default master clock rate.
-        if (!device_addr.has_key("master_clock_rate")) {
-          device_addr.set("master_clock_rate", "184.32e6");
-        }
-        // Set the default send frame size.
-        if (!device_addr.has_key("send_frame_size")) {
-          device_addr.set("send_frame_size", "8000");
-        }
-        // Set the default receive frame size.
-        if (!device_addr.has_key("recv_frame_size")) {
-          device_addr.set("recv_frame_size", "8000");
-        }
-      } else if (type == radio_uhd_device_type::types::N300) {
-        // Set the default master clock rate.
-        if (!device_addr.has_key("master_clock_rate")) {
-          device_addr.set("master_clock_rate", "122.88e6");
-        }
+      switch (type) {
+        case radio_uhd_device_type::types::X300:
+          // Set the default master clock rate.
+          if (!device_addr.has_key("master_clock_rate")) {
+            device_addr.set("master_clock_rate", "184.32e6");
+          }
+          // Set the default send frame size.
+          if (!device_addr.has_key("send_frame_size")) {
+            device_addr.set("send_frame_size", "8000");
+          }
+          // Set the default receive frame size.
+          if (!device_addr.has_key("recv_frame_size")) {
+            device_addr.set("recv_frame_size", "8000");
+          }
+          break;
+        case radio_uhd_device_type::types::N300:
+          // Set the default master clock rate.
+          if (!device_addr.has_key("master_clock_rate")) {
+            device_addr.set("master_clock_rate", "122.88e6");
+          }
+          break;
+        case radio_uhd_device_type::types::E3X0:
+          // Set the default master clock rate.
+          if (!device_addr.has_key("master_clock_rate")) {
+            device_addr.set("master_clock_rate", "30.72e6");
+          }
+          break;
+        case radio_uhd_device_type::types::B200:
+        case radio_uhd_device_type::types::UNKNOWN:
+        default:
+          // No default parameters are required.
+          break;
       }
     }
 
@@ -126,17 +154,16 @@ public:
   {
     return safe_execution([this, &timespec]() { usrp->set_time_unknown_pps(timespec); });
   }
-  bool set_master_clock_rate(double mcr)
+  bool set_automatic_master_clock_rate(double srate_Hz)
   {
-    return safe_execution([this, &mcr]() {
+    return safe_execution([this, &srate_Hz]() {
+      // Get range of valid master clock rates.
       uhd::meta_range_t range = usrp->get_master_clock_rate_range();
 
-      if (!radio_uhd_device_validate_range(range, mcr)) {
-        on_error("Master clock rate {} MHz is out-of-range. Range is {}.", to_MHz(mcr), range.to_pp_string());
-        return;
-      }
+      // Select the nearest valid master clock rate.
+      double mcr_Hz = range.clip(srate_Hz);
 
-      usrp->set_master_clock_rate(mcr);
+      usrp->set_master_clock_rate(mcr_Hz);
     });
   }
   bool get_time_now(uhd::time_spec_t& timespec)
@@ -203,8 +230,10 @@ public:
     return safe_execution([this, rate]() {
       uhd::meta_range_t range = usrp->get_rx_rates();
 
-      if (!radio_uhd_device_validate_range(range, rate)) {
-        on_error("Rx Rate {} MHz is out-of-range. Range is {}.", to_MHz(rate), range.to_pp_string());
+      if (!radio_uhd_device_validate_freq_range(range, rate)) {
+        on_error("Rx Rate {:.2f} MHz is invalid. The nearest valid value is {:.2f}.",
+                 to_MHz(rate),
+                 to_MHz(range.clip(rate)));
         return;
       }
 
@@ -218,8 +247,10 @@ public:
     return safe_execution([this, rate]() {
       uhd::meta_range_t range = usrp->get_tx_rates();
 
-      if (!radio_uhd_device_validate_range(range, rate)) {
-        on_error("Tx Rate {} MHz is out-of-range. Range is {}.", to_MHz(rate), range.to_pp_string());
+      if (!radio_uhd_device_validate_freq_range(range, rate)) {
+        on_error("Tx Rate {:.2f} MHz is invalid. The nearest valid value is {:.2f}.",
+                 to_MHz(rate),
+                 to_MHz(range.clip(rate)));
         return;
       }
 
@@ -262,7 +293,7 @@ public:
     return safe_execution([this, ch, gain]() {
       uhd::freq_range_t range = usrp->get_tx_gain_range(ch);
 
-      if (!radio_uhd_device_validate_range(range, gain)) {
+      if (!radio_uhd_device_validate_gain_range(range, gain)) {
         on_error("Tx gain {} dB is out-of-range. Range is {}.", gain, range.to_pp_string());
         return;
       }
@@ -277,7 +308,7 @@ public:
     return safe_execution([this, ch, gain]() {
       uhd::freq_range_t range = usrp->get_rx_gain_range(ch);
 
-      if (!radio_uhd_device_validate_range(range, gain)) {
+      if (!radio_uhd_device_validate_gain_range(range, gain)) {
         on_error("Rx gain {} dB is out-of-range. Range is {}.", gain, range.to_pp_string());
         return;
       }
@@ -289,23 +320,24 @@ public:
   {
     Debug("Setting channel " << ch << " Tx frequency to " << to_MHz(config.center_frequency_hz) << " MHz");
 
-    // Create tune request.
-    uhd::tune_request_t tune_request(config.center_frequency_hz);
-
-    // If the LO frequency is defined, force a LO frequency and set the DSP frequency to auto.
-    if (std::isnormal(config.lo_frequency_hz)) {
-      tune_request.rf_freq         = config.lo_frequency_hz;
-      tune_request.rf_freq_policy  = uhd::tune_request_t::POLICY_MANUAL;
-      tune_request.dsp_freq_policy = uhd::tune_request_t::POLICY_AUTO;
-    }
-
-    return safe_execution([this, ch, &tune_request]() {
+    return safe_execution([this, ch, &config]() {
       uhd::freq_range_t range = usrp->get_tx_freq_range(ch);
 
-      if (!radio_uhd_device_validate_range(range, tune_request.rf_freq)) {
-        on_error(
-            "Tx RF frequency {} MHz is out-of-range. Range is {}.", to_MHz(tune_request.rf_freq), range.to_pp_string());
+      if (!radio_uhd_device_validate_freq_range(range, config.center_frequency_hz)) {
+        on_error("Tx RF frequency {} MHz is out-of-range. Range is {}.",
+                 to_MHz(config.center_frequency_hz),
+                 range.to_pp_string());
         return;
+      }
+
+      // Create tune request.
+      uhd::tune_request_t tune_request(config.center_frequency_hz);
+
+      // If the LO frequency is defined, force a LO frequency and set the DSP frequency to auto.
+      if (std::isnormal(config.lo_frequency_hz)) {
+        tune_request.rf_freq         = config.lo_frequency_hz;
+        tune_request.rf_freq_policy  = uhd::tune_request_t::POLICY_MANUAL;
+        tune_request.dsp_freq_policy = uhd::tune_request_t::POLICY_AUTO;
       }
 
       usrp->set_tx_freq(tune_request, ch);
@@ -315,23 +347,24 @@ public:
   {
     Debug("Setting channel " << ch << " Rx frequency to " << to_MHz(config.center_frequency_hz) << " MHz");
 
-    // Create tune request.
-    uhd::tune_request_t tune_request(config.center_frequency_hz);
-
-    // If the LO frequency is defined, force a LO frequency and set the DSP frequency to auto.
-    if (std::isnormal(config.lo_frequency_hz)) {
-      tune_request.rf_freq         = config.lo_frequency_hz;
-      tune_request.rf_freq_policy  = uhd::tune_request_t::POLICY_MANUAL;
-      tune_request.dsp_freq_policy = uhd::tune_request_t::POLICY_AUTO;
-    }
-
-    return safe_execution([this, ch, &tune_request]() {
+    return safe_execution([this, ch, &config]() {
       uhd::freq_range_t range = usrp->get_rx_freq_range(ch);
 
-      if (!radio_uhd_device_validate_range(range, tune_request.rf_freq)) {
-        on_error(
-            "Rx RF frequency {} MHz is out-of-range. Range is {}.", to_MHz(tune_request.rf_freq), range.to_pp_string());
+      if (!radio_uhd_device_validate_freq_range(range, config.center_frequency_hz)) {
+        on_error("Rx RF frequency {} MHz is out-of-range. Range is {}.",
+                 to_MHz(config.center_frequency_hz),
+                 range.to_pp_string());
         return;
+      }
+
+      // Create tune request.
+      uhd::tune_request_t tune_request(config.center_frequency_hz);
+
+      // If the LO frequency is defined, force a LO frequency and set the DSP frequency to auto.
+      if (std::isnormal(config.lo_frequency_hz)) {
+        tune_request.rf_freq         = config.lo_frequency_hz;
+        tune_request.rf_freq_policy  = uhd::tune_request_t::POLICY_MANUAL;
+        tune_request.dsp_freq_policy = uhd::tune_request_t::POLICY_AUTO;
       }
 
       usrp->set_rx_freq(tune_request, ch);

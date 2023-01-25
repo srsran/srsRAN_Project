@@ -1,5 +1,6 @@
 #include "gnb_appconfig_validators.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/srslog/logger.h"
 
 using namespace srsgnb;
@@ -7,7 +8,15 @@ using namespace srsgnb;
 /// Validates the given RU application configuration. Returns true on success, otherwise false.
 static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
 {
-  return true;
+  static constexpr phy_time_unit reference_time = phy_time_unit::from_units_of_kappa(16);
+  bool                           valid          = true;
+
+  if (!reference_time.is_sample_accurate(config.srate_MHz * 1e6)) {
+    fmt::print("The sampling rate must be multiple of {:.2f} MHz.\n", 1e-6 / reference_time.to_seconds());
+    valid &= false;
+  }
+
+  return valid;
 }
 
 /// Validates the given PDCCH cell application configuration. Returns true on success, otherwise false.

@@ -251,35 +251,10 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     return;
   }
 
-  // Parse/Select master clock rate.
-  double mcr = 0.0f;
-  switch (device.get_type()) {
-    case radio_uhd_device_type::types::B200:
-      if (std::abs(std::remainder(23.04e6, radio_config.sampling_rate_hz)) < 1.0) {
-        mcr = 23.04e6;
-      } else if (std::abs(std::remainder(23.04e6, radio_config.sampling_rate_hz)) < 1.0) {
-        mcr = 30.72e6;
-      } else if (radio_config.sampling_rate_hz < 11.52e6) {
-        mcr = radio_config.sampling_rate_hz * 4.0;
-      } else {
-        mcr = radio_config.sampling_rate_hz;
-      }
-      break;
-    case radio_uhd_device_type::types::X300:
-    case radio_uhd_device_type::types::N300:
-      // X300 and N300 do not support setting the master clock rate in runtime.
-      break;
-    case radio_uhd_device_type::types::E3X0:
-      mcr = 30.72e6;
-      break;
-    case radio_uhd_device_type::types::UNKNOWN:
-    default:
-      break;
-  }
-
-  if (std::isnormal(mcr)) {
-    if (device.set_master_clock_rate(mcr)) {
-      fmt::print("Error setting master clock rate.\n");
+  static const std::set<radio_uhd_device_type::types> automatic_mcr_devices = {radio_uhd_device_type::types::B200};
+  if (automatic_mcr_devices.count(device.get_type())) {
+    if (!device.set_automatic_master_clock_rate(radio_config.sampling_rate_hz)) {
+      fmt::print("Error setting master clock rate. {}\n", device.get_error_message());
       return;
     }
   }
@@ -311,17 +286,17 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     bool not_error = wait_sensor_locked(is_locked, sensor_name, true, 300);
     // Print Not lock error if the return was successful, wait_sensor_locked prints the error before returning
     if (not is_locked and !not_error) {
-      fmt::print("Could not lock reference clock source. Sensor: {}={}\n", sensor_name, is_locked ? "true" : "false");
+      fmt::print("Could not lock reference clock source. Sensor: {}={}.\n", sensor_name, is_locked ? "true" : "false");
     }
   }
 
   // Set default Tx/Rx rates.
   if (!device.set_tx_rate(radio_config.sampling_rate_hz)) {
-    fmt::print("Error: setting Tx sampling rate. {}.", device.get_error_message());
+    fmt::print("Error: setting Tx sampling rate. {}\n", device.get_error_message());
     return;
   }
   if (!device.set_rx_rate(radio_config.sampling_rate_hz)) {
-    fmt::print("Error: setting Rx sampling rate. {}.", device.get_error_message());
+    fmt::print("Error: setting Rx sampling rate. {}\n", device.get_error_message());
     return;
   }
 

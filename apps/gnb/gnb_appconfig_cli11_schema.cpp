@@ -67,6 +67,7 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
   app.add_option("--rx_gain", rf_driver_params.rx_gain_dB, "Receive gain in decibels.")->capture_default_str();
   app.add_option("--clock", rf_driver_params.clock_source, "Clock source.")->capture_default_str();
   app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source.")->capture_default_str();
+  app.add_option("--otw_format", rf_driver_params.otw_format, "Over-the-wire format.")->capture_default_str();
 }
 
 static void to_aggregation_level(aggregation_level& aggr_lvl, unsigned value)

@@ -250,7 +250,7 @@ int main(int argc, char** argv)
 
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
-    srsgnb_terminate("Invalid configuration detected");
+    srsgnb_terminate("Invalid configuration detected.\n");
   }
 
   // Compute derived parameters.
