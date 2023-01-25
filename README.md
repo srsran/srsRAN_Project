@@ -34,7 +34,7 @@ You can install the required libraries for some example distributions with the c
 
 
 ```bash
-sudo apt-get install build-essential cmake libfftw3-dev libsctp-dev libyaml-cpp-dev libmbedtls-dev git-lfs libgtest-dev
+sudo apt-get install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev git-lfs
 git lfs install
 ```
 </details>
@@ -43,7 +43,7 @@ git lfs install
 
 
 ```bash
-sudo yum install cmake fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel git-lfs gtest-devel
+sudo yum install cmake make gcc gcc-c++ fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel git-lfs
 git lfs install
 ```
 </details>
@@ -52,7 +52,7 @@ git lfs install
 
 
 ```bash
-sudo pacman -S cmake fftw mbedtls yaml-cpp git-lfs gtest lksctp-tools
+sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest git-lfs
 git lfs install
 ```
 </details>
