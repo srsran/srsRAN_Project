@@ -29,7 +29,7 @@ constexpr inline std::size_t get_rb_bw_khz(subcarrier_spacing scs)
 }
 
 /// Converts channel bandwidth in MHz to index.
-constexpr inline std::size_t channel_bw_mhz_to_index(unsigned dl_bw_mhz)
+constexpr inline std::size_t channel_bw_mhz_to_index_fr1(unsigned dl_bw_mhz)
 {
   switch (dl_bw_mhz) {
     case 5:
@@ -58,10 +58,24 @@ constexpr inline std::size_t channel_bw_mhz_to_index(unsigned dl_bw_mhz)
       return 11;
     case 100:
       return 12;
+    default:
+      break;
+  }
+  return std::numeric_limits<size_t>::max();
+}
+
+/// Converts channel bandwidth in MHz to index.
+constexpr inline std::size_t channel_bw_mhz_to_index_fr2(unsigned dl_bw_mhz)
+{
+  switch (dl_bw_mhz) {
+    case 50:
+      return 0;
+    case 100:
+      return 1;
     case 200:
-      return 13;
+      return 2;
     case 400:
-      return 14;
+      return 3;
     default:
       break;
   }
@@ -86,6 +100,7 @@ inline std::size_t get_max_Nprb(unsigned dl_bw_mhz, subcarrier_spacing scs, freq
       { 216, 106,  51}, // 40 MHz.
       { 270, 133,  65}, // 50 MHz.
       {   0, 162,  79}, // 60 MHz.
+      {   0, 189,  93}, // 70 MHz.
       {   0, 217, 107}, // 80 MHz.
       {   0, 245, 121}, // 90 MHz.
       {   0, 273, 135}, // 100 MHz.
@@ -101,12 +116,19 @@ inline std::size_t get_max_Nprb(unsigned dl_bw_mhz, subcarrier_spacing scs, freq
       {   0, 264}, // 400 MHz.
       // clang-format on
   };
-  size_t bw_idx = channel_bw_mhz_to_index(dl_bw_mhz);
+
+  size_t bw_idx;
+  if (fr == frequency_range::FR1) {
+    bw_idx = channel_bw_mhz_to_index_fr1(dl_bw_mhz);
+    if (bw_idx == std::numeric_limits<size_t>::max()) {
+      return 0;
+    }
+    return rb_table_fr1[bw_idx][to_numerology_value(scs)];
+  }
+
+  bw_idx = channel_bw_mhz_to_index_fr2(dl_bw_mhz);
   if (bw_idx == std::numeric_limits<size_t>::max()) {
     return 0;
-  }
-  if (fr == frequency_range::FR1) {
-    return rb_table_fr1[bw_idx][to_numerology_value(scs)];
   }
   return rb_table_fr2[bw_idx][to_numerology_value(scs) - to_numerology_value(subcarrier_spacing::kHz60)];
 }
