@@ -79,7 +79,7 @@ public:
     f1c_handler.handle_dl_rrc_message_transfer(f1ap_msg);
   }
 
-  void on_discard_pdu(uint32_t count) override
+  void on_discard_pdu(uint32_t pdcp_sn) override
   {
     // not implemented
   }

@@ -97,10 +97,10 @@ TEST_F(f1u_cu_up_test, create_new_entity)
 
 TEST_F(f1u_cu_up_test, tx_discard)
 {
-  constexpr uint32_t pdcp_count = 123;
+  constexpr uint32_t pdcp_sn = 123;
 
-  f1u->discard_sdu(pdcp_count);
-  f1u->discard_sdu(pdcp_count + 7);
+  f1u->discard_sdu(pdcp_sn);
+  f1u->discard_sdu(pdcp_sn + 7);
 
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
   EXPECT_TRUE(tester->highest_delivered_pdcp_sn_list.empty());
@@ -110,7 +110,7 @@ TEST_F(f1u_cu_up_test, tx_discard)
   EXPECT_TRUE(tester->tx_msg_list.front().t_pdu.empty());
   ASSERT_TRUE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
   ASSERT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value().size(), 1);
-  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].pdcp_sn_start, pdcp_count);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].pdcp_sn_start, pdcp_sn);
   EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].block_size, 1);
 
   tester->tx_msg_list.pop_front();
@@ -119,7 +119,7 @@ TEST_F(f1u_cu_up_test, tx_discard)
   EXPECT_TRUE(tester->tx_msg_list.front().t_pdu.empty());
   ASSERT_TRUE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
   ASSERT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value().size(), 1);
-  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].pdcp_sn_start, pdcp_count + 7);
+  EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].pdcp_sn_start, pdcp_sn + 7);
   EXPECT_EQ(tester->tx_msg_list.front().dl_user_data.discard_blocks.value()[0].block_size, 1);
 
   tester->tx_msg_list.pop_front();
@@ -129,19 +129,19 @@ TEST_F(f1u_cu_up_test, tx_discard)
 
 TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
 {
-  constexpr uint32_t pdu_size   = 10;
-  constexpr uint32_t pdcp_count = 123;
+  constexpr uint32_t pdu_size = 10;
+  constexpr uint32_t pdcp_sn  = 123;
 
-  byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_count);
+  byte_buffer tx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   pdcp_tx_pdu sdu1;
-  sdu1.buf        = tx_pdcp_pdu1.deep_copy();
-  sdu1.pdcp_count = pdcp_count;
+  sdu1.buf     = tx_pdcp_pdu1.deep_copy();
+  sdu1.pdcp_sn = pdcp_sn;
   f1u->handle_sdu(std::move(sdu1));
 
-  byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_count + 1);
+  byte_buffer tx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   pdcp_tx_pdu sdu2;
-  sdu2.buf        = tx_pdcp_pdu2.deep_copy();
-  sdu2.pdcp_count = pdcp_count + 1;
+  sdu2.buf     = tx_pdcp_pdu2.deep_copy();
+  sdu2.pdcp_sn = pdcp_sn + 1;
   f1u->handle_sdu(std::move(sdu2));
 
   EXPECT_TRUE(tester->highest_transmitted_pdcp_sn_list.empty());
@@ -150,14 +150,14 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu1);
-  EXPECT_EQ(tester->tx_msg_list.front().pdcp_count, pdcp_count);
+  EXPECT_EQ(tester->tx_msg_list.front().pdcp_sn, pdcp_sn);
   EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
 
   tester->tx_msg_list.pop_front();
 
   ASSERT_FALSE(tester->tx_msg_list.empty());
   EXPECT_EQ(tester->tx_msg_list.front().t_pdu, tx_pdcp_pdu2);
-  EXPECT_EQ(tester->tx_msg_list.front().pdcp_count, pdcp_count + 1);
+  EXPECT_EQ(tester->tx_msg_list.front().pdcp_sn, pdcp_sn + 1);
   EXPECT_FALSE(tester->tx_msg_list.front().dl_user_data.discard_blocks.has_value());
 
   tester->tx_msg_list.pop_front();
@@ -167,15 +167,15 @@ TEST_F(f1u_cu_up_test, tx_pdcp_pdus)
 
 TEST_F(f1u_cu_up_test, rx_pdcp_pdus)
 {
-  constexpr uint32_t pdu_size   = 10;
-  constexpr uint32_t pdcp_count = 123;
+  constexpr uint32_t pdu_size = 10;
+  constexpr uint32_t pdcp_sn  = 123;
 
-  byte_buffer    rx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_count);
+  byte_buffer    rx_pdcp_pdu1 = create_sdu_byte_buffer(pdu_size, pdcp_sn);
   nru_ul_message msg1;
   msg1.t_pdu = byte_buffer_slice_chain{rx_pdcp_pdu1.deep_copy()};
   f1u->handle_pdu(std::move(msg1));
 
-  byte_buffer    rx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_count + 1);
+  byte_buffer    rx_pdcp_pdu2 = create_sdu_byte_buffer(pdu_size, pdcp_sn + 1);
   nru_ul_message msg2;
   msg2.t_pdu = byte_buffer_slice_chain{rx_pdcp_pdu2.deep_copy()};
   f1u->handle_pdu(std::move(msg2));

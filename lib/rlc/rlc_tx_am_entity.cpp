@@ -54,28 +54,28 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
   size_t sdu_length = sdu.buf.length();
   logger.log_info(sdu.buf.begin(),
                   sdu.buf.end(),
-                  "TX SDU: sdu_len={}, pdcp_count={}, sdu_queue=[{}]",
+                  "TX SDU: sdu_len={}, pdcp_sn={}, sdu_queue=[{}]",
                   sdu.buf.length(),
-                  sdu.pdcp_count,
+                  sdu.pdcp_sn,
                   sdu_queue);
   if (sdu_queue.write(sdu)) {
     metrics.metrics_add_sdus(1, sdu_length);
     handle_buffer_state_update(); // take lock
   } else {
-    logger.log_info("Dropped TX SDU: sdu_len={}, pdcp_count={}, sdu_queue=[{}]", sdu_length, sdu.pdcp_count, sdu_queue);
+    logger.log_info("Dropped TX SDU: sdu_len={}, pdcp_sn={}, sdu_queue=[{}]", sdu_length, sdu.pdcp_sn, sdu_queue);
     metrics.metrics_add_lost_sdus(1);
   }
 }
 
 // TS 38.322 v16.2.0 Sec. 5.4
-void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_count)
+void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
 {
-  logger.log_info("Discarding SDU with pdcp_count={}", pdcp_count);
-  if (sdu_queue.discard(pdcp_count)) {
+  logger.log_info("Discarding SDU with pdcp_sn={}", pdcp_sn);
+  if (sdu_queue.discard(pdcp_sn)) {
     metrics.metrics_add_discard(1);
     handle_buffer_state_update(); // take lock
   } else {
-    logger.log_info("Could not discard SDU with pdcp_count={}", pdcp_count);
+    logger.log_info("Could not discard SDU with pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard_failure(1);
   }
 }
@@ -159,18 +159,18 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
     logger.log_debug("No SDUs left in the SDU queue. grant_len={}", grant_len);
     return {};
   }
-  logger.log_debug("Read SDU: SN={}, pdcp_count={}, sdu_len={}", st.tx_next, sdu.pdcp_count, sdu.buf.length());
+  logger.log_debug("Read SDU: SN={}, pdcp_sn={}, sdu_len={}", st.tx_next, sdu.pdcp_sn, sdu.buf.length());
 
   // insert newly assigned SN into window and use reference for in-place operations
   // NOTE: from now on, we can't return from this function anymore before increasing tx_next
   rlc_tx_am_sdu_info& sdu_info = tx_window->add_sn(st.tx_next);
-  sdu_info.pdcp_count          = sdu.pdcp_count;
+  sdu_info.pdcp_sn             = sdu.pdcp_sn;
   sdu_info.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU info
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
-  if (sdu.pdcp_count.has_value()) {
+  if (sdu.pdcp_sn.has_value()) {
     // Redirect upper layer notification to ue_executor
-    auto handle_func = [this, pdcp_sn = std::move(sdu.pdcp_count.value())]() mutable {
+    auto handle_func = [this, pdcp_sn = std::move(sdu.pdcp_sn.value())]() mutable {
       upper_dn.on_transmitted_sdu(pdcp_sn);
     };
     ue_executor.execute(std::move(handle_func));
@@ -545,8 +545,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn];
-      if (sdu_info.pdcp_count.has_value()) {
-        max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_count;
+      if (sdu_info.pdcp_sn.has_value()) {
+        max_deliv_pdcp_sn = (*tx_window)[sn].pdcp_sn;
       }
       retx_queue.remove_sn(sn); // remove any pending retx for that SN
       tx_window->remove_sn(sn);

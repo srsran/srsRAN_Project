@@ -42,13 +42,13 @@ namespace srsgnb {
  * Interfaces/notifiers for upper layers
  ****************************************/
 /// Structure used to represent an RLC SDU. An RLC SDU
-/// can optionally be accompanied with the corresponding PDCP COUNT
+/// can optionally be accompanied with the corresponding PDCP sequence number (SN)
 /// so that RLC AM can notify the PDCP of ACKs, and PDCP can notify RLC AM/UM to discard PDCP PDUs
 struct rlc_sdu {
   byte_buffer        buf = {};
-  optional<uint32_t> pdcp_count;
+  optional<uint32_t> pdcp_sn;
   rlc_sdu() = default;
-  rlc_sdu(byte_buffer buf_, optional<uint32_t> pdcp_count_) : buf(std::move(buf_)), pdcp_count(pdcp_count_) {}
+  rlc_sdu(byte_buffer buf_, optional<uint32_t> pdcp_sn_) : buf(std::move(buf_)), pdcp_sn(pdcp_sn_) {}
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.
@@ -69,8 +69,8 @@ public:
   virtual void handle_sdu(rlc_sdu sdu) = 0;
 
   /// \brief Interface for higher layers to discard SDUs from RLC queue
-  /// \param pdcp_count PDCP COUNT of the SDU that is to be discarded
-  virtual void discard_sdu(uint32_t pdcp_count) = 0;
+  /// \param pdcp_sn PDCP sequence number (SN) of the SDU that is to be discarded
+  virtual void discard_sdu(uint32_t pdcp_sn) = 0;
 };
 
 /// This interface represents the data upper layer that the TX RLC bearer must notify on transmission and/or delivery of

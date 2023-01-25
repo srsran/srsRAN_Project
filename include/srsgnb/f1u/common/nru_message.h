@@ -124,8 +124,8 @@ struct nru_assistance_information {};
 struct nru_dl_message {
   /// Transport PDU, e.g. PDCP PDU.
   byte_buffer t_pdu;
-  /// PDCP COUNT value of the t_pdu.
-  optional<uint32_t> pdcp_count;
+  /// PDCP Sequence Number of the t_pdu.
+  optional<uint32_t> pdcp_sn;
   /// NR-U DL User Data.
   nru_dl_user_data dl_user_data;
 };

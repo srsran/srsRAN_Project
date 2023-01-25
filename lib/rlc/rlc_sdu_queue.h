@@ -72,10 +72,10 @@ public:
   bool is_full() { return queue.size() >= capacity; }
 
   // Marks a packet as discarded by calling `clear` on it.
-  bool discard(uint32_t pdcp_count)
+  bool discard(uint32_t pdcp_sn)
   {
-    bool discarded = queue.apply_first([&pdcp_count, this](rlc_sdu& sdu) {
-      if (!sdu.buf.empty() && sdu.pdcp_count == pdcp_count) {
+    bool discarded = queue.apply_first([&pdcp_sn, this](rlc_sdu& sdu) {
+      if (!sdu.buf.empty() && sdu.pdcp_sn == pdcp_sn) {
         queue.pop_func(sdu);
         sdu.buf.clear();
         return true;

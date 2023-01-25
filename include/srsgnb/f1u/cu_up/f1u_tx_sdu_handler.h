@@ -24,8 +24,8 @@ class f1u_tx_sdu_handler
 public:
   virtual ~f1u_tx_sdu_handler() = default;
 
-  virtual void handle_sdu(pdcp_tx_pdu sdu) = 0;
-  virtual void discard_sdu(uint32_t count) = 0;
+  virtual void handle_sdu(pdcp_tx_pdu sdu)   = 0;
+  virtual void discard_sdu(uint32_t pdcp_sn) = 0;
 };
 
 } // namespace srs_cu_up

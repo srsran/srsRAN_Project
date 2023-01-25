@@ -77,7 +77,7 @@ public:
     rx_sdu_notifier->on_new_sdu(std::move(msg.t_pdu));
   }
 
-  void discard_sdu(uint32_t count) final { tx_discard_sdu_list.push_back(count); };
+  void discard_sdu(uint32_t pdcp_sn) final { tx_discard_sdu_list.push_back(pdcp_sn); };
 
   void handle_sdu(pdcp_tx_pdu sdu) final
   {

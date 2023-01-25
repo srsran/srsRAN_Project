@@ -34,7 +34,7 @@ public:
 
   void handle_pdu(nru_ul_message msg) override;
   void handle_sdu(pdcp_tx_pdu sdu) override;
-  void discard_sdu(uint32_t count) override;
+  void discard_sdu(uint32_t pdcp_sn) override;
 
 private:
   f1u_bearer_logger         logger;

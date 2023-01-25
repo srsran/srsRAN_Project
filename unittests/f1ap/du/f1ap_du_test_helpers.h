@@ -125,16 +125,16 @@ class dummy_f1u_rx_sdu_notifier : public f1u_rx_sdu_notifier
 {
 public:
   byte_buffer        last_pdu;
-  optional<uint32_t> last_pdu_count;
-  optional<uint32_t> last_discard_count;
+  optional<uint32_t> last_pdu_sn;
+  optional<uint32_t> last_discard_sn;
 
   void on_new_sdu(pdcp_tx_pdu sdu) override
   {
-    last_pdu       = std::move(sdu.buf);
-    last_pdu_count = sdu.pdcp_count;
+    last_pdu    = std::move(sdu.buf);
+    last_pdu_sn = sdu.pdcp_sn;
   }
 
-  void on_discard_sdu(uint32_t count) override { last_discard_count = count; }
+  void on_discard_sdu(uint32_t pdcp_sn) override { last_discard_sn = pdcp_sn; }
 };
 
 /// Fixture class for F1AP

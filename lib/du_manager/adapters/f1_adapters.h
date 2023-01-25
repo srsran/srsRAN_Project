@@ -40,10 +40,10 @@ public:
   void on_new_sdu(pdcp_tx_pdu sdu) override
   {
     srsgnb_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
-    rlc_tx->handle_sdu(rlc_sdu{std::move(sdu.buf), sdu.pdcp_count});
+    rlc_tx->handle_sdu(rlc_sdu{std::move(sdu.buf), sdu.pdcp_sn});
   }
 
-  void on_discard_sdu(uint32_t count) override
+  void on_discard_sdu(uint32_t pdcp_sn) override
   {
     // TODO.
   }

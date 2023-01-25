@@ -24,7 +24,7 @@ class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
 public:
   std::queue<byte_buffer_slice_chain> sdu_queue;
   uint32_t                            sdu_counter = 0;
-  std::list<uint32_t>                 transmitted_pdcp_count_list;
+  std::list<uint32_t>                 transmitted_pdcp_sn_list;
   uint32_t                            bsr       = 0;
   uint32_t                            bsr_count = 0;
 
@@ -39,7 +39,7 @@ public:
   void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) override
   {
     // store in list
-    transmitted_pdcp_count_list.push_back(max_tx_pdcp_sn);
+    transmitted_pdcp_sn_list.push_back(max_tx_pdcp_sn);
   }
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override {}
 
@@ -266,9 +266,9 @@ TEST_P(rlc_um_test, tx_without_segmentation)
     EXPECT_EQ(i, pdu_bufs[i][payload_len - 1]); // check if last payload item corresponds with index
 
     // Verify transmit notification
-    EXPECT_EQ(1, tester1.transmitted_pdcp_count_list.size());
-    EXPECT_EQ(i + 13, tester1.transmitted_pdcp_count_list.front());
-    tester1.transmitted_pdcp_count_list.pop_front();
+    EXPECT_EQ(1, tester1.transmitted_pdcp_sn_list.size());
+    EXPECT_EQ(i + 13, tester1.transmitted_pdcp_sn_list.front());
+    tester1.transmitted_pdcp_sn_list.pop_front();
 
     // TODO: write PCAP
   }
@@ -334,9 +334,9 @@ TEST_P(rlc_um_test, tx_with_segmentation)
 
     if (num_pdus % ((sdu_size / payload_len) + 1) == 0) {
       // Verify transmit notification
-      EXPECT_EQ(1, tester1.transmitted_pdcp_count_list.size());
-      EXPECT_EQ(num_pdus, tester1.transmitted_pdcp_count_list.front());
-      tester1.transmitted_pdcp_count_list.pop_front();
+      EXPECT_EQ(1, tester1.transmitted_pdcp_sn_list.size());
+      EXPECT_EQ(num_pdus, tester1.transmitted_pdcp_sn_list.front());
+      tester1.transmitted_pdcp_sn_list.pop_front();
     }
 
     if (pdu_bufs[num_pdus].empty()) {
@@ -350,7 +350,7 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
 
   // Verify there are no multiple transmit notifications
-  EXPECT_EQ(0, tester1.transmitted_pdcp_count_list.size());
+  EXPECT_EQ(0, tester1.transmitted_pdcp_sn_list.size());
 
   // Write PDUs into RLC2
   // receive PDUs in order
@@ -593,9 +593,9 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
 
     if (num_pdus % ((sdu_size / payload_len) + 1) == 0) {
       // Verify transmit notification
-      EXPECT_EQ(1, tester1.transmitted_pdcp_count_list.size());
-      EXPECT_EQ(num_pdus, tester1.transmitted_pdcp_count_list.front());
-      tester1.transmitted_pdcp_count_list.pop_front();
+      EXPECT_EQ(1, tester1.transmitted_pdcp_sn_list.size());
+      EXPECT_EQ(num_pdus, tester1.transmitted_pdcp_sn_list.front());
+      tester1.transmitted_pdcp_sn_list.pop_front();
     }
 
     if (pdu_bufs[num_pdus].empty()) {
@@ -609,7 +609,7 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
   EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
 
   // Verify there are no multiple transmit notifications
-  EXPECT_EQ(0, tester1.transmitted_pdcp_count_list.size());
+  EXPECT_EQ(0, tester1.transmitted_pdcp_sn_list.size());
 
   // Write PDUs into RLC2
   // receive PDUs in reverse order

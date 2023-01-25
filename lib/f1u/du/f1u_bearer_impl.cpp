@@ -35,10 +35,10 @@ void f1u_bearer_impl::handle_pdu(nru_dl_message msg)
   logger.log_debug("F1-U bearer received PDU");
   // handle T-PDU
   if (!msg.t_pdu.empty()) {
-    logger.log_debug("Delivering T-PDU of size={}, pdcp_count={}", msg.t_pdu.length(), msg.pdcp_count);
+    logger.log_debug("Delivering T-PDU of size={}, pdcp_sn={}", msg.t_pdu.length(), msg.pdcp_sn);
     pdcp_tx_pdu tx_sdu = {};
     tx_sdu.buf         = std::move(msg.t_pdu);
-    tx_sdu.pdcp_count  = msg.pdcp_count;
+    tx_sdu.pdcp_sn     = msg.pdcp_sn;
     rx_sdu_notifier.on_new_sdu(tx_sdu);
   }
   // handle discard notifications

@@ -48,9 +48,9 @@ public:
   }
 
   // TS 38.322 v16.2.0 Sec. 5.4
-  void discard_sdu(uint32_t pdcp_count) override
+  void discard_sdu(uint32_t pdcp_sn) override
   {
-    logger.log_warning("Ignoring invalid attempt to discard SDU in TM. pdcp_count={}", pdcp_count);
+    logger.log_warning("Ignoring invalid attempt to discard SDU in TM. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard_failure(1);
   }
 

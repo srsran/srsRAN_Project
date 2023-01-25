@@ -58,7 +58,7 @@ public:
 
   // PDCP TX lower layer data notifier
   void on_new_pdu(pdcp_tx_pdu pdu) final { pdu_queue.push(std::move(pdu)); }
-  void on_discard_pdu(uint32_t count) final { sdu_discard_queue.push(count); }
+  void on_discard_pdu(uint32_t pdcp_sn) final { sdu_discard_queue.push(pdcp_sn); }
 };
 
 /// Fixture class for PDCP tests

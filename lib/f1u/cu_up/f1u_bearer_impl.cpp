@@ -67,20 +67,20 @@ void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
 
 void f1u_bearer_impl::handle_sdu(pdcp_tx_pdu sdu)
 {
-  logger.log_debug("F1-U bearer received SDU with PDCP count={}, size={}", sdu.pdcp_count, sdu.buf.length());
+  logger.log_debug("F1-U bearer received SDU with pdcp_sn={}, size={}", sdu.pdcp_sn, sdu.buf.length());
   nru_dl_message msg = {};
   msg.t_pdu          = std::move(sdu.buf);
-  msg.pdcp_count     = sdu.pdcp_count;
+  msg.pdcp_sn        = sdu.pdcp_sn;
   tx_pdu_notifier.on_new_pdu(std::move(msg));
 }
 
-void f1u_bearer_impl::discard_sdu(uint32_t count)
+void f1u_bearer_impl::discard_sdu(uint32_t pdcp_sn)
 {
-  logger.log_debug("F1-U bearer received order to discard SDU with count={}", count);
+  logger.log_debug("F1-U bearer received order to discard SDU with pdcp_sn={}", pdcp_sn);
   nru_dl_message msg              = {};
   msg.dl_user_data.discard_blocks = nru_pdcp_sn_discard_blocks{};
   nru_pdcp_sn_discard_block block = {};
-  block.pdcp_sn_start             = count;
+  block.pdcp_sn_start             = pdcp_sn;
   block.block_size                = 1;
   msg.dl_user_data.discard_blocks.value().push_back(std::move(block));
   tx_pdu_notifier.on_new_pdu(std::move(msg));

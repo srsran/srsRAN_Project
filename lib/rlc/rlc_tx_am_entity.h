@@ -26,7 +26,7 @@ namespace srsgnb {
 /// Container to hold a SDU for transmission, the progress in case of segmentation, and associated meta data
 struct rlc_tx_am_sdu_info {
   byte_buffer        sdu = {};
-  optional<uint32_t> pdcp_count;
+  optional<uint32_t> pdcp_sn;
   uint32_t           next_so    = 0;
   uint32_t           retx_count = RETX_COUNT_NOT_STARTED;
 };
@@ -124,7 +124,7 @@ public:
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu) override;
-  void discard_sdu(uint32_t pdcp_count) override;
+  void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
   byte_buffer_slice_chain pull_pdu(uint32_t grant_len) override;

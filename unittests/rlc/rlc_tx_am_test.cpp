@@ -122,13 +122,13 @@ protected:
   ///
   /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
   /// i.e. if first_byte = 0xfc, the SDU will be 0xfc 0xfe 0xff 0x00 0x01 ...
-  /// \param pdcp_count PDCP count value
+  /// \param pdcp_sn PDCP sequence number
   /// \param sdu_size Size of the SDU
   /// \param first_byte Value of the first byte
   /// \return the produced SDU as a rlc_sdu
-  rlc_sdu create_rlc_sdu(uint32_t pdcp_count, uint32_t sdu_size, uint8_t first_byte = 0) const
+  rlc_sdu create_rlc_sdu(uint32_t pdcp_sn, uint32_t sdu_size, uint8_t first_byte = 0) const
   {
-    rlc_sdu sdu = {create_sdu(sdu_size, first_byte), pdcp_count};
+    rlc_sdu sdu = {create_sdu(sdu_size, first_byte), pdcp_sn};
     return sdu;
   }
 
@@ -147,7 +147,7 @@ protected:
 
       // write SDU into upper end
       rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
-                     /* pdcp_count = */ i}; // no std::move - keep local copy for later comparison
+                     /* pdcp_sn = */ i}; // no std::move - keep local copy for later comparison
       rlc->handle_sdu(std::move(sdu));
       EXPECT_EQ(tester->bsr_count, ++n_bsr);
     }
@@ -198,7 +198,7 @@ protected:
 
       // write SDU into upper end
       rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
-                     /* pdcp_count = */ i}; // no std::move - keep local copy for later comparison
+                     /* pdcp_sn = */ i}; // no std::move - keep local copy for later comparison
       rlc->handle_sdu(std::move(sdu));
       EXPECT_EQ(tester->bsr_count, ++n_bsr);
     }
@@ -388,7 +388,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
 
     // write SDU into upper end
     rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
-                   /* pdcp_count = */ i}; // no std::move - keep local copy for later comparison
+                   /* pdcp_sn = */ i}; // no std::move - keep local copy for later comparison
     rlc->handle_sdu(std::move(sdu));
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
   }
@@ -605,8 +605,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -655,8 +655,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), 5);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -703,8 +703,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -754,8 +754,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -805,8 +805,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -853,8 +853,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -901,8 +901,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -945,8 +945,8 @@ TEST_P(rlc_tx_am_test, retx_insufficient_space)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -1005,8 +1005,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -1069,8 +1069,8 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_invalid_range)
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
     tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
@@ -1285,7 +1285,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
   // push SDU to SDU queue so that it is not empty
   uint32_t    n_bsr   = tester->bsr_count;
   byte_buffer sdu_buf = create_sdu(sdu_size, 7);
-  rlc_sdu     sdu = {sdu_buf.deep_copy(), /* pdcp_count = */ 7}; // no std::move - keep local copy for later comparison
+  rlc_sdu     sdu     = {sdu_buf.deep_copy(), /* pdcp_sn = */ 7}; // no std::move - keep local copy for later comparison
   rlc->handle_sdu(std::move(sdu));
   EXPECT_EQ(rlc->get_buffer_state(), pdu_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);

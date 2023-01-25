@@ -163,13 +163,13 @@ TEST_F(cu_up_test, dl_data_flow)
 
   // check reception of message 1
   pdcp_tx_pdu sdu1 = f1u_bearer.wait_tx_sdu();
-  ASSERT_TRUE(sdu1.pdcp_count.has_value());
-  EXPECT_EQ(sdu1.pdcp_count.value(), 0);
+  ASSERT_TRUE(sdu1.pdcp_sn.has_value());
+  EXPECT_EQ(sdu1.pdcp_sn.value(), 0);
 
   // check reception of message 2
   pdcp_tx_pdu sdu2 = f1u_bearer.wait_tx_sdu();
-  ASSERT_TRUE(sdu2.pdcp_count.has_value());
-  EXPECT_EQ(sdu2.pdcp_count.value(), 1);
+  ASSERT_TRUE(sdu2.pdcp_sn.has_value());
+  EXPECT_EQ(sdu2.pdcp_sn.value(), 1);
 
   // check nothing else was received
   EXPECT_FALSE(f1u_bearer.have_tx_sdu());

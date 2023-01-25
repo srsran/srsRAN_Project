@@ -36,15 +36,15 @@ public:
   // PDCP -> F1 -> RLC
   void on_new_pdu(pdcp_tx_pdu pdu) final
   {
-    rlc_sdu sdu    = {};
-    sdu.buf        = std::move(pdu.buf);
-    sdu.pdcp_count = pdu.pdcp_count;
+    rlc_sdu sdu = {};
+    sdu.buf     = std::move(pdu.buf);
+    sdu.pdcp_sn = pdu.pdcp_sn;
     logger.log_info("Passing F1 PDU to RLC");
     rlc_tx_upper->handle_sdu(std::move(sdu));
   }
 
   // PDCP -> F1 -> RLC
-  void on_discard_pdu(uint32_t count) final
+  void on_discard_pdu(uint32_t pdcp_sn) final
   {
     logger.log_debug("Discard PDU called");
     // TODO

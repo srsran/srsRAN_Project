@@ -41,10 +41,10 @@ struct dummy_f1u_cu_up_rx_delivery_notifier final : public srs_cu_up::f1u_rx_del
 struct dummy_f1u_du_rx_sdu_notifier final : public srs_du::f1u_rx_sdu_notifier {
   void on_new_sdu(pdcp_tx_pdu sdu) override
   {
-    logger.info(sdu.buf.begin(), sdu.buf.end(), "DU received SDU. COUNT={}", sdu.pdcp_count);
+    logger.info(sdu.buf.begin(), sdu.buf.end(), "DU received SDU. pdcp_sn={}", sdu.pdcp_sn);
     last_sdu = std::move(sdu.buf);
   }
-  void        on_discard_sdu(uint32_t count) override {}
+  void        on_discard_sdu(uint32_t pdcp_sn) override {}
   byte_buffer last_sdu;
 
 private:
@@ -116,8 +116,8 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   byte_buffer             cu_buf = make_byte_buffer("ABCD");
   byte_buffer_slice_chain du_exp{cu_buf.deep_copy()};
   pdcp_tx_pdu             sdu;
-  sdu.buf        = std::move(cu_buf);
-  sdu.pdcp_count = 0;
+  sdu.buf     = std::move(cu_buf);
+  sdu.pdcp_sn = 0;
   cu_bearer->get_tx_sdu_handler().handle_sdu(std::move(sdu));
 
   // Check DU-> CU-UP path

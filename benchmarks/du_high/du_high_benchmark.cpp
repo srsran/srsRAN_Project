@@ -308,7 +308,7 @@ public:
   }
 
   // \brief Push a DL PDU to DU-high via F1-U interface.
-  void push_pdcp_pdu() { sim_cu_up.du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.copy(), .pdcp_count = 0}); }
+  void push_pdcp_pdu() { sim_cu_up.du_notif->on_new_sdu(pdcp_tx_pdu{.buf = pdcp_pdu.copy(), .pdcp_sn = 0}); }
 
   du_high_configuration              cfg{};
   cu_cp_simulator                    sim_cu_cp;

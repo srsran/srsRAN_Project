@@ -81,10 +81,10 @@ public:
     f1u_handler->handle_sdu(std::move(pdu));
   }
 
-  void on_discard_pdu(uint32_t count) override
+  void on_discard_pdu(uint32_t pdcp_sn) override
   {
     srsgnb_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
-    f1u_handler->discard_sdu(count);
+    f1u_handler->discard_sdu(pdcp_sn);
   }
 
 private:

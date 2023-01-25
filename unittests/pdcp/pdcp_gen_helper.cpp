@@ -35,7 +35,7 @@ public:
 
   /// PDCP TX lower layer data notifier
   void on_new_pdu(pdcp_tx_pdu pdu) final { pdu_queue.push(std::move(pdu)); }
-  void on_discard_pdu(uint32_t count) final {}
+  void on_discard_pdu(uint32_t pdcp_sn) final {}
 };
 
 bool parse_args(pdcp_gen_helper_args& args, int argc, char* argv[])
