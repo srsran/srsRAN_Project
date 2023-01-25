@@ -21,6 +21,24 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
+/// \brief Generate DU-to-CU RRC Container with CellGroupConfig.
+byte_buffer generate_container_with_cell_group_config();
+
+/// \brief Generate RRC Container with RRC Setup Complete message.
+byte_buffer generate_rrc_setup_complete();
+
+/// \brief Generate a random gnb_cu_cp_ue_e1ap_id
+gnb_cu_cp_ue_e1ap_id_t generate_random_gnb_cu_cp_ue_e1ap_id();
+
+/// \brief Generate a random gnb_cu_up_ue_e1ap_id
+gnb_cu_up_ue_e1ap_id_t generate_random_gnb_cu_up_ue_e1ap_id();
+
+/// \brief Generate a random gnb_cu_ue_f1ap_id
+gnb_cu_ue_f1ap_id_t generate_random_gnb_cu_ue_f1ap_id();
+
+/// \brief Generate a random gnb_du_ue_f1ap_id
+gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
+
 struct dummy_du_processor_to_cu_cp_task_scheduler : public du_processor_to_cu_cp_task_scheduler {
 public:
   dummy_du_processor_to_cu_cp_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
@@ -80,13 +98,9 @@ public:
       CORO_BEGIN(ctx);
 
       if (bearer_context_setup_outcome) {
-        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(
-            test_rgen::uniform_int<uint64_t>(gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::min),
-                                             gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::max) - 1));
-
-        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(
-            test_rgen::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
-                                             gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1));
+        // generate random ids to make sure its not only working for hardcoded values
+        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
+        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = generate_random_gnb_cu_up_ue_e1ap_id();
 
         res = generate_e1ap_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
       } else {
@@ -107,13 +121,9 @@ public:
       CORO_BEGIN(ctx);
 
       if (bearer_context_modification_outcome) {
-        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(
-            test_rgen::uniform_int<uint64_t>(gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::min),
-                                             gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::max) - 1));
-
-        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(
-            test_rgen::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
-                                             gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1));
+        // generate random ids to make sure its not only working for hardcoded values
+        gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = generate_random_gnb_cu_cp_ue_e1ap_id();
+        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = generate_random_gnb_cu_up_ue_e1ap_id();
 
         res = generate_e1ap_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
       } else {
@@ -163,13 +173,9 @@ public:
       CORO_BEGIN(ctx);
 
       if (ue_context_modification_outcome) {
-        gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(
-            test_rgen::uniform_int<uint64_t>(gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::min),
-                                             gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max) - 1));
-
-        gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(
-            test_rgen::uniform_int<uint64_t>(gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::min),
-                                             gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::max) - 1));
+        // generate random ids to make sure its not only working for hardcoded values
+        gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = generate_random_gnb_cu_ue_f1ap_id();
+        gnb_du_ue_f1ap_id_t du_ue_f1ap_id = generate_random_gnb_du_ue_f1ap_id();
 
         res = generate_cu_cp_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
       } else {
@@ -218,12 +224,6 @@ private:
   srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
   bool                  rrc_reconfiguration_outcome = false;
 };
-
-/// \brief Generate DU-to-CU RRC Container with CellGroupConfig.
-byte_buffer generate_container_with_cell_group_config();
-
-/// \brief Generate RRC Container with RRC Setup Complete message.
-byte_buffer generate_rrc_setup_complete();
 
 } // namespace srs_cu_cp
 } // namespace srsgnb

@@ -32,3 +32,29 @@ byte_buffer srsgnb::srs_cu_cp::generate_rrc_setup_complete()
       "018010174000090530101000000000");
   return octet_str.to_byte_buffer();
 }
+
+gnb_cu_cp_ue_e1ap_id_t srsgnb::srs_cu_cp::generate_random_gnb_cu_cp_ue_e1ap_id()
+{
+  return int_to_gnb_cu_cp_ue_e1ap_id(
+      test_rgen::uniform_int<uint64_t>(gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::min),
+                                       gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::max) - 1));
+}
+
+gnb_cu_up_ue_e1ap_id_t srsgnb::srs_cu_cp::generate_random_gnb_cu_up_ue_e1ap_id()
+{
+  return int_to_gnb_cu_up_ue_e1ap_id(
+      test_rgen::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
+                                       gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1));
+}
+
+gnb_cu_ue_f1ap_id_t srsgnb::srs_cu_cp::generate_random_gnb_cu_ue_f1ap_id()
+{
+  return int_to_gnb_cu_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
+      gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::min), gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max) - 1));
+}
+
+gnb_du_ue_f1ap_id_t srsgnb::srs_cu_cp::generate_random_gnb_du_ue_f1ap_id()
+{
+  return int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
+      gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::min), gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::max) - 1));
+}
