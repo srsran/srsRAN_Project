@@ -16,9 +16,9 @@
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
-#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
+#include "fmt/format.h"
 #include <set>
 
 namespace srsgnb {

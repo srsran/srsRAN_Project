@@ -9,6 +9,7 @@
  */
 
 #include "rlc_tx_um_entity.h"
+#include "rlc_um_pdu.h"
 
 using namespace srsgnb;
 

@@ -12,8 +12,8 @@
 
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
-#include "rlc_um_pdu.h"
 #include "srsgnb/support/executors/task_executor.h"
+#include "fmt/format.h"
 
 namespace srsgnb {
 

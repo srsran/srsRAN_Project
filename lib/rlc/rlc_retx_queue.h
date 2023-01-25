@@ -12,6 +12,7 @@
 
 #include "rlc_am_pdu.h"
 #include "srsgnb/support/srsgnb_assert.h"
+#include "fmt/format.h"
 #include <cstdint>
 #include <list>
 

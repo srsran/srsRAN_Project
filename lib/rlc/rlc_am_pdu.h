@@ -12,6 +12,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/support/format_utils.h"
+#include "fmt/format.h"
 
 namespace srsgnb {
 

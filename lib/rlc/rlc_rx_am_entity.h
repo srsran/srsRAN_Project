@@ -16,6 +16,7 @@
 #include "rlc_rx_entity.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
+#include "fmt/format.h"
 #include <set>
 
 namespace srsgnb {
