@@ -35,6 +35,7 @@
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
+#include "srsgnb/fapi/logging_decorator_factories.h"
 #include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 #include "srsgnb/phy/adapters/phy_error_adapter.h"
 #include "srsgnb/phy/adapters/phy_rg_gateway_adapter.h"
@@ -421,13 +422,37 @@ int main(int argc, char** argv)
                                             generate_carrier_config_tlv(gnb_cfg));
   report_fatal_error_if_not(phy_adaptor, "Unable to create PHY adaptor.");
   upper->set_rx_results_notifier(phy_adaptor->get_rx_results_notifier());
-
-  fapi_slot_last_message_dummy last_msg_dummy;
-  auto mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway(), last_msg_dummy);
-  report_fatal_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
-  phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
-  phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
   upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
+
+  fapi_slot_last_message_dummy                      last_msg_dummy;
+  std::unique_ptr<fapi::slot_message_gateway>       logging_slot_gateway;
+  std::unique_ptr<fapi::slot_data_message_notifier> logging_slot_data_notifier;
+  std::unique_ptr<fapi::slot_time_message_notifier> logging_slot_time_notifier;
+  std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>   mac_adaptor;
+  if (gnb_cfg.log_cfg.fapi_level == "debug") {
+    // Create gateway loggers and intercept MAC adaptor calls.
+    logging_slot_gateway =
+        fapi::logging_slot_gateway_decorator_factory().create(phy_adaptor->get_slot_message_gateway());
+    report_fatal_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
+    mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway, last_msg_dummy);
+
+    // Create notification loggers.
+    logging_slot_data_notifier =
+        fapi::logging_slot_data_notifier_decorator_factory().create(mac_adaptor->get_slot_data_notifier());
+    report_fatal_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
+    logging_slot_time_notifier =
+        fapi::logging_slot_time_notifier_decorator_factory().create(mac_adaptor->get_slot_time_notifier());
+    report_fatal_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
+
+    // Connect the PHY adaptor with the loggers to intercept PHY notifications.
+    phy_adaptor->set_slot_time_message_notifier(*logging_slot_time_notifier);
+    phy_adaptor->set_slot_data_message_notifier(*logging_slot_data_notifier);
+  } else {
+    mac_adaptor = build_mac_fapi_adaptor(0, scs, phy_adaptor->get_slot_message_gateway(), last_msg_dummy);
+    report_fatal_error_if_not(mac_adaptor, "Unable to create MAC adaptor.");
+    phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
+    phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
+  }
   gnb_logger.info("FAPI adaptors created successfully");
 
   // Cell configuration.

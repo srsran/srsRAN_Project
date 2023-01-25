@@ -117,7 +117,7 @@ public:
     scs_common(config.scs_common),
     prach_cfg(*config.prach_cfg),
     carrier_cfg(*config.carrier_cfg),
-    logger(srslog::fetch_basic_logger("FAPI", false))
+    logger(srslog::fetch_basic_logger("FAPI", true))
   {
     logger.set_level(srslog::basic_levels::info);
   }

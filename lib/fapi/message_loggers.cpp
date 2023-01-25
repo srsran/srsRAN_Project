@@ -307,7 +307,8 @@ void srsgnb::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog:
 
 void srsgnb::fapi::log_slot_indication(const slot_indication_message& msg, srslog::basic_logger& logger)
 {
-  logger.debug("Slot.indication slot={}.{}", msg.sfn, msg.slot);
+  logger.set_context(msg.sfn, msg.slot);
+  logger.debug("Slot.indication");
 }
 
 void srsgnb::fapi::log_ul_dci_request(const ul_dci_request_message& msg, srslog::basic_logger& logger)

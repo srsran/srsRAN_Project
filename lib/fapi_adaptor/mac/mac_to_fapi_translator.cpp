@@ -183,7 +183,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
                 dl_data.rar_pdus.size());
 
   srsgnb_assert(dl_data.ue_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registry::ue),
-                "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
+                "Number of PDUs ({}) and Payloads ({}) for UE PDUs doesn't match",
                 pdsch_registry.get_nof_pdus(pdsch_pdu_registry::ue),
                 dl_data.ue_pdus.size());
   srsgnb_assert(dl_data.sib1_pdus.size() || dl_data.rar_pdus.size() || dl_data.ue_pdus.size(),

@@ -18,7 +18,7 @@ add_executable(gnb
         )
 
 target_link_libraries(gnb
-        srsgnbapp_f1u_connector 
+        srsgnbapp_f1u_connector
         srsgnb_cu_up
         srsgnb_cu_cp
         srsgnb_io_broker
@@ -28,6 +28,7 @@ target_link_libraries(gnb
         srsgnb_gateway
         mac_fapi_adaptor_factory
         phy_fapi_adaptor_factory
+        srsgnb_fapi_message_loggers
         srsgnb_phy_support
         srsgnb_upper_phy
         srsgnb_signal_processors
