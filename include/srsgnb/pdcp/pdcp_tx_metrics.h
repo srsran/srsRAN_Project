@@ -10,9 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/security/security.h"
+#include "fmt/format.h"
 
 /*
  * This file will hold the interfaces and structures for the

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/pdcp/pdcp_config.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsgnb {
 
