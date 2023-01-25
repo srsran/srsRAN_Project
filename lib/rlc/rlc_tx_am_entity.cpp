@@ -397,8 +397,19 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
     return {};
   }
 
-  // Get expected header and payload len
+  // Get expected header length
   uint32_t expected_hdr_len = get_retx_expected_hdr_len(retx);
+  // Sanity check: can this ReTx be sent considering header overhead?
+  if (nof_bytes <= expected_hdr_len) {
+    logger.log_info(
+        "Cannot build ReTx SDU segment, there are not enough bytes allocated to tx header plus data. nof_bytes={}, "
+        "expected_hdr_len={}",
+        nof_bytes,
+        expected_hdr_len);
+    return {};
+  }
+
+  // Compute maximum payload length
   uint32_t retx_payload_len = std::min(retx.length, nof_bytes - expected_hdr_len);
   bool     sdu_complete     = retx_payload_len == retx.length;
 
