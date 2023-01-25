@@ -22,6 +22,7 @@
 
 #include "adapters/e1_adapter.h"
 #include "adapters/f1_adapter.h"
+#include "srsgnb/support/backtrace.h"
 #include "srsgnb/support/config_parsers.h"
 
 #include "gnb_appconfig.h"
@@ -231,6 +232,9 @@ build_radio(task_executor& executor, radio_notification_handler& radio_handler, 
 
 int main(int argc, char** argv)
 {
+  // Enable backtrace.
+  enable_backtrace();
+
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());

@@ -131,35 +131,41 @@ endif()
 # Find dependencies
 ########################################################################
 
+# Backward-cpp
+find_package(Backward)
+if(Backward_FOUND)
+    if(BACKWARD_HAS_EXTERNAL_LIBRARIES)
+        message(STATUS "Building with backward-cpp support")
+    else (BACKWARD_HAS_EXTERNAL_LIBRARIES)
+        message(STATUS "Backward-cpp found, but external libraries are missing.")
+    endif()
+endif()
+
+# Crypto
+find_package(MbedTLS REQUIRED)
+if (MBEDTLS_FOUND)
+    set(SEC_INCLUDE_DIRS "${MBEDTLS_INCLUDE_DIRS}")
+    if(BUILD_STATIC)
+        set(SEC_LIBRARIES "${MBEDTLS_STATIC_LIBRARIES}")
+    else(BUILD_STATIC)
+        set(SEC_LIBRARIES "${MBEDTLS_LIBRARIES}")
+    endif(BUILD_STATIC)
+else(MBEDTLS_FOUND)
+    message(FATAL_ERROR "mbedTLS is required to build ${CMAKE_PROJECT_NAME}")
+endif (MBEDTLS_FOUND)
+
 # FFTW
 if (ENABLE_FFTW)
     find_package(FFTW3F)
 endif (ENABLE_FFTW)
 
+# Google Tests
+if (BUILD_TESTS)
+    find_package(GTest REQUIRED)
+endif (BUILD_TESTS)
+
 # Threads
 find_package(Threads REQUIRED)
-
-# Crypto
-find_package(MbedTLS REQUIRED)
-if (MBEDTLS_FOUND)
-  set(SEC_INCLUDE_DIRS "${MBEDTLS_INCLUDE_DIRS}")
-  if(BUILD_STATIC)
-    set(SEC_LIBRARIES "${MBEDTLS_STATIC_LIBRARIES}")
-  else(BUILD_STATIC)
-    set(SEC_LIBRARIES "${MBEDTLS_LIBRARIES}")
-  endif(BUILD_STATIC)
-else(MBEDTLS_FOUND)
-  message(FATAL_ERROR "mbedTLS is required to build ${CMAKE_PROJECT_NAME}")
-endif (MBEDTLS_FOUND)
-
-# Yaml-cpp
-find_package(YAMLCPP)
-if (YAMLCPP_FOUND)
-    include_directories(${YAMLCPP_INCLUDE_DIR})
-    link_directories(${YAMLCPP_LIBRARY})
-else (YAMLCPP_FOUND)
-    message(FATAL_ERROR "yaml-cpp is required to build ${CMAKE_PROJECT_NAME}")
-endif (YAMLCPP_FOUND)
 
 # UHD
 if (ENABLE_UHD)
@@ -170,6 +176,15 @@ if (ENABLE_UHD)
     endif (UHD_FOUND)
 endif (ENABLE_UHD)
 
+# Yaml-cpp
+find_package(YAMLCPP)
+if (YAMLCPP_FOUND)
+    include_directories(${YAMLCPP_INCLUDE_DIR})
+    link_directories(${YAMLCPP_LIBRARY})
+else (YAMLCPP_FOUND)
+    message(FATAL_ERROR "yaml-cpp is required to build ${CMAKE_PROJECT_NAME}")
+endif (YAMLCPP_FOUND)
+
 # ZeroMQ
 if (ENABLE_ZEROMQ)
     find_package(ZeroMQ)
@@ -178,11 +193,6 @@ if (ENABLE_ZEROMQ)
         link_directories(${ZEROMQ_LIBRARY_DIRS})
     endif (ZEROMQ_FOUND)
 endif (ENABLE_ZEROMQ)
-
-# Google Tests
-if (BUILD_TESTS)
-    find_package(GTest REQUIRED)
-endif (BUILD_TESTS)
 
 ########################################################################
 # Instruction Set Architecture setup
