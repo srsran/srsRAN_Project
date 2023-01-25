@@ -13,8 +13,8 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/format_utils.h"
+#include "fmt/format.h"
 
 namespace srsgnb {
 
