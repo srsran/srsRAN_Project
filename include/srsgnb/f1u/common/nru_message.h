@@ -55,8 +55,8 @@ typedef static_vector<nru_lost_nru_sn_range, nru_max_nof_lost_nru_sn_ranges> nru
 /// Ref: TS 38.425 Sec. 5.5.2.1, Sec. 5.5.3.
 struct nru_dl_user_data {
   /// Report polling.
-  ///  This parameter indicates that the node hosting the NR PDCP entity requests providing the downlink delivery status
-  ///  report.
+  /// This parameter indicates that the node hosting the NR PDCP entity requests the other side to provide the downlink
+  /// delivery status report.
   bool report_polling = false;
   /// Assistance Information Report Polling Flag.
   /// This parameter indicates that the node hosting the NR PDCP entity requests the corresponding node to send an
