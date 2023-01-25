@@ -88,9 +88,3 @@ TEST_F(rrc_ue_setup, when_setup_complete_received_initial_ue_message_sent)
 
   check_initial_ue_message_sent();
 }
-
-int main(int argc, char** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

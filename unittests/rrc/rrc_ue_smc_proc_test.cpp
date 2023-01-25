@@ -126,9 +126,3 @@ TEST_F(rrc_ue_smc, when_reply_missing_procedure_timeout)
 
   ASSERT_TRUE(t.ready());
 }
-
-int main(int argc, char** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
