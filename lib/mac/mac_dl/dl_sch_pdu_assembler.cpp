@@ -190,7 +190,10 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
                    get_mac_sdu_payload_size(rem_bytes));
       break;
     }
-    srsgnb_assert(sdu.length() <= get_mac_sdu_payload_size(rem_bytes), "RLC Tx SDU exceeded MAC opportunity size");
+    srsgnb_assert(sdu.length() <= get_mac_sdu_payload_size(rem_bytes),
+                  "RLC Tx SDU exceeded MAC opportunity size ({} > {})",
+                  sdu.length(),
+                  get_mac_sdu_payload_size(rem_bytes));
 
     // Add SDU as a subPDU.
     unsigned nwritten = ue_pdu.add_sdu(subpdu.lcid.to_lcid(), std::move(sdu));
