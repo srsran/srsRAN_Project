@@ -12,8 +12,10 @@
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
+#include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../support/ssb_helpers.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 
@@ -89,6 +91,15 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
       }
     }
+
+    // See TS 38.214, Table 5.1.2.1.1-1.
+    // TODO: Select PDSCH time domain resource allocation to apply based on SS/PBCH and CORESET mux. pattern.
+    pdsch_td_alloc_list =
+        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.empty()
+            ? pdsch_default_time_allocations_default_A_table(
+                  bwp_cfg.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL, cell_cfg.dmrs_typeA_pos)
+            : cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+
   } else {
     srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
   }
@@ -176,11 +187,8 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
                                                           static_cast<double>(nof_pf_per_drx_cycle))) %
                          nof_po_per_pf;
 
-    for (unsigned time_res_idx = 0;
-         time_res_idx != cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size();
-         ++time_res_idx) {
-      const cell_slot_resource_allocator& paging_alloc =
-          res_grid[cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_res_idx].k0];
+    for (unsigned time_res_idx = 0; time_res_idx != pdsch_td_alloc_list.size(); ++time_res_idx) {
+      const cell_slot_resource_allocator& paging_alloc = res_grid[pdsch_td_alloc_list[time_res_idx].k0];
       // Verify Paging slot is DL enabled.
       if (not cell_cfg.is_dl_enabled(paging_alloc.slot)) {
         continue;
@@ -323,10 +331,9 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&         res_grid
   // - [Implementation defined] Need to take into account PDSCH Time Domain Resource Allocation in UE's active DL BWP,
   //   for now only initial DL BWP is considered for simplification in this function.
 
-  const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res];
-  static const unsigned nof_symb_sh = pdsch_td_cfg.symbols.length();
-  static const unsigned nof_layers  = 1;
+  const pdsch_time_domain_resource_allocation& pdsch_td_cfg = pdsch_td_alloc_list[pdsch_time_res];
+  static const unsigned                        nof_symb_sh  = pdsch_td_cfg.symbols.length();
+  static const unsigned                        nof_layers   = 1;
   // As per Section 5.1.3.2, TS 38.214, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by P-RNTI.
   static const unsigned nof_oh_prb = 0;
   // As per TS 38.214, Table 5.1.3.2-2.
@@ -422,9 +429,8 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&            pg_gra
   pdsch.rnti               = pdcch.ctx.rnti;
   pdsch.bwp_cfg            = pdcch.ctx.bwp_cfg;
   pdsch.coreset_cfg        = pdcch.ctx.coreset_cfg;
-  pdsch.symbols =
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.p_rnti_f1_0.time_resource].symbols;
-  pdsch.prbs = paging_prbs;
+  pdsch.symbols            = pdsch_td_alloc_list[dci.p_rnti_f1_0.time_resource].symbols;
+  pdsch.prbs               = paging_prbs;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID.
   pdsch.n_id = cell_cfg.pci;
 

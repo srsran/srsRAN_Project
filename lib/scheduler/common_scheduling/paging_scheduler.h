@@ -138,6 +138,8 @@ private:
   /// BWP configuration of CORESET used for Paging (applies for both pagingSearchSpace = 0 and pagingSearchSpace > 0).
   /// It's used for CRB-to-PRB conversion.
   bwp_configuration bwp_cfg;
+  /// PDSCH time domain resource allocation list.
+  span<const pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
 
   /// List of per UE paging indication message yet to be scheduled.
   std::vector<paging_indication_message> paging_pending_ues;
