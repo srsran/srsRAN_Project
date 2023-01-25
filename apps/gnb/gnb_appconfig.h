@@ -124,6 +124,13 @@ struct cell_appconfig {
   base_cell_appconfig cell;
 };
 
+/// Cell configuration
+struct qos_appconfig {
+  /// Physical cell identifier.
+  uint8_t     five_qi = 9;
+  std::string mode    = "am";
+};
+
 struct amf_appconfig {
   std::string ip_addr   = "127.0.0.1";
   uint16_t    port      = 38412;
@@ -170,6 +177,9 @@ struct gnb_appconfig {
   ///
   /// \note Add one cell by default.
   std::vector<cell_appconfig> cells_cfg = {{}};
+
+  /// \brief QoS configuration.
+  std::vector<qos_appconfig> qos_cfg = {};
 };
 
 } // namespace srsgnb

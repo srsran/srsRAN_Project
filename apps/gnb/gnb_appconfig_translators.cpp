@@ -1,6 +1,7 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config_validator.h"
+#include <map>
 
 using namespace srsgnb;
 
@@ -101,6 +102,19 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     ++cell_id;
   }
 
+  return out_cfg;
+}
+
+std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appconfig& config)
+{
+  std::map<uint8_t, du_qos_config> out_cfg = {};
+  for (const qos_appconfig& qos : config.qos_cfg) {
+    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
+      // out_cfg[qos.five_qi].mode = qos.mode;
+    } else {
+      srsgnb_terminate("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+    }
+  }
   return out_cfg;
 }
 

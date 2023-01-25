@@ -271,6 +271,7 @@ int main(int argc, char** argv)
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
+  fmt::print("---- config parsed ----\n\n");
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
     srsgnb_terminate("Invalid configuration detected.\n");
@@ -279,6 +280,8 @@ int main(int argc, char** argv)
   // Compute derived parameters.
   compute_derived_args(gnb_cfg);
 
+  fmt::print("---- 5QI={} ---\n", gnb_cfg.qos_cfg[0].five_qi);
+  fmt::print("---- 5QI={} ---\n", gnb_cfg.qos_cfg[1].five_qi);
   // Set up logging.
   srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
                                                                   : srslog::create_file_sink(gnb_cfg.log_cfg.filename);
@@ -490,6 +493,9 @@ int main(int argc, char** argv)
     phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
   }
   gnb_logger.info("FAPI adaptors created successfully");
+
+  // DU QoS config
+  const std::map<uint8_t, du_qos_config>& du_qos_cfg = generate_du_qos_config(gnb_cfg);
 
   // Cell configuration.
   phy_dummy phy(mac_adaptor->get_cell_result_notifier());

@@ -16,9 +16,11 @@
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/du/du_cell_config_validation.h"
+#include "srsgnb/du/du_qos_config.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/upper/upper_phy_factories.h"
 #include "srsgnb/radio/radio_configuration.h"
+#include <map>
 #include <vector>
 
 namespace srsgnb {
@@ -30,6 +32,9 @@ srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const gnb_appconfig& config
 
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<du_cell_config> generate_du_cell_config(const gnb_appconfig& config);
+
+/// Converts and returns the given gnb application QoS configuration to a DU configuration.
+std::map<uint8_t, du_qos_config> generate_du_qos_config(const gnb_appconfig& config);
 
 /// Converts and returns the given gnb application configuration to a scheduler expert configuration.
 scheduler_expert_config generate_scheduler_expert_config(const gnb_appconfig& config);

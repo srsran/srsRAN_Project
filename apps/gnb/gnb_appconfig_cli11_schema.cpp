@@ -250,8 +250,13 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)
 {
-  app.add_option("--pci", cell_params.pci, "Donwlink ARFCN")->capture_default_str()->check(CLI::Range(0, 1007));
+  app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
   configure_cli11_common_cell_args(app, cell_params.cell);
+}
+
+static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
+{
+  app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 1007));
 }
 
 void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
@@ -282,10 +287,12 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   });
 
   // Cell parameters.
+  fmt::print("creating cell lambda\n");
   app.add_option_function<std::vector<std::string>>(
       "--cells",
       [&gnb_cfg](const std::vector<std::string>& values) {
         // Prepare the cells from the common cell.
+        fprintf(stderr, "cell lambda values size %zu\n", values.size());
         if (values.size() > gnb_cfg.cells_cfg.size()) {
           gnb_cfg.cells_cfg.resize(values.size());
           for (auto& cell : gnb_cfg.cells_cfg) {
@@ -303,4 +310,24 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
         }
       },
       "cells");
+
+  // CLI::App* rb_subcmd = app.add_subcommand("radio_bearers", "Radio bearer parameters")->configurable();
+
+  // RB parameters.
+  fmt::print("creating qos lambda\n");
+  auto rb_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
+    fmt::print("qos lambda qos values size {}\n", values.size());
+    // Prepare the radio bearers
+    gnb_cfg.qos_cfg.resize(values.size());
+
+    //// Format every QoS setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("QoS parsing subapp");
+      subapp.config_formatter(create_yaml_config_parser());
+      configure_cli11_qos_args(subapp, gnb_cfg.qos_cfg[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  app.add_option_function<std::vector<std::string>>("--qos", rb_lambda, "qos");
 }
