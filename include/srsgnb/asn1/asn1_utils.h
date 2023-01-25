@@ -880,7 +880,8 @@ public:
   static const uint32_t lb = LB, ub = UB;
   static const bool     has_ext = ext, is_aligned = aligned;
 
-  explicit bitstring(uint32_t siz_ = lb) { resize(siz_); }
+  bitstring() { resize(lb); }
+  explicit bitstring(uint32_t siz_) { resize(siz_); }
   explicit bitstring(const std::string& s)
   {
     resize(s.size());
