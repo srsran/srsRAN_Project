@@ -88,16 +88,16 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
     simd_sel_t isnormal_mask = srsran_simd_f_max(d_pinv, zero);
 
     // Detect abnormal computation parameters. This detects whenever the channel estimate is infinity.
-    isnormal_mask = srsran_simd_f_select(zero, isnormal_mask, srsran_simd_f_max(infinity, d_pinv));
+    isnormal_mask = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(infinity, d_pinv));
 
     // Calculate noise variances.
     simd_f_t vars_out = srsran_simd_f_mul(d_pinv_rcp, srsran_simd_f_set1(noise_var_est / tx_scaling));
 
     // Detect whenever the post-equalization noise variances are zero, negative or NaN.
-    isnormal_mask = srsran_simd_f_select(zero, isnormal_mask, srsran_simd_f_max(vars_out, zero));
+    isnormal_mask = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(vars_out, zero));
 
     // Detect whenever the post-equalizatino noise variances are set to infinity.
-    isnormal_mask = srsran_simd_f_select(zero, isnormal_mask, srsran_simd_f_max(infinity, vars_out));
+    isnormal_mask = srsran_simd_sel_and(isnormal_mask, srsran_simd_f_max(infinity, vars_out));
 
     // If abnormal calculation parameters are detected, the noise variances are set to infinity.
     srsran_simd_f_storeu(&nvars_out[i_re], srsran_simd_f_select(infinity, vars_out, isnormal_mask));

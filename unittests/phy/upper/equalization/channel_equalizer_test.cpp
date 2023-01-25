@@ -332,12 +332,12 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
     span<const cf_t>  reference  = test_ch_estimates.get_view({0, i_layer});
     span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
     span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
-    // Assert that the noise variances are set to infinity when the channel estimate is zero.
+    // Assert that the noise variances are set to infinity when the channel estimate is infinity.
     ASSERT_TRUE(std::equal(reference.begin(), reference.end(), noise_var.begin(), [](cf_t a, float b) {
       return xnor((std::isinf(a.real())) && (std::isinf(a.imag())), std::isinf(b));
     })) << fmt::format("Noise variances are not set to infinity when estimate is infinity for Tx layer {}", i_layer);
 
-    // Assert that the equalized symbols are set to zero when the channel estimate is zero.
+    // Assert that the equalized symbols are set to zero when the channel estimate is infinity.
     ASSERT_TRUE(std::equal(reference.begin(), reference.end(), eq_symbols.begin(), [](cf_t a, cf_t b) {
       return xnor((std::isinf(a.real())) && (std::isinf(a.imag())), b == cf_t(0, 0));
     })) << fmt::format("Equalized symbols are not zero when estimate is infinity for Tx layer {}", i_layer);
@@ -406,12 +406,12 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanEst)
     span<const cf_t>  reference  = test_ch_estimates.get_view({0, i_layer});
     span<const float> noise_var  = eq_noise_vars_actual.get_view({i_layer});
     span<const cf_t>  eq_symbols = eq_symbols_actual.get_view({i_layer});
-    // Assert that the noise variances are set to infinity when the channel estimate is zero.
+    // Assert that the noise variances are set to infinity when the channel estimate is NaN.
     ASSERT_TRUE(std::equal(reference.begin(), reference.end(), noise_var.begin(), [](cf_t a, float b) {
       return xnor((std::isnan(a.real())) && (std::isnan(a.imag())), std::isinf(b));
     })) << fmt::format("Noise variances are not set to infinity when estimate is NaN for Tx layer {}", i_layer);
 
-    // Assert that the equalized symbols are set to zero when the channel estimate is zero.
+    // Assert that the equalized symbols are set to zero when the channel estimate is NaN.
     ASSERT_TRUE(std::equal(reference.begin(), reference.end(), eq_symbols.begin(), [](cf_t a, cf_t b) {
       return xnor((std::isnan(a.real())) && (std::isnan(a.imag())), b == cf_t(0, 0));
     })) << fmt::format("Equalized symbols are not zero when estimate is NaN for Tx layer {}", i_layer);
@@ -434,7 +434,7 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNegNvar)
   unsigned nof_tx_layers = t_case.transmitted_symbols.nof_slices;
   unsigned nof_rx_ports  = t_case.received_symbols.nof_slices;
 
-  // Create noise vars set to a negative value
+  // Create noise vars set to a negative value.
   std::vector<float> neg_noise_vars(nof_rx_ports);
   for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
     neg_noise_vars[i_rx] = -1.0F;

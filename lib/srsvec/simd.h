@@ -1225,6 +1225,25 @@ static inline simd_i_t srsran_simd_i_and(simd_i_t a, simd_i_t b)
 #endif /* HAVE_AVX512 */
 }
 
+static inline simd_sel_t srsran_simd_sel_and(simd_sel_t a, simd_sel_t b)
+{
+#ifdef HAVE_AVX512
+  return _kand_mask16(a, b);
+#else /* HAVE_AVX512 */
+#ifdef HAVE_AVX2
+  return _mm256_and_ps(a, b);
+#else
+#ifdef HAVE_SSE
+  return _mm_and_ps(a, b);
+#else
+#ifdef HAVE_NEON
+  return vandq_u32(a, b);
+#endif /* HAVE_NEON */
+#endif /* HAVE_SSE */
+#endif /* HAVE_AVX2 */
+#endif /* HAVE_AVX512 */
+}
+
 static inline simd_sel_t srsran_simd_f_max(simd_f_t a, simd_f_t b)
 {
 #ifdef HAVE_AVX512
