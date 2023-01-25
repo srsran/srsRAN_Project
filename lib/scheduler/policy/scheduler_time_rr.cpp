@@ -99,8 +99,13 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
         const prb_bitmap                             used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
         const unsigned     nof_req_prbs                        = is_retx ? h->last_alloc_params().prbs.prbs().length()
                                                                          : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
-        const crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
-        if (not ue_grant_crbs.empty()) {
+        const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
+        bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+        if (is_retx) {
+          // In case of Retx, the #CRBs need to stay the same.
+          are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().prbs.prbs().length();
+        }
+        if (are_crbs_valid) {
           const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{
               &u, ue_cc.cell_index, h->id, ss_cfg->id, time_res, ue_grant_crbs, dci_dl_format::f1_0, agg_lvl});
           if (res_allocated) {
@@ -154,8 +159,13 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
         const prb_bitmap               used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
         const unsigned                 nof_req_prbs =
             is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
-        const crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
-        if (not ue_grant_crbs.empty()) {
+        const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
+        bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+        if (is_retx) {
+          // In case of Retx, the #CRBs need to stay the same.
+          are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().prbs.prbs().length();
+        }
+        if (are_crbs_valid) {
           const bool res_allocated = pusch_alloc.allocate_ul_grant(
               ue_pusch_grant{&u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, ss_cfg->id, agg_lvl});
           if (res_allocated) {
