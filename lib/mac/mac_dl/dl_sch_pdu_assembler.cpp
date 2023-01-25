@@ -218,7 +218,9 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
                      subpdu.lcid.to_lcid(),
                      subpdu.sched_bytes);
     } else {
-      logger.warning("rnti={:#x}, LCID={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU");
+      logger.warning("rnti={:#x}, LCID={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",
+                     rnti,
+                     subpdu.lcid.to_lcid());
     }
   }
 }
