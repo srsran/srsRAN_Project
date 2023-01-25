@@ -12,7 +12,7 @@
 #include "lib/e1/cu_cp/e1ap_asn1_helpers.h"
 #include "lib/f1ap/common/asn1_helpers.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
-#include "unittests/e1/common/e1ap_cu_cp_test_messages.h"
+#include "unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "unittests/f1ap/common/f1ap_cu_test_messages.h"
 
 using namespace srsgnb;

@@ -8,9 +8,9 @@
  *
  */
 
+#include "../common/test_helpers.h"
 #include "e1ap_cu_cp_test_helpers.h"
 #include "lib/e1/common/e1ap_asn1_utils.h"
-#include "unittests/e1/common/test_helpers.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"

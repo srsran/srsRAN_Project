@@ -8,45 +8,13 @@
  *
  */
 
-#pragma once
+#include "e1ap_cu_up_test_messages.h"
 
-#include "test_helpers.h"
-#include "srsgnb/e1/common/e1_common.h"
-#include "srsgnb/e1/cu_up/e1_cu_up.h"
-#include "srsgnb/e1/cu_up/e1_cu_up_factory.h"
-#include <gtest/gtest.h>
+using namespace srsgnb;
+using namespace srs_cu_up;
+using namespace asn1::e1ap;
 
-namespace srsgnb {
-namespace srs_cu_up {
-
-/// Fixture class for E1AP
-class e1_cu_up_test : public ::testing::Test
-{
-protected:
-  void SetUp() override
-  {
-    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-    srslog::init();
-
-    msg_notifier   = std::make_unique<dummy_e1_pdu_notifier>();
-    cu_up_notifier = std::make_unique<dummy_e1ap_cu_up_notifier>();
-
-    e1 = create_e1(*msg_notifier, *cu_up_notifier);
-  }
-
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-  }
-
-  std::unique_ptr<e1_interface>              e1;
-  std::unique_ptr<dummy_e1_pdu_notifier>     msg_notifier;
-  std::unique_ptr<dummy_e1ap_cu_up_notifier> cu_up_notifier;
-  srslog::basic_logger&                      test_logger = srslog::fetch_basic_logger("TEST");
-};
-
-e1_message generate_cu_cp_e1_setup_request()
+e1_message srsgnb::srs_cu_up::generate_cu_cp_e1_setup_request()
 {
   e1_message e1_setup_request = {};
   e1_setup_request.pdu.set_init_msg();
@@ -60,7 +28,7 @@ e1_message generate_cu_cp_e1_setup_request()
   return e1_setup_request;
 }
 
-e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id)
+e1_message srsgnb::srs_cu_up::generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id)
 {
   e1_message bearer_context_setup_request = {};
 
@@ -142,6 +110,3 @@ e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id
 
   return bearer_context_setup_request;
 }
-
-} // namespace srs_cu_up
-} // namespace srsgnb
