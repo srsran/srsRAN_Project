@@ -23,8 +23,8 @@ class rlc_tx_am_test_frame : public rlc_tx_upper_layer_data_notifier,
                              public rlc_rx_am_status_provider
 {
 public:
-  std::list<uint32_t> transmitted_pdcp_count_list;
-  std::list<uint32_t> delivered_pdcp_count_list;
+  std::list<uint32_t> highest_transmitted_pdcp_sn_list;
+  std::list<uint32_t> highest_delivered_pdcp_sn_list;
   rlc_am_sn_size      sn_size;
   rlc_am_status_pdu   status;
   bool                status_required = false;
@@ -37,13 +37,13 @@ public:
   void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) override
   {
     // store in list
-    transmitted_pdcp_count_list.push_back(max_tx_pdcp_sn);
+    highest_transmitted_pdcp_sn_list.push_back(max_tx_pdcp_sn);
   }
 
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override
   {
     // store in list
-    delivered_pdcp_count_list.push_back(max_deliv_pdcp_sn);
+    highest_delivered_pdcp_sn_list.push_back(max_deliv_pdcp_sn);
   }
 
   // rlc_tx_upper_layer_control_notifier interface
@@ -252,7 +252,8 @@ TEST_P(rlc_tx_am_test, create_new_entity)
 {
   init(GetParam());
   EXPECT_EQ(rlc->get_buffer_state(), 0);
-  EXPECT_EQ(tester->transmitted_pdcp_count_list.size(), 0);
+  EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), 0);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 0);
   EXPECT_EQ(tester->bsr, 0);
   EXPECT_EQ(tester->bsr_count, 0);
 }
@@ -498,15 +499,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Verify transmit notification for queued SDUs
-  ASSERT_EQ(tester->transmitted_pdcp_count_list.size(), n_pdus);
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
   for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->transmitted_pdcp_count_list.front(), pdcp_count);
-    tester->transmitted_pdcp_count_list.pop_front();
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
   // Verify delivery notification for fully ACK'ed SDUs
-  ASSERT_EQ(tester->delivered_pdcp_count_list.size(), 1);
-  EXPECT_EQ(tester->delivered_pdcp_count_list.front(), 2);
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
@@ -551,15 +552,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
   EXPECT_EQ(tester->bsr, 0);
 
   // Verify transmit notification for queued SDUs
-  ASSERT_EQ(tester->transmitted_pdcp_count_list.size(), 5);
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), 5);
   for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->transmitted_pdcp_count_list.front(), pdcp_count);
-    tester->transmitted_pdcp_count_list.pop_front();
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
   // Verify delivery notification for fully ACK'ed SDUs
-  ASSERT_EQ(tester->delivered_pdcp_count_list.size(), 1);
-  EXPECT_EQ(tester->delivered_pdcp_count_list.front(), 2);
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
@@ -602,15 +603,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Verify transmit notification for queued SDUs
-  ASSERT_EQ(tester->transmitted_pdcp_count_list.size(), n_pdus);
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
   for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->transmitted_pdcp_count_list.front(), pdcp_count);
-    tester->transmitted_pdcp_count_list.pop_front();
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
   // Verify delivery notification for fully ACK'ed SDUs
-  ASSERT_EQ(tester->delivered_pdcp_count_list.size(), 1);
-  EXPECT_EQ(tester->delivered_pdcp_count_list.front(), 2);
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
@@ -656,15 +657,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Verify transmit notification for queued SDUs
-  ASSERT_EQ(tester->transmitted_pdcp_count_list.size(), n_pdus);
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
   for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->transmitted_pdcp_count_list.front(), pdcp_count);
-    tester->transmitted_pdcp_count_list.pop_front();
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
   // Verify delivery notification for fully ACK'ed SDUs
-  ASSERT_EQ(tester->delivered_pdcp_count_list.size(), 1);
-  EXPECT_EQ(tester->delivered_pdcp_count_list.front(), 2);
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
@@ -710,15 +711,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Verify transmit notification for queued SDUs
-  ASSERT_EQ(tester->transmitted_pdcp_count_list.size(), n_pdus);
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
   for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->transmitted_pdcp_count_list.front(), pdcp_count);
-    tester->transmitted_pdcp_count_list.pop_front();
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
   // Verify delivery notification for fully ACK'ed SDUs
-  ASSERT_EQ(tester->delivered_pdcp_count_list.size(), 1);
-  EXPECT_EQ(tester->delivered_pdcp_count_list.front(), 2);
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
@@ -761,15 +762,15 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Verify transmit notification for queued SDUs
-  ASSERT_EQ(tester->transmitted_pdcp_count_list.size(), n_pdus);
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
   for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->transmitted_pdcp_count_list.front(), pdcp_count);
-    tester->transmitted_pdcp_count_list.pop_front();
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
   // Verify delivery notification for fully ACK'ed SDUs
-  ASSERT_EQ(tester->delivered_pdcp_count_list.size(), 1);
-  EXPECT_EQ(tester->delivered_pdcp_count_list.front(), 2);
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
 TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
@@ -812,22 +813,22 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Verify transmit notification for queued SDUs
-  ASSERT_EQ(tester->transmitted_pdcp_count_list.size(), n_pdus);
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
   for (uint32_t pdcp_count = 0; pdcp_count < n_pdus; pdcp_count++) {
-    EXPECT_EQ(tester->transmitted_pdcp_count_list.front(), pdcp_count);
-    tester->transmitted_pdcp_count_list.pop_front();
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_count);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
   }
 
   // Verify delivery notification for fully ACK'ed SDUs
-  ASSERT_EQ(tester->delivered_pdcp_count_list.size(), 1);
-  EXPECT_EQ(tester->delivered_pdcp_count_list.front(), 2);
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
 TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
 {
   init(GetParam());
   EXPECT_EQ(rlc->get_buffer_state(), 0);
-  EXPECT_EQ(tester->transmitted_pdcp_count_list.size(), 0);
+  EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), 0);
 
   // First set the status_required flag without triggering the on_status_report_changed() event
   tester->status_required = true;
