@@ -48,9 +48,9 @@ public:
   ///         contains the (estimated) noise variance after equalization corresponding to the symbol with the same
   ///         index.
   /// \remark The length of \c llrs is given by the number of symbols multiplied by the modulation order of \c mod.
-  /// \remark A noise variance equal to zero or infinity will set the corresponding log-likelihood ratios to zero,
-  /// independently of the equalized symbol.
-  /// \warning An assertion is triggered if any element of \c noise_vars is negative valued or NAN.
+  /// \remark Any operation involving ill-formed inputs (NaN, infinity or negative noise variances, as well as
+  /// NaN-valued symbols or infinity-over-infinity divisions) will result in an indeterminate, zero-valued log-
+  /// likelihood ratio.
   virtual void demodulate_soft(span<log_likelihood_ratio> llrs,
                                span<const cf_t>           symbols,
                                span<const float>          noise_vars,

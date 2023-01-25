@@ -96,7 +96,8 @@ static void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
 
 static log_likelihood_ratio demod_16QAM_symbol_01(float x, float noise_var)
 {
-  if (noise_var == 0) {
+  // Note: "noise_var > 0" is false also when "noise_var" is NaN.
+  if (!(noise_var > 0)) {
     return log_likelihood_ratio(0);
   }
 
@@ -111,7 +112,8 @@ static log_likelihood_ratio demod_16QAM_symbol_01(float x, float noise_var)
 
 static log_likelihood_ratio demod_16QAM_symbol_23(float x, float noise_var)
 {
-  if (noise_var == 0) {
+  // Note: "noise_var > 0" is false also when "noise_var" is NaN.
+  if (!(noise_var > 0)) {
     return log_likelihood_ratio(0);
   }
 

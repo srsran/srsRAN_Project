@@ -70,6 +70,26 @@ inline __m256i clip_epi32(__m256i value, __m256i range_ceil, __m256i range_floor
   return value;
 }
 
+/// \brief Ensures that 32-bit integers are bounded, otherwise set them to zero.
+///
+/// \param[in] value      Integers to be tested.
+/// \param[in] bound_up   Upper bound.
+/// \param[in] bound_low  Lower bound.
+/// \return The input integers with zeros in place of the out-of-bound values.
+inline __m256i check_bounds_epi32(__m256i value, __m256i bound_up, __m256i bound_low)
+{
+  __m256i ZEROS = _mm256_set1_epi8(0);
+  __m256i mask  = _mm256_cmpgt_epi32(value, bound_up);
+  // Since the mask is set for all bytes of the int32_t integers, we can use the byte-wise blend.
+  value = _mm256_blendv_epi8(value, ZEROS, mask);
+
+  mask = _mm256_cmpgt_epi32(bound_low, value);
+  // Since the mask is set for all bytes of the int32_t integers, we can use the byte-wise blend.
+  value = _mm256_blendv_epi8(value, ZEROS, mask);
+
+  return value;
+}
+
 /// \brief Clips and quantizes four single-precision AVX registers, continuous log-likelihood ratio to the discrete
 /// representation of type \c log_likelihood_ratio in a single AVX register.
 ///
@@ -86,26 +106,34 @@ inline __m256i clip_epi32(__m256i value, __m256i range_ceil, __m256i range_floor
 /// <tt>&plusmn;LLR_MAX</tt>, depending on their sign.
 inline __m256i quantize_ps(__m256 value_0, __m256 value_1, __m256 value_2, __m256 value_3, float range_limit)
 {
-  // Clipping.
-  __m256 RANGE_CEIL  = _mm256_set1_ps(range_limit);
-  __m256 RANGE_FLOOR = _mm256_set1_ps(-range_limit);
-  value_0            = clip_ps(value_0, RANGE_CEIL, RANGE_FLOOR);
-  value_1            = clip_ps(value_1, RANGE_CEIL, RANGE_FLOOR);
-  value_2            = clip_ps(value_2, RANGE_CEIL, RANGE_FLOOR);
-  value_3            = clip_ps(value_3, RANGE_CEIL, RANGE_FLOOR);
-
-  // Scale and round to the nearest integer.
+  // Scale.
   __m256 SCALE = _mm256_set1_ps(static_cast<float>(log_likelihood_ratio::max().to_int()) / range_limit);
-  value_0      = _mm256_round_ps(_mm256_mul_ps(value_0, SCALE), _MM_FROUND_NINT);
-  value_1      = _mm256_round_ps(_mm256_mul_ps(value_1, SCALE), _MM_FROUND_NINT);
-  value_2      = _mm256_round_ps(_mm256_mul_ps(value_2, SCALE), _MM_FROUND_NINT);
-  value_3      = _mm256_round_ps(_mm256_mul_ps(value_3, SCALE), _MM_FROUND_NINT);
+  value_0      = _mm256_mul_ps(value_0, SCALE);
+  value_1      = _mm256_mul_ps(value_1, SCALE);
+  value_2      = _mm256_mul_ps(value_2, SCALE);
+  value_3      = _mm256_mul_ps(value_3, SCALE);
+
+  // Clip and round to the nearest integer.
+  __m256 RANGE_CEIL  = _mm256_set1_ps(log_likelihood_ratio::max().to_int());
+  __m256 RANGE_FLOOR = _mm256_set1_ps(log_likelihood_ratio::min().to_int());
+  value_0            = _mm256_round_ps(clip_ps(value_0, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_NINT);
+  value_1            = _mm256_round_ps(clip_ps(value_1, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_NINT);
+  value_2            = _mm256_round_ps(clip_ps(value_2, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_NINT);
+  value_3            = _mm256_round_ps(clip_ps(value_3, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_NINT);
 
   // Convert to 32 bit.
   __m256i llr_i32_0 = _mm256_cvtps_epi32(value_0);
   __m256i llr_i32_1 = _mm256_cvtps_epi32(value_1);
   __m256i llr_i32_2 = _mm256_cvtps_epi32(value_2);
   __m256i llr_i32_3 = _mm256_cvtps_epi32(value_3);
+
+  // Check bounds one more time: if value_X contains a NaN, its casting to int32_t is indeterminate - set it to zero.
+  __m256i BOUND_UP  = _mm256_set1_epi32(log_likelihood_ratio::max().to_int());
+  __m256i BOUND_LOW = _mm256_set1_epi32(log_likelihood_ratio::min().to_int());
+  llr_i32_0         = check_bounds_epi32(llr_i32_0, BOUND_UP, BOUND_LOW);
+  llr_i32_1         = check_bounds_epi32(llr_i32_1, BOUND_UP, BOUND_LOW);
+  llr_i32_2         = check_bounds_epi32(llr_i32_2, BOUND_UP, BOUND_LOW);
+  llr_i32_3         = check_bounds_epi32(llr_i32_3, BOUND_UP, BOUND_LOW);
 
   // Re-collocate SSE registers.
   __m256i llr_i32_0_ = _mm256_permute2f128_si256(llr_i32_0, llr_i32_1, 0x20);
@@ -207,13 +235,13 @@ inline __m256 interval_function(__m256       value,
 
 /// \brief Safe division.
 ///
-/// \return <tt>dividend / divisor</tt> if \c divisor is not zero, \c 0 otherwise.
+/// \return <tt>dividend / divisor</tt> if \c divisor is greater than zero, \c 0 otherwise.
 inline __m256 safe_div(__m256 dividend, __m256 divisor)
 {
   static const __m256 all_zero = _mm256_setzero_ps();
-  // _CMP_NEQ_OQ: compare not equal, ordered (nan is false) and quite (no exceptions raised).
+  // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quite (no exceptions raised).
 #if defined(__AVX512F__) && defined(__AVX512VL__)
-  __mmask8 mask = _mm256_cmp_ps_mask(divisor, all_zero, _CMP_NEQ_OQ);
+  __mmask8 mask = _mm256_cmp_ps_mask(divisor, all_zero, _CMP_GT_OQ);
   return _mm256_maskz_div_ps(mask, dividend, divisor);
 #else
   __m256 mask   = _mm256_cmp_ps(divisor, all_zero, _CMP_NEQ_OQ);

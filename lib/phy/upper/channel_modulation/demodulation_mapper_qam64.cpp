@@ -194,7 +194,8 @@ void srsgnb::demodulate_soft_QAM64(span<log_likelihood_ratio> llrs,
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
     float rcp_noise = 0;
-    if (*noise_it != 0) {
+    // Note: "*noise_it > 0" is false also when "*noise_it" is NaN.
+    if (*noise_it > 0) {
       rcp_noise = 1 / (*noise_it);
     }
     *llr_it++ = demod_64QAM_symbol_01(std::real(*symbols_it), rcp_noise);

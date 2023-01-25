@@ -109,8 +109,8 @@ TEST_P(DemodulatorFixture, DemodulatorTest)
 // Check that noise_var equal to zero implies LLR = 0.
 TEST_P(DemodulatorFixture, DemodulatorNoiseZero)
 {
-  // By taking 12 symbols, we test both the AVX2 implementation (first 8 symbols) and the classic one (last 4 symbols).
-  unsigned    nof_symbols = 12;
+  // By taking 18 symbols, we test both the AVX2 implementation and the classic one (last 4 symbols).
+  unsigned    nof_symbols = 18;
   span<float> noise_bad   = span<float>(noise_var).first(nof_symbols);
   // Set even-indexed noise variances to zero.
   for (unsigned i_symbol = 0; i_symbol < nof_symbols; i_symbol += 2) {
@@ -142,8 +142,8 @@ TEST_P(DemodulatorFixture, DemodulatorNoiseZero)
 // Check that noise_var equal to infinity implies LLR = 0.
 TEST_P(DemodulatorFixture, DemodulatorNoiseInfinity)
 {
-  // By taking 12 symbols, we test both the AVX2 implementation (first 8 symbols) and the classic one (last 4 symbols).
-  unsigned    nof_symbols = 12;
+  // By taking 18 symbols, we test both the AVX2 implementation and the classic one (last 4 symbols).
+  unsigned    nof_symbols = 18;
   span<float> noise_bad   = span<float>(noise_var).first(nof_symbols);
   // Set even-indexed noise variances to infinity.
   for (unsigned i_symbol = 0; i_symbol < nof_symbols; i_symbol += 2) {
@@ -170,6 +170,207 @@ TEST_P(DemodulatorFixture, DemodulatorNoiseInfinity)
   }
   ASSERT_TRUE(are_zeros_ok) << "Division by infinity went wrong.";
   ASSERT_TRUE(are_others_ok) << "Division by infinity should not affect other soft bits.";
+}
+
+// Check that a negative noise_var implies LLR = 0.
+TEST_P(DemodulatorFixture, DemodulatorNoiseNegative)
+{
+  // By taking 18 symbols, we test both the AVX2 implementation and the classic one (last 4 symbols).
+  unsigned    nof_symbols = 18;
+  span<float> noise_bad   = span<float>(noise_var).first(nof_symbols);
+  // Set even-indexed noise variances to a negative value.
+  for (unsigned i_symbol = 0; i_symbol < nof_symbols; i_symbol += 2) {
+    noise_bad[i_symbol] = -2;
+  }
+
+  unsigned                          bits_per_symbol = get_bits_per_symbol(mod);
+  std::vector<log_likelihood_ratio> soft_bits(nof_symbols * bits_per_symbol);
+  demodulator->demodulate_soft(soft_bits, span<const cf_t>(symbols).first(nof_symbols), noise_bad, mod);
+
+  bool are_zeros_ok = true, are_others_ok = true;
+  for (unsigned i_symbol = 0, offset = 0; i_symbol < nof_symbols; i_symbol += 2) {
+    span<const log_likelihood_ratio> local_soft =
+        span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_zeros_ok = are_zeros_ok && std::all_of(local_soft.begin(), local_soft.end(), [](log_likelihood_ratio a) {
+                     return (a.to_int() == 0);
+                   });
+    local_soft   = span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    span<const log_likelihood_ratio> true_soft =
+        span<const log_likelihood_ratio>(soft_bits_expected).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_others_ok = are_others_ok && std::equal(local_soft.begin(), local_soft.end(), true_soft.begin());
+  }
+  ASSERT_TRUE(are_zeros_ok) << "Dealing with negative variance went wrong.";
+  ASSERT_TRUE(are_others_ok) << "Dealing with negative variance should not affect other soft bits.";
+}
+
+// Check that a NaN noise_var implies LLR = 0.
+TEST_P(DemodulatorFixture, DemodulatorNoiseNaN)
+{
+  // By taking 18 symbols, we test both the AVX2 implementation and the classic one (last 4 symbols).
+  unsigned    nof_symbols = 18;
+  span<float> noise_bad   = span<float>(noise_var).first(nof_symbols);
+  // Set even-indexed noise variances to NaN.
+  for (unsigned i_symbol = 0; i_symbol < nof_symbols; i_symbol += 2) {
+    noise_bad[i_symbol] = std::numeric_limits<float>::quiet_NaN();
+  }
+
+  unsigned                          bits_per_symbol = get_bits_per_symbol(mod);
+  std::vector<log_likelihood_ratio> soft_bits(nof_symbols * bits_per_symbol);
+  demodulator->demodulate_soft(soft_bits, span<const cf_t>(symbols).first(nof_symbols), noise_bad, mod);
+
+  bool are_zeros_ok = true, are_others_ok = true;
+  for (unsigned i_symbol = 0, offset = 0; i_symbol < nof_symbols; i_symbol += 2) {
+    span<const log_likelihood_ratio> local_soft =
+        span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_zeros_ok = are_zeros_ok && std::all_of(local_soft.begin(), local_soft.end(), [](log_likelihood_ratio a) {
+                     return (a.to_int() == 0);
+                   });
+    local_soft   = span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    span<const log_likelihood_ratio> true_soft =
+        span<const log_likelihood_ratio>(soft_bits_expected).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_others_ok = are_others_ok && std::equal(local_soft.begin(), local_soft.end(), true_soft.begin());
+  }
+  ASSERT_TRUE(are_zeros_ok) << "Dealing with NaN variance went wrong.";
+  ASSERT_TRUE(are_others_ok) << "Dealing with NaN variance should not affect other soft bits.";
+}
+
+// Check that an infinite symbol doesn't crash the demodulator.
+TEST_P(DemodulatorFixture, DemodulatorSymbolInfinity)
+{
+  // By taking 18 symbols, we test both the AVX2 implementation and the classic one (last 4 symbols).
+  unsigned   nof_symbols = 18;
+  span<cf_t> symbol_bad  = span<cf_t>(symbols).first(nof_symbols);
+  // Set even-indexed symbols to infinity.
+  symbol_bad[0]  = cf_t(std::numeric_limits<float>::infinity(), 0);
+  symbol_bad[2]  = cf_t(-std::numeric_limits<float>::infinity(), 0);
+  symbol_bad[4]  = cf_t(0, std::numeric_limits<float>::infinity());
+  symbol_bad[6]  = cf_t(0, -std::numeric_limits<float>::infinity());
+  symbol_bad[8]  = cf_t(std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
+  symbol_bad[10] = cf_t(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+  symbol_bad[12] = cf_t(-std::numeric_limits<float>::infinity(), 0);
+  symbol_bad[14] = cf_t(0, std::numeric_limits<float>::infinity());
+  symbol_bad[16] = cf_t(0, -std::numeric_limits<float>::infinity());
+
+  unsigned                          bits_per_symbol = get_bits_per_symbol(mod);
+  std::vector<log_likelihood_ratio> soft_bits(nof_symbols * bits_per_symbol);
+
+  demodulator->demodulate_soft(soft_bits, symbol_bad, span<const float>(noise_var).first(nof_symbols), mod);
+
+  bool are_infinity_ok = true, are_others_ok = true;
+  for (unsigned i_symbol = 0, offset = 0; i_symbol < nof_symbols; i_symbol += 2) {
+    span<const log_likelihood_ratio> local_soft =
+        span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_infinity_ok = are_infinity_ok && std::all_of(local_soft.begin(), local_soft.end(), [](log_likelihood_ratio a) {
+                        return ((a <= log_likelihood_ratio::max()) && (a >= log_likelihood_ratio::min()));
+                      });
+    local_soft      = span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    span<const log_likelihood_ratio> true_soft =
+        span<const log_likelihood_ratio>(soft_bits_expected).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_others_ok = are_others_ok && std::equal(local_soft.begin(), local_soft.end(), true_soft.begin());
+  }
+  ASSERT_TRUE(are_infinity_ok) << "Dealing with NaN symbols went wrong.";
+  ASSERT_TRUE(are_others_ok) << "Infinite symbols should not affect other soft bits.";
+}
+
+// Check that a NaN symbol doesn't crash the demodulator.
+TEST_P(DemodulatorFixture, DemodulatorSymbolNaN)
+{
+  // By taking 18 symbols, we test both the AVX2 implementation and the classic one (last 4 symbols).
+  unsigned   nof_symbols = 18;
+  span<cf_t> symbol_bad  = span<cf_t>(symbols).first(nof_symbols);
+  // Set even-indexed symbols to NaN.
+  symbol_bad[0]  = cf_t(std::numeric_limits<float>::quiet_NaN(), 0);
+  symbol_bad[2]  = cf_t(-std::numeric_limits<float>::quiet_NaN(), 0);
+  symbol_bad[4]  = cf_t(0, std::numeric_limits<float>::quiet_NaN());
+  symbol_bad[6]  = cf_t(0, -std::numeric_limits<float>::quiet_NaN());
+  symbol_bad[8]  = cf_t(std::numeric_limits<float>::quiet_NaN(), -std::numeric_limits<float>::quiet_NaN());
+  symbol_bad[10] = cf_t(std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN());
+  symbol_bad[12] = cf_t(-std::numeric_limits<float>::quiet_NaN(), 0);
+  symbol_bad[14] = cf_t(0, std::numeric_limits<float>::quiet_NaN());
+  symbol_bad[16] = cf_t(0, -std::numeric_limits<float>::quiet_NaN());
+
+  unsigned                          bits_per_symbol = get_bits_per_symbol(mod);
+  std::vector<log_likelihood_ratio> soft_bits(nof_symbols * bits_per_symbol);
+
+  demodulator->demodulate_soft(soft_bits, symbol_bad, span<const float>(noise_var).first(nof_symbols), mod);
+
+  bool are_zeros_ok = true, are_others_ok = true;
+  for (unsigned i_symbol = 0, offset = 0; i_symbol < nof_symbols; i_symbol += 2) {
+    span<const log_likelihood_ratio> local_soft =
+        span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    for (unsigned i_bit = 0; i_bit != bits_per_symbol; ++i_bit) {
+      // A bit is affected by the test if it has an even index and the real part of the channel symbol is NaN...
+      bool is_affected = (i_bit % 2 == 0) && std::isnan(std::real(symbol_bad[i_symbol]));
+      // ... or if it has an odd index and the imaginary part of the channel symbol is NaN.
+      is_affected = is_affected || ((i_bit % 2 == 1) && std::isnan(std::imag(symbol_bad[i_symbol])));
+      if (is_affected) {
+        are_zeros_ok = are_zeros_ok && (local_soft[i_bit].to_int() == 0);
+      } else {
+        are_zeros_ok = are_zeros_ok && (local_soft[i_bit] <= log_likelihood_ratio::max()) &&
+                       (local_soft[i_bit] >= log_likelihood_ratio::min());
+      }
+    }
+    local_soft = span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    span<const log_likelihood_ratio> true_soft =
+        span<const log_likelihood_ratio>(soft_bits_expected).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_others_ok = are_others_ok && std::equal(local_soft.begin(), local_soft.end(), true_soft.begin());
+  }
+  ASSERT_TRUE(are_zeros_ok) << "Dealing with NaN symbols went wrong.";
+  ASSERT_TRUE(are_others_ok) << "Dealing with NaN symbols should not affect other soft bits.";
+}
+
+// Check that a pair of infinite variance and symbol do not cause a crash.
+TEST_P(DemodulatorFixture, DemodulatorInfinityOverInfinity)
+{
+  // By taking 18 symbols, we test both the AVX2 implementation and the classic one (last 2 symbols).
+  unsigned   nof_symbols = 18;
+  span<cf_t> symbol_bad  = span<cf_t>(symbols).first(nof_symbols);
+  // Set even-indexed symbols to infinity.
+  symbol_bad[0]  = cf_t(std::numeric_limits<float>::infinity(), 0);
+  symbol_bad[2]  = cf_t(-std::numeric_limits<float>::infinity(), 0);
+  symbol_bad[4]  = cf_t(0, std::numeric_limits<float>::infinity());
+  symbol_bad[6]  = cf_t(0, -std::numeric_limits<float>::infinity());
+  symbol_bad[8]  = cf_t(std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
+  symbol_bad[10] = cf_t(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+  symbol_bad[12] = cf_t(-std::numeric_limits<float>::infinity(), 0);
+  symbol_bad[14] = cf_t(0, std::numeric_limits<float>::infinity());
+  symbol_bad[16] = cf_t(0, -std::numeric_limits<float>::infinity());
+
+  // Set even-indexed variances to infinity.
+  span<float> noise_bad = span<float>(noise_var).first(nof_symbols);
+  for (unsigned i_var = 0; i_var < nof_symbols; i_var += 2) {
+    noise_bad[i_var] = std::numeric_limits<float>::infinity();
+  }
+
+  unsigned                          bits_per_symbol = get_bits_per_symbol(mod);
+  std::vector<log_likelihood_ratio> soft_bits(nof_symbols * bits_per_symbol);
+
+  demodulator->demodulate_soft(soft_bits, symbol_bad, span<const float>(noise_var).first(nof_symbols), mod);
+
+  bool are_infinity_ok = true, are_others_ok = true;
+  for (unsigned i_symbol = 0, offset = 0; i_symbol < nof_symbols; i_symbol += 2) {
+    span<const log_likelihood_ratio> local_soft =
+        span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_infinity_ok = are_infinity_ok && std::all_of(local_soft.begin(), local_soft.end(), [](log_likelihood_ratio a) {
+                        return (a.to_int() == 0);
+                      });
+    local_soft      = span<const log_likelihood_ratio>(soft_bits).subspan(offset, bits_per_symbol);
+    span<const log_likelihood_ratio> true_soft =
+        span<const log_likelihood_ratio>(soft_bits_expected).subspan(offset, bits_per_symbol);
+    offset += bits_per_symbol;
+    are_others_ok = are_others_ok && std::equal(local_soft.begin(), local_soft.end(), true_soft.begin());
+  }
+  ASSERT_TRUE(are_infinity_ok) << "Dealing with infinity-over-infinity cases went wrong.";
+  ASSERT_TRUE(are_others_ok) << "Infinity-over-infinity cases should not affect other soft bits.";
 }
 
 INSTANTIATE_TEST_SUITE_P(DemodulatorSuite, DemodulatorFixture, ::testing::ValuesIn(demodulation_mapper_test_data));
