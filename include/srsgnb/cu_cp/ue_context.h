@@ -46,9 +46,9 @@ struct cu_drb_context {
 };
 
 struct ue_context {
-  ue_index_t      ue_index;
-  du_cell_index_t pcell_index;
-  rnti_t          c_rnti;
+  ue_index_t      ue_index    = INVALID_UE_INDEX;
+  du_cell_index_t pcell_index = INVALID_DU_CELL_INDEX;
+  rnti_t          c_rnti      = INVALID_RNTI;
 
   std::array<cu_srb_context, MAX_NOF_SRBS> srbs;
   slotted_vector<cu_drb_context>           drbs;
