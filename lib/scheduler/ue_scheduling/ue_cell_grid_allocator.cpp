@@ -90,8 +90,8 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // In case of retx, ensure the number of PRBs for the grant did not change.
   if (not h_dl.empty() and grant.crbs.length() != h_dl.last_alloc_params().prbs.prbs().length()) {
-    logger.warning("Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during retx. Harq-id={}, "
-                   "nof_prbs={}!={}",
+    logger.warning("Failed to allocate PDSCH. Cause: Number of CRBs has to remain constant during retxs (Harq-id={}, "
+                   "nof_prbs={}!={})",
                    h_dl.id,
                    h_dl.last_alloc_params().prbs.prbs().length(),
                    grant.crbs.length());
@@ -215,6 +215,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
   const bwp_uplink_common&     init_ul_bwp = ue_cell_cfg.ul_bwp_common(to_bwp_id(0));
   const bwp_uplink_common&     bwp_ul_cmn  = ue_cell_cfg.ul_bwp_common(ue_cc->active_bwp_id());
+  ul_harq_process&             h_ul        = ue_cc->harqs.ul_harq(grant.h_id);
   // TODO: Get correct DCI format.
   const dci_ul_rnti_config_type dci_type = dci_ul_rnti_config_type::c_rnti_f0_0;
 
@@ -246,6 +247,16 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   if (not bwp_cfg.crbs.contains(grant.crbs)) {
     logger.warning(
         "Failed to allocate PUSCH. Cause: CRBs allocated outside the BWP.", grant.crbs.length(), bwp_cfg.crbs.length());
+    return false;
+  }
+
+  // In case of retx, ensure the number of PRBs for the grant did not change.
+  if (not h_ul.empty() and grant.crbs.length() != h_ul.last_tx_params().prbs.prbs().length()) {
+    logger.warning("Failed to allocate PUSCH. Cause: Number of CRBs has to remain constant during retxs (harq-id={}, "
+                   "nof_prbs={}!={})",
+                   h_ul.id,
+                   h_ul.last_tx_params().prbs.prbs().length(),
+                   grant.crbs.length());
     return false;
   }
 
@@ -281,7 +292,6 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // TODO: get SNR from PHY.
   double                       ul_snr{15};
   optional<pusch_mcs_tbs_prbs> mcs_tbs_info;
-  ul_harq_process&             h_ul = ue_cc->harqs.ul_harq(grant.h_id);
   // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
   if (h_ul.empty()) {
     // If the initial MCS is set in the expert config, apply that value, else compute it from the SNR.
