@@ -20,8 +20,6 @@ class mac_cell_slot_handler;
 
 namespace fapi_adaptor {
 
-class mac_to_fapi_translator;
-
 /// \brief FAPI-to-MAC timing message translator.
 ///
 /// This class listens to slot-based, time-specific FAPI message events and translates them to the suitable data
@@ -29,7 +27,7 @@ class mac_to_fapi_translator;
 class fapi_to_mac_time_msg_translator : public fapi::slot_time_message_notifier
 {
 public:
-  fapi_to_mac_time_msg_translator(mac_to_fapi_translator& translator_, subcarrier_spacing scs_);
+  explicit fapi_to_mac_time_msg_translator(subcarrier_spacing scs_);
 
   // See interface for documentation.
   void on_slot_indication(const fapi::slot_indication_message& msg) override;
@@ -41,7 +39,6 @@ private:
   // :TODO: subcarrier spacing should be retrieved from the cells configuration in the future.
   const subcarrier_spacing                      scs;
   std::reference_wrapper<mac_cell_slot_handler> mac_slot_handler;
-  mac_to_fapi_translator&                       translator;
 };
 
 } // namespace fapi_adaptor

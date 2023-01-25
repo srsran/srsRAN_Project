@@ -90,7 +90,6 @@ static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& bui
 }
 
 static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
-                                         pdsch_pdu_registry&                   pdsch_registry,
                                          span<const sib_information>           sibs,
                                          span<const rar_information>           rars,
                                          span<const dl_msg_alloc>              ue_grants)
@@ -98,32 +97,20 @@ static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& b
   for (const auto& pdu : sibs) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
-    // Add one entry per codeword to the registry.
-    for (unsigned i = 0, e = pdu.pdsch_cfg.codewords.size(); i != e; ++i) {
-      pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), i, pdsch_pdu_registry::sib);
-    }
   }
 
   for (const auto& pdu : rars) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
-    // Add one entry per codeword to the registry.
-    for (unsigned i = 0, e = pdu.pdsch_cfg.codewords.size(); i != e; ++i) {
-      pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), i, pdsch_pdu_registry::rar);
-    }
   }
 
   for (const auto& pdu : ue_grants) {
     fapi::dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
-    // Add one entry per codeword to the registry.
-    for (unsigned i = 0, e = pdu.pdsch_cfg.codewords.size(); i != e; ++i) {
-      pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), i, pdsch_pdu_registry::ue);
-    }
   }
 }
 
-/// Clears the PDUs of the given DL_TTI.request message.
+/// Clears the PDUs in the given DL_TTI.request message.
 static void clear_dl_tti_pdus(fapi::dl_tti_request_message& msg)
 {
   msg.pdus.clear();
@@ -145,12 +132,8 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   // Add SSB PDUs to the DL_TTI.request message.
   add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus);
 
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    // Add PDSCH PDUs to the DL_TTI.request message.
-    add_pdsch_pdus_to_dl_request(
-        builder, pdsch_registry, dl_res.dl_res->bc.sibs, dl_res.dl_res->rar_grants, dl_res.dl_res->ue_grants);
-  }
+  // Add PDSCH PDUs to the DL_TTI.request message.
+  add_pdsch_pdus_to_dl_request(builder, dl_res.dl_res->bc.sibs, dl_res.dl_res->rar_grants, dl_res.dl_res->ue_grants);
 
   // Validate the DL_TTI.request message.
   error_type<fapi::validator_report> result = validate_dl_tti_request(msg);
@@ -169,60 +152,34 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
 {
-  std::lock_guard<std::mutex> lock(mutex);
-
-  // Sanity checks.
-  srsgnb_assert(dl_data.sib1_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registry::sib),
-                "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
-                pdsch_registry.get_nof_pdus(pdsch_pdu_registry::sib),
-                dl_data.sib1_pdus.size());
-
-  srsgnb_assert(dl_data.rar_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registry::rar),
-                "Number of PDUs ({}) and Payloads ({}) for RAR PDUs doesn't match",
-                pdsch_registry.get_nof_pdus(pdsch_pdu_registry::rar),
-                dl_data.rar_pdus.size());
-
-  srsgnb_assert(dl_data.ue_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registry::ue),
-                "Number of PDUs ({}) and Payloads ({}) for UE PDUs doesn't match",
-                pdsch_registry.get_nof_pdus(pdsch_pdu_registry::ue),
-                dl_data.ue_pdus.size());
-  srsgnb_assert(dl_data.sib1_pdus.size() || dl_data.rar_pdus.size() || dl_data.ue_pdus.size(),
-                "Error, received a Tx_Data.request with zero payloads");
+  srsgnb_assert(!dl_data.sib1_pdus.empty() || !dl_data.rar_pdus.empty() || !dl_data.ue_pdus.empty(),
+                "Received a mac_dl_data_result object with zero payloads");
 
   fapi::tx_data_request_message msg;
   fapi::tx_data_request_builder builder(msg);
 
   builder.set_basic_parameters(dl_data.slot.sfn(), dl_data.slot.slot_index());
 
+  // Make sure PDUs are added to the builder in the same order as for the DL_TTI.request message.
+  unsigned fapi_index = 0;
+
   // Add SIB1 PDUs to the Tx_Data.request message.
-  const static_vector<span<const uint8_t>, MAX_SIB1_PDUS_PER_SLOT>& sib1_pdus = dl_data.sib1_pdus;
-  for (unsigned i = 0, e = sib1_pdus.size(); i != e; ++i) {
-    const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::sib);
-    builder.add_pdu_custom_payload(
-        registry_pdu.fapi_index, registry_pdu.cw_index, {sib1_pdus[i].data(), sib1_pdus[i].size()});
+  for (const auto& pdu : dl_data.sib1_pdus) {
+    builder.add_pdu_custom_payload(fapi_index++, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
   }
 
   // Add RAR PDUs to the Tx_Data.request message.
-  const static_vector<span<const uint8_t>, MAX_RAR_PDUS_PER_SLOT>& rar_pdus = dl_data.rar_pdus;
-  for (unsigned i = 0, e = rar_pdus.size(); i != e; ++i) {
-    const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::rar);
-    builder.add_pdu_custom_payload(
-        registry_pdu.fapi_index, registry_pdu.cw_index, {rar_pdus[i].data(), rar_pdus[i].size()});
+  for (const auto& pdu : dl_data.rar_pdus) {
+    builder.add_pdu_custom_payload(fapi_index++, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
   }
 
   // Add UE specific PDUs.
-  const static_vector<span<const uint8_t>, MAX_UE_PDUS_PER_SLOT>& ue_pdus = dl_data.ue_pdus;
-  for (unsigned i = 0, e = ue_pdus.size(); i != e; ++i) {
-    const pdsch_pdu_registry::pdu_struct& registry_pdu = pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::ue);
-    builder.add_pdu_custom_payload(
-        registry_pdu.fapi_index, registry_pdu.cw_index, {ue_pdus[i].data(), ue_pdus[i].size()});
+  for (const auto& pdu : dl_data.ue_pdus) {
+    builder.add_pdu_custom_payload(fapi_index++, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
   }
 
   // Send the message.
   msg_gw.tx_data_request(msg);
-
-  // Clear the PDSCH registry, as the PDUs were sent.
-  pdsch_registry.reset();
 }
 
 /// Clears the PDUs of the given UL_TTI.request message.

@@ -9,7 +9,6 @@
  */
 
 #include "fapi_to_mac_time_msg_translator.h"
-#include "mac_to_fapi_translator.h"
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/mac/mac_cell_slot_handler.h"
 
@@ -30,16 +29,12 @@ public:
 /// cell-specific MAC slot handler, which will be later set up through the \ref set_cell_slot_handler() method.
 static mac_cell_slot_handler_dummy mac_dummy_handler;
 
-fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(mac_to_fapi_translator& translator_,
-                                                                 subcarrier_spacing      scs_) :
-  scs(scs_), mac_slot_handler(mac_dummy_handler), translator(translator_)
+fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(subcarrier_spacing scs_) :
+  scs(scs_), mac_slot_handler(mac_dummy_handler)
 {
 }
 
 void fapi_to_mac_time_msg_translator::on_slot_indication(const fapi::slot_indication_message& msg)
 {
-  translator.handle_new_slot();
-
-  // Delivering the new slot to the MAC layer must always be the last step.
   mac_slot_handler.get().handle_slot_indication(slot_point(to_numerology_value(scs), msg.sfn, msg.slot));
 }

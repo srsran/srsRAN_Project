@@ -211,8 +211,8 @@ public:
   {
     // Save the number of DL grants and bytes transmitted.
     nof_dl_grants += dl_data.ue_pdus.size();
-    for (span<const uint8_t> data : dl_data.ue_pdus) {
-      nof_dl_bytes += data.size();
+    for (const auto& pdu : dl_data.ue_pdus) {
+      nof_dl_bytes += pdu.pdu.size();
     }
   }
 

@@ -259,12 +259,12 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   for (const sib_information& sib_info : dl_res.bc.sibs) {
     srsgnb_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
     span<const uint8_t> payload = sib_assembler.encode_sib_pdu(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
-    data_res.sib1_pdus.emplace_back(payload);
+    data_res.sib1_pdus.emplace_back(0, payload);
   }
 
   // Assemble scheduled RARs' subheaders and payloads.
   for (const rar_information& rar : dl_res.rar_grants) {
-    data_res.rar_pdus.emplace_back(rar_assembler.encode_rar_pdu(rar));
+    data_res.rar_pdus.emplace_back(0, rar_assembler.encode_rar_pdu(rar));
   }
 
   // TODO: Assemble paging payload for paging grants.
@@ -274,7 +274,8 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
     for (unsigned tb_idx = 0; tb_idx != grant.tb_list.size(); ++tb_idx) {
       const dl_msg_tb_info& tb_info = grant.tb_list[tb_idx];
       const pdsch_codeword& cw      = grant.pdsch_cfg.codewords[tb_idx];
-      data_res.ue_pdus.push_back(dlsch_assembler.assemble_pdu(grant.pdsch_cfg.rnti, tb_info, cw.tb_size_bytes));
+      data_res.ue_pdus.emplace_back(tb_idx,
+                                    dlsch_assembler.assemble_pdu(grant.pdsch_cfg.rnti, tb_info, cw.tb_size_bytes));
     }
   }
 }

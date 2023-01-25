@@ -20,7 +20,7 @@ mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(fapi::slot_message_gateway&       m
   sector_id(sector_id_),
   mac_translator(msg_gw, last_msg_notifier),
   fapi_data_translator(scs),
-  fapi_time_translator(mac_translator, scs)
+  fapi_time_translator(scs)
 {
   // :TODO: remove this when sector id is used (in logging)
   (void)(sector_id);

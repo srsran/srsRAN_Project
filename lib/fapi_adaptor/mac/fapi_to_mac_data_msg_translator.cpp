@@ -10,8 +10,6 @@
 
 #include "fapi_to_mac_data_msg_translator.h"
 #include "srsgnb/fapi/messages.h"
-#include "srsgnb/ran/uci/uci_constants.h"
-#include "srsgnb/srsvec/bit.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
