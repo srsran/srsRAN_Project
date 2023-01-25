@@ -362,8 +362,19 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
   pdcch_cfg.coresets[0].pdcch_dmrs_scrambling_id.emplace();
   pdcch_cfg.coresets[0].pdcch_dmrs_scrambling_id.value() = 0;
+  freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
+  const size_t         NOF_CCES_CORESET1 = 8;
+  freq_resources.fill(0, NOF_CCES_CORESET1, true);
+  pdcch_cfg.coresets[0].set_freq_domain_resources(freq_resources);
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
+  pdcch_cfg.search_spaces[0].nof_candidates = {
+      0,
+      2,
+      compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]),
+      0,
+      0,
+  };
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg.emplace();
@@ -399,4 +410,25 @@ srsgnb::config_helpers::create_default_initial_ue_spcell_cell_config(const cell_
   cfg.serv_cell_idx = to_serv_cell_index(0);
   cfg.serv_cell_cfg = create_default_initial_ue_serving_cell_config(params);
   return cfg;
+}
+
+uint8_t srsgnb::config_helpers::compute_max_nof_candidates(aggregation_level            aggr_lvl,
+                                                           const coreset_configuration& cs_cfg)
+{
+  const unsigned max_coreset_rbs =
+      cs_cfg.freq_domain_resources().count() * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE * cs_cfg.duration;
+
+  switch (aggr_lvl) {
+    case aggregation_level::n1:
+      return max_coreset_rbs / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
+    case aggregation_level::n2:
+      return max_coreset_rbs / (2 * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
+    case aggregation_level::n4:
+      return max_coreset_rbs / (4 * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
+    case aggregation_level::n8:
+      return max_coreset_rbs / (8 * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
+    case aggregation_level::n16:
+      return max_coreset_rbs / (16 * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
+  }
+  report_fatal_error("Invalid aggregation level.");
 }

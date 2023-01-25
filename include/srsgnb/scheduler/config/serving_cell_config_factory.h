@@ -12,6 +12,7 @@
 
 #include "cell_config_builder_params.h"
 #include "serving_cell_config.h"
+#include "srsgnb/ran/pdcch/aggregation_level.h"
 
 namespace srsgnb {
 namespace config_helpers {
@@ -49,6 +50,10 @@ serving_cell_config create_default_initial_ue_serving_cell_config(const cell_con
 
 /// \brief Creates a default UE PSCell configuration.
 cell_config_dedicated create_default_initial_ue_spcell_cell_config(const cell_config_builder_params& params = {});
+
+/// \brief Computes maximum nof. candidates that can be accommodated in a CORESET for a given aggregation level.
+/// \return Maximum nof. candidates for a aggregation level.
+uint8_t compute_max_nof_candidates(aggregation_level aggr_lvl, const coreset_configuration& cs_cfg);
 
 } // namespace config_helpers
 } // namespace srsgnb

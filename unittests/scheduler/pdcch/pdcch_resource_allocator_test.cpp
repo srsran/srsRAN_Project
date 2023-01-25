@@ -94,25 +94,34 @@ void test_pdcch_sched_ue()
   pdcch_sch.slot_indication(sl_tx);
 
   // Action: Allocate one UE.
-  rnti_t                rnti = to_rnti(0x4601);
+  const rnti_t          rnti = to_rnti(0x4601);
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, ue_cfg, bwpid, to_search_space_id(2), aggregation_level::n4);
 
+  const rnti_t          rnti2 = to_rnti(0x4602);
+  pdcch_dl_information* pdcch2 =
+      pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti2, ue_cfg, bwpid, to_search_space_id(2), aggregation_level::n4);
+
   // TEST: UE allocation should be successful and the PDCCH contents valid.
-  TESTASSERT_EQ(1, res_grid[0].result.dl.dl_pdcchs.size());
+  TESTASSERT_EQ(2, res_grid[0].result.dl.dl_pdcchs.size());
   TESTASSERT(pdcch == &res_grid[0].result.dl.dl_pdcchs[0]);
+  TESTASSERT(pdcch2 == &res_grid[0].result.dl.dl_pdcchs[1]);
   TESTASSERT_EQ(aggregation_level::n4, pdcch->ctx.cces.aggr_lvl);
+  TESTASSERT_EQ(aggregation_level::n4, pdcch2->ctx.cces.aggr_lvl);
   TESTASSERT_EQ(rnti, pdcch->ctx.rnti);
+  TESTASSERT_EQ(rnti2, pdcch2->ctx.rnti);
   TESTASSERT(*pdcch->ctx.bwp_cfg == ue_cfg.dl_bwp_common(to_bwp_id(0)).generic_params);
   TESTASSERT(*pdcch->ctx.coreset_cfg == ue_cfg.coreset(to_coreset_id(1)));
+  TESTASSERT(*pdcch2->ctx.bwp_cfg == ue_cfg.dl_bwp_common(to_bwp_id(0)).generic_params);
+  TESTASSERT(*pdcch2->ctx.coreset_cfg == ue_cfg.coreset(to_coreset_id(1)));
 
   // Action: Try allocate an DL PDCCH for another UE that fails due to lack of PDCCH resources.
-  rnti  = to_rnti(0x4602);
-  pdcch = pdcch_sch.alloc_dl_pdcch_ue(res_grid[0], rnti, ue_cfg, bwpid, to_search_space_id(2), aggregation_level::n4);
+  pdcch_dl_information* pdcch3 = pdcch_sch.alloc_dl_pdcch_ue(
+      res_grid[0], to_rnti(0x4603), ue_cfg, bwpid, to_search_space_id(2), aggregation_level::n4);
 
-  // TEST: RAR allocation should fail.
-  TESTASSERT_EQ(1, res_grid[0].result.dl.dl_pdcchs.size());
-  TESTASSERT(pdcch == nullptr);
+  // TEST: PDCCH allocation should fail.
+  TESTASSERT_EQ(2, res_grid[0].result.dl.dl_pdcchs.size());
+  TESTASSERT(pdcch3 == nullptr);
 }
 
 void test_pdcch_sched_monitoring_period()
