@@ -8,8 +8,8 @@
  *
  */
 
+#include "uci_test_utils.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "unittests/scheduler/test_utils/uci_test_utils.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>

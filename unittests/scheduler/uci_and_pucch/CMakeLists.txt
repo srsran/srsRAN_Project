@@ -21,6 +21,10 @@ add_executable(pucch_alloc_multi_ue_test pucch_alloc_multi_ue_test.cpp)
 target_link_libraries(pucch_alloc_multi_ue_test srsgnb_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(pucch_alloc_multi_ue_test)
 
+add_executable(pucch_res_manager_test pucch_res_manager_test.cpp)
+target_link_libraries(pucch_res_manager_test srsgnb_sched ${SCHED_TEST_LIBS})
+gtest_discover_tests(pucch_res_manager_test)
+
 add_executable(uci_allocator_test uci_allocator_test.cpp)
 target_link_libraries(uci_allocator_test srsgnb_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(uci_allocator_test)

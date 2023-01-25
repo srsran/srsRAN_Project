@@ -18,9 +18,13 @@ using namespace srsgnb;
 pucch_resource_manager::pucch_resource_manager()
 {
   auto reset_slot_record = [](rnti_pucch_res_id_slot_record& res_counter) {
-    std::for_each(res_counter.ues_using_format1_res.begin(), res_counter.ues_using_format1_res.end(), [](rnti_t& rnti) {
-      rnti = INVALID_RNTI;
-    });
+    res_counter.ue_using_sr_resource = INVALID_RNTI;
+    for (auto& ue_rec : res_counter.ues_using_format1_res) {
+      ue_rec = INVALID_RNTI;
+    }
+    for (auto& ue_rec : res_counter.ues_using_format2_res) {
+      ue_rec = INVALID_RNTI;
+    }
   };
 
   std::for_each(resource_slots.begin(), resource_slots.end(), reset_slot_record);
@@ -33,11 +37,13 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
 
   rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(last_sl_ind - 1);
 
-  res_counter.sr_resource_available   = true;
-  res_counter.next_pucch_harq_res_idx = 0;
-  std::for_each(res_counter.ues_using_format1_res.begin(), res_counter.ues_using_format1_res.end(), [](rnti_t& rnti) {
-    rnti = INVALID_RNTI;
-  });
+  res_counter.ue_using_sr_resource = INVALID_RNTI;
+  for (auto& ue_rec : res_counter.ues_using_format1_res) {
+    ue_rec = INVALID_RNTI;
+  }
+  for (auto& ue_rec : res_counter.ues_using_format2_res) {
+    ue_rec = INVALID_RNTI;
+  }
 }
 
 pucch_harq_resource_alloc_record
@@ -71,22 +77,6 @@ pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 };
 
-bool pucch_resource_manager::release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
-{
-  auto& allocated_ues = get_slot_resource_counter(slot_harq).ues_using_format1_res;
-  auto  target_res = std::find_if(allocated_ues.begin(), allocated_ues.end(), [target_rnti = crnti](const rnti_t rnti) {
-    return rnti == target_rnti;
-  });
-
-  // If the resources was found, then release it (i.e., remove the C-RNTI of the user allocated to it).
-  if (target_res != allocated_ues.end()) {
-    *target_res = INVALID_RNTI;
-    return true;
-  }
-
-  return false;
-}
-
 pucch_harq_resource_alloc_record pucch_resource_manager::get_next_format2_res_available(slot_point          slot_harq,
                                                                                         rnti_t              crnti,
                                                                                         const pucch_config& pucch_cfg)
@@ -105,28 +95,29 @@ pucch_harq_resource_alloc_record pucch_resource_manager::get_next_format2_res_av
 
   const unsigned pucch_resource_set_format2_idx = 1;
 
-  if (available_resource != res_counter.ues_using_format1_res.end() and
-      static_cast<unsigned>(available_resource - res_counter.ues_using_format1_res.begin()) <
+  if (available_resource != res_counter.ues_using_format2_res.end() and
+      static_cast<unsigned>(available_resource - res_counter.ues_using_format2_res.begin()) <
           pucch_cfg.pucch_res_set[pucch_resource_set_format2_idx].pucch_res_id_list.size()) {
     unsigned pucch_res_indicator =
-        static_cast<unsigned>(available_resource - res_counter.ues_using_format1_res.begin());
+        static_cast<unsigned>(available_resource - res_counter.ues_using_format2_res.begin());
     *available_resource = crnti;
     unsigned pucch_res_idx_from_list =
         pucch_cfg.pucch_res_set[pucch_resource_set_format2_idx].pucch_res_id_list[pucch_res_indicator];
+
     return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_res_list[pucch_res_idx_from_list],
                                             .pucch_res_indicator = pucch_res_indicator};
   }
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 };
 
-const pucch_resource* pucch_resource_manager::get_next_sr_res_available(slot_point          slot_sr,
-                                                                        const pucch_config& pucch_cfg)
+const pucch_resource*
+pucch_resource_manager::get_next_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
 {
   srsgnb_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PDCCH being allocated to far into the future");
   srsgnb_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
 
-  if (get_slot_resource_counter(slot_sr).sr_resource_available) {
+  if (get_slot_resource_counter(slot_sr).ue_using_sr_resource == INVALID_RNTI) {
     const auto& pucch_res_list = pucch_cfg.pucch_res_list;
 
     // Check if the list of PUCCH resources (corresponding to \c resourceToAddModList, as part of \c PUCCH-Config, as
@@ -144,15 +135,71 @@ const pucch_resource* pucch_resource_manager::get_next_sr_res_available(slot_poi
       return nullptr;
     }
 
-    get_slot_resource_counter(slot_sr).sr_resource_available = false;
+    get_slot_resource_counter(slot_sr).ue_using_sr_resource = crnti;
     return &(*sr_pucch_resource_cfg);
   }
   return nullptr;
 };
 
-int pucch_resource_manager::get_pucch_res_indicator(slot_point slot_tx, rnti_t crnti)
+bool pucch_resource_manager::release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
+{
+  auto& allocated_ues = get_slot_resource_counter(slot_harq).ues_using_format1_res;
+  auto  target_res = std::find_if(allocated_ues.begin(), allocated_ues.end(), [target_rnti = crnti](const rnti_t rnti) {
+    return rnti == target_rnti;
+  });
+
+  // If the resources was found, then release it (i.e., remove the C-RNTI of the user allocated to it).
+  if (target_res != allocated_ues.end()) {
+    *target_res = INVALID_RNTI;
+    return true;
+  }
+
+  return false;
+}
+
+bool pucch_resource_manager::release_format2_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
+{
+  auto& allocated_ues = get_slot_resource_counter(slot_harq).ues_using_format2_res;
+  auto  target_res = std::find_if(allocated_ues.begin(), allocated_ues.end(), [target_rnti = crnti](const rnti_t rnti) {
+    return rnti == target_rnti;
+  });
+
+  // If the resources was found, then release it (i.e., remove the C-RNTI of the user allocated to it).
+  if (target_res != allocated_ues.end()) {
+    *target_res = INVALID_RNTI;
+    return true;
+  }
+
+  return false;
+}
+
+bool pucch_resource_manager::release_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
+{
+  auto& allocated_ue = get_slot_resource_counter(slot_sr).ue_using_sr_resource;
+
+  // If the UE allocated to the SR PUCCH resource matches the given CRNTI, release the resource.
+  if (allocated_ue == crnti) {
+    allocated_ue = INVALID_RNTI;
+    return true;
+  }
+
+  return false;
+}
+
+int pucch_resource_manager::get_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti)
 {
   const auto& ue_recs = get_slot_resource_counter(slot_tx).ues_using_format1_res;
+
+  auto ue_resource = std::find_if(
+      ue_recs.begin(), ue_recs.end(), [target_rnti = crnti](const rnti_t rnti) { return rnti == target_rnti; });
+
+  // -1 indicates that the there is no UE record for given RNTI.
+  return ue_resource != ue_recs.end() ? static_cast<int>(ue_resource - ue_recs.begin()) : -1;
+}
+
+int pucch_resource_manager::get_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti)
+{
+  const auto& ue_recs = get_slot_resource_counter(slot_tx).ues_using_format2_res;
 
   auto ue_resource = std::find_if(
       ue_recs.begin(), ue_recs.end(), [target_rnti = crnti](const rnti_t rnti) { return rnti == target_rnti; });
@@ -428,7 +475,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   // TODO: extend sr_resource_cfg_list to multiple resource and get_next_sr_res_available() so that it becomes a
   //       func of sr_res.
   const pucch_resource* pucch_sr_res = resource_manager.get_next_sr_res_available(
-      pucch_slot_alloc.slot, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+      pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_sr_res == nullptr) {
     logger.warning("SR allocation skipped for RNTI {:#x} for slot={} due to PUCCH ded. resource not available.",
                    crnti,
@@ -549,7 +596,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucc
   if (existing_harq_grant.format_1.harq_ack_nof_bits > 1) {
     return output;
   }
-  int pucch_res_idx = resource_manager.get_pucch_res_indicator(sl_tx, rnti);
+  int pucch_res_idx = resource_manager.get_f1_pucch_res_indic(sl_tx, rnti);
   if (pucch_res_idx < 0) {
     srsgnb_assert(pucch_res_idx >= 0, "PUCCH resource index should not be negative.");
     return output;

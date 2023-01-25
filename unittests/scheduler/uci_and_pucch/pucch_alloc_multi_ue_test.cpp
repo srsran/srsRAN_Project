@@ -8,109 +8,11 @@
  *
  */
 
-#include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
+#include "uci_test_utils.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "unittests/scheduler/test_utils/uci_test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
-
-////////////    Test the PUCCH resource manager class     ////////////
-
-class test_pucch_resource_manager : public ::testing::Test
-{
-public:
-  test_pucch_resource_manager() :
-    pucch_cfg{config_helpers::make_default_ue_uplink_config().init_ul_bwp.pucch_cfg.value()}, sl_tx(slot_point(0, 0))
-  {
-    res_manager.slot_indication(sl_tx);
-  };
-
-protected:
-  pucch_config           pucch_cfg;
-  pucch_resource_manager res_manager;
-  slot_point             sl_tx;
-
-  // Allocate PUCCH for a given number of UEs, in increasing order of RNTI.
-  void allocate_ues(unsigned nof_ues_to_allocate)
-  {
-    for (size_t n = 0; n != nof_ues_to_allocate; ++n) {
-      rnti_t rnti = to_rnti(0x4601 + n);
-      res_manager.get_next_harq_res_available(sl_tx, rnti, pucch_cfg);
-    }
-  };
-};
-
-// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for 1 UE only.
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_1)
-{
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
-
-  ASSERT_EQ(0, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[0], record.pucch_res);
-}
-
-// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for n UEs.
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_2)
-{
-  allocate_ues(1);
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
-
-  ASSERT_EQ(1, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[1], record.pucch_res);
-}
-
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_3)
-{
-  allocate_ues(2);
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4603), pucch_cfg);
-
-  ASSERT_EQ(2, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[2], record.pucch_res);
-}
-
-TEST_F(test_pucch_resource_manager, get_next_harq_res_nof_ues_4)
-{
-  allocate_ues(3);
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4604), pucch_cfg);
-
-  ASSERT_EQ(nullptr, record.pucch_res);
-}
-
-// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for 1 UE only.
-TEST_F(test_pucch_resource_manager, get_next_harq_different_slot)
-{
-  allocate_ues(1);
-  ++sl_tx;
-  const pucch_harq_resource_alloc_record record =
-      res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
-
-  // Expect that pucch_res_indicator = 0 is returned, as the UE 0x4602 is allocated in a different slot to UE 0x4601.
-  ASSERT_EQ(0, record.pucch_res_indicator);
-  ASSERT_EQ(&pucch_cfg.pucch_res_list[0], record.pucch_res);
-}
-
-// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator; for 1 UE only.
-TEST_F(test_pucch_resource_manager, slot_indication)
-{
-  res_manager.get_next_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
-
-  // Increment slot point and invoke slot_indication(), which should reset the previous UE's resource allocation.
-  ++sl_tx;
-  res_manager.slot_indication(sl_tx);
-
-  // Slot point pointing at the last slot, that has been cleared by that slot_indication().
-  slot_point old_slot{0, sl_tx.to_uint() - 1};
-  int        res_id = res_manager.get_pucch_res_indicator(old_slot, to_rnti(0x4601));
-
-  // Expect that pucch_res_indicator = -1 is returned (due to the slot_indication() resetting the resource records for
-  // old slots).
-  ASSERT_EQ(-1, res_id);
-}
 
 ///////   Test allocation of dedicated PUCCH resources    ///////
 
