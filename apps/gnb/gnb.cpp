@@ -7,6 +7,9 @@
  * the distribution.
  *
  */
+
+#include "srsgnb/support/tsan_options.h"
+
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/cu_cp/cu_cp_factory.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
