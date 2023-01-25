@@ -108,7 +108,6 @@ protected:
   {
     dl_buffer_state_indication_message ind{};
     ind.ue_index = ue_index;
-    ind.rnti     = ues[ue_index].crnti;
     ind.lcid     = lcid;
     ind.bs       = bytes;
     ues[ue_index].handle_dl_buffer_state_indication(ind);

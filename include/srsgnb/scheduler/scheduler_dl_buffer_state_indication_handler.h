@@ -18,7 +18,6 @@ namespace srsgnb {
 /// DL buffer state for a given RLC bearer.
 struct dl_buffer_state_indication_message {
   du_ue_index_t ue_index;
-  rnti_t        rnti;
   lcid_t        lcid;
   unsigned      bs;
 };

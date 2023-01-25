@@ -235,7 +235,7 @@ protected:
   void push_buffer_state_to_dl_ue(du_ue_index_t ue_idx, unsigned buffer_size)
   {
     // Notification from upper layers of DL buffer state.
-    dl_buffer_state_indication_message msg{ue_idx, bench->ue_db[ue_idx].crnti, LCID_SRB0, buffer_size};
+    dl_buffer_state_indication_message msg{ue_idx, LCID_SRB0, buffer_size};
     bench->ue_db[ue_idx].handle_dl_buffer_state_indication(msg);
 
     // Notify scheduler of DL buffer state.

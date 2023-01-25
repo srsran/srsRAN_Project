@@ -70,7 +70,7 @@ TEST(ue_configuration, when_reconfiguration_is_received_then_ue_updates_logical_
   recfg.cfg      = ue_create_msg.cfg;
   recfg.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(uint_to_lcid(4)));
   u.handle_reconfiguration_request(recfg);
-  dl_buffer_state_indication_message ind{recfg.ue_index, recfg.crnti, uint_to_lcid(4), 0};
+  dl_buffer_state_indication_message ind{recfg.ue_index, uint_to_lcid(4), 0};
 
   // Verify that DL buffer state indications affect newly active logical channels.
   for (const auto& lc : recfg.cfg.lc_config_list) {

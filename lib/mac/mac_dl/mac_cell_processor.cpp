@@ -295,7 +295,6 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
         // Update DL buffer state for the allocated logical channel.
         dl_buffer_state_indication_message bs{};
         bs.ue_index = ue_mng.get_ue_index(grant.pdsch_cfg.rnti);
-        bs.rnti     = grant.pdsch_cfg.rnti;
         bs.lcid     = lc_info.lcid.to_lcid();
         bs.bs       = bearer->on_buffer_state_update();
         sched_obj.handle_dl_buffer_state_indication(bs);

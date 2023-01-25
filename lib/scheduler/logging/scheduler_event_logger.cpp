@@ -166,12 +166,7 @@ void scheduler_event_logger::enqueue_impl(const dl_mac_ce_indication& mac_ce)
 void scheduler_event_logger::enqueue_impl(const dl_buffer_state_indication_message& bs)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf,
-                   "\n- RLC Buffer State: UE={}, rnti={:#x}, lcid={}, pending_bytes={}",
-                   bs.ue_index,
-                   bs.rnti,
-                   bs.lcid,
-                   bs.bs);
+    fmt::format_to(fmtbuf, "\n- RLC Buffer State: UE={}, lcid={}, pending_bytes={}", bs.ue_index, bs.lcid, bs.bs);
   } else {
     fmt::format_to(fmtbuf, "{}rlc_bs(UE={}, lcid={}, pending={})", separator(), bs.ue_index, bs.lcid, bs.bs);
   }

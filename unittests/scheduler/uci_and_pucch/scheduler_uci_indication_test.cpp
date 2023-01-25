@@ -95,7 +95,6 @@ protected:
   void notify_dl_buffer_status(lcid_t lcid, unsigned pending_bytes)
   {
     dl_buffer_state_indication_message msg{};
-    msg.rnti     = ue_rnti;
     msg.ue_index = ue_id;
     msg.bs       = pending_bytes;
     msg.lcid     = lcid;

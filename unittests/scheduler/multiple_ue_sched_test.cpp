@@ -207,7 +207,7 @@ protected:
   {
     auto& test_ue = get_ue(ue_index);
     // Notification from upper layers of DL buffer state.
-    dl_buffer_state_indication_message msg{ue_index, test_ue.crnti, lcid, buffer_size};
+    dl_buffer_state_indication_message msg{ue_index, lcid, buffer_size};
 
     // Store to keep track of DL buffer status.
     test_ue.dl_bsr_list.push_back(msg);
