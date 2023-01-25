@@ -35,13 +35,17 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     param.pci                            = cell.pci;
     param.scs_common                     = base_cell.common_scs;
     param.channel_bw_mhz                 = base_cell.channel_bw_mhz;
-    param.nof_crbs = band_helper::get_n_rbs_from_bw(base_cell.channel_bw_mhz, param.scs_common, frequency_range::FR1);
-    param.dl_arfcn = base_cell.dl_arfcn;
-    param.band     = band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
+    param.dl_arfcn                       = base_cell.dl_arfcn;
+    param.band                           = band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
+
+    unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+        base_cell.channel_bw_mhz,
+        param.scs_common,
+        param.band.has_value() ? band_helper::get_freq_range(param.band.value()) : frequency_range::FR1);
 
     static const uint8_t                              ss0_idx      = 0;
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-        base_cell.dl_arfcn, base_cell.band, param.nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
+        base_cell.dl_arfcn, base_cell.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
 
     if (!ssb_freq_loc.has_value()) {
       srsgnb_terminate("Unable to derive a valid SSB pointA and k_SSB for cell id ({}). Exiting.\n", cell.pci);
@@ -63,7 +67,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
         cell.pci,
         base_cell.band,
         base_cell.dl_arfcn,
-        param.nof_crbs,
+        nof_crbs,
         to_string(base_cell.common_scs),
         to_string(out_cfg.back().ssb_cfg.scs),
         (*ssb_freq_loc).offset_to_point_A.to_uint(),

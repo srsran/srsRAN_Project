@@ -14,6 +14,8 @@
 
 using namespace srsgnb;
 
+const unsigned NOF_RBS = 52;
+
 ///////   Test allocation of dedicated PUCCH resources    ///////
 
 // Expected results parameters.
@@ -47,7 +49,7 @@ expected_output_params make_expected_output_params_sr_only()
 {
   return expected_output_params{.format               = pucch_format::FORMAT_1,
                                 .prbs                 = prb_interval{0, 1},
-                                .second_hop_prbs      = prb_interval{51, 52},
+                                .second_hop_prbs      = prb_interval{NOF_RBS - 1, NOF_RBS},
                                 .symbols              = ofdm_symbol_range{0, 14},
                                 .intra_slot_freq_hop  = true,
                                 .initial_cyclic_shift = 0,
@@ -67,7 +69,7 @@ expected_output_params make_expected_output_params_sr_harq()
 static expected_output_params make_expected_output_params_harq_ded_resources()
 {
   return expected_output_params{.format               = pucch_format::FORMAT_1,
-                                .prbs                 = prb_interval{51, 52},
+                                .prbs                 = prb_interval{NOF_RBS - 1, NOF_RBS},
                                 .second_hop_prbs      = prb_interval{0, 1},
                                 .symbols              = ofdm_symbol_range{0, 14},
                                 .intra_slot_freq_hop  = true,

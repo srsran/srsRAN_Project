@@ -16,7 +16,7 @@ using namespace srsgnb;
 
 ////////////    Structs with expected parameters and PUCCH sched INPUT     ////////////
 
-const unsigned NOF_RBS = test_helpers::make_custom_intial_params().nof_crbs;
+const unsigned NOF_RBS = 52;
 
 // Expected results parameters.
 struct expected_output_params {

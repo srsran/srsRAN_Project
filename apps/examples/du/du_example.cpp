@@ -670,7 +670,6 @@ int main(int argc, char** argv)
   struct cell_config_builder_params cell_config;
   cell_config.pci               = pci;
   cell_config.scs_common        = scs_common;
-  cell_config.nof_crbs          = nof_prb_dl_grid[to_numerology_value(scs)];
   cell_config.dl_arfcn          = dl_arfcn;
   cell_config.band              = band;
   cell_config.offset_to_point_a = offset_to_pointA;

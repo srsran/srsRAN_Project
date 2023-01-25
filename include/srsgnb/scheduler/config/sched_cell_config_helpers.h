@@ -10,14 +10,13 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/config/cell_config_builder_params.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 
 namespace srsgnb {
 namespace config_helpers {
 
 /// Builds the list of PUCCH guardbands.
-std::vector<sched_grid_resource> build_pucch_guardbands_list(const cell_config_builder_params& params = {});
+std::vector<sched_grid_resource> build_pucch_guardbands_list(const uplink_config& ul_cfg);
 
 } // namespace config_helpers
 } // namespace srsgnb

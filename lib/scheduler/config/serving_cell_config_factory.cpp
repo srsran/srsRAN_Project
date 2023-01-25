@@ -120,8 +120,12 @@ search_space_configuration srsgnb::config_helpers::make_default_ue_search_space_
 bwp_configuration srsgnb::config_helpers::make_default_init_bwp(const cell_config_builder_params& params)
 {
   bwp_configuration cfg{};
-  cfg.scs         = params.scs_common;
-  cfg.crbs        = {0, params.nof_crbs};
+  cfg.scs           = params.scs_common;
+  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+      params.channel_bw_mhz,
+      params.scs_common,
+      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+  cfg.crbs        = {0, nof_crbs};
   cfg.cp_extended = false;
   return cfg;
 }
@@ -138,7 +142,12 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cel
   cfg.freq_info_dl.scs_carrier_list.emplace_back();
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
-  cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = params.nof_crbs;
+
+  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+      params.channel_bw_mhz,
+      params.scs_common,
+      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+  cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = nof_crbs;
 
   // Configure initial DL BWP.
   cfg.init_dl_bwp.generic_params = make_default_init_bwp(params);
@@ -153,7 +162,7 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols  = {
-       std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 14};
+      std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 14};
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
@@ -170,15 +179,21 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
   uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
   // This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
+
+  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+      params.channel_bw_mhz,
+      params.scs_common,
+      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+
   double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
-      band_helper::nr_arfcn_to_freq(ul_arfcn), params.nof_crbs, params.scs_common);
+      band_helper::nr_arfcn_to_freq(ul_arfcn), nof_crbs, params.scs_common);
   // absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
   // Section 4.4.4.2.
   cfg.freq_info_ul.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(ul_f_ref);
   cfg.freq_info_ul.scs_carrier_list.resize(1);
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
   cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;
-  cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = params.nof_crbs;
+  cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = nof_crbs;
   cfg.freq_info_ul.freq_band_list.emplace_back();
   cfg.freq_info_ul.freq_band_list.back().band =
       params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
@@ -301,7 +316,10 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_res_set_1.pucch_res_id_list.emplace_back(8);
   pucch_res_set_1.pucch_res_id_list.emplace_back(9);
 
-  unsigned nof_rbs = params.nof_crbs;
+  unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
+      params.channel_bw_mhz,
+      params.scs_common,
+      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
 
   // PUCCH resource format 1, for HARQ-ACK.
   // >>> PUCCH resource 0.

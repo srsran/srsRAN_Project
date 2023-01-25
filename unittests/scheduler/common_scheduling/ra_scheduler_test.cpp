@@ -96,8 +96,7 @@ protected:
     if (params.scs == srsgnb::subcarrier_spacing::kHz30) {
       builder_params.channel_bw_mhz = srsgnb::bs_channel_bandwidth_fr1::MHz20;
     }
-    builder_params.nof_crbs =
-        band_helper::get_n_rbs_from_bw(builder_params.channel_bw_mhz, builder_params.scs_common, frequency_range::FR1);
+
     sched_cell_configuration_request_message req =
         test_helpers::make_default_sched_cell_configuration_request(builder_params);
 

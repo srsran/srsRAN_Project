@@ -29,9 +29,6 @@ struct cell_config_builder_params {
   subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
   /// BS Channel Bandwidth, as per TS 38.104, Section 5.3.1.
   bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10;
-  /// The number of Common Resource Blocks (nof_crbs) for the main carrier is determined according to TS 38.104,
-  /// Table 5.3.2-1.
-  unsigned nof_crbs;
   /// This ARFCN represents "f_ref" for DL, as per TS 38.211, Section 5.4.2.1.
   unsigned dl_arfcn = 365000;
   /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2, TS 38.104. If not specified, a valid band for the
@@ -43,18 +40,6 @@ struct cell_config_builder_params {
   unsigned coreset0_index = 6;
   /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
   ssb_subcarrier_offset k_ssb = 0;
-
-  cell_config_builder_params() :
-    nof_crbs{band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1)} {};
-
-  explicit cell_config_builder_params(bs_channel_bandwidth_fr1 channel_bw_mhz_) :
-    channel_bw_mhz{channel_bw_mhz_},
-    nof_crbs{band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1)} {};
-
-  explicit cell_config_builder_params(bs_channel_bandwidth_fr1 channel_bw_mhz_, subcarrier_spacing scs_common_) :
-    scs_common{scs_common_},
-    channel_bw_mhz{channel_bw_mhz_},
-    nof_crbs{band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1)} {};
 };
 
 } // namespace srsgnb

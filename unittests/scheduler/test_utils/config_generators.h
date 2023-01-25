@@ -22,13 +22,6 @@
 namespace srsgnb {
 namespace test_helpers {
 
-inline cell_config_builder_params
-make_custom_intial_params(bs_channel_bandwidth_fr1 bw         = bs_channel_bandwidth_fr1::MHz10,
-                          subcarrier_spacing       scs_common = subcarrier_spacing::kHz15)
-{
-  return cell_config_builder_params(bw, scs_common);
-}
-
 inline sched_cell_configuration_request_message
 make_default_sched_cell_configuration_request(const cell_config_builder_params& params = {})
 {
@@ -55,7 +48,8 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
   sched_req.searchspace0      = 0U;
   sched_req.sib1_payload_size = 101; // Random size.
 
-  sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list(params);
+  sched_req.pucch_guardbands =
+      config_helpers::build_pucch_guardbands_list(config_helpers::make_default_ue_uplink_config(params));
 
   return sched_req;
 }
@@ -65,7 +59,7 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
 inline sched_cell_configuration_request_message
 make_default_sched_cell_configuration_request_scs(subcarrier_spacing scs, bool tdd_mode = false)
 {
-  cell_config_builder_params               params = make_custom_intial_params(bs_channel_bandwidth_fr1::MHz20, scs);
+  cell_config_builder_params               params{.scs_common = scs, .channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20};
   sched_cell_configuration_request_message msg{make_default_sched_cell_configuration_request(params)};
   msg.ssb_config.scs                               = scs;
   msg.scs_common                                   = scs;
@@ -143,8 +137,9 @@ inline serving_cell_config create_test_initial_ue_serving_cell_config()
   pdsch_cfg.prb_bndlg.bundling.emplace<prb_bundling::static_bundling>(
       prb_bundling::static_bundling({.sz = prb_bundling::static_bundling::bundling_size::wideband}));
 
-  // > UL Config.
-  serv_cell.ul_config.emplace(config_helpers::make_default_ue_uplink_config(make_custom_intial_params()));
+  // > UL Config;
+  serv_cell.ul_config.emplace(config_helpers::make_default_ue_uplink_config(cell_config_builder_params{
+      .scs_common = subcarrier_spacing::kHz15, .channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10}));
 
   // > pdsch-ServingCellConfig.
   serv_cell.pdsch_serv_cell_cfg.emplace(srsgnb::config_helpers::make_default_pdsch_serving_cell_config());
