@@ -25,6 +25,14 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pd
   convert_pdsch_mac_to_fapi(builder, mac_pdu);
 }
 
+static crb_interval get_crb_interval(const pdsch_information& pdsch_cfg)
+{
+  if (pdsch_cfg.coreset_cfg->id == to_coreset_id(0)) {
+    return pdsch_cfg.coreset_cfg->coreset0_crbs();
+  }
+  return pdsch_cfg.bwp_cfg->crbs;
+}
+
 static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch_codeword> codewords)
 {
   srsgnb_assert(codewords.size() == 1, "Current FAPI implementation only supports 1 transport block per PDU");
@@ -51,12 +59,12 @@ static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch
                                                  is_tb_crc_second_tb_required);
 }
 
-static void fill_codeword_information(fapi::dl_pdsch_pdu_builder& builder, unsigned nid_pdsch)
+static void
+fill_codeword_information(fapi::dl_pdsch_pdu_builder& builder, unsigned nid_pdsch, fapi::pdsch_ref_point_type ref_point)
 {
   static const unsigned transmision_scheme = 0;
   static const unsigned num_layers         = 1;
-  builder.set_codeword_information_parameters(
-      nid_pdsch, num_layers, transmision_scheme, fapi::pdsch_ref_point_type::subcarrier_0);
+  builder.set_codeword_information_parameters(nid_pdsch, num_layers, transmision_scheme, ref_point);
 }
 
 static void fill_dmrs(fapi::dl_pdsch_pdu_builder& builder, const dmrs_information& dmrs)
@@ -110,9 +118,6 @@ static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder& builder, const pd
 
   // Codewords.
   fill_codewords(builder, pdsch_cfg.codewords);
-
-  // Codeword information.
-  fill_codeword_information(builder, pdsch_cfg.n_id);
 
   // DMRS.
   fill_dmrs(builder, pdsch_cfg.dmrs);
@@ -189,10 +194,13 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
 
+  // Codeword information.
+  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::subcarrier_0);
+
   // BWP parameters.
-  // NOTE: as it is a SIB1 PDU, use the CORESET BWP parameters.
-  builder.set_bwp_parameters(mac_pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().length(),
-                             mac_pdu.pdsch_cfg.coreset_cfg->coreset0_crbs().start(),
+  const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
+  builder.set_bwp_parameters(crbs.length(),
+                             crbs.start(),
                              mac_pdu.pdsch_cfg.bwp_cfg->scs,
                              mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
 
@@ -235,9 +243,13 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
 
+  // Codeword information.
+  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
+
   // BWP parameters.
-  builder.set_bwp_parameters(mac_pdu.pdsch_cfg.bwp_cfg->crbs.length(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->crbs.start(),
+  const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
+  builder.set_bwp_parameters(crbs.length(),
+                             crbs.start(),
                              mac_pdu.pdsch_cfg.bwp_cfg->scs,
                              mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
 
@@ -279,9 +291,13 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
 
+  // Codeword information.
+  fill_codeword_information(builder, mac_pdu.pdsch_cfg.n_id, fapi::pdsch_ref_point_type::point_a);
+
   // BWP parameters.
-  builder.set_bwp_parameters(mac_pdu.pdsch_cfg.bwp_cfg->crbs.length(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->crbs.start(),
+  const crb_interval& crbs = get_crb_interval(mac_pdu.pdsch_cfg);
+  builder.set_bwp_parameters(crbs.length(),
+                             crbs.start(),
                              mac_pdu.pdsch_cfg.bwp_cfg->scs,
                              mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
 
