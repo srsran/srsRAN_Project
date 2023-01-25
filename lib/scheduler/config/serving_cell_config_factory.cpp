@@ -369,11 +369,11 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
   pdcch_cfg.search_spaces[0].nof_candidates = {
-      0,
-      2,
+      compute_max_nof_candidates(aggregation_level::n1, pdcch_cfg.coresets[0]),
+      compute_max_nof_candidates(aggregation_level::n2, pdcch_cfg.coresets[0]),
       compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]),
-      0,
-      0,
+      compute_max_nof_candidates(aggregation_level::n8, pdcch_cfg.coresets[0]),
+      compute_max_nof_candidates(aggregation_level::n16, pdcch_cfg.coresets[0]),
   };
 
   // > PDSCH-Config.
@@ -418,17 +418,5 @@ uint8_t srsgnb::config_helpers::compute_max_nof_candidates(aggregation_level    
   const unsigned max_coreset_rbs =
       cs_cfg.freq_domain_resources().count() * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE * cs_cfg.duration;
 
-  switch (aggr_lvl) {
-    case aggregation_level::n1:
-      return max_coreset_rbs / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
-    case aggregation_level::n2:
-      return max_coreset_rbs / (2 * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
-    case aggregation_level::n4:
-      return max_coreset_rbs / (4 * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
-    case aggregation_level::n8:
-      return max_coreset_rbs / (8 * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
-    case aggregation_level::n16:
-      return max_coreset_rbs / (16 * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
-  }
-  report_fatal_error("Invalid aggregation level.");
+  return max_coreset_rbs / (to_nof_cces(aggr_lvl) * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
 }
