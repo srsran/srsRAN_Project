@@ -30,9 +30,9 @@ scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  srsgnb_assert(not config_validators::validate_sched_cell_configuration_request_message(msg).is_error(),
+  srsgnb_assert(not config_validators::validate_sched_cell_configuration_request_message(msg, sched_cfg).is_error(),
                 "Invalid cell configuration request message. Cause: {}",
-                config_validators::validate_sched_cell_configuration_request_message(msg).error().c_str());
+                config_validators::validate_sched_cell_configuration_request_message(msg, sched_cfg).error().c_str());
 
   cells.add_cell(msg.cell_index, msg);
 

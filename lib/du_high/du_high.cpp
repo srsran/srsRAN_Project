@@ -63,20 +63,21 @@ du_high::du_high(const du_high_configuration& config_) :
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
-  mac        = create_mac(mac_config{mac_ev_notifier,
+  mac  = create_mac(mac_config{mac_ev_notifier,
                               *cfg.ul_executors,
                               *cfg.dl_executors,
                               *cfg.du_mng_executor,
                               *cfg.phy_adapter,
                               cfg.sched_cfg,
                               *metrics_notifier});
-  f1ap       = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ul_executors);
-  du_manager = create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells},
-                                                   {timers, *cfg.du_mng_executor, *cfg.ul_executors, *cfg.dl_executors},
-                                                   {*f1ap, *f1ap},
-                                                   {*config_.f1u_gw},
-                                                   {mac->get_ue_control_info_handler(), *f1ap, *f1ap},
-                                                   {mac->get_cell_manager(), mac->get_ue_configurator()}});
+  f1ap = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ul_executors);
+  du_manager =
+      create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells},
+                                          {timers, *cfg.du_mng_executor, *cfg.ul_executors, *cfg.dl_executors},
+                                          {*f1ap, *f1ap},
+                                          {*config_.f1u_gw},
+                                          {mac->get_ue_control_info_handler(), *f1ap, *f1ap},
+                                          {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.sched_cfg}});
 
   // Connect Layer<->DU manager adapters.
   mac_ev_notifier.connect(*du_manager);

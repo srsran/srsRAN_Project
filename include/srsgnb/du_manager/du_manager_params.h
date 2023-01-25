@@ -16,6 +16,7 @@
 #include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/f1u/du/f1u_gateway.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/support/timers.h"
 
 namespace srsgnb {
@@ -47,8 +48,9 @@ struct du_manager_params {
     f1ap_rrc_message_transfer_procedure_handler& f1c_rx_proc_handler;
   };
   struct mac_config_params {
-    mac_cell_manager&    cell_mng;
-    mac_ue_configurator& ue_cfg;
+    mac_cell_manager&       cell_mng;
+    mac_ue_configurator&    ue_cfg;
+    scheduler_expert_config sched_cfg;
   };
 
   ran_params         ran;

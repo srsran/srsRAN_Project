@@ -43,7 +43,8 @@ void initial_du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     const du_cell_config&   du_cfg       = cell_mng.get_cell_cfg(cell_index);
     byte_buffer             sib1_payload = srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(du_cfg);
     auto                    sched_cfg = srs_du::make_sched_cell_config_req(cell_index, du_cfg, sib1_payload.length());
-    error_type<std::string> result    = config_validators::validate_sched_cell_configuration_request_message(sched_cfg);
+    error_type<std::string> result =
+        config_validators::validate_sched_cell_configuration_request_message(sched_cfg, params.mac.sched_cfg);
     if (result.is_error()) {
       report_fatal_error("Invalid cell={} configuration. Cause: {}", cell_index, result.error());
     }

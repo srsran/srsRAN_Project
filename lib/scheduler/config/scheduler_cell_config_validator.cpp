@@ -9,6 +9,8 @@
  */
 
 #include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
+#include "../support/dmrs_helpers.h"
+#include "../support/prbs_calculator.h"
 #include "srsgnb/ran/duplex_mode.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
 #include "srsgnb/ran/prach/prach_frequency_mapping.h"
@@ -76,11 +78,42 @@ static error_type<std::string> validate_pucch_cfg_common(const sched_cell_config
   return {};
 }
 
+static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_request_message& msg,
+                                                 const scheduler_expert_config&                  expert_cfg)
+{
+  static const unsigned          nof_layers = 1;
+  static pdsch_mcs_table         mcs_table  = srsgnb::pdsch_mcs_table::qam64;
+  static const unsigned          nof_oh_prb = 0;
+  static const ofdm_symbol_range sib1_symbols{2, 14};
+
+  dmrs_information dmrs_info =
+      make_dmrs_info_common(msg.dl_cfg_common.init_dl_bwp.pdsch_common, 0, msg.pci, msg.dmrs_typeA_pos);
+  sch_mcs_description mcs_descr     = pdsch_mcs_get_config(mcs_table, expert_cfg.si.sib1_mcs_index);
+  sch_prbs_tbs        sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{msg.sib1_payload_size,
+                                                                       (unsigned)sib1_symbols.length(),
+                                                                       calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                       nof_oh_prb,
+                                                                       mcs_descr,
+                                                                       nof_layers});
+
+  VERIFY(
+      sib1_prbs_tbs.nof_prbs <= msg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+      "Not enough initial DL BWP PRBs ({} > {}) to send SIB1, given the chosen MCS={} and SIB1 payload size={} bytes. "
+      "Consider increasing SIB1 MCS or decrease the SIB1 payload size.",
+      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+      sib1_prbs_tbs.nof_prbs,
+      expert_cfg.si.sib1_mcs_index,
+      msg.sib1_payload_size);
+
+  return {};
+}
+
 /// \brief Validates \c sched_cell_configuration_request_message used to add a cell.
 /// \param[in] msg scheduler cell configuration message to be validated.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
 error_type<std::string> srsgnb::config_validators::validate_sched_cell_configuration_request_message(
-    const sched_cell_configuration_request_message& msg)
+    const sched_cell_configuration_request_message& msg,
+    const scheduler_expert_config&                  expert_cfg)
 {
   const auto& dl_lst = msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
   for (const auto& pdsch : dl_lst) {
@@ -97,6 +130,8 @@ error_type<std::string> srsgnb::config_validators::validate_sched_cell_configura
   HANDLE_CODE(validate_rach_cfg_common(msg));
 
   HANDLE_CODE(validate_pucch_cfg_common(msg));
+
+  HANDLE_CODE(validate_sib1_cfg(msg, expert_cfg));
 
   // TODO: Validate other parameters.
   return {};
