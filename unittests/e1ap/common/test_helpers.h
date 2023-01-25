@@ -29,12 +29,12 @@ public:
   void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) override
   {
     logger.info("Received E1SetupRequest message.");
-    last_cu_up_e1_setup_request_msg = msg;
+    last_cu_up_e1_setup_request = msg;
   }
 
   void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_cp::int_to_ue_index(ue_index_); }
 
-  cu_up_e1_setup_request last_cu_up_e1_setup_request_msg;
+  cu_up_e1_setup_request last_cu_up_e1_setup_request;
 
 private:
   srslog::basic_logger& logger;
@@ -49,7 +49,7 @@ public:
   cu_cp_e1_setup_response on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) override
   {
     logger.info("Received E1SetupRequest message.");
-    last_cu_cp_e1_setup_request_msg = msg;
+    last_cu_cp_e1_setup_request = msg;
 
     cu_cp_e1_setup_response res = {};
     return res;
@@ -59,7 +59,7 @@ public:
   on_bearer_context_setup_request_received(const srs_cu_up::e1ap_bearer_context_setup_request& msg) override
   {
     logger.info("Received Bearer Context Setup Request message.");
-    last_bearer_context_setup_request_msg                  = msg;
+    last_bearer_context_setup_request                      = msg;
     srs_cu_up::e1ap_bearer_context_setup_response response = {};
     response.ue_index                                      = ue_index;
     response.success                                       = true;
@@ -71,7 +71,7 @@ public:
       const srs_cu_up::e1ap_bearer_context_modification_request& msg) override
   {
     logger.info("Received Bearer Context Modification Request message.");
-    last_bearer_context_modification_request_msg                  = msg;
+    last_bearer_context_modification_request                      = msg;
     srs_cu_up::e1ap_bearer_context_modification_response response = {};
     response.ue_index                                             = ue_index;
     response.success                                              = true;
@@ -82,17 +82,17 @@ public:
   void on_bearer_context_release_command_received(const srs_cu_up::e1ap_bearer_context_release_command& msg) override
   {
     logger.info("Received Bearer Context Release Command.");
-    last_bearer_context_release_command_msg = msg;
+    last_bearer_context_release_command = msg;
 
     return;
   }
 
   void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_up::int_to_ue_index(ue_index_); }
 
-  srs_cu_up::e1ap_bearer_context_release_command      last_bearer_context_release_command_msg;
-  srs_cu_up::e1ap_bearer_context_modification_request last_bearer_context_modification_request_msg;
-  srs_cu_up::e1ap_bearer_context_setup_request        last_bearer_context_setup_request_msg;
-  cu_cp_e1_setup_request                              last_cu_cp_e1_setup_request_msg;
+  srs_cu_up::e1ap_bearer_context_release_command      last_bearer_context_release_command;
+  srs_cu_up::e1ap_bearer_context_modification_request last_bearer_context_modification_request;
+  srs_cu_up::e1ap_bearer_context_setup_request        last_bearer_context_setup_request;
+  cu_cp_e1_setup_request                              last_cu_cp_e1_setup_request;
 
 private:
   srslog::basic_logger& logger;

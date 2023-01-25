@@ -27,3 +27,11 @@ e1ap_cu_up_test::~e1ap_cu_up_test()
   // flush logger after each test
   srslog::flush();
 }
+
+void e1ap_cu_up_test::setup_bearer(unsigned int cu_cp_ue_e1_id)
+{
+  // Generate BearerContextSetupRequest
+  e1_message e1_bearer_context_setup = generate_bearer_context_setup_request(cu_cp_ue_e1_id);
+
+  e1ap->handle_message(e1_bearer_context_setup);
+}

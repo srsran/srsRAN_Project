@@ -72,19 +72,19 @@ TEST_F(e1ap_cu_up_test, when_unsupported_unsuccessful_outcome_received_then_mess
 /* Handling of E1 Setup                                                             */
 //////////////////////////////////////////////////////////////////////////////////////
 
-/// Test the successful CU-CP initiated e1 setup procedure
+/// Test the successful CU-CP initiated e1 setup
 TEST_F(e1ap_cu_up_test, when_cu_cp_e1_setup_request_valid_then_connect_cu_cp)
 {
-  // Action 1: Receive E1SetupRequest message
+  // Receive E1SetupRequest message
   test_logger.info("TEST: Receive E1SetupRequest message...");
 
   // Generate E1SetupRequest
-  e1_message cu_cp_e1_setup_msg = generate_cu_cp_e1_setup_request();
+  e1_message cu_cp_e1_setup = generate_cu_cp_e1_setup_request();
 
-  e1ap->handle_message(cu_cp_e1_setup_msg);
+  e1ap->handle_message(cu_cp_e1_setup);
 
-  // Action 2: Check if E1SetupRequest was forwarded to UE manager
-  ASSERT_EQ(cu_up_notifier.last_cu_cp_e1_setup_request_msg.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
+  // Check if E1SetupRequest was forwarded to UE manager
+  ASSERT_EQ(cu_up_notifier.last_cu_cp_e1_setup_request.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
 
   // Action 3: Transmit E1SetupResponse message
   test_logger.info("TEST: Transmit E1SetupResponse message...");
@@ -102,12 +102,12 @@ TEST_F(e1ap_cu_up_test, when_cu_cp_e1_setup_request_valid_then_connect_cu_cp)
 TEST_F(e1ap_cu_up_test, when_cu_cp_e1_setup_request_cant_be_handled_then_reject_cu_cp)
 {
   // Generate E1SetupRequest
-  e1_message cu_cp_e1_setup_msg = generate_cu_cp_e1_setup_request();
+  e1_message cu_cp_e1_setup = generate_cu_cp_e1_setup_request();
 
-  e1ap->handle_message(cu_cp_e1_setup_msg);
+  e1ap->handle_message(cu_cp_e1_setup);
 
-  // Action 2: Check if E1SetupRequest was forwarded to UE manager
-  ASSERT_EQ(cu_up_notifier.last_cu_cp_e1_setup_request_msg.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
+  // Check if E1SetupRequest was forwarded to UE manager
+  ASSERT_EQ(cu_up_notifier.last_cu_cp_e1_setup_request.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
 
   // Action 3: Transmit E1SetupFailure message
   test_logger.info("TEST: Transmit E1SetupFailure message...");
@@ -125,22 +125,96 @@ TEST_F(e1ap_cu_up_test, when_cu_cp_e1_setup_request_cant_be_handled_then_reject_
 /* Handling of Bearer Context Messages                                              */
 //////////////////////////////////////////////////////////////////////////////////////
 
-/// Test the successful CU-CP initiated e1 setup procedure
-TEST_F(e1ap_cu_up_test, when_valid_bearer_context_setup_received_then_bearer_context_response_is_send)
+TEST_F(e1ap_cu_up_test, when_valid_bearer_context_setup_received_then_bearer_context_setup_response_is_sent)
 {
-  // Action 1: Receive BearerContextSetupRequest message
+  // Receive BearerContextSetupRequest message
   test_logger.info("TEST: Receive BearerContextSetupRequest message...");
 
   // Generate BearerContextSetupRequest
-  e1_message e1_bearer_context_setup_msg = generate_bearer_context_setup_request_msg(9);
+  e1_message e1_bearer_context_setup = generate_bearer_context_setup_request(9);
 
-  e1ap->handle_message(e1_bearer_context_setup_msg);
+  e1ap->handle_message(e1_bearer_context_setup);
 
-  // Action 2: Check if BearerContextSetupRequest was forwarded to UE manager
-  ASSERT_EQ(cu_up_notifier.last_bearer_context_setup_request_msg.serving_plmn.to_string(), "02f899");
+  // Check if BearerContextSetupRequest was forwarded to UE manager
+  ASSERT_EQ(cu_up_notifier.last_bearer_context_setup_request.serving_plmn.to_string(), "02f899");
 
   // Check the generated PDU is indeed the Bearer Context Setup response
   ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, msg_notifier.last_e1_msg.pdu.type());
   ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_setup_resp,
+            msg_notifier.last_e1_msg.pdu.successful_outcome().value.type());
+}
+
+TEST_F(e1ap_cu_up_test, when_invalid_bearer_context_setup_received_then_bearer_context_setup_failure_is_sent)
+{
+  // Receive BearerContextSetupRequest message
+  test_logger.info("TEST: Receive BearerContextSetupRequest message...");
+
+  // Generate BearerContextSetupRequest
+  e1_message e1_bearer_context_setup = generate_invalid_bearer_context_setup_request(9);
+
+  e1ap->handle_message(e1_bearer_context_setup);
+
+  // Check the generated PDU is indeed the Bearer Context Setup Failure
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::unsuccessful_outcome, msg_notifier.last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::bearer_context_setup_fail,
+            msg_notifier.last_e1_msg.pdu.unsuccessful_outcome().value.type());
+}
+
+TEST_F(e1ap_cu_up_test,
+       when_valid_bearer_context_modification_received_then_bearer_context_modification_response_is_sent)
+{
+  // Test preamble
+  this->setup_bearer(9);
+
+  // Receive BearerContextSetupRequest message
+  test_logger.info("TEST: Receive BearerContextModificationRequest message...");
+
+  // Generate BearerContextModificationRequest
+  e1_message e1_bearer_context_modification = generate_bearer_context_modification_request(9, 0);
+
+  e1ap->handle_message(e1_bearer_context_modification);
+
+  // Check the generated PDU is indeed the Bearer Context Modification Response
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, msg_notifier.last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_mod_resp,
+            msg_notifier.last_e1_msg.pdu.successful_outcome().value.type());
+}
+
+TEST_F(e1ap_cu_up_test,
+       when_invalid_bearer_context_modification_received_then_bearer_context_modification_failure_is_sent)
+{
+  // Test preamble
+  this->setup_bearer(9);
+
+  // Receive BearerContextModificationRequest message
+  test_logger.info("TEST: Receive BearerContextModificationRequest message...");
+
+  // Generate BearerContextModificationRequest
+  e1_message e1_bearer_context_modification = generate_invalid_bearer_context_modification_request(9, 0);
+
+  e1ap->handle_message(e1_bearer_context_modification);
+
+  // Check the generated PDU is indeed the Bearer Context Modification Failure
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::unsuccessful_outcome, msg_notifier.last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::options::bearer_context_mod_fail,
+            msg_notifier.last_e1_msg.pdu.unsuccessful_outcome().value.type());
+}
+
+TEST_F(e1ap_cu_up_test, when_valid_bearer_context_release_command_received_then_bearer_context_release_complete_is_sent)
+{
+  // Test preamble
+  this->setup_bearer(9);
+
+  // Receive BearerContextSetupRequest message
+  test_logger.info("TEST: Receive BearerContextReleaseCommand message...");
+
+  // Generate BearerContextReleaseCommand
+  e1_message e1_bearer_context_release_cmd = generate_bearer_context_release_command(9, 0);
+
+  e1ap->handle_message(e1_bearer_context_release_cmd);
+
+  // Check the generated PDU is indeed the Bearer Context Modification Response
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, msg_notifier.last_e1_msg.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_release_complete,
             msg_notifier.last_e1_msg.pdu.successful_outcome().value.type());
 }

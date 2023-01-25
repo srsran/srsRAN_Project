@@ -27,6 +27,9 @@ protected:
   e1ap_cu_up_test();
   ~e1ap_cu_up_test() override;
 
+  /// \brief Helper method to setup a bearer at the CU-UP
+  void setup_bearer(unsigned int cu_cp_ue_e1_id);
+
   srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("E1AP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 

@@ -183,16 +183,14 @@ inline expected<gnb_cu_up_ue_e1ap_id_t> get_gnb_cu_up_ue_e1ap_id(const asn1::e1a
 {
   using init_msg_type = asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts;
   switch (init_msg.value.type()) {
-    case init_msg_type::bearer_context_setup_request:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id->value;
     case init_msg_type::bearer_context_release_cmd:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_cmd()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_cmd()->gnb_cu_up_ue_e1ap_id->value;
     case init_msg_type::bearer_context_mod_request:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_request()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_request()->gnb_cu_up_ue_e1ap_id->value;
     case init_msg_type::bearer_context_mod_required:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_required()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_mod_required()->gnb_cu_up_ue_e1ap_id->value;
     case init_msg_type::bearer_context_release_request:
-      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_request()->gnb_cu_cp_ue_e1ap_id->value;
+      return (gnb_cu_up_ue_e1ap_id_t)init_msg.value.bearer_context_release_request()->gnb_cu_up_ue_e1ap_id->value;
     default:
       break;
   }

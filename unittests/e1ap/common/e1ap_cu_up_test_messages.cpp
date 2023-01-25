@@ -28,7 +28,7 @@ e1_message srsgnb::srs_cu_up::generate_cu_cp_e1_setup_request()
   return e1_setup_request;
 }
 
-e1_message srsgnb::srs_cu_up::generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id)
+e1_message srsgnb::srs_cu_up::generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1_id)
 {
   e1_message bearer_context_setup_request = {};
 
@@ -109,4 +109,108 @@ e1_message srsgnb::srs_cu_up::generate_bearer_context_setup_request_msg(unsigned
   ng_ran_bearer_context_setup_req[0].value().pdu_session_res_to_setup_list().push_back(pdu_session_res_to_setup_item);
 
   return bearer_context_setup_request;
+}
+
+e1_message srsgnb::srs_cu_up::generate_invalid_bearer_context_setup_request(unsigned int cu_cp_ue_e1_id)
+{
+  e1_message bearer_context_setup_request = {};
+
+  bearer_context_setup_request.pdu.set_init_msg();
+  bearer_context_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
+
+  auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
+  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
+  bearer_context_setup_req->security_info.value.security_algorithm.ciphering_algorithm =
+      asn1::e1ap::ciphering_algorithm_e::nea0;
+  bearer_context_setup_req->security_info.value.up_securitykey.encryption_key.from_string(
+      "a6ae39efbe0d424cd85f4a9c3aee0414");
+  bearer_context_setup_req->ue_dl_aggr_max_bit_rate.value.value = 1000000000U;
+  bearer_context_setup_req->serving_plmn.value.from_string("02f899");
+  bearer_context_setup_req->activity_notif_level.value = asn1::e1ap::activity_notif_level_e::ue;
+
+  bearer_context_setup_req->sys_bearer_context_setup_request.id   = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_SETUP_REQUEST;
+  bearer_context_setup_req->sys_bearer_context_setup_request.crit = asn1::crit_opts::reject;
+  bearer_context_setup_req->sys_bearer_context_setup_request.value.set_e_utran_bearer_context_setup_request();
+
+  return bearer_context_setup_request;
+}
+
+e1_message srsgnb::srs_cu_up::generate_bearer_context_modification_request(unsigned int cu_cp_ue_e1_id,
+                                                                           unsigned int cu_up_ue_e1_id)
+{
+  e1_message bearer_context_modification_request = {};
+
+  bearer_context_modification_request.pdu.set_init_msg();
+  bearer_context_modification_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+
+  auto& bearer_context_mod_req = bearer_context_modification_request.pdu.init_msg().value.bearer_context_mod_request();
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
+  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1_id;
+
+  bearer_context_mod_req->sys_bearer_context_mod_request_present = true;
+  bearer_context_mod_req->sys_bearer_context_mod_request.id      = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_MOD_REQUEST;
+  bearer_context_mod_req->sys_bearer_context_mod_request.crit    = asn1::crit_opts::reject;
+  bearer_context_mod_req->sys_bearer_context_mod_request.value.set_ng_ran_bearer_context_mod_request();
+
+  auto& ng_ran_bearer_context_mod_req =
+      bearer_context_mod_req->sys_bearer_context_mod_request.value.ng_ran_bearer_context_mod_request();
+
+  ng_ran_bearer_context_mod_req.pdu_session_res_to_modify_list_present = true;
+
+  asn1::e1ap::pdu_session_res_to_modify_item_s pdu_session_res_to_setup_modify_item = {};
+  pdu_session_res_to_setup_modify_item.pdu_session_id                               = 1;
+
+  asn1::e1ap::drb_to_modify_item_ng_ran_s drb_to_mod_item_ng_ran;
+  drb_to_mod_item_ng_ran.drb_id = 4;
+
+  asn1::e1ap::up_params_item_s up_params_item;
+  up_params_item.up_tnl_info.set_gtp_tunnel();
+  auto& gtp_tunnel = up_params_item.up_tnl_info.gtp_tunnel();
+  gtp_tunnel.transport_layer_address.from_number(2887061624);
+  gtp_tunnel.gtp_teid.from_string("7e9fcae5");
+  up_params_item.cell_group_id = 0;
+
+  drb_to_mod_item_ng_ran.dl_up_params.push_back(up_params_item);
+
+  pdu_session_res_to_setup_modify_item.drb_to_modify_list_ng_ran.push_back(drb_to_mod_item_ng_ran);
+
+  ng_ran_bearer_context_mod_req.pdu_session_res_to_modify_list.value.push_back(pdu_session_res_to_setup_modify_item);
+
+  return bearer_context_modification_request;
+}
+
+e1_message srsgnb::srs_cu_up::generate_invalid_bearer_context_modification_request(unsigned int cu_cp_ue_e1_id,
+                                                                                   unsigned int cu_up_ue_e1_id)
+{
+  e1_message bearer_context_modification_request = {};
+
+  bearer_context_modification_request.pdu.set_init_msg();
+  bearer_context_modification_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+
+  auto& bearer_context_mod_req = bearer_context_modification_request.pdu.init_msg().value.bearer_context_mod_request();
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
+  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1_id;
+
+  bearer_context_mod_req->sys_bearer_context_mod_request_present = true;
+  bearer_context_mod_req->sys_bearer_context_mod_request.id      = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_MOD_REQUEST;
+  bearer_context_mod_req->sys_bearer_context_mod_request.crit    = asn1::crit_opts::reject;
+  bearer_context_mod_req->sys_bearer_context_mod_request.value.set_e_utran_bearer_context_mod_request();
+
+  return bearer_context_modification_request;
+}
+
+e1_message srsgnb::srs_cu_up::generate_bearer_context_release_command(unsigned int cu_cp_ue_e1_id,
+                                                                      unsigned int cu_up_ue_e1_id)
+{
+  e1_message bearer_context_release_command = {};
+
+  bearer_context_release_command.pdu.set_init_msg();
+  bearer_context_release_command.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
+
+  auto& bearer_context_release_cmd = bearer_context_release_command.pdu.init_msg().value.bearer_context_release_cmd();
+  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
+  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1_id;
+  bearer_context_release_cmd->cause.value.set_radio_network();
+
+  return bearer_context_release_command;
 }
