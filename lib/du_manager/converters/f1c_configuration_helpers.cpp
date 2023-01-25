@@ -454,13 +454,19 @@ asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
   return sib1;
 }
 
-byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg)
+byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg, std::string* js_str)
 {
   byte_buffer          buf;
   asn1::bit_ref        bref{buf};
   asn1::rrc_nr::sib1_s sib1 = make_asn1_rrc_cell_sib1(du_cfg);
   asn1::SRSASN_CODE    ret  = sib1.pack(bref);
   srsgnb_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
+
+  if (js_str != nullptr) {
+    asn1::json_writer js;
+    sib1.to_json(js);
+    *js_str = js.to_string();
+  }
   return buf;
 }
 
@@ -477,7 +483,8 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_con
 
 void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request,
                                                 const du_setup_params&          setup_params,
-                                                span<const du_cell_config*>     cells_to_add)
+                                                span<const du_cell_config*>     cells_to_add,
+                                                std::vector<std::string>*       cell_json_strs)
 {
   byte_buffer buf;
   // TODO: Add other inputs and set values accordingly
@@ -504,11 +511,16 @@ void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
     // Add System Information related to the cell.
     f1_cell.gnb_du_sys_info_present = true;
     buf                             = make_asn1_rrc_cell_mib_buffer(*cell_cfg);
-    f1_cell.gnb_du_sys_info.mib_msg.resize(buf.length());
-    std::copy(buf.begin(), buf.end(), f1_cell.gnb_du_sys_info.mib_msg.begin());
-    buf = make_asn1_rrc_cell_sib1_buffer(*cell_cfg);
-    f1_cell.gnb_du_sys_info.sib1_msg.resize(buf.length());
-    std::copy(buf.begin(), buf.end(), f1_cell.gnb_du_sys_info.sib1_msg.begin());
+    f1_cell.gnb_du_sys_info.mib_msg = std::move(buf);
+
+    // Enable json conversion if argument is present.
+    std::string* js_str = nullptr;
+    if (cell_json_strs != nullptr) {
+      cell_json_strs->emplace_back();
+      js_str = &cell_json_strs->back();
+    }
+    buf                              = make_asn1_rrc_cell_sib1_buffer(*cell_cfg, js_str);
+    f1_cell.gnb_du_sys_info.sib1_msg = std::move(buf);
   }
 }
 

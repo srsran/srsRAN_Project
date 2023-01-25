@@ -68,7 +68,13 @@ async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup
   setup_params.rrc_version             = params.ran.rrc_version;
   setup_params.gnb_du_id               = params.ran.gnb_du_id;
   f1_setup_request_message request_msg = {};
-  fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells_to_add);
+  std::vector<std::string> sib1_jsons;
+  fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells_to_add, &sib1_jsons);
+  for (unsigned i = 0; i != sib1_jsons.size(); ++i) {
+    const byte_buffer& sib1_msg =
+        request_msg.msg->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item().gnb_du_sys_info.sib1_msg;
+    logger.info(sib1_msg.begin(), sib1_msg.end(), "SIB1 cell={}: {}", to_du_cell_index(i), sib1_jsons[i]);
+  }
 
   // Initiate F1 Setup Request.
   return params.f1ap.conn_mng.handle_f1ap_setup_request(request_msg);
