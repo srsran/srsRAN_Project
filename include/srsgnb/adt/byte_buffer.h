@@ -184,15 +184,19 @@ public:
   }
 
   /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
-  void append(span<const uint8_t> bytes)
+  bool append(span<const uint8_t> bytes)
   {
     if (empty() and not bytes.empty()) {
-      append_segment();
+      if (not append_segment()) {
+        return false;
+      }
     }
     // segment-wise copy.
     for (size_t count = 0; count < bytes.size();) {
       if (ctrl_blk_ptr->tail->tailroom() == 0) {
-        append_segment();
+        if (not append_segment()) {
+          return false;
+        }
       }
       size_t              to_write = std::min(ctrl_blk_ptr->tail->tailroom(), bytes.size() - count);
       span<const uint8_t> subspan  = bytes.subspan(count, to_write);
@@ -200,23 +204,28 @@ public:
       count += to_write;
       ctrl_blk_ptr->pkt_len += to_write;
     }
+    return true;
   }
 
   /// Appends an initializer list of bytes.
   void append(const std::initializer_list<uint8_t>& bytes) { append(span<const uint8_t>{bytes.begin(), bytes.size()}); }
 
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
-  void append(const byte_buffer& other)
+  bool append(const byte_buffer& other)
   {
     srsgnb_sanity_check(&other != this, "Self-append not supported");
     if (empty() and not other.empty()) {
-      append_segment();
+      if (not append_segment()) {
+        return false;
+      }
     }
     for (byte_buffer_segment* seg = other.ctrl_blk_ptr->head.get(); seg != nullptr; seg = seg->next().get()) {
       auto other_it = seg->begin();
       while (other_it != seg->end()) {
         if (ctrl_blk_ptr->tail->tailroom() == 0) {
-          append_segment();
+          if (not append_segment()) {
+            return false;
+          }
         }
         auto to_append = std::min(seg->end() - other_it, (iterator::difference_type)ctrl_blk_ptr->tail->tailroom());
         ctrl_blk_ptr->tail->append(other_it, other_it + to_append);
@@ -224,16 +233,20 @@ public:
       }
       ctrl_blk_ptr->pkt_len += seg->length();
     }
+    return true;
   }
 
   /// Appends bytes to the byte buffer. This function may allocate new segments.
-  void append(uint8_t byte)
+  bool append(uint8_t byte)
   {
     if (empty() or ctrl_blk_ptr->tail->tailroom() == 0) {
-      append_segment();
+      if (not append_segment()) {
+        return false;
+      }
     }
     ctrl_blk_ptr->tail->append(byte);
     ctrl_blk_ptr->pkt_len++;
+    return true;
   }
 
   /// Appends a view of bytes into current byte buffer.
@@ -250,16 +263,17 @@ public:
   void append(const byte_buffer_slice& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
-  void prepend(span<const uint8_t> bytes)
+  bool prepend(span<const uint8_t> bytes)
   {
     if (empty()) {
       // the byte buffer is empty. Prepending is the same as appending.
-      append(bytes);
-      return;
+      return append(bytes);
     }
     for (size_t count = 0; count < bytes.size();) {
       if (ctrl_blk_ptr->head->headroom() == 0) {
-        prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, bytes.size() - count));
+        if (not prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, bytes.size() - count))) {
+          return false;
+        }
       }
       size_t              to_write = std::min(ctrl_blk_ptr->head->headroom(), bytes.size() - count);
       span<const uint8_t> subspan  = bytes.subspan(bytes.size() - to_write - count, to_write);
@@ -267,6 +281,7 @@ public:
       ctrl_blk_ptr->pkt_len += to_write;
       count += to_write;
     }
+    return true;
   }
 
   /// Prepends space in byte_buffer. This function may allocate new segments.
@@ -403,16 +418,18 @@ public:
   }
 
   /// Set byte_buffer length. Note: It doesn't initialize newly created bytes.
-  void resize(size_t new_sz)
+  bool resize(size_t new_sz)
   {
     size_t prev_len = length();
     if (new_sz == prev_len) {
-      return;
+      return true;
     }
     if (new_sz > prev_len) {
       for (size_t to_add = new_sz - prev_len; to_add > 0;) {
         if (empty() or ctrl_blk_ptr->tail->tailroom() == 0) {
-          append_segment();
+          if (not append_segment()) {
+            return false;
+          }
         }
         size_t added = std::min(ctrl_blk_ptr->tail->tailroom(), to_add);
         ctrl_blk_ptr->tail->resize(added);
@@ -433,6 +450,7 @@ public:
       }
     }
     ctrl_blk_ptr->pkt_len = new_sz;
+    return true;
   }
 
   /// Returns a non-owning list of segments that compose the byte_buffer.
@@ -468,32 +486,39 @@ public:
   }
 
 private:
-  void append_segment()
+  bool append_segment()
   {
     if (empty()) {
       ctrl_blk_ptr = std::make_shared<control_block>();
       // For first segment of byte_buffer, add a headroom.
       std::unique_ptr<byte_buffer_segment> p{new (std::nothrow)
                                                  byte_buffer_segment(byte_buffer_segment::DEFAULT_HEADROOM)};
-      // TODO: Verify if allocation was successful. What to do if not?
-      srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
+      if (p == nullptr) {
+        warn_alloc_failure();
+        return false;
+      }
       ctrl_blk_ptr->tail = p.get();
       ctrl_blk_ptr->head = std::move(p);
     } else {
       // No headroom needed for later segments.
       std::unique_ptr<byte_buffer_segment> p{new (std::nothrow) byte_buffer_segment(0)};
-      // TODO: Verify if allocation was successful. What to do if not?
-      srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
+      if (p == nullptr) {
+        warn_alloc_failure();
+        return false;
+      }
       ctrl_blk_ptr->tail->next() = std::move(p);
       ctrl_blk_ptr->tail         = ctrl_blk_ptr->tail->next().get();
     }
+    return true;
   }
 
-  void prepend_segment(size_t headroom_size)
+  bool prepend_segment(size_t headroom_size)
   {
     std::unique_ptr<byte_buffer_segment> p{new (std::nothrow) byte_buffer_segment(headroom_size)};
-    // TODO: Verify if allocation was successful. What to do if not?
-    srsgnb_assert(p != nullptr, "Failed to allocate byte_buffer_segment");
+    if (p == nullptr) {
+      warn_alloc_failure();
+      return false;
+    }
     if (empty()) {
       ctrl_blk_ptr       = std::make_shared<control_block>();
       ctrl_blk_ptr->tail = p.get();
@@ -502,6 +527,7 @@ private:
       p->next()          = std::move(ctrl_blk_ptr->head);
       ctrl_blk_ptr->head = std::move(p);
     }
+    return true;
   }
 
   /// \brief Removes last segment of the byte_buffer.
@@ -523,6 +549,12 @@ private:
     }
     ctrl_blk_ptr->tail         = new_tail;
     ctrl_blk_ptr->tail->next() = nullptr;
+  }
+
+  void warn_alloc_failure()
+  {
+    static srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
+    logger.warning("POOL: Failure to allocate byte buffer segment");
   }
 
   // TODO: Optimize. shared_ptr<> has a lot of boilerplate we don't need.
@@ -724,7 +756,9 @@ inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
   size_t rem_bytes = nof_bytes;
   while (rem_bytes > 0) {
     if (empty() or ctrl_blk_ptr->head->headroom() == 0) {
-      prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, rem_bytes));
+      if (not prepend_segment(std::min((size_t)byte_buffer_segment::SEGMENT_SIZE, rem_bytes))) {
+        return {};
+      }
     }
     size_t to_reserve = std::min(ctrl_blk_ptr->head->headroom(), rem_bytes);
     ctrl_blk_ptr->head->reserve_prepend(to_reserve);
