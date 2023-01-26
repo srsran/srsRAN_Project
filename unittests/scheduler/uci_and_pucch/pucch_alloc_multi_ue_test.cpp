@@ -289,7 +289,10 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_removal)
   add_sr_grant();
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
 
-  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(slot_grid, t_bench.get_main_ue().crnti);
+  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(
+      slot_grid,
+      t_bench.get_main_ue().crnti,
+      t_bench.get_main_ue().get_pcell().cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(0, removed_bits.harq_ack_nof_bits);
@@ -303,7 +306,10 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_harq_removal)
   add_harq_grant();
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
 
-  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(slot_grid, t_bench.get_main_ue().crnti);
+  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(
+      slot_grid,
+      t_bench.get_main_ue().crnti,
+      t_bench.get_main_ue().get_pcell().cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(1, removed_bits.harq_ack_nof_bits);
@@ -318,7 +324,10 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_harq_removal)
   add_harq_grant();
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
 
-  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(slot_grid, t_bench.get_main_ue().crnti);
+  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(
+      slot_grid,
+      t_bench.get_main_ue().crnti,
+      t_bench.get_main_ue().get_pcell().cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(1, removed_bits.harq_ack_nof_bits);
