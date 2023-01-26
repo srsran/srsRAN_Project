@@ -82,8 +82,8 @@ constexpr inline std::size_t channel_bw_mhz_to_index_fr2(unsigned dl_bw_mhz)
   return std::numeric_limits<size_t>::max();
 }
 
-/// Computes the maximum transmission bandwidth in number of PRBs for a UE channel.
-/// \remark See TS 38.101-1/2, 5.3.2 - Maximum transmission bandwidth configuration.
+/// Computes the maximum transmission bandwidth in number of PRBs.
+/// \remark See TS 38.104, Table 5.3.2-1/2 - Transmission bandwidth configuration for FR1/FR2.
 inline std::size_t get_max_Nprb(unsigned dl_bw_mhz, subcarrier_spacing scs, frequency_range fr)
 {
   srsgnb_sanity_check(is_scs_valid(scs, fr), "Invalid SCS");
