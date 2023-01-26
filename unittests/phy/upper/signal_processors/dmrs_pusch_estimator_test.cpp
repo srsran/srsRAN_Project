@@ -40,9 +40,19 @@ std::ostream& operator<<(std::ostream& os, dmrs_pusch_estimator::configuration c
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, test_label label)
+{
+  std::string text = "DM-RS creation";
+  if (label == test_label::ch_estimation) {
+    text = "CH estimation";
+  }
+  fmt::print(os, text);
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
-  fmt::print(os, "config={} symbols={};", test_case.config, test_case.rx_symbols.get_file_name());
+  fmt::print(os, "{} - config={} symbols={};", test_case.label, test_case.config, test_case.rx_symbols.get_file_name());
   return os;
 }
 
@@ -86,7 +96,7 @@ protected:
 
 static constexpr float tolerance = 0.001;
 
-TEST_P(DmrsPuschEstimatorFixture, Position)
+TEST_P(DmrsPuschEstimatorFixture, Creation)
 {
   // This test only looks to whether the estimator places the DM-RS pilots in the correct position. To this end, the
   // received channel samples have been generated assuming that layers are transmitted on orthogonal channels (one layer
@@ -97,13 +107,13 @@ TEST_P(DmrsPuschEstimatorFixture, Position)
 
   // This is a 'dmrs-position' test.
   if (GetParam().label != test_label::dmrs_creation) {
-    return;
+    GTEST_SKIP() << "Not a DM-RS creation test, skipping.";
   }
 
   // The current estimator does not support Type2 DM-RS.
   // As well, the MIMO case must be double-checked.
   if ((config.type == dmrs_type::TYPE2) || (config.nof_tx_layers > 1)) {
-    GTEST_SKIP();
+    GTEST_SKIP() << "Configuration not supported yet, skipping.";
   }
 
   ASSERT_EQ(config.rx_ports.size(), config.nof_tx_layers)
@@ -195,13 +205,13 @@ TEST_P(DmrsPuschEstimatorFixture, Average)
 
   // This is a 'dmrs-position' test.
   if (GetParam().label != test_label::ch_estimation) {
-    return;
+    GTEST_SKIP() << "Not a channel estimation test, skipping.";
   }
 
   // The current estimator does not support Type2 DM-RS.
   // As well, the MIMO case must be double-checked.
   if ((config.type == dmrs_type::TYPE2) || (config.nof_tx_layers > 1)) {
-    GTEST_SKIP();
+    GTEST_SKIP() << "Configuration not supported yet, skipping.";
   }
 
   unsigned nof_allocated_res = config.rb_mask.count() * NRE * config.nof_symbols;
@@ -228,7 +238,7 @@ TEST_P(DmrsPuschEstimatorFixture, Average)
   ASSERT_NEAR(ch_est.get_rsrp(0, 0), GetParam().est_rsrp, tolerance);
 }
 
-// Creates test suite with al the test cases.
+// Creates test suite with all the test cases.
 INSTANTIATE_TEST_SUITE_P(DmrsPuschEstimatorTest,
                          DmrsPuschEstimatorFixture,
                          ::testing::ValuesIn(dmrs_pusch_estimator_test_data));
