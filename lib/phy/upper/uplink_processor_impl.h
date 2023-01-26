@@ -16,10 +16,10 @@ namespace srsgnb {
 
 class task_executor;
 
-/// \brief Uplink processor implementation with a single executor.
+/// \brief Uplink processor implementation.
 ///
-/// In this implementation, every task is processed by the same executor. When a task finishes, the results are notified
-/// by the upper_phy_rx_results_notifier interface.
+/// In this implementation, every task is processed by its channel processor. When a task finishes, the results are
+/// notified by the upper_phy_rx_results_notifier interface.
 class uplink_processor_impl : public uplink_processor
 {
 public:

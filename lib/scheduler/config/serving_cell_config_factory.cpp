@@ -112,6 +112,8 @@ search_space_configuration srsgnb::config_helpers::make_default_ue_search_space_
   search_space_configuration cfg = make_default_common_search_space_config();
   cfg.cs_id                      = to_coreset_id(1);
   cfg.id                         = to_search_space_id(2);
+  cfg.type                       = search_space_configuration::type_t::ue_dedicated;
+  cfg.ue_specific                = search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
   return cfg;
 }
 
