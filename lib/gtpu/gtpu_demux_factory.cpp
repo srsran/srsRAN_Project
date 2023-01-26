@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<gtpu_demux> srsgnb::create_gtpu_demux()
+std::unique_ptr<gtpu_demux> srsgnb::create_gtpu_demux(gtpu_demux_creation_message_msg& msg)
 {
-  return std::make_unique<gtpu_demux_impl>();
+  return std::make_unique<gtpu_demux_impl>(msg.cu_up_exec);
 }

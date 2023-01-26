@@ -27,7 +27,8 @@ protected:
     gtpu_tunnel = std::make_unique<gtpu_test_rx_upper>();
 
     // create DUT object
-    dut = create_gtpu_demux();
+    gtpu_demux_creation_message_msg msg = {};
+    dut                                 = create_gtpu_demux(msg);
   }
 
   void TearDown() override

@@ -14,7 +14,10 @@
 
 using namespace srsgnb;
 
-gtpu_demux_impl::gtpu_demux_impl() : logger(srslog::fetch_basic_logger("GTPU")) {}
+gtpu_demux_impl::gtpu_demux_impl(task_executor* cu_up_exec_) :
+  cu_up_exec(cu_up_exec_), logger(srslog::fetch_basic_logger("GTPU"))
+{
+}
 
 bool gtpu_demux_impl::add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel)
 {
@@ -44,6 +47,12 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu)
     return;
   }
 
+  auto fn = [this, teid, p = std::move(pdu)]() mutable { handle_pdu_impl(teid, std::move(p)); };
+  cu_up_exec->execute(std::move(fn));
+}
+
+void gtpu_demux_impl::handle_pdu_impl(uint32_t teid, byte_buffer pdu)
+{
   const auto& it = teid_to_tunnel.find(teid);
   if (it == teid_to_tunnel.end()) {
     logger.error("Tunnel with TEID={} does not exist. Dropping PDU.", teid);

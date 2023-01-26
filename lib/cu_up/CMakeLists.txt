@@ -15,4 +15,4 @@ set(SOURCES
 
 add_library(srsgnb_cu_up STATIC ${SOURCES})
 
-target_link_libraries(srsgnb_cu_up srsgnb_e1 srslog srsgnb_support srsgnb_pdcp srsgnb_gtpu srsgnb_gateway e1ap_asn1 srsran_sdap srsgnb_security)
+target_link_libraries(srsgnb_cu_up srsgnb_e1 srsgnb_gtpu srsgnb_pdcp  srsgnb_gateway e1ap_asn1 srsran_sdap srsgnb_security  srsgnb_support srslog )

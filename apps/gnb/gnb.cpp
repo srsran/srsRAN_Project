@@ -120,9 +120,10 @@ struct worker_manager {
     radio_worker.stop();
   }
 
-  // CU worker and executers.
+  // CU-CP worker and executors.
   task_worker                            cu_ctrl_worker{"CU Ctrl", task_worker_queue_size};
   static_vector<task_worker_executor, 1> cu_exec{{cu_ctrl_worker}};
+
   // DU workers and executers.
   task_worker              ctrl_worker{"Crtl-DU_UL", task_worker_queue_size};
   task_worker              dl_workers{"DU-DL#0", task_worker_queue_size};

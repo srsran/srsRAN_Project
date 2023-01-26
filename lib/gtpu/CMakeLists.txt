@@ -8,8 +8,8 @@
 
 set(SOURCES gtpu_tunnel_factory.cpp
             gtpu_pdu.cpp
-            gtpu_demux_impl.cpp
-            gtpu_demux_factory.cpp)
+            gtpu_demux_factory.cpp
+            gtpu_demux_impl.cpp)
 
 add_library(srsgnb_gtpu STATIC ${SOURCES})
 target_link_libraries(srsgnb_gtpu srsgnb_support)
