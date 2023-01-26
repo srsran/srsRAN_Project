@@ -352,6 +352,7 @@ lower_phy_configuration create_lower_phy_configuration(float                    
   phy_config.error_notifier             = error_notifier;
   phy_config.rx_symbol_notifier         = rx_symbol_notifier;
   phy_config.timing_notifier            = timing_notifier;
+  phy_config.prach_async_executor       = nullptr;
 
   // Amplitude controller configuration.
   phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
