@@ -101,6 +101,9 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
     downlink_processor* operator->() { return &dl_processor.get(); }
     /// Overloaded member of pointer operator.
     const downlink_processor* operator->() const { return &dl_processor.get(); }
+
+    /// Returns the associated slot for this controller.
+    slot_point get_slot() const { return slot; }
   };
 
 public:
@@ -146,6 +149,15 @@ public:
   /// \param[in] slot Identifies the new slot.
   /// \note This method is thread safe and may be called from different threads.
   void handle_new_slot(slot_point slot);
+
+private:
+  /// Returns true if the given message arrived in time, otherwise returns false.
+  template <typename T>
+  bool is_message_in_time(const T& msg) const
+  {
+    return (current_slot_controller.get_slot().slot_index() == msg.slot &&
+            current_slot_controller.get_slot().sfn() == msg.sfn);
+  }
 
 private:
   /// Sector identifier.

@@ -165,17 +165,26 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
   // Add SIB1 PDUs to the Tx_Data.request message.
   for (const auto& pdu : dl_data.sib1_pdus) {
-    builder.add_pdu_custom_payload(fapi_index++, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    if (pdu.cw_index == 0) {
+      ++fapi_index;
+    }
   }
 
   // Add RAR PDUs to the Tx_Data.request message.
   for (const auto& pdu : dl_data.rar_pdus) {
-    builder.add_pdu_custom_payload(fapi_index++, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    if (pdu.cw_index == 0) {
+      ++fapi_index;
+    }
   }
 
-  // Add UE specific PDUs.
+  // Add UE specific PDUs to the Tx_Data.request message.
   for (const auto& pdu : dl_data.ue_pdus) {
-    builder.add_pdu_custom_payload(fapi_index++, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    if (pdu.cw_index == 0) {
+      ++fapi_index;
+    }
   }
 
   // Send the message.

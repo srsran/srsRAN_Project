@@ -117,7 +117,8 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         pdcch_processor::pdu_t& pdcch_pdu = pdus.pdcch.emplace_back();
         convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot);
         if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
-          logger.info("Not supported PDCCH PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+          logger.warning(
+              "Unsupported PDCCH PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
 
           return {};
         }
@@ -127,7 +128,8 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         pdsch_processor::pdu_t& pdsch_pdu = pdus.pdsch.emplace_back();
         convert_pdsch_fapi_to_phy(pdsch_pdu, pdu.pdsch_pdu, msg.sfn, msg.slot);
         if (!dl_pdu_validator.is_valid(pdsch_pdu)) {
-          logger.info("Not supported PDSCH PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+          logger.warning(
+              "Unsupported PDSCH PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
 
           return {};
         }
@@ -137,7 +139,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
         ssb_processor::pdu_t& ssb_pdu = pdus.ssb.emplace_back();
         convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot, scs_common);
         if (!dl_pdu_validator.is_valid(ssb_pdu)) {
-          logger.info("Not supported SSB PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+          logger.warning("Unsupported SSB PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
 
           return {};
         }
@@ -156,6 +158,17 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   // :TODO: check the messages order. Do this in a different class.
 
   std::lock_guard<std::mutex> lock(mutex);
+
+  // Ignore messages that do not correspond to the current slot.
+  if (!is_message_in_time(msg)) {
+    logger.warning(
+        "Received DL_TTI.request message out of time. Current slot is {}.{} while message corresponds to {}.{}",
+        current_slot_controller.get_slot().sfn(),
+        current_slot_controller.get_slot().slot_index(),
+        msg.sfn,
+        msg.slot);
+    return;
+  }
 
   const downlink_pdus& pdus = translate_dl_tti_pdus_to_phy_pdus(msg, dl_pdu_validator, logger, scs_common);
 
@@ -222,7 +235,8 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         prach_buffer_context& context = pdus.prach.emplace_back();
         convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_cfg, carrier_cfg, msg.sfn, msg.slot, sector_id);
         if (!ul_pdu_validator.is_valid(get_prach_dectector_config_from(context))) {
-          logger.info("Not supported PRACH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+          logger.warning(
+              "Unsupported PRACH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
 
           return {};
         }
@@ -233,7 +247,8 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         uplink_processor::pucch_pdu& ul_pdu = pdus.pucch.emplace_back();
         convert_pucch_fapi_to_phy(ul_pdu, pdu.pucch_pdu, msg.sfn, msg.slot);
         if (!is_pucch_pdu_valid(ul_pdu_validator, ul_pdu)) {
-          logger.info("Not supported PUCCH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+          logger.warning(
+              "Unsupported PUCCH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
 
           return {};
         }
@@ -244,7 +259,8 @@ static uplink_pdus translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tti_request_
         uplink_processor::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
         convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot);
         if (!ul_pdu_validator.is_valid(ul_pdu.pdu)) {
-          logger.info("Not supported PUSCH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+          logger.warning(
+              "Unsupported PUSCH PDU detected. Skipping UL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
 
           return {};
         }
@@ -263,6 +279,17 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   // :TODO: check the messages order. Do this in a different class.
 
   std::lock_guard<std::mutex> lock(mutex);
+
+  // Ignore messages that do not correspond to the current slot.
+  if (!is_message_in_time(msg)) {
+    logger.warning(
+        "Received UL_TTI.request message out of time. Current slot is {}.{} while message corresponds to {}.{}",
+        current_slot_controller.get_slot().sfn(),
+        current_slot_controller.get_slot().slot_index(),
+        msg.sfn,
+        msg.slot);
+    return;
+  }
 
   const uplink_pdus& pdus =
       translate_ul_tti_pdus_to_phy_pdus(msg, ul_pdu_validator, prach_cfg, carrier_cfg, logger, sector_id);
@@ -301,12 +328,23 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
 {
   std::lock_guard<std::mutex> lock(mutex);
 
+  // Ignore messages that do not correspond to the current slot.
+  if (!is_message_in_time(msg)) {
+    logger.warning(
+        "Received UL_DCI.request message out of time. Current slot is {}.{} while message corresponds to {}.{}",
+        current_slot_controller.get_slot().sfn(),
+        current_slot_controller.get_slot().slot_index(),
+        msg.sfn,
+        msg.slot);
+    return;
+  }
+
   static_vector<pdcch_processor::pdu_t, MAX_PUCCH_PDUS_PER_SLOT> pdus;
   for (const auto& pdu : msg.pdus) {
     pdcch_processor::pdu_t& pdcch_pdu = pdus.emplace_back();
     convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdu, msg.sfn, msg.slot);
     if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
-      logger.info("Not supported PDCCH PDU detect. Skipping UL_DCI.request message in {}.{}.", msg.sfn, msg.slot);
+      logger.warning("Unsupported PDCCH detected. Skipping UL_DCI.request message in {}.{}.", msg.sfn, msg.slot);
 
       return;
     }
@@ -321,16 +359,29 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
 {
   std::lock_guard<std::mutex> lock(mutex);
 
+  // Ignore messages that do not correspond to the current slot.
+  if (!is_message_in_time(msg)) {
+    logger.warning(
+        "Received TX_Data.request message out of time. Current slot is {}.{} while message corresponds to {}.{}",
+        current_slot_controller.get_slot().sfn(),
+        current_slot_controller.get_slot().slot_index(),
+        msg.sfn,
+        msg.slot);
+    return;
+  }
+
   // Skip if there is no PDSCH PDU in the repository. This may be caused by a PDU not supported in the
   // DL_TTI.request.
   if (pdsch_pdu_repository.empty()) {
     return;
   }
 
-  srsgnb_assert(msg.pdus.size() == pdsch_pdu_repository.size(),
-                "Invalid TX_data.request received. Message contains ({}) payload PDUs but it expects ({})",
-                msg.pdus.size(),
-                pdsch_pdu_repository.size());
+  if (msg.pdus.size() != pdsch_pdu_repository.size()) {
+    logger.warning("Invalid TX_Data.request. Message contains ({}) payload PDUs but expected ({})",
+                   msg.pdus.size(),
+                   pdsch_pdu_repository.size());
+    return;
+  }
 
   for (unsigned i = 0, e = msg.pdus.size(); i != e; ++i) {
     static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;

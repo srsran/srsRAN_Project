@@ -12,7 +12,6 @@
 #include "fapi_to_phy_translator.h"
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/srslog/logger.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;

@@ -150,7 +150,8 @@ TEST_F(FAPIToPHYTranslatorFixture, CurrentGridIsSentOnNewSlot)
 
 TEST_F(FAPIToPHYTranslatorFixture, DLSSBPDUIsProcessed)
 {
-  slot_point slot(1, 1, 0);
+  const fapi::dl_tti_request_message& msg = build_valid_dl_tti_request();
+  slot_point                          slot(subcarrier_spacing::kHz15, msg.sfn, msg.slot);
 
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
@@ -164,13 +165,12 @@ TEST_F(FAPIToPHYTranslatorFixture, DLSSBPDUIsProcessed)
   ASSERT_TRUE(grid.has_set_all_zero_method_been_called());
 
   // Process SSB PDU.
-  const fapi::dl_tti_request_message& msg = build_valid_dl_tti_request();
   translator.dl_tti_request(msg);
 
   // Assert that the SSB PDU has been processed.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
 
-  slot_point slot2(1, 1, 1);
+  slot_point slot2 = slot + 1;
   translator.handle_new_slot(slot2);
 
   // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
