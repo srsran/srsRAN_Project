@@ -38,10 +38,35 @@ enum class pucch_f4_occ_len { n2, n4 };
 /// Options for \c occ-Index in \c PUCCH-format4, in \c PUCCH-Config, TS 38.331.
 enum class pucch_f4_occ_idx { n0, n1, n2, n3 };
 
+/// Options for \c PUCCH-MaxCodeRate in \c PUCCH-Config, TS 38.331.
+enum class max_code_rate { not_set = 0, dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
+
+inline float to_max_code_rate_float(max_code_rate opt)
+{
+  switch (opt) {
+    case max_code_rate::dot_08:
+      return 0.08f;
+    case max_code_rate::dot_15:
+      return 0.15f;
+    case max_code_rate::dot_25:
+      return 0.25f;
+    case max_code_rate::dot_35:
+      return 0.35f;
+    case max_code_rate::dot_45:
+      return 0.45f;
+    case max_code_rate::dot_60:
+      return 0.60f;
+    case max_code_rate::dot_80:
+      return 0.80f;
+    default:
+      break;
+  }
+  return 0;
+}
+
 /// \c PUCCH-FormatConfig, in \c PUCCH-Config, TS 38.331. It describes the parameters that are common for a given PUCCH
 /// format.
 struct pucch_common_all_formats {
-  enum class max_code_rate { not_set = 0, dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
   enum class num_of_slots { not_set = 0, n2, n4, n8 };
 
   // The false or not_set value indicates that the field is optional and not set.

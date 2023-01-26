@@ -170,7 +170,9 @@ private:
   void fill_pucch_harq_grant(pucch_info& pucch_info, rnti_t rnti, const pucch_res_alloc_cfg& pucch_res);
 
   // Allocates the PUCCH SR resource on grid.
-  void allocate_pucch_ded_res_on_grid(cell_slot_resource_allocator& pucch_slot_alloc, const pucch_resource& pucch_res);
+  void allocate_pucch_ded_res_on_grid(cell_slot_resource_allocator& pucch_slot_alloc,
+                                      const pucch_resource&         pucch_res,
+                                      unsigned                      nof_prbs);
 
   // Helper that allocates a NEW PUCCH HARQ grant.
   pucch_harq_ack_grant allocate_new_pucch_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -179,10 +181,23 @@ private:
                                                      pucch_info*                   existing_sr_grant);
 
   // Helper that updates an existing PUCCH HARQ grant.
-  pucch_harq_ack_grant update_existing_pucch_harq_grant(pucch_info& existing_harq_grant,
-                                                        pucch_info* existing_sr_grant,
-                                                        rnti_t      rnti,
-                                                        slot_point  sl_tx);
+  pucch_harq_ack_grant update_existing_pucch_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                        pucch_info&                   existing_harq_grant,
+                                                        pucch_info*                   existing_sr_grant,
+                                                        rnti_t                        rnti,
+                                                        slot_point                    sl_tx,
+                                                        const ue_cell_configuration&  ue_cell_cfg);
+
+  pucch_harq_ack_grant convert_to_format2(cell_slot_resource_allocator& pucch_slot_alloc,
+                                          pucch_info&                   existing_harq_grant,
+                                          pucch_info*                   existing_sr_grant,
+                                          rnti_t                        rnti,
+                                          slot_point                    sl_tx,
+                                          const ue_cell_configuration&  ue_cell_cfg);
+
+  void remove_pucch_format1_from_grants(cell_slot_resource_allocator& slot_alloc,
+                                        rnti_t                        crnti,
+                                        const pucch_config&           pucch_cfg);
 
   // Fills the PUCCH SR grant.
   void fill_pucch_ded_res_grant(pucch_info&           pucch_sr_grant,
