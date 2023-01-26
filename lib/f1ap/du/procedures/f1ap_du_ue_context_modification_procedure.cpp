@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_du_ue_context_modification_procedure.h"
-#include "srsgnb/f1u/du/f1u_bearer_factory.h"
+#include "f1ap_du_ue_context_common.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -46,29 +46,17 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
 
   // >> Pass SRBs to setup/modify.
   for (const auto& srb : msg->srbs_to_be_setup_mod_list.value) {
-    du_request.srbs_to_setup.push_back((srb_id_t)srb.value().srbs_to_be_setup_mod_item().srb_id);
+    du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_mod_item()));
   }
 
   // >> Pass DRBs to setup/modify.
   for (const auto& drb : msg->drbs_to_be_setup_mod_list.value) {
-    const asn1::f1ap::drbs_to_be_setup_mod_item_s& drb_item = drb.value().drbs_to_be_setup_mod_item();
-
-    f1ap_drb_to_setup drb_obj;
-    drb_obj.drb_id = (drb_id_t)drb_item.drb_id;
-    drb_obj.mode   = (drb_rlc_mode)(unsigned)drb_item.rlc_mode;
-    drb_obj.uluptnl_info_list.resize(drb_item.ul_up_tnl_info_to_be_setup_list.size());
-    for (unsigned j = 0; j != drb_obj.uluptnl_info_list.size(); ++j) {
-      drb_obj.uluptnl_info_list[j] =
-          asn1_to_up_transport_layer_info(drb_item.ul_up_tnl_info_to_be_setup_list[j].ul_up_tnl_info);
-    }
-
-    du_request.drbs_to_setup.push_back(drb_obj);
+    du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_mod_item()));
   }
 
   // >> Pass DRBs to remove
   for (const auto& drb : msg->drbs_to_be_released_list.value) {
-    const asn1::f1ap::drbs_to_be_released_item_s& drb_item = drb.value().drbs_to_be_released_item();
-    du_request.drbs_to_rem.push_back((drb_id_t)drb_item.drb_id);
+    du_request.drbs_to_rem.push_back(make_drb_id(drb.value().drbs_to_be_released_item()));
   }
 }
 

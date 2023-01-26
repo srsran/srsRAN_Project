@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_ue_context_setup_procedure.h"
+#include "f1ap_du_ue_context_common.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -50,17 +51,12 @@ void f1ap_du_ue_context_setup_procedure::create_du_request(const ue_context_setu
 
   // >> Pass SRBs to setup.
   for (const auto& srb : msg->srbs_to_be_setup_list.value) {
-    du_request.srbs_to_setup.push_back((srb_id_t)srb.value().srbs_to_be_setup_item().srb_id);
+    du_request.srbs_to_setup.push_back(make_srb_id(srb.value().srbs_to_be_setup_item()));
   }
 
   // >> Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list.value) {
-    const asn1::f1ap::drbs_to_be_setup_item_s& drb_item = drb.value().drbs_to_be_setup_item();
-
-    f1ap_drb_to_setup drb_obj;
-    drb_obj.drb_id = (drb_id_t)drb_item.drb_id;
-    drb_obj.mode   = (drb_rlc_mode)(unsigned)drb_item.rlc_mode;
-    du_request.drbs_to_setup.push_back(drb_obj);
+    du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
   }
 }
 
