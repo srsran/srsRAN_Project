@@ -23,7 +23,7 @@ struct lower_phy_rx_symbol_context {
   slot_point slot;
   /// Radio sector identifier.
   unsigned sector;
-  /// Number of symbols that are available for processing.
+  /// The last processed symbol index within the slot.
   unsigned nof_symbols;
 };
 

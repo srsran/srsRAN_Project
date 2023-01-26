@@ -108,7 +108,7 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
     lower_phy_rx_symbol_context ul_symbol_context = {};
     ul_symbol_context.sector                      = sector_id;
     ul_symbol_context.slot                        = ul_slot_context;
-    ul_symbol_context.nof_symbols                 = symbol_id;
+    ul_symbol_context.nof_symbols                 = symbol_id % nof_symbols_per_slot;
     rx_symbol_notifier.on_rx_symbol(ul_symbol_context, *ul_rg);
   }
 
