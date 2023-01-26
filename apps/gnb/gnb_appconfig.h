@@ -124,11 +124,12 @@ struct cell_appconfig {
   base_cell_appconfig cell;
 };
 
-/// Cell configuration
+/// QoS configuration
 struct qos_appconfig {
-  /// Physical cell identifier.
-  uint8_t     five_qi = 9;
-  std::string mode    = "am";
+  uint8_t five_qi = 9;
+  struct {
+    std::string mode = "am";
+  } rlc;
 };
 
 struct amf_appconfig {

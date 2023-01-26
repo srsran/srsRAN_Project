@@ -128,6 +128,16 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
+/// Validates the given QoS configuration. Returns true on success, otherwise false.
+static bool validate_qos_appconfig(span<const qos_appconfig> config)
+{
+  // for now, only default configs are supported
+  if (config.size() != 0) {
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given logging configuration. Returns true on success, otherwise false.
 static bool validate_log_appconfig(const log_appconfig& config)
 {
@@ -182,6 +192,10 @@ bool srsgnb::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_cells_appconfig(config.cells_cfg)) {
+    return false;
+  }
+
+  if (!validate_qos_appconfig(config.qos_cfg)) {
     return false;
   }
 

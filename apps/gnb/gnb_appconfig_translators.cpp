@@ -110,7 +110,10 @@ std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appcon
   std::map<uint8_t, du_qos_config> out_cfg = {};
   for (const qos_appconfig& qos : config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      // out_cfg[qos.five_qi].mode = qos.mode;
+      // Convert RLC config
+      if (!from_string(out_cfg[qos.five_qi].rlc.mode, qos.rlc.mode)) {
+        srsgnb_terminate("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+      }
     } else {
       srsgnb_terminate("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
     }

@@ -20,6 +20,30 @@ namespace srsgnb {
 
 /// RLC NR modes
 enum class rlc_mode { tm, um_bidir, um_unidir_ul, um_unidir_dl, am };
+inline bool from_string(rlc_mode& mode, const std::string& str)
+{
+  if (str == "am") {
+    mode = rlc_mode::am;
+    return true;
+  }
+  if (str == "um_bidir") {
+    mode = rlc_mode::um_bidir;
+    return true;
+  }
+  if (str == "um_unidir_ul") {
+    mode = rlc_mode::um_unidir_ul;
+    return true;
+  }
+  if (str == "um_unidir_dl") {
+    mode = rlc_mode::um_unidir_dl;
+    return true;
+  }
+  if (str == "tm") {
+    mode = rlc_mode::tm;
+    return true;
+  }
+  return false;
+}
 
 /// RLC UM NR sequence number field
 enum class rlc_um_sn_size : uint16_t { size6bits = 6, size12bits = 12 };

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/rlc/rlc_config.h"
 #include <cstdint>
 
 namespace srsgnb {
@@ -17,7 +18,7 @@ namespace srsgnb {
 /// QoS Configuration, i.e. 5QI and the associated RLC
 /// configuration for DRBs
 struct du_qos_config {
-  uint8_t five_qi;
+  rlc_config rlc;
 };
 
 } // namespace srsgnb
