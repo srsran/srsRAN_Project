@@ -164,8 +164,8 @@ struct du_high_single_cell_worker_manager {
   task_worker_executor     ctrl_exec{ctrl_worker};
   task_worker_executor     dl_exec{dl_worker};
   task_worker_executor     ul_exec{ul_worker};
-  pcell_ul_executor_mapper ul_exec_mapper{&ul_exec};
-  cell_dl_executor_mapper  dl_exec_mapper{&dl_exec};
+  pcell_ul_executor_mapper ue_exec_mapper{&ul_exec};
+  cell_dl_executor_mapper  cell_exec_mapper{&dl_exec};
 };
 
 /// \brief Emulator of the PHY, FAPI and UE from the perspective of the DU-high. This class should be able to provide
@@ -248,8 +248,8 @@ public:
   {
     // Instantiate a DU-high object.
     cfg.du_mng_executor = &workers.ctrl_exec;
-    cfg.dl_executors    = &workers.dl_exec_mapper;
-    cfg.ul_executors    = &workers.ul_exec_mapper;
+    cfg.cell_executors  = &workers.cell_exec_mapper;
+    cfg.ue_executors    = &workers.ue_exec_mapper;
     cfg.f1c_notifier    = &sim_cu_cp;
     cfg.f1u_gw          = &sim_cu_up;
     cfg.phy_adapter     = &sim_phy;

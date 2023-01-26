@@ -109,10 +109,9 @@ struct worker_manager {
 
   void stop()
   {
-    cu_ctrl_worker.stop();
-    dl_workers.stop();
-    ul_workers.stop();
     ctrl_worker.stop();
+    ue_workers.stop();
+    cell_workers.stop();
     rt_task_worker.stop();
     upper_dl_worker.stop();
     common_prach_worker.stop();
@@ -120,19 +119,20 @@ struct worker_manager {
     radio_worker.stop();
   }
 
-  // CU-CP worker and executors.
-  task_worker                            cu_ctrl_worker{"CU Ctrl", task_worker_queue_size};
-  static_vector<task_worker_executor, 1> cu_exec{{cu_ctrl_worker}};
-
+  // GNB wide workers and executors
+  task_worker ctrl_worker{"Ctrl-GNB", task_worker_queue_size};
+  task_worker ue_workers{"UE#0", task_worker_queue_size};
+  // CU-CP worker and executers.
+  task_worker_executor cu_cp_ctrl_exec{ctrl_worker};
+  // CU-UP worker and executers.
+  static_vector<task_worker_executor, 1> cu_up_exec{{ue_workers}};
   // DU workers and executers.
-  task_worker              ctrl_worker{"Crtl-DU_UL", task_worker_queue_size};
-  task_worker              dl_workers{"DU-DL#0", task_worker_queue_size};
-  task_worker              ul_workers{"DU-UL#0", task_worker_queue_size};
+  task_worker              cell_workers{"DU-CELL#0", task_worker_queue_size};
   task_worker_executor     ctrl_exec{ctrl_worker};
-  task_worker_executor     dl_execs{dl_workers};
-  task_worker_executor     ul_execs{ul_workers};
-  pcell_ul_executor_mapper ul_exec_mapper{&ul_execs};
-  cell_dl_executor_mapper  dl_exec_mapper{&dl_execs};
+  task_worker_executor     cell_execs{cell_workers};
+  task_worker_executor     ue_execs{ue_workers};
+  pcell_ul_executor_mapper ue_exec_mapper{&ue_execs};
+  cell_dl_executor_mapper  cell_exec_mapper{&cell_execs};
   // Lower PHY RT task executor.
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
   task_worker_executor rt_task_executor{{rt_task_worker}};
@@ -347,7 +347,7 @@ int main(int argc, char** argv)
 
   // Create CU-UP config.
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
-  cu_up_cfg.cu_up_executor       = &workers.cu_exec.front();
+  cu_up_cfg.cu_up_executor       = &workers.cu_up_exec.front();
   cu_up_cfg.e1_notifier          = &e1_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker         = epoll_broker.get();
@@ -360,7 +360,7 @@ int main(int argc, char** argv)
 
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
-  cu_cp_cfg.cu_executor                    = &workers.cu_exec.front();
+  cu_cp_cfg.cu_cp_executor                 = &workers.cu_cp_ctrl_exec;
   cu_cp_cfg.f1c_notifier                   = &f1c_cu_to_du_adapter;
   cu_cp_cfg.e1_notifier                    = &e1_cp_to_up_adapter;
   cu_cp_cfg.ngc_notifier                   = ngap_adapter.get();
@@ -480,8 +480,8 @@ int main(int argc, char** argv)
 
   srs_du::du_high_configuration du_hi_cfg = {};
   du_hi_cfg.du_mng_executor               = &workers.ctrl_exec;
-  du_hi_cfg.ul_executors                  = &workers.ul_exec_mapper;
-  du_hi_cfg.dl_executors                  = &workers.dl_exec_mapper;
+  du_hi_cfg.ue_executors                  = &workers.ue_exec_mapper;
+  du_hi_cfg.cell_executors                = &workers.cell_exec_mapper;
   du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
   du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
   du_hi_cfg.phy_adapter                   = &phy;

@@ -10,6 +10,7 @@
 
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/du_high/du_high_executor_strategies.h"
+#include "unittests/du_high/test_utils/du_high_worker_manager.h"
 #include "unittests/f1ap/common/test_helpers.h"
 #include "unittests/ngap/test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp.h"
@@ -37,28 +38,6 @@ public:
   phy_cell_dummy            cell;
 };
 
-struct du_high_worker_manager {
-  static const uint32_t task_worker_queue_size = 10000;
-
-  void stop()
-  {
-    for (auto& w : dl_workers) {
-      w.stop();
-    }
-    for (auto& w : ul_workers) {
-      w.stop();
-    }
-  }
-
-  manual_task_worker ctrl_worker{task_worker_queue_size};
-  task_worker        dl_workers[2] = {{"DU-DL#0", task_worker_queue_size}, {"DU-DL#1", task_worker_queue_size}};
-  task_worker        ul_workers[2] = {{"DU-UL#0", task_worker_queue_size}, {"DU-UL#1", task_worker_queue_size}};
-  static_vector<task_worker_executor, 2> dl_execs{{dl_workers[0]}, {dl_workers[1]}};
-  static_vector<task_worker_executor, 2> ul_execs{{ul_workers[0]}, {ul_workers[1]}};
-  pcell_ul_executor_mapper               ul_exec_mapper{{&ul_execs[0], &ul_execs[1]}};
-  cell_dl_executor_mapper                dl_exec_mapper{{&dl_execs[0], &dl_execs[1]}};
-};
-
 /// Fixture class for successful F1Setup
 class cu_du_test : public ::testing::Test
 {
@@ -68,19 +47,15 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    // create worker thread and executer
-    task_worker                    task_worker("thread", 1, false);
-    std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
-
     // create message handler for CU and DU to relay messages back and forth
     dummy_cu_cp_f1c_pdu_notifier      cu_msg_handler(nullptr, nullptr);
     dummy_f1c_pdu_notifier            du_msg_handler(nullptr);
     srs_cu_cp::dummy_ngc_amf_notifier ngc_amf_notifier;
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
-    cu_cfg.cu_executor  = task_executor.get();
-    cu_cfg.f1c_notifier = &cu_msg_handler;
-    cu_cfg.ngc_notifier = &ngc_amf_notifier;
+    cu_cfg.cu_cp_executor = &workers.ctrl_worker;
+    cu_cfg.f1c_notifier   = &cu_msg_handler;
+    cu_cfg.ngc_notifier   = &ngc_amf_notifier;
 
     // create and start CU
     cu_cp_obj = create_cu_cp(cu_cfg);
@@ -90,8 +65,8 @@ protected:
 
     srsgnb::srs_du::du_high_configuration du_cfg{};
     du_cfg.du_mng_executor = &workers.ctrl_worker;
-    du_cfg.dl_executors    = &workers.dl_exec_mapper;
-    du_cfg.ul_executors    = &workers.ul_exec_mapper;
+    du_cfg.cell_executors  = &workers.cell_exec_mapper;
+    du_cfg.ue_executors    = &workers.ue_exec_mapper;
     du_cfg.f1c_notifier    = &du_msg_handler;
     du_cfg.phy_adapter     = &phy;
     du_cfg.cells           = {config_helpers::make_default_du_cell_config()};

@@ -20,7 +20,7 @@ using namespace srs_cu_cp;
 
 void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
-  srsgnb_assert(cfg.cu_executor != nullptr, "Invalid CU-CP executor");
+  srsgnb_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
   srsgnb_assert(cfg.f1c_notifier != nullptr, "Invalid F1C notifier");
   srsgnb_assert(cfg.ngc_notifier != nullptr, "Invalid NGC notifier");
 }

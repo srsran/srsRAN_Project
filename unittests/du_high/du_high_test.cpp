@@ -35,8 +35,8 @@ void test_f1_setup_local()
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
-  cfg.dl_executors    = &workers.dl_exec_mapper;
-  cfg.ul_executors    = &workers.ul_exec_mapper;
+  cfg.cell_executors  = &workers.cell_exec_mapper;
+  cfg.ue_executors    = &workers.ue_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
   cfg.cells           = {config_helpers::make_default_du_cell_config()};
@@ -78,8 +78,8 @@ void test_f1_setup_network()
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
-  cfg.dl_executors    = &workers.dl_exec_mapper;
-  cfg.ul_executors    = &workers.ul_exec_mapper;
+  cfg.cell_executors  = &workers.cell_exec_mapper;
+  cfg.ue_executors    = &workers.ue_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
   cfg.cells           = {config_helpers::make_default_du_cell_config()};
@@ -119,8 +119,8 @@ void test_du_ue_create()
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
-  cfg.dl_executors    = &workers.dl_exec_mapper;
-  cfg.ul_executors    = &workers.ul_exec_mapper;
+  cfg.cell_executors  = &workers.cell_exec_mapper;
+  cfg.ue_executors    = &workers.ue_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
   cfg.cells           = {config_helpers::make_default_du_cell_config()};

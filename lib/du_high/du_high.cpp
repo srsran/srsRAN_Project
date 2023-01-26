@@ -20,8 +20,8 @@ using namespace srs_du;
 void assert_du_high_configuration_valid(const du_high_configuration& cfg)
 {
   srsgnb_assert(cfg.du_mng_executor != nullptr, "Invalid DU manager executor");
-  srsgnb_assert(cfg.dl_executors != nullptr, "Invalid DL executor mapper");
-  srsgnb_assert(cfg.ul_executors != nullptr, "Invalid UL executor mapper");
+  srsgnb_assert(cfg.cell_executors != nullptr, "Invalid CELL executor mapper");
+  srsgnb_assert(cfg.ue_executors != nullptr, "Invalid UE executor mapper");
 }
 
 /// Cell slot handler that additionally increments the DU high timers.
@@ -64,16 +64,16 @@ du_high::du_high(const du_high_configuration& config_) :
 
   // Create layers
   mac  = create_mac(mac_config{mac_ev_notifier,
-                              *cfg.ul_executors,
-                              *cfg.dl_executors,
+                              *cfg.ue_executors,
+                              *cfg.cell_executors,
                               *cfg.du_mng_executor,
                               *cfg.phy_adapter,
                               cfg.sched_cfg,
                               *metrics_notifier});
-  f1ap = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ul_executors);
+  f1ap = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ue_executors);
   du_manager =
       create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells},
-                                          {timers, *cfg.du_mng_executor, *cfg.ul_executors, *cfg.dl_executors},
+                                          {timers, *cfg.du_mng_executor, *cfg.ue_executors, *cfg.cell_executors},
                                           {*f1ap, *f1ap},
                                           {*config_.f1u_gw},
                                           {mac->get_ue_control_info_handler(), *f1ap, *f1ap},

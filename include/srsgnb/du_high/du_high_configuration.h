@@ -16,8 +16,8 @@ class f1u_du_gateway;
 /// Configuration passed to DU-High.
 struct du_high_configuration {
   task_executor*                du_mng_executor = nullptr;
-  du_high_ue_executor_mapper*   ul_executors    = nullptr;
-  du_high_cell_executor_mapper* dl_executors    = nullptr;
+  du_high_ue_executor_mapper*   ue_executors    = nullptr;
+  du_high_cell_executor_mapper* cell_executors  = nullptr;
   f1c_message_notifier*         f1c_notifier    = nullptr;
   f1u_du_gateway*               f1u_gw          = nullptr;
   mac_result_notifier*          phy_adapter     = nullptr;

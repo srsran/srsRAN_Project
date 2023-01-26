@@ -16,6 +16,7 @@
 #include "unittests/ngap/ngap_test_messages.h"
 #include "unittests/ngap/test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -31,20 +32,12 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    // create worker thread and executer
-    task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::no_realtime());
-    std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
-
-    f1c_pdu_notifier = std::make_unique<dummy_f1c_pdu_notifier>();
-    e1_pdu_notifier  = std::make_unique<dummy_e1_pdu_notifier>();
-    ngc_amf_notifier = std::make_unique<dummy_ngc_amf_notifier>();
-
     // create CU-CP config
     cu_cp_configuration cfg;
-    cfg.cu_executor  = task_executor.get();
-    cfg.f1c_notifier = f1c_pdu_notifier.get();
-    cfg.e1_notifier  = e1_pdu_notifier.get();
-    cfg.ngc_notifier = ngc_amf_notifier.get();
+    cfg.cu_cp_executor = &ctrl_worker;
+    cfg.f1c_notifier   = &f1c_pdu_notifier;
+    cfg.e1_notifier    = &e1_pdu_notifier;
+    cfg.ngc_notifier   = &ngc_amf_notifier;
 
     cfg.ngc_config.ran_node_name = "srsgnb01";
     cfg.ngc_config.plmn          = "00101";
@@ -63,11 +56,15 @@ protected:
     cu_cp_obj->stop();
   }
 
-  std::unique_ptr<cu_cp>                  cu_cp_obj;
-  std::unique_ptr<dummy_f1c_pdu_notifier> f1c_pdu_notifier;
-  std::unique_ptr<dummy_e1_pdu_notifier>  e1_pdu_notifier;
-  std::unique_ptr<dummy_ngc_amf_notifier> ngc_amf_notifier;
-  srslog::basic_logger&                   test_logger = srslog::fetch_basic_logger("TEST");
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+
+  dummy_f1c_pdu_notifier f1c_pdu_notifier;
+  dummy_e1_pdu_notifier  e1_pdu_notifier;
+  dummy_ngc_amf_notifier ngc_amf_notifier;
+
+  manual_task_worker ctrl_worker{128};
+
+  std::unique_ptr<cu_cp> cu_cp_obj;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -208,10 +205,10 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
 
   // check that the Initial UE Message was sent to the AMF
-  ASSERT_EQ(ngc_amf_notifier->last_ngc_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(ngc_amf_notifier->last_ngc_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(ngc_amf_notifier.last_ngc_msg.pdu.type(), asn1::ngap::ngap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(ngc_amf_notifier.last_ngc_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
-  ASSERT_EQ(ngc_amf_notifier->last_ngc_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value.value, 0);
+  ASSERT_EQ(ngc_amf_notifier.last_ngc_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value.value, 0);
 }
 
 TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
@@ -234,7 +231,7 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 0U);
 
   // check that the Initial UE Message was not send to the AMF
-  ASSERT_NE(ngc_amf_notifier->last_ngc_msg.pdu.init_msg().value.type().value,
+  ASSERT_NE(ngc_amf_notifier.last_ngc_msg.pdu.init_msg().value.type().value,
             asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg);
 }
 

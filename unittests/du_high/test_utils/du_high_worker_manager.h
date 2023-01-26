@@ -19,21 +19,21 @@ struct du_high_worker_manager {
 
   void stop()
   {
-    for (auto& w : dl_workers) {
+    for (auto& w : cell_workers) {
       w.stop();
     }
-    for (auto& w : ul_workers) {
+    for (auto& w : ue_workers) {
       w.stop();
     }
   }
 
   manual_task_worker ctrl_worker{task_worker_queue_size};
-  task_worker        dl_workers[2] = {{"DU-DL#0", task_worker_queue_size}, {"DU-DL#1", task_worker_queue_size}};
-  task_worker        ul_workers[2] = {{"DU-UL#0", task_worker_queue_size}, {"DU-UL#1", task_worker_queue_size}};
-  static_vector<task_worker_executor, 2> dl_execs{{dl_workers[0]}, {dl_workers[1]}};
-  static_vector<task_worker_executor, 2> ul_execs{{ul_workers[0]}, {ul_workers[1]}};
-  pcell_ul_executor_mapper               ul_exec_mapper{{&ul_execs[0], &ul_execs[1]}};
-  cell_dl_executor_mapper                dl_exec_mapper{{&dl_execs[0], &dl_execs[1]}};
+  task_worker        cell_workers[2] = {{"DU-CELL#0", task_worker_queue_size}, {"CELL#1", task_worker_queue_size}};
+  task_worker        ue_workers[2]   = {{"UE#0", task_worker_queue_size}, {"UE#1", task_worker_queue_size}};
+  static_vector<task_worker_executor, 2> cell_execs{{cell_workers[0]}, {cell_workers[1]}};
+  static_vector<task_worker_executor, 2> ue_execs{{ue_workers[0]}, {ue_workers[1]}};
+  pcell_ul_executor_mapper               ue_exec_mapper{{&ue_execs[0], &ue_execs[1]}};
+  cell_dl_executor_mapper                cell_exec_mapper{{&cell_execs[0], &cell_execs[1]}};
 };
 
 } // namespace srsgnb

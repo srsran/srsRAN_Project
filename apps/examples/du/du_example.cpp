@@ -303,8 +303,8 @@ struct worker_manager {
 
   void stop()
   {
-    dl_workers.stop();
-    ul_workers.stop();
+    cell_workers.stop();
+    ue_workers.stop();
     ctrl_worker.stop();
     rt_task_worker.stop();
     upper_dl_worker.stop();
@@ -313,14 +313,14 @@ struct worker_manager {
     radio_worker.stop();
   }
 
-  task_worker              ctrl_worker{"Crtl-DU_UL", task_worker_queue_size};
-  task_worker              dl_workers{"DU-DL#0", task_worker_queue_size};
-  task_worker              ul_workers{"DU-UL#0", task_worker_queue_size};
+  task_worker              ctrl_worker{"Ctrl-GNB", task_worker_queue_size};
+  task_worker              cell_workers{"DU-CELL#0", task_worker_queue_size};
+  task_worker              ue_workers{"UE#0", task_worker_queue_size};
   task_worker_executor     ctrl_exec{ctrl_worker};
-  task_worker_executor     dl_execs{dl_workers};
-  task_worker_executor     ul_execs{ul_workers};
-  pcell_ul_executor_mapper ul_exec_mapper{&ul_execs};
-  cell_dl_executor_mapper  dl_exec_mapper{&dl_execs};
+  task_worker_executor     cell_execs{cell_workers};
+  task_worker_executor     ue_execs{ue_workers};
+  pcell_ul_executor_mapper ue_exec_mapper{&ue_execs};
+  cell_dl_executor_mapper  cell_exec_mapper{&cell_execs};
   // Lower PHY RT task executor.
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
   task_worker_executor rt_task_executor{{rt_task_worker}};
@@ -680,8 +680,8 @@ int main(int argc, char** argv)
 
   du_high_configuration du_hi_cfg = {};
   du_hi_cfg.du_mng_executor       = &workers.ctrl_exec;
-  du_hi_cfg.ul_executors          = &workers.ul_exec_mapper;
-  du_hi_cfg.dl_executors          = &workers.dl_exec_mapper;
+  du_hi_cfg.ue_executors          = &workers.ue_exec_mapper;
+  du_hi_cfg.cell_executors        = &workers.cell_exec_mapper;
   du_hi_cfg.f1c_notifier          = &f1c_notifier;
   du_hi_cfg.phy_adapter           = &phy;
   du_hi_cfg.cells                 = {config_helpers::make_default_du_cell_config(cell_config)};
