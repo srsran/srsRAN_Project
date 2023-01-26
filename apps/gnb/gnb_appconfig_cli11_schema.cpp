@@ -254,9 +254,25 @@ static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_param
   configure_cli11_common_cell_args(app, cell_params.cell);
 }
 
+static void configure_cli11_rlc_um_args(CLI::App& app, rlc_um_appconfig& rlc_um_params)
+{
+  CLI::App* rlc_tx_um_subcmd = app.add_subcommand("tx", "UM TX parameters");
+  rlc_tx_um_subcmd->add_option("--sn", rlc_um_params.tx.sn_field_length, "RLC UM TX SN")->capture_default_str();
+  CLI::App* rlc_rx_um_subcmd = app.add_subcommand("rx", "UM TX parameters");
+  rlc_rx_um_subcmd->add_option("--sn", rlc_um_params.rx.sn_field_length, "RLC UM RX SN")->capture_default_str();
+}
+static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
+{
+  app.add_option("--mode", rlc_params.mode, "RLC mode")->capture_default_str();
+  CLI::App* rlc_um_subcmd = app.add_subcommand("um-bidir", "UM parameters");
+  configure_cli11_rlc_um_args(*rlc_um_subcmd, rlc_params.um);
+}
+
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
 {
   app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 1007));
+  CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
+  configure_cli11_rlc_args(*rlc_subcmd, qos_params.rlc);
 }
 
 void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
@@ -322,7 +338,7 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 
     //// Format every QoS setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
-      CLI::App subapp("QoS parsing subapp");
+      CLI::App subapp("QoS parameters");
       subapp.config_formatter(create_yaml_config_parser());
       configure_cli11_qos_args(subapp, gnb_cfg.qos_cfg[i]);
       std::istringstream ss(values[i]);

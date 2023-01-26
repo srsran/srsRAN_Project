@@ -26,15 +26,15 @@ inline bool from_string(rlc_mode& mode, const std::string& str)
     mode = rlc_mode::am;
     return true;
   }
-  if (str == "um_bidir") {
+  if (str == "um-bidir") {
     mode = rlc_mode::um_bidir;
     return true;
   }
-  if (str == "um_unidir_ul") {
+  if (str == "um-unidir-ul") {
     mode = rlc_mode::um_unidir_ul;
     return true;
   }
-  if (str == "um_unidir_dl") {
+  if (str == "um-unidir-dl") {
     mode = rlc_mode::um_unidir_dl;
     return true;
   }
@@ -335,6 +335,22 @@ struct formatter<srsgnb::rlc_rx_am_config> {
                      cfg.sn_field_length,
                      cfg.t_reassembly,
                      cfg.t_status_prohibit);
+  }
+};
+
+// RLC AM config formatter
+template <>
+struct formatter<srsgnb::rlc_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "mode={}", cfg.mode);
   }
 };
 } // namespace fmt

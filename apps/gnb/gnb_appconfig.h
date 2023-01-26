@@ -124,12 +124,37 @@ struct cell_appconfig {
   base_cell_appconfig cell;
 };
 
+/// RLC UM TX configuration
+struct rlc_tx_um_appconfig {
+  uint16_t sn_field_length; ///< Number of bits used for sequence number
+  int32_t  t_reassembly;    ///< Timer used by rx to detect PDU loss (ms)
+};
+
+/// RLC UM RX configuration
+struct rlc_rx_um_appconfig {
+  uint16_t sn_field_length; ///< Number of bits used for sequence number
+};
+
+/// RLC UM configuration
+struct rlc_um_appconfig {
+  rlc_tx_um_appconfig tx;
+  rlc_rx_um_appconfig rx;
+};
+
+/// RLC AM configuration
+struct rlc_am_appconfig {};
+
+/// RLC configuration
+struct rlc_appconfig {
+  std::string      mode = "am";
+  rlc_um_appconfig um;
+  rlc_am_appconfig am;
+};
+
 /// QoS configuration
 struct qos_appconfig {
-  uint8_t five_qi = 9;
-  struct {
-    std::string mode = "am";
-  } rlc;
+  uint8_t       five_qi = 9;
+  rlc_appconfig rlc;
 };
 
 struct amf_appconfig {
