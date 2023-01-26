@@ -13,6 +13,9 @@
 
 using namespace srsgnb;
 
+/// Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
+constexpr static size_t DAI_MOD = 4;
+
 ////////////    C-tors and d-tors    ////////////
 
 uci_allocator_impl::uci_allocator_impl(pucch_allocator& pucch_alloc_) :
@@ -68,6 +71,12 @@ void uci_allocator_impl::allocate_uci_harq_on_pusch(ul_sched_info&      pusch_gr
 
 ////////////    Public functions    ////////////
 
+void uci_allocator_impl::slot_indication(slot_point sl_tx)
+{
+  // Clear previous slot UCI allocations.
+  uci_alloc_grid[(sl_tx - 1).to_uint()].ucis.clear();
+}
+
 uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                                      rnti_t                       crnti,
                                                      const ue_cell_configuration& ue_cell_cfg,
@@ -104,6 +113,21 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
     uci_output.pucch_grant =
         pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, crnti, ue_cell_cfg, pdsch_time_domain_resource, k1);
     uci_output.alloc_successful = uci_output.pucch_grant.pucch_pdu != nullptr;
+  }
+
+  // Register new UCI allocation in the respective grid slot entry and derive DAI.
+  if (uci_output.alloc_successful) {
+    auto* uci = get_uci_alloc(slot_alloc.slot, crnti);
+    if (uci == nullptr) {
+      uci                   = &uci_alloc_grid[slot_alloc.slot.to_uint()].ucis.emplace_back();
+      uci->rnti             = crnti;
+      uci->harq_ack_counter = 0;
+    }
+    // Set DAI if TDD is enabled.
+    if (slot_alloc.cfg.is_tdd()) {
+      uci_output.dai = uci->harq_ack_counter % DAI_MOD;
+      uci->harq_ack_counter++;
+    }
   }
 
   return uci_output;
@@ -149,4 +173,11 @@ void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocato
   }
 
   pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
+}
+
+uci_allocator_impl::slot_alloc_list::ue_uci* uci_allocator_impl::get_uci_alloc(slot_point uci_slot, rnti_t rnti)
+{
+  auto& ucis = uci_alloc_grid[uci_slot.to_uint()].ucis;
+  auto  it   = std::find_if(ucis.begin(), ucis.end(), [rnti](const auto& uci) { return uci.rnti == rnti; });
+  return it != ucis.end() ? &*it : nullptr;
 }

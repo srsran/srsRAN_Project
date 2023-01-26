@@ -43,6 +43,7 @@ void build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
                            unsigned                           time_resource,
                            unsigned                           k1,
                            unsigned                           pucch_res_indicator,
+                           unsigned                           dai,
                            sch_mcs_index                      mcs_index,
                            const dl_harq_process&             h_dl);
 

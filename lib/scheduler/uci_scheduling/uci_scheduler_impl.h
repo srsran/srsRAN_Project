@@ -19,7 +19,7 @@ class cell_configuration;
 class uci_allocator;
 struct cell_resource_allocator;
 
-/// Implementation of the UCI scheduler interface.
+/// Implementation of the UCI scheduler interface for SR and CSI opportunities.
 class uci_scheduler_impl final : public uci_scheduler
 {
 public:

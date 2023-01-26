@@ -176,6 +176,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             grant.time_res_index,
                             k1,
                             uci.pucch_grant.pucch_res_indicator,
+                            uci.dai,
                             mcs,
                             h_dl);
       break;

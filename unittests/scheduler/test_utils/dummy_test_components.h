@@ -91,6 +91,8 @@ class dummy_uci_allocator : public uci_allocator
 public:
   uci_allocation next_uci_allocation;
 
+  void slot_indication(slot_point sl_tx) override {}
+
   uci_allocation alloc_uci_harq_ue(cell_resource_allocator&     res_alloc,
                                    rnti_t                       crnti,
                                    const ue_cell_configuration& ue_cell_cfg,

@@ -20,6 +20,8 @@ struct uci_allocation {
   bool alloc_successful{false};
   /// If UCI is allocated on the PUCCH, contains the PUCCH grant info; else, this is to be ignored.
   pucch_harq_ack_grant pucch_grant;
+  /// Downlink Assignment Index to be encoded in DL DCI as per TS38.213 Section 9.1.3.
+  uint8_t dai{0};
 };
 
 /// \brief UCI allocator interface.
@@ -28,6 +30,9 @@ class uci_allocator
 {
 public:
   virtual ~uci_allocator() = default;
+
+  /// \brief Signal a new slot indication to be setup in the cell grid.
+  virtual void slot_indication(slot_point sl_tx) = 0;
 
   /// Allocate the common PUCCH resource for HARQ-ACK for a given UE.
   /// \param[out,in] res_alloc struct with scheduling results.

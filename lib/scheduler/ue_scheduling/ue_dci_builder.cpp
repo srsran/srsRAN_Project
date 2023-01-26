@@ -64,6 +64,7 @@ void srsgnb::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
                                    unsigned                           time_resource,
                                    unsigned                           k1,
                                    unsigned                           pucch_res_indicator,
+                                   unsigned                           dai,
                                    sch_mcs_index                      mcs_index,
                                    const dl_harq_process&             h_dl)
 {
@@ -100,6 +101,7 @@ void srsgnb::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
   // UCI resources.
   f1_0.pucch_resource_indicator       = pucch_res_indicator;
   f1_0.pdsch_harq_fb_timing_indicator = get_dci_1_0_pdsch_to_harq_timing_indicator(k1);
+  f1_0.dl_assignment_index            = dai;
 
   f1_0.modulation_coding_scheme = mcs_index.to_uint();
 

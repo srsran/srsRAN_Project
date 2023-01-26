@@ -25,6 +25,8 @@ uci_scheduler_impl::~uci_scheduler_impl() = default;
 
 void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_point sl_tx)
 {
+  uci_alloc.slot_indication(sl_tx);
+
   // Iterate over the users to check for SR opportunities.
   for (auto& user : ues) {
     // Check if the slot is UL enabled.
