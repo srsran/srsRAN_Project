@@ -93,12 +93,12 @@ span<const cf_t> resource_grid_impl::put(unsigned                            por
 
   unsigned mask_count = mask.count();
   srsgnb_assert(mask_count <= symbols.size(),
-                "The number of actibe subcarriers (i.e., {}) exceeds the number of symbols (i.e., {}).",
-                mask.count(),
+                "The number of active subcarriers (i.e., {}) exceeds the number of symbols (i.e., {}).",
+                mask_count,
                 symbols.size());
 
   // Do a straight copy if the elements of the mask are all contiguous.
-  if (mask.is_contiguous()) {
+  if (mask_count and mask.is_contiguous()) {
     srsvec::copy(symb.subspan(mask.find_lowest(), mask_count), symbols.first(mask_count));
     return symbols.last(symbols.size() - mask_count);
   }
