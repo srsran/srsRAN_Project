@@ -45,18 +45,18 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
   // UL scheduling or vice-versa, when allocating PDCCHs.
   if (slot_tx.to_uint() % 2 == 0) {
     // Start with DL re-Tx and then new Tx.
-    sched_strategy->dl_sched(ue_res_grid_view, ue_alloc, ue_db, true);
-    sched_strategy->dl_sched(ue_res_grid_view, ue_alloc, ue_db, false);
+    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
+    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
     // UL re-Tx and then new Tx
-    sched_strategy->ul_sched(ue_res_grid_view, ue_alloc, ue_db, true);
-    sched_strategy->ul_sched(ue_res_grid_view, ue_alloc, ue_db, false);
+    sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, true);
+    sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, false);
   } else {
     // Start with UL re-Tx and then new Tx
-    sched_strategy->ul_sched(ue_res_grid_view, ue_alloc, ue_db, true);
-    sched_strategy->ul_sched(ue_res_grid_view, ue_alloc, ue_db, false);
+    sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, true);
+    sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, false);
     // Start with DL re-Tx, then SRB0 and then new Tx
-    sched_strategy->dl_sched(ue_res_grid_view, ue_alloc, ue_db, true);
-    sched_strategy->dl_sched(ue_res_grid_view, ue_alloc, ue_db, false);
+    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
+    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
   }
 }
 

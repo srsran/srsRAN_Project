@@ -410,7 +410,7 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_cfg.format_1_common_param.emplace();
 
   // >>> dl-DataToUl-Ack
-  if (not band_helper::is_paired_spectrum(get_band(params))) {
+  if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::TDD) {
     // TDD mode.
     pucch_cfg.dl_data_to_ul_ack.resize(8);
     for (unsigned i = 0; i != pucch_cfg.dl_data_to_ul_ack.size(); ++i) {

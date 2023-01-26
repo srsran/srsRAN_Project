@@ -202,8 +202,8 @@ alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocat
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void scheduler_time_rr::dl_sched(const ue_resource_grid_view& res_grid,
-                                 ue_pdsch_allocator&          pdsch_alloc,
+void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
+                                 const ue_resource_grid_view& res_grid,
                                  const ue_list&               ues,
                                  bool                         is_retx)
 {
@@ -220,8 +220,8 @@ void scheduler_time_rr::dl_sched(const ue_resource_grid_view& res_grid,
   }
 }
 
-void scheduler_time_rr::ul_sched(const ue_resource_grid_view& res_grid,
-                                 ue_pusch_allocator&          pusch_alloc,
+void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
+                                 const ue_resource_grid_view& res_grid,
                                  const ue_list&               ues,
                                  bool                         is_retx)
 {

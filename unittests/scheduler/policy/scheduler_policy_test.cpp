@@ -133,7 +133,7 @@ TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_
   ue& u = add_ue(to_du_ue_index(0), {uint_to_lcid(4)});
   push_dl_bs(u.ue_index, uint_to_lcid(4), 100000000);
 
-  sched->dl_sched(ue_res_grid, pdsch_alloc, ues, false);
+  sched->dl_sched(pdsch_alloc, ue_res_grid, ues, false);
 
   ASSERT_TRUE(this->pdsch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pdsch_alloc.last_grant->user->ue_index, u.ue_index);
@@ -166,14 +166,14 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
   const ue& u = add_ue(to_du_ue_index(0), {uint_to_lcid(4)}, uint_to_lcg_id(1), ue_req);
   push_dl_bs(u.ue_index, uint_to_lcid(4), 1053);
 
-  sched->dl_sched(ue_res_grid, pdsch_alloc, ues, false);
+  sched->dl_sched(pdsch_alloc, ue_res_grid, ues, false);
 
   ASSERT_TRUE(this->pdsch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pdsch_alloc.last_grant->user->ue_index, u.ue_index);
   ASSERT_EQ(this->pdsch_alloc.last_grant->ss_id, to_search_space_id(2));
 
   notify_ul_bsr(u.ue_index, uint_to_lcg_id(1), 1053);
-  sched->ul_sched(ue_res_grid, pusch_alloc, ues, false);
+  sched->ul_sched(pusch_alloc, ue_res_grid, ues, false);
 
   ASSERT_TRUE(this->pusch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pusch_alloc.last_grant->user->ue_index, u.ue_index);
@@ -196,7 +196,7 @@ TEST_P(scheduler_policy_test, scheduler_favors_coreset_gt_0_when_ss_has_equal_no
   const ue& u = add_ue(to_du_ue_index(0), {uint_to_lcid(5)}, uint_to_lcg_id(2), ue_req);
   push_dl_bs(u.ue_index, uint_to_lcid(5), 1053);
 
-  sched->dl_sched(ue_res_grid, pdsch_alloc, ues, false);
+  sched->dl_sched(pdsch_alloc, ue_res_grid, ues, false);
 
   ASSERT_TRUE(this->pdsch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pdsch_alloc.last_grant->user->ue_index, u.ue_index);
@@ -204,7 +204,7 @@ TEST_P(scheduler_policy_test, scheduler_favors_coreset_gt_0_when_ss_has_equal_no
   ASSERT_EQ(this->pdsch_alloc.last_grant->ss_id, to_search_space_id(2));
 
   notify_ul_bsr(u.ue_index, uint_to_lcg_id(2), 1053);
-  sched->ul_sched(ue_res_grid, pusch_alloc, ues, false);
+  sched->ul_sched(pusch_alloc, ue_res_grid, ues, false);
 
   ASSERT_TRUE(this->pusch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pusch_alloc.last_grant->user->ue_index, u.ue_index);

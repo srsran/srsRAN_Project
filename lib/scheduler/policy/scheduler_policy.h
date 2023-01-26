@@ -54,24 +54,24 @@ public:
   virtual ~scheduler_policy() = default;
 
   /// Schedule UE DL grants for a given slot and one or more cells.
-  /// \param[in] res_grid view of the current resource grid occupancy state for all gnb cells.
-  /// \param[in/out] pdsch_alloc PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the
+  /// \param[out] pdsch_alloc PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the
   ///                            gNB resource grid.
+  /// \param[in] res_grid view of the current resource grid occupancy state for all gnb cells.
   /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
   /// \param[in] is_retx Flag indicating DL grants for retransmissions or new transmissions.
-  virtual void dl_sched(const ue_resource_grid_view& res_grid,
-                        ue_pdsch_allocator&          pdsch_alloc,
+  virtual void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
+                        const ue_resource_grid_view& res_grid,
                         const ue_list&               ues,
                         bool                         is_retx) = 0;
 
   /// Schedule UE UL grants for a given {slot, cell}.
-  /// \param[in] res_grid view of the current resource grid occupancy state for all gnb cells.
   /// \param[out] pusch_alloc PUSCH grant allocator. This object provides a handle to allocate PUSCH grants in the
   ///                            gNB resource grid.
+  /// \param[in] res_grid view of the current resource grid occupancy state for all gnb cells.
   /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
   /// \param[in] is_retx Flag indicating UL grants for retransmissions or new transmissions.
-  virtual void ul_sched(const ue_resource_grid_view& res_grid,
-                        ue_pusch_allocator&          pusch_alloc,
+  virtual void ul_sched(ue_pusch_allocator&          pusch_alloc,
+                        const ue_resource_grid_view& res_grid,
                         const ue_list&               ues,
                         bool                         is_retx) = 0;
 };
