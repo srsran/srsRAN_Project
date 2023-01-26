@@ -15,6 +15,11 @@
 using namespace srsgnb;
 using namespace srsgnb::config_helpers;
 
+static nr_band get_band(const cell_config_builder_params& params)
+{
+  return params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+}
+
 carrier_configuration
 srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
@@ -22,7 +27,7 @@ srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_bui
   cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
   cfg.arfcn          = params.dl_arfcn;
   cfg.nof_ant        = 1;
-  cfg.band           = params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  cfg.band           = get_band(params);
   return cfg;
 }
 
@@ -58,8 +63,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const
 {
   coreset_configuration cfg            = make_default_coreset_config(params);
   cfg.id                               = to_coreset_id(0);
-  min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(
-      params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn), params.scs_common);
+  min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(get_band(params), params.scs_common);
   pdcch_type0_css_coreset_description desc =
       pdcch_type0_css_coreset_get(min_channel_bw, params.scs_common, params.scs_common, params.coreset0_index, 0);
 
@@ -395,8 +399,6 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // TODO: add more PUCCH resources.
 
-  pucch_cfg.dl_data_to_ul_ack.push_back(4);
-
   // >>> SR Resource.
   const unsigned pucch_sr_res_id = pucch_cfg.pucch_res_list.size() - 1;
   pucch_cfg.sr_res_list.push_back(scheduling_request_resource_config{.sr_res_id    = 1,
@@ -406,6 +408,16 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
                                                                      .pucch_res_id = pucch_sr_res_id});
 
   pucch_cfg.format_1_common_param.emplace();
+
+  // >>> dl-DataToUl-Ack
+  if (band_helper::is_paired_spectrum(get_band(params))) {
+    pucch_cfg.dl_data_to_ul_ack.resize(8);
+    for (unsigned i = 0; i != pucch_cfg.dl_data_to_ul_ack.size(); ++i) {
+      pucch_cfg.dl_data_to_ul_ack[i] = i + 2;
+    }
+  } else {
+    pucch_cfg.dl_data_to_ul_ack.push_back(4);
+  }
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());

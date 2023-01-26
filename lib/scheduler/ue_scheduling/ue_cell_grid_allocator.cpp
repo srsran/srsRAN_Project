@@ -123,11 +123,20 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
-  const unsigned k1 = 4;
-  uci_allocation uci =
-      get_uci_alloc(grant.cell_index)
-          .alloc_uci_harq_ue(get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1);
-  if (not uci.alloc_successful) {
+  bool           uci_allocated = false;
+  unsigned       k1            = 0;
+  uci_allocation uci           = {};
+  for (unsigned i = 0; i != ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack.size();
+       ++i) {
+    k1  = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack[i];
+    uci = get_uci_alloc(grant.cell_index)
+              .alloc_uci_harq_ue(get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1);
+    if (uci.alloc_successful) {
+      uci_allocated = true;
+      break;
+    }
+  }
+  if (not uci_allocated) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;
