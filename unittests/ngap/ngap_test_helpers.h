@@ -17,6 +17,7 @@
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/ngap/ngc_configuration.h"
 #include "srsgnb/ngap/ngc_factory.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {
@@ -59,6 +60,7 @@ protected:
   dummy_ngc_rrc_ue_notifier       rrc_ue_notifier;
   dummy_ngc_du_processor_notifier du_processor_notifier;
   dummy_ngc_ue_task_scheduler     ngap_ue_task_scheduler;
+  manual_task_worker              ctrl_worker{128};
   std::unique_ptr<ngc_interface>  ngap;
 };
 

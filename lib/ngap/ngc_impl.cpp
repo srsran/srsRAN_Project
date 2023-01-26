@@ -20,12 +20,14 @@ using namespace srs_cu_cp;
 ngc_impl::ngc_impl(ngc_configuration&     ngc_cfg_,
                    ngc_ue_task_scheduler& task_sched_,
                    ngc_ue_manager&        ue_manager_,
-                   ngc_message_notifier&  ngc_notifier_) :
+                   ngc_message_notifier&  ngc_notifier_,
+                   task_executor&         ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGC")),
   ngc_cfg(ngc_cfg_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngc_notifier(ngc_notifier_),
+  ctrl_exec(ctrl_exec_),
   ev_mng(task_sched.get_timer_manager())
 {
 }
@@ -150,20 +152,23 @@ void ngc_impl::handle_message(const ngc_message& msg)
 {
   logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 
-  switch (msg.pdu.type().value) {
-    case ngap_pdu_c::types_opts::init_msg:
-      handle_initiating_message(msg.pdu.init_msg());
-      break;
-    case ngap_pdu_c::types_opts::successful_outcome:
-      handle_successful_outcome(msg.pdu.successful_outcome());
-      break;
-    case ngap_pdu_c::types_opts::unsuccessful_outcome:
-      handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-      break;
-    default:
-      logger.error("Invalid PDU type");
-      break;
-  }
+  // Run NGAP protocols in Control executor.
+  ctrl_exec.execute([this, msg]() {
+    switch (msg.pdu.type().value) {
+      case ngap_pdu_c::types_opts::init_msg:
+        handle_initiating_message(msg.pdu.init_msg());
+        break;
+      case ngap_pdu_c::types_opts::successful_outcome:
+        handle_successful_outcome(msg.pdu.successful_outcome());
+        break;
+      case ngap_pdu_c::types_opts::unsuccessful_outcome:
+        handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+        break;
+      default:
+        logger.error("Invalid PDU type");
+        break;
+    }
+  });
 }
 
 void ngc_impl::handle_initiating_message(const init_msg_s& msg)

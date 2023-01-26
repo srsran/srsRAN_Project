@@ -26,7 +26,7 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers)
   cfg.plmn          = "00101";
   cfg.tac           = 7;
 
-  ngap = create_ngc(cfg, ngap_ue_task_scheduler, ue_mng, msg_notifier);
+  ngap = create_ngc(cfg, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
 }
 
 ngap_test::~ngap_test()

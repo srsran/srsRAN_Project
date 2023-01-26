@@ -16,6 +16,7 @@
 #include "srsgnb/ngap/ngc_configuration_helpers.h"
 #include "srsgnb/ngap/ngc_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"
 #include "srsgnb/support/test_utils.h"
 #include "srsgnb/support/timers.h"
@@ -95,7 +96,7 @@ protected:
 
     ngc_ue_task_scheduler = std::make_unique<dummy_ngc_ue_task_scheduler>(timers);
 
-    ngc = create_ngc(cfg, *ngc_ue_task_scheduler, ue_mng, *adapter);
+    ngc = create_ngc(cfg, *ngc_ue_task_scheduler, ue_mng, *adapter, ctrl_worker);
     adapter->connect_ngc(ngc.get());
   }
 
@@ -104,6 +105,7 @@ protected:
   ue_manager                                   ue_mng;
   std::unique_ptr<dummy_ngc_ue_task_scheduler> ngc_ue_task_scheduler;
   std::unique_ptr<ngap_network_adapter>        adapter;
+  manual_task_worker                           ctrl_worker{128};
   std::unique_ptr<ngc_interface>               ngc;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");

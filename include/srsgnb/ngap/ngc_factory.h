@@ -13,6 +13,7 @@
 #include "ngc.h"
 #include "ngc_configuration.h"
 #include "srsgnb/cu_cp/ue_manager.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 
@@ -24,7 +25,8 @@ namespace srs_cu_cp {
 std::unique_ptr<ngc_interface> create_ngc(ngc_configuration&     ngc_cfg_,
                                           ngc_ue_task_scheduler& task_sched_,
                                           ngc_ue_manager&        ue_manager_,
-                                          ngc_message_notifier&  ngc_notifier_);
+                                          ngc_message_notifier&  ngc_notifier_,
+                                          task_executor&         ctrl_exec_);
 
 } // namespace srs_cu_cp
 

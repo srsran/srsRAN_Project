@@ -17,6 +17,7 @@
 #include "srsgnb/cu_cp/ue_manager.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/ngap/ngc_configuration.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 
@@ -32,7 +33,8 @@ public:
   ngc_impl(ngc_configuration&     ngc_cfg_,
            ngc_ue_task_scheduler& task_sched_,
            ngc_ue_manager&        ue_manager_,
-           ngc_message_notifier&  ngc_notifier_);
+           ngc_message_notifier&  ngc_notifier_,
+           task_executor&         ctrl_exec_);
   ~ngc_impl();
 
   // ngc ue control manager functions
@@ -90,6 +92,7 @@ private:
   ngc_ue_task_scheduler& task_sched;
   ngc_ue_manager&        ue_manager;
   ngc_message_notifier&  ngc_notifier;
+  task_executor&         ctrl_exec;
 
   ngap_transaction_manager ev_mng;
 };
