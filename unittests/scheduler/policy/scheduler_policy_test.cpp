@@ -32,11 +32,6 @@ public:
     last_grant = grant;
     return true;
   }
-
-  const cell_slot_resource_grid& dl_resource_grid(du_cell_index_t cell_index, unsigned k0) const override
-  {
-    return slot_res_grid.dl_res_grid;
-  }
 };
 
 class dummy_pusch_allocator : public ue_pusch_allocator
@@ -52,18 +47,15 @@ public:
     last_grant = grant;
     return true;
   }
-
-  const cell_slot_resource_grid& ul_resource_grid(du_cell_index_t cell_index, unsigned k2) const override
-  {
-    return slot_res_grid.ul_res_grid;
-  }
 };
 
 class scheduler_policy_test : public ::testing::TestWithParam<policy_type>
 {
 protected:
-  scheduler_policy_test() : slot_res_grid(cell_cfg), pdsch_alloc(slot_res_grid), pusch_alloc(slot_res_grid)
+  scheduler_policy_test() : res_grid(cell_cfg), pdsch_alloc(res_grid[0]), pusch_alloc(res_grid[0])
   {
+    ue_res_grid.add_cell(res_grid);
+
     switch (GetParam()) {
       case policy_type::time_rr:
         sched = std::make_unique<scheduler_time_rr>();
@@ -128,7 +120,8 @@ protected:
   scheduler_ue_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
   cell_configuration         cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
 
-  cell_slot_resource_allocator      slot_res_grid;
+  cell_resource_allocator           res_grid;
+  ue_resource_grid_view             ue_res_grid;
   dummy_pdsch_allocator             pdsch_alloc;
   dummy_pusch_allocator             pusch_alloc;
   ue_list                           ues;
@@ -140,7 +133,7 @@ TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_
   ue& u = add_ue(to_du_ue_index(0), {uint_to_lcid(4)});
   push_dl_bs(u.ue_index, uint_to_lcid(4), 100000000);
 
-  sched->dl_sched(pdsch_alloc, ues, false);
+  sched->dl_sched(ue_res_grid, pdsch_alloc, ues, false);
 
   ASSERT_TRUE(this->pdsch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pdsch_alloc.last_grant->user->ue_index, u.ue_index);
@@ -173,14 +166,14 @@ TEST_P(scheduler_policy_test, scheduler_favors_ss_with_higher_nof_candidates_for
   const ue& u = add_ue(to_du_ue_index(0), {uint_to_lcid(4)}, uint_to_lcg_id(1), ue_req);
   push_dl_bs(u.ue_index, uint_to_lcid(4), 1053);
 
-  sched->dl_sched(pdsch_alloc, ues, false);
+  sched->dl_sched(ue_res_grid, pdsch_alloc, ues, false);
 
   ASSERT_TRUE(this->pdsch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pdsch_alloc.last_grant->user->ue_index, u.ue_index);
   ASSERT_EQ(this->pdsch_alloc.last_grant->ss_id, to_search_space_id(2));
 
   notify_ul_bsr(u.ue_index, uint_to_lcg_id(1), 1053);
-  sched->ul_sched(pusch_alloc, ues, false);
+  sched->ul_sched(ue_res_grid, pusch_alloc, ues, false);
 
   ASSERT_TRUE(this->pusch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pusch_alloc.last_grant->user->ue_index, u.ue_index);
@@ -203,7 +196,7 @@ TEST_P(scheduler_policy_test, scheduler_favors_coreset_gt_0_when_ss_has_equal_no
   const ue& u = add_ue(to_du_ue_index(0), {uint_to_lcid(5)}, uint_to_lcg_id(2), ue_req);
   push_dl_bs(u.ue_index, uint_to_lcid(5), 1053);
 
-  sched->dl_sched(pdsch_alloc, ues, false);
+  sched->dl_sched(ue_res_grid, pdsch_alloc, ues, false);
 
   ASSERT_TRUE(this->pdsch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pdsch_alloc.last_grant->user->ue_index, u.ue_index);
@@ -211,7 +204,7 @@ TEST_P(scheduler_policy_test, scheduler_favors_coreset_gt_0_when_ss_has_equal_no
   ASSERT_EQ(this->pdsch_alloc.last_grant->ss_id, to_search_space_id(2));
 
   notify_ul_bsr(u.ue_index, uint_to_lcg_id(2), 1053);
-  sched->ul_sched(pusch_alloc, ues, false);
+  sched->ul_sched(ue_res_grid, pusch_alloc, ues, false);
 
   ASSERT_TRUE(this->pusch_alloc.last_grant.has_value());
   ASSERT_EQ(this->pusch_alloc.last_grant->user->ue_index, u.ue_index);

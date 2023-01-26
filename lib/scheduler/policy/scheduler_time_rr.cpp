@@ -61,17 +61,24 @@ get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level a
 }
 
 /// Allocate UE PDSCH grant.
-static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
+static bool
+alloc_dl_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
 {
   if (not is_retx and not u.has_pending_dl_newtx_bytes()) {
     return false;
   }
   // TODO: Set aggregation level based on link quality.
-  const aggregation_level agg_lvl = srsgnb::aggregation_level::n4;
+  const aggregation_level agg_lvl    = srsgnb::aggregation_level::n4;
+  slot_point              pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell& ue_cc = u.get_cell(to_ue_cell_index(i));
+    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot)) {
+      // DL needs to be active for PDCCH in this slot.
+      continue;
+    }
+
     // Search available HARQ.
     const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
@@ -95,12 +102,16 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
 
       for (unsigned time_res = 0; time_res != pdsch_list.size(); ++time_res) {
         const pdsch_time_domain_resource_allocation& pdsch = pdsch_list[time_res];
-        const cell_slot_resource_grid&               grid  = pdsch_alloc.dl_resource_grid(ue_cc.cell_index, pdsch.k0);
-        const prb_bitmap                             used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
-        const unsigned     nof_req_prbs                        = is_retx ? h->last_alloc_params().prbs.prbs().length()
-                                                                         : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
-        const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
-        bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+        if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(pdcch_slot + pdsch.k0)) {
+          // DL needs to be active for PDSCH in this slot.
+          continue;
+        }
+        const cell_slot_resource_grid& grid           = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
+        const prb_bitmap               used_crbs      = grid.used_crbs(bwp_cfg, pdsch.symbols);
+        const unsigned                 nof_req_prbs   = is_retx ? h->last_alloc_params().prbs.prbs().length()
+                                                                : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
+        const crb_interval             ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
+        bool                           are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
         if (is_retx) {
           // In case of Retx, the #CRBs need to stay the same.
           are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().prbs.prbs().length();
@@ -119,7 +130,8 @@ static bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_re
 }
 
 /// Allocate UE PUSCH grant.
-static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
+static bool
+alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocator& pusch_alloc, bool is_retx)
 {
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
@@ -129,13 +141,19 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
     }
   }
   // TODO: Set aggregation level based on link quality.
-  const aggregation_level agg_lvl = srsgnb::aggregation_level::n4;
+  const aggregation_level agg_lvl    = srsgnb::aggregation_level::n4;
+  slot_point              pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
     const ue_cell&               ue_cc       = u.get_cell(to_ue_cell_index(i));
     const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
-    const ul_harq_process*       h           = nullptr;
+    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(res_grid.get_pdcch_slot())) {
+      // DL needs to be active for PDCCH in this slot.
+      continue;
+    }
+
+    const ul_harq_process* h = nullptr;
     if (is_retx) {
       h = ue_cc.harqs.find_pending_ul_retx();
     } else {
@@ -153,9 +171,13 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
           ss_cfg->type == search_space_configuration::type_t::common ? to_bwp_id(0) : ue_cc.active_bwp_id());
 
       for (unsigned time_res = 0; time_res != pusch_list.size(); ++time_res) {
-        const unsigned                 k2            = pusch_list[time_res].k2;
+        const unsigned k2 = pusch_list[time_res].k2;
+        if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_ul_enabled(pdcch_slot + k2)) {
+          // UL needs to be active for PUSCH in this slot.
+          continue;
+        }
         const ofdm_symbol_range        pusch_symbols = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
-        const cell_slot_resource_grid& grid          = pusch_alloc.ul_resource_grid(ue_cc.cell_index, k2);
+        const cell_slot_resource_grid& grid          = res_grid.get_pusch_grid(ue_cc.cell_index, k2);
         const prb_bitmap               used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
         const unsigned                 nof_req_prbs =
             is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
@@ -180,27 +202,37 @@ static bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_re
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void scheduler_time_rr::dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues, bool is_retx)
+void scheduler_time_rr::dl_sched(const ue_resource_grid_view& res_grid,
+                                 ue_pdsch_allocator&          pdsch_alloc,
+                                 const ue_list&               ues,
+                                 bool                         is_retx)
 {
   if (not is_retx) {
     // Increment Round-robin counter to prioritize different UEs.
     rr_count++;
   }
 
-  auto tx_ue_function = [&pdsch_alloc, is_retx](const ue& u) { return alloc_dl_ue(u, pdsch_alloc, is_retx); };
+  auto tx_ue_function = [&res_grid, &pdsch_alloc, is_retx](const ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, is_retx);
+  };
   if (round_robin_apply(ues, rr_count, tx_ue_function)) {
     return;
   }
 }
 
-void scheduler_time_rr::ul_sched(ue_pusch_allocator& pusch_alloc, const ue_list& ues, bool is_retx)
+void scheduler_time_rr::ul_sched(const ue_resource_grid_view& res_grid,
+                                 ue_pusch_allocator&          pusch_alloc,
+                                 const ue_list&               ues,
+                                 bool                         is_retx)
 {
   if (not is_retx) {
     // Increment Round-robin counter to prioritize different UEs.
     rr_count++;
   }
 
-  auto tx_ue_function = [&pusch_alloc, is_retx](const ue& u) { return alloc_ul_ue(u, pusch_alloc, is_retx); };
+  auto tx_ue_function = [&res_grid, &pusch_alloc, is_retx](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx);
+  };
   if (round_robin_apply(ues, rr_count, tx_ue_function)) {
     return;
   }

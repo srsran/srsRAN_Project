@@ -73,6 +73,7 @@ private:
   std::array<std::unique_ptr<cell>, MAX_NOF_DU_CELLS> cells;
 
   /// Scheduling Strategy
+  ue_resource_grid_view             ue_res_grid_view;
   std::unique_ptr<scheduler_policy> sched_strategy;
 
   /// Repository of created UEs.

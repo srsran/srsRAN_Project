@@ -32,17 +32,7 @@ public:
 
   size_t nof_cells() const { return cells.size(); }
 
-  const cell_slot_resource_grid& dl_resource_grid(du_cell_index_t cell_index, unsigned k0) const override
-  {
-    return get_res_alloc(cell_index)[k0].dl_res_grid;
-  }
-
   bool allocate_dl_grant(const ue_pdsch_grant& grant) override;
-
-  const cell_slot_resource_grid& ul_resource_grid(du_cell_index_t cell_index, unsigned k2) const override
-  {
-    return get_res_alloc(cell_index)[k2].ul_res_grid;
-  }
 
   bool allocate_ul_grant(const ue_pusch_grant& grant) override;
 
