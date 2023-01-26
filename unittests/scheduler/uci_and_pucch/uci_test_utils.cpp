@@ -100,10 +100,10 @@ bool srsgnb::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& 
 
 // Test bench with all that is needed for the PUCCH.
 
-test_bench::test_bench(unsigned pucch_res_common, unsigned n_cces, sr_periodicity period, unsigned offset) :
+test_bench::test_bench(const test_bench_params& params) :
   expert_cfg{config_helpers::make_default_scheduler_expert_config()},
-  cell_cfg{make_custom_sched_cell_configuration_request(pucch_res_common)},
-  dci_info{make_default_dci(n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
+  cell_cfg{make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)},
+  dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
   pucch_alloc{cell_cfg},
   uci_alloc(pucch_alloc),
@@ -118,8 +118,8 @@ test_bench::test_bench(unsigned pucch_res_common, unsigned n_cces, sr_periodicit
                         1,
                 "sched_ue_creation_request_message initialization is not complete.");
 
-  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = period;
-  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = offset;
+  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
+  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
 
   ues.insert(main_ue_idx, std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
   last_allocated_rnti   = ue_req.crnti;

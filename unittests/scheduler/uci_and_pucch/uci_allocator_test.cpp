@@ -25,7 +25,7 @@ struct expected_output_cfg_params {
 class test_uci_allocator : public ::testing::Test
 {
 public:
-  test_uci_allocator() : k2{t_bench.k0 + t_bench.k1} {}
+  test_uci_allocator(const test_bench_params& params = {}) : t_bench(params), k2{t_bench.k0 + t_bench.k1} {}
 
 protected:
   test_bench                 t_bench;
@@ -310,6 +310,28 @@ TEST_F(test_uci_allocator, sr_with_existing_pusch)
 
   // No grants expected on PUCCH.
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+}
+
+///////   UCI multiplexing on TDD ///////
+
+class test_tdd_uci_allocator : public test_uci_allocator
+{
+protected:
+  constexpr static size_t DAI_MOD = 4;
+
+  test_tdd_uci_allocator() : test_uci_allocator(test_bench_params{.is_tdd = true}) {}
+};
+
+TEST_F(test_tdd_uci_allocator, when_tdd_cfg_then_dai_increases_with_number_of_allocs_and_wraps_around)
+{
+  for (unsigned i = 0; i != DAI_MOD * 2; ++i) {
+    uci_allocation alloc = t_bench.uci_alloc.alloc_uci_harq_ue(
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+    if (alloc.alloc_successful) {
+      ASSERT_EQ(alloc.dai, i % DAI_MOD);
+    }
+  }
 }
 
 int main(int argc, char** argv)

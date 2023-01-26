@@ -96,25 +96,32 @@ inline pdcch_dl_information make_default_dci(unsigned n_cces, const coreset_conf
   return dci;
 }
 
-inline sched_cell_configuration_request_message make_custom_sched_cell_configuration_request(unsigned pucch_res_common)
+inline sched_cell_configuration_request_message make_custom_sched_cell_configuration_request(unsigned pucch_res_common,
+                                                                                             bool     is_tdd = false)
 {
-  sched_cell_configuration_request_message req =
-      test_helpers::make_default_sched_cell_configuration_request(cell_config_builder_params{
-          .scs_common = subcarrier_spacing::kHz15, .channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10});
+  sched_cell_configuration_request_message req = test_helpers::make_default_sched_cell_configuration_request(
+      cell_config_builder_params{.scs_common     = subcarrier_spacing::kHz15,
+                                 .channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10,
+                                 .dl_arfcn       = is_tdd ? 520000U : 365000U});
   req.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common = pucch_res_common;
   return req;
 }
 
 /////////        TEST BENCH for PUCCH scheduler        /////////
 
+struct test_bench_params {
+  unsigned       pucch_res_common = 11;
+  unsigned       n_cces           = 0;
+  sr_periodicity period           = sr_periodicity::sl_40;
+  unsigned       offset           = 0;
+  bool           is_tdd           = false;
+};
+
 // Test bench with all that is needed for the PUCCH.
 class test_bench
 {
 public:
-  explicit test_bench(unsigned       pucch_res_common = 11,
-                      unsigned       n_cces           = 0,
-                      sr_periodicity period           = sr_periodicity::sl_40,
-                      unsigned       offset           = 0);
+  explicit test_bench(const test_bench_params& params = {});
 
   // Return the main UE, which has RNTI 0x4601.
   const ue& get_main_ue() const;

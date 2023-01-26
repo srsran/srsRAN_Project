@@ -73,7 +73,8 @@ class test_pucch_harq_common_output : public ::testing::TestWithParam<pucch_test
 public:
   test_pucch_harq_common_output() :
     params{GetParam()},
-    t_bench(params.pucch_input_params.pucch_res_common, params.pucch_input_params.n_cces),
+    t_bench(test_bench_params{.pucch_res_common = params.pucch_input_params.pucch_res_common,
+                              .n_cces           = params.pucch_input_params.n_cces}),
     pucch_expected(build_pucch_info(&t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
                                     static_cast<unsigned>(t_bench.cell_cfg.pci),
                                     params.output_params.format,

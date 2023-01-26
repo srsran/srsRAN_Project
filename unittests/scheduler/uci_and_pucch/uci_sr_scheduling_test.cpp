@@ -43,7 +43,10 @@ public:
   test_pucch_output_sr_only() :
     sr_period(GetParam()),
     sr_offset(test_rgen::uniform_int<unsigned>(0, sr_periodicity_to_slot(GetParam()) - 1)),
-    t_bench{pucch_res_common, n_cces, sr_period, sr_offset},
+    t_bench{test_bench_params{.pucch_res_common = pucch_res_common,
+                              .n_cces           = n_cces,
+                              .period           = sr_period,
+                              .offset           = sr_offset}},
     pucch_expected(build_pucch_info(&t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
                                     static_cast<unsigned>(t_bench.cell_cfg.pci),
                                     expected_output_sr.format,
@@ -75,7 +78,10 @@ public:
   test_pucch_output_sr_harq() :
     sr_period(GetParam()),
     sr_offset(test_rgen::uniform_int<unsigned>(0, sr_periodicity_to_slot(GetParam()) - 1)),
-    t_bench{pucch_res_common, n_cces, sr_period, sr_offset},
+    t_bench{test_bench_params{.pucch_res_common = pucch_res_common,
+                              .n_cces           = n_cces,
+                              .period           = sr_period,
+                              .offset           = sr_offset}},
     expected_output_sr{make_expected_output_params_sr_harq()},
     pucch_expected(build_pucch_info(&t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
                                     static_cast<unsigned>(t_bench.cell_cfg.pci),

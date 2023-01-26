@@ -20,7 +20,10 @@ struct uci_allocation {
   bool alloc_successful{false};
   /// If UCI is allocated on the PUCCH, contains the PUCCH grant info; else, this is to be ignored.
   pucch_harq_ack_grant pucch_grant;
-  /// Downlink Assignment Index to be encoded in DL DCI as per TS38.213 Section 9.1.3.
+  /// Downlink Assignment Index to be encoded in DL DCI when using the dynamic HARQ-ACK codebook, as per TS38.213
+  /// Section 9.1.3. This counter informs the UE of the accumulated number of transmissions which require acknowledgment
+  /// up to the PDCCH monitoring occasion respective to this UCI allocation. The values wrap from 3 to 0, so four
+  /// consecutive missed resource allocations would be undetected.
   uint8_t dai{0};
 };
 
