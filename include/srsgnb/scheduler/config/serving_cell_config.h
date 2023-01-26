@@ -12,6 +12,7 @@
 
 #include "bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
+#include "srsgnb/ran/csi_rs/csi_meas_config.h"
 #include "srsgnb/ran/pdcch/downlink_preemption.h"
 #include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/ran/pdsch/pdsch_prb_bundling.h"
@@ -237,6 +238,8 @@ struct serving_cell_config {
   optional<uplink_config> ul_config;
   /// \c pdsch-ServingCellConfig.
   optional<pdsch_serving_cell_config> pdsch_serv_cell_cfg;
+  /// \c CSI-MeasConfig.
+  optional<csi_meas_config> csi_meas_cfg;
 };
 
 /// UE-dedicated configuration for serving cell, as per TS38.331.

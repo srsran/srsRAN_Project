@@ -22,4 +22,13 @@ enum nzp_csi_rs_res_id_t : uint8_t {
   MAX_NOF_NZP_CSI_RS_RESOURCES = 192
 };
 
+/// \brief NZP-CSI-RS-ResourceSetId is used to identify one NZP-CSI-RS-ResourceSet.
+/// \remark See TS 38.331, \c NZP-CSI-RS-ResourceSetId.
+enum nzp_csi_rs_res_set_id_t : uint8_t {
+  MIN_NZP_CSI_RS_RESOURCE_SET_ID       = 0,
+  MAX_NZP_CSI_RS_RESOURCE_SET_ID       = 63,
+  MAX_NOF_NZP_CSI_RS_RESOURCE_SETS     = 64,
+  MAX_NOF_NZP_CSI_RS_RESOURCES_PER_SET = 16
+};
+
 } // namespace srsgnb
