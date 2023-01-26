@@ -42,20 +42,20 @@ struct base_optional_storage {
   // Storage for trivially destructible type.
   template <typename U, bool = std::is_trivially_destructible<U>::value>
   union storage_type {
-    constexpr storage_type() noexcept : empty() {}
+    constexpr storage_type() noexcept : dummy() {}
     template <typename... Args>
     explicit storage_type(in_place_t, Args&&... args) : val(std::forward<Args>(args)...)
     {
     }
 
-    std::true_type empty;
-    U              val;
+    char dummy;
+    U    val;
   };
 
   // Storage for non-trivially destructible type.
   template <typename U>
   union storage_type<U, false> {
-    constexpr storage_type() noexcept : empty() {}
+    constexpr storage_type() noexcept : dummy() {}
     template <typename... Args>
     explicit storage_type(in_place_t, Args&&... args) : val(std::forward<Args>(args)...)
     {
@@ -64,8 +64,8 @@ struct base_optional_storage {
     // User-defined destructor in case T is not trivially destructible.
     ~storage_type() {}
 
-    std::true_type empty;
-    U              val;
+    char dummy;
+    U    val;
   };
 
   constexpr base_optional_storage() noexcept = default;
