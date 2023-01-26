@@ -92,7 +92,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
     handle_buffer_state_update_nolock(); // already locked
   });
 
-  logger.log_debug("MAC opportunity: nof_bytes={}, tx_window size={} PDUs", nof_bytes, tx_window->size());
+  logger.log_info("MAC opportunity: nof_bytes={}, tx_window size={} PDUs", nof_bytes, tx_window->size());
 
   // Tx STATUS if requested
   if (status_provider->status_report_required()) {
@@ -203,7 +203,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu});
-  logger.log_info("Created PDU (): {} bytes", hdr.si, pdu_buf.length());
+  logger.log_info("Created PDU ({}): {} bytes", hdr.si, pdu_buf.length());
 
   // Update TX Next
   st.tx_next = (st.tx_next + 1) % mod;
@@ -825,7 +825,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
 
   // t-PollRetransmit
   if (poll_retransmit_timer.is_valid() && poll_retransmit_timer.id() == timeout_id) {
-    logger.log_debug("t-PollRetransmit expired after {} ms", poll_retransmit_timer.duration());
+    logger.log_info("t-PollRetransmit expired after {} ms", poll_retransmit_timer.duration());
     log_state(srslog::basic_levels::debug);
     /*
      * - if both the transmission buffer and the retransmission buffer are empty
