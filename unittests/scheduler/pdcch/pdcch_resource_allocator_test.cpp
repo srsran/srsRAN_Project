@@ -107,7 +107,11 @@ void test_pdcch_sched_ue()
   TESTASSERT(pdcch == &res_grid[0].result.dl.dl_pdcchs[0]);
   TESTASSERT(pdcch2 == &res_grid[0].result.dl.dl_pdcchs[1]);
   TESTASSERT_EQ(aggregation_level::n4, pdcch->ctx.cces.aggr_lvl);
+  // CCE start index is 0 since its first allocation.
+  TESTASSERT_EQ(0, pdcch->ctx.cces.ncce);
   TESTASSERT_EQ(aggregation_level::n4, pdcch2->ctx.cces.aggr_lvl);
+  // CCE start index is 4 since its second allocation and the first 4 CCEs are allocated to PDCCH grant for rnti=0x4601.
+  TESTASSERT_EQ(4, pdcch2->ctx.cces.ncce);
   TESTASSERT_EQ(rnti, pdcch->ctx.rnti);
   TESTASSERT_EQ(rnti2, pdcch2->ctx.rnti);
   TESTASSERT(*pdcch->ctx.bwp_cfg == ue_cfg.dl_bwp_common(to_bwp_id(0)).generic_params);

@@ -92,6 +92,8 @@ bool pdcch_resource_allocator_impl::pdcch_slot_allocator::alloc_pdcch(dci_contex
   // different permutation of past grant CCE positions.
   do {
     if (alloc_dfs_node(slot_alloc, record, 0)) {
+      // Set CCE start index.
+      record.pdcch_ctx->cces.ncce = dfs_tree.back().ncce;
       // DCI record was successfully allocated.
       records.push_back(record);
       return true;
