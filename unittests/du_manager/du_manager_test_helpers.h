@@ -179,7 +179,7 @@ public:
   {
     if (next_bearer_is_created and f1u_bearers.count(dl_teid) == 0) {
       f1u_bearers.insert(std::make_pair(dl_teid, std::map<uint32_t, f1u_bearer_dummy>{}));
-      f1u_bearers[dl_teid].insert(std::make_pair(ul_teid, f1u_bearer_dummy{du_rx}));
+      f1u_bearers[dl_teid].emplace(ul_teid, du_rx);
       return &f1u_bearers.at(dl_teid).at(ul_teid);
     }
     return nullptr;
