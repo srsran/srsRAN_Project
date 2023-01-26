@@ -96,6 +96,13 @@ bool pdcch_resource_allocator_impl::pdcch_slot_allocator::alloc_pdcch(dci_contex
       record.pdcch_ctx->cces.ncce = dfs_tree.back().ncce;
       // DCI record was successfully allocated.
       records.push_back(record);
+      // If the previous branches of the DFS changed in order for this new PDCCH to be allocated, update previous
+      // PDCCH ncces
+      if (not saved_dfs_tree.empty()) {
+        for (unsigned i = 0; i != dfs_tree.size() - 1; ++i) {
+          records[dfs_tree[i].record_index].pdcch_ctx->cces.ncce = dfs_tree[i].ncce;
+        }
+      }
       return true;
     }
     if (saved_dfs_tree.empty()) {
