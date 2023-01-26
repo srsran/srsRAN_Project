@@ -66,10 +66,10 @@ constexpr unsigned to_number(rlc_dc_field dc)
 
 /// RLC AM NR segmentation info
 enum class rlc_si_field : unsigned {
-  full_sdu       = 0b00,
-  first_segment  = 0b01,
-  last_segment   = 0b10,
-  middle_segment = 0b11
+  full_sdu       = 0b00, ///< Full SDU
+  first_segment  = 0b01, ///< First SDU segment
+  last_segment   = 0b10, ///< Last SDU segment
+  middle_segment = 0b11  ///< Middle SDU segment
 };
 
 constexpr uint16_t to_number(rlc_si_field si_field)
@@ -218,7 +218,8 @@ struct formatter<srsgnb::rlc_si_field> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_si_field si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"full", "first", "last", "middle"};
+    constexpr static const char* options[] = {
+        "full SDU", "first SDU segment", "last SDU segment", "middle SDU segment"};
     return format_to(ctx.out(), "{}", options[to_number(si)]);
   }
 };
