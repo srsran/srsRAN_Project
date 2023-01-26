@@ -57,6 +57,8 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&         b
   config.rx_symbol_notifier         = &rx_symbol_notifier;
   config.timing_notifier            = &timing_notifier;
   config.error_notifier             = &error_notifier;
+  config.prach_async_executor       = nullptr;
+  config.amplitude_config           = {};
   config.sectors.emplace_back();
   config.sectors.back().bandwidth_rb = bandwidth_rb;
   config.sectors.back().dl_freq_hz   = dl_freq_hz;
