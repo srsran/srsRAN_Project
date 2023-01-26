@@ -63,7 +63,9 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& con
 std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const gnb_appconfig&                  params,
                                                     upper_phy_rg_gateway*                 rg_gateway,
                                                     task_executor*                        dl_executor,
-                                                    task_executor*                        ul_executor,
+                                                    task_executor*                        pucch_executor,
+                                                    task_executor*                        pusch_executor,
+                                                    task_executor*                        prach_executor,
                                                     upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
 {
   downlink_processor_factory_sw_config dl_proc_config;
@@ -79,11 +81,13 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const gnb_appconfig&        
 
   std::vector<upper_phy_config> config = generate_du_low_config(params);
 
-  // Fill the rest of the parameters.
+  // Fill the rest with the parameters.
   upper_phy_config& cfg          = config.front();
   cfg.rg_gateway                 = rg_gateway;
   cfg.dl_executor                = dl_executor;
-  cfg.ul_executor                = ul_executor;
+  cfg.pucch_executor             = pucch_executor;
+  cfg.pusch_executor             = pusch_executor;
+  cfg.prach_executor             = prach_executor;
   cfg.rx_symbol_request_notifier = rx_symbol_request_notifier;
 
   return upper_phy_factory->create(cfg);

@@ -16,7 +16,10 @@ add_subdirectory(equalization)
 add_library(srsgnb_downlink_processor downlink_processor_single_executor_impl.cpp downlink_processor_pool_impl.cpp)
 target_link_libraries(srsgnb_downlink_processor srsgnb_channel_processors)
 
-add_library(srsgnb_uplink_processor uplink_processor_single_executor_impl.cpp uplink_processor_pool_impl.cpp uplink_request_processor_impl.cpp)
+add_library(srsgnb_uplink_processor
+        uplink_processor_impl.cpp
+        uplink_processor_pool_impl.cpp
+        uplink_request_processor_impl.cpp)
 target_link_libraries(srsgnb_uplink_processor srsgnb_channel_processors)
 
 add_library(srsgnb_upper_phy upper_phy_factories.cpp upper_phy_impl.cpp upper_phy_factories.cpp upper_phy_rx_symbol_handler_impl.cpp upper_phy_rx_results_notifier_wrapper.cpp)

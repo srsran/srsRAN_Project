@@ -176,8 +176,12 @@ struct upper_phy_config {
   upper_phy_rg_gateway* rg_gateway;
   /// Downlink task executor.
   task_executor* dl_executor;
-  /// Uplink task executor.
-  task_executor* ul_executor;
+  /// PUCCH task executor.
+  task_executor* pucch_executor;
+  /// PUSCH task executor.
+  task_executor* pusch_executor;
+  /// PRACH task executor.
+  task_executor* prach_executor;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
 };

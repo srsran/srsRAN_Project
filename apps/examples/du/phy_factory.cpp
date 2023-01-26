@@ -86,7 +86,9 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const upper_phy_params&     
   upper_config.rg_gateway                                  = rg_gateway;
   upper_config.dl_executor                                 = dl_executor;
   upper_config.nof_ul_processors                           = 8 * params.dl_pipeline_depth;
-  upper_config.ul_executor                                 = ul_executor;
+  upper_config.pucch_executor                              = ul_executor;
+  upper_config.pusch_executor                              = ul_executor;
+  upper_config.prach_executor                              = ul_executor;
   upper_config.rx_symbol_request_notifier                  = rx_symbol_request_notifier;
   upper_config.active_scs                                  = {};
   upper_config.active_scs[to_numerology_value(params.scs)] = true;

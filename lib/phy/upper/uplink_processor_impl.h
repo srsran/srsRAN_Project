@@ -20,13 +20,12 @@ class task_executor;
 ///
 /// In this implementation, every task is processed by the same executor. When a task finishes, the results are notified
 /// by the upper_phy_rx_results_notifier interface.
-class uplink_processor_single_executor_impl : public uplink_processor
+class uplink_processor_impl : public uplink_processor
 {
 public:
-  uplink_processor_single_executor_impl(std::unique_ptr<prach_detector>  prach_,
-                                        std::unique_ptr<pusch_processor> pusch_proc_,
-                                        std::unique_ptr<pucch_processor> pucch_proc_,
-                                        task_executor&                   executor_);
+  uplink_processor_impl(std::unique_ptr<prach_detector>  prach_,
+                        std::unique_ptr<pusch_processor> pusch_proc_,
+                        std::unique_ptr<pucch_processor> pucch_proc_);
 
   // See interface for documentation.
   void process_prach(upper_phy_rx_results_notifier& notifier,
@@ -52,8 +51,6 @@ private:
   std::unique_ptr<pusch_processor> pusch_proc;
   /// PUCCH processor.
   std::unique_ptr<pucch_processor> pucch_proc;
-  /// Executor for the tasks generated within this uplink processor.
-  task_executor& executor;
 };
 
 } // namespace srsgnb

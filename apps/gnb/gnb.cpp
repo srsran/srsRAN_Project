@@ -115,8 +115,8 @@ struct worker_manager {
     ctrl_worker.stop();
     rt_task_worker.stop();
     upper_dl_worker.stop();
-    upper_ul_worker.stop();
-    lower_prach_worker.stop();
+    common_prach_worker.stop();
+    upper_puxch_worker.stop();
     radio_worker.stop();
   }
 
@@ -135,14 +135,20 @@ struct worker_manager {
   // Lower PHY RT task executor.
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
   task_worker_executor rt_task_executor{{rt_task_worker}};
+  // Common lower and upper PRACH worker.
+  task_worker common_prach_worker{"PRACH worker",
+                                  task_worker_queue_size,
+                                  false,
+                                  os_thread_realtime_priority::max() - 1};
   // PRACH lower PHY executor
-  task_worker          lower_prach_worker{"Lower PHY PRACH worker", task_worker_queue_size};
-  task_worker_executor lower_prach_executor{lower_prach_worker};
+  task_worker_executor lower_prach_executor{common_prach_worker};
   // Upper phy task executor
   task_worker          upper_dl_worker{"PHY DL worker", task_worker_queue_size};
   task_worker_executor upper_dl_executor{upper_dl_worker};
-  task_worker          upper_ul_worker{"PHY UL worker", task_worker_queue_size};
-  task_worker_executor upper_ul_executor{upper_ul_worker};
+  task_worker          upper_puxch_worker{"PHY UL worker", task_worker_queue_size};
+  task_worker_executor upper_pucch_executor{upper_puxch_worker};
+  task_worker_executor upper_pusch_executor{upper_puxch_worker};
+  task_worker_executor upper_prach_executor{common_prach_worker};
   // Radio task executor
   task_worker          radio_worker{"Radio worker", task_worker_queue_size};
   task_worker_executor radio_executor{radio_worker};
@@ -396,8 +402,13 @@ int main(int argc, char** argv)
   report_fatal_error_if_not(lower, "Unable to create lower PHY.");
   gnb_logger.info("Lower PHY created successfully");
 
-  auto upper = create_upper_phy(
-      gnb_cfg, &rg_gateway_adapter, &workers.upper_dl_executor, &workers.upper_ul_executor, &phy_rx_symbol_req_adapter);
+  auto upper = create_upper_phy(gnb_cfg,
+                                &rg_gateway_adapter,
+                                &workers.upper_dl_executor,
+                                &workers.upper_pucch_executor,
+                                &workers.upper_pusch_executor,
+                                &workers.lower_prach_executor,
+                                &phy_rx_symbol_req_adapter);
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
   gnb_logger.info("Upper PHY created successfully");
 
