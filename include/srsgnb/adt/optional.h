@@ -28,12 +28,6 @@ constexpr nullopt_t nullopt{0};
 
 namespace detail {
 
-#ifndef __clang__
-// Disable Warning false alarms for gcc 12.2.0.
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-#endif
-
 /// Storage of an optional internal value and empty/has_value flag.
 template <typename T>
 struct base_optional_storage {
@@ -259,10 +253,6 @@ public:
 
   ~optional_storage() { this->reset_(); }
 };
-
-#ifndef __clang__
-#pragma GCC diagnostic pop
-#endif
 
 } // namespace detail
 
