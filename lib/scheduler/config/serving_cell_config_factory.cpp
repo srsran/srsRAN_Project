@@ -415,8 +415,11 @@ srsgnb::config_helpers::create_default_initial_ue_spcell_cell_config(const cell_
 uint8_t srsgnb::config_helpers::compute_max_nof_candidates(aggregation_level            aggr_lvl,
                                                            const coreset_configuration& cs_cfg)
 {
-  const unsigned max_coreset_rbs =
+  // 1 REG = 6 PRBs spread over symbols i.e. 3 PRBs over 2 symbols or 6 PRBs over 1 symbol etc.
+  // 1 CCE = 6 REGs.
+  // Example: 3 Frequency domain resources, 2 symbol duration contains 6 REGs.
+  const unsigned max_coreset_regs =
       cs_cfg.freq_domain_resources().count() * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE * cs_cfg.duration;
 
-  return max_coreset_rbs / (to_nof_cces(aggr_lvl) * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
+  return max_coreset_regs / (to_nof_cces(aggr_lvl) * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
 }
