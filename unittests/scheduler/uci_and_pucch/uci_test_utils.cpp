@@ -88,6 +88,16 @@ bool srsgnb::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& 
                  expected_f.time_domain_occ == test_f.time_domain_occ;
       break;
     }
+    case pucch_format::FORMAT_2: {
+      const pucch_format_2& expected_f = expected.format_2;
+      const pucch_format_2& test_f     = test.format_2;
+      is_equal                         = is_equal && expected_f.max_code_rate == test_f.max_code_rate &&
+                 expected_f.n_id_scambling == test_f.n_id_scambling &&
+                 expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling && expected_f.sr_bits == test_f.sr_bits &&
+                 expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
+                 expected_f.csi_part1_bits == test_f.csi_part1_bits;
+      break;
+    }
     default: {
       return false;
     };

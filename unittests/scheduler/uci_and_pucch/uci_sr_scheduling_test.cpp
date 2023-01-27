@@ -18,23 +18,7 @@ using namespace srsgnb;
 
 ////////////    Structs with expected parameters and PUCCH sched INPUT     ////////////
 
-// Expected results parameters (default values are for SR only).
-struct expected_output_params {
-  pucch_format      format{pucch_format::FORMAT_1};
-  prb_interval      prbs{prb_interval{0, 1}};
-  prb_interval      second_hop_prbs{prb_interval{51, 52}};
-  ofdm_symbol_range symbols{ofdm_symbol_range{0, 14}};
-  uint8_t           initial_cyclic_shift{0};
-  sr_nof_bits       sr_bits{sr_nof_bits::one};
-  unsigned          harq_ack_nof_bits{0};
-  uint8_t           time_domain_occ{0};
-};
-
-// Make expected results parameters (default values are for SR only).
-static expected_output_params make_expected_output_params_sr_harq()
-{
-  return expected_output_params{.harq_ack_nof_bits = 1};
-}
+const unsigned NOF_RBS = 52;
 
 // Class to test PUCCH schedule with SR occasions only.
 class test_pucch_output_sr_only : public ::testing::TestWithParam<sr_periodicity>
@@ -46,17 +30,27 @@ public:
     t_bench{test_bench_params{.pucch_res_common = pucch_res_common,
                               .n_cces           = n_cces,
                               .period           = sr_period,
-                              .offset           = sr_offset}},
-    pucch_expected(build_pucch_info(&t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
-                                    static_cast<unsigned>(t_bench.cell_cfg.pci),
-                                    expected_output_sr.format,
-                                    expected_output_sr.prbs,
-                                    expected_output_sr.second_hop_prbs,
-                                    expected_output_sr.symbols,
-                                    expected_output_sr.initial_cyclic_shift,
-                                    expected_output_sr.sr_bits,
-                                    expected_output_sr.harq_ack_nof_bits,
-                                    expected_output_sr.time_domain_occ)){};
+                              .offset           = sr_offset}}
+  {
+    // Set expected grant for PUCCH Format 1.
+    pucch_expected.format  = srsgnb::pucch_format::FORMAT_1;
+    pucch_expected.crnti   = to_rnti(0x4601);
+    pucch_expected.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected.resources.prbs            = prb_interval{0, 1};
+    pucch_expected.resources.second_hop_prbs = prb_interval{NOF_RBS - 1, NOF_RBS};
+    pucch_expected.resources.symbols         = ofdm_symbol_range{0, 14};
+
+    pucch_expected.format_1.initial_cyclic_shift = 0;
+    pucch_expected.format_1.sr_bits              = sr_nof_bits::one;
+    pucch_expected.format_1.harq_ack_nof_bits    = 0;
+    pucch_expected.format_1.time_domain_occ      = 0;
+
+    pucch_expected.format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    pucch_expected.format                   = pucch_format::FORMAT_1;
+    pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
+    pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+  };
 
 protected:
   // Parameters that are passed by the routing to run the tests.
@@ -65,8 +59,6 @@ protected:
   unsigned       pucch_res_common{11};
   unsigned       n_cces{0};
   test_bench     t_bench;
-  // This contains the list of output expected parameters for SR PUCCH PDU.
-  expected_output_params expected_output_sr;
   // Expected SR PUCCH PDU that would be passed to PHY.
   pucch_info pucch_expected;
 };
@@ -81,18 +73,27 @@ public:
     t_bench{test_bench_params{.pucch_res_common = pucch_res_common,
                               .n_cces           = n_cces,
                               .period           = sr_period,
-                              .offset           = sr_offset}},
-    expected_output_sr{make_expected_output_params_sr_harq()},
-    pucch_expected(build_pucch_info(&t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
-                                    static_cast<unsigned>(t_bench.cell_cfg.pci),
-                                    expected_output_sr.format,
-                                    expected_output_sr.prbs,
-                                    expected_output_sr.second_hop_prbs,
-                                    expected_output_sr.symbols,
-                                    expected_output_sr.initial_cyclic_shift,
-                                    expected_output_sr.sr_bits,
-                                    expected_output_sr.harq_ack_nof_bits,
-                                    expected_output_sr.time_domain_occ)){};
+                              .offset           = sr_offset}}
+  {
+    // Set expected grant for PUCCH Format 1.
+    pucch_expected.format  = srsgnb::pucch_format::FORMAT_1;
+    pucch_expected.crnti   = to_rnti(0x4601);
+    pucch_expected.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected.resources.prbs            = prb_interval{0, 1};
+    pucch_expected.resources.second_hop_prbs = prb_interval{NOF_RBS - 1, NOF_RBS};
+    pucch_expected.resources.symbols         = ofdm_symbol_range{0, 14};
+
+    pucch_expected.format_1.initial_cyclic_shift = 0;
+    pucch_expected.format_1.sr_bits              = sr_nof_bits::one;
+    pucch_expected.format_1.harq_ack_nof_bits    = 1;
+    pucch_expected.format_1.time_domain_occ      = 0;
+
+    pucch_expected.format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    pucch_expected.format                   = pucch_format::FORMAT_1;
+    pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
+    pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+  };
 
 protected:
   // Parameters that are passed by the routing to run the tests.
@@ -102,8 +103,6 @@ protected:
   unsigned       n_cces{0};
   const unsigned sl_point_harq_delay{0};
   test_bench     t_bench;
-  // This contains the list of output expected parameters for SR PUCCH PDU.
-  expected_output_params expected_output_sr;
   // Expected SR PUCCH PDU that would be passed to PHY.
   pucch_info pucch_expected;
 };

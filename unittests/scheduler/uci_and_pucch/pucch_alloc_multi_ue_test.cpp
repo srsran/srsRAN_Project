@@ -18,89 +18,48 @@ const unsigned NOF_RBS = 52;
 
 ///////   Test allocation of dedicated PUCCH resources    ///////
 
-// Expected results parameters.
-struct expected_output_params {
-  pucch_format      format;
-  prb_interval      prbs;
-  prb_interval      second_hop_prbs;
-  ofdm_symbol_range symbols;
-  bool              intra_slot_freq_hop;
-  uint8_t           initial_cyclic_shift;
-  sr_nof_bits       sr_bits;
-  unsigned          harq_ack_nof_bits;
-  uint8_t           time_domain_occ;
-};
-
-// Parameters for PUCCH scheduler initialization.
-struct pucch_params {
-  // Input parameters.
-  unsigned pucch_res_common;
-  unsigned n_cces;
-};
-
-// Parameters to be passed to test for PUCCH output assessment.
-struct pucch_test_parameters {
-  unsigned               dci_pucch_res_indicator;
-  expected_output_params output_params;
-  pucch_params           pucch_input_params;
-};
-
-expected_output_params make_expected_output_params_sr_only()
-{
-  return expected_output_params{.format               = pucch_format::FORMAT_1,
-                                .prbs                 = prb_interval{0, 1},
-                                .second_hop_prbs      = prb_interval{NOF_RBS - 1, NOF_RBS},
-                                .symbols              = ofdm_symbol_range{0, 14},
-                                .intra_slot_freq_hop  = true,
-                                .initial_cyclic_shift = 0,
-                                .sr_bits              = sr_nof_bits::one,
-                                .harq_ack_nof_bits    = 0,
-                                .time_domain_occ      = 0};
-}
-
-// Make expected results parameters (default values are for SR only).
-expected_output_params make_expected_output_params_sr_harq()
-{
-  expected_output_params out = make_expected_output_params_sr_only();
-  out.harq_ack_nof_bits      = 1;
-  return out;
-}
-
-static expected_output_params make_expected_output_params_harq_ded_resources()
-{
-  return expected_output_params{.format               = pucch_format::FORMAT_1,
-                                .prbs                 = prb_interval{NOF_RBS - 1, NOF_RBS},
-                                .second_hop_prbs      = prb_interval{0, 1},
-                                .symbols              = ofdm_symbol_range{0, 14},
-                                .intra_slot_freq_hop  = true,
-                                .initial_cyclic_shift = 0,
-                                .sr_bits              = sr_nof_bits::no_sr,
-                                .harq_ack_nof_bits    = 1,
-                                .time_domain_occ      = 0};
-}
-
 class test_pucch_harq_allocator_ded_resources : public ::testing::Test
 {
 public:
-  test_pucch_harq_allocator_ded_resources() :
-    harq_expected_params{make_expected_output_params_harq_ded_resources()},
-    pucch_expected{build_pucch_info(&t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
-                                    static_cast<unsigned>(t_bench.cell_cfg.pci),
-                                    harq_expected_params.format,
-                                    harq_expected_params.prbs,
-                                    harq_expected_params.second_hop_prbs,
-                                    harq_expected_params.symbols,
-                                    harq_expected_params.initial_cyclic_shift,
-                                    harq_expected_params.sr_bits,
-                                    harq_expected_params.harq_ack_nof_bits,
-                                    harq_expected_params.time_domain_occ)} {};
+  test_pucch_harq_allocator_ded_resources()
+  {
+    // Set expected grant for PUCCH Format 1.
+    pucch_expected_f1.format  = srsgnb::pucch_format::FORMAT_1;
+    pucch_expected_f1.crnti   = to_rnti(0x4601);
+    pucch_expected_f1.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected_f1.resources.prbs            = prb_interval{NOF_RBS - 1, NOF_RBS};
+    pucch_expected_f1.resources.second_hop_prbs = prb_interval{0, 1};
+    pucch_expected_f1.resources.symbols         = ofdm_symbol_range{0, 14};
+
+    pucch_expected_f1.format_1.initial_cyclic_shift = 0;
+    pucch_expected_f1.format_1.sr_bits              = sr_nof_bits::no_sr;
+    pucch_expected_f1.format_1.harq_ack_nof_bits    = 1;
+    pucch_expected_f1.format_1.time_domain_occ      = 0;
+
+    // Set expected grant for PUCCH Format 1.
+    pucch_expected_f1.format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    pucch_expected_f1.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
+    pucch_expected_f1.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+
+    pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_f2.crnti                     = to_rnti(0x4601);
+    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
+
+    pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+  };
 
 protected:
   // Parameters that are passed by the routine to run the tests.
-  expected_output_params harq_expected_params;
-  test_bench             t_bench;
-  pucch_info             pucch_expected;
-  const unsigned         pucch_res_idx{0};
+  test_bench     t_bench;
+  pucch_info     pucch_expected_f1;
+  pucch_info     pucch_expected_f2;
+  const unsigned pucch_res_idx{0};
 
   void add_sr_grant()
   {
@@ -152,7 +111,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_pucch_pdu)
   auto&          slot_grid            = t_bench.res_grid[t_bench.k0 + t_bench.k1];
   const unsigned EXPECTED_HARQ_GRANTS = 1;
   ASSERT_EQ(EXPECTED_HARQ_GRANTS, slot_grid.result.ul.pucchs.size());
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, slot_grid.result.ul.pucchs.back()));
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f1, slot_grid.result.ul.pucchs.back()));
 }
 
 // Tests whether PUCCH HARQ grant is allocated with an existing SR.
@@ -167,7 +126,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_update_sr_and_add_new_harq)
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(test_pdu.pucch_pdu, &slot_grid.result.ul.pucchs[1]);
   ASSERT_EQ(pucch_res_idx, test_pdu.pucch_res_indicator);
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, slot_grid.result.ul.pucchs[1]));
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f1, slot_grid.result.ul.pucchs[1]));
   // Verify that the SR grants gets updated.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs[0].format_1.harq_ack_nof_bits);
 }
@@ -176,8 +135,8 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_update_sr_and_add_new_harq)
 TEST_F(test_pucch_harq_allocator_ded_resources, test_update_harq)
 {
   add_harq_grant();
-  pucch_expected.format_1.harq_ack_nof_bits = 2;
-  pucch_harq_ack_grant test_pdu             = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+  pucch_expected_f1.format_1.harq_ack_nof_bits = 2;
+  pucch_harq_ack_grant test_pdu                = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
@@ -185,14 +144,14 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_update_harq)
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(test_pdu.pucch_pdu, &slot_grid.result.ul.pucchs[0]);
   ASSERT_EQ(pucch_res_idx, test_pdu.pucch_res_indicator);
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, slot_grid.result.ul.pucchs[0]));
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f1, slot_grid.result.ul.pucchs[0]));
 }
 
 // Tests whether existing PUCCH HARQ grant gets updated with an existing SR.
 TEST_F(test_pucch_harq_allocator_ded_resources, test_update_harq_and_sr)
 {
   add_harq_grant();
-  pucch_expected.format_1.harq_ack_nof_bits = 2;
+  pucch_expected_f1.format_1.harq_ack_nof_bits = 2;
   add_sr_grant();
   pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
@@ -203,7 +162,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_update_harq_and_sr)
   ASSERT_EQ(test_pdu.pucch_pdu, &slot_grid.result.ul.pucchs[0]);
   ASSERT_EQ(pucch_res_idx, test_pdu.pucch_res_indicator);
   // The function add_harq_grant() has set the expected harq_ack_nof_bits = 2.
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, slot_grid.result.ul.pucchs[0]));
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f1, slot_grid.result.ul.pucchs[0]));
   // Verify that the SR grants gets updated.
   const unsigned EXPECTED_HARQ_BITS_IN_SR = 2;
   ASSERT_EQ(EXPECTED_HARQ_BITS_IN_SR, slot_grid.result.ul.pucchs[1].format_1.harq_ack_nof_bits);
@@ -316,6 +275,140 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_harq_removal)
 
   ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(1, removed_bits.harq_ack_nof_bits);
+  ASSERT_EQ(0, removed_bits.csi_part1_bits);
+}
+
+///////   Test allocation of format 2 PUCCH resources    ///////
+
+// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator.
+TEST_F(test_pucch_harq_allocator_ded_resources, test_format_2_alloction)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  // By allocating the HARQ-ACK 3 times, the PUCCH is forced to convert the Format 1 into format 2, as Format 1 can
+  // carry 2 HARQ bits, at most.
+  pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_1, test_pdu.pucch_pdu->format);
+  ASSERT_EQ(1, test_pdu.pucch_pdu->format_1.harq_ack_nof_bits);
+
+  // 2 bits HARQ.
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_1, test_pdu.pucch_pdu->format);
+  ASSERT_EQ(2, test_pdu.pucch_pdu->format_1.harq_ack_nof_bits);
+
+  // Convert to Format 2 and with 3 bits HARQ.
+  test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(test_pdu.pucch_pdu, &slot_grid.result.ul.pucchs.back());
+  ASSERT_EQ(0, test_pdu.pucch_res_indicator);
+  ASSERT_EQ(pucch_format::FORMAT_2, test_pdu.pucch_pdu->format);
+  ASSERT_EQ(3, test_pdu.pucch_pdu->format_2.harq_ack_nof_bits);
+}
+
+// Tests whether PUCCH HARQ grant is allocated with correct PUCCH RESOURCE Indicator.
+TEST_F(test_pucch_harq_allocator_ded_resources, test_format_2_alloction_pdu_content)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  // By allocating the HARQ-ACK 3 times, the PUCCH is forced to convert the Format 1 into format 2, as Format 1 can
+  // carry 2 HARQ bits, at most.
+  pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(test_pdu.pucch_pdu, &slot_grid.result.ul.pucchs.back());
+  pucch_expected_f2.format_2.harq_ack_nof_bits = 3;
+  pucch_expected_f2.format_2.sr_bits           = srsgnb::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.csi_part1_bits    = 0;
+  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f2, slot_grid.result.ul.pucchs.back()));
+}
+
+TEST_F(test_pucch_harq_allocator_ded_resources, test_format_2_removal)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  // By allocating the HARQ-ACK 3 times, the PUCCH is forced to convert the Format 1 into format 2, as Format 1 can
+  // carry 2 HARQ bits, at most.
+  pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+
+  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(
+      slot_grid,
+      t_bench.get_main_ue().crnti,
+      t_bench.get_main_ue().get_pcell().cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(3, removed_bits.harq_ack_nof_bits);
+  ASSERT_EQ(0, removed_bits.csi_part1_bits);
+}
+
+TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_allocation_on_format2)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  // By allocating the HARQ-ACK 3 times, the PUCCH is forced to convert the Format 1 into format 2, as Format 1 can
+  // carry 2 HARQ bits, at most.
+  pucch_harq_ack_grant test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  test_pdu = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(srsgnb::sr_nof_bits::no_sr, test_pdu.pucch_pdu->format_2.sr_bits);
+
+  t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
+      t_bench.res_grid[t_bench.k0 + t_bench.k1], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
+
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_2, slot_grid.result.ul.pucchs.back().format);
+  ASSERT_EQ(srsgnb::sr_nof_bits::one, test_pdu.pucch_pdu->format_2.sr_bits);
+}
+
+// Tests whether PUCCH HARQ grant is allocated with an existing SR.
+TEST_F(test_pucch_harq_allocator_ded_resources, test_format2_alloc_on_existing_sr_plus_removal)
+{
+  add_sr_grant();
+
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+
+  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+
+  // Expect 1 PUCCH grant format 2.
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(pucch_format::FORMAT_2, slot_grid.result.ul.pucchs.back().format);
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs[0].format_2.harq_ack_nof_bits);
+  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs[0].format_2.sr_bits);
+
+  pucch_uci_bits removed_bits = t_bench.pucch_alloc.remove_ue_uci_from_pucch(
+      slot_grid,
+      t_bench.get_main_ue().crnti,
+      t_bench.get_main_ue().get_pcell().cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(3, removed_bits.harq_ack_nof_bits);
   ASSERT_EQ(0, removed_bits.csi_part1_bits);
 }
 

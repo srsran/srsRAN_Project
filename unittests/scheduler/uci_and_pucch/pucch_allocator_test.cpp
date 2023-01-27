@@ -19,7 +19,7 @@ using namespace srsgnb;
 const unsigned NOF_RBS = 52;
 
 // Expected results parameters.
-struct expected_output_params {
+struct expected_output_params_f1 {
   pucch_format      format;
   prb_interval      prbs;
   prb_interval      second_hop_prbs;
@@ -29,6 +29,18 @@ struct expected_output_params {
   sr_nof_bits       sr_bits;
   unsigned          harq_ack_nof_bits;
   uint8_t           time_domain_occ;
+};
+
+// Expected results parameters.
+struct expected_output_params_f2 {
+  pucch_format      format;
+  prb_interval      prbs;
+  prb_interval      second_hop_prbs;
+  ofdm_symbol_range symbols;
+  bool              intra_slot_freq_hop;
+  sr_nof_bits       sr_bits;
+  unsigned          harq_ack_nof_bits;
+  unsigned          csi_part1_nof_bits;
 };
 
 // Parameters for PUCCH scheduler initialization.
@@ -41,27 +53,27 @@ struct pucch_params {
 // Parameters to be passed to test for PUCCH output assessment.
 struct pucch_test_parameters {
   unsigned               dci_pucch_res_indicator;
-  expected_output_params output_params;
+  expected_output_params_f1 output_params;
   pucch_params           pucch_input_params;
 };
 
-static expected_output_params make_expected_output_params_sr_only()
+static expected_output_params_f1 make_expected_output_params_sr_only()
 {
-  return expected_output_params{.format               = pucch_format::FORMAT_1,
-                                .prbs                 = prb_interval{0, 1},
-                                .second_hop_prbs      = prb_interval{NOF_RBS - 1, NOF_RBS},
-                                .symbols              = ofdm_symbol_range{0, 14},
-                                .intra_slot_freq_hop  = true,
-                                .initial_cyclic_shift = 0,
-                                .sr_bits              = sr_nof_bits::one,
-                                .harq_ack_nof_bits    = 0,
-                                .time_domain_occ      = 0};
+  return expected_output_params_f1{.format               = pucch_format::FORMAT_1,
+                                   .prbs                 = prb_interval{0, 1},
+                                   .second_hop_prbs      = prb_interval{NOF_RBS - 1, NOF_RBS},
+                                   .symbols              = ofdm_symbol_range{0, 14},
+                                   .intra_slot_freq_hop  = true,
+                                   .initial_cyclic_shift = 0,
+                                   .sr_bits              = sr_nof_bits::one,
+                                   .harq_ack_nof_bits    = 0,
+                                   .time_domain_occ      = 0};
 }
 
 // Make expected results parameters (default values are for SR only).
-expected_output_params make_expected_output_params_sr_harq()
+expected_output_params_f1 make_expected_output_params_sr_harq()
 {
-  expected_output_params out = make_expected_output_params_sr_only();
+  expected_output_params_f1 out = make_expected_output_params_sr_only();
   out.harq_ack_nof_bits      = 1;
   return out;
 }
@@ -126,103 +138,103 @@ INSTANTIATE_TEST_SUITE_P(
     test_pucch_harq_common_output,
     testing::Values(
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_0,
-                                                                      prb_interval{0, 1},
-                                                                      prb_interval{NOF_RBS - 1, NOF_RBS},
-                                                                      ofdm_symbol_range{12, 14},
-                                                                      true,
-                                                                      0,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_0,
+                                                                         prb_interval{0, 1},
+                                                                         prb_interval{NOF_RBS - 1, NOF_RBS},
+                                                                         ofdm_symbol_range{12, 14},
+                                                                         true,
+                                                                         0,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{0, 1}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_0,
-                                                                      prb_interval{3, 4},
-                                                                      prb_interval{NOF_RBS - 4, NOF_RBS - 3},
-                                                                      ofdm_symbol_range{12, 14},
-                                                                      true,
-                                                                      0,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_0,
+                                                                         prb_interval{3, 4},
+                                                                         prb_interval{NOF_RBS - 4, NOF_RBS - 3},
+                                                                         ofdm_symbol_range{12, 14},
+                                                                         true,
+                                                                         0,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{2, 1}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_0,
-                                                                      prb_interval{3, 4},
-                                                                      prb_interval{NOF_RBS - 4, NOF_RBS - 3},
-                                                                      ofdm_symbol_range{12, 14},
-                                                                      true,
-                                                                      4,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_0,
+                                                                         prb_interval{3, 4},
+                                                                         prb_interval{NOF_RBS - 4, NOF_RBS - 3},
+                                                                         ofdm_symbol_range{12, 14},
+                                                                         true,
+                                                                         4,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{2, 6}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_1,
-                                                                      prb_interval{4, 5},
-                                                                      prb_interval{NOF_RBS - 5, NOF_RBS - 4},
-                                                                      ofdm_symbol_range{4, 14},
-                                                                      true,
-                                                                      0,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_1,
+                                                                         prb_interval{4, 5},
+                                                                         prb_interval{NOF_RBS - 5, NOF_RBS - 4},
+                                                                         ofdm_symbol_range{4, 14},
+                                                                         true,
+                                                                         0,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{10, 0}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_1,
-                                                                      prb_interval{4, 5},
-                                                                      prb_interval{NOF_RBS - 5, NOF_RBS - 4},
-                                                                      ofdm_symbol_range{4, 14},
-                                                                      true,
-                                                                      3,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_1,
+                                                                         prb_interval{4, 5},
+                                                                         prb_interval{NOF_RBS - 5, NOF_RBS - 4},
+                                                                         ofdm_symbol_range{4, 14},
+                                                                         true,
+                                                                         3,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{10, 6}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_1,
-                                                                      prb_interval{0, 1},
-                                                                      prb_interval{NOF_RBS - 1, NOF_RBS},
-                                                                      ofdm_symbol_range{0, 14},
-                                                                      true,
-                                                                      0,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_1,
+                                                                         prb_interval{0, 1},
+                                                                         prb_interval{NOF_RBS - 1, NOF_RBS},
+                                                                         ofdm_symbol_range{0, 14},
+                                                                         true,
+                                                                         0,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{11, 0}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_1,
-                                                                      prb_interval{0, 1},
-                                                                      prb_interval{NOF_RBS - 1, NOF_RBS},
-                                                                      ofdm_symbol_range{0, 14},
-                                                                      true,
-                                                                      6,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_1,
+                                                                         prb_interval{0, 1},
+                                                                         prb_interval{NOF_RBS - 1, NOF_RBS},
+                                                                         ofdm_symbol_range{0, 14},
+                                                                         true,
+                                                                         6,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{11, 6}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_1,
-                                                                      prb_interval{13, 14},
-                                                                      prb_interval{NOF_RBS - 14, NOF_RBS - 13},
-                                                                      ofdm_symbol_range{0, 14},
-                                                                      true,
-                                                                      0,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_1,
+                                                                         prb_interval{13, 14},
+                                                                         prb_interval{NOF_RBS - 14, NOF_RBS - 13},
+                                                                         ofdm_symbol_range{0, 14},
+                                                                         true,
+                                                                         0,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{15, 0}},
         pucch_test_parameters{.dci_pucch_res_indicator = 0,
-                              .output_params           = expected_output_params{pucch_format::FORMAT_1,
-                                                                      prb_interval{13, 14},
-                                                                      prb_interval{NOF_RBS - 14, NOF_RBS - 13},
-                                                                      ofdm_symbol_range{0, 14},
-                                                                      true,
-                                                                      3,
-                                                                      sr_nof_bits::no_sr,
-                                                                      1,
-                                                                      0},
+                              .output_params           = expected_output_params_f1{pucch_format::FORMAT_1,
+                                                                         prb_interval{13, 14},
+                                                                         prb_interval{NOF_RBS - 14, NOF_RBS - 13},
+                                                                         ofdm_symbol_range{0, 14},
+                                                                         true,
+                                                                         3,
+                                                                         sr_nof_bits::no_sr,
+                                                                         1,
+                                                                         0},
                               .pucch_input_params      = pucch_params{15, 6}}));
 
 ///////   Test allocation of PUCCH SR resources    ///////
@@ -245,7 +257,7 @@ public:
 
 protected:
   // Parameters that are passed by the routing to run the tests.
-  expected_output_params sr_expected_params;
+  expected_output_params_f1 sr_expected_params;
   const unsigned         sl_point_harq_delay{0};
   test_bench             t_bench;
   pucch_info             pucch_expected;
@@ -291,7 +303,7 @@ public:
 
 protected:
   // Parameters that are passed by the routing to run the tests.
-  expected_output_params sr_expected_params;
+  expected_output_params_f1 sr_expected_params;
   const unsigned         sl_point_harq_delay{0};
   test_bench             t_bench;
   pucch_info             pucch_expected;
