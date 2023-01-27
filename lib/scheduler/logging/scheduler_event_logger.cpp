@@ -139,7 +139,6 @@ void scheduler_event_logger::enqueue_impl(const harq_ack_event& harq_ev)
                  harq_ev.ue_index,
                  harq_ev.rnti,
                  harq_ev.cell_index,
-                 harq_ev.cell_index,
                  harq_ev.h_id,
                  harq_ev.ack ? 1 : 0);
   if (harq_ev.ack) {

@@ -18,6 +18,54 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     fmt::format_to(
         fmtbuf, "\n- SSB: ssbIdx={}, crbs={}, symbols={}", ssb_info.ssb_index, ssb_info.crbs, ssb_info.symbols);
   }
+  for (const pdcch_dl_information& pdcch : result.dl.dl_pdcchs) {
+    fmt::format_to(fmtbuf,
+                   "\n- DL PDCCH: rnti={:#x} type={} format={} ncce={} L={} ",
+                   pdcch.ctx.rnti,
+                   dci_dl_rnti_config_rnti_type(pdcch.dci.type),
+                   dci_dl_rnti_config_format(pdcch.dci.type),
+                   pdcch.ctx.cces.ncce,
+                   to_nof_cces(pdcch.ctx.cces.aggr_lvl));
+    switch (pdcch.dci.type) {
+      case dci_dl_rnti_config_type::c_rnti_f1_0: {
+        auto& dci = pdcch.dci.c_rnti_f1_0;
+        fmt::format_to(fmtbuf,
+                       "dci: h_id={} ndi={} rv={}",
+                       dci.harq_process_number,
+                       dci.new_data_indicator,
+                       dci.redundancy_version);
+      } break;
+      case dci_dl_rnti_config_type::tc_rnti_f1_0: {
+        auto& dci = pdcch.dci.tc_rnti_f1_0;
+        fmt::format_to(fmtbuf,
+                       "dci: h_id={} ndi={} rv={}",
+                       dci.harq_process_number,
+                       dci.new_data_indicator,
+                       dci.redundancy_version);
+      } break;
+      default:
+        break;
+    }
+  }
+  for (const pdcch_ul_information& pdcch : result.dl.ul_pdcchs) {
+    fmt::format_to(fmtbuf,
+                   "\n- UL PDCCH: rnti={:#x} rnti_type={} format={} ncce={} L={} ",
+                   pdcch.ctx.rnti,
+                   dci_ul_rnti_config_rnti_type(pdcch.dci.type),
+                   dci_ul_rnti_config_format(pdcch.dci.type),
+                   pdcch.ctx.cces.ncce,
+                   to_nof_cces(pdcch.ctx.cces.aggr_lvl));
+    switch (pdcch.dci.type) {
+      case dci_ul_rnti_config_type::c_rnti_f0_0: {
+        auto& dci = pdcch.dci.c_rnti_f0_0;
+        fmt::format_to(
+            fmtbuf, "h_id={} ndi={} rv={}", dci.harq_process_number, dci.new_data_indicator, dci.redundancy_version);
+      } break;
+      default:
+        break;
+    }
+  }
+
   for (const sib_information& sib : result.dl.bc.sibs) {
     fmt::format_to(fmtbuf,
                    "\n- SI{} PDSCH: prbs={}, symbols={}, tbs={}bytes, mcs={}, rv={}",
