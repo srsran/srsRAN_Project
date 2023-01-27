@@ -119,21 +119,21 @@ inline cu_cp_ue_id_t get_cu_cp_ue_id(std::underlying_type_t<du_index_t> du_index
   return uint_to_cu_cp_ue_id((du_index * MAX_NOF_UES) + ue_index);
 }
 
-inline ue_index_t get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id_t ngap_id)
+inline ue_index_t get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id_t cu_cp_ue_id)
 {
-  if (ngap_id == cu_cp_ue_id_t::invalid) {
+  if (cu_cp_ue_id == cu_cp_ue_id_t::invalid) {
     return INVALID_UE_INDEX;
   }
-  return int_to_ue_index(cu_cp_ue_id_to_uint(ngap_id) % MAX_NOF_UES);
+  return int_to_ue_index(cu_cp_ue_id_to_uint(cu_cp_ue_id) % MAX_NOF_UES);
 }
 
-inline du_index_t get_du_index_from_cu_cp_ue_id(cu_cp_ue_id_t ngap_id)
+inline du_index_t get_du_index_from_cu_cp_ue_id(cu_cp_ue_id_t cu_cp_ue_id)
 {
-  if (ngap_id == cu_cp_ue_id_t::invalid) {
+  if (cu_cp_ue_id == cu_cp_ue_id_t::invalid) {
     return INVALID_DU_INDEX;
   }
-  std::underlying_type_t<ue_index_t> ue_idx = get_ue_index_from_cu_cp_ue_id(ngap_id);
-  return int_to_du_index((cu_cp_ue_id_to_uint(ngap_id) - ue_idx) / MAX_NOF_UES);
+  std::underlying_type_t<ue_index_t> ue_idx = get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id);
+  return int_to_du_index((cu_cp_ue_id_to_uint(cu_cp_ue_id) - ue_idx) / MAX_NOF_UES);
 }
 
 /// \brief RAN_UE_ID (non ASN1 type of RAN_UE_NGAP_ID).
