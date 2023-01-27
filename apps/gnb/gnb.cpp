@@ -118,6 +118,18 @@ struct worker_manager {
     upper_puxch_worker.stop();
     radio_worker.stop();
   }
+  /*
+  du ctrl exec points to general ctrl_worker
+  du ue exec points to the general ue_worker
+  cu-cp ctrl exec points to general ctrl_worker (just like the du ctrl exec)
+  cu-up ue exec points to the general ue_worker (just like the du ue exec)
+
+  The handler side is responsible for executor dispatching:
+  - ngap::handle_message calls cu-cp ctrl exec
+  - f1ap_cu::handle_message calls cu-cp ctrl exec
+  - e1_cu_cp::handle_message calls cu-cp ctrl exec
+  - e1_cu_up::handle_message calls cu-up ue exec
+  */
 
   // GNB wide workers and executors
   task_worker ctrl_worker{"Ctrl-GNB", task_worker_queue_size};
