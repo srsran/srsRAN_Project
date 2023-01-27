@@ -63,11 +63,12 @@ ue_context_release_command_message srsgnb::srs_cu_cp::generate_ue_context_releas
 cu_cp_pdu_session_resource_setup_request srsgnb::srs_cu_cp::generate_pdu_session_resource_setup()
 {
   cu_cp_pdu_session_resource_setup_request req;
+  pdu_session_id_t                         pdu_session_id = uint_to_pdu_session_id(1);
 
   req.cu_cp_ue_id = uint_to_cu_cp_ue_id(0);
 
   cu_cp_pdu_session_res_setup_item item;
-  item.pdu_session_id = uint_to_pdu_session_id(1);
+  item.pdu_session_id = pdu_session_id;
   item.pdu_session_nas_pdu.resize(2);
   item.pdu_session_nas_pdu[0] = 0xaa;
   item.pdu_session_nas_pdu[1] = 0xbb;
@@ -88,7 +89,7 @@ cu_cp_pdu_session_resource_setup_request srsgnb::srs_cu_cp::generate_pdu_session
 
   item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
 
-  req.pdu_session_res_setup_items.emplace(item.pdu_session_id, std::move(item));
+  req.pdu_session_res_setup_items.emplace(pdu_session_id, std::move(item));
 
   return req;
 };
