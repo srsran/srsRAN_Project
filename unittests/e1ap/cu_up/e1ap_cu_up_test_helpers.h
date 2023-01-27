@@ -15,6 +15,7 @@
 #include "srsgnb/e1/common/e1_common.h"
 #include "srsgnb/e1/cu_up/e1_cu_up.h"
 #include "srsgnb/e1/cu_up/e1_cu_up_factory.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {
@@ -35,6 +36,7 @@ protected:
 
   dummy_e1_pdu_notifier         msg_notifier;
   dummy_e1ap_cu_up_notifier     cu_up_notifier;
+  manual_task_worker            cu_up_worker{128};
   std::unique_ptr<e1_interface> e1ap;
 };
 

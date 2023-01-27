@@ -17,8 +17,13 @@ using namespace srsgnb;
 using namespace asn1::e1ap;
 using namespace srs_cu_up;
 
-e1_cu_up_impl::e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_, e1ap_cu_cp_notifier& e1_cu_up_notifier_) :
-  logger(srslog::fetch_basic_logger("CU-UP-E1")), pdu_notifier(e1_pdu_notifier_), e1_cu_up_notifier(e1_cu_up_notifier_)
+e1_cu_up_impl::e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_,
+                             e1ap_cu_cp_notifier& e1_cu_up_notifier_,
+                             task_executor&       cu_up_exec_) :
+  cu_up_exec(cu_up_exec_),
+  logger(srslog::fetch_basic_logger("CU-UP-E1")),
+  pdu_notifier(e1_pdu_notifier_),
+  e1_cu_up_notifier(e1_cu_up_notifier_)
 {
 }
 
@@ -79,20 +84,23 @@ void e1_cu_up_impl::handle_message(const e1_message& msg)
     logger.info("E1AP SDU, \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
   }
 
-  switch (msg.pdu.type().value) {
-    case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
-      handle_initiating_message(msg.pdu.init_msg());
-      break;
-    case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
-      handle_successful_outcome(msg.pdu.successful_outcome());
-      break;
-    case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
-      handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-      break;
-    default:
-      logger.error("Invalid E1 PDU type");
-      break;
-  }
+  // Run E1AP protocols in CU-UP executor.
+  cu_up_exec.execute([this, msg]() {
+    switch (msg.pdu.type().value) {
+      case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
+        handle_initiating_message(msg.pdu.init_msg());
+        break;
+      case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
+        handle_successful_outcome(msg.pdu.successful_outcome());
+        break;
+      case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
+        handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+        break;
+      default:
+        logger.error("Invalid E1 PDU type");
+        break;
+    }
+  });
 }
 
 void e1_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)

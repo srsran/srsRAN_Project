@@ -60,7 +60,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg, logger, timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux);
 
   // create e1ap
-  e1 = create_e1(*cfg.e1_notifier, e1_cu_up_ev_notifier);
+  e1 = create_e1(*cfg.e1_notifier, e1_cu_up_ev_notifier, *cfg.cu_up_executor);
   e1_cu_up_ev_notifier.connect_cu_up(*this);
 }
 

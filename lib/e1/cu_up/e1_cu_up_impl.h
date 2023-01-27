@@ -13,6 +13,7 @@
 #include "../common/e1ap_asn1_utils.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1/cu_up/e1_cu_up.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <unordered_map>
 
@@ -24,7 +25,9 @@ class e1_event_manager;
 class e1_cu_up_impl final : public e1_interface
 {
 public:
-  e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_, e1ap_cu_cp_notifier& e1_cu_up_notifier_);
+  e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_,
+                e1ap_cu_cp_notifier& e1_cu_up_notifier_,
+                task_executor&       cu_up_exec_);
   ~e1_cu_up_impl();
 
   // e1 connection manager functions
@@ -77,6 +80,8 @@ private:
   /// \param[in] ue_index The UE index used to find the CU-UP UE ID.
   /// \return The CU-UP UE ID.
   gnb_cu_up_ue_e1ap_id_t find_cu_up_ue_id(ue_index_t ue_index);
+
+  task_executor& cu_up_exec;
 
   srslog::basic_logger& logger;
 

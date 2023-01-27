@@ -19,7 +19,7 @@ e1ap_cu_up_test::e1ap_cu_up_test()
   e1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  e1ap = create_e1(msg_notifier, cu_up_notifier);
+  e1ap = create_e1(msg_notifier, cu_up_notifier, cu_up_worker);
 }
 
 e1ap_cu_up_test::~e1ap_cu_up_test()
