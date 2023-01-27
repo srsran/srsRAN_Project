@@ -45,12 +45,19 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
             precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
       }
     } else {
+      bool ss_cfg_set = false;
       for (const auto& cfg : cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
         if (cfg.id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value()) {
           continue;
         }
-        ss_cfg = cfg;
+        ss_cfg     = cfg;
+        ss_cfg_set = true;
       }
+
+      if (not ss_cfg_set) {
+        srsgnb_assertion_failure("Paging Search Space not configured in DL BWP.");
+      }
+
       if (ss_cfg.cs_id != to_coreset_id(0) &&
           ((not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()) ||
            (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id != ss_cfg.cs_id))) {
