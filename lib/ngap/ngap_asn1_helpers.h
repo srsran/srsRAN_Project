@@ -185,8 +185,8 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
 /// message.
 /// \param[out] resp The ASN1 NGAP PDU Session Resource Setup Response message.
 /// \param[in] cu_cp_resp The CU-CP PDU Session Resource Setup Response message.
-inline void fill_pdu_session_res_setup_resp_s(asn1::ngap::pdu_session_res_setup_resp_s&       resp,
-                                              const cu_cp_pdu_session_resource_setup_response cu_cp_resp)
+inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res_setup_resp_s&       resp,
+                                                     const cu_cp_pdu_session_resource_setup_response cu_cp_resp)
 {
   // Fill PDU Session Resource Setup Response List
   if (!cu_cp_resp.pdu_session_res_setup_response_items.empty()) {

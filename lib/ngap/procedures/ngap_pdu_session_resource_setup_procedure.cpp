@@ -53,7 +53,8 @@ void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
   ngc_msg.pdu.set_successful_outcome();
   ngc_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_SETUP);
 
-  fill_pdu_session_res_setup_resp_s(ngc_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp(), response);
+  fill_asn1_pdu_session_res_setup_response(ngc_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp(),
+                                           response);
 
   auto& pdu_session_res_setup_resp = ngc_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp();
   pdu_session_res_setup_resp->amf_ue_ngap_id.value = amf_ue_id_to_uint(ue.get_amf_ue_id());
