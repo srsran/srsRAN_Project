@@ -87,10 +87,6 @@ void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_count)
 byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
 {
   std::lock_guard<std::mutex> lock(mutex);
-  auto                        on_function_exit = make_scope_exit([&]() {
-    logger.log_debug("Handling buffer state update");
-    handle_buffer_state_update_nolock(); // already locked
-  });
 
   logger.log_info("MAC opportunity: nof_bytes={}, tx_window size={} PDUs", nof_bytes, tx_window->size());
 
