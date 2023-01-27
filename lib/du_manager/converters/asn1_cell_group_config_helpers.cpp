@@ -546,30 +546,30 @@ void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& 
   out.add_dmrs_present           = cfg.additional_dmrs;
   out.pi2_bpsk_present           = cfg.pi_2_bpsk;
   out.simul_harq_ack_csi_present = cfg.simultaneous_harq_ack_csi;
-  if (cfg.max_c_rate == max_code_rate::not_set) {
+  if (cfg.max_c_rate == max_pucch_code_rate::not_set) {
     out.max_code_rate_present = false;
   } else {
     out.max_code_rate_present = true;
     switch (cfg.max_c_rate) {
-      case max_code_rate::dot_08:
+      case max_pucch_code_rate::dot_08:
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot08;
         break;
-      case max_code_rate::dot_15:
+      case max_pucch_code_rate::dot_15:
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot15;
         break;
-      case max_code_rate::dot_25:
+      case max_pucch_code_rate::dot_25:
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot25;
         break;
-      case max_code_rate::dot_35:
+      case max_pucch_code_rate::dot_35:
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot35;
         break;
-      case max_code_rate::dot_45:
+      case max_pucch_code_rate::dot_45:
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot45;
         break;
-      case max_code_rate::dot_60:
+      case max_pucch_code_rate::dot_60:
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot60;
         break;
-      case max_code_rate::dot_80:
+      case max_pucch_code_rate::dot_80:
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot80;
         break;
       default:

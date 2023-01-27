@@ -39,24 +39,24 @@ enum class pucch_f4_occ_len { n2, n4 };
 enum class pucch_f4_occ_idx { n0, n1, n2, n3 };
 
 /// Options for \c PUCCH-MaxCodeRate in \c PUCCH-Config, TS 38.331.
-enum class max_code_rate { not_set = 0, dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
+enum class max_pucch_code_rate { not_set = 0, dot_08, dot_15, dot_25, dot_35, dot_45, dot_60, dot_80 };
 
-inline float to_max_code_rate_float(max_code_rate opt)
+inline float to_max_code_rate_float(max_pucch_code_rate opt)
 {
   switch (opt) {
-    case max_code_rate::dot_08:
+    case max_pucch_code_rate::dot_08:
       return 0.08f;
-    case max_code_rate::dot_15:
+    case max_pucch_code_rate::dot_15:
       return 0.15f;
-    case max_code_rate::dot_25:
+    case max_pucch_code_rate::dot_25:
       return 0.25f;
-    case max_code_rate::dot_35:
+    case max_pucch_code_rate::dot_35:
       return 0.35f;
-    case max_code_rate::dot_45:
+    case max_pucch_code_rate::dot_45:
       return 0.45f;
-    case max_code_rate::dot_60:
+    case max_pucch_code_rate::dot_60:
       return 0.60f;
-    case max_code_rate::dot_80:
+    case max_pucch_code_rate::dot_80:
       return 0.80f;
     default:
       break;
@@ -70,12 +70,12 @@ struct pucch_common_all_formats {
   enum class num_of_slots { not_set = 0, n2, n4, n8 };
 
   // The false or not_set value indicates that the field is optional and not set.
-  bool          interslot_freq_hop{false};
-  bool          additional_dmrs{false};
-  max_code_rate max_c_rate{max_code_rate::not_set};
-  num_of_slots  nof_slots{num_of_slots::not_set};
-  bool          pi_2_bpsk{false};
-  bool          simultaneous_harq_ack_csi{false};
+  bool                interslot_freq_hop{false};
+  bool                additional_dmrs{false};
+  max_pucch_code_rate max_c_rate{max_pucch_code_rate::not_set};
+  num_of_slots        nof_slots{num_of_slots::not_set};
+  bool                pi_2_bpsk{false};
+  bool                simultaneous_harq_ack_csi{false};
 
   bool operator==(const pucch_common_all_formats& rhs) const
   {

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/ran/ofdm_symbol_range.h"
+#include "srsgnb/ran/pucch/pucch_configuration.h"
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/resource_allocation/rb_interval.h"
 #include "srsgnb/ran/rnti.h"
@@ -64,10 +65,11 @@ struct pucch_format_2 {
   sr_nof_bits sr_bits;
   unsigned    harq_ack_nof_bits;
   unsigned    csi_part1_bits;
-  /// \f$n_{ID}\f$ as per Section 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.  For PUCCH Format 0, 1, 3, 4.
+  /// \f$n_{ID}\f$ as per Section 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.
   uint16_t n_id_scambling;
-  uint16_t n_id_0_scrambling;
-  uint8_t  max_code_rate;
+  /// \f$N_{ID}^0\f$ as per TS 38.211, Section 6.4.1.3.2.1.
+  uint16_t            n_id_0_scrambling;
+  max_pucch_code_rate max_code_rate;
 };
 
 /// Scheduler output for PUCCH Format 3.

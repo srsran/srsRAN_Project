@@ -431,15 +431,15 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.format_1_common_param.reset();
 
   dest_pucch_cfg.format_2_common_param.emplace();
-  dest_pucch_cfg.format_2_common_param.value().max_c_rate                = max_code_rate::dot_25;
+  dest_pucch_cfg.format_2_common_param.value().max_c_rate                = max_pucch_code_rate::dot_25;
   dest_pucch_cfg.format_2_common_param.value().simultaneous_harq_ack_csi = true;
 
   dest_pucch_cfg.format_3_common_param.emplace();
-  dest_pucch_cfg.format_3_common_param.value().max_c_rate = max_code_rate::dot_08;
+  dest_pucch_cfg.format_3_common_param.value().max_c_rate = max_pucch_code_rate::dot_08;
   dest_pucch_cfg.format_3_common_param.value().nof_slots  = pucch_common_all_formats::num_of_slots::n2;
 
   dest_pucch_cfg.format_4_common_param.emplace();
-  dest_pucch_cfg.format_4_common_param.value().max_c_rate      = max_code_rate::dot_60;
+  dest_pucch_cfg.format_4_common_param.value().max_c_rate      = max_pucch_code_rate::dot_60;
   dest_pucch_cfg.format_4_common_param.value().additional_dmrs = true;
 
   // >>> SR Resource.

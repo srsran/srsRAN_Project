@@ -188,46 +188,141 @@ get_harq_ack_granted_allocated(rnti_t crnti, static_vector<pucch_info, MAX_PUCCH
   });
 }
 
-void pucch_allocator_impl::fill_pucch_ded_res_grant(pucch_info&           pucch_sr_grant,
-                                                    rnti_t                crnti,
-                                                    const pucch_resource& pucch_ded_res_cfg,
-                                                    unsigned              harq_ack_bits,
-                                                    sr_nof_bits           sr_bits)
+void pucch_allocator_impl::fill_pucch_ded_format1_grant(pucch_info&           pucch_grant,
+                                                        rnti_t                crnti,
+                                                        const pucch_resource& pucch_ded_res_cfg,
+                                                        unsigned              harq_ack_bits,
+                                                        sr_nof_bits           sr_bits)
 {
-  pucch_sr_grant.crnti   = crnti;
-  pucch_sr_grant.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_sr_grant.format  = pucch_ded_res_cfg.format;
+  pucch_grant.crnti   = crnti;
+  pucch_grant.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_grant.format  = pucch_format::FORMAT_1;
 
-  switch (pucch_ded_res_cfg.format) {
-    case pucch_format::FORMAT_1: {
-      // Set PRBs and symbols, first.º
-      // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
-      pucch_sr_grant.resources.prbs.set(pucch_ded_res_cfg.starting_prb,
-                                        pucch_ded_res_cfg.starting_prb + PUCCH_FORMAT_1_NOF_PRBS);
-      pucch_sr_grant.resources.symbols.set(pucch_ded_res_cfg.format_1.starting_sym_idx,
-                                           pucch_ded_res_cfg.format_1.starting_sym_idx +
-                                               pucch_ded_res_cfg.format_1.nof_symbols);
-      if (pucch_ded_res_cfg.intraslot_freq_hopping) {
-        pucch_sr_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb,
-                                                     pucch_ded_res_cfg.second_hop_prb + PUCCH_FORMAT_1_NOF_PRBS);
-      }
-      // \c pucch-GroupHopping and \c hoppingId are set as per TS 38.211, Section 6.3.2.2.1.
-      pucch_sr_grant.format_1.group_hopping = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;
-      pucch_sr_grant.format_1.n_id_hopping =
-          cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.has_value()
-              ? cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.value()
-              : cell_cfg.pci;
-      pucch_sr_grant.format_1.initial_cyclic_shift = pucch_ded_res_cfg.format_1.initial_cyclic_shift;
-      pucch_sr_grant.format_1.time_domain_occ      = pucch_ded_res_cfg.format_1.time_domain_occ;
-      // For PUCCH Format 1, only 1 SR bit.
-      pucch_sr_grant.format_1.sr_bits           = sr_bits;
-      pucch_sr_grant.format_1.harq_ack_nof_bits = harq_ack_bits;
-      // [Implementation-defined] We do not implement PUCCH over several slots.
-      pucch_sr_grant.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
-    }
-    default:
-      return;
+  // Set PRBs and symbols, first.º
+  // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
+  pucch_grant.resources.prbs.set(pucch_ded_res_cfg.starting_prb,
+                                 pucch_ded_res_cfg.starting_prb + PUCCH_FORMAT_1_NOF_PRBS);
+  pucch_grant.resources.symbols.set(pucch_ded_res_cfg.format_1.starting_sym_idx,
+                                    pucch_ded_res_cfg.format_1.starting_sym_idx +
+                                        pucch_ded_res_cfg.format_1.nof_symbols);
+  if (pucch_ded_res_cfg.intraslot_freq_hopping) {
+    pucch_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb,
+                                              pucch_ded_res_cfg.second_hop_prb + PUCCH_FORMAT_1_NOF_PRBS);
   }
+  // \c pucch-GroupHopping and \c hoppingId are set as per TS 38.211, Section 6.3.2.2.1.
+  pucch_grant.format_1.group_hopping = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->group_hopping;
+  pucch_grant.format_1.n_id_hopping  = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.has_value()
+                                           ? cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common->hopping_id.value()
+                                           : cell_cfg.pci;
+  pucch_grant.format_1.initial_cyclic_shift = pucch_ded_res_cfg.format_1.initial_cyclic_shift;
+  pucch_grant.format_1.time_domain_occ      = pucch_ded_res_cfg.format_1.time_domain_occ;
+  // For PUCCH Format 1, only 1 SR bit.
+  pucch_grant.format_1.sr_bits           = sr_bits;
+  pucch_grant.format_1.harq_ack_nof_bits = harq_ack_bits;
+  // [Implementation-defined] We do not implement PUCCH over several slots.
+  pucch_grant.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+
+  return;
+}
+
+static unsigned get_n_id0_scrambling(const ue_cell_configuration& ue_cell_cfg, unsigned cell_pci)
+{
+  // As per TS 38.211, Section 6.4.1.3.2.1, "N_{ID}^0 is given by the higher-layer parameter scramblingID0 in the
+  // DMRS-UplinkConfig IE if provided and by N_{ID}^{cell} otherwise. If a UE is configured with both
+  // dmrs-UplinkForPUSCH-MappingTypeA and dmrs-UplinkForPUSCH-MappingTypeB, scramblingID0 is obtained from
+  // dmrs-UplinkForPUSCH-MappingTypeB.
+
+  // Check \c scrambling_id0 in \c dmrs-UplinkForPUSCH-MappingTypeB, first
+  if (ue_cell_cfg.cfg_dedicated()
+          .ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .pusch_mapping_type_b_dmrs.has_value() and
+      ue_cell_cfg.cfg_dedicated()
+          .ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .pusch_mapping_type_b_dmrs.value()
+          .trans_precoder_disabled.has_value() and
+      ue_cell_cfg.cfg_dedicated()
+          .ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .pusch_mapping_type_b_dmrs.value()
+          .trans_precoder_disabled.value()
+          .scrambling_id0.has_value()) {
+    return ue_cell_cfg.cfg_dedicated()
+        .ul_config.value()
+        .init_ul_bwp.pusch_cfg.value()
+        .pusch_mapping_type_b_dmrs.value()
+        .trans_precoder_disabled.value()
+        .scrambling_id0.value();
+  }
+  // Else, check \c scrambling_id0 in \c dmrs-UplinkForPUSCH-MappingTypeA.
+  if (ue_cell_cfg.cfg_dedicated()
+          .ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .pusch_mapping_type_a_dmrs.has_value() and
+      ue_cell_cfg.cfg_dedicated()
+          .ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .pusch_mapping_type_a_dmrs.value()
+          .trans_precoder_disabled.has_value() and
+      ue_cell_cfg.cfg_dedicated()
+          .ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .pusch_mapping_type_a_dmrs.value()
+          .trans_precoder_disabled.value()
+          .scrambling_id0.has_value()) {
+    return ue_cell_cfg.cfg_dedicated()
+        .ul_config.value()
+        .init_ul_bwp.pusch_cfg.value()
+        .pusch_mapping_type_a_dmrs.value()
+        .trans_precoder_disabled.value()
+        .scrambling_id0.value();
+  }
+
+  return cell_pci;
+}
+
+void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                  pucch_grant,
+                                                    rnti_t                       crnti,
+                                                    const pucch_resource&        pucch_ded_res_cfg,
+                                                    const ue_cell_configuration& ue_cell_cfg,
+                                                    unsigned                     nof_prbs,
+                                                    unsigned                     harq_ack_bits,
+                                                    sr_nof_bits                  sr_bits,
+                                                    unsigned                     csi_part1_bits)
+{
+  pucch_grant.crnti   = crnti;
+  pucch_grant.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pucch_grant.format  = pucch_format::FORMAT_2;
+
+  // Set PRBs and symbols, first.º
+  // The number of PRBs is not explicitly stated in the TS, but it can be inferred it's 1.
+  pucch_grant.resources.prbs.set(pucch_ded_res_cfg.starting_prb, pucch_ded_res_cfg.starting_prb + nof_prbs);
+  pucch_grant.resources.symbols.set(pucch_ded_res_cfg.format_1.starting_sym_idx,
+                                    pucch_ded_res_cfg.format_1.starting_sym_idx +
+                                        pucch_ded_res_cfg.format_1.nof_symbols);
+  if (pucch_ded_res_cfg.intraslot_freq_hopping) {
+    pucch_grant.resources.second_hop_prbs.set(pucch_ded_res_cfg.second_hop_prb,
+                                              pucch_ded_res_cfg.second_hop_prb + nof_prbs);
+  }
+
+  pucch_grant.format_2.sr_bits           = sr_bits;
+  pucch_grant.format_2.harq_ack_nof_bits = harq_ack_bits;
+  pucch_grant.format_2.csi_part1_bits    = csi_part1_bits;
+  // \f$n_{ID}\f$ as per Section 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.
+  pucch_grant.format_2.n_id_scambling =
+      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().data_scrambling_id_pusch.has_value()
+          ? ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().data_scrambling_id_pusch.value()
+          : cell_cfg.pci;
+  // \f$N_{ID}^0\f$ as per TS 38.211, Section 6.4.1.3.2.1.
+  pucch_grant.format_2.n_id_0_scrambling = get_n_id0_scrambling(ue_cell_cfg, cell_cfg.pci);
+  pucch_grant.format_2.max_code_rate     = ue_cell_cfg.cfg_dedicated()
+                                           .ul_config.value()
+                                           .init_ul_bwp.pucch_cfg.value()
+                                           .format_2_common_param.value()
+                                           .max_c_rate;
+
+  return;
 }
 
 void pucch_allocator_impl::allocate_pucch_ded_res_on_grid(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -331,7 +426,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   allocate_pucch_ded_res_on_grid(pucch_slot_alloc, *pucch_sr_res, PUCCH_FORMAT_1_NOF_PRBS);
 
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
-  fill_pucch_ded_res_grant(
+  fill_pucch_ded_format1_grant(
       pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
   logger.debug("SR occasion for RNTI {:#x} for slot={} scheduling completed.", crnti, pucch_slot_alloc.slot.to_uint());
 }
@@ -405,7 +500,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   pucch_info&    pucch_pdu                    = pucch_slot_alloc.result.ul.pucchs.emplace_back();
   const unsigned HARQ_BITS_IN_NEW_PUCCH_GRANT = 1;
-  fill_pucch_ded_res_grant(
+  fill_pucch_ded_format1_grant(
       pucch_pdu, crnti, *pucch_harq_res_info.pucch_res, HARQ_BITS_IN_NEW_PUCCH_GRANT, sr_nof_bits::no_sr);
   logger.debug(
       "PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} completed.", crnti, pucch_slot_alloc.slot.to_uint());
@@ -463,9 +558,22 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
     return output;
   }
 
+  // NOTE: We do not check for collision in the grid, as it is assumed the PUCCH gets allocated in its reserved
+  // resources.
+  allocate_pucch_ded_res_on_grid(pucch_slot_alloc, *format2_res.pucch_res, nof_prbs);
+
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   pucch_info& pucch_pdu = pucch_slot_alloc.result.ul.pucchs.emplace_back();
-  fill_pucch_ded_res_grant(pucch_pdu, rnti, *format2_res.pucch_res, harq_ack_bits, static_cast<sr_nof_bits>(sr_bits));
+  // When converting Format 1 to Format 2, there are no CSI bits to be reported.
+  const unsigned NOF_CSI_PART1_BITS = 0;
+  fill_pucch_format2_grant(pucch_pdu,
+                           rnti,
+                           *format2_res.pucch_res,
+                           ue_cell_cfg,
+                           nof_prbs,
+                           harq_ack_bits,
+                           static_cast<sr_nof_bits>(sr_bits),
+                           NOF_CSI_PART1_BITS);
   logger.debug("PUCCH Format 2 grant (HARQ-ACK) allocation for RNTI {:#x} for slot={} completed.",
                rnti,
                pucch_slot_alloc.slot.to_uint());
@@ -600,8 +708,6 @@ void pucch_allocator_impl::remove_pucch_format1_from_grants(cell_slot_resource_a
                                                             rnti_t                        crnti,
                                                             const pucch_config&           pucch_cfg)
 {
-  pucch_uci_bits removed_uci_info;
-
   auto& pucchs = slot_alloc.result.ul.pucchs;
 
   // Remove HARQ-ACK grant first.

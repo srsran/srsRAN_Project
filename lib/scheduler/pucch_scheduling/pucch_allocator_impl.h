@@ -107,11 +107,20 @@ private:
                                         const pucch_config&           pucch_cfg);
 
   // Fills the PUCCH SR grant.
-  void fill_pucch_ded_res_grant(pucch_info&           pucch_sr_grant,
-                                rnti_t                crnti,
-                                const pucch_resource& pucch_ded_res_cfg,
-                                unsigned              harq_ack_bits,
-                                sr_nof_bits           sr_bits);
+  void fill_pucch_ded_format1_grant(pucch_info&           pucch_grant,
+                                    rnti_t                crnti,
+                                    const pucch_resource& pucch_ded_res_cfg,
+                                    unsigned              harq_ack_bits,
+                                    sr_nof_bits           sr_bits);
+
+  void fill_pucch_format2_grant(pucch_info&                  pucch_grant,
+                                rnti_t                       crnti,
+                                const pucch_resource&        pucch_ded_res_cfg,
+                                const ue_cell_configuration& ue_cell_cfg,
+                                unsigned                     nof_prbs,
+                                unsigned                     harq_ack_bits,
+                                sr_nof_bits                  sr_bits,
+                                unsigned                     csi_part1_bits);
 
   const unsigned            PUCCH_FORMAT_1_NOF_PRBS{1};
   const cell_configuration& cell_cfg;
