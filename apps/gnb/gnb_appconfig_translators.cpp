@@ -107,10 +107,9 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
 
 std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appconfig& config)
 {
-  fmt::print("asdfasdfasdf\n");
   std::map<uint8_t, du_qos_config> out_cfg = {};
   for (const qos_appconfig& qos : config.qos_cfg) {
-    fmt::print("asdfasdfasdf = {}\n", qos.five_qi);
+    fmt::print("generating DU QoS config for 5QI={}", qos.five_qi);
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
       srsgnb_terminate("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
     }
@@ -120,7 +119,15 @@ std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appcon
       srsgnb_terminate("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
     if (out_rlc.mode == rlc_mode::um_bidir) {
-      fmt::print("UM TX SN = {}, RX SN = {}\n", qos.rlc.um.tx.sn_field_length, qos.rlc.um.rx.sn_field_length);
+      if (!from_number(out_rlc.um.rx.sn_field_length, qos.rlc.um.rx.sn_field_length)) {
+        srsgnb_terminate("Invalid RLC UM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.rx.sn_field_length);
+      }
+      if (!from_number(out_rlc.um.tx.sn_field_length, qos.rlc.um.tx.sn_field_length)) {
+        srsgnb_terminate("Invalid RLC UM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
+      }
+      fmt::print("UM TX SN = {}, RX SN = {}\n", out_rlc.um.tx.sn_field_length, out_rlc.um.rx.sn_field_length);
+    } else if (out_rlc.mode == rlc_mode::am) {
+      fmt::print("AM TX SN = {}, RX SN = {}\n", qos.rlc.am.tx.sn_field_length, qos.rlc.am.rx.sn_field_length);
     }
   }
   return out_cfg;

@@ -51,6 +51,18 @@ constexpr uint16_t to_number(rlc_um_sn_size sn_size)
 {
   return static_cast<uint16_t>(sn_size);
 }
+inline bool from_number(rlc_um_sn_size& sn_size, uint16_t num)
+{
+  if (num == 6) {
+    sn_size = rlc_um_sn_size::size6bits;
+    return true;
+  }
+  if (num == 12) {
+    sn_size = rlc_um_sn_size::size12bits;
+    return true;
+  }
+  return false;
+}
 
 /// RLC AM NR sequence number field
 enum class rlc_am_sn_size : uint16_t { size12bits = 12, size18bits = 18 };
@@ -296,6 +308,22 @@ struct formatter<srsgnb::rlc_rx_um_config> {
   }
 };
 
+// RLC UM config formatter
+template <>
+struct formatter<srsgnb::rlc_um_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "um_tx=[{}]; um_rx=[{}]", cfg.tx, cfg.rx);
+  }
+};
+
 // RLC AM TX config formatter
 template <>
 struct formatter<srsgnb::rlc_tx_am_config> {
@@ -340,6 +368,22 @@ struct formatter<srsgnb::rlc_rx_am_config> {
 
 // RLC AM config formatter
 template <>
+struct formatter<srsgnb::rlc_am_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "am_tx=[{}]; am_rx=[{}]", cfg.tx, cfg.rx);
+  }
+};
+
+// RLC config formatter
+template <>
 struct formatter<srsgnb::rlc_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
@@ -350,7 +394,13 @@ struct formatter<srsgnb::rlc_config> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "mode={}", cfg.mode);
+    if (cfg.mode == srsgnb::rlc_mode::um_bidir) {
+      return format_to(ctx.out(), "mode={}, {}", cfg.mode, cfg.um);
+    }
+    if (cfg.mode == srsgnb::rlc_mode::am) {
+      return format_to(ctx.out(), "mode={}, {}", cfg.mode, cfg.am);
+    }
+    return format_to(ctx.out(), "unhandled mode. mode={}", cfg.mode);
   }
 };
 } // namespace fmt

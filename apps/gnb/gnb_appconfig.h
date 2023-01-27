@@ -141,8 +141,21 @@ struct rlc_um_appconfig {
   rlc_rx_um_appconfig rx;
 };
 
+/// RLC UM TX configuration
+struct rlc_tx_am_appconfig {
+  uint16_t sn_field_length; ///< Number of bits used for sequence number
+};
+
+/// RLC UM RX configuration
+struct rlc_rx_am_appconfig {
+  uint16_t sn_field_length; ///< Number of bits used for sequence number
+};
+
 /// RLC AM configuration
-struct rlc_am_appconfig {};
+struct rlc_am_appconfig {
+  rlc_tx_um_appconfig tx;
+  rlc_rx_um_appconfig rx;
+};
 
 /// RLC configuration
 struct rlc_appconfig {

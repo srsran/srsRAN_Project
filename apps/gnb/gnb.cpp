@@ -280,8 +280,14 @@ int main(int argc, char** argv)
   // Compute derived parameters.
   compute_derived_args(gnb_cfg);
 
-  fmt::print("---- 5QI={} ---\n", gnb_cfg.qos_cfg[0].five_qi);
-  fmt::print("---- 5QI={} ---\n", gnb_cfg.qos_cfg[1].five_qi);
+  fmt::print("---- 5QI={} TX AM SN={} RX AM SN={}---\n",
+             gnb_cfg.qos_cfg[0].five_qi,
+             gnb_cfg.qos_cfg[0].rlc.am.tx.sn_field_length,
+             gnb_cfg.qos_cfg[0].rlc.am.rx.sn_field_length);
+  fmt::print("---- 5QI={} TX UM SN={} RX AM SN={}---\n",
+             gnb_cfg.qos_cfg[1].five_qi,
+             gnb_cfg.qos_cfg[1].rlc.um.tx.sn_field_length,
+             gnb_cfg.qos_cfg[1].rlc.um.rx.sn_field_length);
 
   // Set up logging.
   srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()

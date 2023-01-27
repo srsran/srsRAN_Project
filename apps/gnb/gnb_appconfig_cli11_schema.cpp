@@ -261,11 +261,22 @@ static void configure_cli11_rlc_um_args(CLI::App& app, rlc_um_appconfig& rlc_um_
   CLI::App* rlc_rx_um_subcmd = app.add_subcommand("rx", "UM TX parameters");
   rlc_rx_um_subcmd->add_option("--sn", rlc_um_params.rx.sn_field_length, "RLC UM RX SN")->capture_default_str();
 }
+
+static void configure_cli11_rlc_am_args(CLI::App& app, rlc_am_appconfig& rlc_am_params)
+{
+  CLI::App* rlc_tx_am_subcmd = app.add_subcommand("tx", "AM TX parameters");
+  rlc_tx_am_subcmd->add_option("--sn", rlc_am_params.tx.sn_field_length, "RLC AM TX SN")->capture_default_str();
+  CLI::App* rlc_rx_am_subcmd = app.add_subcommand("rx", "AM TX parameters");
+  rlc_rx_am_subcmd->add_option("--sn", rlc_am_params.rx.sn_field_length, "RLC AM RX SN")->capture_default_str();
+}
+
 static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
 {
   app.add_option("--mode", rlc_params.mode, "RLC mode")->capture_default_str();
   CLI::App* rlc_um_subcmd = app.add_subcommand("um-bidir", "UM parameters");
   configure_cli11_rlc_um_args(*rlc_um_subcmd, rlc_params.um);
+  CLI::App* rlc_am_subcmd = app.add_subcommand("am", "AM parameters");
+  configure_cli11_rlc_am_args(*rlc_am_subcmd, rlc_params.am);
 }
 
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
