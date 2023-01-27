@@ -161,5 +161,19 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
   return asn1_failed_item;
 }
 
+/// \brief Convert CU-CP NRCGI to NR Cell Identity.
+/// \param ngap_cgi The NGAP NRCGI.
+/// \return The NR Cell Identity.
+inline nr_cell_id_t cu_cp_nrcgi_to_nr_cell_identity(asn1::ngap::nr_cgi_s& ngap_cgi)
+{
+  nr_cell_id_t nci;
+  nci.packed = ngap_cgi.nr_cell_id.to_number();
+
+  nci.cell_idenity = (ngap_cgi.nr_cell_id.to_number() & 0xfffc0000);
+  nci.gnb_identity = (ngap_cgi.nr_cell_id.to_number() & 0X3ff0);
+
+  return nci;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

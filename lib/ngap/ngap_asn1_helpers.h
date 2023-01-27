@@ -276,5 +276,96 @@ fill_cu_cp_ue_context_release_command(cu_cp_ue_context_release_command&         
   cu_cp_ue_context_release_cmd.cause = ngap_cause_to_cu_cp_cause(asn1_ue_context_release_cmd->cause.value);
 }
 
+/// \brief Convert common type UE Context Release Complete message to NGAP ASN1 UE Context Release Complete
+/// message.
+/// \param[out] asn1_resp The ASN1 NGAP UE Context Release Complete message.
+/// \param[in] cu_cp_resp The CU-CP UE Context Release Complete message.
+inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release_complete_s& asn1_resp,
+                                                  const cu_cp_ue_context_release_complete    cu_cp_resp)
+{
+  // add user location info
+  if (cu_cp_resp.user_location_info.has_value()) {
+    asn1_resp->user_location_info_present = true;
+    auto& asn1_user_location_info         = asn1_resp->user_location_info.value.set_user_location_info_nr();
+    // add nr cgi
+    asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_resp.user_location_info.value().nr_cgi.nci.packed);
+    asn1_user_location_info.nr_cgi.plmn_id.from_string(cu_cp_resp.user_location_info.value().nr_cgi.plmn_hex);
+    // add tai
+    asn1_user_location_info.tai.plmn_id.from_string(cu_cp_resp.user_location_info.value().tai.plmn_id);
+    asn1_user_location_info.tai.tac.from_number(cu_cp_resp.user_location_info.value().tai.tac);
+    // add timestamp
+    if (cu_cp_resp.user_location_info.value().time_stamp.has_value()) {
+      asn1_user_location_info.time_stamp_present = true;
+      asn1_user_location_info.time_stamp.from_number(cu_cp_resp.user_location_info.value().time_stamp.value());
+    }
+  }
+
+  // add info on recommended cells and ran nodes for paging
+  if (cu_cp_resp.info_on_recommended_cells_and_ran_nodes_for_paging.has_value()) {
+    asn1_resp->info_on_recommended_cells_and_ran_nodes_for_paging_present = true;
+
+    for (auto cu_cp_recommended_cell_item : cu_cp_resp.info_on_recommended_cells_and_ran_nodes_for_paging.value()
+                                                .recommended_cells_for_paging.recommended_cell_list) {
+      asn1::ngap::recommended_cell_item_s asn1_recommended_cell_item;
+
+      // add ngran cgi
+      asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().nr_cell_id.from_number(
+          cu_cp_recommended_cell_item.ngran_cgi.nci.packed);
+      asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().plmn_id.from_string(
+          cu_cp_recommended_cell_item.ngran_cgi.plmn_hex);
+
+      // add time stayed in cell
+      if (cu_cp_recommended_cell_item.time_stayed_in_cell.has_value()) {
+        asn1_recommended_cell_item.time_stayed_in_cell_present = true;
+        asn1_recommended_cell_item.time_stayed_in_cell = cu_cp_recommended_cell_item.time_stayed_in_cell.value();
+      }
+
+      asn1_resp->info_on_recommended_cells_and_ran_nodes_for_paging.value.recommended_cells_for_paging
+          .recommended_cell_list.push_back(asn1_recommended_cell_item);
+    }
+
+    for (auto cu_cp_recommended_ran_node_item : cu_cp_resp.info_on_recommended_cells_and_ran_nodes_for_paging.value()
+                                                    .recommend_ran_nodes_for_paging.recommended_ran_node_list) {
+      asn1::ngap::recommended_ran_node_item_s asn1_recommended_ran_node_item;
+
+      // add amf paging target
+      if (cu_cp_recommended_ran_node_item.amf_paging_target.is_global_ran_node_id) {
+        // add global gnb id
+        auto& asn1_global_ran_node_id = asn1_recommended_ran_node_item.amf_paging_target.set_global_ran_node_id();
+        asn1_global_ran_node_id.set_global_gnb_id().plmn_id.from_string(
+            cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().plmn_id);
+        asn1_global_ran_node_id.global_gnb_id().gnb_id.set_gnb_id().from_string(
+            cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id);
+      } else if (cu_cp_recommended_ran_node_item.amf_paging_target.is_tai) {
+        // add tai
+        auto& asn1_tai = asn1_recommended_ran_node_item.amf_paging_target.set_tai();
+        asn1_tai.plmn_id.from_string(cu_cp_recommended_ran_node_item.amf_paging_target.tai.value().plmn_id);
+        asn1_tai.tac.from_number(cu_cp_recommended_ran_node_item.amf_paging_target.tai.value().tac);
+      } else {
+        asn1_recommended_ran_node_item.amf_paging_target.set(asn1::ngap::amf_paging_target_c::types_opts::nulltype);
+      }
+
+      asn1_resp->info_on_recommended_cells_and_ran_nodes_for_paging.value.recommend_ran_nodes_for_paging
+          .recommended_ran_node_list.push_back(asn1_recommended_ran_node_item);
+    }
+  }
+
+  // add pdu session res list context release complete
+  if (!cu_cp_resp.pdu_session_res_list_cxt_rel_cpl.empty()) {
+    asn1_resp->pdu_session_res_list_cxt_rel_cpl_present = true;
+
+    for (auto pdu_session_id : cu_cp_resp.pdu_session_res_list_cxt_rel_cpl) {
+      asn1::ngap::pdu_session_res_item_cxt_rel_cpl_s asn1_rel_item;
+      asn1_rel_item.pdu_session_id = pdu_session_id_to_uint(pdu_session_id);
+      asn1_resp->pdu_session_res_list_cxt_rel_cpl.value.push_back(asn1_rel_item);
+    }
+  }
+
+  // add crit diagnostics
+  if (cu_cp_resp.crit_diagnostics.has_value()) {
+    // TODO: Add crit diagnostics
+  }
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

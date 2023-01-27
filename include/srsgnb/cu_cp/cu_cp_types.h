@@ -541,5 +541,57 @@ struct cu_cp_ue_context_release_command {
   cu_cp_cause_t cause;
 };
 
+struct cu_cp_tai {
+  std::string plmn_id;
+  uint32_t    tac;
+};
+
+struct cu_cp_user_location_info_nr {
+  nr_cell_global_id_t nr_cgi;
+  cu_cp_tai           tai;
+  optional<uint64_t>  time_stamp;
+};
+
+struct cu_cp_recommended_cell_item {
+  nr_cell_global_id_t ngran_cgi;
+  optional<uint16_t>  time_stayed_in_cell;
+};
+
+struct cu_cp_recommended_cells_for_paging {
+  std::vector<cu_cp_recommended_cell_item> recommended_cell_list;
+};
+
+struct cu_cp_global_gnb_id {
+  std::string plmn_id;
+  std::string gnb_id;
+};
+
+struct cu_cp_amf_paging_target {
+  bool                          is_global_ran_node_id;
+  bool                          is_tai;
+  optional<cu_cp_global_gnb_id> global_ran_node_id;
+  optional<cu_cp_tai>           tai;
+};
+
+struct cu_cp_recommended_ran_node_item {
+  cu_cp_amf_paging_target amf_paging_target;
+};
+
+struct cu_cp_recommended_ran_nodes_for_paging {
+  std::vector<cu_cp_recommended_ran_node_item> recommended_ran_node_list;
+};
+
+struct cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging {
+  cu_cp_recommended_cells_for_paging     recommended_cells_for_paging;
+  cu_cp_recommended_ran_nodes_for_paging recommend_ran_nodes_for_paging;
+};
+
+struct cu_cp_ue_context_release_complete {
+  optional<cu_cp_user_location_info_nr>                              user_location_info;
+  optional<cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging> info_on_recommended_cells_and_ran_nodes_for_paging;
+  std::vector<pdu_session_id_t>                                      pdu_session_res_list_cxt_rel_cpl;
+  optional<cu_cp_crit_diagnostics>                                   crit_diagnostics;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb
