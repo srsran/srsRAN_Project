@@ -1105,6 +1105,7 @@ rach_indication_message unittest::build_valid_rach_indication()
 
   msg.pdus.emplace_back();
   rach_indication_pdu& pdu = msg.pdus.back();
+  msg.num_pdu              = msg.pdus.size();
 
   pdu.symbol_index = generate_start_symbol_index();
   pdu.slot_index   = generate_slot_index();
