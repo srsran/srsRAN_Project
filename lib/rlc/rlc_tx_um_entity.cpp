@@ -113,10 +113,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 
   // Pack header
   byte_buffer header_buf = {};
-  if (!rlc_um_write_data_pdu_header(header, header_buf)) {
-    logger.log_error("Could not pack RLC UM header. {} B available", nof_bytes);
-    return {};
-  }
+  rlc_um_write_data_pdu_header(header, header_buf);
   srsgnb_sanity_check(head_len == header_buf.length(),
                       "Header length and expected header length do not match ({} != {})",
                       header_buf.length(),

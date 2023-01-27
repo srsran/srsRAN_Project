@@ -42,7 +42,7 @@ void test_rlc_um_6bit_complete_sdu()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_um_write_data_pdu_header(hdr, buf));
+    rlc_um_write_data_pdu_header(hdr, buf);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -71,7 +71,7 @@ void test_rlc_um_6bit_first_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_um_write_data_pdu_header(hdr, buf));
+    rlc_um_write_data_pdu_header(hdr, buf);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -100,7 +100,7 @@ void test_rlc_um_6bit_middle_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_um_write_data_pdu_header(hdr, buf));
+    rlc_um_write_data_pdu_header(hdr, buf);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -129,7 +129,7 @@ void test_rlc_um_6bit_last_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_um_write_data_pdu_header(hdr, buf));
+    rlc_um_write_data_pdu_header(hdr, buf);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -162,7 +162,7 @@ void test_rlc_um_12bit_complete_sdu()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_um_write_data_pdu_header(hdr, buf));
+    rlc_um_write_data_pdu_header(hdr, buf);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -200,7 +200,7 @@ void test_rlc_um_12bit_first_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_um_write_data_pdu_header(hdr, buf));
+    rlc_um_write_data_pdu_header(hdr, buf);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -238,7 +238,7 @@ void test_rlc_um_12bit_middle_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_um_write_data_pdu_header(hdr, buf));
+    rlc_um_write_data_pdu_header(hdr, buf);
     TESTASSERT(buf == tv_pdu);
   }
 }
@@ -270,7 +270,7 @@ void test_rlc_um_12bit_last_segment()
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
-    TESTASSERT(rlc_um_write_data_pdu_header(hdr, buf));
+    rlc_um_write_data_pdu_header(hdr, buf);
     TESTASSERT(buf == tv_pdu);
   }
 }

@@ -143,7 +143,7 @@ inline size_t rlc_um_nr_packed_length(const rlc_um_pdu_header& header)
   return len;
 }
 
-inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
+inline void rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
 {
   byte_buffer        hdr_buf;
   byte_buffer_writer hdr_writer = hdr_buf;
@@ -168,7 +168,6 @@ inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_b
     }
   }
   pdu.chain_before(std::move(hdr_buf));
-  return true;
 }
 
 } // namespace srsgnb
