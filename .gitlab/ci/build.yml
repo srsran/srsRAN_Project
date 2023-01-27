@@ -158,10 +158,16 @@ stages:
       - ccache
     policy: pull
 
+.build_and_unit_big:
+  extends: .build_and_unit
+  variables:
+    KUBERNETES_CPU_REQUEST: 7
+    KUBERNETES_MEMORY_REQUEST: 13Gi
+
 # Main combinations
 
 .build_and_unit_main:
-  extends: .build_and_unit
+  extends: .build_and_unit_big
   variables:
     ASSERT_LEVEL: PARANOID
   parallel:
