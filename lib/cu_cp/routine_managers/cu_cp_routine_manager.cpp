@@ -14,18 +14,24 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-cu_cp_routine_manager::cu_cp_routine_manager(const ngc_configuration&        ngc_cfg_,
-                                             cu_cp_ngap_control_notifier&    ngc_ctrl_notifier_,
-                                             ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_) :
-  ngc_cfg(ngc_cfg_),
+cu_cp_routine_manager::cu_cp_routine_manager(
+    cu_cp_ngap_control_notifier&                                               ngc_ctrl_notifier_,
+    ngap_cu_cp_connection_notifier&                                            cu_cp_ngap_ev_notifier_,
+    slotted_array<std::unique_ptr<cu_up_processor_interface>, MAX_NOF_CU_UPS>& cu_up_db_) :
   ngc_ctrl_notifier(ngc_ctrl_notifier_),
   cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_),
+  cu_up_db(cu_up_db_),
   main_ctrl_loop(128)
 {
 }
 
-void cu_cp_routine_manager::start_initial_cu_cp_setup_routine()
+void cu_cp_routine_manager::start_initial_cu_cp_setup_routine(const ngc_configuration& ngc_cfg)
 {
   main_ctrl_loop.schedule(
       launch_async<initial_cu_cp_setup_routine>(ngc_cfg, ngc_ctrl_notifier, cu_cp_ngap_ev_notifier));
+
+  // start E1 setup procedure(s)
+  for (auto& cu_up : cu_up_db) {
+    cu_up->start();
+  }
 }

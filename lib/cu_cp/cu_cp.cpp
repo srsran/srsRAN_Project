@@ -44,7 +44,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   ngc_entity = create_ngc(cfg.ngc_config, ngc_task_sched, ue_mng, *cfg.ngc_notifier, *cfg.cu_cp_executor);
   ngap_adapter.connect_ngap(*ngc_entity);
 
-  routine_mng = std::make_unique<cu_cp_routine_manager>(cfg.ngc_config, ngap_adapter, ngap_cu_cp_ev_notifier);
+  routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, cu_up_db);
 }
 
 cu_cp::~cu_cp()
@@ -54,13 +54,17 @@ cu_cp::~cu_cp()
 
 void cu_cp::start()
 {
-  // start NG setup procedure.
-  routine_mng->start_initial_cu_cp_setup_routine();
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
 
-  // start E1 setup procedure(s)
-  for (auto& cu_up : cu_up_db) {
-    cu_up->start();
-  }
+  cfg.cu_cp_executor->execute([this, &p]() {
+    // start NG setup procedure.
+    routine_mng->start_initial_cu_cp_setup_routine(cfg.ngc_config);
+    p.set_value();
+  });
+
+  // Block waiting for CU-CP setup to complete.
+  fut.wait();
 }
 
 void cu_cp::stop() {}
