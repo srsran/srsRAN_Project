@@ -129,7 +129,6 @@
     "resolve_outdated_diff_discussions": false,
     "security_and_compliance_access_level": "private",
     "security_and_compliance_enabled": true,
-    "shared_runners_enabled": true,
     "snippets_enabled": true,
     "squash_option": "default_off",
     "visibility": "private",
