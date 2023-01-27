@@ -126,6 +126,14 @@ e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_cont
 async_task<void>
 e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command)
 {
+  if (!ue_ctx_list.contains(command.cu_cp_ue_id)) {
+    logger.error("Can't find bearer to release (cu_cp_ue_id={})", command.cu_cp_ue_id);
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
   // Get UE context
   e1ap_ue_context& ue_ctxt = ue_ctx_list[command.cu_cp_ue_id];
 
@@ -138,7 +146,8 @@ e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_r
 
   fill_asn1_bearer_context_release_command(bearer_context_release_cmd, command);
 
-  return launch_async<e1_bearer_context_release_procedure>(e1_msg, ue_ctxt, pdu_notifier, logger);
+  return launch_async<e1_bearer_context_release_procedure>(
+      command.cu_cp_ue_id, e1_msg, ue_ctx_list, pdu_notifier, logger);
 }
 
 void e1_cu_cp_impl::handle_message(const e1_message& msg)

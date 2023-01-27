@@ -112,12 +112,12 @@ protected:
 
   void check_ue_release_not_requested()
   {
-    ASSERT_NE(rrc_ue_ev_notifier.last_ue_context_release_command_message.ue_index, ALLOCATED_UE_INDEX);
+    ASSERT_NE(rrc_ue_ev_notifier.last_cu_cp_ue_context_release_command.ue_index, ALLOCATED_UE_INDEX);
   }
 
   void check_ue_release_requested()
   {
-    ASSERT_EQ(rrc_ue_ev_notifier.last_ue_context_release_command_message.ue_index, ALLOCATED_UE_INDEX);
+    ASSERT_EQ(rrc_ue_ev_notifier.last_cu_cp_ue_context_release_command.ue_index, ALLOCATED_UE_INDEX);
   }
 
   void receive_smc_complete()

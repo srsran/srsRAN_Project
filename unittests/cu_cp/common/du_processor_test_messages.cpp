@@ -52,12 +52,12 @@ ue_creation_message srsgnb::srs_cu_cp::generate_ue_creation_message(rnti_t c_rnt
   return ue_creation_msg;
 }
 
-ue_context_release_command_message srsgnb::srs_cu_cp::generate_ue_context_release_command(ue_index_t ue_index)
+cu_cp_ue_context_release_command srsgnb::srs_cu_cp::generate_ue_context_release_command(ue_index_t ue_index)
 {
-  ue_context_release_command_message ue_context_release_command_msg = {};
-  ue_context_release_command_msg.ue_index                           = ue_index;
-  ue_context_release_command_msg.cause                              = ue_context_release_cause::radio_network;
-  return ue_context_release_command_msg;
+  cu_cp_ue_context_release_command ue_context_release_command = {};
+  ue_context_release_command.ue_index                         = ue_index;
+  ue_context_release_command.cause                            = cu_cp_cause_t::radio_network;
+  return ue_context_release_command;
 }
 
 cu_cp_pdu_session_resource_setup_request srsgnb::srs_cu_cp::generate_pdu_session_resource_setup()

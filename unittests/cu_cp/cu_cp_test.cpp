@@ -183,6 +183,8 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 
   // Connect DU
   cu_cp_obj->handle_new_du_connection();
+  // Connect CU-UP
+  cu_cp_obj->handle_new_cu_up_connection();
 
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_f1_setup_request();
@@ -215,6 +217,8 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
 {
   // Connect DU
   cu_cp_obj->handle_new_du_connection();
+  // Connect CU-UP
+  cu_cp_obj->handle_new_cu_up_connection();
 
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_f1_setup_request();
@@ -222,12 +226,21 @@ TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
+  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(0);
+  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(41255);
+  rnti_t              crnti    = to_rnti(0x4601);
+
   // Inject Initial UL RRC message
-  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(41255));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
   test_logger.info("Injecting Initial UL RRC message");
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
-  // check that UE has been added
+  // Inject UE Context Release Complete message
+  f1c_message ue_context_release_complete_msg = generate_ue_context_release_complete(cu_ue_id, du_ue_id);
+  test_logger.info("Injecting UE Context Release Complete message");
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ue_context_release_complete_msg);
+
+  // check that UE has not been added
   ASSERT_EQ(cu_cp_obj->get_nof_ues(), 0U);
 
   // check that the Initial UE Message was not send to the AMF
@@ -246,6 +259,8 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 
   // Connect DU
   cu_cp_obj->handle_new_du_connection();
+  // Connect CU-UP
+  cu_cp_obj->handle_new_cu_up_connection();
 
   // Generate F1SetupRequest
   f1c_message f1setup_msg = generate_f1_setup_request();
@@ -290,17 +305,14 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
-    // Check that UE has been added to F1C (the AMF connection drop isn't visible to F1C)
-    ASSERT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 2);
-
-    // The UE should not exists in the CU-CP though
-    ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
-
     // Inject UE Context Release Complete message
     f1c_message ue_context_release_complete_msg =
         generate_ue_context_release_complete(second_ue_cu_ue_id, second_ue_du_ue_id);
     test_logger.info("Injecting UE Context Release Complete message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ue_context_release_complete_msg);
+
+    // The UE should not exists in the CU-CP
+    ASSERT_EQ(cu_cp_obj->get_nof_ues(), 1U);
 
     // Check that UE has also been removed from F1C
     ASSERT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 1);

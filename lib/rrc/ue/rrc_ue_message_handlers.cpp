@@ -169,3 +169,11 @@ async_task<bool> rrc_ue_impl::handle_rrc_reconfiguration_request(const cu_cp_rrc
 {
   return launch_async<rrc_reconfiguration_procedure>(context, msg, *this, *event_mng, logger);
 }
+
+void rrc_ue_impl::handle_rrc_ue_release()
+{
+  dl_dcch_msg_s dl_dcch_msg;
+  dl_dcch_msg.msg.set_c1().set_rrc_release().crit_exts.set_rrc_release();
+
+  send_dl_dcch(dl_dcch_msg);
+}

@@ -57,10 +57,17 @@ public:
     return ues.at(cu_cp_ue_e1ap_id);
   }
 
-  void remove_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_id)
+  void remove_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
-    cu_cp_ue_id_to_ue_e1ap_id.erase(ues.at(cu_cp_ue_id).cu_cp_ue_id);
-    ues.erase(cu_cp_ue_id);
+    cu_cp_ue_id_to_ue_e1ap_id.erase(ues.at(cu_cp_ue_e1ap_id).cu_cp_ue_id);
+    ues.erase(cu_cp_ue_e1ap_id);
+  }
+
+  void remove_ue(cu_cp_ue_id_t cu_cp_ue_id)
+  {
+    gnb_cu_cp_ue_e1ap_id_t ue_e1ap_id = cu_cp_ue_id_to_ue_e1ap_id.at(cu_cp_ue_id);
+    cu_cp_ue_id_to_ue_e1ap_id.erase(cu_cp_ue_id);
+    ues.erase(ue_e1ap_id);
   }
 
   size_t size() const { return ues.size(); }

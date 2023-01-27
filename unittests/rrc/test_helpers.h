@@ -84,16 +84,16 @@ public:
     last_srb_creation_message = std::move(msg);
   }
 
-  void on_ue_context_release_command(const ue_context_release_command_message& msg) override
+  void on_ue_context_release_command(cu_cp_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
-    last_ue_context_release_command_message = std::move(msg);
+    last_cu_cp_ue_context_release_command = msg;
   }
 
-  srb_creation_message               last_srb_creation_message;
-  bool                               srb1_created = false;
-  bool                               srb2_created = false;
-  ue_context_release_command_message last_ue_context_release_command_message;
+  srb_creation_message             last_srb_creation_message;
+  bool                             srb1_created = false;
+  bool                             srb2_created = false;
+  cu_cp_ue_context_release_command last_cu_cp_ue_context_release_command;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");

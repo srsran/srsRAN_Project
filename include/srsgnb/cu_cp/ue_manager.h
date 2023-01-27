@@ -43,15 +43,17 @@ public:
     rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
     du_processor_ctrl_notifier(du_processor_ctrl_notifier_)
   {
-    ue_ctxt.ran_ue_id = ran_ue_id;
+    ue_ctxt.cu_cp_ue_id = cu_cp_ue_id;
+    ue_ctxt.ran_ue_id   = ran_ue_id;
   }
 
   ngc_rrc_ue_pdu_notifier&           get_rrc_ue_pdu_notifier() { return rrc_ue_pdu_notifier; }
   ngc_rrc_ue_control_notifier&       get_rrc_ue_control_notifier() { return rrc_ue_ctrl_notifier; }
   ngc_du_processor_control_notifier& get_du_processor_control_notifier() { return du_processor_ctrl_notifier; }
 
-  amf_ue_id_t get_amf_ue_id() { return ue_ctxt.amf_ue_id; }
-  ran_ue_id_t get_ran_ue_id() { return ue_ctxt.ran_ue_id; }
+  cu_cp_ue_id_t get_cu_cp_ue_id() { return ue_ctxt.cu_cp_ue_id; }
+  amf_ue_id_t   get_amf_ue_id() { return ue_ctxt.amf_ue_id; }
+  ran_ue_id_t   get_ran_ue_id() { return ue_ctxt.ran_ue_id; }
 
   uint64_t get_aggregate_maximum_bit_rate_dl() { return ue_ctxt.aggregate_maximum_bit_rate_dl; }
   void     set_aggregate_maximum_bit_rate_dl(uint64_t aggregate_maximum_bit_rate_dl)

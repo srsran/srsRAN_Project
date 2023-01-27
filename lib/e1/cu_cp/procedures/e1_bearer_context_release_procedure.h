@@ -23,8 +23,9 @@ namespace srs_cu_cp {
 class e1_bearer_context_release_procedure
 {
 public:
-  e1_bearer_context_release_procedure(const e1_message&     command_,
-                                      e1ap_ue_context&      ue_ctxt_,
+  e1_bearer_context_release_procedure(const cu_cp_ue_id_t   cu_cp_ue_id_,
+                                      const e1_message&     command_,
+                                      e1ap_ue_context_list& ue_ctxt_list_,
                                       e1_message_notifier&  e1_notif_,
                                       srslog::basic_logger& logger_);
 
@@ -37,8 +38,9 @@ private:
   /// Handles procedure result and returns back to procedure caller.
   void handle_bearer_context_release_complete();
 
+  const cu_cp_ue_id_t   cu_cp_ue_id;
   const e1_message      command;
-  e1ap_ue_context&      ue_ctxt;
+  e1ap_ue_context_list& ue_ctxt_list;
   e1_message_notifier&  e1_notifier;
   srslog::basic_logger& logger;
 

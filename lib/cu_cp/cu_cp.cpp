@@ -189,6 +189,7 @@ du_index_t cu_cp::add_du()
 
   // TODO: use real config
   du_processor_config_t du_cfg = {};
+  du_cfg.du_index              = du_index;
 
   std::unique_ptr<du_processor_interface> du = create_du_processor(std::move(du_cfg),
                                                                    du_processor_ev_notifier,

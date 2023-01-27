@@ -20,6 +20,7 @@ set(SOURCES
       routines/initial_cu_cp_setup_routine.cpp
       routines/initial_cu_up_processor_setup_routine.cpp
       routines/pdu_session_resource_setup_routine.cpp
+      routines/ue_context_release_routine.cpp
       task_schedulers/ue_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       task_schedulers/du_task_scheduler.cpp

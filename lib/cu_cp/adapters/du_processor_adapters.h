@@ -96,6 +96,13 @@ public:
     return e1_bearer_context_mng->handle_bearer_context_modification_request(msg);
   }
 
+  async_task<void> on_bearer_context_release_command(const e1ap_bearer_context_release_command& cmd) override
+  {
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+
+    return e1_bearer_context_mng->handle_bearer_context_release_command(cmd);
+  }
+
 private:
   e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
 };
@@ -178,6 +185,8 @@ public:
   {
     return rrc_ue_handler.handle_rrc_reconfiguration_request(msg);
   }
+
+  virtual void on_rrc_ue_release() override { return rrc_ue_handler.handle_rrc_ue_release(); }
 
 private:
   rrc_ue_control_message_handler& rrc_ue_handler;

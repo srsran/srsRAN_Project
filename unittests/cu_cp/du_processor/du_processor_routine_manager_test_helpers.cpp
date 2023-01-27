@@ -21,7 +21,8 @@ du_processor_routine_manager_test::du_processor_routine_manager_test()
   srslog::init();
 
   // create routine manager
-  routine_mng = std::make_unique<du_processor_routine_manager>(e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, cu_cp_logger);
+  routine_mng = std::make_unique<du_processor_routine_manager>(
+      e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_du_notifier, ue_mng, cu_cp_logger);
 }
 
 du_processor_routine_manager_test::~du_processor_routine_manager_test()

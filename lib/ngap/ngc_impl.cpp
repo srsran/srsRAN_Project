@@ -11,6 +11,9 @@
 #include "ngc_impl.h"
 #include "ngap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
+#include "procedures/ng_setup_procedure.h"
+#include "procedures/ngap_initial_context_setup_procedure.h"
+#include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_procedure_helpers.h"
 
 using namespace srsgnb;
@@ -279,20 +282,65 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
 
 void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd)
 {
-  std::underlying_type_t<amf_ue_id_t> amf_ue_id_uint = 0;
+  amf_ue_id_t amf_ue_id = amf_ue_id_t::invalid;
+  ran_ue_id_t ran_ue_id = ran_ue_id_t::invalid;
   if (cmd->ue_ngap_ids.value.type() == asn1::ngap::ue_ngap_ids_c::types_opts::amf_ue_ngap_id) {
-    amf_ue_id_uint = cmd->ue_ngap_ids->amf_ue_ngap_id();
+    amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids->amf_ue_ngap_id());
   } else if (cmd->ue_ngap_ids.value.type() == asn1::ngap::ue_ngap_ids_c::types_opts::ue_ngap_id_pair) {
-    amf_ue_id_uint = cmd->ue_ngap_ids->ue_ngap_id_pair().amf_ue_ngap_id;
+    amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids->ue_ngap_id_pair().amf_ue_ngap_id);
+    ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids->ue_ngap_id_pair().ran_ue_ngap_id);
   }
-  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(uint_to_amf_ue_id(amf_ue_id_uint));
+  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(amf_ue_id);
   auto*         ue          = ue_manager.find_ue(cu_cp_ue_id);
   if (ue == nullptr) {
     logger.info("UE with cu_cp_ue_id={} does not exist. Dropping UE Context Release Command", cu_cp_ue_id);
     return;
   }
 
-  // TODO: trigger RRC Connection Release and remove UE
+  if (ran_ue_id == ran_ue_id_t::invalid) {
+    ran_ue_id = ue->get_ran_ue_id();
+  }
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    cmd.to_json(js);
+    logger.debug("Received UE Context Release Command: {}", js.to_string());
+  }
+
+  // Convert to common type
+  cu_cp_ue_context_release_command msg;
+  msg.ue_index = get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id);
+  msg.du_index = get_du_index_from_cu_cp_ue_id(cu_cp_ue_id);
+  fill_cu_cp_ue_context_release_command(msg, cmd);
+
+  // Notify DU processor about UE Context Release Command
+  ue->get_du_processor_control_notifier().on_new_ue_context_release_command(msg);
+
+  // Send UE Context Release Complete
+  ngc_message ngc_msg = {};
+
+  ngc_msg.pdu.set_successful_outcome();
+  ngc_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_UE_CONTEXT_RELEASE);
+
+  // TODO: Add optional fields to UE context Release Complete
+  // fill_asn1_ue_context_release_complete(ngc_msg.pdu.successful_outcome().value.ue_context_release_complete(),
+  // response);
+
+  auto& ue_context_release_complete = ngc_msg.pdu.successful_outcome().value.ue_context_release_complete();
+  ue_context_release_complete->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
+  ue_context_release_complete->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    ngc_msg.pdu.to_json(js);
+    logger.debug("Containerized UE Context Release Complete Message: {}", js.to_string());
+  }
+
+  // Remove NGAP UE
+  ue_manager.remove_ue(cu_cp_ue_id);
+
+  logger.info("Sending UE Context Release Complete to AMF");
+  ngc_notifier.on_new_message(ngc_msg);
 }
 
 void ngc_impl::handle_successful_outcome(const successful_outcome_s& outcome)

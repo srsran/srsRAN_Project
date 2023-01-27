@@ -144,9 +144,9 @@ class du_processor_rrc_ue_interface : public du_processor_srb_interface
 public:
   virtual ~du_processor_rrc_ue_interface() = default;
 
-  /// \brief Handle a UE Context Release Command and notify F1C.
-  /// \param[in] msg The UE Context Release Command Message.
-  virtual void handle_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
+  /// \brief Handle a UE Context Release Command
+  /// \param[in] cmd The UE Context Release Command.
+  virtual void handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 };
 
 /// Interface to notify an RRC UE about control messages.
@@ -163,6 +163,9 @@ public:
   /// \param[in] msg The new RRC Reconfiguration Request.
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool> on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
+
+  /// \brief Notify the RRC UE to Release an UE.
+  virtual void on_rrc_ue_release() = 0;
 };
 
 /// Handler for an NGAP entity to communicate with the DU processor
@@ -174,6 +177,10 @@ public:
   /// \brief Handle the reception of a new PDU Session Resource Setup List.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) = 0;
+
+  /// \brief Handle a UE Context Release Command.
+  /// \param[in] cmd The UE Context Release Command.
+  virtual void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 };
 
 /// Interface to notify the E1AP about control messages.
@@ -189,6 +196,9 @@ public:
   /// \brief Notify about the reception of a new Bearer Context Modification Request.
   virtual async_task<e1ap_bearer_context_modification_response>
   on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request) = 0;
+
+  /// \brief Notify about the reception of a new Bearer Context Release Command.
+  virtual async_task<void> on_bearer_context_release_command(const e1ap_bearer_context_release_command& cmd) = 0;
 };
 
 /// Interface to notify the F1AP about control messages.

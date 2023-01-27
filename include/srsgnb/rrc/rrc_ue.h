@@ -157,8 +157,8 @@ public:
   virtual void on_create_srb(const srb_creation_message& msg) = 0;
 
   /// \brief Notify about a UE Context Release Command.
-  /// \param[in] msg The UE Context Release Command message.
-  virtual void on_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
+  /// \param[in] cmd The UE Context Release Command.
+  virtual void on_ue_context_release_command(cu_cp_ue_context_release_command& cmd) = 0;
 };
 
 /// Schedules asynchronous tasks associated with an UE.
@@ -251,6 +251,9 @@ public:
   /// \returns The result of the rrc reconfiguration.
   virtual async_task<bool>
   handle_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
+
+  /// \brief Handle an RRC UE Release.
+  virtual void handle_rrc_ue_release() = 0;
 };
 
 struct rrc_init_security_context {

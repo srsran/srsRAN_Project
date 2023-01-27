@@ -82,7 +82,7 @@ private:
 
 struct dummy_du_processor_e1ap_control_notifier : public du_processor_e1ap_control_notifier {
 public:
-  dummy_du_processor_e1ap_control_notifier() {}
+  dummy_du_processor_e1ap_control_notifier() = default;
 
   void set_bearer_context_setup_outcome(bool outcome) { bearer_context_setup_outcome = outcome; }
 
@@ -134,6 +134,16 @@ public:
     });
   }
 
+  virtual async_task<void> on_bearer_context_release_command(const e1ap_bearer_context_release_command& cmd) override
+  {
+    logger.info("Received a new bearer context release command");
+
+    return launch_async([](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+
 private:
   srslog::basic_logger& logger                              = srslog::fetch_basic_logger("TEST");
   bool                  bearer_context_setup_outcome        = false;
@@ -142,7 +152,7 @@ private:
 
 struct dummy_du_processor_f1ap_ue_context_notifier : public du_processor_f1ap_ue_context_notifier {
 public:
-  dummy_du_processor_f1ap_ue_context_notifier() {}
+  dummy_du_processor_f1ap_ue_context_notifier() = default;
 
   void set_ue_context_setup_outcome(bool outcome) { ue_context_setup_outcome = outcome; }
 
@@ -204,7 +214,7 @@ private:
 
 struct dummy_du_processor_rrc_ue_control_message_notifier : public du_processor_rrc_ue_control_message_notifier {
 public:
-  dummy_du_processor_rrc_ue_control_message_notifier() {}
+  dummy_du_processor_rrc_ue_control_message_notifier() = default;
 
   void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
 
@@ -220,9 +230,30 @@ public:
     });
   }
 
+  void on_rrc_ue_release() override { logger.info("Received a new RRC UE Release request"); }
+
 private:
   srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
   bool                  rrc_reconfiguration_outcome = false;
+};
+
+struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_notifier {
+public:
+  dummy_du_processor_rrc_du_ue_notifier() = default;
+
+  rrc_ue_interface* on_ue_creation_request(rrc_ue_creation_message msg) override
+  {
+    logger.info("Received a UE creation request");
+    return nullptr;
+  }
+
+  void on_ue_context_release_command(ue_index_t ue_index) override { logger.info("Received a UE Release Command"); };
+
+  /// Send RRC Release to all UEs connected to this DU.
+  void on_release_ues() override { logger.info("Releasing all UEs"); };
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
 } // namespace srs_cu_cp

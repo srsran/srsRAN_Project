@@ -52,6 +52,36 @@ inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
   }
 }
 
+/// \brief Convert CU-CP cause to F1AP cause.
+/// \param cu_cp_cause The CU-CP cause.
+/// \return The F1AP cause.
+inline asn1::f1ap::cause_c cu_cp_cause_to_f1ap_cause(cu_cp_cause_t cu_cp_cause)
+{
+  asn1::f1ap::cause_c f1ap_cause;
+
+  switch (cu_cp_cause) {
+    case cu_cp_cause_t::radio_network:
+      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::radio_network);
+      return f1ap_cause;
+      break;
+    case cu_cp_cause_t::transport:
+      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::transport);
+      return f1ap_cause;
+      break;
+    case cu_cp_cause_t::protocol:
+      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::protocol);
+      return f1ap_cause;
+      break;
+    case cu_cp_cause_t::misc:
+      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::misc);
+      return f1ap_cause;
+      break;
+    default:
+      f1ap_cause.set(asn1::f1ap::cause_c::types_opts::nulltype);
+      return f1ap_cause;
+  }
+}
+
 /// \brief Convert F1AP NRCGI to NR Cell Identity.
 /// \param f1ap_cgi The F1AP NRCGI.
 /// \return The NR Cell Identity.

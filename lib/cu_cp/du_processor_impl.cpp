@@ -38,8 +38,11 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngc_ctrl_notifier(rrc_ue_ngc_ctrl_notifier_),
   task_sched(task_sched_),
-  ue_manager(ue_manager_)
+  ue_manager(ue_manager_),
+  rrc_ue_ev_notifier(cfg.du_index)
 {
+  context.du_index = cfg.du_index;
+
   // create f1c
   f1c = create_f1ap(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier, ctrl_exec_);
   f1c_ev_notifier.connect_du_processor(*this);
@@ -54,7 +57,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
 
   rrc_ue_ev_notifier.connect_du_processor(*this);
 
-  routine_mng = std::make_unique<du_processor_routine_manager>(e1ap_ctrl_notifier, f1c_ue_context_notifier, logger);
+  routine_mng = std::make_unique<du_processor_routine_manager>(
+      e1ap_ctrl_notifier, f1c_ue_context_notifier, rrc_du_adapter, ue_manager, logger);
 }
 
 void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& msg)
@@ -306,33 +310,9 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   }
 }
 
-void du_processor_impl::handle_ue_context_release_command(const ue_context_release_command_message& msg)
+void du_processor_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
 {
-  f1ap_ue_context_release_command f1ap_msg = {};
-  f1ap_msg.ue_index                        = msg.ue_index;
-  f1ap_msg.cause.set_radio_network();
-
-  task_sched.schedule_async_task(
-      context.du_index, msg.ue_index, launch_async([this, f1ap_msg](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-
-        ue_index_t result_idx;
-
-        CORO_AWAIT_VALUE(result_idx, f1c->handle_ue_context_release_command(f1ap_msg));
-
-        if (result_idx == f1ap_msg.ue_index) {
-          logger.info("Removed UE(ue_index={}) from F1C.", f1ap_msg.ue_index);
-        }
-
-        CORO_RETURN();
-      }));
-
-  // Remove UE from RRC
-  rrc_du_adapter.on_ue_context_release_command(msg.ue_index);
-
-  // Remove UE from UE database
-  logger.info("Removing UE (id={})", msg.ue_index);
-  ue_manager.remove_ue(msg.ue_index);
+  task_sched.schedule_async_task(cmd.du_index, cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd));
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response>
@@ -346,4 +326,15 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
       rrc->find_ue(ue_ctxt->ue_index)->get_rrc_ue_secutity_config(),
       *ue_ctxt->rrc_ue_notifier.get(),
       rrc->find_ue(ue_ctxt->ue_index)->get_rrc_ue_drb_manager());
+}
+
+void du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
+{
+  ue_context* ue_ctxt = ue_manager.find_ue(cmd.ue_index);
+  srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
+
+  // Call RRC UE notifier to release the UE
+  ue_ctxt->rrc_ue_notifier->on_rrc_ue_release();
+
+  handle_ue_context_release_command(cmd);
 }

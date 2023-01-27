@@ -132,21 +132,28 @@ class ngc_du_processor_adapter : public ngc_du_processor_control_notifier
 public:
   ngc_du_processor_adapter() = default;
 
-  void connect_du_processor(du_processor_ngap_interface* du_processor_pdu_session_handler_)
+  void connect_du_processor(du_processor_ngap_interface* du_processor_ngap_handler_)
   {
-    du_processor_pdu_session_handler = du_processor_pdu_session_handler_;
+    du_processor_ngap_handler = du_processor_ngap_handler_;
   }
 
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
-    srsgnb_assert(du_processor_pdu_session_handler != nullptr, "du_processor_pdu_session_handler must not be nullptr");
+    srsgnb_assert(du_processor_ngap_handler != nullptr, "du_processor_ngap_handler must not be nullptr");
 
-    return du_processor_pdu_session_handler->handle_new_pdu_session_resource_setup_request(request);
+    return du_processor_ngap_handler->handle_new_pdu_session_resource_setup_request(request);
+  }
+
+  void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
+  {
+    srsgnb_assert(du_processor_ngap_handler != nullptr, "du_processor_ngap_handler must not be nullptr");
+
+    du_processor_ngap_handler->handle_new_ue_context_release_command(command);
   }
 
 private:
-  du_processor_ngap_interface* du_processor_pdu_session_handler = nullptr;
+  du_processor_ngap_interface* du_processor_ngap_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

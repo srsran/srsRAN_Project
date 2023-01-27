@@ -91,9 +91,10 @@ public:
 };
 
 struct ngc_ue_context {
-  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
-  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
-  uint64_t    aggregate_maximum_bit_rate_dl = 0;
+  cu_cp_ue_id_t cu_cp_ue_id                   = cu_cp_ue_id_t::invalid;
+  amf_ue_id_t   amf_ue_id                     = amf_ue_id_t::invalid;
+  ran_ue_id_t   ran_ue_id                     = ran_ue_id_t::invalid;
+  uint64_t      aggregate_maximum_bit_rate_dl = 0;
 };
 
 struct ngap_initial_ue_message {
@@ -163,6 +164,9 @@ public:
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
+
+  /// \brief Notify about the reception of a new UE Context Release Command.
+  virtual void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) = 0;
 };
 
 /// Interface to control the NGC.

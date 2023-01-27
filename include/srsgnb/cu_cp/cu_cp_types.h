@@ -537,7 +537,8 @@ struct cu_cp_rrc_reconfiguration_procedure_request {
 };
 
 struct cu_cp_ue_context_release_command {
-  cu_cp_ue_id_t cu_cp_ue_id = cu_cp_ue_id_t::invalid;
+  ue_index_t    ue_index = INVALID_UE_INDEX;
+  du_index_t    du_index = INVALID_DU_INDEX;
   cu_cp_cause_t cause;
 };
 

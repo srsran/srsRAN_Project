@@ -30,11 +30,6 @@ enum ue_context_release_cause : uint16_t {
   nulltype      = 5
 };
 
-struct ue_context_release_command_message {
-  ue_index_t               ue_index;
-  ue_context_release_cause cause;
-};
-
 /// Interface to inform about changes to the AMF state.
 class rrc_amf_connection_handler
 {

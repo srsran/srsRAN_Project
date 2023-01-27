@@ -65,12 +65,12 @@ public:
   // du_processor_rrc_ue_interface
   /// \brief Create SRB entry in bearer list and add adapter handle.
   void create_srb(const srb_creation_message& msg) override;
-
-  void handle_ue_context_release_command(const ue_context_release_command_message& msg) override;
+  void handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
 
   // du_processor_ngap_interface
   async_task<cu_cp_pdu_session_resource_setup_response>
-  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
+       handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
+  void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
 
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
@@ -142,5 +142,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-
 } // namespace srsgnb

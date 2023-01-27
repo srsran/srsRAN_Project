@@ -51,6 +51,8 @@ private:
 class rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
+  explicit rrc_ue_du_processor_adapter(du_index_t du_index_) : du_index(du_index_) {}
+
   void connect_du_processor(du_processor_rrc_ue_interface& du_processor_rrc_ue_)
   {
     du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
@@ -58,12 +60,14 @@ public:
 
   void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
 
-  void on_ue_context_release_command(const ue_context_release_command_message& msg) override
+  void on_ue_context_release_command(cu_cp_ue_context_release_command& cmd) override
   {
-    du_processor_rrc_ue_handler->handle_ue_context_release_command(msg);
+    cmd.du_index = du_index;
+    du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
   }
 
 private:
+  du_index_t                     du_index;
   du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };
 
