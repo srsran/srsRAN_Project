@@ -11,6 +11,7 @@
 #include "gtpu_test.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 #include "srsgnb/gtpu/gtpu_demux_factory.h"
+#include "srsgnb/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -28,6 +29,7 @@ protected:
 
     // create DUT object
     gtpu_demux_creation_message_msg msg = {};
+    msg.cu_up_exec                      = &exec;
     dut                                 = create_gtpu_demux(msg);
   }
 
@@ -39,6 +41,9 @@ protected:
 
   std::unique_ptr<gtpu_test_rx_upper> gtpu_tunnel;
 
+  task_worker          worker{"GTP-U demux#0", 128};
+  task_worker_executor exec{worker};
+
   std::unique_ptr<gtpu_demux> dut;
   srslog::basic_logger&       test_logger = srslog::fetch_basic_logger("TEST", false);
 };
@@ -46,24 +51,30 @@ protected:
 //// GTPU demux tesst
 TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
 {
+  worker.start();
   byte_buffer pdu{gtpu_ping_vec};
   dut->handle_pdu(std::move(pdu));
+  worker.stop();
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
 }
 
 TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
 {
+  worker.start();
   byte_buffer pdu{gtpu_ping_vec};
   dut->add_tunnel(0x1, gtpu_tunnel.get());
   dut->handle_pdu(std::move(pdu));
+  worker.stop();
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), sizeof(gtpu_ping_vec));
 }
 
 TEST_F(gtpu_demux_test, when_tunnel_is_removed_pdu_is_dropped)
 {
+  worker.start();
   byte_buffer pdu{gtpu_ping_vec};
   dut->add_tunnel(0x1, gtpu_tunnel.get());
   dut->remove_tunnel(0x1);
   dut->handle_pdu(std::move(pdu));
+  worker.stop();
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
 }
