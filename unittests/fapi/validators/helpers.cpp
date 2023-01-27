@@ -286,6 +286,7 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
 dl_tti_request_message unittest::build_valid_dl_tti_request()
 {
   dl_tti_request_message msg;
+  msg.message_type = message_type_id::dl_tti_request;
 
   msg.sfn        = 4;
   msg.slot       = 0;
@@ -317,6 +318,7 @@ dl_tti_request_message unittest::build_valid_dl_tti_request()
 ul_dci_request_message unittest::build_valid_ul_dci_request()
 {
   ul_dci_request_message msg;
+  msg.message_type = message_type_id::ul_dci_request;
 
   msg.slot = generate_slot();
   msg.sfn  = generate_sfn();
@@ -332,6 +334,8 @@ ul_dci_request_message unittest::build_valid_ul_dci_request()
 slot_indication_message unittest::build_valid_slot_indication()
 {
   slot_indication_message msg;
+  msg.message_type = message_type_id::slot_indication;
+
   msg.slot = generate_slot();
   msg.sfn  = generate_sfn();
 
@@ -341,7 +345,7 @@ slot_indication_message unittest::build_valid_slot_indication()
 error_indication_message unittest::build_valid_error_indication()
 {
   error_indication_message msg;
-
+  msg.message_type  = message_type_id::error_indication;
   msg.slot          = generate_slot();
   msg.sfn           = generate_sfn();
   msg.message_id    = message_type_id::tx_data_request;
@@ -355,7 +359,7 @@ error_indication_message unittest::build_valid_error_indication()
 error_indication_message unittest::build_valid_out_of_sync_error_indication()
 {
   error_indication_message msg;
-
+  msg.message_type  = message_type_id::error_indication;
   msg.slot          = generate_slot();
   msg.sfn           = generate_sfn();
   msg.message_id    = message_type_id::tx_data_request;
@@ -369,6 +373,7 @@ error_indication_message unittest::build_valid_out_of_sync_error_indication()
 rx_data_indication_message unittest::build_valid_rx_data_indication()
 {
   rx_data_indication_message msg;
+  msg.message_type = message_type_id::rx_data_indication;
 
   msg.sfn            = generate_sfn();
   msg.slot           = generate_slot();
@@ -665,6 +670,7 @@ uci_indication_message unittest::build_valid_uci_indication()
   std::uniform_int_distribution<unsigned> slot_dist(0, 159);
 
   uci_indication_message msg;
+  msg.message_type = message_type_id::uci_indication;
 
   msg.sfn  = sfn_dist(gen);
   msg.slot = slot_dist(gen);
@@ -1034,6 +1040,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
 ul_tti_request_message unittest::build_valid_ul_tti_request()
 {
   ul_tti_request_message msg;
+  msg.message_type = message_type_id::ul_tti_request;
 
   msg.slot       = generate_slot();
   msg.sfn        = generate_sfn();
@@ -1089,6 +1096,7 @@ static unsigned generate_preamble_index()
 rach_indication_message unittest::build_valid_rach_indication()
 {
   rach_indication_message msg;
+  msg.message_type = message_type_id::rach_indication;
 
   msg.slot = generate_slot();
   msg.sfn  = generate_sfn();
@@ -1118,6 +1126,7 @@ rach_indication_message unittest::build_valid_rach_indication()
 tx_data_request_message unittest::build_valid_tx_data_request()
 {
   tx_data_request_message msg;
+  msg.message_type = message_type_id::tx_data_request;
 
   msg.sfn  = generate_sfn();
   msg.slot = generate_slot();
@@ -1138,6 +1147,7 @@ tx_data_request_message unittest::build_valid_tx_data_request()
 srsgnb::fapi::crc_indication_message unittest::build_valid_crc_indication()
 {
   crc_indication_message msg;
+  msg.message_type = message_type_id::crc_indication;
 
   msg.sfn  = 238;
   msg.slot = 3;

@@ -1777,6 +1777,7 @@ public:
 inline slot_indication_message build_slot_indication_message(unsigned sfn, unsigned slot)
 {
   slot_indication_message msg;
+  msg.message_type = message_type_id::slot_indication;
 
   msg.sfn  = sfn;
   msg.slot = slot;
@@ -1794,6 +1795,7 @@ build_error_indication(uint16_t sfn, uint16_t slot, message_type_id msg_id, erro
 
   error_indication_message msg;
 
+  msg.message_type  = msg_id;
   msg.sfn           = sfn;
   msg.slot          = slot;
   msg.message_id    = msg_id;
@@ -1815,6 +1817,7 @@ inline error_indication_message build_out_of_sync_error_indication(uint16_t     
 {
   error_indication_message msg;
 
+  msg.message_type  = msg_id;
   msg.sfn           = sfn;
   msg.slot          = slot;
   msg.message_id    = msg_id;
