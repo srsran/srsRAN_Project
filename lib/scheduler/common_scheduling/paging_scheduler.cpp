@@ -52,6 +52,7 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         }
         ss_cfg     = cfg;
         ss_cfg_set = true;
+        break;
       }
 
       if (not ss_cfg_set) {
