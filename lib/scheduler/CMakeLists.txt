@@ -18,6 +18,7 @@ set(SOURCES
         policy/scheduler_time_rr.cpp
         pucch_scheduling/pucch_allocator_impl.cpp
         pucch_scheduling/pucch_guardbands_scheduler.cpp
+        pucch_scheduling/pucch_resource_manager.cpp
         uci_scheduling/uci_scheduler_impl.cpp
         uci_scheduling/uci_allocator_impl.cpp
         support/pdcch/pdcch_type0_helpers.cpp
