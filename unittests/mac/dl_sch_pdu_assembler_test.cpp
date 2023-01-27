@@ -94,7 +94,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
   static constexpr unsigned HEADER_LEN = 3;
   std::vector<uint8_t>      bytes(dl_sch_pdu::MAX_PDU_LENGTH);
   dl_sch_pdu                pdu(bytes);
-  unsigned                  payload_len = test_rgen::uniform_int<unsigned>(256, dl_sch_pdu::MAX_PDU_LENGTH);
+  unsigned                  payload_len = test_rgen::uniform_int<unsigned>(256, bytes.size() - HEADER_LEN);
   byte_buffer               payload;
   for (unsigned i = 0; i != payload_len; ++i) {
     payload.append(test_rgen::uniform_int<uint8_t>());
