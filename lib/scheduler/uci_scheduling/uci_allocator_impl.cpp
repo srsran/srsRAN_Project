@@ -29,15 +29,21 @@ uci_allocator_impl::~uci_allocator_impl() = default;
 
 void uci_allocator_impl::allocate_uci_harq_on_pusch(ul_sched_info&      pusch_grant,
                                                     const uci_on_pusch& uci_cfg,
-                                                    unsigned            harq_ack_nof_bits)
+                                                    unsigned            harq_ack_nof_bits,
+                                                    unsigned            csi_part1_nof_bits)
 {
   srsgnb_assert(not pusch_grant.uci.has_value(),
                 "Unexpected event: in the current slot UCI was found on PUSCH for RNTI {:#x}",
                 pusch_grant.pusch_cfg.rnti);
 
+  // [Implementation-defined] CSI part2 reporting not supported.
+  const unsigned CSI_PART2_NOF_BITS = 0;
+
   pusch_grant.uci.emplace();
-  uci_info& uci         = pusch_grant.uci.value();
-  uci.harq_ack_nof_bits = harq_ack_nof_bits;
+  uci_info& uci          = pusch_grant.uci.value();
+  uci.harq_ack_nof_bits  = harq_ack_nof_bits;
+  uci.csi_part1_nof_bits = csi_part1_nof_bits;
+  uci.csi_part2_nof_bits = CSI_PART2_NOF_BITS;
 
   // Set parameters of UCI-HARQ.
   uci.alpha = uci_cfg.scaling;
@@ -55,17 +61,41 @@ void uci_allocator_impl::allocate_uci_harq_on_pusch(ul_sched_info&      pusch_gr
     uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_3.value();
   }
 
-  // TODO: verify whether CSI beta offset need to be set for HARQ reporting only.
+  // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
   if (uci.csi_part1_nof_bits <= 11) {
     uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
   } else {
     uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
   }
 
-  if (uci.csi_part2_nof_bits <= 11) {
-    uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_1.value();
+  // When this allocation is done, there is no CSI_part2 to be reported. Therefore, as per Section 9.3, TS 38.213, the
+  // \c beta_offsets values to be used are those with index 1.
+  uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_1.value();
+}
+
+void uci_allocator_impl::allocate_uci_csi_on_pusch(ul_sched_info&      pusch_grant,
+                                                   const uci_on_pusch& uci_cfg,
+                                                   unsigned            csi_part1_nof_bits)
+{
+  // We assume the configuration contains the values for beta_offsets.
+  const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
+
+  if (pusch_grant.uci.has_value()) {
+    auto& uci = pusch_grant.uci.value();
+
+    uci.csi_part1_nof_bits = csi_part1_nof_bits;
+
+    // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+    if (uci.csi_part1_nof_bits <= 11) {
+      uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
+    } else {
+      uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
+    }
+
   } else {
-    uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_2.value();
+    // When this allocation is done, there is only HARQ-ACK to be reported and no CSI.
+    const unsigned HARQ_ACK_NOF_BITS = 1;
+    allocate_uci_harq_on_pusch(pusch_grant, uci_cfg, HARQ_ACK_NOF_BITS, csi_part1_nof_bits);
   }
 }
 
@@ -101,11 +131,14 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
     // If we reach this point, we expect neither PUCCH grants nor UCI on PUSCH previsouly allocated; this would be the
     // case of a new allocation of HARQ-ACK on PUSCH We assume we only report the HARQ-ACK for a single layer, i.e., 1
     // bit.
-    unsigned nof_harq_ack_bits = 1;
+    const unsigned nof_harq_ack_bits = 1;
+    // When this allocation is done, there is only HARQ-ACK to be reported and no CSI.
+    const unsigned CSI_PART1_NOF_BITS = 0;
     allocate_uci_harq_on_pusch(
         *existing_pusch,
         ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
-        nof_harq_ack_bits);
+        nof_harq_ack_bits,
+        CSI_PART1_NOF_BITS);
     uci_output.alloc_successful = true;
     logger.debug("UCI for HARQ-ACK allocated on PUSCH, for UE={:#x}", crnti);
   } else {
@@ -149,7 +182,8 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
   allocate_uci_harq_on_pusch(
       pusch_grant,
       ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
-      pucch_uci.harq_ack_nof_bits);
+      pucch_uci.harq_ack_nof_bits,
+      pucch_uci.csi_part1_bits);
 
   logger.debug("UCI for UE={:#x} mltplxd on PUSCH for slot={}", crnti, slot_alloc.slot.to_uint());
 }
@@ -172,6 +206,32 @@ void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocato
     return;
   }
 
+  pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
+}
+
+void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocator& slot_alloc,
+                                                      rnti_t                        crnti,
+                                                      const ue_cell_configuration&  ue_cell_cfg)
+{
+  // [Implementation-defined] This is the only supported CSI format, for the time being.
+  const unsigned CSI_PART1_NOF_BITS = 4;
+
+  auto&          puschs         = slot_alloc.result.ul.puschs;
+  ul_sched_info* existing_pusch = std::find_if(
+      puschs.begin(), puschs.end(), [crnti](ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
+
+  bool has_pusch_grants =
+      not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
+
+  // If there is a PUSCH allocated for this UE, allocate the CSI on the UCI on PUSCH.
+  if (has_pusch_grants) {
+    return allocate_uci_csi_on_pusch(
+        *existing_pusch,
+        ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
+        CSI_PART1_NOF_BITS);
+  }
+
+  // Else, allocate the CSI on the PUCCH.
   pucch_alloc.pucch_allocate_sr_opportunity(slot_alloc, crnti, ue_cell_cfg);
 }
 
