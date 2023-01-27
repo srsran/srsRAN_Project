@@ -52,9 +52,9 @@ private:
   const uint32_t mod;
 
   // Header sizes are computed upon construction based on SN length
-  const uint32_t head_len_full      = 0;
-  const uint32_t head_len_first     = 0;
-  const uint32_t head_len_not_first = 0;
+  const uint32_t head_len_full;
+  const uint32_t head_len_first;
+  const uint32_t head_len_not_first;
 
   task_executor& ue_executor;
 
