@@ -271,6 +271,8 @@ sib_information unittests::build_valid_sib1_information_pdu()
   info.pdsch_cfg.dmrs = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
   info.pdsch_cfg.n_id = generate_nid_pdsch();
   info.pdsch_cfg.is_interleaved = false;
+  info.pdsch_cfg.ss_set_type    = search_space_set_type::type0;
+  info.pdsch_cfg.dci_fmt        = dci_dl_format::f1_0;
   info.pdsch_cfg.codewords.push_back(
       pdsch_codeword{{modulation_scheme::QAM16, 220.F}, 5, pdsch_mcs_table::qam64, 2, 128});
 
