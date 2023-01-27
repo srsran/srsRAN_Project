@@ -16,6 +16,7 @@
 #include "srsgnb/e1/common/e1_common.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp_factory.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {
@@ -45,6 +46,7 @@ protected:
   timer_manager                     timers;
   dummy_e1_pdu_notifier             e1_pdu_notifier;
   dummy_e1_cu_up_processor_notifier cu_up_processor_notifier;
+  manual_task_worker                ctrl_worker{128};
   std::unique_ptr<e1_interface>     e1ap;
 };
 

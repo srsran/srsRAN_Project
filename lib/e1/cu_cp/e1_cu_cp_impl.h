@@ -18,6 +18,7 @@
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/ran/nr_cgi.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 
@@ -31,7 +32,8 @@ class e1_cu_cp_impl final : public e1_interface
 public:
   e1_cu_cp_impl(srsgnb::timer_manager&       timers_,
                 e1_message_notifier&         e1_pdu_notifier_,
-                e1_cu_up_processor_notifier& e1_cu_up_processor_notifier_);
+                e1_cu_up_processor_notifier& e1_cu_up_processor_notifier_,
+                task_executor&               ctrl_exec_);
   ~e1_cu_cp_impl();
 
   // e1 connection manager functions
@@ -81,6 +83,7 @@ private:
   // nofifiers and handles
   e1_message_notifier&         pdu_notifier;
   e1_cu_up_processor_notifier& cu_up_processor_notifier;
+  task_executor&               ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id
 };

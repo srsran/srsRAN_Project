@@ -19,6 +19,7 @@
 #include "srsgnb/cu_cp/cu_up_processor_config.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/support/async/async_task_loop.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include <string>
 
 namespace srsgnb {
@@ -30,7 +31,8 @@ public:
   cu_up_processor_impl(const cu_up_processor_config_t             cu_up_processor_config_,
                        cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
                        e1_message_notifier&                       e1_notifier_,
-                       cu_up_processor_task_scheduler&            task_sched_);
+                       cu_up_processor_task_scheduler&            task_sched_,
+                       task_executor&                             ctrl_exec_);
   ~cu_up_processor_impl() = default;
 
   void start() override;

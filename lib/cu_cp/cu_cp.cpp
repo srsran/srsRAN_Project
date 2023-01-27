@@ -269,8 +269,11 @@ cu_up_index_t cu_cp::add_cu_up()
   // TODO: use real config
   cu_up_processor_config_t cu_up_cfg = {};
 
-  std::unique_ptr<cu_up_processor_interface> cu_up = create_cu_up_processor(
-      std::move(cu_up_cfg), cu_up_processor_ev_notifier, *cfg.e1_notifier, cu_up_processor_task_sched);
+  std::unique_ptr<cu_up_processor_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
+                                                                            cu_up_processor_ev_notifier,
+                                                                            *cfg.e1_notifier,
+                                                                            cu_up_processor_task_sched,
+                                                                            *cfg.cu_cp_executor);
 
   cu_up->get_context().cu_up_index = cu_up_index;
 
