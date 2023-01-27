@@ -209,7 +209,7 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
   return true;
 }
 
-inline bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
+inline void rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_buffer& pdu)
 {
   byte_buffer        hdr_buf;
   byte_buffer_writer hdr_writer = hdr_buf;
@@ -236,7 +236,6 @@ inline bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_b
     hdr_writer.append(header.so & 0xffU); // second part of SO
   }
   pdu.chain_before(std::move(hdr_buf));
-  return true;
 }
 
 } // namespace srsgnb

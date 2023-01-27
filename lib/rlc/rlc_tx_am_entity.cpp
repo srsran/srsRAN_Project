@@ -190,10 +190,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
 
   // Pack header
   byte_buffer header_buf = {};
-  if (!rlc_am_write_data_pdu_header(hdr, header_buf)) {
-    // TODO: actually, pack function always returns true, so we never come here
-    logger.log_error("Failed to pack AMD PDU header");
-  }
+  rlc_am_write_data_pdu_header(hdr, header_buf);
 
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
@@ -244,10 +241,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
 
   // Pack header
   byte_buffer header_buf = {};
-  if (!rlc_am_write_data_pdu_header(hdr, header_buf)) {
-    // TODO: actually, pack function always returns true, so we never come here
-    logger.log_error("Failed to pack AMD PDU header");
-  }
+  rlc_am_write_data_pdu_header(hdr, header_buf);
 
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
@@ -326,10 +320,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
 
   // Pack header
   byte_buffer header_buf = {};
-  if (!rlc_am_write_data_pdu_header(hdr, header_buf)) {
-    // TODO: actually, pack function always returns true, so we never come here
-    logger.log_error("Failed to pack AMD PDU header");
-  }
+  rlc_am_write_data_pdu_header(hdr, header_buf);
 
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
@@ -444,10 +435,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
 
   // Pack header
   byte_buffer header_buf = {};
-  if (!rlc_am_write_data_pdu_header(hdr, header_buf)) {
-    // TODO: actually, pack function always returns true, so we never come here
-    logger.log_error("Failed to pack AMD PDU header");
-  }
+  rlc_am_write_data_pdu_header(hdr, header_buf);
   srsgnb_assert(header_buf.length() == expected_hdr_len,
                 "ReTx header length ({}) differs from expected_hdr_len ({})",
                 header_buf.length(),
