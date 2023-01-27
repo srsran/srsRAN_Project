@@ -36,7 +36,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
   size_t sdu_length = sdu_.buf.length();
   logger.log_info(sdu_.buf.begin(),
                   sdu_.buf.end(),
-                  "Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {}",
+                  "Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {})",
                   sdu_.buf.length(),
                   sdu_.pdcp_count,
                   sdu_queue.size_sdus());
@@ -44,7 +44,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
     metrics.metrics_add_sdus(1, sdu_length);
     handle_buffer_state_update(); // take lock
   } else {
-    logger.log_info("Dropped Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {}",
+    logger.log_info("Dropped Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {})",
                     sdu_length,
                     sdu_.pdcp_count,
                     sdu_queue.size_sdus());
@@ -68,11 +68,11 @@ void rlc_tx_um_entity::discard_sdu(uint32_t pdcp_count)
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
 byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 {
-  logger.log_debug("PDU requested with up to {} B", nof_bytes);
+  logger.log_info("MAC opportunity: nof_bytes={}", nof_bytes);
 
   // Check available space -- we need at least the minimum header + 1 payload Byte
-  if (nof_bytes < head_len_full + 1) {
-    logger.log_info("Cannot build a PDU with {} B", nof_bytes);
+  if (nof_bytes <= head_len_full) {
+    logger.log_debug("Cannot fit SDU into nof_bytes={}: head_len_full={}", nof_bytes, head_len_full);
     return {};
   }
 
@@ -83,11 +83,14 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
+    srsgnb_sanity_check(next_so == 0, "New Tx SDU, but next_so is not 0 (next_so={})", next_so);
+    logger.log_debug(
+        "Reading from SDU queue; status: {} SDUs, {} bytes", sdu_queue.size_sdus(), sdu_queue.size_bytes());
     if (not sdu_queue.read(sdu)) {
-      logger.log_info("No data available to be sent");
+      logger.log_debug("No data available to be sent");
       return {};
     }
-    srsgnb_sanity_check(next_so == 0, "New Tx SDU, but next_so is not 0 (next_so = {})", next_so);
+    logger.log_debug("Read SDU: SN={}, pdcp_count={}, {} bytes", st.tx_next, sdu.pdcp_count, sdu.buf.length());
 
     // Notify the upper layer about the beginning of the transfer of the current SDU
     if (sdu.pdcp_count.has_value()) {
@@ -107,7 +110,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   // Get SI and expected header size
   uint32_t head_len = 0;
   if (not get_si_and_expected_header_size(next_so, sdu.buf.length(), nof_bytes, header.si, head_len)) {
-    logger.log_info("Not enough space to send header");
+    logger.log_debug("Cannot fit {} into nof_bytes={}: head_len={}", header.si, nof_bytes, head_len);
     return {};
   }
 
@@ -119,8 +122,10 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
                       header_buf.length(),
                       head_len);
 
+  // Sanity check: can this SDU be sent considering header overhead?
+  // TODO: verify if this check is redundant; see get_si_and_expected_header_size() above
   if (nof_bytes <= head_len) {
-    logger.log_info("Cannot build a PDU - {} B available, {} B required for header", nof_bytes, head_len);
+    logger.log_debug("Cannot fit {} into nof_bytes={}: head_len={}", header.si, nof_bytes, head_len);
     return {};
   }
 
@@ -128,10 +133,11 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   uint32_t space   = nof_bytes - head_len;
   uint32_t to_move = space >= sdu.buf.length() - next_so ? sdu.buf.length() - next_so : space;
 
-  // Log
-  logger.log_debug("adding {} - ({}/{})", header.si, to_move, sdu.buf.length());
+  // Log PDU info
+  logger.log_debug(
+      "Creating PDU ({}) with {} B of {} B. nof_bytes={}", header.si, to_move, sdu.buf.length(), nof_bytes);
 
-  // Move data from SDU to PDU
+  // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu.buf, next_so, to_move});
@@ -158,14 +164,17 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 
   if (header.si == rlc_si_field::full_sdu) {
     // log without SN
-    logger.log_info(pdu_buf.begin(), pdu_buf.end(), "Tx PDU ({} B)", pdu_buf.length());
+    logger.log_info(pdu_buf.begin(), pdu_buf.end(), "Created PDU ({}): {} bytes", header.si, pdu_buf.length());
   } else {
-    logger.log_info(pdu_buf.begin(), pdu_buf.end(), "Tx PDU SN={} ({} B)", header.sn, pdu_buf.length());
+    logger.log_info(
+        pdu_buf.begin(), pdu_buf.end(), "Created PDU ({}): {} bytes, SN={}", header.si, pdu_buf.length(), header.sn);
   }
 
+  // Update metrics
   metrics.metrics_add_pdus(1, pdu_buf.length());
   handle_buffer_state_update_nolock(); // already locked
 
+  // Log state
   log_state(srslog::basic_levels::debug);
 
   return pdu_buf;
