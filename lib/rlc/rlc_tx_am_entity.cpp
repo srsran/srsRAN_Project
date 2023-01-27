@@ -104,7 +104,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
     }
     byte_buffer pdu;
     status_pdu.pack(pdu);
-    logger.log_debug("Built status PDU with {} bytes", pdu.length());
+    logger.log_info("Created status PDU: {} bytes", pdu.length());
 
     // Update metrics
     metrics.metrics_add_pdus(1, pdu.length());
@@ -203,7 +203,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu});
-  logger.log_info("Created PDU ({}): {} bytes", hdr.si, pdu_buf.length());
+  logger.log_info("Created PDU ({}): {} bytes, SN={}", hdr.si, pdu_buf.length(), hdr.sn);
 
   // Update TX Next
   st.tx_next = (st.tx_next + 1) % mod;
@@ -260,7 +260,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
-  logger.log_info("Created PDU ({}): {} bytes", hdr.si, pdu_buf.length());
+  logger.log_info("Created PDU ({}): {} bytes, SN={}", hdr.si, pdu_buf.length(), hdr.sn);
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
@@ -345,7 +345,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
-  logger.log_info("Created PDU ({}): {} bytes", si, pdu_buf.length());
+  logger.log_info("Created PDU ({}): {} bytes, SN={}", hdr.si, pdu_buf.length(), hdr.so);
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
@@ -470,7 +470,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, retx_payload_len});
-  logger.log_info("Created ReTx PDU ({}): {} bytes", si, pdu_buf.length());
+  logger.log_info("Created ReTx PDU ({}): {} bytes, SN={}", hdr.si, pdu_buf.length(), hdr.so);
 
   // Log state
   log_state(srslog::basic_levels::debug);
