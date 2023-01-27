@@ -12,6 +12,7 @@
 
 #include "../../adt/variant.h"
 #include "../tci.h"
+#include "csi_resource_config.h"
 #include "csi_rs_id.h"
 #include "csi_rs_pattern.h"
 #include "csi_rs_types.h"
@@ -119,15 +120,6 @@ struct csi_im_resource_set {
   static_vector<csi_im_res_id_t, csi_im_res_set_id_t::MAX_NOF_CSI_IM_RESOURCES_PER_SET> csi_ims_resources;
 };
 
-/// \brief CSI-SSB-ResourceSetId is used to identify one SS/PBCH block resource set.
-/// \remark See TS 38.331, \c CSI-SSB-ResourceSetId.
-enum csi_ssb_res_set_id_t {
-  MIN_CSI_SSB_RESOURCE_SET_ID       = 0,
-  MAX_CSI_SSB_RESOURCE_SET_ID       = 63,
-  MAX_NOF_CSI_SSB_RESOURCE_SETS     = 64,
-  MAX_NOF_CSI_SSB_RESOURCES_PER_SET = 64,
-};
-
 /// CSI-SSB-ResourceSet is used to configure one SS/PBCH block resource set which refers to SS/PBCH as indicated in
 /// ServingCellConfigCommon.
 /// \remark See TS 38.331, \c CSI-SSB-ResourceSet.
@@ -150,6 +142,8 @@ struct csi_meas_config {
   static_vector<csi_im_resource_set, csi_im_res_set_id_t::MAX_NOF_CSI_IM_RESOURCE_SETS> csi_im_res_set_list;
   /// Pool of CSI-SSB-ResourceSet which can be referred to from CSI-ResourceConfig.
   static_vector<csi_ssb_resource_set, csi_ssb_res_set_id_t::MAX_NOF_CSI_SSB_RESOURCE_SETS> csi_ssb_res_set_list;
+  /// Configured CSI resource settings as specified in TS 38.214 clause 5.2.1.2.
+  static_vector<csi_resource_config, csi_res_config_id_t::MAX_NOF_CSI_RESOURCE_CONFIGS> csi_res_cfg_list;
 };
 
 } // namespace srsgnb

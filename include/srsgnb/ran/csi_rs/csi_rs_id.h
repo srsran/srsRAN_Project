@@ -15,7 +15,7 @@
 namespace srsgnb {
 
 /// \brief NZP-CSI-RS-ResourceId is used to identify one NZP-CSI-RS-Resource.
-/// \remark See TS 38.331, "NZP-CSI-RS-ResourceId" and "maxNrofNZP-CSI-RS-Resources".
+/// \remark See TS 38.331, \c NZP-CSI-RS-ResourceId and \c maxNrofNZP-CSI-RS-Resources.
 enum nzp_csi_rs_res_id_t : uint8_t {
   MIN_NZP_CSI_RS_RESOURCE_ID   = 0,
   MAX_NZP_CSI_RS_RESOURCE_ID   = 191,
@@ -46,6 +46,15 @@ enum csi_im_res_set_id_t : uint8_t {
   MAX_CSI_IM_RESOURCE_SET_ID       = 63,
   MAX_NOF_CSI_IM_RESOURCE_SETS     = 64,
   MAX_NOF_CSI_IM_RESOURCES_PER_SET = 8,
+};
+
+/// \brief CSI-SSB-ResourceSetId is used to identify one SS/PBCH block resource set.
+/// \remark See TS 38.331, \c CSI-SSB-ResourceSetId.
+enum csi_ssb_res_set_id_t {
+  MIN_CSI_SSB_RESOURCE_SET_ID       = 0,
+  MAX_CSI_SSB_RESOURCE_SET_ID       = 63,
+  MAX_NOF_CSI_SSB_RESOURCE_SETS     = 64,
+  MAX_NOF_CSI_SSB_RESOURCES_PER_SET = 64,
 };
 
 } // namespace srsgnb

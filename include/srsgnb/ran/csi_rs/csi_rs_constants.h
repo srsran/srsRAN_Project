@@ -19,4 +19,16 @@ static constexpr unsigned CSI_RS_MAX_NOF_K_INDEXES = 6;
 /// Row 18.
 static constexpr unsigned CSI_RS_MAX_NOF_PORTS = 32;
 
+/// Maximum number of resource sets per resource configuration. See TS 38.331, \c
+/// maxNrofNZP-CSI-RS-ResourceSetsPerConfig.
+static constexpr unsigned MAX_NOF_NZP_CSI_RS_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG = 16;
+
+/// Maximum number of CSI SSB resource sets per resource configuration. See TS 38.331, \c
+/// maxNrofCSI-SSB-ResourceSetsPerConfig.
+static constexpr unsigned MAX_NOF_CSI_SSB_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG = 1;
+
+/// Maximum number of CSI IM resource sets per resource configuration. See TS 38.331, \c
+/// maxNrofCSI-IM-ResourceSetsPerConfig.
+static constexpr unsigned MAX_NOF_CSI_IM_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG = 16;
+
 } // namespace srsgnb
