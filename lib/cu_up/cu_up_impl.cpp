@@ -48,9 +48,9 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   gtpu_gw_adapter.connect_network_gateway(*ngu_gw);
 
   // Create GTP-U demux
-  gtpu_demux_creation_message_msg msg = {};
-  msg.cu_up_exec                      = cfg.cu_up_executor;
-  ngu_demux                           = create_gtpu_demux(msg);
+  gtpu_demux_creation_request msg = {};
+  msg.cu_up_exec                  = cfg.cu_up_executor;
+  ngu_demux                       = create_gtpu_demux(msg);
 
   /// > Connect layers
 

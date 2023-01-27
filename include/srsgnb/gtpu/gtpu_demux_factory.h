@@ -16,11 +16,11 @@
 
 namespace srsgnb {
 
-struct gtpu_demux_creation_message_msg {
+struct gtpu_demux_creation_request {
   task_executor* cu_up_exec = nullptr;
 };
 
 /// Creates an instance of an GTP-U demux object.
-std::unique_ptr<gtpu_demux> create_gtpu_demux(gtpu_demux_creation_message_msg& msg);
+std::unique_ptr<gtpu_demux> create_gtpu_demux(gtpu_demux_creation_request& msg);
 
 } // namespace srsgnb
