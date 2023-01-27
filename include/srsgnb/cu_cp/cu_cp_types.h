@@ -536,5 +536,10 @@ struct cu_cp_rrc_reconfiguration_procedure_request {
   optional<cu_cp_rrc_recfg_v1530_ies> non_crit_ext;
 };
 
+struct cu_cp_ue_context_release_command {
+  cu_cp_ue_id_t cu_cp_ue_id = cu_cp_ue_id_t::invalid;
+  cu_cp_cause_t cause;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

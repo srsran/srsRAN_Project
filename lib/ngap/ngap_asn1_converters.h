@@ -118,6 +118,36 @@ inline asn1::ngap::cause_c cu_cp_cause_to_ngap_cause(cu_cp_cause_t cu_cp_cause)
   }
 }
 
+/// \brief Convert NGAP ASN1 cause to CU-CP cause.
+/// \param ngap_cause The ASN1 NGAP cause.
+/// \return The CU-CP cause.
+inline cu_cp_cause_t ngap_cause_to_cu_cp_cause(asn1::ngap::cause_c ngap_cause)
+{
+  cu_cp_cause_t cu_cp_cause;
+
+  switch (ngap_cause.type()) {
+    case asn1::ngap::cause_c::types_opts::radio_network:
+      cu_cp_cause = cu_cp_cause_t::radio_network;
+      return cu_cp_cause;
+      break;
+    case asn1::ngap::cause_c::types_opts::transport:
+      cu_cp_cause = cu_cp_cause_t::transport;
+      return cu_cp_cause;
+      break;
+    case asn1::ngap::cause_c::types_opts::protocol:
+      cu_cp_cause = cu_cp_cause_t::protocol;
+      return cu_cp_cause;
+      break;
+    case asn1::ngap::cause_c::types_opts::misc:
+      cu_cp_cause = cu_cp_cause_t::misc;
+      return cu_cp_cause;
+      break;
+    default:
+      cu_cp_cause = cu_cp_cause_t::nulltype;
+      return cu_cp_cause;
+  }
+}
+
 /// \brief Convert CU-CP QoS Flow Failed to Setup Item to NGAP QoS Flow With Cause Item.
 /// \param cu_cp_failed_item The CU-CP QoS Flow Failed to Setup Item.
 /// \return The NGAP QoS Flow With Cause Item.
