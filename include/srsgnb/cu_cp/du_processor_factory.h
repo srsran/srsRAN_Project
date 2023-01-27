@@ -15,6 +15,7 @@
 #include "ue_manager.h"
 #include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/rrc/rrc_ue.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
 namespace srsgnb {
@@ -30,7 +31,8 @@ create_du_processor(const du_processor_config_t         du_processor_config_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngc_ctrl_notifier_,
                     du_processor_ue_task_scheduler&     task_sched_,
-                    du_processor_ue_manager&            ue_manager_);
+                    du_processor_ue_manager&            ue_manager_,
+                    task_executor&                      ctrl_exec_);
 
 } // namespace srs_cu_cp
 } // namespace srsgnb

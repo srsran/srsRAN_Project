@@ -33,7 +33,8 @@ du_processor_test::du_processor_test()
                                          rrc_ue_ngc_notifier,
                                          rrc_ue_ngc_notifier,
                                          *ue_task_sched,
-                                         ue_mng);
+                                         ue_mng,
+                                         ctrl_worker);
 }
 
 du_processor_test::~du_processor_test()

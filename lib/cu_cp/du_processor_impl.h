@@ -22,6 +22,7 @@
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include <string>
 
 namespace srsgnb {
@@ -38,7 +39,8 @@ public:
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngc_ctrl_notifier_,
                     du_processor_ue_task_scheduler&     task_sched_,
-                    du_processor_ue_manager&            ue_manager_);
+                    du_processor_ue_manager&            ue_manager_,
+                    task_executor&                      ctrl_exec_);
   ~du_processor_impl() = default;
 
   // message handlers

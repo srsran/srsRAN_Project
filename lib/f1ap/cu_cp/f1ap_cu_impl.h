@@ -18,6 +18,7 @@
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
 namespace srsgnb {
@@ -30,7 +31,8 @@ class f1ap_cu_impl final : public f1ap_cu
 public:
   f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
                f1c_du_processor_notifier&  f1c_du_processor_notifier_,
-               f1c_du_management_notifier& f1c_du_management_notifier_);
+               f1c_du_management_notifier& f1c_du_management_notifier_,
+               task_executor&              ctrl_exec_);
   ~f1ap_cu_impl();
 
   void connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier) override;
@@ -109,6 +111,7 @@ private:
   f1c_message_notifier&       pdu_notifier;
   f1c_du_processor_notifier&  du_processor_notifier;
   f1c_du_management_notifier& du_management_notifier;
+  task_executor&              ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current F1AP transaction id
 };

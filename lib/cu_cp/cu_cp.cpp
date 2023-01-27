@@ -198,7 +198,8 @@ du_index_t cu_cp::add_du()
                                                                    rrc_ue_ngc_notifier,
                                                                    rrc_ue_ngc_notifier,
                                                                    du_processor_task_sched,
-                                                                   ue_mng);
+                                                                   ue_mng,
+                                                                   *cfg.cu_cp_executor);
 
   du_processor_ev_notifier.connect_cu_cp(*this);
   rrc_ue_ngc_notifier.connect_ngc(*ngc_entity);

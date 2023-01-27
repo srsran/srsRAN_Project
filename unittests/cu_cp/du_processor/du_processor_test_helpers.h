@@ -22,6 +22,7 @@
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/cu_cp/du_processor_factory.h"
 #include "srsgnb/rrc/rrc.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -50,6 +51,7 @@ protected:
   dummy_du_processor_e1ap_control_notifier                    e1ap_ctrl_notifier;
   dummy_rrc_ue_ngc_adapter                                    rrc_ue_ngc_notifier;
   std::unique_ptr<dummy_du_processor_to_cu_cp_task_scheduler> ue_task_sched;
+  manual_task_worker                                          ctrl_worker{128};
   std::unique_ptr<du_processor_interface>                     du_processor_obj;
 };
 

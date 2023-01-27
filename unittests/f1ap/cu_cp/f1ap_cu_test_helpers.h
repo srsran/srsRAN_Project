@@ -16,6 +16,7 @@
 #include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {
@@ -77,6 +78,7 @@ protected:
   dummy_f1c_pdu_notifier           f1c_pdu_notifier;
   dummy_f1c_du_processor_notifier  du_processor_notifier;
   dummy_f1c_du_management_notifier f1c_du_mgmt_notifier;
+  manual_task_worker               ctrl_worker{128};
   std::unique_ptr<f1ap_cu>         f1ap;
 };
 

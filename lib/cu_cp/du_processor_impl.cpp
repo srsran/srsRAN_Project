@@ -28,7 +28,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngc_ctrl_notifier_,
                                      du_processor_ue_task_scheduler&     task_sched_,
-                                     du_processor_ue_manager&            ue_manager_) :
+                                     du_processor_ue_manager&            ue_manager_,
+                                     task_executor&                      ctrl_exec_) :
   cfg(du_processor_config_),
   cu_cp_notifier(cu_cp_notifier_),
   f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
@@ -40,7 +41,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   ue_manager(ue_manager_)
 {
   // create f1c
-  f1c = create_f1ap(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier);
+  f1c = create_f1ap(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier, ctrl_exec_);
   f1c_ev_notifier.connect_du_processor(*this);
 
   f1c_ue_context_notifier.connect_f1(&f1c->get_f1c_ue_context_manager());
