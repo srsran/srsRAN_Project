@@ -160,45 +160,6 @@ TEST_F(test_uci_allocator, uci_alloc_on_existing_pusch)
   ASSERT_TRUE(check_pusch_out_param(slot_grid.result.ul.puschs.back()));
 }
 
-TEST_F(test_uci_allocator, uci_alloc_on_existing_pusch_and_pucch)
-{
-  add_pusch_alloc();
-  add_harq_grant_on_pucch();
-  t_bench.uci_alloc.alloc_uci_harq_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-
-  auto& slot_grid = t_bench.res_grid[k2];
-
-  // No grants expected on PUCCH.
-  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
-  // 1 expected PUSCH grant.
-  ASSERT_EQ(1, slot_grid.result.ul.puschs.size());
-  ASSERT_EQ(2, slot_grid.result.ul.puschs.back().uci.value().harq_ack_nof_bits);
-  ASSERT_EQ(0, slot_grid.result.ul.puschs.back().uci.value().csi_part1_nof_bits);
-  ASSERT_EQ(0, slot_grid.result.ul.puschs.back().uci.value().csi_part2_nof_bits);
-  ASSERT_TRUE(check_pusch_out_param(slot_grid.result.ul.puschs.back()));
-}
-
-TEST_F(test_uci_allocator, uci_alloc_on_existing_pusch_and_pucch_plus_sr)
-{
-  add_pusch_alloc();
-  add_sr_grant();
-  add_harq_grant_on_pucch();
-  t_bench.uci_alloc.alloc_uci_harq_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-
-  auto& slot_grid = t_bench.res_grid[k2];
-
-  // No grants expected on PUCCH.
-  ASSERT_EQ(0, slot_grid.result.ul.pucchs.size());
-  // 1 expected PUSCH grant.
-  ASSERT_EQ(1, slot_grid.result.ul.puschs.size());
-  ASSERT_EQ(2, slot_grid.result.ul.puschs.back().uci.value().harq_ack_nof_bits);
-  ASSERT_EQ(0, slot_grid.result.ul.puschs.back().uci.value().csi_part1_nof_bits);
-  ASSERT_EQ(0, slot_grid.result.ul.puschs.back().uci.value().csi_part2_nof_bits);
-  ASSERT_TRUE(check_pusch_out_param(slot_grid.result.ul.puschs.back()));
-}
-
 ///////   UCI multiplexing on PUSCH    ///////
 
 TEST_F(test_uci_allocator, uci_no_multiplexing_on_pusch)

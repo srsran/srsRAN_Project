@@ -210,21 +210,6 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_update_harq_and_sr)
   ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs[1].format_1.sr_bits);
 }
 
-// Tests whether allocator skips PUCCH HARQ grant due to max HARQ bits reached.
-TEST_F(test_pucch_harq_allocator_ded_resources, test_skip_alloc_with_2_harq_bits)
-{
-  // > Allocate HARQ grant with 2 HARQ-ACK bits.
-  add_harq_grant(2);
-  // > Attempt to allocate a second HARQ grant (which will be skipped due to an existing one with 2 HARQ bits).
-  t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-
-  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
-  // Expect 1 HARQ grant, the one allocated at the beginning with 2 HARQ bits.
-  const unsigned EXPECTED_HARQ_GRANTS = 1;
-  ASSERT_EQ(EXPECTED_HARQ_GRANTS, slot_grid.result.ul.pucchs.size());
-}
-
 // Tests whether allocator grants PUCCH HARQ for a second UE when another UE's PUCCH grant has already been allocated.
 TEST_F(test_pucch_harq_allocator_ded_resources, test_2_ues)
 {

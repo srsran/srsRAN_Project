@@ -387,7 +387,8 @@ get_harq_ack_granted_allocated(rnti_t crnti, static_vector<pucch_info, MAX_PUCCH
   return std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
     return pucch.crnti == crnti and
            ((pucch.format == pucch_format::FORMAT_0 and pucch.format_0.harq_ack_nof_bits > 0) or
-            (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0));
+            (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
+            (pucch.format == pucch_format::FORMAT_2 and pucch.format_2.harq_ack_nof_bits > 0));
   });
 }
 
@@ -492,22 +493,25 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   //        implementation, as assume sr_resource_cfg_list only has 1 element.
   // TODO: extend sr_resource_cfg_list to multiple resource and get_next_sr_res_available() so that it becomes a
   //       func of sr_res.
+
+  // Check if there is any existing PUCCH grant for HARQ-ACK already allocated for this UE.
+  auto*       pucch_harq_it = get_harq_ack_granted_allocated(crnti, pucch_slot_alloc.result.ul.pucchs);
+  pucch_info* existing_pucch_harq_grant =
+      pucch_harq_it != pucch_slot_alloc.result.ul.pucchs.end() ? pucch_harq_it : nullptr;
+
+  // If there is a PUCCH Format 2 grant, allocate SR request on that grant and exit.
+  if (existing_pucch_harq_grant != nullptr and existing_pucch_harq_grant->format == pucch_format::FORMAT_2) {
+    logger.debug("SR occasion for RNTI {:#x} for slot={} scheduled on existing PUCCH Format 2 grant.",
+                 crnti,
+                 pucch_slot_alloc.slot.to_uint());
+    existing_pucch_harq_grant->format_2.sr_bits = sr_nof_bits::one;
+    return;
+  }
+
   const pucch_resource* pucch_sr_res = resource_manager.get_next_sr_res_available(
       pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_sr_res == nullptr) {
     logger.warning("SR allocation skipped for RNTI {:#x} for slot={} due to PUCCH ded. resource not available.",
-                   crnti,
-                   pucch_slot_alloc.slot.to_uint());
-    return;
-  }
-
-  // Check if there is any existing PUCCH grant for HARQ-ACK already allocated for this UE.
-  auto*             pucch_harq_it = get_harq_ack_granted_allocated(crnti, pucch_slot_alloc.result.ul.pucchs);
-  const pucch_info* existing_pucch_harq_grant =
-      pucch_harq_it != pucch_slot_alloc.result.ul.pucchs.end() ? pucch_harq_it : nullptr;
-
-  if (existing_pucch_harq_grant != nullptr and existing_pucch_harq_grant->format_1.harq_ack_nof_bits > 2) {
-    logger.warning("SR occasion allocation for RNTI {:#x} for slot={} skipped. CAUSE: max HARQ-ACK bits reached.",
                    crnti,
                    pucch_slot_alloc.slot.to_uint());
     return;
@@ -537,8 +541,9 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
 }
 
 struct existing_pucch_grants {
-  pucch_info* sr_grant{nullptr};
-  pucch_info* harq_grant{nullptr};
+  pucch_info* format1_sr_grant{nullptr};
+  pucch_info* format1_harq_grant{nullptr};
+  pucch_info* format2_grant{nullptr};
 };
 
 // Retrieve the existing PUCCH grants for the current RNTI.
@@ -547,10 +552,19 @@ existing_pucch_grants get_existing_pucch_grants(static_vector<pucch_info, MAX_PU
   existing_pucch_grants grants;
   for (auto& pucch : pucchs) {
     if (pucch.crnti == rnti) {
-      if (pucch.format_1.sr_bits == sr_nof_bits::one) {
-        grants.sr_grant = &pucch;
-      } else if (pucch.format_1.harq_ack_nof_bits > 0 and pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
-        grants.harq_grant = &pucch;
+      // First look for first for Format 2; if present, this is the only PUCCH resource allocated to the UE.
+      if (pucch.format == srsgnb::pucch_format::FORMAT_2) {
+        grants.format2_grant = &pucch;
+        // If there is a grant for PUCCH format 2, then no PUCCH format-1 grants are expected.
+        break;
+      }
+      // Second, look for first for Format 1.
+      else if (pucch.format == srsgnb::pucch_format::FORMAT_1) {
+        if (pucch.format_1.sr_bits == sr_nof_bits::one) {
+          grants.format1_sr_grant = &pucch;
+        } else if (pucch.format_1.harq_ack_nof_bits > 0 and pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
+          grants.format1_harq_grant = &pucch;
+        }
       }
     }
   }
@@ -606,17 +620,16 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
 }
 
 pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                              pucch_info&                   existing_harq_grant,
+                                                              pucch_info*                   existing_harq_grant,
                                                               pucch_info*                   existing_sr_grant,
                                                               rnti_t                        rnti,
-                                                              slot_point                    sl_tx,
                                                               const ue_cell_configuration&  ue_cell_cfg)
 {
   pucch_harq_ack_grant output;
 
   // Try to obtain a PUCCH format 2 resource, if any available.
   pucch_harq_resource_alloc_record format2_res = resource_manager.get_next_format2_res_available(
-      sl_tx, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+      pucch_slot_alloc.slot, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   // If no PUCCH format 2 resource available, exit without changing the existing allocations.
   if (format2_res.pucch_res == nullptr) {
@@ -625,7 +638,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
 
   // Check if the number of PRBs is sufficient for the number of bits to be acked.
   unsigned sr_bits             = existing_sr_grant != nullptr ? 1 : 0;
-  unsigned harq_ack_bits       = existing_harq_grant.format_1.harq_ack_nof_bits + 1;
+  unsigned harq_ack_bits       = existing_harq_grant->format_1.harq_ack_nof_bits + 1;
   unsigned uci_bits            = harq_ack_bits + sr_bits;
   unsigned nof_symbols         = format2_res.pucch_res->format_2.nof_symbols;
   float    max_pucch_code_rate = to_max_code_rate_float(ue_cell_cfg.cfg_dedicated()
@@ -642,7 +655,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
     return output;
   }
 
-  // Remove the previously allocated PUCCH format 1 resources.
+  // Remove the previously allocated PUCCH format-1 resources.
   remove_pucch_format1_from_grants(
       pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
@@ -666,21 +679,14 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
   return output;
 }
 
-pucch_harq_ack_grant
-pucch_allocator_impl::update_existing_pucch_harq_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                       pucch_info&                   existing_harq_grant,
-                                                       pucch_info*                   existing_sr_grant,
-                                                       rnti_t                        rnti,
-                                                       slot_point                    sl_tx,
-                                                       const ue_cell_configuration&  ue_cell_cfg)
+pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucch_info& existing_harq_grant,
+                                                                            pucch_info* existing_sr_grant,
+                                                                            rnti_t      rnti,
+                                                                            slot_point  sl_tx)
 {
-  // If the existing grant is for at lest 2 HARQ-ACK bits, then the PUCCH needs to be converted to format 2.
-  if (existing_harq_grant.format_1.harq_ack_nof_bits > 1) {
-    return convert_to_format2(pucch_slot_alloc, existing_harq_grant, existing_sr_grant, rnti, sl_tx, ue_cell_cfg);
-  }
-
   pucch_harq_ack_grant output;
-  int                  pucch_res_idx = resource_manager.get_f1_pucch_res_indic(sl_tx, rnti);
+
+  int pucch_res_idx = resource_manager.get_f1_pucch_res_indic(sl_tx, rnti);
   if (pucch_res_idx < 0) {
     srsgnb_assert(pucch_res_idx >= 0, "PUCCH resource index should not be negative.");
     return output;
@@ -697,6 +703,28 @@ pucch_allocator_impl::update_existing_pucch_harq_grant(cell_slot_resource_alloca
   output.pucch_res_indicator = pucch_res_idx;
 
   logger.debug("UE={:#x}'s HARQ-ACK mltplxd on existing PUCCH for slot={}", rnti, sl_tx.to_uint());
+  return output;
+}
+
+pucch_harq_ack_grant pucch_allocator_impl::update_existing_format2_grant(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                                         pucch_info& existing_format2_grant,
+                                                                         rnti_t      rnti,
+                                                                         slot_point  sl_tx)
+{
+  pucch_harq_ack_grant output;
+
+  existing_format2_grant.format_2.harq_ack_nof_bits++;
+
+  int pucch_res_idx = resource_manager.get_f2_pucch_res_indic(sl_tx, rnti);
+  if (pucch_res_idx < 0) {
+    srsgnb_assert(pucch_res_idx >= 0, "Previously allocated PUCCH Format2 resource has negative PUCCH res indicator.");
+    return output;
+  }
+
+  output.pucch_pdu           = &existing_format2_grant;
+  output.pucch_res_indicator = pucch_res_idx;
+
+  logger.debug("UE={:#x}'s HARQ-ACK mltplxd on existing PUCCH F2 for slot={}", rnti, sl_tx.to_uint());
   return output;
 }
 
@@ -720,9 +748,6 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
   // NOTE: This function does not check whether there are PUSCH grants allocated for the same UE. The check needs to
   // be performed by the caller.
 
-  // PUCCH output.
-  pucch_harq_ack_grant pucch_harq_ack_output{};
-
   // Get the slot allocation grid considering the PDSCH delay (k0) and the PUCCH delay wrt PDSCH (k1).
   cell_slot_resource_allocator& pucch_slot_alloc = res_alloc[pdsch_time_domain_resource + k1];
 
@@ -731,31 +756,33 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
   // Retrieve the existing PUCCH grants.
   existing_pucch_grants existing_grants = get_existing_pucch_grants(pucchs, crnti);
 
-  // No existing PUCCH grants, allocate a new one.
-  if (existing_grants.sr_grant == nullptr and existing_grants.harq_grant == nullptr) {
-    return allocate_new_pucch_harq_grant(pucch_slot_alloc, crnti, ue_cell_cfg, nullptr);
-  }
-  // An SR is already scheduled but no HARQ grants allocated. Update the SR grants and allocate a new HARQ grant.
-  if (existing_grants.sr_grant != nullptr and existing_grants.harq_grant == nullptr and
-      existing_grants.sr_grant->format_1.harq_ack_nof_bits < 2) {
-    return allocate_new_pucch_harq_grant(pucch_slot_alloc, crnti, ue_cell_cfg, existing_grants.sr_grant);
-  }
-  // An HARQ is already scheduled. Update the existing HARQ grant and the SR grant, if present.
-  if (existing_grants.harq_grant != nullptr and existing_grants.harq_grant->format_1.harq_ack_nof_bits < 2) {
-    if (existing_grants.sr_grant != nullptr) {
-      srsgnb_sanity_check(existing_grants.harq_grant->format_1.harq_ack_nof_bits ==
-                              existing_grants.sr_grant->format_1.harq_ack_nof_bits,
-                          "Mismatch HARQ bits mismatch between SR and HARQ grants");
-    }
-    return update_existing_pucch_harq_grant(pucch_slot_alloc,
-                                            *existing_grants.harq_grant,
-                                            existing_grants.sr_grant,
-                                            crnti,
-                                            pucch_slot_alloc.slot,
-                                            ue_cell_cfg);
+  // Case 1) If there is a PUCCH format 2 grant, update it.
+  if (existing_grants.format2_grant != nullptr) {
+    return update_existing_format2_grant(
+        pucch_slot_alloc, *existing_grants.format2_grant, crnti, pucch_slot_alloc.slot);
   }
 
-  return pucch_harq_ack_output;
+  // Case 2) An HARQ is already scheduled. Update the existing HARQ grant and the SR grant, if present.
+  if (existing_grants.format1_harq_grant != nullptr) {
+    if (existing_grants.format1_sr_grant != nullptr) {
+      srsgnb_sanity_check(existing_grants.format1_harq_grant->format_1.harq_ack_nof_bits ==
+                              existing_grants.format1_sr_grant->format_1.harq_ack_nof_bits,
+                          "Mismatch HARQ bits mismatch between SR and HARQ grants");
+    }
+
+    // Case 2-A) If the existing grant is for at lest 2 HARQ-ACK bits, then the PUCCH needs to be converted to format 2.
+    if (existing_grants.format1_harq_grant->format_1.harq_ack_nof_bits > 1) {
+      return convert_to_format2(
+          pucch_slot_alloc, existing_grants.format1_harq_grant, existing_grants.format1_sr_grant, crnti, ue_cell_cfg);
+    }
+
+    // Case 2-B)
+    return update_existing_pucch_harq_grant(
+        *existing_grants.format1_harq_grant, existing_grants.format1_sr_grant, crnti, pucch_slot_alloc.slot);
+  }
+
+  // Case C) If there is no existing HARQ_ACK grant, allocate a new one and update the SR grant, if present.
+  return allocate_new_pucch_harq_grant(pucch_slot_alloc, crnti, ue_cell_cfg, existing_grants.format1_sr_grant);
 }
 
 static unsigned get_harq_ack_bits(const pucch_info& pucch)

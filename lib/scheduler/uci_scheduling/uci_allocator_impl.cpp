@@ -98,12 +98,10 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
 
   // Allocate UCI on PUSCH if any PUSCH grants already exist for the UE; else, allocate UCI on PUCCH.
   if (has_pusch_grants) {
-    // This will remove the UCI only if the UE with CRNTI has some PUCCH grants.
-    pucch_uci_bits pucch_uci = pucch_alloc.remove_ue_uci_from_pucch(
-        slot_alloc, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    // We assume we only report the HARQ-ACK for a single layer (i.e., 1 bit); increment by 1 only the current number of
-    // HARQ-ACK bits.
-    unsigned nof_harq_ack_bits = pucch_uci.harq_ack_nof_bits + 1;
+    // If we reach this point, we expect neither PUCCH grants nor UCI on PUSCH previsouly allocated; this would be the
+    // case of a new allocation of HARQ-ACK on PUSCH We assume we only report the HARQ-ACK for a single layer, i.e., 1
+    // bit.
+    unsigned nof_harq_ack_bits = 1;
     allocate_uci_harq_on_pusch(
         *existing_pusch,
         ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
