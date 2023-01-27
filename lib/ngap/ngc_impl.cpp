@@ -239,7 +239,8 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
 
   // start routine
   task_sched.schedule_async_task(
-      cu_cp_ue_id, launch_async<ngap_initial_context_setup_procedure>(*ue, request, ngc_notifier, logger));
+      cu_cp_ue_id,
+      launch_async<ngap_initial_context_setup_procedure>(cu_cp_ue_id, request, ue_manager, ngc_notifier, logger));
 }
 
 void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)

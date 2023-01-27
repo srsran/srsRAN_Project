@@ -89,6 +89,5 @@ TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_s
 
   ASSERT_TRUE(was_initial_context_setup_failure_sent());
 
-  // TODO: Activate this when UE context release is added
-  // ASSERT_TRUE(was_ue_removed());
+  ASSERT_TRUE(was_ue_removed());
 }

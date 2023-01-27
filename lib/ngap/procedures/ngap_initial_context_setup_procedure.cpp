@@ -16,12 +16,14 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
-    ngc_ue&                                         ue_,
+    const cu_cp_ue_id_t                             cu_cp_ue_id_,
     const asn1::ngap::init_context_setup_request_s& request_,
+    ngc_ue_manager&                                 ue_manager_,
     ngc_message_notifier&                           amf_notif_,
     srslog::basic_logger&                           logger_) :
-  ue(ue_), request(request_), amf_notifier(amf_notif_), logger(logger_)
+  cu_cp_ue_id(cu_cp_ue_id_), request(request_), ue_manager(ue_manager_), amf_notifier(amf_notif_), logger(logger_)
 {
+  ue = ue_manager.find_ue(cu_cp_ue_id);
 }
 
 void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -33,12 +35,23 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
   // Handle mendatorty IEs
   CORO_AWAIT_VALUE(
       success,
-      ue.get_rrc_ue_control_notifier().on_new_security_context(*request->ue_security_cap, *request->security_key));
+      ue->get_rrc_ue_control_notifier().on_new_security_context(*request->ue_security_cap, *request->security_key));
 
   if (not success) {
     initial_context_failure_message fail_msg = {};
     fail_msg.cause.set_protocol();
-    send_initial_context_setup_failure(fail_msg);
+    send_initial_context_setup_failure(fail_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
+
+    // Release UE
+    cu_cp_ue_context_release_command rel_cmd = {};
+    rel_cmd.ue_index                         = get_ue_index_from_cu_cp_ue_id(ue->get_cu_cp_ue_id());
+    rel_cmd.du_index                         = get_du_index_from_cu_cp_ue_id(ue->get_cu_cp_ue_id());
+    rel_cmd.cause                            = cu_cp_cause_t::protocol;
+
+    ue->get_du_processor_control_notifier().on_new_ue_context_release_command(rel_cmd);
+
+    // Remove UE
+    ue_manager.remove_ue(cu_cp_ue_id);
 
     logger.debug("Initial Context Setup Procedure finished");
     CORO_EARLY_RETURN();
@@ -46,26 +59,28 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 
   // Handle optional IEs
   if (request->nas_pdu_present) {
-    handle_nas_pdu(logger, request->nas_pdu.value, ue);
+    handle_nas_pdu(logger, request->nas_pdu.value, *ue);
   }
 
   initial_context_response_message resp_msg = {};
-  send_initial_context_setup_response(resp_msg);
+  send_initial_context_setup_response(resp_msg, ue->get_amf_ue_id(), ue->get_ran_ue_id());
 
   logger.debug("Initial Context Setup Procedure finished");
   CORO_RETURN();
 }
 
 void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
-    const initial_context_response_message& msg)
+    const initial_context_response_message& msg,
+    const amf_ue_id_t&                      amf_ue_id,
+    const ran_ue_id_t&                      ran_ue_id)
 {
   ngc_message ngc_msg = {};
 
   ngc_msg.pdu.set_successful_outcome();
   ngc_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_INIT_CONTEXT_SETUP);
   auto& init_ctxt_setup_resp                 = ngc_msg.pdu.successful_outcome().value.init_context_setup_resp();
-  init_ctxt_setup_resp->amf_ue_ngap_id.value = amf_ue_id_to_uint(ue.get_amf_ue_id());
-  init_ctxt_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
+  init_ctxt_setup_resp->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
+  init_ctxt_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
 
   // Fill PDU Session Resource Setup Response List
   if (!msg.succeed_to_setup.empty()) {
@@ -109,15 +124,17 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
 }
 
 void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
-    const initial_context_failure_message& msg)
+    const initial_context_failure_message& msg,
+    const amf_ue_id_t&                     amf_ue_id,
+    const ran_ue_id_t&                     ran_ue_id)
 {
   ngc_message ngc_msg = {};
 
   ngc_msg.pdu.set_unsuccessful_outcome();
   ngc_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_INIT_CONTEXT_SETUP);
   auto& init_ctxt_setup_fail                 = ngc_msg.pdu.unsuccessful_outcome().value.init_context_setup_fail();
-  init_ctxt_setup_fail->amf_ue_ngap_id.value = amf_ue_id_to_uint(ue.get_amf_ue_id());
-  init_ctxt_setup_fail->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
+  init_ctxt_setup_fail->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
+  init_ctxt_setup_fail->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
 
   init_ctxt_setup_fail->cause.value = msg.cause;
 

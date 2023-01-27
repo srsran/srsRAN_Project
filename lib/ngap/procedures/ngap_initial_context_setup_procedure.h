@@ -33,8 +33,9 @@ struct initial_context_response_message {
 class ngap_initial_context_setup_procedure
 {
 public:
-  ngap_initial_context_setup_procedure(ngc_ue&                                         ue_,
+  ngap_initial_context_setup_procedure(const cu_cp_ue_id_t                             cu_cp_ue_id_,
                                        const asn1::ngap::init_context_setup_request_s& request_,
+                                       ngc_ue_manager&                                 ue_manager_,
                                        ngc_message_notifier&                           amf_notif_,
                                        srslog::basic_logger&                           logger_);
 
@@ -42,13 +43,20 @@ public:
 
 private:
   // results senders
-  void send_initial_context_setup_response(const initial_context_response_message& msg);
-  void send_initial_context_setup_failure(const initial_context_failure_message& msg);
+  void send_initial_context_setup_response(const initial_context_response_message& msg,
+                                           const amf_ue_id_t&                      amf_ue_id,
+                                           const ran_ue_id_t&                      ran_ue_id);
+  void send_initial_context_setup_failure(const initial_context_failure_message& msg,
+                                          const amf_ue_id_t&                     amf_ue_id,
+                                          const ran_ue_id_t&                     ran_ue_id);
 
-  ngc_ue&                                        ue;
+  const cu_cp_ue_id_t                            cu_cp_ue_id;
   const asn1::ngap::init_context_setup_request_s request;
+  ngc_ue_manager&                                ue_manager;
   ngc_message_notifier&                          amf_notifier;
   srslog::basic_logger&                          logger;
+
+  ngc_ue* ue = nullptr;
 
   bool success = false;
 };
