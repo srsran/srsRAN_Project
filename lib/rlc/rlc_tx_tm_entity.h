@@ -63,7 +63,7 @@ public:
   byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) override
   {
     if (sdu_queue.is_empty()) {
-      logger.log_info("No data available to be sent. Provided space ({} B)", nof_bytes);
+      logger.log_debug("No data available to be sent. Provided space ({} B)", nof_bytes);
       return {};
     }
 
@@ -92,7 +92,7 @@ public:
     // In TM there is no header, just pass the plain SDU
     byte_buffer_slice_chain pdu = {};
     pdu.push_back(std::move(sdu.buf));
-    logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
+    logger.log_info("Created PDU: {} bytes. Provided space ({} B)", sdu_size, nof_bytes);
     metrics.metrics_add_pdus(1, pdu.length());
     handle_buffer_state_update();
 
