@@ -388,12 +388,14 @@ avx compatibility extended:
 
 # Custom
 
-custom build [amd64]:
+custom build:
   tags:
-    - aws-spot-arm64
+    - aws-spot-${PLATFORM}
   extends: .build_and_unit
   rules:
     - if: $ON_MR
+      when: manual
+      allow_failure: true
   variables:
     # must be one of ubuntu-22.04, ubuntu-20.04, archlinux-latest
     OS: "ubuntu-22.04"
@@ -407,10 +409,7 @@ custom build [amd64]:
     UHD_VERSION: ""
   cache: []
   timeout: 4 hours # valgrind mode
-
-custom build [arm64v8]:
-  extends: custom build [amd64]
-  rules:
-    - if: $ON_MR
-  variables:
-    PLATFORM: "arm64"
+  parallel:
+    matrix:
+      - PLATFORM: amd64
+      - PLATFORM: arm64
