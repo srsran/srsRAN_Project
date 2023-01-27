@@ -105,6 +105,13 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
     byte_buffer pdu;
     status_pdu.pack(pdu);
     logger.log_debug("Built status PDU with {} bytes", pdu.length());
+
+    // Update metrics
+    metrics.metrics_add_pdus(1, pdu.length());
+
+    // Log state
+    log_state(srslog::basic_levels::debug);
+
     return byte_buffer_slice_chain{std::move(pdu)};
   }
 
@@ -201,6 +208,12 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   // Update TX Next
   st.tx_next = (st.tx_next + 1) % mod;
 
+  // Update metrics
+  metrics.metrics_add_pdus(1, pdu_buf.length());
+
+  // Log state
+  log_state(srslog::basic_levels::debug);
+
   return pdu_buf;
 }
 
@@ -251,6 +264,12 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
+
+  // Update metrics
+  metrics.metrics_add_pdus(1, pdu_buf.length());
+
+  // Log state
+  log_state(srslog::basic_levels::debug);
 
   return pdu_buf;
 }
@@ -335,6 +354,12 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   if (si == rlc_si_field::last_segment) {
     st.tx_next = (st.tx_next + 1) % mod;
   }
+
+  // Update metrics
+  metrics.metrics_add_pdus(1, pdu_buf.length());
+
+  // Log state
+  log_state(srslog::basic_levels::debug);
 
   return pdu_buf;
 }
@@ -450,7 +475,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   // Log state
   log_state(srslog::basic_levels::debug);
 
-  // Log metrics
+  // Update metrics
   metrics.metrics_add_retx_pdus(1);
 
   return pdu_buf;
