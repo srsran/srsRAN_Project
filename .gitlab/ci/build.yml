@@ -113,10 +113,12 @@ stages:
             --exclude "${CI_PROJECT_DIR}/apps/examples/*" \
             --exclude "${CI_PROJECT_DIR}/external/*" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e1ap/.*" \
+            --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e2ap/.*" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/f1ap/.*" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/ngap/.*" \
             --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/rrc_nr/.*" \
             --exclude "${CI_PROJECT_DIR}/lib/asn1/e1ap/.*" \
+            --exclude "${CI_PROJECT_DIR}/lib/asn1/e2ap/.*" \
             --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap/.*" \
             --exclude "${CI_PROJECT_DIR}/lib/asn1/ngap/.*" \
             --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
