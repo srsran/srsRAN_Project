@@ -15,9 +15,9 @@
 
 #include "channel_equalizer_zf_impl.h"
 
-#ifdef __AVX2__
+#if defined(__AVX2__) || defined(HAVE_NEON)
 #include "../../../srsvec/simd.h"
-#endif
+#endif // __AVX2__ || HAVE_NEON
 
 namespace srsgnb {
 
@@ -46,7 +46,7 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
 
   unsigned i_re = 0;
 
-#ifdef __AVX2__
+#if defined(__AVX2__) || defined(HAVE_NEON)
   // Views over the input data.
   std::array<span<const cf_t>, MAX_PORTS> port_symbols;
   std::array<span<const cf_t>, MAX_PORTS> port_ests;
@@ -71,8 +71,7 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
       simd_cf_t ch_est = srsran_simd_cfi_loadu(&(port_ests[i_port][i_re]));
 
       // Compute the channel square norm, by accumulating the channel square absolute values.
-      ch_mod_sq += srsran_simd_f_add(srsran_simd_f_mul(srsran_simd_cf_re(ch_est), srsran_simd_cf_re(ch_est)),
-                                     srsran_simd_f_mul(srsran_simd_cf_im(ch_est), srsran_simd_cf_im(ch_est)));
+      ch_mod_sq = srsran_simd_f_add(ch_mod_sq, srsran_simd_cf_norm_sq(ch_est));
 
       // Apply the matched channel filter to each received RE and accumulate the results.
       re_out = srsran_simd_cf_add(re_out, srsran_simd_cf_conjprod(re_in, ch_est));
@@ -109,7 +108,7 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
     srsran_simd_cfi_storeu(&symbols_out[i_re],
                            srsran_simd_cf_select(srsran_simd_cf_set1({0, 0}), re_out, isnormal_mask));
   }
-#endif // __AVX2__
+#endif // __AVX2__ || HAVE_NEON
 
   for (; i_re != nof_re; ++i_re) {
     float ch_mod_sq = 0.0F;

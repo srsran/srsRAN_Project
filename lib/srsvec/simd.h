@@ -335,6 +335,25 @@ static inline simd_f_t srsran_simd_f_add(simd_f_t a, simd_f_t b)
 #endif /* HAVE_AVX512 */
 }
 
+static inline simd_f_t srsran_simd_f_fma(simd_f_t acc, simd_f_t a, simd_f_t b)
+{
+#ifdef HAVE_AVX512
+  return _mm512_fmadd_ps(a, b, acc);
+#else /* HAVE_AVX512 */
+#ifdef HAVE_AVX2
+  return _mm256_fmadd_ps(a, b, acc);
+#else /* HAVE_AVX2 */
+#ifdef HAVE_SSE
+  return _mm_fmadd_ps(a, b, acc);
+#else /* HAVE_SSE */
+#ifdef HAVE_NEON
+  return vmlaq_f32(acc, a, b);
+#endif /* HAVE_NEON */
+#endif /* HAVE_SSE */
+#endif /* HAVE_AVX2 */
+#endif /* HAVE_AVX512 */
+}
+
 static inline simd_f_t srsran_simd_f_zero(void)
 {
 #ifdef HAVE_AVX512
@@ -921,6 +940,12 @@ static inline simd_cf_t srsran_simd_cf_sub(simd_cf_t a, simd_cf_t b)
   return ret;
 }
 
+static inline simd_f_t srsran_simd_cf_norm_sq(simd_cf_t a)
+{
+  return srsran_simd_f_fma(
+      srsran_simd_f_mul(srsran_simd_cf_re(a), srsran_simd_cf_re(a)), srsran_simd_cf_im(a), srsran_simd_cf_im(a));
+}
+
 static inline simd_cf_t srsran_simd_cf_mul(simd_cf_t a, simd_f_t b)
 {
   simd_cf_t ret;
@@ -1319,7 +1344,7 @@ static inline simd_cf_t srsran_simd_cf_select(simd_cf_t a, simd_cf_t b, simd_sel
   ret.im = _mm_blendv_ps(a.im, b.im, selector);
 #else /* HAVE_SSE */
 #ifdef HAVE_NEON
-  ret.val[0] = vbslq_f32(selector, b.val[0], a.val[1]);
+  ret.val[0] = vbslq_f32(selector, b.val[0], a.val[0]);
   ret.val[1] = vbslq_f32(selector, b.val[1], a.val[1]);
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
