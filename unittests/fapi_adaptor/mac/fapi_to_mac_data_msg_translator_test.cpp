@@ -69,6 +69,8 @@ private:
     fapi_msg.slot = slot;
 
     fapi_msg.pdus.emplace_back();
+    fapi_msg.num_pdu = fapi_msg.pdus.size();
+
     fapi::rach_indication_pdu& pdu = fapi_msg.pdus.back();
     pdu.avg_rssi                   = (rssi + 140) * 1000;
     pdu.symbol_index               = start_symbol;
