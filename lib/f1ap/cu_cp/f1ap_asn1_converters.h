@@ -22,9 +22,9 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// @brief Convert F1AP Cause to CU-CP Cause.
-/// @param f1ap_cause The F1AP Cause.
-/// @return The CU-CP Cause.
+/// \brief Convert F1AP Cause to CU-CP Cause.
+/// \param f1ap_cause The F1AP Cause.
+/// \return The CU-CP Cause.
 inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
 {
   cu_cp_cause_t cu_cp_cause;
@@ -52,9 +52,9 @@ inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
   }
 }
 
-/// @brief Convert F1AP NRCGI to NR Cell Identity.
-/// @param f1ap_cgi The F1AP NRCGI.
-/// @return The NR Cell Identity.
+/// \brief Convert F1AP NRCGI to NR Cell Identity.
+/// \param f1ap_cgi The F1AP NRCGI.
+/// \return The NR Cell Identity.
 inline nr_cell_id_t f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nr_cgi_s& f1ap_cgi)
 {
   nr_cell_id_t nci;
