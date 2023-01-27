@@ -52,9 +52,9 @@ struct pucch_params {
 
 // Parameters to be passed to test for PUCCH output assessment.
 struct pucch_test_parameters {
-  unsigned               dci_pucch_res_indicator;
+  unsigned                  dci_pucch_res_indicator;
   expected_output_params_f1 output_params;
-  pucch_params           pucch_input_params;
+  pucch_params              pucch_input_params;
 };
 
 static expected_output_params_f1 make_expected_output_params_sr_only()
@@ -74,7 +74,7 @@ static expected_output_params_f1 make_expected_output_params_sr_only()
 expected_output_params_f1 make_expected_output_params_sr_harq()
 {
   expected_output_params_f1 out = make_expected_output_params_sr_only();
-  out.harq_ack_nof_bits      = 1;
+  out.harq_ack_nof_bits         = 1;
   return out;
 }
 
@@ -258,9 +258,9 @@ public:
 protected:
   // Parameters that are passed by the routing to run the tests.
   expected_output_params_f1 sr_expected_params;
-  const unsigned         sl_point_harq_delay{0};
-  test_bench             t_bench;
-  pucch_info             pucch_expected;
+  const unsigned            sl_point_harq_delay{0};
+  test_bench                t_bench;
+  pucch_info                pucch_expected;
 };
 
 // Tests whether PUCCH.
@@ -304,9 +304,9 @@ public:
 protected:
   // Parameters that are passed by the routing to run the tests.
   expected_output_params_f1 sr_expected_params;
-  const unsigned         sl_point_harq_delay{0};
-  test_bench             t_bench;
-  pucch_info             pucch_expected;
+  const unsigned            sl_point_harq_delay{0};
+  test_bench                t_bench;
+  pucch_info                pucch_expected;
 };
 
 // Tests whether PUCCH.
