@@ -10,6 +10,7 @@
 
 #include "channel_equalizer_test_data.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
+#include "srsgnb/srsvec/zero.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
@@ -39,7 +40,7 @@ using ch_dims = channel_equalizer::ch_est_list::dims;
 class ChannelEqualizerFixture : public ::testing::TestWithParam<ChannelEqualizerParams>
 {
 protected:
-  static constexpr float MAX_ERROR_EQ = 1e-3;
+  static constexpr float MAX_ERROR_EQ = 5e-4;
 
   static constexpr unsigned MAX_RX_RE   = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS;
   static constexpr unsigned MAX_TX_RE   = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * pusch_constants::MAX_NOF_LAYERS;
@@ -197,7 +198,7 @@ bool xnor(bool a, bool b)
   return ((a && b) || (!a && !b));
 }
 
-TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroNvar)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
@@ -215,9 +216,7 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)
 
   // Create noise variances set to zero.
   std::vector<float> zero_noise_vars(nof_rx_ports);
-  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
-    zero_noise_vars[i_rx] = 0.0F;
-  }
+  srsvec::zero(zero_noise_vars);
 
   // Equalize the symbols coming from the Rx ports using the modified noise variances.
   test_equalizer->equalize(
@@ -237,10 +236,26 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)
         << fmt::format("Equalized symbols are not set to zero when input noise variance is zero for Tx layer {}",
                        i_layer);
   }
+}
+
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)
+{
+  // Load the test case data.
+  const test_case_t& t_case = GetParam();
+  ReadData(t_case);
+
+  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
+  if (t_case.equalizer_type != "ZF") {
+    GTEST_SKIP();
+  }
+
+  ReadData(t_case);
 
   // Set some channel estimates to zero.
-  static constexpr unsigned stride  = 5;
-  unsigned                  nof_res = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
+  static constexpr unsigned stride        = 5;
+  unsigned                  nof_tx_layers = t_case.transmitted_symbols.nof_slices;
+  unsigned                  nof_rx_ports  = t_case.received_symbols.nof_slices;
+  unsigned                  nof_res       = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
 
   for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
@@ -270,7 +285,7 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerZeroEst)
   }
 }
 
-TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfNvar)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
@@ -288,9 +303,7 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
 
   // Create noise variances set to infinity.
   std::vector<float> inf_noise_vars(nof_rx_ports);
-  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
-    inf_noise_vars[i_rx] = std::numeric_limits<float>::infinity();
-  }
+  std::fill_n(inf_noise_vars.begin(), nof_rx_ports, std::numeric_limits<float>::infinity());
 
   // Equalize the symbols coming from the Rx ports using the modified noise variances.
   test_equalizer->equalize(
@@ -310,10 +323,26 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
         << fmt::format("Equalized symbols are not set to zero when input noise variance is infinity for Tx layer {}",
                        i_layer);
   }
+}
+
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
+{
+  // Load the test case data.
+  const test_case_t& t_case = GetParam();
+  ReadData(t_case);
+
+  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
+  if (t_case.equalizer_type != "ZF") {
+    GTEST_SKIP();
+  }
+
+  ReadData(t_case);
 
   // Set some channel estimates to infinity.
-  static constexpr unsigned stride  = 5;
-  unsigned                  nof_res = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
+  static constexpr unsigned stride        = 5;
+  unsigned                  nof_tx_layers = t_case.transmitted_symbols.nof_slices;
+  unsigned                  nof_rx_ports  = t_case.received_symbols.nof_slices;
+  unsigned                  nof_res       = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
 
   for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
@@ -344,7 +373,7 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerInfEst)
   }
 }
 
-TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanEst)
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanNvar)
 {
   // Load the test case data.
   const test_case_t& t_case = GetParam();
@@ -362,9 +391,7 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanEst)
 
   // Create noise vars set to NaN.
   std::vector<float> nan_noise_vars(nof_rx_ports);
-  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
-    nan_noise_vars[i_rx] = std::numeric_limits<float>::quiet_NaN();
-  }
+  std::fill_n(nan_noise_vars.begin(), nof_rx_ports, std::numeric_limits<float>::quiet_NaN());
 
   // Equalize the symbols coming from the Rx ports using the modified noise variances.
   test_equalizer->equalize(
@@ -384,10 +411,26 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanEst)
         << fmt::format("Equalized symbols are not set to zero when input noise variance is NaN for Tx layer {}",
                        i_layer);
   }
+}
+
+TEST_P(ChannelEqualizerFixture, ChannelEqualizerNanEst)
+{
+  // Load the test case data.
+  const test_case_t& t_case = GetParam();
+  ReadData(t_case);
+
+  // For now, check only Zero Forcing equalizer, since MMSE equalizer is not implemented yet.
+  if (t_case.equalizer_type != "ZF") {
+    GTEST_SKIP();
+  }
+
+  ReadData(t_case);
 
   // Set some channel estimates to NaN.
-  static constexpr unsigned stride  = 5;
-  unsigned                  nof_res = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
+  static constexpr unsigned stride        = 5;
+  unsigned                  nof_tx_layers = t_case.transmitted_symbols.nof_slices;
+  unsigned                  nof_rx_ports  = t_case.received_symbols.nof_slices;
+  unsigned                  nof_res       = t_case.received_symbols.nof_prb * NRE * t_case.received_symbols.nof_symbols;
 
   for (unsigned i_layer = 0; i_layer != nof_tx_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
@@ -436,9 +479,7 @@ TEST_P(ChannelEqualizerFixture, ChannelEqualizerNegNvar)
 
   // Create noise vars set to a negative value.
   std::vector<float> neg_noise_vars(nof_rx_ports);
-  for (unsigned i_rx = 0; i_rx != nof_rx_ports; ++i_rx) {
-    neg_noise_vars[i_rx] = -1.0F;
-  }
+  std::fill_n(neg_noise_vars.begin(), nof_rx_ports, -1.0F);
 
   // Equalize the symbols coming from the Rx ports using the modified noise variances.
   test_equalizer->equalize(

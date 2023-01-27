@@ -1305,8 +1305,8 @@ static inline simd_cf_t srsran_simd_cf_select(simd_cf_t a, simd_cf_t b, simd_sel
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
-  ret.re = _mm512_mask_blend_ps(selector, (__m512)a.re, (__m512)b.re);
-  ret.im = _mm512_mask_blend_ps(selector, (__m512)a.im, (__m512)b.im);
+  ret.re = _mm512_mask_blend_ps(selector, a.re, b.re);
+  ret.im = _mm512_mask_blend_ps(selector, a.im, b.im);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
   /* Permute for AVX registers (mis SSE registers) */

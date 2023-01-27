@@ -77,7 +77,7 @@ public:
   /// \warning If, for a given transmitted RE, the combined channel across all paths results in a non-normal value
   /// (zero, infinity or NaN), the corresponding equalized modulation RE and equalized noise variance will be set to
   /// zero and infinity, respectively.
-  /// \warning If the \c noise_var_estimates noise variances have non-normal values (zero, negative, infinity or NaN),
+  /// \warning If the \c noise_var_estimates noise variances have ill-formed values (zero, negative, infinity or NaN),
   /// the corresponding equalized modulation REs and equalized noise variances will be set to zero and infinity,
   /// respectively.
   virtual void equalize(re_list&           eq_symbols,
