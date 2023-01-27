@@ -35,6 +35,7 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--f1u_level", log_params.f1u_level, "F1-U log level")->capture_default_str()->check(level_check);
   app.add_option("--pdcp_level", log_params.pdcp_level, "PDCP log level")->capture_default_str()->check(level_check);
   app.add_option("--rrc_level", log_params.rrc_level, "RRC log level")->capture_default_str()->check(level_check);
+  app.add_option("--gtpu_level", log_params.gtpu_level, "GTPU log level")->capture_default_str()->check(level_check);
   app.add_option("--fapi_level", log_params.fapi_level, "FAPI log level")->capture_default_str()->check(level_check);
   app.add_option("--hex_max_size", log_params.hex_max_size, "Number of bytes to print in hex")
       ->capture_default_str()

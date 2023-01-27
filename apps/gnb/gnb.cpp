@@ -274,7 +274,7 @@ int main(int argc, char** argv)
 
   // Set log-level of app and all non-layer specific components to app level.
   srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
-  for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "GTPU"}) {
+  for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.app_level));
     logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
@@ -325,6 +325,10 @@ int main(int argc, char** argv)
   auto& rrc_logger = srslog::fetch_basic_logger("RRC", false);
   rrc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rrc_level));
   rrc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+
+  auto& gtpu_logger = srslog::fetch_basic_logger("GTPU", false);
+  gtpu_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.gtpu_level));
+  gtpu_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
   worker_manager workers;
 
