@@ -65,27 +65,27 @@ void e1_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response
 
 void e1_cu_up_impl::handle_message(const e1_message& msg)
 {
-  logger.info("Handling E1 PDU of type {}", msg.pdu.type().to_string());
-
-  // Log message.
-  expected<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
-  expected<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
-  if (transaction_id.has_value()) {
-    logger.info("E1AP SDU, \"{}.{}\", transaction id={}",
-                msg.pdu.type().to_string(),
-                get_message_type_str(msg.pdu),
-                transaction_id.value());
-  } else if (gnb_cu_up_ue_e1ap_id.has_value()) {
-    logger.info("E1AP SDU, \"{}.{}\", GNB-CU-UP-UE-E1AP-ID={}",
-                msg.pdu.type().to_string(),
-                get_message_type_str(msg.pdu),
-                gnb_cu_up_ue_e1ap_id.value());
-  } else {
-    logger.info("E1AP SDU, \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
-  }
-
   // Run E1AP protocols in CU-UP executor.
   cu_up_exec.execute([this, msg]() {
+    logger.info("Handling E1 PDU of type {}", msg.pdu.type().to_string());
+
+    // Log message.
+    expected<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
+    expected<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
+    if (transaction_id.has_value()) {
+      logger.info("E1AP SDU, \"{}.{}\", transaction id={}",
+                  msg.pdu.type().to_string(),
+                  get_message_type_str(msg.pdu),
+                  transaction_id.value());
+    } else if (gnb_cu_up_ue_e1ap_id.has_value()) {
+      logger.info("E1AP SDU, \"{}.{}\", GNB-CU-UP-UE-E1AP-ID={}",
+                  msg.pdu.type().to_string(),
+                  get_message_type_str(msg.pdu),
+                  gnb_cu_up_ue_e1ap_id.value());
+    } else {
+      logger.info("E1AP SDU, \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+    }
+
     switch (msg.pdu.type().value) {
       case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
         handle_initiating_message(msg.pdu.init_msg());
