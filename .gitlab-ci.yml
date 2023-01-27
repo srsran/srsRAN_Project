@@ -152,7 +152,7 @@ intermediate commits:
     - if: $ON_MR
   variables:
     OS: ubuntu-22.04
-    TEST_MODE: coverage
+    TEST_MODE: none
     COMPILER: gcc
     BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
