@@ -1134,6 +1134,9 @@ tx_data_request_message unittest::build_valid_tx_data_request()
   msg.sfn  = generate_sfn();
   msg.slot = generate_slot();
 
+  // NOTE: Set to 0 temporarily.
+  msg.control_length = 0U;
+
   msg.pdus.emplace_back();
   tx_data_req_pdu& pdu = msg.pdus.back();
 
