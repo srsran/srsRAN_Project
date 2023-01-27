@@ -87,7 +87,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   dlrrc_msg->gnb_cu_ue_f1ap_id.value          = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
   dlrrc_msg->gnb_du_ue_f1ap_id.value          = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
   dlrrc_msg->srb_id.value                     = (uint8_t)msg.srb_id;
-  dlrrc_msg->rrc_container.value              = msg.rrc_container;
+  dlrrc_msg->rrc_container.value              = msg.rrc_container.copy();
 
   logger.info("Transmitting DL RRC message");
   // Pack message into PDU

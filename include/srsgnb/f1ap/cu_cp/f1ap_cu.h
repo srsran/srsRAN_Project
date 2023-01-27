@@ -33,9 +33,9 @@ struct f1ap_ul_rrc_message {
 };
 
 struct f1ap_dl_rrc_message {
-  ue_index_t                      ue_index;
-  srb_id_t                        srb_id;
-  asn1::unbounded_octstring<true> rrc_container;
+  ue_index_t  ue_index;
+  srb_id_t    srb_id;
+  byte_buffer rrc_container;
 };
 
 class f1c_rrc_message_handler
