@@ -153,7 +153,7 @@ stages:
       - build/apps/gnb/gnb
     expire_in: 10 minutes
   cache: &build_cache
-    key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}-${TEST_MODE}
+    key: ${OS}-${DOCKER_BUILDER_VERSION}-${COMPILER}
     paths:
       - ccache
     policy: pull
@@ -180,16 +180,6 @@ stages:
         COMPILER: gcc
         BUILD_TYPE: Release
         ENABLE_EXPORT: "True"
-      - OS: ubuntu-22.04
-        TEST_MODE: asan
-        COMPILER: gcc
-        BUILD_TYPE: Debug
-        ENABLE_ASAN: "True"
-      - OS: ubuntu-22.04
-        TEST_MODE: tsan
-        COMPILER: clang
-        BUILD_TYPE: Debug
-        ENABLE_TSAN: "True"
       - OS: rhel8
         TEST_MODE: default
         COMPILER: gcc
@@ -307,9 +297,34 @@ build uhd alt:
         UHD_VERSION: ["4.2.0.0", "4.1.0.5"]
   cache: []
 
-# Extra sanitizers
+# Sanitizers
+sanitizers [asan]:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: asan
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ENABLE_ASAN: "True"
+    ASSERT_LEVEL: PARANOID
+  cache: []
 
-valgrind:
+sanitizers [tsan]:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: tsan
+    COMPILER: clang
+    BUILD_TYPE: Debug
+    ENABLE_TSAN: "True"
+    ASSERT_LEVEL: PARANOID
+  cache: []
+
+sanitizers [valgrind]:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
