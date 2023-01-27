@@ -13,7 +13,8 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<gtpu_demux> srsgnb::create_gtpu_demux(gtpu_demux_creation_request& msg)
+std::unique_ptr<gtpu_demux> srsgnb::create_gtpu_demux(const gtpu_demux_creation_request& msg)
 {
-  return std::make_unique<gtpu_demux_impl>(msg.cu_up_exec);
+  report_fatal_error_if_not(msg.cu_up_exec, "CU-UP exec is uninitialized");
+  return std::make_unique<gtpu_demux_impl>(*msg.cu_up_exec);
 }

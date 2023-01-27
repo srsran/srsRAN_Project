@@ -21,6 +21,6 @@ struct gtpu_demux_creation_request {
 };
 
 /// Creates an instance of an GTP-U demux object.
-std::unique_ptr<gtpu_demux> create_gtpu_demux(gtpu_demux_creation_request& msg);
+std::unique_ptr<gtpu_demux> create_gtpu_demux(const gtpu_demux_creation_request& msg);
 
 } // namespace srsgnb
