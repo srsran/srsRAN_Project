@@ -194,7 +194,7 @@ struct formatter<srsgnb::rlc_tx_amd_retx> {
   template <typename FormatContext>
   auto format(const srsgnb::rlc_tx_amd_retx retx, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "SN={}, SO={}, length={}", retx.sn, retx.so, retx.length);
+    return format_to(ctx.out(), "SN={}, SO={}, len={}", retx.sn, retx.so, retx.length);
   }
 };
 } // namespace fmt
