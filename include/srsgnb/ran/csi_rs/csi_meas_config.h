@@ -18,6 +18,11 @@
 
 namespace srsgnb {
 
+/// CSI-RS-ResourceMapping is used to configure the resource element mapping of a CSI-RS resource in time- and frequency
+/// domain
+/// \remark See TS 38.331, \c CSI-RS-ResourceMapping.
+using csi_rs_resource_mapping = csi_rs_pattern_configuration;
+
 /// Used to configure a periodicity for periodic and semi-persistent CSI resources, and for
 /// periodic and semi-persistent reporting on PUCCH.
 /// \remark See TS 38.331, \c CSI-ResourcePeriodicityAndOffset.
@@ -42,7 +47,7 @@ enum class csi_resource_periodicity {
 struct nzp_csi_rs_resource {
   nzp_csi_rs_res_id_t res_id;
   /// OFDM symbol location(s) in a slot and subcarrier occupancy in a PRB of the CSI-RS resource.
-  csi_rs_pattern_configuration res_mapping;
+  csi_rs_resource_mapping res_mapping;
   /// Power offset of PDSCH RE to NZP CSI-RS RE. Value in dB. Values {-8,...,15}. See TS 38.214, clause 5.2.2.3.1.
   int pwr_ctrl_offset;
   /// Power offset of NZP CSI-RS RE to SSS RE. Value in dB. Values {-3, 0, 3, 6}. See TS 38.214, clause 5.2.2.3.1.
@@ -105,6 +110,15 @@ struct csi_im_resource {
   optional<unsigned> csi_res_offset;
 };
 
+/// CSI-IM-ResourceSet is used to configure a set of one or more CSI Interference Management (IM) resources (their IDs)
+/// and set-specific parameters
+/// \remark See TS 38.331, \c CSI-IM-ResourceSet.
+struct csi_im_resource_set {
+  csi_im_res_set_id_t res_set_id;
+  /// CSI-IM-Resources associated with this CSI-IM-ResourceSet. See TS 38.214, clause 5.2.
+  static_vector<csi_im_res_id_t, csi_im_res_set_id_t::MAX_NOF_CSI_IM_RESOURCES_PER_SET> csi_ims_resources;
+};
+
 /// \brief CSI-MeasConfig is used to configure CSI-RS belonging to the serving cell in which CSI-MeasConfig is included.
 /// \remark See TS 38.331, \c CSI-MeasConfig.
 struct csi_meas_config {
@@ -115,6 +129,8 @@ struct csi_meas_config {
       nzp_csi_rs_res_set_list;
   /// Pool of CSI-IM-Resource which can be referred to from CSI-IM-ResourceSet.
   static_vector<csi_im_resource, csi_im_res_id_t::MAX_NOF_CSI_IM_RESOURCES> csi_im_res_list;
+  /// Pool of CSI-IM-ResourceSet which can be referred to from CSI-ResourceConfig or from MAC CEs.
+  static_vector<csi_im_resource_set, csi_im_res_set_id_t::MAX_NOF_CSI_IM_RESOURCE_SETS> csi_im_res_set_list;
 };
 
 } // namespace srsgnb

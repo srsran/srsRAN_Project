@@ -39,4 +39,13 @@ enum csi_im_res_id_t : uint8_t {
   MAX_NOF_CSI_IM_RESOURCES = 32
 };
 
+/// \brief CSI-IM-ResourceSetId is used to identify CSI-IM-ResourceSets.
+/// \remark See TS 38.331, \c CSI-IM-ResourceSetId.
+enum csi_im_res_set_id_t : uint8_t {
+  MIN_CSI_IM_RESOURCE_SET_ID       = 0,
+  MAX_CSI_IM_RESOURCE_SET_ID       = 63,
+  MAX_NOF_CSI_IM_RESOURCE_SETS     = 64,
+  MAX_NOF_CSI_IM_RESOURCES_PER_SET = 8,
+};
+
 } // namespace srsgnb
