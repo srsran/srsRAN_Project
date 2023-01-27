@@ -244,7 +244,7 @@ inline __m256 safe_div(__m256 dividend, __m256 divisor)
   __mmask8 mask = _mm256_cmp_ps_mask(divisor, all_zero, _CMP_GT_OQ);
   return _mm256_maskz_div_ps(mask, dividend, divisor);
 #else
-  __m256 mask   = _mm256_cmp_ps(divisor, all_zero, _CMP_NEQ_OQ);
+  __m256 mask   = _mm256_cmp_ps(divisor, all_zero, _CMP_GT_OQ);
   __m256 result = _mm256_div_ps(dividend, divisor);
   return _mm256_blendv_ps(all_zero, result, mask);
 #endif
