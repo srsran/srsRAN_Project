@@ -123,20 +123,20 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
-  bool           uci_allocated = false;
-  unsigned       k1            = 0;
-  uci_allocation uci           = {};
-  for (unsigned i = 0; i != ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack.size();
-       ++i) {
-    k1  = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg->dl_data_to_ul_ack[i];
+  // Note1: as per TS38.213, 9.2.3, for DCI format 1_0, the PDSCH-to-HARQ-timing-indicator field values map to
+  // {1, 2, 3, 4, 5, 6, 7, 8}.
+  // Note2: Only k1 >= 4 supported.
+  const unsigned max_k1 = 8;
+  unsigned       k1     = 4;
+  uci_allocation uci    = {};
+  for (; k1 <= max_k1; ++k1) {
     uci = get_uci_alloc(grant.cell_index)
               .alloc_uci_harq_ue(get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1);
     if (uci.alloc_successful) {
-      uci_allocated = true;
       break;
     }
   }
-  if (not uci_allocated) {
+  if (k1 > max_k1) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;
@@ -261,7 +261,9 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
   if (not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
-    logger.warning("Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot", pusch_alloc.slot);
+    logger.warning("Failed to allocate PUSCH in slot={}. Cause: UL is not active in the PUSCH slot (k2={})",
+                   pusch_alloc.slot,
+                   pusch_td_cfg.k2);
     return false;
   }
 

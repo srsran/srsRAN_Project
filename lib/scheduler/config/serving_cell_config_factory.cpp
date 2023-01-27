@@ -35,21 +35,12 @@ tdd_ul_dl_config_common
 srsgnb::config_helpers::make_default_tdd_ul_dl_config_common(const cell_config_builder_params& params)
 {
   tdd_ul_dl_config_common cfg{};
-  cfg.ref_scs = params.scs_common;
-  if (params.scs_common == subcarrier_spacing::kHz15) {
-    cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
-    cfg.pattern1.nof_dl_slots              = 6;
-    cfg.pattern1.nof_dl_symbols            = 0;
-    cfg.pattern1.nof_ul_slots              = 3;
-    cfg.pattern1.nof_ul_symbols            = 0;
-  } else {
-    // 30 kHz
-    cfg.pattern1.dl_ul_tx_period_nof_slots = 20;
-    cfg.pattern1.nof_dl_slots              = 12;
-    cfg.pattern1.nof_dl_symbols            = 0;
-    cfg.pattern1.nof_ul_slots              = 7;
-    cfg.pattern1.nof_ul_symbols            = 0;
-  }
+  cfg.ref_scs                            = params.scs_common;
+  cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
+  cfg.pattern1.nof_dl_slots              = 6;
+  cfg.pattern1.nof_dl_symbols            = 0;
+  cfg.pattern1.nof_ul_slots              = 3;
+  cfg.pattern1.nof_ul_symbols            = 0;
   return cfg;
 }
 
@@ -225,23 +216,15 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10U << to_numerology_value(params.scs_common);
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
-  pusch_time_domain_resource_allocation pusch_res = {};
-  pusch_res.map_type                              = sch_mapping_type::typeA;
-  pusch_res.symbols                               = {0, 14};
+  auto get_pusch_res = [](unsigned k2) {
+    return pusch_time_domain_resource_allocation{.k2 = k2, .map_type = sch_mapping_type::typeA, .symbols = {0, 14}};
+  };
   if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::FDD) {
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(1, pusch_res);
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = 4;
-  } else if (params.scs_common == subcarrier_spacing::kHz15) {
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(4, pusch_res);
-    for (unsigned i = 0; i != cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size(); ++i) {
-      cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[i].k2 = i + 4;
-    }
+    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {get_pusch_res(4)};
   } else {
-    // 30kHz
-    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(6, pusch_res);
-    for (unsigned i = 0; i != cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size(); ++i) {
-      cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[i].k2 = i + 8;
-    }
+    // TDD
+    cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list = {
+        get_pusch_res(4), get_pusch_res(5), get_pusch_res(6), get_pusch_res(7)};
   }
   cfg.init_ul_bwp.pucch_cfg_common.emplace();
   cfg.init_ul_bwp.pucch_cfg_common->pucch_resource_common = 11;
@@ -432,13 +415,7 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_cfg.format_1_common_param.emplace();
 
   // >>> dl-DataToUl-Ack
-  if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::FDD) {
-    pucch_cfg.dl_data_to_ul_ack.push_back(4);
-  } else if (params.scs_common == subcarrier_spacing::kHz15) {
-    pucch_cfg.dl_data_to_ul_ack = {2, 3, 4, 5, 6, 7};
-  } else {
-    pucch_cfg.dl_data_to_ul_ack = {6, 7, 8, 9, 10, 11, 12, 13};
-  }
+  // Inactive for format1_0.
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());
