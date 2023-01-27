@@ -75,14 +75,46 @@ struct nzp_csi_rs_resource_set {
   bool is_trs_info_present{false};
 };
 
+/// \brief CSI-IM-Resource is used to configure one CSI Interference Management (IM) resource.
+/// \remark See TS 38.331, \c CSI-IM-Resource.
+struct csi_im_resource {
+  /// \brief The resource element pattern type.
+  /// \remark TS 38.331, \c csi-IM-ResourceElementPattern.
+  enum class csi_im_resource_element_pattern_type { pattern0, pattern1 };
+  /// \brief The resource element pattern (Pattern0 (2,2) or Pattern1 (4,1)) with corresponding parameters
+  /// \remark See TS 38.214, clause 5.2.2.4 and TS 38.331, \c csi-IM-ResourceElementPattern.
+  struct csi_im_resource_element_pattern {
+    csi_im_resource_element_pattern_type pattern_type;
+    /// OFDM subcarrier occupancy of the CSI-IM resource for Pattern0 or Pattern1.
+    /// For Pattern0, Values {0, 2, 4, 6, 8, 10} and for Pattern1, Values {0, 4, 8}.
+    unsigned subcarrier_location;
+    /// OFDM subcarrier occupancy of the CSI-IM resource for Pattern0 or Pattern1.
+    /// For Pattern0, Values {0,...,12} and for Pattern1, Values {0,..,13}.
+    unsigned symbol_location;
+  };
+
+  csi_im_res_id_t                           res_id;
+  optional<csi_im_resource_element_pattern> csi_im_res_element_pattern;
+  /// PRB where the CSI resource starts, related to the CRB 0.
+  optional<unsigned> start_rb;
+  /// Number of PRBs that the CSI spans.
+  optional<unsigned> nof_rb;
+  /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources.
+  optional<csi_resource_periodicity> csi_res_period;
+  /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources. Values {0,...,(periodicity_in_slots - 1)}.
+  optional<unsigned> csi_res_offset;
+};
+
 /// \brief CSI-MeasConfig is used to configure CSI-RS belonging to the serving cell in which CSI-MeasConfig is included.
-/// \remark See TS 38.331, "CSI-MeasConfig".
+/// \remark See TS 38.331, \c CSI-MeasConfig.
 struct csi_meas_config {
   /// Pool of \c NZP-CSI-RS-Resource which can be referred to from \c NZP-CSI-RS-ResourceSet.
   static_vector<nzp_csi_rs_resource, nzp_csi_rs_res_id_t::MAX_NOF_NZP_CSI_RS_RESOURCES> nzp_csi_rs_res_list;
   /// Pool of NZP-CSI-RS-ResourceSet which can be referred to from CSI-ResourceConfig or from MAC CEs.
   static_vector<nzp_csi_rs_resource_set, nzp_csi_rs_res_set_id_t::MAX_NOF_NZP_CSI_RS_RESOURCE_SETS>
       nzp_csi_rs_res_set_list;
+  /// Pool of CSI-IM-Resource which can be referred to from CSI-IM-ResourceSet.
+  static_vector<csi_im_resource, csi_im_res_id_t::MAX_NOF_CSI_IM_RESOURCES> csi_im_res_list;
 };
 
 } // namespace srsgnb
