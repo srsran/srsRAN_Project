@@ -15,6 +15,9 @@
 #ifdef __AVX2__
 #include <immintrin.h>
 #endif // __AVX2__
+#ifdef HAVE_NEON
+#include <arm_neon.h>
+#endif // HAVE_NEON
 
 using namespace srsgnb;
 
@@ -149,6 +152,53 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
 }
 #endif // __AVX2__
 
+#ifdef HAVE_NEON
+static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len)
+{
+  const uint8x16_t mask_msb_u8    = vdupq_n_u8(0x80);
+  const int8_t     shift_mask[16] = {-7, -6, -5, -4, -3, -2, -1, 0, -7, -6, -5, -4, -3, -2, -1, 0};
+  const int8x16_t  shift_mask_s8 =
+      vcombine_s8(vcreate_s8(*((uint64_t*)shift_mask)), vcreate_s8(*((uint64_t*)&shift_mask[8])));
+
+  // Number of bits processed on each loop cycle.
+  static constexpr unsigned NEON_B_SIZE = 16;
+
+  unsigned i_bit = 0;
+
+  // Destination buffer.
+  span<uint8_t> packed_buffer = hard_bits.get_buffer();
+
+  for (; i_bit != (len / NEON_B_SIZE) * NEON_B_SIZE; i_bit += NEON_B_SIZE) {
+    // Read soft bits.
+    uint8x16_t soft_bits_u8 = vld1q_u8(reinterpret_cast<const uint8_t*>(&soft_bits[i_bit]));
+
+    // Reverse 8 bytes in every double-word, MSBs of each byte will form a mask.
+    soft_bits_u8 = vrev64q_u8(soft_bits_u8);
+
+    // Generate masks of MSB bits shifted to appropriate position.
+    uint8x16_t msb_bits_u8 = vandq_u8(soft_bits_u8, mask_msb_u8);
+    uint8x16_t mask_u8     = vshlq_u8(msb_bits_u8, shift_mask_s8);
+
+    // Obtain 16 packed hard bits from the mask.
+    mask_u8 = vpaddq_u8(mask_u8, mask_u8);
+    mask_u8 = vpaddq_u8(mask_u8, mask_u8);
+    mask_u8 = vpaddq_u8(mask_u8, mask_u8);
+
+    // Write the packed bits into 2 bytes of the internal buffer.
+    vst1q_lane_u16(reinterpret_cast<uint16_t*>(packed_buffer.begin()), vreinterpretq_u16_u8(mask_u8), 0);
+
+    // Advance buffer.
+    packed_buffer = packed_buffer.last(packed_buffer.size() - (NEON_B_SIZE / 8));
+  }
+
+  for (; i_bit != len; ++i_bit) {
+    uint8_t hard_bit = soft_bits[i_bit] < 0 ? 1 : 0;
+
+    hard_bits.insert(hard_bit, i_bit, 1);
+  }
+}
+#endif // HAVE_NEON
+
 void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
 {
   // Make sure that there is enough space in the output to accommodate the hard bits.
@@ -159,7 +209,7 @@ void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
 
   unsigned nof_bits = soft_bits.size();
 
-#ifdef __AVX2__
+#if defined(__AVX2__) || defined(HAVE_NEON)
 
   hard_decision_simd(hard_bits, reinterpret_cast<const int8_t*>(soft_bits.data()), nof_bits);
 
@@ -171,5 +221,5 @@ void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
     // Insert into the bit buffer.
     hard_bits.insert(hard_bit, i_bit, 1);
   }
-#endif // __AVX2__
+#endif // __AVX2__ or HAVE_NEON
 }

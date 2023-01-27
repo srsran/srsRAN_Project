@@ -18,11 +18,11 @@ set(ldpc_sources
         ldpc_segmenter_impl.cpp
         )
 
-if (ENABLE_AVX2)
+if (HAVE_AVX2)
     list(APPEND ldpc_sources
             ldpc_decoder_avx2.cpp
             ldpc_encoder_avx2.cpp)
-endif (ENABLE_AVX2)
+endif (HAVE_AVX2)
 
 if (HAVE_AVX512)
     list(APPEND ldpc_sources ldpc_decoder_avx512.cpp)
@@ -35,6 +35,12 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set_source_files_properties(ldpc_rate_dematcher_avx2_impl.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;")
     set_source_files_properties(ldpc_rate_dematcher_avx512_impl.cpp PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512bw;")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+
+if(HAVE_NEON)
+  list(APPEND ldpc_sources ldpc_encoder_neon.cpp)
+  list(APPEND ldpc_sources ldpc_decoder_neon.cpp)
+  list(APPEND ldpc_sources ldpc_rate_dematcher_neon_impl.cpp)
+endif(HAVE_NEON)
 
 add_library(srsgnb_ldpc STATIC ${ldpc_sources})
 

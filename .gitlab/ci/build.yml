@@ -325,18 +325,18 @@ valgrind:
 # Custom
 
 custom build [amd64]:
+  tags:
+    - aws-spot-arm64
   extends: .build_and_unit
   rules:
     - if: $ON_MR
-      when: manual
-      allow_failure: true
   variables:
     # must be one of ubuntu-22.04, ubuntu-20.04, archlinux-latest
-    OS: ""
+    OS: "ubuntu-22.04"
     # must be one of gcc, clang
-    COMPILER: ""
+    COMPILER: "gcc"
     # must be one of default, coverage, asan, tsan, valgrind, none
-    TEST_MODE: ""
+    TEST_MODE: "default"
     # it will be passed to cmake
     BUILD_ARGS: ""
     # must be one version supported in the specified OS
@@ -346,5 +346,7 @@ custom build [amd64]:
 
 custom build [arm64v8]:
   extends: custom build [amd64]
+  rules:
+    - if: $ON_MR
   variables:
     PLATFORM: "arm64"

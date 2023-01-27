@@ -13,6 +13,10 @@
 #include "avx2_helpers.h"
 #endif // HAVE_AVX2
 
+#ifdef HAVE_NEON
+#include "neon_helpers.h"
+#endif // HAVE_NEON
+
 using namespace srsgnb;
 
 // Maximum (absolute) value considered for quantization. Larger values will be clipped.
@@ -62,6 +66,46 @@ static void demod_QPSK_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const
 
 #endif // HAVE_AVX2
 
+#ifdef HAVE_NEON
+
+static void demod_QPSK_neon(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
+{
+  // Load symbols.
+  float32x4_t symbols_0 = vld1q_f32(reinterpret_cast<const float*>(symbol + 0));
+  float32x4_t symbols_1 = vld1q_f32(reinterpret_cast<const float*>(symbol + 2));
+  float32x4_t symbols_2 = vld1q_f32(reinterpret_cast<const float*>(symbol + 4));
+  float32x4_t symbols_3 = vld1q_f32(reinterpret_cast<const float*>(symbol + 6));
+
+  // Load noise.
+  float32x4_t noise_0 = vld1q_f32(noise_var + 0);
+  float32x4_t noise_1 = vld1q_f32(noise_var + 4);
+
+  // Compute noise inverses.
+  float32x4_t rcp_noise_0 = neon::safe_div(vdupq_n_f32(1), noise_0);
+  float32x4_t rcp_noise_1 = neon::safe_div(vdupq_n_f32(1), noise_1);
+
+  // Repeat noise values for real and imaginary parts.
+  float32x4x2_t noise_rep_0 = vzipq_f32(rcp_noise_0, rcp_noise_0);
+  float32x4x2_t noise_rep_1 = vzipq_f32(rcp_noise_1, rcp_noise_1);
+  // float32x4_t   rcp_noise_0_ = noise_rep_0.val[0];
+  // float32x4_t   rcp_noise_1_ = noise_rep_0.val[1];
+  // float32x4_t   rcp_noise_2_ = noise_rep_1.val[0];
+  // float32x4_t   rcp_noise_3_ = noise_rep_1.val[1];
+
+  // Calculate l_value.
+  float32x4_t GAIN      = vdupq_n_f32(2.0F * M_SQRT2f32);
+  float32x4_t l_value_0 = vmulq_f32(vmulq_f32(GAIN, symbols_0), noise_rep_0.val[0]);
+  float32x4_t l_value_1 = vmulq_f32(vmulq_f32(GAIN, symbols_1), noise_rep_0.val[1]);
+  float32x4_t l_value_2 = vmulq_f32(vmulq_f32(GAIN, symbols_2), noise_rep_1.val[0]);
+  float32x4_t l_value_3 = vmulq_f32(vmulq_f32(GAIN, symbols_3), noise_rep_1.val[1]);
+
+  // Store result.
+  vst1q_s8(reinterpret_cast<int8_t*>(llr),
+           neon::quantize_f32(l_value_0, l_value_1, l_value_2, l_value_3, RANGE_LIMIT_FLOAT));
+}
+
+#endif // HAVE_NEON
+
 static log_likelihood_ratio demod_QPSK_symbol(float x, float noise_var)
 {
   // Note: "noise_var > 0" is false also when "noise_var" is NaN.
@@ -92,6 +136,17 @@ void srsgnb::demodulate_soft_QPSK(span<log_likelihood_ratio> llrs,
     noise_it += 16;
   }
 #endif // HAVE_AVX2
+
+#ifdef HAVE_NEON
+  // For NEON, it generates 16 LLRs simultaneously. The input is read in batches of 8 symbols.
+  for (std::size_t symbol_index_end = (symbols.size() / 8) * 8; symbol_index != symbol_index_end; symbol_index += 8) {
+    demod_QPSK_neon(llr_it, symbols_it, noise_it);
+
+    llr_it += 16;
+    symbols_it += 8;
+    noise_it += 8;
+  }
+#endif // HAVE_NEON
 
   // Process remainder symbols with the generic algorithm.
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {

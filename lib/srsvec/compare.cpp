@@ -38,6 +38,33 @@ const char* srsgnb::srsvec::detail::find(span<const char> input, char value)
   }
 #endif // HAVE_AVX2
 
+#ifdef HAVE_NEON
+  bool found = false;
+  // Advances the input index to either the first SIMD word that contains value or the last index rounded to 16.
+  for (unsigned simd_index_end = 16 * (input.size() / 16); index != simd_index_end; index += 16) {
+    // Load 16 consecutive words starting at index.
+    int8x16_t simd_input = vld1q_s8(reinterpret_cast<const int8_t*>(&input[index]));
+    // Compare the 16 words with the value.
+    uint8x16_t mask_u8 = vceqq_s8(vdupq_n_s8((int8_t)value), simd_input);
+    uint8_t    mask    = vmaxvq_u8(mask_u8);
+    if (mask != 0) {
+      found = true;
+      break;
+    }
+  }
+  // Advances the input index to either the first SIMD word that contains value or the last index rounded to 8.
+  for (unsigned simd_index_end = 8 * (input.size() / 8); !found && index != simd_index_end; index += 8) {
+    // Load 8 consecutive words starting at index.
+    int8x8_t simd_input = vld1_s8(reinterpret_cast<const int8_t*>(&input[index]));
+    // Compare the 8 words with the value.
+    uint8x8_t mask_u8 = vceq_s8(vdup_n_s8((int8_t)value), simd_input);
+    uint8_t   mask    = vmaxv_u8(mask_u8);
+    if (mask != 0) {
+      break;
+    }
+  }
+#endif // HAVE_NEON
+
   // Keeps iterating from the current index to the end.
   for (; index != input.size(); ++index) {
     // Early return if a word is equal to value.

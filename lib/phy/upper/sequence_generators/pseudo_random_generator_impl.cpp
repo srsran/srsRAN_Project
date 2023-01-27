@@ -17,6 +17,10 @@
 #include <immintrin.h>
 #endif // HAVE_SSE
 
+#ifdef HAVE_NEON
+#include <arm_neon.h>
+#endif
+
 using namespace srsgnb;
 
 const pseudo_random_generator_impl::x1_init_s pseudo_random_generator_impl::x1_init =
@@ -137,6 +141,31 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
         _mm_storeu_ps(&out[i + j], v);
       }
 #endif
+#ifdef HAVE_NEON
+      for (; j < SEQUENCE_PAR_BITS - 3; j += 4) {
+        // Preloads bits of interest in the 4 LSB
+        int32x4_t mask_s32 = vdupq_n_s32(c >> j);
+
+        // Masks each bit
+        const int32x4_t tmp_mask = vcombine_s32(vcreate_s32(1ULL | (2ULL << 32)), vcreate_s32(4ULL | (8ULL << 32)));
+
+        mask_s32 = vandq_s32(mask_s32, tmp_mask);
+
+        // Get non zero mask
+        uint32x4_t mask_u32 = vcgtq_s32(mask_s32, vdupq_n_s32(0));
+
+        // And with MSB
+        mask_s32 = vandq_s32(vreinterpretq_s32_u32(mask_u32), vreinterpretq_s32_f32(vdupq_n_f32(-0.0F)));
+
+        // Load input
+        float32x4_t v = vdupq_n_f32(value);
+
+        // Loads input and perform sign XOR
+        v = vreinterpretq_f32_s32(veorq_s32(mask_s32, vreinterpretq_s32_f32(v)));
+
+        vst1q_f32(&out[i + j], v);
+      }
+#endif // HAVE_NEON
       // Finish the parallel bits with generic code
       for (; j != SEQUENCE_PAR_BITS; ++j) {
         FLOAT_U32_XOR(out[i + j], value, (c << (31U - j)) & 0x80000000);
@@ -261,6 +290,38 @@ void pseudo_random_generator_impl::apply_xor(span<uint8_t> out, span<const uint8
         j += 16;
       }
 #endif
+#ifdef HAVE_NEON
+      if (SEQUENCE_PAR_BITS >= 16) {
+        // Preloads bits of interest in the 16 LSB
+        uint32x2_t c_dup_u32 = vdup_n_u32(c);
+        uint8x16_t mask_u8   = vcombine_u8(vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 0),
+                                         vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 1));
+
+        // Create bit masks
+        const uint8_t    bit_masks[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+        const uint8x16_t bit_masks_u8 = vcombine_u8(vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))),
+                                                    vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))));
+        // Mask each bit
+        mask_u8 = vandq_u8(mask_u8, bit_masks_u8);
+
+        // Get non zero mask
+        mask_u8 = vceqq_u8(mask_u8, bit_masks_u8);
+
+        // Reduce to 1s and 0s
+        mask_u8 = vandq_u8(mask_u8, vdupq_n_u8(1));
+
+        // Load input
+        uint8x16_t v = vld1q_u8(&in[i + j]);
+
+        // Apply XOR
+        v = veorq_u8(mask_u8, v);
+
+        vst1q_u8(&out[i + j], v);
+
+        // Increment bit counter `j`
+        j += 16;
+      }
+#endif // HAVE_NEON
       for (; j < SEQUENCE_PAR_BITS; j++) {
         out[i + j] = in[i + j] ^ ((c >> j) & 1U);
       }
@@ -321,6 +382,40 @@ void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, spa
         j += 16;
       }
 #endif
+#ifdef HAVE_NEON
+      if (SEQUENCE_PAR_BITS >= 16) {
+        // Preloads bits of interest in the 16 LSB
+        uint32x2_t c_dup_u32 = vdup_n_u32(c);
+        uint8x16_t mask_u8   = vcombine_u8(vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 0),
+                                         vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 1));
+
+        // Create bit masks
+        const uint8_t    bit_masks[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+        const uint8x16_t bit_masks_u8 = vcombine_u8(vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))),
+                                                    vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))));
+        // Mask each bit
+        mask_u8 = vandq_u8(mask_u8, bit_masks_u8);
+
+        // Get non zero mask
+        mask_u8 = vceqq_u8(mask_u8, bit_masks_u8);
+
+        // Load input
+        int8x16_t v = vld1q_s8(reinterpret_cast<const int8_t*>(&in[i + j]));
+
+        // Negate
+        v = veorq_s8(vreinterpretq_s8_u8(mask_u8), v);
+
+        // Add one
+        int8x16_t one_s8 = vandq_s8(vreinterpretq_s8_u8(mask_u8), vdupq_n_s8(1));
+        v                = vaddq_s8(v, one_s8);
+
+        // Store the result
+        vst1q_s8(reinterpret_cast<int8_t*>(&out[i + j]), v);
+
+        // Increment bit counter `j`
+        j += 16;
+      }
+#endif // HAVE_NEON
       for (; j != SEQUENCE_PAR_BITS; ++j) {
         out[i + j] = in[i + j].to_value_type() * (((c >> j) & 1U) ? -1 : +1);
       }

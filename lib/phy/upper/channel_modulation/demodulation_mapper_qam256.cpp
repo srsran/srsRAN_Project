@@ -15,6 +15,10 @@
 #include "avx2_helpers.h"
 #endif // HAVE_AVX2
 
+#ifdef HAVE_NEON
+#include "neon_helpers.h"
+#endif // HAVE_NEON
+
 using namespace srsgnb;
 
 // Square root of 1/170.
@@ -190,6 +194,75 @@ static void demod_QAM256_avx2(log_likelihood_ratio* llr, const cf_t* symbol, con
 }
 #endif // HAVE_AVX2
 
+#ifdef HAVE_NEON
+static void demod_QAM256_neon(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
+{
+  // Load symbols.
+  float32x4_t symbols_0 = vld1q_f32(reinterpret_cast<const float*>(symbol + 0));
+  float32x4_t symbols_1 = vld1q_f32(reinterpret_cast<const float*>(symbol + 2));
+
+  // Load noise.
+  float32x4_t noise_0 = vld1q_f32(noise_var);
+
+  // Make noise reciprocal.
+  float32x4_t rcp_noise_0 = neon::safe_div(vdupq_n_f32(1.0f), noise_0);
+
+  // Repeat noise values for real and imaginary parts.
+  float32x4x2_t noise_rep_0  = vzipq_f32(rcp_noise_0, rcp_noise_0);
+  float32x4_t   rcp_noise_0_ = noise_rep_0.val[0];
+  float32x4_t   rcp_noise_1_ = noise_rep_0.val[1];
+
+  // Calculate l_value for bits 0 and 1.
+  float32x4_t l_value_01_0 =
+      neon::interval_function(symbols_0, rcp_noise_0_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  float32x4_t l_value_01_1 =
+      neon::interval_function(symbols_1, rcp_noise_1_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+
+  // Calculate l_value for bits 2 and 3.
+  float32x4_t l_value_23_0 =
+      neon::interval_function(symbols_0, rcp_noise_0_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  float32x4_t l_value_23_1 =
+      neon::interval_function(symbols_1, rcp_noise_1_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+
+  // Calculate l_value for bits 4 and 5.
+  float32x4_t l_value_45_0 =
+      neon::interval_function(symbols_0, rcp_noise_0_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  float32x4_t l_value_45_1 =
+      neon::interval_function(symbols_1, rcp_noise_1_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+
+  // Calculate l_value for bits 6 and 7.
+  float32x4_t l_value_67_0 =
+      neon::interval_function(symbols_0, rcp_noise_0_, INTERVAL_WIDTH_67, NOF_INTERVALS_67, SLOPE_67, INTERCEPT_67);
+  float32x4_t l_value_67_1 =
+      neon::interval_function(symbols_1, rcp_noise_1_, INTERVAL_WIDTH_67, NOF_INTERVALS_67, SLOPE_67, INTERCEPT_67);
+
+  // Re-collocate values.
+  float32x4_t l_value_0 =
+      vreinterpretq_f32_u64(vtrn1q_u64(vreinterpretq_u64_f32(l_value_01_0), vreinterpretq_u64_f32(l_value_23_0)));
+  float32x4_t l_value_1 =
+      vreinterpretq_f32_u64(vtrn1q_u64(vreinterpretq_u64_f32(l_value_45_0), vreinterpretq_u64_f32(l_value_67_0)));
+  float32x4_t l_value_2 =
+      vreinterpretq_f32_u64(vtrn2q_u64(vreinterpretq_u64_f32(l_value_01_0), vreinterpretq_u64_f32(l_value_23_0)));
+  float32x4_t l_value_3 =
+      vreinterpretq_f32_u64(vtrn2q_u64(vreinterpretq_u64_f32(l_value_45_0), vreinterpretq_u64_f32(l_value_67_0)));
+  //
+  float32x4_t l_value_4 =
+      vreinterpretq_f32_u64(vtrn1q_u64(vreinterpretq_u64_f32(l_value_01_1), vreinterpretq_u64_f32(l_value_23_1)));
+  float32x4_t l_value_5 =
+      vreinterpretq_f32_u64(vtrn1q_u64(vreinterpretq_u64_f32(l_value_45_1), vreinterpretq_u64_f32(l_value_67_1)));
+  float32x4_t l_value_6 =
+      vreinterpretq_f32_u64(vtrn2q_u64(vreinterpretq_u64_f32(l_value_01_1), vreinterpretq_u64_f32(l_value_23_1)));
+  float32x4_t l_value_7 =
+      vreinterpretq_f32_u64(vtrn2q_u64(vreinterpretq_u64_f32(l_value_45_1), vreinterpretq_u64_f32(l_value_67_1)));
+
+  // Store result.
+  vst1q_s8(reinterpret_cast<int8_t*>(llr),
+           neon::quantize_f32(l_value_0, l_value_1, l_value_2, l_value_3, RANGE_LIMIT_FLOAT));
+  vst1q_s8(reinterpret_cast<int8_t*>(llr + 16),
+           neon::quantize_f32(l_value_4, l_value_5, l_value_6, l_value_7, RANGE_LIMIT_FLOAT));
+}
+#endif // HAVE_NEON
+
 static log_likelihood_ratio demod_256QAM_symbol_01(float value, float rcp_noise_var)
 {
   float l_value = interval_function(value, rcp_noise_var, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
@@ -233,6 +306,17 @@ void srsgnb::demodulate_soft_QAM256(span<log_likelihood_ratio> llrs,
     noise_it += 4;
   }
 #endif // HAVE_AVX2
+
+#ifdef HAVE_NEON
+  // For NEON, it generates 32 LLRs simultaneously. The input is read in batches of 4 symbols.
+  for (std::size_t symbol_index_end = (symbols.size() / 4) * 4; symbol_index != symbol_index_end; symbol_index += 4) {
+    demod_QAM256_neon(llr_it, symbols_it, noise_it);
+
+    llr_it += 32;
+    symbols_it += 4;
+    noise_it += 4;
+  }
+#endif // HAVE_NEON
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
     float rcp_noise = 0;

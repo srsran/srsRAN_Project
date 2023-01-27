@@ -14,6 +14,10 @@
 #include "avx2_helpers.h"
 #endif // HAVE_AVX2
 
+#ifdef HAVE_NEON
+#include "neon_helpers.h"
+#endif // HAVE_NEON
+
 using namespace srsgnb;
 
 // Maximum (absolute) value considered for quantization. Larger values will be clipped.
@@ -94,6 +98,73 @@ static void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
 }
 #endif // HAVE_AVX2
 
+#ifdef HAVE_NEON
+static void demod_QAM16_neon(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
+{
+  // Load symbols.
+  float32x4_t symbols_0 = vld1q_f32(reinterpret_cast<const float*>(symbol + 0));
+  float32x4_t symbols_1 = vld1q_f32(reinterpret_cast<const float*>(symbol + 2));
+
+  float32x4_t abs_symbols_0 = neon::abs_f32(symbols_0);
+  float32x4_t abs_symbols_1 = neon::abs_f32(symbols_1);
+
+  // Load noise.
+  float32x4_t noise_0 = vld1q_f32(noise_var);
+
+  // Make noise reciprocal.
+  float32x4_t rcp_noise_0 = neon::safe_div(vdupq_n_f32(1.0f), noise_0);
+
+  // Repeat noise values for real and imaginary parts.
+  float32x4x2_t noise_rep    = vzipq_f32(rcp_noise_0, rcp_noise_0);
+  float32x4_t   rcp_noise_0_ = noise_rep.val[0];
+  float32x4_t   rcp_noise_1_ = noise_rep.val[1];
+
+  // Calculate l_value for bits 0 and 1.
+  float32x4_t GAIN_FIRST         = vdupq_n_f32(4.0F * M_SQRT1_10);
+  float32x4_t GAIN_LARGE         = vdupq_n_f32(2.0F);
+  float32x4_t CONST_0_8          = vdupq_n_f32(0.8F);
+  float32x4_t l_value_01_first_0 = vmulq_f32(GAIN_FIRST, symbols_0);
+  float32x4_t l_value_01_first_1 = vmulq_f32(GAIN_FIRST, symbols_1);
+  float32x4_t l_value_01_second_0 =
+      vsubq_f32(vmulq_f32(GAIN_LARGE, l_value_01_first_0), neon::copysign_f32(CONST_0_8, symbols_0));
+  float32x4_t l_value_01_second_1 =
+      vsubq_f32(vmulq_f32(GAIN_LARGE, l_value_01_first_1), neon::copysign_f32(CONST_0_8, symbols_1));
+
+  // Calculate threshold mask.
+  float32x4_t THRESHOLD_ABS    = vdupq_n_f32(2 * M_SQRT1_10);
+  uint32x4_t  threshold_mask_0 = vcgtq_f32(abs_symbols_0, THRESHOLD_ABS);
+  uint32x4_t  threshold_mask_1 = vcgtq_f32(abs_symbols_1, THRESHOLD_ABS);
+
+  // Select l_value for bits 0 and 1.
+  float32x4_t l_value_01_0 = vbslq_f32(threshold_mask_0, l_value_01_second_0, l_value_01_first_0);
+  float32x4_t l_value_01_1 = vbslq_f32(threshold_mask_1, l_value_01_second_1, l_value_01_first_1);
+
+  // Calculate l_value for bits 2 and 3.
+  float32x4_t l_value_23_0 = vsubq_f32(CONST_0_8, neon::abs_f32(l_value_01_first_0));
+  float32x4_t l_value_23_1 = vsubq_f32(CONST_0_8, neon::abs_f32(l_value_01_first_1));
+
+  // Multiply by noise reciprocal.
+  l_value_01_0 = vmulq_f32(l_value_01_0, rcp_noise_0_);
+  l_value_01_1 = vmulq_f32(l_value_01_1, rcp_noise_1_);
+  l_value_23_0 = vmulq_f32(l_value_23_0, rcp_noise_0_);
+  l_value_23_1 = vmulq_f32(l_value_23_1, rcp_noise_1_);
+
+  // Re-collocate values.
+  float32x4_t l_value_0 =
+      vreinterpretq_f32_u64(vtrn1q_u64(vreinterpretq_u64_f32(l_value_01_0), vreinterpretq_u64_f32(l_value_23_0)));
+  float32x4_t l_value_1 =
+      vreinterpretq_f32_u64(vtrn2q_u64(vreinterpretq_u64_f32(l_value_01_0), vreinterpretq_u64_f32(l_value_23_0)));
+  float32x4_t l_value_2 =
+      vreinterpretq_f32_u64(vtrn1q_u64(vreinterpretq_u64_f32(l_value_01_1), vreinterpretq_u64_f32(l_value_23_1)));
+  float32x4_t l_value_3 =
+      vreinterpretq_f32_u64(vtrn2q_u64(vreinterpretq_u64_f32(l_value_01_1), vreinterpretq_u64_f32(l_value_23_1)));
+
+  // Store result.
+  vst1q_s8(reinterpret_cast<int8_t*>(llr),
+           neon::quantize_f32(l_value_0, l_value_1, l_value_2, l_value_3, RANGE_LIMIT_FLOAT));
+}
+#endif // HAVE_NEON
+
 static log_likelihood_ratio demod_16QAM_symbol_01(float x, float noise_var)
 {
   // Note: "noise_var > 0" is false also when "noise_var" is NaN.
@@ -141,6 +212,17 @@ void srsgnb::demodulate_soft_QAM16(span<log_likelihood_ratio> llrs,
     noise_it += 8;
   }
 #endif // HAVE_AVX2
+
+#ifdef HAVE_NEON
+  // For NEON, it generates 16 LLRs simultaneously. The input is read in batches of 4 symbols.
+  for (std::size_t symbol_index_end = (symbols.size() / 4) * 4; symbol_index != symbol_index_end; symbol_index += 4) {
+    demod_QAM16_neon(llr_it, symbols_it, noise_it);
+
+    llr_it += 16;
+    symbols_it += 4;
+    noise_it += 4;
+  }
+#endif // HAVE_NEON
 
   for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
     *llr_it++ = demod_16QAM_symbol_01(std::real(*symbols_it), *noise_it);

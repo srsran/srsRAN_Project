@@ -41,6 +41,12 @@
 #include "ldpc/ldpc_rate_dematcher_avx512_impl.h"
 #endif // __x86_64__
 
+#ifdef HAVE_NEON
+#include "ldpc/ldpc_decoder_neon.h"
+#include "ldpc/ldpc_encoder_neon.h"
+#include "ldpc/ldpc_rate_dematcher_neon_impl.h"
+#endif // HAVE_NEON
+
 using namespace srsgnb;
 
 namespace {
@@ -81,6 +87,11 @@ public:
 
   std::unique_ptr<ldpc_decoder> create() override
   {
+#ifdef HAVE_NEON
+    if ((dec_type == "neon") || (dec_type == "auto")) {
+      return std::make_unique<ldpc_decoder_neon>();
+    }
+#endif // HAVE_NEON
 #ifdef HAVE_AVX512
     if ((dec_type == "auto") || (dec_type == "avx512")) {
       return std::make_unique<ldpc_decoder_avx512>();
@@ -113,6 +124,11 @@ public:
       return std::make_unique<ldpc_encoder_avx2>();
     }
 #endif // __AVX2__
+#ifdef HAVE_NEON
+    if ((enc_type == "neon") || (enc_type == "auto")) {
+      return std::make_unique<ldpc_encoder_neon>();
+    }
+#endif // HAVE_NEON
     if ((enc_type == "generic") || (enc_type == "auto")) {
       return std::make_unique<ldpc_encoder_generic>();
     }
@@ -141,6 +157,11 @@ public:
       return std::make_unique<ldpc_rate_dematcher_avx2_impl>();
     }
 #endif // __x86_64__
+#ifdef HAVE_NEON
+    if ((dematcher_type == "neon") || (dematcher_type == "auto")) {
+      return std::make_unique<ldpc_rate_dematcher_neon_impl>();
+    }
+#endif // HAVE_NEON
     if ((dematcher_type == "generic") || (dematcher_type == "auto")) {
       return std::make_unique<ldpc_rate_dematcher_impl>();
     }

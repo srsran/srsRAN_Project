@@ -59,6 +59,10 @@ protected:
       enc_factory_avx2 = create_ldpc_encoder_factory_sw("avx2");
       ASSERT_NE(enc_factory_avx2, nullptr);
     }
+    if (!enc_factory_neon) {
+      enc_factory_neon = create_ldpc_encoder_factory_sw("neon");
+      ASSERT_NE(enc_factory_neon, nullptr);
+    }
     if (!dec_factory_generic) {
       dec_factory_generic = create_ldpc_decoder_factory_sw("generic");
       ASSERT_NE(dec_factory_generic, nullptr);
@@ -70,6 +74,10 @@ protected:
     if (!dec_factory_avx512) {
       dec_factory_avx512 = create_ldpc_decoder_factory_sw("avx512");
       ASSERT_NE(dec_factory_avx512, nullptr);
+    }
+    if (!dec_factory_neon) {
+      dec_factory_neon = create_ldpc_decoder_factory_sw("neon");
+      ASSERT_NE(dec_factory_neon, nullptr);
     }
   }
 
@@ -117,9 +125,11 @@ protected:
     // Check the factories again, since ASSERT_* is not fatal in SetUpTestSuite in old googletest releases.
     ASSERT_NE(enc_factory_generic, nullptr);
     ASSERT_NE(enc_factory_avx2, nullptr);
+    ASSERT_NE(enc_factory_neon, nullptr);
     ASSERT_NE(dec_factory_generic, nullptr);
     ASSERT_NE(dec_factory_avx2, nullptr);
     ASSERT_NE(dec_factory_avx512, nullptr);
+    ASSERT_NE(dec_factory_neon, nullptr);
 
     std::string implementation = std::get<0>(GetParam());
     if (implementation == "generic") {
@@ -137,6 +147,11 @@ protected:
       ASSERT_NE(encoder_test, nullptr);
       decoder_test = dec_factory_avx512->create();
       ASSERT_NE(decoder_test, nullptr);
+    } else if (implementation == "neon") {
+      encoder_test = enc_factory_neon->create();
+      ASSERT_NE(encoder_test, nullptr);
+      decoder_test = dec_factory_neon->create();
+      ASSERT_NE(decoder_test, nullptr);
     } else {
       FAIL() << fmt::format("Invalid implementation type {}.", implementation);
     }
@@ -149,9 +164,11 @@ protected:
 
   static std::shared_ptr<ldpc_encoder_factory> enc_factory_generic;
   static std::shared_ptr<ldpc_encoder_factory> enc_factory_avx2;
+  static std::shared_ptr<ldpc_encoder_factory> enc_factory_neon;
   static std::shared_ptr<ldpc_decoder_factory> dec_factory_generic;
   static std::shared_ptr<ldpc_decoder_factory> dec_factory_avx2;
   static std::shared_ptr<ldpc_decoder_factory> dec_factory_avx512;
+  static std::shared_ptr<ldpc_decoder_factory> dec_factory_neon;
 
   std::unique_ptr<ldpc_encoder>         encoder_test;
   std::unique_ptr<srsgnb::ldpc_decoder> decoder_test;
@@ -170,9 +187,11 @@ protected:
 
 std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_generic = nullptr;
 std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_avx2    = nullptr;
+std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_neon    = nullptr;
 std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_generic = nullptr;
 std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_avx2    = nullptr;
 std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_avx512  = nullptr;
+std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_neon    = nullptr;
 
 // Returns a vector of with values [min_val, min_val + delta, ..., min_val + N * delta, max_val], where N = steps - 1 if
 // max_val - min_val is divisible by steps, and N = steps otherwise.
@@ -252,6 +271,10 @@ INSTANTIATE_TEST_SUITE_P(LDPCEncDecSuite,
                                                               ,
                                                               "avx512"
 #endif // HAVE_AVX512
+#ifdef HAVE_NEON
+                                                              ,
+                                                              "neon"
+#endif // HAVE_NEON
                                                               ),
                                             ::testing::ValuesIn(ldpc_encoder_test_data)));
 } // namespace

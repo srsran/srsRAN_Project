@@ -50,9 +50,6 @@ inline bool cpu_supports_feature(cpu_feature feature)
     case cpu_feature::sse4_1:
       return __builtin_cpu_supports("sse4.1");
 #endif // __x86_64__
-#ifdef __arm__
-// Handle here ARM features...
-#endif // __arm__
     default:
       return false;
   }
