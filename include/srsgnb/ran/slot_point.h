@@ -296,7 +296,7 @@ struct formatter<srsgnb::slot_point> {
   template <typename FormatContext>
   auto format(srsgnb::slot_point slot, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{}", slot.to_uint());
+    return format_to(ctx.out(), "{}.{}", slot.sfn(), slot.slot_index());
   }
 };
 } // namespace fmt
