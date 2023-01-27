@@ -119,6 +119,23 @@ struct csi_im_resource_set {
   static_vector<csi_im_res_id_t, csi_im_res_set_id_t::MAX_NOF_CSI_IM_RESOURCES_PER_SET> csi_ims_resources;
 };
 
+/// \brief CSI-SSB-ResourceSetId is used to identify one SS/PBCH block resource set.
+/// \remark See TS 38.331, \c CSI-SSB-ResourceSetId.
+enum csi_ssb_res_set_id_t {
+  MIN_CSI_SSB_RESOURCE_SET_ID       = 0,
+  MAX_CSI_SSB_RESOURCE_SET_ID       = 63,
+  MAX_NOF_CSI_SSB_RESOURCE_SETS     = 64,
+  MAX_NOF_CSI_SSB_RESOURCES_PER_SET = 64,
+};
+
+/// CSI-SSB-ResourceSet is used to configure one SS/PBCH block resource set which refers to SS/PBCH as indicated in
+/// ServingCellConfigCommon.
+/// \remark See TS 38.331, \c CSI-SSB-ResourceSet.
+struct csi_ssb_resource_set {
+  csi_ssb_res_set_id_t                                                             res_set_id;
+  static_vector<ssb_id_t, csi_ssb_res_set_id_t::MAX_NOF_CSI_SSB_RESOURCES_PER_SET> csi_ssb_res_list;
+};
+
 /// \brief CSI-MeasConfig is used to configure CSI-RS belonging to the serving cell in which CSI-MeasConfig is included.
 /// \remark See TS 38.331, \c CSI-MeasConfig.
 struct csi_meas_config {
@@ -131,6 +148,8 @@ struct csi_meas_config {
   static_vector<csi_im_resource, csi_im_res_id_t::MAX_NOF_CSI_IM_RESOURCES> csi_im_res_list;
   /// Pool of CSI-IM-ResourceSet which can be referred to from CSI-ResourceConfig or from MAC CEs.
   static_vector<csi_im_resource_set, csi_im_res_set_id_t::MAX_NOF_CSI_IM_RESOURCE_SETS> csi_im_res_set_list;
+  /// Pool of CSI-SSB-ResourceSet which can be referred to from CSI-ResourceConfig.
+  static_vector<csi_ssb_resource_set, csi_ssb_res_set_id_t::MAX_NOF_CSI_SSB_RESOURCE_SETS> csi_ssb_res_set_list;
 };
 
 } // namespace srsgnb
