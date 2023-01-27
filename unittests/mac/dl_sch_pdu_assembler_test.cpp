@@ -91,15 +91,16 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
   // |             ...               |  ...
   // |            Payload            |  Octet >=256 + 3
 
-  std::vector<uint8_t> bytes(dl_sch_pdu::MAX_PDU_LENGTH);
-  dl_sch_pdu           pdu(bytes);
-  unsigned             payload_len = test_rgen::uniform_int<unsigned>(256, dl_sch_pdu::MAX_PDU_LENGTH);
-  byte_buffer          payload;
+  static constexpr unsigned HEADER_LEN = 3;
+  std::vector<uint8_t>      bytes(dl_sch_pdu::MAX_PDU_LENGTH);
+  dl_sch_pdu                pdu(bytes);
+  unsigned                  payload_len = test_rgen::uniform_int<unsigned>(256, dl_sch_pdu::MAX_PDU_LENGTH);
+  byte_buffer               payload;
   for (unsigned i = 0; i != payload_len; ++i) {
     payload.append(test_rgen::uniform_int<uint8_t>());
   }
   lcid_t lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_NOF_RB_LCIDS);
-  pdu.add_sdu(lcid, byte_buffer_slice_chain{payload.copy()});
+  ASSERT_EQ(pdu.add_sdu(lcid, byte_buffer_slice_chain{payload.copy()}), payload.length() + HEADER_LEN);
   span<const uint8_t> result = pdu.get();
 
   byte_buffer expected;
@@ -224,6 +225,11 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
     // Generate SDU size.
     sdu_payload_sizes[i] = test_rgen::uniform_int<unsigned>(MIN_LC_SCHED_BYTES_SIZE, 1000);
     sdu_req_sizes[i]     = get_mac_sdu_required_bytes(sdu_payload_sizes[i]);
+    if (i == nof_sdus - 1 and tb_size + sdu_req_sizes[i] == 258) {
+      // avoid special case with impossible subheader + SDU size.
+      sdu_payload_sizes[i]++;
+      sdu_req_sizes[i] = get_mac_sdu_required_bytes(sdu_payload_sizes[i]);
+    }
     tb_size += sdu_req_sizes[i];
 
     // Add pending SDU in MAC Tx SDU dummy notifier.
@@ -239,7 +245,8 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   ASSERT_EQ(result.size(), tb_size);
   ASSERT_EQ(this->dl_bearers[1].last_sdus.size(), nof_sdus);
   for (unsigned i = 0; i != nof_sdus; ++i) {
-    ASSERT_EQ(this->dl_bearers[1].last_sdus[i].length(), sdu_payload_sizes[i]);
+    ASSERT_EQ(this->dl_bearers[1].last_sdus[i].length(), sdu_payload_sizes[i])
+        << fmt::format("SDU size mismatch for SDU {}/{}. First SDU len={}", i + 1, nof_sdus, sdu_payload_sizes[0]);
   }
 
   // Check if MAC PDU contains the MAC SDUs composed by a MAC subheader and the data passed by the upper layer.
