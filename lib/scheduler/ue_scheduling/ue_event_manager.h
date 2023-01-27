@@ -20,7 +20,6 @@
 
 namespace srsgnb {
 
-class event_logger;
 class scheduler_metrics_handler;
 class scheduler_event_logger;
 

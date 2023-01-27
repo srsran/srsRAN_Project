@@ -52,6 +52,13 @@ public:
     du_ue_index_t ue_index;
     rnti_t        rnti;
   };
+  struct bsr_event {
+    du_ue_index_t          ue_index;
+    rnti_t                 rnti;
+    bsr_format             type;
+    ul_bsr_lcg_report_list reported_lcgs;
+    units::bytes           tot_ul_pending_bytes;
+  };
 
   scheduler_event_logger() :
     logger(srslog::fetch_basic_logger("SCHED")),
@@ -76,6 +83,8 @@ public:
     enqueue_impl(std::forward<Event>(ev));
   }
 
+  bool enabled() const { return mode != none; }
+
 private:
   enum mode_t { none, info, debug };
   srslog::basic_logger& logger;
@@ -94,7 +103,7 @@ private:
   void enqueue_impl(const sched_ue_delete_message& ue_request);
 
   void enqueue_impl(const sr_event& sr);
-  void enqueue_impl(const ul_bsr_indication_message& bsr);
+  void enqueue_impl(const bsr_event& bsr);
   void enqueue_impl(const harq_ack_event& harq_ev);
   void enqueue_impl(const crc_event& crc_ev);
   void enqueue_impl(const dl_mac_ce_indication& mac_ce);

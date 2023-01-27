@@ -109,17 +109,26 @@ void scheduler_event_logger::enqueue_impl(const sr_event& sr)
   }
 }
 
-void scheduler_event_logger::enqueue_impl(const ul_bsr_indication_message& bsr)
+void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
 {
   if (mode == debug) {
     fmt::format_to(
-        fmtbuf, "\n- BSR: UE={}, rnti={:#x}, type={}, payload:", bsr.ue_index, bsr.crnti, to_string(bsr.type));
+        fmtbuf, "\n- BSR: UE={} rnti={:#x} type=\"{}\" report={{", bsr.ue_index, bsr.rnti, to_string(bsr.type));
+
+    std::array<int, MAX_NOF_LCGS> report = {-1};
     for (unsigned i = 0; i != bsr.reported_lcgs.size(); ++i) {
-      fmt::format_to(
-          fmtbuf, "{}{}: {}", i == 0 ? "" : ", ", bsr.reported_lcgs[i].lcg_id, bsr.reported_lcgs[i].nof_bytes);
+      report[bsr.reported_lcgs[i].lcg_id] = bsr.reported_lcgs[i].nof_bytes;
     }
+    for (unsigned i = 0; i != MAX_NOF_LCGS; ++i) {
+      fmt::format_to(fmtbuf, "{}{}", i == 0 ? "" : ", ", report[i]);
+    }
+    fmt::format_to(fmtbuf, "}} to_alloc={:B}", bsr.tot_ul_pending_bytes);
   } else if (logger.info.enabled()) {
-    fmt::format_to(fmtbuf, "{}UE={} UL BSR", separator(), bsr.ue_index);
+    unsigned tot_bytes = 0;
+    for (const auto& lcg : bsr.reported_lcgs) {
+      tot_bytes += lcg.nof_bytes;
+    }
+    fmt::format_to(fmtbuf, "{}UE={} BSR={}", separator(), bsr.ue_index, tot_bytes);
   }
 }
 

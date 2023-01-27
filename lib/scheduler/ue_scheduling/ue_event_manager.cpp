@@ -96,11 +96,20 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
   srsgnb_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
   common_events.emplace(bsr_ind.ue_index, [this, bsr_ind]() {
+    auto& u = ue_db[bsr_ind.ue_index];
     // Handle event.
-    ue_db[bsr_ind.ue_index].handle_bsr_indication(bsr_ind);
+    u.handle_bsr_indication(bsr_ind);
 
     // Log event.
-    ev_logger.enqueue(bsr_ind);
+    if (ev_logger.enabled()) {
+      scheduler_event_logger::bsr_event event{};
+      event.ue_index             = bsr_ind.ue_index;
+      event.rnti                 = bsr_ind.crnti;
+      event.type                 = bsr_ind.type;
+      event.reported_lcgs        = bsr_ind.reported_lcgs;
+      event.tot_ul_pending_bytes = units::bytes{u.pending_ul_newtx_bytes()};
+      ev_logger.enqueue(event);
+    }
 
     // Notify metrics handler.
     metrics_handler.handle_ul_bsr_indication(bsr_ind);
