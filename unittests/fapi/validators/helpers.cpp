@@ -323,6 +323,8 @@ ul_dci_request_message unittest::build_valid_ul_dci_request()
   msg.slot = generate_slot();
   msg.sfn  = generate_sfn();
 
+  msg.num_pdus_of_each_type.fill(0);
+
   // Manually add the PDCCH PDU to reuse the functions above.
   msg.pdus.emplace_back();
   msg.pdus.back().pdu_type = ul_dci_pdu_type::PDCCH;
