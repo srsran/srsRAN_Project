@@ -189,7 +189,7 @@ alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocat
         }
         if (are_crbs_valid) {
           const bool res_allocated = pusch_alloc.allocate_ul_grant(
-              ue_pusch_grant{&u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, k2, ss_cfg->id, agg_lvl});
+              ue_pusch_grant{&u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, time_res, ss_cfg->id, agg_lvl});
           if (res_allocated) {
             return true;
           }

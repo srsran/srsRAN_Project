@@ -36,7 +36,7 @@ struct ue_pusch_grant {
   harq_id_t         h_id;
   crb_interval      crbs;
   ofdm_symbol_range symbols;
-  unsigned          k2;
+  unsigned          time_res_index;
   search_space_id   ss_id    = to_search_space_id(1);
   aggregation_level aggr_lvl = aggregation_level::n4;
 };

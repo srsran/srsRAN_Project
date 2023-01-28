@@ -216,7 +216,6 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 {
   srsgnb_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
   srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
-  constexpr static unsigned time_resource        = 0; // TODO: Support other time resources.
   constexpr static unsigned pdcch_delay_in_slots = 0;
 
   ue& u = ues[grant.user->ue_index];
@@ -250,7 +249,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   const subcarrier_spacing                                scs = bwp_cfg.scs;
   const span<const pusch_time_domain_resource_allocation> pusch_list =
       ue_cell_cfg.get_pusch_time_domain_list(ss_cfg->id);
-  const pusch_time_domain_resource_allocation pusch_td_cfg = pusch_list[time_resource];
+  const pusch_time_domain_resource_allocation pusch_td_cfg = pusch_list[grant.time_res_index];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
@@ -310,10 +309,10 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   pusch_config_params pusch_cfg;
   switch (dci_type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, time_resource);
+      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, grant.time_res_index);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_c_rnti(cell_cfg, ue_cell_cfg, bwp_ul_cmn, time_resource);
+      pusch_cfg = get_pusch_config_f0_0_c_rnti(cell_cfg, ue_cell_cfg, bwp_ul_cmn, grant.time_res_index);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -372,7 +371,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                         bwp_ul_cmn.generic_params,
                         ss_cfg->type,
                         prbs,
-                        time_resource,
+                        grant.time_res_index,
                         mcs_tbs_info.value().mcs,
                         h_ul);
 
