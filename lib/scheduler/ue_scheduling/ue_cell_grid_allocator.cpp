@@ -36,6 +36,9 @@ void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
 
 bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 {
+  // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
+  static constexpr std::array<uint8_t, 8> dl_data_to_ul_ack_f1_0 = {1, 2, 3, 4, 5, 6, 7, 8};
+
   srsgnb_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
   srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
   ue& u = ues[grant.user->ue_index];
@@ -123,20 +126,20 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
-  // Note1: as per TS38.213, 9.2.3, for DCI format 1_0, the PDSCH-to-HARQ-timing-indicator field values map to
-  // {1, 2, 3, 4, 5, 6, 7, 8}.
-  // Note2: Only k1 >= 4 supported.
-  const unsigned max_k1 = 8;
-  unsigned       k1     = 4;
-  uci_allocation uci    = {};
-  for (; k1 <= max_k1; ++k1) {
+  unsigned       k1        = 4;
+  const auto&    pucch_cfg = *ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg;
+  auto           k1_list   = pucch_cfg.dl_data_to_ul_ack.empty() ? span<const uint8_t>{dl_data_to_ul_ack_f1_0}
+                                                                 : span<const uint8_t>{pucch_cfg.dl_data_to_ul_ack};
+  uci_allocation uci       = {};
+  for (uint8_t k1_candidate : k1_list) {
     uci = get_uci_alloc(grant.cell_index)
               .alloc_uci_harq_ue(get_res_alloc(grant.cell_index), u.crnti, u.get_pcell().cfg(), pdsch_td_cfg.k0, k1);
     if (uci.alloc_successful) {
+      k1 = k1_candidate;
       break;
     }
   }
-  if (k1 > max_k1) {
+  if (not uci.alloc_successful) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;

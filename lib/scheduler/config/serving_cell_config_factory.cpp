@@ -415,7 +415,18 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_cfg.format_1_common_param.emplace();
 
   // >>> dl-DataToUl-Ack
-  // Inactive for format1_0.
+  // TS38.213, 9.1.2.1 - "If a UE is provided dl-DataToUL-ACK, the UE does not expect to be indicated by DCI format 1_0
+  // a slot timing value for transmission of HARQ-ACK information that does not belong to the intersection of the set
+  // of slot timing values {1, 2, 3, 4, 5, 6, 7, 8} and the set of slot timing values provided by dl-DataToUL-ACK for
+  // the active DL BWP of a corresponding serving cell.
+  // Inactive for format1_0."
+  // Note2: Only k1 >= 4 supported.
+  if (band_helper::get_duplex_mode(get_band(params)) == duplex_mode::FDD) {
+    pucch_cfg.dl_data_to_ul_ack = {4};
+  } else {
+    // TDD
+    pucch_cfg.dl_data_to_ul_ack = {4, 5, 6, 7, 8};
+  }
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config());
