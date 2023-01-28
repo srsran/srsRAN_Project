@@ -72,13 +72,13 @@ public:
   void discard_sdu(uint32_t pdcp_count) override;
 
   // Interfaces for lower layers
-  byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) override;
+  byte_buffer_slice_chain pull_pdu(uint32_t grant_len) override;
   uint32_t                get_buffer_state() override;
 
 private:
   bool get_si_and_expected_header_size(uint32_t      so,
                                        uint32_t      sdu_len,
-                                       uint32_t      nof_bytes,
+                                       uint32_t      grant_len,
                                        rlc_si_field& si,
                                        uint32_t&     head_len) const;
 
