@@ -14,6 +14,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
+#include "srsgnb/support/executors/sync_task_executor.h"
 
 namespace srsgnb {
 
@@ -73,20 +74,35 @@ private:
   std::array<task_executor*, MAX_NOF_DU_UES> ue_idx_to_exec;
 };
 
-/// Dispatch DL tasks based on cell index.
-class cell_dl_executor_mapper final : public du_high_cell_executor_mapper
+/// Dispatch cell-specific tasks based on cell index.
+class cell_executor_mapper final : public du_high_cell_executor_mapper
 {
 public:
-  explicit cell_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) :
-    dl_execs(execs_.begin(), execs_.end())
+  explicit cell_executor_mapper(const std::initializer_list<task_executor*>& other_execs_, bool blocking_slot_ind) :
+    cell_execs(other_execs_.begin(), other_execs_.end())
   {
-    srsgnb_assert(not dl_execs.empty(), "The number of DL executors must be higher than 1");
+    srsgnb_assert(not cell_execs.empty(), "The number of DL executors must be higher than 1");
+    if (blocking_slot_ind) {
+      for (task_executor* exec : cell_execs) {
+        blocking_slot_execs.push_back(std::make_unique<sync_task_executor>(*exec));
+        slot_execs.push_back(blocking_slot_execs.back().get());
+      }
+    } else {
+      slot_execs = cell_execs;
+    }
   }
 
-  task_executor& executor(du_cell_index_t cell_index) override { return *dl_execs[cell_index % dl_execs.size()]; }
+  task_executor& executor(du_cell_index_t cell_index) override { return *cell_execs[cell_index % cell_execs.size()]; }
+
+  task_executor& slot_ind_executor(du_cell_index_t cell_index) override
+  {
+    return *slot_execs[cell_index % cell_execs.size()];
+  }
 
 private:
-  std::vector<task_executor*> dl_execs;
+  std::vector<task_executor*>                      cell_execs;
+  std::vector<task_executor*>                      slot_execs;
+  std::vector<std::unique_ptr<sync_task_executor>> blocking_slot_execs;
 };
 
 } // namespace srsgnb

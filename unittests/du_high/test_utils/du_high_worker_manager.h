@@ -33,7 +33,7 @@ struct du_high_worker_manager {
   static_vector<task_worker_executor, 2> cell_execs{{cell_workers[0]}, {cell_workers[1]}};
   static_vector<task_worker_executor, 2> ue_execs{{ue_workers[0]}, {ue_workers[1]}};
   pcell_ul_executor_mapper               ue_exec_mapper{{&ue_execs[0], &ue_execs[1]}};
-  cell_dl_executor_mapper                cell_exec_mapper{{&cell_execs[0], &cell_execs[1]}};
+  cell_executor_mapper                   cell_exec_mapper{{&cell_execs[0], &cell_execs[1]}, false};
 };
 
 } // namespace srsgnb

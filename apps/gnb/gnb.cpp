@@ -107,6 +107,8 @@ public:
 struct worker_manager {
   static const uint32_t task_worker_queue_size = 128;
 
+  worker_manager(const gnb_appconfig& appcfg) : zmq_mode(appcfg.rf_driver_cfg.device_driver == "zmq") {}
+
   void stop()
   {
     ctrl_worker.stop();
@@ -131,6 +133,8 @@ struct worker_manager {
   - e1_cu_up::handle_message calls cu-up ue exec
   */
 
+  bool zmq_mode = false;
+
   // GNB wide workers and executors
   task_worker ctrl_worker{"Ctrl-GNB", task_worker_queue_size};
   task_worker ue_workers{"UE#0", task_worker_queue_size};
@@ -141,10 +145,10 @@ struct worker_manager {
   // DU workers and executers.
   task_worker              cell_workers{"DU-CELL#0", task_worker_queue_size};
   task_worker_executor     ctrl_exec{ctrl_worker};
-  task_worker_executor     cell_execs{cell_workers};
-  task_worker_executor     ue_execs{ue_workers};
-  pcell_ul_executor_mapper ue_exec_mapper{&ue_execs};
-  cell_dl_executor_mapper  cell_exec_mapper{&cell_execs};
+  task_worker_executor     cell_exec{cell_workers};
+  task_worker_executor     ue_exec{ue_workers};
+  pcell_ul_executor_mapper ue_exec_mapper{&ue_exec};
+  cell_executor_mapper     cell_exec_mapper{{&cell_exec}, zmq_mode};
   // Lower PHY RT task executor.
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
   task_worker_executor rt_task_executor{{rt_task_worker}};
@@ -342,7 +346,7 @@ int main(int argc, char** argv)
   gtpu_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.gtpu_level));
   gtpu_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
-  worker_manager workers;
+  worker_manager workers{gnb_cfg};
 
   f1c_local_adapter f1c_cu_to_du_adapter("CU-CP-F1"), f1c_du_to_cu_adapter("DU-F1");
   e1_local_adapter  e1_cp_to_up_adapter("CU-CP"), e1_up_to_cp_adapter("CU-UP");

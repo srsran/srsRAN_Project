@@ -22,10 +22,12 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
                                        mac_dl_ue_manager&               ue_mng_,
                                        mac_cell_result_notifier&        phy_notifier_,
                                        task_executor&                   cell_exec_,
+                                       task_executor&                   slot_exec_,
                                        task_executor&                   ctrl_exec_) :
   logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
   cell_exec(cell_exec_),
+  slot_exec(slot_exec_),
   ctrl_exec(ctrl_exec_),
   phy_cell(phy_notifier_),
   // The PDU pool has to be large enough to fit the maximum number of PDUs per slot for all possible K0 values.
@@ -54,7 +56,7 @@ async_task<void> mac_cell_processor::stop()
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 {
   // Change execution context to DL executors.
-  cell_exec.execute([this, sl_tx]() { handle_slot_indication_impl(sl_tx); });
+  slot_exec.execute([this, sl_tx]() { handle_slot_indication_impl(sl_tx); });
 }
 
 void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)

@@ -165,7 +165,7 @@ struct du_high_single_cell_worker_manager {
   task_worker_executor     dl_exec{dl_worker};
   task_worker_executor     ul_exec{ul_worker};
   pcell_ul_executor_mapper ue_exec_mapper{&ul_exec};
-  cell_dl_executor_mapper  cell_exec_mapper{&dl_exec};
+  cell_executor_mapper     cell_exec_mapper{{&dl_exec}, false};
 };
 
 /// \brief Emulator of the PHY, FAPI and UE from the perspective of the DU-high. This class should be able to provide

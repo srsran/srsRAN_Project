@@ -52,13 +52,23 @@ public:
   void start(os_thread_realtime_priority      prio_ = os_thread_realtime_priority::no_realtime(),
              const os_sched_affinity_bitmask& mask_ = {});
 
-  void push_task(task_t&& task)
+  bool push_task(task_t&& task)
   {
     auto ret = pending_tasks.try_push(std::move(task));
     if (ret.is_error()) {
       logger.error("Cannot push anymore tasks into the {} worker queue. maximum size is {}",
                    worker_name,
                    uint32_t(pending_tasks.max_size()));
+      return false;
+    }
+    return true;
+  }
+
+  void push_task_blocking(task_t&& task)
+  {
+    auto ret = pending_tasks.push_blocking(std::move(task));
+    if (ret.is_error()) {
+      logger.debug("Cannot push anymore tasks into the {} worker queue because it was closed", worker_name);
       return;
     }
   }
