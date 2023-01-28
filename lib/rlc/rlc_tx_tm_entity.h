@@ -60,39 +60,38 @@ public:
 
   // Interfaces for lower layers
   // TS 38.322 v16.2.0 Sec. 5.2.1.1
-  byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) override
+  byte_buffer_slice_chain pull_pdu(uint32_t grant_len) override
   {
     if (sdu_queue.is_empty()) {
-      logger.log_debug("No data available to be sent. Provided space ({} B)", nof_bytes);
+      logger.log_debug("No SDUs left in the SDU queue. grant_len={}", grant_len);
       return {};
     }
 
-    uint32_t front_size = {};
-    if (not sdu_queue.front_size_bytes(front_size)) {
-      logger.log_warning("Could not get size of front packet. Provided space ({} B)", nof_bytes);
+    uint32_t front_len = {};
+    if (not sdu_queue.front_size_bytes(front_len)) {
+      logger.log_warning("Could not get length of front packet. grant_len={}", grant_len);
       return {};
     }
 
-    if (front_size > nof_bytes) {
-      logger.log_info("Tx PDU size larger than provided space ({} > {})", front_size, nof_bytes);
+    if (front_len > grant_len) {
+      logger.log_info("SDU/PDU exeeds provided space: front_len={}, grant_len={}", front_len, grant_len);
       metrics.metrics_add_small_alloc(1);
       return {};
     }
 
     rlc_sdu sdu = {};
     if (not sdu_queue.read(sdu)) {
-      logger.log_warning("Could not read SDU, but queue should not be empty. Provided space ({} B)", nof_bytes);
+      logger.log_warning("Could not read SDU, but queue should not be empty. grant_len={}", grant_len);
       return {};
     }
 
-    size_t sdu_size = sdu.buf.length();
-    srsgnb_sanity_check(
-        sdu_size == front_size, "Tx PDU size different than front size ({} != {})", sdu_size, front_size);
+    size_t sdu_len = sdu.buf.length();
+    srsgnb_sanity_check(sdu_len == front_len, "Mismatching lengths: sdu_len={}, front_len={}", sdu_len, front_len);
 
     // In TM there is no header, just pass the plain SDU
     byte_buffer_slice_chain pdu = {};
     pdu.push_back(std::move(sdu.buf));
-    logger.log_info("Created PDU: {} bytes. Provided space ({} B)", sdu_size, nof_bytes);
+    logger.log_info("Tx PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
     metrics.metrics_add_pdus(1, pdu.length());
     handle_buffer_state_update();
 
