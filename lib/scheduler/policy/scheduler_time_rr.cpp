@@ -146,9 +146,10 @@ alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocat
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
-    const ue_cell&               ue_cc       = u.get_cell(to_ue_cell_index(i));
-    const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
-    if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_dl_enabled(res_grid.get_pdcch_slot())) {
+    const ue_cell&               ue_cc           = u.get_cell(to_ue_cell_index(i));
+    const ue_cell_configuration& ue_cell_cfg     = ue_cc.cfg();
+    const cell_configuration&    cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
+    if (not cell_cfg_common.is_dl_enabled(res_grid.get_pdcch_slot())) {
       // DL needs to be active for PDCCH in this slot.
       continue;
     }
@@ -170,29 +171,36 @@ alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocat
       const bwp_uplink_common& bwp_ul = ue_cell_cfg.ul_bwp_common(
           ss_cfg->type == search_space_configuration::type_t::common ? to_bwp_id(0) : ue_cc.active_bwp_id());
 
-      for (unsigned time_res = 0; time_res != pusch_list.size(); ++time_res) {
-        const unsigned k2 = pusch_list[time_res].k2;
-        if (not res_grid.get_cell_cfg_common(ue_cc.cell_index).is_ul_enabled(pdcch_slot + k2)) {
+      // Search minimum k2 that corresponds to a UL slot.
+      unsigned time_res = 0;
+      for (; time_res != pusch_list.size(); ++time_res) {
+        if (cell_cfg_common.is_ul_enabled(pdcch_slot + pusch_list[time_res].k2)) {
           // UL needs to be active for PUSCH in this slot.
-          continue;
+          break;
         }
-        const ofdm_symbol_range        pusch_symbols = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
-        const cell_slot_resource_grid& grid          = res_grid.get_pusch_grid(ue_cc.cell_index, k2);
-        const prb_bitmap               used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
-        const unsigned                 nof_req_prbs =
-            is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
-        const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
-        bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
-        if (is_retx) {
-          // In case of Retx, the #CRBs need to stay the same.
-          are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().prbs.prbs().length();
-        }
-        if (are_crbs_valid) {
-          const bool res_allocated = pusch_alloc.allocate_ul_grant(
-              ue_pusch_grant{&u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, time_res, ss_cfg->id, agg_lvl});
-          if (res_allocated) {
-            return true;
-          }
+      }
+      if (time_res == pusch_list.size()) {
+        // no valid k2 found.
+        continue;
+      }
+
+      const unsigned                 k2            = pusch_list[time_res].k2;
+      const ofdm_symbol_range        pusch_symbols = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
+      const cell_slot_resource_grid& grid          = res_grid.get_pusch_grid(ue_cc.cell_index, k2);
+      const prb_bitmap               used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
+      const unsigned                 nof_req_prbs =
+          is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
+      const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
+      bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+      if (is_retx) {
+        // In case of Retx, the #CRBs need to stay the same.
+        are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().prbs.prbs().length();
+      }
+      if (are_crbs_valid) {
+        const bool res_allocated = pusch_alloc.allocate_ul_grant(
+            ue_pusch_grant{&u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, time_res, ss_cfg->id, agg_lvl});
+        if (res_allocated) {
+          return true;
         }
       }
     }
