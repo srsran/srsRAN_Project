@@ -186,7 +186,8 @@ public:
 
 std::shared_ptr<pucch_detector_factory>
 create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
-                                 std::shared_ptr<pseudo_random_generator_factory>      prgf);
+                                 std::shared_ptr<pseudo_random_generator_factory>      prgf,
+                                 std::shared_ptr<channel_equalizer_factory>            eqzrf);
 
 class pucch_processor_factory
 {

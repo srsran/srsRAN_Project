@@ -14,6 +14,7 @@
 #pragma once
 
 #include "srsgnb/phy/upper/channel_processors/pucch_detector.h"
+#include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 
@@ -38,8 +39,9 @@ public:
   /// \frac{n}{N_{\textup{sc}}^{\textup{RB}}}, \quad n = 0, \dots, N_{\textup{sc}}^{\textup{RB}}-1\}\f$, where
   /// \f$N_{\textup{sc}}^{\textup{RB}} = 12\f$ is the number of subcarriers in a resource block.
   pucch_detector_impl(std::unique_ptr<low_papr_sequence_collection> lpsc,
-                      std::unique_ptr<pseudo_random_generator>      prg) :
-    low_papr(std::move(lpsc)), pseudo_random(std::move(prg))
+                      std::unique_ptr<pseudo_random_generator>      prg,
+                      std::unique_ptr<channel_equalizer>            eqzr) :
+    low_papr(std::move(lpsc)), pseudo_random(std::move(prg)), equalizer(std::move(eqzr))
   {
   }
 
@@ -78,24 +80,38 @@ private:
   std::unique_ptr<low_papr_sequence_collection> low_papr;
   /// Pseudorandom sequence generator.
   std::unique_ptr<pseudo_random_generator> pseudo_random;
-  /// \brief Buffer for storing the spread data sequence.
+  /// Channel equalizer.
+  std::unique_ptr<channel_equalizer> equalizer;
+  /// \brief Tensor for storing the spread data sequence.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
-  std::array<cf_t, MAX_ALLOCATED_RE_F1 / 2> time_spread_buffer;
-  /// View of the data sequence buffer.
-  span<cf_t> time_spread_sequence;
-  /// Buffer for storing the channel estimates corresponding to the spread data sequence.
-  std::array<cf_t, MAX_ALLOCATED_RE_F1 / 2> ch_estimates_buffer;
-  /// View of the channel estimates buffer.
-  span<cf_t> ch_estimates;
+  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
+                cf_t,
+                MAX_ALLOCATED_RE_F1 / 2,
+                channel_equalizer::re_list::dims>
+      time_spread_sequence;
+  /// \brief Tensor for storing the channel estimates corresponding to the spread data sequence.
+  /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
+  static_tensor<std::underlying_type_t<channel_equalizer::ch_est_list::dims>(
+                    channel_equalizer::ch_est_list::dims::nof_dims),
+                cf_t,
+                MAX_ALLOCATED_RE_F1 / 2,
+                channel_equalizer::ch_est_list::dims>
+      ch_estimates;
   /// \brief Buffer for storing the spread data sequence after equalization.
   /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
-  std::array<cf_t, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_buffer;
-  /// View of the equalized spread data sequence buffer.
-  span<cf_t> eq_time_spread_sequence;
-  /// Buffer for storing the equivalent channel noise variances corresponding to the equalized spread data sequence.
-  std::array<float, MAX_ALLOCATED_RE_F1 / 2> eq_time_spread_noise_var_buffer;
-  /// View of the equivalent (post-equalization) channel noise variance buffer.
-  span<float> eq_time_spread_noise_var;
+  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
+                cf_t,
+                MAX_ALLOCATED_RE_F1 / 2,
+                channel_equalizer::re_list::dims>
+      eq_time_spread_sequence;
+  /// \brief Buffer for storing the equivalent channel noise variances corresponding to the equalized spread data
+  /// sequence.
+  /// \remark Only half of the allocated symbols contain data, the other half being used for DM-RS.
+  static_tensor<std::underlying_type_t<channel_equalizer::re_list::dims>(channel_equalizer::re_list::dims::nof_dims),
+                float,
+                MAX_ALLOCATED_RE_F1 / 2,
+                channel_equalizer::re_list::dims>
+      eq_time_spread_noise_var;
   /// Buffer for storing alpha indices.
   std::array<unsigned, MAX_NSYMB_PER_SLOT / 2> alpha_buffer;
   /// View of the alpha indices buffer.

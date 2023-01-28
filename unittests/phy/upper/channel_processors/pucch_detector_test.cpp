@@ -51,7 +51,8 @@ protected:
       std::shared_ptr<low_papr_sequence_collection_factory> low_papr_col =
           create_low_papr_sequence_collection_sw_factory(low_papr_gen);
       std::shared_ptr<pseudo_random_generator_factory> pseudorandom = create_pseudo_random_generator_sw_factory();
-      detector_factory = create_pucch_detector_factory_sw(low_papr_col, pseudorandom);
+      std::shared_ptr<channel_equalizer_factory>       equalizer    = create_channel_equalizer_factory_zf();
+      detector_factory = create_pucch_detector_factory_sw(low_papr_col, pseudorandom, equalizer);
     }
     ASSERT_NE(detector_factory, nullptr);
   }

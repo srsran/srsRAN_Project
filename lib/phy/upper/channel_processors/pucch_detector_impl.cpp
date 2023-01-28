@@ -13,6 +13,7 @@
 
 #include "pucch_detector_impl.h"
 #include "srsgnb/srsvec/copy.h"
+#include "srsgnb/srsvec/mean.h"
 
 using namespace srsgnb;
 
@@ -170,25 +171,6 @@ static void validate_config(const pucch_detector::format1_configuration& config)
   srsgnb_assert(config.nof_harq_ack <= 2, "At most two ACK bits - requested {}.", config.nof_harq_ack);
 }
 
-// TEMPORARY: need to refactor equalizer interface.
-static void equalize(span<cf_t>       symbols_out,
-                     span<float>      noise_out,
-                     span<const cf_t> symbols_in,
-                     span<const cf_t> channels,
-                     float            noise_var,
-                     float            beta)
-{
-  std::transform(symbols_in.begin(), symbols_in.end(), channels.begin(), symbols_out.begin(), [beta](cf_t a, cf_t b) {
-    return a / b / beta;
-  });
-  float beta2 = beta * beta;
-  std::transform(channels.begin(), channels.end(), noise_out.begin(), [beta2, noise_var](cf_t a) {
-    float a2 = std::abs(a);
-    a2 *= a2;
-    return noise_var / a2 / beta2;
-  });
-}
-
 // Given the detected symbol and the corresponding equivalent noise variance, demodulates the symbol into nof_bits bits.
 // It also returns the detection metric used to decide whether the PUCCH was transmitted or not by threshold comparison.
 static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_noise_var)
@@ -219,11 +201,11 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   validate_config(config);
 
   // Total number of REs used for PUCCH data (recall that positive integer division implies taking the floor).
-  unsigned nof_res         = (config.nof_symbols / 2) * NRE;
-  time_spread_sequence     = span<cf_t>(time_spread_buffer).first(nof_res);
-  ch_estimates             = span<cf_t>(ch_estimates_buffer).first(nof_res);
-  eq_time_spread_sequence  = span<cf_t>(eq_time_spread_buffer).first(nof_res);
-  eq_time_spread_noise_var = span<float>(eq_time_spread_noise_var_buffer).first(nof_res);
+  unsigned nof_res = (config.nof_symbols / 2) * NRE;
+  time_spread_sequence.resize({nof_res, 1});
+  ch_estimates.resize({nof_res, 1, 1});
+  eq_time_spread_sequence.resize({nof_res, 1});
+  eq_time_spread_noise_var.resize({nof_res, 1});
 
   // Compute the number of data symbols before frequency hop.
   nof_data_symbols         = config.nof_symbols / 2;
@@ -237,12 +219,13 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   extract_data_and_estimates(
       grid, estimates, config.start_symbol_index, config.starting_prb, config.second_hop_prb, config.port);
 
-  equalize(eq_time_spread_sequence,
-           eq_time_spread_noise_var,
-           time_spread_sequence,
-           ch_estimates,
-           estimates.get_noise_variance(config.port),
-           config.beta_pucch);
+  float port_noise_var = estimates.get_noise_variance(config.port);
+  equalizer->equalize(eq_time_spread_sequence,
+                      eq_time_spread_noise_var,
+                      time_spread_sequence,
+                      ch_estimates,
+                      span<float>(&port_noise_var, 1),
+                      config.beta_pucch);
 
   marginalize_w_and_r_out(config);
 
@@ -309,22 +292,23 @@ void pucch_detector_impl::extract_data_and_estimates(const resource_grid_reader&
   for (; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, skip += NRE, symbol_index += 2) {
     // Index of the first subcarrier assigned to PUCCH, before hopping.
     unsigned   k_init         = NRE * first_prb;
-    span<cf_t> sequence_chunk = span<cf_t>(time_spread_sequence).subspan(skip, NRE);
+    span<cf_t> sequence_chunk = time_spread_sequence.get_data().subspan(skip, NRE);
     grid.get(sequence_chunk, port, symbol_index, k_init);
 
     span<const cf_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
-    srsvec::copy(ch_estimates.subspan(skip, NRE), tmp.subspan(k_init, NRE));
+    srsvec::copy(ch_estimates.get_data().subspan(skip, NRE), tmp.subspan(k_init, NRE));
   }
 
   for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE, symbol_index += 2) {
     // Index of the first subcarrier assigned to PUCCH, after hopping. Note that we only enter this loop if
     // second_prb.has_value().
     unsigned   k_init         = NRE * second_prb.value();
-    span<cf_t> sequence_chunk = span<cf_t>(time_spread_sequence).subspan(skip, NRE);
+    span<cf_t> sequence_chunk = time_spread_sequence.get_data().subspan(skip, NRE);
     grid.get(sequence_chunk, port, symbol_index, k_init);
 
-    span<const cf_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
-    std::copy_n(tmp.begin() + k_init, NRE, ch_estimates.begin() + skip);
+    span<const cf_t> tmp_in  = estimates.get_symbol_ch_estimate(symbol_index, port).subspan(k_init, NRE);
+    span<cf_t>       tmp_out = ch_estimates.get_data().subspan(skip, NRE);
+    srsvec::copy(tmp_out, tmp_in);
   }
 }
 
@@ -396,7 +380,7 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
   for (unsigned i_symbol = 0; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, offset += NRE) {
     span<const cf_t> seq_r = low_papr->get(group_index, sequence_number, alpha_indices[i_symbol]);
     for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
+      detected_symbol += eq_time_spread_sequence[{offset + i_elem}] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
     }
   }
 
@@ -407,12 +391,13 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
     span<const cf_t> seq_r =
         low_papr->get(group_index, sequence_number, alpha_indices[i_symbol + nof_data_symbols_pre_hop]);
     for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
+      detected_symbol += eq_time_spread_sequence[{offset + i_elem}] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
     }
   }
 
-  auto n_repetitions = static_cast<float>(eq_time_spread_sequence.size());
+  auto n_repetitions = static_cast<float>(eq_time_spread_sequence.get_data().size());
   detected_symbol /= n_repetitions;
-  eq_noise_var = std::accumulate(eq_time_spread_noise_var.begin(), eq_time_spread_noise_var.end(), 0.0F) /
-                 n_repetitions / n_repetitions;
+  // For the noise variance, we have to compute the sum of all variances and divide by the square of their number: same
+  // as computing the mean and dividing again buy their number.
+  eq_noise_var = srsvec::mean(eq_time_spread_noise_var.get_data()) / n_repetitions;
 }

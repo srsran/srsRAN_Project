@@ -78,7 +78,7 @@ target_link_libraries(pucch_demodulator_format2_test
 add_test_vector(pucch_demodulator_format2_test pucch_demodulator_format2_test_data.tar.gz "")
 
 add_executable(pucch_detector_test pucch_detector_test.cpp)
-target_link_libraries(pucch_detector_test srsgnb_channel_processors srslog gtest gtest_main)
+target_link_libraries(pucch_detector_test srsgnb_channel_processors srsgnb_channel_equalizer srslog gtest gtest_main)
 add_test_vector(pucch_detector_test pucch_detector_test_data.tar.gz "")
 
 add_executable(pucch_processor_format1_unittest pucch_processor_format1_unittest.cpp)

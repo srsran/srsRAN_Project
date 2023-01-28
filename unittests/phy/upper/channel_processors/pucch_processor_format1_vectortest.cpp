@@ -88,13 +88,13 @@ protected:
         create_dmrs_pucch_estimator_factory_sw(prg_factory, lpc_factory, port_chan_estimator_factory);
     ASSERT_NE(estimator_factory, nullptr) << "Cannot create DM-RS PUCCH estimator factory.";
 
-    std::shared_ptr<pucch_detector_factory> detector_factory =
-        create_pucch_detector_factory_sw(lpc_factory, prg_factory);
-    ASSERT_NE(detector_factory, nullptr);
-
     // Create factories required by the PUCCH demodulator factory.
     std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_factory_zf();
     ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory.";
+
+    std::shared_ptr<pucch_detector_factory> detector_factory =
+        create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory);
+    ASSERT_NE(detector_factory, nullptr);
 
     std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
     ASSERT_NE(demod_factory, nullptr) << "Cannot create channel modulation factory.";

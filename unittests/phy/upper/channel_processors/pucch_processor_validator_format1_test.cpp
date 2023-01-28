@@ -211,7 +211,7 @@ protected:
 
       // Create PUCCH detector factory.
       std::shared_ptr<pucch_detector_factory> detector_factory =
-          create_pucch_detector_factory_sw(lpc_factory, prg_factory);
+          create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory);
       ASSERT_NE(detector_factory, nullptr) << "Cannot create PUCCH detector factory.";
 
       // Create UCI decoder factory.

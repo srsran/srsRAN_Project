@@ -293,14 +293,17 @@ class pucch_detector_factory_sw : public pucch_detector_factory
 private:
   std::shared_ptr<low_papr_sequence_collection_factory> low_papr_factory;
   std::shared_ptr<pseudo_random_generator_factory>      prg_factory;
+  std::shared_ptr<channel_equalizer_factory>            eqzr_factory;
 
 public:
   pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
-                            std::shared_ptr<pseudo_random_generator_factory>      prgf) :
-    low_papr_factory(std::move(lpcf)), prg_factory(std::move(prgf))
+                            std::shared_ptr<pseudo_random_generator_factory>      prgf,
+                            std::shared_ptr<channel_equalizer_factory>            eqzrf) :
+    low_papr_factory(std::move(lpcf)), prg_factory(std::move(prgf)), eqzr_factory(std::move(eqzrf))
   {
     srsgnb_assert(low_papr_factory, "Invalid low-PAPR sequence collection factory.");
     srsgnb_assert(prg_factory, "Invalid pseudorandom generator factory.");
+    srsgnb_assert(eqzr_factory, "Invalid channel equalizer factory.");
   }
 
   std::unique_ptr<pucch_detector> create() override
@@ -309,7 +312,8 @@ public:
     std::generate(alphas.begin(), alphas.end(), [n = 0U]() mutable {
       return (TWOPI * static_cast<float>(n++) / static_cast<float>(NRE));
     });
-    return std::make_unique<pucch_detector_impl>(low_papr_factory->create(1, 0, alphas), prg_factory->create());
+    return std::make_unique<pucch_detector_impl>(
+        low_papr_factory->create(1, 0, alphas), prg_factory->create(), eqzr_factory->create());
   }
 };
 
@@ -687,9 +691,10 @@ srsgnb::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_fa
 
 std::shared_ptr<pucch_detector_factory>
 srsgnb::create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
-                                         std::shared_ptr<pseudo_random_generator_factory>      prgf)
+                                         std::shared_ptr<pseudo_random_generator_factory>      prgf,
+                                         std::shared_ptr<channel_equalizer_factory>            eqzrf)
 {
-  return std::make_shared<pucch_detector_factory_sw>(std::move(lpcf), std::move(prgf));
+  return std::make_shared<pucch_detector_factory_sw>(std::move(lpcf), std::move(prgf), std::move(eqzrf));
 }
 
 std::shared_ptr<pusch_decoder_factory>
