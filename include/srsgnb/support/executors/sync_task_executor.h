@@ -33,7 +33,6 @@ public:
   sync_task_executor(task_executor& exec_) : exec(&exec_) {}
   void execute(unique_task task) override
   {
-    fmt::print("-- SLOT IND START\n");
     std::unique_lock<std::mutex> lock(mutex);
     done = false;
     std::unique_ptr<bool, setter_deleter> unique_setter(&done, setter_deleter{this});
@@ -41,7 +40,6 @@ public:
     while (not done) {
       cvar.wait(lock);
     }
-    fmt::print("-- SLOT IND END\n");
   }
   void defer(unique_task task) override { execute(std::move(task)); }
 
