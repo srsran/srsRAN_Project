@@ -177,8 +177,8 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cel
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0       = 0;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type = sch_mapping_type::typeA;
-  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols  = {
-       std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 14};
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols =
+      ofdm_symbol_range{std::max(2U, cfg.init_dl_bwp.pdcch_common.coreset0->duration), 14};
 
   // Configure PCCH.
   cfg.pcch_cfg.default_paging_cycle = paging_cycle::rf128;
@@ -280,16 +280,14 @@ pusch_config srsgnb::config_helpers::make_default_pusch_config()
                                                          .pathloss_ref_rs          = {},
                                                          .sri_pusch_mapping        = {}};
   cfg.pusch_pwr_ctrl.value().p0_alphasets.push_back(pusch_config::pusch_power_control::p0_pusch_alphaset{
-      .id             = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(0),
-      .p0             = 0,
-      .p0_pusch_alpha = alpha::alpha1});
+      .id = static_cast<p0_pusch_alphaset_id>(0), .p0 = 0, .p0_pusch_alpha = alpha::alpha1});
   cfg.pusch_pwr_ctrl.value().pathloss_ref_rs.push_back(pusch_config::pusch_power_control::pusch_pathloss_ref_rs{
       .id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
       .rs = static_cast<ssb_id_t>(0)});
   cfg.pusch_pwr_ctrl.value().sri_pusch_mapping.push_back(pusch_config::pusch_power_control::sri_pusch_pwr_ctrl{
       .id                           = static_cast<pusch_config::pusch_power_control::sri_pusch_pwr_ctrl_id>(0),
       .sri_pusch_pathloss_ref_rs_id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
-      .sri_p0_pusch_alphaset_id     = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(0),
+      .sri_p0_pusch_alphaset_id     = static_cast<p0_pusch_alphaset_id>(0),
       .closed_loop_idx = pusch_config::pusch_power_control::sri_pusch_pwr_ctrl::sri_pusch_closed_loop_index::i0});
   cfg.res_alloc      = pusch_config::resource_allocation::resource_allocation_type_1;
   cfg.trans_precoder = pusch_config::transform_precoder::disabled;

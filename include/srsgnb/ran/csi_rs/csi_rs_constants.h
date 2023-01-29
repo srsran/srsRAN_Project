@@ -31,4 +31,8 @@ static constexpr unsigned MAX_NOF_CSI_SSB_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG 
 /// maxNrofCSI-IM-ResourceSetsPerConfig.
 static constexpr unsigned MAX_NOF_CSI_IM_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG = 16;
 
+/// Maximum number of resources per resource configuration. See TS 38.331, \c
+/// maxNrofNZP-CSI-RS-ResourcesPerConfig.
+static constexpr unsigned MAX_NOF_NZP_CSI_RS_RESOURCES_PER_CONFIG = 128;
+
 } // namespace srsgnb

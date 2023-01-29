@@ -1,0 +1,199 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "codebook_config.h"
+#include "csi_meas_config.h"
+#include "csi_resource_config.h"
+#include "csi_rs_constants.h"
+#include "srsgnb/ran/pusch/pusch_configuration.h"
+#include "srsgnb/ran/pusch/pusch_constants.h"
+
+namespace srsgnb {
+
+enum class csi_resource_periodicity;
+
+/// \brief CSI-ReportConfigId is used to identify one CSI-ReportConfig.
+/// \remark See TS 38.331, \c CSI-ReportConfigId.
+enum csi_report_config_id_t : uint8_t {
+  MIN_CSI_REPORT_CONFIG_ID   = 0,
+  MAX_CSI_REPORT_CONFIG_ID   = 47,
+  MAX_NOF_CSI_REPORT_CONFIGS = 48,
+};
+
+/// \brief Periodicity and slot offset.
+/// \remark See TS 38.331, \c CSI-ReportPeriodicityAndOffset.
+enum class csi_report_periodicity {
+  slots4   = 4,
+  slots5   = 5,
+  slots8   = 8,
+  slots10  = 10,
+  slots16  = 16,
+  slots20  = 20,
+  slots40  = 40,
+  slots80  = 80,
+  slots160 = 160,
+  slots320 = 320
+};
+
+/// CSI-ReportConfig is used to configure a periodic or semi-persistent report sent on PUCCH on the cell in which the
+/// CSI-ReportConfig is included, or to configure a semi-persistent or aperiodic report sent on PUSCH triggered by DCI
+/// received on the cell in which the CSI-ReportConfig is included.
+/// \remark See TS 38.331, \c CSI-ReportConfig.
+struct csi_report_config {
+  /// See TS 38.331, \c csi-ReportingBand.
+  static constexpr unsigned MAX_NOF_CSI_REPORTING_SUBBANDS = 19;
+
+  /// \brief PUCCH resource for the associated uplink BWP. Only PUCCH-Resource of format 2, 3 and 4 is supported.
+  /// \remark See TS 38.331, \c pucch-Resource under \c CSI-ReportConfig.
+  struct pucch_csi_resource {
+    bwp_id_t ul_bwp;
+    unsigned pucch_res_id;
+  };
+
+  /// See TS 38.331, \c reportConfigType under \c CSI-ReportConfig.
+  struct periodic_report {
+    csi_report_periodicity report_slot_period;
+    /// Values {0,...,(period_in_nof_slot - 1)}.
+    unsigned                                        report_slot_offset;
+    static_vector<pucch_csi_resource, MAX_NOF_BWPS> pucch_csi_res_list;
+  };
+  using semi_persistent_report_on_pucch = periodic_report;
+  struct semi_persistent_report_on_pusch {
+    /// Values {slots5, slots10, slots20, slots40, slots80, slots160, slots320}.
+    csi_report_periodicity slot_cfg;
+    /// Timing offset Y for semi persistent reporting using PUSCH. This field lists the allowed offset values. This list
+    /// must have the same number of entries as the pusch-TimeDomainAllocationList in PUSCH-Config. A particular value
+    /// is indicated in DCI.Values {0,...,32}.
+    static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> report_slot_offset_list;
+    /// Index of the p0-alpha set determining the power control for this CSI report transmission.
+    p0_pusch_alphaset_id p0_alpha;
+  };
+  struct aperiodic_report {
+    /// Timing offset Y for aperiodic reporting using PUSCH. This field lists the allowed offset values. This list
+    /// must have the same number of entries as the pusch-TimeDomainAllocationList in PUSCH-Config. A particular value
+    /// is indicated in DCI.Values {0,...,32}.
+    static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> report_slot_offset_list;
+  };
+
+  /// \brief The CSI related quantities to report.
+  /// \remark See TS 38.214, clause 5.2.1 and TS 38.331, \c reportQuantity.
+  enum class report_quantity_type_t {
+    none,
+    cri_ri_pmi_cqi,
+    cri_ri_i1,
+    cri_ri_i1_cqi,
+    cri_ri_cqi,
+    cri_rsrp,
+    ssb_index_rsrp,
+    cri_ri_li_pmi_cqi
+  };
+
+  /// PRB bundling size to assume for CQI calculation when reportQuantity is CRI/RI/i1/CQI. Value \c none means UE
+  /// assumes that no PRB bundling is applied.
+  /// \remark See TS 38.331, \c pdsch-BundleSizeForCSI.
+  enum class csi_ri_i1_cqi_pdsch_bundle_size_for_csi { n2, n4, none };
+
+  /// \brief Indicates whether the UE shall report a single (wideband) or multiple (subband) CQI.
+  /// \remark See TS 38.331, \c cqi-FormatIndicator.
+  enum class cqi_format_indicator { wideband_cqi, subband_cqi, none };
+  /// \brief Indicates whether the UE shall report a single (wideband) or multiple (subband) PMI.
+  /// \remark See TS 38.331, \c pmi-FormatIndicator.
+  enum class pmi_format_indicator { wideband_pmi, subband_pmi, none };
+
+  /// \brief Which CQI table to use for CQI calculation.
+  /// \remark See TS 38.331, \c cqi-Table in \c CSI-ReportConfig and TS 38.214, clause 5.2.2.1.
+  enum class cqi_table_t { table1, table2, table3, spare1 };
+
+  /// Indicates one out of two possible BWP-dependent values for the subband size as indicated in TS 38.214,
+  /// table 5.2.1.4-2.
+  /// \remark See TS 38.331, \c subbandSize in \c CSI-ReportConfig.
+  enum class subband_size_t { value1, value2 };
+
+  /// \brief See TS 38.331, \c PortIndexFor8Ranks in \c CSI-ReportConfig.
+  struct port_index_for_8_ranks {
+    /// Port-Index configuration for up to rank 8. If present, the network configures port indexes for at least one of
+    /// the ranks.
+    /// \remark See TS 38.331, \c portIndex8.
+    struct port_index_8 {
+      /// Values {0,...,7}.
+      optional<unsigned>         rank1_8;
+      static_vector<unsigned, 2> rank2_8;
+      static_vector<unsigned, 3> rank3_8;
+      static_vector<unsigned, 4> rank4_8;
+      static_vector<unsigned, 5> rank5_8;
+      static_vector<unsigned, 6> rank6_8;
+      static_vector<unsigned, 7> rank7_8;
+      static_vector<unsigned, 8> rank8_8;
+    };
+
+    struct port_index_4 {
+      /// Values {0,...,3}.
+      optional<unsigned>         rank1_4;
+      static_vector<unsigned, 2> rank2_4;
+      static_vector<unsigned, 3> rank3_4;
+      static_vector<unsigned, 4> rank4_4;
+    };
+
+    struct port_index_2 {
+      /// Values {0,...,1}.
+      optional<unsigned>         rank1_2;
+      static_vector<unsigned, 2> rank2_2;
+    };
+
+    struct port_index_1 {};
+
+    variant<port_index_1, port_index_2, port_index_4, port_index_8> port_index;
+  };
+
+  csi_report_config_id_t report_cfg_id;
+  /// Indicates in which serving cell the CSI-ResourceConfig indicated below are to be found. If the field is absent,
+  /// the resources are on the same serving cell as this report configuration.
+  optional<du_cell_index_t> carrier;
+  /// Resources for channel measurement.
+  csi_res_config_id_t res_for_channel_meas;
+  /// CSI IM resources for interference measurement.
+  optional<csi_res_config_id_t> csi_im_res_for_interference;
+  /// NZP CSI RS resources for interference measurement.
+  optional<csi_res_config_id_t> nzp_csi_rs_res_for_interference;
+  /// Time domain behavior of reporting configuration.
+  variant<periodic_report, semi_persistent_report_on_pucch, semi_persistent_report_on_pusch, aperiodic_report>
+                         report_cfg_type;
+  report_quantity_type_t report_qty_type;
+  /// Relevant only when \c report_quantity_type_t is of type \c cri_ri_i1_cqi.
+  csi_ri_i1_cqi_pdsch_bundle_size_for_csi pdsch_bundle_size_for_csi{csi_ri_i1_cqi_pdsch_bundle_size_for_csi::none};
+  cqi_format_indicator                    cqi_format_ind{cqi_format_indicator::none};
+  pmi_format_indicator                    pmi_format_ind{pmi_format_indicator::none};
+  /// Indicates a contiguous or non-contiguous subset of subbands in the bandwidth part which CSI shall be reported
+  /// for. This field is absent if there are less than 24 PRBs. Values {3,...,19}. See TS 38.331, \c csi-ReportingBand.
+  tiny_optional<unsigned, 0> nof_csi_reporting_subbands;
+  /// Used in conjunction with \c nof_csi_reporting_subbands, where each bit in the bit-string represents one subband.
+  bounded_bitset<MAX_NOF_CSI_REPORTING_SUBBANDS> csi_reporting_subbands_bitmap;
+  /// Time domain measurement restriction for the channel (signal) measurements. See TS 38.214, clause 5.2.1.1.
+  bool is_time_restrictions_for_channel_meas_configured{false};
+  /// Time domain measurement restriction for interference measurements. See TS 38.214, clause 5.2.1.1.
+  bool is_time_restrictions_for_interference_meas_configured{false};
+  /// Codebook configuration for Type-1 or Type-2 including codebook subset restriction.
+  optional<codebook_config> codebook_cfg;
+  /// Turning on/off group beam based reporting.
+  bool is_group_based_beam_reporting_enabled;
+  /// Value is relevant only when \c is_group_based_beam_reporting_enabled is false.
+  optional<unsigned>    nof_reported_rs;
+  optional<cqi_table_t> cqi_table;
+  /// If csi-ReportingBand is absent, the UE shall ignore this field.
+  subband_size_t subband_size;
+  /// Port indication for RI/CQI calculation. For each CSI-RS resource in the linked ResourceConfig for channel
+  /// measurement, a port indication for each rank R, indicating which R ports to use. Applicable only for non-PMI
+  /// feedback. See TS 38.214, clause 5.2.1.4.2.
+  static_vector<port_index_for_8_ranks, MAX_NOF_NZP_CSI_RS_RESOURCES_PER_CONFIG> nonn_pmi_port_indication;
+};
+
+} // namespace srsgnb

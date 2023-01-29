@@ -11,6 +11,7 @@
 #pragma once
 
 #include "csi_rs_constants.h"
+#include "csi_rs_id.h"
 
 namespace srsgnb {
 

@@ -39,6 +39,9 @@ static constexpr unsigned MAX_NOF_DMRS_SYMBOLS = 4 * 2;
 /// (i.e., <tt>MAX_RB * NRE / 2</tt>) is assigned a DM-RS symbol.
 static constexpr unsigned MAX_NOF_DMRS_SUBC = MAX_RB * NRE / 2;
 
+/// Maximum number of PUSCH time domain resource allocations. See TS 38.331, \c maxNrofUL-Allocations.
+static constexpr unsigned MAX_NOF_PUSCH_TD_RES_ALLOCS = 16;
+
 } // namespace pusch_constants
 
 } // namespace srsgnb

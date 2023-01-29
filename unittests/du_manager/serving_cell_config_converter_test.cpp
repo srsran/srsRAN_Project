@@ -43,16 +43,14 @@ pusch_config make_initial_pusch_config()
                                                          .pathloss_ref_rs          = {},
                                                          .sri_pusch_mapping        = {}};
   cfg.pusch_pwr_ctrl.value().p0_alphasets.push_back(pusch_config::pusch_power_control::p0_pusch_alphaset{
-      .id             = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(0),
-      .p0             = 0,
-      .p0_pusch_alpha = alpha::alpha1});
+      .id = static_cast<p0_pusch_alphaset_id>(0), .p0 = 0, .p0_pusch_alpha = alpha::alpha1});
   cfg.pusch_pwr_ctrl.value().pathloss_ref_rs.push_back(pusch_config::pusch_power_control::pusch_pathloss_ref_rs{
       .id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
       .rs = static_cast<ssb_id_t>(0)});
   cfg.pusch_pwr_ctrl.value().sri_pusch_mapping.push_back(pusch_config::pusch_power_control::sri_pusch_pwr_ctrl{
       .id                           = static_cast<pusch_config::pusch_power_control::sri_pusch_pwr_ctrl_id>(0),
       .sri_pusch_pathloss_ref_rs_id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(0),
-      .sri_p0_pusch_alphaset_id     = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(0),
+      .sri_p0_pusch_alphaset_id     = static_cast<p0_pusch_alphaset_id>(0),
       .closed_loop_idx = pusch_config::pusch_power_control::sri_pusch_pwr_ctrl::sri_pusch_closed_loop_index::i0});
   cfg.res_alloc = pusch_config::resource_allocation::resource_allocation_type_1;
   cfg.pusch_td_alloc_list.resize(1);
@@ -599,9 +597,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pusch_cfg_conversion)
   dest_pusch_cfg.pusch_mapping_type_b_dmrs.reset();
 
   dest_pusch_cfg.pusch_pwr_ctrl.value().p0_alphasets.push_back(pusch_config::pusch_power_control::p0_pusch_alphaset{
-      .id             = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(1),
-      .p0             = 2,
-      .p0_pusch_alpha = alpha::alpha05});
+      .id = static_cast<p0_pusch_alphaset_id>(1), .p0 = 2, .p0_pusch_alpha = alpha::alpha05});
   // Erase/Release.
   dest_pusch_cfg.pusch_pwr_ctrl.value().p0_alphasets.erase(dest_pusch_cfg.pusch_pwr_ctrl.value().p0_alphasets.begin());
 
@@ -617,7 +613,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pusch_cfg_conversion)
       pusch_config::pusch_power_control::sri_pusch_pwr_ctrl{
           .id                           = static_cast<pusch_config::pusch_power_control::sri_pusch_pwr_ctrl_id>(1),
           .sri_pusch_pathloss_ref_rs_id = static_cast<pusch_config::pusch_power_control::pusch_pathloss_ref_rs_id>(1),
-          .sri_p0_pusch_alphaset_id     = static_cast<pusch_config::pusch_power_control::p0_pusch_alphaset_id>(1),
+          .sri_p0_pusch_alphaset_id     = static_cast<p0_pusch_alphaset_id>(1),
           .closed_loop_idx = pusch_config::pusch_power_control::sri_pusch_pwr_ctrl::sri_pusch_closed_loop_index::i0});
   // Erase/Release.
   dest_pusch_cfg.pusch_pwr_ctrl.value().sri_pusch_mapping.erase(

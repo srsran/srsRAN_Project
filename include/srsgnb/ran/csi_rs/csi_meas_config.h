@@ -10,12 +10,13 @@
 
 #pragma once
 
-#include "../../adt/variant.h"
-#include "../tci.h"
+#include "csi_report_config.h"
 #include "csi_resource_config.h"
 #include "csi_rs_id.h"
 #include "csi_rs_pattern.h"
 #include "csi_rs_types.h"
+#include "srsgnb/adt/variant.h"
+#include "srsgnb/ran/tci.h"
 
 namespace srsgnb {
 
@@ -144,6 +145,8 @@ struct csi_meas_config {
   static_vector<csi_ssb_resource_set, csi_ssb_res_set_id_t::MAX_NOF_CSI_SSB_RESOURCE_SETS> csi_ssb_res_set_list;
   /// Configured CSI resource settings as specified in TS 38.214 clause 5.2.1.2.
   static_vector<csi_resource_config, csi_res_config_id_t::MAX_NOF_CSI_RESOURCE_CONFIGS> csi_res_cfg_list;
+  /// Configured CSI report settings as specified in TS 38.214 clause 5.2.1.1.
+  static_vector<csi_report_config, csi_report_config_id_t::MAX_NOF_CSI_REPORT_CONFIGS> csi_report_cfg_list;
 };
 
 } // namespace srsgnb

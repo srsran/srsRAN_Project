@@ -18,6 +18,12 @@
 
 namespace srsgnb {
 
+enum p0_pusch_alphaset_id : uint8_t {
+  MIN_P0_PUSCH_ALPHASET_ID   = 0,
+  MAX_P0_PUSCH_ALPHASET_ID   = 29,
+  MAX_NOF_P0_PUSCH_ALPHASETS = 30
+};
+
 /// \brief Used to configure the UE specific PUSCH parameters applicable to a particular BWP.
 /// \remark See TS 38.331, PUSCH-Config.
 struct pusch_config {
@@ -25,12 +31,6 @@ struct pusch_config {
   enum class tx_config { codebook, non_codebook, not_set };
 
   struct pusch_power_control {
-    enum p0_pusch_alphaset_id : uint8_t {
-      MIN_P0_PUSCH_ALPHASET_ID   = 0,
-      MAX_P0_PUSCH_ALPHASET_ID   = 29,
-      MAX_NOF_P0_PUSCH_ALPHASETS = 30
-    };
-
     struct p0_pusch_alphaset {
       p0_pusch_alphaset_id id;
       /// P0 value for PUSCH with grant (except msg3) in steps of 1dB. When the field is absent the UE applies the value
