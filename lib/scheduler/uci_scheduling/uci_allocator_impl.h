@@ -63,10 +63,10 @@ private:
   // \param[in] pusch_grant PUSCH grant where UCI has to be allocated.
   // \param[in] uci_cfg UCI configuration for PUSCH.
   // \param[in] harq_ack_nof_bits num. of HARQ-ACK bits to reported by the UE.
-  void allocate_uci_harq_on_pusch(ul_sched_info&      pusch_grant,
-                                  const uci_on_pusch& uci_cfg,
-                                  unsigned            harq_ack_nof_bits,
-                                  unsigned            csi_part1_nof_bits);
+  void allocate_uci_on_pusch(ul_sched_info&      pusch_grant,
+                             const uci_on_pusch& uci_cfg,
+                             unsigned            harq_ack_nof_bits,
+                             unsigned            csi_part1_nof_bits);
 
   void allocate_uci_csi_on_pusch(ul_sched_info& pusch_grant, const uci_on_pusch& uci_cfg, unsigned csi_part1_nof_bits);
 

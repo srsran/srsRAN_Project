@@ -93,22 +93,109 @@ pucch_harq_resource_alloc_record pucch_resource_manager::get_next_format2_res_av
 
   const auto& pucch_res_list = pucch_cfg.pucch_res_list;
 
-  const unsigned pucch_resource_set_format2_idx = 1;
+  const unsigned PUCCH_RESOURCE_SET_FORMAT2_IDX = 1;
 
   if (available_resource != res_counter.ues_using_format2_res.end() and
       static_cast<unsigned>(available_resource - res_counter.ues_using_format2_res.begin()) <
-          pucch_cfg.pucch_res_set[pucch_resource_set_format2_idx].pucch_res_id_list.size()) {
+          pucch_cfg.pucch_res_set[PUCCH_RESOURCE_SET_FORMAT2_IDX].pucch_res_id_list.size()) {
     unsigned pucch_res_indicator =
         static_cast<unsigned>(available_resource - res_counter.ues_using_format2_res.begin());
     *available_resource = crnti;
     unsigned pucch_res_idx_from_list =
-        pucch_cfg.pucch_res_set[pucch_resource_set_format2_idx].pucch_res_id_list[pucch_res_indicator];
+        pucch_cfg.pucch_res_set[PUCCH_RESOURCE_SET_FORMAT2_IDX].pucch_res_id_list[pucch_res_indicator];
 
     return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_res_list[pucch_res_idx_from_list],
                                             .pucch_res_indicator = pucch_res_indicator};
   }
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 };
+
+static int get_res_indicator_from_pucch_res_index(unsigned            pucch_res_index,
+                                                  unsigned            pucch_res_set_index,
+                                                  const pucch_config& pucch_cfg)
+{
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+
+  auto available_resource =
+      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [pucch_res_index](const pucch_resource& res) {
+        return res.res_id == pucch_res_index;
+      });
+
+  if (available_resource == pucch_res_list.end()) {
+    return -1;
+  }
+
+  srsgnb_sanity_check(pucch_res_index < pucch_cfg.pucch_res_set.size(),
+                      "Requested PUCCH resource set with index {} is out-of-bound",
+                      pucch_res_index);
+  srsgnb_sanity_check(pucch_res_index == pucch_cfg.pucch_res_set[pucch_res_index].pucch_res_set_id,
+                      "PUCCH Resource set not properly indexed.",
+                      pucch_res_index);
+  pucch_cfg.pucch_res_set[pucch_res_index];
+
+  auto it_pucch_res_set = std::find_if(pucch_cfg.pucch_res_set[pucch_res_set_index].pucch_res_id_list.begin(),
+                                       pucch_cfg.pucch_res_set[pucch_res_set_index].pucch_res_id_list.end(),
+                                       [pucch_res_index](unsigned res_idx) { return res_idx == pucch_res_index; });
+
+  if (it_pucch_res_set != pucch_cfg.pucch_res_set[pucch_res_index].pucch_res_id_list.end()) {
+    // Apply iterator arithmetic to get the PUCCH resource indicator (it corresponds to the index of the item in the
+    // vector).
+    return static_cast<unsigned>(it_pucch_res_set - pucch_cfg.pucch_res_set[pucch_res_index].pucch_res_id_list.begin());
+  }
+
+  // Return a negative value if this value was not found.
+  return -1;
+}
+
+pucch_harq_resource_alloc_record
+pucch_resource_manager::get_csi_format2_res(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
+{
+  srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+                      "PDCCH being allocated to far into the future");
+
+  // Get resource list of wanted slot.
+  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
+
+  // TODO replace this with value from config.
+  const unsigned csi_pucch_res_idx = 5;
+  // [Implementation-defined] We use PUCCH resource set with index 1 for CSI resources (Format 2).
+  const unsigned CSI_PUCCH_RES_SET_IDX = 1;
+
+  // Get PUCCH_res_indicator from PUCCH resource index for the CSI resource.
+  int target_res_indicator =
+      get_res_indicator_from_pucch_res_index(csi_pucch_res_idx, CSI_PUCCH_RES_SET_IDX, pucch_cfg);
+
+  if (target_res_indicator < 0 or res_counter.ues_using_format2_res[target_res_indicator] == INVALID_RNTI) {
+    return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
+  }
+
+  res_counter.ues_using_format2_res[target_res_indicator] = crnti;
+  return pucch_harq_resource_alloc_record{.pucch_res           = &pucch_cfg.pucch_res_list[csi_pucch_res_idx],
+                                          .pucch_res_indicator = static_cast<unsigned>(target_res_indicator)};
+};
+
+bool pucch_resource_manager::is_csi_format2_res_available(slot_point          slot_harq,
+                                                          rnti_t              crnti,
+                                                          const pucch_config& pucch_cfg)
+{
+  srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+                      "PDCCH being allocated to far into the future");
+
+  // Get resource list of wanted slot.
+  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
+
+  // TODO replace this with value from config.
+  const unsigned csi_pucch_res_idx = 5;
+  // [Implementation-defined] We use PUCCH resource set with index 1 for CSI resources (Format 2).
+  const unsigned CSI_PUCCH_RES_SET_IDX = 1;
+
+  // Get PUCCH_res_indicator from PUCCH resource index for the CSI resource.
+  int target_res_indicator =
+      get_res_indicator_from_pucch_res_index(csi_pucch_res_idx, CSI_PUCCH_RES_SET_IDX, pucch_cfg);
+
+  return target_res_indicator >= 0 and res_counter.ues_using_format2_res[target_res_indicator] == INVALID_RNTI ? true
+                                                                                                               : false;
+}
 
 const pucch_resource*
 pucch_resource_manager::get_next_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)

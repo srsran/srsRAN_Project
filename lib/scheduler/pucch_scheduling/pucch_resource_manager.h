@@ -40,13 +40,23 @@ public:
   pucch_harq_resource_alloc_record
   get_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// Returns the PUCCH format 2 resource to be used (SR / HARQ-ACK / CSI).
+  /// Returns the PUCCH format 2 resource to be used (SR / HARQ-ACK).
   /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
   /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
   pucch_harq_resource_alloc_record
   get_next_format2_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+
+  /// Returns the PUCCH format 2 resource to be used (SR / HARQ-ACK / CSI).
+  /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
+  /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
+  /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
+  /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
+  pucch_harq_resource_alloc_record
+  get_csi_format2_res(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+
+  bool is_csi_format2_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// Returns the pointer to the configuration of the PUCCH resource to be used for SR.
   /// \remark There is only one resource used for SR.

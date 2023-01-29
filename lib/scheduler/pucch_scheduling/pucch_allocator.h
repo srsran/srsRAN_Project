@@ -31,7 +31,8 @@ struct pucch_harq_ack_grant {
 /// Contains the number of UCI HARQ-ACK and CSI information bits of a removed PUCCH grant.
 struct pucch_uci_bits {
   /// Number of HARQ-ACK info bits that should have been reported in the removed PUCCH grant.
-  unsigned harq_ack_nof_bits{0};
+  unsigned    harq_ack_nof_bits{0};
+  sr_nof_bits sr_bits{sr_nof_bits::no_sr};
   /// Number of CSI-part1 info bits that should have been reported in the removed PUCCH grant.
   unsigned csi_part1_bits{0};
   // TODO: add extra bits for CSI part 2.
@@ -88,6 +89,15 @@ public:
   /// to be removed, return 0 for both HARQ-ACK and CSI info bits.
   virtual pucch_uci_bits
   remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc, rnti_t crnti, const pucch_config& pucch_cfg) = 0;
+
+  /// Allocate the PUCCH resource for a UE's CSI opportunity.
+  /// \param[out,in] slot_alloc struct with scheduling results.
+  /// \param[in] crnti C-RNTI of the UE.
+  /// \param[in] ue_cell_cfg user configuration.
+  virtual void pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
+                                              rnti_t                        crnti,
+                                              const ue_cell_configuration&  ue_cell_cfg,
+                                              unsigned                      csi_part1_nof_bits) = 0;
 };
 
 } // namespace srsgnb

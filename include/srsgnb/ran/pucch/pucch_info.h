@@ -60,4 +60,19 @@ get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, uns
   return std::min(estimated_nof_prbs, max_nof_prbs);
 }
 
+inline unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate)
+{
+  // [Implementation-defined] This is the maximum supported payload.
+  const unsigned MAX_SUPPORTED_PAYLOAD_BITS = 11;
+
+  const unsigned NOF_BITS_QPSK_SYMBOL = 2;
+  // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.1, TS 38.213; the
+  // max payloads is obtained by using the floor operation from the maximum PHY capacity, given the PRBs, symbols and
+  // max_code_rate.
+  unsigned estimated_payload_bits = static_cast<unsigned>(std::floor(
+      static_cast<float>(pucch_constants::FORMAT2_NOF_DATA_SC * nof_symbols * NOF_BITS_QPSK_SYMBOL) * max_code_rate));
+
+  return std::min(estimated_payload_bits, MAX_SUPPORTED_PAYLOAD_BITS);
+}
+
 } // namespace srsgnb
