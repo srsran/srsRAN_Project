@@ -12,6 +12,8 @@
 
 #include "csi_rs_constants.h"
 #include "csi_rs_id.h"
+#include "srsgnb/adt/static_vector.h"
+#include "srsgnb/scheduler/config/bwp_configuration.h"
 
 namespace srsgnb {
 

@@ -10,6 +10,7 @@
 
 #include "asn1_cell_group_config_helpers.h"
 #include "../../asn1/asn1_diff_utils.h"
+#include "asn1_csi_meas_config_helpers.h"
 #include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
@@ -1821,6 +1822,8 @@ void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
 {
   out.init_dl_bwp_present = true;
   calculate_bwp_dl_dedicated_diff(out.init_dl_bwp, src.init_dl_bwp, dest.init_dl_bwp);
+
+  // UplinkConfig.
   if (dest.ul_config.has_value()) {
     out.ul_cfg_present = true;
     calculate_uplink_config_diff(
@@ -1839,6 +1842,18 @@ void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
   } else if (src.pdsch_serv_cell_cfg.has_value() && not dest.pdsch_serv_cell_cfg.has_value()) {
     out.pdsch_serving_cell_cfg_present = true;
     out.pdsch_serving_cell_cfg.set_release();
+  }
+
+  // CSI-MeasConfig.
+  if ((dest.csi_meas_cfg.has_value() && not src.csi_meas_cfg.has_value()) ||
+      (dest.csi_meas_cfg.has_value() && src.csi_meas_cfg.has_value() && dest.csi_meas_cfg != src.csi_meas_cfg)) {
+    out.csi_meas_cfg_present = true;
+    calculate_csi_meas_config_diff(out.csi_meas_cfg.set_setup(),
+                                   src.csi_meas_cfg.has_value() ? src.csi_meas_cfg.value() : csi_meas_config{},
+                                   dest.csi_meas_cfg.value());
+  } else if (src.csi_meas_cfg.has_value() && not dest.csi_meas_cfg.has_value()) {
+    out.csi_meas_cfg_present = true;
+    out.csi_meas_cfg.set_release();
   }
 }
 

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/variant.h"
 
 namespace srsgnb {
