@@ -39,6 +39,16 @@ struct csi_rs_pattern_configuration {
   csi_rs_freq_density_type freq_density;
   /// Number of ports.
   unsigned nof_ports;
+
+  bool operator==(const csi_rs_pattern_configuration& rhs) const
+  {
+    return start_rb == rhs.start_rb && nof_rb == rhs.nof_rb &&
+           csi_rs_mapping_table_row == rhs.csi_rs_mapping_table_row &&
+           freq_allocation_ref_idx == rhs.freq_allocation_ref_idx && symbol_l0 == rhs.symbol_l0 &&
+           symbol_l1 == rhs.symbol_l1 && cdm == rhs.cdm && freq_density == rhs.freq_density &&
+           nof_ports == rhs.nof_ports;
+  }
+  bool operator!=(const csi_rs_pattern_configuration& rhs) const { return !(rhs == *this); }
 };
 
 /// Describes the CSI-RS pattern within a PRB for a given port.

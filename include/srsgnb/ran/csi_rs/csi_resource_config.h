@@ -40,6 +40,12 @@ struct csi_resource_config {
         nzp_csi_rs_res_set_list;
     /// List of references to SSB resources used for beam measurement and reporting in a CSI-RS resource set.
     static_vector<csi_ssb_res_set_id_t, MAX_NOF_CSI_SSB_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG> csi_ssb_res_set_list;
+
+    bool operator==(const nzp_csi_rs_ssb& rhs) const
+    {
+      return nzp_csi_rs_res_set_list == rhs.nzp_csi_rs_res_set_list && csi_ssb_res_set_list == rhs.csi_ssb_res_set_list;
+    }
+    bool operator!=(const nzp_csi_rs_ssb& rhs) const { return !(rhs == *this); }
   };
 
   /// Time domain behavior of resource configuration. It does not apply to resources provided in the
@@ -52,6 +58,13 @@ struct csi_resource_config {
   /// The DL BWP which the CSI-RS associated with this CSI-ResourceConfig are located in.
   bwp_id_t      bwp_id;
   resource_type res_type;
+
+  bool operator==(const csi_resource_config& rhs) const
+  {
+    return res_cfg_id == rhs.res_cfg_id && csi_rs_res_set_list == rhs.csi_rs_res_set_list && bwp_id == rhs.bwp_id &&
+           res_type == rhs.res_type;
+  }
+  bool operator!=(const csi_resource_config& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb

@@ -57,6 +57,12 @@ struct csi_report_config {
   struct pucch_csi_resource {
     bwp_id_t ul_bwp;
     unsigned pucch_res_id;
+
+    bool operator==(const pucch_csi_resource& rhs) const
+    {
+      return ul_bwp == rhs.ul_bwp && pucch_res_id == rhs.pucch_res_id;
+    }
+    bool operator!=(const pucch_csi_resource& rhs) const { return !(rhs == *this); }
   };
 
   /// See TS 38.331, \c reportConfigType under \c CSI-ReportConfig.
@@ -65,6 +71,13 @@ struct csi_report_config {
     /// Values {0,...,(period_in_nof_slot - 1)}.
     unsigned                                        report_slot_offset;
     static_vector<pucch_csi_resource, MAX_NOF_BWPS> pucch_csi_res_list;
+
+    bool operator==(const periodic_report& rhs) const
+    {
+      return report_slot_period == rhs.report_slot_period && report_slot_offset == rhs.report_slot_offset &&
+             pucch_csi_res_list == rhs.pucch_csi_res_list;
+    }
+    bool operator!=(const periodic_report& rhs) const { return !(rhs == *this); }
   };
   using semi_persistent_report_on_pucch = periodic_report;
   struct semi_persistent_report_on_pusch {
@@ -76,12 +89,25 @@ struct csi_report_config {
     static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> report_slot_offset_list;
     /// Index of the p0-alpha set determining the power control for this CSI report transmission.
     p0_pusch_alphaset_id p0_alpha;
+
+    bool operator==(const semi_persistent_report_on_pusch& rhs) const
+    {
+      return slot_cfg == rhs.slot_cfg && report_slot_offset_list == rhs.report_slot_offset_list &&
+             p0_alpha == rhs.p0_alpha;
+    }
+    bool operator!=(const semi_persistent_report_on_pusch& rhs) const { return !(rhs == *this); }
   };
   struct aperiodic_report {
     /// Timing offset Y for aperiodic reporting using PUSCH. This field lists the allowed offset values. This list
     /// must have the same number of entries as the pusch-TimeDomainAllocationList in PUSCH-Config. A particular value
     /// is indicated in DCI.Values {0,...,32}.
     static_vector<unsigned, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS> report_slot_offset_list;
+
+    bool operator==(const aperiodic_report& rhs) const
+    {
+      return report_slot_offset_list == rhs.report_slot_offset_list;
+    }
+    bool operator!=(const aperiodic_report& rhs) const { return !(rhs == *this); }
   };
 
   /// \brief The CSI related quantities to report.
@@ -133,6 +159,13 @@ struct csi_report_config {
       static_vector<unsigned, 6> rank6_8;
       static_vector<unsigned, 7> rank7_8;
       static_vector<unsigned, 8> rank8_8;
+
+      bool operator==(const port_index_8& rhs) const
+      {
+        return rank1_8 == rhs.rank1_8 && rank2_8 == rhs.rank2_8 && rank3_8 == rhs.rank3_8 && rank4_8 == rhs.rank4_8 &&
+               rank5_8 == rhs.rank5_8 && rank6_8 == rhs.rank6_8 && rank7_8 == rhs.rank7_8 && rank8_8 == rhs.rank8_8;
+      }
+      bool operator!=(const port_index_8& rhs) const { return !(rhs == *this); }
     };
 
     struct port_index_4 {
@@ -141,17 +174,29 @@ struct csi_report_config {
       static_vector<unsigned, 2> rank2_4;
       static_vector<unsigned, 3> rank3_4;
       static_vector<unsigned, 4> rank4_4;
+
+      bool operator==(const port_index_4& rhs) const
+      {
+        return rank1_4 == rhs.rank1_4 && rank2_4 == rhs.rank2_4 && rank3_4 == rhs.rank3_4 && rank4_4 == rhs.rank4_4;
+      }
+      bool operator!=(const port_index_4& rhs) const { return !(rhs == *this); }
     };
 
     struct port_index_2 {
       /// Values {0,...,1}.
       optional<unsigned>         rank1_2;
       static_vector<unsigned, 2> rank2_2;
+
+      bool operator==(const port_index_2& rhs) const { return rank1_2 == rhs.rank1_2 && rank2_2 == rhs.rank2_2; }
+      bool operator!=(const port_index_2& rhs) const { return !(rhs == *this); }
     };
 
-    struct port_index_1 {};
+    using port_index_1 = bool;
 
     variant<port_index_1, port_index_2, port_index_4, port_index_8> port_index;
+
+    bool operator==(const port_index_for_8_ranks& rhs) const { return port_index == rhs.port_index; }
+    bool operator!=(const port_index_for_8_ranks& rhs) const { return !(rhs == *this); }
   };
 
   csi_report_config_id_t report_cfg_id;
@@ -194,6 +239,26 @@ struct csi_report_config {
   /// measurement, a port indication for each rank R, indicating which R ports to use. Applicable only for non-PMI
   /// feedback. See TS 38.214, clause 5.2.1.4.2.
   static_vector<port_index_for_8_ranks, MAX_NOF_NZP_CSI_RS_RESOURCES_PER_CONFIG> nonn_pmi_port_indication;
+
+  bool operator==(const csi_report_config& rhs) const
+  {
+    return report_cfg_id == rhs.report_cfg_id && carrier == rhs.carrier &&
+           res_for_channel_meas == rhs.res_for_channel_meas &&
+           csi_im_res_for_interference == rhs.csi_im_res_for_interference &&
+           nzp_csi_rs_res_for_interference == rhs.nzp_csi_rs_res_for_interference &&
+           report_cfg_type == rhs.report_cfg_type && report_qty_type == rhs.report_qty_type &&
+           pdsch_bundle_size_for_csi == rhs.pdsch_bundle_size_for_csi && cqi_format_ind == rhs.cqi_format_ind &&
+           pmi_format_ind == rhs.pmi_format_ind && nof_csi_reporting_subbands == rhs.nof_csi_reporting_subbands &&
+           csi_reporting_subbands_bitmap == rhs.csi_reporting_subbands_bitmap &&
+           is_time_restrictions_for_channel_meas_configured == rhs.is_time_restrictions_for_channel_meas_configured &&
+           is_time_restrictions_for_interference_meas_configured ==
+               rhs.is_time_restrictions_for_interference_meas_configured &&
+           codebook_cfg == rhs.codebook_cfg &&
+           is_group_based_beam_reporting_enabled == rhs.is_group_based_beam_reporting_enabled &&
+           nof_reported_rs == rhs.nof_reported_rs && cqi_table == rhs.cqi_table && subband_size == rhs.subband_size &&
+           nonn_pmi_port_indication == rhs.nonn_pmi_port_indication;
+  }
+  bool operator!=(const csi_report_config& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb

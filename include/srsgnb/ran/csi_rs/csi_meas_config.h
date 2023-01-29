@@ -62,6 +62,15 @@ struct nzp_csi_rs_resource {
   optional<unsigned> csi_res_offset;
   /// Present only for periodic NZP-CSI-RS-Resources (as indicated in CSI-ResourceConfig).
   optional<tci_state_id_t> tci_state_id;
+
+  bool operator==(const nzp_csi_rs_resource& rhs) const
+  {
+    return res_id == rhs.res_id && res_mapping == rhs.res_mapping && pwr_ctrl_offset == rhs.pwr_ctrl_offset &&
+           pwr_ctrl_offset_ss_db == rhs.pwr_ctrl_offset_ss_db && scrambling_id == rhs.scrambling_id &&
+           csi_res_period == rhs.csi_res_period && csi_res_offset == rhs.csi_res_offset &&
+           tci_state_id == rhs.tci_state_id;
+  }
+  bool operator!=(const nzp_csi_rs_resource& rhs) const { return !(rhs == *this); }
 };
 
 /// NZP-CSI-RS-ResourceSet is a set of Non-Zero-Power (NZP) CSI-RS resources (their IDs) and set-specific
@@ -80,6 +89,14 @@ struct nzp_csi_rs_resource_set {
   unsigned aperiodic_trigger_offset;
   /// Indicates that the antenna port for all NZP-CSI-RS resources in the CSI-RS resource set is same.
   bool is_trs_info_present{false};
+
+  bool operator==(const nzp_csi_rs_resource_set& rhs) const
+  {
+    return res_set_id == rhs.res_set_id && nzp_csi_rs_res == rhs.nzp_csi_rs_res &&
+           is_repetition_on == rhs.is_repetition_on && aperiodic_trigger_offset == rhs.aperiodic_trigger_offset &&
+           is_trs_info_present == rhs.is_trs_info_present;
+  }
+  bool operator!=(const nzp_csi_rs_resource_set& rhs) const { return !(rhs == *this); }
 };
 
 /// \brief CSI-IM-Resource is used to configure one CSI Interference Management (IM) resource.
@@ -98,6 +115,13 @@ struct csi_im_resource {
     /// OFDM subcarrier occupancy of the CSI-IM resource for Pattern0 or Pattern1.
     /// For Pattern0, Values {0,...,12} and for Pattern1, Values {0,..,13}.
     unsigned symbol_location;
+
+    bool operator==(const csi_im_resource_element_pattern& rhs) const
+    {
+      return pattern_type == rhs.pattern_type && subcarrier_location == rhs.subcarrier_location &&
+             symbol_location == rhs.symbol_location;
+    }
+    bool operator!=(const csi_im_resource_element_pattern& rhs) const { return !(rhs == *this); }
   };
 
   csi_im_res_id_t                           res_id;
@@ -110,6 +134,14 @@ struct csi_im_resource {
   optional<csi_resource_periodicity> csi_res_period;
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources. Values {0,...,(periodicity_in_slots - 1)}.
   optional<unsigned> csi_res_offset;
+
+  bool operator==(const csi_im_resource& rhs) const
+  {
+    return res_id == rhs.res_id && csi_im_res_element_pattern == rhs.csi_im_res_element_pattern &&
+           start_rb == rhs.start_rb && nof_rb == rhs.nof_rb && csi_res_period == rhs.csi_res_period &&
+           csi_res_offset == rhs.csi_res_offset;
+  }
+  bool operator!=(const csi_im_resource& rhs) const { return !(rhs == *this); }
 };
 
 /// CSI-IM-ResourceSet is used to configure a set of one or more CSI Interference Management (IM) resources (their IDs)
@@ -119,6 +151,12 @@ struct csi_im_resource_set {
   csi_im_res_set_id_t res_set_id;
   /// CSI-IM-Resources associated with this CSI-IM-ResourceSet. See TS 38.214, clause 5.2.
   static_vector<csi_im_res_id_t, csi_im_res_set_id_t::MAX_NOF_CSI_IM_RESOURCES_PER_SET> csi_ims_resources;
+
+  bool operator==(const csi_im_resource_set& rhs) const
+  {
+    return res_set_id == rhs.res_set_id && csi_ims_resources == rhs.csi_ims_resources;
+  }
+  bool operator!=(const csi_im_resource_set& rhs) const { return !(rhs == *this); }
 };
 
 /// CSI-SSB-ResourceSet is used to configure one SS/PBCH block resource set which refers to SS/PBCH as indicated in
@@ -127,6 +165,12 @@ struct csi_im_resource_set {
 struct csi_ssb_resource_set {
   csi_ssb_res_set_id_t                                                             res_set_id;
   static_vector<ssb_id_t, csi_ssb_res_set_id_t::MAX_NOF_CSI_SSB_RESOURCES_PER_SET> csi_ssb_res_list;
+
+  bool operator==(const csi_ssb_resource_set& rhs) const
+  {
+    return res_set_id == rhs.res_set_id && csi_ssb_res_list == rhs.csi_ssb_res_list;
+  }
+  bool operator!=(const csi_ssb_resource_set& rhs) const { return !(rhs == *this); }
 };
 
 /// See TS 38.331, \c CSI-AssociatedReportConfigInfo.
@@ -142,6 +186,12 @@ struct csi_associated_report_config_info {
     unsigned resource_set;
     /// Only present if the NZP-CSI-RS-Resources in the associated resourceSet have the resourceType aperiodic.
     static_vector<tci_state_id_t, MAX_NOF_AP_CSI_RS_RESOURCES_PER_SET> qcl_info;
+
+    bool operator==(const nzp_csi_rs& rhs) const
+    {
+      return resource_set == rhs.resource_set && qcl_info == rhs.qcl_info;
+    }
+    bool operator!=(const nzp_csi_rs& rhs) const { return !(rhs == *this); }
   };
 
   csi_report_config_id_t                    report_cfg_id;
@@ -156,6 +206,14 @@ struct csi_associated_report_config_info {
   /// Field is present if the CSI-ReportConfig identified by reportConfigId is configured with
   /// nzp-CSI-RS-ResourcesForInterference.
   optional<unsigned> nzp_csi_rs_resources_for_interference;
+
+  bool operator==(const csi_associated_report_config_info& rhs) const
+  {
+    return report_cfg_id == rhs.report_cfg_id && res_for_channel == rhs.res_for_channel &&
+           csi_im_resources_for_interference == rhs.csi_im_resources_for_interference &&
+           nzp_csi_rs_resources_for_interference == rhs.nzp_csi_rs_resources_for_interference;
+  }
+  bool operator!=(const csi_associated_report_config_info& rhs) const { return !(rhs == *this); }
 };
 
 /// See TS 38.331, \c CSI-AperiodicTriggerState.
@@ -195,6 +253,17 @@ struct csi_meas_config {
   optional<unsigned>                                        report_trigger_size;
   optional<csi_aperiodic_trigger_state_list>                aperiodic_trigger_state_list;
   optional<csi_semi_persistent_on_pusch_trigger_state_list> semi_persistent_on_pusch_trigger_state_list;
+
+  bool operator==(const csi_meas_config& rhs) const
+  {
+    return nzp_csi_rs_res_list == rhs.nzp_csi_rs_res_list && nzp_csi_rs_res_set_list == rhs.nzp_csi_rs_res_set_list &&
+           csi_im_res_list == rhs.csi_im_res_list && csi_im_res_set_list == rhs.csi_im_res_set_list &&
+           csi_ssb_res_set_list == rhs.csi_ssb_res_set_list && csi_res_cfg_list == rhs.csi_res_cfg_list &&
+           csi_report_cfg_list == rhs.csi_report_cfg_list && report_trigger_size == rhs.report_trigger_size &&
+           aperiodic_trigger_state_list == rhs.aperiodic_trigger_state_list &&
+           semi_persistent_on_pusch_trigger_state_list == rhs.semi_persistent_on_pusch_trigger_state_list;
+  }
+  bool operator!=(const csi_meas_config& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb

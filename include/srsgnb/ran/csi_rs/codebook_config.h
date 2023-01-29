@@ -48,11 +48,26 @@ struct codebook_config {
         n1_n2_value_t n1_n2_value;
         /// i2 codebook subset restriction for Type I Single-panel codebook used when reportQuantity is CRI/Ri/i1/CQI.
         optional<bounded_bitset<16>> typei_single_panel_codebook_subset_restriction_i2;
+
+        bool operator==(const more_than_two_antenna_ports& rhs) const
+        {
+          return n1_n2_type == rhs.n1_n2_type && n1_n2_value == rhs.n1_n2_value &&
+                 typei_single_panel_codebook_subset_restriction_i2 ==
+                     rhs.typei_single_panel_codebook_subset_restriction_i2;
+        }
+        bool operator!=(const more_than_two_antenna_ports& rhs) const { return !(rhs == *this); }
       };
 
       variant<two_antenna_ports_two_tx_codebook_subset_restriction, more_than_two_antenna_ports> nof_antenna_ports;
       /// Restriction for RI for typeI-SinglePanel-RI-Restriction.
       bounded_bitset<8> typei_single_panel_ri_restriction;
+
+      bool operator==(const single_panel& rhs) const
+      {
+        return nof_antenna_ports == rhs.nof_antenna_ports &&
+               typei_single_panel_ri_restriction == rhs.typei_single_panel_ri_restriction;
+      }
+      bool operator!=(const single_panel& rhs) const { return !(rhs == *this); }
     };
 
     /// \brief See TS 38.331, \c typeI-MultiPanel in \c CodebookConfig.
@@ -75,11 +90,21 @@ struct codebook_config {
       ng_n1_n2_value_t ng_n1_n2_value;
       /// Restriction for RI for typeI-MultiPanel-RI-Restriction.
       bounded_bitset<4> ri_restriction;
+
+      bool operator==(const multi_panel& rhs) const
+      {
+        return ng_n1_n2_type == rhs.ng_n1_n2_type && ng_n1_n2_value == rhs.ng_n1_n2_value &&
+               ri_restriction == rhs.ri_restriction;
+      }
+      bool operator!=(const multi_panel& rhs) const { return !(rhs == *this); }
     };
 
     variant<single_panel, multi_panel> sub_type;
     /// CodebookMode as specified in TS 38.214, clause 5.2.2.2.2. Value {1,...,2}.
     unsigned codebook_mode;
+
+    bool operator==(const type1& rhs) const { return sub_type == rhs.sub_type && codebook_mode == rhs.codebook_mode; }
+    bool operator!=(const type1& rhs) const { return !(rhs == *this); }
   };
 
   struct type2 {
@@ -108,6 +133,14 @@ struct codebook_config {
       n1_n2_codebook_subset_restriction_value_t n1_n2_codebook_subset_restriction_value;
       /// Restriction for RI for TypeII-RI-Restriction.
       bounded_bitset<2> typeii_ri_restriction;
+
+      bool operator==(const typeii& rhs) const
+      {
+        return n1_n2_codebook_subset_restriction_type == rhs.n1_n2_codebook_subset_restriction_type &&
+               n1_n2_codebook_subset_restriction_value == rhs.n1_n2_codebook_subset_restriction_value &&
+               typeii_ri_restriction == rhs.typeii_ri_restriction;
+      }
+      bool operator!=(const typeii& rhs) const { return !(rhs == *this); }
     };
 
     /// \brief See TS 38.331, \c typeII-PortSelection in \c CodebookConfig.
@@ -116,6 +149,13 @@ struct codebook_config {
       optional<unsigned> port_selection_sampling_size;
       /// Restriction for RI for TypeII-PortSelection-RI-Restriction.
       bounded_bitset<2> typeii_port_selection_ri_restriction;
+
+      bool operator==(const typeii_port_selection& rhs) const
+      {
+        return port_selection_sampling_size == rhs.port_selection_sampling_size &&
+               typeii_port_selection_ri_restriction == rhs.typeii_port_selection_ri_restriction;
+      }
+      bool operator!=(const typeii_port_selection& rhs) const { return !(rhs == *this); }
     };
 
     variant<typeii, typeii_port_selection> sub_type;
@@ -125,9 +165,19 @@ struct codebook_config {
     bool subband_amplitude;
     /// Number of beams, L, used for linear combination. Values {2, 3, 4}.
     unsigned nof_beams;
+
+    bool operator==(const type2& rhs) const
+    {
+      return sub_type == rhs.sub_type && phase_alphabet_size == rhs.phase_alphabet_size &&
+             subband_amplitude == rhs.subband_amplitude && nof_beams == rhs.nof_beams;
+    }
+    bool operator!=(const type2& rhs) const { return !(rhs == *this); }
   };
 
   variant<type1, type2> codebook_type;
+
+  bool operator==(const codebook_config& rhs) const { return codebook_type == rhs.codebook_type; }
+  bool operator!=(const codebook_config& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsgnb
