@@ -35,4 +35,19 @@ static constexpr unsigned MAX_NOF_CSI_IM_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG =
 /// maxNrofNZP-CSI-RS-ResourcesPerConfig.
 static constexpr unsigned MAX_NOF_NZP_CSI_RS_RESOURCES_PER_CONFIG = 128;
 
+/// Maximum number of triggers for aperiodic CSI reporting. See TS 38.331, \c
+/// maxNrOfCSI-AperiodicTriggers.
+static constexpr unsigned MAX_NOF_CSI_APERIODIC_TRIGGERS = 128;
+
+/// Maximum number of report configurations per trigger state for aperiodic reporting. See TS 38.331, \c
+/// maxNrofReportConfigPerAperiodicTrigger.
+static constexpr unsigned MAX_NOF_REPORT_CONFIG_PER_APERIODIC_TRIGGER = 16;
+
+/// See TS 38.331, \c maxNrofAP-CSI-RS-ResourcesPerSet.
+static constexpr unsigned MAX_NOF_AP_CSI_RS_RESOURCES_PER_SET = 16;
+
+/// Maximum number of triggers for semi persistent reporting on PUSCH. See TS 38.331, \c
+/// maxNrOfSemiPersistentPUSCH-Triggers.
+static constexpr unsigned MAX_NOF_SEMI_PERSISTENT_PUSCH_TRIGGERS = 64;
+
 } // namespace srsgnb

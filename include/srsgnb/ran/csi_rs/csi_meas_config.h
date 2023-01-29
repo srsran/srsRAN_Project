@@ -129,6 +129,50 @@ struct csi_ssb_resource_set {
   static_vector<ssb_id_t, csi_ssb_res_set_id_t::MAX_NOF_CSI_SSB_RESOURCES_PER_SET> csi_ssb_res_list;
 };
 
+/// See TS 38.331, \c CSI-AssociatedReportConfigInfo.
+struct csi_associated_report_config_info {
+  /// CSI-SSB-ResourceSet for channel measurements. Values
+  /// {1,...,MAX_NOF_CSI_SSB_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG}.
+  /// \remark See TS 38.331,\c CSI-SSB-ResourceSet.
+  using csi_ssb_resource_set = unsigned;
+
+  struct nzp_csi_rs {
+    /// NZP-CSI-RS-ResourceSet for channel measurements. Values
+    /// {1,...,MAX_NOF_NZP_CSI_RS_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG}.
+    unsigned resource_set;
+    /// Only present if the NZP-CSI-RS-Resources in the associated resourceSet have the resourceType aperiodic.
+    static_vector<tci_state_id_t, MAX_NOF_AP_CSI_RS_RESOURCES_PER_SET> qcl_info;
+  };
+
+  csi_report_config_id_t                    report_cfg_id;
+  variant<nzp_csi_rs, csi_ssb_resource_set> res_for_channel;
+  /// CSI-IM-ResourceSet for interference measurement. Values
+  /// {1,...,MAX_NOF_CSI_IM_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG}.
+  /// Field is present if the CSI-ReportConfig identified by reportConfigId is configured with
+  /// csi-IM-ResourcesForInterference.
+  optional<unsigned> csi_im_resources_for_interference;
+  /// NZP-CSI-RS-ResourceSet for interference measurement. Values
+  /// {1,...,MAX_NOF_NZP_CSI_RS_RESOURCE_SETS_PER_CSI_RESOURCE_CONFIG}.
+  /// Field is present if the CSI-ReportConfig identified by reportConfigId is configured with
+  /// nzp-CSI-RS-ResourcesForInterference.
+  optional<unsigned> nzp_csi_rs_resources_for_interference;
+};
+
+/// See TS 38.331, \c CSI-AperiodicTriggerState.
+using csi_aperiodic_trigger_state =
+    static_vector<csi_associated_report_config_info, MAX_NOF_REPORT_CONFIG_PER_APERIODIC_TRIGGER>;
+
+/// Used to configure the UE with a list of aperiodic trigger states. Each codepoint of the DCI field "CSI request" is
+/// associated with one trigger state.
+/// \remark TS 38.331, \c CSI-AperiodicTriggerStateList.
+using csi_aperiodic_trigger_state_list = static_vector<csi_aperiodic_trigger_state, MAX_NOF_CSI_APERIODIC_TRIGGERS>;
+
+/// Used to configure the UE with a list of trigger states for semi-persistent reporting of channel state information on
+/// L1.
+/// \remark TS 38.331, \c CSI-SemiPersistentOnPUSCH-TriggerStateList.
+using csi_semi_persistent_on_pusch_trigger_state_list =
+    static_vector<csi_report_config_id_t, MAX_NOF_SEMI_PERSISTENT_PUSCH_TRIGGERS>;
+
 /// \brief CSI-MeasConfig is used to configure CSI-RS belonging to the serving cell in which CSI-MeasConfig is included.
 /// \remark See TS 38.331, \c CSI-MeasConfig.
 struct csi_meas_config {
@@ -147,6 +191,10 @@ struct csi_meas_config {
   static_vector<csi_resource_config, csi_res_config_id_t::MAX_NOF_CSI_RESOURCE_CONFIGS> csi_res_cfg_list;
   /// Configured CSI report settings as specified in TS 38.214 clause 5.2.1.1.
   static_vector<csi_report_config, csi_report_config_id_t::MAX_NOF_CSI_REPORT_CONFIGS> csi_report_cfg_list;
+  /// Size of CSI request field in DCI (bits). See TS 38.214, clause 5.2.1.5.1.
+  optional<unsigned>                                        report_trigger_size;
+  optional<csi_aperiodic_trigger_state_list>                aperiodic_trigger_state_list;
+  optional<csi_semi_persistent_on_pusch_trigger_state_list> semi_persistent_on_pusch_trigger_state_list;
 };
 
 } // namespace srsgnb
