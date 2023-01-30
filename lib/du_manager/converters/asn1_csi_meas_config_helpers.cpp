@@ -360,6 +360,47 @@ asn1::rrc_nr::csi_ssb_res_set_s make_asn1_csi_ssb_resource_set(const csi_ssb_res
   return out;
 }
 
+asn1::rrc_nr::csi_res_cfg_s make_asn1_csi_resource_config(const csi_resource_config& cfg)
+{
+  csi_res_cfg_s out{};
+  out.csi_res_cfg_id = cfg.res_cfg_id;
+  if (variant_holds_alternative<csi_resource_config::nzp_csi_rs_ssb>(cfg.csi_rs_res_set_list)) {
+    auto&       res_set     = out.csi_rs_res_set_list.set_nzp_csi_rs_ssb();
+    const auto& res_set_val = variant_get<csi_resource_config::nzp_csi_rs_ssb>(cfg.csi_rs_res_set_list);
+    for (const auto& res_set_id : res_set_val.nzp_csi_rs_res_set_list) {
+      res_set.nzp_csi_rs_res_set_list.push_back(res_set_id);
+    }
+    res_set.csi_ssb_res_set_list_present = not res_set_val.csi_ssb_res_set_list.empty();
+    for (const auto& res_set_id : res_set_val.csi_ssb_res_set_list) {
+      res_set.csi_ssb_res_set_list[0] = res_set_id;
+    }
+  } else if (variant_holds_alternative<csi_resource_config::csi_im_resource_set_list>(cfg.csi_rs_res_set_list)) {
+    auto&       res_set     = out.csi_rs_res_set_list.set_csi_im_res_set_list();
+    const auto& res_set_val = variant_get<csi_resource_config::csi_im_resource_set_list>(cfg.csi_rs_res_set_list);
+    for (const auto& res_set_id : res_set_val) {
+      res_set.push_back(res_set_id);
+    }
+  }
+
+  out.bwp_id = cfg.bwp_id;
+
+  switch (cfg.res_type) {
+    case csi_resource_config::resource_type::aperiodic:
+      out.res_type = csi_res_cfg_s::res_type_opts::aperiodic;
+      break;
+    case csi_resource_config::resource_type::semiPersistent:
+      out.res_type = csi_res_cfg_s::res_type_opts::semi_persistent;
+      break;
+    case csi_resource_config::resource_type::periodic:
+      out.res_type = csi_res_cfg_s::res_type_opts::periodic;
+      break;
+    default:
+      srsgnb_assertion_failure("Invalid CSI resource type={}", cfg.res_type);
+  }
+
+  return out;
+}
+
 void srsgnb::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s& out,
                                                     const csi_meas_config&        src,
                                                     const csi_meas_config&        dest)
@@ -403,4 +444,12 @@ void srsgnb::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s
       dest.csi_ssb_res_set_list,
       [](const csi_ssb_resource_set& res) { return make_asn1_csi_ssb_resource_set(res); },
       [](const csi_ssb_resource_set& res) { return res.res_set_id; });
+
+  calculate_addmodremlist_diff(
+      out.csi_res_cfg_to_add_mod_list,
+      out.csi_res_cfg_to_release_list,
+      src.csi_res_cfg_list,
+      dest.csi_res_cfg_list,
+      [](const csi_resource_config& res) { return make_asn1_csi_resource_config(res); },
+      [](const csi_resource_config& res) { return res.res_cfg_id; });
 }
