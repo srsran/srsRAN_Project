@@ -53,7 +53,7 @@ void test_slot_type()
   TESTASSERT(((slot1 - 100) + 100) == slot1);
   TESTASSERT(((slot1 - 1) + 1) == slot1);
 
-  TESTASSERT(fmt::format("{}", slot1) == fmt::format("{}", slot1.to_uint()));
+  TESTASSERT(fmt::format("{}", slot1) == fmt::format("{}.{}", slot1.sfn(), slot1.slot_index()));
 }
 
 int main()
