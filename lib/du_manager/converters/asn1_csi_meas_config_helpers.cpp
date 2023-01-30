@@ -508,7 +508,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
               three_two_typei_single_panel_restriction: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_three_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{}", ant_restriction.n1_n2_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
@@ -520,7 +520,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
               four_two_typei_single_panel_restriction: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_four_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{}", ant_restriction.n1_n2_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
@@ -532,13 +532,13 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
               four_three_typei_single_panel_restriction: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_four_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{}", ant_restriction.n1_n2_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
               six_two_typei_single_panel_restriction: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_six_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{}", ant_restriction.n1_n2_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
@@ -550,13 +550,13 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
               four_four_typei_single_panel_restriction: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_four_four_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{}", ant_restriction.n1_n2_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
               eight_two_typei_single_panel_restriction: {
             auto& n1_n2 = out_ant_restriction.n1_n2.set_eight_two_type_i_single_panel_restrict();
-            n1_n2.from_string(fmt::format("{}", ant_restriction.n1_n2_value));
+            n1_n2.from_string(fmt::format("{:b}", ant_restriction.n1_n2_value));
             break;
           }
           case codebook_config::type1::single_panel::more_than_two_antenna_ports::n1_n2_type_t::
@@ -610,7 +610,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_type_t::two_four_two_typei_multi_panel_restriction: {
           auto& ng_n1_n2 = out_mp_cfg.ng_n1_n2.set_two_four_two_type_i_multi_panel_restrict();
-          ng_n1_n2.from_string(fmt::format("{}", mp_cfg_val.ng_n1_n2_value));
+          ng_n1_n2.from_string(fmt::format("{:b}", mp_cfg_val.ng_n1_n2_value));
           break;
         }
         case codebook_config::type1::multi_panel::ng_n1_n2_type_t::four_two_two_typei_multi_panel_restriction: {
@@ -658,7 +658,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_two: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_four_two();
-          n1_n2.from_string(fmt::format("{}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::eight_one: {
@@ -668,32 +668,32 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_three: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_four_three();
-          n1_n2.from_string(fmt::format("{}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::six_two: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_six_two();
-          n1_n2.from_string(fmt::format("{}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::twelve_one: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_twelve_one();
-          n1_n2.from_string(fmt::format("{}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_four: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_four_four();
-          n1_n2.from_string(fmt::format("{}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::eight_two: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_eight_two();
-          n1_n2.from_string(fmt::format("{}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
           break;
         }
         case codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::sixteen_one: {
           auto& n1_n2 = out_typeii.n1_n2_codebook_subset_restrict.set_sixteen_one();
-          n1_n2.from_string(fmt::format("{}", typeii.n1_n2_codebook_subset_restriction_value));
+          n1_n2.from_string(fmt::format("{:b}", typeii.n1_n2_codebook_subset_restriction_value));
           break;
         }
         default:
