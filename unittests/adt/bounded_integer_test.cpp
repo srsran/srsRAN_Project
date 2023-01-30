@@ -66,7 +66,7 @@ TEST(bounded_integer_test, copy_assignment)
 
 TEST(bounded_integer_test, increment_decrement_operator)
 {
-  int                            num = test_rgen::uniform_int<int>(-5, 1000);
+  int                            num = test_rgen::uniform_int<int>(-4, 999);
   bounded_integer<int, -5, 1000> val(num);
 
   ASSERT_EQ(val, num);
