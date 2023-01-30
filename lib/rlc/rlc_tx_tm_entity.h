@@ -37,16 +37,13 @@ public:
   void handle_sdu(rlc_sdu sdu) override
   {
     size_t sdu_length = sdu.buf.length();
-    logger.log_info(sdu.buf.begin(),
-                    sdu.buf.end(),
-                    "TX SDU (length: {} B, enqueued SDUs: {})",
-                    sdu.buf.length(),
-                    sdu_queue.size_sdus());
+    logger.log_info(
+        sdu.buf.begin(), sdu.buf.end(), "TX SDU (length: {} B, sdu_queue=[{}])", sdu.buf.length(), sdu_queue);
     if (sdu_queue.write(sdu)) {
       metrics.metrics_add_sdus(1, sdu_length);
       handle_buffer_state_update();
     } else {
-      logger.log_info("Dropped TX SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
+      logger.log_info("Dropped TX SDU (length: {} B, sdu_queue=[{}])", sdu.buf.length(), sdu_queue);
       metrics.metrics_add_lost_sdus(1);
     }
   }
@@ -80,6 +77,7 @@ public:
     }
 
     rlc_sdu sdu = {};
+    logger.log_debug("Reading SDU from sdu_queue=[{}]", sdu_queue);
     if (not sdu_queue.read(sdu)) {
       logger.log_warning("Could not read SDU, but queue should not be empty. grant_len={}", grant_len);
       return {};

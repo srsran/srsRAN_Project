@@ -13,6 +13,7 @@
 #include "srsgnb/adt/blocking_queue.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rlc/rlc_tx.h"
+#include "fmt/format.h"
 #include <cstdint>
 #include <functional>
 #include <list>
@@ -124,3 +125,20 @@ private:
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+template <>
+struct formatter<srsgnb::rlc_sdu_queue> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_sdu_queue& q, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "size_sdus={}, size_bytes={}", q.size_sdus(), q.size_bytes());
+  }
+};
+} // namespace fmt

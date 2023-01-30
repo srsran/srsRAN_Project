@@ -36,18 +36,16 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
   size_t sdu_length = sdu_.buf.length();
   logger.log_info(sdu_.buf.begin(),
                   sdu_.buf.end(),
-                  "TX SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {})",
+                  "TX SDU (length: {} B, PDCP Count: {}, sdu_queue=[{}])",
                   sdu_.buf.length(),
                   sdu_.pdcp_count,
-                  sdu_queue.size_sdus());
+                  sdu_queue);
   if (sdu_queue.write(sdu_)) {
     metrics.metrics_add_sdus(1, sdu_length);
     handle_buffer_state_update(); // take lock
   } else {
-    logger.log_info("Dropped TX SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {})",
-                    sdu_length,
-                    sdu_.pdcp_count,
-                    sdu_queue.size_sdus());
+    logger.log_info(
+        "Dropped TX SDU (length: {} B, PDCP Count: {}, sdu_queue=[{}])", sdu_length, sdu_.pdcp_count, sdu_queue);
     metrics.metrics_add_lost_sdus(1);
   }
 }
@@ -84,8 +82,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
     srsgnb_sanity_check(next_so == 0, "New TX SDU, but next_so is not 0 (next_so={})", next_so);
-    logger.log_debug(
-        "Reading from SDU queue; status: {} SDUs, {} bytes", sdu_queue.size_sdus(), sdu_queue.size_bytes());
+    logger.log_debug("Reading SDU from sdu_queue=[{}]", sdu_queue);
     if (not sdu_queue.read(sdu)) {
       logger.log_debug("No SDUs left in the SDU queue. grant_len={}", grant_len);
       return {};
