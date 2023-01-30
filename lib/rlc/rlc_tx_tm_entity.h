@@ -39,14 +39,14 @@ public:
     size_t sdu_length = sdu.buf.length();
     logger.log_info(sdu.buf.begin(),
                     sdu.buf.end(),
-                    "Tx SDU (length: {} B, enqueued SDUs: {})",
+                    "TX SDU (length: {} B, enqueued SDUs: {})",
                     sdu.buf.length(),
                     sdu_queue.size_sdus());
     if (sdu_queue.write(sdu)) {
       metrics.metrics_add_sdus(1, sdu_length);
       handle_buffer_state_update();
     } else {
-      logger.log_info("Dropped Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
+      logger.log_info("Dropped TX SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
       metrics.metrics_add_lost_sdus(1);
     }
   }
@@ -91,7 +91,7 @@ public:
     // In TM there is no header, just pass the plain SDU
     byte_buffer_slice_chain pdu = {};
     pdu.push_back(std::move(sdu.buf));
-    logger.log_info("Tx PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
+    logger.log_info("TX PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
     metrics.metrics_add_pdus(1, pdu.length());
     handle_buffer_state_update();
 
