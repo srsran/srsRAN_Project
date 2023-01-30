@@ -329,7 +329,6 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       "--cells",
       [&gnb_cfg](const std::vector<std::string>& values) {
         // Prepare the cells from the common cell.
-        fprintf(stderr, "cell lambda values size %zu\n", values.size());
         if (values.size() > gnb_cfg.cells_cfg.size()) {
           gnb_cfg.cells_cfg.resize(values.size());
           for (auto& cell : gnb_cfg.cells_cfg) {
@@ -348,8 +347,8 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       },
       "cells");
 
-  // RB parameters.
-  auto rb_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
+  // QoS parameters.
+  auto qos_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
     // Prepare the radio bearers
     gnb_cfg.qos_cfg.resize(values.size());
 
@@ -362,5 +361,5 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       subapp.parse_from_stream(ss);
     }
   };
-  app.add_option_function<std::vector<std::string>>("--qos", rb_lambda, "qos");
+  app.add_option_function<std::vector<std::string>>("--qos", qos_lambda, "qos");
 }

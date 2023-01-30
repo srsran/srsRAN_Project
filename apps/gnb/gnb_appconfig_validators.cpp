@@ -131,11 +131,13 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
 /// Validates the given QoS configuration. Returns true on success, otherwise false.
 static bool validate_qos_appconfig(span<const qos_appconfig> config)
 {
-#if 0
+#ifndef RLC_CONFIG
   // for now, only default configs are supported
   if (config.size() != 0) {
     return false;
   }
+#else
+#pragma message "using unsupported QoS configs"
 #endif
   return true;
 }

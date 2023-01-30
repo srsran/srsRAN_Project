@@ -494,7 +494,7 @@ int main(int argc, char** argv)
   // DU QoS config
   const std::map<uint8_t, du_qos_config>& du_qos_cfg = generate_du_qos_config(gnb_cfg);
   for (const auto& it : du_qos_cfg) {
-    gnb_logger.debug("QoS RLC configuration: 5QI={} RLC={}\n", it.first, it.second.rlc);
+    gnb_logger.info("QoS RLC configuration: 5QI={} RLC={}", it.first, it.second.rlc);
   }
 
   // Cell configuration.
