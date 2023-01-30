@@ -557,8 +557,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   for (uint32_t nack_idx = 0; nack_idx < status.get_nacks().size(); nack_idx++) {
     if (status.get_nacks()[nack_idx].has_nack_range) {
       for (uint32_t range_sn = status.get_nacks()[nack_idx].nack_sn;
-           range_sn < status.get_nacks()[nack_idx].nack_sn + status.get_nacks()[nack_idx].nack_range;
-           range_sn++) {
+           range_sn != (status.get_nacks()[nack_idx].nack_sn + status.get_nacks()[nack_idx].nack_range) % mod;
+           range_sn = (range_sn + 1) % mod) {
         rlc_am_status_nack nack = {};
         nack.nack_sn            = range_sn;
         if (status.get_nacks()[nack_idx].has_so) {
@@ -567,7 +567,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
             nack.so_start = status.get_nacks()[nack_idx].so_start;
           }
           // Apply so_end to last range item
-          if (range_sn == (status.get_nacks()[nack_idx].nack_sn + status.get_nacks()[nack_idx].nack_range - 1)) {
+          if (range_sn == (status.get_nacks()[nack_idx].nack_sn + status.get_nacks()[nack_idx].nack_range - 1) % mod) {
             nack.so_end = status.get_nacks()[nack_idx].so_end;
           }
           // Enable has_so only if the offsets do not span the whole SDU

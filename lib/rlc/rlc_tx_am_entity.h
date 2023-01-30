@@ -170,6 +170,22 @@ public:
   /// \return true if sn is valid, false otherwise
   bool valid_ack_sn(uint32_t sn) const;
 
+  /*
+   * Testing helpers
+   */
+
+  /// Set the internal state variables
+  /// Note: This function should only be used for testing
+  ///
+  /// \param st_ The state variables to be set
+  void set_state(const rlc_tx_am_state& st_) { this->st = st_; }
+
+  /// Get the internal state variables
+  /// Note: This function should only be used for testing
+  ///
+  /// \return A copy of the internal state variables
+  rlc_tx_am_state get_state() { return st; }
+
 private:
   /// \brief Builds a new RLC PDU.
   /// This will be called after checking whether control, retransmission,
