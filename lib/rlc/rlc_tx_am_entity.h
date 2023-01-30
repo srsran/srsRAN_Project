@@ -31,7 +31,7 @@ struct rlc_tx_am_sdu_info {
   uint32_t           retx_count = RETX_COUNT_NOT_STARTED;
 };
 
-/// \brief Tx state variables
+/// \brief TX state variables
 /// Ref: 3GPP TS 38.322 version 16.2.0 Section 7.1
 struct rlc_tx_am_state {
   /// \brief TX_Next_Ack – Acknowledgement state variable
@@ -71,27 +71,27 @@ private:
   // Status interface
   rlc_rx_am_status_provider* status_provider = nullptr;
 
-  // Tx state variables
+  // TX state variables
   rlc_tx_am_state st;
 
-  // Tx SDU buffers
+  // TX SDU buffers
   rlc_sdu_queue sdu_queue;
   uint32_t      sn_under_segmentation = INVALID_RLC_SN; // SN of the SDU currently being segmented
 
-  // ReTx buffers
+  // RETX buffers
   rlc_retx_queue retx_queue;
 
   // Mutexes
   std::mutex mutex;
 
-  /// Tx counter modulus
+  /// TX counter modulus
   const uint32_t     mod;
   constexpr uint32_t tx_mod_base(uint32_t x) const { return (x - st.tx_next_ack) % mod; }
 
   /// AM window size
   const uint32_t am_window_size;
 
-  /// Tx window
+  /// TX window
   std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> tx_window;
 
   // Header sizes are computed upon construction based on SN length
@@ -119,7 +119,7 @@ public:
                    task_executor&                       ue_executor_,
                    task_executor&                       pcell_executor_);
 
-  // Tx/Rx interconnect
+  // TX/RX interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }
 
   // Interfaces for higher layers
@@ -156,9 +156,9 @@ public:
 
   // Window helpers
 
-  /// \brief Checks if a sequence number is inside the Tx window
+  /// \brief Checks if a sequence number is inside the TX window
   /// \param sn Sequence Number to check
-  /// \return true if sn is inside the Tx window, false otherwise
+  /// \return true if sn is inside the TX window, false otherwise
   bool inside_tx_window(uint32_t sn) const;
 
   /// \brief This function is used to check if a received status report as a valid ACK_SN.
@@ -218,10 +218,10 @@ private:
   /// \return One PDU
   byte_buffer_slice_chain build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len);
 
-  /// \brief Builds a retx RLC PDU.
+  /// \brief Builds a RETX RLC PDU.
   ///
   /// This will use the retx_queue to get information about the RLC PDU
-  /// being retx'ed. The retx may have been previously transmitted as
+  /// being RETX'ed. The RETX may have been previously transmitted as
   /// a full PDU or an PDU segment(s).
   ///
   /// \param grant_len Limits the maximum size of the requested PDU.
@@ -233,14 +233,14 @@ private:
     return retx.so == 0 ? head_min_size : head_max_size;
   }
 
-  /// \brief Evaluates a status PDU, schedules ReTx and removes ACK'ed SDUs from Tx window
+  /// \brief Evaluates a status PDU, schedules RETX and removes ACK'ed SDUs from TX window
   /// \param status The status PDU
   void handle_status_pdu(rlc_am_status_pdu status);
 
-  /// \brief Schedules ReTx for NACK'ed PDUs
+  /// \brief Schedules RETX for NACK'ed PDUs
   ///
   /// NACKs will be dropped if the SN falls out of the tx window or if the NACK'ed
-  /// PDU or PDU segment is already queued for ReTx.
+  /// PDU or PDU segment is already queued for RETX.
   /// Invalid or out of bounds segment offsets are adjusted to SDU boundaries
   ///
   /// Note: This function must not be called with NACKs that have a nack range.
@@ -250,11 +250,11 @@ private:
   /// \return true if NACK was handled and queued successfully, false if NACK has been ignored
   bool handle_nack(rlc_am_status_nack nack);
 
-  /// \brief Helper to check if a SN has reached the max reTx threshold
+  /// \brief Helper to check if a SN has reached the max RETX threshold
   ///
   /// Caller _must_ hold the mutex when calling the function.
-  /// If the retx has been reached for a SN the upper layers (i.e. RRC/PDCP) will be informed.
-  /// The SN is _not_ removed from the Tx window, so retransmissions of that SN can still occur.
+  /// If the RETX has been reached for a SN the upper layers (i.e. RRC/PDCP) will be informed.
+  /// The SN is _not_ removed from the TX window, so retransmissions of that SN can still occur.
   /// \param sn The SN of the PDU to check
   void check_sn_reached_max_retx(uint32_t sn);
 
