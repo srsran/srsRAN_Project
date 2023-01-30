@@ -37,13 +37,12 @@ public:
   void handle_sdu(rlc_sdu sdu) override
   {
     size_t sdu_length = sdu.buf.length();
-    logger.log_info(
-        sdu.buf.begin(), sdu.buf.end(), "TX SDU (length: {} B, sdu_queue=[{}])", sdu.buf.length(), sdu_queue);
+    logger.log_info(sdu.buf.begin(), sdu.buf.end(), "TX SDU: sdu_len={}, sdu_queue=[{}]", sdu.buf.length(), sdu_queue);
     if (sdu_queue.write(sdu)) {
       metrics.metrics_add_sdus(1, sdu_length);
       handle_buffer_state_update();
     } else {
-      logger.log_info("Dropped TX SDU (length: {} B, sdu_queue=[{}])", sdu.buf.length(), sdu_queue);
+      logger.log_info("Dropped TX SDU: sdu_len={}, sdu_queue=[{}]", sdu.buf.length(), sdu_queue);
       metrics.metrics_add_lost_sdus(1);
     }
   }
