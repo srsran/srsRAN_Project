@@ -133,6 +133,7 @@ struct rlc_tx_um_appconfig {
 /// RLC UM RX configuration
 struct rlc_rx_um_appconfig {
   uint16_t sn_field_length; ///< Number of bits used for sequence number
+  int32_t  t_reassembly;    ///< Timer used by rx to detect PDU loss (ms)
 };
 
 /// RLC UM configuration
@@ -144,17 +145,23 @@ struct rlc_um_appconfig {
 /// RLC UM TX configuration
 struct rlc_tx_am_appconfig {
   uint16_t sn_field_length; ///< Number of bits used for sequence number
+  int32_t  t_poll_retx;     ///< Poll retx timeout (ms)
+  uint32_t max_retx_thresh; ///< Max retx threshold
+  int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
+  int32_t  poll_byte;       ///< Insert poll bit after this much data (KB)
 };
 
 /// RLC UM RX configuration
 struct rlc_rx_am_appconfig {
-  uint16_t sn_field_length; ///< Number of bits used for sequence number
+  uint16_t sn_field_length;   ///< Number of bits used for sequence number
+  int32_t  t_reassembly;      ///< Timer used by rx to detect PDU loss (ms)
+  int32_t  t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
 };
 
 /// RLC AM configuration
 struct rlc_am_appconfig {
-  rlc_tx_um_appconfig tx;
-  rlc_rx_um_appconfig rx;
+  rlc_tx_am_appconfig tx;
+  rlc_rx_am_appconfig rx;
 };
 
 /// RLC configuration

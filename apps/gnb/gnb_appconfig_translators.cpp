@@ -119,15 +119,35 @@ std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appcon
       srsgnb_terminate("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
     if (out_rlc.mode == rlc_mode::um_bidir) {
+      // UM Config
+      //< RX SN
       if (!from_number(out_rlc.um.rx.sn_field_length, qos.rlc.um.rx.sn_field_length)) {
         srsgnb_terminate("Invalid RLC UM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.rx.sn_field_length);
       }
+      //< RX t-reassembly
+      out_rlc.um.rx.t_reassembly = qos.rlc.um.rx.t_reassembly;
+      //< TX SN
       if (!from_number(out_rlc.um.tx.sn_field_length, qos.rlc.um.tx.sn_field_length)) {
         srsgnb_terminate("Invalid RLC UM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
       }
       fmt::print("UM TX SN = {}, RX SN = {}\n", out_rlc.um.tx.sn_field_length, out_rlc.um.rx.sn_field_length);
     } else if (out_rlc.mode == rlc_mode::am) {
       fmt::print("AM TX SN = {}, RX SN = {}\n", qos.rlc.am.tx.sn_field_length, qos.rlc.am.rx.sn_field_length);
+      // AM Config
+      //<  TX SN
+      if (!from_number(out_rlc.am.tx.sn_field_length, qos.rlc.am.tx.sn_field_length)) {
+        srsgnb_terminate("Invalid RLC AM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.tx.sn_field_length);
+      }
+      out_rlc.am.tx.t_poll_retx     = qos.rlc.am.tx.t_poll_retx;
+      out_rlc.am.tx.max_retx_thresh = qos.rlc.am.tx.max_retx_thresh;
+      out_rlc.am.tx.poll_pdu        = qos.rlc.am.tx.poll_pdu;
+      out_rlc.am.tx.poll_byte       = qos.rlc.am.tx.poll_byte;
+      //< RX SN
+      if (!from_number(out_rlc.am.rx.sn_field_length, qos.rlc.am.rx.sn_field_length)) {
+        srsgnb_terminate("Invalid RLC AM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.rx.sn_field_length);
+      }
+      out_rlc.am.rx.t_reassembly      = qos.rlc.am.rx.t_reassembly;
+      out_rlc.am.rx.t_status_prohibit = qos.rlc.am.rx.t_status_prohibit;
     }
   }
   return out_cfg;

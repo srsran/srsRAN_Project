@@ -74,6 +74,18 @@ constexpr uint16_t to_number(rlc_am_sn_size sn_size)
 {
   return static_cast<uint16_t>(sn_size);
 }
+inline bool from_number(rlc_am_sn_size& sn_size, uint16_t num)
+{
+  if (num == 12) {
+    sn_size = rlc_am_sn_size::size12bits;
+    return true;
+  }
+  if (num == 18) {
+    sn_size = rlc_am_sn_size::size18bits;
+    return true;
+  }
+  return false;
+}
 
 /// \brief Returns the value range of the sequence numbers
 /// \param sn_size Length of the sequence number field in bits
