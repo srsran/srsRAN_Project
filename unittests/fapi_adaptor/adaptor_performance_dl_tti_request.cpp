@@ -157,7 +157,7 @@ static void pdcch_conversion_benchmark()
 
     // Conversion block.
     auto start = std::chrono::high_resolution_clock::now();
-    convert_pdcch_fapi_to_phy(proc_pdu, msg.pdus[0].pdcch_pdu, msg.sfn, msg.slot);
+    convert_pdcch_fapi_to_phy(proc_pdu, msg.pdus[0].pdcch_pdu, msg.sfn, msg.slot, 0);
     auto end = std::chrono::high_resolution_clock::now();
 
     // Print how much time it took.

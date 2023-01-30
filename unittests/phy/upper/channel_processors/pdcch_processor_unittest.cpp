@@ -104,8 +104,7 @@ int main()
                 coreset.interleaver_size                      = 2;
                 coreset.shift_index                           = 0;
 
-                pdu.dci_list.resize(1);
-                pdcch_processor::dci_description& dci = pdu.dci_list[0];
+                pdcch_processor::dci_description& dci = pdu.dci;
                 dci.n_id_pdcch_dmrs                   = dist_n_id(rgen);
                 dci.n_id_pdcch_data                   = dist_n_id(rgen);
                 dci.n_rnti                            = dist_n_id(rgen);
@@ -129,14 +128,14 @@ int main()
                 pdcch->process(grid, pdu);
 
                 // Calculate ideal allocation mask.
-                bounded_bitset<MAX_RB> rb_mask = pdcch_processor_impl::compute_rb_mask(pdu.coreset, pdu.dci_list[0]);
+                bounded_bitset<MAX_RB> rb_mask = pdcch_processor_impl::compute_rb_mask(pdu.coreset, pdu.dci);
 
                 // Check PDCCH encoder inputs.
                 TESTASSERT_EQ(encoder->get_nof_entries(), 1);
                 const auto& encoder_entry = encoder->get_entries().front();
                 TESTASSERT_EQ(encoder_entry.config.rnti, dci.rnti);
                 TESTASSERT_EQ(encoder_entry.config.E, E);
-                TESTASSERT_EQ(const_span<uint8_t>(encoder_entry.data), const_span<uint8_t>(pdu.dci_list[0].payload));
+                TESTASSERT_EQ(const_span<uint8_t>(encoder_entry.data), const_span<uint8_t>(pdu.dci.payload));
 
                 // Check PDCCH modulator inputs.
                 TESTASSERT_EQ(modulator->get_nof_entries(), 1);
@@ -147,8 +146,7 @@ int main()
                 TESTASSERT_EQ(modulator_entry.config.n_id, dci.n_id_pdcch_data);
                 TESTASSERT_EQ(modulator_entry.config.n_rnti, dci.n_rnti);
                 TESTASSERT_EQ(modulator_entry.config.scaling, convert_dB_to_amplitude(dci.data_power_offset_dB));
-                TESTASSERT_EQ(const_span<uint8_t>(pdu.dci_list[0].ports),
-                              const_span<uint8_t>(modulator_entry.config.ports));
+                TESTASSERT_EQ(const_span<uint8_t>(pdu.dci.ports), const_span<uint8_t>(modulator_entry.config.ports));
                 TESTASSERT_EQ(const_span<uint8_t>(modulator_entry.bits), const_span<uint8_t>(encoder_entry.encoded));
                 TESTASSERT_EQ((void*)modulator_entry.grid_ptr, (void*)&grid);
 
@@ -163,7 +161,7 @@ int main()
                 TESTASSERT_EQ(dmrs_entry.config.duration, coreset.duration);
                 TESTASSERT_EQ(dmrs_entry.config.n_id, dci.n_id_pdcch_dmrs);
                 TESTASSERT_EQ(dmrs_entry.config.amplitude, convert_dB_to_amplitude(dci.dmrs_power_offset_dB));
-                TESTASSERT_EQ(const_span<uint8_t>(pdu.dci_list[0].ports), const_span<uint8_t>(dmrs_entry.config.ports));
+                TESTASSERT_EQ(const_span<uint8_t>(pdu.dci.ports), const_span<uint8_t>(dmrs_entry.config.ports));
               }
             }
           }

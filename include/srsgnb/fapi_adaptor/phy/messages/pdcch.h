@@ -20,7 +20,8 @@ namespace fapi_adaptor {
 void convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&   proc_pdu,
                                const fapi::dl_pdcch_pdu& fapi_pdu,
                                uint16_t                  sfn,
-                               uint16_t                  slot);
+                               uint16_t                  slot,
+                               uint16_t                  i_dci);
 
 } // namespace fapi_adaptor
 } // namespace srsgnb

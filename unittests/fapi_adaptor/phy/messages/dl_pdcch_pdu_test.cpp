@@ -109,7 +109,7 @@ static void pdcch_conversion_test()
                   builder_dci.set_parameters_v4_dci(nid_dmrs);
 
                   pdcch_processor::pdu_t proc_pdu;
-                  convert_pdcch_fapi_to_phy(proc_pdu, pdu, sfn, slot);
+                  convert_pdcch_fapi_to_phy(proc_pdu, pdu, sfn, slot, 0);
 
                   // Test basic parameters.
                   TESTASSERT_EQ(sfn, proc_pdu.slot.sfn());
@@ -144,25 +144,24 @@ static void pdcch_conversion_test()
                     }
                   }
 
-                  // Test DCIs.
-                  TESTASSERT_EQ(1, proc_pdu.dci_list.size());
-                  TESTASSERT_EQ(n_rnti, proc_pdu.dci_list[0].n_rnti);
-                  TESTASSERT_EQ(cce, proc_pdu.dci_list[0].cce_index);
-                  TESTASSERT_EQ(aggregation, proc_pdu.dci_list[0].aggregation_level);
-                  TESTASSERT_EQ(nid_data, proc_pdu.dci_list[0].n_id_pdcch_data);
-                  TESTASSERT_EQ(nid_dmrs, proc_pdu.dci_list[0].n_id_pdcch_dmrs);
+                  // Test DCI.
+                  TESTASSERT_EQ(n_rnti, proc_pdu.dci.n_rnti);
+                  TESTASSERT_EQ(cce, proc_pdu.dci.cce_index);
+                  TESTASSERT_EQ(aggregation, proc_pdu.dci.aggregation_level);
+                  TESTASSERT_EQ(nid_data, proc_pdu.dci.n_id_pdcch_data);
+                  TESTASSERT_EQ(nid_dmrs, proc_pdu.dci.n_id_pdcch_dmrs);
 
                   // Test powers.
                   TESTASSERT(std::fabs((profile_nr ? profile_nr.value() : profile_dmrs.value()) -
-                                       proc_pdu.dci_list[0].dmrs_power_offset_dB) < 0.001F);
+                                       proc_pdu.dci.dmrs_power_offset_dB) < 0.001F);
                   TESTASSERT(std::fabs((profile_data ? profile_data.value()
                                         : profile_nr ? profile_nr.value()
                                                      : profile_dmrs.value()) -
-                                       proc_pdu.dci_list[0].data_power_offset_dB) < 0.001F);
+                                       proc_pdu.dci.data_power_offset_dB) < 0.001F);
 
                   // Test vectors.
                   for (unsigned i = 0, e = payload.size(); i != e; ++i) {
-                    TESTASSERT_EQ(payload.test(i), bool(proc_pdu.dci_list[0].payload[i]));
+                    TESTASSERT_EQ(payload.test(i), bool(proc_pdu.dci.payload[i]));
                   }
 
                   // Test frequency domain resources.

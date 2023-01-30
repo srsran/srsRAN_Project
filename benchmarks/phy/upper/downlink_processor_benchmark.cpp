@@ -349,17 +349,16 @@ int main(int argc, char** argv)
           pdu.coreset.reg_bundle_size    = 6;
           pdu.coreset.interleaver_size   = 2;
           pdu.coreset.shift_index        = 0;
-          pdu.dci_list.emplace_back();
-          pdu.dci_list.back().rnti                 = rnti;
-          pdu.dci_list.back().n_id_pdcch_dmrs      = 0;
-          pdu.dci_list.back().n_id_pdcch_data      = 0;
-          pdu.dci_list.back().n_rnti               = rnti;
-          pdu.dci_list.back().cce_index            = 0;
-          pdu.dci_list.back().aggregation_level    = pdcch_aggregation_level;
-          pdu.dci_list.back().dmrs_power_offset_dB = 0.0;
-          pdu.dci_list.back().data_power_offset_dB = 0.0;
-          pdu.dci_list.back().payload.resize(pdcch_payload_size);
-          pdu.dci_list.back().ports = {0};
+          pdu.dci.rnti                   = rnti;
+          pdu.dci.n_id_pdcch_dmrs        = 0;
+          pdu.dci.n_id_pdcch_data        = 0;
+          pdu.dci.n_rnti                 = rnti;
+          pdu.dci.cce_index              = 0;
+          pdu.dci.aggregation_level      = pdcch_aggregation_level;
+          pdu.dci.dmrs_power_offset_dB   = 0.0;
+          pdu.dci.data_power_offset_dB   = 0.0;
+          pdu.dci.payload.resize(pdcch_payload_size);
+          pdu.dci.ports = {0};
 
           // Skip case if the number of CORESET available CCE is not sufficient to accommodate the aggregation level.
           unsigned nof_cce_coreset = pdu.coreset.frequency_resources.count() * pdu.coreset.duration;
@@ -395,7 +394,7 @@ int main(int argc, char** argv)
 
           // Process PDU multiple times.
           perf_meas_pdcch.new_measure(
-              to_string(description_buf), pdu.dci_list.back().payload.size(), [&]() { dl_proc->process_pdcch(pdu); });
+              to_string(description_buf), pdu.dci.payload.size(), [&]() { dl_proc->process_pdcch(pdu); });
 
           dl_proc->finish_processing_pdus();
         }

@@ -15,39 +15,37 @@ using namespace srsgnb;
 using namespace fapi_adaptor;
 
 /// Fills the DL DCI parameters of the PDCCH processor PDU.
-static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu& fapi_pdu)
+static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu& fapi_pdu, uint16_t i_dci)
 {
-  for (unsigned i = 0, e = fapi_pdu.dl_dci.size(); i != e; ++i) {
-    auto&       dci         = proc_pdu.dci_list.emplace_back();
-    const auto& fapi_dci    = fapi_pdu.dl_dci[i];
-    const auto& fapi_dci_v3 = fapi_pdu.maintenance_v3.info[i];
-    const auto& fapi_dci_v4 = fapi_pdu.parameters_v4.params[i];
+  auto&       dci         = proc_pdu.dci;
+  const auto& fapi_dci    = fapi_pdu.dl_dci[i_dci];
+  const auto& fapi_dci_v3 = fapi_pdu.maintenance_v3.info[i_dci];
+  const auto& fapi_dci_v4 = fapi_pdu.parameters_v4.params[i_dci];
 
-    dci.rnti              = fapi_dci.rnti;
-    dci.n_id_pdcch_data   = fapi_dci.nid_pdcch_data;
-    dci.n_id_pdcch_dmrs   = fapi_dci_v4.nid_pdcch_dmrs;
-    dci.n_rnti            = fapi_dci.nrnti_pdcch_data;
-    dci.cce_index         = fapi_dci.cce_index;
-    dci.aggregation_level = fapi_dci.aggregation_level;
+  dci.rnti              = fapi_dci.rnti;
+  dci.n_id_pdcch_data   = fapi_dci.nid_pdcch_data;
+  dci.n_id_pdcch_dmrs   = fapi_dci_v4.nid_pdcch_dmrs;
+  dci.n_rnti            = fapi_dci.nrnti_pdcch_data;
+  dci.cce_index         = fapi_dci.cce_index;
+  dci.aggregation_level = fapi_dci.aggregation_level;
 
-    dci.dmrs_power_offset_dB = (fapi_dci.power_control_offset_ss_profile_nr == -127)
-                                   ? static_cast<float>(fapi_dci_v3.pdcch_dmrs_power_offset_profile_sss) * 0.001F
-                                   : static_cast<float>(fapi_dci.power_control_offset_ss_profile_nr);
+  dci.dmrs_power_offset_dB = (fapi_dci.power_control_offset_ss_profile_nr == -127)
+                                 ? static_cast<float>(fapi_dci_v3.pdcch_dmrs_power_offset_profile_sss) * 0.001F
+                                 : static_cast<float>(fapi_dci.power_control_offset_ss_profile_nr);
 
-    dci.data_power_offset_dB = (fapi_dci_v3.pdcch_data_power_offset_profile_sss ==
-                                std::numeric_limits<decltype(fapi_dci_v3.pdcch_data_power_offset_profile_sss)>::min())
-                                   ? dci.dmrs_power_offset_dB
-                                   : float(fapi_dci_v3.pdcch_data_power_offset_profile_sss) * 0.001F;
+  dci.data_power_offset_dB = (fapi_dci_v3.pdcch_data_power_offset_profile_sss ==
+                              std::numeric_limits<decltype(fapi_dci_v3.pdcch_data_power_offset_profile_sss)>::min())
+                                 ? dci.dmrs_power_offset_dB
+                                 : float(fapi_dci_v3.pdcch_data_power_offset_profile_sss) * 0.001F;
 
-    // Unpack the payload.
-    dci.payload.resize(fapi_dci.payload.size());
-    for (unsigned j = 0, je = fapi_dci.payload.size(); j != je; ++j) {
-      dci.payload[j] = fapi_dci.payload.test(j);
-    }
-
-    // :TODO: Fill this in the future.
-    dci.ports = {0};
+  // Unpack the payload.
+  dci.payload.resize(fapi_dci.payload.size());
+  for (unsigned j = 0, je = fapi_dci.payload.size(); j != je; ++j) {
+    dci.payload[j] = fapi_dci.payload.test(j);
   }
+
+  // :TODO: Fill this in the future.
+  dci.ports = {0};
 }
 
 /// Fills the CORESET parameters of the PDCCH processor PDU.
@@ -95,12 +93,13 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const fa
 void srsgnb::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&   proc_pdu,
                                                      const fapi::dl_pdcch_pdu& fapi_pdu,
                                                      uint16_t                  sfn,
-                                                     uint16_t                  slot)
+                                                     uint16_t                  slot,
+                                                     uint16_t                  i_dci)
 {
   proc_pdu.slot = slot_point(fapi_pdu.scs, sfn, slot);
   proc_pdu.cp   = fapi_pdu.cp;
 
   fill_coreset(proc_pdu.coreset, fapi_pdu);
 
-  fill_dci(proc_pdu, fapi_pdu);
+  fill_dci(proc_pdu, fapi_pdu, i_dci);
 }

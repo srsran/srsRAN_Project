@@ -115,7 +115,7 @@ public:
     unsigned shift_index;
   };
 
-  /// Describes the PDCCH processing parameters.
+  /// Collects the PDCCH parameters for a transmission.
   struct pdu_t {
     /// Indicates the slot and numerology.
     slot_point slot;
@@ -123,8 +123,8 @@ public:
     cyclic_prefix cp;
     /// Provides CORESET description.
     coreset_description coreset;
-    /// List of DCI.
-    static_vector<dci_description, pdcch_constants::MAX_NOF_DCI> dci_list;
+    /// Downlink Control Information.
+    dci_description dci;
   };
 
   /// Default detsructor.

@@ -780,7 +780,7 @@ public:
   {
     const auto&& func = [&]() { processor->process(grid, pdu); };
 
-    if (!enable_logging_broadcast && is_broadcast_rnti(pdu.dci_list.front().rnti)) {
+    if (!enable_logging_broadcast && is_broadcast_rnti(pdu.dci.rnti)) {
       func();
       return;
     }

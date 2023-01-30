@@ -100,7 +100,7 @@ struct formatter<srsgnb::pdcch_processor::pdu_t> {
   auto format(const srsgnb::pdcch_processor::pdu_t& pdu, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{} {}", pdu.coreset, pdu.dci_list.front());
+    return format_to(ctx.out(), "{} {}", pdu.coreset, pdu.dci);
   }
 };
 
