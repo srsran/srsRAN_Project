@@ -81,7 +81,6 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const
   cfg.interleaved->reg_bundle_sz  = 6;
   cfg.interleaved->shift_index    = params.pci;
   cfg.precoder_granurality        = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
-  cfg.pdcch_dmrs_scrambling_id    = params.pci;
 
   return cfg;
 }
@@ -455,8 +454,6 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // >> Add CORESET#1.
   pdcch_cfg.coresets.push_back(make_default_coreset_config(params));
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
-  pdcch_cfg.coresets[0].pdcch_dmrs_scrambling_id.emplace();
-  pdcch_cfg.coresets[0].pdcch_dmrs_scrambling_id.value() = 0;
   freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
   const size_t         NOF_CCES_CORESET1 = 8;
   freq_resources.fill(0, NOF_CCES_CORESET1, true);
