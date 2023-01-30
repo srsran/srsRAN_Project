@@ -145,8 +145,7 @@ TEST_P(ChannelEstFixture, test)
   ASSERT_TRUE(are_estimates_ok(expected_estimates, estimates));
   ASSERT_NEAR(estimates.get_rsrp(0, 0), test_params.rsrp, tolerance);
   ASSERT_NEAR(estimates.get_epre(0, 0), test_params.epre, tolerance);
-  // todo: noise estimation is temporarily disabled.
-  // ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, tolerance);
+  ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, tolerance);
   ASSERT_NEAR(estimates.get_snr_dB(0, 0), test_params.snr_est, tolerance);
 }
 

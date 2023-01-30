@@ -60,6 +60,9 @@ namespace {
 
 using PucchProcessorFormat1Param = test_case_t;
 
+std::normal_distribution<float> noise(0.0F, std::sqrt(0.5F));
+std::mt19937                    rgen(1234);
+
 class PucchProcessorFormat1Fixture : public ::testing::TestWithParam<PucchProcessorFormat1Param>
 {
 protected:
@@ -173,6 +176,32 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
   ASSERT_EQ(result.message.get_sr_bits().size(), 0);
   ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
   ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
+}
+
+TEST_P(PucchProcessorFormat1Fixture, NoSignal)
+{
+  std::vector<resource_grid_reader_spy::expected_entry_t> res = GetParam().grid.read();
+
+  for (auto& entry : res) {
+    entry.value = cf_t(noise(rgen), noise(rgen));
+  }
+  // Prepare resource grid.
+  resource_grid_reader_spy grid;
+  grid.write(res);
+
+  const PucchProcessorFormat1Param& param = GetParam();
+
+  // Make sure configuration is valid.
+  ASSERT_TRUE(validator->is_valid(param.config));
+
+  if ((param.config.nof_symbols < 6) || param.config.second_hop_prb.has_value()) {
+    GTEST_SKIP() << "Noise estimation doesn't work with a small number of OFDM symbols or frequency hopping.";
+  }
+
+  pucch_processor_result result = processor->process(grid, param.config);
+
+  // The message shall be invalid.
+  ASSERT_EQ(result.message.get_status(), uci_status::invalid);
 }
 
 INSTANTIATE_TEST_SUITE_P(PucchProcessorFormat1,

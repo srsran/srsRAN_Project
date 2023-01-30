@@ -18,10 +18,6 @@
 
 using namespace srsgnb;
 
-// Size of the averaging window used for noise estimation. Its value should divide the number of DM-RS pilots per PRB,
-// which is 12 (PUCCH F1), 6 (PUSCH) or 4 (PUCCH F2).
-static constexpr unsigned WINDOW_SIZE = 2;
-
 /// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop and
 /// for the selected port.
 /// \param[out] rx_symbols  Symbol buffer destination.
@@ -88,6 +84,9 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
   for (unsigned i_layer = 0, nof_tx_layers = cfg.dmrs_pattern.size(); i_layer != nof_tx_layers; ++i_layer) {
     rsrp      = 0;
     noise_var = 0;
+    // Set the noise average window size to the number of DM-RS pilots in one RB.
+    window_size = cfg.dmrs_pattern[i_layer].re_pattern.count();
+
     compute_layer_hop(estimate, grid, port, pilots, cfg, 0, i_layer);
     if (cfg.dmrs_pattern[i_layer].hopping_symbol_index.has_value()) {
       compute_layer_hop(estimate, grid, port, pilots, cfg, 1, i_layer);
@@ -100,10 +99,13 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     float epre = rsrp / cfg.scaling / cfg.scaling;
     estimate.set_epre(epre, port, i_layer);
 
-    noise_var /= static_cast<float>(WINDOW_SIZE * symbols_size.nof_symbols - 1);
-    // todo: temporarily commenting this since it causes old tests to fail.
-    // estimate.set_noise_variance(noise_var, port, i_layer);
-    estimate.set_noise_variance(convert_dB_to_power(-30) * epre, port, i_layer);
+    noise_var /= static_cast<float>(window_size * symbols_size.nof_symbols - 1);
+    // todo: this is temporary. The estimator is too simple and the result is quite bad when the number of OFDM symbols
+    // containing pilots is small. Since we are working in very nice conditions, we set the SNR to 30 dB in this case.
+    if ((symbols_size.nof_symbols < 3) || cfg.dmrs_pattern[i_layer].hopping_symbol_index.has_value()) {
+      noise_var = convert_dB_to_power(-30) * epre;
+    }
+    estimate.set_noise_variance(noise_var, port, i_layer);
     estimate.set_snr((noise_var != 0) ? epre / noise_var : 1000, port, i_layer);
   }
 }
@@ -160,7 +162,7 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsgnb::channel_esti
   }
 
   noise_var +=
-      estimate_noise(pilots, rx_pilots, pilots_lse, beta_scaling, WINDOW_SIZE, nof_dmrs_symbols, hop_offset, i_layer);
+      estimate_noise(pilots, rx_pilots, pilots_lse, beta_scaling, window_size, nof_dmrs_symbols, hop_offset, i_layer);
 
   // Interpolate frequency domain.
   const bounded_bitset<MAX_RB>& hop_rb_mask      = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;

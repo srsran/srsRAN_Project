@@ -64,6 +64,9 @@ private:
 
   /// Estimated noise variance (single layer).
   float noise_var = 0;
+
+  /// Size of the noise average window.
+  unsigned window_size = 0;
 };
 
 } // namespace srsgnb
