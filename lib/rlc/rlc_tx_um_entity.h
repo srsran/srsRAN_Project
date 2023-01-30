@@ -18,7 +18,7 @@
 namespace srsgnb {
 
 ///
-/// \brief Tx state variables
+/// \brief TX state variables
 /// Ref: 3GPP TS 38.322 version 16.2.0 Section 7.1
 ///
 struct rlc_tx_um_state {
@@ -37,10 +37,10 @@ private:
   // Config storage
   const rlc_tx_um_config cfg;
 
-  // Tx state variables
+  // TX state variables
   rlc_tx_um_state st;
 
-  // Tx SDU buffers
+  // TX SDU buffers
   rlc_sdu_queue sdu_queue;
   rlc_sdu       sdu;
   uint32_t      next_so = 0; // The segment offset for the next generated PDU
@@ -48,7 +48,7 @@ private:
   // Mutexes
   std::mutex mutex;
 
-  /// Tx counter modulus
+  /// TX counter modulus
   const uint32_t mod;
 
   // Header sizes are computed upon construction based on SN length

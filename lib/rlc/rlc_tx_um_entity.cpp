@@ -36,7 +36,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
   size_t sdu_length = sdu_.buf.length();
   logger.log_info(sdu_.buf.begin(),
                   sdu_.buf.end(),
-                  "Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {})",
+                  "TX SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {})",
                   sdu_.buf.length(),
                   sdu_.pdcp_count,
                   sdu_queue.size_sdus());
@@ -44,7 +44,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu_)
     metrics.metrics_add_sdus(1, sdu_length);
     handle_buffer_state_update(); // take lock
   } else {
-    logger.log_info("Dropped Tx SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {})",
+    logger.log_info("Dropped TX SDU (length: {} B, PDCP Count: {}, enqueued SDUs: {})",
                     sdu_length,
                     sdu_.pdcp_count,
                     sdu_queue.size_sdus());
@@ -77,13 +77,13 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
   }
 
   // Multiple threads can read from the SDU queue and change the
-  // RLC UM Tx state (current SDU, tx_next and next_so).
+  // RLC UM TX state (current SDU, tx_next and next_so).
   // As such we need to lock to access these variables.
   std::lock_guard<std::mutex> lock(mutex);
 
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
-    srsgnb_sanity_check(next_so == 0, "New Tx SDU, but next_so is not 0 (next_so={})", next_so);
+    srsgnb_sanity_check(next_so == 0, "New TX SDU, but next_so is not 0 (next_so={})", next_so);
     logger.log_debug(
         "Reading from SDU queue; status: {} SDUs, {} bytes", sdu_queue.size_sdus(), sdu_queue.size_bytes());
     if (not sdu_queue.read(sdu)) {
@@ -170,14 +170,14 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
     // log without SN
     logger.log_info(pdu_buf.begin(),
                     pdu_buf.end(),
-                    "Tx PDU ({}): pdu_len={}, grant_len={}",
+                    "TX PDU ({}): pdu_len={}, grant_len={}",
                     header.si,
                     pdu_buf.length(),
                     grant_len);
   } else {
     logger.log_info(pdu_buf.begin(),
                     pdu_buf.end(),
-                    "Tx PDU ({}): SN={}, SO={}, pdu_len={} grant_len={}",
+                    "TX PDU ({}): SN={}, SO={}, pdu_len={} grant_len={}",
                     header.si,
                     header.sn,
                     header.so,
