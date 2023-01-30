@@ -340,6 +340,16 @@ asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
   return out;
 }
 
+asn1::rrc_nr::csi_im_res_set_s make_asn1_csi_im_resource_set(const csi_im_resource_set& cfg)
+{
+  csi_im_res_set_s out{};
+  out.csi_im_res_set_id = cfg.res_set_id;
+  for (const auto& res_id : cfg.csi_ims_resources) {
+    out.csi_im_res.push_back(res_id);
+  }
+  return out;
+}
+
 void srsgnb::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s& out,
                                                     const csi_meas_config&        src,
                                                     const csi_meas_config&        dest)
@@ -367,4 +377,12 @@ void srsgnb::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s
       dest.csi_im_res_list,
       [](const csi_im_resource& res) { return make_asn1_csi_im_resource(res); },
       [](const csi_im_resource& res) { return res.res_id; });
+
+  calculate_addmodremlist_diff(
+      out.csi_im_res_set_to_add_mod_list,
+      out.csi_im_res_set_to_release_list,
+      src.csi_im_res_set_list,
+      dest.csi_im_res_set_list,
+      [](const csi_im_resource_set& res) { return make_asn1_csi_im_resource_set(res); },
+      [](const csi_im_resource_set& res) { return res.res_set_id; });
 }
