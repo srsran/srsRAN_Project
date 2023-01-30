@@ -253,19 +253,38 @@ struct csi_associated_report_config_info {
 };
 
 /// See TS 38.331, \c CSI-AperiodicTriggerState.
-using csi_aperiodic_trigger_state =
-    static_vector<csi_associated_report_config_info, MAX_NOF_REPORT_CONFIG_PER_APERIODIC_TRIGGER>;
+struct csi_aperiodic_trigger_state {
+  static_vector<csi_associated_report_config_info, MAX_NOF_REPORT_CONFIG_PER_APERIODIC_TRIGGER>
+      associated_report_cfg_info_list;
+
+  bool operator==(const csi_aperiodic_trigger_state& rhs) const
+  {
+    return associated_report_cfg_info_list == rhs.associated_report_cfg_info_list;
+  }
+  bool operator!=(const csi_aperiodic_trigger_state& rhs) const { return !(rhs == *this); }
+};
 
 /// Used to configure the UE with a list of aperiodic trigger states. Each codepoint of the DCI field "CSI request" is
 /// associated with one trigger state.
 /// \remark TS 38.331, \c CSI-AperiodicTriggerStateList.
 using csi_aperiodic_trigger_state_list = static_vector<csi_aperiodic_trigger_state, MAX_NOF_CSI_APERIODIC_TRIGGERS>;
 
+/// See TS 38.331, \c CSI-SemiPersistentOnPUSCH-TriggerState.
+struct csi_semi_persistent_on_pusch_trigger_state {
+  csi_report_config_id_t associated_report_cfg_info;
+
+  bool operator==(const csi_semi_persistent_on_pusch_trigger_state& rhs) const
+  {
+    return associated_report_cfg_info == rhs.associated_report_cfg_info;
+  }
+  bool operator!=(const csi_semi_persistent_on_pusch_trigger_state& rhs) const { return !(rhs == *this); }
+};
+
 /// Used to configure the UE with a list of trigger states for semi-persistent reporting of channel state information on
 /// L1.
 /// \remark TS 38.331, \c CSI-SemiPersistentOnPUSCH-TriggerStateList.
 using csi_semi_persistent_on_pusch_trigger_state_list =
-    static_vector<csi_report_config_id_t, MAX_NOF_SEMI_PERSISTENT_PUSCH_TRIGGERS>;
+    static_vector<csi_semi_persistent_on_pusch_trigger_state, MAX_NOF_SEMI_PERSISTENT_PUSCH_TRIGGERS>;
 
 /// \brief CSI-MeasConfig is used to configure CSI-RS belonging to the serving cell in which CSI-MeasConfig is included.
 /// \remark See TS 38.331, \c CSI-MeasConfig.

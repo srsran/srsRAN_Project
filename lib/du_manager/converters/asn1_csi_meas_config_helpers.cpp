@@ -1155,6 +1155,53 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
   return out;
 }
 
+asn1::rrc_nr::csi_aperiodic_trigger_state_s make_asn1_aperiodic_trigger_state(const csi_aperiodic_trigger_state& cfg)
+{
+  csi_aperiodic_trigger_state_s out{};
+  for (const auto& report_cfg_info : cfg.associated_report_cfg_info_list) {
+    csi_associated_report_cfg_info_s out_report_cfg_info{};
+    out_report_cfg_info.report_cfg_id = report_cfg_info.report_cfg_id;
+
+    if (variant_holds_alternative<csi_associated_report_config_info::nzp_csi_rs>(report_cfg_info.res_for_channel)) {
+      const auto& res_for_chnl =
+          variant_get<csi_associated_report_config_info::nzp_csi_rs>(report_cfg_info.res_for_channel);
+      auto& out_res_for_chnl   = out_report_cfg_info.res_for_ch.set_nzp_csi_rs();
+      out_res_for_chnl.res_set = res_for_chnl.resource_set;
+      for (const auto& qcl_info : res_for_chnl.qcl_info) {
+        out_res_for_chnl.qcl_info.push_back(qcl_info);
+      }
+    } else if (variant_holds_alternative<csi_associated_report_config_info::csi_ssb_resource_set>(
+                   report_cfg_info.res_for_channel)) {
+      const auto& res_for_chnl =
+          variant_get<csi_associated_report_config_info::csi_ssb_resource_set>(report_cfg_info.res_for_channel);
+      auto& out_res_for_chnl = out_report_cfg_info.res_for_ch.set_csi_ssb_res_set();
+      out_res_for_chnl       = res_for_chnl;
+    }
+
+    if (report_cfg_info.nzp_csi_rs_resources_for_interference.has_value()) {
+      out_report_cfg_info.nzp_csi_rs_res_for_interference_present = true;
+      out_report_cfg_info.nzp_csi_rs_res_for_interference =
+          report_cfg_info.nzp_csi_rs_resources_for_interference.value();
+    }
+
+    if (report_cfg_info.csi_im_resources_for_interference.has_value()) {
+      out_report_cfg_info.csi_im_res_for_interference_present = true;
+      out_report_cfg_info.csi_im_res_for_interference = report_cfg_info.csi_im_resources_for_interference.value();
+    }
+
+    out.associated_report_cfg_info_list.push_back(out_report_cfg_info);
+  }
+  return out;
+}
+
+asn1::rrc_nr::csi_semi_persistent_on_pusch_trigger_state_s
+make_asn1_semi_persistent_on_pusch_trigger_state(const csi_semi_persistent_on_pusch_trigger_state& cfg)
+{
+  csi_semi_persistent_on_pusch_trigger_state_s out{};
+  out.associated_report_cfg_info = cfg.associated_report_cfg_info;
+  return out;
+}
+
 void srsgnb::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s& out,
                                                     const csi_meas_config&        src,
                                                     const csi_meas_config&        dest)
@@ -1214,4 +1261,38 @@ void srsgnb::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s
       dest.csi_report_cfg_list,
       [](const csi_report_config& res) { return make_asn1_csi_report_config(res); },
       [](const csi_report_config& res) { return res.report_cfg_id; });
+
+  if (dest.report_trigger_size.has_value()) {
+    out.report_trigger_size_present = true;
+    out.report_trigger_size         = dest.report_trigger_size.value();
+  }
+
+  if ((dest.aperiodic_trigger_state_list.has_value() and not src.aperiodic_trigger_state_list.has_value()) ||
+      (dest.aperiodic_trigger_state_list.has_value() and src.aperiodic_trigger_state_list.has_value() and
+       dest.aperiodic_trigger_state_list != src.aperiodic_trigger_state_list)) {
+    out.aperiodic_trigger_state_list_present = true;
+    auto& ap_trigger_state_list              = out.aperiodic_trigger_state_list.set_setup();
+    for (const auto& trigger_state : dest.aperiodic_trigger_state_list.value()) {
+      ap_trigger_state_list.push_back(make_asn1_aperiodic_trigger_state(trigger_state));
+    }
+  } else if (src.aperiodic_trigger_state_list.has_value() and not dest.aperiodic_trigger_state_list.has_value()) {
+    out.aperiodic_trigger_state_list_present = true;
+    out.aperiodic_trigger_state_list.set_release();
+  }
+
+  if ((dest.semi_persistent_on_pusch_trigger_state_list.has_value() and
+       not src.semi_persistent_on_pusch_trigger_state_list.has_value()) ||
+      (dest.semi_persistent_on_pusch_trigger_state_list.has_value() and
+       src.semi_persistent_on_pusch_trigger_state_list.has_value() and
+       dest.semi_persistent_on_pusch_trigger_state_list != src.semi_persistent_on_pusch_trigger_state_list)) {
+    out.semi_persistent_on_pusch_trigger_state_list_present = true;
+    auto& sp_trigger_state_list = out.semi_persistent_on_pusch_trigger_state_list.set_setup();
+    for (const auto& trigger_state : dest.semi_persistent_on_pusch_trigger_state_list.value()) {
+      sp_trigger_state_list.push_back(make_asn1_semi_persistent_on_pusch_trigger_state(trigger_state));
+    }
+  } else if (src.semi_persistent_on_pusch_trigger_state_list.has_value() and
+             not dest.semi_persistent_on_pusch_trigger_state_list.has_value()) {
+    out.semi_persistent_on_pusch_trigger_state_list_present = true;
+    out.semi_persistent_on_pusch_trigger_state_list.set_release();
+  }
 }
