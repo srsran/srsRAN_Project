@@ -377,10 +377,9 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
 TEST_P(rlc_tx_am_test, sdu_discard)
 {
   init(GetParam());
-  const uint32_t          sdu_size = 1;
-  const uint32_t          n_pdus   = 5;
-  byte_buffer_slice_chain pdus[n_pdus];
-  uint32_t                n_bsr = tester->bsr_count;
+  const uint32_t sdu_size = 1;
+  const uint32_t n_pdus   = 6;
+  uint32_t       n_bsr    = tester->bsr_count;
 
   // Push "n_pdus" SDUs into RLC
   byte_buffer sdu_bufs[n_pdus];
@@ -398,71 +397,77 @@ TEST_P(rlc_tx_am_test, sdu_discard)
 
   // Discard valid SDUs
   rlc->discard_sdu(0);
+  rlc->discard_sdu(4); // out-of-order discard
   rlc->discard_sdu(3);
 
   // Compute expected buffer state
   uint32_t header_size         = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
   uint32_t data_pdu_size       = header_size + sdu_size;
-  uint32_t expect_buffer_state = (n_pdus - 2) * data_pdu_size;
-  uint32_t expect_mac_bsr      = (n_pdus - 2) * data_pdu_size;
+  uint32_t expect_buffer_state = (n_pdus - 3) * data_pdu_size;
+  uint32_t expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
 
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 2);
-  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 2);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 0);
 
   // Try discard of invalid SDU
   rlc->discard_sdu(999);
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 2);
-  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 2);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 1);
 
   // Try discard of already discarded SDU
   rlc->discard_sdu(0);
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 2);
-  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 2);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 2);
 
   // Transmit full PDU
-  rlc->pull_pdu(data_pdu_size);
-  expect_buffer_state = (n_pdus - 3) * data_pdu_size;
-  expect_mac_bsr      = (n_pdus - 2) * data_pdu_size;
+  byte_buffer_slice_chain pdu;
+  pdu = rlc->pull_pdu(data_pdu_size);
+  EXPECT_FALSE(pdu.empty());
+  EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
+  expect_buffer_state = (n_pdus - 4) * data_pdu_size;
+  expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 2);
-  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 2);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 2);
 
   // Try discard of already transmitted SDU
   rlc->discard_sdu(1);
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 2);
-  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 2);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 
   // Transmit full PDU
-  rlc->pull_pdu(data_pdu_size);
-  expect_buffer_state = (n_pdus - 4) * data_pdu_size;
-  expect_mac_bsr      = (n_pdus - 2) * data_pdu_size;
-  EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
-  EXPECT_EQ(tester->bsr_count, 2);
-  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 2);
-  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
-
-  // Discard remaining SDU
-  rlc->discard_sdu(4);
-  expect_buffer_state = 0;
-  expect_mac_bsr      = 0;
+  pdu = rlc->pull_pdu(data_pdu_size);
+  EXPECT_FALSE(pdu.empty());
+  EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[2].begin()));
+  expect_buffer_state = (n_pdus - 5) * data_pdu_size;
+  expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
   EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
   EXPECT_EQ(tester->bsr, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, 3);
   EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
+
+  // Discard remaining SDU
+  rlc->discard_sdu(5);
+  expect_buffer_state = 0;
+  expect_mac_bsr      = 0;
+  EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr_count, 4);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 4);
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 }
 
