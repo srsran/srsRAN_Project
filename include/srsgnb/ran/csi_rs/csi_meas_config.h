@@ -23,7 +23,43 @@ namespace srsgnb {
 /// CSI-RS-ResourceMapping is used to configure the resource element mapping of a CSI-RS resource in time- and frequency
 /// domain
 /// \remark See TS 38.331, \c CSI-RS-ResourceMapping.
-using csi_rs_resource_mapping = csi_rs_pattern_configuration;
+struct csi_rs_resource_mapping {
+  /// See TS 38.331, \c frequencyDomainAllocation in \c CSI-RS-ResourceMapping.
+  using fd_alloc_row1  = bounded_bitset<4>;
+  using fd_alloc_row2  = bounded_bitset<12>;
+  using fd_alloc_row4  = bounded_bitset<3>;
+  using fd_alloc_other = bounded_bitset<6>;
+
+  /// Frequency domain allocation within a physical resource block in accordance with TS 38.211, clause 7.4.1.5.3.
+  variant<fd_alloc_row1, fd_alloc_row2, fd_alloc_row4, fd_alloc_other> fd_alloc;
+  /// Number of ports. Values {1, 2, 4, 8, 12, 16, 24, 32}.
+  unsigned nof_ports;
+  /// Time domain allocation within a physical resource block. Values {0,...,13}.
+  unsigned first_ofdm_symbol_in_td;
+  /// Time domain allocation within a physical resource block. Values {2,...,12}.
+  optional<unsigned> first_ofdm_symbol_in_td2;
+  /// CDM configuration.
+  csi_rs_cdm_type cdm;
+  /// Frequency density configuration.
+  csi_rs_freq_density_type freq_density;
+  /// PRB where this CSI resource starts in relation to CRB#0 on the common resource block grid. Only multiples of 4 are
+  /// allowed (0, 4, ...)
+  unsigned freq_band_start_rb;
+  /// Number of PRBs across which this CSI resource spans. Only multiples of 4 are allowed. The smallest configurable
+  /// number is the minimum of 24 and the width of the associated BWP. If the configured value is larger than the width
+  /// of the corresponding BWP, the UE shall assume that the actual CSI-RS bandwidth is equal to the width of the BWP.
+  unsigned freq_band_nof_rb;
+
+  bool operator==(const csi_rs_resource_mapping& rhs) const
+  {
+    return fd_alloc == rhs.fd_alloc && nof_ports == rhs.nof_ports &&
+           first_ofdm_symbol_in_td == rhs.first_ofdm_symbol_in_td &&
+           first_ofdm_symbol_in_td2 == rhs.first_ofdm_symbol_in_td2 && cdm == rhs.cdm &&
+           freq_density == rhs.freq_density && freq_band_start_rb == rhs.freq_band_start_rb &&
+           freq_band_nof_rb == rhs.freq_band_nof_rb;
+  }
+  bool operator!=(const csi_rs_resource_mapping& rhs) const { return !(rhs == *this); }
+};
 
 /// Used to configure a periodicity for periodic and semi-persistent CSI resources, and for
 /// periodic and semi-persistent reporting on PUCCH.
