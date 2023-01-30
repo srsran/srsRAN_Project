@@ -99,6 +99,7 @@ private:
                                           pucch_info*                   existing_sr_grant,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  ue_cell_cfg,
+                                          unsigned                      harq_ack_nof_bits,
                                           unsigned                      csi_part1_nof_bits);
 
   // Helper that updates PUCCH Format 2 grant.
@@ -140,27 +141,6 @@ private:
   pucch_resource_manager    resource_manager;
 
   srslog::basic_logger& logger;
-
-#if 0
-
-  // Allocates the PUCCH SR resource on grid.
-  void allocate_pucch_ded_res_on_grid(cell_slot_resource_allocator& pucch_slot_alloc,
-                                      const pucch_resource&         pucch_res,
-                                      unsigned                      nof_prbs);
-
-  // Helper that updates an existing PUCCH HARQ grant (Format 2).
-  pucch_harq_ack_grant update_existing_format2_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                     pucch_info&                   existing_format2_grant,
-                                                     rnti_t                        rnti,
-                                                     slot_point                    sl_tx);
-
-  pucch_harq_ack_grant replace_format2_res_with_csi_specific(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                             rnti_t                        crnti,
-                                                             pucch_info&                   existing_f2_grant,
-
-                                                             unsigned                     existing_grant_res_indic,
-                                                             const ue_cell_configuration& ue_cell_cfg);
-#endif
 };
 
 } // namespace srsgnb

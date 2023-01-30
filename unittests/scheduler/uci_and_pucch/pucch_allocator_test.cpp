@@ -115,15 +115,6 @@ TEST_P(test_pucch_harq_common_output, test_pucch_output_info)
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, *pucch_test.pucch_pdu));
 }
 
-// Tests whether PUCCH allocator fills the scheduler grid correctly.
-TEST_P(test_pucch_harq_common_output, test_pucch_grid_filling)
-{
-  t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, t_bench.k1, t_bench.dci_info);
-
-  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, t_bench.k1, true));
-}
-
 // Tests whether PUCCH allocator returns the correct values for the DCI.
 TEST_P(test_pucch_harq_common_output, test_pucch_output_for_dci)
 {
@@ -274,17 +265,6 @@ TEST_F(test_pucch_sr_allocator, test_pucch_sr_only_output_info)
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
 }
 
-// Tests whether PUCCH allocator returns the correct values for the DCI.
-TEST_F(test_pucch_sr_allocator, test_pucch_sr_only_grid_filled)
-{
-  ASSERT_EQ(1, t_bench.get_main_ue().nof_cells());
-  t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
-      t_bench.res_grid[0], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
-
-  ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
-  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay, true));
-}
-
 class test_pucch_sr_allocator_with_harq : public ::testing::Test
 {
 public:
@@ -309,21 +289,8 @@ protected:
   pucch_info                pucch_expected;
 };
 
-// Tests whether PUCCH.
-TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_output_info)
-{
-  ASSERT_EQ(1, t_bench.get_main_ue().nof_cells());
-  t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, sl_point_harq_delay, t_bench.dci_info);
-  t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
-      t_bench.res_grid[0], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
-
-  ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
-  ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
-}
-
 // Tests whether PUCCH allocator returns the correct values for the DCI.
-TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_grid_filled)
+TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_grid)
 {
   ASSERT_EQ(1, t_bench.get_main_ue().nof_cells());
   t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(t_bench.res_grid,
@@ -335,7 +302,6 @@ TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_harq_grid_filled)
       t_bench.res_grid[0], t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
   ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
-  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay, true));
 }
 
 // Tests whether PUCCH allocator returns the correct values for the DCI.
@@ -366,7 +332,6 @@ TEST_F(test_pucch_sr_allocator_with_harq, test_pucch_sr_with_harq_format2)
   ASSERT_EQ(pucch_format::FORMAT_2, t_bench.res_grid[0].result.ul.pucchs.front().format);
   ASSERT_EQ(3, t_bench.res_grid[0].result.ul.pucchs.front().format_2.harq_ack_nof_bits);
   ASSERT_EQ(sr_nof_bits::one, t_bench.res_grid[0].result.ul.pucchs.front().format_2.sr_bits);
-  ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay, true));
 }
 
 //

@@ -119,7 +119,6 @@ TEST_P(test_pucch_output_sr_only, test_pucch_sr_only)
     if ((t_bench.sl_tx - sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
       ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
-      ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, 0));
     } else {
       ASSERT_TRUE(t_bench.res_grid[0].result.ul.pucchs.empty());
     }
@@ -139,7 +138,6 @@ TEST_P(test_pucch_output_sr_harq, test_pucch_sr_harq)
     if ((t_bench.sl_tx - sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
       ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
       ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
-      ASSERT_TRUE(assert_ul_resource_grid_filled(t_bench.cell_cfg, t_bench.res_grid, sl_point_harq_delay));
     } else {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
     }

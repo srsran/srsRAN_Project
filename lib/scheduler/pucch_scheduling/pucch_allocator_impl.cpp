@@ -300,6 +300,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
                                 existing_grants.format1_sr_grant,
                                 crnti,
                                 ue_cell_cfg,
+                                harq_ack_bits,
                                 csi_part1_nof_bits);
     }
 
@@ -443,6 +444,7 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
                        existing_grants.format1_sr_grant,
                        crnti,
                        ue_cell_cfg,
+                       HARQ_ACK_NOF_BITS,
                        csi_part1_nof_bits);
   }
 }
@@ -673,6 +675,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
                                                               pucch_info*                   existing_sr_grant,
                                                               rnti_t                        rnti,
                                                               const ue_cell_configuration&  ue_cell_cfg,
+                                                              unsigned                      harq_ack_nof_bits,
                                                               unsigned                      csi_part1_nof_bits)
 {
   srsgnb_assert(existing_harq_grant != nullptr or existing_sr_grant != nullptr,
@@ -700,10 +703,12 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
                                                          .max_c_rate);
   // Compute the number of and which UCI bits that can be reported so as not to exceed the Max Code Rate of PUCCH
   // Format 2.
-  pucch_uci_bits uci_bits = compute_format2_uci_bits(*format2_res.pucch_res,
+  unsigned       curr_harq_bits = existing_harq_grant != nullptr ? existing_harq_grant->format_1.harq_ack_nof_bits : 0;
+  sr_nof_bits    curr_sr_bits = existing_sr_grant != nullptr ? existing_sr_grant->format_1.sr_bits : sr_nof_bits::no_sr;
+  pucch_uci_bits uci_bits     = compute_format2_uci_bits(*format2_res.pucch_res,
                                                      max_pucch_code_rate,
-                                                     existing_harq_grant->format_1.harq_ack_nof_bits,
-                                                     existing_sr_grant->format_1.sr_bits,
+                                                     curr_harq_bits + harq_ack_nof_bits,
+                                                     curr_sr_bits,
                                                      csi_part1_nof_bits);
 
   // Compute the number of PRBs required for the uci bits computed above.
@@ -997,113 +1002,3 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
 
   return;
 }
-
-//////////////     Unused code       //////////////
-
-#if 0
-
-void pucch_allocator_impl::allocate_pucch_ded_res_on_grid(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                          const pucch_resource&         pucch_res,
-                                                          unsigned                      nof_prbs)
-{
-  srsgnb_assert(pucch_res.format == pucch_format::FORMAT_1 or pucch_res.format == pucch_format::FORMAT_2,
-                "Only PUCCH Format 1 and 2 are currently supported");
-
-  // NOTE: We do not check for collision in the grid, as it is assumed the PUCCH gets allocated in its reserved
-  // resources.
-  const bwp_configuration& bwp_config = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-
-  // Differentiate intra-slot frequency hopping cases.
-  if (not pucch_res.intraslot_freq_hopping) {
-    unsigned starting_sym = pucch_res.format == pucch_format::FORMAT_1 ? pucch_res.format_1.starting_sym_idx
-                                                                       : pucch_res.format_2.starting_sym_idx;
-    unsigned stop_sym     = pucch_res.format == pucch_format::FORMAT_1 ? starting_sym + pucch_res.format_1.nof_symbols
-                                                                       : starting_sym + pucch_res.format_2.nof_symbols;
-
-    // No intra-slot frequency hopping.
-    ofdm_symbol_range symbols{starting_sym, stop_sym};
-    unsigned          starting_crb = prb_to_crb(bwp_config, pucch_res.starting_prb);
-    pucch_slot_alloc.ul_res_grid.fill(
-        grant_info{bwp_config.scs, symbols, crb_interval{starting_crb, starting_crb + nof_prbs}});
-  }
-  // Intra-slot frequency hopping.
-  else {
-    // First hop.
-    unsigned starting_sym = pucch_res.format == pucch_format::FORMAT_1 ? pucch_res.format_1.starting_sym_idx
-                                                                       : pucch_res.format_2.starting_sym_idx;
-    unsigned stop_sym = pucch_res.format == pucch_format::FORMAT_1 ? starting_sym + pucch_res.format_1.nof_symbols / 2
-                                                                   : starting_sym + pucch_res.format_2.nof_symbols / 2;
-    ofdm_symbol_range first_hop_symbols{starting_sym, stop_sym};
-    unsigned          crb_first_hop = prb_to_crb(bwp_config, pucch_res.starting_prb);
-    pucch_slot_alloc.ul_res_grid.fill(
-        grant_info{bwp_config.scs, first_hop_symbols, crb_interval{crb_first_hop, crb_first_hop + nof_prbs}});
-
-    // Second hop.
-    unsigned second_starting_sym = stop_sym;
-    unsigned second_stop_sym     = pucch_res.format == pucch_format::FORMAT_1
-                                       ? starting_sym + pucch_res.format_1.nof_symbols
-                                       : starting_sym + pucch_res.format_2.nof_symbols;
-
-    ofdm_symbol_range second_hop_symbols{second_starting_sym, second_stop_sym};
-    unsigned          crb_second_hop = prb_to_crb(bwp_config, pucch_res.second_hop_prb);
-    pucch_slot_alloc.ul_res_grid.fill(
-        grant_info{bwp_config.scs, second_hop_symbols, crb_interval{crb_second_hop, crb_second_hop + nof_prbs}});
-  }
-}
-
-pucch_harq_ack_grant pucch_allocator_impl::update_existing_format2_grant(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                                         pucch_info& existing_format2_grant,
-                                                                         rnti_t      rnti,
-                                                                         slot_point  sl_tx)
-{
-  pucch_harq_ack_grant output;
-
-  existing_format2_grant.format_2.harq_ack_nof_bits++;
-
-  int pucch_res_idx = resource_manager.get_f2_pucch_res_indic(sl_tx, rnti);
-  if (pucch_res_idx < 0) {
-    srsgnb_assert(pucch_res_idx >= 0, "Previously allocated PUCCH Format2 resource has negative PUCCH res indicator.");
-    return output;
-  }
-
-  output.pucch_pdu           = &existing_format2_grant;
-  output.pucch_res_indicator = pucch_res_idx;
-
-  logger.debug("UE={:#x}'s HARQ-ACK mltplxd on existing PUCCH F2 for slot={}", rnti, sl_tx.to_uint());
-  return output;
-}
-
-pucch_harq_ack_grant
-pucch_allocator_impl::replace_format2_res_with_csi_specific(cell_slot_resource_allocator& pucch_slot_alloc,
-                                                            rnti_t                        crnti,
-                                                            pucch_info&                   existing_f2_grant,
-                                                            unsigned                      existing_grant_res_indic,
-                                                            const ue_cell_configuration&  ue_cell_cfg)
-{
-  const pucch_config& pucch_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
-
-  if (not resource_manager.is_csi_format2_res_available(pucch_slot_alloc.slot, crnti, pucch_cfg)) {
-    return {};
-  }
-
-  unsigned nof_prbs = existing_f2_grant.resources.prbs.length();
-  // Release previous PUCCH F2 resource and allocate the one for CSI.
-  pucch_uci_bits                   removed_uci_bits = remove_ue_uci_from_pucch(pucch_slot_alloc, crnti, pucch_cfg);
-  pucch_harq_resource_alloc_record new_format_2_resource =
-      resource_manager.get_csi_format2_res(pucch_slot_alloc.slot, crnti, pucch_cfg);
-
-  // Fill scheduler output.
-  pucch_info& pucch_pdu = pucch_slot_alloc.result.ul.pucchs.emplace_back();
-  fill_pucch_format2_grant(pucch_pdu,
-                           crnti,
-                           *new_format_2_resource.pucch_res,
-                           ue_cell_cfg,
-                           nof_prbs,
-                           removed_uci_bits.harq_ack_nof_bits,
-                           removed_uci_bits.sr_bits,
-                           removed_uci_bits.csi_part1_bits);
-
-  return pucch_harq_ack_grant{.pucch_res_indicator = new_format_2_resource.pucch_res_indicator,
-                              .pucch_pdu           = &pucch_pdu};
-}
-#endif
