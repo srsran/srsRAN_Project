@@ -64,10 +64,18 @@ protected:
 
     detector_test = detector_factory->create();
     ASSERT_NE(detector_test, nullptr);
+
+    channel_estimate::channel_estimate_dimensions ch_dims;
+    ch_dims.nof_tx_layers = 1;
+    ch_dims.nof_rx_ports  = 1;
+    ch_dims.nof_symbols   = MAX_NSYMB_PER_SLOT;
+    ch_dims.nof_prb       = MAX_RB;
+    csi.resize(ch_dims);
   }
 
   static std::shared_ptr<pucch_detector_factory> detector_factory;
   std::unique_ptr<pucch_detector>                detector_test;
+  channel_estimate                               csi;
 };
 
 std::shared_ptr<pucch_detector_factory> PUCCHDetectFixture::detector_factory = nullptr;
@@ -97,21 +105,11 @@ TEST_P(PUCCHDetectFixture, Format1Test)
   ASSERT_EQ(channel_entries.size(), nof_res)
       << "The number of channel estimates and the number of PUCCH REs do not match";
 
-  channel_estimate                              csi;
-  channel_estimate::channel_estimate_dimensions ch_dims;
-  ch_dims.nof_tx_layers = 1;
-  ch_dims.nof_rx_ports  = 1;
-  ch_dims.nof_symbols   = MAX_NSYMB_PER_SLOT;
-  ch_dims.nof_prb       = MAX_RB;
-  csi.resize(ch_dims);
-
   fill_ch_estimate(csi, channel_entries);
 
   csi.set_noise_variance(test_data.noise_var, 0);
 
-  std::unique_ptr<pucch_detector> pucch_det = detector_factory->create();
-
-  pucch_uci_message msg = pucch_det->detect(grid, csi, test_data.cfg);
+  pucch_uci_message msg = detector_test->detect(grid, csi, test_data.cfg);
 
   if (test_data.cfg.nof_harq_ack == 0) {
     if (test_data.sr_bit.empty()) {
@@ -133,6 +131,34 @@ TEST_P(PUCCHDetectFixture, Format1Test)
   ASSERT_EQ(msg.get_harq_ack_bits().size(), test_data.ack_bits.size()) << "Wrong number of HARQ-ACK bits.";
   ASSERT_TRUE(std::equal(msg.get_harq_ack_bits().begin(), msg.get_harq_ack_bits().end(), test_data.ack_bits.begin()))
       << "The HARQ-ACK bits do not match.";
+}
+
+// This test checks the behavior of the detector when the estimated noise variance is zero.
+TEST_P(PUCCHDetectFixture, Format1Variance0Test)
+{
+  test_case_t test_data = GetParam();
+
+  pucch_detector::format1_configuration config = test_data.cfg;
+
+  unsigned                                                nof_res      = config.nof_symbols / 2 * NRE;
+  std::vector<resource_grid_reader_spy::expected_entry_t> grid_entries = test_data.received_symbols.read();
+  ASSERT_EQ(grid_entries.size(), nof_res) << "The number of grid entries and the number of PUCCH REs do not match";
+
+  resource_grid_reader_spy grid;
+
+  grid.write(grid_entries);
+
+  std::vector<resource_grid_reader_spy::expected_entry_t> channel_entries = test_data.ch_estimates.read();
+  ASSERT_EQ(channel_entries.size(), nof_res)
+      << "The number of channel estimates and the number of PUCCH REs do not match";
+
+  fill_ch_estimate(csi, channel_entries);
+
+  csi.set_noise_variance(0, 0);
+
+  pucch_uci_message msg = detector_test->detect(grid, csi, test_data.cfg);
+  ASSERT_EQ(msg.get_status(), uci_status::invalid)
+      << "When the signal is ill-conditioned, the detection status should be invalid.";
 }
 
 INSTANTIATE_TEST_SUITE_P(PUCCHDetectorSuite, PUCCHDetectFixture, ::testing::ValuesIn(pucch_detector_test_data));
