@@ -66,20 +66,23 @@ struct csi_report_config {
   };
 
   /// See TS 38.331, \c reportConfigType under \c CSI-ReportConfig.
-  struct periodic_report {
+  struct periodic_or_semi_persistent_report_on_pucch {
+    enum class report_type_t { periodic, semi_persistent };
+
+    report_type_t          report_type;
     csi_report_periodicity report_slot_period;
     /// Values {0,...,(period_in_nof_slot - 1)}.
     unsigned                                        report_slot_offset;
     static_vector<pucch_csi_resource, MAX_NOF_BWPS> pucch_csi_res_list;
 
-    bool operator==(const periodic_report& rhs) const
+    bool operator==(const periodic_or_semi_persistent_report_on_pucch& rhs) const
     {
-      return report_slot_period == rhs.report_slot_period && report_slot_offset == rhs.report_slot_offset &&
-             pucch_csi_res_list == rhs.pucch_csi_res_list;
+      return report_type == rhs.report_type && report_slot_period == rhs.report_slot_period &&
+             report_slot_offset == rhs.report_slot_offset && pucch_csi_res_list == rhs.pucch_csi_res_list;
     }
-    bool operator!=(const periodic_report& rhs) const { return !(rhs == *this); }
+    bool operator!=(const periodic_or_semi_persistent_report_on_pucch& rhs) const { return !(rhs == *this); }
   };
-  using semi_persistent_report_on_pucch = periodic_report;
+
   struct semi_persistent_report_on_pusch {
     /// Values {slots5, slots10, slots20, slots40, slots80, slots160, slots320}.
     csi_report_periodicity slot_cfg;
@@ -134,6 +137,27 @@ struct csi_report_config {
   /// \brief Indicates whether the UE shall report a single (wideband) or multiple (subband) PMI.
   /// \remark See TS 38.331, \c pmi-FormatIndicator.
   enum class pmi_format_indicator { wideband_pmi, subband_pmi, none };
+
+  /// \brief Reporting configuration in the frequency domain.
+  /// \remark See TS 38.331, \c reportFreqConfiguration.
+  struct report_frequency_config {
+    cqi_format_indicator cqi_format_ind{cqi_format_indicator::none};
+    pmi_format_indicator pmi_format_ind{pmi_format_indicator::none};
+    /// Indicates a contiguous or non-contiguous subset of subbands in the bandwidth part which CSI shall be reported
+    /// for. This field is absent if there are less than 24 PRBs. Values {3,...,19}. See TS 38.331, \c
+    /// csi-ReportingBand.
+    optional<unsigned> nof_csi_reporting_subbands;
+    /// Used in conjunction with \c nof_csi_reporting_subbands, where each bit in the bit-string represents one subband.
+    bounded_bitset<MAX_NOF_CSI_REPORTING_SUBBANDS> csi_reporting_subbands_bitmap;
+
+    bool operator==(const report_frequency_config& rhs) const
+    {
+      return cqi_format_ind == rhs.cqi_format_ind && pmi_format_ind == rhs.pmi_format_ind &&
+             nof_csi_reporting_subbands == rhs.nof_csi_reporting_subbands &&
+             csi_reporting_subbands_bitmap == rhs.csi_reporting_subbands_bitmap;
+    }
+    bool operator!=(const report_frequency_config& rhs) const { return !(rhs == *this); }
+  };
 
   /// \brief Which CQI table to use for CQI calculation.
   /// \remark See TS 38.331, \c cqi-Table in \c CSI-ReportConfig and TS 38.214, clause 5.2.2.1.
@@ -210,18 +234,12 @@ struct csi_report_config {
   /// NZP CSI RS resources for interference measurement.
   optional<csi_res_config_id_t> nzp_csi_rs_res_for_interference;
   /// Time domain behavior of reporting configuration.
-  variant<periodic_report, semi_persistent_report_on_pucch, semi_persistent_report_on_pusch, aperiodic_report>
+  variant<periodic_or_semi_persistent_report_on_pucch, semi_persistent_report_on_pusch, aperiodic_report>
                          report_cfg_type;
   report_quantity_type_t report_qty_type;
   /// Relevant only when \c report_quantity_type_t is of type \c cri_ri_i1_cqi.
   csi_ri_i1_cqi_pdsch_bundle_size_for_csi pdsch_bundle_size_for_csi{csi_ri_i1_cqi_pdsch_bundle_size_for_csi::none};
-  cqi_format_indicator                    cqi_format_ind{cqi_format_indicator::none};
-  pmi_format_indicator                    pmi_format_ind{pmi_format_indicator::none};
-  /// Indicates a contiguous or non-contiguous subset of subbands in the bandwidth part which CSI shall be reported
-  /// for. This field is absent if there are less than 24 PRBs. Values {3,...,19}. See TS 38.331, \c csi-ReportingBand.
-  tiny_optional<unsigned, 0> nof_csi_reporting_subbands;
-  /// Used in conjunction with \c nof_csi_reporting_subbands, where each bit in the bit-string represents one subband.
-  bounded_bitset<MAX_NOF_CSI_REPORTING_SUBBANDS> csi_reporting_subbands_bitmap;
+  optional<report_frequency_config>       rep_freq_cfg;
   /// Time domain measurement restriction for the channel (signal) measurements. See TS 38.214, clause 5.2.1.1.
   bool is_time_restrictions_for_channel_meas_configured{false};
   /// Time domain measurement restriction for interference measurements. See TS 38.214, clause 5.2.1.1.
@@ -230,7 +248,7 @@ struct csi_report_config {
   optional<codebook_config> codebook_cfg;
   /// Turning on/off group beam based reporting.
   bool is_group_based_beam_reporting_enabled;
-  /// Value is relevant only when \c is_group_based_beam_reporting_enabled is false.
+  /// Value is relevant only when \c is_group_based_beam_reporting_enabled is false. Values {1, 2, 3, 4}.
   optional<unsigned>    nof_reported_rs;
   optional<cqi_table_t> cqi_table;
   /// If csi-ReportingBand is absent, the UE shall ignore this field.
@@ -238,7 +256,7 @@ struct csi_report_config {
   /// Port indication for RI/CQI calculation. For each CSI-RS resource in the linked ResourceConfig for channel
   /// measurement, a port indication for each rank R, indicating which R ports to use. Applicable only for non-PMI
   /// feedback. See TS 38.214, clause 5.2.1.4.2.
-  static_vector<port_index_for_8_ranks, MAX_NOF_NZP_CSI_RS_RESOURCES_PER_CONFIG> nonn_pmi_port_indication;
+  static_vector<port_index_for_8_ranks, MAX_NOF_NZP_CSI_RS_RESOURCES_PER_CONFIG> non_pmi_port_indication;
 
   bool operator==(const csi_report_config& rhs) const
   {
@@ -247,16 +265,14 @@ struct csi_report_config {
            csi_im_res_for_interference == rhs.csi_im_res_for_interference &&
            nzp_csi_rs_res_for_interference == rhs.nzp_csi_rs_res_for_interference &&
            report_cfg_type == rhs.report_cfg_type && report_qty_type == rhs.report_qty_type &&
-           pdsch_bundle_size_for_csi == rhs.pdsch_bundle_size_for_csi && cqi_format_ind == rhs.cqi_format_ind &&
-           pmi_format_ind == rhs.pmi_format_ind && nof_csi_reporting_subbands == rhs.nof_csi_reporting_subbands &&
-           csi_reporting_subbands_bitmap == rhs.csi_reporting_subbands_bitmap &&
+           pdsch_bundle_size_for_csi == rhs.pdsch_bundle_size_for_csi && rep_freq_cfg == rhs.rep_freq_cfg &&
            is_time_restrictions_for_channel_meas_configured == rhs.is_time_restrictions_for_channel_meas_configured &&
            is_time_restrictions_for_interference_meas_configured ==
                rhs.is_time_restrictions_for_interference_meas_configured &&
            codebook_cfg == rhs.codebook_cfg &&
            is_group_based_beam_reporting_enabled == rhs.is_group_based_beam_reporting_enabled &&
            nof_reported_rs == rhs.nof_reported_rs && cqi_table == rhs.cqi_table && subband_size == rhs.subband_size &&
-           nonn_pmi_port_indication == rhs.nonn_pmi_port_indication;
+           non_pmi_port_indication == rhs.non_pmi_port_indication;
   }
   bool operator!=(const csi_report_config& rhs) const { return !(rhs == *this); }
 };
