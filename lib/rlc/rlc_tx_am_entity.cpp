@@ -559,6 +559,12 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       for (uint32_t range_sn = status.get_nacks()[nack_idx].nack_sn;
            range_sn != (status.get_nacks()[nack_idx].nack_sn + status.get_nacks()[nack_idx].nack_range) % mod;
            range_sn = (range_sn + 1) % mod) {
+        // Sanity check
+        if (range_sn == status.ack_sn) {
+          logger.log_warning(
+              "Truncating invalid NACK range at ACK_SN={}: nack={}", status.ack_sn, status.get_nacks()[nack_idx]);
+          break;
+        }
         rlc_am_status_nack nack = {};
         nack.nack_sn            = range_sn;
         if (status.get_nacks()[nack_idx].has_so) {
