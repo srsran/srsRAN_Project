@@ -120,8 +120,8 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
           convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot, i_dci);
           if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
             logger.warning(
-                "Unsupported UL DCI {} detected. Skipping UL_DCI.request message in {}.{}.", i_dci, msg.sfn, msg.slot);
-            continue;
+                "Unsupported DL DCI {} detected. Skipping DL_DCI.request message in {}.{}.", i_dci, msg.sfn, msg.slot);
+            return {};
           }
         }
         break;
@@ -350,7 +350,7 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
       if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
         logger.warning(
             "Unsupported UL DCI {} detected. Skipping UL_DCI.request message in {}.{}.", i_dci, msg.sfn, msg.slot);
-        continue;
+        return;
       }
     }
   }

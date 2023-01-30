@@ -15,9 +15,8 @@ using namespace srsgnb;
 using namespace fapi_adaptor;
 
 /// Fills the DL DCI parameters of the PDCCH processor PDU.
-static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const fapi::dl_pdcch_pdu& fapi_pdu, uint16_t i_dci)
+static void fill_dci(pdcch_processor::dci_description& dci, const fapi::dl_pdcch_pdu& fapi_pdu, uint16_t i_dci)
 {
-  auto&       dci         = proc_pdu.dci;
   const auto& fapi_dci    = fapi_pdu.dl_dci[i_dci];
   const auto& fapi_dci_v3 = fapi_pdu.maintenance_v3.info[i_dci];
   const auto& fapi_dci_v4 = fapi_pdu.parameters_v4.params[i_dci];
@@ -101,5 +100,5 @@ void srsgnb::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&   p
 
   fill_coreset(proc_pdu.coreset, fapi_pdu);
 
-  fill_dci(proc_pdu, fapi_pdu, i_dci);
+  fill_dci(proc_pdu.dci, fapi_pdu, i_dci);
 }
