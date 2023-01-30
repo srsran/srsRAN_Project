@@ -59,16 +59,15 @@ private:
     static_vector<ue_uci, MAX_PUCCH_PDUS_PER_SLOT> ucis;
   };
 
-  // Allocates the HARQ-ACK on the PUSCH.
-  // \param[in] pusch_grant PUSCH grant where UCI has to be allocated.
+  // Fill the UCI on the PUSCH with the number of bits and alpha and beta parameters.
+  // \param[in] uci UCI PDU grant.
   // \param[in] uci_cfg UCI configuration for PUSCH.
   // \param[in] harq_ack_nof_bits num. of HARQ-ACK bits to reported by the UE.
-  void allocate_uci_on_pusch(ul_sched_info&      pusch_grant,
-                             const uci_on_pusch& uci_cfg,
-                             unsigned            harq_ack_nof_bits,
-                             unsigned            csi_part1_nof_bits);
-
-  void allocate_uci_csi_on_pusch(ul_sched_info& pusch_grant, const uci_on_pusch& uci_cfg, unsigned csi_part1_nof_bits);
+  // \param[in] csi_part1_nof_bits num. of CSI part1 bits to reported by the UE.
+  void fill_uci_on_pusch(uci_info&           uci,
+                         const uci_on_pusch& uci_cfg,
+                         unsigned            harq_ack_nof_bits,
+                         unsigned            csi_part1_nof_bits);
 
   /// \brief Fetches UCI alloc information for a given slot and UE. Returns nullptr if no UCI allocation was found.
   /// \return The UE UCI information for a given UCI slot and RNTI. If no UCI exists with the provided params, returns

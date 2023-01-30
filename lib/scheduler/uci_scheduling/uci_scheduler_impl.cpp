@@ -37,6 +37,7 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
     // At this point, we assume the config validator ensures there is pCell.
     auto& ue_cell = user.get_pcell();
 
+    // > Schedule SR grants.
     // At this point, we assume the UE has a \c ul_config, a \c pucch_cfg and a \c sr_res_list.
     const auto& sr_resource_cfg_list =
         ue_cell.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
@@ -52,6 +53,19 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
         // It is up to the UCI allocator to verify whether SR allocation can be skipped due to an existing PUCCH grant.
         uci_alloc.uci_allocate_sr_opportunity(slot_alloc, user.crnti, ue_cell.cfg());
       }
+    }
+
+    // > Scheduler CSI grants.
+    // TODO: get these values from the UE config.
+    const unsigned CSI_offset = 1;
+    const unsigned CSI_period = 80;
+
+    // Check if this slot corresponds to an CSI opportunity for the UE.
+    if ((sl_tx - CSI_offset).to_uint() % CSI_period == 0) {
+      const unsigned CSI_SLOT_DELAY = 0;
+      auto&          slot_alloc     = cell_alloc[CSI_SLOT_DELAY];
+
+      uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user.crnti, ue_cell.cfg());
     }
   }
 }

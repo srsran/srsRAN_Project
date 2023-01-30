@@ -53,10 +53,7 @@ public:
   /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
-  pucch_harq_resource_alloc_record
-  get_csi_format2_res(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
-
-  bool is_csi_format2_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  const pucch_resource* get_next_csi_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// Returns the pointer to the configuration of the PUCCH resource to be used for SR.
   /// \remark There is only one resource used for SR.
@@ -83,7 +80,14 @@ public:
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
-  bool release_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
+  bool release_sr_resource(slot_point slot_sr, rnti_t crnti);
+
+  /// \brief Release PUCCH (format 2) resource used for CSI from being allocated to a given UE.
+  /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
+  /// \param[in] crnti UE from which the resource needs to be released.
+  /// \param[in] pucch_cfg UE's PUCCH config.
+  /// \return True if the resource for the UE was found in the allocation records for the given slot.
+  bool release_csi_resource(slot_point slot_sr, rnti_t crnti);
 
   /// \brief Returns the PUCCH resource indicator (format 1) of the resource used for a given RNTI at a given slot.
   /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
@@ -110,6 +114,8 @@ private:
   struct rnti_pucch_res_id_slot_record {
     // Keep track of the UE allocated to the SR resource.
     rnti_t ue_using_sr_resource{INVALID_RNTI};
+    // Keep track of the UE allocated to the SR resource.
+    rnti_t ue_using_csi_resource{INVALID_RNTI};
     // Keeps track of the RNTI of the UE using a given PUCCH resource format 1 (indexed by the PUCCH res. indicator).
     pucch_res_record_array ues_using_format1_res;
     // Keeps track of the RNTI of the UE using a given PUCCH resource format 2 (indexed by the PUCCH res. indicator).

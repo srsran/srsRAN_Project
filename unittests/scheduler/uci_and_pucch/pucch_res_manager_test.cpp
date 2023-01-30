@@ -314,7 +314,7 @@ TEST_F(test_pucch_resource_manager, test_allocation_release_sr_resource)
   res_manager.get_next_sr_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
 
   // Release resource and verify it was successful.
-  ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, to_rnti(0x4601), pucch_cfg));
+  ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, to_rnti(0x4601)));
 
   // Assigne a different UE and verify it is assigned a resource.
   const pucch_resource* sr_resource_ue2 = res_manager.get_next_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);

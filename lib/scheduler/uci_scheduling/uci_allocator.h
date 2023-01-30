@@ -67,7 +67,7 @@ public:
                                            rnti_t                        crnti,
                                            const ue_cell_configuration&  ue_cell_cfg) = 0;
 
-  /// Allocates the CSO opportunities for a given UE.
+  /// Allocates the CSI opportunities for a given UE.
   /// \param[out,in] slot_alloc struct with scheduling results.
   /// \param[in] crnti C-RNTI of the UE.
   /// \param[in] ue_cell_cfg user configuration.
