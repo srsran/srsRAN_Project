@@ -271,7 +271,6 @@ int main(int argc, char** argv)
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
-  fmt::print("---- config parsed ----\n\n");
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
     srsgnb_terminate("Invalid configuration detected.\n");
@@ -279,15 +278,6 @@ int main(int argc, char** argv)
 
   // Compute derived parameters.
   compute_derived_args(gnb_cfg);
-
-  fmt::print("---- 5QI={} TX AM SN={} RX AM SN={}---\n",
-             gnb_cfg.qos_cfg[0].five_qi,
-             gnb_cfg.qos_cfg[0].rlc.am.tx.sn_field_length,
-             gnb_cfg.qos_cfg[0].rlc.am.rx.sn_field_length);
-  fmt::print("---- 5QI={} TX UM SN={} RX AM SN={}---\n",
-             gnb_cfg.qos_cfg[1].five_qi,
-             gnb_cfg.qos_cfg[1].rlc.um.tx.sn_field_length,
-             gnb_cfg.qos_cfg[1].rlc.um.rx.sn_field_length);
 
   // Set up logging.
   srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
@@ -504,7 +494,7 @@ int main(int argc, char** argv)
   // DU QoS config
   const std::map<uint8_t, du_qos_config>& du_qos_cfg = generate_du_qos_config(gnb_cfg);
   for (const auto& it : du_qos_cfg) {
-    fmt::print("5QI={} RLC={}\n", it.first, it.second.rlc);
+    gnb_logger.debug("QoS RLC configuration: 5QI={} RLC={}\n", it.first, it.second.rlc);
   }
 
   // Cell configuration.

@@ -325,7 +325,6 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   });
 
   // Cell parameters.
-  fmt::print("creating cell lambda\n");
   app.add_option_function<std::vector<std::string>>(
       "--cells",
       [&gnb_cfg](const std::vector<std::string>& values) {
@@ -349,12 +348,8 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       },
       "cells");
 
-  // CLI::App* rb_subcmd = app.add_subcommand("radio_bearers", "Radio bearer parameters")->configurable();
-
   // RB parameters.
-  fmt::print("creating qos lambda\n");
   auto rb_lambda = [&gnb_cfg](const std::vector<std::string>& values) {
-    fmt::print("qos lambda qos values size {}\n", values.size());
     // Prepare the radio bearers
     gnb_cfg.qos_cfg.resize(values.size());
 
