@@ -119,10 +119,10 @@ struct nzp_csi_rs_resource_set {
   static_vector<nzp_csi_rs_res_id_t, nzp_csi_rs_res_set_id_t::MAX_NOF_NZP_CSI_RS_RESOURCES_PER_SET> nzp_csi_rs_res;
   /// Indicates whether repetition is on/off. If false, UE may not assume that the NZP-CSI-RS resources within the
   /// resource set are transmitted with the same downlink spatial domain transmission filter.
-  bool is_repetition_on{false};
+  optional<bool> is_repetition_on;
   /// Offset X between the slot containing the DCI that triggers a set of aperiodic NZP CSI-RS resources and the slot in
   /// which the CSI-RS resource set is transmitted. Values {0,...,6}.
-  unsigned aperiodic_trigger_offset;
+  optional<unsigned> aperiodic_trigger_offset;
   /// Indicates that the antenna port for all NZP-CSI-RS resources in the CSI-RS resource set is same.
   bool is_trs_info_present{false};
 
@@ -163,9 +163,9 @@ struct csi_im_resource {
   csi_im_res_id_t                           res_id;
   optional<csi_im_resource_element_pattern> csi_im_res_element_pattern;
   /// PRB where the CSI resource starts, related to the CRB 0.
-  optional<unsigned> start_rb;
+  optional<unsigned> freq_band_start_rb;
   /// Number of PRBs that the CSI spans.
-  optional<unsigned> nof_rb;
+  optional<unsigned> freq_band_nof_rb;
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources.
   optional<csi_resource_periodicity> csi_res_period;
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources. Values {0,...,(periodicity_in_slots - 1)}.
@@ -174,8 +174,8 @@ struct csi_im_resource {
   bool operator==(const csi_im_resource& rhs) const
   {
     return res_id == rhs.res_id && csi_im_res_element_pattern == rhs.csi_im_res_element_pattern &&
-           start_rb == rhs.start_rb && nof_rb == rhs.nof_rb && csi_res_period == rhs.csi_res_period &&
-           csi_res_offset == rhs.csi_res_offset;
+           freq_band_start_rb == rhs.freq_band_start_rb && freq_band_nof_rb == rhs.freq_band_nof_rb &&
+           csi_res_period == rhs.csi_res_period && csi_res_offset == rhs.csi_res_offset;
   }
   bool operator!=(const csi_im_resource& rhs) const { return !(rhs == *this); }
 };
