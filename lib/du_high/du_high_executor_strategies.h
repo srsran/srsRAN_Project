@@ -74,15 +74,21 @@ private:
   std::array<task_executor*, MAX_NOF_DU_UES> ue_idx_to_exec;
 };
 
-/// Dispatch cell-specific tasks based on cell index.
+/// \brief Mapper of task executors used by the MAC DL, RLC DL and MAC scheduler for low-latency tasks. The task
+/// executors can be mapped based on cell index or type of task (slot indication vs others).
 class cell_executor_mapper final : public du_high_cell_executor_mapper
 {
 public:
-  explicit cell_executor_mapper(const std::initializer_list<task_executor*>& other_execs_, bool blocking_slot_ind) :
-    cell_execs(other_execs_.begin(), other_execs_.end())
+  /// \brief Creates a cell_executor_mapper instance.
+  /// \param cell_execs_ List of task executors that will be used by the MAC DL and scheduler.
+  /// \param blocking_slot_ind sets whether slot indication tasks are processed synchronously or asynchronously
+  explicit cell_executor_mapper(const std::initializer_list<task_executor*>& cell_execs_, bool blocking_slot_ind) :
+    cell_execs(cell_execs_.begin(), cell_execs_.end())
   {
     srsgnb_assert(not cell_execs.empty(), "The number of DL executors must be higher than 1");
     if (blocking_slot_ind) {
+      // synchronours slot indication mode.
+      srslog::fetch_basic_logger("MAC").debug("Synchronous slot indication processing selected for L2");
       for (task_executor* exec : cell_execs) {
         blocking_slot_execs.push_back(std::make_unique<sync_task_executor>(*exec));
         slot_execs.push_back(blocking_slot_execs.back().get());
@@ -92,16 +98,26 @@ public:
     }
   }
 
+  /// \brief Fetches a default task executor for a given cell.
   task_executor& executor(du_cell_index_t cell_index) override { return *cell_execs[cell_index % cell_execs.size()]; }
 
+  /// \brief Fetches a task executor for slot indications, given a cell index.
   task_executor& slot_ind_executor(du_cell_index_t cell_index) override
   {
     return *slot_execs[cell_index % cell_execs.size()];
   }
 
 private:
-  std::vector<task_executor*>                      cell_execs;
-  std::vector<task_executor*>                      slot_execs;
+  /// Executors used to process tasks related to the MAC DL and scheduler other than the slot indications.
+  std::vector<task_executor*> cell_execs;
+
+  /// \brief Executors used to process slot indication tasks. These executors can be either the same as the
+  /// \c cell_execs or point to a sync_task_executor adapter stored in \c blocking_slot_execs, depending on whether
+  /// slot indication tasks are processed synchronously or asynchronously.
+  std::vector<task_executor*> slot_execs;
+
+  /// \brief Task executor adapter that forces processed tasks to run synchronously. This member is only used when
+  /// the mode of blocking slot_indications tasks was selected.
   std::vector<std::unique_ptr<sync_task_executor>> blocking_slot_execs;
 };
 

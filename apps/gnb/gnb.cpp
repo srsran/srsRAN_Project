@@ -113,7 +113,7 @@ struct worker_manager {
   {
     ctrl_worker.stop();
     ue_workers.stop();
-    cell_workers.stop();
+    cell_worker.stop();
     rt_task_worker.stop();
     upper_dl_worker.stop();
     common_prach_worker.stop();
@@ -143,10 +143,10 @@ struct worker_manager {
   // CU-UP worker and executers.
   static_vector<task_worker_executor, 1> cu_up_exec{{ue_workers}};
   // DU workers and executers.
-  task_worker              cell_workers{"DU-CELL#0", task_worker_queue_size};
-  task_worker_executor     ctrl_exec{ctrl_worker};
-  task_worker_executor     cell_exec{cell_workers};
-  task_worker_executor     ue_exec{ue_workers};
+  task_worker          cell_worker{"DU-CELL#0", task_worker_queue_size, false, os_thread_realtime_priority::max() - 2};
+  task_worker_executor ctrl_exec{ctrl_worker};
+  task_worker_executor cell_exec{cell_worker};
+  task_worker_executor ue_exec{ue_workers};
   pcell_ul_executor_mapper ue_exec_mapper{&ue_exec};
   cell_executor_mapper     cell_exec_mapper{{&cell_exec}, zmq_mode};
   // Lower PHY RT task executor.
