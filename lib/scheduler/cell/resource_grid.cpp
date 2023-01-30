@@ -100,6 +100,17 @@ cell_slot_resource_grid::cell_slot_resource_grid(span<const scs_specific_carrier
   }
 }
 
+static_vector<subcarrier_spacing, NOF_NUMEROLOGIES> cell_slot_resource_grid::active_scs() const
+{
+  static_vector<subcarrier_spacing, NOF_NUMEROLOGIES> ret;
+  for (unsigned u = 0; u != numerology_to_grid_idx.size(); ++u) {
+    if (numerology_to_grid_idx[u] < std::numeric_limits<unsigned>::max()) {
+      ret.push_back(to_subcarrier_spacing(u));
+    }
+  }
+  return ret;
+}
+
 void cell_slot_resource_grid::clear()
 {
   for (auto& carrier : carrier_grids) {
@@ -127,10 +138,17 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
   return carrier.subslot_rbs.collides(ofdm_symbols, crbs);
 }
 
-prb_bitmap cell_slot_resource_grid::used_crbs(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols) const
+crb_bitmap cell_slot_resource_grid::used_crbs(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols) const
 {
   const carrier_resource_grid& carrier = get_carrier(bwp_cfg.scs);
   return carrier.subslot_rbs.used_crbs(bwp_cfg.crbs, symbols);
+}
+
+crb_bitmap
+cell_slot_resource_grid::used_crbs(subcarrier_spacing scs, crb_interval crb_lims, ofdm_symbol_range symbols) const
+{
+  const carrier_resource_grid& carrier = get_carrier(scs);
+  return carrier.subslot_rbs.used_crbs(crb_lims, symbols);
 }
 
 bool cell_slot_resource_grid::all_set(grant_info grant) const

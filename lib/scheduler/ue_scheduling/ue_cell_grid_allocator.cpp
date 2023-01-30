@@ -247,12 +247,10 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
 
-  const bwp_configuration bwp_cfg =
-      get_resource_alloc_type_1_ul_bwp_size(dci_type, init_ul_bwp, bwp_ul_cmn, ss_cfg->type);
-  const subcarrier_spacing                                scs = bwp_cfg.scs;
-  const span<const pusch_time_domain_resource_allocation> pusch_list =
-      ue_cell_cfg.get_pusch_time_domain_list(ss_cfg->id);
-  const pusch_time_domain_resource_allocation pusch_td_cfg = pusch_list[grant.time_res_index];
+  const bwp_configuration  bwp_lims = ue_cc->alloc_type1_bwp_limits(dci_ul_format::f0_0, ss_cfg->type);
+  const subcarrier_spacing scs      = bwp_ul_cmn.generic_params.scs;
+  span<const pusch_time_domain_resource_allocation> pusch_list   = ue_cell_cfg.get_pusch_time_domain_list(ss_cfg->id);
+  const pusch_time_domain_resource_allocation&      pusch_td_cfg = pusch_list[grant.time_res_index];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[pdcch_delay_in_slots];
@@ -277,9 +275,10 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Verify CRBs allocation.
-  if (not bwp_cfg.crbs.contains(grant.crbs)) {
-    logger.warning(
-        "Failed to allocate PUSCH. Cause: CRBs allocated outside the BWP.", grant.crbs.length(), bwp_cfg.crbs.length());
+  if (not bwp_lims.crbs.contains(grant.crbs)) {
+    logger.warning("Failed to allocate PUSCH. Cause: CRBs allocated outside the BWP.",
+                   grant.crbs.length(),
+                   bwp_lims.crbs.length());
     return false;
   }
 
@@ -355,7 +354,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, crbs});
 
   // Compute the available PRBs in the grid for this transmission.
-  prb_interval prbs = crb_to_prb(bwp_cfg, grant.crbs);
+  prb_interval prbs = crb_to_prb(bwp_lims, grant.crbs);
 
   // Allocate UE UL HARQ.
   if (h_ul.empty()) {

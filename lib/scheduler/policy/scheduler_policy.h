@@ -40,6 +40,20 @@ public:
     return (*cell_res_grids[cell_index])[k2].ul_res_grid;
   }
 
+  bool has_ue_dl_grant(du_cell_index_t cell_index, rnti_t rnti, unsigned k0) const
+  {
+    const auto& grants = (*cell_res_grids[cell_index])[k0].result.dl.ue_grants;
+    return std::any_of(
+        grants.begin(), grants.end(), [rnti](const auto& grant) { return grant.pdsch_cfg.rnti == rnti; });
+  }
+
+  bool has_ue_ul_grant(du_cell_index_t cell_index, rnti_t rnti, unsigned k2) const
+  {
+    const auto& puschs = (*cell_res_grids[cell_index])[k2].result.ul.puschs;
+    return std::any_of(
+        puschs.begin(), puschs.end(), [rnti](const auto& pusch) { return pusch.pusch_cfg.rnti == rnti; });
+  }
+
   unsigned nof_cells() const { return cell_res_grids.size(); }
 
 private:

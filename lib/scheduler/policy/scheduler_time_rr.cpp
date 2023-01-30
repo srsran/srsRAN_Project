@@ -146,30 +146,24 @@ alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocat
 
   // Prioritize PCell over SCells.
   for (unsigned i = 0; i != u.nof_cells(); ++i) {
-    const ue_cell&               ue_cc           = u.get_cell(to_ue_cell_index(i));
-    const ue_cell_configuration& ue_cell_cfg     = ue_cc.cfg();
-    const cell_configuration&    cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
+    const ue_cell&            ue_cc           = u.get_cell(to_ue_cell_index(i));
+    const cell_configuration& cell_cfg_common = res_grid.get_cell_cfg_common(ue_cc.cell_index);
     if (not cell_cfg_common.is_dl_enabled(res_grid.get_pdcch_slot())) {
       // DL needs to be active for PDCCH in this slot.
       continue;
     }
 
     const ul_harq_process* h = nullptr;
-    if (is_retx) {
-      h = ue_cc.harqs.find_pending_ul_retx();
-    } else {
-      h = ue_cc.harqs.find_empty_ul_harq();
-    }
+    h                        = is_retx ? ue_cc.harqs.find_pending_ul_retx() : ue_cc.harqs.find_empty_ul_harq();
     if (h == nullptr) {
+      // No HARQs available.
       continue;
     }
 
     for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
       const span<const pusch_time_domain_resource_allocation> pusch_list =
           ue_cc.cfg().get_pusch_time_domain_list(ss_cfg->id);
-      // See TS 38.212, 7.3.1.0 DCI size alignment.
-      const bwp_uplink_common& bwp_ul = ue_cell_cfg.ul_bwp_common(
-          ss_cfg->type == search_space_configuration::type_t::common ? to_bwp_id(0) : ue_cc.active_bwp_id());
+      bwp_configuration bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_ul_format::f0_0, ss_cfg->type);
 
       // Search minimum k2 that corresponds to a UL slot.
       unsigned time_res = 0;
@@ -184,11 +178,15 @@ alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocat
         continue;
       }
 
-      const unsigned                 k2            = pusch_list[time_res].k2;
-      const ofdm_symbol_range        pusch_symbols = bwp_ul.pusch_cfg_common->pusch_td_alloc_list[time_res].symbols;
-      const cell_slot_resource_grid& grid          = res_grid.get_pusch_grid(ue_cc.cell_index, k2);
-      const prb_bitmap               used_crbs     = grid.used_crbs(bwp_ul.generic_params, pusch_symbols);
-      const unsigned                 nof_req_prbs =
+      const unsigned                 k2   = pusch_list[time_res].k2;
+      const cell_slot_resource_grid& grid = res_grid.get_pusch_grid(ue_cc.cell_index, k2);
+      if (res_grid.has_ue_ul_grant(ue_cc.cell_index, ue_cc.rnti(), k2)) {
+        // only one PUSCH per UE per slot.
+        continue;
+      }
+      const ofdm_symbol_range pusch_symbols = pusch_list[time_res].symbols;
+      const prb_bitmap        used_crbs     = grid.used_crbs(bwp_lims, pusch_symbols);
+      const unsigned          nof_req_prbs =
           is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
       const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
       bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.

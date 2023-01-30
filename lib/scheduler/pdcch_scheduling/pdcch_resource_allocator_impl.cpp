@@ -112,6 +112,7 @@ bool pdcch_resource_allocator_impl::pdcch_slot_allocator::alloc_pdcch(dci_contex
 
   // Revert steps to initial state, before dci record allocation was attempted
   dfs_tree.swap(saved_dfs_tree);
+
   return false;
 }
 

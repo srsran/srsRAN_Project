@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../support/bwp_helpers.h"
 #include "harq_process.h"
 #include "ue_configuration.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
@@ -49,6 +50,15 @@ public:
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
   unsigned required_ul_prbs(unsigned time_resource, unsigned pending_bytes) const;
+
+  /// \brief Derive UL resource allocation type1 BWP configuration as per TS38.214, 6.1.2.2.2.
+  bwp_configuration alloc_type1_bwp_limits(dci_ul_format dci_fmt, search_space_configuration::type_t ss_type) const
+  {
+    return get_resource_alloc_type_1_ul_bwp_size(dci_fmt,
+                                                 ue_cfg.cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
+                                                 ue_cfg.ul_bwp_common(active_bwp_id()).generic_params,
+                                                 ss_type);
+  }
 
 private:
   struct ue_cell_metrics {
