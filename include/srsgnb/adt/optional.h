@@ -400,7 +400,7 @@ struct formatter<srsgnb::optional<T>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::optional<T> optval, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsgnb::optional<T>& optval, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (!optval.has_value()) {
       return format_to(ctx.out(), "{{na}}");

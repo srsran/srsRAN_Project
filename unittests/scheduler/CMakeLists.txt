@@ -28,7 +28,7 @@ target_link_libraries(sched_no_ue_test srsgnb_sched
 add_test(sched_no_ue_test sched_no_ue_test)
 
 add_executable(pdcch_resource_allocator_test pdcch/pdcch_resource_allocator_test.cpp)
-target_link_libraries(pdcch_resource_allocator_test srsgnb_sched srslog mac_configuration_helpers sched_config)
+target_link_libraries(pdcch_resource_allocator_test srsgnb_sched srslog mac_configuration_helpers sched_config gtest gtest_main)
 add_test(pdcch_resource_allocator_test pdcch_resource_allocator_test)
 
 add_executable(scheduler_retx_test scheduler_retx_test.cpp)
