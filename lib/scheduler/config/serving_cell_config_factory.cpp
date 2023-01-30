@@ -20,6 +20,14 @@ static nr_band get_band(const cell_config_builder_params& params)
   return params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
 }
 
+static unsigned cell_nof_crbs(const cell_config_builder_params& params)
+{
+  return band_helper::get_n_rbs_from_bw(params.channel_bw_mhz,
+                                        params.scs_common,
+                                        params.band.has_value() ? band_helper::get_freq_range(params.band.value())
+                                                                : frequency_range::FR1);
+}
+
 carrier_configuration
 srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
@@ -48,9 +56,10 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
 {
   coreset_configuration cfg{};
   cfg.id = to_coreset_id(1);
+  // PRBs spanning the maximnum number of CRBs possible.
   freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-  const size_t         NOF_PRBS_CORESET1 = 6;
-  freq_resources.fill(0, NOF_PRBS_CORESET1, true);
+  unsigned             coreset_nof_resources = cell_nof_crbs(params) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
+  freq_resources.fill(0, coreset_nof_resources, true);
   cfg.set_freq_domain_resources(freq_resources);
   cfg.duration             = 1;
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
@@ -61,7 +70,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
 /// \remark See TS 38.213, Table 13-1.
 coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
 {
-  coreset_configuration cfg            = make_default_coreset_config(params);
+  coreset_configuration cfg{};
   cfg.id                               = to_coreset_id(0);
   min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(get_band(params), params.scs_common);
   pdcch_type0_css_coreset_description desc =
@@ -123,12 +132,8 @@ search_space_configuration srsgnb::config_helpers::make_default_ue_search_space_
 bwp_configuration srsgnb::config_helpers::make_default_init_bwp(const cell_config_builder_params& params)
 {
   bwp_configuration cfg{};
-  cfg.scs           = params.scs_common;
-  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-      params.channel_bw_mhz,
-      params.scs_common,
-      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
-  cfg.crbs        = {0, nof_crbs};
+  cfg.scs         = params.scs_common;
+  cfg.crbs        = {0, cell_nof_crbs(params)};
   cfg.cp_extended = false;
   return cfg;
 }
