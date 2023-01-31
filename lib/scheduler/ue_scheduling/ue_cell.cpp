@@ -14,6 +14,9 @@
 
 using namespace srsgnb;
 
+/// Number of UL HARQs reserved per UE (Implementation-defined)
+constexpr unsigned NOF_UL_HARQS = 16;
+
 ue_cell::ue_cell(du_ue_index_t                     ue_index_,
                  rnti_t                            crnti_val,
                  const scheduler_ue_expert_config& expert_cfg_,
@@ -21,7 +24,7 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
                  const serving_cell_config&        ue_serv_cell) :
   ue_index(ue_index_),
   cell_index(ue_serv_cell.cell_index),
-  harqs(crnti_val, 8),
+  harqs(crnti_val, (unsigned)ue_serv_cell.pdsch_serv_cell_cfg->nof_harq_proc, NOF_UL_HARQS),
   crnti_(crnti_val),
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell)

@@ -198,11 +198,11 @@ struct pdsch_code_block_group_transmission {
 /// \c PDSCH-ServingCellConfig, as per TS38.331.
 struct pdsch_serving_cell_config {
   /// \c nrofHARQ-ProcessesForPDSCH.
-  enum class nof_harq_proc_for_pdsch { n2, n4, n6, n10, n12, n16, not_set };
+  enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16, not_set = 17 };
 
   optional<pdsch_code_block_group_transmission> code_block_group_tx;
   x_overhead                                    x_ov_head{x_overhead::not_set};
-  nof_harq_proc_for_pdsch                       nof_harq_proc{nof_harq_proc_for_pdsch::not_set};
+  nof_harq_proc_for_pdsch                       nof_harq_proc{nof_harq_proc_for_pdsch::n8};
   optional<serv_cell_index_t>                   pucch_cell;
   /// Values {1,...,8};
   unsigned       max_mimo_layers;

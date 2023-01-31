@@ -209,15 +209,20 @@ void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-harq_entity::harq_entity(rnti_t rnti_, unsigned nof_harq_procs, unsigned max_ack_wait_in_slots) :
+harq_entity::harq_entity(rnti_t   rnti_,
+                         unsigned nof_dl_harq_procs,
+                         unsigned nof_ul_harq_procs,
+                         unsigned max_ack_wait_in_slots) :
   rnti(rnti_), logger(srslog::fetch_basic_logger("SCHED"))
 {
-  // Create HARQs
-  dl_harqs.reserve(nof_harq_procs);
-  ul_harqs.reserve(nof_harq_procs);
-  for (unsigned pid = 0; pid < nof_harq_procs; ++pid) {
-    dl_harqs.emplace_back(to_harq_id(pid), max_ack_wait_in_slots);
-    ul_harqs.emplace_back(to_harq_id(pid), max_ack_wait_in_slots);
+  // Create HARQ processes
+  dl_harqs.reserve(nof_dl_harq_procs);
+  ul_harqs.reserve(nof_ul_harq_procs);
+  for (unsigned id = 0; id < nof_dl_harq_procs; ++id) {
+    dl_harqs.emplace_back(to_harq_id(id), max_ack_wait_in_slots);
+  }
+  for (unsigned id = 0; id != nof_ul_harq_procs; ++id) {
+    ul_harqs.emplace_back(to_harq_id(id), max_ack_wait_in_slots);
   }
 }
 

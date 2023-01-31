@@ -266,7 +266,19 @@ void save_harq_alloc_params(ul_harq_process::alloc_params& ul_alloc,
 class harq_entity
 {
 public:
-  explicit harq_entity(rnti_t rnti, uint32_t nof_harq_procs, unsigned max_ack_wait_in_slots = 8);
+  /// \brief Creates a HARQ entity for a given UE cell.
+  /// \param rnti RNTI of the UE
+  /// \param nof_dl_harq_procs Number of DL HARQ processes that the UE can support. This value is derived based on
+  /// the UE capabilities, and passed to the UE via RRC signalling. See TS38.331, "nrofHARQ-ProcessesForPDSCH".
+  /// Values: {2, 4, 6, 10, 12, 16}.
+  /// \param nof_ul_harq_procs Number of UL HARQ processes that gNB can support. This value is implementation-defined
+  /// and can up to 16 (there are up to 4 bits for HARQ-Id signalling).
+  /// \param max_ack_wait_in_slots Duration in slots before a HARQ process acknowledgement is considered to have gone
+  /// missing and that the HARQ can be reset.
+  explicit harq_entity(rnti_t   rnti,
+                       unsigned nof_dl_harq_procs,
+                       unsigned nof_ul_harq_procs     = 16,
+                       unsigned max_ack_wait_in_slots = 8);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void slot_indication(slot_point slot_tx_);
