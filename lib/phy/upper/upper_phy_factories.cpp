@@ -297,9 +297,16 @@ static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(con
   std::shared_ptr<channel_modulation_factory> demodulation_factory = create_channel_modulation_sw_factory();
 
   pusch_decoder_factory_sw_configuration decoder_config;
-  decoder_config.crc_factory       = create_crc_calculator_factory_sw("auto");
-  decoder_config.decoder_factory   = create_ldpc_decoder_factory_sw("auto");
-  decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw("auto");
+  decoder_config.crc_factory = create_crc_calculator_factory_sw(config.crc_calculator_type);
+  report_fatal_error_if_not(
+      decoder_config.crc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
+  decoder_config.decoder_factory = create_ldpc_decoder_factory_sw(config.ldpc_decoder_type);
+  report_fatal_error_if_not(
+      decoder_config.decoder_factory, "Invalid LDPC decoder factory of type {}.", config.crc_calculator_type);
+  decoder_config.dematcher_factory = create_ldpc_rate_dematcher_factory_sw(config.ldpc_rate_dematcher_type);
+  report_fatal_error_if_not(decoder_config.dematcher_factory,
+                            "Invalid LDPC Rate Dematcher factory of type {}.",
+                            config.ldpc_rate_dematcher_type);
   decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
 
   uci_decoder_factory_sw_configuration uci_dec_config;
@@ -479,8 +486,9 @@ std::shared_ptr<downlink_processor_factory>
 srsgnb::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config)
 {
   // Create channel coding factories - CRC
-  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
-  report_fatal_error_if_not(crc_calc_factory, "Invalid CRC factory.");
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory =
+      create_crc_calculator_factory_sw(config.crc_calculator_type);
+  report_fatal_error_if_not(crc_calc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
 
   // Create channel coding factories - LDPC
   std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_seg_tx_factory =

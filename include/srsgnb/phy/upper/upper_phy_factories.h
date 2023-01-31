@@ -105,14 +105,25 @@ public:
   virtual std::unique_ptr<downlink_pdu_validator> create_pdu_validator() = 0;
 };
 
-/// Downlink processor software factory configuration.
+/// \brief Downlink processor software factory configuration.
+///
+/// \remark Default values are empty strings which are invalid.
 struct downlink_processor_factory_sw_config {
-  /// \brief LDPC encoder type
+  /// \brief LDPC encoder type.
   ///
   /// Use of there options:
+  /// - \c auto: let the factory select the most efficient given the CPU architecture, or
   /// - \c generic: for using unoptimized LDPC encoder, or
-  /// - \c avx2: for using AVX2 optimized LDPC encoder.
+  /// - \c avx2: for using AVX2 optimized LDPC encoder (x86_64 CPUs only), or
+  /// - \c neon: for using NEON optimized LDPC encoder (ARM CPUs only).
   std::string ldpc_encoder_type;
+  /// \brief CRC calculator type.
+  ///
+  /// Use of there options:
+  /// - \c auto: let the factory select the most efficient given the CPU architecture, or
+  /// - \c lut: for using a look-up table CRC calculator, or
+  /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
+  std::string crc_calculator_type;
 };
 
 /// Creates a full software based downlink processor factory.
@@ -154,6 +165,31 @@ struct upper_phy_config {
   bool enable_evm;
   /// Receive symbol printer. Leave empty to disable.
   std::string rx_symbol_printer_filename;
+  /// \brief LDPC decoder type.
+  ///
+  /// Use of there options:
+  /// - \c auto: let the factory select the most efficient given the CPU architecture, or
+  /// - \c generic: for using generic instructions, or
+  /// - \c avx2: for using AVX2 instructions (x86_64 CPUs only), or
+  /// - \c avx512: for using AVX512 instructions (x86_64 CPUs only), or
+  /// - \c neon: for using NEON instructions (ARM CPUs only).
+  std::string ldpc_decoder_type;
+  /// \brief LDPC rate dematcher type.
+  ///
+  /// Use of there options:
+  /// - \c auto: let the factory select the most efficient given the CPU architecture, or
+  /// - \c generic: for using generic instructions, or
+  /// - \c avx2: for using AVX2 instructions (x86_64 CPUs only), or
+  /// - \c avx512: for using AVX512 instructions (x86_64 CPUs only), or
+  /// - \c neon: for using NEON instructions (ARM CPUs only).
+  std::string ldpc_rate_dematcher_type;
+  /// \brief CRC calculator type.
+  ///
+  /// Use of there options:
+  /// - \c auto: let the factory select the most efficient given the CPU architecture, or
+  /// - \c lut: for using a look-up table CRC calculator, or
+  /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
+  std::string crc_calculator_type;
   /// Radio sector identifier.
   unsigned sector_id;
   /// Port identifier within the sector.

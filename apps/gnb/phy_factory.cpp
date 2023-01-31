@@ -69,7 +69,8 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const gnb_appconfig&        
                                                     upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier)
 {
   downlink_processor_factory_sw_config dl_proc_config;
-  dl_proc_config.ldpc_encoder_type = "generic";
+  dl_proc_config.ldpc_encoder_type   = "auto";
+  dl_proc_config.crc_calculator_type = "auto";
 
   // Create downlink processor factory.
   std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_proc_config);
@@ -89,6 +90,9 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const gnb_appconfig&        
   cfg.pusch_executor             = pusch_executor;
   cfg.prach_executor             = prach_executor;
   cfg.rx_symbol_request_notifier = rx_symbol_request_notifier;
+  cfg.crc_calculator_type        = "auto";
+  cfg.ldpc_rate_dematcher_type   = "auto";
+  cfg.ldpc_decoder_type          = "auto";
 
   return upper_phy_factory->create(cfg);
 }

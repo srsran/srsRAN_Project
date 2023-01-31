@@ -23,18 +23,19 @@ using namespace srsgnb;
 static std::mt19937 rgen(0);
 
 // General parameters.
-static unsigned           nof_repetitions   = 1000;
-static bool               silent            = false;
-static std::string        ldpc_encoder_type = "auto";
-static std::string        benchmark_profile = "default";
-static unsigned           rg_nof_ports      = 1;
-static unsigned           rg_nof_symbols    = srsgnb::MAX_NSYMB_PER_SLOT;
-static unsigned           rg_nof_prb        = srsgnb::MAX_RB;
-static subcarrier_spacing common_scs        = subcarrier_spacing::kHz15;
-static uint16_t           rnti              = 0x1234;
-static unsigned           bwp_size_rb       = MAX_RB;
-static unsigned           bwp_start_rb      = 0;
-static cyclic_prefix      global_cp         = cyclic_prefix::NORMAL;
+static unsigned           nof_repetitions     = 1000;
+static bool               silent              = false;
+static std::string        crc_calculator_type = "auto";
+static std::string        ldpc_encoder_type   = "auto";
+static std::string        benchmark_profile   = "default";
+static unsigned           rg_nof_ports        = 1;
+static unsigned           rg_nof_symbols      = srsgnb::MAX_NSYMB_PER_SLOT;
+static unsigned           rg_nof_prb          = srsgnb::MAX_RB;
+static subcarrier_spacing common_scs          = subcarrier_spacing::kHz15;
+static uint16_t           rnti                = 0x1234;
+static unsigned           bwp_size_rb         = MAX_RB;
+static unsigned           bwp_start_rb        = 0;
+static cyclic_prefix      global_cp           = cyclic_prefix::NORMAL;
 
 // PDSCH parameters.
 static std::vector<std::pair<modulation_scheme, double>> pdsch_mcs_set = {{modulation_scheme::QPSK, 120.0 / 1024.0},
@@ -234,6 +235,7 @@ int main(int argc, char** argv)
   // Create downlink processor factory.
   downlink_processor_factory_sw_config dl_proc_factory_config;
   dl_proc_factory_config.ldpc_encoder_type            = ldpc_encoder_type;
+  dl_proc_factory_config.crc_calculator_type          = crc_calculator_type;
   std::shared_ptr<downlink_processor_factory> factory = create_downlink_processor_factory_sw(dl_proc_factory_config);
   report_fatal_error_if_not(factory, "Invalid factory.");
 
