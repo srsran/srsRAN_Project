@@ -114,6 +114,8 @@ struct test_bench_params {
   unsigned       n_cces           = 0;
   sr_periodicity period           = sr_periodicity::sl_40;
   unsigned       offset           = 0;
+  unsigned       csi_period       = 80;
+  unsigned       csi_offset       = 1;
   bool           is_tdd           = false;
 };
 

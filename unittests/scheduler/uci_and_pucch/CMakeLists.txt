@@ -33,9 +33,9 @@ add_executable(test_pucch_guardbands_sched pucch_guardbands_sched_test.cpp)
 target_link_libraries(test_pucch_guardbands_sched srsgnb_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(test_pucch_guardbands_sched)
 
-add_executable(uci_sr_scheduling_test uci_sr_scheduling_test.cpp)
-target_link_libraries(uci_sr_scheduling_test srsgnb_sched ${SCHED_TEST_LIBS})
-gtest_discover_tests(uci_sr_scheduling_test)
+add_executable(uci_scheduling_test uci_scheduling_test.cpp)
+target_link_libraries(uci_scheduling_test srsgnb_sched ${SCHED_TEST_LIBS})
+gtest_discover_tests(uci_scheduling_test)
 
 add_executable(scheduler_uci_indication_test scheduler_uci_indication_test.cpp)
 target_link_libraries(scheduler_uci_indication_test

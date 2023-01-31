@@ -38,7 +38,7 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
 
   rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(last_sl_ind - 1);
 
-  res_counter.ue_using_sr_resource = INVALID_RNTI;
+  res_counter.ue_using_sr_resource  = INVALID_RNTI;
   res_counter.ue_using_csi_resource = INVALID_RNTI;
   for (auto& ue_rec : res_counter.ues_using_format1_res) {
     ue_rec = INVALID_RNTI;

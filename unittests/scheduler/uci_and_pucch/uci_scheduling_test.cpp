@@ -220,6 +220,153 @@ INSTANTIATE_TEST_SUITE_P(test_pucch_output_for_dci,
                                          sr_periodicity::sl_320,
                                          sr_periodicity::sl_640));
 
+/////////////  Test CSI scheduling
+
+// Class to test PUCCH schedule with SR occasions only.
+class test_uci_csi_scheduling : public ::testing::Test
+{
+public:
+  test_uci_csi_scheduling() : t_bench{}
+  {
+    // Set expected grant for PUCCH Format 1.
+    pucch_expected.format  = srsgnb::pucch_format::FORMAT_1;
+    pucch_expected.crnti   = to_rnti(0x4601);
+    pucch_expected.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected.resources.prbs            = prb_interval{0, 1};
+    pucch_expected.resources.second_hop_prbs = prb_interval{NOF_RBS - 1, NOF_RBS};
+    pucch_expected.resources.symbols         = ofdm_symbol_range{0, 14};
+
+    pucch_expected.format_1.initial_cyclic_shift = 0;
+    pucch_expected.format_1.sr_bits              = sr_nof_bits::one;
+    pucch_expected.format_1.harq_ack_nof_bits    = 0;
+    pucch_expected.format_1.time_domain_occ      = 0;
+
+    pucch_expected.format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    pucch_expected.format                   = pucch_format::FORMAT_1;
+    pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
+    pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+
+    pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_f2.crnti                     = to_rnti(0x4601);
+    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{12, 14};
+
+    pucch_expected_f2.format_2.harq_ack_nof_bits = 0;
+    pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::one;
+    pucch_expected_f2.format_2.csi_part1_bits    = 4;
+    pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+  };
+
+protected:
+  // Parameters that are passed by the routing to run the tests.
+  unsigned   sr_period{sr_periodicity_to_slot(srsgnb::sr_periodicity::sl_80)};
+  unsigned   sr_offset{0};
+  unsigned   csi_period{80};
+  unsigned   csi_offset{1};
+  test_bench t_bench;
+  // Expected SR PUCCH PDU that would be passed to PHY.
+  pucch_info pucch_expected;
+  pucch_info pucch_expected_f2;
+};
+
+TEST_F(test_uci_csi_scheduling, test_tmp)
+{
+  const unsigned NOF_SLOTS_TO_TEST = csi_period * 4;
+  // TODO: get these values from the UE config.
+
+  for (; t_bench.sl_tx.to_uint() < NOF_SLOTS_TO_TEST; t_bench.slot_indication(++t_bench.sl_tx)) {
+    t_bench.uci_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+    if ((t_bench.sl_tx - csi_offset).to_uint() % csi_period == 0) {
+      ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
+      ASSERT_EQ(4, t_bench.res_grid[0].result.ul.pucchs.back().format_2.csi_part1_bits);
+    }
+  }
+}
+
+// TODO: complete the test once the CSI config has been added.
+#if 0
+// Class to test PUCCH schedule with SR occasions only.
+class test_uci_csi_scheduling : public ::testing::TestWithParam<unsigned>
+{
+public:
+  test_uci_csi_scheduling() :
+    csi_period(GetParam()),
+    csi_offset(test_rgen::uniform_int<unsigned>(0, GetParam() - 1)),
+    t_bench{test_bench_params{.csi_period = csi_period, .csi_offset = csi_offset}}
+  {
+    // Set expected grant for PUCCH Format 1.
+    pucch_expected.format  = srsgnb::pucch_format::FORMAT_1;
+    pucch_expected.crnti   = to_rnti(0x4601);
+    pucch_expected.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+
+    pucch_expected.resources.prbs            = prb_interval{0, 1};
+    pucch_expected.resources.second_hop_prbs = prb_interval{NOF_RBS - 1, NOF_RBS};
+    pucch_expected.resources.symbols         = ofdm_symbol_range{0, 14};
+
+    pucch_expected.format_1.initial_cyclic_shift = 0;
+    pucch_expected.format_1.sr_bits              = sr_nof_bits::one;
+    pucch_expected.format_1.harq_ack_nof_bits    = 0;
+    pucch_expected.format_1.time_domain_occ      = 0;
+
+    pucch_expected.format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    pucch_expected.format                   = pucch_format::FORMAT_1;
+    pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
+    pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+
+    pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_f2.crnti                     = to_rnti(0x4601);
+    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{12, 14};
+
+    pucch_expected_f2.format_2.harq_ack_nof_bits = 0;
+    pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::one;
+    pucch_expected_f2.format_2.csi_part1_bits    = 4;
+    pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+  };
+
+protected:
+  // Parameters that are passed by the routing to run the tests.
+  unsigned   sr_period{sr_periodicity_to_slot(srsgnb::sr_periodicity::sl_80)};
+  unsigned   sr_offset{0};
+  unsigned   csi_period;
+  unsigned   csi_offset;
+  test_bench t_bench;
+  // Expected SR PUCCH PDU that would be passed to PHY.
+  pucch_info pucch_expected;
+  pucch_info pucch_expected_f2;
+};
+
+TEST_P(test_uci_csi_scheduling, test_csi_sched)
+{
+  const unsigned NOF_SLOTS_TO_TEST = csi_period * 4;
+
+  for (; t_bench.sl_tx.to_uint() < NOF_SLOTS_TO_TEST; t_bench.slot_indication(++t_bench.sl_tx)) {
+    t_bench.uci_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+    if ((t_bench.sl_tx - csi_offset).to_uint() % csi_period == 0) {
+      ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
+      if ((t_bench.sl_tx - sr_offset).to_uint() % sr_period == 0) {
+        ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
+      } else {
+        ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f2, t_bench.res_grid[0].result.ul.pucchs.back()));
+      }
+    }
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(test_csi_sched_different_periods_offsets,
+                         test_uci_csi_scheduling,
+                         testing::Values(1, 2, 4, 5, 8, 16, 20, 40, 80, 160, 320, 640));
+#endif
+
 int main(int argc, char** argv)
 {
   srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);

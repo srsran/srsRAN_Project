@@ -31,7 +31,7 @@ struct pucch_harq_ack_grant {
 /// Contains the number of UCI HARQ-ACK and CSI information bits of a removed PUCCH grant.
 struct pucch_uci_bits {
   /// Number of HARQ-ACK info bits that should have been reported in the removed PUCCH grant.
-  unsigned    harq_ack_nof_bits{0};
+  unsigned harq_ack_nof_bits{0};
   /// Number of SR info bits that should have been reported in the removed PUCCH grant.
   sr_nof_bits sr_bits{sr_nof_bits::no_sr};
   /// Number of CSI-part1 info bits that should have been reported in the removed PUCCH grant.
