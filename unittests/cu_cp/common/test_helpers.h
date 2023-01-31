@@ -42,7 +42,7 @@ gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
 struct dummy_du_processor_to_cu_cp_task_scheduler : public du_processor_to_cu_cp_task_scheduler {
 public:
   dummy_du_processor_to_cu_cp_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
-  void schedule_async_task(du_index_t du_index, ue_index_t ue_index, async_task<void>&& task) override
+  void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));
   }

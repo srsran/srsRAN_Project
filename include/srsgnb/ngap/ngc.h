@@ -91,14 +91,14 @@ public:
 };
 
 struct ngc_ue_context {
-  cu_cp_ue_id_t cu_cp_ue_id                   = cu_cp_ue_id_t::invalid;
-  amf_ue_id_t   amf_ue_id                     = amf_ue_id_t::invalid;
-  ran_ue_id_t   ran_ue_id                     = ran_ue_id_t::invalid;
-  uint64_t      aggregate_maximum_bit_rate_dl = 0;
+  ue_index_t  ue_index                      = ue_index_t::invalid;
+  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
+  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
+  uint64_t    aggregate_maximum_bit_rate_dl = 0;
 };
 
 struct ngap_initial_ue_message {
-  cu_cp_ue_id_t                            cu_cp_ue_id;
+  ue_index_t                               ue_index = ue_index_t::invalid;
   byte_buffer                              nas_pdu;
   asn1::ngap::rrc_establishment_cause_opts establishment_cause;
   asn1::ngap::nr_cgi_s                     nr_cgi;
@@ -106,7 +106,7 @@ struct ngap_initial_ue_message {
 };
 
 struct ngap_ul_nas_transport_message {
-  cu_cp_ue_id_t        cu_cp_ue_id;
+  ue_index_t           ue_index = ue_index_t::invalid;
   byte_buffer          nas_pdu;
   asn1::ngap::nr_cgi_s nr_cgi;
   uint32_t             tac;
@@ -128,8 +128,8 @@ public:
 };
 
 struct ngap_pdu_session_res_item {
-  uint16_t    pdu_session_id = 0;
-  byte_buffer pdu_session_res;
+  pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
+  byte_buffer      pdu_session_res;
 };
 using ngap_pdu_session_res_list = std::vector<ngap_pdu_session_res_item>;
 
@@ -176,13 +176,11 @@ public:
   virtual ~ngc_ue_control_manager() = default;
 
   /// \brief Creates a NGC UE.
-  /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue_pdu_notifier The pdu notifier to the RRC UE.
   /// \param[in] rrc_ue_ctrl_notifier The control notifier to the RRC UE.
   /// \param[in] du_processor_ctrl_notifier The pdu notifier to the DU processor.
-  virtual void create_ngc_ue(du_index_t                         du_index,
-                             ue_index_t                         ue_index,
+  virtual void create_ngc_ue(ue_index_t                         ue_index,
                              ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
                              ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
                              ngc_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
@@ -192,10 +190,10 @@ public:
 class ngc_ue_task_scheduler
 {
 public:
-  virtual ~ngc_ue_task_scheduler()                                                               = default;
-  virtual void           schedule_async_task(cu_cp_ue_id_t cu_cp_ue_id, async_task<void>&& task) = 0;
-  virtual unique_timer   make_unique_timer()                                                     = 0;
-  virtual timer_manager& get_timer_manager()                                                     = 0;
+  virtual ~ngc_ue_task_scheduler()                                                         = default;
+  virtual void           schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
+  virtual unique_timer   make_unique_timer()                                               = 0;
+  virtual timer_manager& get_timer_manager()                                               = 0;
 };
 
 /// \brief Interface to query statistics from the NGC interface.

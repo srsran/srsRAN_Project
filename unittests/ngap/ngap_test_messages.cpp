@@ -104,10 +104,10 @@ ngc_message srsgnb::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time_
   return ng_setup_failure;
 }
 
-ngap_initial_ue_message srsgnb::srs_cu_cp::generate_initial_ue_message(cu_cp_ue_id_t cu_cp_ue_id)
+ngap_initial_ue_message srsgnb::srs_cu_cp::generate_initial_ue_message(ue_index_t ue_index)
 {
   ngap_initial_ue_message msg;
-  msg.cu_cp_ue_id = cu_cp_ue_id;
+  msg.ue_index = ue_index;
   msg.nas_pdu.resize(nas_pdu_len);
   msg.establishment_cause.value = rrc_establishment_cause_opts::mo_sig;
   // msg.nr_cgi = {};
@@ -130,10 +130,10 @@ ngc_message srsgnb::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id
   return dl_nas_transport;
 }
 
-ngap_ul_nas_transport_message srsgnb::srs_cu_cp::generate_ul_nas_transport_message(cu_cp_ue_id_t cu_cp_ue_id)
+ngap_ul_nas_transport_message srsgnb::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
 {
   ngap_ul_nas_transport_message ul_nas_transport;
-  ul_nas_transport.cu_cp_ue_id = cu_cp_ue_id;
+  ul_nas_transport.ue_index = ue_index;
   ul_nas_transport.nas_pdu.resize(nas_pdu_len);
   // ul_nas_transport.nr_cgi = {};
 

@@ -16,14 +16,14 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
-    const cu_cp_ue_id_t                             cu_cp_ue_id_,
+    const ue_index_t                                ue_index_,
     const asn1::ngap::init_context_setup_request_s& request_,
     ngc_ue_manager&                                 ue_manager_,
     ngc_message_notifier&                           amf_notif_,
     srslog::basic_logger&                           logger_) :
-  cu_cp_ue_id(cu_cp_ue_id_), request(request_), ue_manager(ue_manager_), amf_notifier(amf_notif_), logger(logger_)
+  ue_index(ue_index_), request(request_), ue_manager(ue_manager_), amf_notifier(amf_notif_), logger(logger_)
 {
-  ue = ue_manager.find_ue(cu_cp_ue_id);
+  ue = ue_manager.find_ngap_ue(ue_index);
 }
 
 void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -44,14 +44,13 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
 
     // Release UE
     cu_cp_ue_context_release_command rel_cmd = {};
-    rel_cmd.ue_index                         = get_ue_index_from_cu_cp_ue_id(ue->get_cu_cp_ue_id());
-    rel_cmd.du_index                         = get_du_index_from_cu_cp_ue_id(ue->get_cu_cp_ue_id());
+    rel_cmd.ue_index                         = ue->get_ue_index();
     rel_cmd.cause                            = cu_cp_cause_t::protocol;
 
     ue->get_du_processor_control_notifier().on_new_ue_context_release_command(rel_cmd);
 
     // Remove UE
-    ue_manager.remove_ue(cu_cp_ue_id);
+    ue_manager.remove_ngap_ue(ue_index);
 
     logger.debug("Initial Context Setup Procedure finished");
     CORO_EARLY_RETURN();
@@ -88,7 +87,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
     init_ctxt_setup_resp->pdu_session_res_setup_list_cxt_res->resize(msg.succeed_to_setup.size());
     for (auto& it : msg.succeed_to_setup) {
       asn1::ngap::pdu_session_res_setup_item_cxt_res_s res_item;
-      res_item.pdu_session_id = it.pdu_session_id;
+      res_item.pdu_session_id = pdu_session_id_to_uint(it.pdu_session_id);
       res_item.pdu_session_res_setup_resp_transfer.resize(it.pdu_session_res.length());
       std::copy(
           it.pdu_session_res.begin(), it.pdu_session_res.end(), res_item.pdu_session_res_setup_resp_transfer.begin());
@@ -103,7 +102,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
     init_ctxt_setup_resp->pdu_session_res_failed_to_setup_list_cxt_res->resize(msg.failed_to_setup.size());
     for (auto& it : msg.failed_to_setup) {
       asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_res_s res_item;
-      res_item.pdu_session_id = it.pdu_session_id;
+      res_item.pdu_session_id = pdu_session_id_to_uint(it.pdu_session_id);
       res_item.pdu_session_res_setup_unsuccessful_transfer.resize(it.pdu_session_res.length());
       std::copy(it.pdu_session_res.begin(),
                 it.pdu_session_res.end(),
@@ -144,7 +143,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
     init_ctxt_setup_fail->pdu_session_res_failed_to_setup_list_cxt_fail->resize(msg.failed_to_setup.size());
     for (auto& it : msg.failed_to_setup) {
       asn1::ngap::pdu_session_res_failed_to_setup_item_cxt_fail_s fail_item;
-      fail_item.pdu_session_id = it.pdu_session_id;
+      fail_item.pdu_session_id = pdu_session_id_to_uint(it.pdu_session_id);
       fail_item.pdu_session_res_setup_unsuccessful_transfer.resize(it.pdu_session_res.length());
       std::copy(it.pdu_session_res.begin(),
                 it.pdu_session_res.end(),

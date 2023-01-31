@@ -65,7 +65,7 @@ cu_cp_pdu_session_resource_setup_request srsgnb::srs_cu_cp::generate_pdu_session
   cu_cp_pdu_session_resource_setup_request req;
   pdu_session_id_t                         pdu_session_id = uint_to_pdu_session_id(1);
 
-  req.cu_cp_ue_id = uint_to_cu_cp_ue_id(0);
+  req.ue_index = uint_to_ue_index(0);
 
   cu_cp_pdu_session_res_setup_item item;
   item.pdu_session_id = pdu_session_id;

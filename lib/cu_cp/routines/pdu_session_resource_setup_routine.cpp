@@ -39,12 +39,12 @@ void pdu_session_resource_setup_routine::operator()(
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("ue={}: \"{}\" initialized.", setup_msg.cu_cp_ue_id, name());
+  logger.debug("ue={}: \"{}\" initialized.", setup_msg.ue_index, name());
 
   // initial sanity check, making sure we catch implementation limitations
   if (setup_msg.pdu_session_res_setup_items.size() != 1) {
     logger.error("ue={}: \"{}\" supports only one PDU Session ({} requested).",
-                 setup_msg.cu_cp_ue_id,
+                 setup_msg.ue_index,
                  name(),
                  setup_msg.pdu_session_res_setup_items.size());
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -60,14 +60,14 @@ void pdu_session_resource_setup_routine::operator()(
 
     // Handle BearerContextSetupResponse
     if (not bearer_context_setup_response.success) {
-      logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", setup_msg.cu_cp_ue_id, name());
+      logger.error("ue={}: \"{}\" failed to setup bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
 
     // fail unsupported fields
     if (not bearer_context_setup_response.pdu_session_resource_failed_list.empty()) {
       logger.error(
-          "ue={}: \"{}\" Non-empty PDU session resource failed list not supported.", setup_msg.cu_cp_ue_id, name());
+          "ue={}: \"{}\" Non-empty PDU session resource failed list not supported.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -75,7 +75,7 @@ void pdu_session_resource_setup_routine::operator()(
   // Register required DRB resources at DU
   {
     // prepare UE Context Modification Request and call F1 notifier
-    ue_context_mod_request.ue_index = get_ue_index_from_cu_cp_ue_id(setup_msg.cu_cp_ue_id);
+    ue_context_mod_request.ue_index = setup_msg.ue_index;
     for (const auto& drb_to_add : drb_to_add_list) {
       // verify sanity of received resposne
       const pdu_session_id_t session = rrc_ue_drb_manager.get_pdu_session_id(drb_to_add);
@@ -84,7 +84,7 @@ void pdu_session_resource_setup_routine::operator()(
       // verify correct PDU session is acked
       if (not bearer_context_setup_response.pdu_session_resource_setup_list.contains(session)) {
         logger.error("ue={}: \"{}\" Bearer context setup response doesn't include setup for PDU session {}",
-                     setup_msg.cu_cp_ue_id,
+                     setup_msg.ue_index,
                      name(),
                      session);
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -94,7 +94,7 @@ void pdu_session_resource_setup_routine::operator()(
       if (not bearer_context_setup_response.pdu_session_resource_setup_list[session].drb_setup_list_ng_ran.contains(
               drb_to_add)) {
         logger.error("ue={}: \"{}\" Bearer context setup response doesn't include setup for DRB id {}",
-                     setup_msg.cu_cp_ue_id,
+                     setup_msg.ue_index,
                      name(),
                      drb_to_add);
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -102,7 +102,7 @@ void pdu_session_resource_setup_routine::operator()(
 
       // Fail on any DRB that fails to be setup
       if (not bearer_context_setup_response.pdu_session_resource_setup_list[session].drb_failed_list_ng_ran.empty()) {
-        logger.error("ue={}: \"{}\" Non-empty DRB failed list not supported", setup_msg.cu_cp_ue_id, name());
+        logger.error("ue={}: \"{}\" Non-empty DRB failed list not supported", setup_msg.ue_index, name());
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
       }
 
@@ -110,13 +110,13 @@ void pdu_session_resource_setup_routine::operator()(
       const auto& drb =
           bearer_context_setup_response.pdu_session_resource_setup_list[session].drb_setup_list_ng_ran[drb_to_add];
       if (not drb.flow_failed_list.empty()) {
-        logger.error("ue={}: \"{}\" Non-empty QoS flow failed list not supported", setup_msg.cu_cp_ue_id, name());
+        logger.error("ue={}: \"{}\" Non-empty QoS flow failed list not supported", setup_msg.ue_index, name());
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
       }
 
       // verify only a single UL transport info item is present
       if (drb.ul_up_transport_params.size() != 1) {
-        logger.error("ue={}: \"{}\" Multiple UL UP transport items not supported", setup_msg.cu_cp_ue_id, name());
+        logger.error("ue={}: \"{}\" Multiple UL UP transport items not supported", setup_msg.ue_index, name());
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
       }
 
@@ -141,14 +141,14 @@ void pdu_session_resource_setup_routine::operator()(
 
     // Handle UE Context Modification Response
     if (not ue_context_modification_response.success) {
-      logger.error("ue={}: \"{}\" failed to modify UE context at DU.", setup_msg.cu_cp_ue_id, name());
+      logger.error("ue={}: \"{}\" failed to modify UE context at DU.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
 
     // Fail procedure if (single) DRB couldn't be setup
     if (not ue_context_modification_response.drbs_failed_to_be_setup_mod_list.empty()) {
       logger.error("ue={}: \"{}\" couldn't setup {} DRBs at DU.",
-                   setup_msg.cu_cp_ue_id,
+                   setup_msg.ue_index,
                    name(),
                    ue_context_modification_response.drbs_failed_to_be_setup_mod_list.size());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
@@ -166,7 +166,7 @@ void pdu_session_resource_setup_routine::operator()(
 
     // Handle BearerContextModificationResponse
     if (not bearer_context_modification_response.success) {
-      logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.cu_cp_ue_id, name());
+      logger.error("ue={}: \"{}\" failed to modification bearer at CU-UP.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -202,7 +202,7 @@ void pdu_session_resource_setup_routine::operator()(
 
     // Handle UE Context Modification Response
     if (not rrc_reconfig_result) {
-      logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", setup_msg.cu_cp_ue_id, name());
+      logger.error("ue={}: \"{}\" RRC Reconfiguration failed.", setup_msg.ue_index, name());
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -230,7 +230,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
       response_msg.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, item);
     }
 
-    logger.debug("ue={}: \"{}\" finalized.", setup_msg.cu_cp_ue_id, name());
+    logger.debug("ue={}: \"{}\" finalized.", setup_msg.ue_index, name());
   } else {
     // mark all PDU sessions as failed
     for (const auto& setup_item : setup_msg.pdu_session_res_setup_items) {
@@ -240,7 +240,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
       response_msg.pdu_session_res_failed_to_setup_items.emplace(setup_item.pdu_session_id, item);
     }
 
-    logger.error("ue={}: \"{}\" failed.", setup_msg.cu_cp_ue_id, name());
+    logger.error("ue={}: \"{}\" failed.", setup_msg.ue_index, name());
   }
 
   return response_msg;
@@ -249,7 +249,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
 void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
     e1ap_bearer_context_setup_request& e1ap_request)
 {
-  e1ap_request.cu_cp_ue_id = setup_msg.cu_cp_ue_id;
+  e1ap_request.ue_index = setup_msg.ue_index;
 
   // security info
   e1ap_request.security_info.security_algorithm.ciphering_algo                 = security_cfg.cipher_algo;
@@ -322,7 +322,7 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
 void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_request(
     e1ap_bearer_context_modification_request& e1ap_request)
 {
-  e1ap_request.cu_cp_ue_id = setup_msg.cu_cp_ue_id;
+  e1ap_request.ue_index = setup_msg.ue_index;
 
   e1ap_ng_ran_bearer_context_mod_request e1ap_bearer_context_mod;
 

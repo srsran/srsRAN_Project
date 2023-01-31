@@ -14,12 +14,12 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
-e1_bearer_context_release_procedure::e1_bearer_context_release_procedure(const cu_cp_ue_id_t   cu_cp_ue_id_,
+e1_bearer_context_release_procedure::e1_bearer_context_release_procedure(const ue_index_t      ue_index_,
                                                                          const e1_message&     command_,
                                                                          e1ap_ue_context_list& ue_ctxt_list_,
                                                                          e1_message_notifier&  e1_notif_,
                                                                          srslog::basic_logger& logger_) :
-  cu_cp_ue_id(cu_cp_ue_id_), command(command_), ue_ctxt_list(ue_ctxt_list_), e1_notifier(e1_notif_), logger(logger_)
+  ue_index(ue_index_), command(command_), ue_ctxt_list(ue_ctxt_list_), e1_notifier(e1_notif_), logger(logger_)
 {
 }
 
@@ -28,7 +28,7 @@ void e1_bearer_context_release_procedure::operator()(coro_context<async_task<voi
   CORO_BEGIN(ctx);
 
   // Subscribe to respective publisher to receive BEARER CONTEXT RELEASE COMPLETE message.
-  transaction_sink.subscribe_to(ue_ctxt_list[cu_cp_ue_id].bearer_ev_mng.context_release_complete);
+  transaction_sink.subscribe_to(ue_ctxt_list[ue_index].bearer_ev_mng.context_release_complete);
 
   // Send command to CU-UP.
   send_bearer_context_release_command();
@@ -66,7 +66,7 @@ void e1_bearer_context_release_procedure::handle_bearer_context_release_complete
     }
     if (command.pdu.init_msg().value.bearer_context_release_cmd()->gnb_cu_cp_ue_e1ap_id.value ==
         resp->gnb_cu_cp_ue_e1ap_id.value) {
-      ue_ctxt_list.remove_ue(cu_cp_ue_id);
+      ue_ctxt_list.remove_ue(ue_index);
     }
 
   } else {

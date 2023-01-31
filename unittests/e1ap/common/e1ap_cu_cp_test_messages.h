@@ -54,9 +54,9 @@ e1_message generate_valid_cu_up_e1_setup_request();
 e1_message generate_cu_up_e1_setup_respose(unsigned transaction_id);
 
 /// \brief Generate a dummy Bearer Context Setup Request.
-/// \param[in] cu_cp_ue_id The CU-CP UE ID.
+/// \param[in] ue_index The UE Index.
 /// \return The Bearer Context Setup Request.
-e1ap_bearer_context_setup_request generate_bearer_context_setup_request(cu_cp_ue_id_t cu_cp_ue_id);
+e1ap_bearer_context_setup_request generate_bearer_context_setup_request(ue_index_t ue_index);
 
 /// \brief Generate a dummy Bearer Context Setup Response.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
@@ -72,7 +72,7 @@ e1_message generate_bearer_context_setup_failure(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue
 
 /// \brief Generate a dummy Bearer Context Modification Request.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
-e1ap_bearer_context_modification_request generate_bearer_context_modification_request(cu_cp_ue_id_t cu_cp_ue_id);
+e1ap_bearer_context_modification_request generate_bearer_context_modification_request(ue_index_t ue_index);
 
 /// \brief Generate a dummy Bearer Context Modification Response.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.
@@ -89,8 +89,8 @@ e1_message generate_bearer_context_modification_failure(gnb_cu_cp_ue_e1ap_id_t c
                                                         gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
 
 /// \brief Generate a dummy Bearer Context Release Command.
-/// \param[in] cu_cp_ue_id The CU-CP UE ID.
-e1ap_bearer_context_release_command generate_bearer_context_release_command(cu_cp_ue_id_t cu_cp_ue_id);
+/// \param[in] ue_index The UE Index.
+e1ap_bearer_context_release_command generate_bearer_context_release_command(ue_index_t ue_index);
 
 /// \brief Generate a dummy Bearer Context Release Complete.
 /// \param[in] cu_cp_ue_e1ap_id The CU-CP UE E1AP ID.

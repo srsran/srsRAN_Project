@@ -32,13 +32,13 @@ public:
     last_cu_up_e1_setup_request = msg;
   }
 
-  void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_cp::int_to_ue_index(ue_index_); }
+  void set_ue_index(uint16_t ue_index_) { ue_index = ue_index_; }
 
   cu_up_e1_setup_request last_cu_up_e1_setup_request;
 
 private:
   srslog::basic_logger& logger;
-  uint16_t              ue_index = srs_cu_cp::MIN_UE_INDEX;
+  uint16_t              ue_index = srs_cu_cp::ue_index_to_uint(srs_cu_cp::ue_index_t::min);
 };
 
 class dummy_e1ap_cu_up_notifier : public srs_cu_up::e1ap_cu_cp_notifier

@@ -119,7 +119,7 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
 
     return launch_async([](coro_context<async_task<ue_index_t>>& ctx) mutable {
       CORO_BEGIN(ctx);
-      CORO_RETURN(INVALID_UE_INDEX);
+      CORO_RETURN(ue_index_t::invalid);
     });
   }
 
@@ -219,7 +219,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   f1ap_init_ul_rrc_msg.msg                              = msg;
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(f1ap_init_ul_rrc_msg);
 
-  if (ue_creation_complete_msg.ue_index == INVALID_UE_INDEX) {
+  if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
     logger.error("Invalid UE index.");
     return;
   }

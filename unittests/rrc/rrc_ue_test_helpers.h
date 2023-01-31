@@ -167,7 +167,7 @@ protected:
   }
 
 private:
-  const ue_index_t ALLOCATED_UE_INDEX = int_to_ue_index(23);
+  const ue_index_t ALLOCATED_UE_INDEX = uint_to_ue_index(23);
   rrc_cfg_t        cfg{}; // empty config
 
   dummy_rrc_ue_du_processor_adapter               rrc_ue_ev_notifier;

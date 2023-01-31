@@ -28,7 +28,7 @@ public:
   ~ue_task_scheduler() = default;
 
   // UE task scheduler
-  void handle_ue_async_task(cu_cp_ue_id_t cu_cp_ue_id, async_task<void>&& task);
+  void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task);
 
   unique_timer   make_unique_timer();
   timer_manager& get_timer_manager();

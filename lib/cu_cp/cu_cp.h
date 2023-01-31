@@ -117,8 +117,8 @@ private:
   // Components
   std::unique_ptr<ngc_interface> ngc_entity;
 
-  slotted_array<std::unique_ptr<du_processor_interface>, MAX_NOF_DUS>       du_db;
-  slotted_array<std::unique_ptr<cu_up_processor_interface>, MAX_NOF_CU_UPS> cu_up_db;
+  std::unordered_map<du_index_t, std::unique_ptr<du_processor_interface>>       du_db;
+  std::unordered_map<cu_up_index_t, std::unique_ptr<cu_up_processor_interface>> cu_up_db;
 
   ue_manager ue_mng;
 
@@ -155,11 +155,11 @@ private:
   // RRC UE to NGC adapter
   rrc_ue_ngc_adapter rrc_ue_ngc_notifier;
 
-  // NGC to RRC UE adapter array
-  slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngc_rrc_ue_ev_notifiers;
+  // NGAP to RRC UE adapter array
+  slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngap_rrc_ue_ev_notifiers;
 
-  // NGC to DU processor adapter array
-  slotted_array<ngc_du_processor_adapter, MAX_NOF_DUS> ngc_du_processor_ev_notifiers; // indexed by DU index
+  // NGAP to DU processor adapters
+  slotted_id_vector<du_index_t, ngc_du_processor_adapter> ngap_du_processor_ev_notifiers; // indexed by DU index
 
   std::atomic<bool> amf_connected = {false};
 

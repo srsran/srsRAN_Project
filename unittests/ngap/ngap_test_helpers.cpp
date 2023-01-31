@@ -35,28 +35,24 @@ ngap_test::~ngap_test()
   srslog::flush();
 }
 
-void ngap_test::create_ue(cu_cp_ue_id_t cu_cp_ue_id)
+void ngap_test::create_ue(ue_index_t ue_index)
 {
   // Inject UE creation at NGAP
-  ngap->create_ngc_ue(get_du_index_from_cu_cp_ue_id(cu_cp_ue_id),
-                      get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id),
-                      rrc_ue_notifier,
-                      rrc_ue_notifier,
-                      du_processor_notifier);
+  ngap->create_ngc_ue(ue_index, rrc_ue_notifier, rrc_ue_notifier, du_processor_notifier);
 
   // generate and inject valid initial ue message
-  ngap_initial_ue_message msg = generate_initial_ue_message(cu_cp_ue_id);
+  ngap_initial_ue_message msg = generate_initial_ue_message(ue_index);
   ngap->handle_initial_ue_message(msg);
 
-  test_ues.emplace(cu_cp_ue_id);
-  test_ues[cu_cp_ue_id].cu_cp_ue_id = cu_cp_ue_id;
-  test_ues[cu_cp_ue_id].ran_ue_id =
+  test_ues.emplace(ue_index);
+  test_ues[ue_index].ue_index = ue_index;
+  test_ues[ue_index].ran_ue_id =
       uint_to_ran_ue_id(msg_notifier.last_ngc_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value);
 }
 
-void ngap_test::run_dl_nas_transport(cu_cp_ue_id_t cu_cp_ue_id)
+void ngap_test::run_dl_nas_transport(ue_index_t ue_index)
 {
-  auto& ue     = test_ues[cu_cp_ue_id];
+  auto& ue     = test_ues[ue_index];
   ue.amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max) - 1));
 
@@ -64,15 +60,15 @@ void ngap_test::run_dl_nas_transport(cu_cp_ue_id_t cu_cp_ue_id)
   ngap->handle_message(dl_nas_transport);
 }
 
-void ngap_test::run_ul_nas_transport(cu_cp_ue_id_t cu_cp_ue_id)
+void ngap_test::run_ul_nas_transport(ue_index_t ue_index)
 {
-  ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(cu_cp_ue_id);
+  ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(ue_index);
   ngap->handle_ul_nas_transport_message(ul_nas_transport);
 }
 
-void ngap_test::run_inital_context_setup(cu_cp_ue_id_t cu_cp_ue_id)
+void ngap_test::run_inital_context_setup(ue_index_t ue_index)
 {
-  auto& ue = test_ues[cu_cp_ue_id];
+  auto& ue = test_ues[ue_index];
 
   ngc_message init_context_setup_request =
       generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());

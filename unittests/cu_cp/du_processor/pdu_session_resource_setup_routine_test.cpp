@@ -16,7 +16,7 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-/// Note: Check if UE ID is valid is done by caller. Injection of invalid cu_cp_ue_id results in assertion.
+/// Note: Check if UE ID is valid is done by caller. Injection of invalid ue_index results in assertion.
 
 class pdu_session_resource_setup_test : public du_processor_routine_manager_test
 {
@@ -119,7 +119,7 @@ TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_rec
 {
   // Test Preamble.
   cu_cp_pdu_session_resource_setup_request request = {}; // empty message
-  request.cu_cp_ue_id                              = uint_to_cu_cp_ue_id(0);
+  request.ue_index                                 = uint_to_ue_index(0);
 
   // Start PDU SESSION RESOURCE SETUP routine.
   this->start_procedure(request, true, true, true, true);

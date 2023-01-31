@@ -78,7 +78,7 @@ size_t cu_cp::get_nof_ues() const
 {
   size_t nof_ues = 0;
   for (auto& du : du_db) {
-    nof_ues += du->get_nof_ues();
+    nof_ues += du.second->get_nof_ues();
   }
   return nof_ues;
 }
@@ -121,7 +121,7 @@ void cu_cp::handle_new_du_connection()
   du_index_t du_index = add_du();
   logger.info("Added DU {}", du_index);
   if (du_index != INVALID_DU_INDEX && amf_connected) {
-    du_db[du_index]->get_rrc_amf_connection_handler().handle_amf_connection();
+    du_db.at(du_index)->get_rrc_amf_connection_handler().handle_amf_connection();
   }
 }
 
@@ -133,12 +133,11 @@ void cu_cp::handle_du_remove_request(const du_index_t du_index)
 
 void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue)
 {
-  std::underlying_type_t<cu_cp_ue_id_t> cu_cp_ue_id_uint = cu_cp_ue_id_to_uint(get_cu_cp_ue_id(du_index, ue_index));
-  ngc_rrc_ue_ev_notifiers.emplace(cu_cp_ue_id_uint);
+  ngap_rrc_ue_ev_notifiers.emplace(ue_index_to_uint(ue_index));
 
-  ngc_rrc_ue_adapter&       rrc_ue_adapter       = ngc_rrc_ue_ev_notifiers[cu_cp_ue_id_uint];
-  ngc_du_processor_adapter& du_processor_adapter = ngc_du_processor_ev_notifiers[du_index_to_int(du_index)];
-  ngc_entity->create_ngc_ue(du_index, ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
+  ngc_rrc_ue_adapter&       rrc_ue_adapter       = ngap_rrc_ue_ev_notifiers[ue_index_to_uint(ue_index)];
+  ngc_du_processor_adapter& du_processor_adapter = ngap_du_processor_ev_notifiers[du_index];
+  ngc_entity->create_ngc_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_ue_dl_nas_message_handler(),
                                 &rrc_ue->get_rrc_ue_control_message_handler(),
                                 &rrc_ue->get_rrc_ue_init_security_context_handler());
@@ -162,7 +161,7 @@ void cu_cp::handle_amf_connection()
 
   // inform all connected DU objects about the new connection
   for (auto& du : du_db) {
-    du->get_rrc_amf_connection_handler().handle_amf_connection();
+    du.second->get_rrc_amf_connection_handler().handle_amf_connection();
   }
 }
 
@@ -172,7 +171,7 @@ void cu_cp::handle_amf_connection_drop()
 
   // inform all DU objects about the AMF connection drop
   for (auto& du : du_db) {
-    du->get_rrc_amf_connection_handler().handle_amf_connection_drop();
+    du.second->get_rrc_amf_connection_handler().handle_amf_connection_drop();
   }
 }
 
@@ -204,11 +203,8 @@ du_index_t cu_cp::add_du()
 
   du_processor_ev_notifier.connect_cu_cp(*this);
   rrc_ue_ngc_notifier.connect_ngc(*ngc_entity);
-  ngc_du_processor_ev_notifiers.emplace(du_index_to_int(du_index));
-  ngc_du_processor_ev_notifiers[du_index_to_int(du_index)].connect_du_processor(du.get());
-
-  // Add DU index to adapter
-  rrc_ue_ngc_notifier.set_du_index(du_index);
+  ngap_du_processor_ev_notifiers.emplace(du_index);
+  ngap_du_processor_ev_notifiers[du_index].connect_du_processor(du.get());
 
   du->get_context().du_index = du_index;
 
@@ -232,7 +228,7 @@ void cu_cp::remove_du(du_index_t du_index)
   du_task_sched.handle_du_async_task(
       du_index, launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
-        srsgnb_assert(du_db.contains(du_index), "Remove DU called for inexistent du_index={}", du_index);
+        srsgnb_assert(du_db.find(du_index) != du_db.end(), "Remove DU called for inexistent du_index={}", du_index);
         du_db.erase(du_index);
         logger.info("Removed du_index={}", du_index);
         CORO_RETURN();
@@ -242,15 +238,15 @@ void cu_cp::remove_du(du_index_t du_index)
 du_processor_interface& cu_cp::find_du(du_index_t du_index)
 {
   srsgnb_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
-  srsgnb_assert(du_db.contains(du_index), "DU not found du_index={}", du_index);
-  return *du_db[du_index];
+  srsgnb_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
+  return *du_db.at(du_index);
 }
 
 du_index_t cu_cp::get_next_du_index()
 {
   for (int du_idx_int = MIN_DU_INDEX; du_idx_int < MAX_NOF_DUS; du_idx_int++) {
     du_index_t du_idx = int_to_du_index(du_idx_int);
-    if (!du_db.contains(du_idx)) {
+    if (du_db.find(du_idx) == du_db.end()) {
       return du_idx;
     }
   }
@@ -301,28 +297,30 @@ void cu_cp::remove_cu_up(cu_up_index_t cu_up_index)
   logger.debug("Scheduling cu_up_index={} deletion", cu_up_index);
 
   // Schedule CU-UP removal task
-  cu_up_task_sched.handle_cu_up_async_task(
-      cu_up_index, launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
-        srsgnb_assert(cu_up_db.contains(cu_up_index), "Remove CU-UP called for inexistent cu_up_index={}", cu_up_index);
-        cu_up_db.erase(cu_up_index);
-        logger.info("Removed cu_up_index={}", cu_up_index);
-        CORO_RETURN();
-      }));
+  cu_up_task_sched.handle_cu_up_async_task(cu_up_index,
+                                           launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) {
+                                             CORO_BEGIN(ctx);
+                                             srsgnb_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(),
+                                                           "Remove CU-UP called for inexistent cu_up_index={}",
+                                                           cu_up_index);
+                                             cu_up_db.erase(cu_up_index);
+                                             logger.info("Removed cu_up_index={}", cu_up_index);
+                                             CORO_RETURN();
+                                           }));
 }
 
 cu_up_processor_interface& cu_cp::find_cu_up(cu_up_index_t cu_up_index)
 {
   srsgnb_assert(cu_up_index < MAX_NOF_CU_UPS, "Invalid cu_up_index={}", cu_up_index);
-  srsgnb_assert(cu_up_db.contains(cu_up_index), "CU-UP not found cu_up_index={}", cu_up_index);
-  return *cu_up_db[cu_up_index];
+  srsgnb_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
+  return *cu_up_db.at(cu_up_index);
 }
 
 cu_up_index_t cu_cp::get_next_cu_up_index()
 {
   for (int cu_up_idx_int = MIN_CU_UP_INDEX; cu_up_idx_int < MAX_NOF_CU_UPS; cu_up_idx_int++) {
     cu_up_index_t cu_up_idx = int_to_cu_up_index(cu_up_idx_int);
-    if (!cu_up_db.contains(cu_up_idx)) {
+    if (cu_up_db.find(cu_up_idx) == cu_up_db.end()) {
       return cu_up_idx;
     }
   }

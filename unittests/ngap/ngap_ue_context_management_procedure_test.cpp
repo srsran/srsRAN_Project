@@ -19,16 +19,16 @@ using namespace srs_cu_cp;
 class ngap_ue_context_management_procedure_test : public ngap_test
 {
 protected:
-  void start_procedure(const cu_cp_ue_id_t cu_cp_ue_id)
+  void start_procedure(const ue_index_t ue_index)
   {
     ASSERT_EQ(ngap->get_nof_ues(), 0);
-    create_ue(cu_cp_ue_id);
+    create_ue(ue_index);
 
     // Inject DL NAS transport message from AMF
-    run_dl_nas_transport(cu_cp_ue_id);
+    run_dl_nas_transport(ue_index);
 
     // Inject UL NAS transport message from RRC
-    run_ul_nas_transport(cu_cp_ue_id);
+    run_ul_nas_transport(ue_index);
   }
 
   bool was_initial_context_setup_response_sent() const
@@ -52,11 +52,11 @@ protected:
 TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_setup_request_received_then_response_send)
 {
   // Test preamble
-  cu_cp_ue_id_t cu_cp_ue_id = uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
-      cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min), cu_cp_ue_id_to_uint(cu_cp_ue_id_t::max) - 1));
-  this->start_procedure(cu_cp_ue_id);
+  ue_index_t ue_index = uint_to_ue_index(
+      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+  this->start_procedure(ue_index);
 
-  auto& ue = test_ues[cu_cp_ue_id];
+  auto& ue = test_ues[ue_index];
 
   // Inject Initial Context Setup Request
   ngc_message init_context_setup_request =
@@ -73,11 +73,11 @@ TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_set
 TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_setup_request_received_then_failure_sent)
 {
   // Test preamble
-  cu_cp_ue_id_t cu_cp_ue_id = uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
-      cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min), cu_cp_ue_id_to_uint(cu_cp_ue_id_t::max) - 1));
-  this->start_procedure(cu_cp_ue_id);
+  ue_index_t ue_index = uint_to_ue_index(
+      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+  this->start_procedure(ue_index);
 
-  auto& ue = test_ues[cu_cp_ue_id];
+  auto& ue = test_ues[ue_index];
 
   // Inject Initial Context Setup Request
   ngc_message init_context_setup_request =

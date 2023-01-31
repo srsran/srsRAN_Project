@@ -51,8 +51,6 @@ private:
 class rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
-  explicit rrc_ue_du_processor_adapter(du_index_t du_index_) : du_index(du_index_) {}
-
   void connect_du_processor(du_processor_rrc_ue_interface& du_processor_rrc_ue_)
   {
     du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
@@ -60,14 +58,12 @@ public:
 
   void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
 
-  void on_ue_context_release_command(cu_cp_ue_context_release_command& cmd) override
+  void on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override
   {
-    cmd.du_index = du_index;
     du_processor_rrc_ue_handler->handle_ue_context_release_command(cmd);
   }
 
 private:
-  du_index_t                     du_index;
   du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };
 
@@ -155,16 +151,13 @@ class rrc_ue_ngc_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_not
 public:
   void connect_ngc(ngc_nas_message_handler& ngc_nas_msg_handler_) { ngc_nas_msg_handler = &ngc_nas_msg_handler_; }
 
-  void set_du_index(du_index_t du_index_) { du_index = du_index_; }
-
   void on_initial_ue_message(const initial_ue_message& msg) override
   {
-    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
     srsgnb_assert(ngc_nas_msg_handler != nullptr, "ngc_nas_msg_handler must not be nullptr");
 
     ngap_initial_ue_message ngap_init_ue_msg;
-    ngap_init_ue_msg.cu_cp_ue_id = get_cu_cp_ue_id(du_index, msg.ue_index);
-    ngap_init_ue_msg.nas_pdu     = msg.nas_pdu.copy();
+    ngap_init_ue_msg.ue_index = msg.ue_index;
+    ngap_init_ue_msg.nas_pdu  = msg.nas_pdu.copy();
 
     ngap_init_ue_msg.establishment_cause.value =
         rrc_establishment_cause_to_ngap_rrcestablishment_cause(msg.establishment_cause).value;
@@ -178,12 +171,11 @@ public:
 
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
   {
-    srsgnb_assert(du_index != INVALID_DU_INDEX, "du_index of rrc_ue_ngc_adapter not set");
     srsgnb_assert(ngc_nas_msg_handler != nullptr, "ngc_nas_msg_handler must not be nullptr");
 
     ngap_ul_nas_transport_message ngap_ul_nas_msg;
-    ngap_ul_nas_msg.cu_cp_ue_id = get_cu_cp_ue_id(du_index, msg.ue_index);
-    ngap_ul_nas_msg.nas_pdu     = msg.nas_pdu.copy();
+    ngap_ul_nas_msg.ue_index = msg.ue_index;
+    ngap_ul_nas_msg.nas_pdu  = msg.nas_pdu.copy();
 
     ngap_ul_nas_msg.nr_cgi.nr_cell_id.from_number(msg.cell.cgi.nci.packed);
     ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
@@ -194,11 +186,10 @@ public:
 
 private:
   ngc_nas_message_handler* ngc_nas_msg_handler = nullptr;
-  du_index_t               du_index            = INVALID_DU_INDEX;
 
-  /// @brief Convert a RRC Establishment Cause to a NGAP RRC Establishment Cause.
-  /// @param establishment_cause The RRC Establishment Cause.
-  /// @return The NGAP RRC Establishment Cause.
+  /// \brief Convert a RRC Establishment Cause to a NGAP RRC Establishment Cause.
+  /// \param establishment_cause The RRC Establishment Cause.
+  /// \return The NGAP RRC Establishment Cause.
   inline asn1::ngap::rrc_establishment_cause_opts rrc_establishment_cause_to_ngap_rrcestablishment_cause(
       const asn1::rrc_nr::establishment_cause_opts& establishment_cause)
   {

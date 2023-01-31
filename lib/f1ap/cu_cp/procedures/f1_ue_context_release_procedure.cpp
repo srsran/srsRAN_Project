@@ -65,7 +65,7 @@ ue_index_t f1_ue_context_release_procedure::create_ue_context_release_complete(
 {
   logger.info("Received F1AP UE Context Release Complete.");
 
-  ue_index_t ret = INVALID_UE_INDEX;
+  ue_index_t ret = ue_index_t::invalid;
 
   if (msg->gnb_du_ue_f1ap_id.value == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
     ret = ue_ctxt.ue_index;

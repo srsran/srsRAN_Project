@@ -46,7 +46,7 @@ struct cu_drb_context {
 };
 
 struct ue_context {
-  ue_index_t      ue_index    = INVALID_UE_INDEX;
+  ue_index_t      ue_index    = ue_index_t::invalid;
   du_cell_index_t pcell_index = INVALID_DU_CELL_INDEX;
   rnti_t          c_rnti      = INVALID_RNTI;
 

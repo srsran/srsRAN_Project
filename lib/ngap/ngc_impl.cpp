@@ -38,21 +38,15 @@ ngc_impl::ngc_impl(ngc_configuration&     ngc_cfg_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 ngc_impl::~ngc_impl() {}
 
-void ngc_impl::create_ngc_ue(du_index_t                         du_index,
-                             ue_index_t                         ue_index,
+void ngc_impl::create_ngc_ue(ue_index_t                         ue_index,
                              ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
                              ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
                              ngc_du_processor_control_notifier& du_processor_ctrl_notifier)
 {
   // Create UE context and store it
-  cu_cp_ue_id_t cu_cp_ue_id = get_cu_cp_ue_id(du_index, ue_index);
-  auto& ue = ue_manager.add_ue(cu_cp_ue_id, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
+  auto& ue = ue_manager.add_ngap_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
 
-  logger.debug("Created NGAP UE (ran_ue_id={}, cu_cp_ue_id={}, du_index={}, ue_index={})",
-               ue.get_ran_ue_id(),
-               cu_cp_ue_id,
-               du_index,
-               ue_index);
+  logger.debug("Created NGAP UE (ran_ue_id={}, ue_index={})", ue.get_ran_ue_id(), ue_index);
 }
 
 async_task<ng_setup_response> ngc_impl::handle_ng_setup_request(const ng_setup_request& request)
@@ -68,9 +62,9 @@ async_task<ng_setup_response> ngc_impl::handle_ng_setup_request(const ng_setup_r
 
 void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 {
-  auto* ue = ue_manager.find_ue(msg.cu_cp_ue_id);
+  auto* ue = ue_manager.find_ngap_ue(msg.ue_index);
   if (ue == nullptr) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping Initial UE Message", msg.cu_cp_ue_id);
+    logger.info("UE with ue_index={} does not exist. Dropping Initial UE Message", msg.ue_index);
     return;
   }
 
@@ -110,9 +104,9 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 
 void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg)
 {
-  auto* ue = ue_manager.find_ue(msg.cu_cp_ue_id);
+  auto* ue = ue_manager.find_ngap_ue(msg.ue_index);
   if (ue == nullptr) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping UL NAS Transport Message", msg.cu_cp_ue_id);
+    logger.info("UE with ue_index={} does not exist. Dropping UL NAS Transport Message", msg.ue_index);
     return;
   }
 
@@ -128,7 +122,7 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
 
   amf_ue_id_t amf_ue_id = ue->get_amf_ue_id();
   if (amf_ue_id == amf_ue_id_t::invalid) {
-    logger.error("UE AMF ID for cu_cp_ue_id={} not found!", msg.cu_cp_ue_id);
+    logger.error("UE AMF ID for ue_index={} not found!", msg.ue_index);
     return;
   }
   ul_nas_transport_msg->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(amf_ue_id);
@@ -202,22 +196,22 @@ void ngc_impl::handle_initiating_message(const init_msg_s& msg)
 
 void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg)
 {
-  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value.value));
-  if (cu_cp_ue_id == cu_cp_ue_id_t::invalid) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping PDU", cu_cp_ue_id);
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value.value));
+  if (ue_index == ue_index_t::invalid) {
+    logger.info("UE with ue_index={} does not exist. Dropping PDU", ue_index);
     return;
   }
 
-  auto* ue = ue_manager.find_ue(cu_cp_ue_id);
+  auto* ue = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping PDU", cu_cp_ue_id);
+    logger.info("UE with ue_index={} does not exist. Dropping PDU", ue_index);
     return;
   }
 
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
   if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
     // Set AMF UE ID in the UE context and also in the lookup
-    ue_manager.set_amf_ue_id(cu_cp_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
+    ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
   }
 
   byte_buffer nas_pdu;
@@ -230,10 +224,10 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
 
 void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
 {
-  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
-  auto*         ue          = ue_manager.find_ue(cu_cp_ue_id);
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
+  auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping Initial Context Setup Request", cu_cp_ue_id);
+    logger.info("UE with ue_index={} does not exist. Dropping Initial Context Setup Request", ue_index);
     return;
   }
 
@@ -245,16 +239,16 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
 
   // start routine
   task_sched.schedule_async_task(
-      cu_cp_ue_id,
-      launch_async<ngap_initial_context_setup_procedure>(cu_cp_ue_id, request, ue_manager, ngc_notifier, logger));
+      ue_index,
+      launch_async<ngap_initial_context_setup_procedure>(ue_index, request, ue_manager, ngc_notifier, logger));
 }
 
 void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
 {
-  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
-  auto*         ue          = ue_manager.find_ue(cu_cp_ue_id);
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
+  auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping PDU Session Resource Setup Request", cu_cp_ue_id);
+    logger.info("UE with ue_index={} does not exist. Dropping PDU Session Resource Setup Request", ue_index);
     return;
   }
 
@@ -271,13 +265,13 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
 
   // Convert to common type
   cu_cp_pdu_session_resource_setup_request msg;
-  msg.cu_cp_ue_id  = cu_cp_ue_id;
+  msg.ue_index     = ue_index;
   msg.serving_plmn = ngc_cfg.plmn;
   fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
 
   // start routine
-  task_sched.schedule_async_task(cu_cp_ue_id,
+  task_sched.schedule_async_task(ue_index,
                                  launch_async<ngap_pdu_session_resource_setup_procedure>(
                                      *ue, msg, ue->get_du_processor_control_notifier(), ngc_notifier, logger));
 
@@ -297,10 +291,10 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
     amf_ue_id = uint_to_amf_ue_id(cmd->ue_ngap_ids->ue_ngap_id_pair().amf_ue_ngap_id);
     ran_ue_id = uint_to_ran_ue_id(cmd->ue_ngap_ids->ue_ngap_id_pair().ran_ue_ngap_id);
   }
-  cu_cp_ue_id_t cu_cp_ue_id = ue_manager.get_cu_cp_ue_id(amf_ue_id);
-  auto*         ue          = ue_manager.find_ue(cu_cp_ue_id);
+  ue_index_t ue_index = ue_manager.get_ue_index(amf_ue_id);
+  auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.info("UE with cu_cp_ue_id={} does not exist. Dropping UE Context Release Command", cu_cp_ue_id);
+    logger.info("UE with ue_index={} does not exist. Dropping UE Context Release Command", ue_index);
     return;
   }
 
@@ -316,8 +310,7 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
 
   // Convert to common type
   cu_cp_ue_context_release_command msg;
-  msg.ue_index = get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id);
-  msg.du_index = get_du_index_from_cu_cp_ue_id(cu_cp_ue_id);
+  msg.ue_index = ue_index;
   fill_cu_cp_ue_context_release_command(msg, cmd);
 
   // Notify DU processor about UE Context Release Command
@@ -344,7 +337,7 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
   }
 
   // Remove NGAP UE
-  ue_manager.remove_ue(cu_cp_ue_id);
+  ue_manager.remove_ngap_ue(ue_index);
 
   logger.info("Sending UE Context Release Complete to AMF");
   ngc_notifier.on_new_message(ngc_msg);
@@ -374,5 +367,5 @@ void ngc_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome
 
 size_t ngc_impl::get_nof_ues() const
 {
-  return ue_manager.get_nof_ngc_ues();
+  return ue_manager.get_nof_ngap_ues();
 }

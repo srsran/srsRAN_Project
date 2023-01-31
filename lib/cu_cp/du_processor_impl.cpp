@@ -38,8 +38,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngc_ctrl_notifier(rrc_ue_ngc_ctrl_notifier_),
   task_sched(task_sched_),
-  ue_manager(ue_manager_),
-  rrc_ue_ev_notifier(cfg.du_index)
+  ue_manager(ue_manager_)
 {
   context.du_index = cfg.du_index;
 
@@ -173,33 +172,33 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
 ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const ue_creation_message& msg)
 {
   ue_creation_complete_message ue_creation_complete_msg = {};
-  ue_creation_complete_msg.ue_index                     = INVALID_UE_INDEX;
+  ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;
 
-  // 1. Check that creation message is valid
+  // Check that creation message is valid
   du_cell_index_t pcell_index = find_cell(msg.cgi.nci.packed);
   if (pcell_index == INVALID_DU_CELL_INDEX) {
     logger.error("Could not find cell with cell_id={}", msg.cgi.nci.packed);
     return ue_creation_complete_msg;
   }
 
-  // 2. Create new UE context
+  // Create new UE context
   ue_context* ue_ctxt = ue_manager.add_ue(msg.c_rnti);
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");
     return ue_creation_complete_msg;
   }
 
-  // 3. Set parameters from creation message
+  // Set parameters from creation message
   ue_ctxt->pcell_index = pcell_index;
   ue_ctxt->c_rnti      = msg.c_rnti;
 
-  // 4. Create a UE task scheduler notifier.
+  // Create a UE task scheduler notifier.
   ue_ctxt->task_sched = std::make_unique<rrc_to_du_ue_task_scheduler>(ue_ctxt->ue_index, *this);
 
-  // 5. Create new RRC UE entity
+  // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
   rrc_ue_create_msg.ue_index = ue_ctxt->ue_index;
-  rrc_ue_create_msg.c_rnti   = ue_ctxt->c_rnti;
+  rrc_ue_create_msg.c_rnti   = msg.c_rnti;
   rrc_ue_create_msg.cell.cgi = msg.cgi;
   rrc_ue_create_msg.cell.tac = cell_db[pcell_index].tac;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
@@ -219,13 +218,13 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Notifiy CU-CP about the creation of the RRC UE
   cu_cp_notifier.on_rrc_ue_created(context.du_index, ue_ctxt->ue_index, rrc_ue);
 
-  // 6. Create SRB0 bearer and notifier
+  // Create SRB0 bearer and notifier
   srb_creation_message srb0_msg{};
   srb0_msg.srb_id   = srb_id_t::srb0;
   srb0_msg.ue_index = ue_ctxt->ue_index;
   create_srb(srb0_msg);
 
-  logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctxt->ue_index, ue_ctxt->c_rnti);
+  logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctxt->ue_index, msg.c_rnti);
 
   ue_creation_complete_msg.ue_index = ue_ctxt->ue_index;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
@@ -246,11 +245,11 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
     // create direct connection with UE manager to RRC adapter
-    srb.rx_notifier = std::make_unique<f1c_rrc_ue_adapter>(rrc->find_ue(ue_ctxt->ue_index)->get_ul_ccch_pdu_handler());
-    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_pdu_adapter>(*f1c, ue_ctxt->ue_index);
+    srb.rx_notifier     = std::make_unique<f1c_rrc_ue_adapter>(rrc->find_ue(msg.ue_index)->get_ul_ccch_pdu_handler());
+    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_pdu_adapter>(*f1c, msg.ue_index);
 
     // update notifier in RRC
-    rrc->find_ue(ue_ctxt->ue_index)
+    rrc->find_ue(msg.ue_index)
         ->connect_srb_notifier(
             msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, nullptr, nullptr);
   } else if (msg.srb_id <= srb_id_t::srb2) {
@@ -258,18 +257,17 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb.pdcp_context.emplace();
 
     // add adapter for PDCP to talk to F1C (Tx), RRC data (Rx) and RRC control (Tx/Rx)
-    srb.pdcp_context->pdcp_tx_notifier =
-        std::make_unique<pdcp_du_processor_adapter>(*f1c, ue_ctxt->ue_index, msg.srb_id);
+    srb.pdcp_context->pdcp_tx_notifier = std::make_unique<pdcp_du_processor_adapter>(*f1c, msg.ue_index, msg.srb_id);
     srb.pdcp_context->rrc_tx_control_notifier =
         std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
     srb.pdcp_context->rrc_rx_data_notifier =
-        std::make_unique<pdcp_rrc_ue_adapter>(rrc->find_ue(ue_ctxt->ue_index)->get_ul_dcch_pdu_handler());
+        std::make_unique<pdcp_rrc_ue_adapter>(rrc->find_ue(msg.ue_index)->get_ul_dcch_pdu_handler());
     srb.pdcp_context->rrc_rx_control_notifier =
         std::make_unique<pdcp_rx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
 
     // prepare PDCP creation message
     pdcp_entity_creation_message srb_pdcp{};
-    srb_pdcp.ue_index           = msg.ue_index;
+    srb_pdcp.ue_index           = ue_index_to_uint(msg.ue_index);
     srb_pdcp.rb_id              = msg.srb_id;
     srb_pdcp.config             = pdcp_make_default_srb_config(); // TODO: allow non-default PDCP SRB configs
     srb_pdcp.config.tx.rb_type  = pdcp_rb_type::srb;
@@ -297,14 +295,14 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
         srb.pdcp_context->pdcp_bearer->get_rx_upper_control_interface());
 
     // update notifier in RRC
-    rrc->find_ue(ue_ctxt->ue_index)
+    rrc->find_ue(msg.ue_index)
         ->connect_srb_notifier(msg.srb_id,
                                *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
                                ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
                                ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier.get());
 
     // update notifier in F1C
-    f1c->connect_srb_notifier(ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier);
+    f1c->connect_srb_notifier(msg.ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier);
   } else {
     logger.error("Couldn't create SRB{}.", msg.srb_id);
   }
@@ -312,20 +310,19 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
 
 void du_processor_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
 {
-  task_sched.schedule_async_task(cmd.du_index, cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd));
+  task_sched.schedule_async_task(cmd.ue_index, routine_mng->start_ue_context_release_routine(cmd));
 }
 
 async_task<cu_cp_pdu_session_resource_setup_response>
 du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg)
 {
-  ue_context* ue_ctxt = ue_manager.find_ue(get_ue_index_from_cu_cp_ue_id(msg.cu_cp_ue_id));
+  ue_context* ue_ctxt = ue_manager.find_ue(msg.ue_index);
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
-  return routine_mng->start_pdu_session_resource_setup_routine(
-      msg,
-      rrc->find_ue(ue_ctxt->ue_index)->get_rrc_ue_secutity_config(),
-      *ue_ctxt->rrc_ue_notifier.get(),
-      rrc->find_ue(ue_ctxt->ue_index)->get_rrc_ue_drb_manager());
+  return routine_mng->start_pdu_session_resource_setup_routine(msg,
+                                                               rrc->find_ue(msg.ue_index)->get_rrc_ue_secutity_config(),
+                                                               *ue_ctxt->rrc_ue_notifier.get(),
+                                                               rrc->find_ue(msg.ue_index)->get_rrc_ue_drb_manager());
 }
 
 void du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)

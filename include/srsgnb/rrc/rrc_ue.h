@@ -105,8 +105,8 @@ public:
 };
 
 struct srb_creation_message {
-  ue_index_t               ue_index;
-  srb_id_t                 srb_id;
+  ue_index_t               ue_index = ue_index_t::invalid;
+  srb_id_t                 srb_id   = srb_id_t::nulltype;
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
 };
 
@@ -158,7 +158,7 @@ public:
 
   /// \brief Notify about a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
-  virtual void on_ue_context_release_command(cu_cp_ue_context_release_command& cmd) = 0;
+  virtual void on_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) = 0;
 };
 
 /// Schedules asynchronous tasks associated with an UE.
@@ -172,14 +172,14 @@ public:
 };
 
 struct initial_ue_message {
-  ue_index_t                             ue_index;
+  ue_index_t                             ue_index = ue_index_t::invalid;
   byte_buffer                            nas_pdu;
   rrc_cell_context                       cell;
   asn1::rrc_nr::establishment_cause_opts establishment_cause;
 };
 
 struct ul_nas_transport_message {
-  ue_index_t       ue_index;
+  ue_index_t       ue_index = ue_index_t::invalid;
   byte_buffer      nas_pdu;
   rrc_cell_context cell;
 };
@@ -204,7 +204,7 @@ public:
 };
 
 struct rrc_reconfiguration_response_message {
-  ue_index_t ue_index;
+  ue_index_t ue_index = ue_index_t::invalid;
   bool       success;
 };
 

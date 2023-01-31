@@ -84,7 +84,7 @@ public:
     last_srb_creation_message = std::move(msg);
   }
 
-  void on_ue_context_release_command(cu_cp_ue_context_release_command& msg) override
+  void on_ue_context_release_command(const cu_cp_ue_context_release_command& msg) override
   {
     logger.info("Received UE Context Release Command");
     last_cu_cp_ue_context_release_command = msg;

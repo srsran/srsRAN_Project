@@ -27,7 +27,7 @@ class e1ap_cu_cp_test : public ::testing::Test
 {
 protected:
   struct test_ue {
-    cu_cp_ue_id_t                    cu_cp_ue_id;
+    ue_index_t                       ue_index;
     optional<gnb_cu_cp_ue_e1ap_id_t> cu_cp_ue_e1ap_id;
     optional<gnb_cu_up_ue_e1ap_id_t> cu_up_ue_e1ap_id;
   };
@@ -36,12 +36,12 @@ protected:
   ~e1ap_cu_cp_test() override;
 
   /// \brief Helper method to run E1AP CU-CP Bearer Context Setup procedure.
-  void run_bearer_context_setup(cu_cp_ue_id_t cu_cp_ue_id, gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
+  void run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
 
   srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("E1AP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  slotted_id_table<cu_cp_ue_id_t, test_ue, MAX_NOF_CU_UES> test_ues;
+  slotted_id_table<ue_index_t, test_ue, MAX_NOF_CU_UES> test_ues;
 
   timer_manager                     timers;
   dummy_e1_pdu_notifier             e1_pdu_notifier;

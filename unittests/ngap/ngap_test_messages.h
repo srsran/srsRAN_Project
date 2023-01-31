@@ -88,13 +88,13 @@ ngc_message generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wait
 
 const uint32_t nas_pdu_len = 4; // Dummy length used for testing (content is not important)
 /// \brief Generate a dummy Initial UE Message.
-ngap_initial_ue_message generate_initial_ue_message(cu_cp_ue_id_t cu_cp_ue_id);
+ngap_initial_ue_message generate_initial_ue_message(ue_index_t ue_index);
 
 /// \brief Generate a dummy DL NAS Transport Message.
 ngc_message generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a dummy UL NAS Transport Message.
-ngap_ul_nas_transport_message generate_ul_nas_transport_message(cu_cp_ue_id_t cu_cp_ue_id);
+ngap_ul_nas_transport_message generate_ul_nas_transport_message(ue_index_t ue_index);
 
 /// \brief Generate a dummy Initial Context Setup Request base.
 ngc_message generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);

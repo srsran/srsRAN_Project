@@ -74,7 +74,7 @@ public:
 
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
-    task_sched.schedule_async_task(context.du_index, ue_index, std::move(task));
+    task_sched.schedule_async_task(ue_index, std::move(task));
   }
 
   unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }

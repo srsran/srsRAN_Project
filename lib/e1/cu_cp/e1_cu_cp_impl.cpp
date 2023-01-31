@@ -87,10 +87,10 @@ e1_cu_cp_impl::handle_bearer_context_setup_request(const e1ap_bearer_context_set
   }
 
   // add new e1ap_ue_context
-  ue_ctx_list.add_ue(request.cu_cp_ue_id, cu_cp_ue_e1ap_id);
+  ue_ctx_list.add_ue(request.ue_index, cu_cp_ue_e1ap_id);
   e1ap_ue_context& ue_ctxt = ue_ctx_list[cu_cp_ue_e1ap_id];
 
-  logger.debug("Added UE (cu_cp_ue_id={}, cu_cp_ue_e1ap_id={}).", request.cu_cp_ue_id, cu_cp_ue_e1ap_id);
+  logger.debug("Added UE (ue_index={}, cu_cp_ue_e1ap_id={}).", request.ue_index, cu_cp_ue_e1ap_id);
 
   e1_message e1_msg;
   e1_msg.pdu.set_init_msg();
@@ -108,7 +108,7 @@ async_task<e1ap_bearer_context_modification_response>
 e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_context_modification_request& request)
 {
   // Get UE context
-  e1ap_ue_context& ue_ctxt = ue_ctx_list[request.cu_cp_ue_id];
+  e1ap_ue_context& ue_ctxt = ue_ctx_list[request.ue_index];
 
   e1_message e1_msg;
   e1_msg.pdu.set_init_msg();
@@ -126,8 +126,8 @@ e1_cu_cp_impl::handle_bearer_context_modification_request(const e1ap_bearer_cont
 async_task<void>
 e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command)
 {
-  if (!ue_ctx_list.contains(command.cu_cp_ue_id)) {
-    logger.error("Can't find bearer to release (cu_cp_ue_id={})", command.cu_cp_ue_id);
+  if (!ue_ctx_list.contains(command.ue_index)) {
+    logger.error("Can't find bearer to release (ue_index={})", command.ue_index);
     return launch_async([](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN();
@@ -135,7 +135,7 @@ e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_r
   }
 
   // Get UE context
-  e1ap_ue_context& ue_ctxt = ue_ctx_list[command.cu_cp_ue_id];
+  e1ap_ue_context& ue_ctxt = ue_ctx_list[command.ue_index];
 
   e1_message e1_msg;
   e1_msg.pdu.set_init_msg();
@@ -146,8 +146,7 @@ e1_cu_cp_impl::handle_bearer_context_release_command(const e1ap_bearer_context_r
 
   fill_asn1_bearer_context_release_command(bearer_context_release_cmd, command);
 
-  return launch_async<e1_bearer_context_release_procedure>(
-      command.cu_cp_ue_id, e1_msg, ue_ctx_list, pdu_notifier, logger);
+  return launch_async<e1_bearer_context_release_procedure>(command.ue_index, e1_msg, ue_ctx_list, pdu_notifier, logger);
 }
 
 void e1_cu_cp_impl::handle_message(const e1_message& msg)

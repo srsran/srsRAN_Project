@@ -24,7 +24,7 @@ namespace srs_cu_cp {
 struct dummy_ngc_ue_task_scheduler : public ngc_ue_task_scheduler {
 public:
   dummy_ngc_ue_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
-  void schedule_async_task(cu_cp_ue_id_t cu_cp_ue_id, async_task<void>&& task) override
+  void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));
   }

@@ -144,7 +144,7 @@ struct e1ap_pdcp_config {
 };
 
 struct e1ap_drb_to_setup_item_ng_ran {
-  drb_id_t                                                       drb_id;
+  drb_id_t                                                       drb_id = drb_id_t::invalid;
   cu_cp_sdap_config                                              sdap_cfg;
   e1ap_pdcp_config                                               pdcp_cfg;
   std::vector<e1ap_cell_group_info_item>                         cell_group_info = {};
@@ -185,7 +185,7 @@ struct e1ap_security_info {
 };
 
 struct e1ap_bearer_context_setup_request {
-  cu_cp_ue_id_t                                                           cu_cp_ue_id;
+  ue_index_t                                                              ue_index = ue_index_t::invalid;
   e1ap_security_info                                                      security_info;
   uint64_t                                                                ue_dl_aggregate_maximum_bit_rate;
   std::string                                                             serving_plmn;
@@ -218,7 +218,7 @@ struct e1ap_data_forwarding_info {
 };
 
 struct e1ap_drb_setup_item_ng_ran {
-  drb_id_t                                                    drb_id;
+  drb_id_t                                                    drb_id                 = drb_id_t::invalid;
   std::vector<e1ap_up_params_item>                            ul_up_transport_params = {};
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_item>        flow_setup_list;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_failed_item> flow_failed_list;
@@ -226,7 +226,7 @@ struct e1ap_drb_setup_item_ng_ran {
 };
 
 struct e1ap_drb_failed_item_ng_ran {
-  drb_id_t      drb_id;
+  drb_id_t      drb_id = drb_id_t::invalid;
   cu_cp_cause_t cause;
 };
 
@@ -274,7 +274,7 @@ struct e1ap_bearer_context_setup_response {
 };
 
 struct e1ap_drb_to_setup_mod_item_ng_ran {
-  drb_id_t                                                       drb_id;
+  drb_id_t                                                       drb_id = drb_id_t::invalid;
   cu_cp_sdap_config                                              sdap_cfg;
   e1ap_pdcp_config                                               pdcp_cfg;
   std::vector<e1ap_cell_group_info_item>                         cell_group_info = {};
@@ -297,7 +297,7 @@ struct e1ap_pdu_session_res_to_setup_mod_item {
 };
 
 struct e1ap_drb_to_modify_item_ng_ran {
-  drb_id_t                                                       drb_id;
+  drb_id_t                                                       drb_id = drb_id_t::invalid;
   optional<cu_cp_sdap_config>                                    sdap_cfg;
   optional<cu_cp_pdcp_config>                                    pdcp_cfg;
   optional<e1ap_data_forwarding_info>                            drb_data_forwarding_info;
@@ -333,7 +333,7 @@ struct e1ap_ng_ran_bearer_context_mod_request {
 };
 
 struct e1ap_bearer_context_modification_request {
-  cu_cp_ue_id_t                                    cu_cp_ue_id;
+  ue_index_t                                       ue_index = ue_index_t::invalid;
   optional<e1ap_security_info>                     security_info;
   optional<uint64_t>                               ue_dl_aggr_max_bit_rate;
   optional<uint64_t>                               ue_dl_max_integrity_protected_data_rate;
@@ -348,7 +348,7 @@ struct e1ap_bearer_context_modification_request {
 };
 
 struct e1ap_drb_modified_item_ng_ran {
-  drb_id_t                                                    drb_id;
+  drb_id_t                                                    drb_id                 = drb_id_t::invalid;
   std::vector<e1ap_up_params_item>                            ul_up_transport_params = {};
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_item>        flow_setup_list;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_failed_item> flow_failed_list;
@@ -383,7 +383,7 @@ struct e1ap_bearer_context_modification_response {
 };
 
 struct e1ap_bearer_context_release_command {
-  cu_cp_ue_id_t cu_cp_ue_id;
+  ue_index_t    ue_index = ue_index_t::invalid;
   cu_cp_cause_t cause;
 };
 

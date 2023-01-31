@@ -23,9 +23,9 @@ ue_task_scheduler::ue_task_scheduler(timer_manager& timers_) : timers(timers_)
 }
 
 // UE task scheduler
-void ue_task_scheduler::handle_ue_async_task(cu_cp_ue_id_t cu_cp_ue_id, async_task<void>&& task)
+void ue_task_scheduler::handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task)
 {
-  ue_ctrl_loop[cu_cp_ue_id_to_uint(cu_cp_ue_id)].schedule(std::move(task));
+  ue_ctrl_loop[ue_index_to_uint(ue_index)].schedule(std::move(task));
 }
 
 unique_timer ue_task_scheduler::make_unique_timer()

@@ -107,7 +107,7 @@ TEST_F(du_processor_test, when_ue_creation_msg_valid_then_ue_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_NE(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 }
@@ -125,7 +125,7 @@ TEST_F(du_processor_test, when_cell_id_invalid_then_ue_not_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
 }
@@ -143,7 +143,7 @@ TEST_F(du_processor_test, when_rnti_invalid_then_ue_not_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 0);
 }
@@ -161,13 +161,13 @@ TEST_F(du_processor_test, when_ue_exists_then_ue_not_added)
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_NE(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 
   // Pass same message to DU processor again
   ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 }
@@ -186,7 +186,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
+  for (unsigned ue_index = 0; ue_index < MAX_NOF_UES_PER_DU; ue_index++) {
     // Generate ue_creation message
     rnti_t              c_rnti          = to_rnti(ue_index + 1); // 0 is not a valid RNTI
     ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
@@ -194,7 +194,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
         du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-    ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+    ASSERT_NE(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
   }
 
   // Reset logger loglevel
@@ -202,18 +202,18 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
 
   // Add one more UE to DU processor
   // Generate ue_creation message
-  rnti_t              c_rnti          = to_rnti(MAX_NOF_UES + 1);
+  rnti_t              c_rnti          = to_rnti(MAX_NOF_UES_PER_DU + 1);
   ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_EQ(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_EQ(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -232,12 +232,13 @@ TEST_F(du_processor_test, when_ue_context_release_command_received_then_ue_delet
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_NE(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), 1);
 
   // Generate UE context release command message
-  cu_cp_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(MIN_UE_INDEX);
+  cu_cp_ue_context_release_command ue_context_release_command =
+      generate_ue_context_release_command(uint_to_ue_index(0));
 
   // Pass message to DU processor
   du_processor_obj->handle_ue_context_release_command(ue_context_release_command);
@@ -259,7 +260,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
+  for (unsigned ue_index = 0; ue_index < MAX_NOF_UES_PER_DU; ue_index++) {
     // Generate ue_creation message
     rnti_t              c_rnti          = to_rnti(ue_index + 1); // 0 is not a valid RNTI
     ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
@@ -267,7 +268,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
     // Pass message to DU processor
     ue_creation_complete_message ue_creation_complete_msg =
         du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-    ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+    ASSERT_NE(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
   }
 
   // Reset logger loglevel
@@ -275,24 +276,25 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
   srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
 
   // Generate UE context release command message
-  cu_cp_ue_context_release_command ue_context_release_command = generate_ue_context_release_command(MIN_UE_INDEX);
+  cu_cp_ue_context_release_command ue_context_release_command =
+      generate_ue_context_release_command(uint_to_ue_index(0));
 
   // Pass message to DU processor
   du_processor_obj->handle_ue_context_release_command(ue_context_release_command);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES - 1);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU - 1);
 
   // Add one more UE to DU processor
   // Generate ue_creation message
-  rnti_t              c_rnti          = to_rnti(MAX_NOF_UES + 1);
+  rnti_t              c_rnti          = to_rnti(MAX_NOF_UES_PER_DU + 1);
   ue_creation_message ue_creation_msg = generate_ue_creation_message(c_rnti, 12345678);
 
   // Pass message to DU processor
   ue_creation_complete_message ue_creation_complete_msg = du_processor_obj->handle_ue_creation_request(ue_creation_msg);
-  ASSERT_NE(ue_creation_complete_msg.ue_index, INVALID_UE_INDEX);
+  ASSERT_NE(ue_creation_complete_msg.ue_index, ue_index_t::invalid);
 
-  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES);
+  ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
 }

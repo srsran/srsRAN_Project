@@ -52,11 +52,11 @@ public:
     logger.info("Received UE creation request.");
     last_ue_creation_request_msg                = msg;
     srs_cu_cp::ue_creation_complete_message ret = {};
-    ret.ue_index                                = srs_cu_cp::INVALID_UE_INDEX;
-    if (ue_index < srs_cu_cp::MAX_NOF_UES) {
-      ret.ue_index          = srs_cu_cp::int_to_ue_index(ue_index);
+    ret.ue_index                                = srs_cu_cp::ue_index_t::invalid;
+    if (ue_id < srs_cu_cp::MAX_NOF_UES_PER_DU) {
+      ret.ue_index          = srs_cu_cp::uint_to_ue_index(ue_id);
       last_created_ue_index = ret.ue_index;
-      ue_index++;
+      ue_id++;
       for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
         ret.srbs[i] = rx_notifier.get();
       }
@@ -64,7 +64,7 @@ public:
     return ret;
   }
 
-  void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_cp::int_to_ue_index(ue_index_); }
+  void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
   srs_cu_cp::f1_setup_request_message             last_f1_setup_request_msg;
   srs_cu_cp::f1ap_initial_ul_rrc_message          last_ue_creation_request_msg;
@@ -73,7 +73,7 @@ public:
 
 private:
   srslog::basic_logger& logger;
-  uint16_t              ue_index = srs_cu_cp::MIN_UE_INDEX;
+  uint16_t              ue_id = ue_index_to_uint(srs_cu_cp::ue_index_t::min);
 };
 
 /// Reusable notifier class that a) stores the received PDU for test inspection and b)

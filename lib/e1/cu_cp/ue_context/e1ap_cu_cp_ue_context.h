@@ -18,14 +18,14 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct e1ap_ue_context {
-  cu_cp_ue_id_t          cu_cp_ue_id      = cu_cp_ue_id_t::invalid;
+  ue_index_t             ue_index         = ue_index_t::invalid;
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = gnb_cu_cp_ue_e1ap_id_t::invalid;
   gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_t::invalid;
 
   e1ap_bearer_transaction_manager bearer_ev_mng;
 
-  e1ap_ue_context(cu_cp_ue_id_t cu_cp_ue_id_, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id_, timer_manager& timers_) :
-    cu_cp_ue_id(cu_cp_ue_id_), cu_cp_ue_e1ap_id(cu_cp_ue_e1ap_id_), bearer_ev_mng(timers_)
+  e1ap_ue_context(ue_index_t ue_index_, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id_, timer_manager& timers_) :
+    ue_index(ue_index_), cu_cp_ue_e1ap_id(cu_cp_ue_e1ap_id_), bearer_ev_mng(timers_)
   {
   }
 };
@@ -37,36 +37,36 @@ public:
 
   bool contains(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const { return ues.find(cu_cp_ue_e1ap_id) != ues.end(); }
 
-  /// \brief Checks whether a UE with the given CU-CP UE ID exists.
-  /// \param[in] cu_cp_ue_id The CU-CP UE ID used to find the UE.
-  /// \return The CU CP UE ID.
-  bool contains(cu_cp_ue_id_t cu_cp_ue_id) const
+  /// \brief Checks whether a UE with the given UE Index exists.
+  /// \param[in] ue_index The UE Index used to find the UE.
+  /// \return The UE Index.
+  bool contains(ue_index_t ue_index) const
   {
-    return cu_cp_ue_id_to_ue_e1ap_id.find(cu_cp_ue_id) != cu_cp_ue_id_to_ue_e1ap_id.end();
+    return ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end();
   }
 
-  e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_id) { return ues.at(cu_cp_ue_id); }
-  e1ap_ue_context& operator[](cu_cp_ue_id_t cu_cp_ue_id) { return ues.at(cu_cp_ue_id_to_ue_e1ap_id.at(cu_cp_ue_id)); }
+  e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t ue_index) { return ues.at(ue_index); }
+  e1ap_ue_context& operator[](ue_index_t ue_index) { return ues.at(ue_index_to_ue_e1ap_id.at(ue_index)); }
 
-  e1ap_ue_context& add_ue(cu_cp_ue_id_t cu_cp_ue_id, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
+  e1ap_ue_context& add_ue(ue_index_t ue_index, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
     ues.emplace(std::piecewise_construct,
                 std::forward_as_tuple(cu_cp_ue_e1ap_id),
-                std::forward_as_tuple(cu_cp_ue_id, cu_cp_ue_e1ap_id, timers));
-    cu_cp_ue_id_to_ue_e1ap_id.emplace(cu_cp_ue_id, cu_cp_ue_e1ap_id);
+                std::forward_as_tuple(ue_index, cu_cp_ue_e1ap_id, timers));
+    ue_index_to_ue_e1ap_id.emplace(ue_index, cu_cp_ue_e1ap_id);
     return ues.at(cu_cp_ue_e1ap_id);
   }
 
   void remove_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
-    cu_cp_ue_id_to_ue_e1ap_id.erase(ues.at(cu_cp_ue_e1ap_id).cu_cp_ue_id);
+    ue_index_to_ue_e1ap_id.erase(ues.at(cu_cp_ue_e1ap_id).ue_index);
     ues.erase(cu_cp_ue_e1ap_id);
   }
 
-  void remove_ue(cu_cp_ue_id_t cu_cp_ue_id)
+  void remove_ue(ue_index_t ue_index)
   {
-    gnb_cu_cp_ue_e1ap_id_t ue_e1ap_id = cu_cp_ue_id_to_ue_e1ap_id.at(cu_cp_ue_id);
-    cu_cp_ue_id_to_ue_e1ap_id.erase(cu_cp_ue_id);
+    gnb_cu_cp_ue_e1ap_id_t ue_e1ap_id = ue_index_to_ue_e1ap_id.at(ue_index);
+    ue_index_to_ue_e1ap_id.erase(ue_index);
     ues.erase(ue_e1ap_id);
   }
 
@@ -75,18 +75,18 @@ public:
   /// \brief Get the next available GNB-CU-CP-E1AP-UE-ID.
   gnb_cu_cp_ue_e1ap_id_t next_gnb_cu_cp_ue_e1ap_id() const
   {
-    if (cu_cp_ue_id_to_ue_e1ap_id.size() == MAX_NOF_CU_UES) {
+    if (ue_index_to_ue_e1ap_id.size() == MAX_NOF_CU_UES) {
       return gnb_cu_cp_ue_e1ap_id_t::invalid;
     }
 
     for (unsigned it = 0; it < gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::max); it++) {
-      // Only iterate over cu_cp_ue_id_to_ue_e1ap_id (size=MAX NOF CU UEs)
+      // Only iterate over ue_index_to_ue_e1ap_id (size=MAX NOF CU UEs)
       // to avoid iterating over all possible values of gnb_cu_cp_ue_e1ap_id_t (size=2^32-1)
-      auto it2 = std::find_if(cu_cp_ue_id_to_ue_e1ap_id.begin(), cu_cp_ue_id_to_ue_e1ap_id.end(), [it](auto& u) {
+      auto it2 = std::find_if(ue_index_to_ue_e1ap_id.begin(), ue_index_to_ue_e1ap_id.end(), [it](auto& u) {
         return u.second == int_to_gnb_cu_cp_ue_e1ap_id(it);
       });
 
-      if (it2 == cu_cp_ue_id_to_ue_e1ap_id.end()) {
+      if (it2 == ue_index_to_ue_e1ap_id.end()) {
         return int_to_gnb_cu_cp_ue_e1ap_id(it);
       }
     }
@@ -97,8 +97,8 @@ public:
 private:
   timer_manager& timers;
 
-  std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context> ues; // indexed by gnb_cu_cp_ue_e1ap_id
-  std::unordered_map<cu_cp_ue_id_t, gnb_cu_cp_ue_e1ap_id_t>   cu_cp_ue_id_to_ue_e1ap_id; // indexed by cu_cp_ue_id
+  std::unordered_map<gnb_cu_cp_ue_e1ap_id_t, e1ap_ue_context> ues;                    // indexed by gnb_cu_cp_ue_e1ap_id
+  std::unordered_map<ue_index_t, gnb_cu_cp_ue_e1ap_id_t>      ue_index_to_ue_e1ap_id; // indexed by ue_index
 };
 
 } // namespace srs_cu_cp

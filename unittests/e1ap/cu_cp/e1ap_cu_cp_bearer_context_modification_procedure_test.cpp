@@ -22,7 +22,7 @@ class e1ap_cu_cp_bearer_context_modification_test : public e1ap_cu_cp_test
 protected:
   void start_procedure(const e1ap_bearer_context_modification_request& req)
   {
-    run_bearer_context_setup(req.cu_cp_ue_id,
+    run_bearer_context_setup(req.ue_index,
                              int_to_gnb_cu_up_ue_e1ap_id(test_rgen::uniform_int<uint64_t>(
                                  gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
                                  gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1)));
@@ -65,13 +65,13 @@ protected:
 TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_request_sent_then_procedure_waits_for_response)
 {
   // Test Preamble.
-  auto request = generate_bearer_context_modification_request(uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
-      cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min), cu_cp_ue_id_to_uint(cu_cp_ue_id_t::max) - 1)));
+  auto request = generate_bearer_context_modification_request(uint_to_ue_index(
+      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
 
   // Start BEARER CONTEXT MODIFICATION procedure.
   this->start_procedure(request);
 
-  auto& ue = test_ues[request.cu_cp_ue_id];
+  auto& ue = test_ues[request.ue_index];
 
   // The BEARER CONTEXT MODIFICATION was sent to CU-UP and CU-CP is waiting for response.
   ASSERT_TRUE(was_bearer_context_modification_request_sent(ue.cu_cp_ue_e1ap_id.value()));
@@ -81,13 +81,13 @@ TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_request_sent_then_proce
 TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_response_received_then_procedure_successful)
 {
   // Test Preamble.
-  auto request = generate_bearer_context_modification_request(uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
-      cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min), cu_cp_ue_id_to_uint(cu_cp_ue_id_t::max) - 1)));
+  auto request = generate_bearer_context_modification_request(uint_to_ue_index(
+      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
 
   // Start BEARER CONTEXT MODIFICATION procedure and return back the response from the CU-UP.
   this->start_procedure(request);
 
-  auto&      ue = test_ues[request.cu_cp_ue_id];
+  auto&      ue = test_ues[request.ue_index];
   e1_message response =
       generate_bearer_context_modification_response(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
   e1ap->handle_message(response);
@@ -99,13 +99,13 @@ TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_response_received_then_
 TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_ue_setup_failure_received_then_procedure_unsuccessful)
 {
   // Test Preamble.
-  auto request = generate_bearer_context_modification_request(uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
-      cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min), cu_cp_ue_id_to_uint(cu_cp_ue_id_t::max) - 1)));
+  auto request = generate_bearer_context_modification_request(uint_to_ue_index(
+      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
 
   // Start BEARER CONTEXT MODIFICATION procedure and return back the failure response from the CU-UP.
   this->start_procedure(request);
 
-  auto& ue = test_ues[request.cu_cp_ue_id];
+  auto& ue = test_ues[request.ue_index];
 
   e1_message response =
       generate_bearer_context_modification_failure(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());

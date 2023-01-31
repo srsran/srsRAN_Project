@@ -19,7 +19,7 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct f1ap_ue_context {
-  const ue_index_t          ue_index      = INVALID_UE_INDEX;
+  const ue_index_t          ue_index      = ue_index_t::invalid;
   const gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_t::invalid;
   gnb_du_ue_f1ap_id_t       du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
   f1ap_srb_notifiers        srbs;
@@ -66,12 +66,12 @@ public:
   /// \brief Get the next available GNB-CU-F1AP-UE-ID.
   gnb_cu_ue_f1ap_id_t next_gnb_cu_ue_f1ap_id() const
   {
-    if (ue_index_to_ue_f1ap_id.size() == MAX_NOF_UES) {
+    if (ue_index_to_ue_f1ap_id.size() == MAX_NOF_UES_PER_DU) {
       return gnb_cu_ue_f1ap_id_t::invalid;
     }
 
     for (unsigned it = 0; it < gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max); it++) {
-      // Only iterate over ue_index_to_ue_f1ap_id (size=MAX NOF UEs)
+      // Only iterate over ue_index_to_ue_f1ap_id (size=MAX_NOF_UES_PER_DU)
       // to avoid iterating over all possible values of gnb_cu_ue_f1ap_id_t (size=2^32-1)
       auto it2 = std::find_if(ue_index_to_ue_f1ap_id.begin(), ue_index_to_ue_f1ap_id.end(), [it](auto& u) {
         return u.second == int_to_gnb_cu_ue_f1ap_id(it);

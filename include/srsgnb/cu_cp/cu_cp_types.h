@@ -28,16 +28,49 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Maximum number of UEs supported by CU-CP (implementation-defined).
-enum ue_index_t : uint16_t {
-  MIN_UE_INDEX     = 0,
-  MAX_UE_INDEX     = 1023,
-  MAX_NOF_UES      = 1024,
-  INVALID_UE_INDEX = MAX_NOF_UES
-};
-
 /// Maximum number of DUs supported by CU-CP (implementation-defined).
 enum du_index_t : uint16_t { MIN_DU_INDEX = 0, MAX_DU_INDEX = 1, MAX_NOF_DUS = 2, INVALID_DU_INDEX = MAX_NOF_DUS };
+
+/// Convert integer to DU index type.
+constexpr inline du_index_t int_to_du_index(std::underlying_type_t<du_index_t> idx)
+{
+  return static_cast<du_index_t>(idx);
+}
+
+constexpr inline std::underlying_type_t<du_index_t> du_index_to_int(du_index_t du_index)
+{
+  return static_cast<std::underlying_type_t<du_index_t>>(du_index);
+}
+
+/// Maximum number of UEs per DU (implementation-defined).
+const uint16_t MAX_NOF_UES_PER_DU = 1024;
+
+/// Maximum number of UEs supported by CU-CP (implementation-defined).
+#define MAX_NOF_CU_UES (du_index_t::MAX_NOF_DUS * MAX_NOF_UES_PER_DU)
+
+/// \brief ue_index internally used to identify the UE CU-CP-wide.
+/// \remark The ue_index is derived from the DU index and the maximum number of UEs per DU.
+enum class ue_index_t : uint64_t { min = 0, max = MAX_NOF_CU_UES - 1, invalid = MAX_NOF_CU_UES };
+
+/// Convert ue_index  type to integer.
+inline uint64_t ue_index_to_uint(ue_index_t index)
+{
+  return static_cast<uint64_t>(index);
+}
+
+/// Convert integer to ue_index type.
+inline ue_index_t uint_to_ue_index(std::underlying_type_t<ue_index_t> index)
+{
+  return static_cast<ue_index_t>(index);
+}
+
+inline du_index_t get_du_index_from_ue_index(ue_index_t index)
+{
+  if (index == ue_index_t::invalid) {
+    return INVALID_DU_INDEX;
+  }
+  return int_to_du_index((ue_index_to_uint(index) / MAX_NOF_UES_PER_DU));
+}
 
 /// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
 enum cu_up_index_t : uint16_t {
@@ -55,85 +88,16 @@ enum du_cell_index_t : uint16_t {
   INVALID_DU_CELL_INDEX = MAX_NOF_DU_CELLS
 };
 
-/// Convert integer to DU index type.
-constexpr inline du_index_t int_to_du_index(std::underlying_type_t<du_index_t> idx)
-{
-  return static_cast<du_index_t>(idx);
-}
-
-constexpr inline std::underlying_type_t<du_index_t> du_index_to_int(du_index_t du_index)
-{
-  return static_cast<std::underlying_type_t<du_index_t>>(du_index);
-}
-
 /// Convert integer to CU-UP index type.
 constexpr inline cu_up_index_t int_to_cu_up_index(std::underlying_type_t<cu_up_index_t> idx)
 {
   return static_cast<cu_up_index_t>(idx);
 }
 
-/// Convert integer to CU UE index type.
-constexpr inline ue_index_t int_to_ue_index(std::underlying_type_t<ue_index_t> idx)
-{
-  return static_cast<ue_index_t>(idx);
-}
-
-constexpr inline bool is_ue_index_valid(ue_index_t ue_idx)
-{
-  return ue_idx < MAX_NOF_UES;
-}
-
 /// Convert integer to CU cell index type.
 inline du_cell_index_t int_to_du_cell_index(std::underlying_type_t<du_cell_index_t> idx)
 {
   return static_cast<du_cell_index_t>(idx);
-}
-
-#define MAX_NOF_CU_UES (du_index_t::MAX_NOF_DUS * ue_index_t::MAX_NOF_UES)
-
-/// \brief CU_CP_UE_ID internally used to identify the UE CU-CP-wide.
-/// \remark The CU_CP_UE_ID is derived from the DU index and the UE's index at the DU
-/// by (DU_INDEX * MAX_NOF_UES) + UE_INDEX
-enum class cu_cp_ue_id_t : uint64_t { min = 0, max = MAX_NOF_CU_UES - 1, invalid = MAX_NOF_CU_UES };
-
-/// Convert CU_CP_UE_ID  type to integer.
-inline uint64_t cu_cp_ue_id_to_uint(cu_cp_ue_id_t id)
-{
-  return static_cast<uint64_t>(id);
-}
-
-/// Convert integer to CU_CP_UE_ID type.
-inline cu_cp_ue_id_t uint_to_cu_cp_ue_id(std::underlying_type_t<cu_cp_ue_id_t> id)
-{
-  return static_cast<cu_cp_ue_id_t>(id);
-}
-
-inline cu_cp_ue_id_t get_cu_cp_ue_id(du_index_t du_index, ue_index_t ue_index)
-{
-  return uint_to_cu_cp_ue_id((du_index * MAX_NOF_UES) + ue_index);
-}
-
-inline cu_cp_ue_id_t get_cu_cp_ue_id(std::underlying_type_t<du_index_t> du_index,
-                                     std::underlying_type_t<ue_index_t> ue_index)
-{
-  return uint_to_cu_cp_ue_id((du_index * MAX_NOF_UES) + ue_index);
-}
-
-inline ue_index_t get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id_t cu_cp_ue_id)
-{
-  if (cu_cp_ue_id == cu_cp_ue_id_t::invalid) {
-    return INVALID_UE_INDEX;
-  }
-  return int_to_ue_index(cu_cp_ue_id_to_uint(cu_cp_ue_id) % MAX_NOF_UES);
-}
-
-inline du_index_t get_du_index_from_cu_cp_ue_id(cu_cp_ue_id_t cu_cp_ue_id)
-{
-  if (cu_cp_ue_id == cu_cp_ue_id_t::invalid) {
-    return INVALID_DU_INDEX;
-  }
-  std::underlying_type_t<ue_index_t> ue_idx = get_ue_index_from_cu_cp_ue_id(cu_cp_ue_id);
-  return int_to_du_index((cu_cp_ue_id_to_uint(cu_cp_ue_id) - ue_idx) / MAX_NOF_UES);
 }
 
 /// \brief RAN_UE_ID (non ASN1 type of RAN_UE_NGAP_ID).
@@ -305,7 +269,7 @@ struct cu_cp_pdu_session_res_setup_item {
 };
 
 struct cu_cp_pdu_session_resource_setup_request {
-  cu_cp_ue_id_t                                                         cu_cp_ue_id = cu_cp_ue_id_t::invalid;
+  ue_index_t                                                            ue_index = ue_index_t::invalid;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                                              ue_aggregate_maximum_bit_rate_dl;
   std::string                                                           serving_plmn;
@@ -537,8 +501,7 @@ struct cu_cp_rrc_reconfiguration_procedure_request {
 };
 
 struct cu_cp_ue_context_release_command {
-  ue_index_t    ue_index = INVALID_UE_INDEX;
-  du_index_t    du_index = INVALID_DU_INDEX;
+  ue_index_t    ue_index = ue_index_t::invalid;
   cu_cp_cause_t cause;
 };
 

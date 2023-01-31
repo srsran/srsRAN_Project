@@ -138,11 +138,11 @@ e1_message srsgnb::srs_cu_cp::generate_cu_up_e1_setup_respose(unsigned transacti
   return e1_setup_response;
 }
 
-e1ap_bearer_context_setup_request srsgnb::srs_cu_cp::generate_bearer_context_setup_request(cu_cp_ue_id_t cu_cp_ue_id)
+e1ap_bearer_context_setup_request srsgnb::srs_cu_cp::generate_bearer_context_setup_request(ue_index_t ue_index)
 {
   e1ap_bearer_context_setup_request request = {};
 
-  request.cu_cp_ue_id                                     = cu_cp_ue_id;
+  request.ue_index                                        = ue_index;
   request.security_info.security_algorithm.ciphering_algo = srsgnb::security::ciphering_algorithm::nea0;
   request.security_info.up_security_key.encryption_key    = make_byte_buffer("9950ab8083ed034257d900e9a6a06236");
   request.ue_dl_aggregate_maximum_bit_rate                = 300000000;
@@ -261,10 +261,10 @@ e1_message srsgnb::srs_cu_cp::generate_bearer_context_setup_failure(gnb_cu_cp_ue
 }
 
 e1ap_bearer_context_modification_request
-srsgnb::srs_cu_cp::generate_bearer_context_modification_request(cu_cp_ue_id_t cu_cp_ue_id)
+srsgnb::srs_cu_cp::generate_bearer_context_modification_request(ue_index_t ue_index)
 {
   e1ap_bearer_context_modification_request request;
-  request.cu_cp_ue_id = cu_cp_ue_id;
+  request.ue_index = ue_index;
 
   return request;
 }
@@ -321,12 +321,11 @@ e1_message srsgnb::srs_cu_cp::generate_bearer_context_modification_failure(gnb_c
   return bearer_context_modification_failure;
 }
 
-e1ap_bearer_context_release_command
-srsgnb::srs_cu_cp::generate_bearer_context_release_command(cu_cp_ue_id_t cu_cp_ue_id)
+e1ap_bearer_context_release_command srsgnb::srs_cu_cp::generate_bearer_context_release_command(ue_index_t ue_index)
 {
   e1ap_bearer_context_release_command command;
-  command.cu_cp_ue_id = cu_cp_ue_id;
-  command.cause       = cu_cp_cause_t::radio_network;
+  command.ue_index = ue_index;
+  command.cause    = cu_cp_cause_t::radio_network;
 
   return command;
 }

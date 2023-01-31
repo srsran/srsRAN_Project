@@ -216,10 +216,10 @@ public:
 class du_processor_ue_task_scheduler
 {
 public:
-  virtual ~du_processor_ue_task_scheduler() = default;
-  virtual void           schedule_async_task(du_index_t du_index, ue_index_t ue_index, async_task<void>&& task) = 0;
-  virtual unique_timer   make_unique_timer()                                                                    = 0;
-  virtual timer_manager& get_timer_manager()                                                                    = 0;
+  virtual ~du_processor_ue_task_scheduler()                                                = default;
+  virtual void           schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
+  virtual unique_timer   make_unique_timer()                                               = 0;
+  virtual timer_manager& get_timer_manager()                                               = 0;
 };
 
 /// \brief Handles incoming task scheduling requests associated with an UE.

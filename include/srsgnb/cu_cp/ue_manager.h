@@ -34,7 +34,7 @@ public:
 class ngc_ue
 {
 public:
-  ngc_ue(cu_cp_ue_id_t                      cu_cp_ue_id,
+  ngc_ue(ue_index_t                         ue_index,
          ran_ue_id_t                        ran_ue_id,
          ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
          ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
@@ -43,17 +43,17 @@ public:
     rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
     du_processor_ctrl_notifier(du_processor_ctrl_notifier_)
   {
-    ue_ctxt.cu_cp_ue_id = cu_cp_ue_id;
-    ue_ctxt.ran_ue_id   = ran_ue_id;
+    ue_ctxt.ue_index  = ue_index;
+    ue_ctxt.ran_ue_id = ran_ue_id;
   }
 
   ngc_rrc_ue_pdu_notifier&           get_rrc_ue_pdu_notifier() { return rrc_ue_pdu_notifier; }
   ngc_rrc_ue_control_notifier&       get_rrc_ue_control_notifier() { return rrc_ue_ctrl_notifier; }
   ngc_du_processor_control_notifier& get_du_processor_control_notifier() { return du_processor_ctrl_notifier; }
 
-  cu_cp_ue_id_t get_cu_cp_ue_id() { return ue_ctxt.cu_cp_ue_id; }
-  amf_ue_id_t   get_amf_ue_id() { return ue_ctxt.amf_ue_id; }
-  ran_ue_id_t   get_ran_ue_id() { return ue_ctxt.ran_ue_id; }
+  ue_index_t  get_ue_index() { return ue_ctxt.ue_index; }
+  amf_ue_id_t get_amf_ue_id() { return ue_ctxt.amf_ue_id; }
+  ran_ue_id_t get_ran_ue_id() { return ue_ctxt.ran_ue_id; }
 
   uint64_t get_aggregate_maximum_bit_rate_dl() { return ue_ctxt.aggregate_maximum_bit_rate_dl; }
   void     set_aggregate_maximum_bit_rate_dl(uint64_t aggregate_maximum_bit_rate_dl)
@@ -78,17 +78,17 @@ class ngc_ue_manager
 public:
   virtual ~ngc_ue_manager() = default;
 
-  virtual ngc_ue&       add_ue(cu_cp_ue_id_t                      cu_cp_ue_id,
-                               ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                               ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                               ngc_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
-  virtual void          remove_ue(cu_cp_ue_id_t cu_cp_ue_id)                                  = 0;
-  virtual ngc_ue*       find_ue(cu_cp_ue_id_t cu_cp_ue_id)                                    = 0;
-  virtual size_t        get_nof_ngc_ues()                                                     = 0;
-  virtual void          set_amf_ue_id(cu_cp_ue_id_t cu_cp_ue_id, amf_ue_id_t amf_ue_id)       = 0;
-  virtual cu_cp_ue_id_t get_cu_cp_ue_id(ran_ue_id_t ran_ue_id)                                = 0;
-  virtual cu_cp_ue_id_t get_cu_cp_ue_id(amf_ue_id_t amf_ue_id)                                = 0;
-  virtual bool          contains(cu_cp_ue_id_t cu_cp_ue_id)                                   = 0;
+  virtual ngc_ue&    add_ngap_ue(ue_index_t                         ue_index,
+                                 ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+                                 ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+                                 ngc_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
+  virtual void       remove_ngap_ue(ue_index_t ue_index)                                        = 0;
+  virtual ngc_ue*    find_ngap_ue(ue_index_t ue_index)                                          = 0;
+  virtual size_t     get_nof_ngap_ues()                                                         = 0;
+  virtual void       set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id)                  = 0;
+  virtual ue_index_t get_ue_index(ran_ue_id_t ran_ue_id)                                        = 0;
+  virtual ue_index_t get_ue_index(amf_ue_id_t amf_ue_id)                                        = 0;
+  virtual bool       contains(ue_index_t ue_index)                                              = 0;
 };
 
 } // namespace srs_cu_cp

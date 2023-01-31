@@ -28,7 +28,7 @@ class ngap_test : public ::testing::Test
 {
 protected:
   struct test_ue {
-    cu_cp_ue_id_t         cu_cp_ue_id;
+    ue_index_t            ue_index;
     optional<amf_ue_id_t> amf_ue_id;
     optional<ran_ue_id_t> ran_ue_id;
   };
@@ -37,21 +37,21 @@ protected:
   ~ngap_test() override;
 
   /// \brief Helper method to successfully create UE instance in NGAP.
-  void create_ue(cu_cp_ue_id_t cu_cp_ue_id);
+  void create_ue(ue_index_t ue_index);
 
   /// \brief Helper method to successfully run DL NAS transport in NGAP.
-  void run_dl_nas_transport(cu_cp_ue_id_t cu_cp_ue_id);
+  void run_dl_nas_transport(ue_index_t ue_index);
 
   /// \brief Helper method to successfully run UL NAS transport in NGAP.
-  void run_ul_nas_transport(cu_cp_ue_id_t cu_cp_ue_id);
+  void run_ul_nas_transport(ue_index_t ue_index);
 
   /// \brief Helper method to successfully run Initial Context Setup in NGAP.
-  void run_inital_context_setup(cu_cp_ue_id_t cu_cp_ue_id);
+  void run_inital_context_setup(ue_index_t ue_index);
 
   srslog::basic_logger& ngap_logger = srslog::fetch_basic_logger("NGAP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  slotted_id_table<cu_cp_ue_id_t, test_ue, MAX_NOF_CU_UES> test_ues;
+  slotted_id_table<ue_index_t, test_ue, MAX_NOF_CU_UES> test_ues;
 
   ngc_configuration               cfg;
   timer_manager                   timers;

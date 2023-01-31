@@ -33,7 +33,7 @@ struct initial_context_response_message {
 class ngap_initial_context_setup_procedure
 {
 public:
-  ngap_initial_context_setup_procedure(const cu_cp_ue_id_t                             cu_cp_ue_id_,
+  ngap_initial_context_setup_procedure(const ue_index_t                                ue_index_,
                                        const asn1::ngap::init_context_setup_request_s& request_,
                                        ngc_ue_manager&                                 ue_manager_,
                                        ngc_message_notifier&                           amf_notif_,
@@ -50,7 +50,7 @@ private:
                                           const amf_ue_id_t&                     amf_ue_id,
                                           const ran_ue_id_t&                     ran_ue_id);
 
-  const cu_cp_ue_id_t                            cu_cp_ue_id;
+  const ue_index_t                               ue_index;
   const asn1::ngap::init_context_setup_request_s request;
   ngc_ue_manager&                                ue_manager;
   ngc_message_notifier&                          amf_notifier;

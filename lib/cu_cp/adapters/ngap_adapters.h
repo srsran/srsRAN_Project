@@ -33,10 +33,10 @@ public:
 
   void connect_cu_cp(ue_task_scheduler& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
 
-  void schedule_async_task(cu_cp_ue_id_t cu_cp_ue_id, async_task<void>&& task) override
+  void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
-    cu_cp_task_sched->handle_ue_async_task(cu_cp_ue_id, std::move(task));
+    cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
   }
 
   unique_timer make_unique_timer() override
@@ -58,7 +58,7 @@ private:
 class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier
 {
 public:
-  ngap_cu_cp_adapter() = default;
+  explicit ngap_cu_cp_adapter() = default;
 
   void connect_cu_cp(cu_cp_ngap_connection_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
 

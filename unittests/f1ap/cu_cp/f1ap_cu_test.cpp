@@ -166,14 +166,14 @@ TEST_F(f1ap_cu_test, when_du_to_cu_rrc_container_missing_then_ue_not_added)
   EXPECT_EQ(f1ap->get_nof_ues(), 0);
 }
 
-TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
+TEST_F(f1ap_cu_test, when_max_nof_ues_PER_DU_exceeded_then_ue_not_added)
 {
   // Reduce F1AP and TEST logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP-F1").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
-  for (int ue_index = MIN_UE_INDEX; ue_index < MAX_NOF_UES; ue_index++) {
+  for (int ue_index = 0; ue_index < MAX_NOF_UES_PER_DU; ue_index++) {
     // Generate ue_creation message
     f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(ue_index));
 
@@ -185,22 +185,22 @@ TEST_F(f1ap_cu_test, when_max_nof_ues_exceeded_then_ue_not_added)
   srslog::fetch_basic_logger("CU-CP-F1").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
-  EXPECT_EQ(f1ap->get_nof_ues(), MAX_NOF_UES);
+  EXPECT_EQ(f1ap->get_nof_ues(), MAX_NOF_UES_PER_DU);
 
   // Add one more UE to F1C
   // Generate ue_creation message
-  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(MAX_NOF_UES + 1));
+  f1c_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(int_to_gnb_du_ue_f1ap_id(MAX_NOF_UES_PER_DU + 1));
 
   // Pass message to F1C
   f1ap->handle_message(init_ul_rrc_msg);
 
-  EXPECT_EQ(f1ap->get_nof_ues(), MAX_NOF_UES);
+  EXPECT_EQ(f1ap->get_nof_ues(), MAX_NOF_UES_PER_DU);
 }
 
 TEST_F(f1ap_cu_test, when_ue_creation_fails_then_ue_not_added)
 {
   // Add maximum number of UEs to dummy DU processor
-  du_processor_notifier.set_ue_index(MAX_NOF_UES);
+  du_processor_notifier.set_ue_id(MAX_NOF_UES_PER_DU);
 
   // Add one more UE to F1C
   // Generate F1 Initial UL RRC Message

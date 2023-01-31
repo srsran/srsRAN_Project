@@ -19,19 +19,19 @@ using namespace srs_cu_cp;
 class ngap_pdu_session_resource_setup_procedure_test : public ngap_test
 {
 protected:
-  void start_procedure(const cu_cp_ue_id_t cu_cp_ue_id)
+  void start_procedure(const ue_index_t ue_index)
   {
     ASSERT_EQ(ngap->get_nof_ues(), 0);
-    create_ue(cu_cp_ue_id);
+    create_ue(ue_index);
 
     // Inject DL NAS transport message from AMF
-    run_dl_nas_transport(cu_cp_ue_id);
+    run_dl_nas_transport(ue_index);
 
     // Inject UL NAS transport message from RRC
-    run_ul_nas_transport(cu_cp_ue_id);
+    run_ul_nas_transport(ue_index);
 
     // Inject Initial Context Setup Request
-    run_inital_context_setup(cu_cp_ue_id);
+    run_inital_context_setup(ue_index);
   }
 
   bool was_conversion_successful(ngc_message pdu_session_resource_setup_request, pdu_session_id_t pdu_session_id) const
@@ -86,15 +86,15 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
        when_valid_pdu_session_resource_setup_request_received_then_pdu_session_setup_succeeds)
 {
   // Test preamble
-  cu_cp_ue_id_t cu_cp_ue_id = uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
-      cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min), cu_cp_ue_id_to_uint(cu_cp_ue_id_t::max) - 1));
-  this->start_procedure(cu_cp_ue_id);
+  ue_index_t ue_index = uint_to_ue_index(
+      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+  this->start_procedure(ue_index);
 
   // Inject PDU Session Resource Setup Request
   pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rgen::uniform_int<uint32_t>(
       pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max) - 1));
 
-  auto& ue = test_ues[cu_cp_ue_id];
+  auto& ue = test_ues[ue_index];
 
   ngc_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
       ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
@@ -112,11 +112,11 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
        when_invalid_pdu_session_resource_setup_request_received_then_pdu_session_setup_failed)
 {
   // Test preamble
-  cu_cp_ue_id_t cu_cp_ue_id = uint_to_cu_cp_ue_id(test_rgen::uniform_int<uint32_t>(
-      cu_cp_ue_id_to_uint(cu_cp_ue_id_t::min), cu_cp_ue_id_to_uint(cu_cp_ue_id_t::max) - 1));
-  this->start_procedure(cu_cp_ue_id);
+  ue_index_t ue_index = uint_to_ue_index(
+      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+  this->start_procedure(ue_index);
 
-  auto& ue = test_ues[cu_cp_ue_id];
+  auto& ue = test_ues[ue_index];
 
   // Inject invalid PDU Session Resource Setup Request
   ngc_message pdu_session_resource_setup_request =

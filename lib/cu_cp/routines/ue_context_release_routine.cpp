@@ -37,8 +37,8 @@ void ue_context_release_routine::operator()(coro_context<async_task<void>>& ctx)
 
   {
     // prepare Bearer Context Release Command and call E1AP notifier
-    bearer_context_release_command.cu_cp_ue_id = get_cu_cp_ue_id(command.du_index, command.ue_index);
-    bearer_context_release_command.cause       = command.cause;
+    bearer_context_release_command.ue_index = command.ue_index;
+    bearer_context_release_command.cause    = command.cause;
 
     CORO_AWAIT(e1ap_ctrl_notifier.on_bearer_context_release_command(bearer_context_release_command));
   }
