@@ -104,7 +104,7 @@ void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer 
   pdcp_tx_pdu tx_pdu = {};
   tx_pdu.buf         = std::move(buf);
   if (is_drb()) {
-    tx_pdu.pdcp_sn = count; // Set only for data PDUs on DRBs.
+    tx_pdu.pdcp_sn = SN(count); // Set only for data PDUs on DRBs.
   }
   lower_dn.on_new_pdu(std::move(tx_pdu));
 }
@@ -161,7 +161,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
   for (auto it = discard_timers_map.begin(); it != discard_timers_map.end();) {
     if (it->first < fmc) {
       logger.log_debug("Discarding SDU with COUNT={}", it->first);
-      lower_dn.on_discard_pdu(it->first);
+      lower_dn.on_discard_pdu(SN(it->first));
       it = discard_timers_map.erase(it);
     } else {
       ++it;
@@ -176,7 +176,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
     // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
     if (bit == 1) {
       logger.log_debug("Discarding SDU with COUNT={}", fmc);
-      lower_dn.on_discard_pdu(fmc);
+      lower_dn.on_discard_pdu(SN(fmc));
       discard_timers_map.erase(fmc);
     }
   }
@@ -404,7 +404,7 @@ void pdcp_entity_tx::discard_callback::operator()(uint32_t timer_id)
   parent->logger.log_debug("Discard timer expired for PDU with COUNT={}", discard_count);
 
   // Notify the RLC of the discard. It's the RLC to actually discard, if no segment was transmitted yet.
-  parent->lower_dn.on_discard_pdu(discard_count);
+  parent->lower_dn.on_discard_pdu(pdcp_compute_sn(discard_count, parent->sn_size));
 
   // Add discard to metrics
   parent->metrics_add_discard_timouts(1);

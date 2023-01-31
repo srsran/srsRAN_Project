@@ -74,11 +74,13 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
 
     // Verify discard
     {
-      std::array<uint32_t, 3> exp_counts = {tx_next, tx_next + 2, tx_next + 4};
+      std::array<uint32_t, 3> exp_pdcp_sns = {pdcp_compute_sn(tx_next, sn_size),
+                                              pdcp_compute_sn(tx_next + 2, sn_size),
+                                              pdcp_compute_sn(tx_next + 4, sn_size)};
       ASSERT_FALSE(test_frame.sdu_discard_queue.empty());
       while (not test_frame.sdu_discard_queue.empty()) {
-        ASSERT_NE(std::find(exp_counts.begin(), exp_counts.end(), test_frame.sdu_discard_queue.front()),
-                  exp_counts.end());
+        ASSERT_NE(std::find(exp_pdcp_sns.begin(), exp_pdcp_sns.end(), test_frame.sdu_discard_queue.front()),
+                  exp_pdcp_sns.end());
         test_frame.sdu_discard_queue.pop();
       }
     }
@@ -90,11 +92,12 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
 
     // Verify discard timers for already discarded SDU were disarmed (no duplicated discard)
     {
-      std::array<uint32_t, 2> exp_counts = {tx_next + 1, tx_next + 3};
+      std::array<uint32_t, 2> exp_pdcp_sns = {pdcp_compute_sn(tx_next + 1, sn_size),
+                                              pdcp_compute_sn(tx_next + 3, sn_size)};
       ASSERT_FALSE(test_frame.sdu_discard_queue.empty());
       while (not test_frame.sdu_discard_queue.empty()) {
-        ASSERT_NE(std::find(exp_counts.begin(), exp_counts.end(), test_frame.sdu_discard_queue.front()),
-                  exp_counts.end());
+        ASSERT_NE(std::find(exp_pdcp_sns.begin(), exp_pdcp_sns.end(), test_frame.sdu_discard_queue.front()),
+                  exp_pdcp_sns.end());
         test_frame.sdu_discard_queue.pop();
       }
     }
