@@ -518,7 +518,7 @@ uint8_t srsgnb::config_helpers::compute_max_nof_candidates(aggregation_level    
 {
   // 1 REG = 1 RB and 1 symbol.
   // 1 CCE = 6 {PRB, symbol}. e.g. 3 PRBs over 2 symbols or 6 PRBs over 1 symbol, etc.
-  // Example: 3 Frequency domain resources, 2 symbol duration contains 6 REGs.
+  // Example: 3 Frequency domain resources, 2 symbol duration contains 6 CCEs.
   const unsigned max_coreset_cces = cs_cfg.freq_domain_resources().count() * cs_cfg.duration;
   return max_coreset_cces / to_nof_cces(aggr_lvl);
 }
