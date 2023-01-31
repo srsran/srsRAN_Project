@@ -101,7 +101,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     }
     byte_buffer pdu;
     status_pdu.pack(pdu);
-    logger.log_info(pdu.begin(), pdu.end(), "Status PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
+    logger.log_info(pdu.begin(), pdu.end(), "TX status PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
 
     // Update metrics
     metrics.metrics_add_pdus(1, pdu.length());
