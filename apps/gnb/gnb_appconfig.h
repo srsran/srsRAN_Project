@@ -148,7 +148,7 @@ struct rlc_tx_am_appconfig {
   int32_t  t_poll_retx;     ///< Poll retx timeout (ms)
   uint32_t max_retx_thresh; ///< Max retx threshold
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
-  int32_t  poll_byte;       ///< Insert poll bit after this much data (KB)
+  int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
 };
 
 /// RLC UM RX configuration

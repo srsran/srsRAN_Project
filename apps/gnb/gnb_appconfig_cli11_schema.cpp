@@ -292,7 +292,7 @@ static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
 
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
 {
-  app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 1007));
+  app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
   CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
   configure_cli11_rlc_args(*rlc_subcmd, qos_params.rlc);
 }

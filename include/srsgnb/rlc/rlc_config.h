@@ -152,7 +152,7 @@ struct rlc_tx_am_config {
   // Configurable Parameters. Ref: 3GPP TS 38.322 Section 7.4
   uint32_t max_retx_thresh; ///< Max number of retx
   int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
-  int32_t  poll_byte;       ///< Insert poll bit after this much data (KB)
+  int32_t  poll_byte;       ///< Insert poll bit after this much data (bytes)
 };
 
 /// \brief Configurable parameters for RLC AM
