@@ -61,8 +61,11 @@ get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level a
 }
 
 /// Allocate UE PDSCH grant.
-static bool
-alloc_dl_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
+static bool alloc_dl_ue(const ue&                    u,
+                        const ue_resource_grid_view& res_grid,
+                        ue_pdsch_allocator&          pdsch_alloc,
+                        bool                         is_retx,
+                        srslog::basic_logger&        logger)
 {
   if (not is_retx and not u.has_pending_dl_newtx_bytes()) {
     return false;
@@ -82,6 +85,10 @@ alloc_dl_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pdsch_allocat
     // Search available HARQ.
     const dl_harq_process* h = is_retx ? ue_cc.harqs.find_pending_dl_retx() : ue_cc.harqs.find_empty_dl_harq();
     if (h == nullptr) {
+      if (not is_retx) {
+        logger.debug(
+            "UE={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
+      }
       continue;
     }
 
@@ -130,8 +137,11 @@ alloc_dl_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pdsch_allocat
 }
 
 /// Allocate UE PUSCH grant.
-static bool
-alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocator& pusch_alloc, bool is_retx)
+static bool alloc_ul_ue(const ue&                    u,
+                        const ue_resource_grid_view& res_grid,
+                        ue_pusch_allocator&          pusch_alloc,
+                        bool                         is_retx,
+                        srslog::basic_logger&        logger)
 {
   unsigned pending_newtx_bytes = 0;
   if (not is_retx) {
@@ -157,6 +167,10 @@ alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocat
     h                        = is_retx ? ue_cc.harqs.find_pending_ul_retx() : ue_cc.harqs.find_empty_ul_harq();
     if (h == nullptr) {
       // No HARQs available.
+      if (not is_retx) {
+        logger.debug(
+            "UE={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
+      }
       continue;
     }
 
@@ -208,6 +222,8 @@ alloc_ul_ue(const ue& u, const ue_resource_grid_view& res_grid, ue_pusch_allocat
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+scheduler_time_rr::scheduler_time_rr() : logger(srslog::fetch_basic_logger("SCHED")) {}
+
 void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
                                  const ue_list&               ues,
@@ -218,8 +234,8 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
     rr_count++;
   }
 
-  auto tx_ue_function = [&res_grid, &pdsch_alloc, is_retx](const ue& u) {
-    return alloc_dl_ue(u, res_grid, pdsch_alloc, is_retx);
+  auto tx_ue_function = [this, &res_grid, &pdsch_alloc, is_retx](const ue& u) {
+    return alloc_dl_ue(u, res_grid, pdsch_alloc, is_retx, logger);
   };
   if (round_robin_apply(ues, rr_count, tx_ue_function)) {
     return;
@@ -236,8 +252,8 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
     rr_count++;
   }
 
-  auto tx_ue_function = [&res_grid, &pusch_alloc, is_retx](const ue& u) {
-    return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx);
+  auto tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
+    return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, logger);
   };
   if (round_robin_apply(ues, rr_count, tx_ue_function)) {
     return;

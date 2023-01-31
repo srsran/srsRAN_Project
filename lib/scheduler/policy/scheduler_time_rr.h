@@ -16,6 +16,8 @@ namespace srsgnb {
 class scheduler_time_rr : public scheduler_policy
 {
 public:
+  scheduler_time_rr();
+
   void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                 const ue_resource_grid_view& res_grid,
                 const ue_list&               ues,
@@ -27,6 +29,8 @@ public:
                 bool                         is_retx) override;
 
 private:
+  srslog::basic_logger& logger;
+
   unsigned rr_count = 0;
 };
 
