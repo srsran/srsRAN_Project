@@ -34,6 +34,14 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
 {
 }
 
+pdu_session_manager_impl::~pdu_session_manager_impl()
+{
+  // Release GTP-U tunnel from GTP-U demux
+  for (auto& session_it : pdu_sessions) {
+    gtpu_rx_demux.remove_tunnel(session_it.second->local_teid);
+  }
+}
+
 pdu_session_setup_result
 pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to_setup_item_s& session)
 {

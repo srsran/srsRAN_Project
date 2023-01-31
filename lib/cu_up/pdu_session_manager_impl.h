@@ -22,7 +22,7 @@ namespace srsgnb {
 
 namespace srs_cu_up {
 
-class pdu_session_manager_impl : public pdu_session_manager_ctrl
+class pdu_session_manager_impl final : public pdu_session_manager_ctrl
 {
 public:
   pdu_session_manager_impl(ue_index_t                           ue_index_,
@@ -32,7 +32,7 @@ public:
                            f1u_cu_up_gateway&                   f1u_gw_,
                            gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                            gtpu_demux_ctrl&                     gtpu_rx_demux_);
-  ~pdu_session_manager_impl() = default;
+  ~pdu_session_manager_impl() override;
 
   pdu_session_setup_result setup_pdu_session(const asn1::e1ap::pdu_session_res_to_setup_item_s& session) override;
   pdu_session_modification_result
