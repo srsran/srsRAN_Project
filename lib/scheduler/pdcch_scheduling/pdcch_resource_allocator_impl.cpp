@@ -172,10 +172,8 @@ pdcch_resource_allocator_impl::pdcch_slot_allocator::get_cce_loc_table(const all
 {
   // TODO: Cache result list.
   aggregation_level l = record.pdcch_ctx->cces.aggr_lvl;
-  return pdcch_candidates_common_ss_get_lowest_cce(
-      pdcch_candidates_common_ss_configuration{l,
-                                               record.ss_cfg->nof_candidates[to_aggregation_level_index(l)],
-                                               get_coreset_nof_cces(*record.pdcch_ctx->coreset_cfg)});
+  return pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
+      l, record.ss_cfg->nof_candidates[to_aggregation_level_index(l)], record.pdcch_ctx->coreset_cfg->get_nof_cces()});
 }
 
 bool pdcch_resource_allocator_impl::pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc,

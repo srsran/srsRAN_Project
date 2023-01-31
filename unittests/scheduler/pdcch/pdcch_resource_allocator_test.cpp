@@ -116,7 +116,7 @@ protected:
                                             aggregation_level                 aggr_lvl) const
   {
     return pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
-        aggr_lvl, ss_cfg.nof_candidates[to_aggregation_level_index(aggr_lvl)], get_coreset_nof_cces(cs_cfg)});
+        aggr_lvl, ss_cfg.nof_candidates[to_aggregation_level_index(aggr_lvl)], cs_cfg.get_nof_cces()});
   }
 
   bool pdcchs_collide(const dci_context_information& pdcch_ctx1, const dci_context_information& pdcch_ctx2) const
@@ -395,21 +395,30 @@ struct multi_alloc_test_params {
 
   bs_channel_bandwidth_fr1 cell_bw;
   std::vector<alloc>       allocs;
+};
 
-  friend std::ostream& operator<<(std::ostream& os, const multi_alloc_test_params& params)
+template <>
+struct fmt::formatter<multi_alloc_test_params> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
   {
-    fmt::memory_buffer fmtbuf;
+    return ctx.begin();
+  }
+  template <typename FormatContext>
+  auto format(const multi_alloc_test_params& params, FormatContext& ctx)
+  {
+    fmt::format_to(ctx.out(), "bw={}MHz allocs=[", bs_channel_bandwidth_to_MHz(params.cell_bw));
     for (const auto& a : params.allocs) {
-      fmt::format_to(fmtbuf,
+      fmt::format_to(ctx.out(),
                      "{}{{{}={:#x} aggr_lvl=n{}, ss_id={} -> ncce={}}}",
-                     fmtbuf.size() == 0 ? "" : ", ",
+                     &a == params.allocs.data() ? "" : ", ",
                      to_string(a.type),
                      a.rnti,
                      to_nof_cces(a.aggr_lvl),
                      a.ss_id,
                      a.expected_ncce);
     }
-    return os << fmt::format("bw={}MHz allocs=[{}]", bs_channel_bandwidth_to_MHz(params.cell_bw), to_string(fmtbuf));
+    return format_to(ctx.out(), "]");
   }
 };
 
@@ -507,6 +516,7 @@ protected:
 
 TEST_P(multi_alloc_pdcch_resource_allocator_tester, pdcch_allocation_outcome)
 {
+  test_logger.info("Test params: {}", params);
   print_cfg();
 
   for (const multi_alloc_test_params::alloc& a : params.allocs) {
@@ -569,12 +579,12 @@ INSTANTIATE_TEST_SUITE_P(
      {alloc_type::dl_crnti, to_rnti(0x4602), aggregation_level::n2, to_search_space_id(2), 2},
      {alloc_type::dl_crnti, to_rnti(0x4603), aggregation_level::n2, to_search_space_id(2), 4},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n2, to_search_space_id(2), 6},
-     {alloc_type::ul_crnti, to_rnti(0x4602), aggregation_level::n2, to_search_space_id(2), nullopt}}},
+     {alloc_type::ul_crnti, to_rnti(0x4602), aggregation_level::n2, to_search_space_id(2), 8}}},
   multi_alloc_test_params{cell_bw::MHz20,
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 0},
      {alloc_type::dl_crnti, to_rnti(0x4602), aggregation_level::n4, to_search_space_id(2), 4},
      {alloc_type::dl_crnti, to_rnti(0x4603), aggregation_level::n4, to_search_space_id(2), 8},
      {alloc_type::dl_crnti, to_rnti(0x4604), aggregation_level::n4, to_search_space_id(2), 12},
-     {alloc_type::dl_crnti, to_rnti(0x4605), aggregation_level::n4, to_search_space_id(2), nullopt}}}
+     {alloc_type::dl_crnti, to_rnti(0x4605), aggregation_level::n4, to_search_space_id(2), 14}}}
 ));
 // clang-format on

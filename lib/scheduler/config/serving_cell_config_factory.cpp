@@ -66,10 +66,10 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
   unsigned             coreset_nof_resources = cell_nof_crbs(params) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
   freq_resources.fill(0, coreset_nof_resources, true);
   cfg.set_freq_domain_resources(freq_resources);
-  // Number of symbols equal to CORESET#0.
+  // Number of symbols equal to max(CORESET#0, 2).
   pdcch_type0_css_coreset_description desc = pdcch_type0_css_coreset_get(
       min_channel_bw(params), params.scs_common, params.scs_common, params.coreset0_index, 0);
-  cfg.duration             = static_cast<unsigned>(desc.nof_symb_coreset);
+  cfg.duration             = std::max(2U, static_cast<unsigned>(desc.nof_symb_coreset));
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
   return cfg;
 }
@@ -516,11 +516,9 @@ srsgnb::config_helpers::create_default_initial_ue_spcell_cell_config(const cell_
 uint8_t srsgnb::config_helpers::compute_max_nof_candidates(aggregation_level            aggr_lvl,
                                                            const coreset_configuration& cs_cfg)
 {
-  // 1 REG = 6 PRBs spread over symbols i.e. 3 PRBs over 2 symbols or 6 PRBs over 1 symbol etc.
-  // 1 CCE = 6 REGs.
+  // 1 REG = 1 RB and 1 symbol.
+  // 1 CCE = 6 {PRB, symbol}. e.g. 3 PRBs over 2 symbols or 6 PRBs over 1 symbol, etc.
   // Example: 3 Frequency domain resources, 2 symbol duration contains 6 REGs.
-  const unsigned max_coreset_regs =
-      cs_cfg.freq_domain_resources().count() * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE * cs_cfg.duration;
-
-  return max_coreset_regs / (to_nof_cces(aggr_lvl) * pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
+  const unsigned max_coreset_cces = cs_cfg.freq_domain_resources().count() * cs_cfg.duration;
+  return max_coreset_cces / to_nof_cces(aggr_lvl);
 }
