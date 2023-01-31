@@ -25,6 +25,7 @@ bool gtpu_demux_impl::add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_inter
     logger.error("Tunnel with TEID={} already exists", teid);
     return false;
   }
+  logger.info("Adding tunnel with TEID={}", teid);
   teid_to_tunnel[teid] = tunnel;
   return true;
 }
@@ -35,6 +36,7 @@ bool gtpu_demux_impl::remove_tunnel(uint32_t teid)
     logger.error("Tunnel with TEID={} does not exist", teid);
     return false;
   }
+  logger.info("Removing tunnel with TEID={}", teid);
   teid_to_tunnel.erase(teid);
   return true;
 }
@@ -58,7 +60,6 @@ void gtpu_demux_impl::handle_pdu_impl(uint32_t teid, byte_buffer pdu)
     logger.error("Tunnel with TEID={} does not exist. Dropping PDU.", teid);
     return;
   }
-
   logger.debug(pdu.begin(), pdu.end(), "Forwarding PDU (len={}B) to TEID={}", pdu.length(), teid);
 
   // Forward entire PDU to the tunnel
