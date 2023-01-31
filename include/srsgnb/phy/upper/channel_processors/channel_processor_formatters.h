@@ -693,9 +693,9 @@ struct formatter<srsgnb::pucch_processor_result> {
   }
 };
 
-/// \brief Custom formatter for \c optional<pusch_processor::codeword_description>.
+/// \brief Custom formatter for \c pusch_processor::codeword_description.
 template <>
-struct formatter<srsgnb::optional<srsgnb::pusch_processor::codeword_description>> {
+struct formatter<srsgnb::pusch_processor::codeword_description> {
   /// Helper used to parse formatting options and format fields.
   srsgnb::detail::delimited_formatter helper;
 
@@ -712,11 +712,6 @@ struct formatter<srsgnb::optional<srsgnb::pusch_processor::codeword_description>
   auto format(const srsgnb::optional<srsgnb::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    if (!codeword.has_value()) {
-      helper.format_always(ctx, "{{na}}");
-      return ctx.out();
-    }
-
     helper.format_always(ctx, "rv={}", codeword.value().rv);
     helper.format_always(ctx, "bg={}", codeword.value().ldpc_base_graph);
     helper.format_always(ctx, "ndi={}", codeword.value().new_data);
@@ -744,25 +739,12 @@ struct formatter<srsgnb::pusch_processor::uci_description> {
   auto format(const srsgnb::pusch_processor::uci_description& uci_desc, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    // Each UCI field size is included if the UCI payload carries it. Verbose format includes all field sizes.
-    if (uci_desc.nof_harq_ack) {
-      helper.format_always(ctx, "oack={}", uci_desc.nof_harq_ack);
-    } else {
-      helper.format_if_verbose(ctx, "oack={}", uci_desc.nof_harq_ack);
-    }
+    // Number of ACK, CSI-Part1 and CSI-Part2 bits.
+    helper.format_if_verbose(ctx, "oack={}", uci_desc.nof_harq_ack);
+    helper.format_if_verbose(ctx, "ocsi1={}", uci_desc.nof_csi_part1);
+    helper.format_if_verbose(ctx, "ocsi2={}", uci_desc.nof_csi_part2);
 
-    if (uci_desc.nof_csi_part1) {
-      helper.format_always(ctx, "ocsi1={}", uci_desc.nof_csi_part1);
-    } else {
-      helper.format_if_verbose(ctx, "ocsi1={}", uci_desc.nof_csi_part1);
-    }
-    if (uci_desc.nof_csi_part2) {
-      helper.format_always(ctx, "ocsi2={}", uci_desc.nof_csi_part1);
-    } else {
-      helper.format_if_verbose(ctx, "ocsi2={}", uci_desc.nof_csi_part1);
-    }
-
-    // Scaling and offset parameters are included only in the verbose format.
+    // Scaling and offset parameters.
     helper.format_if_verbose(ctx, "alpha={}", uci_desc.alpha_scaling);
 
     helper.format_if_verbose(ctx,
@@ -806,7 +788,12 @@ struct formatter<srsgnb::pusch_processor::pdu_t> {
     // Verbose parameters.
     helper.format_if_verbose(ctx, "mod={}", to_string(pdu.mcs_descr.modulation));
     helper.format_if_verbose(ctx, "tcr={}", pdu.mcs_descr.get_normalised_target_code_rate());
-    helper.format_if_verbose(ctx, pdu.codeword);
+
+    // PUSCH data codeword if available.
+    if (pdu.codeword.has_value()) {
+      helper.format_if_verbose(ctx, pdu.codeword.value());
+    }
+
     helper.format_if_verbose(ctx, "n_id={}", pdu.n_id);
     helper.format_if_verbose(ctx, "dmrs_mask={}", pdu.dmrs_symbol_mask);
     helper.format_if_verbose(ctx, "n_scr_id={}", pdu.scrambling_id);
@@ -845,6 +832,8 @@ struct formatter<srsgnb::pusch_decoder_result> {
     helper.format_always(ctx, "crc={}", result.tb_crc_ok ? "OK" : "KO");
     helper.format_always(ctx, "iter={:.1f}", result.ldpc_decoder_stats.get_mean());
 
+    helper.format_if_verbose(ctx, "max_iter={}", result.ldpc_decoder_stats.get_max());
+    helper.format_if_verbose(ctx, "min_iter={}", result.ldpc_decoder_stats.get_min());
     helper.format_if_verbose(ctx, "nof_cb={}", result.nof_codeblocks_total);
 
     return ctx.out();

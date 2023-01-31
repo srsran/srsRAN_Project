@@ -167,23 +167,15 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
       // Process time domain signal with the amplitude controller.
       amplitude_controller_metrics amplitude_control_metrics =
           amplitude_controllers[sector_id]->process(buffer, buffer);
-
-      if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - amplitude_log_tp) >=
-          amplitude_log_period_ms) {
-        // Log the amplitude controller metrics periodically.
-        logger.debug(
-            "Amplitude controller metrics: Mean pwr={:.2f} dBFS, Peak pwr={:.2f} dBFS, PAPR={:.2f} dB, Gain={:.2f} dB, "
-            "Clipped sps={}, Clipping prob={:.2e}.",
-            amplitude_control_metrics.avg_power_dBFS,
-            amplitude_control_metrics.peak_power_dBFS,
-            amplitude_control_metrics.papr_dB,
-            amplitude_control_metrics.gain_dB,
-            amplitude_control_metrics.nof_clipped_samples,
-            amplitude_control_metrics.clipping_probability);
-
-        // Update amplitude logging time point.
-        amplitude_log_tp = std::chrono::steady_clock::now();
-      }
+      logger.debug(
+          "Amplitude controller metrics: Mean pwr={:.2f} dBFS, Peak pwr={:.2f} dBFS, PAPR={:.2f} dB, Gain={:.2f} dB, "
+          "Clipped sps={}, Clipping prob={:.2e}.",
+          amplitude_control_metrics.avg_power_dBFS,
+          amplitude_control_metrics.peak_power_dBFS,
+          amplitude_control_metrics.papr_dB,
+          amplitude_control_metrics.gain_dB,
+          amplitude_control_metrics.nof_clipped_samples,
+          amplitude_control_metrics.clipping_probability);
     }
   }
 

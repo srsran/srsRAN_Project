@@ -86,8 +86,6 @@ class lower_phy_impl : public lower_phy,
 private:
   /// Number of resource grid buffers.
   static constexpr unsigned NOF_RG_BUFFER = 40;
-  /// Amplitude controller log periodicity in milliseconds.
-  const std::chrono::milliseconds amplitude_log_period_ms = std::chrono::milliseconds(1000);
 
   /// Logger.
   srslog::basic_logger& logger;
@@ -136,8 +134,6 @@ private:
   lower_phy_state_fsm state_fsm;
   /// Processor notification adaptor.
   processor_notifier_adaptor notification_adaptor;
-  /// Time point used for amplitude controller logging.
-  std::chrono::steady_clock::time_point amplitude_log_tp;
 
   /// \brief Processes an uplink symbol.
   /// \param[in] symbol_idx Symbol index within a subframe.
