@@ -15,6 +15,8 @@
 #include "csi_rs_id.h"
 #include "csi_rs_pattern.h"
 #include "csi_rs_types.h"
+#include "srsgnb/adt/optional.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/adt/variant.h"
 #include "srsgnb/ran/tci.h"
 
@@ -97,14 +99,14 @@ struct nzp_csi_rs_resource {
   /// Present only for periodic and semi-persistent NZP-CSI-RS-Resources. Values {0,...,(periodicity_in_slots - 1)}.
   optional<unsigned> csi_res_offset;
   /// Present only for periodic NZP-CSI-RS-Resources (as indicated in CSI-ResourceConfig).
-  optional<tci_state_id_t> tci_state_id;
+  optional<tci_state_id_t> qcl_info_periodic_csi_rs;
 
   bool operator==(const nzp_csi_rs_resource& rhs) const
   {
     return res_id == rhs.res_id && res_mapping == rhs.res_mapping && pwr_ctrl_offset == rhs.pwr_ctrl_offset &&
            pwr_ctrl_offset_ss_db == rhs.pwr_ctrl_offset_ss_db && scrambling_id == rhs.scrambling_id &&
            csi_res_period == rhs.csi_res_period && csi_res_offset == rhs.csi_res_offset &&
-           tci_state_id == rhs.tci_state_id;
+           qcl_info_periodic_csi_rs == rhs.qcl_info_periodic_csi_rs;
   }
   bool operator!=(const nzp_csi_rs_resource& rhs) const { return !(rhs == *this); }
 };

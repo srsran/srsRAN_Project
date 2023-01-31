@@ -223,9 +223,9 @@ asn1::rrc_nr::nzp_csi_rs_res_s make_asn1_nzp_csi_rs_resource(const nzp_csi_rs_re
         out.periodicity_and_offset, cfg.csi_res_period.value(), cfg.csi_res_offset.value());
   }
 
-  if (cfg.tci_state_id.has_value()) {
+  if (cfg.qcl_info_periodic_csi_rs.has_value()) {
     out.qcl_info_periodic_csi_rs_present = true;
-    out.qcl_info_periodic_csi_rs         = cfg.tci_state_id.value();
+    out.qcl_info_periodic_csi_rs         = cfg.qcl_info_periodic_csi_rs.value();
   }
 
   return out;
@@ -771,73 +771,81 @@ asn1::rrc_nr::port_idx_for8_ranks_c
 make_asn1_port_index_for_8_ranks(const csi_report_config::port_index_for_8_ranks& cfg)
 {
   port_idx_for8_ranks_c out{};
-  if (variant_holds_alternative<csi_report_config::port_index_for_8_ranks::port_index_8>(cfg.port_index)) {
-    const auto& p_idx     = variant_get<csi_report_config::port_index_for_8_ranks::port_index_8>(cfg.port_index);
-    auto&       out_p_idx = out.set_port_idx8();
-    if (p_idx.rank1_8.has_value()) {
-      out_p_idx.rank1_8_present = true;
-      out_p_idx.rank1_8         = p_idx.rank1_8.value();
+  switch (cfg.port_index_type) {
+    case csi_report_config::port_index_for_8_ranks::port_index_type_t::port_index_1: {
+      out.set_port_idx1();
+      break;
     }
-    if (not p_idx.rank2_8.empty()) {
-      out_p_idx.rank2_8_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank2_8, p_idx.rank2_8);
+    case csi_report_config::port_index_for_8_ranks::port_index_type_t::port_index_2: {
+      auto& out_p_idx = out.set_port_idx2();
+      if (cfg.rank1_x.has_value()) {
+        out_p_idx.rank1_2_present = true;
+        out_p_idx.rank1_2         = cfg.rank1_x.value();
+      }
+      if (not cfg.rank2_x.empty()) {
+        out_p_idx.rank2_2_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank2_2, cfg.rank2_x);
+      }
+      break;
     }
-    if (not p_idx.rank3_8.empty()) {
-      out_p_idx.rank3_8_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank3_8, p_idx.rank3_8);
+    case csi_report_config::port_index_for_8_ranks::port_index_type_t::port_index_4: {
+      auto& out_p_idx = out.set_port_idx4();
+      if (cfg.rank1_x.has_value()) {
+        out_p_idx.rank1_4_present = true;
+        out_p_idx.rank1_4         = cfg.rank1_x.value();
+      }
+      if (not cfg.rank2_x.empty()) {
+        out_p_idx.rank2_4_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank2_4, cfg.rank2_x);
+      }
+      if (not cfg.rank3_x.empty()) {
+        out_p_idx.rank3_4_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank3_4, cfg.rank3_x);
+      }
+      if (not cfg.rank4_x.empty()) {
+        out_p_idx.rank4_4_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank4_4, cfg.rank4_x);
+      }
+      break;
     }
-    if (not p_idx.rank4_8.empty()) {
-      out_p_idx.rank4_8_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank4_8, p_idx.rank4_8);
+    case csi_report_config::port_index_for_8_ranks::port_index_type_t::port_index_8: {
+      auto& out_p_idx = out.set_port_idx8();
+      if (cfg.rank1_x.has_value()) {
+        out_p_idx.rank1_8_present = true;
+        out_p_idx.rank1_8         = cfg.rank1_x.value();
+      }
+      if (not cfg.rank2_x.empty()) {
+        out_p_idx.rank2_8_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank2_8, cfg.rank2_x);
+      }
+      if (not cfg.rank3_x.empty()) {
+        out_p_idx.rank3_8_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank3_8, cfg.rank3_x);
+      }
+      if (not cfg.rank4_x.empty()) {
+        out_p_idx.rank4_8_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank4_8, cfg.rank4_x);
+      }
+      if (not cfg.rank5_x.empty()) {
+        out_p_idx.rank5_8_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank5_8, cfg.rank5_x);
+      }
+      if (not cfg.rank6_x.empty()) {
+        out_p_idx.rank6_8_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank6_8, cfg.rank6_x);
+      }
+      if (not cfg.rank7_x.empty()) {
+        out_p_idx.rank7_8_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank7_8, cfg.rank7_x);
+      }
+      if (not cfg.rank8_x.empty()) {
+        out_p_idx.rank8_8_present = true;
+        make_asn1_port_index_each_rank(out_p_idx.rank8_8, cfg.rank8_x);
+      }
+      break;
     }
-    if (not p_idx.rank5_8.empty()) {
-      out_p_idx.rank5_8_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank5_8, p_idx.rank5_8);
-    }
-    if (not p_idx.rank6_8.empty()) {
-      out_p_idx.rank6_8_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank6_8, p_idx.rank6_8);
-    }
-    if (not p_idx.rank7_8.empty()) {
-      out_p_idx.rank7_8_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank7_8, p_idx.rank7_8);
-    }
-    if (not p_idx.rank8_8.empty()) {
-      out_p_idx.rank8_8_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank8_8, p_idx.rank8_8);
-    }
-  } else if (variant_holds_alternative<csi_report_config::port_index_for_8_ranks::port_index_4>(cfg.port_index)) {
-    const auto& p_idx     = variant_get<csi_report_config::port_index_for_8_ranks::port_index_4>(cfg.port_index);
-    auto&       out_p_idx = out.set_port_idx4();
-    if (p_idx.rank1_4.has_value()) {
-      out_p_idx.rank1_4_present = true;
-      out_p_idx.rank1_4         = p_idx.rank1_4.value();
-    }
-    if (not p_idx.rank2_4.empty()) {
-      out_p_idx.rank2_4_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank2_4, p_idx.rank2_4);
-    }
-    if (not p_idx.rank3_4.empty()) {
-      out_p_idx.rank3_4_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank3_4, p_idx.rank3_4);
-    }
-    if (not p_idx.rank4_4.empty()) {
-      out_p_idx.rank4_4_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank4_4, p_idx.rank4_4);
-    }
-  } else if (variant_holds_alternative<csi_report_config::port_index_for_8_ranks::port_index_2>(cfg.port_index)) {
-    const auto& p_idx     = variant_get<csi_report_config::port_index_for_8_ranks::port_index_2>(cfg.port_index);
-    auto&       out_p_idx = out.set_port_idx2();
-    if (p_idx.rank1_2.has_value()) {
-      out_p_idx.rank1_2_present = true;
-      out_p_idx.rank1_2         = p_idx.rank1_2.value();
-    }
-    if (not p_idx.rank2_2.empty()) {
-      out_p_idx.rank2_2_present = true;
-      make_asn1_port_index_each_rank(out_p_idx.rank2_2, p_idx.rank2_2);
-    }
-  } else if (variant_holds_alternative<csi_report_config::port_index_for_8_ranks::port_index_1>(cfg.port_index)) {
-    out.set_port_idx1();
+    default:
+      srsgnb_assertion_failure("Invalid port index type={}", cfg.port_index_type);
   }
   return out;
 }
@@ -965,127 +973,126 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
       srsgnb_assertion_failure("Invalid CSI report quantity={}", cfg.report_qty_type);
   }
 
-  if (cfg.rep_freq_cfg.has_value()) {
+  if (cfg.report_freq_cfg.has_value()) {
     out.report_freq_cfg_present = true;
 
     out.report_freq_cfg.cqi_format_ind_present =
-        cfg.rep_freq_cfg.value().cqi_format_ind != csi_report_config::cqi_format_indicator::none;
+        cfg.report_freq_cfg.value().cqi_format_ind != csi_report_config::cqi_format_indicator::none;
     out.report_freq_cfg.cqi_format_ind =
-        cfg.rep_freq_cfg.value().cqi_format_ind == csi_report_config::cqi_format_indicator::wideband_cqi
+        cfg.report_freq_cfg.value().cqi_format_ind == csi_report_config::cqi_format_indicator::wideband_cqi
             ? csi_report_cfg_s::report_freq_cfg_s_::cqi_format_ind_opts::wideband_cqi
             : csi_report_cfg_s::report_freq_cfg_s_::cqi_format_ind_opts::subband_cqi;
 
     out.report_freq_cfg.pmi_format_ind_present =
-        cfg.rep_freq_cfg.value().pmi_format_ind != csi_report_config::pmi_format_indicator::none;
+        cfg.report_freq_cfg.value().pmi_format_ind != csi_report_config::pmi_format_indicator::none;
     out.report_freq_cfg.pmi_format_ind =
-        cfg.rep_freq_cfg.value().pmi_format_ind == csi_report_config::pmi_format_indicator::wideband_pmi
+        cfg.report_freq_cfg.value().pmi_format_ind == csi_report_config::pmi_format_indicator::wideband_pmi
             ? csi_report_cfg_s::report_freq_cfg_s_::pmi_format_ind_opts::wideband_pmi
             : csi_report_cfg_s::report_freq_cfg_s_::pmi_format_ind_opts::subband_pmi;
 
-    if (cfg.rep_freq_cfg.value().nof_csi_reporting_subbands.has_value()) {
+    if (cfg.report_freq_cfg.value().nof_csi_reporting_subbands.has_value()) {
       out.report_freq_cfg.csi_report_band_present = true;
-      switch (cfg.rep_freq_cfg.value().nof_csi_reporting_subbands.value()) {
+      switch (cfg.report_freq_cfg.value().nof_csi_reporting_subbands.value()) {
         case 3: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands3();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 4: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands4();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 5: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands5();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 6: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands6();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 7: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands7();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 8: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands8();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 9: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands9();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 10: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands10();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 11: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands11();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 12: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands12();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 13: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands13();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 14: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands14();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 15: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands15();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 16: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands16();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 17: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands17();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 18: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands18();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
         case 19: {
           auto& sb = out.report_freq_cfg.csi_report_band.set_subbands19_v1530();
-          sb.from_number(cfg.rep_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
+          sb.from_number(cfg.report_freq_cfg.value().csi_reporting_subbands_bitmap.to_uint64());
           break;
         }
       }
     }
+  }
 
-    out.time_restrict_for_ch_meass = cfg.is_time_restrictions_for_channel_meas_configured
-                                         ? csi_report_cfg_s::time_restrict_for_ch_meass_opts::cfg
-                                         : csi_report_cfg_s::time_restrict_for_ch_meass_opts::not_cfg;
+  out.time_restrict_for_ch_meass = cfg.is_time_restrictions_for_channel_meas_configured
+                                       ? csi_report_cfg_s::time_restrict_for_ch_meass_opts::cfg
+                                       : csi_report_cfg_s::time_restrict_for_ch_meass_opts::not_cfg;
 
-    out.time_restrict_for_interference_meass =
-        cfg.is_time_restrictions_for_interference_meas_configured
-            ? csi_report_cfg_s::time_restrict_for_interference_meass_opts::cfg
-            : csi_report_cfg_s::time_restrict_for_interference_meass_opts::not_cfg;
+  out.time_restrict_for_interference_meass = cfg.is_time_restrictions_for_interference_meas_configured
+                                                 ? csi_report_cfg_s::time_restrict_for_interference_meass_opts::cfg
+                                                 : csi_report_cfg_s::time_restrict_for_interference_meass_opts::not_cfg;
 
-    if (cfg.codebook_cfg.has_value()) {
-      out.codebook_cfg_present = true;
-      make_asn1_codebook_config(out.codebook_cfg, cfg.codebook_cfg.value());
-    }
+  if (cfg.codebook_cfg.has_value()) {
+    out.codebook_cfg_present = true;
+    make_asn1_codebook_config(out.codebook_cfg, cfg.codebook_cfg.value());
   }
 
   if (cfg.is_group_based_beam_reporting_enabled) {

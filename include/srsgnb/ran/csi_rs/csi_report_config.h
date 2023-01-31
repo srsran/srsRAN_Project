@@ -14,6 +14,7 @@
 #include "csi_meas_config.h"
 #include "csi_resource_config.h"
 #include "csi_rs_constants.h"
+#include "srsgnb/adt/variant.h"
 #include "srsgnb/ran/pusch/pusch_configuration.h"
 #include "srsgnb/ran/pusch/pusch_constants.h"
 
@@ -173,53 +174,34 @@ struct csi_report_config {
     /// Port-Index configuration for up to rank 8. If present, the network configures port indexes for at least one of
     /// the ranks.
     /// \remark See TS 38.331, \c portIndex8.
-    struct port_index_8 {
-      /// Values {0,...,7}.
-      optional<unsigned>         rank1_8;
-      static_vector<unsigned, 2> rank2_8;
-      static_vector<unsigned, 3> rank3_8;
-      static_vector<unsigned, 4> rank4_8;
-      static_vector<unsigned, 5> rank5_8;
-      static_vector<unsigned, 6> rank6_8;
-      static_vector<unsigned, 7> rank7_8;
-      static_vector<unsigned, 8> rank8_8;
+    enum class port_index_type_t { port_index_1 = 0, port_index_2 = 2, port_index_4 = 4, port_index_8 = 8 };
 
-      bool operator==(const port_index_8& rhs) const
-      {
-        return rank1_8 == rhs.rank1_8 && rank2_8 == rhs.rank2_8 && rank3_8 == rhs.rank3_8 && rank4_8 == rhs.rank4_8 &&
-               rank5_8 == rhs.rank5_8 && rank6_8 == rhs.rank6_8 && rank7_8 == rhs.rank7_8 && rank8_8 == rhs.rank8_8;
-      }
-      bool operator!=(const port_index_8& rhs) const { return !(rhs == *this); }
-    };
+    port_index_type_t port_index_type;
+    /// Used only for \c port_index_type_t > \c port_index_1.
+    optional<unsigned> rank1_x;
+    /// Max. size of vector is 2.
+    std::vector<unsigned> rank2_x;
+    /// \c {rank3_x, rank4_x} are used only for \c port_index_type_t > \c port_index_2.
+    /// Max. size of vector is 3.
+    std::vector<unsigned> rank3_x;
+    /// Max. size of vector is 4.
+    std::vector<unsigned> rank4_x;
+    /// \c {rank5_x, rank6_x, rank7_x, rank8_x} are used only for \c port_index_type_t > \c port_index_4.
+    /// Max. size of vector is 5.
+    std::vector<unsigned> rank5_x;
+    /// Max. size of vector is 6.
+    std::vector<unsigned> rank6_x;
+    /// Max. size of vector is 7.
+    std::vector<unsigned> rank7_x;
+    /// Max. size of vector is 8.
+    std::vector<unsigned> rank8_x;
 
-    struct port_index_4 {
-      /// Values {0,...,3}.
-      optional<unsigned>         rank1_4;
-      static_vector<unsigned, 2> rank2_4;
-      static_vector<unsigned, 3> rank3_4;
-      static_vector<unsigned, 4> rank4_4;
-
-      bool operator==(const port_index_4& rhs) const
-      {
-        return rank1_4 == rhs.rank1_4 && rank2_4 == rhs.rank2_4 && rank3_4 == rhs.rank3_4 && rank4_4 == rhs.rank4_4;
-      }
-      bool operator!=(const port_index_4& rhs) const { return !(rhs == *this); }
-    };
-
-    struct port_index_2 {
-      /// Values {0,...,1}.
-      optional<unsigned>         rank1_2;
-      static_vector<unsigned, 2> rank2_2;
-
-      bool operator==(const port_index_2& rhs) const { return rank1_2 == rhs.rank1_2 && rank2_2 == rhs.rank2_2; }
-      bool operator!=(const port_index_2& rhs) const { return !(rhs == *this); }
-    };
-
-    using port_index_1 = bool;
-
-    variant<port_index_1, port_index_2, port_index_4, port_index_8> port_index;
-
-    bool operator==(const port_index_for_8_ranks& rhs) const { return port_index == rhs.port_index; }
+    bool operator==(const port_index_for_8_ranks& rhs) const
+    {
+      return port_index_type == rhs.port_index_type && rank1_x == rhs.rank1_x && rank2_x == rhs.rank2_x &&
+             rank3_x == rhs.rank3_x && rank4_x == rhs.rank4_x && rank5_x == rhs.rank5_x && rank6_x == rhs.rank6_x &&
+             rank7_x == rhs.rank7_x && rank8_x == rhs.rank8_x;
+    }
     bool operator!=(const port_index_for_8_ranks& rhs) const { return !(rhs == *this); }
   };
 
@@ -239,7 +221,7 @@ struct csi_report_config {
   report_quantity_type_t report_qty_type;
   /// Relevant only when \c report_quantity_type_t is of type \c cri_ri_i1_cqi.
   csi_ri_i1_cqi_pdsch_bundle_size_for_csi pdsch_bundle_size_for_csi{csi_ri_i1_cqi_pdsch_bundle_size_for_csi::none};
-  optional<report_frequency_config>       rep_freq_cfg;
+  optional<report_frequency_config>       report_freq_cfg;
   /// Time domain measurement restriction for the channel (signal) measurements. See TS 38.214, clause 5.2.1.1.
   bool is_time_restrictions_for_channel_meas_configured{false};
   /// Time domain measurement restriction for interference measurements. See TS 38.214, clause 5.2.1.1.
@@ -265,7 +247,7 @@ struct csi_report_config {
            csi_im_res_for_interference == rhs.csi_im_res_for_interference &&
            nzp_csi_rs_res_for_interference == rhs.nzp_csi_rs_res_for_interference &&
            report_cfg_type == rhs.report_cfg_type && report_qty_type == rhs.report_qty_type &&
-           pdsch_bundle_size_for_csi == rhs.pdsch_bundle_size_for_csi && rep_freq_cfg == rhs.rep_freq_cfg &&
+           pdsch_bundle_size_for_csi == rhs.pdsch_bundle_size_for_csi && report_freq_cfg == rhs.report_freq_cfg &&
            is_time_restrictions_for_channel_meas_configured == rhs.is_time_restrictions_for_channel_meas_configured &&
            is_time_restrictions_for_interference_meas_configured ==
                rhs.is_time_restrictions_for_interference_meas_configured &&
