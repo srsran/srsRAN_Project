@@ -28,13 +28,13 @@ struct f1ap_initial_ul_rrc_message {
 };
 
 struct f1ap_ul_rrc_message {
-  ue_index_t                        ue_index;
+  ue_index_t                        ue_index = ue_index_t::invalid;
   asn1::f1ap::ul_rrc_msg_transfer_s msg;
 };
 
 struct f1ap_dl_rrc_message {
-  ue_index_t  ue_index;
-  srb_id_t    srb_id;
+  ue_index_t  ue_index = ue_index_t::invalid;
+  srb_id_t    srb_id   = srb_id_t::nulltype;
   byte_buffer rrc_container;
 };
 
@@ -71,7 +71,7 @@ public:
 };
 
 struct f1ap_ue_context_release_command {
-  ue_index_t    ue_index;
+  ue_index_t    ue_index = ue_index_t::invalid;
   cu_cp_cause_t cause;
 };
 
@@ -132,12 +132,12 @@ private:
 using f1ap_srb_notifiers = std::array<f1c_rrc_message_notifier*, MAX_NOF_SRBS>;
 
 struct f1ap_srb_creation_message {
-  ue_index_t ue_index;
-  srb_id_t   srb_id;
+  ue_index_t ue_index = ue_index_t::invalid;
+  srb_id_t   srb_id   = srb_id_t::nulltype;
 };
 
 struct ue_creation_complete_message {
-  ue_index_t         ue_index;
+  ue_index_t         ue_index = ue_index_t::invalid;
   f1ap_srb_notifiers srbs;
 };
 
