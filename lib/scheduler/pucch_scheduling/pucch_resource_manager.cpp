@@ -39,6 +39,7 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
   rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(last_sl_ind - 1);
 
   res_counter.ue_using_sr_resource = INVALID_RNTI;
+  res_counter.ue_using_csi_resource = INVALID_RNTI;
   for (auto& ue_rec : res_counter.ues_using_format1_res) {
     ue_rec = INVALID_RNTI;
   }
@@ -47,8 +48,9 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
   }
 }
 
-pucch_harq_resource_alloc_record
-pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
+pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_available(slot_point          slot_harq,
+                                                                                         rnti_t              crnti,
+                                                                                         const pucch_config& pucch_cfg)
 {
   srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PDCCH being allocated to far into the future");
@@ -78,9 +80,10 @@ pucch_resource_manager::get_next_harq_res_available(slot_point slot_harq, rnti_t
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 };
 
-pucch_harq_resource_alloc_record pucch_resource_manager::get_next_format2_res_available(slot_point          slot_harq,
-                                                                                        rnti_t              crnti,
-                                                                                        const pucch_config& pucch_cfg)
+pucch_harq_resource_alloc_record
+pucch_resource_manager::reserve_next_format2_res_available(slot_point          slot_harq,
+                                                           rnti_t              crnti,
+                                                           const pucch_config& pucch_cfg)
 {
   srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PDCCH being allocated to far into the future");
@@ -112,7 +115,7 @@ pucch_harq_resource_alloc_record pucch_resource_manager::get_next_format2_res_av
 };
 
 const pucch_resource*
-pucch_resource_manager::get_next_csi_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
+pucch_resource_manager::reserve_csi_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
 {
   srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PDCCH being allocated to far into the future");
@@ -121,7 +124,7 @@ pucch_resource_manager::get_next_csi_resource(slot_point slot_harq, rnti_t crnti
   rnti_pucch_res_id_slot_record& slot_record = get_slot_resource_counter(slot_harq);
 
   // TODO replace this with value from config.
-  const unsigned csi_pucch_res_idx = 13;
+  const unsigned csi_pucch_res_idx = 9;
 
   // Check if the list of PUCCH resources contains the resource indexed to be used for CSI.
   if (slot_record.ue_using_csi_resource == INVALID_RNTI) {
@@ -143,7 +146,7 @@ pucch_resource_manager::get_next_csi_resource(slot_point slot_harq, rnti_t crnti
 };
 
 const pucch_resource*
-pucch_resource_manager::get_next_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
+pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
 {
   srsgnb_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PDCCH being allocated to far into the future");
@@ -233,7 +236,7 @@ bool pucch_resource_manager::release_csi_resource(slot_point slot_sr, rnti_t crn
   return false;
 }
 
-int pucch_resource_manager::get_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti)
+int pucch_resource_manager::fetch_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti)
 {
   const auto& ue_recs = get_slot_resource_counter(slot_tx).ues_using_format1_res;
 
@@ -244,7 +247,7 @@ int pucch_resource_manager::get_f1_pucch_res_indic(slot_point slot_tx, rnti_t cr
   return ue_resource != ue_recs.end() ? static_cast<int>(ue_resource - ue_recs.begin()) : -1;
 }
 
-int pucch_resource_manager::get_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti)
+int pucch_resource_manager::fetch_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti)
 {
   const auto& ue_recs = get_slot_resource_counter(slot_tx).ues_using_format2_res;
 
@@ -253,6 +256,32 @@ int pucch_resource_manager::get_f2_pucch_res_indic(slot_point slot_tx, rnti_t cr
 
   // -1 indicates that the there is no UE record for given RNTI.
   return ue_resource != ue_recs.end() ? static_cast<int>(ue_resource - ue_recs.begin()) : -1;
+}
+
+const pucch_resource*
+pucch_resource_manager::fetch_csi_pucch_res_config(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg)
+{
+  srsgnb_sanity_check(slot_tx < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+                      "PDCCH being allocated to far into the future");
+
+  // Get resource list of wanted slot.
+  rnti_pucch_res_id_slot_record& slot_record = get_slot_resource_counter(slot_tx);
+
+  if (slot_record.ue_using_csi_resource != crnti) {
+    return nullptr;
+  }
+
+  // TODO replace this with value from config.
+  const unsigned csi_pucch_res_idx = 9;
+
+  // Check if the list of PUCCH resources contains the resource indexed to be used for CSI.
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+  const auto* csi_pucch_resource_cfg =
+      std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [](const pucch_resource& pucch_res) {
+        return csi_pucch_res_idx == pucch_res.res_id;
+      });
+
+  return csi_pucch_resource_cfg != pucch_res_list.end() ? &pucch_cfg.pucch_res_list[csi_pucch_res_idx] : nullptr;
 }
 
 pucch_resource_manager::rnti_pucch_res_id_slot_record& pucch_resource_manager::get_slot_resource_counter(slot_point sl)

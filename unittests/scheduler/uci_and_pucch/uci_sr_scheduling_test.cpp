@@ -50,6 +50,20 @@ public:
     pucch_expected.format                   = pucch_format::FORMAT_1;
     pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
     pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+
+    pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_f2.crnti                     = to_rnti(0x4601);
+    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{12, 14};
+
+    pucch_expected_f2.format_2.harq_ack_nof_bits = 0;
+    pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::one;
+    pucch_expected_f2.format_2.csi_part1_bits    = 4;
+    pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
   };
 
 protected:
@@ -61,6 +75,7 @@ protected:
   test_bench     t_bench;
   // Expected SR PUCCH PDU that would be passed to PHY.
   pucch_info pucch_expected;
+  pucch_info pucch_expected_f2;
 };
 
 // Class to test PUCCH schedule with SR occasions & HARQ-ACK.
@@ -93,6 +108,20 @@ public:
     pucch_expected.format                   = pucch_format::FORMAT_1;
     pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
     pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+
+    pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_f2.crnti                     = to_rnti(0x4601);
+    pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{12, 14};
+
+    pucch_expected_f2.format_2.harq_ack_nof_bits = 1;
+    pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::one;
+    pucch_expected_f2.format_2.csi_part1_bits    = 4;
+    pucch_expected_f2.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
   };
 
 protected:
@@ -105,41 +134,58 @@ protected:
   test_bench     t_bench;
   // Expected SR PUCCH PDU that would be passed to PHY.
   pucch_info pucch_expected;
+  pucch_info pucch_expected_f2;
 };
 
 // Tests the PUCCH scheduler with SR opportunities only.
+
 TEST_P(test_pucch_output_sr_only, test_pucch_sr_only)
+
 {
   const unsigned NOF_SLOTS_TO_TEST = sr_periodicity_to_slot(sr_period) * 4;
+  // TODO: get these values from the UE config.
+  const unsigned CSI_offset = 1;
 
+  const unsigned CSI_period = 80;
   for (; t_bench.sl_tx.to_uint() < NOF_SLOTS_TO_TEST; t_bench.slot_indication(++t_bench.sl_tx)) {
     // t_bench.pucch_alloc.slot_indication(t_bench.sl_tx);
     t_bench.uci_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
-
     if ((t_bench.sl_tx - sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
       ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
-      ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
-    } else {
-      ASSERT_TRUE(t_bench.res_grid[0].result.ul.pucchs.empty());
+      // The SR will be mixed with CSI. When there is also a CSI scheduled, then
+      if ((t_bench.sl_tx - CSI_offset).to_uint() % CSI_period == 0) {
+        ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f2, t_bench.res_grid[0].result.ul.pucchs.back()));
+      } else {
+        ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
+      }
     }
   }
 }
 
-// Tests the PUCCH scheduler with SR opportunities and HARQ-ACK.
 TEST_P(test_pucch_output_sr_harq, test_pucch_sr_harq)
 {
+  // TODO: get these values from the UE config.
+  const unsigned CSI_offset = 1;
+  const unsigned CSI_period = 80;
+
   const unsigned NOF_SLOTS_TO_TEST = sr_periodicity_to_slot(sr_period) * 4;
 
   for (; t_bench.sl_tx.to_uint() < NOF_SLOTS_TO_TEST; t_bench.slot_indication(++t_bench.sl_tx)) {
-    t_bench.pucch_alloc.alloc_common_pucch_harq_ack_ue(
-        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, sl_point_harq_delay, t_bench.dci_info);
+    // To avoid that the HARQ-ACK grant gets scheduled with some delay (which complicates the checks in this test),
+    // assume k1 = 0. This way, the HARQ-ACK grant will get scheduled at each slot, starting from 0.
+    t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+        t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, 0);
     t_bench.uci_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
 
     if ((t_bench.sl_tx - sr_offset).to_uint() % sr_periodicity_to_slot(sr_period) == 0) {
-      ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
-      ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
-    } else {
-      ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
+      // Check if this slot corresponds to an CSI opportunity for the UE.
+      if ((t_bench.sl_tx - CSI_offset).to_uint() % CSI_period == 0) {
+        ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
+        ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f2, t_bench.res_grid[0].result.ul.pucchs.back()));
+      } else {
+        ASSERT_EQ(2, t_bench.res_grid[0].result.ul.pucchs.size());
+        ASSERT_TRUE(assess_ul_pucch_info(pucch_expected, t_bench.res_grid[0].result.ul.pucchs.back()));
+      }
     }
   }
 }

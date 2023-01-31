@@ -352,7 +352,6 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_res_set_1.pucch_res_id_list.emplace_back(6);
   pucch_res_set_1.pucch_res_id_list.emplace_back(7);
   pucch_res_set_1.pucch_res_id_list.emplace_back(8);
-  pucch_res_set_1.pucch_res_id_list.emplace_back(9);
 
   unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
       params.channel_bw_mhz,

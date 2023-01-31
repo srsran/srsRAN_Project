@@ -38,7 +38,7 @@ public:
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
   pucch_harq_resource_alloc_record
-  get_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  reserve_next_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// Returns the PUCCH format 2 resource to be used (SR / HARQ-ACK).
   /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
@@ -46,20 +46,20 @@ public:
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
   pucch_harq_resource_alloc_record
-  get_next_format2_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  reserve_next_format2_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// Returns the PUCCH format 2 resource to be used (SR / HARQ-ACK / CSI).
   /// \remark This index refers to the \c pucch-ResourceId of the \c PUCCH-Resource, as per TS 38.331.
   /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
-  const pucch_resource* get_next_csi_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  const pucch_resource* reserve_csi_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// Returns the pointer to the configuration of the PUCCH resource to be used for SR.
   /// \remark There is only one resource used for SR.
   /// \return the pointer to the configuration of the PUCCH resource to be used for SR, if available; else, it returns
   /// \c nullptr.
-  const pucch_resource* get_next_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
+  const pucch_resource* reserve_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Release PUCCH (format 1) resource from being allocated to a given UE.
   /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
@@ -91,11 +91,15 @@ public:
 
   /// \brief Returns the PUCCH resource indicator (format 1) of the resource used for a given RNTI at a given slot.
   /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
-  int get_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti);
+  int fetch_f1_pucch_res_indic(slot_point slot_tx, rnti_t crnti);
 
   /// \brief Returns the PUCCH resource indicator (format 2) of the resource used for a given RNTI at a given slot.
   /// \return PUCCH resource indicator of the resource used allocated to the UE; if UE is not found, returns -1.
-  int get_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti);
+  int fetch_f2_pucch_res_indic(slot_point slot_tx, rnti_t crnti);
+
+  /// \brief Returns the configuration of the PUCCH resource used for CSI (format 2) for a given RNTI at a given slot.
+  /// \return Pointer to the resource configuration used allocated to the UE; if UE is not found, returns \c nullptr.
+  const pucch_resource* fetch_csi_pucch_res_config(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg);
 
 private:
   /// Size of the ring buffer of pucch_resource_manager. This size sets a limit on how far in advance a PUCCH can be
