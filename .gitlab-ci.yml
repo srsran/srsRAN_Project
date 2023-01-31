@@ -14,11 +14,13 @@ include:
     ref: "37"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
+  - local: .gitlab/ci/e2e.yml
 
 stages:
   - ci
   - static
   - build and unit tests
+  - test-e2e
   - documentation
 
 ################################################################################
@@ -290,14 +292,18 @@ pages:
       when: always # Even if previous stages/required jobs fail
   image: $CR_REGISTRY_URI/testing-tools/doxygen:1.5.0
   script:
-    - doxygen_generator.sh
-    - mv build/public .
-    - mv coverage_html public/
-    - mv codechecker*html public/
-    - mv test_report.html public/
-    - mv requirement_report.html public/
-    - mv public/index.html public/index_doxygen.html
-    - mv docs/index.html public/index.html
+    - |
+      ls
+      doxygen_generator.sh
+      mv build/public .
+      mv coverage_html public/
+      mv codechecker*html public/
+      mv test_report.html public/
+      mv requirement_report.html public/
+      mv public/index.html public/index_doxygen.html
+      mv docs/index.html public/index.html
+      mv e2e-run-zmq-isa_false-tsan_false public/
+      mv e2e-run-zmq-isa_false-tsan_true public/
   after_script:
     - |
       if [ $CI_JOB_STATUS = "failed" ]; then
@@ -307,6 +313,10 @@ pages:
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
   needs:
+    - job: e2e-run-zmq-isa_false-tsan_false
+      artifacts: true
+    - job: e2e-run-zmq-isa_false-tsan_true
+      artifacts: true
     - job: unit coverage
       artifacts: true
     - job: unit requirements

@@ -27,6 +27,14 @@
             padding: 36px 0 36px 50px;
         }
 
+        .a_list {
+            margin: 1px;
+            background-repeat: no-repeat;
+            background-position: left center;
+            background-size: 40px;
+            padding: 1px 0 1px 1px;
+        }
+
         .code {
             background-image: url("./code.png");
         }
@@ -84,6 +92,20 @@
         <a class="test" href="./test_report.html">Tests report</a>
         <p></p>
         <a class="list" href="./requirement_report.html">Requirements</a>
+        <p></p>
+        <p></p>
+        <p></p>
+        <a class="test">e2e test:</a>
+        <p></p>
+        <ul>
+            <li>
+                <a class="a_list" href="./e2e-run-zmq-isa_false-tsan_false/report.html">zmq-isa[false]-tsan[false]</a>
+            </li>
+            <p></p>
+            <li>
+            <a class="a_list" href="./e2e-run-zmq-isa_false-tsan_true/report.html">zmq-isa[false]-tsan[true]</a>
+            </li>
+        </ul>
     </div>
 
 </body>
