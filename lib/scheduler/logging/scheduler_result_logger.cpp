@@ -127,11 +127,12 @@ void scheduler_result_logger::log_debug(const sched_result& result)
 
   for (const ul_sched_info& ul_info : result.ul.puschs) {
     fmt::format_to(fmtbuf,
-                   "\n- PUSCH: c-rnti={:#x}, h_id={}, prbs={}, symbols={}, rv_idx={}",
+                   "\n- PUSCH: c-rnti={:#x}, h_id={}, prbs={}, symbols={}, tbs={}B, rv={}",
                    ul_info.pusch_cfg.rnti,
                    ul_info.pusch_cfg.harq_id,
                    ul_info.pusch_cfg.prbs.prbs(),
                    ul_info.pusch_cfg.symbols,
+                   ul_info.pusch_cfg.tb_size_bytes,
                    ul_info.pusch_cfg.rv_index);
     if (ul_info.uci.has_value()) {
       fmt::format_to(fmtbuf,

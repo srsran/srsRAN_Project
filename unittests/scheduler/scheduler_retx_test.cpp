@@ -45,6 +45,7 @@ protected:
   {
     ul_crc_indication crc_ind;
     crc_ind.cell_index = to_du_cell_index(0);
+    crc_ind.sl_rx      = bench.next_slot_rx() - 1;
     crc_ind.crcs.resize(1);
     crc_ind.crcs[0].rnti           = to_rnti(ue_rnti);
     crc_ind.crcs[0].ue_index       = is_msg3 ? INVALID_DU_UE_INDEX : to_du_ue_index(0);

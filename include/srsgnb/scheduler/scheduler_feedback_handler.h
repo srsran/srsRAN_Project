@@ -55,6 +55,7 @@ struct ul_crc_pdu_indication {
 /// \brief UL HARQ CRC indication for a given UE PDU.
 struct ul_crc_indication {
   du_cell_index_t                                               cell_index;
+  slot_point                                                    sl_rx;
   static_vector<ul_crc_pdu_indication, MAX_PUSCH_PDUS_PER_SLOT> crcs;
 };
 

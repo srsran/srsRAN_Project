@@ -110,6 +110,7 @@ void benchmark_rach_scheduling()
     if (not res->ul.puschs.empty()) {
       ul_crc_indication crc;
       crc.cell_index = to_du_cell_index(0);
+      crc.sl_rx      = sl_tx - 4;
       for (const ul_sched_info& ulinfo : res->ul.puschs) {
         crc.crcs.push_back(ul_crc_pdu_indication{
             ulinfo.pusch_cfg.rnti, INVALID_DU_UE_INDEX, to_harq_id(ulinfo.pusch_cfg.harq_id), true});

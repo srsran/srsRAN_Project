@@ -122,7 +122,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
   for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
-        crc_ind.crcs[i].ue_index, [this, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
+        crc_ind.crcs[i].ue_index, [this, sl_rx = crc_ind.sl_rx, crc = crc_ind.crcs[i]](ue_cell& ue_cc) {
           const int tbs = ue_cc.harqs.ul_harq(crc.harq_id).crc_info(crc.tb_crc_success);
           if (tbs < 0) {
             logger.warning("CRC received for UE={}, h_id={} that is inactive", crc.ue_index, crc.harq_id);
@@ -134,7 +134,7 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
           // Log event.
           ev_logger.enqueue(scheduler_event_logger::crc_event{
-              crc.ue_index, crc.rnti, ue_cc.cell_index, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_metric});
+              crc.ue_index, crc.rnti, ue_cc.cell_index, sl_rx, crc.harq_id, crc.tb_crc_success, crc.ul_sinr_metric});
 
           // Notify metrics handler.
           metrics_handler.handle_crc_indication(crc);

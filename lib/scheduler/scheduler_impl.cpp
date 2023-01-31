@@ -78,6 +78,10 @@ void scheduler_impl::handle_crc_indication(const ul_crc_indication& crc_ind)
 
   if (has_msg3_crcs) {
     ul_crc_indication msg3_crcs{}, ue_crcs{};
+    msg3_crcs.sl_rx      = crc_ind.sl_rx;
+    msg3_crcs.cell_index = crc_ind.cell_index;
+    ue_crcs.sl_rx        = crc_ind.sl_rx;
+    ue_crcs.cell_index   = crc_ind.cell_index;
     for (const ul_crc_pdu_indication& crc_pdu : crc_ind.crcs) {
       if (crc_pdu.ue_index == INVALID_DU_UE_INDEX) {
         msg3_crcs.crcs.push_back(crc_pdu);

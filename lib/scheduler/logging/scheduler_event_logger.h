@@ -36,6 +36,7 @@ public:
     du_ue_index_t   ue_index;
     rnti_t          rnti;
     du_cell_index_t cell_index;
+    slot_point      sl_rx;
     harq_id_t       h_id;
     bool            crc;
     double          ul_sinr_db;
