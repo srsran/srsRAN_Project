@@ -28,6 +28,11 @@ static unsigned cell_nof_crbs(const cell_config_builder_params& params)
                                                                 : frequency_range::FR1);
 }
 
+static min_channel_bandwidth min_channel_bw(const cell_config_builder_params& params)
+{
+  return band_helper::get_min_channel_bw(get_band(params), params.scs_common);
+}
+
 carrier_configuration
 srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
@@ -61,7 +66,10 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
   unsigned             coreset_nof_resources = cell_nof_crbs(params) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE;
   freq_resources.fill(0, coreset_nof_resources, true);
   cfg.set_freq_domain_resources(freq_resources);
-  cfg.duration             = 1;
+  // Number of symbols equal to CORESET#0.
+  pdcch_type0_css_coreset_description desc = pdcch_type0_css_coreset_get(
+      min_channel_bw(params), params.scs_common, params.scs_common, params.coreset0_index, 0);
+  cfg.duration             = static_cast<unsigned>(desc.nof_symb_coreset);
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
   return cfg;
 }
@@ -71,17 +79,16 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
 coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
 {
   coreset_configuration cfg{};
-  cfg.id                               = to_coreset_id(0);
-  min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(get_band(params), params.scs_common);
-  pdcch_type0_css_coreset_description desc =
-      pdcch_type0_css_coreset_get(min_channel_bw, params.scs_common, params.scs_common, params.coreset0_index, 0);
+  cfg.id                                   = to_coreset_id(0);
+  pdcch_type0_css_coreset_description desc = pdcch_type0_css_coreset_get(
+      min_channel_bw(params), params.scs_common, params.scs_common, params.coreset0_index, 0);
 
   cfg.duration = static_cast<unsigned>(desc.nof_symb_coreset);
   int rb_start = params.scs_common == subcarrier_spacing::kHz15
                      ? static_cast<int>(params.offset_to_point_a.to_uint()) - desc.offset
                      : static_cast<int>(params.offset_to_point_a.to_uint() / 2) - desc.offset;
   if (rb_start < 0) {
-    srsgnb_terminate("Coreset#0 CRB starts before point A.");
+    srsgnb_terminate("Coreset#0 CRB starts before pointA.");
   }
   cfg.set_coreset0_crbs({static_cast<unsigned>(rb_start), static_cast<unsigned>(rb_start) + desc.nof_rb_coreset});
   // Implicit CORESET#0 parameters as per TS38.211-7.3.2.2.
@@ -460,10 +467,6 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // >> Add CORESET#1.
   pdcch_cfg.coresets.push_back(make_default_coreset_config(params));
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
-  freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-  const size_t         NOF_CCES_CORESET1 = 8;
-  freq_resources.fill(0, NOF_CCES_CORESET1, true);
-  pdcch_cfg.coresets[0].set_freq_domain_resources(freq_resources);
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
   pdcch_cfg.search_spaces[0].nof_candidates = {

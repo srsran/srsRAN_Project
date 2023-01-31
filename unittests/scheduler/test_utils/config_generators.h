@@ -98,15 +98,16 @@ inline serving_cell_config create_test_initial_ue_serving_cell_config()
   return serv_cell;
 }
 #endif
-inline cell_config_dedicated create_test_initial_ue_spcell_cell_config()
+inline cell_config_dedicated create_test_initial_ue_spcell_cell_config(const cell_config_builder_params& params = {})
 {
   cell_config_dedicated cfg;
   cfg.serv_cell_idx = to_serv_cell_index(0);
-  cfg.serv_cell_cfg = config_helpers::create_default_initial_ue_serving_cell_config();
+  cfg.serv_cell_cfg = config_helpers::create_default_initial_ue_serving_cell_config(params);
   return cfg;
 }
 
-inline sched_ue_creation_request_message create_default_sched_ue_creation_request()
+inline sched_ue_creation_request_message
+create_default_sched_ue_creation_request(const cell_config_builder_params& params = {})
 {
   sched_ue_creation_request_message msg{};
 
@@ -116,7 +117,7 @@ inline sched_ue_creation_request_message create_default_sched_ue_creation_reques
   scheduling_request_to_addmod sr_0{.sr_id = scheduling_request_id::SR_ID_MIN, .max_tx = sr_max_tx::n64};
   msg.cfg.sched_request_config_list.push_back(sr_0);
 
-  msg.cfg.cells.push_back(create_test_initial_ue_spcell_cell_config());
+  msg.cfg.cells.push_back(create_test_initial_ue_spcell_cell_config(params));
 
   msg.cfg.lc_config_list.resize(2);
   msg.cfg.lc_config_list[0] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);

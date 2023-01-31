@@ -309,6 +309,13 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_helper(cell_
                                                                            const search_space_configuration& ss_cfg,
                                                                            aggregation_level                 aggr_lvl)
 {
+  // Verify RNTI is unique.
+  for (const pdcch_ul_information& pdcch : slot_alloc.result.dl.ul_pdcchs) {
+    if (pdcch.ctx.rnti == rnti) {
+      return nullptr;
+    }
+  }
+
   // Create PDCCH list element.
   pdcch_ul_information& pdcch = slot_alloc.result.dl.ul_pdcchs.emplace_back();
   pdcch.ctx.bwp_cfg           = &bwp_cfg;
@@ -343,7 +350,12 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
     return nullptr;
   }
 
-  pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
+  // Verify RNTI is unique.
+  for (const pdcch_dl_information& pdcch : slot_alloc.result.dl.dl_pdcchs) {
+    if (pdcch.ctx.rnti == rnti) {
+      return nullptr;
+    }
+  }
 
   // Create PDCCH list element.
   pdcch_dl_information& pdcch = slot_alloc.result.dl.dl_pdcchs.emplace_back();
@@ -359,6 +371,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch.ctx.n_id_pdcch_dmrs   = get_N_ID_dmrs(cell_cfg, cs_cfg);
 
   // Allocate a position for DL PDCCH in CORESET.
+  pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
   if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg)) {
     slot_alloc.result.dl.dl_pdcchs.pop_back();
     return nullptr;
