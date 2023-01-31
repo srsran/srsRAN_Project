@@ -270,9 +270,9 @@ ssb_configuration srsgnb::config_helpers::make_default_ssb_config(const cell_con
 pusch_config srsgnb::config_helpers::make_default_pusch_config()
 {
   pusch_config cfg{};
-  cfg.tx_cfg = pusch_config::tx_config::codebook;
-  cfg.pusch_mapping_type_b_dmrs.emplace();
-  cfg.pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.emplace();
+  cfg.tx_cfg = pusch_config::tx_config::not_set;
+  cfg.pusch_mapping_type_a_dmrs.emplace();
+  cfg.pusch_mapping_type_a_dmrs.value().additional_positions = dmrs_additional_positions::pos1;
 
   cfg.pusch_pwr_ctrl = pusch_config::pusch_power_control{.msg3_alpha               = alpha::alpha1,
                                                          .p0_nominal_without_grant = -76,
