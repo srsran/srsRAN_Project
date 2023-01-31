@@ -49,7 +49,7 @@ struct rlc_rx_am_sdu_info {
   uint32_t                                                   total_sdu_length = 0;
 };
 
-/// \brief Rx state variables
+/// \brief RX state variables
 /// Ref: 3GPP TS 38.322 version 16.2.0 Section 7.1
 struct rlc_rx_am_state {
   /// \brief RX_Next – Receive state variable
@@ -79,7 +79,7 @@ private:
   /// Config storage
   const rlc_rx_am_config cfg;
 
-  /// Rx state variables
+  /// RX state variables
   rlc_rx_am_state st;
 
   /// Status handler
@@ -89,12 +89,12 @@ private:
   /// Indicates whether a status report is required
   std::atomic<bool> do_status = {false};
 
-  /// Rx counter modulus
+  /// RX counter modulus
   const uint32_t mod;
   /// AM window size
   const uint32_t am_window_size;
 
-  /// Rx window
+  /// RX window
   std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rx_window;
   /// Indicates the rx_window has not been changed, i.e. no need to rebuild status report.
   static const bool rx_window_not_changed = false;
@@ -127,7 +127,7 @@ public:
                    timer_manager&                    timers,
                    task_executor&                    ue_executor);
 
-  // Rx/Tx interconnect
+  // RX/TX interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }
   void set_status_notifier(rlc_tx_am_status_notifier* status_notifier_) { status_notifier = status_notifier_; }
 
@@ -163,9 +163,9 @@ public:
   /// \return The rebased value of sn
   uint32_t rx_mod_base(uint32_t sn) const { return (sn - st.rx_next) % mod; }
 
-  /// Checks whether a sequence number is inside the current Rx window
+  /// Checks whether a sequence number is inside the current RX window
   /// \param sn The sequence number to be checked
-  /// \return True if sn is inside the Rx window, false otherwise
+  /// \return True if sn is inside the RX window, false otherwise
   bool inside_rx_window(uint32_t sn) const
   {
     // RX_Next <= SN < RX_Next + AM_Window_Size

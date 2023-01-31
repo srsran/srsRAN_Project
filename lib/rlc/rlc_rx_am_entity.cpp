@@ -56,11 +56,12 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
 void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
 {
   metrics.metrics_add_pdus(1, buf.length());
-  logger.log_info(buf.begin(), buf.end(), "Rx PDU ({} B)", buf.length());
   metrics.metrics_add_sdus(1, buf.length());
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
+    logger.log_info(buf.begin(), buf.end(), "RX control PDU: pdu_len={}", buf.length());
     handle_control_pdu(std::move(buf));
   } else {
+    logger.log_info(buf.begin(), buf.end(), "RX AMD PDU: pdu_len={}", buf.length());
     handle_data_pdu(std::move(buf));
   }
 }
@@ -69,10 +70,10 @@ void rlc_rx_am_entity::handle_control_pdu(byte_buffer_slice buf)
 {
   rlc_am_status_pdu status_pdu(cfg.sn_field_length);
   if (status_pdu.unpack(buf.view())) {
-    logger.log_debug(buf.begin(), buf.end(), "Successfully unpacked control PDU ({} B)", buf.length());
+    logger.log_debug(buf.begin(), buf.end(), "Unpacked status PDU. pdu_len={}", buf.length());
     status_handler->on_status_pdu(std::move(status_pdu));
   } else {
-    logger.log_error(buf.begin(), buf.end(), "Failed to unpack control PDU ({} B)", buf.length());
+    logger.log_warning(buf.begin(), buf.end(), "Failed to unpack control PDU. pdu_len={}", buf.length());
   }
 }
 
@@ -82,7 +83,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   bool status_requested = false;
   auto on_function_exit = make_scope_exit([&]() {
     logger.log_debug(
-        "Post-processing data PDU: status_changed={}, status_requested={}", status_changed, status_requested);
+        "Post-processing for AMD PDU: status_changed={}, status_requested={}", status_changed, status_requested);
     if (status_changed) {
       refresh_status_report();
     }
@@ -94,14 +95,14 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
     }
   });
 
-  logger.log_debug(buf.begin(), buf.end(), "Rx data PDU ({} B)", buf.length());
+  logger.log_debug(buf.begin(), buf.end(), "RX AMD PDU: pdu_len={}", buf.length());
   rlc_am_pdu_header header = {};
   if (not rlc_am_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
-    logger.log_warning("Failed to unpack header of RLC PDU");
+    logger.log_warning(buf.begin(), buf.end(), "Failed to unpack AMD PDU header. pdu_len={}");
     metrics.metrics_add_malformed_pdus(1);
     return;
   }
-  logger.log_debug("PDU header: {}", header);
+  logger.log_debug("AMD PDU header: {}", header);
 
   // strip header, extract payload
   size_t            header_len = header.get_packed_size();
@@ -111,25 +112,27 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   // We do this before checking if the PDU is inside the RX window,
   // as the RX window may have advanced without the TX having received the ACKs.
   // This can cause a data stall, whereby the TX keeps retransmiting
-  // a PDU outside of the Rx window.
+  // a PDU outside of the RX window.
   // Also, we do this before discarding duplicate SDUs/SDU segments
   // because t-PollRetransmit may transmit a PDU that was already
   // received.
   if (header.p != 0U) {
-    logger.log_info("status packet requested through polling bit");
+    logger.log_info("Status report requested via polling bit");
     status_requested = true;
   }
 
-  // Check whether SDU is within Rx Window
+  // Check whether PDU SN is within RX Window
   if (!inside_rx_window(header.sn)) {
-    logger.log_info(
-        "SN={} outside rx window [{}:{}] - discarding", header.sn, st.rx_next, (st.rx_next + am_window_size) % mod);
+    logger.log_info("Discarded PDU: SN={} is outside the RX window [{}:{}]",
+                    header.sn,
+                    st.rx_next,
+                    (st.rx_next + am_window_size) % mod);
     return;
   }
 
   // Section 5.2.3.2.2, discard duplicate PDUs
   if (rx_window->has_sn(header.sn) && (*rx_window)[header.sn].fully_received) {
-    logger.log_info("discarding duplicate SN={}", header.sn);
+    logger.log_info("Discarded PDU: SN={} is fully received", header.sn);
     return;
   }
 
@@ -140,13 +143,12 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
       uint32_t pdu_last_byte  = header.so + payload.length() - 1;
       if ((header.so >= segm.header.so && header.so <= segm_last_byte) ||
           (pdu_last_byte >= segm.header.so && pdu_last_byte <= segm_last_byte)) {
-        logger.log_info("Got SDU segment with duplicate bytes. Discarding.");
-        logger.log_info("Discarded SDU segment. SN={}, SO={}, last_byte={}, length={}",
+        logger.log_info("Discarded segment with overlapping bytes: SN={}, SO={}, last_byte={}, payload_len={}",
                         header.sn,
                         header.so,
                         pdu_last_byte,
                         payload.length());
-        logger.log_info("Overlaping with SDU segment: SN={}, SO={}, last_byte={}, length={}",
+        logger.log_info("Overlapped with SDU segment: SN={}, SO={}, last_byte={}, payload_len={}",
                         header.sn,
                         segm.header.so,
                         segm_last_byte,
@@ -184,7 +186,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
      *   the reassembled RLC SDU to upper layer;
      */
     rlc_rx_am_sdu_info& rx_sdu = (*rx_window)[header.sn];
-    logger.log_info("Rx SDU ({} B)", rx_sdu.sdu.length());
+    logger.log_info("RX SDU ({} B)", rx_sdu.sdu.length());
     metrics.metrics_add_sdus(1, rx_sdu.sdu.length());
     upper_dn.on_new_sdu(std::move(rx_sdu.sdu));
 
@@ -538,7 +540,7 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
       }
     }
     if (not valid_ack_sn(sn_upd)) {
-      logger.log_error("Rx_Highest_Status not inside RX window. sn_upd={}, st={}", sn_upd, st);
+      logger.log_error("rx_highest_status not inside RX window. sn_upd={}, st={}", sn_upd, st);
     }
     srsgnb_assert(
         valid_ack_sn(sn_upd), "Error: rx_highest_status assigned outside rx window. sn_upd={}, st={}", sn_upd, st);
