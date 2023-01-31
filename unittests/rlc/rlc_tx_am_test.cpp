@@ -471,6 +471,106 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
 }
 
+TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
+{
+  init(GetParam());
+  const uint32_t sdu_size = 1;
+  const uint32_t n_pdus   = 6;
+  uint32_t       n_bsr    = tester->bsr_count;
+
+  const uint32_t pdcp_sn_start = 4092;
+  const uint32_t pdcp_sn_mod   = 4096;
+
+  // Push "n_pdus" SDUs into RLC
+  byte_buffer sdu_bufs[n_pdus];
+  for (uint32_t i = 0; i < n_pdus; i++) {
+    sdu_bufs[i] = create_sdu(sdu_size, i);
+
+    // write SDU into upper end
+    rlc_sdu sdu = {sdu_bufs[i].deep_copy(),
+                   /* pdcp_sn = */ (pdcp_sn_start + i) % pdcp_sn_mod}; // no std::move, keep copy for later comparison
+    rlc->handle_sdu(std::move(sdu));
+    EXPECT_EQ(tester->bsr_count, ++n_bsr);
+  }
+
+  tester->bsr_count = 0; // reset
+
+  // Discard valid SDUs
+  rlc->discard_sdu((pdcp_sn_start + 0) % pdcp_sn_mod);
+  rlc->discard_sdu((pdcp_sn_start + 4) % pdcp_sn_mod); // post-wraparound discard
+  rlc->discard_sdu((pdcp_sn_start + 3) % pdcp_sn_mod); // out-of-order discard (pre-wraparound)
+
+  // Compute expected buffer state
+  uint32_t header_size         = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  uint32_t data_pdu_size       = header_size + sdu_size;
+  uint32_t expect_buffer_state = (n_pdus - 3) * data_pdu_size;
+  uint32_t expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
+
+  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 0);
+
+  // Try discard of invalid SDU
+  rlc->discard_sdu((pdcp_sn_start + 999) % pdcp_sn_mod);
+  EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 1);
+
+  // Try discard of already discarded SDU
+  rlc->discard_sdu((pdcp_sn_start + 0) % pdcp_sn_mod);
+  EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 2);
+
+  // Transmit full PDU
+  byte_buffer_slice_chain pdu;
+  pdu = rlc->pull_pdu(data_pdu_size);
+  EXPECT_FALSE(pdu.empty());
+  EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
+  expect_buffer_state = (n_pdus - 4) * data_pdu_size;
+  expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
+  EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 2);
+
+  // Try discard of already transmitted SDU
+  rlc->discard_sdu((pdcp_sn_start + 1) % pdcp_sn_mod);
+  EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
+
+  // Transmit full PDU
+  pdu = rlc->pull_pdu(data_pdu_size);
+  EXPECT_FALSE(pdu.empty());
+  EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[2].begin()));
+  expect_buffer_state = (n_pdus - 5) * data_pdu_size;
+  expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
+  EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr_count, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 3);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
+
+  // Discard remaining SDU
+  rlc->discard_sdu((pdcp_sn_start + 5) % pdcp_sn_mod);
+  expect_buffer_state = 0;
+  expect_mac_bsr      = 0;
+  EXPECT_EQ(rlc->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr_count, 4);
+  EXPECT_EQ(rlc->get_metrics().num_discarded_sdus, 4);
+  EXPECT_EQ(rlc->get_metrics().num_discard_failures, 3);
+}
+
 TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
 {
   init(GetParam());
