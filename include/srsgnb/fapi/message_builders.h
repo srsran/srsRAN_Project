@@ -2002,11 +2002,31 @@ public:
     return *this;
   }
 
+  /// Sets the PUCCH PDU hopping information parameters for PUCCH format 2 and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_hopping_information_format2_parameters(bool     intra_slot_frequency_hopping,
+                                                                   uint16_t second_hop_prb)
+  {
+    pdu.intra_slot_frequency_hopping = intra_slot_frequency_hopping;
+    pdu.second_hop_prb               = second_hop_prb;
+
+    return *this;
+  }
+
   /// Sets the PUCCH PDU scrambling parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
   ul_pucch_pdu_builder& set_scrambling_parameters(uint16_t nid_pucch_scrambling)
   {
     pdu.nid_pucch_scrambling = nid_pucch_scrambling;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU format 2 parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_format2_parameters(uint16_t nid0_pucch_dmrs_scrambling)
+  {
+    pdu.nid0_pucch_dmrs_scrambling = nid0_pucch_dmrs_scrambling;
 
     return *this;
   }
@@ -2032,11 +2052,9 @@ public:
 
   /// Sets the PUCCH PDU DMRS parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder&
-  set_dmrs_parameters(bool add_dmrs_flag, uint16_t nid0_pucch_dmrs_scrambling, uint8_t m0_pucch_dmrs_cyclic_shift)
+  ul_pucch_pdu_builder& set_dmrs_parameters(bool add_dmrs_flag, uint8_t m0_pucch_dmrs_cyclic_shift)
   {
     pdu.add_dmrs_flag              = add_dmrs_flag;
-    pdu.nid0_pucch_dmrs_scrambling = nid0_pucch_dmrs_scrambling;
     pdu.m0_pucch_dmrs_cyclic_shift = m0_pucch_dmrs_cyclic_shift;
 
     return *this;

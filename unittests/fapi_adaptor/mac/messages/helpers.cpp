@@ -382,3 +382,25 @@ pucch_info unittests::build_valid_pucch_format_1_pdu()
 
   return pucch;
 }
+
+pucch_info srsgnb::unittests::build_valid_pucch_format_2_pdu()
+{
+  pucch_info pucch;
+
+  static bwp_configuration bwp_cfg = {false, subcarrier_spacing::kHz15, {2, 10}};
+
+  pucch.crnti                      = to_rnti(29);
+  pucch.bwp_cfg                    = &bwp_cfg;
+  pucch.format                     = pucch_format::FORMAT_2;
+  pucch.resources.prbs             = {1, 4};
+  pucch.resources.symbols          = {0, 14};
+  pucch.resources.second_hop_prbs  = {};
+  pucch.format_2.max_code_rate     = max_pucch_code_rate::dot_08;
+  pucch.format_2.csi_part1_bits    = 102;
+  pucch.format_2.harq_ack_nof_bits = 100;
+  pucch.format_2.sr_bits           = sr_nof_bits::one;
+  pucch.format_2.n_id_0_scrambling = 256;
+  pucch.format_2.n_id_scambling    = 382;
+
+  return pucch;
+}

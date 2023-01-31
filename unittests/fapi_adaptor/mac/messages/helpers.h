@@ -33,5 +33,8 @@ ul_sched_info build_valid_pusch_pdu();
 /// Build and returns a valid PUCCH format 1 PDU.
 pucch_info build_valid_pucch_format_1_pdu();
 
+/// Build and returns a valid PUCCH format 2 PDU.
+pucch_info build_valid_pucch_format_2_pdu();
+
 } // namespace unittests
 } // namespace srsgnb

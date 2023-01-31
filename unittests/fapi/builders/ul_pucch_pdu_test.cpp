@@ -147,19 +147,29 @@ TEST(ul_pucch_pdu_builder, valid_pucch_format4_parameters_passes)
   ASSERT_EQ(pre_dft_len, pdu.pre_dft_occ_len);
 }
 
-TEST(ul_pucch_pdu_builder, valid_dmrs_parameters_passes)
+TEST(ul_pucch_pdu_builder, valid_pucch_format2_parameters_passes)
 {
-  bool     dmrs_flag            = false;
   unsigned nid0_dmrs_scrambling = 34567;
-  unsigned m0_cyclic_shift      = 8;
 
   ul_pucch_pdu         pdu;
   ul_pucch_pdu_builder builder(pdu);
 
-  builder.set_dmrs_parameters(dmrs_flag, nid0_dmrs_scrambling, m0_cyclic_shift);
+  builder.set_format2_parameters(nid0_dmrs_scrambling);
+
+  ASSERT_EQ(nid0_dmrs_scrambling, pdu.nid0_pucch_dmrs_scrambling);
+}
+
+TEST(ul_pucch_pdu_builder, valid_dmrs_parameters_passes)
+{
+  bool     dmrs_flag       = false;
+  unsigned m0_cyclic_shift = 8;
+
+  ul_pucch_pdu         pdu;
+  ul_pucch_pdu_builder builder(pdu);
+
+  builder.set_dmrs_parameters(dmrs_flag, m0_cyclic_shift);
 
   ASSERT_EQ(dmrs_flag, pdu.add_dmrs_flag);
-  ASSERT_EQ(nid0_dmrs_scrambling, pdu.nid0_pucch_dmrs_scrambling);
   ASSERT_EQ(m0_cyclic_shift, pdu.m0_pucch_dmrs_cyclic_shift);
 }
 
