@@ -574,6 +574,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
               ant_restriction.typei_single_panel_codebook_subset_restriction_i2.value().to_uint64());
         }
       }
+      out_sp_cfg.type_i_single_panel_ri_restrict.from_number(sp_cfg_val.typei_single_panel_ri_restriction.to_uint64());
     } else if (variant_holds_alternative<codebook_config::type1::multi_panel>(tp1_cfg_val.sub_type)) {
       const auto& mp_cfg_val = variant_get<codebook_config::type1::multi_panel>(tp1_cfg_val.sub_type);
       auto&       out_mp_cfg = out_tp1_cfg.sub_type.set_type_i_multi_panel();

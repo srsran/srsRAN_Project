@@ -485,7 +485,7 @@ nzp_csi_rs_resource srsgnb::config_helpers::make_default_nzp_csi_rs_resource()
   // TODO: Set correct scrambling id.
   res.scrambling_id = 0;
 
-  res.csi_res_period = csi_resource_periodicity::slots40;
+  res.csi_res_period = csi_resource_periodicity::slots320;
   res.csi_res_offset = 11;
 
   res.qcl_info_periodic_csi_rs = static_cast<tci_state_id_t>(0);
@@ -512,7 +512,7 @@ csi_im_resource srsgnb::config_helpers::make_default_csi_im_resource()
       .symbol_location     = 8});
   res.freq_band_start_rb.emplace(0);
   res.freq_band_nof_rb.emplace(52);
-  res.csi_res_period.emplace(csi_resource_periodicity::slots80);
+  res.csi_res_period.emplace(csi_resource_periodicity::slots320);
   res.csi_res_offset.emplace(1);
 
   return res;
@@ -541,13 +541,13 @@ csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
 
   csi_report_config::periodic_or_semi_persistent_report_on_pucch report_cfg_type{};
   report_cfg_type.report_type = csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic;
-  report_cfg_type.report_slot_period = csi_report_periodicity::slots80;
+  report_cfg_type.report_slot_period = csi_report_periodicity::slots320;
   report_cfg_type.report_slot_offset = 9;
   report_cfg_type.pucch_csi_res_list.push_back(
-      csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 17});
+      csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 7});
   cfg.report_cfg_type = report_cfg_type;
 
-  cfg.report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_li_pmi_cqi;
+  cfg.report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_pmi_cqi;
 
   cfg.report_freq_cfg.emplace();
   cfg.report_freq_cfg.value().cqi_format_ind = csi_report_config::cqi_format_indicator::wideband_cqi;
@@ -556,7 +556,7 @@ csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
   cfg.codebook_cfg.emplace();
   auto ant_restriction = codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction(6);
   // '111111'B.
-  ant_restriction.all();
+  ant_restriction.from_uint64(0x3f);
   codebook_config::type1::single_panel sub_type{};
   sub_type.nof_antenna_ports                 = ant_restriction;
   sub_type.typei_single_panel_ri_restriction = bounded_bitset<8>(8);
@@ -588,7 +588,7 @@ csi_meas_config srsgnb::config_helpers::make_default_csi_meas_config()
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.nof_ports    = 2;
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.cdm          = csi_rs_cdm_type::fd_CDM2;
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::one;
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_period           = csi_resource_periodicity::slots80;
+  meas_cfg.nzp_csi_rs_res_list.back().csi_res_period           = csi_resource_periodicity::slots320;
   meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 1;
   // Resource 1.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource());
