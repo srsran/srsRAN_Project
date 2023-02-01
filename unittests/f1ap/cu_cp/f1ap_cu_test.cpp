@@ -240,5 +240,5 @@ TEST_F(f1ap_cu_test, when_f1_removal_request_received_then_du_deleted)
   // Pass message to F1C
   f1ap->handle_message(removal_request);
 
-  EXPECT_EQ(f1c_du_mgmt_notifier.last_du_idx, 0);
+  EXPECT_EQ(f1c_du_mgmt_notifier.last_du_idx, du_index_t::min);
 }

@@ -18,7 +18,7 @@ namespace srs_cu_cp {
 
 struct du_processor_config_t {
   std::string           name        = "srs_cu_cp";
-  du_index_t            du_index    = INVALID_DU_INDEX;
+  du_index_t            du_index    = du_index_t::invalid;
   uint8_t               rrc_version = 2;
   srslog::basic_logger& logger      = srslog::fetch_basic_logger("CU-CP");
   rrc_cfg_t             rrc_cfg; // TODO: do we put subcomponent configs here?

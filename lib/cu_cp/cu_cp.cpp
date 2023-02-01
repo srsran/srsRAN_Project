@@ -119,8 +119,13 @@ ngc_event_handler& cu_cp::get_ngc_event_handler()
 void cu_cp::handle_new_du_connection()
 {
   du_index_t du_index = add_du();
+  if (du_index == du_index_t::invalid) {
+    logger.error("Failed to add new DU");
+    return;
+  }
+
   logger.info("Added DU {}", du_index);
-  if (du_index != INVALID_DU_INDEX && amf_connected) {
+  if (amf_connected) {
     du_db.at(du_index)->get_rrc_amf_connection_handler().handle_amf_connection();
   }
 }
@@ -146,6 +151,11 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
 void cu_cp::handle_new_cu_up_connection()
 {
   cu_up_index_t cu_up_index = add_cu_up();
+  if (cu_up_index == INVALID_CU_UP_INDEX) {
+    logger.error("Failed to add new CU-UP");
+    return;
+  }
+
   logger.info("Added CU-UP {}", cu_up_index);
 }
 
@@ -181,9 +191,9 @@ void cu_cp::handle_amf_connection_drop()
 du_index_t cu_cp::add_du()
 {
   du_index_t du_index = get_next_du_index();
-  if (du_index == INVALID_DU_INDEX) {
+  if (du_index == du_index_t::invalid) {
     logger.error("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
-    return INVALID_DU_INDEX;
+    return du_index_t::invalid;
   }
 
   // TODO: use real config
@@ -208,7 +218,7 @@ du_index_t cu_cp::add_du()
 
   du->get_context().du_index = du_index;
 
-  srsgnb_assert(du->get_context().du_index < MAX_NOF_DUS, "Invalid du_index={}", du->get_context().du_index);
+  srsgnb_assert(du->get_context().du_index != du_index_t::invalid, "Invalid du_index={}", du->get_context().du_index);
 
   // Create DU object
   du_db.emplace(du_index, std::move(du));
@@ -221,7 +231,7 @@ void cu_cp::remove_du(du_index_t du_index)
   // Note: The caller of this function can be a DU procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the DU. This is achieved via a scheduled async task
 
-  srsgnb_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
+  srsgnb_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   logger.debug("Scheduling du_index={} deletion", du_index);
 
   // Schedule DU removal task
@@ -237,21 +247,21 @@ void cu_cp::remove_du(du_index_t du_index)
 
 du_processor_interface& cu_cp::find_du(du_index_t du_index)
 {
-  srsgnb_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
+  srsgnb_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   srsgnb_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
   return *du_db.at(du_index);
 }
 
 du_index_t cu_cp::get_next_du_index()
 {
-  for (int du_idx_int = MIN_DU_INDEX; du_idx_int < MAX_NOF_DUS; du_idx_int++) {
-    du_index_t du_idx = int_to_du_index(du_idx_int);
+  for (int du_idx_int = du_index_to_uint(du_index_t::min); du_idx_int < MAX_NOF_DUS; du_idx_int++) {
+    du_index_t du_idx = uint_to_du_index(du_idx_int);
     if (du_db.find(du_idx) == du_db.end()) {
       return du_idx;
     }
   }
   logger.error("No DU index available");
-  return INVALID_DU_INDEX;
+  return du_index_t::invalid;
 }
 
 /// Create CU-UP object with valid index

@@ -34,18 +34,18 @@ struct du_sys_info {
 };
 
 struct du_cell_context {
-  du_cell_index_t     cell_index; /// CU internal cell ID
-  du_index_t          du_index;   /// Index of the DU containing the cell
-  nr_cell_global_id_t cgi;        /// global cell ID
-  uint32_t            tac;        /// tracking area code
-  uint16_t            pci;        /// Physical cell ID
-  du_sys_info         sys_info;   /// System information provided by DU
+  du_cell_index_t     cell_index = INVALID_DU_CELL_INDEX; /// CU internal cell ID
+  du_index_t          du_index   = du_index_t::invalid;   /// Index of the DU containing the cell
+  nr_cell_global_id_t cgi;                                /// global cell ID
+  uint32_t            tac;                                /// tracking area code
+  uint16_t            pci;                                /// Physical cell ID
+  du_sys_info         sys_info;                           /// System information provided by DU
 };
 
 struct du_processor_context {
-  du_index_t  du_index = INVALID_DU_INDEX; /// Index assisgned by CU-CP
-  uint64_t    id;                          /// the gNB-DU-ID
-  std::string name = "none";               /// gNB-DU-Name
+  du_index_t  du_index = du_index_t::invalid; /// Index assisgned by CU-CP
+  uint64_t    id;                             /// the gNB-DU-ID
+  std::string name = "none";                  /// gNB-DU-Name
 };
 
 } // namespace srs_cu_cp

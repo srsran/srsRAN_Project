@@ -77,7 +77,7 @@ protected:
 
     // attach DU msg handler to CU message handler and vice-versa (in this order)
     cu_msg_handler.attach_handler(cu_cp_obj.get(), &du_obj->get_f1c_message_handler());
-    du_msg_handler.attach_handler(&cu_cp_obj->get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
+    du_msg_handler.attach_handler(&cu_cp_obj->get_f1c_message_handler(srs_cu_cp::uint_to_du_index(0)));
 
     // start CU and DU
     du_obj->start();

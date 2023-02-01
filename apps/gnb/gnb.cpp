@@ -524,7 +524,7 @@ int main(int argc, char** argv)
   ::signal(SIGKILL, signal_handler);
 
   // attach F1C adapter to DU and CU-CP
-  f1c_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1c_message_handler(srsgnb::srs_cu_cp::int_to_du_index(0)));
+  f1c_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1c_message_handler(srsgnb::srs_cu_cp::uint_to_du_index(0)));
   f1c_cu_to_du_adapter.attach_handler(&du_obj.get_f1c_message_handler());
 
   // Start execution.

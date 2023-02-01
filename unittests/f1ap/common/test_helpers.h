@@ -39,7 +39,7 @@ class dummy_f1c_du_processor_notifier : public srs_cu_cp::f1c_du_processor_notif
 public:
   dummy_f1c_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::MIN_DU_INDEX; }
+  srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::du_index_t::min; }
 
   void on_f1_setup_request_received(const srs_cu_cp::f1_setup_request_message& msg) override
   {

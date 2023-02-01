@@ -28,25 +28,12 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Maximum number of DUs supported by CU-CP (implementation-defined).
-enum du_index_t : uint16_t { MIN_DU_INDEX = 0, MAX_DU_INDEX = 1, MAX_NOF_DUS = 2, INVALID_DU_INDEX = MAX_NOF_DUS };
-
-/// Convert integer to DU index type.
-constexpr inline du_index_t int_to_du_index(std::underlying_type_t<du_index_t> idx)
-{
-  return static_cast<du_index_t>(idx);
-}
-
-constexpr inline std::underlying_type_t<du_index_t> du_index_to_int(du_index_t du_index)
-{
-  return static_cast<std::underlying_type_t<du_index_t>>(du_index);
-}
-
 /// Maximum number of UEs per DU (implementation-defined).
 const uint16_t MAX_NOF_UES_PER_DU = 1024;
-
+/// Maximum number of DUs supported by CU-CP (implementation-defined).
+const uint16_t MAX_NOF_DUS = 2;
 /// Maximum number of UEs supported by CU-CP (implementation-defined).
-#define MAX_NOF_CU_UES (du_index_t::MAX_NOF_DUS * MAX_NOF_UES_PER_DU)
+#define MAX_NOF_CU_UES (MAX_NOF_DUS * MAX_NOF_UES_PER_DU)
 
 /// \brief ue_index internally used to identify the UE CU-CP-wide.
 /// \remark The ue_index is derived from the DU index and the maximum number of UEs per DU.
@@ -64,12 +51,26 @@ inline ue_index_t uint_to_ue_index(std::underlying_type_t<ue_index_t> index)
   return static_cast<ue_index_t>(index);
 }
 
+/// Maximum number of DUs supported by CU-CP (implementation-defined).
+enum class du_index_t : uint16_t { min = 0, max = MAX_NOF_DUS - 1, invalid = MAX_NOF_DUS };
+
+/// Convert integer to DU index type.
+constexpr inline du_index_t uint_to_du_index(std::underlying_type_t<du_index_t> index)
+{
+  return static_cast<du_index_t>(index);
+}
+
+constexpr inline std::underlying_type_t<du_index_t> du_index_to_uint(du_index_t du_index)
+{
+  return static_cast<std::underlying_type_t<du_index_t>>(du_index);
+}
+
 inline du_index_t get_du_index_from_ue_index(ue_index_t index)
 {
   if (index == ue_index_t::invalid) {
-    return INVALID_DU_INDEX;
+    return du_index_t::invalid;
   }
-  return int_to_du_index((ue_index_to_uint(index) / MAX_NOF_UES_PER_DU));
+  return uint_to_du_index((ue_index_to_uint(index) / MAX_NOF_UES_PER_DU));
 }
 
 /// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
