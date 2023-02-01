@@ -70,6 +70,9 @@ public:
   // See interface for documentation.
   void finish_processing_pdus() override;
 
+  // See interface for documentation.
+  bool is_reserved() const override;
+
 private:
   /// \brief Handles a send opportunity to send the resource grid. If all the conditions are met, the resource grid will
   /// be sent, otherwise it will do nothing.
@@ -82,7 +85,6 @@ private:
   /// gateway.
   void decrease_pending_pdus_and_try_sending_grid();
 
-private:
   upper_phy_rg_gateway&                 gateway;
   resource_grid_context                 rg_context;
   resource_grid*                        current_grid;
@@ -96,6 +98,6 @@ private:
   bool     is_send_allowed;
   /// Protects pending_pdus and is_send_allowed.
   // :TODO: remove me later
-  std::mutex mutex;
+  mutable std::mutex mutex;
 };
 } // namespace srsgnb

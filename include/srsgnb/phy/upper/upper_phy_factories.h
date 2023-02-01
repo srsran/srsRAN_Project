@@ -146,6 +146,8 @@ struct downlink_processor_pool_config {
   std::vector<sector_dl_processor> dl_processors;
   /// Number of base station sector.
   unsigned num_sectors;
+  /// Null processor.
+  std::unique_ptr<downlink_processor> null_proc;
 };
 
 /// \brief Creates and returns a downlink processor pool.

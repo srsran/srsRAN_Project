@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/phy/upper/upper_phy_factories.h"
+#include "downlink_processor_null_executor.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
 #include "logging_downlink_processor_decorator.h"
@@ -196,8 +197,13 @@ private:
 static std::unique_ptr<downlink_processor_pool>
 create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> factory, const upper_phy_config& config)
 {
+  srslog::basic_logger& dl_phy_logger = srslog::fetch_basic_logger("DL-PHY", true);
+  dl_phy_logger.set_level(config.log_level);
+  dl_phy_logger.set_hex_dump_max_size(config.logger_max_hex_size);
+
   downlink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;
+  config_pool.null_proc   = std::make_unique<downlink_processor_null_executor>(*config.rg_gateway, dl_phy_logger);
 
   for (unsigned numerology = 0, numerology_end = to_numerology_value(subcarrier_spacing::invalid);
        numerology != numerology_end;
@@ -609,6 +615,7 @@ std::unique_ptr<downlink_processor_pool> srsgnb::create_dl_processor_pool(downli
   // Convert from pool config to pool_impl config.
   downlink_processor_pool_impl_config dl_processors;
   dl_processors.num_sectors = config.num_sectors;
+  dl_processors.null_proc   = std::move(config.null_proc);
 
   for (auto& proc : config.dl_processors) {
     dl_processors.procs.push_back({proc.sector, proc.scs, std::move(proc.procs)});

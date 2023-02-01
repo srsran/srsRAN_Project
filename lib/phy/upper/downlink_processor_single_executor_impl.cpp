@@ -127,7 +127,7 @@ void srsgnb::downlink_processor_single_executor_impl::finish_processing_pdus()
 void downlink_processor_single_executor_impl::handle_resource_grid_send_opportunity()
 {
   std::lock_guard<std::mutex> lock(mutex);
-  if (pending_pdus == 0 && is_send_allowed && current_grid) {
+  if (is_send_allowed && (pending_pdus == 0) && (current_grid != nullptr)) {
     gateway.send(rg_context, *current_grid);
 
     is_send_allowed = false;
@@ -149,4 +149,10 @@ void downlink_processor_single_executor_impl::decrease_pending_pdus_and_try_send
   }
 
   handle_resource_grid_send_opportunity();
+}
+
+bool downlink_processor_single_executor_impl::is_reserved() const
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  return (current_grid != nullptr);
 }

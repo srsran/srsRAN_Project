@@ -75,6 +75,11 @@ public:
   /// configure_resource_grid() to provide the processing context of the resource grid in the lower physical layer.
   // :TODO: move this method to other interface to avoid controlling the order of the methods execution.
   virtual void finish_processing_pdus() = 0;
+
+  /// \brief Returns true if the processor is reserved.
+  ///
+  /// A processor is reserved if it has been configured and not finished the processing for the configured context.
+  virtual bool is_reserved() const = 0;
 };
 
 /// Downlink processor validation interface.

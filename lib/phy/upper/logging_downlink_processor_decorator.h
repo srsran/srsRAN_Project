@@ -59,6 +59,9 @@ public:
   // See interface for documentation.
   void finish_processing_pdus() override { downlink_proc->finish_processing_pdus(); }
 
+  // See interface for documentation.
+  bool is_reserved() const override { return downlink_proc->is_reserved(); }
+
 private:
   std::unique_ptr<downlink_processor> downlink_proc;
   srslog::basic_logger&               logger;

@@ -248,8 +248,11 @@ static void test_2consecutive_slots()
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
+  TESTASSERT_EQ(dl_processor->is_reserved(), false);
+
   resource_grid_dummy grid;
   dl_processor->configure_resource_grid({slot, sector}, grid);
+  TESTASSERT_EQ(dl_processor->is_reserved(), true);
 
   dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
@@ -258,9 +261,11 @@ static void test_2consecutive_slots()
   dl_processor->process_pdsch({data}, {});
   dl_processor->process_nzp_csi_rs({});
   TESTASSERT(!gw.sent);
+  TESTASSERT_EQ(dl_processor->is_reserved(), true);
 
   dl_processor->finish_processing_pdus();
 
+  TESTASSERT_EQ(dl_processor->is_reserved(), false);
   TESTASSERT(gw.sent);
 
   slot_point slot2(1, 2, 2);

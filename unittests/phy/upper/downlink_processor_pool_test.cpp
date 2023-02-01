@@ -14,6 +14,8 @@
 
 using namespace srsgnb;
 
+static constexpr unsigned null_id = 99;
+
 static void test_dl_processor_ok()
 {
   downlink_processor_pool_config dl_procs;
@@ -25,6 +27,7 @@ static void test_dl_processor_ok()
   downlink_processor_pool_config::sector_dl_processor info{sector, scs, {}};
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id));
   dl_procs.dl_processors.push_back(std::move(info));
+  dl_procs.null_proc = std::make_unique<downlink_processor_spy>(null_id);
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
@@ -32,6 +35,27 @@ static void test_dl_processor_ok()
   downlink_processor& dl_processor = dl_proc_pool->get_processor(slot, id);
 
   TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor).get_id(), id);
+}
+
+static void test_null_processor()
+{
+  downlink_processor_pool_config dl_procs;
+  dl_procs.num_sectors      = 1;
+  unsigned           sector = 0;
+  subcarrier_spacing scs    = subcarrier_spacing::kHz30;
+  unsigned           id     = 0;
+
+  downlink_processor_pool_config::sector_dl_processor info{sector, scs, {}};
+  info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id, true));
+  dl_procs.dl_processors.push_back(std::move(info));
+  dl_procs.null_proc = std::make_unique<downlink_processor_spy>(null_id);
+
+  std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+
+  slot_point          slot(to_numerology_value(scs), 0, 0);
+  downlink_processor& dl_processor = dl_proc_pool->get_processor(slot, id);
+
+  TESTASSERT_EQ(static_cast<downlink_processor_spy&>(dl_processor).get_id(), null_id);
 }
 
 void test_pass_same_slot_gets_same_processor()
@@ -45,6 +69,7 @@ void test_pass_same_slot_gets_same_processor()
   downlink_processor_pool_config::sector_dl_processor info{sector, scs, {}};
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id));
   dl_procs.dl_processors.push_back(std::move(info));
+  dl_procs.null_proc = std::make_unique<downlink_processor_spy>(null_id);
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
@@ -68,6 +93,7 @@ static void test_consecutive_dl_processor_ok()
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(0));
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(1));
   dl_procs.dl_processors.push_back(std::move(info));
+  dl_procs.null_proc = std::make_unique<downlink_processor_spy>(null_id);
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
@@ -91,6 +117,7 @@ static void test_2sectors_2dl_processor_ok()
     info.procs.emplace_back(std::make_unique<downlink_processor_spy>(i * 10 + 1));
     dl_procs.dl_processors.push_back(std::move(info));
   }
+  dl_procs.null_proc = std::make_unique<downlink_processor_spy>(null_id);
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
@@ -119,6 +146,7 @@ static void test_circular_buffer_ok()
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(0));
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(1));
   dl_procs.dl_processors.push_back(std::move(info));
+  dl_procs.null_proc = std::make_unique<downlink_processor_spy>(null_id);
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
@@ -146,6 +174,7 @@ static void test_2sectors_2numerologies_2dl_processor_ok()
       dl_procs.dl_processors.push_back(std::move(info));
     }
   }
+  dl_procs.null_proc = std::make_unique<downlink_processor_spy>(null_id);
 
   std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
@@ -175,6 +204,7 @@ static void test_2sectors_2numerologies_2dl_processor_ok()
 int main()
 {
   test_dl_processor_ok();
+  test_null_processor();
   test_pass_same_slot_gets_same_processor();
   test_consecutive_dl_processor_ok();
   test_2sectors_2dl_processor_ok();

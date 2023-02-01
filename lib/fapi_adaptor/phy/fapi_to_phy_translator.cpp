@@ -38,6 +38,7 @@ public:
   void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override {}
   void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override {}
   void finish_processing_pdus() override {}
+  bool is_reserved() const override { return false; }
 };
 
 } // namespace
@@ -400,6 +401,7 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
 void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
   std::lock_guard<std::mutex> lock(mutex);
+
   current_slot_controller = slot_based_upper_phy_controller(dl_processor_pool, dl_rg_pool, slot, sector_id);
   pdsch_pdu_repository.clear();
   ul_pdu_repository.clear_slot(slot);

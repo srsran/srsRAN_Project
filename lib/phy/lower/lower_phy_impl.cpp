@@ -11,39 +11,10 @@
 #include "lower_phy_impl.h"
 #include "srsgnb/phy/lower/processors/prach/prach_processor_baseband.h"
 #include "srsgnb/phy/lower/processors/prach/prach_processor_request_handler.h"
+#include "srsgnb/phy/support/resource_grid_reader_empty.h"
 #include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
-
-namespace {
-
-class resource_grid_reader_empty : public resource_grid_reader
-{
-public:
-  bool is_empty(unsigned /**/) const override { return true; }
-  void get(span<cf_t> symbols, unsigned /**/, span<const resource_grid_coordinate> /**/) const override
-  {
-    srsvec::zero(symbols);
-  }
-  span<cf_t> get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/, span<const bool> /**/) const override
-  {
-    srsvec::zero(symbols);
-    return {};
-  }
-
-  span<cf_t> get(span<cf_t> symbols,
-                 unsigned /**/,
-                 unsigned /**/,
-                 unsigned /**/,
-                 const bounded_bitset<MAX_RB * NRE>& /**/) const override
-  {
-    srsvec::zero(symbols);
-    return {};
-  }
-  void get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/) const override { srsvec::zero(symbols); }
-};
-
-} // namespace
 
 static const resource_grid_reader_empty rg_reader_empty;
 
