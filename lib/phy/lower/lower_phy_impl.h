@@ -28,6 +28,7 @@
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/lower/processors/prach/prach_processor.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
+#include "srsgnb/support/stats.h"
 
 namespace srsgnb {
 
@@ -134,6 +135,12 @@ private:
   lower_phy_state_fsm state_fsm;
   /// Processor notification adaptor.
   processor_notifier_adaptor notification_adaptor;
+  /// Average symbol power statistics.
+  sample_statistics<float> avg_symbol_power;
+  /// Peak symbol power statistics.
+  sample_statistics<float> peak_symbol_power;
+  /// Symbol PAPR statistics.
+  sample_statistics<float> symbol_papr;
 
   /// \brief Processes an uplink symbol.
   /// \param[in] symbol_idx Symbol index within a subframe.

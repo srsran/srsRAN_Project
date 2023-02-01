@@ -155,8 +155,6 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
   lower_phy_configuration out_cfg;
 
   {
-    const base_cell_appconfig& cell = config.cells_cfg.front().cell;
-
     out_cfg.log_level                  = config.log_cfg.phy_level;
     out_cfg.scs                        = config.common_cell_cfg.common_scs;
     out_cfg.cp                         = cp;
@@ -174,13 +172,22 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
       out_cfg.time_advance_calibration = phy_time_unit::from_seconds(108.0 / out_cfg.srate.to_Hz());
     }
 
-    out_cfg.tx_scale =
-        1.0F / std::sqrt(NRE * band_helper::get_n_rbs_from_bw(
-                                   cell.channel_bw_mhz, config.common_cell_cfg.common_scs, frequency_range::FR1));
-    out_cfg.amplitude_config.ceiling_dBFS    = -0.1F;
+    unsigned bandwidth_sc =
+        NOF_SUBCARRIERS_PER_RB * band_helper::get_n_rbs_from_bw(config.common_cell_cfg.channel_bw_mhz,
+                                                                config.common_cell_cfg.common_scs,
+                                                                frequency_range::FR1);
+
+    out_cfg.tx_scale = 1.0F;
+
+    // Apply gain back-off to account for the PAPR of the signal and the DFT power normalization.
+    out_cfg.amplitude_config.input_gain_dB = -convert_power_to_dB(static_cast<float>(bandwidth_sc)) - 12.0F;
+
+    // If clipping is enabled, the amplitude controller will clip the IQ components when their amplitude comes within
+    // 0.1 dB of the radio full scale value.
+    out_cfg.amplitude_config.ceiling_dBFS = -0.1F;
+
     out_cfg.amplitude_config.enable_clipping = false;
-    out_cfg.amplitude_config.full_scale_lin  = 1.F;
-    out_cfg.amplitude_config.input_gain_dB   = -2.5F;
+    out_cfg.amplitude_config.full_scale_lin  = 1.0F;
   }
 
   for (unsigned sector_id = 0; sector_id != config.cells_cfg.size(); ++sector_id) {

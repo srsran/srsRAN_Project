@@ -138,18 +138,50 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
       // Process time domain signal with the amplitude controller.
       amplitude_controller_metrics amplitude_control_metrics =
           amplitude_controllers[sector_id]->process(buffer, buffer);
-      logger.debug(
-          "Amplitude controller metrics: Mean pwr={:.2f} dBFS, Peak pwr={:.2f} dBFS, PAPR={:.2f} dB, Gain={:.2f} dB, "
-          "Clipped sps={}, Clipping prob={:.2e}.",
-          amplitude_control_metrics.avg_power_dBFS,
-          amplitude_control_metrics.peak_power_dBFS,
-          amplitude_control_metrics.papr_dB,
-          amplitude_control_metrics.gain_dB,
-          amplitude_control_metrics.nof_clipped_samples,
-          amplitude_control_metrics.clipping_probability);
+
+      // Add entries to long term power statistics when the signal carrier power.
+      if ((amplitude_control_metrics.papr_dB > 0.0F)) {
+        avg_symbol_power.update(convert_dB_to_power(amplitude_control_metrics.avg_power_dBFS));
+        peak_symbol_power.update(convert_dB_to_power(amplitude_control_metrics.peak_power_dBFS));
+        symbol_papr.update(convert_dB_to_power(amplitude_control_metrics.papr_dB));
+      }
+
+      // Log amplitude controller metrics every 10 frames.
+      if ((dl_slot_context.sfn() % 10 == 0) && (dl_slot_context.slot_index() == 0) && (symbol_id == 0)) {
+        // Long term average signal power can be computed as the mean of the average power of each OFDM symbol.
+        float mean_symbol_power = avg_symbol_power.get_mean();
+
+        // Long term peak power is the maximum registered symbol peak power.
+        float max_symbol_peak_pwr = peak_symbol_power.get_max();
+
+        float papr = 1.0F;
+        if (std::isnormal(mean_symbol_power)) {
+          // Long term PAPR is the ratio between the maximum observed instantaneous power and the average power.
+          // This indicates the dynamic range of the signal in the entirety of the analysis window.
+          papr = max_symbol_peak_pwr / mean_symbol_power;
+        }
+
+        // Mean symbol PAPR. This indicates the mean dynamic range of the signal for an analysis window of 1 OFDM
+        // symbol.
+        float mean_symb_papr = symbol_papr.get_mean();
+
+        logger.debug("gain={:+.2f}dB avg_pwr={:+.2f}dBFS peak_pwr={:+.2f}dBFS papr={:+.2f}dB mean_symb_papr={:+.2f}dB "
+                     "clip_sps={} clip_prob={:.2e}",
+                     amplitude_control_metrics.gain_dB,
+                     convert_power_to_dB(mean_symbol_power),
+                     convert_power_to_dB(max_symbol_peak_pwr),
+                     convert_power_to_dB(papr),
+                     convert_power_to_dB(mean_symb_papr),
+                     amplitude_control_metrics.nof_clipped_samples,
+                     amplitude_control_metrics.clipping_probability);
+
+        // Reset long term analysis window.
+        avg_symbol_power.reset();
+        peak_symbol_power.reset();
+        symbol_papr.reset();
+      }
     }
   }
-
   // Transmit signal.
   for (unsigned stream_id = 0, nof_streams = radio_buffers.size(); stream_id != nof_streams; ++stream_id) {
     transmitter.transmit(stream_id, transmit_metadata, radio_buffers[stream_id]);

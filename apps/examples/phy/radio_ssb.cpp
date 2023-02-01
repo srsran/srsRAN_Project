@@ -79,8 +79,8 @@ static bool                                      enable_random_data = false;
 static modulation_scheme                         data_mod_scheme    = modulation_scheme::QPSK;
 
 // Amplitude control args.
-static float baseband_gain_dB       = -10.0F;
-static bool  enable_clipping        = false;
+static float baseband_backoff_dB    = 12.0F;
+static bool  enable_clipping        = true;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
 
@@ -226,7 +226,7 @@ static void usage(std::string prog)
   fmt::print("\t-L Set ZMQ loopback. Set to 0 to disable, otherwise true. [Default {}]\n", zmq_loopback);
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
   fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
-  fmt::print("\t-b Baseband gain prior to clipping (in dB). [Default {}]\n", baseband_gain_dB);
+  fmt::print("\t-b Baseband gain back-off prior to clipping (in dB). [Default {}]\n", baseband_backoff_dB);
   fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
   fmt::print(
       "\t-m Data modulation scheme ({}). [Default {}]\n", span<std::string>(modulations), to_string(data_mod_scheme));
@@ -271,7 +271,7 @@ static void parse_args(int argc, char** argv)
         break;
       case 'b':
         if (optarg != nullptr) {
-          baseband_gain_dB = std::strtof(optarg, nullptr);
+          baseband_backoff_dB = std::strtof(optarg, nullptr);
         }
         break;
       case 'h':
@@ -358,7 +358,10 @@ lower_phy_configuration create_lower_phy_configuration(float                    
   phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
   phy_config.amplitude_config.ceiling_dBFS    = amplitude_ceiling_dBFS;
   phy_config.amplitude_config.enable_clipping = enable_clipping;
-  phy_config.amplitude_config.input_gain_dB   = baseband_gain_dB;
+
+  // Baseband gain includes normalization to unitary power (according to the number of subcarriers) and the additional
+  // back-off to account for signal PAPR.
+  phy_config.amplitude_config.input_gain_dB = -convert_power_to_dB(bw_rb * NRE) - baseband_backoff_dB;
 
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     lower_phy_sector_description sector_config;
@@ -386,9 +389,6 @@ int main(int argc, char** argv)
 
   // Make sure thread pool logging matches the test level.
   srslog::fetch_basic_logger("POOL").set_level(srslog::str_to_basic_level(log_level));
-
-  // Derived parameters.
-  float tx_scale = 1.0F / std::sqrt(NRE * bw_rb);
 
   // Make sure parameters are valid.
   report_fatal_error_if_not(
@@ -432,8 +432,10 @@ int main(int argc, char** argv)
 
   // Create lower physical layer.
   {
+    // DFT gain compensation is carried out in the amplitude controller.
+    float                   ofdm_tx_scale = 1.0F;
     lower_phy_configuration phy_config =
-        create_lower_phy_configuration(tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
+        create_lower_phy_configuration(ofdm_tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
     lower_phy_instance = create_lower_phy(phy_config);
     srsgnb_assert(lower_phy_instance, "Failed to create lower physical layer.");
   }
