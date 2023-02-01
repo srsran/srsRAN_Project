@@ -58,7 +58,7 @@ void ue_context_release_routine::operator()(coro_context<async_task<void>>& ctx)
 
     // Remove UE from UE database
     logger.info("Removing UE (id={})", command.ue_index);
-    ue_manager.remove_ue(command.ue_index);
+    ue_manager.remove_du_ue(command.ue_index);
   }
 
   CORO_RETURN();

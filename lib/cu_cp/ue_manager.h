@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/du_processor_adapters.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/ue_manager.h"
 #include <unordered_map>
@@ -24,11 +25,11 @@ public:
   explicit ue_manager();
 
   // du_processor_ue_manager
-  ue_context* add_ue(rnti_t rnti) override;
-  void        remove_ue(ue_index_t ue_index) override;
-  ue_context* find_ue(ue_index_t ue_index) override;
-  ue_index_t  find_ue_index(rnti_t rnti) override;
-  size_t      get_nof_ues() override;
+  du_ue*     add_du_ue(rnti_t rnti) override;
+  void       remove_du_ue(ue_index_t ue_index) override;
+  du_ue*     find_du_ue(ue_index_t ue_index) override;
+  ue_index_t get_ue_index(rnti_t rnti) override;
+  size_t     get_nof_du_ues() override;
 
   // ngc_ue_manager
   ngc_ue& add_ngap_ue(ue_index_t                         ue_index,
@@ -69,8 +70,8 @@ private:
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("UE-MNG");
 
-  slotted_array<ue_context, MAX_NOF_UES_PER_DU> ue_db;
-  std::map<rnti_t, ue_index_t>                  rnti_to_ue_index;
+  slotted_array<du_ue, MAX_NOF_UES_PER_DU> du_ues;
+  std::map<rnti_t, ue_index_t>             rnti_to_ue_index;
 
   std::unordered_map<ue_index_t, ngc_ue>      ngap_ues;              // ngap_ues indexed by ue_index
   std::unordered_map<ran_ue_id_t, ue_index_t> ran_ue_id_to_ue_index; // ue_indexs indexed by ran_ue_ids

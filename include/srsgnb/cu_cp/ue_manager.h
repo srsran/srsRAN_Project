@@ -10,25 +10,63 @@
 
 #pragma once
 
-#include "ue_context.h"
+#include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/ngap/ngc.h"
+#include "srsgnb/rrc/rrc_ue.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
+
+class du_ue
+{
+public:
+  du_ue(ue_index_t ue_index_, rnti_t c_rnti_)
+
+  {
+    ue_ctxt.ue_index = ue_index_;
+    ue_ctxt.c_rnti   = c_rnti_;
+  }
+
+  slotted_id_vector<srb_id_t, cu_srb_context>&  get_srbs() { return srbs; }
+  slotted_vector<cu_drb_context>&               get_drbs() { return drbs; }
+  rrc_ue_task_scheduler&                        get_task_sched() { return *task_sched; }
+  du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() { return *rrc_ue_notifier; }
+
+  ue_index_t      get_ue_index() { return ue_ctxt.ue_index; }
+  rnti_t          get_c_rnti() { return ue_ctxt.c_rnti; }
+  du_cell_index_t get_pcell_index() { return ue_ctxt.pcell_index; }
+
+  void set_pcell_index(du_cell_index_t pcell_index) { ue_ctxt.pcell_index = pcell_index; }
+
+  void set_task_sched(rrc_ue_task_scheduler* task_sched_) { task_sched = task_sched_; }
+
+  void set_rrc_ue_notifier(du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier_)
+  {
+    rrc_ue_notifier = rrc_ue_notifier_;
+  }
+
+private:
+  du_ue_context ue_ctxt;
+
+  slotted_id_vector<srb_id_t, cu_srb_context>   srbs;
+  slotted_vector<cu_drb_context>                drbs;
+  rrc_ue_task_scheduler*                        task_sched      = nullptr;
+  du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier = nullptr;
+};
 
 class du_processor_ue_manager
 {
 public:
   virtual ~du_processor_ue_manager() = default;
 
-  /// Allocate new UE context for the given RNTI. A UE index is allocated internally.
-  /// If a new UE can't be allocated or if a UE with the same RNTI already exists, nulltpr is returned.
-  /// \param rnti RNTI of the UE to be added.
-  virtual ue_context* add_ue(rnti_t rnti)            = 0;
-  virtual void        remove_ue(ue_index_t ue_index) = 0;
-  virtual ue_context* find_ue(ue_index_t ue_index)   = 0;
-  virtual ue_index_t  find_ue_index(rnti_t rnti)     = 0;
-  virtual size_t      get_nof_ues()                  = 0;
+  /// \brief Allocate new UE context for the given RNTI. A UE index is allocated internally. If a new UE can't be
+  /// allocated or if a UE with the same RNTI already exists, nulltpr is returned.
+  /// \param[in] rnti RNTI of the UE to be added.
+  virtual du_ue*     add_du_ue(rnti_t rnti)            = 0;
+  virtual void       remove_du_ue(ue_index_t ue_index) = 0;
+  virtual du_ue*     find_du_ue(ue_index_t ue_index)   = 0;
+  virtual ue_index_t get_ue_index(rnti_t rnti)         = 0;
+  virtual size_t     get_nof_du_ues()                  = 0;
 };
 
 class ngc_ue

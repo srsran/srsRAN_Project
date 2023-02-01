@@ -14,7 +14,6 @@
 #include "lib/cu_cp/adapters/du_processor_adapters.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/test_utils.h"
 

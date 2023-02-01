@@ -173,23 +173,31 @@ private:
 class du_processor_rrc_ue_adapter : public du_processor_rrc_ue_control_message_notifier
 {
 public:
-  explicit du_processor_rrc_ue_adapter(rrc_ue_control_message_handler& rrc_ue_handler_) :
-    rrc_ue_handler(rrc_ue_handler_)
-  {
-  }
+  du_processor_rrc_ue_adapter() = default;
 
-  virtual void on_new_guami(const guami& msg) override { return rrc_ue_handler.handle_new_guami(msg); }
+  void connect_rrc_ue(rrc_ue_control_message_handler* rrc_ue_handler_) { rrc_ue_handler = rrc_ue_handler_; }
+
+  virtual void on_new_guami(const guami& msg) override
+  {
+    srsgnb_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->handle_new_guami(msg);
+  }
 
   virtual async_task<bool>
   on_rrc_reconfiguration_request(const cu_cp_rrc_reconfiguration_procedure_request& msg) override
   {
-    return rrc_ue_handler.handle_rrc_reconfiguration_request(msg);
+    srsgnb_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->handle_rrc_reconfiguration_request(msg);
   }
 
-  virtual void on_rrc_ue_release() override { return rrc_ue_handler.handle_rrc_ue_release(); }
+  virtual void on_rrc_ue_release() override
+  {
+    srsgnb_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
+    return rrc_ue_handler->handle_rrc_ue_release();
+  }
 
 private:
-  rrc_ue_control_message_handler& rrc_ue_handler;
+  rrc_ue_control_message_handler* rrc_ue_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

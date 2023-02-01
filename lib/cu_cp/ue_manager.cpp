@@ -18,13 +18,13 @@ ue_manager::ue_manager() {}
 
 // du_processor_ue_manager
 
-ue_context* ue_manager::find_ue(ue_index_t ue_index)
+du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
 {
   srsgnb_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-  return ue_db.contains(ue_index_to_uint(ue_index)) ? &ue_db[ue_index_to_uint(ue_index)] : nullptr;
+  return du_ues.contains(ue_index_to_uint(ue_index)) ? &du_ues[ue_index_to_uint(ue_index)] : nullptr;
 }
 
-ue_index_t ue_manager::find_ue_index(rnti_t rnti)
+ue_index_t ue_manager::get_ue_index(rnti_t rnti)
 {
   auto it = rnti_to_ue_index.find(rnti);
   if (it == rnti_to_ue_index.end()) {
@@ -35,7 +35,7 @@ ue_index_t ue_manager::find_ue_index(rnti_t rnti)
   return it->second;
 }
 
-ue_context* ue_manager::add_ue(rnti_t rnti)
+du_ue* ue_manager::add_du_ue(rnti_t rnti)
 {
   // check if RNTI is valid
   if (rnti == INVALID_RNTI) {
@@ -44,50 +44,49 @@ ue_context* ue_manager::add_ue(rnti_t rnti)
   }
 
   // check if the UE is already present
-  if (find_ue_index(rnti) != ue_index_t::invalid) {
+  if (get_ue_index(rnti) != ue_index_t::invalid) {
     logger.error("UE with rnti={} already exists", rnti);
     return nullptr;
   }
 
-  ue_index_t new_idx = get_next_ue_index();
-  if (new_idx == ue_index_t::invalid) {
+  ue_index_t new_ue_index = get_next_ue_index();
+  if (new_ue_index == ue_index_t::invalid) {
     logger.error("No free ue_index available");
     return nullptr;
   }
 
   // Create UE object
-  ue_context new_ctx{};
-  ue_db.emplace(ue_index_to_uint(new_idx), std::move(new_ctx));
-  auto& u    = ue_db[ue_index_to_uint(new_idx)];
-  u.c_rnti   = rnti;
-  u.ue_index = new_idx;
+  du_ues.emplace(ue_index_to_uint(new_ue_index), new_ue_index, rnti);
 
-  // Update RNTI -> UE index map
-  rnti_to_ue_index.emplace(u.c_rnti, new_idx);
+  // Add RNTI to lookup
+  rnti_to_ue_index.emplace(rnti, new_ue_index);
 
-  return &u;
+  return &du_ues[ue_index_to_uint(new_ue_index)];
 }
 
-void ue_manager::remove_ue(ue_index_t ue_index)
+void ue_manager::remove_du_ue(ue_index_t ue_index)
 {
   srsgnb_assert(ue_index != ue_index_t::invalid, "Invalid ueId={}", ue_index);
   logger.debug("Scheduling ueId={} deletion", ue_index);
 
-  srsgnb_assert(ue_db.contains(ue_index_to_uint(ue_index)), "Remove UE called for inexistent ueId={}", ue_index);
+  srsgnb_assert(du_ues.contains(ue_index_to_uint(ue_index)), "Remove UE called for inexistent ueId={}", ue_index);
 
-  // remove UE from RNTI -> UE index map
-  rnti_to_ue_index.erase(ue_db[ue_index_to_uint(ue_index)].c_rnti);
+  // remove UE from lookups
+  rnti_t c_rnti = du_ues[ue_index_to_uint(ue_index)].get_c_rnti();
+  if (c_rnti != rnti_t::INVALID_RNTI) {
+    rnti_to_ue_index.erase(c_rnti);
+  }
 
   // remove UE from database
-  ue_db.erase(ue_index_to_uint(ue_index));
+  du_ues.erase(ue_index_to_uint(ue_index));
 
   logger.info("Removed ueId={}", ue_index);
   return;
 }
 
-size_t ue_manager::get_nof_ues()
+size_t ue_manager::get_nof_du_ues()
 {
-  return ue_db.size();
+  return du_ues.size();
 }
 
 // ngc_ue_manager
@@ -167,7 +166,7 @@ ue_index_t ue_manager::get_next_ue_index()
 {
   // Search unallocated UE index
   for (unsigned i = 0; i < MAX_NOF_UES_PER_DU; i++) {
-    if (not ue_db.contains(i)) {
+    if (not du_ues.contains(i)) {
       return uint_to_ue_index(i);
       break;
     }

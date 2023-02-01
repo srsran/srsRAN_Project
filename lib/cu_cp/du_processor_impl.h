@@ -55,7 +55,7 @@ public:
   f1c_ue_context_manager& get_f1c_ue_context_manager() override { return *f1c; }
   f1c_statistics_handler& get_f1c_statistics_handler() override { return *f1c; }
 
-  size_t get_nof_ues() override { return ue_manager.get_nof_ues(); };
+  size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(); };
 
   // du_processor_rrc_message_handler
   ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) override;
@@ -138,6 +138,12 @@ private:
 
   // DU processor to RRC DU adapter
   du_processor_rrc_du_adapter rrc_du_adapter;
+
+  // RRC UE to DU processor task schedulers
+  slotted_id_vector<ue_index_t, rrc_to_du_ue_task_scheduler> rrc_ue_task_scheds;
+
+  // DU processor to RRC UE adapters
+  slotted_id_vector<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
 
   // DU processor routine manager
   std::unique_ptr<du_processor_routine_manager> routine_mng;

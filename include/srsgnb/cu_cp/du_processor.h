@@ -15,6 +15,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
+#include "srsgnb/pdcp/pdcp_entity.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/rrc/rrc.h"
@@ -29,6 +30,35 @@ namespace srs_cu_cp {
 /// Forward declared messages.
 struct f1_setup_request_message;
 struct rrc_ue_creation_message;
+
+struct du_ue_context {
+  ue_index_t      ue_index    = ue_index_t::invalid;
+  du_cell_index_t pcell_index = du_cell_index_t::invalid;
+  rnti_t          c_rnti      = INVALID_RNTI;
+};
+
+/// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
+struct cu_srb_pdcp_context {
+  std::unique_ptr<pdcp_tx_lower_notifier>         pdcp_tx_notifier;
+  std::unique_ptr<pdcp_tx_upper_control_notifier> rrc_tx_control_notifier;
+  std::unique_ptr<pdcp_rx_upper_data_notifier>    rrc_rx_data_notifier;
+  std::unique_ptr<pdcp_rx_upper_control_notifier> rrc_rx_control_notifier;
+  std::unique_ptr<rrc_tx_security_notifier>       rrc_tx_sec_notifier;
+  std::unique_ptr<rrc_rx_security_notifier>       rrc_rx_sec_notifier;
+};
+
+/// Context for a SRB with adapters between DU processor, F1C, RRC and optionally PDCP.
+struct cu_srb_context {
+  std::unique_ptr<f1c_rrc_message_notifier> rx_notifier     = std::make_unique<f1c_rrc_null_notifier>();
+  std::unique_ptr<rrc_pdu_notifier>         rrc_tx_notifier = std::make_unique<rrc_pdu_null_notifier>();
+  optional<cu_srb_pdcp_context>             pdcp_context;
+};
+
+/// Holds the context of an DRB that is processed outside of the CU-CP.
+struct cu_drb_context {
+  lcid_t lcid = lcid_t::INVALID_LCID;
+  /// TODO: add required fields for the DRB context.
+};
 
 /// Interface to request SRB creations at the DU processor.
 class du_processor_srb_interface

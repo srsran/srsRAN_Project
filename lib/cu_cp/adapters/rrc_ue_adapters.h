@@ -71,22 +71,33 @@ private:
 class rrc_to_du_ue_task_scheduler : public rrc_ue_task_scheduler
 {
 public:
-  rrc_to_du_ue_task_scheduler(ue_index_t ue_index_, du_processor_ue_task_handler& du_processor_task_handler_) :
-    ue_index(ue_index_), du_processor_task_handler(du_processor_task_handler_)
+  rrc_to_du_ue_task_scheduler(ue_index_t ue_index_) : ue_index(ue_index_) {}
+
+  void connect_du_processor(du_processor_ue_task_handler& du_processor_task_handler_)
   {
+    du_processor_task_handler = &du_processor_task_handler_;
   }
 
   void schedule_async_task(async_task<void>&& task) override
   {
-    du_processor_task_handler.handle_ue_async_task(ue_index, std::move(task));
+    srsgnb_assert(du_processor_task_handler != nullptr, "du_processor_task_handler must not be nullptr");
+    du_processor_task_handler->handle_ue_async_task(ue_index, std::move(task));
   }
 
-  unique_timer   make_unique_timer() override { return du_processor_task_handler.make_unique_timer(); }
-  timer_manager& get_timer_manager() override { return du_processor_task_handler.get_timer_manager(); }
+  unique_timer make_unique_timer() override
+  {
+    srsgnb_assert(du_processor_task_handler != nullptr, "du_processor_task_handler must not be nullptr");
+    return du_processor_task_handler->make_unique_timer();
+  }
+  timer_manager& get_timer_manager() override
+  {
+    srsgnb_assert(du_processor_task_handler != nullptr, "du_processor_task_handler must not be nullptr");
+    return du_processor_task_handler->get_timer_manager();
+  }
 
 private:
   ue_index_t                    ue_index;
-  du_processor_ue_task_handler& du_processor_task_handler;
+  du_processor_ue_task_handler* du_processor_task_handler = nullptr;
 };
 
 /// Adapter between RRC and PDCP in DL direction (Tx) for data transfer
