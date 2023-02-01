@@ -319,9 +319,23 @@ struct cu_cp_pdu_session_res_setup_response_item {
   cu_cp_pdu_session_resource_setup_response_transfer pdu_session_resource_setup_response_transfer;
 };
 
+struct cu_cp_crit_diagnostics_item {
+  std::string iecrit;
+  uint32_t    ie_id;
+  std::string type_of_error;
+};
+
+struct cu_cp_crit_diagnostics {
+  std::vector<cu_cp_crit_diagnostics_item> ies_crit_diagnostics = {};
+  optional<uint16_t>                       proc_code;
+  optional<std::string>                    trigger_msg;
+  optional<std::string>                    proc_crit;
+  optional<uint16_t>                       transaction_id;
+};
+
 struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
-  cu_cp_cause_t cause;
-  // TODO: Add crit diagnostics
+  cu_cp_cause_t                    cause;
+  optional<cu_cp_crit_diagnostics> crit_diagnostics;
 };
 
 struct cu_cp_pdu_session_res_setup_failed_item {
@@ -332,7 +346,7 @@ struct cu_cp_pdu_session_res_setup_failed_item {
 struct cu_cp_pdu_session_resource_setup_response {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
-  // TODO: Add crit diagnostics
+  optional<cu_cp_crit_diagnostics>                                               crit_diagnostics;
 };
 
 struct cu_cp_drb_setup_message {
@@ -382,20 +396,6 @@ struct cu_cp_drbs_failed_to_be_setup_modified_item {
 struct cu_cp_scell_failed_to_setup_mod_item {
   nr_cell_id_t            scell_id;
   optional<cu_cp_cause_t> cause;
-};
-
-struct cu_cp_crit_diagnostics_item {
-  std::string iecrit;
-  uint32_t    ie_id;
-  std::string type_of_error;
-};
-
-struct cu_cp_crit_diagnostics {
-  std::vector<cu_cp_crit_diagnostics_item> ies_crit_diagnostics = {};
-  optional<uint16_t>                       proc_code;
-  optional<std::string>                    trigger_msg;
-  optional<std::string>                    proc_crit;
-  optional<uint16_t>                       transaction_id;
 };
 
 struct cu_cp_associated_scell_item {
