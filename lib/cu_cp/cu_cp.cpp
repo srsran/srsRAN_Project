@@ -151,7 +151,7 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
 void cu_cp::handle_new_cu_up_connection()
 {
   cu_up_index_t cu_up_index = add_cu_up();
-  if (cu_up_index == INVALID_CU_UP_INDEX) {
+  if (cu_up_index == cu_up_index_t::invalid) {
     logger.error("Failed to add new CU-UP");
     return;
   }
@@ -268,9 +268,9 @@ du_index_t cu_cp::get_next_du_index()
 cu_up_index_t cu_cp::add_cu_up()
 {
   cu_up_index_t cu_up_index = get_next_cu_up_index();
-  if (cu_up_index == INVALID_CU_UP_INDEX) {
+  if (cu_up_index == cu_up_index_t::invalid) {
     logger.error("CU-UP connection failed - maximum number of CU-UPs connected ({})", MAX_NOF_CU_UPS);
-    return INVALID_CU_UP_INDEX;
+    return cu_up_index_t::invalid;
   }
 
   // TODO: use real config
@@ -289,8 +289,9 @@ cu_up_index_t cu_cp::add_cu_up()
 
   // cu_up->start();
 
-  srsgnb_assert(
-      cu_up->get_context().cu_up_index < MAX_NOF_CU_UPS, "Invalid cu_up_index={}", cu_up->get_context().cu_up_index);
+  srsgnb_assert(cu_up->get_context().cu_up_index != cu_up_index_t::invalid,
+                "Invalid cu_up_index={}",
+                cu_up->get_context().cu_up_index);
 
   // Create CU-UP object
   cu_up_db.emplace(cu_up_index, std::move(cu_up));
@@ -303,7 +304,7 @@ void cu_cp::remove_cu_up(cu_up_index_t cu_up_index)
   // Note: The caller of this function can be a CU-UP procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the CU-UP. This is achieved via a scheduled async task
 
-  srsgnb_assert(cu_up_index < MAX_NOF_CU_UPS, "Invalid cu_up_index={}", cu_up_index);
+  srsgnb_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   logger.debug("Scheduling cu_up_index={} deletion", cu_up_index);
 
   // Schedule CU-UP removal task
@@ -321,19 +322,19 @@ void cu_cp::remove_cu_up(cu_up_index_t cu_up_index)
 
 cu_up_processor_interface& cu_cp::find_cu_up(cu_up_index_t cu_up_index)
 {
-  srsgnb_assert(cu_up_index < MAX_NOF_CU_UPS, "Invalid cu_up_index={}", cu_up_index);
+  srsgnb_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   srsgnb_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
   return *cu_up_db.at(cu_up_index);
 }
 
 cu_up_index_t cu_cp::get_next_cu_up_index()
 {
-  for (int cu_up_idx_int = MIN_CU_UP_INDEX; cu_up_idx_int < MAX_NOF_CU_UPS; cu_up_idx_int++) {
-    cu_up_index_t cu_up_idx = int_to_cu_up_index(cu_up_idx_int);
+  for (int cu_up_idx_int = cu_up_index_to_uint(cu_up_index_t::min); cu_up_idx_int < MAX_NOF_CU_UPS; cu_up_idx_int++) {
+    cu_up_index_t cu_up_idx = uint_to_cu_up_index(cu_up_idx_int);
     if (cu_up_db.find(cu_up_idx) == cu_up_db.end()) {
       return cu_up_idx;
     }
   }
   logger.error("No CU-UP index available");
-  return INVALID_CU_UP_INDEX;
+  return cu_up_index_t::invalid;
 }

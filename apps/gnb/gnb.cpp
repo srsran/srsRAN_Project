@@ -393,7 +393,7 @@ int main(int argc, char** argv)
   ngap_adapter->connect_ngc(&cu_cp_obj->get_ngc_message_handler(), &cu_cp_obj->get_ngc_event_handler());
 
   // attach E1AP adapters to CU-UP and CU-CP
-  e1_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1_message_handler(srsgnb::srs_cu_cp::int_to_cu_up_index(0)));
+  e1_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1_message_handler(srsgnb::srs_cu_cp::uint_to_cu_up_index(0)));
   e1_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1_message_handler());
 
   // start CU-CP

@@ -25,7 +25,7 @@ cu_up_task_scheduler::cu_up_task_scheduler(timer_manager& timers_) : timers(time
 // UE task scheduler
 void cu_up_task_scheduler::handle_cu_up_async_task(cu_up_index_t cu_up_index, async_task<void>&& task)
 {
-  cu_up_ctrl_loop[cu_up_index].schedule(std::move(task));
+  cu_up_ctrl_loop[cu_up_index_to_uint(cu_up_index)].schedule(std::move(task));
 }
 
 unique_timer cu_up_task_scheduler::make_unique_timer()

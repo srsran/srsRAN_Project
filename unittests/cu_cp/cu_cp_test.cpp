@@ -138,7 +138,7 @@ TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
 
   // Remove CU-UP
   // FIXME: This is scheduled but never run
-  cu_cp_obj->handle_cu_up_remove_request(MIN_CU_UP_INDEX);
+  cu_cp_obj->handle_cu_up_remove_request(cu_up_index_t::min);
 
   // Check that CU-UP has been removed
   ASSERT_EQ(cu_cp_obj->get_nof_cu_ups(), 0U);
@@ -147,7 +147,7 @@ TEST_F(cu_cp_test, when_cu_up_remove_request_received_then_cu_up_removed)
 /// Test exeeding the maximum number of connected CU-UPs
 TEST_F(cu_cp_test, when_max_nof_cu_ups_connected_then_reject_new_connection)
 {
-  for (int it = MIN_CU_UP_INDEX; it < MAX_NOF_CU_UPS; it++) {
+  for (int it = cu_up_index_to_uint(cu_up_index_t::min); it < MAX_NOF_CU_UPS; it++) {
     cu_cp_obj->handle_new_cu_up_connection();
   }
 
