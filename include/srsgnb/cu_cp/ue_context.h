@@ -41,7 +41,7 @@ struct cu_srb_context {
 
 /// Holds the context of an DRB that is processed outside of the CU-CP.
 struct cu_drb_context {
-  lcid_t lcid;
+  lcid_t lcid = lcid_t::INVALID_LCID;
   /// TODO: add required fields for the DRB context.
 };
 
@@ -50,8 +50,8 @@ struct ue_context {
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
   rnti_t          c_rnti      = INVALID_RNTI;
 
-  std::array<cu_srb_context, MAX_NOF_SRBS> srbs;
-  slotted_vector<cu_drb_context>           drbs;
+  slotted_id_vector<srb_id_t, cu_srb_context> srbs;
+  slotted_vector<cu_drb_context>              drbs;
 
   std::unique_ptr<rrc_ue_task_scheduler>                        task_sched;
   std::unique_ptr<du_processor_rrc_ue_control_message_notifier> rrc_ue_notifier;

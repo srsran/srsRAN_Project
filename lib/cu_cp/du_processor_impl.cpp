@@ -203,7 +203,8 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_create_msg.cell.cgi = msg.cgi;
   rrc_ue_create_msg.cell.tac = cell_db[pcell_index].tac;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-    rrc_ue_create_msg.srbs[i].pdu_notifier = ue_ctxt->srbs[i].rrc_tx_notifier.get();
+    ue_ctxt->srbs.emplace(int_to_srb_id(i));
+    rrc_ue_create_msg.srbs[i].pdu_notifier = ue_ctxt->srbs[int_to_srb_id(i)].rrc_tx_notifier.get();
   }
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
@@ -229,7 +230,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   ue_creation_complete_msg.ue_index = ue_ctxt->ue_index;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
-    ue_creation_complete_msg.srbs[i] = ue_ctxt->srbs[i].rx_notifier.get();
+    ue_creation_complete_msg.srbs[i] = ue_ctxt->srbs[int_to_srb_id(i)].rx_notifier.get();
   }
 
   return ue_creation_complete_msg;
@@ -241,7 +242,8 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
   // create entry for SRB
-  cu_srb_context& srb = ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)];
+  ue_ctxt->srbs.emplace(msg.srb_id);
+  cu_srb_context& srb = ue_ctxt->srbs[msg.srb_id];
 
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
@@ -251,8 +253,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
 
     // update notifier in RRC
     rrc->find_ue(msg.ue_index)
-        ->connect_srb_notifier(
-            msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier, nullptr, nullptr);
+        ->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rrc_tx_notifier, nullptr, nullptr);
   } else if (msg.srb_id <= srb_id_t::srb2) {
     // create PDCP context for this SRB
     srb.pdcp_context.emplace();
@@ -298,12 +299,12 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     // update notifier in RRC
     rrc->find_ue(msg.ue_index)
         ->connect_srb_notifier(msg.srb_id,
-                               *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier,
-                               ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_tx_sec_notifier.get(),
-                               ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].pdcp_context->rrc_rx_sec_notifier.get());
+                               *ue_ctxt->srbs[msg.srb_id].rrc_tx_notifier,
+                               ue_ctxt->srbs[msg.srb_id].pdcp_context->rrc_tx_sec_notifier.get(),
+                               ue_ctxt->srbs[msg.srb_id].pdcp_context->rrc_rx_sec_notifier.get());
 
     // update notifier in F1C
-    f1c->connect_srb_notifier(msg.ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier);
+    f1c->connect_srb_notifier(msg.ue_index, msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rx_notifier);
   } else {
     logger.error("Couldn't create SRB{}.", msg.srb_id);
   }
