@@ -18,14 +18,14 @@ ue_task_scheduler::ue_task_scheduler(timer_manager& timers_) : timers(timers_)
   // init ue control loops
   const size_t number_of_pending_ue_procedures = 16;
   for (size_t i = 0; i < MAX_NOF_CU_UES; ++i) {
-    ue_ctrl_loop.emplace(i, number_of_pending_ue_procedures);
+    ue_ctrl_loop.emplace(uint_to_ue_index(i), number_of_pending_ue_procedures);
   }
 }
 
 // UE task scheduler
 void ue_task_scheduler::handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task)
 {
-  ue_ctrl_loop[ue_index_to_uint(ue_index)].schedule(std::move(task));
+  ue_ctrl_loop.at(ue_index).schedule(std::move(task));
 }
 
 unique_timer ue_task_scheduler::make_unique_timer()

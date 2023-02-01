@@ -16,6 +16,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
+#include <unordered_map>
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -37,7 +38,7 @@ private:
   timer_manager& timers;
 
   // task event loops indexed by ue_index
-  slotted_array<async_task_sequencer, MAX_NOF_CU_UES> ue_ctrl_loop;
+  std::unordered_map<ue_index_t, async_task_sequencer> ue_ctrl_loop;
 };
 
 } // namespace srs_cu_cp
