@@ -28,7 +28,6 @@ public:
   }
 
   slotted_id_vector<srb_id_t, cu_srb_context>&  get_srbs() { return srbs; }
-  slotted_vector<cu_drb_context>&               get_drbs() { return drbs; }
   rrc_ue_task_scheduler&                        get_task_sched() { return *task_sched; }
   du_processor_rrc_ue_control_message_notifier& get_rrc_ue_notifier() { return *rrc_ue_notifier; }
 
@@ -49,7 +48,6 @@ private:
   du_ue_context ue_ctxt;
 
   slotted_id_vector<srb_id_t, cu_srb_context>   srbs;
-  slotted_vector<cu_drb_context>                drbs;
   rrc_ue_task_scheduler*                        task_sched      = nullptr;
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier = nullptr;
 };

@@ -54,12 +54,6 @@ struct cu_srb_context {
   optional<cu_srb_pdcp_context>             pdcp_context;
 };
 
-/// Holds the context of an DRB that is processed outside of the CU-CP.
-struct cu_drb_context {
-  lcid_t lcid = lcid_t::INVALID_LCID;
-  /// TODO: add required fields for the DRB context.
-};
-
 /// Interface to request SRB creations at the DU processor.
 class du_processor_srb_interface
 {
