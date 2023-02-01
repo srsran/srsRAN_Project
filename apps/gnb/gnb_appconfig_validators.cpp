@@ -55,6 +55,21 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config)
   return true;
 }
 
+/// Validates the given amplitude control application configuration. Returns true on success, otherwise false.
+static bool validate_amplitude_control_appconfig(const amplitude_control_appconfig& config)
+{
+  bool valid = true;
+
+  if (config.gain_backoff_dB < 0.0F) {
+    valid = false;
+  }
+  if (config.power_ceiling_dBFS > 0.0F) {
+    valid = false;
+  }
+
+  return valid;
+}
+
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 {
@@ -86,6 +101,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   if (!validate_prach_cell_app_config(config.prach_cfg)) {
+    return false;
+  }
+
+  if (!validate_amplitude_control_appconfig(config.amplitude_cfg)) {
     return false;
   }
 

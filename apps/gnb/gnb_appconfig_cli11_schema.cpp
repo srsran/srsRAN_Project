@@ -167,6 +167,15 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
       ->capture_default_str();
 }
 
+static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
+{
+  app.add_option("--tx_gain_backoff", amplitude_params.gain_backoff_dB, "Gain back-off to accommodate the signal PAPR")
+      ->capture_default_str();
+  app.add_option("--enable_clipping", amplitude_params.enable_clipping, "Signal clipping")->capture_default_str();
+  app.add_option("--ceiling", amplitude_params.power_ceiling_dBFS, "Clipping ceiling referenced to full scale")
+      ->capture_default_str();
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
   app.add_option("--dl_arfcn", cell_params.dl_arfcn, "Donwlink ARFCN")->capture_default_str();
@@ -246,6 +255,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // PRACH configuration.
   CLI::App* prach_subcmd = app.add_subcommand("prach", "PRACH parameters");
   configure_cli11_prach_args(*prach_subcmd, cell_params.prach_cfg);
+
+  // Amplitude control configuration.
+  CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
+  configure_cli11_amplitude_control_args(*amplitude_control_subcmd, cell_params.amplitude_cfg);
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)

@@ -80,7 +80,7 @@ static modulation_scheme                         data_mod_scheme    = modulation
 
 // Amplitude control args.
 static float baseband_backoff_dB    = 12.0F;
-static bool  enable_clipping        = true;
+static bool  enable_clipping        = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
 

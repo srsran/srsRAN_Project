@@ -20,31 +20,36 @@ amplitude_controller_metrics amplitude_controller_clipping_impl::process(span<cf
 {
   srsgnb_srsvec_assert_size(output, input);
 
+  // Report clipping status.
+  metrics.clipping_enabled = clipping_enabled;
+
   // Apply the gain factor.
   metrics.gain_dB = convert_amplitude_to_dB(amplitude_gain);
   srsvec::sc_prod(input, amplitude_gain, output);
 
   // Compute Mean and Peak signal power.
-  float avg_power         = srsvec::average_power(output);
-  float peak_power        = srsvec::max_abs_element(output).second;
-  metrics.avg_power_dBFS  = convert_power_to_dB(avg_power / full_scale_pwr);
-  metrics.peak_power_dBFS = convert_power_to_dB(peak_power / full_scale_pwr);
+  float avg_power  = srsvec::average_power(output);
+  float peak_power = srsvec::max_abs_element(output).second;
 
-  // Compute signal PAPR.
-  if ((std::isnormal(metrics.avg_power_dBFS)) && (std::isnormal(metrics.peak_power_dBFS))) {
-    metrics.papr_dB = metrics.peak_power_dBFS - metrics.avg_power_dBFS;
-  } else {
-    metrics.papr_dB = 0.0F;
+  // Normalize power to full scale.
+  metrics.avg_power_fs  = avg_power / full_scale_pwr;
+  metrics.peak_power_fs = peak_power / full_scale_pwr;
+
+  if ((!std::isnormal(avg_power)) || (!std::isnormal(peak_power))) {
+    // If the signal has zero power, do nothing.
+    metrics.papr_lin = 1.0F;
+    return metrics;
   }
 
-  // Clip the signal and count the number of clipped and processed samples.
+  // Compute signal PAPR.
+  metrics.papr_lin = peak_power / avg_power;
+
   if (clipping_enabled) {
+    // Clip the signal and count the number of clipped and processed samples.
     metrics.nof_processed_samples += input.size();
     metrics.nof_clipped_samples += srsvec::clip_iq(output, output, ceiling_lin);
     metrics.clipping_probability =
         static_cast<double>(metrics.nof_clipped_samples) / static_cast<double>(metrics.nof_processed_samples);
-  } else {
-    metrics.clipping_probability = 0.0F;
   }
 
   return metrics;

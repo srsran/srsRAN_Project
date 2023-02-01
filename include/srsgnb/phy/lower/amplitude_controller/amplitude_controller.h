@@ -19,12 +19,12 @@ namespace srsgnb {
 
 /// Power measurements and runtime metrics reported by the amplitude controller.
 struct amplitude_controller_metrics {
-  /// Average power at the input of the amplitude control, relative to full scale.
-  float avg_power_dBFS;
-  /// Peak power at the input of the amplitude control, relative to full scale.
-  float peak_power_dBFS;
+  /// Average power after input gain and before clipping, normalized to full scale.
+  float avg_power_fs;
+  /// Peak power after input gain and before clipping, normalized to full scale.
+  float peak_power_fs;
   /// PAPR of the input signal.
-  float papr_dB;
+  float papr_lin;
   /// Gain factor applied to the signal by the amplitude control after the measurements.
   float gain_dB;
   /// Total number of samples processed by the clipping stage.
@@ -34,6 +34,8 @@ struct amplitude_controller_metrics {
   /// Expected probability that an input sample is clipped, calculated as \c nof_clipped_samples /
   /// \c nof_processed_samples.
   long double clipping_probability;
+  /// Indicates whether clipping is enabled in the amplitude controller.
+  bool clipping_enabled;
 };
 
 /// \brief Describes an amplitude controller interface.

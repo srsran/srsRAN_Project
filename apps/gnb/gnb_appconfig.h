@@ -84,6 +84,16 @@ struct pucch_appconfig {};
 /// CSI-RS application configuration.
 struct csi_appconfig {};
 
+/// Amplitude control application configuration.
+struct amplitude_control_appconfig {
+  /// Baseband gain back-off. This accounts for the signal PAPR and is applied regardless of clipping settings.
+  float gain_backoff_dB = 12.0F;
+  /// Power ceiling in dB, relative to the full scale amplitude of the radio.
+  float power_ceiling_dBFS = -0.1F;
+  /// Clipping of the baseband samples. If enabled, the samples that exceed the power ceiling are clipped.
+  bool enable_clipping = false;
+};
+
 /// Base cell configuration.
 struct base_cell_appconfig {
   /// Downlink arfcn.
@@ -114,6 +124,8 @@ struct base_cell_appconfig {
   pusch_appconfig pusch_cfg;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
+  /// Amplitude control configuration.
+  amplitude_control_appconfig amplitude_cfg;
 };
 
 /// Cell configuration
