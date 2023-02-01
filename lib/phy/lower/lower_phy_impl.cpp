@@ -140,7 +140,7 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
           amplitude_controllers[sector_id]->process(buffer, buffer);
 
       // Add entries to long term power statistics when the signal carries power.
-      if ((amplitude_control_metrics.avg_power_fs > 0.0F)) {
+      if (amplitude_control_metrics.avg_power_fs > 0.0F) {
         avg_symbol_power.update(amplitude_control_metrics.avg_power_fs);
         peak_symbol_power.update(amplitude_control_metrics.peak_power_fs);
         symbol_papr.update(amplitude_control_metrics.papr_lin);
