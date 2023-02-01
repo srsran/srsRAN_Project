@@ -89,16 +89,30 @@ size_t ue_manager::get_nof_du_ues()
   return du_ues.size();
 }
 
-// ngc_ue_manager
+// ngap_ue_manager
 
-ngc_ue& ue_manager::add_ngap_ue(ue_index_t                         ue_index,
-                                ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
-                                ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
-                                ngc_du_processor_control_notifier& du_processor_ctrl_notifier_)
+ngap_ue* ue_manager::add_ngap_ue(ue_index_t                         ue_index,
+                                 ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+                                 ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+                                 ngc_du_processor_control_notifier& du_processor_ctrl_notifier_)
 {
-  srsgnb_assert(ngap_ues.find(ue_index) == ngap_ues.end(), "Duplicate ue_index={} detected", ue_index);
+  // check if ue index is valid
+  if (ue_index == ue_index_t::invalid) {
+    logger.error("Invalid ue_index={}", ue_index);
+    return nullptr;
+  }
+
+  // check if the UE is already present
+  if (ngap_ues.find(ue_index) != ngap_ues.end()) {
+    logger.error("UE with ue_index={} already exists", ue_index);
+    return nullptr;
+  }
 
   ran_ue_id_t ran_ue_id = get_next_ran_ue_id();
+  if (ran_ue_id == ran_ue_id_t::invalid) {
+    logger.error("No free RAN UE ID available");
+    return nullptr;
+  }
 
   ngap_ues.emplace(std::piecewise_construct,
                    std::forward_as_tuple(ue_index),
@@ -108,7 +122,7 @@ ngc_ue& ue_manager::add_ngap_ue(ue_index_t                         ue_index,
   // Add RAN UE ID to lookup
   ran_ue_id_to_ue_index.emplace(ran_ue_id, ue_index);
 
-  return ngap_ues.at(ue_index);
+  return &ngap_ues.at(ue_index);
 }
 
 void ue_manager::remove_ngap_ue(ue_index_t ue_index)
@@ -129,7 +143,7 @@ void ue_manager::remove_ngap_ue(ue_index_t ue_index)
   ngap_ues.erase(ue_index);
 }
 
-ngc_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
+ngap_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
 {
   srsgnb_assert(ue_index < ue_index_t::max, "Invalid ue_index={}", ue_index);
   return ngap_ues.find(ue_index) != ngap_ues.end() ? &ngap_ues.at(ue_index) : nullptr;

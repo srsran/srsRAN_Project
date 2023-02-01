@@ -18,7 +18,7 @@ using namespace asn1::ngap;
 ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
     const ue_index_t                                ue_index_,
     const asn1::ngap::init_context_setup_request_s& request_,
-    ngc_ue_manager&                                 ue_manager_,
+    ngap_ue_manager&                                ue_manager_,
     ngc_message_notifier&                           amf_notif_,
     srslog::basic_logger&                           logger_) :
   ue_index(ue_index_), request(request_), ue_manager(ue_manager_), amf_notifier(amf_notif_), logger(logger_)

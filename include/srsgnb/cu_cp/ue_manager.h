@@ -69,14 +69,14 @@ public:
   virtual size_t     get_nof_du_ues()                  = 0;
 };
 
-class ngc_ue
+class ngap_ue
 {
 public:
-  ngc_ue(ue_index_t                         ue_index,
-         ran_ue_id_t                        ran_ue_id,
-         ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
-         ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
-         ngc_du_processor_control_notifier& du_processor_ctrl_notifier_) :
+  ngap_ue(ue_index_t                         ue_index,
+          ran_ue_id_t                        ran_ue_id,
+          ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+          ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+          ngc_du_processor_control_notifier& du_processor_ctrl_notifier_) :
     rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_),
     rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_),
     du_processor_ctrl_notifier(du_processor_ctrl_notifier_)
@@ -111,17 +111,17 @@ private:
   ngc_du_processor_control_notifier& du_processor_ctrl_notifier;
 };
 
-class ngc_ue_manager
+class ngap_ue_manager
 {
 public:
-  virtual ~ngc_ue_manager() = default;
+  virtual ~ngap_ue_manager() = default;
 
-  virtual ngc_ue&    add_ngap_ue(ue_index_t                         ue_index,
+  virtual ngap_ue*   add_ngap_ue(ue_index_t                         ue_index,
                                  ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
                                  ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
                                  ngc_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
   virtual void       remove_ngap_ue(ue_index_t ue_index)                                        = 0;
-  virtual ngc_ue*    find_ngap_ue(ue_index_t ue_index)                                          = 0;
+  virtual ngap_ue*   find_ngap_ue(ue_index_t ue_index)                                          = 0;
   virtual size_t     get_nof_ngap_ues()                                                         = 0;
   virtual void       set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id)                  = 0;
   virtual ue_index_t get_ue_index(ran_ue_id_t ran_ue_id)                                        = 0;

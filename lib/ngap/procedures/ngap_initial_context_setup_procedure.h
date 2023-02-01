@@ -35,7 +35,7 @@ class ngap_initial_context_setup_procedure
 public:
   ngap_initial_context_setup_procedure(const ue_index_t                                ue_index_,
                                        const asn1::ngap::init_context_setup_request_s& request_,
-                                       ngc_ue_manager&                                 ue_manager_,
+                                       ngap_ue_manager&                                ue_manager_,
                                        ngc_message_notifier&                           amf_notif_,
                                        srslog::basic_logger&                           logger_);
 
@@ -52,11 +52,11 @@ private:
 
   const ue_index_t                               ue_index;
   const asn1::ngap::init_context_setup_request_s request;
-  ngc_ue_manager&                                ue_manager;
+  ngap_ue_manager&                               ue_manager;
   ngc_message_notifier&                          amf_notifier;
   srslog::basic_logger&                          logger;
 
-  ngc_ue* ue = nullptr;
+  ngap_ue* ue = nullptr;
 
   bool success = false;
 };

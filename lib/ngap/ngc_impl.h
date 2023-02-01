@@ -30,7 +30,7 @@ class ngc_impl final : public ngc_interface
 public:
   ngc_impl(ngc_configuration&     ngc_cfg_,
            ngc_ue_task_scheduler& task_sched_,
-           ngc_ue_manager&        ue_manager_,
+           ngap_ue_manager&       ue_manager_,
            ngc_message_notifier&  ngc_notifier_,
            task_executor&         ctrl_exec_);
   ~ngc_impl();
@@ -87,7 +87,7 @@ private:
   srslog::basic_logger&  logger;
   ngc_configuration&     ngc_cfg;
   ngc_ue_task_scheduler& task_sched;
-  ngc_ue_manager&        ue_manager;
+  ngap_ue_manager&       ue_manager;
   ngc_message_notifier&  ngc_notifier;
   task_executor&         ctrl_exec;
 

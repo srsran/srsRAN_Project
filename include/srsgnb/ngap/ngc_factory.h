@@ -24,7 +24,7 @@ namespace srs_cu_cp {
 /// Creates an instance of an NGC interface, notifying outgoing packets on the specified listener object.
 std::unique_ptr<ngc_interface> create_ngc(ngc_configuration&     ngc_cfg_,
                                           ngc_ue_task_scheduler& task_sched_,
-                                          ngc_ue_manager&        ue_manager_,
+                                          ngap_ue_manager&       ue_manager_,
                                           ngc_message_notifier&  ngc_notifier_,
                                           task_executor&         ctrl_exec_);
 

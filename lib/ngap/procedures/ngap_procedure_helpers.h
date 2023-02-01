@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/ue_manager.h" // for ngc_ue
+#include "srsgnb/cu_cp/ue_manager.h" // for ngap_ue
 #include "srsgnb/ngap/ngc.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
-inline void handle_nas_pdu(srslog::basic_logger& logger, const asn1::unbounded_octstring<true>& nas_pdu, ngc_ue& ue)
+inline void handle_nas_pdu(srslog::basic_logger& logger, const asn1::unbounded_octstring<true>& nas_pdu, ngap_ue& ue)
 {
   logger.info("Forwarding NAS PDU to RRC");
   byte_buffer rrc_nas_pdu;

@@ -19,7 +19,7 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-class ue_manager : public du_processor_ue_manager, public ngc_ue_manager
+class ue_manager : public du_processor_ue_manager, public ngap_ue_manager
 {
 public:
   explicit ue_manager();
@@ -31,14 +31,14 @@ public:
   ue_index_t get_ue_index(rnti_t rnti) override;
   size_t     get_nof_du_ues() override;
 
-  // ngc_ue_manager
-  ngc_ue& add_ngap_ue(ue_index_t                         ue_index,
-                      ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
-                      ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
-                      ngc_du_processor_control_notifier& du_processor_ctrl_notifier_) override;
-  void    remove_ngap_ue(ue_index_t ue_index) override;
+  // ngap_ue_manager
+  ngap_ue* add_ngap_ue(ue_index_t                         ue_index,
+                       ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+                       ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+                       ngc_du_processor_control_notifier& du_processor_ctrl_notifier_) override;
+  void     remove_ngap_ue(ue_index_t ue_index) override;
 
-  ngc_ue* find_ngap_ue(ue_index_t ue_index) override;
+  ngap_ue* find_ngap_ue(ue_index_t ue_index) override;
 
   size_t get_nof_ngap_ues() override { return ngap_ues.size(); }
 
@@ -73,11 +73,10 @@ private:
   slotted_array<du_ue, MAX_NOF_UES_PER_DU> du_ues;
   std::map<rnti_t, ue_index_t>             rnti_to_ue_index;
 
-  std::unordered_map<ue_index_t, ngc_ue>      ngap_ues;              // ngap_ues indexed by ue_index
+  std::unordered_map<ue_index_t, ngap_ue>     ngap_ues;              // ngap_ues indexed by ue_index
   std::unordered_map<ran_ue_id_t, ue_index_t> ran_ue_id_to_ue_index; // ue_indexs indexed by ran_ue_ids
   std::unordered_map<amf_ue_id_t, ue_index_t> amf_ue_id_to_ue_index; // ue_indexs indexed by amf_ue_ids
 };
 
 } // namespace srs_cu_cp
-
 } // namespace srsgnb

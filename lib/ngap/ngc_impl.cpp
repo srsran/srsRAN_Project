@@ -22,7 +22,7 @@ using namespace srs_cu_cp;
 
 ngc_impl::ngc_impl(ngc_configuration&     ngc_cfg_,
                    ngc_ue_task_scheduler& task_sched_,
-                   ngc_ue_manager&        ue_manager_,
+                   ngap_ue_manager&       ue_manager_,
                    ngc_message_notifier&  ngc_notifier_,
                    task_executor&         ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGC")),
@@ -44,9 +44,14 @@ void ngc_impl::create_ngc_ue(ue_index_t                         ue_index,
                              ngc_du_processor_control_notifier& du_processor_ctrl_notifier)
 {
   // Create UE context and store it
-  auto& ue = ue_manager.add_ngap_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
+  ngap_ue* ue = ue_manager.add_ngap_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
 
-  logger.debug("Created NGAP UE (ran_ue_id={}, ue_index={})", ue.get_ran_ue_id(), ue_index);
+  if (ue == nullptr) {
+    logger.error("Failed to create NGAP UE (ue_index={})", ue_index);
+    return;
+  }
+
+  logger.debug("Created NGAP UE (ran_ue_id={}, ue_index={})", ue->get_ran_ue_id(), ue_index);
 }
 
 async_task<ng_setup_response> ngc_impl::handle_ng_setup_request(const ng_setup_request& request)
