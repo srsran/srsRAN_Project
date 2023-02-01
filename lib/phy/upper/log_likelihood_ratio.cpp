@@ -95,47 +95,54 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   // Destination buffer.
   span<uint8_t> packed_buffer = hard_bits.get_buffer();
 
-  for (; i_bit != (len / AVX2_B_SIZE) * AVX2_B_SIZE; i_bit += AVX2_B_SIZE) {
-    // Generate a mask from the LLR.
-    __m256i mask = _mm256_loadu_si256((__m256i*)(&soft_bits[i_bit]));
+  for (unsigned max_bit = (len / AVX2_B_SIZE) * AVX2_B_SIZE; i_bit != max_bit; i_bit += AVX2_B_SIZE) {
+    // Load AVX2_B_SIZE LLRs.
+    __m256i soft_epi8 = _mm256_loadu_si256((__m256i*)(&soft_bits[i_bit]));
 
-    // Shuffle mask. The position of each byte is maintained, but its bits are reversed.
-    mask = _mm256_shuffle_epi8(mask,
-                               _mm256_set_epi8(24,
-                                               25,
-                                               26,
-                                               27,
-                                               28,
-                                               29,
-                                               30,
-                                               31,
-                                               16,
-                                               17,
-                                               18,
-                                               19,
-                                               20,
-                                               21,
-                                               22,
-                                               23,
-                                               8,
-                                               9,
-                                               10,
-                                               11,
-                                               12,
-                                               13,
-                                               14,
-                                               15,
-                                               0,
-                                               1,
-                                               2,
-                                               3,
-                                               4,
-                                               5,
-                                               6,
-                                               7));
+    // Shuffle soft_epi8: the soft bits are taken in groups of 8 and, inside each group, we reverse their order (this is
+    // because, once we convert the soft bits into hard bits, the hard bits forming a byte need to be reversed before
+    // being stored in packed format).
+    // Remark: Recall that _mm256_set_epi8 takes as inputs (c31, c30, ..., c1, c0), which means that the control values
+    // associated with the bytes of soft_epi8 (as the output of the shuffle operations) must be read down up.
+    soft_epi8 = _mm256_shuffle_epi8(soft_epi8,
+                                    _mm256_set_epi8(8,
+                                                    9,
+                                                    10,
+                                                    11,
+                                                    12,
+                                                    13,
+                                                    14,
+                                                    15,
+                                                    0,
+                                                    1,
+                                                    2,
+                                                    3,
+                                                    4,
+                                                    5,
+                                                    6,
+                                                    7,
+                                                    8,
+                                                    9,
+                                                    10,
+                                                    11,
+                                                    12,
+                                                    13,
+                                                    14,
+                                                    15,
+                                                    0,
+                                                    1,
+                                                    2,
+                                                    3,
+                                                    4,
+                                                    5,
+                                                    6,
+                                                    7));
 
-    // Obtain 32 packed hard bits from the mask.
-    uint32_t bytes = _mm256_movemask_epi8(mask);
+    // To obtain 32 packed hard bits from soft_epi8, we first compare with 1 - for each LLR, all the bits of the
+    // corresponding output byte are set to 0 if the LLR is positive (that is, 1 > LLR is false), and are set to 1 if
+    // the LLR is negative or null (that is, 1 > LLR is true). Finally, it suffices to pick the MSB of all bytes.
+    soft_epi8      = _mm256_cmpgt_epi8(_mm256_set1_epi8(1), soft_epi8);
+    uint32_t bytes = _mm256_movemask_epi8(soft_epi8);
 
     // Write the packed bits into 4 bytes of the internal buffer.
     *(reinterpret_cast<uint32_t*>(packed_buffer.begin())) = bytes;
@@ -145,7 +152,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   }
 
   for (; i_bit != len; ++i_bit) {
-    uint8_t hard_bit = soft_bits[i_bit] < 0 ? 1 : 0;
+    uint8_t hard_bit = soft_bits[i_bit] <= 0 ? 1 : 0;
 
     hard_bits.insert(hard_bit, i_bit, 1);
   }
@@ -172,6 +179,10 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
     // Read soft bits.
     uint8x16_t soft_bits_u8 = vld1q_u8(reinterpret_cast<const uint8_t*>(&soft_bits[i_bit]));
 
+    // Replace 0-valued soft bits with -1.
+    uint8x16_t zero_mask = vceqq_u8(soft_bits_u8, vdupq_n_u8(0));
+    soft_bits_u8         = vbslq_u8(zero_mask, vdupq_n_u8(127), soft_bits_u8);
+
     // Reverse 8 bytes in every double-word, MSBs of each byte will form a mask.
     soft_bits_u8 = vrev64q_u8(soft_bits_u8);
 
@@ -192,7 +203,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   }
 
   for (; i_bit != len; ++i_bit) {
-    uint8_t hard_bit = soft_bits[i_bit] < 0 ? 1 : 0;
+    uint8_t hard_bit = soft_bits[i_bit] <= 0 ? 1 : 0;
 
     hard_bits.insert(hard_bit, i_bit, 1);
   }
@@ -216,7 +227,7 @@ void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
 #else
   for (unsigned i_bit = 0; i_bit != nof_bits; ++i_bit) {
     // Compute hard bit.
-    uint8_t hard_bit = soft_bits[i_bit] >= 0 ? 0 : 1;
+    uint8_t hard_bit = soft_bits[i_bit].to_hard_bit();
 
     // Insert into the bit buffer.
     hard_bits.insert(hard_bit, i_bit, 1);

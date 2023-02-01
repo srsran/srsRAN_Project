@@ -70,8 +70,8 @@ public:
   constexpr int to_int() const { return value; };
 
   /// \brief Converts the LLR to a hard bit.
-  /// \note By convention, the null LLR indeterminate case returns a 0 bit.
-  constexpr uint8_t to_hard_bit() const { return static_cast<uint8_t>(value < 0); }
+  /// \note By convention, the null LLR indeterminate case returns a 1 bit.
+  constexpr uint8_t to_hard_bit() const { return static_cast<uint8_t>(value <= 0); }
   ///@}
 
   /// Default assignment operator.
@@ -245,6 +245,7 @@ namespace detail {
 /// Checks if \c T is compatible with a span of log_likelihood_ratios.
 template <typename T, typename = void>
 struct is_llr_span_compatible : std::false_type {
+  // Intentionally empty.
 };
 
 /// Checks if \c T is compatible with a span of log_likelihood_ratios.
@@ -253,6 +254,7 @@ struct is_llr_span_compatible<T,
                               std::enable_if_t<std::is_convertible<T, span<log_likelihood_ratio>>::value ||
                                                std::is_convertible<T, span<const log_likelihood_ratio>>::value>>
   : std::true_type {
+  // Intentionally empty.
 };
 
 } // namespace detail
