@@ -8,7 +8,7 @@
  *
  */
 
-#include "pdcch_candidates_common_test_data.h"
+#include "pdcch_candidates_ue_test_data.h"
 #include "srsgnb/adt/span.h"
 #include "gtest/gtest.h"
 
@@ -17,13 +17,11 @@ using namespace srsgnb;
 class PdcchCandidatesFixture : public ::testing::TestWithParam<test_case_t>
 {};
 
-TEST_P(PdcchCandidatesFixture, Common)
+TEST_P(PdcchCandidatesFixture, Ue)
 {
   const test_case_t&   test_case  = GetParam();
-  pdcch_candidate_list candidates = pdcch_candidates_common_ss_get_lowest_cce(test_case.config);
+  pdcch_candidate_list candidates = pdcch_candidates_ue_ss_get_lowest_cce(test_case.config);
   ASSERT_EQ(span<const uint8_t>(test_case.candidates), span<const uint8_t>(candidates));
 }
 
-INSTANTIATE_TEST_SUITE_P(PdcchCandidatesCommon,
-                         PdcchCandidatesFixture,
-                         ::testing::ValuesIn(pdcch_candidates_common_test_data));
+INSTANTIATE_TEST_SUITE_P(PdcchCandidatesUe, PdcchCandidatesFixture, ::testing::ValuesIn(pdcch_candidates_ue_test_data));
