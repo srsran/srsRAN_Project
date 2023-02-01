@@ -20,7 +20,6 @@ ue_manager::ue_manager() {}
 
 du_ue* ue_manager::find_du_ue(ue_index_t ue_index)
 {
-  srsgnb_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
   return du_ues.contains(ue_index_to_uint(ue_index)) ? &du_ues[ue_index_to_uint(ue_index)] : nullptr;
 }
 
