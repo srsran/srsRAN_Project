@@ -23,13 +23,26 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t&              cfg_,
   cfg(cfg_),
   rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
   nas_notifier(nas_notif_),
-  ngc_ctrl_notifier(ngc_ctrl_notif_)
+  ngc_ctrl_notifier(ngc_ctrl_notif_),
+  logger(cfg_.logger)
 {
 }
 
 rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
 {
-  // TODO: check if du_to_cu_container is valid, reject if not
+  // Unpack DU to CU container
+  asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
+  asn1::cbit_ref                 bref({msg.du_to_cu_container.begin(), msg.du_to_cu_container.end()});
+  if (cell_group_cfg.unpack(bref) != asn1::SRSASN_SUCCESS) {
+    logger.error("Failed to unpack DU to CU RRC container. Aborting user creation.");
+    return nullptr;
+  }
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    cell_group_cfg.to_json(js);
+    logger.debug("Containerized MasterCellGroup: %s", js.to_string().c_str());
+  }
 
   // create UE object
   ue_index_t ue_index = msg.ue_index;

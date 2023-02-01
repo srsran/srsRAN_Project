@@ -57,6 +57,7 @@ private:
   rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier; // notifier to the DU processor
   rrc_ue_nas_notifier&          nas_notifier;            // PDU notifier to the NGC
   rrc_ue_control_notifier&      ngc_ctrl_notifier;       // Control notifier to the NGC
+  srslog::basic_logger&         logger;
 
   // RRC-internal user database indexed by ue_index
   std::unordered_map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;
