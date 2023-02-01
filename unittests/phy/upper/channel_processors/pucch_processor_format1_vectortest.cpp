@@ -60,9 +60,6 @@ namespace {
 
 using PucchProcessorFormat1Param = test_case_t;
 
-std::normal_distribution<float> noise(0.0F, std::sqrt(0.5F));
-std::mt19937                    rgen(1234);
-
 class PucchProcessorFormat1Fixture : public ::testing::TestWithParam<PucchProcessorFormat1Param>
 {
 protected:
@@ -168,40 +165,62 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
   // The message shall be valid.
   ASSERT_EQ(result.message.get_status(), uci_status::valid);
   ASSERT_EQ(result.message.get_full_payload().size(), param.ack_bits.size());
-  ASSERT_EQ(result.message.get_full_payload().size(), param.ack_bits.size());
+  ASSERT_EQ(result.message.get_harq_ack_bits().size(), param.ack_bits.size());
   if (!param.ack_bits.empty()) {
-    ASSERT_TRUE(srsvec::equal(result.message.get_full_payload(), param.ack_bits));
-    ASSERT_TRUE(srsvec::equal(result.message.get_harq_ack_bits(), param.ack_bits));
+    ASSERT_EQ(span<const uint8_t>(result.message.get_full_payload()), span<const uint8_t>(param.ack_bits));
+    ASSERT_EQ(span<const uint8_t>(result.message.get_harq_ack_bits()), span<const uint8_t>(param.ack_bits));
   }
   ASSERT_EQ(result.message.get_sr_bits().size(), 0);
   ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
   ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
 }
 
-TEST_P(PucchProcessorFormat1Fixture, NoSignal)
+TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
 {
   std::vector<resource_grid_reader_spy::expected_entry_t> res = GetParam().grid.read();
+
+  std::normal_distribution<float> noise(0.0F, std::sqrt(0.5F));
+  std::mt19937                    rgen(1234);
+
+  unsigned nof_trials = 200;
+  // Acceptable probability of false alarm. The 1% value is given by the PUCCH requirements in TS38.104 Section 8.3.
+  // Important: This is just a quick test, longer simulations are needed to properly estimate the PFA.
+  float acceptable_pfa = 0.01;
 
   for (auto& entry : res) {
     entry.value = cf_t(noise(rgen), noise(rgen));
   }
   // Prepare resource grid.
   resource_grid_reader_spy grid;
-  grid.write(res);
+  unsigned                 counter = 0;
+  for (unsigned i = 0; i != nof_trials; ++i) {
+    for (auto& entry : res) {
+      entry.value = cf_t(noise(rgen), noise(rgen));
+    }
+    grid.write(res);
 
-  const PucchProcessorFormat1Param& param = GetParam();
+    const PucchProcessorFormat1Param& param = GetParam();
 
-  // Make sure configuration is valid.
-  ASSERT_TRUE(validator->is_valid(param.config));
+    // Make sure configuration is valid.
+    ASSERT_TRUE(validator->is_valid(param.config));
 
-  if ((param.config.nof_symbols < 6) || param.config.second_hop_prb.has_value()) {
-    GTEST_SKIP() << "Noise estimation doesn't work with a small number of OFDM symbols or frequency hopping.";
+    if ((param.config.nof_symbols < 6) || param.config.second_hop_prb.has_value()) {
+      GTEST_SKIP() << "Noise estimation doesn't work with a small number of OFDM symbols or frequency hopping.";
+    }
+
+    pucch_processor_result result = processor->process(grid, param.config);
+
+    counter += static_cast<unsigned>(result.message.get_status() == uci_status::valid);
   }
 
-  pucch_processor_result result = processor->process(grid, param.config);
-
-  // The message shall be invalid.
-  ASSERT_EQ(result.message.get_status(), uci_status::invalid);
+  // Assert that the probability of false alarm doesn't exceed the acceptable value.
+  float pfa = static_cast<float>(counter) / nof_trials;
+  ASSERT_TRUE(pfa <= acceptable_pfa) << fmt::format(
+      "Probability of false alarms too high: {} while max is {} ({} hits out of {} trials).",
+      pfa,
+      acceptable_pfa,
+      counter,
+      nof_trials);
 }
 
 INSTANTIATE_TEST_SUITE_P(PucchProcessorFormat1,
