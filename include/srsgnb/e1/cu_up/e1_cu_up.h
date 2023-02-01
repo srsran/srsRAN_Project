@@ -55,11 +55,6 @@ struct e1ap_bearer_context_release_command {
   asn1::e1ap::cause_c cause; // Cause of the release.
 };
 
-struct e1ap_ue_context {
-  gnb_cu_cp_ue_e1ap_id_t cu_cp_e1_ue_id = gnb_cu_cp_ue_e1ap_id_t::invalid;
-  ue_index_t             ue_index       = INVALID_UE_INDEX;
-};
-
 /// Handle E1 interface management procedures as defined in TS 38.463 section 8.2.
 class e1_connection_manager
 {

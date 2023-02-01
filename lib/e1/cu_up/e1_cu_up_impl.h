@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../common/e1ap_asn1_utils.h"
+#include "e1ap_cu_up_ue_context.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/e1/cu_up/e1_cu_up.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -72,21 +73,12 @@ private:
   /// \param[in] msg The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome);
 
-  /// \brief Get the next available CU-UP UE ID.
-  /// \return The CU-UP UE ID.
-  gnb_cu_up_ue_e1ap_id_t get_next_cu_up_ue_id();
-
-  /// \brief Find the CU-UP UE ID by a given UE index.
-  /// \param[in] ue_index The UE index used to find the CU-UP UE ID.
-  /// \return The CU-UP UE ID.
-  gnb_cu_up_ue_e1ap_id_t find_cu_up_ue_id(ue_index_t ue_index);
-
   task_executor& cu_up_exec;
 
   srslog::basic_logger& logger;
 
-  std::unordered_map<gnb_cu_up_ue_e1ap_id_t, e1ap_ue_context>
-      cu_up_ue_id_to_e1ap_ue_context; // indexed by gnb_cu_up_ue_e1ap_id
+  /// Repository of UE Contexts.
+  e1ap_ue_context_list ue_ctxt_list;
 
   // nofifiers and handles
 

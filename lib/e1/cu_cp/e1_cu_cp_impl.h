@@ -76,7 +76,7 @@ private:
   timer_manager& timers;
 
   /// Repository of UE Contexts.
-  e1ap_ue_context_list ue_ctx_list;
+  e1ap_ue_context_list ue_ctxt_list;
 
   e1ap_transaction_manager ev_mng;
 
