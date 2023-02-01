@@ -135,6 +135,7 @@ constexpr static uint16_t MAX_NOF_PDU_SESSIONS = 256;
 /// \remark See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
 enum class pdu_session_id_t : uint16_t { min = 0, max = MAX_NOF_PDU_SESSIONS - 1, invalid = MAX_NOF_PDU_SESSIONS };
 
+/// Convert PDU Session ID type to integer.
 constexpr inline uint16_t pdu_session_id_to_uint(pdu_session_id_t id)
 {
   return static_cast<uint16_t>(id);
@@ -153,6 +154,7 @@ constexpr static uint8_t MAX_NOF_QOS_FLOWS = 64;
 /// \remark See TS 38.463 Section 9.3.1.21: QoS Flow ID valid values: (0..63)
 enum class qos_flow_id_t : uint8_t { min = 0, max = MAX_NOF_QOS_FLOWS - 1, invalid = MAX_NOF_QOS_FLOWS };
 
+/// Convert QoS Flow ID type to integer.
 constexpr inline uint8_t qos_flow_id_to_uint(qos_flow_id_t id)
 {
   return static_cast<uint8_t>(id);
