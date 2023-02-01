@@ -36,9 +36,14 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
 
 pdu_session_manager_impl::~pdu_session_manager_impl()
 {
-  // Release GTP-U tunnel from GTP-U demux
   for (auto& session_it : pdu_sessions) {
+    // Remove GTP-U tunnel from GTP-U demux
     gtpu_rx_demux.remove_tunnel(session_it.second->local_teid);
+
+    for (auto& drb_it : session_it.second->drbs) {
+      // Remove F1-U bearer from F1-U gateway
+      f1u_gw.remove_cu_bearer(drb_it.second->f1u_ul_teid);
+    }
   }
 }
 
