@@ -194,7 +194,7 @@ void lower_phy_impl::process_symbol()
 
     // Notify slot boundary.
     lower_phy_timing_context timing_context = {};
-    timing_context.slot                     = dl_slot_context + max_processing_delay_slots;
+    timing_context.slot                     = ul_slot_context + max_processing_delay_slots;
     timing_notifier.on_tti_boundary(timing_context);
   }
 

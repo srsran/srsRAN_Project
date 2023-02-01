@@ -160,7 +160,7 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
     out_cfg.log_level                  = config.log_cfg.phy_level;
     out_cfg.scs                        = config.common_cell_cfg.common_scs;
     out_cfg.cp                         = cp;
-    out_cfg.max_processing_delay_slots = 4;
+    out_cfg.max_processing_delay_slots = 2;
     out_cfg.ul_to_dl_subframe_offset   = 1;
 
     out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);

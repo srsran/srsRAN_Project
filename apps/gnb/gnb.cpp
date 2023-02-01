@@ -160,9 +160,12 @@ struct worker_manager {
   // PRACH lower PHY executor
   task_worker_executor lower_prach_executor{common_prach_worker};
   // Upper phy task executor
-  task_worker          upper_dl_worker{"PHY DL worker", task_worker_queue_size};
+  task_worker upper_dl_worker{"PHY DL worker", task_worker_queue_size, false, os_thread_realtime_priority::max() - 10};
   task_worker_executor upper_dl_executor{upper_dl_worker};
-  task_worker          upper_puxch_worker{"PHY UL worker", task_worker_queue_size};
+  task_worker          upper_puxch_worker{"PHY UL worker",
+                                 task_worker_queue_size,
+                                 false,
+                                 os_thread_realtime_priority::max() - 20};
   task_worker_executor upper_pucch_executor{upper_puxch_worker};
   task_worker_executor upper_pusch_executor{upper_puxch_worker};
   task_worker_executor upper_prach_executor{common_prach_worker};

@@ -116,8 +116,7 @@ static void test_start_run_stop()
   // Run the start up transition.
   for (unsigned slot_count = 0; slot_count != 10 * max_processing_delay_slots; ++slot_count) {
     // Derive downlink and uplink expected slots.
-    slot_point expected_dl_slot(to_numerology_value(scs),
-                                slot_count + ul_to_dl_subframe_offset + max_processing_delay_slots);
+    slot_point expected_dl_slot(to_numerology_value(scs), slot_count + max_processing_delay_slots);
     slot_point expected_ul_slot(to_numerology_value(scs), slot_count);
     slot_point expected_late_slot(to_numerology_value(scs), slot_count + ul_to_dl_subframe_offset);
 
