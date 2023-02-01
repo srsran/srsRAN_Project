@@ -21,9 +21,8 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Additional context of a SRB containing PDCP, i.e. SRB1 and SRB2.
+/// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
 struct cu_srb_pdcp_context {
-  std::unique_ptr<pdcp_entity>                    pdcp_bearer;
   std::unique_ptr<pdcp_tx_lower_notifier>         pdcp_tx_notifier;
   std::unique_ptr<pdcp_tx_upper_control_notifier> rrc_tx_control_notifier;
   std::unique_ptr<pdcp_rx_upper_data_notifier>    rrc_rx_data_notifier;
