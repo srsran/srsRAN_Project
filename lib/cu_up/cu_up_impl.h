@@ -16,7 +16,7 @@
 #include "ue_manager.h"
 #include "srsgnb/cu_up/cu_up.h"
 #include "srsgnb/cu_up/cu_up_configuration.h"
-#include "srsgnb/e1/cu_up/e1_cu_up.h"
+#include "srsgnb/e1/cu_up/e1ap_cu_up.h"
 #include "srsgnb/gateways/udp_network_gateway.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"

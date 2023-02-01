@@ -8,7 +8,7 @@
  *
  */
 
-#include "e1_cu_up_impl.h"
+#include "e1ap_cu_up_impl.h"
 #include "../../ran/gnb_format.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/ran/bcd_helpers.h"
@@ -17,9 +17,9 @@ using namespace srsgnb;
 using namespace asn1::e1ap;
 using namespace srs_cu_up;
 
-e1_cu_up_impl::e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_,
-                             e1ap_cu_cp_notifier& e1_cu_up_notifier_,
-                             task_executor&       cu_up_exec_) :
+e1ap_cu_up_impl::e1ap_cu_up_impl(e1_message_notifier& e1_pdu_notifier_,
+                                 e1ap_cu_cp_notifier& e1_cu_up_notifier_,
+                                 task_executor&       cu_up_exec_) :
   cu_up_exec(cu_up_exec_),
   logger(srslog::fetch_basic_logger("CU-UP-E1")),
   pdu_notifier(e1_pdu_notifier_),
@@ -28,9 +28,9 @@ e1_cu_up_impl::e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_,
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
-e1_cu_up_impl::~e1_cu_up_impl() {}
+e1ap_cu_up_impl::~e1ap_cu_up_impl() {}
 
-void e1_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg)
+void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg)
 {
   // Pack message into PDU
   e1_message e1_msg;
@@ -63,7 +63,7 @@ void e1_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response
   }
 }
 
-void e1_cu_up_impl::handle_message(const e1_message& msg)
+void e1ap_cu_up_impl::handle_message(const e1_message& msg)
 {
   // Run E1AP protocols in CU-UP executor.
   cu_up_exec.execute([this, msg]() {
@@ -103,7 +103,7 @@ void e1_cu_up_impl::handle_message(const e1_message& msg)
   });
 }
 
-void e1_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
+void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_cp_e1_setup_request: {
@@ -124,14 +124,14 @@ void e1_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
   }
 }
 
-void e1_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_e1_setup_request_s& msg)
+void e1ap_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_e1_setup_request_s& msg)
 {
   cu_cp_e1_setup_request req_msg = {};
   req_msg.request                = msg;
   e1_cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
 }
 
-void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg)
+void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg)
 {
   // create failure message for early returns
   e1_message e1_msg;
@@ -216,7 +216,7 @@ void e1_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer
   }
 }
 
-void e1_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& msg)
+void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& msg)
 {
   // create failure message for early returns
   e1_message e1_msg;
@@ -288,7 +288,7 @@ void e1_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1ap:
   }
 }
 
-void e1_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg)
+void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg)
 {
   e1ap_bearer_context_release_command e1_bearer_context_release_cmd = {};
 
@@ -321,7 +321,7 @@ void e1_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::bear
   pdu_notifier.on_new_message(e1_msg);
 }
 
-void e1_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
+void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
     default:
@@ -334,7 +334,7 @@ void e1_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outco
   }
 }
 
-void e1_cu_up_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome)
+void e1ap_cu_up_impl::handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
     default:

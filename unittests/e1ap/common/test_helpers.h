@@ -16,7 +16,7 @@
 #include "srsgnb/cu_up/cu_up_types.h"
 #include "srsgnb/e1/common/e1_common.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
-#include "srsgnb/e1/cu_up/e1_cu_up.h"
+#include "srsgnb/e1/cu_up/e1ap_cu_up.h"
 #include "srsgnb/gateways/network_gateway.h"
 
 namespace srsgnb {

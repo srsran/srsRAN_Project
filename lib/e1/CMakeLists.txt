@@ -15,8 +15,8 @@ set(SOURCES
         cu_cp/procedures/e1_bearer_context_setup_procedure.cpp
         cu_cp/procedures/e1_bearer_context_release_procedure.cpp
         cu_cp/procedures/e1_bearer_context_modification_procedure.cpp
-        cu_up/e1_cu_up_factory.cpp
-        cu_up/e1_cu_up_impl.cpp
+        cu_up/e1ap_cu_up_factory.cpp
+        cu_up/e1ap_cu_up_impl.cpp
     )
 
 add_library(srsgnb_e1 STATIC ${SOURCES})

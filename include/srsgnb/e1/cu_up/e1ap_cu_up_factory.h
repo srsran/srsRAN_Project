@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "e1_cu_up.h"
+#include "e1ap_cu_up.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <memory>

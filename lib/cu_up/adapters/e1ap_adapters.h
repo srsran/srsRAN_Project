@@ -11,13 +11,13 @@
 #pragma once
 
 #include "srsgnb/cu_up/cu_up.h"
-#include "srsgnb/e1/cu_up/e1_cu_up.h"
+#include "srsgnb/e1/cu_up/e1ap_cu_up.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
 namespace srs_cu_up {
 
-/// Adapter between E1 and CU-UP
+/// Adapter between E1AP and CU-UP
 class e1ap_cu_up_adapter : public e1ap_cu_cp_notifier
 {
 public:

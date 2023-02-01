@@ -13,7 +13,7 @@
 #include "../common/e1ap_asn1_utils.h"
 #include "e1ap_cu_up_ue_context.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/e1/cu_up/e1_cu_up.h"
+#include "srsgnb/e1/cu_up/e1ap_cu_up.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <unordered_map>
@@ -23,13 +23,13 @@ namespace srs_cu_up {
 
 class e1_event_manager;
 
-class e1_cu_up_impl final : public e1_interface
+class e1ap_cu_up_impl final : public e1_interface
 {
 public:
-  e1_cu_up_impl(e1_message_notifier& e1_pdu_notifier_,
-                e1ap_cu_cp_notifier& e1_cu_up_notifier_,
-                task_executor&       cu_up_exec_);
-  ~e1_cu_up_impl();
+  e1ap_cu_up_impl(e1_message_notifier& e1_pdu_notifier_,
+                  e1ap_cu_cp_notifier& e1_cu_up_notifier_,
+                  task_executor&       cu_up_exec_);
+  ~e1ap_cu_up_impl();
 
   // e1 connection manager functions
 
@@ -81,7 +81,6 @@ private:
   e1ap_ue_context_list ue_ctxt_list;
 
   // nofifiers and handles
-
   e1_message_notifier& pdu_notifier;
   e1ap_cu_cp_notifier& e1_cu_up_notifier;
 

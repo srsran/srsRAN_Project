@@ -10,8 +10,8 @@
 
 #include "../common/test_helpers.h"
 #include "e1ap_cu_up_test_helpers.h"
-#include "srsgnb/e1/cu_up/e1_cu_up.h"
-#include "srsgnb/e1/cu_up/e1_cu_up_factory.h"
+#include "srsgnb/e1/cu_up/e1ap_cu_up.h"
+#include "srsgnb/e1/cu_up/e1ap_cu_up_factory.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
