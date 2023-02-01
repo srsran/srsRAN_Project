@@ -41,7 +41,7 @@ protected:
   }
 
   timer_manager                                        timers;
-  std::unique_ptr<gtpu_demux_ctrl>                     gtpu_rx_demux;
+  std::unique_ptr<dummy_gtpu_demux_ctrl>               gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_f1u_bearer                                     f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>                   f1u_gw;
@@ -150,6 +150,10 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, 0xee);
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  ASSERT_FALSE(gtpu_rx_demux->created_teid_list.empty());
+  gtpu_rx_demux->created_teid_list.pop_front();
+  ASSERT_TRUE(gtpu_rx_demux->created_teid_list.empty());
+
   ASSERT_FALSE(f1u_gw->created_ul_teid_list.empty());
   uint32_t ul_teid = f1u_gw->created_ul_teid_list.front();
   f1u_gw->created_ul_teid_list.pop_front();
@@ -173,7 +177,76 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
 
+  // validate pdu session is not disconnected from GTP-U gateway
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  ASSERT_TRUE(gtpu_rx_demux->removed_teid_list.empty());
+
+  // validate bearer is disconnected from F1-U gateway
+  ASSERT_FALSE(f1u_gw->removed_ul_teid_list.empty());
+  ASSERT_EQ(f1u_gw->removed_ul_teid_list.front(), ul_teid);
+  f1u_gw->removed_ul_teid_list.pop_front();
+  ASSERT_TRUE(f1u_gw->removed_ul_teid_list.empty());
+}
+
+TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
+{
+  // no sessions added yet
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  // prepare setup request (to create bearer)
+  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
+  pdu_session_setup_item.pdu_session_id = 0x0d;
+  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().transport_layer_address.from_string(
+      "01111111000000000000000000000001");
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x12345678);
+
+  asn1::e1ap::drb_to_setup_item_ng_ran_s drb_to_setup;
+  drb_to_setup.drb_id                                   = 0x0b;
+  drb_to_setup.pdcp_cfg.rlc_mode                        = asn1::e1ap::rlc_mode_opts::options::rlc_um_bidirectional;
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_dl                 = asn1::e1ap::pdcp_sn_size_opts::options::s_neg18;
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_ul                 = asn1::e1ap::pdcp_sn_size_opts::options::s_neg18;
+  drb_to_setup.pdcp_cfg.discard_timer_present           = false;
+  drb_to_setup.pdcp_cfg.t_reordering_timer_present      = true;
+  drb_to_setup.pdcp_cfg.t_reordering_timer.t_reordering = asn1::e1ap::t_reordering_e::ms50;
+
+  asn1::e1ap::qos_flow_qos_param_item_s qos_to_setup;
+  qos_to_setup.qos_flow_id = 0xee;
+
+  drb_to_setup.qos_flow_info_to_be_setup.push_back(qos_to_setup);
+  pdu_session_setup_item.drb_to_setup_list_ng_ran.push_back(drb_to_setup);
+
+  // attempt to add session
+  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+
+  // check successful outcome
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(setup_result.pdu_session_id, 0x0d);
+  ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->drb_id, 0x0b);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.size(), 1);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, 0xee);
+
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+  ASSERT_FALSE(gtpu_rx_demux->created_teid_list.empty());
+  uint32_t teid = gtpu_rx_demux->created_teid_list.front();
+  gtpu_rx_demux->created_teid_list.pop_front();
+  ASSERT_TRUE(gtpu_rx_demux->created_teid_list.empty());
+
+  ASSERT_FALSE(f1u_gw->created_ul_teid_list.empty());
+  uint32_t ul_teid = f1u_gw->created_ul_teid_list.front();
+  f1u_gw->created_ul_teid_list.pop_front();
+  ASSERT_TRUE(f1u_gw->created_ul_teid_list.empty());
+
+  // delete pdu_session_mng, all remaining sessions and bearers shall be removed and detached from all gateways
+  pdu_session_mng.reset();
+
+  // validate pdu session is disconnected from GTP-U gateway
+  ASSERT_FALSE(gtpu_rx_demux->removed_teid_list.empty());
+  ASSERT_EQ(gtpu_rx_demux->removed_teid_list.front(), teid);
+  gtpu_rx_demux->removed_teid_list.pop_front();
+  ASSERT_TRUE(gtpu_rx_demux->removed_teid_list.empty());
+
+  // validate bearer is disconnected from F1-U gateway
   ASSERT_FALSE(f1u_gw->removed_ul_teid_list.empty());
   ASSERT_EQ(f1u_gw->removed_ul_teid_list.front(), ul_teid);
   f1u_gw->removed_ul_teid_list.pop_front();

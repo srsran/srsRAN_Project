@@ -30,9 +30,19 @@ public:
   dummy_gtpu_demux_ctrl()  = default;
   ~dummy_gtpu_demux_ctrl() = default;
 
-  bool add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override { return true; }
+  bool add_tunnel(uint32_t teid, gtpu_tunnel_rx_upper_layer_interface* tunnel) override
+  {
+    created_teid_list.push_back(teid);
+    return true;
+  }
+  bool remove_tunnel(uint32_t teid) override
+  {
+    removed_teid_list.push_back(teid);
+    return true;
+  }
 
-  bool remove_tunnel(uint32_t teid) override { return true; }
+  std::list<uint32_t> created_teid_list = {};
+  std::list<uint32_t> removed_teid_list = {};
 };
 
 /// Dummy adapter between GTP-U and Network Gateway
