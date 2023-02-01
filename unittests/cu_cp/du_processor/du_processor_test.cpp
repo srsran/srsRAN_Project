@@ -73,7 +73,8 @@ TEST_F(du_processor_test, when_max_nof_du_cells_exeeded_then_f1setup_rejected)
   f1_setup_request_msg.request->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST;
   f1_setup_request_msg.request->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
 
-  for (int du_cell_idx_int = MIN_DU_CELL_INDEX; du_cell_idx_int < MAX_NOF_DU_CELLS + 1; du_cell_idx_int++) {
+  for (int du_cell_idx_int = du_cell_index_to_uint(du_cell_index_t::min); du_cell_idx_int < MAX_NOF_DU_CELLS + 1;
+       du_cell_idx_int++) {
     f1_setup_request_msg.request->gnb_du_served_cells_list.value.push_back({});
     f1_setup_request_msg.request->gnb_du_served_cells_list.value.back().load_info_obj(
         ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);

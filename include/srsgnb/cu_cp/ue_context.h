@@ -47,7 +47,7 @@ struct cu_drb_context {
 
 struct ue_context {
   ue_index_t      ue_index    = ue_index_t::invalid;
-  du_cell_index_t pcell_index = INVALID_DU_CELL_INDEX;
+  du_cell_index_t pcell_index = du_cell_index_t::invalid;
   rnti_t          c_rnti      = INVALID_RNTI;
 
   std::array<cu_srb_context, MAX_NOF_SRBS> srbs;

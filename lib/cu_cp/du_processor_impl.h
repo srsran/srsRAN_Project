@@ -91,7 +91,7 @@ private:
 
   /// \brief Get the DU processor cell database.
   /// \return The DU processor cell database.
-  slotted_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };
+  slotted_id_vector<du_cell_index_t, du_cell_context>& get_cell_db() { return cell_db; };
 
   // F1C senders
 
@@ -117,7 +117,7 @@ private:
   du_processor_f1c_adapter            f1c_ue_context_notifier;
 
   du_processor_context context;
-  slotted_array<du_cell_context, MAX_NOF_DU_CELLS>
+  slotted_id_vector<du_cell_index_t, du_cell_context>
                         cell_db; /// flattened version of served cells list provided by DU/F1C
   std::atomic<uint16_t> next_du_cell_index{0};
 

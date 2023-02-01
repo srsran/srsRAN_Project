@@ -36,6 +36,8 @@ const uint16_t MAX_NOF_DUS = 2;
 #define MAX_NOF_CU_UES (MAX_NOF_DUS * MAX_NOF_UES_PER_DU)
 /// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
 const uint16_t MAX_NOF_CU_UPS = 2;
+/// Maximum number of cells per DU supported by CU-CP (implementation-defined).
+const uint16_t MAX_NOF_DU_CELLS = 16;
 
 /// \brief ue_index internally used to identify the UE CU-CP-wide.
 /// \remark The ue_index is derived from the DU index and the maximum number of UEs per DU.
@@ -62,11 +64,13 @@ constexpr inline du_index_t uint_to_du_index(std::underlying_type_t<du_index_t> 
   return static_cast<du_index_t>(index);
 }
 
+/// Convert DU index type to integer.
 constexpr inline std::underlying_type_t<du_index_t> du_index_to_uint(du_index_t du_index)
 {
   return static_cast<std::underlying_type_t<du_index_t>>(du_index);
 }
 
+/// Get DU index from UE index.
 inline du_index_t get_du_index_from_ue_index(ue_index_t index)
 {
   if (index == ue_index_t::invalid) {
@@ -84,23 +88,25 @@ constexpr inline cu_up_index_t uint_to_cu_up_index(std::underlying_type_t<cu_up_
   return static_cast<cu_up_index_t>(index);
 }
 
+/// Convert CU-UP index type to integer.
 constexpr inline std::underlying_type_t<cu_up_index_t> cu_up_index_to_uint(cu_up_index_t cu_up_index)
 {
   return static_cast<std::underlying_type_t<cu_up_index_t>>(cu_up_index);
 }
 
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
-enum du_cell_index_t : uint16_t {
-  MIN_DU_CELL_INDEX     = 0,
-  MAX_DU_CELL_INDEX     = 15,
-  MAX_NOF_DU_CELLS      = 16,
-  INVALID_DU_CELL_INDEX = MAX_NOF_DU_CELLS
-};
+enum class du_cell_index_t : uint16_t { min = 0, max = MAX_NOF_DU_CELLS - 1, invalid = MAX_NOF_DU_CELLS };
 
-/// Convert integer to CU cell index type.
-inline du_cell_index_t int_to_du_cell_index(std::underlying_type_t<du_cell_index_t> idx)
+/// Convert integer to DU cell index type.
+inline du_cell_index_t uint_to_du_cell_index(std::underlying_type_t<du_cell_index_t> index)
 {
-  return static_cast<du_cell_index_t>(idx);
+  return static_cast<du_cell_index_t>(index);
+}
+
+/// Convert DU cell index type to integer.
+constexpr inline std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(du_cell_index_t du_cell_index)
+{
+  return static_cast<std::underlying_type_t<du_cell_index_t>>(du_cell_index);
 }
 
 /// \brief RAN_UE_ID (non ASN1 type of RAN_UE_NGAP_ID).

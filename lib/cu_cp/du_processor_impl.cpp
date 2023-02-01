@@ -82,7 +82,7 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
     du_cell_context du_cell;
     du_cell.cell_index = get_next_du_cell_index();
 
-    if (du_cell.cell_index == INVALID_DU_CELL_INDEX) {
+    if (du_cell.cell_index == du_cell_index_t::invalid) {
       logger.error("Not handling F1 setup, maximum number of DU cells reached");
       send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
       return;
@@ -137,7 +137,7 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
       return cell.cell_index;
     }
   }
-  return INVALID_DU_CELL_INDEX;
+  return du_cell_index_t::invalid;
 }
 
 /// Sender for F1C messages
@@ -159,14 +159,15 @@ void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::option
 
 du_cell_index_t du_processor_impl::get_next_du_cell_index()
 {
-  for (int du_cell_idx_int = MIN_DU_CELL_INDEX; du_cell_idx_int < MAX_NOF_DU_CELLS; du_cell_idx_int++) {
-    du_cell_index_t cell_idx = int_to_du_cell_index(du_cell_idx_int);
+  for (int du_cell_idx_int = du_cell_index_to_uint(du_cell_index_t::min); du_cell_idx_int < MAX_NOF_DU_CELLS;
+       du_cell_idx_int++) {
+    du_cell_index_t cell_idx = uint_to_du_cell_index(du_cell_idx_int);
     if (!cell_db.contains(cell_idx)) {
       return cell_idx;
     }
   }
   logger.error("No DU cell index available");
-  return INVALID_DU_CELL_INDEX;
+  return du_cell_index_t::invalid;
 }
 
 ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const ue_creation_message& msg)
@@ -176,7 +177,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   // Check that creation message is valid
   du_cell_index_t pcell_index = find_cell(msg.cgi.nci.packed);
-  if (pcell_index == INVALID_DU_CELL_INDEX) {
+  if (pcell_index == du_cell_index_t::invalid) {
     logger.error("Could not find cell with cell_id={}", msg.cgi.nci.packed);
     return ue_creation_complete_msg;
   }
