@@ -37,7 +37,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     param.scs_common                     = base_cell.common_scs;
     param.channel_bw_mhz                 = base_cell.channel_bw_mhz;
     param.dl_arfcn                       = base_cell.dl_arfcn;
-    param.band                           = band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
+    param.band                           = base_cell.band;
 
     unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz,
