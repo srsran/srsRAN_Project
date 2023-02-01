@@ -145,7 +145,6 @@ void ue_manager::remove_ngap_ue(ue_index_t ue_index)
 
 ngap_ue* ue_manager::find_ngap_ue(ue_index_t ue_index)
 {
-  srsgnb_assert(ue_index < ue_index_t::max, "Invalid ue_index={}", ue_index);
   return ngap_ues.find(ue_index) != ngap_ues.end() ? &ngap_ues.at(ue_index) : nullptr;
 }
 
