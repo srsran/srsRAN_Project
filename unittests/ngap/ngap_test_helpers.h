@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/cu_cp/ue_manager.h"
+#include "lib/cu_cp/ue_manager_impl.h"
 #include "ngap_test_messages.h"
 #include "test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"

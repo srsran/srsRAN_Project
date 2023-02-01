@@ -14,7 +14,7 @@
 #include "adapters/f1c_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "routine_managers/du_processor_routine_manager.h"
-#include "ue_manager.h"
+#include "ue_manager_impl.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"

@@ -13,7 +13,7 @@
 #include "../common/du_processor_test_messages.h"
 #include "../common/test_helpers.h"
 #include "lib/cu_cp/routine_managers/du_processor_routine_manager.h"
-#include "lib/cu_cp/ue_manager.h"
+#include "lib/cu_cp/ue_manager_impl.h"
 #include "lib/rrc/ue/drb_manager_impl.h"
 #include "unittests/rrc/rrc_ue_test_messages.h"
 #include "srsgnb/support/test_utils.h"

@@ -8,7 +8,7 @@
  *
  */
 
-#include "ue_manager.h"
+#include "ue_manager_impl.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
 
 using namespace srsgnb;

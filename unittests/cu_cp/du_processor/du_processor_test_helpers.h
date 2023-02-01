@@ -13,7 +13,7 @@
 #include "../common/du_processor_test_messages.h"
 #include "../common/test_helpers.h"
 #include "du_processor_test_helpers.h"
-#include "lib/cu_cp/ue_manager.h"
+#include "lib/cu_cp/ue_manager_impl.h"
 #include "lib/f1ap/common/asn1_helpers.h"
 #include "unittests/f1ap/common/test_helpers.h"
 #include "unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
