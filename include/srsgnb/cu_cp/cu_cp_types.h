@@ -350,7 +350,7 @@ struct cu_cp_pdu_session_resource_setup_response {
 };
 
 struct cu_cp_drb_setup_message {
-  drb_id_t                                                      drb_id;
+  drb_id_t                                                      drb_id = drb_id_t::invalid;
   srsgnb::rlc_mode                                              rlc;
   cu_cp_qos_characteristics                                     qos_info;
   std::vector<up_transport_layer_info>                          gtp_tunnels = {};
@@ -362,7 +362,7 @@ struct cu_cp_drb_setup_message {
 };
 
 struct cu_cp_ue_context_modification_request {
-  ue_index_t                                           ue_index;
+  ue_index_t                                           ue_index = ue_index_t::invalid;
   slotted_id_vector<drb_id_t, cu_cp_drb_setup_message> cu_cp_drb_setup_msgs;
   optional<uint64_t>                                   ue_aggregate_maximum_bit_rate_ul;
 };
@@ -378,18 +378,18 @@ struct cu_cp_dl_up_tnl_info_to_be_setup_item {
 };
 
 struct cu_cp_drbs_setup_modified_item {
-  drb_id_t                                           drb_id;
-  optional<lcid_t>                                   lcid;
+  drb_id_t                                           drb_id                          = drb_id_t::invalid;
+  optional<lcid_t>                                   lcid                            = lcid_t::INVALID_LCID;
   std::vector<cu_cp_dl_up_tnl_info_to_be_setup_item> dl_up_tnl_info_to_be_setup_list = {};
 };
 
 struct cu_cp_srbs_failed_to_be_setup_mod_item {
-  srb_id_t                srb_id;
+  srb_id_t                srb_id = srb_id_t::nulltype;
   optional<cu_cp_cause_t> cause;
 };
 
 struct cu_cp_drbs_failed_to_be_setup_modified_item {
-  drb_id_t                drb_id;
+  drb_id_t                drb_id = drb_id_t::invalid;
   optional<cu_cp_cause_t> cause;
 };
 
@@ -403,8 +403,8 @@ struct cu_cp_associated_scell_item {
 };
 
 struct cu_cp_srbs_setup_modified_item {
-  srb_id_t srb_id;
-  lcid_t   lcid;
+  srb_id_t srb_id = srb_id_t::nulltype;
+  lcid_t   lcid   = lcid_t::INVALID_LCID;
 };
 
 struct cu_cp_ue_context_modification_response {
@@ -437,7 +437,7 @@ struct cu_cp_ue_context_modification_response {
 struct cu_cp_srb_to_add_mod {
   bool                        reestablish_pdcp_present = false;
   bool                        discard_on_pdcp_present  = false;
-  srb_id_t                    srb_id;
+  srb_id_t                    srb_id                   = srb_id_t::nulltype;
   optional<cu_cp_pdcp_config> pdcp_cfg;
 };
 
@@ -450,7 +450,7 @@ struct cu_cp_drb_to_add_mod {
   bool                        reestablish_pdcp_present = false;
   bool                        recover_pdcp_present     = false;
   optional<cu_cp_cn_assoc>    cn_assoc;
-  drb_id_t                    drb_id;
+  drb_id_t                    drb_id = drb_id_t::invalid;
   optional<cu_cp_pdcp_config> pdcp_cfg;
 };
 
