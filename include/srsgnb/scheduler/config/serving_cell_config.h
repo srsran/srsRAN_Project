@@ -189,24 +189,40 @@ struct uplink_config {
 /// \c PDSCH-CodeBlockGroupTransmission, as per TS38.331.
 struct pdsch_code_block_group_transmission {
   /// \c maxCodeBlockGroupsPerTransportBlock.
-  enum class max_code_block_groups_per_tb { n1, n2, n6, n8 };
+  enum class max_code_block_groups_per_tb { n2, n4, n6, n8 };
 
   max_code_block_groups_per_tb max_cbg_per_tb;
   bool                         code_block_group_flush_indicator;
+
+  bool operator==(const pdsch_code_block_group_transmission& rhs) const
+  {
+    return max_cbg_per_tb == rhs.max_cbg_per_tb &&
+           code_block_group_flush_indicator == rhs.code_block_group_flush_indicator;
+  }
+  bool operator!=(const pdsch_code_block_group_transmission& rhs) const { return !(rhs == *this); }
 };
 
 /// \c PDSCH-ServingCellConfig, as per TS38.331.
 struct pdsch_serving_cell_config {
   /// \c nrofHARQ-ProcessesForPDSCH.
-  enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16, not_set = 17 };
+  enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16 };
 
   optional<pdsch_code_block_group_transmission> code_block_group_tx;
   x_overhead                                    x_ov_head{x_overhead::not_set};
-  nof_harq_proc_for_pdsch                       nof_harq_proc{nof_harq_proc_for_pdsch::n8};
-  optional<serv_cell_index_t>                   pucch_cell;
+  /// See TS 38.331, \c nrofHARQ-ProcessesForPDSCH. If the field is absent, the UE uses 8 HARQ processes.
+  nof_harq_proc_for_pdsch     nof_harq_proc{nof_harq_proc_for_pdsch::n8};
+  optional<serv_cell_index_t> pucch_cell;
   /// Values {1,...,8};
   unsigned       max_mimo_layers;
   optional<bool> processing_type_2_enabled;
+
+  bool operator==(const pdsch_serving_cell_config& rhs) const
+  {
+    return code_block_group_tx == rhs.code_block_group_tx && x_ov_head == rhs.x_ov_head &&
+           nof_harq_proc == rhs.nof_harq_proc && pucch_cell == rhs.pucch_cell &&
+           max_mimo_layers == rhs.max_mimo_layers && processing_type_2_enabled == rhs.processing_type_2_enabled;
+  }
+  bool operator!=(const pdsch_serving_cell_config& rhs) const { return !(rhs == *this); }
 };
 
 /// \c ServingCellConfig, as per TS38.331.

@@ -824,3 +824,86 @@ TEST(serving_cell_config_converter_test, test_ue_srs_cfg_release_conversion)
   // SRS Config is released due to absence in dest cell group config.
   ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.srs_cfg.type(), asn1::setup_release_opts::release);
 }
+
+TEST(serving_cell_config_converter_test, test_initial_pdsch_serving_cell_cfg_conversion)
+{
+  auto dest_cell_grp_cfg = make_initial_cell_group_config();
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cell_grp_cfg);
+
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
+
+  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
+  auto& dest_sp_cell_cfg_ded = dest_cell_grp_cfg.cells[0].serv_cell_cfg;
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present);
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present, dest_sp_cell_cfg_ded.pdsch_serv_cell_cfg.has_value());
+  // Since its initial setup and no source cell group config was provided PDSCH serving cell config must be of setup
+  // type.
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.is_setup());
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().max_mimo_layers_present);
+  ASSERT_FALSE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().nrof_harq_processes_for_pdsch_present);
+}
+
+TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conversion)
+{
+  auto src_cell_grp_cfg = make_initial_cell_group_config();
+
+  srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
+  auto& dest_pdsch_serving_cell_cfg = dest_cell_grp_cfg.cells[0].serv_cell_cfg.pdsch_serv_cell_cfg.value();
+  // Add new/remove configurations. Need not be valid configuration.
+  dest_pdsch_serving_cell_cfg.code_block_group_tx.emplace(pdsch_code_block_group_transmission{
+      .max_cbg_per_tb                   = pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n8,
+      .code_block_group_flush_indicator = true});
+
+  dest_pdsch_serving_cell_cfg.x_ov_head     = srsgnb::x_overhead::xoh6;
+  dest_pdsch_serving_cell_cfg.nof_harq_proc = srsgnb::pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n12;
+  dest_pdsch_serving_cell_cfg.pucch_cell    = to_serv_cell_index(1);
+  dest_pdsch_serving_cell_cfg.processing_type_2_enabled = false;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
+
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
+
+  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
+  auto& dest_sp_cell_cfg_ded = dest_cell_grp_cfg.cells[0].serv_cell_cfg;
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present);
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present, dest_sp_cell_cfg_ded.pdsch_serv_cell_cfg.has_value());
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.is_setup());
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().code_block_group_tx_present);
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().code_block_group_tx.is_setup());
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().max_mimo_layers_present);
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().nrof_harq_processes_for_pdsch_present);
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().xoverhead_present);
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().pucch_cell_present);
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup().processing_type2_enabled_present);
+}
+
+TEST(serving_cell_config_converter_test, test_pdsch_serving_cell_cfg_release_conversion)
+{
+  auto                      src_cell_grp_cfg = make_initial_cell_group_config();
+  srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
+  dest_cell_grp_cfg.cells[0].serv_cell_cfg.pdsch_serv_cell_cfg.reset();
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
+
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg_present);
+  ASSERT_TRUE(rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded_present);
+
+  auto& rrc_sp_cell_cfg_ded  = rrc_cell_grp_cfg.sp_cell_cfg.sp_cell_cfg_ded;
+  auto& dest_sp_cell_cfg_ded = dest_cell_grp_cfg.cells[0].serv_cell_cfg;
+
+  ASSERT_TRUE(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present);
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg_present,
+            not dest_sp_cell_cfg_ded.pdsch_serv_cell_cfg.has_value());
+  // PDSCH Serving Cell Config is released due to absence in dest cell group config.
+  ASSERT_EQ(rrc_sp_cell_cfg_ded.pdsch_serving_cell_cfg.type(), asn1::setup_release_opts::release);
+}

@@ -1721,6 +1721,100 @@ void calculate_uplink_config_diff(asn1::rrc_nr::ul_cfg_s& out, const uplink_conf
   // TODO: Remaining.
 }
 
+void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_s& out,
+                                           const pdsch_serving_cell_config&        src,
+                                           const pdsch_serving_cell_config&        dest)
+{
+  if ((dest.code_block_group_tx.has_value() && not src.code_block_group_tx.has_value()) ||
+      (dest.code_block_group_tx.has_value() && src.code_block_group_tx.has_value() &&
+       dest.code_block_group_tx != src.code_block_group_tx)) {
+    out.code_block_group_tx_present       = true;
+    auto& cbg_grp_tx                      = out.code_block_group_tx.set_setup();
+    cbg_grp_tx.code_block_group_flush_ind = dest.code_block_group_tx.value().code_block_group_flush_indicator;
+    switch (dest.code_block_group_tx.value().max_cbg_per_tb) {
+      case pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n2:
+        cbg_grp_tx.max_code_block_groups_per_transport_block =
+            pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n2;
+        break;
+      case pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n4:
+        cbg_grp_tx.max_code_block_groups_per_transport_block =
+            pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n4;
+        break;
+      case pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n6:
+        cbg_grp_tx.max_code_block_groups_per_transport_block =
+            pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n6;
+        break;
+      case pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n8:
+        cbg_grp_tx.max_code_block_groups_per_transport_block =
+            pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n8;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid xOverhead={}", dest.x_ov_head);
+    }
+  } else if (src.code_block_group_tx.has_value() && not dest.code_block_group_tx.has_value()) {
+    out.code_block_group_tx_present = true;
+    out.code_block_group_tx.set_release();
+  }
+
+  if (dest.x_ov_head != x_overhead::not_set) {
+    out.xoverhead_present = true;
+    switch (dest.x_ov_head) {
+      case x_overhead::xoh6:
+        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh6;
+        break;
+      case x_overhead::xoh12:
+        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh12;
+        break;
+      case x_overhead::xoh18:
+        out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh18;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid xOverhead={}", dest.x_ov_head);
+    }
+  }
+
+  if (dest.nof_harq_proc != pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n8) {
+    out.nrof_harq_processes_for_pdsch_present = true;
+    switch (dest.nof_harq_proc) {
+      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n2:
+        out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n2;
+        break;
+      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n4:
+        out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n4;
+        break;
+      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n6:
+        out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n6;
+        break;
+      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n10:
+        out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n10;
+        break;
+      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n12:
+        out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n12;
+        break;
+      case pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n16:
+        out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n16;
+        break;
+      default:
+        srsgnb_assertion_failure("Invalid max. nof.HARQ process for PDSCH={}", dest.nof_harq_proc);
+    }
+  }
+
+  if (dest.pucch_cell.has_value()) {
+    out.pucch_cell_present = true;
+    out.pucch_cell         = dest.pucch_cell.value();
+  }
+
+  if (dest.max_mimo_layers > 0) {
+    out.max_mimo_layers_present = true;
+    out.max_mimo_layers         = dest.max_mimo_layers;
+  }
+
+  if (dest.processing_type_2_enabled.has_value()) {
+    out.processing_type2_enabled_present = true;
+    out.processing_type2_enabled         = dest.processing_type_2_enabled.value();
+  }
+}
+
 void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
                                         const serving_cell_config&        src,
                                         const serving_cell_config&        dest)
@@ -1731,6 +1825,20 @@ void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
     out.ul_cfg_present = true;
     calculate_uplink_config_diff(
         out.ul_cfg, src.ul_config.has_value() ? src.ul_config.value() : uplink_config{}, dest.ul_config.value());
+  }
+
+  // PDSCH-ServingCellConfig.
+  if ((dest.pdsch_serv_cell_cfg.has_value() && not src.pdsch_serv_cell_cfg.has_value()) ||
+      (dest.pdsch_serv_cell_cfg.has_value() && src.pdsch_serv_cell_cfg.has_value() &&
+       dest.pdsch_serv_cell_cfg != src.pdsch_serv_cell_cfg)) {
+    out.pdsch_serving_cell_cfg_present = true;
+    calculate_pdsch_serving_cell_cfg_diff(out.pdsch_serving_cell_cfg.set_setup(),
+                                          src.pdsch_serv_cell_cfg.has_value() ? src.pdsch_serv_cell_cfg.value()
+                                                                              : pdsch_serving_cell_config{},
+                                          dest.pdsch_serv_cell_cfg.value());
+  } else if (src.pdsch_serv_cell_cfg.has_value() && not dest.pdsch_serv_cell_cfg.has_value()) {
+    out.pdsch_serving_cell_cfg_present = true;
+    out.pdsch_serving_cell_cfg.set_release();
   }
 }
 
