@@ -83,6 +83,7 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
   // For each layer...
   for (unsigned i_layer = 0, nof_tx_layers = cfg.dmrs_pattern.size(); i_layer != nof_tx_layers; ++i_layer) {
     rsrp      = 0;
+    epre      = 0;
     noise_var = 0;
     // Set the noise average window size to the number of DM-RS pilots in one RB.
     window_size = cfg.dmrs_pattern[i_layer].re_pattern.count();
@@ -93,10 +94,9 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     }
 
     rsrp /= static_cast<float>(nof_dmrs_pilots);
-    estimate.set_rsrp(rsrp, port, i_layer);
+    epre /= static_cast<float>(nof_dmrs_pilots);
 
-    srsgnb_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");
-    float epre = rsrp / cfg.scaling / cfg.scaling;
+    estimate.set_rsrp(rsrp, port, i_layer);
     estimate.set_epre(epre, port, i_layer);
 
     noise_var /= static_cast<float>(window_size * symbols_size.nof_symbols - 1);
@@ -106,7 +106,11 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
       noise_var = convert_dB_to_power(-30) * epre;
     }
     estimate.set_noise_variance(noise_var, port, i_layer);
-    estimate.set_snr((noise_var != 0) ? epre / noise_var : 1000, port, i_layer);
+
+    srsgnb_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");
+    // Compute the estimated data received power by scaling the RSRP.
+    float datarp = rsrp / cfg.scaling / cfg.scaling;
+    estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port, i_layer);
   }
 }
 
@@ -146,20 +150,24 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsgnb::channel_esti
   span<cf_t> pilots_lse     = span<cf_t>(aux_pilots_lse).first(pilots.size().nof_subc);
   srsvec::prod_conj(rx_pilots.get_symbol(0, i_layer), pilots.get_symbol(hop_offset, i_layer), pilots_lse);
 
+  epre += std::real(srsvec::dot_prod(rx_pilots.get_symbol(0, i_layer), rx_pilots.get_symbol(0, i_layer)));
+
   // Accumulate all symbols frequency domain response.
   for (unsigned i_dmrs_symbol = 1; i_dmrs_symbol != nof_dmrs_symbols; ++i_dmrs_symbol) {
     srsvec::prod_conj(rx_pilots.get_symbol(i_dmrs_symbol, i_layer),
                       pilots.get_symbol(hop_offset + i_dmrs_symbol, i_layer),
                       pilot_products);
     srsvec::add(pilots_lse, pilot_products, pilots_lse);
+
+    epre += std::real(
+        srsvec::dot_prod(rx_pilots.get_symbol(i_dmrs_symbol, i_layer), rx_pilots.get_symbol(i_dmrs_symbol, i_layer)));
   }
 
   // Average and apply DM-RS-to-data gain.
   float beta_scaling = cfg.scaling;
-  for (cf_t& value : pilots_lse) {
-    rsrp += abs_sq(value) / static_cast<float>(nof_dmrs_symbols);
-    value /= (static_cast<float>(nof_dmrs_symbols) * beta_scaling);
-  }
+  rsrp += std::real(srsvec::dot_prod(pilots_lse, pilots_lse)) / static_cast<float>(nof_dmrs_symbols);
+  float total_scaling = 1.0F / (static_cast<float>(nof_dmrs_symbols) * beta_scaling);
+  srsvec::sc_prod(pilots_lse, total_scaling, pilots_lse);
 
   noise_var +=
       estimate_noise(pilots, rx_pilots, pilots_lse, beta_scaling, window_size, nof_dmrs_symbols, hop_offset, i_layer);

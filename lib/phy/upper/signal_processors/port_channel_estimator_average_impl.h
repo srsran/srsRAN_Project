@@ -62,6 +62,11 @@ private:
   /// Estimated RSRP value (single layer).
   float rsrp = 0;
 
+  /// \brief Observed average DM-RS EPRE.
+  ///
+  /// \remark The EPRE is defined as the average received power (including noise) across all REs carrying DM-RS.
+  float epre = 0;
+
   /// Estimated noise variance (single layer).
   float noise_var = 0;
 

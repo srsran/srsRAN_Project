@@ -132,10 +132,14 @@ public:
     return convert_power_to_dB(get_rsrp(rx_port, tx_layer));
   }
 
-  /// Returns the average EPRE for the path between the given Rx port and Tx layer (linear scale).
+  /// \brief Returns the average EPRE for the path between the given Rx port and Tx layer (linear scale).
+  ///
+  /// \remark The EPRE is defined as the average received power (including noise) across all REs carrying DM-RS.
   float get_epre(unsigned rx_port, unsigned tx_layer = 0) const { return epre[path_to_index(rx_port, tx_layer)]; }
 
-  /// Returns the average EPRE for the path between the given Rx port and Tx layer (dB scale).
+  /// \brief Returns the average EPRE for the path between the given Rx port and Tx layer (dB scale).
+  ///
+  /// \remark The EPRE is defined as the average received power (including noise) across all REs carrying DM-RS.
   float get_epre_dB(unsigned rx_port, unsigned tx_layer = 0) const
   {
     return convert_power_to_dB(get_epre(rx_port, tx_layer));
