@@ -28,32 +28,33 @@ struct codebook_config {
       /// \brief See TS 38.331, \c nrOfAntennaPorts in \c CodebookConfig.
       struct more_than_two_antenna_ports {
         /// \brief See TS 38.331, \c n1-n2 in \c CodebookConfig.
-        /// \remark Bitset size is based on \c n1_n2_type_t with maximum bit string length.
-        using n1_n2_value_t = bounded_bitset<256>;
-        enum class n1_n2_type_t {
-          two_one_typei_single_panel_restriction,
-          two_two_typei_single_panel_restriction,
-          four_one_typei_single_panel_restriction,
-          three_two_typei_single_panel_restriction,
-          six_one_typei_single_panel_restriction,
-          four_two_typei_single_panel_restriction,
-          eight_one_typei_single_panel_restriction,
-          four_three_typei_single_panel_restriction,
-          six_two_typei_single_panel_restriction,
-          twelve_one_typei_single_panel_restriction,
-          four_four_typei_single_panel_restriction,
-          eight_two_typei_single_panel_restriction,
-          sixteen_one_typei_single_panel_restriction
+        /// \remark Bitset size is based on \c n1_n2_restriction_type_t with maximum bit string length.
+        using n1_n2_restriction_value_t = bounded_bitset<256>;
+        enum class n1_n2_restriction_type_t {
+          two_one,
+          two_two,
+          four_one,
+          three_two,
+          six_one,
+          four_two,
+          eight_one,
+          four_three,
+          six_two,
+          twelve_one,
+          four_four,
+          eight_two,
+          sixteen_one
         };
 
-        n1_n2_type_t  n1_n2_type;
-        n1_n2_value_t n1_n2_value;
+        n1_n2_restriction_type_t  n1_n2_restriction_type;
+        n1_n2_restriction_value_t n1_n2_restriction_value;
         /// i2 codebook subset restriction for Type I Single-panel codebook used when reportQuantity is CRI/Ri/i1/CQI.
         optional<bounded_bitset<16>> typei_single_panel_codebook_subset_restriction_i2;
 
         bool operator==(const more_than_two_antenna_ports& rhs) const
         {
-          return n1_n2_type == rhs.n1_n2_type && n1_n2_value == rhs.n1_n2_value &&
+          return n1_n2_restriction_type == rhs.n1_n2_restriction_type &&
+                 n1_n2_restriction_value == rhs.n1_n2_restriction_value &&
                  typei_single_panel_codebook_subset_restriction_i2 ==
                      rhs.typei_single_panel_codebook_subset_restriction_i2;
         }
@@ -75,28 +76,28 @@ struct codebook_config {
     /// \brief See TS 38.331, \c typeI-MultiPanel in \c CodebookConfig.
     struct multi_panel {
       /// \brief See TS 38.331, \c ng-n1-n2 in \c CodebookConfig.
-      /// \remark Bitset size is based on \c ng_n1_n2_type_t with maximum bit string length.
-      using ng_n1_n2_value_t = bounded_bitset<128>;
-      enum class ng_n1_n2_type_t {
-        two_two_one_typei_multi_panel_restriction,
-        two_four_one_typei_multi_panel_restriction,
-        four_two_one_typei_multi_panel_restriction,
-        two_two_two_typei_multi_panel_restriction,
-        two_eight_one_typei_multi_panel_restriction,
-        four_four_one_typei_multi_panel_restriction,
-        two_four_two_typei_multi_panel_restriction,
-        four_two_two_typei_multi_panel_restriction
+      /// \remark Bitset size is based on \c ng_n1_n2_restriction_type_t with maximum bit string length.
+      using ng_n1_n2_restriction_value_t = bounded_bitset<128>;
+      enum class ng_n1_n2_restriction_type_t {
+        two_two_one,
+        two_four_one,
+        four_two_one,
+        two_two_two,
+        two_eight_one,
+        four_four_one,
+        two_four_two,
+        four_two_two
       };
 
-      ng_n1_n2_type_t  ng_n1_n2_type;
-      ng_n1_n2_value_t ng_n1_n2_value;
+      ng_n1_n2_restriction_type_t  ng_n1_n2_restriction_type;
+      ng_n1_n2_restriction_value_t ng_n1_n2_restriction_value;
       /// Restriction for RI for typeI-MultiPanel-RI-Restriction.
       bounded_bitset<4> ri_restriction;
 
       bool operator==(const multi_panel& rhs) const
       {
-        return ng_n1_n2_type == rhs.ng_n1_n2_type && ng_n1_n2_value == rhs.ng_n1_n2_value &&
-               ri_restriction == rhs.ri_restriction;
+        return ng_n1_n2_restriction_type == rhs.ng_n1_n2_restriction_type &&
+               ng_n1_n2_restriction_value == rhs.ng_n1_n2_restriction_value && ri_restriction == rhs.ri_restriction;
       }
       bool operator!=(const multi_panel& rhs) const { return !(rhs == *this); }
     };

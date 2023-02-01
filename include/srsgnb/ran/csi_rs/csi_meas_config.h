@@ -36,9 +36,9 @@ struct csi_rs_resource_mapping {
   variant<fd_alloc_row1, fd_alloc_row2, fd_alloc_row4, fd_alloc_other> fd_alloc;
   /// Number of ports. Values {1, 2, 4, 8, 12, 16, 24, 32}.
   unsigned nof_ports;
-  /// Time domain allocation within a physical resource block. Values {0,...,13}.
+  /// The time domain location reference \f$l_0\f$ in TS 38.211, clause 7.4.1.5.3. Values {0,...,13}.
   unsigned first_ofdm_symbol_in_td;
-  /// Time domain allocation within a physical resource block. Values {2,...,12}.
+  /// The time domain location reference \f$l_1\f$ in TS 38.211, clause 7.4.1.5.3. Values {2,...,12}.
   optional<unsigned> first_ofdm_symbol_in_td2;
   /// CDM configuration.
   csi_rs_cdm_type cdm;

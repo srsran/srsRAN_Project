@@ -544,7 +544,7 @@ csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
   report_cfg_type.report_slot_period = csi_report_periodicity::slots320;
   report_cfg_type.report_slot_offset = 9;
   report_cfg_type.pucch_csi_res_list.push_back(
-      csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 7});
+      csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9});
   cfg.report_cfg_type = report_cfg_type;
 
   cfg.report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_pmi_cqi;
