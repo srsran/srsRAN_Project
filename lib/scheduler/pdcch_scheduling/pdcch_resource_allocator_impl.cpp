@@ -47,7 +47,7 @@ private:
   bool alloc_dfs_node(cell_slot_resource_allocator& slot_alloc, const alloc_record& record, unsigned dci_iter_index);
   bool get_next_dfs(cell_slot_resource_allocator& slot_alloc);
 
-  pdcch_candidate_list get_cce_loc_table(const alloc_record& record) const;
+  pdcch_candidate_list get_cce_loc_table(slot_point pdcch_slot, const alloc_record& record) const;
 
   /// Allocate CCEs of a given PDCCH.
   bool allocate_cce(cell_slot_resource_allocator& slot_alloc, unsigned ncce, const alloc_record& record);
@@ -121,7 +121,7 @@ bool pdcch_resource_allocator_impl::pdcch_slot_allocator::alloc_dfs_node(cell_sl
                                                                          unsigned                      dci_iter_index)
 {
   // Get CCE location table, i.e. the current node possible leaves.
-  auto cce_locs = get_cce_loc_table(record);
+  auto cce_locs = get_cce_loc_table(slot_alloc.slot, record);
   if (dci_iter_index >= cce_locs.size()) {
     // All possible CCE position leaves have been attempted. Early return.
     return false;
@@ -168,12 +168,23 @@ bool pdcch_resource_allocator_impl::pdcch_slot_allocator::get_next_dfs(cell_slot
 }
 
 pdcch_candidate_list
-pdcch_resource_allocator_impl::pdcch_slot_allocator::get_cce_loc_table(const alloc_record& record) const
+pdcch_resource_allocator_impl::pdcch_slot_allocator::get_cce_loc_table(slot_point          pdcch_slot,
+                                                                       const alloc_record& record) const
 {
   // TODO: Cache result list.
-  aggregation_level l = record.pdcch_ctx->cces.aggr_lvl;
-  return pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
-      l, record.ss_cfg->nof_candidates[to_aggregation_level_index(l)], record.pdcch_ctx->coreset_cfg->get_nof_cces()});
+  aggregation_level l                = record.pdcch_ctx->cces.aggr_lvl;
+  unsigned          nof_candidates   = record.ss_cfg->nof_candidates[to_aggregation_level_index(l)];
+  unsigned          nof_coreset_cces = record.pdcch_ctx->coreset_cfg->get_nof_cces();
+  if (record.ss_cfg->type == search_space_configuration::type_t::common) {
+    return pdcch_candidates_common_ss_get_lowest_cce(
+        pdcch_candidates_common_ss_configuration{l, nof_candidates, nof_coreset_cces});
+  }
+  return pdcch_candidates_ue_ss_get_lowest_cce(pdcch_candidates_ue_ss_configuration{l,
+                                                                                    nof_candidates,
+                                                                                    nof_coreset_cces,
+                                                                                    record.pdcch_ctx->coreset_cfg->id,
+                                                                                    record.pdcch_ctx->rnti,
+                                                                                    pdcch_slot.slot_index()});
 }
 
 bool pdcch_resource_allocator_impl::pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc,
