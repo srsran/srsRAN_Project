@@ -83,16 +83,19 @@ pusch_config_params srsgnb::get_pusch_config_f0_0_c_rnti(const cell_configuratio
                                                          const bwp_uplink_common&     ul_bwp,
                                                          unsigned                     time_resource)
 {
-  constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
-  constexpr unsigned        nof_layers = 1;
+  const pusch_mcs_table mcs_table  = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
+  constexpr unsigned    nof_layers = 1;
   // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
   // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
   constexpr unsigned tb_scaling_field = 0;
   // Parameter \c tp-pi2BPSK enabled is not supported yet.
   constexpr bool tp_pi2bpsk_present = false;
+  // We set 6 bits, assuming a maximum of 1 HARQ-ACK per slot and maximum number of slot corresponding to the number of
+  // DL slots in TDD, currently 6.
   // TODO verify if this is the correct value.
-  constexpr unsigned nof_harq_ack_bits = 2;
-  // There is no need for CSI reporting for TC-RNTI.
+  constexpr unsigned nof_harq_ack_bits = 6;
+  // We assume only 4 bits for CSI part-1.
+  // TODO set this to 4 when PHY supports it.
   constexpr unsigned nof_csi_part1_bits = 0;
   constexpr unsigned nof_csi_part2_bits = 0;
 

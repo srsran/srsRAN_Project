@@ -50,6 +50,33 @@ static mac_pdu_handler_dummy dummy_pdu_handler;
 /// actual, cell-specific MAC CRC handler, which will be later set up through the \ref set_cell_crc_handler() method.
 static mac_cell_control_information_handler_dummy dummy_crc_handler;
 
+/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
+static float to_uci_ul_sinr(int sinr)
+{
+  return static_cast<float>(sinr) * 0.002F;
+}
+
+/// Converts the given FAPI UCI RSSI to dBs as per SCF-222 v4.0 section 3.4.9.
+static float to_uci_ul_rssi(unsigned rssi)
+{
+  return static_cast<float>(rssi - 1280) * 0.1F;
+}
+
+/// Converts the given FAPI UCI RSRP to dBs as per SCF-222 v4.0 section 3.4.9.
+static float to_uci_ul_rsrp(unsigned rsrp)
+{
+  return static_cast<float>(rsrp - 1400) * 0.1F;
+}
+
+/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
+static optional<float> convert_fapi_to_mac_ul_sinr(int16_t fapi_ul_sinr)
+{
+  if (fapi_ul_sinr != std::numeric_limits<decltype(fapi_ul_sinr)>::min()) {
+    return to_uci_ul_sinr(fapi_ul_sinr);
+  }
+  return nullopt;
+}
+
 fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spacing scs_) :
   rach_handler(dummy_mac_rach_handler), pdu_handler(dummy_pdu_handler), crc_handler(dummy_crc_handler), scs(scs_)
 {
@@ -90,36 +117,10 @@ void fapi_to_mac_data_msg_translator::on_crc_indication(const fapi::crc_indicati
     pdu.harq_id        = fapi_pdu.harq_id;
     pdu.rnti           = fapi_pdu.rnti;
     pdu.tb_crc_success = fapi_pdu.tb_crc_status_ok;
+    pdu.ul_sinr_metric = convert_fapi_to_mac_ul_sinr(fapi_pdu.ul_sinr_metric);
   }
 
   crc_handler.get().handle_crc(indication);
-}
-
-/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
-static float to_uci_ul_sinr(int sinr)
-{
-  return static_cast<float>(sinr) * 0.002F;
-}
-
-/// Converts the given FAPI UCI RSSI to dBs as per SCF-222 v4.0 section 3.4.9.
-static float to_uci_ul_rssi(unsigned rssi)
-{
-  return static_cast<float>(rssi - 1280) * 0.1F;
-}
-
-/// Converts the given FAPI UCI RSRP to dBs as per SCF-222 v4.0 section 3.4.9.
-static float to_uci_ul_rsrp(unsigned rsrp)
-{
-  return static_cast<float>(rsrp - 1400) * 0.1F;
-}
-
-/// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
-static optional<float> convert_fapi_to_mac_ul_sinr(int16_t fapi_ul_sinr)
-{
-  if (fapi_ul_sinr != std::numeric_limits<decltype(fapi_ul_sinr)>::min()) {
-    return to_uci_ul_sinr(fapi_ul_sinr);
-  }
-  return nullopt;
 }
 
 /// Converts the given FAPI Timing Advance Offset in nanoseconds to Physical layer time unit.

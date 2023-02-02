@@ -8,11 +8,11 @@
  *
  */
 
-#include "mcs_tbs_prbs_calculator.h"
-#include "../../ue_scheduling/ue_sch_pdu_builder.h"
-#include "../dmrs_helpers.h"
-#include "../prbs_calculator.h"
-#include "../tbs_calculator.h"
+#include "mcs_tbs_calculator.h"
+#include "../ue_scheduling/ue_sch_pdu_builder.h"
+#include "dmrs_helpers.h"
+#include "prbs_calculator.h"
+#include "tbs_calculator.h"
 #include "srsgnb/adt/variant.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/pusch/ulsch_info.h"
@@ -147,11 +147,10 @@ static void update_ulsch_info(ulsch_configuration& ulsch_cfg, unsigned tbs_bytes
   ulsch_cfg.mcs_descr = mcs_info;
 }
 
-optional<pusch_mcs_tbs_prbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
-                                                        const ue_cell_configuration& ue_cell_cfg,
-                                                        unsigned                     payload_size_bytes,
-                                                        sch_mcs_index                max_mcs,
-                                                        unsigned                     max_nof_prbs)
+optional<pusch_mcs_tbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
+                                                   const ue_cell_configuration& ue_cell_cfg,
+                                                   sch_mcs_index                max_mcs,
+                                                   unsigned                     nof_prbs)
 {
   // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
@@ -160,56 +159,43 @@ optional<pusch_mcs_tbs_prbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_param
   sch_mcs_description mcs_info    = pusch_mcs_get_config(pusch_cfg.mcs_table, max_mcs, pusch_cfg.tp_pi2bpsk_present);
   unsigned            nof_symbols = pusch_cfg.symbols.length();
 
-  // > Compute the number of required PRBs.
-  sch_prbs_tbs init_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{.payload_size_bytes = payload_size_bytes,
-                                                                       .nof_symb_sh        = nof_symbols,
-                                                                       .nof_dmrs_prb       = dmrs_prbs,
-                                                                       .nof_oh_prb         = pusch_cfg.nof_oh_prb,
-                                                                       .mcs_descr          = mcs_info,
-                                                                       .nof_layers         = pusch_cfg.nof_layers,
-                                                                       .tb_scaling_field = pusch_cfg.tb_scaling_field});
-
-  // > If the number of required PRBs > the max nof available PRBs, cap nof_prbs to its maximum and recompute TBS.
-  unsigned nof_prbs = std::min(init_prbs_tbs.nof_prbs, max_nof_prbs);
-  unsigned tbs =
-      init_prbs_tbs.nof_prbs <= max_nof_prbs
-          ? init_prbs_tbs.tbs_bytes
-          : tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
-                                                                  .nof_dmrs_prb     = dmrs_prbs,
-                                                                  .nof_oh_prb       = pusch_cfg.nof_oh_prb,
-                                                                  .mcs_descr        = mcs_info,
-                                                                  .nof_layers       = pusch_cfg.nof_layers,
-                                                                  .tb_scaling_field = pusch_cfg.tb_scaling_field,
-                                                                  .n_prb            = nof_prbs}) /
-                NOF_BITS_PER_BYTE;
+  unsigned tbs_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                            .mcs_descr        = mcs_info,
+                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                            .n_prb            = nof_prbs}) /
+      NOF_BITS_PER_BYTE;
 
   // > Compute the effective code rate.
-  ulsch_configuration ulsch_cfg           = build_ulsch_info(pusch_cfg, ue_cell_cfg, tbs, mcs_info, nof_prbs);
+  ulsch_configuration ulsch_cfg           = build_ulsch_info(pusch_cfg, ue_cell_cfg, tbs_bytes, mcs_info, nof_prbs);
   float               effective_code_rate = get_ulsch_information(ulsch_cfg).get_effective_code_rate();
 
   // > Decrease the MCS and recompute TBS until the effective code rate is not above the 0.95 threshold.
   sch_mcs_index mcs = max_mcs;
   while (effective_code_rate > max_supported_code_rate and mcs > 0) {
     --mcs;
-    mcs_info = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
-    tbs      = tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
-                                                                     .nof_dmrs_prb     = dmrs_prbs,
-                                                                     .nof_oh_prb       = pusch_cfg.nof_oh_prb,
-                                                                     .mcs_descr        = mcs_info,
-                                                                     .nof_layers       = pusch_cfg.nof_layers,
-                                                                     .tb_scaling_field = pusch_cfg.tb_scaling_field,
-                                                                     .n_prb            = nof_prbs}) /
-          NOF_BITS_PER_BYTE;
+    mcs_info  = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
+    tbs_bytes = tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                                      .nof_dmrs_prb     = dmrs_prbs,
+                                                                      .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                                      .mcs_descr        = mcs_info,
+                                                                      .nof_layers       = pusch_cfg.nof_layers,
+                                                                      .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                                      .n_prb            = nof_prbs}) /
+                NOF_BITS_PER_BYTE;
 
-    update_ulsch_info(ulsch_cfg, tbs, mcs_info);
+    update_ulsch_info(ulsch_cfg, tbs_bytes, mcs_info);
     effective_code_rate = get_ulsch_information(ulsch_cfg).get_effective_code_rate();
   }
 
   // If no MCS such that effective code rate <= 0.95, return an empty optional object.
   if (effective_code_rate > max_supported_code_rate and mcs == 0) {
-    return {};
+    return nullopt;
   }
 
-  optional<pusch_mcs_tbs_prbs> output;
-  return output.emplace(pusch_mcs_tbs_prbs{.mcs = mcs, .tbs = tbs, .n_prbs = nof_prbs});
+  optional<pusch_mcs_tbs> output;
+  return output.emplace(pusch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes});
 }

@@ -39,6 +39,7 @@ struct ue_pusch_grant {
   unsigned          time_res_index;
   search_space_id   ss_id    = to_search_space_id(1);
   aggregation_level aggr_lvl = aggregation_level::n4;
+  sch_mcs_index     mcs;
 };
 
 /// Allocator of PDSCH grants for UE RLC data.

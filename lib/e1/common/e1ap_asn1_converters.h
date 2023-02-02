@@ -830,7 +830,7 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
 
       if (asn1_pdcp_cfg.rohc_params.ul_only_rohc().continue_rohc_present) {
         if (asn1_pdcp_cfg.rohc_params.ul_only_rohc().continue_rohc ==
-            asn1::e1ap::rohc_s::continue_rohc_opts::options::true_value) {
+            asn1::e1ap::ul_only_rohc_s::continue_rohc_opts::options::true_value) {
           ul_only_rohc.continue_rohc = true;
         } else {
           ul_only_rohc.continue_rohc = false;

@@ -199,19 +199,25 @@ static bool alloc_ul_ue(const ue&                    u,
         // only one PUSCH per UE per slot.
         continue;
       }
-      const ofdm_symbol_range pusch_symbols = pusch_list[time_res].symbols;
-      const prb_bitmap        used_crbs     = grid.used_crbs(bwp_lims, pusch_symbols);
-      const unsigned          nof_req_prbs =
-          is_retx ? h->last_tx_params().prbs.prbs().length() : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes);
-      const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
+      // TODO: Get correct DCI format.
+      const dci_ul_rnti_config_type dci_type      = dci_ul_rnti_config_type::c_rnti_f0_0;
+      const ofdm_symbol_range       pusch_symbols = pusch_list[time_res].symbols;
+      const prb_bitmap              used_crbs     = grid.used_crbs(bwp_lims, pusch_symbols);
+
+      // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
+      const grant_prbs_mcs mcs_prbs =
+          is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().prbs.prbs().length()}
+                  : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes, dci_type);
+
+      const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
       bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
       if (is_retx) {
         // In case of Retx, the #CRBs need to stay the same.
         are_crbs_valid = ue_grant_crbs.length() == h->last_tx_params().prbs.prbs().length();
       }
       if (are_crbs_valid) {
-        const bool res_allocated = pusch_alloc.allocate_ul_grant(
-            ue_pusch_grant{&u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, time_res, ss_cfg->id, agg_lvl});
+        const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
+            &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, time_res, ss_cfg->id, agg_lvl, mcs_prbs.mcs});
         if (res_allocated) {
           return true;
         }

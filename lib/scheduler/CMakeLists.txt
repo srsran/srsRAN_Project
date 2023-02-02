@@ -27,7 +27,7 @@ set(SOURCES
         support/pucch/pucch_default_resource.cpp
         support/pusch/pusch_default_time_allocation.cpp
         support/pusch/pusch_dmrs_symbol_mask.cpp
-        support/pusch/mcs_tbs_prbs_calculator.cpp
+        support/mcs_tbs_calculator.cpp
         support/tbs_calculator.cpp
         support/prbs_calculator.cpp
         support/mcs_calculator.cpp

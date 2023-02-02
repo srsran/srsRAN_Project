@@ -163,15 +163,26 @@ void scheduler_event_logger::enqueue_impl(const harq_ack_event& harq_ev)
 void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf,
-                   "\n- CRC: UE={} rnti={:#x} cell={} rx_slot={} h_id={} crc={} sinr={}dB",
-                   crc_ev.ue_index,
-                   crc_ev.rnti,
-                   crc_ev.cell_index,
-                   crc_ev.sl_rx,
-                   crc_ev.h_id,
-                   crc_ev.crc,
-                   crc_ev.ul_sinr_db);
+    if (crc_ev.ul_sinr_db.has_value()) {
+      fmt::format_to(fmtbuf,
+                     "\n- CRC: UE={} rnti={:#x} cell={} rx_slot={} h_id={} crc={} sinr={}dB",
+                     crc_ev.ue_index,
+                     crc_ev.rnti,
+                     crc_ev.cell_index,
+                     crc_ev.sl_rx,
+                     crc_ev.h_id,
+                     crc_ev.crc,
+                     crc_ev.ul_sinr_db.value());
+    } else {
+      fmt::format_to(fmtbuf,
+                     "\n- CRC: UE={} rnti={:#x} cell={} rx_slot={} h_id={} crc={} sinr=N/A",
+                     crc_ev.ue_index,
+                     crc_ev.rnti,
+                     crc_ev.cell_index,
+                     crc_ev.sl_rx,
+                     crc_ev.h_id,
+                     crc_ev.crc);
+    }
   } else if (logger.info.enabled()) {
     fmt::format_to(fmtbuf, "{}CRC ind", separator());
   }

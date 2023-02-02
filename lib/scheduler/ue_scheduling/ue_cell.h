@@ -19,12 +19,20 @@ namespace srsgnb {
 
 struct ul_crc_pdu_indication;
 
+struct grant_prbs_mcs {
+  /// MCS to use for the UE's PUSCH.
+  sch_mcs_index mcs;
+  /// Number of PRBs to be allocated for the UE's PUSCH.
+  unsigned n_prbs;
+};
+
 /// \brief Context respective to a UE serving cell.
 class ue_cell
 {
 public:
   struct metrics {
     /// Save the latest PUSCH SNR reported from PHY, in dB.
+    // NOTE: the 0 is only used for initialization and will be overwritten by the first UL SNR report.
     double   pusch_snr_db          = 0.0;
     unsigned consecutive_pusch_kos = 0;
     // TODO: Add other metrics of interest for the scheduler.
@@ -50,13 +58,11 @@ public:
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
 
-  double get_pusch_snr() const { return ue_metrics.pusch_snr_db; }
-
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   unsigned required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
-  unsigned required_ul_prbs(unsigned time_resource, unsigned pending_bytes) const;
+  grant_prbs_mcs required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul_rnti_config_type type) const;
 
   /// \brief Derive UL resource allocation type1 BWP configuration as per TS38.214, 6.1.2.2.2.
   bwp_configuration alloc_type1_bwp_limits(dci_ul_format dci_fmt, search_space_configuration::type_t ss_type) const
@@ -76,7 +82,12 @@ public:
 
 private:
   /// Update PUSCH SNR metric of the UE.
-  void update_pusch_snr(double snr) { ue_metrics.pusch_snr_db = snr; }
+  void update_pusch_snr(optional<float> snr)
+  {
+    if (snr.has_value()) {
+      ue_metrics.pusch_snr_db = static_cast<double>(snr.value());
+    }
+  }
 
   rnti_t                            crnti_;
   const scheduler_ue_expert_config& expert_cfg;

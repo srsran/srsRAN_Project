@@ -11,7 +11,7 @@
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
-#include "../support/pusch/mcs_tbs_prbs_calculator.h"
+#include "../support/mcs_tbs_calculator.h"
 #include "../support/tbs_calculator.h"
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
@@ -332,22 +332,14 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Compute MCS and TBS for this transmission.
-  // TODO: get SNR from PHY.
-  double                       ul_snr{15};
-  optional<pusch_mcs_tbs_prbs> mcs_tbs_info;
+  optional<pusch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
   if (h_ul.empty()) {
-    // If the initial MCS is set in the expert config, apply that value, else compute it from the SNR.
-    sch_mcs_index initial_mcs =
-        expert_cfg.fixed_ul_mcs.has_value() ? expert_cfg.fixed_ul_mcs.value() : map_snr_to_mcs_ul(ul_snr);
-    mcs_tbs_info =
-        compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, u.pending_ul_newtx_bytes(), initial_mcs, grant.crbs.length());
+    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length());
   }
   // If it's a reTx, fetch the MCS and TBS from the previous transmission.
   else {
-    mcs_tbs_info.emplace(pusch_mcs_tbs_prbs{.mcs    = h_ul.last_tx_params().mcs,
-                                            .tbs    = h_ul.last_tx_params().tbs_bytes,
-                                            .n_prbs = h_ul.last_tx_params().prbs.prbs().length()});
+    mcs_tbs_info.emplace(pusch_mcs_tbs{.mcs = h_ul.last_tx_params().mcs, .tbs = h_ul.last_tx_params().tbs_bytes});
   }
 
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
@@ -356,13 +348,8 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
 
-  // Update CRBs interval if the used nof PRBs is less than the total available for PUSCH.
-  crb_interval crbs = grant.crbs.length() != mcs_tbs_info->n_prbs
-                          ? crb_interval{grant.crbs.start(), grant.crbs.start() + mcs_tbs_info->n_prbs}
-                          : grant.crbs;
-
   // Mark resources as occupied in the ResourceGrid.
-  pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, crbs});
+  pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, grant.crbs});
 
   // Compute the available PRBs in the grid for this transmission.
   prb_interval prbs = crb_to_prb(bwp_lims, grant.crbs);

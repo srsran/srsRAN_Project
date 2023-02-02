@@ -39,7 +39,7 @@ public:
     slot_point      sl_rx;
     harq_id_t       h_id;
     bool            crc;
-    double          ul_sinr_db;
+    optional<float> ul_sinr_db;
   };
   struct harq_ack_event {
     du_ue_index_t   ue_index;
