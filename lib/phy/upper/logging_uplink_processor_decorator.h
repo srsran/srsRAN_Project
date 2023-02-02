@@ -39,13 +39,13 @@ public:
 
   // See interface for documentation.
   void process_pusch(span<uint8_t>                      data,
-                     rx_softbuffer&                     softbuffer,
+                     unique_rx_softbuffer               softbuffer,
                      upper_phy_rx_results_notifier&     notifier,
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override
   {
     logger.set_context(pdu.pdu.slot.sfn(), pdu.pdu.slot.slot_index());
-    uplink_proc->process_pusch(data, softbuffer, notifier, grid, pdu);
+    uplink_proc->process_pusch(data, std::move(softbuffer), notifier, grid, pdu);
   }
 
   // See interface for documentation.

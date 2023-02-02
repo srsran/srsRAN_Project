@@ -29,7 +29,7 @@ public:
   }
 
   void process_pusch(span<uint8_t>                      data,
-                     rx_softbuffer&                     softbuffer,
+                     unique_rx_softbuffer               softbuffer,
                      upper_phy_rx_results_notifier&     notifier,
                      const resource_grid_reader&        grid,
                      const uplink_processor::pusch_pdu& pdu) override

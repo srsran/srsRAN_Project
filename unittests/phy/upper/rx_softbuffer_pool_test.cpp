@@ -33,7 +33,7 @@ static void test_softbuffer_limit()
   TESTASSERT(pool);
 
   // Create as many softbuffers as the limit is set.
-  std::vector<rx_softbuffer*> softbuffers;
+  std::vector<unique_rx_softbuffer> softbuffers;
   for (unsigned rnti = 0; rnti != pool_config.max_softbuffers; ++rnti) {
     rx_softbuffer_identifier softbuffer_id;
     softbuffer_id.harq_ack_id = 0;
@@ -41,7 +41,7 @@ static void test_softbuffer_limit()
 
     // Reserve softbuffer, it shall not fail.
     softbuffers.emplace_back(pool->reserve_softbuffer(slot, softbuffer_id, 1));
-    TESTASSERT(softbuffers.back());
+    TESTASSERT(softbuffers.back().is_valid());
   }
 
   // Create one more softbuffer. No softbuffers are available. It must fail to reserve.
@@ -49,7 +49,7 @@ static void test_softbuffer_limit()
   softbuffer_id.harq_ack_id = 0;
   softbuffer_id.rnti        = static_cast<uint16_t>(pool_config.max_softbuffers);
   softbuffers.emplace_back(pool->reserve_softbuffer(slot, softbuffer_id, 1));
-  TESTASSERT(softbuffers.back() == nullptr);
+  TESTASSERT(!softbuffers.back().is_valid());
 }
 
 // Tests that the pool returns nullptr when the limit of codeblocks is reached.
@@ -73,13 +73,13 @@ static void test_codeblock_limit()
   rx_softbuffer_identifier softbuffer_id0;
   softbuffer_id0.harq_ack_id = 0x3;
   softbuffer_id0.rnti        = 0x1234;
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks) != nullptr);
+  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
 
   // Create one more softbuffer. No codeblocks are available. It must fail to reserve.
   rx_softbuffer_identifier softbuffer_id1;
   softbuffer_id1.harq_ack_id = softbuffer_id0.harq_ack_id + 1;
   softbuffer_id1.rnti        = 0x1234;
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, 1) == nullptr);
+  TESTASSERT(!pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());
 }
 
 // Tests that the pool frees reserved softbuffer.
@@ -103,22 +103,22 @@ static void test_softbuffer_free()
   rx_softbuffer_identifier softbuffer_id0;
   softbuffer_id0.harq_ack_id = 0x3;
   softbuffer_id0.rnti        = 0x1234;
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks) != nullptr);
+  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
 
   // Reserve softbuffer with the same identifier. It shall not fail.
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks) != nullptr);
+  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
 
   // Reserve softbuffer with a different identifier. It shall fail.
   rx_softbuffer_identifier softbuffer_id1;
   softbuffer_id1.harq_ack_id = softbuffer_id0.harq_ack_id + 1;
   softbuffer_id1.rnti        = 0x1234;
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks) == nullptr);
+  TESTASSERT(!pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());
 
   // Free the first softbuffer identifier.
   pool->free_softbuffer(softbuffer_id0);
 
   // Reserve softbuffer with all the codeblocks, it shall not fail.
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks) != nullptr);
+  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());
 }
 
 // Tests that the pool expires softbuffers after the last reserved slot.
@@ -144,12 +144,12 @@ static void test_softbuffer_expire()
   rx_softbuffer_identifier softbuffer_id0;
   softbuffer_id0.harq_ack_id = 0x3;
   softbuffer_id0.rnti        = 0x1234;
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks) != nullptr);
+  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
 
   // Run slot and reserve the same softbuffer.
   slot += delay;
   pool->run_slot(slot);
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks) != nullptr);
+  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
 
   // Run for each slot until it expires.
   do {
@@ -157,7 +157,7 @@ static void test_softbuffer_expire()
     rx_softbuffer_identifier softbuffer_id1;
     softbuffer_id1.harq_ack_id = softbuffer_id0.harq_ack_id + 1;
     softbuffer_id1.rnti        = 0x1234;
-    TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks) == nullptr);
+    TESTASSERT(!pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());
     ++slot;
     pool->run_slot(slot);
   } while (slot.system_slot() < pool_config.expire_timeout_slots + delay);
@@ -166,7 +166,7 @@ static void test_softbuffer_expire()
   rx_softbuffer_identifier softbuffer_id2;
   softbuffer_id2.harq_ack_id = softbuffer_id0.harq_ack_id + 2;
   softbuffer_id2.rnti        = 0x1234;
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id2, pool_config.max_nof_codeblocks) != nullptr);
+  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id2, pool_config.max_nof_codeblocks).is_valid());
 }
 
 // Tests softbuffer soft bits contents persists between retransmissions.
@@ -196,41 +196,51 @@ static void test_softbuffer_contents()
   softbuffer_id.harq_ack_id = 0x3;
   softbuffer_id.rnti        = 0x1234;
 
-  // Reserve softbuffer, it shall not fail.
-  rx_softbuffer* softbuffer0 = pool->reserve_softbuffer(slot, softbuffer_id, nof_cb_x_buffer);
-  TESTASSERT(softbuffer0 != nullptr);
+  // Temporal storage of softbuffer codeblock information.
+  std::vector<span<log_likelihood_ratio>> cb_soft_bits;
+  std::vector<bit_buffer>                 cb_data_bits;
 
-  // For each codeblock...
-  for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
-    // Get codeblock soft and data bits.
-    span<log_likelihood_ratio> buffer      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
-    bit_buffer                 data_buffer = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
+  // Note: two softbuffers with the same identifier cannot be simultaneously in scope.
+  {
+    // Reserve softbuffer, it shall not fail.
+    unique_rx_softbuffer softbuffer = pool->reserve_softbuffer(slot, softbuffer_id, nof_cb_x_buffer);
+    TESTASSERT(softbuffer.is_valid());
 
-    // Make sure size matches.
-    TESTASSERT(buffer.size() == cb_size);
-    TESTASSERT(data_buffer.size() == data_size);
+    // For each codeblock...
+    for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
+      // Get codeblock soft and data bits.
+      span<log_likelihood_ratio> buffer      = softbuffer.get_codeblock_soft_bits(cb_id, cb_size);
+      bit_buffer                 data_buffer = softbuffer.get_codeblock_data_bits(cb_id, data_size);
 
-    // Write data in codeblock.
-    for (unsigned bit_idx = 0; bit_idx != cb_size; ++bit_idx) {
-      int8_t data     = (cb_id << 4) | bit_idx;
-      buffer[bit_idx] = data;
-      if (bit_idx < data_size) {
-        data_buffer.insert(bit_idx & 1U, bit_idx, 1);
+      cb_soft_bits.emplace_back(buffer);
+      cb_data_bits.emplace_back(data_buffer);
+
+      // Make sure size matches.
+      TESTASSERT(buffer.size() == cb_size);
+      TESTASSERT(data_buffer.size() == data_size);
+
+      // Write data in codeblock.
+      for (unsigned bit_idx = 0; bit_idx != cb_size; ++bit_idx) {
+        int8_t data     = (cb_id << 4) | bit_idx;
+        buffer[bit_idx] = data;
+        if (bit_idx < data_size) {
+          data_buffer.insert(bit_idx & 1U, bit_idx, 1);
+        }
       }
     }
   }
 
   // Reserve softbuffer, it shall not fail.
-  rx_softbuffer* softbuffer1 = pool->reserve_softbuffer(slot, softbuffer_id, nof_cb_x_buffer);
-  TESTASSERT(softbuffer1 != nullptr);
+  unique_rx_softbuffer softbuffer = pool->reserve_softbuffer(slot, softbuffer_id, nof_cb_x_buffer);
+  TESTASSERT(softbuffer.is_valid());
 
   // For each codeblock...
   for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
     // Get codeblock soft bits.
-    span<log_likelihood_ratio> buffer0      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
-    span<log_likelihood_ratio> buffer1      = softbuffer1->get_codeblock_soft_bits(cb_id, cb_size);
-    bit_buffer                 data_buffer0 = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
-    bit_buffer                 data_buffer1 = softbuffer1->get_codeblock_data_bits(cb_id, data_size);
+    span<log_likelihood_ratio> buffer0      = cb_soft_bits[cb_id];
+    span<log_likelihood_ratio> buffer1      = softbuffer.get_codeblock_soft_bits(cb_id, cb_size);
+    bit_buffer                 data_buffer0 = cb_data_bits[cb_id];
+    bit_buffer                 data_buffer1 = softbuffer.get_codeblock_data_bits(cb_id, data_size);
 
     // Make sure the data pointers match.
     TESTASSERT(buffer0.data() == buffer1.data());

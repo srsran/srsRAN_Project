@@ -16,6 +16,7 @@
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/phy/upper/uplink_processor_context.h"
 
 namespace srsgnb {
@@ -89,7 +90,7 @@ public:
   /// \param[in]     grid       Grid the capture data is stored in.
   /// \param[in]     pdu        PUSCH transmission parameters.
   virtual void process_pusch(span<uint8_t>                      data,
-                             rx_softbuffer&                     softbuffer,
+                             unique_rx_softbuffer               softbuffer,
                              upper_phy_rx_results_notifier&     notifier,
                              const resource_grid_reader&        grid,
                              const uplink_processor::pusch_pdu& pdu) = 0;

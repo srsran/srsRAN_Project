@@ -11,46 +11,40 @@
 #include "rx_softbuffer_pool_impl.h"
 
 using namespace srsgnb;
-rx_softbuffer* rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&               slot,
-                                                           const rx_softbuffer_identifier& id,
-                                                           unsigned int                    nof_codeblocks)
+unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&               slot,
+                                                                 const rx_softbuffer_identifier& id,
+                                                                 unsigned                        nof_codeblocks)
 {
   std::unique_lock<std::mutex> lock(mutex);
+  slot_point                   expire_slot = slot + expire_timeout_slots;
 
   // Look for the same identifier.
   for (rx_softbuffer_impl& buffer : buffers) {
     if (buffer.match_id(id)) {
-      slot_point expire_slot = slot + expire_timeout_slots;
-
-      // Rserve buffer.
-      buffer.reserve(id, expire_slot, nof_codeblocks);
-
-      // If the reservation failed, return nullptr.
-      if (!buffer.is_reserved()) {
-        return nullptr;
+      // Reserve buffer.
+      if (!buffer.reserve(id, expire_slot, nof_codeblocks)) {
+        // If the reservation failed, return nullptr.
+        return {};
       }
 
-      return &buffer;
+      return unique_rx_softbuffer(buffer);
     }
   }
 
   // If the same identifier was not found, select the first available.
   for (rx_softbuffer_impl& buffer : buffers) {
     if (!buffer.is_reserved()) {
-      slot_point expire_slot = slot + expire_timeout_slots;
-      buffer.reserve(id, expire_slot, nof_codeblocks);
-
-      // If the reservation failed, return nullptr.
-      if (!buffer.is_reserved()) {
-        return nullptr;
+      // If the reservation failed, return an invalid buffer.
+      if (!buffer.reserve(id, expire_slot, nof_codeblocks)) {
+        return {};
       }
 
-      return &buffer;
+      return unique_rx_softbuffer(buffer);
     }
   }
 
-  // If no available buffer is found...
-  return nullptr;
+  // If no available buffer is found return an invalid buffer.
+  return {};
 }
 
 void rx_softbuffer_pool_impl::free_softbuffer(const rx_softbuffer_identifier& id)

@@ -122,9 +122,10 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
   unsigned nof_codeblocks =
       ldpc::compute_nof_codeblocks(units::bytes(pdu.tb_size).to_bits(), proc_pdu.codeword->ldpc_base_graph);
 
-  if (rx_softbuffer* buffer = softbuffer_pool.reserve_softbuffer(slot, id, nof_codeblocks)) {
+  unique_rx_softbuffer buffer = softbuffer_pool.reserve_softbuffer(slot, id, nof_codeblocks);
+  if (buffer.is_valid()) {
     auto payload = rx_payload_pool.acquire_payload_buffer(pdu.tb_size);
-    ul_processor.process_pusch(payload, *buffer, rx_results_notifier, grid, pdu);
+    ul_processor.process_pusch(payload, std::move(buffer), rx_results_notifier, grid, pdu);
     return;
   }
 

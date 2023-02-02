@@ -119,8 +119,8 @@ int main(int argc, char** argv)
     TESTASSERT(pool);
 
     // Reserve softbuffer.
-    rx_softbuffer* softbuffer = pool->reserve_softbuffer({}, {}, nof_codeblocks);
-    TESTASSERT(softbuffer);
+    unique_rx_softbuffer softbuffer = pool->reserve_softbuffer({}, {}, nof_codeblocks);
+    TESTASSERT(softbuffer.is_valid());
 
     pusch_decoder::configuration dec_cfg = {};
 
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
       dec_cfg.segmenter_cfg = cfg;
 
       decoder->decode(
-          rx_tb, dec_stats, softbuffer, span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws), dec_cfg);
+          rx_tb, dec_stats, &softbuffer, span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws), dec_cfg);
       cw_offset += cws;
       dec_cfg.new_data = false;
 
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
       }
 
       // Force all CRCs to false to test LLR combining.
-      softbuffer->reset_codeblocks_crc();
+      softbuffer.reset_codeblocks_crc();
     }
   }
 }

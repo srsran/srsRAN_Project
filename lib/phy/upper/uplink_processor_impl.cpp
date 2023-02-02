@@ -11,6 +11,7 @@
 #include "uplink_processor_impl.h"
 #include "srsgnb/phy/support/prach_buffer.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
 #include "srsgnb/support/executors/task_executor.h"
 
@@ -53,12 +54,17 @@ void uplink_processor_impl::process_prach(upper_phy_rx_results_notifier& notifie
 }
 
 void uplink_processor_impl::process_pusch(span<uint8_t>                      data,
-                                          rx_softbuffer&                     softbuffer,
+                                          unique_rx_softbuffer               softbuffer,
                                           upper_phy_rx_results_notifier&     notifier,
                                           const resource_grid_reader&        grid,
                                           const uplink_processor::pusch_pdu& pdu)
 {
   pusch_processor_result proc_result = pusch_proc->process(data, softbuffer, grid, pdu.pdu);
+
+  // Unlock softbuffer by moving out of the context.
+  {
+    unique_rx_softbuffer me = std::move(softbuffer);
+  }
 
   ul_pusch_results result;
   result.slot = pdu.pdu.slot;

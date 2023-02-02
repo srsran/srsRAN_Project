@@ -108,9 +108,11 @@ public:
 };
 
 /// Implements a receiver softbuffer interface.
-class rx_softbuffer_impl : public rx_softbuffer
+class rx_softbuffer_impl : public unique_rx_softbuffer::softbuffer
 {
 private:
+  /// Indicates whether the softbuffer is in use.
+  bool is_locked = false;
   /// Reservation identifier.
   rx_softbuffer_identifier reservation_id;
   /// Indicates the slot the softbuffer will expire at.
@@ -131,18 +133,29 @@ public:
   }
 
   /// \brief Reserves the buffer.
+  ///
+  /// The reservation is unsuccessful if:
+  /// - the softbuffer is locked (i.e., not active in a scope), or
+  /// - it fails to reserve codeblocks them from the pool.
+  ///
   /// \param[in] id Indicates the reservation identifier.
   /// \param[in] expire_slot Indicates the slot at which the reservation expires.
   /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
-  void reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
+  ///  \return Returns true if the reservation is successful, otherwise false.
+  bool reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
   {
+    // It cannot be reserved if it is locked.
+    if (is_locked) {
+      return false;
+    }
+
     // Update reservation information.
     reservation_id          = id;
     reservation_expire_slot = expire_slot;
 
     // If the number of codeblocks match, skip the rest.
     if (nof_codeblocks == codeblock_ids.size()) {
-      return;
+      return true;
     }
 
     // Make sure there are no buffers before reserving.
@@ -163,14 +176,20 @@ public:
       if (cb_id == rx_softbuffer_codeblock_pool::UNRESERVED_CB_ID) {
         // Free the rest of the softbuffer.
         free();
-        return;
+        return false;
       }
     }
+
+    return true;
   }
 
-  /// Returns the reservation to the pool.
+  /// \brief Returns the reservation to the pool.
+  /// \remark An assertion is triggered is the softbuffer is locked.
   void free()
   {
+    srsgnb_assert(
+        !is_locked, "Softbuffer is locked for rnti=0x{:04x} harq={}.", reservation_id.rnti, reservation_id.harq_ack_id);
+
     // Free codeblocks.
     for (unsigned cb_id : codeblock_ids) {
       codeblock_pool.free(cb_id);
@@ -184,7 +203,12 @@ public:
   /// \param[in] slot Indicates the current slot.
   void run_slot(const slot_point& slot)
   {
-    // Skip if it is not reseved.
+    // No actions can be taken in locked softbuffers.
+    if (is_locked) {
+      return;
+    }
+
+    // Skip if it is not reserved.
     if (!is_reserved()) {
       return;
     }
@@ -257,6 +281,12 @@ public:
         data_size <= data_max_size, "Codeblock data size {} exceeds maximum size {}.", data_size, data_max_size);
     return codeblock_pool.get_data_bits(cb_id).first(data_size);
   }
+
+  // See interface for documentation.
+  void lock() override { is_locked = true; }
+
+  // See interface for documentation.
+  void unlock() override { is_locked = false; }
 };
 
 /// Describes a receiver softbuffer pool.
@@ -284,7 +314,7 @@ public:
   }
 
   // See interface for documentation.
-  rx_softbuffer*
+  unique_rx_softbuffer
   reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned nof_codeblocks) override;
 
   // See interface for documentation.

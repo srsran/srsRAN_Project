@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/phy/upper/rx_softbuffer.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/ran/slot_point.h"
 #include <cstdint>
 
@@ -64,7 +65,7 @@ public:
   /// \param[in] id Identifies the softbuffer.
   /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
   /// \return A pointer to the reserved softbuffer if the reservation was successful. Otherwise, \c nullptr.
-  virtual rx_softbuffer*
+  virtual unique_rx_softbuffer
   reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned nof_codeblocks) = 0;
 
   /// \brief Releases the specified softbuffer.
