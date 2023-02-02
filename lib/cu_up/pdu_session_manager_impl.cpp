@@ -39,11 +39,6 @@ pdu_session_manager_impl::~pdu_session_manager_impl()
   for (auto& session_it : pdu_sessions) {
     // Remove GTP-U tunnel from GTP-U demux
     gtpu_rx_demux.remove_tunnel(session_it.second->local_teid);
-
-    for (auto& drb_it : session_it.second->drbs) {
-      // Remove F1-U bearer from F1-U gateway
-      f1u_gw.remove_cu_bearer(drb_it.second->f1u_ul_teid);
-    }
   }
 }
 
@@ -138,15 +133,15 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
     pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1_adapter;
     pdcp_msg.timers                               = &timers;
-    new_drb->pdcp_bearer                          = srsgnb::create_pdcp_entity(pdcp_msg);
+    new_drb->pdcp                                 = srsgnb::create_pdcp_entity(pdcp_msg);
 
     // Connect "PDCP-E1" adapter to E1
     new_drb->pdcp_tx_to_e1_adapter.connect_e1(); // TODO: pass actual E1 handler
     new_drb->pdcp_rx_to_e1_adapter.connect_e1(); // TODO: pass actual E1 handler
 
     // Create  F1-U bearer
-    uint32_t    f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
-    f1u_bearer* f1u_bearer =
+    uint32_t f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
+    new_drb->f1u =
         f1u_gw.create_cu_bearer(ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
     new_drb->f1u_ul_teid = f1u_ul_teid;
 
@@ -162,9 +157,9 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
                   session.pdu_session_id);
 
     // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
-    new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp_bearer->get_rx_lower_interface(),
-                                              new_drb->pdcp_bearer->get_tx_lower_interface());
-    new_drb->pdcp_to_f1u_adapter.connect_f1u(f1u_bearer->get_tx_sdu_handler());
+    new_drb->f1u_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_rx_lower_interface(),
+                                              new_drb->pdcp->get_tx_lower_interface());
+    new_drb->pdcp_to_f1u_adapter.connect_f1u(new_drb->f1u->get_tx_sdu_handler());
 
     // Create QoS flows
     for (size_t k = 0; k < drb.qos_flow_info_to_be_setup.size(); ++k) {
@@ -187,7 +182,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
       // Connect the DRB's "PDCP->SDAP adapter" directly to SDAP
       new_drb->pdcp_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_rx_pdu_handler());
       // Connect SDAP's "SDAP->PDCP adapter" directly to PDCP
-      new_session->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp_bearer->get_tx_upper_data_interface());
+      new_session->sdap_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
 
       // Add QoS flow creation result
       flow_result.success = true;
@@ -276,10 +271,7 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
                   drb_to_rem.drb_id,
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
-    // remove F1-U bearer from F1-U gateway
-    f1u_gw.remove_cu_bearer(drb_iter->second->f1u_ul_teid);
-
-    // remove DRB
+    // remove DRB (this will automatically disconnect from F1-U gateway)
     pdu_session->drbs.erase(drb_iter);
 
     logger.info("Removed DRB. drb_id={}, pdu_session_id={}.", drb_to_rem.drb_id, session.pdu_session_id);

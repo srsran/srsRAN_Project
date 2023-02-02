@@ -74,7 +74,7 @@ protected:
   }
 
   dummy_e1_notifier                           e1_message_notifier;
-  dummy_f1u_bearer                            f1u_bearer;
+  dummy_inner_f1u_bearer                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>          f1u_gw;
   std::unique_ptr<io_broker>                  broker;
   std::unique_ptr<srs_cu_up::cu_up_interface> cu_up;

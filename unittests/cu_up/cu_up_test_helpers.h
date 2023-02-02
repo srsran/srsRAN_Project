@@ -55,9 +55,9 @@ public:
   void on_new_pdu(byte_buffer /*buf*/, const ::sockaddr_storage& /*addr*/) override {}
 };
 
-class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,
-                               public srs_cu_up::f1u_rx_pdu_handler,
-                               public srs_cu_up::f1u_tx_sdu_handler
+class dummy_inner_f1u_bearer final : public srs_cu_up::f1u_bearer,
+                                     public srs_cu_up::f1u_rx_pdu_handler,
+                                     public srs_cu_up::f1u_tx_sdu_handler
 {
 private:
   srs_cu_up::f1u_rx_sdu_notifier* rx_sdu_notifier = nullptr;
@@ -69,8 +69,8 @@ private:
 public:
   std::list<uint32_t> tx_discard_sdu_list;
 
-  dummy_f1u_bearer()  = default;
-  ~dummy_f1u_bearer() = default;
+  dummy_inner_f1u_bearer()  = default;
+  ~dummy_inner_f1u_bearer() = default;
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
@@ -118,23 +118,54 @@ public:
   }
 };
 
+class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,
+                               public srs_cu_up::f1u_rx_pdu_handler,
+                               public srs_cu_up::f1u_tx_sdu_handler
+{
+public:
+  dummy_f1u_bearer(dummy_inner_f1u_bearer& inner_, srs_cu_up::f1u_bearer_origin& origin_, uint32_t ul_teid_) :
+    inner(inner_), origin(origin_), ul_teid(ul_teid_)
+  {
+  }
+  virtual ~dummy_f1u_bearer() { origin.remove_cu_bearer(ul_teid); };
+
+  virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
+  virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
+
+  void connect_f1u_rx_sdu_notifier(srs_cu_up::f1u_rx_sdu_notifier& rx_sdu_notifier_)
+  {
+    inner.connect_f1u_rx_sdu_notifier(rx_sdu_notifier_);
+  }
+
+  void handle_pdu(nru_ul_message msg) final { inner.handle_pdu(std::move(msg)); }
+
+  void discard_sdu(uint32_t pdcp_sn) final { inner.discard_sdu(pdcp_sn); };
+
+  void handle_sdu(pdcp_tx_pdu sdu) final { inner.handle_sdu(std::move(sdu)); }
+
+private:
+  dummy_inner_f1u_bearer&       inner;
+  srs_cu_up::f1u_bearer_origin& origin;
+  uint32_t                      ul_teid;
+};
+
 class dummy_f1u_gateway final : public f1u_cu_up_gateway
 {
 private:
-  dummy_f1u_bearer& bearer;
+  dummy_inner_f1u_bearer& bearer;
 
 public:
-  explicit dummy_f1u_gateway(dummy_f1u_bearer& bearer_) : bearer(bearer_) {}
+  explicit dummy_f1u_gateway(dummy_inner_f1u_bearer& bearer_) : bearer(bearer_) {}
   ~dummy_f1u_gateway() override = default;
 
-  srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ue_index,
-                                          uint32_t                             ul_teid,
-                                          srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
-                                          srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
+  std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
+                                                          uint32_t                             ul_teid,
+                                                          srs_cu_up::f1u_rx_delivery_notifier& cu_delivery,
+                                                          srs_cu_up::f1u_rx_sdu_notifier&      cu_rx) override
   {
     created_ul_teid_list.push_back(ul_teid);
     bearer.connect_f1u_rx_sdu_notifier(cu_rx);
-    return &bearer;
+    return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_teid);
   };
   void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override { attached_ul_teid_list.push_back(ul_teid); };
   void remove_cu_bearer(uint32_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); };

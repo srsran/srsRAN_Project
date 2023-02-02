@@ -18,11 +18,15 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                  ue_index,
                                  drb_id_t                  drb_id_,
                                  f1u_tx_pdu_notifier&      tx_pdu_notifier_,
                                  f1u_rx_delivery_notifier& rx_delivery_notifier_,
-                                 f1u_rx_sdu_notifier&      rx_sdu_notifier_) :
+                                 f1u_rx_sdu_notifier&      rx_sdu_notifier_,
+                                 f1u_bearer_origin&        origin_,
+                                 uint32_t                  ul_teid_) :
   logger("F1-U", {ue_index, drb_id_}),
   tx_pdu_notifier(tx_pdu_notifier_),
   rx_delivery_notifier(rx_delivery_notifier_),
-  rx_sdu_notifier(rx_sdu_notifier_)
+  rx_sdu_notifier(rx_sdu_notifier_),
+  origin(origin_),
+  ul_teid(ul_teid_)
 {
   (void)rx_delivery_notifier;
 }

@@ -43,7 +43,7 @@ protected:
   timer_manager                                        timers;
   std::unique_ptr<dummy_gtpu_demux_ctrl>               gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
-  dummy_f1u_bearer                                     f1u_bearer;
+  dummy_inner_f1u_bearer                               f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>                   f1u_gw;
   std::unique_ptr<pdu_session_manager_ctrl>            pdu_session_mng;
   network_interface_config                             net_config;

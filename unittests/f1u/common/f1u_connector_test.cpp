@@ -91,8 +91,8 @@ TEST_F(f1u_connector_test, create_new_connector)
   EXPECT_NE(f1u_conn->get_f1u_cu_up_gateway(), nullptr);
 }
 
-/// Test attaching F1-U bearer at CU-UP and DU
-TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
+/// Test attaching/detaching F1-U bearer at CU-UP and DU
+TEST_F(f1u_connector_test, attach_detach_cu_up_f1u_to_du_f1u)
 {
   f1u_cu_up_gateway*      cu_gw = f1u_conn->get_f1u_cu_up_gateway();
   srs_du::f1u_du_gateway* du_gw = f1u_conn->get_f1u_du_gateway();
@@ -101,9 +101,9 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
   uint32_t dl_teid = 2;
 
   // Create CU TX notifier adapter
-  dummy_f1u_cu_up_rx_sdu_notifier      cu_rx;
-  dummy_f1u_cu_up_rx_delivery_notifier cu_delivery;
-  srs_cu_up::f1u_bearer*               cu_bearer = cu_gw->create_cu_bearer(0, ul_teid, cu_delivery, cu_rx);
+  dummy_f1u_cu_up_rx_sdu_notifier        cu_rx;
+  dummy_f1u_cu_up_rx_delivery_notifier   cu_delivery;
+  std::unique_ptr<srs_cu_up::f1u_bearer> cu_bearer = cu_gw->create_cu_bearer(0, ul_teid, cu_delivery, cu_rx);
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_rx_sdu_notifier du_rx;
@@ -128,6 +128,16 @@ TEST_F(f1u_connector_test, attach_cu_up_f1u_to_du_f1u)
 
   ASSERT_EQ(du_rx.last_sdu, du_exp);
   ASSERT_EQ(cu_rx.last_sdu, cu_exp);
+
+  // Delete CU bearer
+  cu_bearer.reset();
+
+  // Check DU-> CU-UP path is properly detached
+  byte_buffer             du_buf2 = make_byte_buffer("LMNO");
+  byte_buffer             cu_exp2 = du_buf2.deep_copy();
+  byte_buffer_slice_chain du_slice2{du_buf2.deep_copy()};
+  du_bearer->get_tx_sdu_handler().handle_sdu(std::move(du_slice2));
+  ASSERT_EQ(cu_rx.last_sdu, cu_exp); // Last SDU should not have changed
 }
 
 int main(int argc, char** argv)

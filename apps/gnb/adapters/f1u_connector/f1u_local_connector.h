@@ -21,11 +21,11 @@
 namespace srsgnb {
 
 struct f1u_cu_bearer {
-  std::unique_ptr<f1u_dl_local_adapter>  cu_tx      = nullptr;
-  std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer = nullptr;
-  optional<uint32_t>                     dl_teid; ///< holds the dl_teid to disconnect UL at DU upon bearer removal
-  f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, std::unique_ptr<srs_cu_up::f1u_bearer> f1u_bearer_) :
-    cu_tx(std::move(cu_tx_)), f1u_bearer(std::move(f1u_bearer_))
+  std::unique_ptr<f1u_dl_local_adapter> cu_tx      = nullptr;
+  srs_cu_up::f1u_bearer*                f1u_bearer = nullptr;
+  optional<uint32_t>                    dl_teid; ///< holds the dl_teid to disconnect UL at DU upon bearer removal
+  f1u_cu_bearer(std::unique_ptr<f1u_dl_local_adapter> cu_tx_, srs_cu_up::f1u_bearer* f1u_bearer_) :
+    cu_tx(std::move(cu_tx_)), f1u_bearer(f1u_bearer_)
   {
   }
 };
@@ -50,12 +50,12 @@ public:
   srs_du::f1u_du_gateway* get_f1u_du_gateway() { return this; }
   f1u_cu_up_gateway*      get_f1u_cu_up_gateway() { return this; }
 
-  srs_cu_up::f1u_bearer* create_cu_bearer(uint32_t                             ue_index,
-                                          uint32_t                             ul_teid,
-                                          srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
-                                          srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier) override;
-  void                   attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override;
-  void                   remove_cu_bearer(uint32_t ul_teid) override;
+  std::unique_ptr<srs_cu_up::f1u_bearer> create_cu_bearer(uint32_t                             ue_index,
+                                                          uint32_t                             ul_teid,
+                                                          srs_cu_up::f1u_rx_delivery_notifier& rx_delivery_notifier,
+                                                          srs_cu_up::f1u_rx_sdu_notifier& rx_sdu_notifier) override;
+  void                                   attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override;
+  void                                   remove_cu_bearer(uint32_t ul_teid) override;
 
   srs_du::f1u_bearer*
   create_du_bearer(uint32_t ue_index, uint32_t dl_teid, uint32_t ul_teid, srs_du::f1u_rx_sdu_notifier& du_rx) override;
