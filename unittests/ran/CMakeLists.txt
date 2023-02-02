@@ -23,11 +23,11 @@ add_test(dci_packing_test dci_packing_test)
 
 add_executable(pdcch_candidates_common pdcch/pdcch_candidates_common_test.cpp)
 target_link_libraries(pdcch_candidates_common srsgnb_support srsgnb_ran gtest gtest_main)
-add_test(pdcch_candidates_common pdcch_candidates_common)
+add_test_vector(pdcch_candidates_common none "")
 
 add_executable(pdcch_candidates_ue pdcch/pdcch_candidates_ue_test.cpp)
 target_link_libraries(pdcch_candidates_ue srsgnb_support srsgnb_ran gtest gtest_main)
-add_test(pdcch_candidates_ue pdcch_candidates_ue)
+add_test_vector(pdcch_candidates_ue none "")
 
 add_executable(pdcch_type0_css_coreset_config_test pdcch/pdcch_type0_css_coreset_config_test.cpp)
 target_link_libraries(pdcch_type0_css_coreset_config_test srsgnb_ran srslog)

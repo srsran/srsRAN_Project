@@ -18,6 +18,16 @@ static pdcch_candidate_list pdcch_candidates_get_lowest_cce(unsigned Y_p,
                                                             unsigned nof_candidates,
                                                             unsigned nof_cce_coreset)
 {
+  // Assertions avoid zero division.
+  srsgnb_assert(nof_cce_coreset > 0, "Number of CORESET CCEs must be greater than zero.");
+  srsgnb_assert(L > 0, "The aggregation level must be greater than zero.");
+  srsgnb_assert(nof_cce_coreset >= L * nof_candidates,
+                "Number of CCE in a CORESET (i.e., {}) cannot lesser than the aggregation level (i.e., {}) times the "
+                "number of candidates (i.e., {}).",
+                nof_cce_coreset,
+                L,
+                nof_candidates);
+
   pdcch_candidate_list candidates;
 
   for (unsigned candidate = 0; candidate != nof_candidates; ++candidate) {
