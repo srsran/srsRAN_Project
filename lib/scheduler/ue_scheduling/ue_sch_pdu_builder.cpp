@@ -125,7 +125,8 @@ pusch_config_params srsgnb::get_pusch_config_f0_0_c_rnti(const cell_configuratio
 void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
-                                      const dci_1_0_tc_rnti_configuration& dci_cfg)
+                                      const dci_1_0_tc_rnti_configuration& dci_cfg,
+                                      bool                                 is_new_data)
 {
   static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
@@ -164,6 +165,7 @@ void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
 
   // One Codeword.
   pdsch_codeword& cw             = pdsch.codewords.emplace_back();
+  cw.is_new_data                 = is_new_data;
   cw.rv_index                    = dci_cfg.redundancy_version;
   cw.mcs_index                   = dci_cfg.modulation_coding_scheme;
   cw.mcs_table                   = mcs_table;
@@ -184,7 +186,8 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      const ue_cell_configuration&        ue_cell_cfg,
                                      bwp_id_t                            active_bwp_id,
                                      const search_space_configuration&   ss_cfg,
-                                     const dci_1_0_c_rnti_configuration& dci_cfg)
+                                     const dci_1_0_c_rnti_configuration& dci_cfg,
+                                     bool                                is_new_data)
 {
   static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
@@ -215,6 +218,7 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
 
   // One Codeword.
   pdsch_codeword& cw             = pdsch.codewords.emplace_back();
+  cw.is_new_data                 = is_new_data;
   cw.rv_index                    = dci_cfg.redundancy_version;
   cw.mcs_index                   = dci_cfg.modulation_coding_scheme;
   cw.mcs_table                   = mcs_table;

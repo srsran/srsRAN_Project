@@ -107,7 +107,6 @@ struct pdcch_ul_information {
 };
 
 /// PDSCH codeword.
-/// \remark See FAPI PDSCH PDU.
 struct pdsch_codeword {
   /// Modulation and coding scheme.
   sch_mcs_description mcs_descr;
@@ -120,6 +119,8 @@ struct pdsch_codeword {
   uint8_t rv_index;
   /// Transport block size, in bytes (see TS38.214 Section 5.1.3.2).
   uint32_t tb_size_bytes;
+  /// Whether this is the first Tx or retx of the HARQ codeword.
+  unsigned is_new_data;
 };
 
 /// \brief Information relative to a PDSCH grant in a given slot.

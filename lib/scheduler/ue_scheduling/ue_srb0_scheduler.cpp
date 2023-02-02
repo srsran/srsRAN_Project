@@ -223,7 +223,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                   u,
                          h_dl);
 
   // Fill PDSCH PDU.
-  build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0);
+  build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, true);
 
   // Set MAC logical channels to schedule in this PDU.
   u.build_dl_srb0_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);

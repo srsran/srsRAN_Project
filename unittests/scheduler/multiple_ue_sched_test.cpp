@@ -230,19 +230,25 @@ protected:
     bench->sch.handle_ul_bsr_indication(msg);
   }
 
-  bool ue_is_allocated_pdsch(const sched_test_ue& u)
+  const dl_msg_alloc* find_ue_pdsch(const sched_test_ue& u) const
   {
-    return std::any_of(bench->sched_res->dl.ue_grants.begin(),
-                       bench->sched_res->dl.ue_grants.end(),
-                       [&u](const auto& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+    auto it = std::find_if(bench->sched_res->dl.ue_grants.begin(),
+                           bench->sched_res->dl.ue_grants.end(),
+                           [&u](const auto& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+    return it == bench->sched_res->dl.ue_grants.end() ? nullptr : &*it;
   }
 
-  bool ue_is_allocated_pusch(const sched_test_ue& u)
+  bool ue_is_allocated_pdsch(const sched_test_ue& u) const { return find_ue_pdsch(u) != nullptr; }
+
+  const ul_sched_info* find_ue_pusch(const sched_test_ue& u) const
   {
-    return std::any_of(bench->sched_res->ul.puschs.begin(), bench->sched_res->ul.puschs.end(), [&u](const auto& grant) {
-      return grant.pusch_cfg.rnti == u.crnti;
-    });
+    auto it = std::find_if(bench->sched_res->ul.puschs.begin(),
+                           bench->sched_res->ul.puschs.end(),
+                           [&u](const auto& grant) { return grant.pusch_cfg.rnti == u.crnti; });
+    return it == bench->sched_res->ul.puschs.end() ? nullptr : &*it;
   }
+
+  bool ue_is_allocated_pusch(const sched_test_ue& u) const { return find_ue_pusch(u) != nullptr; }
 };
 
 TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
@@ -270,8 +276,10 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
       if (is_bsr_zero_sent[idx]) {
-        ASSERT_FALSE(ue_is_allocated_pdsch(test_ue))
-            << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
+        const auto* grant = find_ue_pdsch(test_ue);
+        srslog::flush();
+        ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].is_new_data)
+            << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
         continue;
       }
 
@@ -323,7 +331,8 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
       auto& test_ue = get_ue(to_du_ue_index(idx));
 
       if (is_bsr_zero_sent[idx]) {
-        ASSERT_FALSE(ue_is_allocated_pusch(test_ue))
+        auto* pusch = find_ue_pusch(test_ue);
+        ASSERT_TRUE(pusch == nullptr or not pusch->pusch_cfg.new_data)
             << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
         continue;
       }
