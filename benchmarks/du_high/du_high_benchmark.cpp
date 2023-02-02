@@ -299,8 +299,7 @@ public:
     du_hi->get_pdu_handler(to_du_cell_index(0)).handle_rx_data_indication(std::move(rx_ind));
 
     // Wait for UE Context Modification Response to arrive to CU.
-    unsigned count = 0;
-    for (; not sim_cu_cp.ue_created; ++count) {
+    while (not sim_cu_cp.ue_created) {
       // Need to run one slot for scheduler to handle pending events.
       run_slot();
       std::this_thread::sleep_for(std::chrono::milliseconds{1});
