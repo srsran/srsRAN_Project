@@ -8,7 +8,7 @@
 .e2e-run:
   stage: test-e2e
   image:
-    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.8
+    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.9
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -20,7 +20,11 @@
     - if: $ON_MR
       when: manual
       allow_failure: true
+      variables:
+        mark: "smoke"
     - if: $CI_DESCRIPTION =~ /Nightly/
+      variables:
+        mark: "smoke or intensive"
   artifacts:
     paths:
       - $CI_JOB_NAME/*
@@ -30,7 +34,7 @@
   script:
     - |
       cd e2e_tests
-      retina-launcher --retina-request $PWD/${REQUEST}.yml ./test_basic_e2e.py --log-cli-level=INFO --html=./log/report.html --self-contained-html --junitxml=out.xml
+      retina-launcher --retina-request $PWD/${REQUEST}.yml --self-contained-html --html=./log/report.html --junitxml=out.xml -m "${mark}" .
   after_script:
     - mv e2e_tests/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
 
@@ -41,7 +45,7 @@ e2e-build:
   extends: .build_and_unit
   stage: test-e2e
   tags:
-    - on-prem-amd64
+    - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   parallel:
     matrix:
       - AUTO_DETECT_ISA: "False"
@@ -49,10 +53,9 @@ e2e-build:
       - AUTO_DETECT_ISA: "False"
         ENABLE_TSAN: "True"
   variables:
-    # General
     OS: ubuntu-22.04
-    # Test
-    TEST_MODE: none # default, coverage, asan, tsan, valgrind, none
+    TEST_MODE: none
+    PLATFORM: "amd64"
   needs: []
   rules:
     - if: $ON_MR
@@ -72,7 +75,7 @@ e2e-build:
 ################################################################################
 ## e2e tests
 ################################################################################
-e2e-run-zmq-isa_false-tsan_false:
+zmq:
   extends: .e2e-run
   variables:
     REQUEST: "request_srsgnb_zmq"
@@ -80,7 +83,7 @@ e2e-run-zmq-isa_false-tsan_false:
   - job: "e2e-build: [False, False]"
     artifacts: true
 
-e2e-run-zmq-isa_false-tsan_true:
+zmq-tsan:
   extends: .e2e-run
   variables:
     REQUEST: "request_srsgnb_zmq"

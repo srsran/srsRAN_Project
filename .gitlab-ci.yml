@@ -313,9 +313,9 @@ pages:
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
   needs:
-    - job: e2e-run-zmq-isa_false-tsan_false
+    - job: zmq
       artifacts: true
-    - job: e2e-run-zmq-isa_false-tsan_true
+    - job: zmq-tsan
       artifacts: true
     - job: unit coverage
       artifacts: true
