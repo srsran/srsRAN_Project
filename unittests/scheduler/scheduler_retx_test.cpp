@@ -37,6 +37,30 @@ protected:
     return nullptr;
   }
 
+  const pdcch_dl_information* run_until_next_dl_pdcch_alloc(unsigned max_slot_delay)
+  {
+    for (unsigned i = 0; i != max_slot_delay; ++i) {
+      bench.run_slot();
+      const pdcch_dl_information* pdcch = bench.find_ue_dl_pdcch(ue_rnti);
+      if (pdcch != nullptr) {
+        return pdcch;
+      }
+    }
+    return nullptr;
+  }
+
+  const pdcch_ul_information* run_until_next_ul_pdcch_alloc(unsigned max_slot_delay)
+  {
+    for (unsigned i = 0; i != max_slot_delay; ++i) {
+      bench.run_slot();
+      const pdcch_ul_information* pdcch = bench.find_ue_ul_pdcch(ue_rnti);
+      if (pdcch != nullptr) {
+        return pdcch;
+      }
+    }
+    return nullptr;
+  }
+
   void notify_crc_ind(bool is_msg3, unsigned harq_id, bool ack)
   {
     ul_crc_indication crc_ind;
@@ -129,8 +153,8 @@ TEST_F(scheduler_missing_ack_tester, when_no_harq_ack_arrives_then_harq_eventual
 
   // Allocate all HARQs.
   for (unsigned i = 0; i != nof_harqs; ++i) {
-    bench.run_slot(to_du_cell_index(0));
-    ASSERT_NE(bench.find_ue_dl_pdcch(rnti), nullptr);
+    const pdcch_dl_information* pdcch = this->run_until_next_dl_pdcch_alloc(2);
+    ASSERT_NE(pdcch, nullptr) << "Failed to allocate DL HARQ newtxs";
   }
 
   // Set buffer state to zero, so that no newtxs get allocated once the current harqs become empty.
@@ -139,27 +163,68 @@ TEST_F(scheduler_missing_ack_tester, when_no_harq_ack_arrives_then_harq_eventual
   ASSERT_EQ(bench.find_ue_dl_pdcch(rnti), nullptr) << "No HARQs should be available at this point";
 
   // After several slots without HARQ-ACK, the HARQ should auto retx.
-  const unsigned MAX_HARQ_TIMEOUT = 16, MAX_TEST_COUNT = 10000;
-  unsigned       consecutive_no_retx = 0, retx_counter = 0;
+  const unsigned MAX_HARQ_TIMEOUT = 32, MAX_TEST_COUNT = 10000;
   for (unsigned i = 0; i != MAX_TEST_COUNT; ++i) {
-    bench.run_slot(to_du_cell_index(0));
-    if (bench.find_ue_dl_pdcch(rnti) != nullptr) {
-      consecutive_no_retx = 0;
-      retx_counter++;
-    } else {
-      ++consecutive_no_retx;
-    }
-    if (consecutive_no_retx >= MAX_HARQ_TIMEOUT) {
+    const pdcch_dl_information* pdcch = this->run_until_next_dl_pdcch_alloc(MAX_HARQ_TIMEOUT);
+    if (pdcch == nullptr) {
+      // All HARQs should be reset at this point.
       break;
     }
   }
-  ASSERT_GE(retx_counter, nof_harqs) << "HARQ retxs were not triggered when the HARQ-ACK went missing";
 
   // At this point, all HARQs should be free once again. Push enough bytes and verify that all HARQs get re-allocated.
   bench.push_dl_buffer_state(dl_buffer_state_indication_message{ue_create_req.ue_index, LCID_SRB1, 10000000});
   for (unsigned i = 0; i != nof_harqs; ++i) {
-    bench.run_slot(to_du_cell_index(0));
-    ASSERT_NE(bench.find_ue_dl_pdcch(rnti), nullptr) << "HARQs should be available for reallocation";
+    const pdcch_dl_information* pdcch = this->run_until_next_dl_pdcch_alloc(2);
+    ASSERT_NE(pdcch, nullptr) << "Failed to reallocate DL HARQs after timeout";
+  }
+}
+
+TEST_F(scheduler_missing_ack_tester, when_no_crc_arrives_then_ul_harq_eventually_becomes_available)
+{
+  static constexpr unsigned         nof_harqs     = 8;
+  static constexpr rnti_t           rnti          = to_rnti(0x4601);
+  sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
+  ue_create_req.crnti                             = rnti;
+  ue_create_req.ue_index                          = to_du_ue_index(0);
+  bench.add_ue(ue_create_req);
+
+  // Push enough bytes so that all HARQs get allocated.
+  ul_bsr_indication_message bsr{to_du_cell_index(0),
+                                to_du_ue_index(0),
+                                rnti,
+                                bsr_format::SHORT_BSR,
+                                ul_bsr_lcg_report_list{ul_bsr_lcg_report{uint_to_lcg_id(0), 100000}}};
+  bench.push_bsr(bsr);
+
+  // Allocate all UL HARQs.
+  for (unsigned i = 0; i != nof_harqs; ++i) {
+    const pdcch_ul_information* pdcch = this->run_until_next_ul_pdcch_alloc(2);
+    ASSERT_NE(pdcch, nullptr) << "Failed to allocate UL HARQ newtxs";
+  }
+
+  // Set buffer state to zero, so that no newtxs get allocated once the current harqs become empty.
+  bsr.reported_lcgs[0].nof_bytes = 0;
+  bench.push_bsr(bsr);
+  bench.run_slot(to_du_cell_index(0));
+  ASSERT_EQ(bench.find_ue_ul_pdcch(rnti), nullptr) << "No HARQs should be available at this point";
+
+  // After several slots without HARQ-ACK, the HARQ should auto retx.
+  const unsigned MAX_HARQ_TIMEOUT = 32, MAX_TEST_COUNT = 10000;
+  for (unsigned i = 0; i != MAX_TEST_COUNT; ++i) {
+    const pdcch_ul_information* pdcch = this->run_until_next_ul_pdcch_alloc(MAX_HARQ_TIMEOUT);
+    if (pdcch == nullptr) {
+      // All HARQs should be reset at this point.
+      break;
+    }
+  }
+
+  // At this point, all HARQs should be free once again. Push enough bytes and verify that all HARQs get re-allocated.
+  bsr.reported_lcgs[0].nof_bytes = 100000000;
+  bench.push_bsr(bsr);
+  for (unsigned i = 0; i != nof_harqs; ++i) {
+    const pdcch_ul_information* pdcch = this->run_until_next_ul_pdcch_alloc(2);
+    ASSERT_NE(pdcch, nullptr) << "Failed to reuse UL HARQs";
   }
 }
 

@@ -50,6 +50,8 @@ public:
     sched->handle_dl_buffer_state_indication(upd);
   }
 
+  void push_bsr(const ul_bsr_indication_message& bsr) { sched->handle_ul_bsr_indication(bsr); }
+
   void run_slot(du_cell_index_t cell_idx = to_du_cell_index(0))
   {
     srsgnb_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", cell_idx);
@@ -65,6 +67,16 @@ public:
     for (unsigned i = 0; i != last_sched_res->dl.dl_pdcchs.size(); ++i) {
       if (last_sched_res->dl.dl_pdcchs[i].ctx.rnti == rnti) {
         return &last_sched_res->dl.dl_pdcchs[i];
+      }
+    }
+    return nullptr;
+  }
+
+  const pdcch_ul_information* find_ue_ul_pdcch(rnti_t rnti) const
+  {
+    for (unsigned i = 0; i != last_sched_res->dl.ul_pdcchs.size(); ++i) {
+      if (last_sched_res->dl.ul_pdcchs[i].ctx.rnti == rnti) {
+        return &last_sched_res->dl.ul_pdcchs[i];
       }
     }
     return nullptr;
