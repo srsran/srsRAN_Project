@@ -79,6 +79,12 @@ inline du_index_t get_du_index_from_ue_index(ue_index_t index)
   return uint_to_du_index((ue_index_to_uint(index) / MAX_NOF_UES_PER_DU));
 }
 
+/// Generate a UE index from DU index and an index.
+inline ue_index_t generate_ue_index(du_index_t du_index, uint16_t index)
+{
+  return uint_to_ue_index(du_index_to_uint(du_index) * MAX_NOF_UES_PER_DU + index);
+}
+
 /// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
 enum class cu_up_index_t : uint16_t { min = 0, max = MAX_NOF_CU_UPS - 1, invalid = MAX_NOF_CU_UPS };
 

@@ -44,7 +44,7 @@ void ngc_impl::create_ngc_ue(ue_index_t                         ue_index,
                              ngc_du_processor_control_notifier& du_processor_ctrl_notifier)
 {
   // Create UE context and store it
-  ngap_ue* ue = ue_manager.add_ngap_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
+  ngap_ue* ue = ue_manager.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
 
   if (ue == nullptr) {
     logger.error("Failed to create NGAP UE (ue_index={})", ue_index);

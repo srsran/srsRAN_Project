@@ -31,12 +31,6 @@ namespace srs_cu_cp {
 struct f1_setup_request_message;
 struct rrc_ue_creation_message;
 
-struct du_ue_context {
-  ue_index_t      ue_index    = ue_index_t::invalid;
-  du_cell_index_t pcell_index = du_cell_index_t::invalid;
-  rnti_t          c_rnti      = INVALID_RNTI;
-};
-
 /// Additional context of a SRB containing notifiers to PDCP, i.e. SRB1 and SRB2.
 struct cu_srb_pdcp_context {
   std::unique_ptr<pdcp_tx_lower_notifier>         pdcp_tx_notifier;

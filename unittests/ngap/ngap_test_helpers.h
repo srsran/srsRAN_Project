@@ -27,8 +27,12 @@ namespace srs_cu_cp {
 class ngap_test : public ::testing::Test
 {
 protected:
-  struct test_ue {
-    ue_index_t            ue_index;
+  class test_ue
+  {
+  public:
+    test_ue(ue_index_t ue_index_) : ue_index(ue_index_) {}
+
+    ue_index_t            ue_index = ue_index_t::invalid;
     optional<amf_ue_id_t> amf_ue_id;
     optional<ran_ue_id_t> ran_ue_id;
   };
@@ -51,11 +55,11 @@ protected:
   srslog::basic_logger& ngap_logger = srslog::fetch_basic_logger("NGAP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  slotted_id_table<ue_index_t, test_ue, MAX_NOF_CU_UES> test_ues;
+  std::unordered_map<ue_index_t, test_ue> test_ues;
 
   ngc_configuration               cfg;
   timer_manager                   timers;
-  ue_manager                      ue_mng;
+  dummy_ngap_ue_manager           ue_mng;
   dummy_ngc_amf_notifier          msg_notifier;
   dummy_ngc_rrc_ue_notifier       rrc_ue_notifier;
   dummy_ngc_du_processor_notifier du_processor_notifier;

@@ -44,15 +44,14 @@ void ngap_test::create_ue(ue_index_t ue_index)
   ngap_initial_ue_message msg = generate_initial_ue_message(ue_index);
   ngap->handle_initial_ue_message(msg);
 
-  test_ues.emplace(ue_index);
-  test_ues[ue_index].ue_index = ue_index;
-  test_ues[ue_index].ran_ue_id =
+  test_ues.emplace(ue_index, ue_index);
+  test_ues.at(ue_index).ran_ue_id =
       uint_to_ran_ue_id(msg_notifier.last_ngc_msg.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id.value);
 }
 
 void ngap_test::run_dl_nas_transport(ue_index_t ue_index)
 {
-  auto& ue     = test_ues[ue_index];
+  auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max) - 1));
 
@@ -68,7 +67,7 @@ void ngap_test::run_ul_nas_transport(ue_index_t ue_index)
 
 void ngap_test::run_inital_context_setup(ue_index_t ue_index)
 {
-  auto& ue = test_ues[ue_index];
+  auto& ue = test_ues.at(ue_index);
 
   ngc_message init_context_setup_request =
       generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());

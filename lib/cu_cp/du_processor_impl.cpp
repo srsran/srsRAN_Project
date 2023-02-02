@@ -183,7 +183,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   }
 
   // Create new UE context
-  du_ue* ue = ue_manager.add_du_ue(msg.c_rnti);
+  du_ue* ue = ue_manager.add_ue(context.du_index, msg.c_rnti);
   if (ue == nullptr) {
     logger.error("Could not create UE context");
     return ue_creation_complete_msg;
@@ -197,7 +197,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_task_scheds[ue->get_ue_index()].connect_du_processor(*this);
 
   // Set task schedulers
-  ue->set_task_sched(&rrc_ue_task_scheds[ue->get_ue_index()]);
+  ue->set_task_sched(rrc_ue_task_scheds[ue->get_ue_index()]);
 
   // Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
@@ -220,7 +220,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   // Create and connect DU Processor to RRC UE adapter
   rrc_ue_adapters.emplace(ue->get_ue_index());
   rrc_ue_adapters[ue->get_ue_index()].connect_rrc_ue(&rrc_ue->get_rrc_ue_control_message_handler());
-  ue->set_rrc_ue_notifier(&rrc_ue_adapters[ue->get_ue_index()]);
+  ue->set_rrc_ue_notifier(rrc_ue_adapters[ue->get_ue_index()]);
 
   // Notifiy CU-CP about the creation of the RRC UE
   cu_cp_notifier.on_rrc_ue_created(context.du_index, ue->get_ue_index(), rrc_ue);

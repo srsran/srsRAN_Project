@@ -24,6 +24,7 @@ du_processor_test::du_processor_test()
 
   // create and start DU processor
   du_processor_config_t du_cfg = {};
+  du_cfg.du_index              = uint_to_du_index(0);
 
   du_processor_obj = create_du_processor(std::move(du_cfg),
                                          cu_cp_notifier,

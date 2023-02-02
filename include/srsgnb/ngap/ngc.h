@@ -90,13 +90,6 @@ public:
   virtual void on_amf_connection_drop() = 0;
 };
 
-struct ngc_ue_context {
-  ue_index_t  ue_index                      = ue_index_t::invalid;
-  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
-  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
-  uint64_t    aggregate_maximum_bit_rate_dl = 0;
-};
-
 struct ngap_initial_ue_message {
   ue_index_t                               ue_index = ue_index_t::invalid;
   byte_buffer                              nas_pdu;

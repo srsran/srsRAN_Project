@@ -13,10 +13,12 @@
 #include "lib/ngap/ngap_asn1_helpers.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/cu_cp/ue_manager.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/async/async_task_loop.h"
+#include <unordered_map>
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -36,6 +38,171 @@ public:
 private:
   async_task_sequencer ctrl_loop{16};
   timer_manager&       timer_db;
+};
+
+struct dummy_ngap_ue : public ngap_ue {
+public:
+  dummy_ngap_ue(ue_index_t ue_index_) : ue_index(ue_index_) {}
+
+  ue_index_t get_ue_index() override { return ue_index; }
+
+  void set_aggregate_maximum_bit_rate_dl(uint64_t aggregate_maximum_bit_rate_dl_) override
+  {
+    aggregate_maximum_bit_rate_dl = aggregate_maximum_bit_rate_dl_;
+  }
+
+  ngc_rrc_ue_pdu_notifier&           get_rrc_ue_pdu_notifier() override { return *rrc_ue_pdu_notifier; }
+  ngc_rrc_ue_control_notifier&       get_rrc_ue_control_notifier() override { return *rrc_ue_ctrl_notifier; }
+  ngc_du_processor_control_notifier& get_du_processor_control_notifier() override
+  {
+    return *du_processor_ctrl_notifier;
+  }
+
+  amf_ue_id_t get_amf_ue_id() override { return amf_ue_id; }
+  ran_ue_id_t get_ran_ue_id() override { return ran_ue_id; }
+
+  uint64_t get_aggregate_maximum_bit_rate_dl() override { return aggregate_maximum_bit_rate_dl; }
+
+  bool du_ue_created   = false;
+  bool ngap_ue_created = false;
+
+  void set_ran_ue_id(ran_ue_id_t ran_ue_id_) { ran_ue_id = ran_ue_id_; }
+
+  void set_rrc_ue_pdu_notifier(ngc_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_)
+  {
+    rrc_ue_pdu_notifier = &rrc_ue_pdu_notifier_;
+  }
+
+  void set_rrc_ue_ctrl_notifier(ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
+  {
+    rrc_ue_ctrl_notifier = &rrc_ue_ctrl_notifier_;
+  }
+
+  void set_du_processor_ctrl_notifier(ngc_du_processor_control_notifier& du_processor_ctrl_notifier_)
+  {
+    du_processor_ctrl_notifier = &du_processor_ctrl_notifier_;
+  }
+
+  /// \brief Set the AMF UE ID in the UE.
+  /// \param[in] amf_ue_id The AMF UE ID to set.
+  void set_amf_ue_id(amf_ue_id_t amf_ue_id_) { amf_ue_id = amf_ue_id_; }
+
+private:
+  ue_index_t ue_index = ue_index_t::invalid;
+
+  amf_ue_id_t amf_ue_id                     = amf_ue_id_t::invalid;
+  ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
+  uint64_t    aggregate_maximum_bit_rate_dl = 0;
+
+  ngc_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
+  ngc_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
+  ngc_du_processor_control_notifier* du_processor_ctrl_notifier = nullptr;
+};
+
+struct dummy_ngap_ue_manager : public ngap_ue_manager {
+public:
+  ngap_ue* add_ue(ue_index_t                         ue_index,
+                  ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+                  ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+                  ngc_du_processor_control_notifier& du_processor_ctrl_notifier_) override
+  {
+    ran_ue_id_t ran_ue_id = get_next_ran_ue_id();
+    if (ran_ue_id == ran_ue_id_t::invalid) {
+      logger.error("No free RAN UE ID available");
+      return nullptr;
+    }
+
+    // Create UE object
+    ues.emplace(ue_index, ue_index);
+    auto& ue = ues.at(ue_index);
+
+    ue.set_ran_ue_id(ran_ue_id);
+    ue.set_rrc_ue_pdu_notifier(rrc_ue_pdu_notifier_);
+    ue.set_rrc_ue_ctrl_notifier(rrc_ue_ctrl_notifier_);
+    ue.set_du_processor_ctrl_notifier(du_processor_ctrl_notifier_);
+
+    // Add RAN UE ID to lookup
+    ran_ue_id_to_ue_index.emplace(ran_ue_id, ue_index);
+
+    return &ue;
+  }
+
+  void remove_ngap_ue(ue_index_t ue_index) override
+  {
+    // Remove UE from lookups
+    ran_ue_id_t ran_ue_id = ues.at(ue_index).get_ran_ue_id();
+    if (ran_ue_id != ran_ue_id_t::invalid) {
+      ran_ue_id_to_ue_index.erase(ran_ue_id);
+    }
+
+    amf_ue_id_t amf_ue_id = ues.at(ue_index).get_amf_ue_id();
+    if (amf_ue_id != amf_ue_id_t::invalid) {
+      amf_ue_id_to_ue_index.erase(amf_ue_id);
+    }
+
+    ues.erase(ue_index);
+  }
+
+  ngap_ue* find_ngap_ue(ue_index_t ue_index) override
+  {
+    if (ues.find(ue_index) != ues.end()) {
+      return &ues.at(ue_index);
+    }
+    return nullptr;
+  }
+
+  size_t get_nof_ngap_ues() override { return ues.size(); }
+
+  void set_amf_ue_id(ue_index_t ue_index, amf_ue_id_t amf_ue_id) override
+  {
+    if (ue_index == ue_index_t::invalid) {
+      logger.error("Invalid ue_index={}", ue_index);
+      return;
+    }
+
+    ues.at(ue_index).set_amf_ue_id(amf_ue_id);
+    // Add AMF UE ID to lookup
+    amf_ue_id_to_ue_index.emplace(amf_ue_id, ue_index);
+  }
+
+  ue_index_t get_ue_index(ran_ue_id_t ran_ue_id) override
+  {
+    if (ran_ue_id_to_ue_index.find(ran_ue_id) == ran_ue_id_to_ue_index.end()) {
+      logger.info("UE with ran_ue_id_t={} does not exist. Dropping PDU", ran_ue_id);
+      return ue_index_t::invalid;
+    }
+    return ran_ue_id_to_ue_index[ran_ue_id];
+  }
+
+  ue_index_t get_ue_index(amf_ue_id_t amf_ue_id) override
+  {
+    if (amf_ue_id_to_ue_index.find(amf_ue_id) == amf_ue_id_to_ue_index.end()) {
+      logger.info("UE with amf_ue_id_t={} does not exist. Dropping PDU", amf_ue_id);
+      return ue_index_t::invalid;
+    }
+    return amf_ue_id_to_ue_index[amf_ue_id];
+  }
+
+private:
+  ran_ue_id_t get_next_ran_ue_id()
+  {
+    // Search unallocated UE index
+    for (uint64_t i = 0; i < MAX_NOF_RAN_UES; i++) {
+      ran_ue_id_t next_ran_ue_id = uint_to_ran_ue_id(i);
+      if (ran_ue_id_to_ue_index.find(next_ran_ue_id) == ran_ue_id_to_ue_index.end()) {
+        return next_ran_ue_id;
+      }
+    }
+
+    logger.error("No RAN UE ID available");
+    return ran_ue_id_t::invalid;
+  }
+
+  std::unordered_map<ue_index_t, dummy_ngap_ue> ues;                   // ues indexed by ue_index
+  std::unordered_map<ran_ue_id_t, ue_index_t>   ran_ue_id_to_ue_index; // ue_indexes indexed by ran_ue_ids
+  std::unordered_map<amf_ue_id_t, ue_index_t>   amf_ue_id_to_ue_index; // ue_indexes indexed by amf_ue_ids
+
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
 /// Reusable notifier class that a) stores the received msg for test inspection and b)

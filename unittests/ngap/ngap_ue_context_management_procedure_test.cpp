@@ -56,7 +56,7 @@ TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_set
       test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
   this->start_procedure(ue_index);
 
-  auto& ue = test_ues[ue_index];
+  auto& ue = test_ues.at(ue_index);
 
   // Inject Initial Context Setup Request
   ngc_message init_context_setup_request =
@@ -77,7 +77,7 @@ TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_s
       test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
   this->start_procedure(ue_index);
 
-  auto& ue = test_ues[ue_index];
+  auto& ue = test_ues.at(ue_index);
 
   // Inject Initial Context Setup Request
   ngc_message init_context_setup_request =

@@ -68,7 +68,7 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwar
       test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
   this->start_procedure(ue_index);
 
-  auto& ue     = test_ues[ue_index];
+  auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = uint_to_amf_ue_id(
       test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max) - 1));
 
