@@ -49,9 +49,10 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
-  srsgnb_assert(not config_validators::validate_sched_ue_creation_request_message(ue_request).is_error(),
-                "Invalid UE creation request message. Cause: {}",
-                config_validators::validate_sched_ue_creation_request_message(ue_request).error().c_str());
+  error_type<std::string> result = config_validators::validate_sched_ue_creation_request_message(ue_request);
+  if (result.is_error()) {
+    report_fatal_error("Invalid UE={} creation request message. Cause: {}", ue_request.crnti, result.error());
+  }
 
   ue_cfg_handler.handle_ue_creation_request(ue_request);
 }
