@@ -14,6 +14,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/ran/cause.h"
+#include "srsgnb/ran/crit_diagnostics.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/ran/rnti.h"
@@ -316,23 +317,9 @@ struct cu_cp_pdu_session_res_setup_response_item {
   cu_cp_pdu_session_resource_setup_response_transfer pdu_session_resource_setup_response_transfer;
 };
 
-struct cu_cp_crit_diagnostics_item {
-  std::string iecrit;
-  uint32_t    ie_id;
-  std::string type_of_error;
-};
-
-struct cu_cp_crit_diagnostics {
-  std::vector<cu_cp_crit_diagnostics_item> ies_crit_diagnostics = {};
-  optional<uint16_t>                       proc_code;
-  optional<std::string>                    trigger_msg;
-  optional<std::string>                    proc_crit;
-  optional<uint16_t>                       transaction_id;
-};
-
 struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
-  cause_t                          cause;
-  optional<cu_cp_crit_diagnostics> crit_diagnostics;
+  cause_t                      cause;
+  optional<crit_diagnostics_t> crit_diagnostics;
 };
 
 struct cu_cp_pdu_session_res_setup_failed_item {
@@ -343,7 +330,7 @@ struct cu_cp_pdu_session_res_setup_failed_item {
 struct cu_cp_pdu_session_resource_setup_response {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_response_item> pdu_session_res_setup_response_items;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_failed_item>   pdu_session_res_failed_to_setup_items;
-  optional<cu_cp_crit_diagnostics>                                               crit_diagnostics;
+  optional<crit_diagnostics_t>                                                   crit_diagnostics;
 };
 
 struct cu_cp_drb_setup_message {
@@ -426,7 +413,7 @@ struct cu_cp_ue_context_modification_response {
   optional<cause_t> cause;
 
   // Common
-  optional<cu_cp_crit_diagnostics> crit_diagnostics;
+  optional<crit_diagnostics_t> crit_diagnostics;
 };
 
 /// Arguments for the RRC Reconfiguration procedure.
@@ -562,7 +549,7 @@ struct cu_cp_ue_context_release_complete {
   optional<cu_cp_user_location_info_nr>                              user_location_info;
   optional<cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging> info_on_recommended_cells_and_ran_nodes_for_paging;
   std::vector<pdu_session_id_t>                                      pdu_session_res_list_cxt_rel_cpl;
-  optional<cu_cp_crit_diagnostics>                                   crit_diagnostics;
+  optional<crit_diagnostics_t>                                       crit_diagnostics;
 };
 
 } // namespace srs_cu_cp
