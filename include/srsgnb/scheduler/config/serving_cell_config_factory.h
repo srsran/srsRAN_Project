@@ -48,17 +48,17 @@ pdsch_serving_cell_config make_default_pdsch_serving_cell_config();
 
 nzp_csi_rs_resource_set make_default_nzp_csi_rs_resource_set();
 
-nzp_csi_rs_resource make_default_nzp_csi_rs_resource();
+nzp_csi_rs_resource make_default_nzp_csi_rs_resource(const cell_config_builder_params& params);
 
 csi_im_resource_set make_default_csi_im_resource_set();
 
-csi_im_resource make_default_csi_im_resource();
+csi_im_resource make_default_csi_im_resource(const cell_config_builder_params& params);
 
 csi_resource_config make_default_csi_resource_config();
 
 csi_report_config make_default_csi_report_config();
 
-csi_meas_config make_default_csi_meas_config();
+csi_meas_config make_default_csi_meas_config(const cell_config_builder_params& params);
 
 /// \brief Creates a default UE Serving Cell configuration.
 serving_cell_config create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params = {});

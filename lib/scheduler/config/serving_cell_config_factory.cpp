@@ -34,6 +34,25 @@ static min_channel_bandwidth min_channel_bw(const cell_config_builder_params& pa
   return band_helper::get_min_channel_bw(get_band(params), params.scs_common);
 }
 
+static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params& params)
+{
+  const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+      params.channel_bw_mhz,
+      params.scs_common,
+      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+
+  // See TS 38.331, CSI-FrequencyOccupation. Only multiples of 4 allowed for nrofRBs. And, the smallest configurable
+  // number is the minimum of 24 and the width of the associated BWP.
+  // NOTE: If the configured value is larger than the width of the corresponding BWP, the UE shall assume that the
+  // actual CSI-RS bandwidth is equal to the width of the BWP.
+  const unsigned nof_rbs_in_multiples_of_4 = 4 * (nof_crbs / 4);
+
+  if (nof_rbs_in_multiples_of_4 > 24) {
+    return nof_rbs_in_multiples_of_4;
+  }
+  return 24;
+}
+
 carrier_configuration
 srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
@@ -463,7 +482,7 @@ nzp_csi_rs_resource_set srsgnb::config_helpers::make_default_nzp_csi_rs_resource
   return res_set;
 }
 
-nzp_csi_rs_resource srsgnb::config_helpers::make_default_nzp_csi_rs_resource()
+nzp_csi_rs_resource srsgnb::config_helpers::make_default_nzp_csi_rs_resource(const cell_config_builder_params& params)
 {
   nzp_csi_rs_resource res;
   res.res_id = static_cast<nzp_csi_rs_res_id_t>(0);
@@ -478,7 +497,7 @@ nzp_csi_rs_resource srsgnb::config_helpers::make_default_nzp_csi_rs_resource()
   res.res_mapping.cdm                     = csi_rs_cdm_type::no_CDM;
   res.res_mapping.freq_density            = csi_rs_freq_density_type::three;
   res.res_mapping.freq_band_start_rb      = 0;
-  res.res_mapping.freq_band_nof_rb        = 52;
+  res.res_mapping.freq_band_nof_rb        = get_csi_freq_occupation_nof_rbs(params);
 
   res.pwr_ctrl_offset       = 0;
   res.pwr_ctrl_offset_ss_db = 0;
@@ -502,7 +521,7 @@ csi_im_resource_set srsgnb::config_helpers::make_default_csi_im_resource_set()
   return res_set;
 }
 
-csi_im_resource srsgnb::config_helpers::make_default_csi_im_resource()
+csi_im_resource srsgnb::config_helpers::make_default_csi_im_resource(const cell_config_builder_params& params)
 {
   csi_im_resource res;
   res.res_id = static_cast<csi_im_res_id_t>(0);
@@ -511,7 +530,7 @@ csi_im_resource srsgnb::config_helpers::make_default_csi_im_resource()
       .subcarrier_location = 8,
       .symbol_location     = 8});
   res.freq_band_start_rb.emplace(0);
-  res.freq_band_nof_rb.emplace(52);
+  res.freq_band_nof_rb.emplace(get_csi_freq_occupation_nof_rbs(params));
   res.csi_res_period.emplace(csi_resource_periodicity::slots320);
   res.csi_res_offset.emplace(1);
 
@@ -537,7 +556,7 @@ csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
   csi_report_config cfg;
   cfg.report_cfg_id               = static_cast<csi_report_config_id_t>(0);
   cfg.res_for_channel_meas        = static_cast<csi_res_config_id_t>(0);
-  cfg.csi_im_res_for_interference = static_cast<csi_res_config_id_t>(1);
+  cfg.csi_im_res_for_interference = static_cast<csi_res_config_id_t>(0);
 
   csi_report_config::periodic_or_semi_persistent_report_on_pucch report_cfg_type{};
   report_cfg_type.report_type = csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic;
@@ -574,13 +593,13 @@ csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
   return cfg;
 }
 
-csi_meas_config srsgnb::config_helpers::make_default_csi_meas_config()
+csi_meas_config srsgnb::config_helpers::make_default_csi_meas_config(const cell_config_builder_params& params)
 {
   csi_meas_config meas_cfg{};
 
   // NZP-CSI-RS-Resource.
   // Resource 0.
-  meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource());
+  meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
   auto fd_alloc = csi_rs_resource_mapping::fd_alloc_other(6);
   // '100000'B.
   fd_alloc.set(5);
@@ -590,56 +609,14 @@ csi_meas_config srsgnb::config_helpers::make_default_csi_meas_config()
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::one;
   meas_cfg.nzp_csi_rs_res_list.back().csi_res_period           = csi_resource_periodicity::slots320;
   meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 1;
-  // Resource 1.
-  meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource());
-  meas_cfg.nzp_csi_rs_res_list.back().res_id = static_cast<nzp_csi_rs_res_id_t>(1);
-  // Resource 2.
-  meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource());
-  meas_cfg.nzp_csi_rs_res_list.back().res_id                              = static_cast<nzp_csi_rs_res_id_t>(2);
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.first_ofdm_symbol_in_td = 8;
-  // Resource 3.
-  meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource());
-  meas_cfg.nzp_csi_rs_res_list.back().res_id         = static_cast<nzp_csi_rs_res_id_t>(3);
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset = 12;
-  // Resource 4.
-  meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource());
-  meas_cfg.nzp_csi_rs_res_list.back().res_id                              = static_cast<nzp_csi_rs_res_id_t>(4);
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.first_ofdm_symbol_in_td = 8;
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset                      = 12;
 
   // NZP-CSI-RS-ResourceSet.
   // Resource Set 0.
   meas_cfg.nzp_csi_rs_res_set_list.push_back(make_default_nzp_csi_rs_resource_set());
-  // Resource Set 1.
-  meas_cfg.nzp_csi_rs_res_set_list.push_back(make_default_nzp_csi_rs_resource_set());
-  meas_cfg.nzp_csi_rs_res_set_list.back().res_set_id          = static_cast<nzp_csi_rs_res_set_id_t>(1);
-  meas_cfg.nzp_csi_rs_res_set_list.back().nzp_csi_rs_res      = {static_cast<nzp_csi_rs_res_id_t>(1),
-                                                                 static_cast<nzp_csi_rs_res_id_t>(2),
-                                                                 static_cast<nzp_csi_rs_res_id_t>(3),
-                                                                 static_cast<nzp_csi_rs_res_id_t>(4)};
-  meas_cfg.nzp_csi_rs_res_set_list.back().is_trs_info_present = true;
-
-  // CSI-IM-Resource.
-  meas_cfg.csi_im_res_list.push_back(make_default_csi_im_resource());
-
-  // CSI-IM-ResourceSet.
-  meas_cfg.csi_im_res_set_list.push_back(make_default_csi_im_resource_set());
 
   // CSI-ResourceConfig.
   // Resource 0.
   meas_cfg.csi_res_cfg_list.push_back(make_default_csi_resource_config());
-  // Resource 1.
-  meas_cfg.csi_res_cfg_list.push_back(make_default_csi_resource_config());
-  meas_cfg.csi_res_cfg_list.back().res_cfg_id = static_cast<csi_res_config_id_t>(1);
-  csi_resource_config::csi_im_resource_set_list csi_im_res_set{};
-  csi_im_res_set.push_back(static_cast<const csi_im_res_set_id_t>(0));
-  meas_cfg.csi_res_cfg_list.back().csi_rs_res_set_list = csi_im_res_set;
-  // Resource 2.
-  meas_cfg.csi_res_cfg_list.push_back(make_default_csi_resource_config());
-  meas_cfg.csi_res_cfg_list.back().res_cfg_id = static_cast<csi_res_config_id_t>(2);
-  csi_resource_config::nzp_csi_rs_ssb nzp_csi_rs_res_set{};
-  nzp_csi_rs_res_set.nzp_csi_rs_res_set_list.push_back(static_cast<const nzp_csi_rs_res_set_id_t>(1));
-  meas_cfg.csi_res_cfg_list.back().csi_rs_res_set_list = nzp_csi_rs_res_set;
 
   // CSI-ReportConfig.
   meas_cfg.csi_report_cfg_list.push_back(make_default_csi_report_config());
@@ -696,7 +673,7 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // > CSI-MeasConfig.
   if (band_helper::is_paired_spectrum(get_band(params))) {
     // Only for FDD.
-    serv_cell.csi_meas_cfg.emplace(make_default_csi_meas_config());
+    serv_cell.csi_meas_cfg.emplace(make_default_csi_meas_config(params));
   }
 
   return serv_cell;
