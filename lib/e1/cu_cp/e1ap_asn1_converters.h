@@ -70,19 +70,19 @@ integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& in
   }
 }
 
-/// \brief Convert CU-CP s-NSSAI to E1AP ASN1 s-NSSAI.
-/// \param cu_cp_snssai The CU-CP s-NSSAI.
+/// \brief Convert \c s_nssai_t type to E1AP ASN1 s-NSSAI.
+/// \param snssai The s-NSSAI type.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(srsgnb::srs_cu_cp::cu_cp_s_nssai cu_cp_snssai)
+inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(srsgnb::s_nssai_t snssai)
 {
-  asn1::e1ap::snssai_s snssai;
-  snssai.sst.from_number(cu_cp_snssai.sst);
-  if (cu_cp_snssai.sd.has_value()) {
-    snssai.sd_present = true;
-    snssai.sd.from_number(cu_cp_snssai.sd.value());
+  asn1::e1ap::snssai_s asn1_snssai;
+  asn1_snssai.sst.from_number(snssai.sst);
+  if (snssai.sd.has_value()) {
+    asn1_snssai.sd_present = true;
+    asn1_snssai.sd.from_number(snssai.sd.value());
   }
 
-  return snssai;
+  return asn1_snssai;
 }
 
 /// \brief Converts type \c sdap_config to an E1AP ASN.1 type.

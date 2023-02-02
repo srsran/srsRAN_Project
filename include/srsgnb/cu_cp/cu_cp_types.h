@@ -18,6 +18,7 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/s_nssai.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
 #include "srsgnb/rlc/rlc_config.h"
@@ -260,16 +261,10 @@ struct qos_flow_setup_request_item {
   optional<std::string>     reflective_qos_attribute;
 };
 
-// Network slice information, see TS 38.413, Sec. 9.3.1.24
-struct cu_cp_s_nssai {
-  uint8_t            sst; // Slice/Service type (max 8bits)
-  optional<uint32_t> sd;  // Slice Differentiator (max 24bits)
-};
-
 struct cu_cp_pdu_session_res_setup_item {
   pdu_session_id_t                                              pdu_session_id = pdu_session_id_t::invalid;
   byte_buffer                                                   pdu_session_nas_pdu;
-  cu_cp_s_nssai                                                 s_nssai;
+  s_nssai_t                                                     s_nssai;
   uint64_t                                                      pdu_session_aggregate_maximum_bit_rate_dl;
   uint64_t                                                      pdu_session_aggregate_maximum_bit_rate_ul;
   up_transport_layer_info                                       ul_ngu_up_tnl_info;
@@ -338,7 +333,7 @@ struct cu_cp_drb_setup_message {
   srsgnb::rlc_mode                                              rlc;
   cu_cp_qos_characteristics                                     qos_info;
   std::vector<up_transport_layer_info>                          gtp_tunnels = {};
-  cu_cp_s_nssai                                                 s_nssai;
+  s_nssai_t                                                     s_nssai;
   slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item> qos_flows_mapped_to_drb;
 
   uint8_t dl_pdcp_sn_length; // id-DLPDCPSNLength 161

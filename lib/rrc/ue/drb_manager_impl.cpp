@@ -164,7 +164,7 @@ cu_cp_sdap_config drb_manager_impl::get_sdap_config(const drb_id_t drb_id)
   return drbs[drb_id].sdap_cfg;
 }
 
-cu_cp_s_nssai drb_manager_impl::get_s_nssai(const drb_id_t drb_id)
+s_nssai_t drb_manager_impl::get_s_nssai(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
