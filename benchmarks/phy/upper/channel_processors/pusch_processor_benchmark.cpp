@@ -14,6 +14,7 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
+#include "srsgnb/support/unique_thread.h"
 #include <condition_variable>
 #include <getopt.h>
 #include <mutex>
@@ -62,9 +63,9 @@ benchmark_modes to_benchmark_mode(const char* string)
 static const unsigned max_nof_threads = std::thread::hardware_concurrency();
 
 // General test configuration parameters.
-static unsigned                           nof_repetitions             = 10;
-static unsigned                           nof_threads                 = max_nof_threads;
-static unsigned                           batch_size_per_thread       = 100;
+static uint64_t                           nof_repetitions             = 10;
+static uint64_t                           nof_threads                 = max_nof_threads;
+static uint64_t                           batch_size_per_thread       = 100;
 static std::string                        selected_profile_name       = "default";
 static std::string                        ldpc_decoder_type           = "auto";
 static std::string                        rate_dematcher_type         = "auto";
@@ -215,6 +216,7 @@ static int parse_args(int argc, char** argv)
         break;
       case 'D':
         ldpc_decoder_type = std::string(optarg);
+        break;
       case 'M':
         rate_dematcher_type = std::string(optarg);
         break;
@@ -538,22 +540,22 @@ int main(int argc, char** argv)
     thread_quit  = false;
 
     // Prepare threads for the current case.
-    std::vector<std::thread> threads(nof_threads);
+    std::vector<unique_thread> threads(nof_threads);
     for (unsigned thread_id = 0; thread_id != nof_threads; ++thread_id) {
       // Select thread.
-      std::thread& thread = threads[thread_id];
+      unique_thread& thread = threads[thread_id];
+
+      // Prepare priority.
+      os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime() + 1;
+
+      // Prepare affinity mask.
+      os_sched_affinity_bitmask cpuset;
+      cpuset.set(thread_id);
 
       // Create thread.
-      thread = std::thread(thread_process, config, tbs, grid.get());
-
-      // Set affinity to ensure each thread runs in a separate logical core.
-      cpu_set_t cpuset;
-      CPU_ZERO(&cpuset);
-      CPU_SET(thread_id, &cpuset);
-      int rc = pthread_setaffinity_np(thread.native_handle(), sizeof(cpu_set_t), &cpuset);
-      if (rc != 0) {
-        fmt::print(stderr, "Error calling pthread_setaffinity_np: {}\n", rc);
-      }
+      thread = unique_thread("thread_" + std::to_string(thread_id), prio, cpuset, [&config, &tbs, &grid] {
+        thread_process(config, tbs, grid.get());
+      });
     }
 
     // Wait for finish thread init.
@@ -598,25 +600,27 @@ int main(int argc, char** argv)
 
     thread_quit = true;
 
-    for (std::thread& thread : threads) {
+    for (unique_thread& thread : threads) {
       thread.join();
     }
   }
 
   // Print latency.
   if ((benchmark_mode == benchmark_modes::latency) || (benchmark_mode == benchmark_modes::all)) {
-    perf_meas.print_percentiles_time("microseconds average per thread",
-                                     1e-3 / static_cast<double>(nof_threads * batch_size_per_thread));
+    fmt::print("\n--- Latency measurements ---\n");
+    perf_meas.print_percentiles_time("microseconds", 1e-3 / static_cast<double>(nof_threads * batch_size_per_thread));
   }
 
   // Print total aggregated throughput.
   if ((benchmark_mode == benchmark_modes::throughput_total) || (benchmark_mode == benchmark_modes::all)) {
-    perf_meas.print_percentiles_throughput("bits for all threads");
+    fmt::print("\n--- Total throughput measurements ---\n");
+    perf_meas.print_percentiles_throughput("bits");
   }
 
   // Print average throughput per thread.
   if ((benchmark_mode == benchmark_modes::throughput_thread) || (benchmark_mode == benchmark_modes::all)) {
-    perf_meas.print_percentiles_throughput("bits per thread", 1.0 / static_cast<double>(nof_threads));
+    fmt::print("\n--- Thread throughput measurements ---\n");
+    perf_meas.print_percentiles_throughput("bits", 1.0 / static_cast<double>(nof_threads));
   }
 
   return 0;

@@ -47,23 +47,23 @@ private:
   /// Benchmark main title.
   std::string title;
   /// Number of repetitions.
-  unsigned nof_repetitions;
+  uint64_t nof_repetitions;
 
   /// Collects a benchmark result line.
   struct benchmark_result {
     /// Measurement description.
     std::string description;
     /// Number of elements computed in every measurement. It is used to calculate the throughput.
-    unsigned size;
+    uint64_t size;
     /// Actual measurements in nanoseconds.
-    std::vector<unsigned> measurements;
+    std::vector<uint64_t> measurements;
   };
   /// Collects different measurements.
   std::vector<benchmark_result> benchmark_results;
 
   /// \brief Get the maximum measured execution time.
   /// \return A pair of values containing the maximum execution time and the number of elements in order.
-  std::pair<unsigned, unsigned> get_max_meas_time_ns() const
+  std::pair<uint64_t, uint64_t> get_max_meas_time_ns() const
   {
     auto it = std::max_element(
         benchmark_results.begin(), benchmark_results.end(), [](const benchmark_result& a, const benchmark_result& b) {
@@ -75,7 +75,7 @@ private:
   /// Get percentile column width for execution time, including one decimal point.
   unsigned get_percentile_width_time(double scaling = 1.0) const
   {
-    unsigned max_meas_ns = get_max_meas_time_ns().first;
+    uint64_t max_meas_ns = get_max_meas_time_ns().first;
     unsigned percentile_width =
         static_cast<unsigned>(std::ceil(std::log10(static_cast<double>(max_meas_ns) * scaling)));
     percentile_width = std::max(percentile_width, 6U);
@@ -85,8 +85,8 @@ private:
   /// Get percentile column width for execution throughput.
   unsigned get_percentile_width_throughput(double scaling) const
   {
-    std::pair<unsigned, unsigned> max_meas = get_max_meas_time_ns();
-    max_meas.first                         = std::max(max_meas.first, 1U);
+    std::pair<uint64_t, uint64_t> max_meas = get_max_meas_time_ns();
+    max_meas.first                         = std::max(max_meas.first, 1UL);
     double throughput_max                  = convert_to_throughput(max_meas.first, max_meas.second);
 
     unsigned percentile_width = static_cast<unsigned>(std::ceil(std::log10(throughput_max * scaling))) + 2U;
@@ -138,10 +138,15 @@ private:
   /// \param[in] time_ns Execution time in nanoseconds.
   /// \param[in] size    Number of elements processed during the measurement.
   /// \return The calculated throughput.
-  static inline double convert_to_throughput(unsigned time_ns, unsigned size)
+  static inline double convert_to_throughput(uint64_t time_ns, size_t size)
   {
-    time_ns = std::max(time_ns, 1U);
-    return 1e3 * static_cast<double>(size) / static_cast<double>(time_ns);
+    time_ns = std::max(time_ns, 1UL);
+
+    // Calculates throughput in tens of millions of elements per seconds.
+    uint64_t throughput = (size * 10000UL) / time_ns;
+
+    // Converts to floating point.
+    return static_cast<double>(throughput) * 0.1;
   }
 
 public:
@@ -149,7 +154,8 @@ public:
   ///
   /// \param[in] title_           Indicates the benchmark title for the percentile report.
   /// \param[in] nof_repetitions_ Indicates the number of repetitions of the function to measure the performance.
-  benchmarker(const std::string& title_, unsigned nof_repetitions_) : title(title_), nof_repetitions(nof_repetitions_)
+  benchmarker(std::string title_, uint64_t nof_repetitions_) :
+    title(std::move(title_)), nof_repetitions(nof_repetitions_)
   {
 #if ASSERTS_ENABLED
     fmt::print(stderr, "Warning: Assertions are enabled. Performance might be negatively affected.\n");
@@ -229,14 +235,14 @@ public:
   /// \param[in] size        Number of elements processed in the measurement.
   /// \param[in] function    Lambda function to call repeatedly.
   template <typename Func>
-  void new_measure(const std::string& description, unsigned size, Func&& function)
+  void new_measure(const std::string& description, uint64_t size, Func&& function)
   {
     benchmark_result result;
     result.description = description;
     result.size        = size;
     result.measurements.reserve(nof_repetitions);
 
-    for (unsigned rep = 0; rep != nof_repetitions; ++rep) {
+    for (uint64_t rep = 0; rep != nof_repetitions; ++rep) {
       auto start = std::chrono::high_resolution_clock::now();
       function();
       auto end = std::chrono::high_resolution_clock::now();

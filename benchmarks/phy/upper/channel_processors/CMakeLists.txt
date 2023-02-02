@@ -18,4 +18,4 @@ target_link_libraries(pusch_processor_benchmark
         srsgnb_sched
         srslog
         srsvec)
-add_test(pusch_processor_benchmark pusch_processor_benchmark -s -R 1 -P pusch_scs15_5MHz_qpsk_min)
+add_test(pusch_processor_benchmark pusch_processor_benchmark -s -R 1 -B 1 -T 2 -P pusch_scs15_5MHz_qpsk_min)
