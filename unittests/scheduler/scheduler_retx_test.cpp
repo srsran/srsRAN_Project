@@ -20,14 +20,10 @@
 
 using namespace srsgnb;
 
-struct test_params {
-  unsigned nof_retxs = 0;
-};
-
-class scheduler_retx_tester : public ::testing::TestWithParam<test_params>
+class base_scheduler_retx_tester
 {
 protected:
-  scheduler_retx_tester() { bench.add_cell(test_helpers::make_default_sched_cell_configuration_request()); }
+  base_scheduler_retx_tester() { bench.add_cell(test_helpers::make_default_sched_cell_configuration_request()); }
 
   const ul_sched_info* run_until_next_pusch_alloc(unsigned max_slot_delay)
   {
@@ -58,6 +54,13 @@ protected:
 
   scheduler_test_bench bench;
 };
+
+struct test_params {
+  unsigned nof_retxs = 0;
+};
+
+class scheduler_retx_tester : public base_scheduler_retx_tester, public ::testing::TestWithParam<test_params>
+{};
 
 TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
 {
@@ -105,6 +108,59 @@ TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
   // No Msg3 retx should be scheduled after the HARQ is ACKed.
   grant = run_until_next_pusch_alloc(MAX_RETX_DELAY);
   ASSERT_EQ(grant, nullptr) << "Msg3 HARQ should be empty";
+}
+
+class scheduler_missing_ack_tester : public base_scheduler_retx_tester, public ::testing::Test
+{};
+
+TEST_F(scheduler_missing_ack_tester, when_no_harq_ack_arrives_then_harq_eventually_becomes_available)
+{
+  static constexpr unsigned         nof_harqs     = 8;
+  static constexpr rnti_t           rnti          = to_rnti(0x4601);
+  sched_ue_creation_request_message ue_create_req = test_helpers::create_default_sched_ue_creation_request();
+  ue_create_req.crnti                             = rnti;
+  ue_create_req.ue_index                          = to_du_ue_index(0);
+  ue_create_req.cfg.cells[0].serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
+      (pdsch_serving_cell_config::nof_harq_proc_for_pdsch)nof_harqs;
+  bench.add_ue(ue_create_req);
+
+  // Push enough bytes so that all HARQs get allocated.
+  bench.push_dl_buffer_state(dl_buffer_state_indication_message{ue_create_req.ue_index, LCID_SRB1, 10000000});
+
+  // Allocate all HARQs.
+  for (unsigned i = 0; i != nof_harqs; ++i) {
+    bench.run_slot(to_du_cell_index(0));
+    ASSERT_NE(bench.find_ue_dl_pdcch(rnti), nullptr);
+  }
+
+  // Set buffer state to zero, so that no newtxs get allocated once the current harqs become empty.
+  bench.push_dl_buffer_state(dl_buffer_state_indication_message{ue_create_req.ue_index, LCID_SRB1, 0});
+  bench.run_slot(to_du_cell_index(0));
+  ASSERT_EQ(bench.find_ue_dl_pdcch(rnti), nullptr) << "No HARQs should be available at this point";
+
+  // After several slots without HARQ-ACK, the HARQ should auto retx.
+  const unsigned MAX_HARQ_TIMEOUT = 16, MAX_TEST_COUNT = 10000;
+  unsigned       consecutive_no_retx = 0, retx_counter = 0;
+  for (unsigned i = 0; i != MAX_TEST_COUNT; ++i) {
+    bench.run_slot(to_du_cell_index(0));
+    if (bench.find_ue_dl_pdcch(rnti) != nullptr) {
+      consecutive_no_retx = 0;
+      retx_counter++;
+    } else {
+      ++consecutive_no_retx;
+    }
+    if (consecutive_no_retx >= MAX_HARQ_TIMEOUT) {
+      break;
+    }
+  }
+  ASSERT_GE(retx_counter, nof_harqs) << "HARQ retxs were not triggered when the HARQ-ACK went missing";
+
+  // At this point, all HARQs should be free once again. Push enough bytes and verify that all HARQs get re-allocated.
+  bench.push_dl_buffer_state(dl_buffer_state_indication_message{ue_create_req.ue_index, LCID_SRB1, 10000000});
+  for (unsigned i = 0; i != nof_harqs; ++i) {
+    bench.run_slot(to_du_cell_index(0));
+    ASSERT_NE(bench.find_ue_dl_pdcch(rnti), nullptr) << "HARQs should be available for reallocation";
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(msg3_retx,

@@ -12,7 +12,6 @@
 
 #include "dummy_test_components.h"
 #include "lib/scheduler/cell/cell_configuration.h"
-#include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
@@ -44,15 +43,31 @@ public:
     sched->handle_cell_configuration_request(cell_cfg_req);
   }
 
+  void add_ue(const sched_ue_creation_request_message& ue_request) { sched->handle_ue_creation_request(ue_request); }
+
+  void push_dl_buffer_state(const dl_buffer_state_indication_message& upd)
+  {
+    sched->handle_dl_buffer_state_indication(upd);
+  }
+
   void run_slot(du_cell_index_t cell_idx = to_du_cell_index(0))
   {
     srsgnb_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", cell_idx);
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
     last_sched_res = sched->slot_indication(next_slot, cell_idx);
     srsgnb_assert(last_sched_res != nullptr, "No scheduler output was provided");
-    result_logger.log(*last_sched_res);
     test_scheduler_result_consistency(cell_cfg_list[cell_idx], *last_sched_res);
     ++next_slot;
+  }
+
+  const pdcch_dl_information* find_ue_dl_pdcch(rnti_t rnti) const
+  {
+    for (unsigned i = 0; i != last_sched_res->dl.dl_pdcchs.size(); ++i) {
+      if (last_sched_res->dl.dl_pdcchs[i].ctx.rnti == rnti) {
+        return &last_sched_res->dl.dl_pdcchs[i];
+      }
+    }
+    return nullptr;
   }
 
   const unsigned                      tx_rx_delay;
@@ -60,7 +75,6 @@ public:
   sched_cfg_dummy_notifier            notif;
   scheduler_ue_metrics_dummy_notifier metric_notif;
   std::unique_ptr<mac_scheduler>      sched;
-  scheduler_result_logger             result_logger;
 
   slotted_array<cell_configuration, MAX_NOF_DU_CELLS> cell_cfg_list;
 

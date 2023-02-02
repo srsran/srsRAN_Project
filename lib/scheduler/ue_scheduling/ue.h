@@ -33,7 +33,7 @@ public:
   const du_ue_index_t ue_index;
   const rnti_t        crnti;
 
-  void slot_indication(slot_point sl_tx) {}
+  void slot_indication(slot_point sl_tx);
 
   ue_cell* find_cell(du_cell_index_t cell_index)
   {

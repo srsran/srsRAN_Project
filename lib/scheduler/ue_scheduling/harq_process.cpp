@@ -237,6 +237,7 @@ void harq_entity::slot_indication(slot_point slot_tx_)
       logger.info("rnti={:#x}, DL HARQ id={}, TB={} - Discarding HARQ. Cause: Maximum number of retx exceeded ({})",
                   rnti,
                   dl_h.id,
+                  dl_h.last_alloc_params().tb[0]->tbs_bytes,
                   dl_h.max_nof_harq_retxs(0));
     }
   }
@@ -248,6 +249,7 @@ void harq_entity::slot_indication(slot_point slot_tx_)
       logger.info("rnti={:#x}, UL HARQ id={}, TB={} - Discarding HARQ. Cause: Maximum number of retx exceeded ({})",
                   rnti,
                   ul_h.id,
+                  ul_h.last_tx_params().tbs_bytes,
                   ul_h.max_nof_harq_retxs());
     }
   }

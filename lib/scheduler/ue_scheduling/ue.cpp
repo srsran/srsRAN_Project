@@ -34,6 +34,16 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   ul_lc_ch_mgr.configure(log_channels_configs);
 }
 
+void ue::slot_indication(slot_point sl_tx)
+{
+  for (unsigned i = 0; i != du_cells.size(); ++i) {
+    if (du_cells[i] != nullptr) {
+      // Clear old HARQs.
+      du_cells[i]->harqs.slot_indication(sl_tx);
+    }
+  }
+}
+
 void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg)
 {
   log_channels_configs = msg.cfg.lc_config_list;
