@@ -119,11 +119,11 @@ public:
 
   std::unique_ptr<ldpc_encoder> create() override
   {
-#ifdef __AVX2__
+#ifdef HAVE_AVX2
     if ((enc_type == "avx2") || (enc_type == "auto")) {
       return std::make_unique<ldpc_encoder_avx2>();
     }
-#endif // __AVX2__
+#endif // HAVE_AVX2
 #ifdef HAVE_NEON
     if ((enc_type == "neon") || (enc_type == "auto")) {
       return std::make_unique<ldpc_encoder_neon>();
