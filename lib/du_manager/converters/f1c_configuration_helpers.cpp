@@ -399,6 +399,46 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   cell.ss_pbch_block_pwr               = du_cfg.ssb_cfg.ssb_block_power;
   cell.n_timing_advance_offset_present = true;
   cell.n_timing_advance_offset.value   = asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
+
+  // TDD config
+  if (du_cfg.tdd_ul_dl_cfg_common.has_value()) {
+    cell.tdd_ul_dl_cfg_common_present                = true;
+    cell.tdd_ul_dl_cfg_common.ref_subcarrier_spacing = get_asn1_scs(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs);
+    float periodicity_ms = du_cfg.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots /
+                           get_nof_slots_per_subframe(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs);
+    if (periodicity_ms == 10.0) {
+      cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
+          asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms10;
+    } else if (periodicity_ms == 5.0) {
+      cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
+          asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms5;
+    } else if (periodicity_ms == 2.5) {
+      cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
+          asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms2p5;
+    } else if (periodicity_ms == 2.0) {
+      cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
+          asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms2;
+    } else if (periodicity_ms == 1.25) {
+      cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
+          asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms1p25;
+    } else if (periodicity_ms == 2) {
+      cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
+          asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms1;
+    } else if (periodicity_ms == 0.625) {
+      cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
+          asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms0p625;
+    } else if (periodicity_ms == 0.5) {
+      cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
+          asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms0p5;
+    } else {
+      report_fatal_error("Unsupported TDD UL/DL periodicity {}ms", periodicity_ms);
+    }
+    cell.tdd_ul_dl_cfg_common.pattern1.nrof_dl_slots   = du_cfg.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_slots;
+    cell.tdd_ul_dl_cfg_common.pattern1.nrof_dl_symbols = du_cfg.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_symbols;
+    cell.tdd_ul_dl_cfg_common.pattern1.nrof_ul_slots   = du_cfg.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots;
+    cell.tdd_ul_dl_cfg_common.pattern1.nrof_ul_symbols = du_cfg.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols;
+  }
+
   // TODO: Fill remaining fields.
 
   return cell;
