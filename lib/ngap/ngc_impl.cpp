@@ -155,6 +155,12 @@ void ngc_impl::handle_message(const ngc_message& msg)
 {
   logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    msg.pdu.to_json(js);
+    logger.debug("Rx NGAP message: {}", js.to_string());
+  }
+
   // Run NGAP protocols in Control executor.
   ctrl_exec.execute([this, msg]() {
     switch (msg.pdu.type().value) {
