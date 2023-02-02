@@ -36,7 +36,9 @@ target_link_libraries(gnb
         srsgnb_channel_equalizer
         srsgnb_lower_phy
         srsgnb_radio
+        srsgnb_support
         )
+add_backward(gnb)
 
 target_include_directories(gnb PRIVATE ${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/external)
