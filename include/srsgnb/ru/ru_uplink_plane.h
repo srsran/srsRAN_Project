@@ -26,11 +26,11 @@ struct ru_uplink_rx_symbol_context {
   slot_point slot;
   /// Radio sector identifier.
   unsigned sector;
-  /// The last processed symbol index within the slot.
+  /// Index, within the slot, of the last processed symbol.
   unsigned symbol_id;
 };
 
-/// Radio Unit uplink plane received symbol notifier.
+/// Radio Unit uplink plane symbol reception notifier.
 class ru_uplink_plane_rx_symbol_notifier
 {
 public:
@@ -42,9 +42,9 @@ public:
   /// \param[in] grid    Resource grid that belongs to the context.
   virtual void on_new_uplink_symbol(const ru_uplink_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
 
-  /// \brief Notifies the completion of PRACH window.
+  /// \brief Notifies the completion of a PRACH window.
   ///
-  /// The RU uses this method to notify that a PRACH window identified by \c context has been written in \c buffer.
+  /// The RU uses this method to notify that the PRACH window identified by \c context has been written in \c buffer.
   ///
   /// \param[in] context PRACH context.
   /// \param[in] buffer  Read-only PRACH buffer.
@@ -53,7 +53,7 @@ public:
 
 /// \brief Radio Unit uplink plane handler.
 ///
-/// Handles PRACH and uplink data requests and capture uplink data. The uplink received data will be notified through
+/// Handles PRACH and uplink data requests and captures uplink data. The uplink received data will be notified through
 /// the \ref ru_uplink_plane_rx_symbol_notifier notifier.
 class ru_uplink_plane_handler
 {
@@ -62,7 +62,7 @@ public:
 
   /// \brief Requests the RU to capture a PRACH window.
   ///
-  /// The RU must capture a PHY window identified by \c context. The results will be notified t
+  /// The RU must capture the PHY window identified by \c context.
   ///
   /// \param[in] context PRACH window context.
   /// \param[in] buffer  PRACH buffer used to write the PRACH window.
