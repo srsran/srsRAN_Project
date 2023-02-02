@@ -56,7 +56,7 @@ cu_cp_ue_context_release_command srsgnb::srs_cu_cp::generate_ue_context_release_
 {
   cu_cp_ue_context_release_command ue_context_release_command = {};
   ue_context_release_command.ue_index                         = ue_index;
-  ue_context_release_command.cause                            = cu_cp_cause_t::radio_network;
+  ue_context_release_command.cause                            = cause_t::radio_network;
   return ue_context_release_command;
 }
 

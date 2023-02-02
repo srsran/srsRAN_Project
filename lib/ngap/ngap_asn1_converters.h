@@ -88,27 +88,27 @@ cu_cp_qos_flow_per_tnl_info_to_ngap_qos_flow_per_tnl_info(cu_cp_qos_flow_per_tnl
   return ngap_qos_flow_info;
 }
 
-/// \brief Convert CU-CP cause to NGAP cause.
-/// \param cu_cp_cause The CU-CP cause.
+/// \brief Convert \c cause_t type to NGAP cause.
+/// \param cause The cause_t type.
 /// \return The NGAP cause.
-inline asn1::ngap::cause_c cu_cp_cause_to_ngap_cause(cu_cp_cause_t cu_cp_cause)
+inline asn1::ngap::cause_c cause_to_ngap_cause(cause_t cause)
 {
   asn1::ngap::cause_c ngap_cause;
 
-  switch (cu_cp_cause) {
-    case cu_cp_cause_t::radio_network:
+  switch (cause) {
+    case cause_t::radio_network:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::radio_network);
       return ngap_cause;
       break;
-    case cu_cp_cause_t::transport:
+    case cause_t::transport:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::transport);
       return ngap_cause;
       break;
-    case cu_cp_cause_t::protocol:
+    case cause_t::protocol:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::protocol);
       return ngap_cause;
       break;
-    case cu_cp_cause_t::misc:
+    case cause_t::misc:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::misc);
       return ngap_cause;
       break;
@@ -118,33 +118,33 @@ inline asn1::ngap::cause_c cu_cp_cause_to_ngap_cause(cu_cp_cause_t cu_cp_cause)
   }
 }
 
-/// \brief Convert NGAP ASN1 cause to CU-CP cause.
+/// \brief Convert NGAP ASN1 cause to \c cause_t type.
 /// \param ngap_cause The ASN1 NGAP cause.
-/// \return The CU-CP cause.
-inline cu_cp_cause_t ngap_cause_to_cu_cp_cause(asn1::ngap::cause_c ngap_cause)
+/// \return The cause_t type.
+inline cause_t ngap_cause_to_cause(asn1::ngap::cause_c ngap_cause)
 {
-  cu_cp_cause_t cu_cp_cause;
+  cause_t cause;
 
   switch (ngap_cause.type()) {
     case asn1::ngap::cause_c::types_opts::radio_network:
-      cu_cp_cause = cu_cp_cause_t::radio_network;
+      cause = cause_t::radio_network;
       break;
     case asn1::ngap::cause_c::types_opts::transport:
-      cu_cp_cause = cu_cp_cause_t::transport;
+      cause = cause_t::transport;
       break;
     case asn1::ngap::cause_c::types_opts::protocol:
-      cu_cp_cause = cu_cp_cause_t::protocol;
+      cause = cause_t::protocol;
       break;
     case asn1::ngap::cause_c::types_opts::nas:
-      cu_cp_cause = cu_cp_cause_t::nas;
+      cause = cause_t::nas;
       break;
     case asn1::ngap::cause_c::types_opts::misc:
-      cu_cp_cause = cu_cp_cause_t::misc;
+      cause = cause_t::misc;
       break;
     default:
-      cu_cp_cause = cu_cp_cause_t::nulltype;
+      cause = cause_t::nulltype;
   }
-  return cu_cp_cause;
+  return cause;
 }
 
 /// \brief Convert CU-CP QoS Flow Failed to Setup Item to NGAP QoS Flow With Cause Item.
@@ -155,7 +155,7 @@ inline asn1::ngap::qos_flow_with_cause_item_s cu_cp_qos_flow_failed_to_setup_ite
 {
   asn1::ngap::qos_flow_with_cause_item_s asn1_failed_item;
   asn1_failed_item.qos_flow_id = qos_flow_id_to_uint(cu_cp_failed_item.qos_flow_id);
-  asn1_failed_item.cause       = cu_cp_cause_to_ngap_cause(cu_cp_failed_item.cause);
+  asn1_failed_item.cause       = cause_to_ngap_cause(cu_cp_failed_item.cause);
 
   return asn1_failed_item;
 }

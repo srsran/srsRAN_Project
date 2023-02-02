@@ -27,7 +27,7 @@ ue_context_release_routine::ue_context_release_routine(const cu_cp_ue_context_re
   ue_manager(ue_manager_),
   logger(logger_)
 {
-  srsgnb_assert(command.cause != cu_cp_cause_t::nulltype, "Release command needs to be set.");
+  srsgnb_assert(command.cause != cause_t::nulltype, "Release command needs to be set.");
 }
 
 void ue_context_release_routine::operator()(coro_context<async_task<void>>& ctx)

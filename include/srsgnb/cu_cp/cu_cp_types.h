@@ -13,6 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slotted_array.h"
+#include "srsgnb/ran/cause.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/ran/rnti.h"
@@ -172,16 +173,6 @@ constexpr inline qos_flow_id_t uint_to_qos_flow_id(uint8_t idx)
   return static_cast<qos_flow_id_t>(idx);
 }
 
-enum class cu_cp_cause_t : uint8_t {
-  radio_network = 0,
-  transport     = 1,
-  nas           = 2,
-  protocol      = 3,
-  misc          = 4,
-  choice_exts   = 5,
-  nulltype      = 6
-};
-
 struct cu_cp_rohc_profiles {
   bool profile0x0001 = false;
   bool profile0x0002 = false;
@@ -299,7 +290,7 @@ struct cu_cp_associated_qos_flow {
 
 struct cu_cp_qos_flow_failed_to_setup_item {
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
-  cu_cp_cause_t cause;
+  cause_t       cause;
 };
 
 struct cu_cp_qos_flow_per_tnl_information {
@@ -340,7 +331,7 @@ struct cu_cp_crit_diagnostics {
 };
 
 struct cu_cp_pdu_session_resource_setup_unsuccessful_transfer {
-  cu_cp_cause_t                    cause;
+  cause_t                          cause;
   optional<cu_cp_crit_diagnostics> crit_diagnostics;
 };
 
@@ -390,18 +381,18 @@ struct cu_cp_drbs_setup_modified_item {
 };
 
 struct cu_cp_srbs_failed_to_be_setup_mod_item {
-  srb_id_t                srb_id = srb_id_t::nulltype;
-  optional<cu_cp_cause_t> cause;
+  srb_id_t          srb_id = srb_id_t::nulltype;
+  optional<cause_t> cause;
 };
 
 struct cu_cp_drbs_failed_to_be_setup_modified_item {
-  drb_id_t                drb_id = drb_id_t::invalid;
-  optional<cu_cp_cause_t> cause;
+  drb_id_t          drb_id = drb_id_t::invalid;
+  optional<cause_t> cause;
 };
 
 struct cu_cp_scell_failed_to_setup_mod_item {
-  nr_cell_id_t            scell_id;
-  optional<cu_cp_cause_t> cause;
+  nr_cell_id_t      scell_id;
+  optional<cause_t> cause;
 };
 
 struct cu_cp_associated_scell_item {
@@ -432,7 +423,7 @@ struct cu_cp_ue_context_modification_response {
   optional<std::string>                                                    full_cfg;
 
   // UE Context Modification Failure
-  optional<cu_cp_cause_t> cause;
+  optional<cause_t> cause;
 
   // Common
   optional<cu_cp_crit_diagnostics> crit_diagnostics;
@@ -518,8 +509,8 @@ struct cu_cp_rrc_reconfiguration_procedure_request {
 };
 
 struct cu_cp_ue_context_release_command {
-  ue_index_t    ue_index = ue_index_t::invalid;
-  cu_cp_cause_t cause;
+  ue_index_t ue_index = ue_index_t::invalid;
+  cause_t    cause;
 };
 
 struct cu_cp_tai {

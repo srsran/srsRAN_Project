@@ -23,7 +23,7 @@ f1_ue_context_release_procedure::f1_ue_context_release_procedure(f1ap_ue_context
 {
   command->gnb_cu_ue_f1ap_id.value = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
   command->gnb_du_ue_f1ap_id.value = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
-  command->cause.value             = cu_cp_cause_to_f1ap_cause(cmd_.cause);
+  command->cause.value             = cause_to_f1ap_cause(cmd_.cause);
 }
 
 void f1_ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t>>& ctx)

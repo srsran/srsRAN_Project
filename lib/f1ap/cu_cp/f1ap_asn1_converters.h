@@ -22,57 +22,57 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// \brief Convert F1AP Cause to CU-CP Cause.
+/// \brief Convert F1AP Cause to \c cause_t type.
 /// \param f1ap_cause The F1AP Cause.
-/// \return The CU-CP Cause.
-inline cu_cp_cause_t f1ap_cause_to_cu_cp_cause(asn1::f1ap::cause_c f1ap_cause)
+/// \return The cause_t type.
+inline cause_t f1ap_cause_to_cause(asn1::f1ap::cause_c f1ap_cause)
 {
-  cu_cp_cause_t cu_cp_cause;
+  cause_t cause;
 
   switch (f1ap_cause.type()) {
     case asn1::f1ap::cause_c::types_opts::radio_network:
-      cu_cp_cause = cu_cp_cause_t::radio_network;
-      return cu_cp_cause;
+      cause = cause_t::radio_network;
+      return cause;
       break;
     case asn1::f1ap::cause_c::types_opts::transport:
-      cu_cp_cause = cu_cp_cause_t::transport;
-      return cu_cp_cause;
+      cause = cause_t::transport;
+      return cause;
       break;
     case asn1::f1ap::cause_c::types_opts::protocol:
-      cu_cp_cause = cu_cp_cause_t::protocol;
-      return cu_cp_cause;
+      cause = cause_t::protocol;
+      return cause;
       break;
     case asn1::f1ap::cause_c::types_opts::misc:
-      cu_cp_cause = cu_cp_cause_t::misc;
-      return cu_cp_cause;
+      cause = cause_t::misc;
+      return cause;
       break;
     default:
-      cu_cp_cause = cu_cp_cause_t::nulltype;
-      return cu_cp_cause;
+      cause = cause_t::nulltype;
+      return cause;
   }
 }
 
-/// \brief Convert CU-CP cause to F1AP cause.
-/// \param cu_cp_cause The CU-CP cause.
+/// \brief Convert \c cause_t type to F1AP cause.
+/// \param cause The cause_t type.
 /// \return The F1AP cause.
-inline asn1::f1ap::cause_c cu_cp_cause_to_f1ap_cause(cu_cp_cause_t cu_cp_cause)
+inline asn1::f1ap::cause_c cause_to_f1ap_cause(cause_t cause)
 {
   asn1::f1ap::cause_c f1ap_cause;
 
-  switch (cu_cp_cause) {
-    case cu_cp_cause_t::radio_network:
+  switch (cause) {
+    case cause_t::radio_network:
       f1ap_cause.set(asn1::f1ap::cause_c::types_opts::radio_network);
       return f1ap_cause;
       break;
-    case cu_cp_cause_t::transport:
+    case cause_t::transport:
       f1ap_cause.set(asn1::f1ap::cause_c::types_opts::transport);
       return f1ap_cause;
       break;
-    case cu_cp_cause_t::protocol:
+    case cause_t::protocol:
       f1ap_cause.set(asn1::f1ap::cause_c::types_opts::protocol);
       return f1ap_cause;
       break;
-    case cu_cp_cause_t::misc:
+    case cause_t::misc:
       f1ap_cause.set(asn1::f1ap::cause_c::types_opts::misc);
       return f1ap_cause;
       break;

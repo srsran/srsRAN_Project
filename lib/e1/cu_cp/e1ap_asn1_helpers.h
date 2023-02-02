@@ -382,7 +382,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
   if (asn1_bearer_context_setup_resp->sys_bearer_context_setup_resp->type() ==
       asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
     res.success = false;
-    res.cause   = cu_cp_cause_t::protocol;
+    res.cause   = cause_t::protocol;
     return;
   } else {
     res.success = true;
@@ -424,7 +424,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
           e1ap_qos_flow_failed_item failed_qos_flow_item;
 
           failed_qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_failed_qos_flow_item.qos_flow_id);
-          failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(asn1_failed_qos_flow_item.cause);
+          failed_qos_flow_item.cause       = e1ap_cause_to_cause(asn1_failed_qos_flow_item.cause);
 
           drb_setup_item.flow_failed_list.emplace(failed_qos_flow_item.qos_flow_id, failed_qos_flow_item);
         }
@@ -448,7 +448,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
       for (const auto& asn1_drb_failed_item : asn1_res_setup_item.drb_failed_list_ng_ran) {
         e1ap_drb_failed_item_ng_ran drb_failed_item;
         drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
-        drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
+        drb_failed_item.cause  = e1ap_cause_to_cause(asn1_drb_failed_item.cause);
 
         res_setup_item.drb_failed_list_ng_ran.emplace(drb_failed_item.drb_id, drb_failed_item);
       }
@@ -490,7 +490,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
         e1ap_pdu_session_resource_failed_item failed_item;
 
         failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
-        failed_item.cause          = e1ap_cause_to_cu_cp_cause(asn1_failed_item.cause);
+        failed_item.cause          = e1ap_cause_to_cause(asn1_failed_item.cause);
 
         res.pdu_session_resource_failed_list.emplace(failed_item.pdu_session_id, failed_item);
       }
@@ -503,7 +503,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
                                         const asn1::e1ap::bearer_context_setup_fail_s& e1_bearer_context_setup_fail)
 {
   res.success = false;
-  res.cause   = e1ap_cause_to_cu_cp_cause(e1_bearer_context_setup_fail->cause.value);
+  res.cause   = e1ap_cause_to_cause(e1_bearer_context_setup_fail->cause.value);
   if (e1_bearer_context_setup_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
   }
@@ -557,7 +557,7 @@ inline void fill_e1ap_bearer_context_modification_response(
     if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp->type() ==
         asn1::e1ap::sys_bearer_context_mod_resp_c::types::e_utran_bearer_context_mod_resp) {
       res.success = false;
-      res.cause   = cu_cp_cause_t::protocol;
+      res.cause   = cause_t::protocol;
       return;
     } else {
       // Add NG RAN bearer context modification response
@@ -600,7 +600,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               e1ap_qos_flow_failed_item failed_qos_flow_item;
 
               failed_qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_failed_qos_flow_item.qos_flow_id);
-              failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(asn1_failed_qos_flow_item.cause);
+              failed_qos_flow_item.cause       = e1ap_cause_to_cause(asn1_failed_qos_flow_item.cause);
 
               drb_setup_item.flow_failed_list.emplace(failed_qos_flow_item.qos_flow_id, failed_qos_flow_item);
             }
@@ -626,7 +626,7 @@ inline void fill_e1ap_bearer_context_modification_response(
           for (const auto& asn1_drb_failed_item : asn1_res_mod_item.drb_failed_mod_list_ng_ran) {
             e1ap_drb_failed_item_ng_ran drb_failed_item;
             drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
-            drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
+            drb_failed_item.cause  = e1ap_cause_to_cause(asn1_drb_failed_item.cause);
 
             res_mod_item.drb_failed_list_ng_ran.emplace(drb_failed_item.drb_id, drb_failed_item);
           }
@@ -663,7 +663,7 @@ inline void fill_e1ap_bearer_context_modification_response(
           e1ap_pdu_session_resource_failed_item failed_item;
 
           failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
-          failed_item.cause          = e1ap_cause_to_cu_cp_cause(asn1_failed_item.cause);
+          failed_item.cause          = e1ap_cause_to_cause(asn1_failed_item.cause);
 
           res.pdu_session_resource_failed_list.emplace(failed_item.pdu_session_id, failed_item);
         }
@@ -708,7 +708,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               e1ap_qos_flow_failed_item failed_qos_flow_item;
 
               failed_qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_failed_qos_flow_item.qos_flow_id);
-              failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(asn1_failed_qos_flow_item.cause);
+              failed_qos_flow_item.cause       = e1ap_cause_to_cause(asn1_failed_qos_flow_item.cause);
 
               drb_setup_item.flow_failed_list.emplace(failed_qos_flow_item.qos_flow_id, failed_qos_flow_item);
             }
@@ -734,7 +734,7 @@ inline void fill_e1ap_bearer_context_modification_response(
           for (const auto& asn1_drb_failed_item : asn1_res_mod_item.drb_failed_list_ng_ran) {
             e1ap_drb_failed_item_ng_ran drb_failed_item;
             drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
-            drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
+            drb_failed_item.cause  = e1ap_cause_to_cause(asn1_drb_failed_item.cause);
 
             res_mod_item.drb_failed_list_ng_ran.emplace(drb_failed_item.drb_id, drb_failed_item);
           }
@@ -766,7 +766,7 @@ inline void fill_e1ap_bearer_context_modification_response(
               e1ap_qos_flow_failed_item failed_qos_flow_item;
 
               failed_qos_flow_item.qos_flow_id = uint_to_qos_flow_id(asn1_failed_qos_flow_item.qos_flow_id);
-              failed_qos_flow_item.cause       = e1ap_cause_to_cu_cp_cause(asn1_failed_qos_flow_item.cause);
+              failed_qos_flow_item.cause       = e1ap_cause_to_cause(asn1_failed_qos_flow_item.cause);
 
               drb_mod_item.flow_failed_list.emplace(failed_qos_flow_item.qos_flow_id, failed_qos_flow_item);
             }
@@ -794,7 +794,7 @@ inline void fill_e1ap_bearer_context_modification_response(
           for (const auto& asn1_drb_failed_item : asn1_res_mod_item.drb_failed_to_modify_list_ng_ran) {
             e1ap_drb_failed_item_ng_ran drb_failed_item;
             drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
-            drb_failed_item.cause  = e1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
+            drb_failed_item.cause  = e1ap_cause_to_cause(asn1_drb_failed_item.cause);
 
             res_mod_item.drb_failed_to_modify_list_ng_ran.emplace(drb_failed_item.drb_id, drb_failed_item);
           }
@@ -832,7 +832,7 @@ inline void fill_e1ap_bearer_context_modification_response(
           e1ap_pdu_session_resource_failed_item failed_item;
 
           failed_item.pdu_session_id = uint_to_pdu_session_id(asn1_failed_item.pdu_session_id);
-          failed_item.cause          = e1ap_cause_to_cu_cp_cause(asn1_failed_item.cause);
+          failed_item.cause          = e1ap_cause_to_cause(asn1_failed_item.cause);
 
           res.pdu_session_resource_failed_to_modify_list.emplace(failed_item.pdu_session_id, failed_item);
         }
@@ -846,7 +846,7 @@ inline void fill_e1ap_bearer_context_modification_response(
     const asn1::e1ap::bearer_context_mod_fail_s& asn1_bearer_context_modification_fail)
 {
   res.success = false;
-  res.cause   = e1ap_cause_to_cu_cp_cause(asn1_bearer_context_modification_fail->cause.value);
+  res.cause   = e1ap_cause_to_cause(asn1_bearer_context_modification_fail->cause.value);
   if (asn1_bearer_context_modification_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
   }
@@ -855,7 +855,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 inline void fill_asn1_bearer_context_release_command(asn1::e1ap::bearer_context_release_cmd_s&  asn1_command,
                                                      const e1ap_bearer_context_release_command& command)
 {
-  asn1_command->cause.value = cu_cp_cause_to_e1ap_cause(command.cause);
+  asn1_command->cause.value = cause_to_e1ap_cause(command.cause);
 }
 
 } // namespace srs_cu_cp

@@ -259,7 +259,7 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
 
       asn1::ngap::pdu_session_res_setup_unsuccessful_transfer_s setup_unsuccessful_transfer;
       setup_unsuccessful_transfer.cause =
-          cu_cp_cause_to_ngap_cause(cu_cp_setup_failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause);
+          cause_to_ngap_cause(cu_cp_setup_failed_item.pdu_session_resource_setup_unsuccessful_transfer.cause);
       // TODO: Add crit diagnostics
 
       // Pack pdu_session_res_setup_unsuccessful_transfer_s
@@ -280,7 +280,7 @@ inline void
 fill_cu_cp_ue_context_release_command(cu_cp_ue_context_release_command&           cu_cp_ue_context_release_cmd,
                                       const asn1::ngap::ue_context_release_cmd_s& asn1_ue_context_release_cmd)
 {
-  cu_cp_ue_context_release_cmd.cause = ngap_cause_to_cu_cp_cause(asn1_ue_context_release_cmd->cause.value);
+  cu_cp_ue_context_release_cmd.cause = ngap_cause_to_cause(asn1_ue_context_release_cmd->cause.value);
 }
 
 /// \brief Convert common type UE Context Release Complete message to NGAP ASN1 UE Context Release Complete

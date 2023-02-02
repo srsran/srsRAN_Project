@@ -71,8 +71,8 @@ public:
 };
 
 struct f1ap_ue_context_release_command {
-  ue_index_t    ue_index = ue_index_t::invalid;
-  cu_cp_cause_t cause;
+  ue_index_t ue_index = ue_index_t::invalid;
+  cause_t    cause;
 };
 
 struct f1ap_ue_context_release_complete {

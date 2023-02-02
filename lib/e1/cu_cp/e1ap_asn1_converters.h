@@ -257,57 +257,57 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
   return e1ap_pdcp_cfg;
 }
 
-/// \brief Convert E1AP Cause to CU-CP Cause.
+/// \brief Convert E1AP Cause to \c cause_t type.
 /// \param e1ap_cause The E1AP Cause.
-/// \return The CU-CP Cause.
-inline cu_cp_cause_t e1ap_cause_to_cu_cp_cause(asn1::e1ap::cause_c e1ap_cause)
+/// \return The cause type.
+inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
 {
-  cu_cp_cause_t cu_cp_cause;
+  cause_t cause;
 
   switch (e1ap_cause.type()) {
     case asn1::e1ap::cause_c::types_opts::radio_network:
-      cu_cp_cause = cu_cp_cause_t::radio_network;
-      return cu_cp_cause;
+      cause = cause_t::radio_network;
+      return cause;
       break;
     case asn1::e1ap::cause_c::types_opts::transport:
-      cu_cp_cause = cu_cp_cause_t::transport;
-      return cu_cp_cause;
+      cause = cause_t::transport;
+      return cause;
       break;
     case asn1::e1ap::cause_c::types_opts::protocol:
-      cu_cp_cause = cu_cp_cause_t::protocol;
-      return cu_cp_cause;
+      cause = cause_t::protocol;
+      return cause;
       break;
     case asn1::e1ap::cause_c::types_opts::misc:
-      cu_cp_cause = cu_cp_cause_t::misc;
-      return cu_cp_cause;
+      cause = cause_t::misc;
+      return cause;
       break;
     default:
-      cu_cp_cause = cu_cp_cause_t::nulltype;
-      return cu_cp_cause;
+      cause = cause_t::nulltype;
+      return cause;
   }
 }
 
-/// \brief Convert CU-CP cause to E1AP cause.
-/// \param cu_cp_cause The CU-CP cause.
+/// \brief Convert \c cause_t type to E1AP cause.
+/// \param cause The cause_t type.
 /// \return The E1AP cause.
-inline asn1::e1ap::cause_c cu_cp_cause_to_e1ap_cause(cu_cp_cause_t cu_cp_cause)
+inline asn1::e1ap::cause_c cause_to_e1ap_cause(cause_t cause)
 {
   asn1::e1ap::cause_c e1ap_cause;
 
-  switch (cu_cp_cause) {
-    case cu_cp_cause_t::radio_network:
+  switch (cause) {
+    case cause_t::radio_network:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
       return e1ap_cause;
       break;
-    case cu_cp_cause_t::transport:
+    case cause_t::transport:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::transport);
       return e1ap_cause;
       break;
-    case cu_cp_cause_t::protocol:
+    case cause_t::protocol:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::protocol);
       return e1ap_cause;
       break;
-    case cu_cp_cause_t::misc:
+    case cause_t::misc:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::misc);
       return e1ap_cause;
       break;

@@ -90,7 +90,7 @@ cu_cp_ue_context_modification_response f1_ue_context_modification_procedure::cre
   } else {
     logger.warning("F1AP UE Context Modification Response timeout.");
     res.success = false;
-    res.cause   = cu_cp_cause_t::misc;
+    res.cause   = cause_t::misc;
   }
 
   return res;

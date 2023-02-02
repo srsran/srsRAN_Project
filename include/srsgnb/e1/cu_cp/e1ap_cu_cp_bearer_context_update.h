@@ -209,7 +209,7 @@ struct e1ap_qos_flow_item {
 
 struct e1ap_qos_flow_failed_item {
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
-  cu_cp_cause_t cause;
+  cause_t       cause;
 };
 
 struct e1ap_data_forwarding_info {
@@ -226,8 +226,8 @@ struct e1ap_drb_setup_item_ng_ran {
 };
 
 struct e1ap_drb_failed_item_ng_ran {
-  drb_id_t      drb_id = drb_id_t::invalid;
-  cu_cp_cause_t cause;
+  drb_id_t drb_id = drb_id_t::invalid;
+  cause_t  cause;
 };
 
 struct e1ap_pdu_session_resource_setup_modification_item {
@@ -242,7 +242,7 @@ struct e1ap_pdu_session_resource_setup_modification_item {
 
 struct e1ap_pdu_session_resource_failed_item {
   pdu_session_id_t pdu_session_id = pdu_session_id_t::invalid;
-  cu_cp_cause_t    cause;
+  cause_t          cause;
 };
 
 struct e1ap_crit_diagnostics_item {
@@ -267,7 +267,7 @@ struct e1ap_bearer_context_setup_response {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> pdu_session_resource_failed_list;
 
   // Bearer Context Setup Failure
-  optional<cu_cp_cause_t> cause;
+  optional<cause_t> cause;
 
   // Common
   optional<e1ap_crit_diagnostics> crit_diagnostics;
@@ -376,15 +376,15 @@ struct e1ap_bearer_context_modification_response {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> pdu_session_resource_failed_to_modify_list;
 
   // Bearer Context Modification Failure
-  optional<cu_cp_cause_t> cause;
+  optional<cause_t> cause;
 
   // Common
   optional<e1ap_crit_diagnostics> crit_diagnostics;
 };
 
 struct e1ap_bearer_context_release_command {
-  ue_index_t    ue_index = ue_index_t::invalid;
-  cu_cp_cause_t cause;
+  ue_index_t ue_index = ue_index_t::invalid;
+  cause_t    cause;
 };
 
 } // namespace srs_cu_cp

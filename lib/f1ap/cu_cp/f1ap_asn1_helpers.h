@@ -162,7 +162,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       cu_cp_srbs_failed_to_be_setup_mod_item srb_failed_item;
       srb_failed_item.srb_id = int_to_srb_id(asn1_srb_failed_item.srb_id);
       if (asn1_srb_failed_item.cause_present) {
-        srb_failed_item.cause = f1ap_cause_to_cu_cp_cause(asn1_srb_failed_item.cause);
+        srb_failed_item.cause = f1ap_cause_to_cause(asn1_srb_failed_item.cause);
       }
       res.srbs_failed_to_be_setup_mod_list.emplace(srb_failed_item.srb_id, srb_failed_item);
     }
@@ -176,7 +176,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       cu_cp_drbs_failed_to_be_setup_modified_item drb_failed_item;
       drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
       if (asn1_drb_failed_item.cause_present) {
-        drb_failed_item.cause = f1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
+        drb_failed_item.cause = f1ap_cause_to_cause(asn1_drb_failed_item.cause);
       }
       res.drbs_failed_to_be_setup_mod_list.emplace(drb_failed_item.drb_id, drb_failed_item);
     }
@@ -190,7 +190,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       cu_cp_scell_failed_to_setup_mod_item scell_failed_item;
       scell_failed_item.scell_id = f1ap_nrcgi_to_nr_cell_identity(asn1_scell_failed_item.scell_id);
       if (asn1_scell_failed_item.cause_present) {
-        scell_failed_item.cause = f1ap_cause_to_cu_cp_cause(asn1_scell_failed_item.cause);
+        scell_failed_item.cause = f1ap_cause_to_cause(asn1_scell_failed_item.cause);
       }
       res.scell_failed_to_setup_mod_list.push_back(scell_failed_item);
     }
@@ -204,7 +204,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
       cu_cp_drbs_failed_to_be_setup_modified_item drb_failed_item;
       drb_failed_item.drb_id = uint_to_drb_id(asn1_drb_failed_item.drb_id);
       if (asn1_drb_failed_item.cause_present) {
-        drb_failed_item.cause = f1ap_cause_to_cu_cp_cause(asn1_drb_failed_item.cause);
+        drb_failed_item.cause = f1ap_cause_to_cause(asn1_drb_failed_item.cause);
       }
       res.drbs_failed_to_be_modified_list.emplace(drb_failed_item.drb_id, drb_failed_item);
     }
@@ -271,7 +271,7 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
                                                                const asn1::f1ap::ue_context_mod_fail_s& asn1_fail)
 {
   res.success = false;
-  res.cause   = f1ap_cause_to_cu_cp_cause(asn1_fail->cause.value);
+  res.cause   = f1ap_cause_to_cause(asn1_fail->cause.value);
   if (asn1_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
   }

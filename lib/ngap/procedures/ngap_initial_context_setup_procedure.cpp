@@ -46,7 +46,7 @@ void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<vo
     // Release UE
     cu_cp_ue_context_release_command rel_cmd = {};
     rel_cmd.ue_index                         = ue->get_ue_index();
-    rel_cmd.cause                            = cu_cp_cause_t::protocol;
+    rel_cmd.cause                            = cause_t::protocol;
 
     ue->get_du_processor_control_notifier().on_new_ue_context_release_command(rel_cmd);
 
