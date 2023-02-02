@@ -72,7 +72,7 @@ du_high::du_high(const du_high_configuration& config_) :
                               *metrics_notifier});
   f1ap = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ue_executors);
   du_manager =
-      create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells},
+      create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells, cfg.qos},
                                           {timers, *cfg.du_mng_executor, *cfg.ue_executors, *cfg.cell_executors},
                                           {*f1ap, *f1ap},
                                           {*config_.f1u_gw},

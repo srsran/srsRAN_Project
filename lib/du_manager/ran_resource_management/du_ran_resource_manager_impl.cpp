@@ -61,8 +61,12 @@ du_ue_resource_update_response du_ue_ran_resource_updater_impl::update(du_cell_i
 
 ///////////////////////////
 
-du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config> cell_cfg_list_) :
-  cell_cfg_list(cell_cfg_list_), logger(srslog::fetch_basic_logger("DU-MNG")), pucch_res_mng(cell_cfg_list)
+du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>       cell_cfg_list_,
+                                                           std::map<uint8_t, du_qos_config> qos_) :
+  cell_cfg_list(cell_cfg_list_),
+  qos_config(qos_),
+  logger(srslog::fetch_basic_logger("DU-MNG")),
+  pucch_res_mng(cell_cfg_list)
 {
 }
 
@@ -135,6 +139,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
           })) {
         logger.warning("Failed to allocate DRB-Id={}. Cause: Specified LCID={} already exists", drb.drb_id, lcid);
         resp.failed_drbs.push_back(drb.drb_id);
+        continue;
       }
     } else {
       // >> Allocate LCID if not specified by F1AP.
@@ -142,8 +147,20 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       if (lcid > LCID_MAX_DRB) {
         logger.warning("Failed to allocate DRB-Id={}. Cause: No available LCIDs", drb.drb_id);
         resp.failed_drbs.push_back(drb.drb_id);
+        continue;
       }
     }
+
+    // >> Get RLC config from 5QI
+    rlc_config rlc_cfg = {};
+    if (qos_config.find(drb.five_qi) == qos_config.end()) {
+      logger.warning("Failed to allocate DRB-Id={}. Cause: No 5QI={} configured", drb.drb_id, drb.five_qi);
+      resp.failed_drbs.push_back(drb.drb_id);
+      continue;
+    }
+    du_qos_config qos = qos_config[drb.five_qi];
+    rlc_cfg           = qos.rlc;
+
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
     ue_mcg.rlc_bearers.back().drb_id  = drb.drb_id;

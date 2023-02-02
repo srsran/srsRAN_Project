@@ -44,7 +44,7 @@ private:
 class du_ran_resource_manager_impl : public du_ran_resource_manager
 {
 public:
-  du_ran_resource_manager_impl(span<const du_cell_config> cell_cfg_list_);
+  du_ran_resource_manager_impl(span<const du_cell_config> cell_cfg_list_, std::map<uint8_t, du_qos_config> qos);
   du_ran_resource_manager_impl(du_ran_resource_manager_impl&&)                 = delete;
   du_ran_resource_manager_impl(const du_ran_resource_manager_impl&)            = delete;
   du_ran_resource_manager_impl& operator=(du_ran_resource_manager_impl&&)      = delete;
@@ -73,8 +73,9 @@ private:
   bool allocate_cell_resources(du_ue_index_t ue_index, du_cell_index_t cell_index, serv_cell_index_t serv_cell_index);
   void deallocate_cell_resources(du_ue_index_t ue_index, serv_cell_index_t serv_cell_index);
 
-  span<const du_cell_config> cell_cfg_list;
-  srslog::basic_logger&      logger;
+  span<const du_cell_config>       cell_cfg_list;
+  std::map<uint8_t, du_qos_config> qos_config;
+  srslog::basic_logger&            logger;
 
   struct ue_res_item {
     cell_group_config cg_cfg;

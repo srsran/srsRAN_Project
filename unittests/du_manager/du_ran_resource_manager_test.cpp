@@ -21,8 +21,9 @@ class du_ran_resource_manager_tester : public ::testing::Test
 protected:
   du_ran_resource_manager_tester() :
     cell_cfg_list({config_helpers::make_default_du_cell_config()}),
+    qos_cfg_list({}),
     default_ue_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),
-    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list))
+    res_mng(std::make_unique<du_ran_resource_manager_impl>(cell_cfg_list, qos_cfg_list))
   {
   }
 
@@ -47,6 +48,7 @@ protected:
   }
 
   std::vector<du_cell_config>                                 cell_cfg_list;
+  std::map<uint8_t, du_qos_config>                            qos_cfg_list;
   const serving_cell_config                                   default_ue_cell_cfg;
   std::unique_ptr<du_ran_resource_manager>                    res_mng;
   slotted_array<ue_ran_resource_configurator, MAX_NOF_DU_UES> ues;

@@ -512,6 +512,7 @@ int main(int argc, char** argv)
   du_hi_cfg.phy_adapter                   = &phy;
   du_hi_cfg.cells                         = du_cfg;
   du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
+  du_hi_cfg.qos                           = du_qos_cfg;
 
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");

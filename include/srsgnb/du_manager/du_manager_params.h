@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/du/du_cell_config.h"
+#include "srsgnb/du/du_qos_config.h"
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/f1ap/du/f1ap_du.h"
@@ -18,16 +19,18 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/support/timers.h"
+#include <map>
 
 namespace srsgnb {
 namespace srs_du {
 
 struct du_manager_params {
   struct ran_params {
-    std::string                 gnb_du_name;
-    uint64_t                    gnb_du_id;
-    uint8_t                     rrc_version;
-    std::vector<du_cell_config> cells;
+    std::string                      gnb_du_name;
+    uint64_t                         gnb_du_id;
+    uint8_t                          rrc_version;
+    std::vector<du_cell_config>      cells;
+    std::map<uint8_t, du_qos_config> qos;
   };
   struct service_params {
     timer_manager&                timers;
