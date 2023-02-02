@@ -554,9 +554,8 @@ csi_resource_config srsgnb::config_helpers::make_default_csi_resource_config()
 csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
 {
   csi_report_config cfg;
-  cfg.report_cfg_id               = static_cast<csi_report_config_id_t>(0);
-  cfg.res_for_channel_meas        = static_cast<csi_res_config_id_t>(0);
-  cfg.csi_im_res_for_interference = static_cast<csi_res_config_id_t>(0);
+  cfg.report_cfg_id        = static_cast<csi_report_config_id_t>(0);
+  cfg.res_for_channel_meas = static_cast<csi_res_config_id_t>(0);
 
   csi_report_config::periodic_or_semi_persistent_report_on_pucch report_cfg_type{};
   report_cfg_type.report_type = csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic;
@@ -566,7 +565,7 @@ csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
       csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9});
   cfg.report_cfg_type = report_cfg_type;
 
-  cfg.report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_pmi_cqi;
+  cfg.report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_cqi;
 
   cfg.report_freq_cfg.emplace();
   cfg.report_freq_cfg.value().cqi_format_ind = csi_report_config::cqi_format_indicator::wideband_cqi;
