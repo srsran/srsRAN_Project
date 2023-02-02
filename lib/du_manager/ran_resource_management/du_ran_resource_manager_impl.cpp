@@ -152,19 +152,17 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
     }
 
     // >> Get RLC config from 5QI
-    rlc_config rlc_cfg = {};
     if (qos_config.find(drb.five_qi) == qos_config.end()) {
       logger.warning("Failed to allocate DRB-Id={}. Cause: No 5QI={} configured", drb.drb_id, drb.five_qi);
       resp.failed_drbs.push_back(drb.drb_id);
       continue;
     }
     du_qos_config qos = qos_config[drb.five_qi];
-    rlc_cfg           = qos.rlc;
 
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
     ue_mcg.rlc_bearers.back().drb_id  = drb.drb_id;
-    ue_mcg.rlc_bearers.back().rlc_cfg = create_rlc_config(drb);
+    ue_mcg.rlc_bearers.back().rlc_cfg = qos.rlc;
   }
 
   // > Allocate resources for new or modified cells.

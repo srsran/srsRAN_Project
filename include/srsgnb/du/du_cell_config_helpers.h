@@ -11,6 +11,7 @@
 #pragma once
 
 #include "du_cell_config.h"
+#include "srsgnb/du/du_qos_config.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
@@ -19,6 +20,7 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/support/error_handling.h"
+#include <map>
 
 // TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.
 
@@ -83,6 +85,35 @@ inline du_cell_config make_default_du_cell_config(const cell_config_builder_para
   cfg.ue_ded_serv_cell_cfg = create_default_initial_ue_serving_cell_config(params);
 
   return cfg;
+}
+
+/// Generates default QoS configuration used by gNB DU. The default configuration should be valid.
+inline std::map<uint8_t, du_qos_config> make_default_du_qos_config_list()
+{
+  std::map<uint8_t, du_qos_config> qos_list = {};
+  {
+    // 5QI=7
+    du_qos_config cfg{};
+    cfg.rlc.mode                  = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
+    cfg.rlc.um.rx.t_reassembly    = 35;
+    qos_list[7]                   = cfg;
+  }
+  {
+    // 5QI=9
+    du_qos_config cfg{};
+    cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
+    cfg.rlc.am.tx.t_poll_retx       = 45;
+    cfg.rlc.am.tx.poll_pdu          = -1;
+    cfg.rlc.am.tx.poll_byte         = -1;
+    cfg.rlc.am.tx.max_retx_thresh   = 8;
+    cfg.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
+    cfg.rlc.am.rx.t_reassembly      = 35;
+    cfg.rlc.am.rx.t_status_prohibit = 0;
+    qos_list[9]                     = cfg;
+  }
+  return qos_list;
 }
 
 } // namespace config_helpers

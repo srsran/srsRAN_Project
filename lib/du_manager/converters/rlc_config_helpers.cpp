@@ -68,28 +68,6 @@ rlc_config srsgnb::srs_du::make_default_srb_rlc_config()
   return cfg;
 }
 
-rlc_config srsgnb::srs_du::create_rlc_config(const f1ap_drb_to_setup& f1_drb_cfg)
-{
-  rlc_config cfg;
-  cfg.mode = convert_asn1_f1ap_to_rlc_mode(f1_drb_cfg.mode);
-  // TODO: Actual use of F1 parameters.
-  if (cfg.mode == rlc_mode::am) {
-    cfg.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
-    cfg.am.tx.t_poll_retx       = 50;
-    cfg.am.tx.poll_pdu          = 16;
-    cfg.am.tx.poll_byte         = 2000;
-    cfg.am.tx.max_retx_thresh   = 8;
-    cfg.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
-    cfg.am.rx.t_reassembly      = 50;
-    cfg.am.rx.t_status_prohibit = 45;
-  } else {
-    cfg.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
-    cfg.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
-    cfg.um.rx.t_reassembly    = 50;
-  }
-  return cfg;
-}
-
 template <typename Bearer>
 static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&             msg,
                                                     du_ue_index_t                            ue_index,

@@ -95,6 +95,8 @@ private:
                          ->drbs_to_be_setup_mod_list.value[0]
                          ->drbs_to_be_setup_mod_item();
         drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
+        drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
+            7; // UM in default configs
         f1c_msg_handler->handle_message(msg);
       } break;
       default:
@@ -256,6 +258,7 @@ public:
     cfg.phy_adapter     = &sim_phy;
     cfg.cells           = {config_helpers::make_default_du_cell_config()};
     cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
+    cfg.qos             = config_helpers::make_default_du_qos_config_list();
     du_hi               = std::make_unique<du_high>(cfg);
 
     // Connect CU back to DU.
