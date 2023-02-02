@@ -12,9 +12,8 @@
 
 namespace srsgnb {
 
-class ru_downlink_plane;
-class ru_uplink_plane;
-class ru_timing_notifier;
+class ru_downlink_plane_handler;
+class ru_uplink_plane_handler;
 
 /// \brief Radio Unit interface.
 ///
@@ -25,14 +24,11 @@ class radio_unit
 public:
   virtual ~radio_unit() = default;
 
-  /// Returns the downlink plane interface of this RU.
-  virtual ru_downlink_plane& get_downlink_plane() = 0;
+  /// Returns the downlink plane handler interface of this RU.
+  virtual ru_downlink_plane_handler& get_downlink_plane_handler() = 0;
 
-  /// Returns the uplink plane interface of this RU.
-  virtual ru_uplink_plane& get_uplink_plane() = 0;
-
-  /// \brief Sets the RU timing notifier for this RU.
-  virtual void set_timing_notifier(ru_timing_notifier& notifier_) = 0;
+  /// Returns the uplink plane interface handler of this RU.
+  virtual ru_uplink_plane_handler& get_uplink_plane_handler() = 0;
 };
 
 } // namespace srsgnb

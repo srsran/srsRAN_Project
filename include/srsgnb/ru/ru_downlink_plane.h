@@ -17,13 +17,13 @@ namespace srsgnb {
 struct resource_grid_context;
 class resource_grid_reader;
 
-/// \brief Radio Unit downlink plane interface.
+/// \brief Radio Unit downlink plane handler interface.
 ///
-/// Downlink plane interface of a radio unit used to transmit downlink data.
-class ru_downlink_plane
+/// Downlink plane handler interface of a radio unit used to transmit downlink data.
+class ru_downlink_plane_handler
 {
 public:
-  virtual ~ru_downlink_plane() = default;
+  virtual ~ru_downlink_plane_handler() = default;
 
   /// \brief Handles the given downlink data to be transmitted.
   ///
