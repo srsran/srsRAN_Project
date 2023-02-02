@@ -166,7 +166,8 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   }
   status_changed = true;
 
-  logger.log_debug("State: {}", st);
+  // Log state
+  log_state(srslog::basic_levels::debug);
 
   // 5.2.3.2.3 Actions when an AMD PDU is placed in the reception buffer
   /*
