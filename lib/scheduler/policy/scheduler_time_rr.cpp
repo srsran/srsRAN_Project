@@ -247,11 +247,6 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_list&               ues,
                                  bool                         is_retx)
 {
-  if (not is_retx) {
-    // Increment Round-robin counter to prioritize different UEs.
-    rr_count++;
-  }
-
   auto tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
     return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, logger);
   };
