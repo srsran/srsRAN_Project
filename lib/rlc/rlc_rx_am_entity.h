@@ -44,9 +44,7 @@ struct rlc_rx_am_sdu_info {
   bool                                                       fully_received = false;
   bool                                                       has_gap        = false;
   std::set<rlc_rx_am_sdu_segment, rlc_rx_am_sdu_segment_cmp> segments; // Set of segments with SO as key
-  byte_buffer_slice_chain                                    sdu              = {};
-  uint32_t                                                   next_expected_so = 0;
-  uint32_t                                                   total_sdu_length = 0;
+  byte_buffer_slice_chain                                    sdu = {};
 };
 
 /// \brief RX state variables
@@ -251,6 +249,28 @@ private:
 } // namespace srsgnb
 
 namespace fmt {
+
+template <>
+struct formatter<srsgnb::rlc_rx_am_sdu_info> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_rx_am_sdu_info& info, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "nof_segments={}, has_gap={}, fully_received={}, sdu_len={}",
+                     info.segments.size(),
+                     info.has_gap,
+                     info.fully_received,
+                     info.sdu.length());
+  }
+};
+
 template <>
 struct formatter<srsgnb::rlc_rx_am_state> {
   template <typename ParseContext>
