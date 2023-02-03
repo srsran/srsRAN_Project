@@ -148,10 +148,11 @@ void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
 void scheduler_event_logger::enqueue_impl(const harq_ack_event& harq_ev)
 {
   fmt::format_to(fmtbuf,
-                 "\n- HARQ-ACK: UE={}, rnti={:#x}, cell={}, h_id={}, ack={}",
+                 "\n- HARQ-ACK: UE={} rnti={:#x} cell={} slot_rx={} h_id={} ack={}",
                  harq_ev.ue_index,
                  harq_ev.rnti,
                  harq_ev.cell_index,
+                 harq_ev.sl_ack_rx,
                  harq_ev.h_id,
                  harq_ev.ack ? 1 : 0);
   if (harq_ev.ack) {

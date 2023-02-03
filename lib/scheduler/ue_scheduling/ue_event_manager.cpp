@@ -147,9 +147,10 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 
 void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const bool> harq_bits)
 {
+  unsigned h_id = 0;
   for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
     int tbs = -1;
-    for (unsigned h_id = 0; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
+    for (; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
       if (not ue_cc.harqs.dl_harq(h_id).empty() and ue_cc.harqs.dl_harq(h_id).slot_ack() == uci_sl) {
         // TODO: Fetch the right HARQ id, TB, CBG.
         tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits[bit_idx]);
@@ -158,6 +159,7 @@ void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<c
           ev_logger.enqueue(scheduler_event_logger::harq_ack_event{ue_cc.ue_index,
                                                                    ue_cc.rnti(),
                                                                    ue_cc.cell_index,
+                                                                   uci_sl,
                                                                    to_harq_id(h_id),
                                                                    harq_bits[bit_idx],
                                                                    units::bytes{(unsigned)tbs}});
@@ -178,9 +180,10 @@ void ue_event_manager::handle_harq_ind(ue_cell&                                 
                                        slot_point                                                 uci_sl,
                                        const bounded_bitset<uci_constants::MAX_NOF_PAYLOAD_BITS>& harq_bits)
 {
+  unsigned h_id = 0;
   for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
     int tbs = -1;
-    for (unsigned h_id = 0; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
+    for (; h_id != ue_cc.harqs.nof_dl_harqs(); ++h_id) {
       if (not ue_cc.harqs.dl_harq(h_id).empty() and ue_cc.harqs.dl_harq(h_id).slot_ack() == uci_sl) {
         // TODO: Fetch the right HARQ id, TB, CBG.
         tbs = ue_cc.harqs.dl_harq(h_id).ack_info(0, harq_bits.test(bit_idx));
@@ -189,6 +192,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                                 
           ev_logger.enqueue(scheduler_event_logger::harq_ack_event{ue_cc.ue_index,
                                                                    ue_cc.rnti(),
                                                                    ue_cc.cell_index,
+                                                                   uci_sl,
                                                                    to_harq_id(h_id),
                                                                    harq_bits.test(bit_idx),
                                                                    units::bytes{(unsigned)tbs}});
