@@ -110,13 +110,13 @@ inline sched_cell_configuration_request_message make_custom_sched_cell_configura
 /////////        TEST BENCH for PUCCH scheduler        /////////
 
 struct test_bench_params {
-  unsigned       pucch_res_common = 11;
-  unsigned       n_cces           = 0;
-  sr_periodicity period           = sr_periodicity::sl_40;
-  unsigned       offset           = 0;
-  unsigned       csi_period       = 80;
-  unsigned       csi_offset       = 1;
-  bool           is_tdd           = false;
+  unsigned               pucch_res_common = 11;
+  unsigned               n_cces           = 0;
+  sr_periodicity         period           = sr_periodicity::sl_40;
+  unsigned               offset           = 0;
+  csi_report_periodicity csi_period       = csi_report_periodicity::slots320;
+  unsigned               csi_offset       = 9;
+  bool                   is_tdd           = false;
 };
 
 // Test bench with all that is needed for the PUCCH.

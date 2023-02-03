@@ -20,13 +20,19 @@ class test_pucch_resource_manager : public ::testing::Test
 {
 public:
   test_pucch_resource_manager() :
-    pucch_cfg{config_helpers::make_default_ue_uplink_config().init_ul_bwp.pucch_cfg.value()}, sl_tx(slot_point(0, 0))
+    cell_cfg{test_helpers::make_default_sched_cell_configuration_request()},
+    ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
+    pucch_cfg{ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value()},
+    sl_tx(slot_point(0, 0))
   {
     res_manager.slot_indication(sl_tx);
   };
 
 protected:
-  pucch_config           pucch_cfg;
+  cell_configuration    cell_cfg;
+  ue_cell_configuration ue_cell_cfg;
+  // Helper variable.
+  const pucch_config&    pucch_cfg;
   pucch_resource_manager res_manager;
   slot_point             sl_tx;
 
@@ -113,7 +119,7 @@ TEST_F(test_pucch_resource_manager, slot_indication)
 
   // Slot point pointing at the last slot, that has been cleared by that slot_indication().
   slot_point old_slot{0, sl_tx.to_uint() - 1};
-  int        res_id = res_manager.fetch_f1_pucch_res_indic(old_slot, to_rnti(0x4601));
+  const int  res_id = res_manager.fetch_f1_pucch_res_indic(old_slot, to_rnti(0x4601));
 
   // Expect that pucch_res_indicator = -1 is returned (due to the slot_indication() resetting the resource records for
   // old slots).
@@ -210,6 +216,37 @@ TEST_F(test_pucch_resource_manager, allocate_8_ue_res_f2)
 
   // Expect the 8th UE not to get assigned anything, as there are only 7 resources available.
   ASSERT_EQ(nullptr, record.pucch_res);
+}
+
+TEST_F(test_pucch_resource_manager, allocate_csi_resource)
+{
+  const unsigned        expected_csi_res_index = 9;
+  const pucch_resource* res                    = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[expected_csi_res_index], res);
+  // Check that the Resource hgets actually stored in the resource manager.
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[expected_csi_res_index],
+            res_manager.fetch_csi_pucch_res_config(sl_tx, to_rnti(0x4601), ue_cell_cfg));
+}
+
+TEST_F(test_pucch_resource_manager, release_and_reallocate_csi_resource)
+{
+  // There is no allcoated resource, expects false from the release.
+  ASSERT_FALSE(res_manager.release_csi_resource(sl_tx, to_rnti(0x4601)));
+
+  const unsigned        expected_csi_res_index = 9;
+  const pucch_resource* res                    = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[expected_csi_res_index], res);
+
+  const pucch_resource* res_second_allc_no_release =
+      res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+  ASSERT_EQ(nullptr, res_second_allc_no_release);
+
+  // This time the release it supposed to return true.
+  ASSERT_TRUE(res_manager.release_csi_resource(sl_tx, to_rnti(0x4601)));
+
+  const pucch_resource* res_reallocation = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+  ASSERT_EQ(&pucch_cfg.pucch_res_list[expected_csi_res_index], res_reallocation);
 }
 
 // Tests allocation in different slots.

@@ -25,12 +25,10 @@ uci_allocator_impl::uci_allocator_impl(pucch_allocator& pucch_alloc_) :
 
 uci_allocator_impl::~uci_allocator_impl() = default;
 
-////////////    Private functions    ////////////
+////////////    Static functions    ////////////
 
-void uci_allocator_impl::fill_uci_on_pusch(uci_info&           uci,
-                                           const uci_on_pusch& uci_cfg,
-                                           unsigned            harq_ack_nof_bits,
-                                           unsigned            csi_part1_nof_bits)
+static void
+fill_uci_on_pusch(uci_info& uci, const uci_on_pusch& uci_cfg, unsigned harq_ack_nof_bits, unsigned csi_part1_nof_bits)
 {
   // [Implementation-defined] CSI part2 reporting not supported.
   const unsigned CSI_PART2_NOF_BITS = 0;
@@ -67,6 +65,8 @@ void uci_allocator_impl::fill_uci_on_pusch(uci_info&           uci,
   uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_1.value();
 }
 
+////////////    Private functions    ////////////
+
 uci_allocator_impl::slot_alloc_list::ue_uci* uci_allocator_impl::get_uci_alloc(slot_point uci_slot, rnti_t rnti)
 {
   auto& ucis = uci_alloc_grid[uci_slot.to_uint()].ucis;
@@ -98,7 +98,7 @@ uci_allocation uci_allocator_impl::alloc_uci_harq_ue(cell_resource_allocator&   
   ul_sched_info* existing_pusch = std::find_if(
       puschs.begin(), puschs.end(), [crnti](ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
 
-  bool has_pusch_grants =
+  const bool has_pusch_grants =
       not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
 
   // Allocate UCI on PUSCH if any PUSCH grants already exist for the UE; else, allocate UCI on PUCCH.
@@ -151,7 +151,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
   // Note: the UCI bits is capped to the PUCCH Format 2 capacity. When multiplexing UCI to PUSCH, we only "tranfer" the
   // bits that would have been fit within the PUCCH, not the all the bits that should have been reported.
   // TODO: Check if this approach is correct.
-  pucch_uci_bits pucch_uci = pucch_alloc.remove_ue_uci_from_pucch(
+  const pucch_uci_bits pucch_uci = pucch_alloc.remove_ue_uci_from_pucch(
       slot_alloc, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   // In case there are no UCI bits from PUCCH, then there is no UCI to be multiplexed on the PUSCH.
@@ -178,7 +178,7 @@ void uci_allocator_impl::uci_allocate_sr_opportunity(cell_slot_resource_allocato
   ul_sched_info* existing_pusch = std::find_if(
       puschs.begin(), puschs.end(), [crnti](ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
 
-  bool has_pusch_grants =
+  const bool has_pusch_grants =
       not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
 
   // If there is a PUSCH allocated for this UE, do not allocate any PUCCH SR grants.
@@ -201,7 +201,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
   ul_sched_info* existing_pusch = std::find_if(
       puschs.begin(), puschs.end(), [crnti](ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == crnti; });
 
-  bool has_pusch_grants =
+  const bool has_pusch_grants =
       not slot_alloc.result.ul.puschs.empty() and existing_pusch != slot_alloc.result.ul.puschs.end();
 
   // If there is a PUSCH allocated for this UE, allocate the CSI on the UCI on PUSCH.

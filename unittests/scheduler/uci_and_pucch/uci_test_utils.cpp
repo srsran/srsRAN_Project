@@ -130,6 +130,10 @@ test_bench::test_bench(const test_bench_params& params) :
 
   ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
   ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
+  auto& csi_report = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+      ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
+  csi_report.report_slot_period = params.csi_period;
+  csi_report.report_slot_offset = params.csi_offset;
 
   ues.insert(main_ue_idx, std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
   last_allocated_rnti   = ue_req.crnti;

@@ -10,7 +10,6 @@
 
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/pucch_scheduling/pucch_guardbands_scheduler.h"
-#include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "unittests/scheduler/uci_and_pucch/uci_test_utils.h"
 #include <gtest/gtest.h>

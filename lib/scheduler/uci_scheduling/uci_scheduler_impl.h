@@ -19,7 +19,6 @@ class cell_configuration;
 class uci_allocator;
 struct cell_resource_allocator;
 
-/// Implementation of the UCI scheduler interface for SR and CSI opportunities.
 class uci_scheduler_impl final : public uci_scheduler
 {
 public:
@@ -27,15 +26,12 @@ public:
 
   ~uci_scheduler_impl() override;
 
-  /// Allocate the PUCCH resource for CSI or SR opportunities.
-  /// \param[out,in] res_alloc struct with scheduling results.
-  /// \param[in] sl_tx slot for which the PUCCH resource should be allocated.
   void run_slot(cell_resource_allocator& res_alloc, slot_point sl_tx) override;
 
 private:
   // Cell configuration.
   const cell_configuration& cell_cfg;
-  // Ref to PUCCH resource allocator object.
+  // Reference to PUCCH resource allocator object.
   uci_allocator& uci_alloc;
   ue_list&       ues;
 

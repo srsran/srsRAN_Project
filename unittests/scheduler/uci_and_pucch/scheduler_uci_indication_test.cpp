@@ -118,7 +118,7 @@ protected:
     });
   }
 
-  bool ue_pucch_scheduled() const
+  bool ue_pucch_harq_ack_grant_scheduled() const
   {
     return std::any_of(last_sched_res->ul.pucchs.begin(), last_sched_res->ul.pucchs.end(), [](const pucch_info& pucch) {
       bool is_harq_ack{false};
@@ -152,7 +152,7 @@ TEST_F(uci_sched_tester, no_retx_after_harq_ack)
   bool pucch_found = false;
   for (unsigned i = 0; i != MAX_COUNT; ++i) {
     run_slot();
-    if (ue_pucch_scheduled()) {
+    if (ue_pucch_harq_ack_grant_scheduled()) {
       notify_uci_ind_on_pucch(false, std::array<bool, 1>{true});
       pucch_found = true;
       break;
@@ -164,7 +164,7 @@ TEST_F(uci_sched_tester, no_retx_after_harq_ack)
   for (unsigned i = 0; i != MAX_COUNT; ++i) {
     run_slot();
     ASSERT_FALSE(ue_pdsch_scheduled());
-    ASSERT_FALSE(ue_pucch_scheduled());
+    ASSERT_FALSE(ue_pucch_harq_ack_grant_scheduled());
   }
 }
 
@@ -178,7 +178,7 @@ TEST_F(uci_sched_tester, pusch_scheduled_after_sr_indication)
   for (unsigned i = 0; i != MAX_UL_GRANT_DELAY; ++i) {
     run_slot();
     ASSERT_FALSE(ue_pdsch_scheduled());
-    ASSERT_FALSE(ue_pucch_scheduled());
+    ASSERT_FALSE(ue_pucch_harq_ack_grant_scheduled());
     if (ue_pusch_scheduled()) {
       pusch_found = true;
       break;
@@ -209,7 +209,7 @@ TEST_F(uci_sched_tester, uci_ind_on_pusch)
   for (unsigned i = 0; i != MAX_COUNT; ++i) {
     run_slot();
     ASSERT_FALSE(ue_pdsch_scheduled());
-    ASSERT_FALSE(ue_pucch_scheduled());
+    ASSERT_FALSE(ue_pucch_harq_ack_grant_scheduled());
   }
 }
 

@@ -45,6 +45,11 @@ enum class csi_report_periodicity {
   slots320 = 320
 };
 
+inline unsigned csi_report_periodicity_to_uint(csi_report_periodicity period)
+{
+  return static_cast<unsigned>(period);
+}
+
 /// CSI-ReportConfig is used to configure a periodic or semi-persistent report sent on PUCCH on the cell in which the
 /// CSI-ReportConfig is included, or to configure a semi-persistent or aperiodic report sent on PUSCH triggered by DCI
 /// received on the cell in which the CSI-ReportConfig is included.

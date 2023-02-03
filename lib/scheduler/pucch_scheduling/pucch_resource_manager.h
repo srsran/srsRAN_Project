@@ -53,7 +53,8 @@ public:
   /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
   /// resources available, the pointer passed will be \c nullptr, whereas the PUCCH resource indicator is to be ignored.
-  const pucch_resource* reserve_csi_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
+  const pucch_resource*
+  reserve_csi_resource(slot_point slot_harq, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
   /// Returns the pointer to the configuration of the PUCCH resource to be used for SR.
   /// \remark There is only one resource used for SR.
@@ -99,7 +100,8 @@ public:
 
   /// \brief Returns the configuration of the PUCCH resource used for CSI (format 2) for a given RNTI at a given slot.
   /// \return Pointer to the resource configuration used allocated to the UE; if UE is not found, returns \c nullptr.
-  const pucch_resource* fetch_csi_pucch_res_config(slot_point slot_tx, rnti_t crnti, const pucch_config& pucch_cfg);
+  const pucch_resource*
+  fetch_csi_pucch_res_config(slot_point slot_tx, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
 private:
   /// Size of the ring buffer of pucch_resource_manager. This size sets a limit on how far in advance a PUCCH can be

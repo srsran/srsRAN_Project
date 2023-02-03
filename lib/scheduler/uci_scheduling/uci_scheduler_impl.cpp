@@ -55,13 +55,22 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
       }
     }
 
-    // > Scheduler CSI grants.
-    // TODO: get these values from the UE config.
-    const unsigned CSI_offset = 1;
-    const unsigned CSI_period = 80;
+    // We assume we only use the first CSI report configuration.
+    const unsigned csi_report_cfg_idx = 0;
+    const auto&    csi_report_cfg =
+        ue_cell.cfg().cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
 
-    // Check if this slot corresponds to an CSI opportunity for the UE.
-    if ((sl_tx - CSI_offset).to_uint() % CSI_period == 0) {
+    // > Scheduler CSI grants.
+    unsigned csi_offset =
+        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
+            .report_slot_offset;
+    unsigned csi_period = csi_report_periodicity_to_uint(
+        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
+            .report_slot_period);
+
+    // Check if this slot corresponds to a CSI opportunity for the UE.
+    if ((sl_tx - csi_offset).to_uint() % csi_period == 0) {
+      // We do not allocate the CSI head of time.
       const unsigned CSI_SLOT_DELAY = 0;
       auto&          slot_alloc     = cell_alloc[CSI_SLOT_DELAY];
 

@@ -26,6 +26,15 @@ inline constexpr const T& variant_get(const variant<Types...>& v)
   return mpark::get<T, Types...>(v);
 }
 
+/// \brief Reads the value of the variant given the index or the type (if the type is unique).
+/// \param[in] v Variant to examine.
+/// \return Non-const Reference to the value stored in the variant.
+template <typename T, typename... Types>
+inline constexpr T& variant_get(variant<Types...>& v)
+{
+  return mpark::get<T, Types...>(v);
+}
+
 /// \brief Checks if the variant v holds the alternative T.
 /// \param[in] v Variant to examine.
 /// \return True if the variant currently holds the alternative T, false otherwise.
