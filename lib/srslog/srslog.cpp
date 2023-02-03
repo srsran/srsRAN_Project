@@ -226,14 +226,15 @@ void srslog::flush()
     sinks.push_back(s->get());
   }
 
-  detail::log_entry cmd;
-  cmd.metadata.store = nullptr;
-  cmd.flush_cmd =
-      std::unique_ptr<detail::flush_backend_cmd>(new detail::flush_backend_cmd{completion_flag, std::move(sinks)});
-
-  // Make sure the flush command gets into the backend, otherwise we will be
-  // stuck waiting forever for the command to succeed.
-  while (!instance.get_backend().push(std::move(cmd))) {
+  // Make sure the flush command gets into the backend, otherwise we will be stuck waiting forever for the command to
+  // succeed.
+  for (;;) {
+    detail::log_entry cmd;
+    cmd.metadata.store = nullptr;
+    cmd.flush_cmd      = std::make_unique<detail::flush_backend_cmd>(detail::flush_backend_cmd{completion_flag, sinks});
+    if (instance.get_backend().push(std::move(cmd))) {
+      break;
+    }
   }
 
   // Block the caller thread until we are signaled that the flush is completed.
