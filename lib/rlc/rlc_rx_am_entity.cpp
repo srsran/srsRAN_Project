@@ -537,11 +537,12 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
         break;
       }
     }
-    st.rx_highest_status = sn_upd;
-    if (not valid_ack_sn(st.rx_highest_status)) {
-      logger.log_error("Rx_Highest_Status not inside RX window. State: {}", st);
+    if (not valid_ack_sn(sn_upd)) {
+      logger.log_error("Rx_Highest_Status not inside RX window. sn_upd={}, st={}", sn_upd, st);
     }
-    srsgnb_assert(valid_ack_sn(st.rx_highest_status), "Error: rx_highest_status assigned outside rx window");
+    srsgnb_assert(
+        valid_ack_sn(sn_upd), "Error: rx_highest_status assigned outside rx window. sn_upd={}, st={}", sn_upd, st);
+    st.rx_highest_status = sn_upd;
 
     bool restart_reassembly_timer = false;
     if (rx_mod_base(st.rx_next_highest) > rx_mod_base(st.rx_highest_status + 1)) {
