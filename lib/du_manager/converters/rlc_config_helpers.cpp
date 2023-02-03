@@ -75,17 +75,17 @@ rlc_config srsgnb::srs_du::create_rlc_config(const f1ap_drb_to_setup& f1_drb_cfg
   // TODO: Actual use of F1 parameters.
   if (cfg.mode == rlc_mode::am) {
     cfg.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
-    cfg.am.tx.t_poll_retx       = 45;
-    cfg.am.tx.poll_pdu          = -1;
-    cfg.am.tx.poll_byte         = -1;
+    cfg.am.tx.t_poll_retx       = 50;
+    cfg.am.tx.poll_pdu          = 16;
+    cfg.am.tx.poll_byte         = 2000;
     cfg.am.tx.max_retx_thresh   = 8;
     cfg.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
-    cfg.am.rx.t_reassembly      = 35;
-    cfg.am.rx.t_status_prohibit = 0;
+    cfg.am.rx.t_reassembly      = 50;
+    cfg.am.rx.t_status_prohibit = 45;
   } else {
     cfg.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
     cfg.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
-    cfg.um.rx.t_reassembly    = 35;
+    cfg.um.rx.t_reassembly    = 50;
   }
   return cfg;
 }
