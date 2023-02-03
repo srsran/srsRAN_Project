@@ -28,10 +28,18 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
     if (tb.state == transport_block::state_t::waiting_ack) {
       // ACK went missing.
       tb.state = transport_block::state_t::pending_retx;
+      logger.warning(id,
+                     "Setting HARQ to \"pending reTx\" state. Cause: ACK Wait Timeout={} slots reached",
+                     max_ack_wait_in_slots);
     }
     if (tb.nof_retxs + 1 > tb.max_nof_harq_retxs) {
       // Max number of reTxs was exceeded. Clear HARQ process
       tb.state = transport_block::state_t::empty;
+      logger.warning(
+          id,
+          "Discarding HARQ. Cause: ACK Wait Timeout={} slots reached and maximum number of reTxs {} exceeded",
+          max_nof_harq_retxs(0),
+          max_ack_wait_in_slots);
     }
   }
 }
@@ -143,8 +151,18 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
 int dl_harq_process::ack_info(uint32_t tb_idx, bool ack)
 {
   if (base_type::ack_info_common(tb_idx, ack)) {
-    return ack ? (int)prev_tx_params.tb[tb_idx]->tbs_bytes : 0;
+    if (not ack and empty(tb_idx)) {
+      logger.warning(id,
+                     "Discarding HARQ tb={} with tbs={}bytes. Cause: Maximum number of reTxs {} exceeded",
+                     tb_idx,
+                     prev_tx_params.tb[tb_idx]->tbs_bytes,
+                     max_nof_harq_retxs(tb_idx),
+                     max_ack_wait_in_slots);
+      return (int)prev_tx_params.tb[tb_idx]->tbs_bytes;
+    }
+    return 0;
   }
+  logger.warning(id, "HARQ-ACK arrived for inactive HARQ");
   return -1;
 }
 
@@ -187,8 +205,17 @@ void ul_harq_process::new_retx(slot_point pusch_slot)
 int ul_harq_process::crc_info(bool ack)
 {
   if (base_type::ack_info_common(0, ack)) {
-    return ack ? (int)prev_tx_params.tbs_bytes : 0;
+    if (not ack and empty()) {
+      logger.warning(id,
+                     "Discarding HARQ with tbs={}bytes. Cause: Maximum number of reTxs {} exceeded",
+                     prev_tx_params.tbs_bytes,
+                     max_nof_harq_retxs(),
+                     max_ack_wait_in_slots);
+      return (int)prev_tx_params.tbs_bytes;
+    }
+    return 0;
   }
+  logger.warning(id, "CRC arrived for inactive HARQ");
   return -1;
 }
 
@@ -213,16 +240,19 @@ harq_entity::harq_entity(rnti_t   rnti_,
                          unsigned nof_dl_harq_procs,
                          unsigned nof_ul_harq_procs,
                          unsigned max_ack_wait_in_slots) :
-  rnti(rnti_), logger(srslog::fetch_basic_logger("SCHED"))
+  rnti(rnti_),
+  logger(srslog::fetch_basic_logger("SCHED")),
+  dl_h_logger(logger, rnti_, to_du_cell_index(0), true),
+  ul_h_logger(logger, rnti_, to_du_cell_index(0), false)
 {
   // Create HARQ processes
   dl_harqs.reserve(nof_dl_harq_procs);
   ul_harqs.reserve(nof_ul_harq_procs);
   for (unsigned id = 0; id < nof_dl_harq_procs; ++id) {
-    dl_harqs.emplace_back(to_harq_id(id), max_ack_wait_in_slots);
+    dl_harqs.emplace_back(to_harq_id(id), dl_h_logger, max_ack_wait_in_slots);
   }
   for (unsigned id = 0; id != nof_ul_harq_procs; ++id) {
-    ul_harqs.emplace_back(to_harq_id(id), max_ack_wait_in_slots);
+    ul_harqs.emplace_back(to_harq_id(id), ul_h_logger, max_ack_wait_in_slots);
   }
 }
 
@@ -230,27 +260,9 @@ void harq_entity::slot_indication(slot_point slot_tx_)
 {
   slot_tx = slot_tx_;
   for (dl_harq_process& dl_h : dl_harqs) {
-    bool was_empty = dl_h.empty();
     dl_h.slot_indication(slot_tx);
-    if (not was_empty and dl_h.empty()) {
-      // Toggle in HARQ state means that the HARQ was discarded
-      logger.info("rnti={:#x}, DL HARQ id={}, TB={} - Discarding HARQ. Cause: Maximum number of retx exceeded ({})",
-                  rnti,
-                  dl_h.id,
-                  dl_h.last_alloc_params().tb[0]->tbs_bytes,
-                  dl_h.max_nof_harq_retxs(0));
-    }
   }
   for (ul_harq_process& ul_h : ul_harqs) {
-    bool was_empty = ul_h.empty();
     ul_h.slot_indication(slot_tx);
-    if (not was_empty and ul_h.empty()) {
-      // Toggle in HARQ state means that the HARQ was discarded
-      logger.info("rnti={:#x}, UL HARQ id={}, TB={} - Discarding HARQ. Cause: Maximum number of retx exceeded ({})",
-                  rnti,
-                  ul_h.id,
-                  ul_h.last_tx_params().tbs_bytes,
-                  ul_h.max_nof_harq_retxs());
-    }
   }
 }

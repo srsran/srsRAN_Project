@@ -65,10 +65,11 @@ private:
   struct pending_msg3_t {
     /// Detected PRACH Preamble associated to this Msg3.
     rach_indication_message::preamble preamble{};
+    harq_logger msg3_harq_logger{srslog::fetch_basic_logger("SCHED"), INVALID_RNTI, to_du_cell_index(0), false};
     /// UL Harq used to schedule Msg3.
     /// Note: [TS 38.321, 5.4.2.1] "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is
     /// used".
-    ul_harq_process harq{to_harq_id(0)};
+    ul_harq_process harq{to_harq_id(0), msg3_harq_logger};
   };
   struct msg3_alloc_candidate {
     unsigned     pusch_td_res_index;

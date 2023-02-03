@@ -122,7 +122,8 @@ void ra_scheduler::precompute_msg3_pdus()
 
   for (unsigned i = 0; i != msg3_data.size(); ++i) {
     // Create a dummy HARQ used to fill DCI and PUSCH.
-    ul_harq_process dummy_h_ul(to_harq_id(0));
+    harq_logger     dummy_harq_logger{logger, to_rnti(0x4601), cell_cfg.cell_index, false};
+    ul_harq_process dummy_h_ul(to_harq_id(0), dummy_harq_logger);
     slot_point      dummy_slot{to_numerology_value(get_ul_bwp_cfg().scs), 0};
     dummy_h_ul.new_tx(dummy_slot, sched_cfg.max_nof_msg3_harq_retxs);
 
@@ -222,6 +223,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
 
       // Store Msg3 to allocate.
       pending_msg3s[prach_preamble.tc_rnti % MAX_NOF_MSG3].preamble = prach_preamble;
+      pending_msg3s[prach_preamble.tc_rnti % MAX_NOF_MSG3].msg3_harq_logger.set_rnti(prach_preamble.tc_rnti);
     }
   }
 }

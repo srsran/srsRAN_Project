@@ -20,11 +20,59 @@
 #include "srsgnb/scheduler/harq_id.h"
 #include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
+#include "srsgnb/support/format_utils.h"
 
 namespace srsgnb {
 
 struct pdsch_information;
 struct pusch_information;
+
+/// \brief Helper class to log HARQ events.
+class harq_logger
+{
+public:
+  harq_logger(srslog::basic_logger& logger_, rnti_t rnti_, du_cell_index_t cell_index_, bool is_dl_) :
+    logger(logger_), rnti(rnti_), cell_index(cell_index_), is_dl(is_dl_)
+  {
+  }
+
+  void set_rnti(rnti_t rnti_) { rnti = rnti_; }
+
+  template <typename... Args>
+  void warning(harq_id_t h_id, const char* fmtstr, Args&&... args)
+  {
+    log(logger.warning, h_id, fmtstr, std::forward<Args>(args)...);
+  }
+
+  template <typename... Args>
+  void info(harq_id_t h_id, const char* fmtstr, Args&&... args)
+  {
+    log(logger.info, h_id, fmtstr, std::forward<Args>(args)...);
+  }
+
+  template <typename... Args>
+  void debug(harq_id_t h_id, const char* fmtstr, Args&&... args)
+  {
+    log(logger.debug, h_id, fmtstr, std::forward<Args>(args)...);
+  }
+
+private:
+  template <typename... Args>
+  void log(srslog::log_channel& ch, harq_id_t h_id, const char* fmtstr, Args&&... args)
+  {
+    if (not ch.enabled()) {
+      return;
+    }
+    fmt::memory_buffer fmtbuf;
+    fmt::format_to(fmtbuf, fmtstr, std::forward<Args>(args)...);
+    ch("{} HARQ rnti={:#x} cell={} h_id={}: {}", is_dl ? "DL" : "UL", rnti, cell_index, h_id, to_c_str(fmtbuf));
+  }
+
+  srslog::basic_logger& logger;
+  rnti_t                rnti;
+  du_cell_index_t       cell_index;
+  bool                  is_dl;
+};
 
 namespace detail {
 
@@ -32,14 +80,14 @@ namespace detail {
 template <bool IsDownlink>
 class harq_process
 {
-  /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
-  /// (implementation-defined).
-  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 8U;
-
   /// Type used to store the DCI format and RNTI type of the TB stored in the HARQ.
   using dci_rnti_config_type = std::conditional_t<IsDownlink, dci_dl_rnti_config_type, dci_ul_rnti_config_type>;
 
 public:
+  /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
+  /// (implementation-defined).
+  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 16U;
+
   /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
   constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
 
@@ -68,8 +116,10 @@ public:
   /// \brief HARQ process constructor.
   /// \param h_id HARQ process ID.
   /// \param max_ack_wait_in_slots_ number of slots above which the scheduler considers that the ACK/CRC went missing.
-  explicit harq_process(harq_id_t h_id, unsigned max_ack_wait_in_slots_ = DEFAULT_ACK_TIMEOUT_SLOTS) :
-    id(h_id), max_ack_wait_in_slots(max_ack_wait_in_slots_)
+  explicit harq_process(harq_id_t    h_id,
+                        harq_logger& logger_,
+                        unsigned     max_ack_wait_in_slots_ = DEFAULT_ACK_TIMEOUT_SLOTS) :
+    id(h_id), logger(logger_), max_ack_wait_in_slots(max_ack_wait_in_slots_)
   {
   }
 
@@ -122,6 +172,9 @@ protected:
 
   /// \brief Clear the contents of a specific TB of this HARQ process and resets it back to empty state.
   void reset_tb(unsigned tb_idx);
+
+  /// HARQ entity logger used by this HARQ process.
+  harq_logger& logger;
 
   /// Time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned max_ack_wait_in_slots;
@@ -278,7 +331,7 @@ public:
   explicit harq_entity(rnti_t   rnti,
                        unsigned nof_dl_harq_procs,
                        unsigned nof_ul_harq_procs     = 16,
-                       unsigned max_ack_wait_in_slots = 8);
+                       unsigned max_ack_wait_in_slots = detail::harq_process<true>::DEFAULT_ACK_TIMEOUT_SLOTS);
 
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void slot_indication(slot_point slot_tx_);
@@ -354,6 +407,8 @@ private:
 
   rnti_t                rnti;
   srslog::basic_logger& logger;
+  harq_logger           dl_h_logger;
+  harq_logger           ul_h_logger;
 
   // slot_rx is the slot index at which the scheduler is currently working
   slot_point                   slot_tx;
