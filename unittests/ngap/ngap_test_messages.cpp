@@ -261,3 +261,24 @@ ngc_message srsgnb::srs_cu_cp::generate_invalid_pdu_session_resource_setup_reque
 
   return ngc_msg;
 }
+
+cu_cp_pdu_session_resource_setup_response
+srsgnb::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id)
+{
+  cu_cp_pdu_session_resource_setup_response pdu_session_res_setup_resp;
+
+  cu_cp_pdu_session_res_setup_response_item pdu_session_setup_response_item;
+  pdu_session_setup_response_item.pdu_session_id = pdu_session_id;
+
+  auto& dlqos_flow_per_tnl_info =
+      pdu_session_setup_response_item.pdu_session_resource_setup_response_transfer.dlqos_flow_per_tnl_info;
+  dlqos_flow_per_tnl_info.up_tp_layer_info = {transport_layer_address{"0.0.0.0"}, int_to_gtp_teid(0)};
+  cu_cp_associated_qos_flow assoc_qos_flow;
+  assoc_qos_flow.qos_flow_id = uint_to_qos_flow_id(1);
+  dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(uint_to_qos_flow_id(1), assoc_qos_flow);
+
+  pdu_session_res_setup_resp.pdu_session_res_setup_response_items.emplace(pdu_session_id,
+                                                                          pdu_session_setup_response_item);
+
+  return pdu_session_res_setup_resp;
+}

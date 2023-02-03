@@ -116,5 +116,9 @@ ngc_message generate_valid_pdu_session_resource_setup_request_message(amf_ue_id_
 /// \brief Generate an invalid dummy PDU Session Resource Setup Request Message.
 ngc_message generate_invalid_pdu_session_resource_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
+/// \brief Generate a dummy PDU Session Resource Setup Response.
+cu_cp_pdu_session_resource_setup_response
+generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id);
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

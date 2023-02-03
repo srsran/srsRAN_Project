@@ -11,6 +11,7 @@
 #pragma once
 
 #include "lib/ngap/ngap_asn1_helpers.h"
+#include "ngap_test_messages.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_manager.h"
@@ -306,8 +307,7 @@ public:
         res.pdu_session_res_failed_to_setup_items.emplace(uint_to_pdu_session_id(1),
                                                           cu_cp_pdu_session_res_setup_failed_item{});
       } else {
-        res.pdu_session_res_setup_response_items.emplace(uint_to_pdu_session_id(1),
-                                                         cu_cp_pdu_session_res_setup_response_item{});
+        res = generate_cu_cp_pdu_session_resource_setup_response(uint_to_pdu_session_id(1));
       }
 
       CORO_RETURN(res);
