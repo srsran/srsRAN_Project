@@ -19,10 +19,10 @@
 #include "uplink_processor_task_dispatcher.h"
 #include "upper_phy_impl.h"
 #include "upper_phy_pdu_validators.h"
-#include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;

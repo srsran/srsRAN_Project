@@ -13,6 +13,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
 #include <mutex>
@@ -132,16 +133,16 @@ public:
     // Do nothing.
   }
 
-  /// \brief Reserves the buffer.
+  /// \brief Reserves the softbuffer.
   ///
   /// The reservation is unsuccessful if:
-  /// - the softbuffer is locked (i.e., not active in a scope), or
-  /// - it fails to reserve codeblocks them from the pool.
+  /// - the softbuffer is already in use in an another scope, or
+  /// - if the pool is out of resources.
   ///
   /// \param[in] id Indicates the reservation identifier.
   /// \param[in] expire_slot Indicates the slot at which the reservation expires.
   /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
-  ///  \return Returns true if the reservation is successful, otherwise false.
+  ///  \return True if the reservation is successful, false otherwise.
   bool reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
   {
     // It cannot be reserved if it is locked.
@@ -183,8 +184,8 @@ public:
     return true;
   }
 
-  /// \brief Returns the reservation to the pool.
-  /// \remark An assertion is triggered is the softbuffer is locked.
+  /// \brief Releases the reserved softbuffer to the pool.
+  /// \remark An assertion is triggered if the softbuffer is locked.
   void free()
   {
     srsgnb_assert(

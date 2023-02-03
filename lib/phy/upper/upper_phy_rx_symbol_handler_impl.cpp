@@ -12,6 +12,7 @@
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/support/resource_grid.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
 #include "srsgnb/support/error_handling.h"
 

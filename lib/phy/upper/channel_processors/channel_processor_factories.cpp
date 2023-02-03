@@ -31,6 +31,7 @@
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/zero.h"
@@ -912,13 +913,15 @@ public:
     srsgnb_assert(processor, "Invalid processor.");
   }
 
-  pusch_processor_result
-  process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) override
+  pusch_processor_result process(span<uint8_t>               data,
+                                 unique_rx_softbuffer        softbuffer,
+                                 const resource_grid_reader& grid,
+                                 const pdu_t&                pdu) override
   {
     pusch_processor_result result;
 
     std::chrono::nanoseconds time_ns =
-        time_execution([&]() { result = processor->process(data, softbuffer, grid, pdu); });
+        time_execution([&]() { result = processor->process(data, std::move(softbuffer), grid, pdu); });
 
     if (result.data->tb_crc_ok) {
       // If CRC is OK, dump TB.

@@ -11,11 +11,11 @@
 #pragma once
 
 #include "srsgnb/adt/tensor.h"
-#include "srsgnb/phy/upper/rx_softbuffer.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 
 namespace srsgnb {
 
-class rx_softbuffer_spy : public rx_softbuffer
+class rx_softbuffer_spy : public unique_rx_softbuffer::softbuffer
 {
 public:
   rx_softbuffer_spy() = default;
@@ -50,6 +50,10 @@ public:
     return hard_bits[codeblock_id].first(data_size);
   }
 
+  void lock() override { locked = true; }
+
+  void unlock() override { locked = false; }
+
   /// Clears all counters.
   void clear()
   {
@@ -60,9 +64,13 @@ public:
   /// Get the total number of times the methods have been called.
   unsigned get_total_count() const { return count + const_count; }
 
+  /// Returns true if the softbuffer is locked.
+  bool is_locked() const { return locked; }
+
 private:
   unsigned         count       = 0;
   mutable unsigned const_count = 0;
+  bool             locked      = false;
 
   dynamic_tensor<2, log_likelihood_ratio> soft_bits;
   std::vector<dynamic_bit_buffer>         hard_bits;

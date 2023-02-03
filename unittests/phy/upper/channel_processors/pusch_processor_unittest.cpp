@@ -208,13 +208,20 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   ulsch_information ulsch_info             = get_ulsch_information(ulsch_config);
 
   // Create receive softbuffer.
-  rx_softbuffer_spy softbuffer_spy;
+  rx_softbuffer_spy    softbuffer_spy;
+  unique_rx_softbuffer softbuffer(softbuffer_spy);
+
+  // The softbuffer must be locked.
+  ASSERT_TRUE(softbuffer_spy.is_locked());
 
   // Resource grid spy.
   resource_grid_spy rg_spy;
 
   // Process PDU.
-  pusch_processor_result result = pusch_proc->process(transport_block, softbuffer_spy, rg_spy, pdu);
+  pusch_processor_result result = pusch_proc->process(transport_block, std::move(softbuffer), rg_spy, pdu);
+
+  // The softbuffer must be unlocked.
+  ASSERT_FALSE(softbuffer_spy.is_locked());
 
   // Make sure PDU is valid.
   ASSERT_TRUE(validator->is_valid(pdu));

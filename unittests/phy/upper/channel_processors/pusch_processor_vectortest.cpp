@@ -148,15 +148,16 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   std::vector<uint8_t> data(expected_data.size());
 
   // Prepare softbuffer.
-  rx_softbuffer_spy softbuffer(ldpc::MAX_CODEBLOCK_SIZE,
-                               ldpc::compute_nof_codeblocks(units::bytes(expected_data.size()).to_bits(),
-                                                            config.codeword.value().ldpc_base_graph));
+  rx_softbuffer_spy    softbuffer_spy(ldpc::MAX_CODEBLOCK_SIZE,
+                                   ldpc::compute_nof_codeblocks(units::bytes(expected_data.size()).to_bits(),
+                                                                config.codeword.value().ldpc_base_graph));
+  unique_rx_softbuffer softbuffer(softbuffer_spy);
 
   // Make sure the configuration is valid.
   ASSERT_TRUE(pdu_validator->is_valid(config));
 
   // Process PUSCH PDU.
-  pusch_processor_result result = pusch_proc->process(data, softbuffer, grid, config);
+  pusch_processor_result result = pusch_proc->process(data, std::move(softbuffer), grid, config);
 
   // Verify UL-SCH decode results.
   ASSERT_TRUE(result.data.has_value());

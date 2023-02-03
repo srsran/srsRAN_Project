@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/rx_softbuffer.h"
-#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/ran/slot_point.h"
 #include <cstdint>
 
 namespace srsgnb {
+
+class unique_rx_softbuffer;
 
 /// Identifies a receive softbuffer.
 struct rx_softbuffer_identifier {
@@ -64,7 +64,7 @@ public:
   /// \param[in] slot Indicates the slot context in which the reservation occurs.
   /// \param[in] id Identifies the softbuffer.
   /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
-  /// \return A pointer to the reserved softbuffer if the reservation was successful. Otherwise, \c nullptr.
+  /// \return A valid unique softbuffer if the reservation was successful. Otherwise, an invalid unique softbuffer.
   virtual unique_rx_softbuffer
   reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned nof_codeblocks) = 0;
 

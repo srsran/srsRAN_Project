@@ -20,6 +20,7 @@
 #include "pusch_decoder_test_data.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/support/test_utils.h"
 #include <getopt.h>
 
@@ -134,8 +135,11 @@ int main(int argc, char** argv)
 
       dec_cfg.segmenter_cfg = cfg;
 
-      decoder->decode(
-          rx_tb, dec_stats, &softbuffer, span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws), dec_cfg);
+      decoder->decode(rx_tb,
+                      dec_stats,
+                      &softbuffer.get(),
+                      span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws),
+                      dec_cfg);
       cw_offset += cws;
       dec_cfg.new_data = false;
 
@@ -154,7 +158,7 @@ int main(int argc, char** argv)
       }
 
       // Force all CRCs to false to test LLR combining.
-      softbuffer.reset_codeblocks_crc();
+      softbuffer.get().reset_codeblocks_crc();
     }
   }
 }

@@ -11,6 +11,7 @@
 #include "rx_softbuffer_pool_impl.h"
 
 using namespace srsgnb;
+
 unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&               slot,
                                                                  const rx_softbuffer_identifier& id,
                                                                  unsigned                        nof_codeblocks)
@@ -23,8 +24,8 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
     if (buffer.match_id(id)) {
       // Reserve buffer.
       if (!buffer.reserve(id, expire_slot, nof_codeblocks)) {
-        // If the reservation failed, return nullptr.
-        return {};
+        // If the reservation failed, return an invalid softbuffer.
+        return unique_rx_softbuffer();
       }
 
       return unique_rx_softbuffer(buffer);
@@ -34,9 +35,9 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
   // If the same identifier was not found, select the first available.
   for (rx_softbuffer_impl& buffer : buffers) {
     if (!buffer.is_reserved()) {
-      // If the reservation failed, return an invalid buffer.
+      // If the reservation failed, return an invalid softbuffer.
       if (!buffer.reserve(id, expire_slot, nof_codeblocks)) {
-        return {};
+        return unique_rx_softbuffer();
       }
 
       return unique_rx_softbuffer(buffer);
@@ -44,7 +45,7 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
   }
 
   // If no available buffer is found return an invalid buffer.
-  return {};
+  return unique_rx_softbuffer();
 }
 
 void rx_softbuffer_pool_impl::free_softbuffer(const rx_softbuffer_identifier& id)

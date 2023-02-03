@@ -59,12 +59,7 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
                                           const resource_grid_reader&        grid,
                                           const uplink_processor::pusch_pdu& pdu)
 {
-  pusch_processor_result proc_result = pusch_proc->process(data, softbuffer, grid, pdu.pdu);
-
-  // Unlock softbuffer by moving out of the context.
-  {
-    unique_rx_softbuffer me = std::move(softbuffer);
-  }
+  pusch_processor_result proc_result = pusch_proc->process(data, std::move(softbuffer), grid, pdu.pdu);
 
   ul_pusch_results result;
   result.slot = pdu.pdu.slot;

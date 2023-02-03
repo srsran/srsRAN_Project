@@ -9,13 +9,12 @@
  */
 
 #include "../../../lib/phy/upper/uplink_processor_impl.h"
-#include "../../support/task_executor_test_doubles.h"
 #include "../support/prach_buffer_test_doubles.h"
 #include "channel_processors/prach_detector_test_doubles.h"
 #include "channel_processors/pucch_processor_test_doubles.h"
 #include "channel_processors/pusch_processor_test_doubles.h"
 #include "upper_phy_rx_results_notifier_test_doubles.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;

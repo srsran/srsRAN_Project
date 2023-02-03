@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/phy/upper/rx_softbuffer.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/uci/uci_constants.h"
@@ -140,7 +140,7 @@ public:
   /// \param[in] grid Provides the destination resource grid.
   /// \param[in] pdu Provides the necessary parameters to process the PUSCH transmission.
   virtual pusch_processor_result
-  process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) = 0;
+  process(span<uint8_t> data, unique_rx_softbuffer softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) = 0;
 };
 
 /// \brief Describes the PUSCH processor validator interface.

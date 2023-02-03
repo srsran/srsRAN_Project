@@ -77,8 +77,10 @@ public:
   pusch_processor_impl(pusch_processor_configuration& config);
 
   // See interface for documentation.
-  pusch_processor_result
-  process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) override;
+  pusch_processor_result process(span<uint8_t>               data,
+                                 unique_rx_softbuffer        softbuffer,
+                                 const resource_grid_reader& grid,
+                                 const pdu_t&                pdu) override;
 
 private:
   /// Maximum UCI scaling \f$\alpha\f$ as per TS38.331 UCI-OnPUSCH.

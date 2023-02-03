@@ -10,6 +10,7 @@
 
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/srsgnb_test.h"
 
@@ -209,8 +210,8 @@ static void test_softbuffer_contents()
     // For each codeblock...
     for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
       // Get codeblock soft and data bits.
-      span<log_likelihood_ratio> buffer      = softbuffer.get_codeblock_soft_bits(cb_id, cb_size);
-      bit_buffer                 data_buffer = softbuffer.get_codeblock_data_bits(cb_id, data_size);
+      span<log_likelihood_ratio> buffer      = softbuffer.get().get_codeblock_soft_bits(cb_id, cb_size);
+      bit_buffer                 data_buffer = softbuffer.get().get_codeblock_data_bits(cb_id, data_size);
 
       cb_soft_bits.emplace_back(buffer);
       cb_data_bits.emplace_back(data_buffer);
@@ -238,9 +239,9 @@ static void test_softbuffer_contents()
   for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
     // Get codeblock soft bits.
     span<log_likelihood_ratio> buffer0      = cb_soft_bits[cb_id];
-    span<log_likelihood_ratio> buffer1      = softbuffer.get_codeblock_soft_bits(cb_id, cb_size);
+    span<log_likelihood_ratio> buffer1      = softbuffer.get().get_codeblock_soft_bits(cb_id, cb_size);
     bit_buffer                 data_buffer0 = cb_data_bits[cb_id];
-    bit_buffer                 data_buffer1 = softbuffer.get_codeblock_data_bits(cb_id, data_size);
+    bit_buffer                 data_buffer1 = softbuffer.get().get_codeblock_data_bits(cb_id, data_size);
 
     // Make sure the data pointers match.
     TESTASSERT(buffer0.data() == buffer1.data());

@@ -423,9 +423,6 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
   // Create softbuffer pool.
   std::unique_ptr<rx_softbuffer_pool> softbuffer_pool = create_rx_softbuffer_pool(softbuffer_config);
 
-  // Reserve softbuffer.
-  unique_rx_softbuffer softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
-
   // Prepare receive data buffer.
   std::vector<uint8_t> data(tbs / 8);
 
@@ -451,8 +448,11 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
       pending_count--;
     }
 
+    // Reserve softbuffer.
+    unique_rx_softbuffer softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
+
     // Process PDU.
-    proc->process(data, softbuffer, *grid, config);
+    proc->process(data, std::move(softbuffer), *grid, config);
 
     // Notify finish count.
     {

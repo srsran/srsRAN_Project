@@ -10,11 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
 namespace srsgnb {
+
+class bit_buffer;
 
 /// \brief Describes a receiver softbuffer.
 ///
