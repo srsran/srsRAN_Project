@@ -223,9 +223,11 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
       transfer.dlqos_flow_per_tnl_info.up_tp_layer_info =
           bearer_context_setup_response.pdu_session_resource_setup_list[setup_item.pdu_session_id].ng_dl_up_tnl_info;
 
-      cu_cp_associated_qos_flow qos_flow;
-      qos_flow.qos_flow_id = uint_to_qos_flow_id(1); // TODO: Remove hardcoded value
-      transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(uint_to_qos_flow_id(1), qos_flow);
+      for (qos_flow_id_t flow_id : rrc_ue_drb_manager.get_mapped_qos_flows(setup_item.pdu_session_id)) {
+        cu_cp_associated_qos_flow qos_flow;
+        qos_flow.qos_flow_id = flow_id;
+        transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(flow_id, qos_flow);
+      }
 
       response_msg.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, item);
     }
