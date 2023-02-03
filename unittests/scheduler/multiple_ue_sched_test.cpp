@@ -207,7 +207,7 @@ protected:
   {
     auto& test_ue = get_ue(ue_index);
     // Notification from upper layers of DL buffer state.
-    dl_buffer_state_indication_message msg{ue_index, lcid, buffer_size};
+    const dl_buffer_state_indication_message msg{ue_index, lcid, buffer_size};
 
     // Store to keep track of DL buffer status.
     test_ue.dl_bsr_list.push_back(msg);
@@ -232,9 +232,9 @@ protected:
 
   const dl_msg_alloc* find_ue_pdsch(const sched_test_ue& u) const
   {
-    auto it = std::find_if(bench->sched_res->dl.ue_grants.begin(),
-                           bench->sched_res->dl.ue_grants.end(),
-                           [&u](const auto& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
+    const auto* it = std::find_if(bench->sched_res->dl.ue_grants.begin(),
+                                  bench->sched_res->dl.ue_grants.end(),
+                                  [&u](const auto& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
     return it == bench->sched_res->dl.ue_grants.end() ? nullptr : &*it;
   }
 
@@ -242,13 +242,31 @@ protected:
 
   const ul_sched_info* find_ue_pusch(const sched_test_ue& u) const
   {
-    auto it = std::find_if(bench->sched_res->ul.puschs.begin(),
-                           bench->sched_res->ul.puschs.end(),
-                           [&u](const auto& grant) { return grant.pusch_cfg.rnti == u.crnti; });
+    const auto* it = std::find_if(bench->sched_res->ul.puschs.begin(),
+                                  bench->sched_res->ul.puschs.end(),
+                                  [&u](const auto& grant) { return grant.pusch_cfg.rnti == u.crnti; });
     return it == bench->sched_res->ul.puschs.end() ? nullptr : &*it;
   }
 
   bool ue_is_allocated_pusch(const sched_test_ue& u) const { return find_ue_pusch(u) != nullptr; }
+
+  optional<slot_point> get_pusch_scheduled_slot(const sched_test_ue& u) const
+  {
+    const auto* it = std::find_if(bench->sched_res->dl.ul_pdcchs.begin(),
+                                  bench->sched_res->dl.ul_pdcchs.end(),
+                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    return it == bench->sched_res->dl.ul_pdcchs.end() ? optional<slot_point>{nullopt}
+                                                      : next_slot + it->dci.c_rnti_f0_0.time_resource;
+  }
+
+  optional<slot_point> get_pdsch_scheduled_slot(const sched_test_ue& u) const
+  {
+    const auto* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
+                                  bench->sched_res->dl.dl_pdcchs.end(),
+                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
+                                                      : next_slot + it->dci.c_rnti_f1_0.time_resource;
+  }
 };
 
 TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
@@ -308,14 +326,16 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 {
   // Used to track BSR 0.
-  std::map<unsigned, bool> is_bsr_zero_sent;
+  std::map<unsigned, bool>                 is_bsr_zero_sent;
+  std::map<unsigned, optional<slot_point>> pusch_scheduled_slot_in_future;
 
   setup_sched(create_expert_config(10), create_random_cell_config_request());
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     // Initialize.
-    is_bsr_zero_sent[idx] = false;
+    is_bsr_zero_sent[idx]               = false;
+    pusch_scheduled_slot_in_future[idx] = {};
 
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0));
 
@@ -329,9 +349,15 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
+      // Update the PUSCH scheduled slot in the future.
+      const auto& pusch_slot = get_pusch_scheduled_slot(test_ue);
+      if (pusch_slot.has_value()) {
+        pusch_scheduled_slot_in_future[idx] = pusch_slot;
+      }
 
-      if (is_bsr_zero_sent[idx]) {
-        auto* pusch = find_ue_pusch(test_ue);
+      const auto* pusch = find_ue_pusch(test_ue);
+      if (is_bsr_zero_sent[idx] && pusch_scheduled_slot_in_future[idx].has_value() &&
+          next_slot > pusch_scheduled_slot_in_future[idx].value()) {
         ASSERT_TRUE(pusch == nullptr or not pusch->pusch_cfg.new_data)
             << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
         continue;
@@ -344,11 +370,13 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
         notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
       }
 
-      if (tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) {
-        // Accounting for MAC headers.
-        test_ue.ul_bsr_list.back().nof_bytes = 0;
-      } else {
-        test_ue.ul_bsr_list.back().nof_bytes -= tbs_sched_bytes;
+      if (pusch != nullptr && pusch->pusch_cfg.new_data) {
+        if (tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) {
+          // Accounting for MAC headers.
+          test_ue.ul_bsr_list.back().nof_bytes = 0;
+        } else {
+          test_ue.ul_bsr_list.back().nof_bytes -= tbs_sched_bytes;
+        }
       }
     }
   }
