@@ -11,7 +11,6 @@
 #pragma once
 
 #include "adapters/du_processor_adapters.h"
-#include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/ue_manager.h"
 #include <unordered_map>
 
@@ -32,7 +31,7 @@ public:
   // du_ue
 
   /// \brief Get the SRBs of the UE.
-  slotted_id_vector<srb_id_t, cu_srb_context>& get_srbs() override { return srbs; }
+  std::map<srb_id_t, cu_srb_context>& get_srbs() override { return srbs; }
 
   /// \brief Get the task scheduler of the UE.
   rrc_ue_task_scheduler& get_task_sched() override { return *task_sched; }
@@ -131,7 +130,7 @@ private:
   du_cell_index_t pcell_index = du_cell_index_t::invalid;
   rnti_t          c_rnti      = INVALID_RNTI;
 
-  slotted_id_vector<srb_id_t, cu_srb_context>   srbs;
+  std::map<srb_id_t, cu_srb_context>            srbs;
   rrc_ue_task_scheduler*                        task_sched      = nullptr;
   du_processor_rrc_ue_control_message_notifier* rrc_ue_notifier = nullptr;
 

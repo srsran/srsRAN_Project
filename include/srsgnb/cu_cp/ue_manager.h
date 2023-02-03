@@ -34,7 +34,7 @@ public:
   virtual ~du_ue() = default;
 
   /// \brief Get the SRBs of the UE.
-  virtual slotted_id_vector<srb_id_t, cu_srb_context>& get_srbs() = 0;
+  virtual std::map<srb_id_t, cu_srb_context>& get_srbs() = 0;
 
   /// \brief Get the task scheduler of the UE.
   virtual rrc_ue_task_scheduler& get_task_sched() = 0;

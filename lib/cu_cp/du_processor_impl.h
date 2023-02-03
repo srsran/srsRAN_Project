@@ -140,10 +140,10 @@ private:
   du_processor_rrc_du_adapter rrc_du_adapter;
 
   // RRC UE to DU processor task schedulers
-  slotted_id_vector<ue_index_t, rrc_to_du_ue_task_scheduler> rrc_ue_task_scheds;
+  std::unordered_map<ue_index_t, rrc_to_du_ue_task_scheduler> rrc_ue_task_scheds;
 
   // DU processor to RRC UE adapters
-  slotted_id_vector<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
+  std::unordered_map<ue_index_t, du_processor_rrc_ue_adapter> rrc_ue_adapters;
 
   // DU processor routine manager
   std::unique_ptr<du_processor_routine_manager> routine_mng;

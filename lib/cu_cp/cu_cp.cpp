@@ -141,7 +141,7 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
   ngap_rrc_ue_ev_notifiers.emplace(ue_index_to_uint(ue_index));
 
   ngc_rrc_ue_adapter&       rrc_ue_adapter       = ngap_rrc_ue_ev_notifiers[ue_index_to_uint(ue_index)];
-  ngc_du_processor_adapter& du_processor_adapter = ngap_du_processor_ev_notifiers[du_index];
+  ngc_du_processor_adapter& du_processor_adapter = ngap_du_processor_ev_notifiers.at(du_index);
   ngc_entity->create_ngc_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_ue_dl_nas_message_handler(),
                                 &rrc_ue->get_rrc_ue_control_message_handler(),
@@ -213,8 +213,8 @@ du_index_t cu_cp::add_du()
 
   du_processor_ev_notifier.connect_cu_cp(*this);
   rrc_ue_ngc_notifier.connect_ngc(*ngc_entity);
-  ngap_du_processor_ev_notifiers.emplace(du_index);
-  ngap_du_processor_ev_notifiers[du_index].connect_du_processor(du.get());
+  ngap_du_processor_ev_notifiers[du_index] = {};
+  ngap_du_processor_ev_notifiers.at(du_index).connect_du_processor(du.get());
 
   du->get_context().du_index = du_index;
 

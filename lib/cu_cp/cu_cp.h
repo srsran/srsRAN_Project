@@ -159,7 +159,7 @@ private:
   slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngap_rrc_ue_ev_notifiers;
 
   // NGAP to DU processor adapters
-  slotted_id_vector<du_index_t, ngc_du_processor_adapter> ngap_du_processor_ev_notifiers; // indexed by DU index
+  std::map<du_index_t, ngc_du_processor_adapter> ngap_du_processor_ev_notifiers; // indexed by DU index
 
   std::atomic<bool> amf_connected = {false};
 

@@ -222,7 +222,6 @@ ue_index_t ue_manager::get_next_ue_index(du_index_t du_index)
   // Search unallocated UE index
   for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {
     ue_index_t new_ue_index = generate_ue_index(du_index, i);
-    logger.debug("possible ue index={} for du_index={} and index={}", new_ue_index, du_index, i);
     if (ues.find(new_ue_index) == ues.end()) {
       return new_ue_index;
     }
