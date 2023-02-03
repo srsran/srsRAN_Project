@@ -34,7 +34,7 @@ void srsgnb::build_dci_f1_0_tc_rnti(dci_dl_info&               dci,
   dci.tc_rnti_f1_0                    = {};
   dci_1_0_tc_rnti_configuration& f1_0 = dci.tc_rnti_f1_0;
 
-  f1_0.tpc_command        = 0;
+  f1_0.tpc_command        = 1;
   f1_0.vrb_to_prb_mapping = 0;
 
   // PDSCH resources.
@@ -72,7 +72,7 @@ void srsgnb::build_dci_f1_0_c_rnti(dci_dl_info&                       dci,
   dci.c_rnti_f1_0                    = {};
   dci_1_0_c_rnti_configuration& f1_0 = dci.c_rnti_f1_0;
 
-  f1_0.tpc_command        = 0;
+  f1_0.tpc_command        = 1;
   f1_0.vrb_to_prb_mapping = 0;
 
   // PDSCH resources.
@@ -130,7 +130,7 @@ void srsgnb::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
   f0_0.N_ul_hop               = 0;
   f0_0.hopping_offset         = 0;
   f0_0.frequency_hopping_flag = 0;
-  f0_0.tpc_command            = 0;
+  f0_0.tpc_command            = 1;
 
   // PUSCH params.
   dci_sizes dci_sz  = get_dci_sizes(dci_size_config{
@@ -170,7 +170,7 @@ void srsgnb::build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
   f0_0.N_ul_hop               = 0;
   f0_0.hopping_offset         = 0;
   f0_0.frequency_hopping_flag = 0;
-  f0_0.tpc_command            = 0;
+  f0_0.tpc_command            = 1;
   f0_0.ul_sul_indicator       = {};
 
   // PUSCH params.

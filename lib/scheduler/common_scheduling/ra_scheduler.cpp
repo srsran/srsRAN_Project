@@ -533,7 +533,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_info.freq_resource_assignment = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
         cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});
     msg3_info.mcs                      = sched_cfg.msg3_mcs_index;
-    msg3_info.tpc                      = 0;
+    msg3_info.tpc                      = 1;
     msg3_info.csi_req                  = false;
 
     // Allocate Msg3 RBs.
