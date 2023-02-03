@@ -96,6 +96,10 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
   srsgnb_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
   common_events.emplace(bsr_ind.ue_index, [this, bsr_ind]() {
+    if (not ue_db.contains(bsr_ind.ue_index)) {
+      logger.warning("BSR received for inexistent UE={}", bsr_ind.ue_index);
+      return;
+    }
     auto& u = ue_db[bsr_ind.ue_index];
     // Handle event.
     u.handle_bsr_indication(bsr_ind);
