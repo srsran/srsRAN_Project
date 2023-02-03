@@ -122,15 +122,15 @@ ngap_ue* ue_manager::add_ue(ue_index_t                         ue_index,
     return nullptr;
   }
 
-  ran_ue_id_t ran_ue_id = get_next_ran_ue_id();
-  if (ran_ue_id == ran_ue_id_t::invalid) {
-    logger.error("No free RAN UE ID available");
-    return nullptr;
-  }
-
   // UE must be created by DU processor
   if (ues.find(ue_index) == ues.end()) {
     logger.error("UE has not been created");
+    return nullptr;
+  }
+
+  ran_ue_id_t ran_ue_id = get_next_ran_ue_id();
+  if (ran_ue_id == ran_ue_id_t::invalid) {
+    logger.error("No free RAN UE ID available");
     return nullptr;
   }
 
