@@ -59,7 +59,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
 {
   mac_ul_ue_context* ue = ue_manager.find_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("Received UL CCCH for inexistent ueId={}", ue_index);
+    logger.warning("UL-CCCH: Received UL CCCH for inexistent UE Id={}", ue_index);
     return false;
   }
 
@@ -189,6 +189,13 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
 
 bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
+  if (ctx.ue_index != INVALID_DU_UE_INDEX) {
+    logger.warning("c-rnti={:#x} UE={} UL-CCCH: Discarding message. Cause: UL-CCCH should be only for Msg3",
+                   ctx.pdu_rx.rnti,
+                   ctx.ue_index);
+    return true;
+  }
+
   // Notify DU manager of received CCCH message.
   ul_ccch_indication_message msg{};
   msg.crnti      = ctx.pdu_rx.rnti;
