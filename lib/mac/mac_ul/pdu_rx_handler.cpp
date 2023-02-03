@@ -220,6 +220,10 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       // The MAC CE C-RNTI is handled separately and, among all the MAC CEs, it should be the first one being processed.
       // After the MAC C-RNTI is processed, this function is invoked for all subPDUs (including the MAC C-RNTI itself).
       // Therefore, to avoid logging a warning for MAC C-RNTI, we added the case lcid_ul_sch_t::CRNTI below.
+      break;
+    case lcid_ul_sch_t::SE_PHR:
+      logger.debug("Unhandled PHR CE");
+      break;
     case lcid_ul_sch_t::PADDING:
       break;
     default:
