@@ -152,7 +152,7 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
 
 void ngc_impl::handle_message(const ngc_message& msg)
 {
-  logger.info("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+  logger.debug("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -213,9 +213,13 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
     return;
   }
 
+  logger.info("Handling DL NAS Transport Message for UE with ran_ue_id={}", ue->get_ran_ue_id());
+
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
   if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
     // Set AMF UE ID in the UE context and also in the lookup
+    logger.debug(
+        "Received AMF UE ID={} for UE with ueID={}", uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value), ue_index);
     ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
   }
 
@@ -235,6 +239,8 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
     logger.info("UE with ue_index={} does not exist. Dropping Initial Context Setup Request", ue_index);
     return;
   }
+
+  logger.info("Handling Initial Context Setup Request for UE with ran_ue_id={}", ue->get_ran_ue_id());
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -256,6 +262,8 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
     logger.info("UE with ue_index={} does not exist. Dropping PDU Session Resource Setup Request", ue_index);
     return;
   }
+
+  logger.info("Handling PDU Session Resource Setup Request for UE with ran_ue_id={}", ue->get_ran_ue_id());
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -306,6 +314,8 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
   if (ran_ue_id == ran_ue_id_t::invalid) {
     ran_ue_id = ue->get_ran_ue_id();
   }
+
+  logger.info("Handling UE Context Release Command for UE with ran_ue_id={}", ue->get_ran_ue_id());
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
