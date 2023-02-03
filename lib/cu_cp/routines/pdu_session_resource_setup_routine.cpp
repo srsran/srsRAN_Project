@@ -130,7 +130,13 @@ void pdu_session_resource_setup_routine::operator()(
       for (const auto& qos_flow : mapped_flows) {
         qos_flow_setup_request_item mapped_flow = {};
         mapped_flow.qos_flow_id                 = qos_flow;
+        mapped_flow.qos_characteristics =
+            setup_msg.pdu_session_res_setup_items[session].qos_flow_setup_request_items[qos_flow].qos_characteristics;
         rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb.emplace(qos_flow, mapped_flow);
+        rrc_ue_drb_setup_message_item.qos_info.is_dynamic_5qi = false;
+        rrc_ue_drb_setup_message_item.qos_info.five_qi        = setup_msg.pdu_session_res_setup_items[session]
+                                                             .qos_flow_setup_request_items[qos_flow]
+                                                             .qos_characteristics.five_qi;
       }
 
       ue_context_mod_request.cu_cp_drb_setup_msgs.emplace(drb_to_add, rrc_ue_drb_setup_message_item);

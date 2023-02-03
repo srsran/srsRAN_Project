@@ -219,6 +219,12 @@ void f1ap_du_impl::handle_message(const f1c_message& msg)
     logger.info("F1AP SDU, \"{}::{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
   }
 
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    msg.pdu.to_json(js);
+    logger.debug("Rx F1AP PDU: {}", js.to_string());
+  }
+
   // Run F1AP protocols in Control executor.
   ctrl_exec.execute([this, msg]() {
     switch (msg.pdu.type().value) {
