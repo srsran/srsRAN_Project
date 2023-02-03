@@ -875,12 +875,14 @@ private:
   void set_(size_t bitpos) noexcept
   {
     bitpos = get_bitidx_(bitpos);
+    srsgnb_assume(bitpos <= nof_words_());
     get_word_(bitpos) |= maskbit(bitpos);
   }
 
   void reset_(size_t bitpos) noexcept
   {
     bitpos = get_bitidx_(bitpos);
+    srsgnb_assume(bitpos <= nof_words_());
     get_word_(bitpos) &= ~(maskbit(bitpos));
   }
 
