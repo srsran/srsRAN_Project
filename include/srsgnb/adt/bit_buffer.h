@@ -56,6 +56,21 @@ public:
   /// Fill with zeros.
   void zero() { std::fill_n(buffer.begin(), nof_words(), 0); }
 
+  /// Fill with ones.
+  void one()
+  {
+    unsigned nof_full = nof_full_words();
+    word_t   val      = (1U << bits_per_word) - 1;
+    std::fill_n(buffer.begin(), nof_full, val);
+
+    unsigned tail_bits = size() - nof_full * bits_per_word;
+    if (tail_bits == 0) {
+      return;
+    }
+    val              = (1U << tail_bits) - 1;
+    buffer[nof_full] = val << (bits_per_word - tail_bits);
+  }
+
   /// \brief Inserts the \c count least significant bits from \c value_ starting at \c startpos.
   /// \tparam Integer Integer type of the bits to insert.
   /// \param[in] value_   Consecutive bits to insert.
