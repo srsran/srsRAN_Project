@@ -8,7 +8,7 @@
 .e2e-run:
   stage: test-e2e
   image:
-    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.9
+    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.10
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -34,6 +34,7 @@
   script:
     - |
       cd e2e_tests
+      export LOGNAME="gitlab-ci"
       retina-launcher --retina-request $PWD/${REQUEST}.yml --self-contained-html --html=./log/report.html --junitxml=out.xml -m "${mark}" .
   after_script:
     - mv e2e_tests/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
