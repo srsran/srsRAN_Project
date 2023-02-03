@@ -11,8 +11,9 @@ add_subdirectory(io_broker)
 set(SOURCES
         backtrace.cpp
         math_utils.cpp
-        task_worker.cpp
         unique_thread.cpp
+        task_worker.cpp
+        task_worker_pool.cpp
         timers.cpp
         bit_encoding.cpp
         config_json.cpp
