@@ -306,6 +306,10 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     device.set_time_unknown_pps(uhd::time_spec_t());
   }
 
+  // Lists of stream descriptions.
+  std::vector<radio_uhd_tx_stream::stream_description> tx_stream_description_list;
+  std::vector<radio_uhd_rx_stream::stream_description> rx_stream_description_list;
+
   // For each transmit stream, create stream and configure RF ports.
   for (unsigned stream_idx = 0; stream_idx != radio_config.tx_streams.size(); ++stream_idx) {
     // Select stream.
@@ -330,11 +334,6 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       tx_port_map.emplace_back(port_to_stream_channel(stream_idx, channel_idx));
     }
 
-    // Create transmit stream.
-    if (tx_streams.emplace_back(device.create_tx_stream(async_executor, notifier, stream_description)) == nullptr) {
-      return;
-    }
-
     // Setup port.
     for (unsigned channel_idx = 0; channel_idx != stream.channels.size(); ++channel_idx) {
       // Get the port index.
@@ -356,6 +355,9 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
         fmt::print("Warning: transmitter {} unused args.\n", port_idx);
       }
     }
+
+    // Add stream description to the list.
+    tx_stream_description_list.emplace_back(stream_description);
   }
 
   // For each receive stream, create stream and configure RF ports.
@@ -381,11 +383,6 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       rx_port_map.emplace_back(port_to_stream_channel(stream_idx, channel_idx));
     }
 
-    // Create receive stream.
-    if (rx_streams.emplace_back(device.create_rx_stream(notifier, stream_description)) == nullptr) {
-      return;
-    }
-
     // Setup port.
     for (unsigned channel_idx = 0; channel_idx != stream.channels.size(); ++channel_idx) {
       // Get the port index.
@@ -408,6 +405,25 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       if (!channel.args.empty()) {
         fmt::print("Warning: transmitter {} unused args.\n", port_idx);
       }
+    }
+
+    // Add stream description to the list.
+    rx_stream_description_list.emplace_back(stream_description);
+  }
+
+  // Create transmit streams.
+  for (unsigned tx_stream_idx = 0; tx_stream_idx != radio_config.tx_streams.size(); ++tx_stream_idx) {
+    if (tx_streams.emplace_back(
+            device.create_tx_stream(async_executor, notifier, tx_stream_description_list[tx_stream_idx])) == nullptr) {
+      return;
+    }
+  }
+
+  // Create receive streams.
+  for (unsigned rx_stream_idx = 0; rx_stream_idx != radio_config.tx_streams.size(); ++rx_stream_idx) {
+    if (rx_streams.emplace_back(
+            device.create_rx_stream(notifier, rx_stream_description_list[rx_stream_idx])) == nullptr) {
+      return;
     }
   }
 

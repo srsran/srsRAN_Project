@@ -76,9 +76,13 @@ static bool validate_amplitude_control_appconfig(const amplitude_control_appconf
 static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 {
   if (config.nof_antennas_dl != 1) {
+    fmt::print("The requested number of DL antennas (i.e. {}) is invalid or not currently supported.\n",
+               config.nof_antennas_dl);
     return false;
   }
   if (config.nof_antennas_ul != 1) {
+    fmt::print("The requested number of UL antennas (i.e. {}) is invalid or not currently supported.\n",
+               config.nof_antennas_ul);
     return false;
   }
 
@@ -116,6 +120,8 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 static bool validate_cells_appconfig(const cell_appconfig& config)
 {
   if (config.pci > 1007) {
+    fmt::print(
+        "Invalid PCI (i.e. {}). PCI ranges from 0 to {}.\n", config.pci, MAX_PCI);
     return false;
   }
 
@@ -232,6 +238,13 @@ bool srsgnb::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_expert_phy_appconfig(config.expert_phy_cfg)) {
+    return false;
+  }
+
+  if (config.rf_driver_cfg.srate_MHz < bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz)) {
+    fmt::print("Sampling rate (i.e. {} MHz) is too low for the requested channel bandwidth (i.e. {} MHz).\n",
+               config.rf_driver_cfg.srate_MHz,
+               bs_channel_bandwidth_to_MHz(config.common_cell_cfg.channel_bw_mhz));
     return false;
   }
 

@@ -21,7 +21,7 @@
 /// A frequency is considered valid within a range if the range clips the frequency value within 1 Hz error.
 static bool radio_uhd_device_validate_freq_range(const uhd::freq_range_t& range, double freq)
 {
-  uint64_t clipped_freq = static_cast<uint64_t>(range.clip(freq));
+  uint64_t clipped_freq = static_cast<uint64_t>(std::round(range.clip(freq)));
   uint64_t uint_freq    = static_cast<uint64_t>(freq);
   return (clipped_freq == uint_freq);
 }
@@ -31,8 +31,8 @@ static bool radio_uhd_device_validate_freq_range(const uhd::freq_range_t& range,
 /// A gain is considered valid within a range if the range clips the frequency value within 0.01 error.
 static bool radio_uhd_device_validate_gain_range(const uhd::gain_range_t& range, double gain)
 {
-  uint64_t clipped_gain = static_cast<uint64_t>(range.clip(gain, true) * 100);
-  uint64_t uint_gain    = static_cast<uint64_t>(gain * 100);
+  int64_t clipped_gain = static_cast<uint64_t>(std::round(range.clip(gain, true) * 100));
+  int64_t uint_gain    = static_cast<uint64_t>(gain * 100);
 
   return (clipped_gain == uint_gain);
 }
@@ -291,10 +291,14 @@ public:
     Debug("Setting channel " << ch << " Tx gain to " << gain << " dB");
 
     return safe_execution([this, ch, gain]() {
-      uhd::freq_range_t range = usrp->get_tx_gain_range(ch);
+      uhd::gain_range_t range = usrp->get_tx_gain_range(ch);
 
       if (!radio_uhd_device_validate_gain_range(range, gain)) {
-        on_error("Tx gain {} dB is out-of-range. Range is {}.", gain, range.to_pp_string());
+        on_error("Tx gain (i.e., {} dB) is out-of-range. Range is [{}, {}] dB in steps of {} dB.",
+                 gain,
+                 range.start(),
+                 range.stop(),
+                 range.step());
         return;
       }
 
@@ -306,10 +310,14 @@ public:
     Debug("Setting channel " << ch << " Rx gain to " << gain << " dB");
 
     return safe_execution([this, ch, gain]() {
-      uhd::freq_range_t range = usrp->get_rx_gain_range(ch);
+      uhd::gain_range_t range = usrp->get_rx_gain_range(ch);
 
       if (!radio_uhd_device_validate_gain_range(range, gain)) {
-        on_error("Rx gain {} dB is out-of-range. Range is {}.", gain, range.to_pp_string());
+        on_error("Rx gain (i.e., {} dB) is out-of-range. Range is [{}, {}] dB in steps of {} dB.",
+                 gain,
+                 range.start(),
+                 range.stop(),
+                 range.step());
         return;
       }
 

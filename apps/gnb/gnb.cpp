@@ -415,7 +415,9 @@ int main(int argc, char** argv)
   // Create radio.
   radio_notification_handler_printer radio_event_printer;
   auto                               radio = build_radio(workers.radio_executor, radio_event_printer, gnb_cfg);
-  report_fatal_error_if_not(radio, "Unable to create radio session.");
+  if (radio == nullptr) {
+    srsgnb_terminate("Unable to create radio session.\n");
+  }
   gnb_logger.info("Radio driver '{}' created successfully", gnb_cfg.rf_driver_cfg.device_driver);
 
   // Create lower and upper PHY adapters.
