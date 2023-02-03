@@ -54,7 +54,7 @@ void f1u_local_connector::attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid)
   cu_tun.dl_teid = dl_teid;
 }
 
-void f1u_local_connector::remove_cu_bearer(uint32_t ul_teid)
+void f1u_local_connector::disconnect_cu_bearer(uint32_t ul_teid)
 {
   // Find bearer from ul_teid
   auto bearer_it = cu_map.find(ul_teid);

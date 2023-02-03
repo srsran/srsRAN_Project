@@ -20,10 +20,10 @@ std::unique_ptr<f1u_bearer> srsgnb::srs_cu_up::create_f1u_bearer(uint32_t       
                                                                  f1u_tx_pdu_notifier&      tx_pdu_notifier,
                                                                  f1u_rx_delivery_notifier& rx_delivery_notifier,
                                                                  f1u_rx_sdu_notifier&      rx_sdu_notifier,
-                                                                 f1u_bearer_origin&        origin,
+                                                                 f1u_bearer_disconnector&  disconnector,
                                                                  uint32_t                  ul_teid)
 {
   auto bearer = std::make_unique<f1u_bearer_impl>(
-      ue_index, drb_id, tx_pdu_notifier, rx_delivery_notifier, rx_sdu_notifier, origin, ul_teid);
+      ue_index, drb_id, tx_pdu_notifier, rx_delivery_notifier, rx_sdu_notifier, disconnector, ul_teid);
   return bearer;
 }

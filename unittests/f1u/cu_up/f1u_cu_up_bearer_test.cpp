@@ -20,7 +20,7 @@ using namespace srs_cu_up;
 class f1u_cu_up_test_frame : public f1u_tx_pdu_notifier,
                              public f1u_rx_delivery_notifier,
                              public f1u_rx_sdu_notifier,
-                             public f1u_bearer_origin
+                             public f1u_bearer_disconnector
 {
 public:
   std::list<nru_dl_message>          tx_msg_list;
@@ -45,8 +45,8 @@ public:
   // f1u_rx_sdu_notifier interface
   void on_new_sdu(byte_buffer_slice_chain sdu) override { rx_sdu_list.push_back(std::move(sdu)); }
 
-  // f1u_bearer_origin interface
-  void remove_cu_bearer(uint32_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); }
+  // f1u_bearer_disconnector interface
+  void disconnect_cu_bearer(uint32_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); }
 };
 
 class f1u_trx_test

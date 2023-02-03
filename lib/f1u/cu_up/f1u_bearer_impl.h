@@ -28,12 +28,12 @@ public:
                   f1u_tx_pdu_notifier&      tx_pdu_notifier_,
                   f1u_rx_delivery_notifier& rx_delivery_notifier_,
                   f1u_rx_sdu_notifier&      rx_sdu_notifier_,
-                  f1u_bearer_origin&        origin_,
+                  f1u_bearer_disconnector&  diconnector_,
                   uint32_t                  ul_teid_);
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
 
-  virtual ~f1u_bearer_impl() { origin.remove_cu_bearer(ul_teid); }
+  virtual ~f1u_bearer_impl() { disconnector.disconnect_cu_bearer(ul_teid); }
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
@@ -49,7 +49,7 @@ private:
   f1u_tx_pdu_notifier&      tx_pdu_notifier;
   f1u_rx_delivery_notifier& rx_delivery_notifier;
   f1u_rx_sdu_notifier&      rx_sdu_notifier;
-  f1u_bearer_origin&        origin;
+  f1u_bearer_disconnector&  disconnector;
   uint32_t                  ul_teid;
 };
 

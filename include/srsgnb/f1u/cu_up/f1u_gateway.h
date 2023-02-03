@@ -19,7 +19,7 @@ namespace srsgnb {
 
 /// This class will be used to provide the interfaces to
 /// the CU-UP to create and manage F1-U bearers.
-class f1u_cu_up_gateway : public srs_cu_up::f1u_bearer_origin
+class f1u_cu_up_gateway : public srs_cu_up::f1u_bearer_disconnector
 {
 public:
   f1u_cu_up_gateway()                                    = default;

@@ -17,7 +17,7 @@
 namespace srsgnb {
 namespace srs_cu_up {
 
-class f1u_bearer_origin;
+class f1u_bearer_disconnector;
 
 class f1u_bearer
 {
@@ -33,11 +33,11 @@ public:
 };
 
 /// This class represents the interface through which a F1-U bearer disconnects from its gateway upon destruction
-class f1u_bearer_origin
+class f1u_bearer_disconnector
 {
 public:
-  virtual ~f1u_bearer_origin()                    = default;
-  virtual void remove_cu_bearer(uint32_t ul_teid) = 0;
+  virtual ~f1u_bearer_disconnector()                  = default;
+  virtual void disconnect_cu_bearer(uint32_t ul_teid) = 0;
 };
 
 } // namespace srs_cu_up

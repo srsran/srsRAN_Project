@@ -123,11 +123,13 @@ class dummy_f1u_bearer final : public srs_cu_up::f1u_bearer,
                                public srs_cu_up::f1u_tx_sdu_handler
 {
 public:
-  dummy_f1u_bearer(dummy_inner_f1u_bearer& inner_, srs_cu_up::f1u_bearer_origin& origin_, uint32_t ul_teid_) :
-    inner(inner_), origin(origin_), ul_teid(ul_teid_)
+  dummy_f1u_bearer(dummy_inner_f1u_bearer&             inner_,
+                   srs_cu_up::f1u_bearer_disconnector& disconnector_,
+                   uint32_t                            ul_teid_) :
+    inner(inner_), disconnector(disconnector_), ul_teid(ul_teid_)
   {
   }
-  virtual ~dummy_f1u_bearer() { origin.remove_cu_bearer(ul_teid); };
+  virtual ~dummy_f1u_bearer() { disconnector.disconnect_cu_bearer(ul_teid); };
 
   virtual f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   virtual f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
@@ -144,9 +146,9 @@ public:
   void handle_sdu(pdcp_tx_pdu sdu) final { inner.handle_sdu(std::move(sdu)); }
 
 private:
-  dummy_inner_f1u_bearer&       inner;
-  srs_cu_up::f1u_bearer_origin& origin;
-  uint32_t                      ul_teid;
+  dummy_inner_f1u_bearer&             inner;
+  srs_cu_up::f1u_bearer_disconnector& disconnector;
+  uint32_t                            ul_teid;
 };
 
 class dummy_f1u_gateway final : public f1u_cu_up_gateway
@@ -168,7 +170,7 @@ public:
     return std::make_unique<dummy_f1u_bearer>(bearer, *this, ul_teid);
   };
   void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) override { attached_ul_teid_list.push_back(ul_teid); };
-  void remove_cu_bearer(uint32_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); };
+  void disconnect_cu_bearer(uint32_t ul_teid) override { removed_ul_teid_list.push_back(ul_teid); };
 
   std::list<uint32_t> created_ul_teid_list  = {};
   std::list<uint32_t> attached_ul_teid_list = {};

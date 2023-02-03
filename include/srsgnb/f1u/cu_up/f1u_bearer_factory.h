@@ -26,7 +26,7 @@ std::unique_ptr<f1u_bearer> create_f1u_bearer(uint32_t                  ue_index
                                               f1u_tx_pdu_notifier&      tx_pdu_notifier,
                                               f1u_rx_delivery_notifier& rx_delivery_notifier,
                                               f1u_rx_sdu_notifier&      rx_sdu_notifier,
-                                              f1u_bearer_origin&        origin,
+                                              f1u_bearer_disconnector&  disconnector,
                                               uint32_t                  ul_teid);
 
 } // namespace srs_cu_up
