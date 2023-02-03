@@ -110,6 +110,13 @@ void downlink_processor_single_executor_impl::configure_resource_grid(const reso
 
   rg_context   = context;
   current_grid = &grid;
+
+  // Initialize the resource grid asynchronously.
+  increase_pending_pdus();
+  executor.execute([this]() {
+    current_grid->set_all_zero();
+    decrease_pending_pdus_and_try_sending_grid();
+  });
 }
 
 void srsgnb::downlink_processor_single_executor_impl::finish_processing_pdus()

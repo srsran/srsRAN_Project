@@ -63,9 +63,6 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
   // Grab the resource grid.
   resource_grid& grid = rg_pool.get_resource_grid(context);
 
-  // Initialize the resource grid.
-  grid.set_all_zero();
-
   // Configure the downlink processor.
   dl_processor.get().configure_resource_grid(context, grid);
 }

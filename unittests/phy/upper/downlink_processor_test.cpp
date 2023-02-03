@@ -299,11 +299,24 @@ static void test_finish_without_processing_pdus_sends_the_grid()
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  resource_grid_dummy grid;
+  resource_grid_spy grid;
   dl_processor->configure_resource_grid({slot, sector}, grid);
+
+  // The resource grid should not have been set to zero yet.
+  TESTASSERT(!grid.has_set_all_zero_method_been_called());
+
+  // The resource grid set all zero should be enqueued.
+  TESTASSERT(executor.has_pending_tasks());
+
+  // Run resource grid zero set.
+  executor.run_pending_tasks();
+
+  // The resource grid set all zero should have been called.
+  TESTASSERT(grid.has_set_all_zero_method_been_called());
 
   TESTASSERT(!gw.sent);
 
+  // By finishing PDUs, the resource grid should be sent.
   dl_processor->finish_processing_pdus();
 
   TESTASSERT(gw.sent);

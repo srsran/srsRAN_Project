@@ -121,8 +121,8 @@ TEST_F(FAPIToPHYTranslatorFixture, DownlinkProcessorIsConfiguredOnNewSlot)
   // Assert that the downlink processor is configured.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
 
-  // Assert that the resource grid has been set to zero.
-  ASSERT_TRUE(grid.has_set_all_zero_method_been_called());
+  // Assert that the resource grid has not been set to zero.
+  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
 }
 
 TEST_F(FAPIToPHYTranslatorFixture, CurrentGridIsSentOnNewSlot)
@@ -136,8 +136,8 @@ TEST_F(FAPIToPHYTranslatorFixture, CurrentGridIsSentOnNewSlot)
 
   // Assert that the downlink processor is configured.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  // Assert that the resource grid has been set to zero.
-  ASSERT_TRUE(grid.has_set_all_zero_method_been_called());
+  // Assert that the resource grid has NOT been set to zero.
+  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
 
   slot_point slot2(1, 1, 1);
   translator.handle_new_slot(slot2);
@@ -161,8 +161,8 @@ TEST_F(FAPIToPHYTranslatorFixture, DLSSBPDUIsProcessed)
   // Assert that the downlink processor is configured.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   ASSERT_FALSE(dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
-  // Assert that the resource grid has been set to zero.
-  ASSERT_TRUE(grid.has_set_all_zero_method_been_called());
+  // Assert that the resource grid has NOT been set to zero.
+  ASSERT_FALSE(grid.has_set_all_zero_method_been_called());
 
   // Process SSB PDU.
   translator.dl_tti_request(msg);
