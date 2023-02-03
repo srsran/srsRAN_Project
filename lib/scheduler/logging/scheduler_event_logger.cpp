@@ -115,12 +115,25 @@ void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
     fmt::format_to(
         fmtbuf, "\n- BSR: UE={} rnti={:#x} type=\"{}\" report={{", bsr.ue_index, bsr.rnti, to_string(bsr.type));
 
-    std::array<int, MAX_NOF_LCGS> report = {-1};
-    for (unsigned i = 0; i != bsr.reported_lcgs.size(); ++i) {
-      report[bsr.reported_lcgs[i].lcg_id] = bsr.reported_lcgs[i].nof_bytes;
-    }
-    for (unsigned i = 0; i != MAX_NOF_LCGS; ++i) {
-      fmt::format_to(fmtbuf, "{}{}", i == 0 ? "" : ", ", report[i]);
+    if (bsr.type == bsr_format::LONG_BSR or bsr.type == bsr_format::LONG_TRUNC_BSR or bsr.reported_lcgs.full()) {
+      std::array<int, MAX_NOF_LCGS> report;
+      std::fill(report.begin(), report.end(), -1);
+      for (unsigned i = 0; i != bsr.reported_lcgs.size(); ++i) {
+        report[bsr.reported_lcgs[i].lcg_id] = bsr.reported_lcgs[i].nof_bytes;
+      }
+      for (unsigned i = 0; i != MAX_NOF_LCGS; ++i) {
+        fmt::format_to(fmtbuf, "{}", i == 0 ? "" : ", ");
+        if (report[i] < 0) {
+          fmt::format_to(fmtbuf, "-");
+        } else {
+          fmt::format_to(fmtbuf, "{}", report[i]);
+        }
+      }
+    } else {
+      for (unsigned i = 0; i != bsr.reported_lcgs.size(); ++i) {
+        fmt::format_to(
+            fmtbuf, "{}{}: {}", i == 0 ? "" : " ", bsr.reported_lcgs[i].lcg_id, bsr.reported_lcgs[i].nof_bytes);
+      }
     }
     fmt::format_to(fmtbuf, "}} to_alloc={:B}", bsr.tot_ul_pending_bytes);
   } else if (logger.info.enabled()) {
