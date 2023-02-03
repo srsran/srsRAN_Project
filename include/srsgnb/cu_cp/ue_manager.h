@@ -91,6 +91,10 @@ public:
   /// \brief Get the number of UEs connected to the DU.
   /// \return Number of UEs.
   virtual size_t get_nof_du_ues() = 0;
+
+  /// \brief Get the number of UEs connected to a specific DU.
+  /// \return Number of UEs.
+  virtual size_t get_nof_du_ues(du_index_t du_index) = 0;
 };
 
 /// Interface for NGAP UE.

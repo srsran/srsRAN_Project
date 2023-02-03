@@ -172,9 +172,24 @@ public:
   /// \return Index of the DU UE if found, invalid index otherwise.
   ue_index_t get_ue_index(rnti_t rnti) override;
 
-  /// \brief Get the number of UEs connected to the DU.
+  /// \brief Get the number of UEs connected to DUs.
   /// \return Number of UEs.
   size_t get_nof_du_ues() override { return rnti_to_ue_index.size(); }
+
+  /// \brief Get the number of UEs connected to a specific DU.
+  /// \return Number of UEs.
+  size_t get_nof_du_ues(du_index_t du_index) override
+  {
+    unsigned ue_count = 0;
+    // Search allocated UE indexes
+    for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {
+      ue_index_t new_ue_index = generate_ue_index(du_index, i);
+      if (ues.find(new_ue_index) != ues.end() && ues.at(new_ue_index).du_ue_created) {
+        ue_count++;
+      }
+    }
+    return ue_count;
+  }
 
   // ngap_ue_manager
 
@@ -201,7 +216,7 @@ public:
 
   /// \brief Get the number of UEs connected to the AMF.
   /// \return Number of UEs.
-  size_t get_nof_ngap_ues() override { return ues.size(); }
+  size_t get_nof_ngap_ues() override { return ran_ue_id_to_ue_index.size(); }
 
   /// \brief Get the UE index of the UE for the given RAN UE ID.
   /// \param[in] ran_ue_id RAN UE ID of the UE.

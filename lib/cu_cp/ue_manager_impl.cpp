@@ -128,6 +128,12 @@ ngap_ue* ue_manager::add_ue(ue_index_t                         ue_index,
     return nullptr;
   }
 
+  // UE must be created by DU processor
+  if (ues.find(ue_index) == ues.end()) {
+    logger.error("UE has not been created");
+    return nullptr;
+  }
+
   auto& ue = ues.at(ue_index);
 
   ue.set_ran_ue_id(ran_ue_id);
@@ -139,6 +145,8 @@ ngap_ue* ue_manager::add_ue(ue_index_t                         ue_index,
   ran_ue_id_to_ue_index.emplace(ran_ue_id, ue_index);
 
   ue.ngap_ue_created = true;
+
+  logger.debug("Added NGAP context to UE (ueId={}) with ran_ue_id={}", ue_index, ran_ue_id);
 
   return &ue;
 }
@@ -223,6 +231,7 @@ ue_index_t ue_manager::get_next_ue_index(du_index_t du_index)
   for (uint16_t i = 0; i < MAX_NOF_UES_PER_DU; i++) {
     ue_index_t new_ue_index = generate_ue_index(du_index, i);
     if (ues.find(new_ue_index) == ues.end()) {
+      logger.debug("Allocating new UE index={} for du_index={}", new_ue_index, du_index);
       return new_ue_index;
     }
   }
