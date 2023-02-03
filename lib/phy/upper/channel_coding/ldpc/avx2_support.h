@@ -46,6 +46,7 @@ class avx_array
   /// Helper type for method overloading.
   template <typename HelpType>
   struct help_type {
+    // Intentionally empty.
   };
 
 public:
@@ -108,7 +109,7 @@ public:
 
 private:
   /// Actual array where the AVX registers are stored.
-  alignas(AVX_SIZE_BYTE) std::array<int8_t, nof_elements * AVX_SIZE_BYTE> inner_array;
+  std::array<int8_t, nof_elements * AVX_SIZE_BYTE> inner_array;
 
   template <typename T>
   auto get_at(help_type<T> /**/, unsigned /**/) const
@@ -139,6 +140,7 @@ class avx_span
   /// Helper type for method overloading.
   template <typename HelpType>
   struct help_type {
+    // Intentionally empty.
   };
 
 public:
