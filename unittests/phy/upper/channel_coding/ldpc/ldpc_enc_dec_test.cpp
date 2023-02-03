@@ -193,7 +193,7 @@ std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_avx2    = n
 std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_avx512  = nullptr;
 std::shared_ptr<ldpc_decoder_factory> LDPCEncDecFixture::dec_factory_neon    = nullptr;
 
-// Returns a vector of with values [min_val, min_val + delta, ..., min_val + N * delta, max_val], where N = steps - 1 if
+// Returns a vector with values [min_val, min_val + delta, ..., min_val + N * delta, max_val], where N = steps - 1 if
 // max_val - min_val is divisible by steps, and N = steps otherwise.
 std::vector<unsigned> create_range(unsigned min_val, unsigned max_val, unsigned steps)
 {
@@ -211,7 +211,7 @@ std::vector<unsigned> create_range(unsigned min_val, unsigned max_val, unsigned 
   return out;
 }
 
-TEST_P(LDPCEncDecFixture, LDPCEncDecTest)
+TEST_P(LDPCEncDecFixture, LDPCEncTest)
 {
   unsigned used_msg_bits   = 0;
   unsigned used_cblck_bits = 0;
@@ -229,8 +229,26 @@ TEST_P(LDPCEncDecFixture, LDPCEncDecTest)
       // Check the encoder.
       std::vector<uint8_t> encoded(length);
       encoder_test->encode(encoded, msg_i, cfg_enc);
-      EXPECT_TRUE(std::equal(encoded.begin(), encoded.end(), cblock_i.begin())) << "Wrong codeblock.";
+      ASSERT_TRUE(std::equal(encoded.begin(), encoded.end(), cblock_i.begin())) << "Wrong codeblock.";
+    }
+  }
+}
 
+TEST_P(LDPCEncDecFixture, LDPCDecTest)
+{
+  unsigned used_msg_bits   = 0;
+  unsigned used_cblck_bits = 0;
+  // For all test message-codeblock pairs...
+  for (unsigned message_idx = 0; message_idx != nof_messages; ++message_idx) {
+    span<const uint8_t> msg_i = span<const uint8_t>(messages).subspan(used_msg_bits, msg_length);
+    used_msg_bits += msg_length;
+    span<const uint8_t> cblock_i = span<const uint8_t>(codeblocks).subspan(used_cblck_bits, max_cb_length);
+    used_cblck_bits += max_cb_length;
+
+    // check several shortened codeblocks.
+    constexpr unsigned          NOF_STEPS    = 3;
+    const std::vector<unsigned> length_steps = create_range(min_cb_length, max_cb_length, NOF_STEPS);
+    for (const unsigned length : length_steps) {
       // Check the decoder - we need to transform hard bits into soft bits.
       dynamic_bit_buffer                decoded(msg_length);
       std::vector<uint8_t>              decoded_bits(msg_length);
@@ -242,10 +260,25 @@ TEST_P(LDPCEncDecFixture, LDPCEncDecTest)
       // Unpack the decoded message.
       srsvec::bit_unpack(decoded_bits, decoded);
 
-      EXPECT_TRUE(std::equal(decoded_bits.begin(), decoded_bits.end(), msg_i.begin(), is_msg_equal))
+      ASSERT_TRUE(std::equal(decoded_bits.begin(), decoded_bits.end(), msg_i.begin(), is_msg_equal))
           << "Wrong recovered message.";
     }
   }
+}
+
+bool all_ones(const bit_buffer& bb)
+{
+  unsigned            n_bytes    = bb.size() / 8;
+  span<const uint8_t> full_bytes = bb.get_buffer().first(n_bytes);
+  bool                vv = std::all_of(full_bytes.begin(), full_bytes.end(), [](uint8_t a) { return a == 255; });
+
+  unsigned n_bits = bb.size() - n_bytes * 8;
+  if (n_bits != 0) {
+    for (unsigned i_bit = n_bytes * 8, max_bit = n_bytes * 8 + n_bits; (i_bit != max_bit); ++i_bit) {
+      vv = vv && (bb.extract(i_bit, 1) == 1);
+    }
+  }
+  return vv;
 }
 
 TEST_P(LDPCEncDecFixture, LDPCDecTestZeroLLR)
@@ -255,9 +288,23 @@ TEST_P(LDPCEncDecFixture, LDPCDecTestZeroLLR)
   srsvec::zero(llrs);
   dynamic_bit_buffer decoded(msg_length);
   optional<unsigned> n_iters = decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
-  ASSERT_FALSE(n_iters.has_value());
-  ASSERT_TRUE(
-      std::all_of(decoded.get_buffer().begin(), decoded.get_buffer().end(), [](uint8_t a) { return (a == 1); }));
+  ASSERT_FALSE(n_iters.has_value()) << "Without CRC calculator, the decoder should not return a number of iteration.";
+  ASSERT_TRUE(all_ones(decoded));
+}
+
+TEST_P(LDPCEncDecFixture, LDPCDecTestAlmostZeroLLR)
+{
+  // Check that a codeblock with all zero LLR but a few very small ones returns message of all ones and an empty output.
+  std::vector<log_likelihood_ratio> llrs(max_cb_length);
+  srsvec::zero(llrs);
+
+  for (unsigned i_bit = min_cb_length + 2; i_bit < max_cb_length; i_bit += 3) {
+    llrs[i_bit] = (i_bit % 2 == 0) ? 1 : -1;
+  }
+
+  dynamic_bit_buffer decoded(msg_length);
+  decoder_test->decode(decoded, llrs, nullptr, cfg_dec);
+  ASSERT_TRUE(all_ones(decoded));
 }
 
 INSTANTIATE_TEST_SUITE_P(LDPCEncDecSuite,

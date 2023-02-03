@@ -74,7 +74,7 @@ optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      ou
   if (last == input.begin()) {
     // If all input LLRs are zero, we won't be able to decode: set all bits to one (so that the CRC will fail).
     if (crc == nullptr) {
-      std::fill(output.get_buffer().begin(), output.get_buffer().end(), 1);
+      output.one();
     }
     return nullopt;
   }
