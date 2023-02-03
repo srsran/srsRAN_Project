@@ -75,9 +75,9 @@ private:
 class du_processor_e1ap_adapter : public du_processor_e1ap_control_notifier
 {
 public:
-  void connect_e1ap(e1_bearer_context_manager* e1_bearer_context_mng_)
+  void connect_e1ap(e1_bearer_context_manager& e1_bearer_context_mng_)
   {
-    e1_bearer_context_mng = e1_bearer_context_mng_;
+    e1_bearer_context_mng = &e1_bearer_context_mng_;
   }
 
   async_task<e1ap_bearer_context_setup_response>
@@ -113,7 +113,7 @@ class du_processor_f1c_adapter : public du_processor_f1ap_ue_context_notifier
 public:
   du_processor_f1c_adapter() = default;
 
-  void connect_f1(f1c_ue_context_manager* handler_) { handler = handler_; }
+  void connect_f1(f1c_ue_context_manager& handler_) { handler = &handler_; }
 
   async_task<f1ap_ue_context_setup_response>
   on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override
@@ -145,7 +145,7 @@ class du_processor_rrc_du_adapter : public du_processor_rrc_du_ue_notifier
 public:
   du_processor_rrc_du_adapter() = default;
 
-  void connect_rrc_du(rrc_du_ue_repository* rrc_du_handler_) { rrc_du_handler = rrc_du_handler_; }
+  void connect_rrc_du(rrc_du_ue_repository& rrc_du_handler_) { rrc_du_handler = &rrc_du_handler_; }
 
   virtual rrc_ue_interface* on_ue_creation_request(rrc_ue_creation_message msg) override
   {
@@ -175,7 +175,7 @@ class du_processor_rrc_ue_adapter : public du_processor_rrc_ue_control_message_n
 public:
   du_processor_rrc_ue_adapter() = default;
 
-  void connect_rrc_ue(rrc_ue_control_message_handler* rrc_ue_handler_) { rrc_ue_handler = rrc_ue_handler_; }
+  void connect_rrc_ue(rrc_ue_control_message_handler& rrc_ue_handler_) { rrc_ue_handler = &rrc_ue_handler_; }
 
   virtual void on_new_guami(const guami& msg) override
   {

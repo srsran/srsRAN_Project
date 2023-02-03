@@ -46,13 +46,13 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   f1c = create_f1ap(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier, ctrl_exec_);
   f1c_ev_notifier.connect_du_processor(*this);
 
-  f1c_ue_context_notifier.connect_f1(&f1c->get_f1c_ue_context_manager());
+  f1c_ue_context_notifier.connect_f1(f1c->get_f1c_ue_context_manager());
 
   // create RRC
   rrc_du_creation_message rrc_creation_msg(
       cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngc_ctrl_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
-  rrc_du_adapter.connect_rrc_du(&rrc->get_rrc_du_ue_repository());
+  rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_ue_repository());
 
   rrc_ue_ev_notifier.connect_du_processor(*this);
 
@@ -219,7 +219,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   // Create and connect DU Processor to RRC UE adapter
   rrc_ue_adapters[ue->get_ue_index()] = {};
-  rrc_ue_adapters[ue->get_ue_index()].connect_rrc_ue(&rrc_ue->get_rrc_ue_control_message_handler());
+  rrc_ue_adapters[ue->get_ue_index()].connect_rrc_ue(rrc_ue->get_rrc_ue_control_message_handler());
   ue->set_rrc_ue_notifier(rrc_ue_adapters.at(ue->get_ue_index()));
 
   // Notifiy CU-CP about the creation of the RRC UE
