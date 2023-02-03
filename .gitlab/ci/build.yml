@@ -225,65 +225,196 @@ build clean:
   extends: .build_and_unit
   variables:
     OS: "" # Need to be specified
+    PLATFORM: "" # Need to be specified
+    BUILD_TYPE: "" # Need to be specified
+    TEST_MODE: default
+    ENABLE_GCOV: "False"
+    ENABLE_ASAN: "False"
+    ENABLE_TSAN: "False"
   parallel:
     matrix:
-      - TEST_MODE: default
-        COMPILER: [gcc, clang]
-        BUILD_TYPE: [Debug, Release]
+      - COMPILER: [gcc, clang]
         ASSERT_LEVEL: [MINIMAL, NORMAL, PARANOID]
         ENABLE_EXPORT: ["True", "False"]
-        ENABLE_GCOV: "False"
-        ENABLE_ASAN: "False"
-        ENABLE_TSAN: "False"
 
-build alt [ubuntu 22.04 amd64]:
+build alt [ubuntu-22.04, amd64, Debug]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: ubuntu-22.04
+    PLATFORM: amd64
+    BUILD_TYPE: Debug
   cache: []
 
-build alt [ubuntu 22.04 arm64v8]:
+build alt [ubuntu-22.04, amd64, Release]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    PLATFORM: amd64
+    BUILD_TYPE: Release
+  cache: []
+
+build alt [ubuntu-22.04, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     OS: ubuntu-22.04
-    PLATFORM: "arm64"
+    PLATFORM: amd64
+    BUILD_TYPE: RelWithDebInfo
   cache: []
 
-build alt [archlinux-latest amd64]:
+build alt [ubuntu-22.04, arm64v8, Debug]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-22.04
+    PLATFORM: arm64
+    BUILD_TYPE: Debug
+  cache: []
+
+build alt [ubuntu-22.04, arm64v8, Release]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-22.04
+    PLATFORM: arm64
+    BUILD_TYPE: Release
+  cache: []
+
+build alt [ubuntu-22.04, arm64v8, RelWithDebInfo]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-22.04
+    PLATFORM: arm64
+    BUILD_TYPE: RelWithDebInfo
+  cache: []
+
+build alt [ubuntu-20.04, amd64, Debug]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-20.04
+    PLATFORM: amd64
+    BUILD_TYPE: Debug
+  cache: []
+
+build alt [ubuntu-20.04, amd64, Release]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-20.04
+    PLATFORM: amd64
+    BUILD_TYPE: Release
+  cache: []
+
+build alt [ubuntu-20.04, amd64, RelWithDebInfo]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-20.04
+    PLATFORM: amd64
+    BUILD_TYPE: RelWithDebInfo
+  cache: []
+
+build alt [ubuntu-20.04, arm64v8, Debug]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-20.04
+    PLATFORM: arm64
+    BUILD_TYPE: Debug
+  cache: []
+
+build alt [ubuntu-20.04, arm64v8, Release]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-20.04
+    PLATFORM: arm64
+    BUILD_TYPE: Release
+  cache: []
+
+build alt [ubuntu-20.04, arm64v8, RelWithDebInfo]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: ubuntu-20.04
+    PLATFORM: arm64
+    BUILD_TYPE: RelWithDebInfo
+  cache: []
+
+build alt [archlinux-latest, amd64, Debug]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: archlinux-latest
+    PLATFORM: amd64
+    BUILD_TYPE: Debug
   cache: []
 
-build alt [ubuntu-20.04 amd64]:
+build alt [archlinux-latest, amd64, Release]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    OS: ubuntu-20.04
+    OS: archlinux-latest
+    PLATFORM: amd64
+    BUILD_TYPE: Release
   cache: []
 
-build alt [ubuntu-20.04 arm64v8]:
+build alt [archlinux-latest, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
-    OS: ubuntu-20.04
-    PLATFORM: "arm64"
+    OS: archlinux-latest
+    PLATFORM: amd64
+    BUILD_TYPE: RelWithDebInfo
   cache: []
 
-build alt [rhel8-latest amd64]:
+build alt [rhel8, amd64, Debug]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: rhel8
+    PLATFORM: amd64
+    BUILD_TYPE: Debug
+  cache: []
+
+build alt [rhel8, amd64, Release]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: rhel8
+    PLATFORM: amd64
+    BUILD_TYPE: Release
+  cache: []
+
+build alt [rhel8, amd64, RelWithDebInfo]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: rhel8
+    PLATFORM: amd64
+    BUILD_TYPE: RelWithDebInfo
   cache: []
 
 # UHD
