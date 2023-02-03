@@ -157,6 +157,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       resp.failed_drbs.push_back(drb.drb_id);
       continue;
     }
+    logger.debug("Getting RLC config for DRB-Id={} from 5QI={}", drb.drb_id, drb.five_qi);
     du_qos_config qos = qos_config[drb.five_qi];
 
     ue_mcg.rlc_bearers.emplace_back();

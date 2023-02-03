@@ -103,6 +103,7 @@ inline std::map<uint8_t, du_qos_config> make_default_du_qos_config_list()
   {
     // 5QI=9
     du_qos_config cfg{};
+    cfg.rlc.mode                    = rlc_mode::am;
     cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
     cfg.rlc.am.tx.t_poll_retx       = 45;
     cfg.rlc.am.tx.poll_pdu          = -1;

@@ -108,6 +108,11 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
 std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appconfig& config)
 {
   std::map<uint8_t, du_qos_config> out_cfg = {};
+  if (config.qos_cfg.size() == 0) {
+    out_cfg = config_helpers::make_default_du_qos_config_list();
+    return out_cfg;
+  }
+
   for (const qos_appconfig& qos : config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
       srsgnb_terminate("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
