@@ -190,7 +190,7 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
 bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
   if (ctx.ue_index != INVALID_DU_UE_INDEX) {
-    logger.warning("c-rnti={:#x} UE={} UL-CCCH: Discarding message. Cause: UL-CCCH should be only for Msg3",
+    logger.warning("UE={} c-rnti={:#x} UL-CCCH: Discarding message. Cause: UL-CCCH should be only for Msg3",
                    ctx.pdu_rx.rnti,
                    ctx.ue_index);
     return true;
