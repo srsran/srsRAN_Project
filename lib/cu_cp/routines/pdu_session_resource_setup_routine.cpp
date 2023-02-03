@@ -130,7 +130,7 @@ void pdu_session_resource_setup_routine::operator()(
       for (const auto& qos_flow : mapped_flows) {
         qos_flow_setup_request_item mapped_flow = {};
         mapped_flow.qos_flow_id                 = qos_flow;
-        rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb.emplace(mapped_flow.qos_flow_id, mapped_flow);
+        rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb.emplace(qos_flow, mapped_flow);
       }
 
       ue_context_mod_request.cu_cp_drb_setup_msgs.emplace(drb_to_add, rrc_ue_drb_setup_message_item);
@@ -225,7 +225,7 @@ pdu_session_resource_setup_routine::handle_pdu_session_resource_setup_result(boo
 
       cu_cp_associated_qos_flow qos_flow;
       qos_flow.qos_flow_id = uint_to_qos_flow_id(1); // TODO: Remove hardcoded value
-      transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(qos_flow.qos_flow_id, qos_flow);
+      transfer.dlqos_flow_per_tnl_info.associated_qos_flow_list.emplace(uint_to_qos_flow_id(1), qos_flow);
 
       response_msg.pdu_session_res_setup_response_items.emplace(setup_item.pdu_session_id, item);
     }
@@ -309,7 +309,7 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
         e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
             qos_item.qos_characteristics.pre_emption_vulnerability;
 
-        e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(e1ap_qos_item.qos_flow_id, e1ap_qos_item);
+        e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(qos_item.qos_flow_id, e1ap_qos_item);
       }
 
       e1ap_pdu_session_item.drb_to_setup_list_ng_ran.emplace(drb_to_setup, e1ap_drb_setup_item);

@@ -22,6 +22,19 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
+// Helper to create PDU from NGAP message
+template <class T>
+byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
+{
+  context_name = context_name == nullptr ? __FUNCTION__ : context_name;
+  byte_buffer   pdu{};
+  asn1::bit_ref bref{pdu};
+  if (msg.pack(bref) == asn1::SRSASN_ERROR_ENCODE_FAIL) {
+    srslog::fetch_basic_logger("NGAP").error("Failed to pack message in {}. Discarding it.", context_name);
+  }
+  return pdu;
+}
+
 // TODO: pass params using struct
 /// \brief Fills ASN.1 NGSetupRequest struct.
 /// \param[out] request The NGSetupRequest ASN.1 struct to fill.
@@ -156,7 +169,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
 
       // Optional Parameters
       if (asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info_present) {
-        qos_flow_setup_req_item.add_qos_flow_info.value() =
+        qos_flow_setup_req_item.add_qos_flow_info =
             asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info.to_string();
       }
 
@@ -165,12 +178,12 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
       }
 
       if (asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
-        qos_flow_setup_req_item.reflective_qos_attribute.value() =
+        qos_flow_setup_req_item.reflective_qos_attribute =
             asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
       }
 
       if (asn1_flow_item.erab_id_present) {
-        qos_flow_setup_req_item.erab_id.value() = asn1_flow_item.erab_id;
+        qos_flow_setup_req_item.erab_id = asn1_flow_item.erab_id;
       }
 
       setup_item.qos_flow_setup_request_items.emplace(qos_flow_setup_req_item.qos_flow_id, qos_flow_setup_req_item);
@@ -227,10 +240,7 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
       }
 
       // Pack pdu_session_res_setup_resp_transfer_s
-      byte_buffer   pdu;
-      asn1::bit_ref bref(pdu);
-      // TODO: Check return value
-      response_transfer.pack(bref);
+      byte_buffer pdu = pack_into_pdu(response_transfer);
 
       resp_item.pdu_session_res_setup_resp_transfer.resize(pdu.length());
       std::copy(pdu.begin(), pdu.end(), resp_item.pdu_session_res_setup_resp_transfer.begin());
@@ -253,10 +263,7 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
       // TODO: Add crit diagnostics
 
       // Pack pdu_session_res_setup_unsuccessful_transfer_s
-      byte_buffer   pdu;
-      asn1::bit_ref bref(pdu);
-      // TODO: Check return value
-      setup_unsuccessful_transfer.pack(bref);
+      byte_buffer pdu = pack_into_pdu(setup_unsuccessful_transfer);
 
       setup_failed_item.pdu_session_res_setup_unsuccessful_transfer.resize(pdu.length());
       std::copy(pdu.begin(), pdu.end(), setup_failed_item.pdu_session_res_setup_unsuccessful_transfer.begin());
