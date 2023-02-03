@@ -607,19 +607,19 @@ int main(int argc, char** argv)
 
   // Print latency.
   if ((benchmark_mode == benchmark_modes::latency) || (benchmark_mode == benchmark_modes::all)) {
-    fmt::print("\n--- Latency measurements ---\n");
+    fmt::print("\n--- Average latency ---\n");
     perf_meas.print_percentiles_time("microseconds", 1e-3 / static_cast<double>(nof_threads * batch_size_per_thread));
   }
 
   // Print total aggregated throughput.
   if ((benchmark_mode == benchmark_modes::throughput_total) || (benchmark_mode == benchmark_modes::all)) {
-    fmt::print("\n--- Total throughput measurements ---\n");
+    fmt::print("\n--- Total throughput ---\n");
     perf_meas.print_percentiles_throughput("bits");
   }
 
   // Print average throughput per thread.
   if ((benchmark_mode == benchmark_modes::throughput_thread) || (benchmark_mode == benchmark_modes::all)) {
-    fmt::print("\n--- Thread throughput measurements ---\n");
+    fmt::print("\n--- Thread throughput ---\n");
     perf_meas.print_percentiles_throughput("bits", 1.0 / static_cast<double>(nof_threads));
   }
 

@@ -142,7 +142,8 @@ private:
   {
     time_ns = std::max(time_ns, 1UL);
 
-    // Calculates throughput in tens of millions of elements per seconds.
+    // To get a more precise result with one decimal place, the throughput is calculated in hundreds of thousands of
+    // elements per second and then divided by ten when it is converted to a floating point number.
     uint64_t throughput = (size * 10000UL) / time_ns;
 
     // Converts to floating point.
