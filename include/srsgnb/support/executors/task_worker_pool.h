@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/blocking_queue.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/unique_thread.h"
 
 namespace srsgnb {
@@ -74,6 +75,20 @@ private:
 
   // Queue of tasks.
   srsgnb::blocking_queue<unique_task> pending_tasks;
+};
+
+class task_worker_pool_executor final : public task_executor
+{
+public:
+  task_worker_pool_executor() = default;
+  task_worker_pool_executor(task_worker_pool& worker_pool_) : worker_pool(&worker_pool_) {}
+
+  void execute(unique_task task) override { worker_pool->push_task(std::move(task)); }
+
+  void defer(unique_task task) override { worker_pool->push_task(std::move(task)); }
+
+private:
+  task_worker_pool* worker_pool = nullptr;
 };
 
 } // namespace srsgnb
