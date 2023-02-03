@@ -152,7 +152,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   }
 
   for (; i_bit != len; ++i_bit) {
-    uint8_t hard_bit = soft_bits[i_bit] <= 0 ? 1 : 0;
+    uint8_t hard_bit = (soft_bits[i_bit] <= 0) ? 1 : 0;
 
     hard_bits.insert(hard_bit, i_bit, 1);
   }
@@ -203,7 +203,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   }
 
   for (; i_bit != len; ++i_bit) {
-    uint8_t hard_bit = soft_bits[i_bit] <= 0 ? 1 : 0;
+    uint8_t hard_bit = (soft_bits[i_bit] <= 0) ? 1 : 0;
 
     hard_bits.insert(hard_bit, i_bit, 1);
   }
