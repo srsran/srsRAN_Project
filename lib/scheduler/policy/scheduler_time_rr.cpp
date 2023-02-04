@@ -23,7 +23,7 @@ bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate&
   if (ue_db.empty()) {
     return false;
   }
-  auto next_it = ue_db.lower_bound(to_du_ue_index(rr_count % MAX_NOF_DU_UES));
+  auto next_it = ue_db.lower_bound(to_du_ue_index(rr_count % ue_db.size()));
   for (uint32_t count = 0; count < ue_db.size(); ++count, ++next_it) {
     if (next_it == ue_db.end()) {
       // wrap-around
