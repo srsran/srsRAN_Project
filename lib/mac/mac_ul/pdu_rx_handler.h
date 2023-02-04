@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../../ran/gnb_format.h"
 #include "../du_rnti_table.h"
 #include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"

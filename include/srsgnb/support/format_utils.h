@@ -14,6 +14,7 @@
 
 namespace srsgnb {
 
+/// \brief Converts fmt memoryy buffer to c_str() without the need for conversion to intermediate std::string.
 template <size_t N>
 const char* to_c_str(fmt::basic_memory_buffer<char, N>& mem_buffer)
 {
@@ -22,3 +23,15 @@ const char* to_c_str(fmt::basic_memory_buffer<char, N>& mem_buffer)
 }
 
 } // namespace srsgnb
+
+namespace fmt {
+
+struct basic_fmt_parser {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+};
+
+} // namespace fmt

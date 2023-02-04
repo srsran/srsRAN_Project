@@ -12,6 +12,45 @@
 
 using namespace srsgnb;
 
+namespace {
+
+/// \brief Structure used to provide a logging prefix for the UE PDU/subPDU.
+struct pdu_log_prefix {
+  const char*             type;
+  rnti_t                  rnti;
+  du_ue_index_t           ue_index;
+  optional<lcid_ul_sch_t> lcid;
+};
+
+pdu_log_prefix create_prefix(const decoded_mac_rx_pdu& pdu)
+{
+  return pdu_log_prefix{.type = "UL PDU", .rnti = pdu.pdu_rx.rnti, .ue_index = pdu.ue_index};
+}
+
+pdu_log_prefix create_prefix(const decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu)
+{
+  return pdu_log_prefix{.type = "UL subPDU", .rnti = pdu.pdu_rx.rnti, .ue_index = pdu.ue_index, .lcid = subpdu.lcid()};
+}
+
+} // namespace
+
+template <>
+struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
+  template <typename FormatContext>
+  auto format(const pdu_log_prefix& p, FormatContext& ctx)
+  {
+    fmt::format_to(ctx.out(), "{} rnti={:#x}", p.type, p.rnti);
+    if (p.ue_index != srsgnb::INVALID_DU_UE_INDEX) {
+      fmt::format_to(ctx.out(), " UE={}", p.ue_index);
+    }
+    if (p.lcid.has_value()) {
+      const char* event = p.lcid->is_sdu() ? p.lcid->is_ccch() ? "UL-CCCH" : "UL-DCCH" : "CE";
+      fmt::format_to(ctx.out(), " lcid={:#x} {}", *p.lcid, event);
+    }
+    return ctx.out();
+  }
+};
+
 pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&       ccch_notifier_,
                                du_high_ue_executor_mapper& ue_exec_mapper_,
                                scheduler_feedback_handler& sched_,
@@ -34,12 +73,12 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   // 2. Decode MAC UL PDU.
   decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu), ue_index};
   if (not ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu)) {
-    logger.warning("Failed to decode PDU");
+    logger.warning("{}: Failed to decode PDU", create_prefix(ctx));
     return false;
   }
 
   // 3. Log MAC UL PDU.
-  log_ul_pdu(logger, ctx.ue_index, ctx.pdu_rx.rnti, ctx.cell_index_rx, "PUSCH", "Content: [{}]", ctx.decoded_subpdus);
+  logger.info("{} subPDUs: [{}]", create_prefix(ctx), ctx.decoded_subpdus);
 
   // 4. Check if MAC CRNTI CE is present.
   for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
@@ -59,16 +98,20 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
 {
   mac_ul_ue_context* ue = ue_manager.find_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("UL-CCCH: Received UL CCCH for inexistent UE Id={}", ue_index);
+    logger.warning(
+        "UL subPDU UE={}, lcid={} UL-CCCH: Received UL-CCCH for inexistent UE Id={}", ue_index, LCID_SRB0, ue_index);
     return false;
   }
 
   if (not ue->ul_bearers.contains(LCID_SRB0)) {
-    logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{} | ue->rnti | LCID_SRB0);
+    logger.warning("{}: Received UL PDU for inexistent bearer.",
+                   pdu_log_prefix{.type = "UL subPDU", .rnti = ue->rnti, .lcid = LCID_SRB0});
     return false;
   }
 
-  log_ul_pdu(logger, ue->ue_index, ue->rnti, MAX_NOF_DU_CELLS, "CCCH", "Pushing {} bytes", ul_ccch_msg.length());
+  logger.debug("{}: Forwarding UL SDU of {} bytes",
+               pdu_log_prefix{.type = "UL subPDU", .rnti = ue->rnti, .ue_index = ue->ue_index, .lcid = LCID_SRB0},
+               ul_ccch_msg.length());
 
   // Push CCCH message to upper layers.
   ue->ul_bearers[LCID_SRB0]->on_new_sdu(byte_buffer_slice{std::move(ul_ccch_msg)});
@@ -93,29 +136,18 @@ bool pdu_rx_handler::handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
 bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue_context* ue)
 {
   if (ue == nullptr) {
-    logger.warning("Received MAC SDU for inexistent RNTI.");
+    logger.warning("{}: Discarding SDU. Cause: Inexistent C-RNTI", create_prefix(ctx, sdu));
     return false;
   }
 
   lcid_t lcid = (lcid_t)sdu.lcid().value();
   if (not ue->ul_bearers.contains(lcid)) {
-    logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{} | ue->rnti | lcid);
+    logger.warning("{}: Discarding SDU. Cause: Inexistent LCID", create_prefix(ctx, sdu));
     return false;
   }
 
   // Log MAC UL SDU
-  if (lcid == 0) {
-    log_ul_pdu(logger, MAX_NOF_DU_UES, ue->rnti, ctx.cell_index_rx, "CCCH", "Pushing {} bytes", sdu.sdu_length());
-  } else {
-    log_ul_pdu(logger,
-               ue->ue_index,
-               ue->rnti,
-               ctx.cell_index_rx,
-               "DCCH",
-               "Pushing {} bytes to LCID={}",
-               sdu.sdu_length(),
-               lcid);
-  }
+  logger.debug("{}: Forwarding SDU of {} bytes", create_prefix(ctx, sdu), sdu.sdu_length());
 
   // Push PDU to upper layers
   ue->ul_bearers[lcid]->on_new_sdu(byte_buffer_slice{ctx.pdu_rx.pdu, sdu.payload()});
@@ -136,8 +168,8 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
     case lcid_ul_sch_t::SHORT_BSR:
     case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
       if (not is_du_ue_index_valid(ctx.ue_index)) {
-        logger.warning("UL c-rnti={:#x}: Discarding MAC CE. Cause: C-RNTI is not associated with any UE.",
-                       ctx.pdu_rx.rnti);
+        logger.warning("{}: Discarding MAC CE. Cause: C-RNTI is not associated with any existing UE",
+                       create_prefix(ctx, subpdu));
         return false;
       }
       // Decode Short BSR
@@ -165,8 +197,8 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
     case lcid_ul_sch_t::LONG_BSR:
     case lcid_ul_sch_t::LONG_TRUNC_BSR: {
       if (not is_du_ue_index_valid(ctx.ue_index)) {
-        logger.warning("UL c-rnti={:#x}: Discarding MAC CE. Cause: C-RNTI is not associated with any UE.",
-                       ctx.pdu_rx.rnti);
+        logger.warning("{}: Discarding MAC CE. Cause: C-RNTI is not associated with any existing UE",
+                       create_prefix(ctx, subpdu));
         return false;
       }
       // Decode Long BSR
@@ -191,7 +223,7 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
     case lcid_ul_sch_t::PADDING:
       break;
     default:
-      logger.warning("Unhandled subPDU with LCID={}", subpdu.lcid());
+      logger.warning("{}: Discarding MAC CE. Cause: Unhandled LCID", create_prefix(ctx, subpdu));
   }
 
   return true;
@@ -200,9 +232,7 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
 bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
   if (ctx.ue_index != INVALID_DU_UE_INDEX) {
-    logger.warning("UE={} c-rnti={:#x} UL-CCCH: Discarding message. Cause: UL-CCCH should be only for Msg3",
-                   ctx.pdu_rx.rnti,
-                   ctx.ue_index);
+    logger.warning("{}: Discarding message. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, sdu));
     return true;
   }
 
@@ -222,7 +252,8 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   // 1. Decode CRNTI CE and update UE RNTI output parameter.
   ctx.pdu_rx.rnti = decode_crnti_ce(subpdu.payload());
   if (ctx.pdu_rx.rnti == INVALID_RNTI) {
-    logger.error("Invalid Payload length={} for C-RNTI MAC CE.", subpdu.sdu_length());
+    logger.error("{}: Discarding CE. Cause: Invalid Payload length={} for C-RNTI MAC CE type",
+                 create_prefix(ctx, subpdu));
     return false;
   }
   ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];
