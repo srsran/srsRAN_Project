@@ -69,6 +69,48 @@ TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_set
   ASSERT_TRUE(was_ue_added());
 }
 
+/// Test Initial Context Setup Request with "updated" AMF UE ID
+TEST_F(ngap_ue_context_management_procedure_test,
+       when_new_amf_ue_id_is_sent_in_initial_context_setup_request_received_then_id_is_updated)
+{
+  // Test preamble
+  ue_index_t ue_index = uint_to_ue_index(
+      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+  this->start_procedure(ue_index);
+
+  auto& ue = test_ues.at(ue_index);
+
+  // Get "first" AMF UE ID received
+  amf_ue_id_t old_id = ue.amf_ue_id.value();
+
+  // Lookup UE in UE manager
+  ngap_ue* ngap_ue = ue_mng.find_ngap_ue(ue_index);
+
+  // Check that UE manager has the same AMF UE ID
+  ASSERT_EQ(ngap_ue->get_amf_ue_id(), old_id);
+
+  // randomly generate new ID assigned by core
+  amf_ue_id_t new_id = old_id;
+  while (new_id == old_id) {
+    new_id = uint_to_amf_ue_id(
+        test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max) - 1));
+  }
+  ASSERT_NE(old_id, new_id);
+
+  // Inject Initial Context Setup Request with new ID
+  ngc_message init_context_setup_request =
+      generate_valid_initial_context_setup_request_message(new_id, ue.ran_ue_id.value());
+  ngap->handle_message(init_context_setup_request);
+
+  // Check that AMF notifier was called with right type
+  ASSERT_TRUE(was_initial_context_setup_response_sent());
+
+  ASSERT_TRUE(was_ue_added());
+
+  // Check that UE has new AMF UE ID
+  ASSERT_EQ(ngap_ue->get_amf_ue_id(), new_id);
+}
+
 /// Test Initial Context Setup Request
 TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_setup_request_received_then_failure_sent)
 {
