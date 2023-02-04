@@ -128,24 +128,23 @@ inline cu_cp_cause_t ngap_cause_to_cu_cp_cause(asn1::ngap::cause_c ngap_cause)
   switch (ngap_cause.type()) {
     case asn1::ngap::cause_c::types_opts::radio_network:
       cu_cp_cause = cu_cp_cause_t::radio_network;
-      return cu_cp_cause;
       break;
     case asn1::ngap::cause_c::types_opts::transport:
       cu_cp_cause = cu_cp_cause_t::transport;
-      return cu_cp_cause;
       break;
     case asn1::ngap::cause_c::types_opts::protocol:
       cu_cp_cause = cu_cp_cause_t::protocol;
-      return cu_cp_cause;
+      break;
+    case asn1::ngap::cause_c::types_opts::nas:
+      cu_cp_cause = cu_cp_cause_t::nas;
       break;
     case asn1::ngap::cause_c::types_opts::misc:
       cu_cp_cause = cu_cp_cause_t::misc;
-      return cu_cp_cause;
       break;
     default:
       cu_cp_cause = cu_cp_cause_t::nulltype;
-      return cu_cp_cause;
   }
+  return cu_cp_cause;
 }
 
 /// \brief Convert CU-CP QoS Flow Failed to Setup Item to NGAP QoS Flow With Cause Item.
