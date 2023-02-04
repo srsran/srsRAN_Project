@@ -16,9 +16,17 @@
 
 namespace srsgnb {
 
+/// \brief Simple pool of task workers/threads. The workers share the same queue of task and do not perform
+/// work-stealing.
 class task_worker_pool
 {
 public:
+  /// \brief Creates a task worker pool.
+  /// \param nof_workers Number of workers of the worker pool.
+  /// \param queue_size Size of the task queue.
+  /// \param pool_name String with the name for the worker pool. Individual workers of the pool will be assigned the
+  /// name "<pool_name>#<worker index>". E.g. for pool_name="Pool", the second worker will be called "Pool#1".
+  /// \param prio Workers realtime thread priority.
   task_worker_pool(unsigned                    nof_workers,
                    unsigned                    queue_size,
                    const std::string&          pool_name,
@@ -38,6 +46,10 @@ public:
   /// \brief Number of tasks currently enqueued.
   uint32_t nof_pending_tasks() const { return pending_tasks.size(); }
 
+  /// \brief Push a new task to be processed by the worker pool. If the task queue is full, it skips the task and
+  /// return false.
+  /// \param task Task to be run in the thread pool.
+  /// \return True if task was successfully enqueued to be processed. False, if task queue is full.
   bool push_task(unique_task&& task)
   {
     auto ret = pending_tasks.try_push(std::move(task));
@@ -50,6 +62,8 @@ public:
     return true;
   }
 
+  /// \brief Push a new task to be processed by the worker pool. If the task queue is full, blocks.
+  /// \param task Task to be run in the thread pool.
   void push_task_blocking(unique_task&& task)
   {
     auto ret = pending_tasks.push_blocking(std::move(task));
@@ -59,7 +73,8 @@ public:
     }
   }
 
-  /// \brief Wait for all the currently enqueued tasks to complete.
+  /// \brief Wait for all the currently enqueued tasks to complete. If more tasks get enqueued after this function call
+  /// those tasks are not accounted for in the waiting.
   void wait_pending_tasks();
 
 private:
@@ -77,6 +92,7 @@ private:
   srsgnb::blocking_queue<unique_task> pending_tasks;
 };
 
+/// \brief Task executor that pushes tasks to worker pool.
 class task_worker_pool_executor final : public task_executor
 {
 public:
