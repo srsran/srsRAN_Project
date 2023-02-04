@@ -135,6 +135,11 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       return handle_ccch_msg(ctx, subpdu);
     case lcid_ul_sch_t::SHORT_BSR:
     case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
+      if (not is_du_ue_index_valid(ctx.ue_index)) {
+        logger.warning("UL c-rnti={:#x}: Discarding MAC CE. Cause: C-RNTI is not associated with any UE.",
+                       ctx.pdu_rx.rnti);
+        return false;
+      }
       // Decode Short BSR
       bsr_format bsr_fmt =
           subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR ? bsr_format::SHORT_BSR : bsr_format::SHORT_TRUNC_BSR;
@@ -159,6 +164,11 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
     } break;
     case lcid_ul_sch_t::LONG_BSR:
     case lcid_ul_sch_t::LONG_TRUNC_BSR: {
+      if (not is_du_ue_index_valid(ctx.ue_index)) {
+        logger.warning("UL c-rnti={:#x}: Discarding MAC CE. Cause: C-RNTI is not associated with any UE.",
+                       ctx.pdu_rx.rnti);
+        return false;
+      }
       // Decode Long BSR
       bsr_format bsr_fmt = subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
       long_bsr_report lbsr_ce = decode_lbsr(bsr_fmt, subpdu.payload());

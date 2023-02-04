@@ -71,10 +71,6 @@ public:
   {
     for (mac_rx_pdu& pdu : msg.pdus) {
       du_ue_index_t ue_index = rnti_table[pdu.rnti];
-      if (not is_du_ue_index_valid(ue_index)) {
-        logger.warning("UL PDU c-rnti={:#x}: Received MAC UL PDU for inexistent UE.", pdu.rnti);
-      }
-
       // 1. Fork each PDU handling to different executors based on the PDU RNTI.
       cfg.ue_exec_mapper.executor(ue_index).execute(
           [this, slot_rx = msg.sl_rx, cell_idx = msg.cell_index, pdu = std::move(pdu)]() mutable {
