@@ -262,18 +262,59 @@ protected:
 
   optional<slot_point> get_pdsch_scheduled_slot(const sched_test_ue& u) const
   {
+    const auto* it          = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
+                                  bench->sched_res->dl.dl_pdcchs.end(),
+                                  [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    const auto& ue_dl_lst   = u.msg.cfg.cells[0].serv_cell_cfg.init_dl_bwp.pdsch_cfg.value().pdsch_td_alloc_list;
+    const auto& cell_dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
+    const auto& dl_lst      = ue_dl_lst.empty() ? cell_dl_lst : ue_dl_lst;
+
+    return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
+                                                      : next_slot + dl_lst[it->dci.c_rnti_f1_0.time_resource].k0;
+  }
+
+  optional<slot_point> get_pdsch_ack_nack_scheduled_slot(const sched_test_ue& u) const
+  {
     const auto* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
                                   bench->sched_res->dl.dl_pdcchs.end(),
                                   [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    const auto& ul_lst =
+        u.msg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack;
+
     return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                      : next_slot + it->dci.c_rnti_f1_0.time_resource;
+                                                      : next_slot + ul_lst[it->dci.c_rnti_f1_0.time_resource];
+  }
+
+  uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
+  {
+    const sched_test_ue& u = get_ue(ue_idx);
+
+    uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
+    pucch_pdu.sr_detected = false;
+    pucch_pdu.harqs.push_back(true);
+
+    uci_indication::uci_pdu pdu{};
+    pdu.crnti    = u.crnti;
+    pdu.ue_index = ue_idx;
+    pdu.pdu      = pucch_pdu;
+
+    uci_indication uci_ind{};
+    uci_ind.slot_rx    = sl_tx;
+    uci_ind.cell_index = to_du_cell_index(0);
+    uci_ind.ucis.push_back(pdu);
+
+    return uci_ind;
   }
 };
 
 TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 {
   // Used to track BSR 0.
-  std::map<unsigned, bool> is_bsr_zero_sent;
+  std::map<unsigned, bool>                 is_bsr_zero_sent;
+  std::map<unsigned, optional<slot_point>> pdsch_scheduled_slot_in_future;
+
+  // Vector to keep track of ACKs to send.
+  std::vector<uci_indication> uci_ind_to_send;
 
   setup_sched(create_expert_config(10), create_random_cell_config_request());
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
@@ -292,28 +333,54 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
   for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
     run_slot();
+
+    std::vector<uci_indication> uci_ind_not_for_current_slot;
+    // Send ACKs if there are any to send.
+    for (const auto& ind : uci_ind_to_send) {
+      if (next_slot == ind.slot_rx) {
+        bench->sch.handle_uci_indication(ind);
+      } else {
+        uci_ind_not_for_current_slot.push_back(ind);
+      }
+    }
+    swap(uci_ind_to_send, uci_ind_not_for_current_slot);
+
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
-      if (is_bsr_zero_sent[idx]) {
-        const auto* grant = find_ue_pdsch(test_ue);
-        srslog::flush();
+      // Update the PDSCH scheduled slot in the future.
+      const auto& pdsch_slot = get_pdsch_scheduled_slot(test_ue);
+      if (pdsch_slot.has_value()) {
+        pdsch_scheduled_slot_in_future[idx] = pdsch_slot;
+      }
+      const auto& ack_nack_slot = get_pdsch_ack_nack_scheduled_slot(test_ue);
+      if (ack_nack_slot.has_value()) {
+        uci_ind_to_send.push_back(build_harq_ack_pucch_f0_f1_uci_ind(to_du_ue_index(idx), ack_nack_slot.value()));
+      }
+
+      const auto* grant = find_ue_pdsch(test_ue);
+      if (is_bsr_zero_sent[idx] && pdsch_scheduled_slot_in_future[idx].has_value() &&
+          next_slot > pdsch_scheduled_slot_in_future[idx].value()) {
         ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].is_new_data)
             << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
         continue;
       }
 
       const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
-      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.back().bs == 0 && not is_bsr_zero_sent[idx]) {
+      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.back().bs == 0 &&
+          pdsch_scheduled_slot_in_future[idx].has_value() && next_slot > pdsch_scheduled_slot_in_future[idx].value() &&
+          not is_bsr_zero_sent[idx]) {
         is_bsr_zero_sent[idx] = true;
         // Notify buffer status of 0 to ensure scheduler does not schedule further for this UE.
         push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
       }
 
-      if (tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) {
-        // Accounting for MAC headers.
-        test_ue.dl_bsr_list.back().bs = 0;
-      } else {
-        test_ue.dl_bsr_list.back().bs -= tbs_sched_bytes;
+      if (grant != nullptr && grant->pdsch_cfg.codewords[0].is_new_data) {
+        if (tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) {
+          // Accounting for MAC headers.
+          test_ue.dl_bsr_list.back().bs = 0;
+        } else {
+          test_ue.dl_bsr_list.back().bs -= tbs_sched_bytes;
+        }
       }
     }
   }
