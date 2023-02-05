@@ -266,3 +266,25 @@ void harq_entity::slot_indication(slot_point slot_tx_)
     ul_h.slot_indication(slot_tx);
   }
 }
+
+const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, bool ack)
+{
+  for (dl_harq_process& h_dl : dl_harqs) {
+    if (not h_dl.empty() and h_dl.slot_ack() == uci_slot) {
+      h_dl.ack_info(0, ack);
+      return &h_dl;
+    }
+  }
+  logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
+  return nullptr;
+}
+
+int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
+{
+  ul_harq_process& h_ul = ul_harq(h_id);
+  if (h_ul.empty() or h_ul.slot_ack() != pusch_slot) {
+    ul_h_logger.warning(h_id, "Discarding CRC. Cause: No active UL HARQ expecting a CRC at slot={}", pusch_slot);
+    return -1;
+  }
+  return h_ul.crc_info(ack);
+}

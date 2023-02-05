@@ -336,8 +336,12 @@ public:
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void slot_indication(slot_point slot_tx_);
 
-  int dl_ack_info(uint32_t pid, uint32_t tb_idx, bool ack) { return dl_harqs[pid].ack_info(tb_idx, ack); }
-  int ul_crc_info(uint32_t pid, bool ack) { return ul_harqs[pid].crc_info(ack); }
+  /// \brief Update the state of the DL HARQ for the specified UCI slot.
+  /// \return HARQ process whose state was updated. Nullptr, if no HARQ for which the ACK/NACK was directed was found.
+  const dl_harq_process* dl_ack_info(slot_point uci_slot, bool ack);
+
+  /// Update UL HARQ state given the received CRC indication.
+  int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);
 
   uint32_t               nof_dl_harqs() const { return dl_harqs.size(); }
   uint32_t               nof_ul_harqs() const { return ul_harqs.size(); }

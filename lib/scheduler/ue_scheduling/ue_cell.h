@@ -17,6 +17,8 @@
 
 namespace srsgnb {
 
+struct ul_crc_pdu_indication;
+
 /// \brief Context respective to a UE serving cell.
 class ue_cell
 {
@@ -43,8 +45,6 @@ public:
 
   double get_pusch_snr() const { return sched_metrics.pusch_snr_db; }
 
-  void update_pusch_snr(double snr) { sched_metrics.pusch_snr_db = snr; }
-
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   unsigned required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
 
@@ -60,12 +60,18 @@ public:
                                                  ss_type);
   }
 
+  /// \brief Handle CRC PDU indication.
+  int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
+
 private:
   struct ue_cell_metrics {
     /// Save the latest PUSCH SNR reported from PHY, in dB.
     double pusch_snr_db;
     // TODO: Add other metrics of interest for the scheduler.
   };
+
+  /// Update PUSCH SNR metric of the UE.
+  void update_pusch_snr(double snr) { sched_metrics.pusch_snr_db = snr; }
 
   rnti_t                            crnti_;
   const scheduler_ue_expert_config& expert_cfg;

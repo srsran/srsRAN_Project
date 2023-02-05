@@ -11,6 +11,7 @@
 #include "ue_cell.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
+#include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
 using namespace srsgnb;
 
@@ -86,4 +87,18 @@ unsigned ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_byte
       mcs_config,
       nof_layers});
   return prbs_tbs.nof_prbs;
+}
+
+int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu)
+{
+  // Update UL HARQ state.
+  int tbs = harqs.ul_crc_info(crc_pdu.harq_id, crc_pdu.tb_crc_success, pusch_slot);
+  if (tbs >= 0) {
+    // HARQ was found.
+
+    // Update PUSCH SNR reported from PHY.
+    update_pusch_snr(crc_pdu.ul_sinr_metric);
+  }
+
+  return tbs;
 }
