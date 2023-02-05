@@ -305,6 +305,19 @@ protected:
 
     return uci_ind;
   }
+
+  ul_crc_pdu_indication build_success_crc_pdu_indication(const du_ue_index_t ue_idx, const uint8_t harq_id)
+  {
+    const sched_test_ue& u = get_ue(ue_idx);
+
+    ul_crc_pdu_indication pdu{};
+    pdu.ue_index       = ue_idx;
+    pdu.rnti           = u.crnti;
+    pdu.harq_id        = (harq_id_t)harq_id;
+    pdu.tb_crc_success = true;
+
+    return pdu;
+  }
 };
 
 TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
@@ -415,6 +428,12 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
   for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
     run_slot();
+
+    // CRC Indication to send if there PUSCH is scheduled in current slot.
+    ul_crc_indication crc_ind{};
+    crc_ind.cell_index = to_du_cell_index(0);
+    crc_ind.sl_rx      = next_slot;
+
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
       // Update the PUSCH scheduled slot in the future.
@@ -441,6 +460,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
       }
 
       if (pusch != nullptr && pusch->pusch_cfg.new_data) {
+        crc_ind.crcs.push_back(build_success_crc_pdu_indication(to_du_ue_index(idx), pusch->pusch_cfg.harq_id));
         if (tbs_sched_bytes > test_ue.ul_bsr_list.back().nof_bytes) {
           // Accounting for MAC headers.
           test_ue.ul_bsr_list.back().nof_bytes = 0;
@@ -448,6 +468,10 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
           test_ue.ul_bsr_list.back().nof_bytes -= tbs_sched_bytes;
         }
       }
+    }
+
+    if (not crc_ind.crcs.empty()) {
+      bench->sch.handle_crc_indication(crc_ind);
     }
   }
 
