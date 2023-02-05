@@ -21,6 +21,7 @@ set(SOURCES
 
 add_library(srsgnb_support STATIC ${SOURCES})
 target_link_libraries(srsgnb_support srsgnb_io_broker ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY} srslog)
+add_backward(srsgnb_support)
 
 install(TARGETS srsgnb_support EXPORT srsgnb_export)
 
