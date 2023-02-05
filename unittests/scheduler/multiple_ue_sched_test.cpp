@@ -27,9 +27,10 @@ using namespace srsgnb;
 using dl_bsr_lc_report_list = static_vector<dl_buffer_state_indication_message, MAX_NOF_RB_LCIDS>;
 
 struct sched_test_ue {
-  rnti_t                 crnti;
-  ul_bsr_lcg_report_list ul_bsr_list;
-  dl_bsr_lc_report_list  dl_bsr_list;
+  rnti_t                            crnti;
+  ul_bsr_lcg_report_list            ul_bsr_list;
+  dl_bsr_lc_report_list             dl_bsr_list;
+  sched_ue_creation_request_message msg;
 };
 
 unsigned allocate_rnti()
@@ -41,8 +42,6 @@ unsigned allocate_rnti()
 
 // Parameters to be passed to test.
 struct multiple_ue_test_params {
-  uint8_t     k0;
-  uint8_t     k1;
   uint16_t    nof_ues;
   uint16_t    min_buffer_size_in_bytes;
   uint16_t    max_buffer_size_in_bytes;
@@ -141,7 +140,6 @@ protected:
   sched_cell_configuration_request_message create_random_cell_config_request() const
   {
     sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
-    msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
 
     if (params.duplx_mode == duplex_mode::TDD) {
       msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
@@ -184,8 +182,6 @@ protected:
     auto ue_creation_req     = test_helpers::create_default_sched_ue_creation_request();
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
-    ue_creation_req.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack[0] =
-        params.k1;
 
     auto it = std::find_if(ue_creation_req.cfg.lc_config_list.begin(),
                            ue_creation_req.cfg.lc_config_list.end(),
@@ -198,7 +194,7 @@ protected:
 
     bench->sch.handle_ue_creation_request(ue_creation_req);
 
-    bench->ues[ue_index] = sched_test_ue{ue_creation_req.crnti, {}};
+    bench->ues[ue_index] = sched_test_ue{ue_creation_req.crnti, {}, {}, ue_creation_req};
   }
 
   sched_test_ue& get_ue(du_ue_index_t ue_idx) { return bench->ues.at(ue_idx); }
@@ -255,8 +251,13 @@ protected:
     const auto* it = std::find_if(bench->sched_res->dl.ul_pdcchs.begin(),
                                   bench->sched_res->dl.ul_pdcchs.end(),
                                   [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+    const auto& ue_ul_lst =
+        u.msg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_td_alloc_list;
+    const auto& cell_ul_lst = bench->cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    const auto& ul_lst      = ue_ul_lst.empty() ? cell_ul_lst : ue_ul_lst;
+
     return it == bench->sched_res->dl.ul_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                      : next_slot + it->dci.c_rnti_f0_0.time_resource;
+                                                      : next_slot + ul_lst[it->dci.c_rnti_f0_0.time_resource].k2;
   }
 
   optional<slot_point> get_pdsch_scheduled_slot(const sched_test_ue& u) const
@@ -364,7 +365,9 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
       }
 
       const unsigned tbs_sched_bytes = pusch_tbs_scheduled_bytes(test_ue);
-      if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.back().nof_bytes == 0 && not is_bsr_zero_sent[idx]) {
+      if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.back().nof_bytes == 0 &&
+          pusch_scheduled_slot_in_future[idx].has_value() && next_slot > pusch_scheduled_slot_in_future[idx].value() &&
+          not is_bsr_zero_sent[idx]) {
         is_bsr_zero_sent[idx] = true;
         // Notify BSR 0 to ensure scheduler does not schedule further for this UE.
         notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
@@ -411,27 +414,15 @@ TEST_P(multiple_ue_sched_tester, not_scheduled_when_buffer_status_zero)
 
 INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                          multiple_ue_sched_tester,
-                         testing::Values(multiple_ue_test_params{.k0                       = 1,
-                                                                 .k1                       = 4,
-                                                                 .nof_ues                  = 3,
+                         testing::Values(multiple_ue_test_params{.nof_ues                  = 3,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::FDD},
-                                         multiple_ue_test_params{.k0                       = 2,
-                                                                 .k1                       = 5,
-                                                                 .nof_ues                  = 3,
-                                                                 .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 3000,
-                                                                 .duplx_mode               = duplex_mode::FDD},
-                                         multiple_ue_test_params{.k0                       = 15,
-                                                                 .k1                       = 4,
-                                                                 .nof_ues                  = 5,
+                                         multiple_ue_test_params{.nof_ues                  = 5,
                                                                  .min_buffer_size_in_bytes = 2000,
                                                                  .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::TDD},
-                                         multiple_ue_test_params{.k0                       = 2,
-                                                                 .k1                       = 5,
-                                                                 .nof_ues                  = 2,
+                                         multiple_ue_test_params{.nof_ues                  = 2,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::TDD}));
