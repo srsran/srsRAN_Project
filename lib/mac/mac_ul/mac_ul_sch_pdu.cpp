@@ -43,7 +43,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
   if (lcid_val.has_length_field()) {
     // Variable-sized MAC CEs or SDUs
 
-    if (subpdu_len < (F_bit ? 2 : 3)) {
+    if (subpdu_len < (F_bit ? 3 : 2)) {
       srslog::fetch_basic_logger("MAC").warning(
           "Invalid UL MAC PDU. Cause: Not enough bytes remaining in PDU to decode length prefix.");
       return false;
