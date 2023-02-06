@@ -130,8 +130,17 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       case mac_uci_pdu::pdu_type::pusch: {
         const auto&                            pusch = msg.ucis[i].pusch;
         uci_indication::uci_pdu::uci_pusch_pdu pdu{};
-        if (pusch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        if (pusch.harq_info.has_value() and
+            pusch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
           pdu.harqs = pusch.harq_info->payload;
+        }
+        if (pusch.csi_part1_info.has_value() and
+            pusch.csi_part1_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          pdu.csi_part1 = pusch.csi_part1_info->payload;
+        }
+        if (pusch.csi_part2_info.has_value() and
+            pusch.csi_part2_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          pdu.csi_part2 = pusch.csi_part2_info->payload;
         }
         ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>(pdu);
       } break;

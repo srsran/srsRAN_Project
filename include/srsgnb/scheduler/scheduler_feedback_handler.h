@@ -20,6 +20,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_pdu_capacity_constants.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/uci/uci_constants.h"
 #include "srsgnb/scheduler/harq_id.h"
 
 namespace srsgnb {
@@ -68,10 +69,9 @@ struct uci_indication {
       static_vector<bool, NOF_HARQS_PER_UCI> harqs;
     };
     struct uci_pusch_pdu {
-      constexpr static size_t MAX_HARQS_PER_UCI = 1706;
-
-      bounded_bitset<MAX_HARQS_PER_UCI> harqs;
-      // TODO: Add CSI Part 1 and Part 2.
+      bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>               harqs;
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part1;
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part2;
     };
 
     du_ue_index_t                                  ue_index;
