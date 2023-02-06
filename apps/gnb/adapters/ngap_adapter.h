@@ -67,7 +67,7 @@ private:
   void on_connection_established() override
   {
     // TODO: extend event interface to inform about connection establishment
-    logger.info("on_connection_established");
+    logger.debug("on_connection_established");
   }
 
   io_broker&                            broker;
@@ -77,7 +77,7 @@ private:
   ngc_message_handler*                  ngc_msg_handler = nullptr;
   ngc_event_handler*                    ngc_evt_handler = nullptr;
 
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("NGAP-ADAPTER");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("SCTP-GW");
 };
 
 }; // namespace srs_cu_cp

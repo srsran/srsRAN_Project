@@ -266,7 +266,7 @@ bool sctp_network_gateway_impl::create_and_connect()
       }
     }
 
-    logger.info("Connection successful");
+    logger.debug("Connection successful");
     break;
   }
 
@@ -478,7 +478,7 @@ void sctp_network_gateway_impl::handle_notification(span<socket_buffer_type> pay
 
 void sctp_network_gateway_impl::handle_data(const span<socket_buffer_type> payload)
 {
-  logger.info("Received data of {} bytes", payload.size_bytes());
+  logger.debug("Received data of {} bytes", payload.size_bytes());
   data_notifier.on_new_pdu(byte_buffer(payload.begin(), payload.end()));
 }
 
