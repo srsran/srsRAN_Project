@@ -240,7 +240,7 @@ struct dummy_du_processor_rrc_du_ue_notifier : public du_processor_rrc_du_ue_not
 public:
   dummy_du_processor_rrc_du_ue_notifier() = default;
 
-  rrc_ue_interface* on_ue_creation_request(rrc_ue_creation_message msg) override
+  rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
     logger.info("Received a UE creation request");
     return nullptr;

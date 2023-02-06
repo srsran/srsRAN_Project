@@ -146,7 +146,7 @@ public:
   /// \brief Notify RRC DU to create a UE.
   /// \param[in] msg The UE creation message.
   /// \return Returns a handle to the created UE.
-  virtual rrc_ue_interface* on_ue_creation_request(rrc_ue_creation_message msg) = 0;
+  virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) = 0;
 
   /// \brief Notify the RRC DU to release a UE.
   /// \param[in] ue_index The index of the UE object to remove.

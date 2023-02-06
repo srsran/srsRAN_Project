@@ -147,7 +147,7 @@ public:
 
   void connect_rrc_du(rrc_du_ue_repository& rrc_du_handler_) { rrc_du_handler = &rrc_du_handler_; }
 
-  virtual rrc_ue_interface* on_ue_creation_request(rrc_ue_creation_message msg) override
+  virtual rrc_ue_interface* on_ue_creation_request(const rrc_ue_creation_message& msg) override
   {
     srsgnb_assert(rrc_du_handler != nullptr, "RRC DU handler must not be nullptr");
     return rrc_du_handler->add_ue(msg);
