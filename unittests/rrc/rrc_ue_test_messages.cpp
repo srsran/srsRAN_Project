@@ -44,10 +44,10 @@ cu_cp_rrc_reconfiguration_procedure_request srsgnb::srs_cu_cp::generate_rrc_reco
   cn_assoc.eps_bearer_id = 5;
   drb_item.cn_assoc      = cn_assoc;
 
-  cu_cp_pdcp_config pdcp_config;
+  pdcp_config_t pdcp_config;
   pdcp_config.ciphering_disabled_present = true;
 
-  cu_cp_drb drb;
+  drb_t drb;
   drb.pdcp_sn_size_dl = 18;
   drb.pdcp_sn_size_ul = 18;
   drb.discard_timer   = 100;

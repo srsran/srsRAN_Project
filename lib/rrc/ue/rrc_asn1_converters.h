@@ -20,10 +20,10 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// \brief Converts type \c cu_cp_pdcp_config to an RRC NR ASN.1 type.
+/// \brief Converts type \c pdcp_config_t to an RRC NR ASN.1 type.
 /// \param pdcp_cfg pdcp config object.
 /// \return The RRC NR ASN.1 object where the result of the conversion is stored.
-inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(cu_cp_pdcp_config pdcp_cfg)
+inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config_t pdcp_cfg)
 {
   asn1::rrc_nr::pdcp_cfg_s rrc_pdcp_cfg;
 

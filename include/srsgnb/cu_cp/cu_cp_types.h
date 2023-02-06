@@ -138,67 +138,6 @@ inline ran_ue_id_t uint_to_ran_ue_id(std::underlying_type_t<ran_ue_id_t> id)
 
 // ASN1 types converted to common types
 
-struct cu_cp_rohc_profiles {
-  bool profile0x0001 = false;
-  bool profile0x0002 = false;
-  bool profile0x0003 = false;
-  bool profile0x0004 = false;
-  bool profile0x0006 = false;
-  bool profile0x0101 = false;
-  bool profile0x0102 = false;
-  bool profile0x0103 = false;
-  bool profile0x0104 = false;
-};
-
-struct cu_cp_rohc {
-  cu_cp_rohc_profiles profiles;
-  bool                drb_continue_rohc_present = false;
-  optional<uint16_t>  max_cid;
-};
-
-struct cu_cp_ul_only_rohc_profiles {
-  bool profile0x0006 = false;
-};
-
-struct cu_cp_ul_only_rohc {
-  cu_cp_ul_only_rohc_profiles profiles;
-  bool                        drb_continue_rohc_present = false;
-  optional<uint16_t>          max_cid;
-};
-
-struct cu_cp_hdr_compress {
-  optional<cu_cp_rohc>         rohc;
-  optional<cu_cp_ul_only_rohc> ul_only_rohc;
-};
-
-struct cu_cp_drb {
-  cu_cp_hdr_compress hdr_compress;
-  optional<int16_t>  discard_timer;
-  optional<uint8_t>  pdcp_sn_size_ul;
-  optional<uint8_t>  pdcp_sn_size_dl;
-  bool               integrity_protection_present   = false;
-  bool               status_report_required_present = false;
-  bool               out_of_order_delivery_present  = false;
-};
-
-struct cu_cp_primary_path {
-  optional<uint8_t> cell_group;
-  optional<uint8_t> lc_ch;
-};
-
-struct cu_cp_more_than_one_rlc {
-  cu_cp_primary_path primary_path;
-  optional<int32_t>  ul_data_split_thres;
-  optional<bool>     pdcp_dupl;
-};
-
-struct cu_cp_pdcp_config {
-  optional<cu_cp_drb>               drb;
-  optional<cu_cp_more_than_one_rlc> more_than_one_rlc;
-  optional<uint16_t>                t_reordering;
-  bool                              ciphering_disabled_present = false;
-};
-
 struct cu_cp_qos_characteristics {
   bool        is_dynamic_5qi = false;
   uint16_t    five_qi;
@@ -368,10 +307,10 @@ struct cu_cp_ue_context_modification_response {
 /// Arguments for the RRC Reconfiguration procedure.
 
 struct cu_cp_srb_to_add_mod {
-  bool                        reestablish_pdcp_present = false;
-  bool                        discard_on_pdcp_present  = false;
-  srb_id_t                    srb_id                   = srb_id_t::nulltype;
-  optional<cu_cp_pdcp_config> pdcp_cfg;
+  bool                    reestablish_pdcp_present = false;
+  bool                    discard_on_pdcp_present  = false;
+  srb_id_t                srb_id                   = srb_id_t::nulltype;
+  optional<pdcp_config_t> pdcp_cfg;
 };
 
 struct cu_cp_cn_assoc {
@@ -380,11 +319,11 @@ struct cu_cp_cn_assoc {
 };
 
 struct cu_cp_drb_to_add_mod {
-  bool                        reestablish_pdcp_present = false;
-  bool                        recover_pdcp_present     = false;
-  optional<cu_cp_cn_assoc>    cn_assoc;
-  drb_id_t                    drb_id = drb_id_t::invalid;
-  optional<cu_cp_pdcp_config> pdcp_cfg;
+  bool                     reestablish_pdcp_present = false;
+  bool                     recover_pdcp_present     = false;
+  optional<cu_cp_cn_assoc> cn_assoc;
+  drb_id_t                 drb_id = drb_id_t::invalid;
+  optional<pdcp_config_t>  pdcp_cfg;
 };
 
 struct cu_cp_security_algorithm_config {

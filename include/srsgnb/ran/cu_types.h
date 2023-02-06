@@ -93,4 +93,65 @@ struct sdap_config_t {
   std::vector<qos_flow_id_t> mapped_qos_flows_to_release = {};
 };
 
+struct rohc_profiles_t {
+  bool profile0x0001 = false;
+  bool profile0x0002 = false;
+  bool profile0x0003 = false;
+  bool profile0x0004 = false;
+  bool profile0x0006 = false;
+  bool profile0x0101 = false;
+  bool profile0x0102 = false;
+  bool profile0x0103 = false;
+  bool profile0x0104 = false;
+};
+
+struct rohc_t {
+  rohc_profiles_t    profiles;
+  bool               drb_continue_rohc_present = false;
+  optional<uint16_t> max_cid;
+};
+
+struct ul_only_rohc_profiles_t {
+  bool profile0x0006 = false;
+};
+
+struct ul_only_rohc_t {
+  ul_only_rohc_profiles_t profiles;
+  bool                    drb_continue_rohc_present = false;
+  optional<uint16_t>      max_cid;
+};
+
+struct hdr_compress_t {
+  optional<rohc_t>         rohc;
+  optional<ul_only_rohc_t> ul_only_rohc;
+};
+
+struct drb_t {
+  hdr_compress_t    hdr_compress;
+  optional<int16_t> discard_timer;
+  optional<uint8_t> pdcp_sn_size_ul;
+  optional<uint8_t> pdcp_sn_size_dl;
+  bool              integrity_protection_present   = false;
+  bool              status_report_required_present = false;
+  bool              out_of_order_delivery_present  = false;
+};
+
+struct primary_path_t {
+  optional<uint8_t> cell_group;
+  optional<uint8_t> lc_ch;
+};
+
+struct more_than_one_rlc_t {
+  primary_path_t    primary_path;
+  optional<int32_t> ul_data_split_thres;
+  optional<bool>    pdcp_dupl;
+};
+
+struct pdcp_config_t {
+  optional<drb_t>               drb;
+  optional<more_than_one_rlc_t> more_than_one_rlc;
+  optional<uint16_t>            t_reordering;
+  bool                          ciphering_disabled_present = false;
+};
+
 } // namespace srsgnb

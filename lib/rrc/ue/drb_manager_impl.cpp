@@ -96,14 +96,14 @@ sdap_config_t drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
   return sdap_cfg;
 }
 
-cu_cp_pdcp_config drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
+pdcp_config_t drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
 {
   // TODO lookup PDCP config for 5QI in config
   (void)cfg;
-  cu_cp_pdcp_config pdcp_cfg;
+  pdcp_config_t pdcp_cfg;
   pdcp_cfg.ciphering_disabled_present = true;
 
-  cu_cp_drb drb;
+  drb_t drb;
   drb.pdcp_sn_size_dl = 18;
   drb.pdcp_sn_size_ul = 18;
   drb.discard_timer   = 100;
@@ -146,7 +146,7 @@ std::vector<qos_flow_id_t> drb_manager_impl::get_mapped_qos_flows(const pdu_sess
   return mapped_flows;
 }
 
-cu_cp_pdcp_config drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
+pdcp_config_t drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);
