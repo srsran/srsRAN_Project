@@ -10,6 +10,7 @@
 
 #include "e1ap_cu_up_impl.h"
 #include "../../ran/gnb_format.h"
+#include "../common/e1ap_asn1_converters.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/ran/bcd_helpers.h"
 
@@ -39,10 +40,18 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_respon
 
     e1_msg.pdu.set_successful_outcome();
     e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-    e1_msg.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp() = msg.response;
+    auto& setup_resp = e1_msg.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp();
+
+    setup_resp->gnb_cu_up_id.value = msg.gnb_cu_up_id.value();
+    if (msg.gnb_cu_up_name.has_value()) {
+      setup_resp->gnb_cu_up_name_present = true;
+      setup_resp->gnb_cu_up_name.value.from_string(msg.gnb_cu_up_name.value());
+    }
+
+    // TODO: Add missing values
 
     // set values handled by E1
-    e1_msg.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp()->transaction_id.value = current_transaction_id;
+    setup_resp->transaction_id.value = current_transaction_id;
 
     // send response
     pdu_notifier.on_new_message(e1_msg);
@@ -50,8 +59,8 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_respon
     logger.info("Transmitting CuCpE1SetupFailure message");
     e1_msg.pdu.set_unsuccessful_outcome();
     e1_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-    e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail() = msg.failure;
-    auto& setup_fail = e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail();
+    auto& setup_fail        = e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail();
+    setup_fail->cause.value = cause_to_e1ap_cause(msg.cause.value());
 
     // set values handled by E1
     setup_fail->transaction_id.value = current_transaction_id;
@@ -127,7 +136,11 @@ void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& ms
 void e1ap_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_e1_setup_request_s& msg)
 {
   cu_cp_e1_setup_request req_msg = {};
-  req_msg.request                = msg;
+
+  if (msg->gnb_cu_cp_name_present) {
+    req_msg.gnb_cu_cp_name = msg->gnb_cu_cp_name.value.to_string();
+  }
+
   e1_cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
 }
 

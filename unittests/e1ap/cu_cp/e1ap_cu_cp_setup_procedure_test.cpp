@@ -49,7 +49,7 @@ TEST_F(e1ap_cu_cp_test, when_cu_cp_e1_setup_response_received_then_cu_cp_connect
 
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get().success);
-  ASSERT_EQ(t.get().response->gnb_cu_up_name.value.to_string(), "srsCU-UP");
+  ASSERT_EQ(t.get().gnb_cu_up_name.value(), "srsCU-UP");
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and successful retry
@@ -100,7 +100,7 @@ TEST_F(e1ap_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_t
 
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(t.get().success);
-  ASSERT_EQ(t.get().response->gnb_cu_up_name.value.to_string(), "srsCU-UP");
+  ASSERT_EQ(t.get().gnb_cu_up_name.value(), "srsCU-UP");
 }
 
 /// Test unsuccessful e1 setup procedure with time to wait and unsuccessful retry

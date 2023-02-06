@@ -16,6 +16,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsgnb/ran/bcd_helpers.h"
 #include <string>
 #include <vector>
 
@@ -334,6 +335,28 @@ inline e1ap_pdcp_count e1ap_asn1_pdcp_count_to_pdcp_count(asn1::e1ap::pdcp_count
   pdcp_count.pdcp_sn = asn1_pdcp_count.pdcp_sn;
 
   return pdcp_count;
+}
+
+inline nr_cell_global_id_t cgi_from_e1ap_asn1(const asn1::e1ap::nr_cgi_s& asn1_cgi)
+{
+  nr_cell_global_id_t cgi          = {};
+  uint32_t            encoded_plmn = asn1_cgi.plmn_id.to_number();
+  ngap_plmn_to_mccmnc(encoded_plmn, &cgi.mcc, &cgi.mnc);
+
+  std::string mcc_string, mnc_string;
+  mcc_to_string(cgi.mcc, &mcc_string);
+  mnc_to_string(cgi.mnc, &mnc_string);
+  cgi.plmn = mcc_string + mnc_string;
+
+  // Set PLMN hex string
+  cgi.plmn_hex = asn1_cgi.plmn_id.to_string();
+
+  cgi.nci.packed = asn1_cgi.nr_cell_id.to_number();
+
+  cgi.nci.cell_idenity = (asn1_cgi.nr_cell_id.to_number() & 0xfffc0000); // bits 4 to 14
+  cgi.nci.gnb_identity = (asn1_cgi.nr_cell_id.to_number() & 0X3ff0);     // bits 22 to 32
+
+  return cgi;
 }
 
 } // namespace srsgnb

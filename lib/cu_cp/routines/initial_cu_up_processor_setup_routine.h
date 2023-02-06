@@ -28,7 +28,7 @@ public:
 
 private:
   async_task<cu_cp_e1_setup_response> start_cu_cp_e1_setup_request();
-  void                                handle_cu_cp_e1_setup_response(const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& resp);
+  void                                handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& resp);
 
   cu_up_processor_context& context;
 

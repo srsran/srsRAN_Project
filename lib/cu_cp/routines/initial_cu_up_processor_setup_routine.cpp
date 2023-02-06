@@ -32,7 +32,7 @@ void initial_cu_up_processor_setup_routine::operator()(coro_context<async_task<v
   // Handle CU-CP E1 setup result.
   if (response.success) {
     // In case of CU-CP E1 Setup Response.
-    handle_cu_cp_e1_setup_response(response.response);
+    handle_cu_cp_e1_setup_response(response);
   } else {
     cu_cp_notifier.on_cu_up_remove_request_received(context.cu_up_index);
   }
@@ -43,21 +43,19 @@ void initial_cu_up_processor_setup_routine::operator()(coro_context<async_task<v
 async_task<cu_cp_e1_setup_response> initial_cu_up_processor_setup_routine::start_cu_cp_e1_setup_request()
 {
   // Prepare request to send to CU-CP E1 Setup Request message.
-  cu_cp_e1_setup_request request          = {};
-  request.request->gnb_cu_cp_name_present = true;
-  request.request->gnb_cu_cp_name.value.from_string(context.cu_cp_name);
+  cu_cp_e1_setup_request request = {};
+  request.gnb_cu_cp_name         = context.cu_cp_name;
 
   // Initiate CU-CP E1 Setup Request.
   return e1_conn_notifier.on_cu_cp_e1_setup_request(request);
 }
 
-void initial_cu_up_processor_setup_routine::handle_cu_cp_e1_setup_response(
-    const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& resp)
+void initial_cu_up_processor_setup_routine::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& resp)
 {
-  if (resp->gnb_cu_up_name_present) {
-    context.cu_up_name = resp->gnb_cu_up_name.value.to_string();
+  if (resp.gnb_cu_up_name.has_value()) {
+    context.cu_up_name = resp.gnb_cu_up_name.value();
   }
-  context.id = resp->gnb_cu_up_id.value;
+  context.id = resp.gnb_cu_up_id.value();
 
   // TODO: handle response
 }

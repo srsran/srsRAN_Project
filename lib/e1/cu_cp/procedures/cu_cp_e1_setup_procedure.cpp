@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_e1_setup_procedure.h"
+#include "../e1ap_asn1_helpers.h"
 #include "srsgnb/support/async/async_timer.h"
 
 using namespace srsgnb;
@@ -64,10 +65,14 @@ void cu_cp_e1_setup_procedure::send_e1_setup_request()
   // set E1AP PDU contents
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-  msg.pdu.init_msg().value.gnb_cu_cp_e1_setup_request() = request.request;
+  auto& setup_req = msg.pdu.init_msg().value.gnb_cu_cp_e1_setup_request();
+
+  if (request.gnb_cu_cp_name.has_value()) {
+    setup_req->gnb_cu_cp_name_present = true;
+    setup_req->gnb_cu_cp_name.value.from_string(request.gnb_cu_cp_name.value());
+  }
 
   // set values handled by E1
-  auto& setup_req                 = msg.pdu.init_msg().value.gnb_cu_cp_e1_setup_request();
   setup_req->transaction_id.value = transaction.id();
 
   // send request
@@ -112,8 +117,9 @@ cu_cp_e1_setup_response cu_cp_e1_setup_procedure::create_e1_setup_result()
 
   if (cu_cp_e1_setup_outcome.has_value()) {
     logger.info("Received E1AP PDU with successful outcome.");
-    res.response = cu_cp_e1_setup_outcome.value().value.gnb_cu_cp_e1_setup_resp();
-    res.success  = true;
+
+    fill_e1ap_cu_cp_e1_setup_response(res, cu_cp_e1_setup_outcome.value().value.gnb_cu_cp_e1_setup_resp());
+
   } else if (cu_cp_e1_setup_outcome.has_value() or
              cu_cp_e1_setup_outcome.error().value.type().value !=
                  e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_cp_e1_setup_fail) {
@@ -123,7 +129,7 @@ cu_cp_e1_setup_response cu_cp_e1_setup_procedure::create_e1_setup_result()
   } else {
     logger.info("Received E1AP PDU with unsuccessful outcome. Cause: {}",
                 get_cause_str(cu_cp_e1_setup_outcome.error().value.gnb_cu_cp_e1_setup_fail()->cause.value));
-    res.success = false;
+    fill_e1ap_cu_cp_e1_setup_response(res, cu_cp_e1_setup_outcome.error().value.gnb_cu_cp_e1_setup_fail());
   }
   return res;
 }

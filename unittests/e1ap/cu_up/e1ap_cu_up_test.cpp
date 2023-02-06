@@ -84,12 +84,14 @@ TEST_F(e1ap_cu_up_test, when_cu_cp_e1_setup_request_valid_then_connect_cu_cp)
   e1ap->handle_message(cu_cp_e1_setup);
 
   // Check if E1SetupRequest was forwarded to UE manager
-  ASSERT_EQ(cu_up_notifier.last_cu_cp_e1_setup_request.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
+  ASSERT_TRUE(cu_up_notifier.last_cu_cp_e1_setup_request.gnb_cu_cp_name.has_value());
+  ASSERT_EQ(cu_up_notifier.last_cu_cp_e1_setup_request.gnb_cu_cp_name.value(), "srsCU-CP");
 
   // Action 3: Transmit E1SetupResponse message
   test_logger.info("TEST: Transmit E1SetupResponse message...");
   cu_cp_e1_setup_response msg = {};
   msg.success                 = true;
+  msg.gnb_cu_up_id            = 0;
   e1ap->handle_cu_cp_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the F1 Setup response
@@ -107,12 +109,14 @@ TEST_F(e1ap_cu_up_test, when_cu_cp_e1_setup_request_cant_be_handled_then_reject_
   e1ap->handle_message(cu_cp_e1_setup);
 
   // Check if E1SetupRequest was forwarded to UE manager
-  ASSERT_EQ(cu_up_notifier.last_cu_cp_e1_setup_request.request->gnb_cu_cp_name.value.to_string(), "srsCU-CP");
+  ASSERT_TRUE(cu_up_notifier.last_cu_cp_e1_setup_request.gnb_cu_cp_name.has_value());
+  ASSERT_EQ(cu_up_notifier.last_cu_cp_e1_setup_request.gnb_cu_cp_name.value(), "srsCU-CP");
 
   // Action 3: Transmit E1SetupFailure message
   test_logger.info("TEST: Transmit E1SetupFailure message...");
   cu_cp_e1_setup_response msg = {};
   msg.success                 = false;
+  msg.cause                   = cause_t::nulltype;
   e1ap->handle_cu_cp_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup failure

@@ -16,9 +16,8 @@ using namespace asn1::e1ap;
 
 cu_cp_e1_setup_request srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_request()
 {
-  cu_cp_e1_setup_request e1_setup_request          = {};
-  e1_setup_request.request->gnb_cu_cp_name_present = true;
-  e1_setup_request.request->gnb_cu_cp_name.value.from_string("srsCU-CP");
+  cu_cp_e1_setup_request e1_setup_request = {};
+  e1_setup_request.gnb_cu_cp_name         = "srsCU-CP";
 
   return e1_setup_request;
 }

@@ -76,16 +76,15 @@ cu_cp_e1_setup_response cu_up::handle_cu_cp_e1_setup_request(const cu_cp_e1_setu
   cu_cp_e1_setup_response response;
   response.success = true;
 
-  response.response->gnb_cu_up_id.value     = cfg.cu_up_id;
-  response.response->gnb_cu_up_name_present = true;
-  response.response->gnb_cu_up_name.value.from_string(cfg.cu_up_name);
+  response.gnb_cu_up_id   = cfg.cu_up_id;
+  response.gnb_cu_up_name = cfg.cu_up_name;
 
   // We only support 5G
-  response.response->cn_support.value = asn1::e1ap::cn_support_opts::options::c_5gc;
+  response.cn_support = "c-5gc";
 
-  asn1::e1ap::supported_plmns_item_s plmn_item;
-  plmn_item.plmn_id.from_number(plmn_string_to_bcd(cfg.plmn));
-  response.response->supported_plmns.value.push_back(plmn_item);
+  supported_plmns_item_t plmn_item;
+  plmn_item.plmn_id = plmn_string_to_bcd(cfg.plmn);
+  response.supported_plmns.push_back(plmn_item);
 
   return response;
 }

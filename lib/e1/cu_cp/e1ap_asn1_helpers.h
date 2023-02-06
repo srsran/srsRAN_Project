@@ -16,6 +16,83 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
+inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&                     res,
+                                              const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& asn1_res)
+{
+  res.success      = true;
+  res.gnb_cu_up_id = asn1_res->gnb_cu_up_id.value;
+
+  if (asn1_res->gnb_cu_up_name_present) {
+    res.gnb_cu_up_name = asn1_res->gnb_cu_up_name.value.to_string();
+  }
+
+  res.cn_support = asn1_res->cn_support.value.to_string();
+
+  for (const auto& asn1_plmn_item : asn1_res->supported_plmns.value) {
+    supported_plmns_item_t plmn;
+    plmn.plmn_id = asn1_plmn_item.plmn_id.to_string();
+
+    for (const auto& asn1_slice_support_item : asn1_plmn_item.slice_support_list) {
+      slice_support_item_t slice_support;
+      slice_support.s_nssai.sst = asn1_slice_support_item.snssai.sst.to_number();
+
+      if (asn1_slice_support_item.snssai.sd_present) {
+        slice_support.s_nssai.sd = asn1_slice_support_item.snssai.sd.to_number();
+      }
+
+      plmn.slice_support_list.push_back(slice_support);
+    }
+
+    for (const auto& asn1_nr_cgi_support_item : asn1_plmn_item.nr_cgi_support_list) {
+      nr_cgi_support_item_t nr_cgi_support;
+      nr_cgi_support.nr_cgi = cgi_from_e1ap_asn1(asn1_nr_cgi_support_item.nr_cgi);
+
+      plmn.nr_cgi_support_list.push_back(nr_cgi_support);
+    }
+
+    if (asn1_plmn_item.qos_params_support_list_present) {
+      // We only support ng ran qos support list
+      for (const auto& asn1_qos_support_item : asn1_plmn_item.qos_params_support_list.ng_ran_qos_support_list) {
+        ng_ran_qos_support_item_t qos_support_item;
+
+        qos_support_item.non_dyn_5qi_descriptor.five_qi = asn1_qos_support_item.non_dyn_5qi_descriptor.five_qi;
+
+        if (asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level_present) {
+          qos_support_item.non_dyn_5qi_descriptor.qos_prio_level =
+              asn1_qos_support_item.non_dyn_5qi_descriptor.qos_prio_level;
+        }
+        if (asn1_qos_support_item.non_dyn_5qi_descriptor.averaging_win_present) {
+          qos_support_item.non_dyn_5qi_descriptor.averaging_win =
+              asn1_qos_support_item.non_dyn_5qi_descriptor.averaging_win;
+        }
+        if (asn1_qos_support_item.non_dyn_5qi_descriptor.max_data_burst_volume_present) {
+          qos_support_item.non_dyn_5qi_descriptor.max_data_burst_volume =
+              asn1_qos_support_item.non_dyn_5qi_descriptor.max_data_burst_volume;
+        }
+
+        plmn.ng_ran_qos_support_list.push_back(qos_support_item);
+      }
+    }
+
+    res.supported_plmns.push_back(plmn);
+  }
+
+  if (asn1_res->gnb_cu_up_capacity_present) {
+    res.gnb_cu_up_capacity = asn1_res->gnb_cu_up_capacity.value;
+  }
+}
+
+inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&                     res,
+                                              const asn1::e1ap::gnb_cu_cp_e1_setup_fail_s& asn1_fail)
+{
+  res.success = false;
+  res.cause   = e1ap_cause_to_cause(asn1_fail->cause.value);
+
+  if (asn1_fail->crit_diagnostics_present) {
+    // TODO: Add crit diagnostics
+  }
+}
+
 inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_setup_request_s& asn1_request,
                                                    const e1ap_bearer_context_setup_request&    request)
 {

@@ -15,6 +15,7 @@
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/cu_up/cu_up_types.h"
 #include "srsgnb/e1/common/e1_common.h"
+#include "srsgnb/e1/common/e1_setup_messages.h"
 
 namespace srsgnb {
 namespace srs_cu_up {
