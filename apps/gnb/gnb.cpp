@@ -105,7 +105,7 @@ public:
 
 /// Manages the workers of the app.
 struct worker_manager {
-  static const uint32_t task_worker_queue_size = 128;
+  static const uint32_t task_worker_queue_size = 2048;
 
   worker_manager(const gnb_appconfig& appcfg) : zmq_mode(appcfg.rf_driver_cfg.device_driver == "zmq") {}
 
