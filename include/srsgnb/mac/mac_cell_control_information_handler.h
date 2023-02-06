@@ -44,7 +44,7 @@ struct mac_crc_indication_message {
 };
 
 struct mac_uci_pdu {
-  enum class pdu_type : uint16_t { pusch, pucch_f0_or_f1, pucch_other };
+  enum class pdu_type : uint16_t { pusch, pucch_f0_or_f1, pucch_f2_or_f3_or_f4 };
   struct pusch_type {
     struct harq_information {
       /// HARQ Detection Status values for UCI PUSCH.
@@ -74,13 +74,13 @@ struct mac_uci_pdu {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
-    /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBFs.
+    /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
     optional<float> ul_sinr;
     /// \brief Timing Advance measured for the UE. Values: {0, 63}.
     optional<phy_time_unit> time_advance_offset;
-    /// RSSI report in dBFs;
+    /// RSSI report in dBs;
     optional<float> rssi;
-    /// RSRP report in dBFs;
+    /// RSRP report in dBs;
     optional<float>            rsrp;
     optional<harq_information> harq_info;
     optional<csi_information>  csi_part1_info;
@@ -96,25 +96,79 @@ struct mac_uci_pdu {
     };
 
     bool is_f1;
-    /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBFs.
+    /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
     optional<float> ul_sinr;
     /// \brief Timing Advance measured for the UE. Values: {0, 63}.
     optional<phy_time_unit> time_advance_offset;
-    /// RSSI report in dBFs;
+    /// RSSI report in dBs;
     optional<float> rssi;
-    /// RSRP report in dBFs;
+    /// RSRP report in dBs;
     optional<float>            rsrp;
     optional<sr_information>   sr_info;
     optional<harq_information> harq_info;
   };
-  struct pucch_other_type {};
+  struct pucch_f2_or_f3_or_f4_type {
+    /// Maximum number of SR bits expected on the PUCCH transmission.
+    static constexpr unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
+
+    /// \brief PUCCH format.
+    enum class pucch_format { f2, f3, f4 };
+
+    using sr_information = bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>;
+
+    struct harq_information {
+      /// HARQ Detection Status values for UCI PUCCH Format 2, 3, 4.
+      using harq_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
+
+      /// Indicates CRC result on UCI.
+      harq_detection_status harq_status;
+      /// Contents of HARQ, excluding any CRC.
+      /// NOTE: Wherever bit is set 1 the \c harq_status applies. i.e. If \c harq_status == crc_pass, then all HARQs
+      /// with bit set 1 in \c payload has its status as crc_pass. \n
+      /// Example: If number of HARQ bits are 20 bits, then its represented as follows in \c payload.
+      /// [ HARQ_bit_19 ... HARQ_bit_0 ] => [ MSB ... LSB ].
+      bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS> payload;
+    };
+
+    struct uci_payload_or_csi_information {
+      /// \brief Indicates whether information include UCI parts payload or CSI parts payload.
+      enum class payload_type_t { uci_part_payload, csi_part_payload };
+
+      /// UCI payload Part 1/ Part 2 or CSI Part1/CSI Part2 Detection Status values for UCI PUCCH Format 2, 3, 4.
+      using part1_or_part2_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
+
+      payload_type_t payload_type;
+      /// Indicates detection outcome on UCI/CSI.
+      part1_or_part2_detection_status status;
+      /// Contents of UCI/CSI, excluding any CRC.
+      /// NOTE1: Wherever bit is set 1 the \c csi_status applies. i.e. If \c csi_status == crc_pass, then all CSIs
+      /// with bit set 1 in \c payload has its status as crc_pass. \n
+      /// Example: If number of CSI bits are 20 bits, then its represented as follows in \c payload.
+      /// [ CSI_bit_19 ... CSI_bit_0 ] => [ MSB ... LSB ].
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
+    };
+
+    pucch_format pucch_fmt;
+    /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
+    optional<float> ul_sinr;
+    /// \brief Timing Advance measured for the UE. Values: {0, 63}.
+    optional<phy_time_unit> time_advance_offset;
+    /// RSSI report in dBs;
+    optional<float> rssi;
+    /// RSRP report in dBs;
+    optional<float>                          rsrp;
+    optional<sr_information>                 sr_info;
+    optional<harq_information>               harq_info;
+    optional<uci_payload_or_csi_information> uci_part1_or_csi_part1_info;
+    optional<uci_payload_or_csi_information> uci_part2_or_csi_part2_info;
+  };
 
   pdu_type type;
   rnti_t   rnti;
   // :TODO: add variant here.
-  pusch_type          pusch;
-  pucch_f0_or_f1_type pucch_f0_or_f1;
-  pucch_other_type    pucch_other;
+  pusch_type                pusch;
+  pucch_f0_or_f1_type       pucch_f0_or_f1;
+  pucch_f2_or_f3_or_f4_type pucch_f2_or_f3_or_f4;
 };
 
 /// \brief UCI indication that may contain multiple UCI PDUs.
