@@ -97,24 +97,22 @@ inline asn1::ngap::cause_c cause_to_ngap_cause(cause_t cause)
   switch (cause) {
     case cause_t::radio_network:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::radio_network);
-      return ngap_cause;
       break;
     case cause_t::transport:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::transport);
-      return ngap_cause;
       break;
     case cause_t::protocol:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::protocol);
-      return ngap_cause;
       break;
     case cause_t::misc:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::misc);
-      return ngap_cause;
       break;
     default:
       ngap_cause.set(asn1::ngap::cause_c::types_opts::nulltype);
-      return ngap_cause;
+      break;
   }
+
+  return ngap_cause;
 }
 
 /// \brief Convert NGAP ASN1 cause to \c cause_t type.

@@ -267,24 +267,21 @@ inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
   switch (e1ap_cause.type()) {
     case asn1::e1ap::cause_c::types_opts::radio_network:
       cause = cause_t::radio_network;
-      return cause;
       break;
     case asn1::e1ap::cause_c::types_opts::transport:
       cause = cause_t::transport;
-      return cause;
       break;
     case asn1::e1ap::cause_c::types_opts::protocol:
       cause = cause_t::protocol;
-      return cause;
       break;
     case asn1::e1ap::cause_c::types_opts::misc:
       cause = cause_t::misc;
-      return cause;
       break;
     default:
       cause = cause_t::nulltype;
-      return cause;
   }
+
+  return cause;
 }
 
 /// \brief Convert \c cause_t type to E1AP cause.
@@ -297,24 +294,22 @@ inline asn1::e1ap::cause_c cause_to_e1ap_cause(cause_t cause)
   switch (cause) {
     case cause_t::radio_network:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
-      return e1ap_cause;
       break;
     case cause_t::transport:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::transport);
-      return e1ap_cause;
       break;
     case cause_t::protocol:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::protocol);
-      return e1ap_cause;
       break;
     case cause_t::misc:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::misc);
-      return e1ap_cause;
       break;
     default:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::nulltype);
-      return e1ap_cause;
+      break;
   }
+
+  return e1ap_cause;
 }
 
 /// \brief Convert E1AP NG DL UP Unchanged to its boolean representation
