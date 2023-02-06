@@ -190,6 +190,12 @@ public:
   channel_state_information get_channel_state_information() const
   {
     channel_state_information csi = {};
+
+    srsgnb_assert(nof_rx_ports == 1, "For now, only one Rx port is supported.");
+    srsgnb_assert(nof_tx_layers == 1, "For now, only one Tx layer is supported.");
+    csi.epre_dB = get_epre_dB(0, 0);
+    csi.rsrp_dB = get_rsrp_dB(0, 0);
+    csi.sinr_dB = get_snr_dB(0, 0);
     return csi;
   }
 
