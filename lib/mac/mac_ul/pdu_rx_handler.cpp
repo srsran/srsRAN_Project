@@ -78,7 +78,12 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   }
 
   // 3. Log MAC UL PDU.
-  logger.info("{} subPDUs: [{}]", create_prefix(ctx), ctx.decoded_subpdus);
+  if (logger.info.enabled()) {
+    // Note: Since subPDUs are just views, they should not be passed by value to the logging backend.
+    fmt::memory_buffer fmtbuf;
+    fmt::format_to(fmtbuf, "{}", ctx.decoded_subpdus);
+    logger.info("{} subPDUs: [{}]", create_prefix(ctx), to_c_str(fmtbuf));
+  }
 
   // 4. Check if MAC CRNTI CE is present.
   for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
