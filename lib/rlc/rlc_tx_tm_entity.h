@@ -88,7 +88,7 @@ public:
     // In TM there is no header, just pass the plain SDU
     byte_buffer_slice_chain pdu = {};
     pdu.push_back(std::move(sdu.buf));
-    logger.log_info("TX PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
+    logger.log_info(pdu.begin(), pdu.end(), "TX PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
     metrics.metrics_add_pdus(1, pdu.length());
     handle_buffer_state_update();
 
