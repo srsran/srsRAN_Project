@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "e1ap_asn1_converters.h"
+#include "../common/e1ap_asn1_converters.h"
 #include "srsgnb/ran/bcd_helpers.h"
 
 namespace srsgnb {

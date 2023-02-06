@@ -20,7 +20,6 @@
 #include <vector>
 
 namespace srsgnb {
-namespace srs_cu_cp {
 
 /// \brief Converts type \c ciphering_algorithm to an E1AP ASN.1 type.
 /// \param ciph_algo Cyphering Algorithm object.
@@ -337,5 +336,4 @@ inline e1ap_pdcp_count e1ap_asn1_pdcp_count_to_pdcp_count(asn1::e1ap::pdcp_count
   return pdcp_count;
 }
 
-} // namespace srs_cu_cp
 } // namespace srsgnb
