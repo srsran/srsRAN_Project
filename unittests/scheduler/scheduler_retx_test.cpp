@@ -163,7 +163,7 @@ TEST_F(scheduler_missing_ack_tester, when_no_harq_ack_arrives_then_harq_eventual
   ASSERT_EQ(bench.find_ue_dl_pdcch(rnti), nullptr) << "No HARQs should be available at this point";
 
   // After several slots without HARQ-ACK, the HARQ should auto retx.
-  const unsigned MAX_HARQ_TIMEOUT = 32, MAX_TEST_COUNT = 10000;
+  const unsigned MAX_HARQ_TIMEOUT = 10240, MAX_TEST_COUNT = 256;
   for (unsigned i = 0; i != MAX_TEST_COUNT; ++i) {
     const pdcch_dl_information* pdcch = this->run_until_next_dl_pdcch_alloc(MAX_HARQ_TIMEOUT);
     if (pdcch == nullptr) {

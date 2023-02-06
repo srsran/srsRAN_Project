@@ -86,7 +86,7 @@ class harq_process
 public:
   /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
   /// (implementation-defined).
-  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 128U;
+  constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
 
   /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
   constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
