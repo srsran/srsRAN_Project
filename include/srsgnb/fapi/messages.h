@@ -1001,16 +1001,6 @@ struct sr_pdu_format_2_3_4 {
   bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS> sr_payload;
 };
 
-/// UCI payload for PUSCH or PUCCH.
-struct uci_payload_pusch_pucch {
-  /// Maximum number of supported bytes in this message.
-  static constexpr unsigned MAX_UCI_PAYLOAD_LEN = 214;
-
-  uci_pusch_or_pucch_f2_3_4_detection_status  detection_status;
-  uint16_t                                    expected_uci_payload_size;
-  static_vector<uint8_t, MAX_UCI_PAYLOAD_LEN> payload;
-};
-
 /// UCI PUCCH for format 2, 3, or 4.
 struct uci_pucch_pdu_format_2_3_4 {
   static constexpr unsigned BITMAP_SIZE   = 4U;
@@ -1034,8 +1024,6 @@ struct uci_pucch_pdu_format_2_3_4 {
   uci_harq_pdu             harq;
   uci_csi_part1            csi_part1;
   uci_csi_part2            csi_part2;
-  uci_payload_pusch_pucch  uci_part1;
-  uci_payload_pusch_pucch  uci_part2;
 };
 
 enum class uci_pdu_type : uint16_t { PUSCH, PUCCH_format_0_1, PUCCH_format_2_3_4 };

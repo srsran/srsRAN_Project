@@ -127,8 +127,12 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
   fapi::uci_pusch_pdu_builder builder_pdu = builder.add_pusch_pdu(handle, result.rnti);
 
   const channel_state_information& csi_info = result.csi;
-  // :TODO: Use the CSI parameters when they're valid.
-  builder_pdu.set_metrics_parameters({csi_info.sinr_dB}, {}, {}, {}, {});
+
+  // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.9.1 Table UCI PUSCH PDU.
+  static constexpr float MIN_UL_SINR_VALUE = -65.534;
+  static constexpr float MAX_UL_SINR_VALUE = 65.534;
+
+  builder_pdu.set_metrics_parameters(clamp(csi_info.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE), {}, {}, {}, {});
 
   // Add the HARQ section.
   if (result.uci->harq_ack.has_value()) {
@@ -190,7 +194,11 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
   // CB CRC status is not supported for now.
   unsigned                            num_cb = 0;
   const ul_pusch_results::pusch_data& data   = result.data.value();
-  // :TODO: fill the power parameters when they are valid.
+
+  // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.8 Table CRC.indication message body.
+  static constexpr float MIN_UL_SINR_VALUE = -65.534;
+  static constexpr float MAX_UL_SINR_VALUE = 65.534;
+
   builder.add_pdu(handle,
                   result.rnti,
                   optional<uint8_t>(),
@@ -198,7 +206,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
                   data.decoder_result.tb_crc_ok,
                   num_cb,
                   {},
-                  {},
+                  clamp(result.csi.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE),
                   {},
                   optional<int>(result.csi.time_alignment.to_seconds() * 1e9),
                   {},
@@ -286,8 +294,13 @@ static void add_format_0_1_pucch_pdu(fapi::uci_indication_message_builder& build
       builder.add_format_0_1_pucch_pdu(handle, context.rnti, context.format);
 
   const channel_state_information& csi_info = result.processor_result.csi;
-  // :TODO: Use the CSI parameters when they're valid.
-  builder_format01.set_metrics_parameters({csi_info.sinr_dB}, {}, {}, {}, {});
+
+  // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.9.2 Table UCI PUCCH format 0 or 1 PDU.
+  static constexpr float MIN_UL_SINR_VALUE = -65.534;
+  static constexpr float MAX_UL_SINR_VALUE = 65.534;
+
+  builder_format01.set_metrics_parameters(
+      clamp(csi_info.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE), {}, {}, {}, {});
 
   // Fill SR parameters.
   fill_format_0_1_sr(builder_format01, result);
@@ -370,8 +383,13 @@ static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder
       builder.add_format_2_3_4_pucch_pdu(handle, result.context.rnti, result.context.format);
 
   const channel_state_information& csi_info = result.processor_result.csi;
-  // :TODO: Use the CSI parameters when they're valid.
-  builder_format234.set_metrics_parameters({csi_info.sinr_dB}, {}, {}, {}, {});
+
+  // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.9.3 Table UCI PUCCH format 2, 3 or 4 PDU.
+  static constexpr float MIN_UL_SINR_VALUE = -65.534;
+  static constexpr float MAX_UL_SINR_VALUE = 65.534;
+
+  builder_format234.set_metrics_parameters(
+      clamp(csi_info.sinr_dB, MIN_UL_SINR_VALUE, MAX_UL_SINR_VALUE), {}, {}, {}, {});
 
   // Fill SR parameters.
   fill_format_2_3_4_sr(builder_format234, result.processor_result.message);

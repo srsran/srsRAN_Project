@@ -574,8 +574,6 @@ INSTANTIATE_TEST_SUITE_P(
                                    srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure) {
                              pdu.csi_part1.payload = {};
                            }
-                           pdu.uci_part1.detection_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-                           pdu.uci_part1.expected_uci_payload_size = 1;
                          }}),
                      testing::Values(test_case_data{0, false},
                                      test_case_data{1, true},
@@ -595,9 +593,6 @@ INSTANTIATE_TEST_SUITE_P(CSIPart1BitLength,
                                                 pdu.csi_part1.payload =
                                                     bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>(
                                                         value);
-                                                pdu.uci_part1.detection_status =
-                                                    uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-                                                pdu.uci_part1.expected_uci_payload_size = 1;
                                               }}),
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, true},
@@ -619,46 +614,12 @@ INSTANTIATE_TEST_SUITE_P(
                                    srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure) {
                              pdu.csi_part2.payload = {};
                            }
-                           pdu.uci_part2.detection_status = uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
-                           pdu.uci_part2.expected_uci_payload_size = 1;
                          }}),
                      testing::Values(test_case_data{0, false},
                                      test_case_data{1, true},
                                      test_case_data{3, true},
                                      test_case_data{5, true},
                                      test_case_data{6, false})));
-
-INSTANTIATE_TEST_SUITE_P(UCIPart1Detection,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "UCI detection status",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
-                                                pdu.uci_part1.detection_status =
-                                                    static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
-                                                pdu.uci_part1.expected_uci_payload_size = 1;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{3, true},
-                                                          test_case_data{5, true},
-                                                          test_case_data{6, false})));
-
-INSTANTIATE_TEST_SUITE_P(UCIPart2Detection,
-                         validate_uci_pucch_format234_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<uci_pucch_pdu_format_2_3_4>{
-                                              "UCI detection status",
-                                              [](uci_pucch_pdu_format_2_3_4& pdu, int value) {
-                                                pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
-                                                pdu.uci_part2.detection_status =
-                                                    static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(value);
-                                                pdu.uci_part2.expected_uci_payload_size = 1;
-                                              }}),
-                                          testing::Values(test_case_data{0, false},
-                                                          test_case_data{1, true},
-                                                          test_case_data{3, true},
-                                                          test_case_data{5, true},
-                                                          test_case_data{6, false})));
 
 TEST(validate_uci_pucch_format234_pdu, valid_pdu_passes)
 {

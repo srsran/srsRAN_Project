@@ -440,38 +440,6 @@ static bool validate_sr_format234_bit_length(unsigned value, validator_report& r
                         report);
 }
 
-/// Validates the UCI detection status property of the UCI payload for PUSCH or PUCCH, as per SCF-222 v4.0
-/// section 3.4.9.4.
-static bool validate_uci_detection_status(unsigned value, validator_report& report)
-{
-  static constexpr unsigned MIN_VALUE = 1;
-  static constexpr unsigned MAX_VALUE = 5;
-
-  return validate_field(MIN_VALUE,
-                        MAX_VALUE,
-                        value,
-                        "UCI detection status",
-                        msg_type,
-                        static_cast<unsigned>(uci_pdu_type::PUCCH_format_2_3_4),
-                        report);
-}
-
-/// Validates the expected UCI payload size property of the UCI payload for PUSCH or PUCCH, as per SCF-222 v4.0
-/// section 3.4.9.4.
-static bool validate_uci_expected_bit_length(unsigned value, validator_report& report)
-{
-  static constexpr unsigned MIN_VALUE = 1;
-  static constexpr unsigned MAX_VALUE = 1706;
-
-  return validate_field(MIN_VALUE,
-                        MAX_VALUE,
-                        value,
-                        "Expected UCI payload size",
-                        msg_type,
-                        static_cast<unsigned>(uci_pdu_type::PUCCH_format_2_3_4),
-                        report);
-}
-
 bool srsgnb::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2_3_4& pdu, validator_report& report)
 {
   static constexpr uci_pdu_type pdu_type = uci_pdu_type::PUCCH_format_2_3_4;
@@ -511,10 +479,6 @@ bool srsgnb::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2
                                          pdu.csi_part1.payload.size(),
                                          pdu.csi_part1.detection_status,
                                          report);
-
-    // Check the UCI-PART1 payload.
-    result &= validate_uci_detection_status(static_cast<unsigned>(pdu.uci_part1.detection_status), report);
-    result &= validate_uci_expected_bit_length(pdu.uci_part1.expected_uci_payload_size, report);
   }
 
   // Validate CSI-Part2 when it is present.
@@ -527,10 +491,6 @@ bool srsgnb::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2
                                          pdu.csi_part2.payload.size(),
                                          pdu.csi_part2.detection_status,
                                          report);
-
-    // Check the UCI-PART2 payload.
-    result &= validate_uci_detection_status(static_cast<unsigned>(pdu.uci_part2.detection_status), report);
-    result &= validate_uci_expected_bit_length(pdu.uci_part2.expected_uci_payload_size, report);
   }
 
   return result;

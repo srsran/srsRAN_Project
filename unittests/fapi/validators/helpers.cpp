@@ -495,12 +495,6 @@ static unsigned generate_rssi_or_rsrp()
   return (value <= 1280U) ? value : 65535;
 }
 
-static uci_pusch_or_pucch_f2_3_4_detection_status generate_detection_status()
-{
-  std::uniform_int_distribution<unsigned> dist(1, 5);
-  return static_cast<uci_pusch_or_pucch_f2_3_4_detection_status>(dist(gen));
-}
-
 static unsigned generate_bit_length()
 {
   std::uniform_int_distribution<unsigned> dist(1, 1706);
@@ -624,21 +618,6 @@ static sr_pdu_format_2_3_4 generate_sr_format234_pdu()
   return pdu;
 }
 
-static uci_payload_pusch_pucch generate_uci_payload()
-{
-  uci_payload_pusch_pucch payload;
-
-  payload.detection_status          = generate_detection_status();
-  payload.expected_uci_payload_size = generate_bit_length();
-  if (payload.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass ||
-      payload.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::no_dtx ||
-      payload.detection_status == uci_pusch_or_pucch_f2_3_4_detection_status::dtx_not_checked) {
-    payload.payload.resize(std::ceil(static_cast<float>(payload.expected_uci_payload_size) / 8.F));
-  }
-
-  return payload;
-}
-
 uci_pucch_pdu_format_2_3_4 unittest::build_valid_uci_pucch_format234_pdu()
 {
   uci_pucch_pdu_format_2_3_4 pdu;
@@ -660,8 +639,6 @@ uci_pucch_pdu_format_2_3_4 unittest::build_valid_uci_pucch_format234_pdu()
   pdu.harq       = generate_harq_pdu();
   pdu.csi_part1  = generate_csi_part1_pdu();
   pdu.csi_part2  = generate_csi_part2_pdu();
-  pdu.uci_part1  = generate_uci_payload();
-  pdu.uci_part2  = generate_uci_payload();
 
   return pdu;
 }

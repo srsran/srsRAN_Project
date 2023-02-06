@@ -1674,42 +1674,6 @@ public:
 
     return *this;
   }
-
-  /// \brief Sets the UCI Part 1 Payload parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table UCI Payload for PUSCH or PUCCH
-  /// transport.
-  uci_pucch_pdu_format_2_3_4_builder& set_uci_part1_payload(uci_pusch_or_pucch_f2_3_4_detection_status detection,
-                                                            uint16_t                                   bit_length,
-                                                            span<const uint8_t>                        payload)
-  {
-    srsgnb_assert(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT],
-                  "Expected the UCI Part 1 payload to be enabled");
-
-    auto& uci                     = pdu.uci_part1;
-    uci.detection_status          = detection;
-    uci.expected_uci_payload_size = bit_length;
-    uci.payload.assign(payload.begin(), payload.end());
-
-    return *this;
-  }
-
-  /// \brief Sets the UCI Part 2 Payload parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table UCI Payload for PUSCH or PUCCH
-  /// transport.
-  uci_pucch_pdu_format_2_3_4_builder& set_uci_part2_payload(uci_pusch_or_pucch_f2_3_4_detection_status detection,
-                                                            uint16_t                                   bit_length,
-                                                            span<const uint8_t>                        payload)
-  {
-    srsgnb_assert(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT],
-                  "Expected the UCI Part 2 payload to be enabled");
-
-    auto& uci                     = pdu.uci_part2;
-    uci.detection_status          = detection;
-    uci.expected_uci_payload_size = bit_length;
-    uci.payload.assign(payload.begin(), payload.end());
-
-    return *this;
-  }
 };
 
 /// UCI.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 Section 3.4.9.
