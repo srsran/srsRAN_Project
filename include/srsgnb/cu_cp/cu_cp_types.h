@@ -138,25 +138,6 @@ inline ran_ue_id_t uint_to_ran_ue_id(std::underlying_type_t<ran_ue_id_t> id)
 
 // ASN1 types converted to common types
 
-// See TS 38.463 Section 9.3.1.24: QoS Flow ID valid values: (0..63)
-constexpr static uint8_t MAX_NOF_QOS_FLOWS = 64;
-
-/// \brief QoS Flow ID.
-/// \remark See TS 38.463 Section 9.3.1.21: QoS Flow ID valid values: (0..63)
-enum class qos_flow_id_t : uint8_t { min = 0, max = MAX_NOF_QOS_FLOWS - 1, invalid = MAX_NOF_QOS_FLOWS };
-
-/// Convert QoS Flow ID type to integer.
-constexpr inline uint8_t qos_flow_id_to_uint(qos_flow_id_t id)
-{
-  return static_cast<uint8_t>(id);
-}
-
-/// Convert integer to QoS Flow ID type.
-constexpr inline qos_flow_id_t uint_to_qos_flow_id(uint8_t idx)
-{
-  return static_cast<qos_flow_id_t>(idx);
-}
-
 struct cu_cp_rohc_profiles {
   bool profile0x0001 = false;
   bool profile0x0002 = false;
