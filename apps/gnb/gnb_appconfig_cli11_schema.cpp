@@ -107,6 +107,9 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig& expert_phy_params)
 {
+  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of threads to process uplink.")
+      ->capture_default_str()
+      ->check(CLI::Number);
   app.add_option("--pusch_dec_max_iterations",
                  expert_phy_params.pusch_decoder_max_iterations,
                  "Maximum number of PUSCH LDPC decoder iterations.")

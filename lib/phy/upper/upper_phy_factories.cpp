@@ -14,6 +14,7 @@
 #include "downlink_processor_single_executor_impl.h"
 #include "logging_downlink_processor_decorator.h"
 #include "logging_uplink_processor_decorator.h"
+#include "uplink_processor_concurrent.h"
 #include "uplink_processor_impl.h"
 #include "uplink_processor_pool_impl.h"
 #include "uplink_processor_task_dispatcher.h"
@@ -36,29 +37,21 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override {}
 };
 
-/// \brief Factory to create single executor uplink processors.
-class uplink_processor_single_executor_factory : public uplink_processor_factory
+class uplink_processor_base_factory : public uplink_processor_factory
 {
 public:
-  uplink_processor_single_executor_factory(std::shared_ptr<pucch_processor_factory> pucch_factory_,
-                                           std::shared_ptr<pusch_processor_factory> pusch_factory_,
-                                           std::shared_ptr<prach_detector_factory>  prach_factory_,
-                                           task_executor&                           pucch_executor_,
-                                           task_executor&                           pusch_executor_,
-                                           task_executor&                           prach_executor_) :
+  uplink_processor_base_factory(std::shared_ptr<pucch_processor_factory> pucch_factory_,
+                                std::shared_ptr<pusch_processor_factory> pusch_factory_,
+                                std::shared_ptr<prach_detector_factory>  prach_factory_) :
     pucch_factory(std::move(pucch_factory_)),
     pusch_factory(std::move(pusch_factory_)),
-    prach_factory(std::move(prach_factory_)),
-    pucch_executor(pucch_executor_),
-    pusch_executor(pusch_executor_),
-    prach_executor(prach_executor_)
+    prach_factory(std::move(prach_factory_))
   {
     report_fatal_error_if_not(prach_factory, "Invalid PRACH factory.");
     report_fatal_error_if_not(pusch_factory, "Invalid PUSCH factory.");
     report_fatal_error_if_not(pucch_factory, "Invalid PUCCH factory.");
   }
 
-  // See interface for documentation.
   std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) override
   {
     std::unique_ptr<prach_detector> prach = prach_factory->create();
@@ -70,14 +63,9 @@ public:
     std::unique_ptr<pucch_processor> pucch_proc = pucch_factory->create();
     report_fatal_error_if_not(pucch_proc, "Invalid PUCCH processor.");
 
-    std::unique_ptr<uplink_processor> processor =
-        std::make_unique<uplink_processor_impl>(std::move(prach), std::move(pusch_proc), std::move(pucch_proc));
-
-    return std::make_unique<uplink_processor_task_dispatcher>(
-        std::move(processor), pucch_executor, pusch_executor, prach_executor);
+    return std::make_unique<uplink_processor_impl>(std::move(prach), std::move(pusch_proc), std::move(pucch_proc));
   }
 
-  // See interface for documentation.
   std::unique_ptr<uplink_processor>
   create(const uplink_processor_config& config, srslog::basic_logger& logger, bool log_all_opportunities) override
   {
@@ -90,18 +78,7 @@ public:
     std::unique_ptr<pucch_processor> pucch_proc = pucch_factory->create(logger);
     report_fatal_error_if_not(pucch_proc, "Invalid PUCCH processor.");
 
-    // Create base uplink processor.
-    std::unique_ptr<uplink_processor> uplink_proc =
-        std::make_unique<uplink_processor_impl>(std::move(prach), std::move(pusch_proc), std::move(pucch_proc));
-
-    // Wrap uplink processor with logger.
-    uplink_proc = std::make_unique<logging_uplink_processor_decorator>(std::move(uplink_proc), logger);
-
-    // Wrap uplink processor with executor.
-    uplink_proc = std::make_unique<uplink_processor_task_dispatcher>(
-        std::move(uplink_proc), pucch_executor, pusch_executor, prach_executor);
-
-    return uplink_proc;
+    return std::make_unique<uplink_processor_impl>(std::move(prach), std::move(pusch_proc), std::move(pucch_proc));
   }
 
   std::unique_ptr<uplink_pdu_validator> create_pdu_validator() override
@@ -114,9 +91,166 @@ private:
   std::shared_ptr<pucch_processor_factory> pucch_factory;
   std::shared_ptr<pusch_processor_factory> pusch_factory;
   std::shared_ptr<prach_detector_factory>  prach_factory;
-  task_executor&                           pucch_executor;
-  task_executor&                           pusch_executor;
-  task_executor&                           prach_executor;
+};
+
+class uplink_processor_concurrent_factory : public uplink_processor_factory
+{
+public:
+  uplink_processor_concurrent_factory(unsigned nof_processors_, std::shared_ptr<uplink_processor_factory> factory_) :
+    nof_processors(nof_processors_), factory(std::move(factory_))
+  {
+    report_fatal_error_if_not(factory, "Invalid uplink factory.");
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) override
+  {
+    if (common_processor_pool == nullptr) {
+      // Create base uplink processor.
+      std::vector<std::unique_ptr<uplink_processor>> uplink_procs;
+      uplink_procs.reserve(nof_processors);
+
+      // Create processors.
+      for (unsigned i_proc = 0; i_proc != nof_processors; ++i_proc) {
+        uplink_procs.emplace_back(factory->create(config));
+        report_fatal_error_if_not(uplink_procs.back(), "Invalid uplink processor.");
+      }
+
+      common_processor_pool = std::make_shared<uplink_processor_concurrent::processor_pool>(std::move(uplink_procs));
+    }
+
+    // Create concurrent processor.
+    return std::make_unique<uplink_processor_concurrent>(common_processor_pool);
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<uplink_processor>
+  create(const uplink_processor_config& config, srslog::basic_logger& logger, bool log_all_opportunities) override
+  {
+    if (common_processor_pool == nullptr) {
+      // Create base uplink processor.
+      std::vector<std::unique_ptr<uplink_processor>> uplink_procs;
+      uplink_procs.reserve(nof_processors);
+
+      // Create processors.
+      for (unsigned i_proc = 0; i_proc != nof_processors; ++i_proc) {
+        uplink_procs.emplace_back(factory->create(config, logger, log_all_opportunities));
+        report_fatal_error_if_not(uplink_procs.back(), "Invalid uplink processor.");
+      }
+
+      common_processor_pool = std::make_shared<uplink_processor_concurrent::processor_pool>(std::move(uplink_procs));
+    }
+
+    // Create concurrent processor.
+    return std::make_unique<uplink_processor_concurrent>(common_processor_pool);
+  }
+
+  std::unique_ptr<uplink_pdu_validator> create_pdu_validator() override { return factory->create_pdu_validator(); }
+
+private:
+  unsigned                                                     nof_processors;
+  std::shared_ptr<uplink_processor_factory>                    factory;
+  std::shared_ptr<uplink_processor_concurrent::processor_pool> common_processor_pool;
+};
+
+/// \brief Factory to create single executor uplink processors.
+class uplink_processor_task_dispatcher_factory : public uplink_processor_factory
+{
+public:
+  uplink_processor_task_dispatcher_factory(std::shared_ptr<uplink_processor_factory> factory_,
+                                           task_executor&                            pucch_executor_,
+                                           task_executor&                            pusch_executor_,
+                                           task_executor&                            prach_executor_) :
+    factory(std::move(factory_)),
+    pucch_executor(pucch_executor_),
+    pusch_executor(pusch_executor_),
+    prach_executor(prach_executor_)
+  {
+    report_fatal_error_if_not(factory, "Invalid uplink factory.");
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) override
+  {
+    // Create base uplink processor.
+    std::unique_ptr<uplink_processor> uplink_proc = factory->create(config);
+    report_fatal_error_if_not(uplink_proc, "Invalid uplink processor.");
+
+    // Wrap uplink processor with executor.
+    uplink_proc = std::make_unique<uplink_processor_task_dispatcher>(
+        std::move(uplink_proc), pucch_executor, pusch_executor, prach_executor);
+
+    return uplink_proc;
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<uplink_processor>
+  create(const uplink_processor_config& config, srslog::basic_logger& logger, bool log_all_opportunities) override
+  {
+    // Create base uplink processor.
+    std::unique_ptr<uplink_processor> uplink_proc = factory->create(config, logger, log_all_opportunities);
+    report_fatal_error_if_not(uplink_proc, "Invalid uplink processor.");
+
+    // Wrap uplink processor with executor.
+    uplink_proc = std::make_unique<uplink_processor_task_dispatcher>(
+        std::move(uplink_proc), pucch_executor, pusch_executor, prach_executor);
+
+    return uplink_proc;
+  }
+
+  std::unique_ptr<uplink_pdu_validator> create_pdu_validator() override { return factory->create_pdu_validator(); }
+
+private:
+  std::shared_ptr<uplink_processor_factory> factory;
+  task_executor&                            pucch_executor;
+  task_executor&                            pusch_executor;
+  task_executor&                            prach_executor;
+};
+
+/// \brief Factory to create single executor uplink processors.
+class uplink_processor_logging_decorator_factory : public uplink_processor_factory
+{
+public:
+  uplink_processor_logging_decorator_factory(srslog::basic_levels                      log_level_,
+                                             unsigned                                  log_hex_limit_,
+                                             std::shared_ptr<uplink_processor_factory> factory_) :
+    log_level(log_level_), log_hex_limit(log_hex_limit_), factory(std::move(factory_))
+  {
+    report_fatal_error_if_not(factory, "Invalid uplink factory.");
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) override
+  {
+    return factory->create(config);
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<uplink_processor>
+  create(const uplink_processor_config& config, srslog::basic_logger& /**/, bool log_all_opportunities) override
+  {
+    // Setup logger.
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("UL-PHY" + std::to_string(proc_count++), true);
+    logger.set_level(log_level);
+    logger.set_hex_dump_max_size(log_hex_limit);
+
+    // Create base uplink processor.
+    std::unique_ptr<uplink_processor> uplink_proc = factory->create(config, logger, log_all_opportunities);
+    report_fatal_error_if_not(uplink_proc, "Invalid uplink processor.");
+
+    // Wrap uplink processor with executor.
+    uplink_proc = std::make_unique<logging_uplink_processor_decorator>(std::move(uplink_proc), logger);
+
+    return uplink_proc;
+  }
+
+  std::unique_ptr<uplink_pdu_validator> create_pdu_validator() override { return factory->create_pdu_validator(); }
+
+private:
+  unsigned                                  proc_count = 0;
+  srslog::basic_levels                      log_level;
+  unsigned                                  log_hex_limit;
+  std::shared_ptr<uplink_processor_factory> factory;
 };
 
 /// \brief Factory to create single executor downlink processors.
@@ -280,7 +414,7 @@ static std::unique_ptr<resource_grid_pool> create_ul_resource_grid_pool(const up
   return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
 }
 
-static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(const upper_phy_config& config)
+static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(const upper_phy_config& config)
 {
   std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
   if (!dft_factory) {
@@ -382,12 +516,26 @@ static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(con
       pucch_dmrs_factory, pucch_detector_fact, pucch_demod_factory, uci_decoder_factory, channel_estimate_dimensions);
   report_fatal_error_if_not(pucch_factory, "Invalid PUCCH processor factory.");
 
-  return std::make_unique<uplink_processor_single_executor_factory>(std::move(pucch_factory),
-                                                                    std::move(pusch_factory),
-                                                                    std::move(prach_factory),
-                                                                    *config.pucch_executor,
-                                                                    *config.pusch_executor,
-                                                                    *config.prach_executor);
+  // Create base factory.
+  std::shared_ptr<uplink_processor_factory> factory = std::make_shared<uplink_processor_base_factory>(
+      std::move(pucch_factory), std::move(pusch_factory), std::move(prach_factory));
+  report_fatal_error_if_not(factory, "Invalid Uplink processor factory.");
+
+  // Create logger decorator processor factory.
+  factory = std::make_shared<uplink_processor_logging_decorator_factory>(
+      config.log_level, config.logger_max_hex_size, std::move(factory));
+  report_fatal_error_if_not(factory, "Invalid Uplink processor factory.");
+
+  // Create concurrent processor factory.
+  factory = std::make_shared<uplink_processor_concurrent_factory>(config.max_ul_thread_concurrency, std::move(factory));
+  report_fatal_error_if_not(factory, "Invalid Uplink processor factory.");
+
+  // Create task dispatcher processor factory.
+  factory = std::make_shared<uplink_processor_task_dispatcher_factory>(
+      std::move(factory), *config.pucch_executor, *config.pusch_executor, *config.prach_executor);
+  report_fatal_error_if_not(factory, "Invalid Uplink processor factory.");
+
+  return factory;
 }
 
 static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_processor_factory& factory,
@@ -395,6 +543,11 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_pr
 {
   uplink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;
+
+  // Fetch and configure logger.
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("UL-PHY", true);
+  logger.set_level(config.log_level);
+  logger.set_hex_dump_max_size(config.logger_max_hex_size);
 
   for (unsigned scs = 0, scs_end = static_cast<unsigned>(subcarrier_spacing::invalid); scs != scs_end; ++scs) {
     // Skip SCS if not active.
@@ -407,11 +560,6 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_pr
     for (unsigned i = 0, e = config.nof_ul_processors; i != e; ++i) {
       std::unique_ptr<uplink_processor> ul_proc;
       if (config.log_level != srslog::basic_levels::none) {
-        // Fetch and configure logger.
-        srslog::basic_logger& logger = srslog::fetch_basic_logger("UL-PHY" + std::to_string(i), true);
-        logger.set_level(config.log_level);
-        logger.set_hex_dump_max_size(config.logger_max_hex_size);
-
         ul_proc = factory.create({}, logger, config.enable_logging_broadcast);
       } else {
         ul_proc = factory.create({});
@@ -463,7 +611,7 @@ public:
     phy_config.dl_rg_pool = create_dl_resource_grid_pool(config);
     report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");
 
-    std::unique_ptr<uplink_processor_factory> ul_processor_fact = create_ul_processor_factory(config);
+    std::shared_ptr<uplink_processor_factory> ul_processor_fact = create_ul_processor_factory(config);
 
     phy_config.ul_rg_pool = create_ul_resource_grid_pool(config);
     report_fatal_error_if_not(phy_config.ul_rg_pool, "Invalid uplink resource grid pool.");

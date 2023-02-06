@@ -27,6 +27,7 @@
 #include "adapters/f1_adapter.h"
 #include "srsgnb/support/backtrace.h"
 #include "srsgnb/support/config_parsers.h"
+#include "srsgnb/support/executors/task_worker_pool.h"
 
 #include "gnb_appconfig.h"
 #include "gnb_appconfig_cli11_schema.h"
@@ -113,12 +114,18 @@ public:
 
 /// Manages the workers of the app.
 struct worker_manager {
-  worker_manager(const gnb_appconfig& appcfg) { create_executors(appcfg.rf_driver_cfg.device_driver == "zmq"); }
+  worker_manager(const gnb_appconfig& appcfg)
+  {
+    create_executors(appcfg.rf_driver_cfg.device_driver == "zmq", appcfg.expert_phy_cfg.nof_ul_threads);
+  }
 
   void stop()
   {
     for (auto& worker : workers) {
       worker.second->stop();
+    }
+    for (auto& pool : worker_pools) {
+      pool.second->stop();
     }
   }
 
@@ -154,7 +161,8 @@ struct worker_manager {
   optional<cell_executor_mapper>                                  cell_exec_mapper;
 
 private:
-  std::unordered_map<std::string, std::unique_ptr<task_worker>> workers;
+  std::unordered_map<std::string, std::unique_ptr<task_worker>>      workers;
+  std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
 
   // helper method to create workers
   void create_worker(const std::string&          name,
@@ -162,10 +170,20 @@ private:
                      os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime())
   {
     auto ret = workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, queue_size, false, prio)));
-    srsgnb_assert(ret.second, "Unable to create worker {}", name);
+    srsgnb_assert(ret.second, "Unable to create worker {}.", name);
+  }
+  // helper method to create worker pool
+  void create_worker_pool(const std::string&          name,
+                          size_t                      nof_workers,
+                          size_t                      queue_size,
+                          os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime())
+  {
+    auto ret = worker_pools.insert(
+        std::make_pair(name, std::make_unique<task_worker_pool>(nof_workers, queue_size, name, prio)));
+    srsgnb_assert(ret.second, "Unable to create worker pool {}.", name);
   }
 
-  void create_executors(bool blocking_mode_active)
+  void create_executors(bool blocking_mode_active, unsigned nof_ul_workers)
   {
     static const uint32_t task_worker_queue_size = 2048;
 
@@ -179,7 +197,8 @@ private:
       create_worker("rt_task_worker", 1, os_thread_realtime_priority::max());
       create_worker("prach_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 1);
       create_worker("uphy_dl_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 10);
-      create_worker("uphy_puxch_wrkr", task_worker_queue_size, os_thread_realtime_priority::max() - 20);
+      create_worker_pool(
+          "uphy_ul_worker", nof_ul_workers, task_worker_queue_size, os_thread_realtime_priority::max() - 20);
     }
     create_worker("radio_worker", task_worker_queue_size);
 
@@ -202,8 +221,8 @@ private:
       rt_task_exec     = std::make_unique<task_worker_executor>(*workers.at("rt_task_worker"));
       lower_prach_exec = std::make_unique<task_worker_executor>(*workers.at("prach_worker"));
       upper_dl_exec    = std::make_unique<task_worker_executor>(*workers.at("uphy_dl_worker"));
-      upper_pusch_exec = std::make_unique<task_worker_executor>(*workers.at("uphy_puxch_wrkr"));
-      upper_pucch_exec = std::make_unique<task_worker_executor>(*workers.at("uphy_puxch_wrkr"));
+      upper_pusch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("uphy_ul_worker"));
+      upper_pucch_exec = std::make_unique<task_worker_pool_executor>(*worker_pools.at("uphy_ul_worker"));
       upper_prach_exec = std::make_unique<task_worker_executor>(*workers.at("prach_worker"));
     }
     radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio_worker"));

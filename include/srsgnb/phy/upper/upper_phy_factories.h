@@ -210,6 +210,8 @@ struct upper_phy_config {
   unsigned nof_dl_processors;
   /// Maximum number of concurrent uplink processes.
   unsigned nof_ul_processors;
+  /// Maximum uplink processor thread concurrency.
+  unsigned max_ul_thread_concurrency;
   /// Number of RBs for downlink.
   unsigned dl_bw_rb;
   /// Number of RBs for uplink.

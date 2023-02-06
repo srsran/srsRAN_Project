@@ -419,11 +419,12 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
     cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
 
-    cfg.nof_slots_dl_rg   = dl_pipeline_depth * nof_slots_per_subframe;
-    cfg.nof_dl_processors = cfg.nof_slots_dl_rg;
-    cfg.nof_slots_ul_rg   = ul_pipeline_depth * nof_slots_per_subframe;
-    cfg.nof_ul_processors = cfg.nof_slots_ul_rg;
-    cfg.nof_prach_buffer  = prach_pipeline_depth * nof_slots_per_subframe;
+    cfg.nof_slots_dl_rg           = dl_pipeline_depth * nof_slots_per_subframe;
+    cfg.nof_dl_processors         = cfg.nof_slots_dl_rg;
+    cfg.nof_slots_ul_rg           = ul_pipeline_depth * nof_slots_per_subframe;
+    cfg.nof_ul_processors         = cfg.nof_slots_ul_rg;
+    cfg.max_ul_thread_concurrency = config.expert_phy_cfg.nof_ul_threads + 1;
+    cfg.nof_prach_buffer          = prach_pipeline_depth * nof_slots_per_subframe;
 
     cfg.active_scs                                                                = {};
     cfg.active_scs[to_numerology_value(config.cells_cfg.front().cell.common_scs)] = true;

@@ -175,6 +175,8 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
         // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
         cb_crcs[cb_id] = true;
         stats.ldpc_decoder_stats.update(nof_iters.value());
+      } else {
+        stats.ldpc_decoder_stats.update(cfg.nof_ldpc_iterations);
       }
     }
 

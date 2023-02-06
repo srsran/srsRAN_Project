@@ -16,6 +16,7 @@
 #include "srsgnb/ran/pdcch/aggregation_level.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace srsgnb {
@@ -238,6 +239,9 @@ struct pcap_appconfig {
 
 /// Expert physical layer configuration.
 struct expert_phy_appconfig {
+  /// Number of thread for processing PUSCH and PUCCH. It is set to 4 by default unless the available hardware
+  /// concurrency is limited in which case will use a minimum of one thread.
+  unsigned nof_ul_threads = std::min(4U, std::max(std::thread::hardware_concurrency(), 4U) - 3U);
   /// Number of PUSCH LDPC decoder iterations.
   unsigned pusch_decoder_max_iterations = 6;
   /// Set to true to enable the PUSCH LDPC decoder early stop.
