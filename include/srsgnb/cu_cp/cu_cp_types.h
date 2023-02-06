@@ -199,15 +199,6 @@ struct cu_cp_pdcp_config {
   bool                              ciphering_disabled_present = false;
 };
 
-struct cu_cp_sdap_config {
-  pdu_session_id_t           pdu_session = pdu_session_id_t::invalid;
-  std::string                sdap_hdr_dl;
-  std::string                sdap_hdr_ul;
-  bool                       default_drb                 = false;
-  std::vector<qos_flow_id_t> mapped_qos_flows_to_add     = {};
-  std::vector<qos_flow_id_t> mapped_qos_flows_to_release = {};
-};
-
 struct cu_cp_qos_characteristics {
   bool        is_dynamic_5qi = false;
   uint16_t    five_qi;
@@ -384,8 +375,8 @@ struct cu_cp_srb_to_add_mod {
 };
 
 struct cu_cp_cn_assoc {
-  optional<uint8_t>           eps_bearer_id;
-  optional<cu_cp_sdap_config> sdap_cfg;
+  optional<uint8_t>       eps_bearer_id;
+  optional<sdap_config_t> sdap_cfg;
 };
 
 struct cu_cp_drb_to_add_mod {

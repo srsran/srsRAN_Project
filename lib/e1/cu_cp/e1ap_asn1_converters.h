@@ -88,7 +88,7 @@ inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(srsgnb::s_nssai_t snssai)
 /// \brief Converts type \c sdap_config to an E1AP ASN.1 type.
 /// \param sdap_cfg sdap config object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::sdap_cfg_s sdap_config_to_e1ap_asn1(cu_cp_sdap_config sdap_cfg)
+inline asn1::e1ap::sdap_cfg_s sdap_config_to_e1ap_asn1(sdap_config_t sdap_cfg)
 {
   asn1::e1ap::sdap_cfg_s e1ap_sdap_cfg;
 

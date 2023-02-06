@@ -83,9 +83,9 @@ drb_id_t drb_manager_impl::allocate_drb_id()
   return new_drb_id;
 }
 
-cu_cp_sdap_config drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
+sdap_config_t drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
 {
-  cu_cp_sdap_config sdap_cfg;
+  sdap_config_t sdap_cfg;
   sdap_cfg.pdu_session = context.pdu_session_id;
   sdap_cfg.default_drb = context.default_drb;
   sdap_cfg.sdap_hdr_dl = "absent";
@@ -155,7 +155,7 @@ cu_cp_pdcp_config drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
   return drbs[drb_id].pdcp_cfg;
 }
 
-cu_cp_sdap_config drb_manager_impl::get_sdap_config(const drb_id_t drb_id)
+sdap_config_t drb_manager_impl::get_sdap_config(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);

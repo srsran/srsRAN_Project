@@ -84,4 +84,13 @@ struct supported_plmns_item_t {
   std::vector<qos_params_support_list_t> qos_params_support_list;
 };
 
+struct sdap_config_t {
+  pdu_session_id_t           pdu_session = pdu_session_id_t::invalid;
+  std::string                sdap_hdr_dl;
+  std::string                sdap_hdr_ul;
+  bool                       default_drb                 = false;
+  std::vector<qos_flow_id_t> mapped_qos_flows_to_add     = {};
+  std::vector<qos_flow_id_t> mapped_qos_flows_to_release = {};
+};
+
 } // namespace srsgnb

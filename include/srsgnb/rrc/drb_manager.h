@@ -33,7 +33,7 @@ public:
   virtual cu_cp_pdcp_config get_pdcp_config(const drb_id_t drb_id) = 0;
 
   /// \brief Return SDAP config for a given DRB.
-  virtual cu_cp_sdap_config get_sdap_config(const drb_id_t drb_id) = 0;
+  virtual sdap_config_t get_sdap_config(const drb_id_t drb_id) = 0;
 
   /// \brief Return list of QoS flow IDs mapped on a given DRB.
   virtual std::vector<qos_flow_id_t> get_mapped_qos_flows(const drb_id_t drb_id) = 0;

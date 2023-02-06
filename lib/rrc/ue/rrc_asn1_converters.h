@@ -149,7 +149,7 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(cu_cp_pdcp_config pdc
 /// \brief Converts type \c sdap_config to an RRC NR ASN.1 type.
 /// \param sdap_cfg sdap config object.
 /// \return The RRC NR ASN.1 object where the result of the conversion is stored.
-inline asn1::rrc_nr::sdap_cfg_s sdap_config_to_rrc_asn1(cu_cp_sdap_config sdap_cfg)
+inline asn1::rrc_nr::sdap_cfg_s sdap_config_to_rrc_asn1(sdap_config_t sdap_cfg)
 {
   asn1::rrc_nr::sdap_cfg_s asn1_sdap_cfg;
 
