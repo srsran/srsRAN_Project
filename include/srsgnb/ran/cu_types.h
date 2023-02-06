@@ -73,15 +73,11 @@ struct ng_ran_qos_support_item_t {
   non_dyn_5qi_descriptor_t non_dyn_5qi_descriptor;
 };
 
-struct qos_params_support_list_t {
-  std::vector<ng_ran_qos_support_item_t> ng_ran_qos_support_list;
-};
-
 struct supported_plmns_item_t {
   std::string                            plmn_id;
   std::vector<slice_support_item_t>      slice_support_list;
   std::vector<nr_cgi_support_item_t>     nr_cgi_support_list;
-  std::vector<qos_params_support_list_t> qos_params_support_list;
+  std::vector<ng_ran_qos_support_item_t> ng_ran_qos_support_list;
 };
 
 struct sdap_config_t {
