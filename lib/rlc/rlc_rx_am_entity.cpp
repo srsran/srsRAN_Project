@@ -56,7 +56,7 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
 void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
 {
   metrics.metrics_add_pdus(1, buf.length());
-  logger.log_info("Rx PDU ({} B)", buf.length());
+  logger.log_info(buf.begin(), buf.end(), "Rx PDU ({} B)", buf.length());
   metrics.metrics_add_sdus(1, buf.length());
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
     handle_control_pdu(std::move(buf));
