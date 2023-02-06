@@ -165,8 +165,8 @@ struct e1ap_rohc_params {
 };
 
 struct e1ap_pdcp_config {
-  uint8_t                    pdcp_sn_size_ul;
-  uint8_t                    pdcp_sn_size_dl;
+  int8_t                     pdcp_sn_size_ul;
+  int8_t                     pdcp_sn_size_dl;
   srsgnb::rlc_mode           rlc_mod;
   optional<e1ap_rohc_params> rohc_params;
   optional<uint16_t>         t_reordering_timer;
