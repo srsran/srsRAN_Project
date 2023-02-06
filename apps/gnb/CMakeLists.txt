@@ -37,6 +37,7 @@ target_link_libraries(gnb
         srsgnb_lower_phy
         srsgnb_radio
         srsgnb_support
+        srsgnb_build_info
         )
 add_backward(gnb)
 

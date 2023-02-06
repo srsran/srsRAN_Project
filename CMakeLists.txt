@@ -31,6 +31,12 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 
+# Generate CMake to include build information
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cmake/modules/build_info.cmake.in
+  ${CMAKE_BINARY_DIR}/build_info.cmake
+)
+
 ########################################################################
 # Options
 ########################################################################

@@ -6,6 +6,7 @@
 # the distribution.
 #
 
+add_subdirectory(build_info)
 add_subdirectory(io_broker)
 
 set(SOURCES
