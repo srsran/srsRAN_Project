@@ -242,6 +242,9 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
 
   logger.info("Handling Initial Context Setup Request for UE with ran_ue_id={}", ue->get_ran_ue_id());
 
+  // Update AMF ID and use the one from this Context Setup as per TS 38.413 v16.2 page 38
+  ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(request->amf_ue_ngap_id.value.value));
+
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     request.to_json(js);
