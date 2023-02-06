@@ -16,6 +16,25 @@
 
 namespace srsgnb {
 
+// See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
+constexpr static uint16_t MAX_NOF_PDU_SESSIONS = 256;
+
+/// \brief PDU Session ID.
+/// \remark See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
+enum class pdu_session_id_t : uint16_t { min = 0, max = MAX_NOF_PDU_SESSIONS - 1, invalid = MAX_NOF_PDU_SESSIONS };
+
+/// Convert PDU Session ID type to integer.
+constexpr inline uint16_t pdu_session_id_to_uint(pdu_session_id_t id)
+{
+  return static_cast<uint16_t>(id);
+}
+
+/// Convert integer to PDU Session ID type.
+constexpr inline pdu_session_id_t uint_to_pdu_session_id(uint16_t idx)
+{
+  return static_cast<pdu_session_id_t>(idx);
+}
+
 struct slice_support_item {
   s_nssai_t s_nssai;
 };
