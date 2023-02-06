@@ -13,8 +13,8 @@
 #include "adapters/f1u_adapters.h"
 #include "adapters/pdcp_adapters.h"
 #include "qos_flow_context.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
+#include "srsgnb/ran/lcid.h"
 #include <map>
 
 namespace srsgnb {
@@ -22,9 +22,9 @@ namespace srs_cu_up {
 
 /// \brief DRB context with map to all QoS flows.
 struct drb_context {
-  drb_context(const asn1::e1ap::drb_to_setup_item_ng_ran_s& drb) : drb_id(drb.drb_id){};
+  drb_context(const drb_id_t& drb_id_) : drb_id(drb_id_){};
 
-  int16_t  drb_id;
+  drb_id_t drb_id;
   uint32_t f1u_ul_teid;
 
   std::unique_ptr<f1u_bearer>  f1u;

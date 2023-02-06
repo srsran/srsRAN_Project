@@ -120,8 +120,8 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
 
     // get DRB from list and create context
     const asn1::e1ap::drb_to_setup_item_ng_ran_s& drb = session.drb_to_setup_list_ng_ran[i];
-    new_session->drbs[drb.drb_id]                     = std::make_unique<drb_context>(drb);
-    auto& new_drb                                     = new_session->drbs[drb.drb_id];
+    new_session->drbs[uint_to_drb_id(drb.drb_id)]     = std::make_unique<drb_context>(uint_to_drb_id(drb.drb_id));
+    auto& new_drb                                     = new_session->drbs[uint_to_drb_id(drb.drb_id)];
 
     // Create PDCP entity
     srsgnb::pdcp_entity_creation_message pdcp_msg = {};
@@ -230,14 +230,14 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
     drb_result.drb_id = drb_to_mod.drb_id;
 
     // find DRB in PDU session
-    auto drb_iter = pdu_session->drbs.find(drb_to_mod.drb_id);
+    auto drb_iter = pdu_session->drbs.find(uint_to_drb_id(drb_to_mod.drb_id));
     if (drb_iter == pdu_session->drbs.end()) {
       logger.warning(
           "Cannot modify DRB: drb_id={} not found in pdu_session_id={}", drb_to_mod.drb_id, session.pdu_session_id);
       pdu_session_result.drb_setup_results.push_back(drb_result);
       continue;
     }
-    srsgnb_assert(drb_to_mod.drb_id == drb_iter->second->drb_id,
+    srsgnb_assert(drb_to_mod.drb_id == drb_id_to_uint(drb_iter->second->drb_id),
                   "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
                   drb_to_mod.drb_id,
                   session.pdu_session_id,
@@ -260,13 +260,13 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
     pdu_session->sdap_to_pdcp_adapter.disconnect_pdcp();
 
     // remove DRB from PDU session
-    auto drb_iter = pdu_session->drbs.find(drb_to_rem.drb_id);
+    auto drb_iter = pdu_session->drbs.find(uint_to_drb_id(drb_to_rem.drb_id));
     if (drb_iter == pdu_session->drbs.end()) {
       logger.warning(
           "Cannot remove DRB: drb_id={} not found in pdu_session_id={}", drb_to_rem.drb_id, session.pdu_session_id);
       continue;
     }
-    srsgnb_assert(drb_to_rem.drb_id == drb_iter->second->drb_id,
+    srsgnb_assert(drb_to_rem.drb_id == drb_id_to_uint(drb_iter->second->drb_id),
                   "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
                   drb_to_rem.drb_id,
                   session.pdu_session_id,

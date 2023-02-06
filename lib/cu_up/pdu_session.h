@@ -55,7 +55,7 @@ struct pdu_session {
 
   drb_context* default_drb = nullptr; // non-owning pointer to default DRB, if any
 
-  std::map<int16_t, std::unique_ptr<drb_context>> drbs; // key is drb_id
+  std::map<drb_id_t, std::unique_ptr<drb_context>> drbs; // key is drb_id
 };
 
 } // namespace srs_cu_up
