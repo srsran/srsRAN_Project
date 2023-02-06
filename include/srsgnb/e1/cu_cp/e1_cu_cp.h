@@ -14,7 +14,6 @@
 #include "e1ap_cu_cp_bearer_context_update.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/expected.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/e1/common/e1_common.h"
 #include "srsgnb/e1/common/e1_setup_messages.h"

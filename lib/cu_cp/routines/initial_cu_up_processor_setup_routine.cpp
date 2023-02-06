@@ -9,7 +9,6 @@
  */
 
 #include "initial_cu_up_processor_setup_routine.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

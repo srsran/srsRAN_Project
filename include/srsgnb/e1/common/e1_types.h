@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/ran/cause.h"
 #include "srsgnb/ran/cu_types.h"
 #include "srsgnb/ran/lcid.h"
