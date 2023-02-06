@@ -69,7 +69,7 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 {
   auto* ue = ue_manager.find_ngap_ue(msg.ue_index);
   if (ue == nullptr) {
-    logger.info("UE with ue_index={} does not exist. Dropping Initial UE Message", msg.ue_index);
+    logger.warning("UE with ue_index={} does not exist. Dropping Initial UE Message", msg.ue_index);
     return;
   }
 
@@ -111,7 +111,7 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
 {
   auto* ue = ue_manager.find_ngap_ue(msg.ue_index);
   if (ue == nullptr) {
-    logger.info("UE with ue_index={} does not exist. Dropping UL NAS Transport Message", msg.ue_index);
+    logger.warning("UE with ue_index={} does not exist. Dropping UL NAS Transport Message", msg.ue_index);
     return;
   }
 
@@ -127,7 +127,7 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
 
   amf_ue_id_t amf_ue_id = ue->get_amf_ue_id();
   if (amf_ue_id == amf_ue_id_t::invalid) {
-    logger.error("UE AMF ID for ue_index={} not found!", msg.ue_index);
+    logger.warning("UE AMF ID for ue_index={} not found!", msg.ue_index);
     return;
   }
   ul_nas_transport_msg->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(amf_ue_id);
@@ -203,13 +203,13 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
 {
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value.value));
   if (ue_index == ue_index_t::invalid) {
-    logger.info("UE with ue_index={} does not exist. Dropping PDU", ue_index);
+    logger.warning("UE with ue_index={} does not exist. Dropping PDU", ue_index);
     return;
   }
 
   auto* ue = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.info("UE with ue_index={} does not exist. Dropping PDU", ue_index);
+    logger.warning("UE with ue_index={} does not exist. Dropping PDU", ue_index);
     return;
   }
 
@@ -236,7 +236,7 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.info("UE with ue_index={} does not exist. Dropping Initial Context Setup Request", ue_index);
+    logger.warning("UE with ue_index={} does not exist. Dropping Initial Context Setup Request", ue_index);
     return;
   }
 
@@ -262,7 +262,7 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.info("UE with ue_index={} does not exist. Dropping PDU Session Resource Setup Request", ue_index);
+    logger.warning("UE with ue_index={} does not exist. Dropping PDU Session Resource Setup Request", ue_index);
     return;
   }
 
@@ -310,7 +310,7 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
   ue_index_t ue_index = ue_manager.get_ue_index(amf_ue_id);
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.info("UE with ue_index={} does not exist. Dropping UE Context Release Command", ue_index);
+    logger.warning("UE with ue_index={} does not exist. Dropping UE Context Release Command", ue_index);
     return;
   }
 
