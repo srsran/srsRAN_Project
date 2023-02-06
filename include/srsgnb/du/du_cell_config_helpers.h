@@ -46,7 +46,8 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ue.fixed_dl_mcs       = 10;
   cfg.ue.fixed_ul_mcs       = 10;
   /// Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
-  cfg.ue.max_msg4_mcs = 7;
+  cfg.ue.max_msg4_mcs              = 7;
+  cfg.ue.max_consecutive_pusch_kos = 128;
 
   cfg.metrics_report_period = std::chrono::milliseconds{1000};
 

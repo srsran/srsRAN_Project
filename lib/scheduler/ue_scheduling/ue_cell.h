@@ -23,6 +23,13 @@ struct ul_crc_pdu_indication;
 class ue_cell
 {
 public:
+  struct metrics {
+    /// Save the latest PUSCH SNR reported from PHY, in dB.
+    double   pusch_snr_db          = 0.0;
+    unsigned consecutive_pusch_kos = 0;
+    // TODO: Add other metrics of interest for the scheduler.
+  };
+
   ue_cell(du_ue_index_t                     ue_index_,
           rnti_t                            crnti_val,
           const scheduler_ue_expert_config& expert_cfg_,
@@ -43,7 +50,7 @@ public:
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
 
-  double get_pusch_snr() const { return sched_metrics.pusch_snr_db; }
+  double get_pusch_snr() const { return ue_metrics.pusch_snr_db; }
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   unsigned required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
@@ -63,20 +70,19 @@ public:
   /// \brief Handle CRC PDU indication.
   int handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu);
 
-private:
-  struct ue_cell_metrics {
-    /// Save the latest PUSCH SNR reported from PHY, in dB.
-    double pusch_snr_db;
-    // TODO: Add other metrics of interest for the scheduler.
-  };
+  /// \brief Get the current UE cell metrics.
+  const metrics& get_metrics() const { return ue_metrics; }
+  metrics&       get_metrics() { return ue_metrics; }
 
+private:
   /// Update PUSCH SNR metric of the UE.
-  void update_pusch_snr(double snr) { sched_metrics.pusch_snr_db = snr; }
+  void update_pusch_snr(double snr) { ue_metrics.pusch_snr_db = snr; }
 
   rnti_t                            crnti_;
   const scheduler_ue_expert_config& expert_cfg;
   ue_cell_configuration             ue_cfg;
-  ue_cell_metrics                   sched_metrics;
+
+  metrics ue_metrics;
 };
 
 } // namespace srsgnb

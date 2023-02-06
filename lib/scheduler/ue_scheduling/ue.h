@@ -136,8 +136,11 @@ private:
 
   /// List of \c mac-LogicalChannelConfig, TS 38.331; \ref sched_ue_creation_request_message.
   std::vector<logical_channel_config> log_channels_configs;
+
   /// \c schedulingRequestToAddModList, TS 38.331; \ref sched_ue_creation_request_message.
   std::vector<scheduling_request_to_addmod> sched_request_configs;
+
+  srslog::basic_logger& logger;
 
   /// List of UE cells indexed by \c du_cell_index_t. If an element is null, it means that the DU cell is not
   /// configured to be used by the UE.

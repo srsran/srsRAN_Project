@@ -94,7 +94,10 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   // Update UL HARQ state.
   int tbs = harqs.ul_crc_info(crc_pdu.harq_id, crc_pdu.tb_crc_success, pusch_slot);
   if (tbs >= 0) {
-    // HARQ was found.
+    // HARQ with matching ID and UCI slot was found.
+
+    // Update PUSCH KO count metrics.
+    ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;
 
     // Update PUSCH SNR reported from PHY.
     update_pusch_snr(crc_pdu.ul_sinr_metric);
