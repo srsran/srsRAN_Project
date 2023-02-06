@@ -5,13 +5,13 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "37"
+    ref: "44"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "37"
+    ref: "44"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "37"
+    ref: "44"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/e2e.yml
@@ -302,8 +302,8 @@ pages:
       mv requirement_report.html public/
       mv public/index.html public/index_doxygen.html
       mv docs/index.html public/index.html
-      mv e2e-run-zmq-isa_false-tsan_false public/
-      mv e2e-run-zmq-isa_false-tsan_true public/
+      mv zmq public/
+      mv zmq-tsan public/
   after_script:
     - |
       if [ $CI_JOB_STATUS = "failed" ]; then

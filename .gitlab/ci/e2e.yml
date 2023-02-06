@@ -7,6 +7,7 @@
 
 .e2e-run:
   stage: test-e2e
+  timeout: 8h
   image:
     name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.10
     entrypoint: ["/bin/sh", "-c"]
@@ -51,8 +52,10 @@ e2e-build:
     matrix:
       - AUTO_DETECT_ISA: "False"
         ENABLE_TSAN: "False"
+        COMPILER: gcc
       - AUTO_DETECT_ISA: "False"
         ENABLE_TSAN: "True"
+        COMPILER: clang
   variables:
     OS: ubuntu-22.04
     TEST_MODE: none
@@ -81,7 +84,7 @@ zmq:
   variables:
     REQUEST: "request_srsgnb_zmq"
   needs:
-  - job: "e2e-build: [False, False]"
+  - job: "e2e-build: [False, False, gcc]"
     artifacts: true
 
 zmq-tsan:
@@ -89,5 +92,5 @@ zmq-tsan:
   variables:
     REQUEST: "request_srsgnb_zmq"
   needs:
-  - job: "e2e-build: [False, True]"
+  - job: "e2e-build: [False, True, clang]"
     artifacts: true
