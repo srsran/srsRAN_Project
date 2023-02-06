@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../common/e1_types.h"
+#include "e1ap_cu_up_bearer_context_update.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/cu_up/cu_up_types.h"
@@ -19,21 +20,6 @@
 
 namespace srsgnb {
 namespace srs_cu_up {
-
-/// \brief Request to create a new UE and bearer context.
-struct e1ap_bearer_context_setup_request {
-  asn1::e1ap::sys_bearer_context_setup_request_c request;
-  asn1::fixed_octstring<3U, true>                serving_plmn;
-  // TODO: add optional fields like DU-ID, etc
-};
-
-/// \brief Response to a bearer context setup request including UE index for E1 map.
-struct e1ap_bearer_context_setup_response {
-  bool                                        success;
-  ue_index_t                                  ue_index = INVALID_UE_INDEX; // Valid UE index if setup was successful.
-  asn1::e1ap::sys_bearer_context_setup_resp_c sys_bearer_context_setup_resp;
-  asn1::e1ap::cause_c                         cause; // Cause if setup was unsuccessful.
-};
 
 /// \brief Request to modify a bearer context.
 struct e1ap_bearer_context_modification_request {

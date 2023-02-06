@@ -10,7 +10,7 @@
 
 #include "e1ap_cu_up_impl.h"
 #include "../../ran/gnb_format.h"
-#include "../common/e1ap_asn1_converters.h"
+#include "e1ap_cu_up_asn1_helpers.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/ran/bcd_helpers.h"
 
@@ -182,12 +182,12 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
   // Forward message to CU-UP
   e1ap_bearer_context_setup_request e1_bearer_context_setup = {};
-  e1_bearer_context_setup.serving_plmn                      = msg->serving_plmn.value;
-  e1_bearer_context_setup.request                           = msg->sys_bearer_context_setup_request.value;
-  e1ap_bearer_context_setup_response ue_context_setup_response_msg =
+  fill_e1ap_bearer_context_setup_request(e1_bearer_context_setup, msg);
+
+  e1ap_bearer_context_setup_response bearer_context_setup_response_msg =
       e1_cu_up_notifier.on_bearer_context_setup_request_received(e1_bearer_context_setup);
 
-  if (ue_context_setup_response_msg.ue_index == INVALID_UE_INDEX) {
+  if (bearer_context_setup_response_msg.ue_index == INVALID_UE_INDEX) {
     logger.error("Invalid UE index.");
 
     // send response
@@ -197,7 +197,7 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
   }
 
   // Create UE context and store it
-  ue_ctxt_list.add_ue(ue_context_setup_response_msg.ue_index,
+  ue_ctxt_list.add_ue(bearer_context_setup_response_msg.ue_index,
                       cu_up_ue_e1ap_id,
                       int_to_gnb_cu_cp_ue_e1ap_id(msg->gnb_cu_cp_ue_e1ap_id.value));
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[cu_up_ue_e1ap_id];
@@ -207,21 +207,23 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
                ue_ctxt.cu_cp_ue_e1ap_id,
                ue_ctxt.ue_index);
 
-  if (ue_context_setup_response_msg.success) {
+  if (bearer_context_setup_response_msg.success) {
     e1_msg.pdu.set_successful_outcome();
     e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
     e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_cp_ue_e1ap_id = msg->gnb_cu_cp_ue_e1ap_id;
     e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->gnb_cu_up_ue_e1ap_id.value =
         gnb_cu_up_ue_e1ap_id_to_uint(cu_up_ue_e1ap_id);
-    e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->sys_bearer_context_setup_resp.value =
-        ue_context_setup_response_msg.sys_bearer_context_setup_resp;
+
+    fill_asn1_bearer_context_setup_response(
+        e1_msg.pdu.successful_outcome().value.bearer_context_setup_resp()->sys_bearer_context_setup_resp.value,
+        bearer_context_setup_response_msg);
 
     // send response
     logger.info("Transmitting BearerContextSetupResponse message");
     pdu_notifier.on_new_message(e1_msg);
   } else {
     e1_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause.value =
-        ue_context_setup_response_msg.cause;
+        cause_to_e1ap_cause(bearer_context_setup_response_msg.cause.value());
 
     // send response
     logger.info("Transmitting BearerContextSetupFailure message");

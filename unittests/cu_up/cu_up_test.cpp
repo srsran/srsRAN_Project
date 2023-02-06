@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_test_helpers.h"
+#include "lib/e1/cu_up/e1ap_cu_up_asn1_helpers.h"
 #include "srsgnb/cu_up/cu_up_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"
@@ -88,16 +89,12 @@ protected:
   void create_drb()
   {
     // Generate BearerContextSetupRequest
-    e1_message e1_bearer_context_setup_msg = generate_bearer_context_setup_request_msg(9);
+    e1_message asn1_e1_bearer_context_setup_msg = generate_bearer_context_setup_request_msg(9);
 
-    // Pick bearer context setup request
-    asn1::e1ap::bearer_context_setup_request_s& msg =
-        e1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request();
-
-    // Prepare bearer context setup
-    e1ap_bearer_context_setup_request e1_bearer_context_setup = {};
-    e1_bearer_context_setup.serving_plmn                      = msg->serving_plmn.value;
-    e1_bearer_context_setup.request                           = msg->sys_bearer_context_setup_request.value;
+    // Convert to common type
+    e1ap_bearer_context_setup_request e1_bearer_context_setup;
+    fill_e1ap_bearer_context_setup_request(
+        e1_bearer_context_setup, asn1_e1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request());
 
     // Setup bearer
     cu_up->handle_bearer_context_setup_request(e1_bearer_context_setup);

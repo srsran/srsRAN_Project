@@ -57,11 +57,10 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
 
   // prepare request
-  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
-  pdu_session_setup_item.pdu_session_id = 1;
-  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().transport_layer_address.from_string(
-      "01111111000000000000000000000001");
-  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x12345678);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
+  pdu_session_setup_item.pdu_session_id = uint_to_pdu_session_id(1);
+  pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -71,13 +70,13 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
   // attempt to remove non-existing session
-  pdu_session_mng->remove_pdu_session(2);
+  pdu_session_mng->remove_pdu_session(uint_to_pdu_session_id(2));
 
   // check successful outcome (unchanged)
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
   // attempt to remove existing session
-  pdu_session_mng->remove_pdu_session(1);
+  pdu_session_mng->remove_pdu_session(uint_to_pdu_session_id(1));
 
   // check successful outcome (unchanged)
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
@@ -89,11 +88,10 @@ TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
 
   // prepare request
-  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
-  pdu_session_setup_item.pdu_session_id = 1;
-  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().transport_layer_address.from_string(
-      "01111111000000000000000000000001");
-  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x12345678);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
+  pdu_session_setup_item.pdu_session_id = uint_to_pdu_session_id(1);
+  pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
@@ -117,37 +115,34 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
 
   // prepare setup request (to create bearer)
-  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
-  pdu_session_setup_item.pdu_session_id = 0x0d;
-  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().transport_layer_address.from_string(
-      "01111111000000000000000000000001");
-  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x12345678);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
+  pdu_session_setup_item.pdu_session_id = uint_to_pdu_session_id(0x0d);
+  pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
 
-  asn1::e1ap::drb_to_setup_item_ng_ran_s drb_to_setup;
-  drb_to_setup.drb_id                                   = 0x0b;
-  drb_to_setup.pdcp_cfg.rlc_mode                        = asn1::e1ap::rlc_mode_opts::options::rlc_um_bidirectional;
-  drb_to_setup.pdcp_cfg.pdcp_sn_size_dl                 = asn1::e1ap::pdcp_sn_size_opts::options::s_neg18;
-  drb_to_setup.pdcp_cfg.pdcp_sn_size_ul                 = asn1::e1ap::pdcp_sn_size_opts::options::s_neg18;
-  drb_to_setup.pdcp_cfg.discard_timer_present           = false;
-  drb_to_setup.pdcp_cfg.t_reordering_timer_present      = true;
-  drb_to_setup.pdcp_cfg.t_reordering_timer.t_reordering = asn1::e1ap::t_reordering_e::ms50;
+  e1ap_drb_to_setup_item_ng_ran drb_to_setup;
+  drb_to_setup.drb_id                      = uint_to_drb_id(0x0b);
+  drb_to_setup.pdcp_cfg.rlc_mod            = rlc_mode::um_bidir;
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = -18;
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = -18;
+  drb_to_setup.pdcp_cfg.t_reordering_timer = 50;
 
-  asn1::e1ap::qos_flow_qos_param_item_s qos_to_setup;
-  qos_to_setup.qos_flow_id = 0xee;
+  e1ap_qos_flow_qos_param_item qos_to_setup;
+  qos_to_setup.qos_flow_id = uint_to_qos_flow_id(0xee);
 
-  drb_to_setup.qos_flow_info_to_be_setup.push_back(qos_to_setup);
-  pdu_session_setup_item.drb_to_setup_list_ng_ran.push_back(drb_to_setup);
+  drb_to_setup.qos_flow_info_to_be_setup.emplace(uint_to_qos_flow_id(0xee), qos_to_setup);
+  pdu_session_setup_item.drb_to_setup_list_ng_ran.emplace(uint_to_drb_id(0x0b), drb_to_setup);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
-  ASSERT_EQ(setup_result.pdu_session_id, 0x0d);
+  ASSERT_EQ(setup_result.pdu_session_id, uint_to_pdu_session_id(0x0d));
   ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
-  ASSERT_EQ(setup_result.drb_setup_results.begin()->drb_id, 0x0b);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->drb_id, uint_to_drb_id(0x0b));
   ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.size(), 1);
-  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, 0xee);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, uint_to_qos_flow_id(0xee));
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
   ASSERT_FALSE(gtpu_rx_demux->created_teid_list.empty());
@@ -194,37 +189,34 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
 
   // prepare setup request (to create bearer)
-  asn1::e1ap::pdu_session_res_to_setup_item_s pdu_session_setup_item;
-  pdu_session_setup_item.pdu_session_id = 0x0d;
-  pdu_session_setup_item.ng_ul_up_tnl_info.set_gtp_tunnel().transport_layer_address.from_string(
-      "01111111000000000000000000000001");
-  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_tunnel().gtp_teid.from_number(0x12345678);
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
+  pdu_session_setup_item.pdu_session_id = uint_to_pdu_session_id(0x0d);
+  pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
+  pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
 
-  asn1::e1ap::drb_to_setup_item_ng_ran_s drb_to_setup;
-  drb_to_setup.drb_id                                   = 0x0b;
-  drb_to_setup.pdcp_cfg.rlc_mode                        = asn1::e1ap::rlc_mode_opts::options::rlc_um_bidirectional;
-  drb_to_setup.pdcp_cfg.pdcp_sn_size_dl                 = asn1::e1ap::pdcp_sn_size_opts::options::s_neg18;
-  drb_to_setup.pdcp_cfg.pdcp_sn_size_ul                 = asn1::e1ap::pdcp_sn_size_opts::options::s_neg18;
-  drb_to_setup.pdcp_cfg.discard_timer_present           = false;
-  drb_to_setup.pdcp_cfg.t_reordering_timer_present      = true;
-  drb_to_setup.pdcp_cfg.t_reordering_timer.t_reordering = asn1::e1ap::t_reordering_e::ms50;
+  e1ap_drb_to_setup_item_ng_ran drb_to_setup;
+  drb_to_setup.drb_id                      = uint_to_drb_id(0x0b);
+  drb_to_setup.pdcp_cfg.rlc_mod            = rlc_mode::um_bidir;
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = -18;
+  drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = -18;
+  drb_to_setup.pdcp_cfg.t_reordering_timer = 50;
 
-  asn1::e1ap::qos_flow_qos_param_item_s qos_to_setup;
-  qos_to_setup.qos_flow_id = 0xee;
+  e1ap_qos_flow_qos_param_item qos_to_setup;
+  qos_to_setup.qos_flow_id = uint_to_qos_flow_id(0xee);
 
-  drb_to_setup.qos_flow_info_to_be_setup.push_back(qos_to_setup);
-  pdu_session_setup_item.drb_to_setup_list_ng_ran.push_back(drb_to_setup);
+  drb_to_setup.qos_flow_info_to_be_setup.emplace(uint_to_qos_flow_id(0xee), qos_to_setup);
+  pdu_session_setup_item.drb_to_setup_list_ng_ran.emplace(uint_to_drb_id(0x0b), drb_to_setup);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
-  ASSERT_EQ(setup_result.pdu_session_id, 0x0d);
+  ASSERT_EQ(setup_result.pdu_session_id, uint_to_pdu_session_id(0x0d));
   ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
-  ASSERT_EQ(setup_result.drb_setup_results.begin()->drb_id, 0x0b);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->drb_id, uint_to_drb_id(0x0b));
   ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.size(), 1);
-  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, 0xee);
+  ASSERT_EQ(setup_result.drb_setup_results.begin()->qos_flow_results.begin()->qos_flow_id, uint_to_qos_flow_id(0xee));
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
   ASSERT_FALSE(gtpu_rx_demux->created_teid_list.empty());

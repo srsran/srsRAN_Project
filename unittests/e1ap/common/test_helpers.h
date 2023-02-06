@@ -17,6 +17,7 @@
 #include "srsgnb/e1/common/e1_common.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/e1/cu_up/e1ap_cu_up.h"
+#include "srsgnb/e1/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsgnb/gateways/network_gateway.h"
 
 namespace srsgnb {
@@ -59,7 +60,16 @@ public:
   on_bearer_context_setup_request_received(const srs_cu_up::e1ap_bearer_context_setup_request& msg) override
   {
     logger.info("Received Bearer Context Setup Request message.");
-    last_bearer_context_setup_request                      = msg;
+    last_bearer_context_setup_request.security_info.security_algorithm = msg.security_info.security_algorithm;
+    last_bearer_context_setup_request.security_info.up_security_key.encryption_key =
+        msg.security_info.up_security_key.encryption_key.copy();
+    last_bearer_context_setup_request.security_info.up_security_key.integrity_protection_key =
+        msg.security_info.up_security_key.integrity_protection_key.copy();
+    last_bearer_context_setup_request.ue_dl_aggregate_maximum_bit_rate = msg.ue_dl_aggregate_maximum_bit_rate;
+    last_bearer_context_setup_request.serving_plmn                     = msg.serving_plmn;
+    last_bearer_context_setup_request.activity_notif_level             = msg.activity_notif_level;
+    last_bearer_context_setup_request.pdu_session_res_to_setup_list    = msg.pdu_session_res_to_setup_list;
+
     srs_cu_up::e1ap_bearer_context_setup_response response = {};
     response.ue_index                                      = ue_index;
     response.success                                       = true;

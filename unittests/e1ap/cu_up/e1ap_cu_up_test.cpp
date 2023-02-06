@@ -140,7 +140,7 @@ TEST_F(e1ap_cu_up_test, when_valid_bearer_context_setup_received_then_bearer_con
   e1ap->handle_message(e1_bearer_context_setup);
 
   // Check if BearerContextSetupRequest was forwarded to UE manager
-  ASSERT_EQ(cu_up_notifier.last_bearer_context_setup_request.serving_plmn.to_string(), "02f899");
+  ASSERT_EQ(cu_up_notifier.last_bearer_context_setup_request.serving_plmn, "20899"); // this is the human readable PLMN
 
   // Check the generated PDU is indeed the Bearer Context Setup response
   ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, msg_notifier.last_e1_msg.pdu.type());

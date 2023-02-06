@@ -10,24 +10,25 @@
 
 #pragma once
 
-#include "srsgnb/asn1/e1ap/e1ap.h"
+#include "srsgnb/e1/common/e1_types.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
+#include "srsgnb/ran/cu_types.h"
 
 namespace srsgnb {
 namespace srs_cu_up {
 
 struct qos_flow_context {
-  qos_flow_context(const asn1::e1ap::qos_flow_qos_param_item_s& flow) : qos_flow_id(flow.qos_flow_id)
+  qos_flow_context(const e1ap_qos_flow_qos_param_item& flow) : qos_flow_id(flow.qos_flow_id)
   {
     const auto& qos_params = flow.qos_flow_level_qos_params.qos_characteristics;
-    if (qos_params.type() == asn1::e1ap::qos_characteristics_c::types_opts::non_dyn_5qi) {
-      five_qi = qos_params.non_dyn_5qi().five_qi;
+    if (qos_params.non_dyn_5qi.has_value()) {
+      five_qi = qos_params.non_dyn_5qi.value().five_qi;
     }
   };
 
-  uint8_t  qos_flow_id; // The QoS flow ID.
-  uint16_t five_qi;     // The FiveQI assigned to this flow.
+  qos_flow_id_t qos_flow_id; // The QoS flow ID.
+  uint16_t      five_qi;     // The FiveQI assigned to this flow.
 
   // TODO: add other fields contained in:
   // * qos_flow_level_qos_params_s

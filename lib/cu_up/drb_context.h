@@ -42,7 +42,7 @@ struct drb_context {
 
   uint8_t cell_group_id; /// This can/should be a list of cell groups.
 
-  std::map<uint8_t, std::unique_ptr<qos_flow_context>> qos_flows; // key is qos_flow_id
+  std::map<qos_flow_id_t, std::unique_ptr<qos_flow_context>> qos_flows; // key is qos_flow_id
 };
 
 } // namespace srs_cu_up

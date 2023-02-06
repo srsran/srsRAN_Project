@@ -10,6 +10,7 @@
 
 #include "pdu_session_manager_impl.h"
 #include "ue_context.h"
+#include "srsgnb/e1/common/e1_types.h"
 #include "srsgnb/e1/cu_up/e1ap_config_converters.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/sdap/sdap_factory.h"
@@ -42,13 +43,12 @@ pdu_session_manager_impl::~pdu_session_manager_impl()
   }
 }
 
-pdu_session_setup_result
-pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to_setup_item_s& session)
+pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
 {
   pdu_session_setup_result pdu_session_result = {};
   pdu_session_result.success                  = false;
   pdu_session_result.pdu_session_id           = session.pdu_session_id;
-  pdu_session_result.cause.set_radio_network();
+  pdu_session_result.cause                    = cause_t::radio_network;
 
   if (pdu_sessions.find(session.pdu_session_id) != pdu_sessions.end()) {
     logger.error("PDU Session {} already exists", session.pdu_session_id);
@@ -76,7 +76,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
   up_transport_layer_info n3_dl_tunnel_addr;
   n3_dl_tunnel_addr.tp_address.from_string(net_config.n3_bind_addr);
   n3_dl_tunnel_addr.gtp_teid = int_to_gtp_teid(new_session->local_teid);
-  up_transport_layer_info_to_asn1(pdu_session_result.gtp_tunnel, n3_dl_tunnel_addr);
+  n3_dl_tunnel_addr          = pdu_session_result.gtp_tunnel;
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {};
@@ -111,23 +111,23 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
                 session.pdu_session_id);
 
   // Handle DRB setup
-  for (size_t i = 0; i < session.drb_to_setup_list_ng_ran.size(); ++i) {
+  // for (size_t i = 0; i < session.drb_to_setup_list_ng_ran.size(); ++i) {
+  for (auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
     // prepare DRB creation result
     drb_setup_result drb_result = {};
     drb_result.success          = false;
-    drb_result.cause.set_radio_network();
-    drb_result.drb_id = session.drb_to_setup_list_ng_ran[i].drb_id;
+    drb_result.cause            = cause_t::radio_network;
+    drb_result.drb_id           = drb_to_setup.drb_id;
 
     // get DRB from list and create context
-    const asn1::e1ap::drb_to_setup_item_ng_ran_s& drb = session.drb_to_setup_list_ng_ran[i];
-    new_session->drbs[uint_to_drb_id(drb.drb_id)]     = std::make_unique<drb_context>(uint_to_drb_id(drb.drb_id));
-    auto& new_drb                                     = new_session->drbs[uint_to_drb_id(drb.drb_id)];
+    new_session->drbs[drb_to_setup.drb_id] = std::make_unique<drb_context>(drb_to_setup.drb_id);
+    auto& new_drb                          = new_session->drbs[drb_to_setup.drb_id];
 
     // Create PDCP entity
     srsgnb::pdcp_entity_creation_message pdcp_msg = {};
     pdcp_msg.ue_index                             = ue_index;
-    pdcp_msg.rb_id                                = uint_to_drb_id(drb.drb_id);
-    pdcp_msg.config                               = make_pdcp_drb_config(drb.pdcp_cfg);
+    pdcp_msg.rb_id                                = drb_to_setup.drb_id;
+    pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg);
     pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
     pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1_adapter;
     pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
@@ -140,7 +140,7 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     new_drb->pdcp_rx_to_e1_adapter.connect_e1(); // TODO: pass actual E1 handler
 
     // Create  F1-U bearer
-    uint32_t f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb.drb_id);
+    uint32_t f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb_to_setup.drb_id);
     new_drb->f1u =
         f1u_gw.create_cu_bearer(ue_index, f1u_ul_teid, new_drb->f1u_to_pdcp_adapter, new_drb->f1u_to_pdcp_adapter);
     new_drb->f1u_ul_teid = f1u_ul_teid;
@@ -148,12 +148,12 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     up_transport_layer_info f1u_ul_tunnel_addr;
     f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
     f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(f1u_ul_teid);
-    up_transport_layer_info_to_asn1(drb_result.gtp_tunnel, f1u_ul_tunnel_addr);
+    f1u_ul_tunnel_addr          = drb_result.gtp_tunnel;
 
-    srsgnb_assert(drb.qos_flow_info_to_be_setup.size() <= 1,
+    srsgnb_assert(drb_to_setup.qos_flow_info_to_be_setup.size() <= 1,
                   "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS "
                   "flow per DRB!",
-                  drb.drb_id,
+                  drb_to_setup.drb_id,
                   session.pdu_session_id);
 
     // Connect F1-U's "F1-U->PDCP adapter" directly to PDCP
@@ -162,15 +162,15 @@ pdu_session_manager_impl::setup_pdu_session(const asn1::e1ap::pdu_session_res_to
     new_drb->pdcp_to_f1u_adapter.connect_f1u(new_drb->f1u->get_tx_sdu_handler());
 
     // Create QoS flows
-    for (size_t k = 0; k < drb.qos_flow_info_to_be_setup.size(); ++k) {
+    for (auto& qos_flow_info : drb_to_setup.qos_flow_info_to_be_setup) {
       // prepare QoS flow creation result
       qos_flow_setup_result flow_result = {};
       flow_result.success               = false;
-      flow_result.cause.set_radio_network();
-      flow_result.qos_flow_id = drb.qos_flow_info_to_be_setup[k].qos_flow_id;
+      flow_result.cause                 = cause_t::radio_network;
+      flow_result.qos_flow_id           = qos_flow_info.qos_flow_id;
 
       // create QoS flow context
-      auto& qos_flow                           = drb.qos_flow_info_to_be_setup[k];
+      auto& qos_flow                           = qos_flow_info;
       new_drb->qos_flows[qos_flow.qos_flow_id] = std::make_unique<qos_flow_context>(qos_flow);
       auto& new_qos_flow                       = new_drb->qos_flows[qos_flow.qos_flow_id];
       logger.debug(
@@ -202,15 +202,15 @@ pdu_session_modification_result
 pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session)
 {
   pdu_session_modification_result pdu_session_result;
-  auto&                           pdu_session = pdu_sessions[session.pdu_session_id];
+  auto&                           pdu_session = pdu_sessions[uint_to_pdu_session_id(session.pdu_session_id)];
 
   // > DRB To Setup List
   for (const auto& drb_to_setup : session.drb_to_setup_list_ng_ran) {
     // prepare DRB creation result
     drb_setup_result drb_result = {};
     drb_result.success          = false;
-    drb_result.cause.set_radio_network();
-    drb_result.drb_id = drb_to_setup.drb_id;
+    drb_result.cause            = cause_t::radio_network;
+    drb_result.drb_id           = uint_to_drb_id(drb_to_setup.drb_id);
 
     // TODO: handle session.drb_to_setup_list_ng_ran
     logger.warning("Setup of new DRBs via PDU session modification is not supported: session={}, drb_id={}",
@@ -226,8 +226,8 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
     // prepare DRB modification result
     drb_setup_result drb_result = {};
     drb_result.success          = false;
-    drb_result.cause.set_radio_network();
-    drb_result.drb_id = drb_to_mod.drb_id;
+    drb_result.cause            = cause_t::radio_network;
+    drb_result.drb_id           = uint_to_drb_id(drb_to_mod.drb_id);
 
     // find DRB in PDU session
     auto drb_iter = pdu_session->drbs.find(uint_to_drb_id(drb_to_mod.drb_id));
@@ -280,7 +280,7 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
   return pdu_session_result;
 }
 
-void pdu_session_manager_impl::remove_pdu_session(uint8_t pdu_session_id)
+void pdu_session_manager_impl::remove_pdu_session(pdu_session_id_t pdu_session_id)
 {
   if (pdu_sessions.find(pdu_session_id) == pdu_sessions.end()) {
     logger.error("PDU session {} not found", pdu_session_id);
@@ -296,22 +296,22 @@ size_t pdu_session_manager_impl::get_nof_pdu_sessions()
   return pdu_sessions.size();
 }
 
-uint32_t pdu_session_manager_impl::allocate_local_teid(uint8_t pdu_session_id)
+uint32_t pdu_session_manager_impl::allocate_local_teid(pdu_session_id_t pdu_session_id)
 {
   // Local TEID is the concatenation of the unique UE index and the PDU session ID
   uint32_t local_teid = ue_index;
   local_teid <<= 8U;
-  local_teid |= pdu_session_id;
+  local_teid |= pdu_session_id_to_uint(pdu_session_id);
   return local_teid;
 }
 
-uint32_t pdu_session_manager_impl::allocate_local_f1u_teid(uint8_t pdu_session_id, uint8_t drb_id)
+uint32_t pdu_session_manager_impl::allocate_local_f1u_teid(pdu_session_id_t pdu_session_id, drb_id_t drb_id)
 {
   // Local TEID is the concatenation of the unique UE index, the PDU session ID and the DRB Id
   uint32_t local_teid = ue_index;
   local_teid <<= 8U;
-  local_teid |= pdu_session_id;
+  local_teid |= pdu_session_id_to_uint(pdu_session_id);
   local_teid <<= 8U;
-  local_teid |= drb_id;
+  local_teid |= drb_id_to_uint(drb_id);
   return local_teid;
 }
