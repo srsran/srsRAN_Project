@@ -17,14 +17,13 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// \brief  Convert CU-CP security result to NGAP security result.
-/// \param cu_cp_security_result The CU-CP security result.
+/// \param security_result The CU-CP security result.
 /// \return The NGAP security result.
-inline asn1::ngap::security_result_s
-cu_cp_security_result_to_ngap_security_result(cu_cp_security_result cu_cp_security_result)
+inline asn1::ngap::security_result_s cu_cp_security_result_to_ngap_security_result(security_result_t security_result)
 {
   asn1::ngap::security_result_s ngap_security_result;
 
-  if (cu_cp_security_result.confidentiality_protection_result == "performed") {
+  if (security_result.confidentiality_protection_result == "performed") {
     ngap_security_result.confidentiality_protection_result =
         asn1::ngap::confidentiality_protection_result_opts::options::performed;
   } else {
@@ -32,7 +31,7 @@ cu_cp_security_result_to_ngap_security_result(cu_cp_security_result cu_cp_securi
         asn1::ngap::confidentiality_protection_result_opts::options::not_performed;
   }
 
-  if (cu_cp_security_result.integrity_protection_result == "performed") {
+  if (security_result.integrity_protection_result == "performed") {
     ngap_security_result.integrity_protection_result.value =
         asn1::ngap::integrity_protection_result_opts::options::performed;
   } else {

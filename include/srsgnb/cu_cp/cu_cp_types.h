@@ -187,17 +187,12 @@ struct cu_cp_qos_flow_per_tnl_information {
   slotted_id_vector<qos_flow_id_t, cu_cp_associated_qos_flow> associated_qos_flow_list;
 };
 
-struct cu_cp_security_result {
-  std::string confidentiality_protection_result;
-  std::string integrity_protection_result;
-};
-
 struct cu_cp_pdu_session_resource_setup_response_transfer {
   std::vector<cu_cp_qos_flow_per_tnl_information>                       add_dl_qos_flow_per_tnl_info = {};
   cu_cp_qos_flow_per_tnl_information                                    dlqos_flow_per_tnl_info;
   slotted_id_vector<qos_flow_id_t, cu_cp_associated_qos_flow>           associated_qos_flow_list;
   slotted_id_vector<qos_flow_id_t, cu_cp_qos_flow_failed_to_setup_item> qos_flow_failed_to_setup_list;
-  optional<cu_cp_security_result>                                       security_result;
+  optional<security_result_t>                                           security_result;
 };
 
 struct cu_cp_pdu_session_res_setup_response_item {

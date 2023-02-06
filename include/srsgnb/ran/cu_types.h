@@ -154,4 +154,9 @@ struct pdcp_config_t {
   bool                          ciphering_disabled_present = false;
 };
 
+struct security_result_t {
+  std::string confidentiality_protection_result;
+  std::string integrity_protection_result;
+};
+
 } // namespace srsgnb

@@ -235,7 +235,7 @@ struct e1ap_pdu_session_resource_setup_modification_item {
   up_transport_layer_info                                  ng_dl_up_tnl_info;
   slotted_id_vector<drb_id_t, e1ap_drb_setup_item_ng_ran>  drb_setup_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran> drb_failed_list_ng_ran;
-  optional<cu_cp_security_result>                          security_result;
+  optional<security_result_t>                              security_result;
   optional<e1ap_data_forwarding_info>                      pdu_session_data_forwarding_info_resp;
   optional<bool>                                           ng_dl_up_unchanged;
 };
@@ -362,7 +362,7 @@ struct e1ap_pdu_session_resource_modified_item {
   slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran>   drb_failed_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_modified_item_ng_ran> drb_modified_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran>   drb_failed_to_modify_list_ng_ran;
-  optional<cu_cp_security_result>                            security_result;
+  optional<security_result_t>                                security_result;
   optional<e1ap_data_forwarding_info>                        pdu_session_data_forwarding_info_resp;
 };
 
