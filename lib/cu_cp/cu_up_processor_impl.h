@@ -57,7 +57,7 @@ private:
 
   /// \brief Create and transmit the GNB-CU-UP E1 Setup failure message.
   /// \param[in] cause The cause of the failure.
-  void send_cu_up_e1_setup_failure(asn1::e1ap::cause_c::types::options cause);
+  void send_cu_up_e1_setup_failure(cause_t cause);
 
   srslog::basic_logger&    logger = srslog::fetch_basic_logger("CU-CP");
   cu_up_processor_config_t cfg;

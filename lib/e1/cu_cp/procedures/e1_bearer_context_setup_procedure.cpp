@@ -9,7 +9,7 @@
  */
 
 #include "e1_bearer_context_setup_procedure.h"
-#include "../e1ap_asn1_helpers.h"
+#include "../e1ap_cu_cp_asn1_helpers.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;

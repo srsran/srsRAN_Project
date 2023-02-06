@@ -10,7 +10,8 @@
 
 #include "e1_cu_cp_impl.h"
 #include "../../ran/gnb_format.h"
-#include "e1ap_asn1_helpers.h"
+#include "../common/e1ap_asn1_helpers.h"
+#include "e1ap_cu_cp_asn1_helpers.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 
 using namespace srsgnb;
@@ -43,7 +44,11 @@ void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response
 
     e1_msg.pdu.set_successful_outcome();
     e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
-    e1_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp() = msg.response;
+    auto& setup_resp = e1_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp();
+
+    if (msg.gnb_cu_cp_name.has_value()) {
+      setup_resp->gnb_cu_cp_name.value.from_string(msg.gnb_cu_cp_name.value());
+    }
 
     // set values handled by E1
     e1_msg.pdu.successful_outcome().value.gnb_cu_up_e1_setup_resp()->transaction_id.value = current_transaction_id;
@@ -54,8 +59,9 @@ void e1_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response
     logger.info("Transmitting CuUpE1SetupFailure message");
     e1_msg.pdu.set_unsuccessful_outcome();
     e1_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
-    e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail() = msg.failure;
-    auto& setup_fail = e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
+    e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
+    auto& setup_fail        = e1_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
+    setup_fail->cause.value = cause_to_e1ap_cause(msg.cause.value());
 
     // set values handled by E1
     setup_fail->transaction_id.value = current_transaction_id;
@@ -194,9 +200,9 @@ void e1_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
     case asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_cu_up_e1_setup_request: {
-      cu_up_e1_setup_request req = {};
       current_transaction_id     = msg.value.gnb_cu_up_e1_setup_request()->transaction_id.value;
-      req.request                = msg.value.gnb_cu_up_e1_setup_request();
+      cu_up_e1_setup_request req = {};
+      fill_e1ap_cu_up_e1_setup_request(req, msg.value.gnb_cu_up_e1_setup_request());
       cu_up_processor_notifier.on_cu_up_e1_setup_request_received(req);
     } break;
     default:

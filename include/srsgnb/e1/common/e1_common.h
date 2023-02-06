@@ -18,19 +18,6 @@ struct e1_message {
   asn1::e1ap::e1ap_pdu_c pdu;
 };
 
-/// \brief CU-UP initiated E1 setup request.
-struct cu_up_e1_setup_request {
-  asn1::e1ap::gnb_cu_up_e1_setup_request_s request;
-  unsigned                                 max_setup_retries = 5;
-};
-
-/// \brief Response to CU-UP initiated E1 setup request.
-struct cu_up_e1_setup_response {
-  asn1::e1ap::gnb_cu_up_e1_setup_resp_s response;
-  asn1::e1ap::gnb_cu_up_e1_setup_fail_s failure;
-  bool                                  success;
-};
-
 /// This interface is used to push E1 messages to the E1 interface.
 class e1_message_handler
 {

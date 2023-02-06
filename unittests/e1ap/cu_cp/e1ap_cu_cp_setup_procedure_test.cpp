@@ -214,7 +214,7 @@ TEST_F(e1ap_cu_cp_test, when_received_cu_up_e1_setup_request_valid_then_connect_
   e1ap->handle_message(e1_setup_msg);
 
   // Action 2: Check if CuUpE1SetupRequest was forwarded to NGAP
-  ASSERT_EQ(cu_up_processor_notifier.last_cu_up_e1_setup_request.request->gnb_cu_up_name.value.to_string(), "srsCU-UP");
+  ASSERT_EQ(cu_up_processor_notifier.last_cu_up_e1_setup_request.gnb_cu_up_name.value(), "srsCU-UP");
 
   // Action 3: Transmit CuUpE1SetupResponse message
   test_logger.info("TEST: Transmit CuUpE1SetupResponse message...");
@@ -239,12 +239,13 @@ TEST_F(e1ap_cu_cp_test, when_received_cu_up_e1_setup_request_invalid_then_reject
   e1ap->handle_message(e1_setup_msg);
 
   // Action 2 : Check if E1SetupRequest was forwarded to NGAP
-  ASSERT_EQ(cu_up_processor_notifier.last_cu_up_e1_setup_request.request->gnb_cu_up_name.value.to_string(), "srsCU-UP");
+  ASSERT_EQ(cu_up_processor_notifier.last_cu_up_e1_setup_request.gnb_cu_up_name.value(), "srsCU-UP");
 
   // Action 3: Transmit E1SetupFailure message
   test_logger.info("TEST: Transmit CuUpE1SetupFailure message...");
   cu_up_e1_setup_response msg = {};
   msg.success                 = false;
+  msg.cause                   = cause_t::nulltype;
   e1ap->handle_cu_up_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup failure

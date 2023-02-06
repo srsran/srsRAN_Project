@@ -59,10 +59,10 @@ void cu_up_processor_impl::send_cu_up_e1_setup_response()
   e1->handle_cu_up_e1_setup_response(response);
 }
 
-void cu_up_processor_impl::send_cu_up_e1_setup_failure(asn1::e1ap::cause_c::types::options cause)
+void cu_up_processor_impl::send_cu_up_e1_setup_failure(cause_t cause)
 {
   cu_up_e1_setup_response response;
   response.success = false;
-  response.failure->cause->set(cause);
+  response.cause   = cause;
   e1->handle_cu_up_e1_setup_response(response);
 }
