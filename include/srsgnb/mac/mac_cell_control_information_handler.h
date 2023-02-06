@@ -109,10 +109,10 @@ struct mac_uci_pdu {
   };
   struct pucch_f2_or_f3_or_f4_type {
     /// Maximum number of SR bits expected on the PUCCH transmission.
-    static constexpr unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
+    static const unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
 
     /// \brief PUCCH format.
-    enum class pucch_format { f2, f3, f4 };
+    enum class pucch_format { format_2, format_3, format_4 };
 
     using sr_information = bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>;
 

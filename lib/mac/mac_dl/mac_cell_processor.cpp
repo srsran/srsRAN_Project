@@ -144,6 +144,37 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
         }
         ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>(pdu);
       } break;
+      case mac_uci_pdu::pdu_type::pucch_f2_or_f3_or_f4: {
+        const auto&                                           pucch = msg.ucis[i].pucch_f2_or_f3_or_f4;
+        uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pdu{};
+        switch (pucch.pucch_fmt) {
+          case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_2:
+            pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_2;
+            break;
+          case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_3:
+            pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_3;
+            break;
+          case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_4:
+            pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_4;
+            break;
+        }
+        if (pucch.sr_info.has_value()) {
+          pdu.sr_info = pucch.sr_info.value();
+        }
+        if (pucch.harq_info.has_value() and
+            pucch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          pdu.harqs = pucch.harq_info->payload;
+        }
+        if (pucch.uci_part1_or_csi_part1_info.has_value() and
+            pucch.uci_part1_or_csi_part1_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          pdu.csi_part1 = pucch.uci_part1_or_csi_part1_info->payload;
+        }
+        if (pucch.uci_part2_or_csi_part2_info.has_value() and
+            pucch.uci_part2_or_csi_part2_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+          pdu.csi_part2 = pucch.uci_part2_or_csi_part2_info->payload;
+        }
+        ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu);
+      } break;
       default:
         report_fatal_error("Unsupported PUCCH format");
     }

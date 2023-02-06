@@ -73,10 +73,23 @@ struct uci_indication {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part1;
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part2;
     };
+    struct uci_pucch_f2_or_f3_or_f4_pdu {
+      /// Maximum number of SR bits expected on the PUCCH transmission.
+      static const unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
 
-    du_ue_index_t                                  ue_index;
-    rnti_t                                         crnti;
-    variant<uci_pucch_f0_or_f1_pdu, uci_pusch_pdu> pdu;
+      /// \brief PUCCH format.
+      enum class pucch_format { format_2, format_3, format_4 };
+
+      pucch_format                                                   pucch_fmt;
+      bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>                       sr_info;
+      bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>               harqs;
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part1;
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part2;
+    };
+
+    du_ue_index_t                                                                ue_index;
+    rnti_t                                                                       crnti;
+    variant<uci_pucch_f0_or_f1_pdu, uci_pusch_pdu, uci_pucch_f2_or_f3_or_f4_pdu> pdu;
   };
   using uci_pdu_list = static_vector<uci_pdu, MAX_UCI_PDUS_PER_UCI_IND>;
 

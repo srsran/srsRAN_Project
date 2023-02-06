@@ -200,6 +200,59 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
   }
 }
 
+static void convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_uci_pdu::pucch_f2_or_f3_or_f4_type& mac_pucch,
+                                                       const fapi::uci_pucch_pdu_format_2_3_4& fapi_pucch)
+{
+  switch (fapi_pucch.pucch_format) {
+    case fapi::uci_pucch_pdu_format_2_3_4::format_type::format_2:
+      mac_pucch.pucch_fmt = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_2;
+      break;
+    case fapi::uci_pucch_pdu_format_2_3_4::format_type::format_3:
+      mac_pucch.pucch_fmt = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_3;
+      break;
+    case fapi::uci_pucch_pdu_format_2_3_4::format_type::format_4:
+      mac_pucch.pucch_fmt = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_4;
+      break;
+  }
+  mac_pucch.ul_sinr = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
+  mac_pucch.rssi    = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
+  mac_pucch.rsrp    = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
+  convert_fapi_to_mac_ta_offset(mac_pucch.time_advance_offset, fapi_pucch.timing_advance_offset_ns);
+
+  // Fill SR.
+  if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_2_3_4::SR_BIT)) {
+    mac_uci_pdu::pucch_f2_or_f3_or_f4_type::sr_information& sr = mac_pucch.sr_info.emplace();
+    sr                                                         = fapi_pucch.sr.sr_payload;
+  }
+
+  // Fill HARQ.
+  if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_2_3_4::HARQ_BIT)) {
+    mac_uci_pdu::pucch_f2_or_f3_or_f4_type::harq_information& harq = mac_pucch.harq_info.emplace();
+    harq.harq_status                                               = fapi_pucch.harq.detection_status;
+    harq.payload                                                   = fapi_pucch.harq.payload;
+  }
+
+  // Fill CSI Part 1.
+  if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT)) {
+    mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information& csi =
+        mac_pucch.uci_part1_or_csi_part1_info.emplace();
+    csi.payload_type =
+        mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload;
+    csi.status  = fapi_pucch.csi_part1.detection_status;
+    csi.payload = fapi_pucch.csi_part1.payload;
+  }
+
+  // Fill CSI Part 2.
+  if (fapi_pucch.pdu_bitmap.test(fapi::uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT)) {
+    mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information& csi =
+        mac_pucch.uci_part2_or_csi_part2_info.emplace();
+    csi.payload_type =
+        mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information::payload_type_t::csi_part_payload;
+    csi.status  = fapi_pucch.csi_part2.detection_status;
+    csi.payload = fapi_pucch.csi_part2.payload;
+  }
+}
+
 void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indication_message& msg)
 {
   mac_uci_indication_message mac_msg;
@@ -220,8 +273,13 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
         convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_pdu.pucch_f0_or_f1, pdu.pucch_pdu_f01);
         break;
       }
-      case fapi::uci_pdu_type::PUCCH_format_2_3_4:
+      case fapi::uci_pdu_type::PUCCH_format_2_3_4: {
+        mac_uci_pdu& mac_pdu = mac_msg.ucis.emplace_back();
+        mac_pdu.type         = mac_uci_pdu::pdu_type::pucch_f2_or_f3_or_f4;
+        mac_pdu.rnti         = to_rnti(pdu.pucch_pdu_f234.rnti);
+        convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_pdu.pucch_f2_or_f3_or_f4, pdu.pucch_pdu_f234);
         break;
+      }
     }
   }
 
