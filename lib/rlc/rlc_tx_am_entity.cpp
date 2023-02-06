@@ -101,7 +101,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
     }
     byte_buffer pdu;
     status_pdu.pack(pdu);
-    logger.log_info("Status PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
+    logger.log_info(pdu.begin(), pdu.end(), "Status PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
 
     // Update metrics
     metrics.metrics_add_pdus(1, pdu.length());
@@ -200,7 +200,13 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu});
-  logger.log_info("TX PDU ({}): SN={}, pdu_len={}, grant_len={}", hdr.si, hdr.sn, pdu_buf.length(), grant_len);
+  logger.log_info(pdu_buf.begin(),
+                  pdu_buf.end(),
+                  "TX PDU ({}): SN={}, pdu_len={}, grant_len={}",
+                  hdr.si,
+                  hdr.sn,
+                  pdu_buf.length(),
+                  grant_len);
 
   // Update TX Next
   st.tx_next = (st.tx_next + 1) % mod;
@@ -256,7 +262,13 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
-  logger.log_info("TX PDU ({}): SN={}, pdu_len={}, grant_len={}", hdr.si, hdr.sn, pdu_buf.length(), grant_len);
+  logger.log_info(pdu_buf.begin(),
+                  pdu_buf.end(),
+                  "TX PDU ({}): SN={}, pdu_len={}, grant_len={}",
+                  hdr.si,
+                  hdr.sn,
+                  pdu_buf.length(),
+                  grant_len);
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
@@ -342,8 +354,14 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
-  logger.log_info(
-      "TX PDU ({}): SN={}, SO={}, pdu_len={}, grant_len={}", hdr.si, hdr.sn, hdr.so, pdu_buf.length(), grant_len);
+  logger.log_info(pdu_buf.begin(),
+                  pdu_buf.end(),
+                  "TX PDU ({}): SN={}, SO={}, pdu_len={}, grant_len={}",
+                  hdr.si,
+                  hdr.sn,
+                  hdr.so,
+                  pdu_buf.length(),
+                  grant_len);
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
@@ -470,7 +488,13 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, retx_payload_len});
-  logger.log_info("RETX PDU ({}): SN={}, pdu_len={}, grant_len={}", hdr.si, hdr.sn, pdu_buf.length(), grant_len);
+  logger.log_info(pdu_buf.begin(),
+                  pdu_buf.end(),
+                  "RETX PDU ({}): SN={}, pdu_len={}, grant_len={}",
+                  hdr.si,
+                  hdr.sn,
+                  pdu_buf.length(),
+                  grant_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
