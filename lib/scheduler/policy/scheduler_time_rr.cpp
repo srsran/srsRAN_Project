@@ -230,15 +230,11 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_list&               ues,
                                  bool                         is_retx)
 {
-  if (not is_retx) {
-    // Increment Round-robin counter to prioritize different UEs.
-    rr_count++;
-  }
-
-  auto tx_ue_function = [this, &res_grid, &pdsch_alloc, is_retx](const ue& u) {
+  unsigned rr_priority_idx = res_grid.get_pdcch_slot().to_uint();
+  auto     tx_ue_function  = [this, &res_grid, &pdsch_alloc, is_retx](const ue& u) {
     return alloc_dl_ue(u, res_grid, pdsch_alloc, is_retx, logger);
   };
-  if (round_robin_apply(ues, rr_count, tx_ue_function)) {
+  if (round_robin_apply(ues, rr_priority_idx, tx_ue_function)) {
     return;
   }
 }
@@ -248,10 +244,11 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_list&               ues,
                                  bool                         is_retx)
 {
-  auto tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
+  unsigned rr_priority_idx = res_grid.get_pdcch_slot().to_uint();
+  auto     tx_ue_function  = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
     return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, logger);
   };
-  if (round_robin_apply(ues, rr_count, tx_ue_function)) {
+  if (round_robin_apply(ues, rr_priority_idx, tx_ue_function)) {
     return;
   }
 }

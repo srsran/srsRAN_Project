@@ -30,8 +30,6 @@ public:
 
 private:
   srslog::basic_logger& logger;
-
-  unsigned rr_count = 0;
 };
 
 } // namespace srsgnb
