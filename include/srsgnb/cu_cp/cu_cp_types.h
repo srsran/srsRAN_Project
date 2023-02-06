@@ -119,23 +119,6 @@ constexpr inline std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(d
   return static_cast<std::underlying_type_t<du_cell_index_t>>(du_cell_index);
 }
 
-/// \brief RAN_UE_ID (non ASN1 type of RAN_UE_NGAP_ID).
-/// \remark See TS 38.413 Section 9.3.3.2: RAN_UE_NGAP_ID valid values: (0..2^32-1)
-constexpr static uint64_t MAX_NOF_RAN_UES = ((uint64_t)1 << 32);
-enum class ran_ue_id_t : uint64_t { min = 0, max = MAX_NOF_RAN_UES - 1, invalid = 0x1ffffffff };
-
-/// Convert RAN_UE_ID type to integer.
-inline uint64_t ran_ue_id_to_uint(ran_ue_id_t id)
-{
-  return static_cast<uint64_t>(id);
-}
-
-/// Convert integer to RAN_UE_ID type.
-inline ran_ue_id_t uint_to_ran_ue_id(std::underlying_type_t<ran_ue_id_t> id)
-{
-  return static_cast<ran_ue_id_t>(id);
-}
-
 // ASN1 types converted to common types
 
 struct cu_cp_qos_characteristics {
