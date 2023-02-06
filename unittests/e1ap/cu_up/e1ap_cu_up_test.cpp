@@ -116,7 +116,7 @@ TEST_F(e1ap_cu_up_test, when_cu_cp_e1_setup_request_cant_be_handled_then_reject_
   test_logger.info("TEST: Transmit E1SetupFailure message...");
   cu_cp_e1_setup_response msg = {};
   msg.success                 = false;
-  msg.cause                   = cause_t::nulltype;
+  msg.cause                   = cause_t::radio_network;
   e1ap->handle_cu_cp_e1_setup_response(msg);
 
   // Check the generated PDU is indeed the E1 Setup failure
