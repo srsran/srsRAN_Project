@@ -54,11 +54,11 @@ constexpr inline qos_flow_id_t uint_to_qos_flow_id(uint8_t idx)
   return static_cast<qos_flow_id_t>(idx);
 }
 
-struct slice_support_item {
+struct slice_support_item_t {
   s_nssai_t s_nssai;
 };
 
-struct nr_cgi_support_item {
+struct nr_cgi_support_item_t {
   nr_cell_global_id_t nr_cgi;
 };
 
@@ -69,18 +69,18 @@ struct non_dyn_5qi_descriptor_t {
   optional<uint16_t> max_data_burst_volume;
 };
 
-struct ng_ran_qos_support_item {
+struct ng_ran_qos_support_item_t {
   non_dyn_5qi_descriptor_t non_dyn_5qi_descriptor;
 };
 
 struct qos_params_support_list_t {
-  std::vector<ng_ran_qos_support_item> ng_ran_qos_support_list;
+  std::vector<ng_ran_qos_support_item_t> ng_ran_qos_support_list;
 };
 
 struct supported_plmns_item_t {
   std::string                            plmn_id;
-  std::vector<slice_support_item>        slice_support_list;
-  std::vector<nr_cgi_support_item>       nr_cgi_support_list;
+  std::vector<slice_support_item_t>      slice_support_list;
+  std::vector<nr_cgi_support_item_t>     nr_cgi_support_list;
   std::vector<qos_params_support_list_t> qos_params_support_list;
 };
 
