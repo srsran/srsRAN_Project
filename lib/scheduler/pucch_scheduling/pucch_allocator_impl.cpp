@@ -728,7 +728,12 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
                            uci_bits.sr_bits,
                            uci_bits.csi_part1_bits);
   logger.debug(
-      "PUCCH Format 2 grant allocation for RNTI {:#x} for slot={} completed.", rnti, pucch_slot_alloc.slot.to_uint());
+      "PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits for RNTI {:#x} for slot={} completed.",
+      uci_bits.harq_ack_nof_bits,
+      uci_bits.sr_bits,
+      uci_bits.csi_part1_bits,
+      rnti,
+      pucch_slot_alloc.slot.to_uint());
   output.pucch_pdu           = &pucch_pdu;
   output.pucch_res_indicator = static_cast<unsigned>(format2_res.pucch_res_indicator);
 
@@ -853,7 +858,12 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_
                            uci_bits.csi_part1_bits);
 
   logger.debug(
-      "PUCCH Format 2 grant allocation for RNTI {:#x} for slot={} completed.", crnti, pucch_slot_alloc.slot.to_uint());
+      "PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits for RNTI {:#x} for slot={} completed.",
+      uci_bits.harq_ack_nof_bits,
+      uci_bits.sr_bits,
+      uci_bits.csi_part1_bits,
+      crnti,
+      pucch_slot_alloc.slot.to_uint());
   output.pucch_pdu           = &pucch_pdu;
   output.pucch_res_indicator = static_cast<unsigned>(format2_res.pucch_res_indicator);
 

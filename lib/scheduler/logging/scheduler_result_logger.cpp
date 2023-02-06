@@ -140,21 +140,39 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   for (const pucch_info& pucch : result.ul.pucchs) {
+    unsigned nof_harq_bits{0};
+    unsigned nof_sr_bits{0};
+    unsigned nof_csi_part1_bits{0};
+    if (pucch.format == pucch_format::FORMAT_1) {
+      nof_harq_bits = pucch.format_1.harq_ack_nof_bits;
+      nof_sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
+    } else if (pucch.format == pucch_format::FORMAT_2) {
+      nof_harq_bits      = pucch.format_2.harq_ack_nof_bits;
+      nof_sr_bits        = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
+      nof_csi_part1_bits = pucch.format_2.csi_part1_bits;
+    }
     if (pucch.resources.second_hop_prbs.empty()) {
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symbols={}",
-                     pucch.crnti,
-                     pucch.format,
-                     pucch.resources.prbs,
-                     pucch.resources.symbols);
-    } else {
-      fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symbols={}, second_prbs={}",
+                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symbols={}, uci: harq_bits={} sr={} csi-1_bits={}",
                      pucch.crnti,
                      pucch.format,
                      pucch.resources.prbs,
                      pucch.resources.symbols,
-                     pucch.resources.second_hop_prbs);
+                     nof_harq_bits,
+                     nof_sr_bits,
+                     nof_csi_part1_bits);
+    } else {
+      fmt::format_to(fmtbuf,
+                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symbols={}, second_prbs={}, uci: harq_bits={} sr={} "
+                     "csi-1_bits={}",
+                     pucch.crnti,
+                     pucch.format,
+                     pucch.resources.prbs,
+                     pucch.resources.symbols,
+                     pucch.resources.second_hop_prbs,
+                     nof_harq_bits,
+                     nof_sr_bits,
+                     nof_csi_part1_bits);
     }
   }
 

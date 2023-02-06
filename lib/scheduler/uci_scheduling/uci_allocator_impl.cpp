@@ -219,11 +219,17 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
       nof_csi_part1_bits += existing_pusch->uci.value().csi_part1_nof_bits;
     }
 
-    return fill_uci_on_pusch(
-        existing_pusch->uci.value(),
-        ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
-        nof_harq_ack_bits,
-        nof_csi_part1_bits);
+    fill_uci_on_pusch(existing_pusch->uci.value(),
+                      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value(),
+                      nof_harq_ack_bits,
+                      nof_csi_part1_bits);
+    logger.debug("UCI with {} H-ACK, {} CSI-p1, {} CSI-p2 bits for RNTI {:#x} for slot={} allocated on PUSCH.",
+                 existing_pusch->uci.value().harq_ack_nof_bits,
+                 existing_pusch->uci.value().csi_part1_nof_bits,
+                 existing_pusch->uci.value().csi_part2_nof_bits,
+                 crnti,
+                 slot_alloc.slot.to_uint());
+    return;
   }
 
   // Else, allocate the CSI on the PUCCH.
