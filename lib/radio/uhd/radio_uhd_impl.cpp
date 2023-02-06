@@ -421,8 +421,8 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
   // Create receive streams.
   for (unsigned rx_stream_idx = 0; rx_stream_idx != radio_config.tx_streams.size(); ++rx_stream_idx) {
-    if (rx_streams.emplace_back(
-            device.create_rx_stream(notifier, rx_stream_description_list[rx_stream_idx])) == nullptr) {
+    if (rx_streams.emplace_back(device.create_rx_stream(notifier, rx_stream_description_list[rx_stream_idx])) ==
+        nullptr) {
       return;
     }
   }

@@ -34,6 +34,8 @@ struct rf_driver_appconfig {
   double rx_gain_dB = 60.0;
   /// LO Offset in MHz. It shifts the LO from the center frequency for moving the LO leakage out of the channel.
   double lo_offset_MHz = 0.0;
+  /// Rx to Tx radio time alignment calibration in samples.
+  optional<int> tx_time_advance_sps;
   /// Synchronization source.
   std::string synch_source = "default";
   /// Clock source.

@@ -9,14 +9,34 @@ using namespace srsgnb;
 static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
 {
   static constexpr phy_time_unit reference_time = phy_time_unit::from_units_of_kappa(16);
-  bool                           valid          = true;
 
   if (!reference_time.is_sample_accurate(config.srate_MHz * 1e6)) {
     fmt::print("The sampling rate must be multiple of {:.2f} MHz.\n", 1e-6 / reference_time.to_seconds());
-    valid &= false;
+    return false;
   }
 
-  return valid;
+  if (config.tx_time_advance_sps.has_value()) {
+    unsigned srate_Hz = static_cast<unsigned>(config.srate_MHz * 1e6);
+
+    // Compute the Tx time advance times in number of samples closest to the requested value that are aligned with an
+    // integer number of NR-PHY time units. If the requested value is already aligned, the same value is returned.
+    std::pair<int, int> time_adv_candidates =
+        phy_time_unit::tc_aligned_nof_samples(config.tx_time_advance_sps.value(), srate_Hz);
+
+    if (time_adv_candidates.first != config.tx_time_advance_sps) {
+      // If the requested Tx time advance is not aligned, inform the user of the closest candidates.
+      fmt::print(
+          "Requested Tx time advance (i.e, {}) cannot be expressed in integer number of Tc (NR time units).\n"
+          "Choose a sampling rate with a sampling period that is multiple of Tc, or set the time advance to one of the "
+          "closest candidates: {} or {}.\n",
+          config.tx_time_advance_sps,
+          time_adv_candidates.first,
+          time_adv_candidates.second);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 /// Validates the given PDCCH cell application configuration. Returns true on success, otherwise false.
@@ -120,8 +140,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 static bool validate_cells_appconfig(const cell_appconfig& config)
 {
   if (config.pci > 1007) {
-    fmt::print(
-        "Invalid PCI (i.e. {}). PCI ranges from 0 to {}.\n", config.pci, MAX_PCI);
+    fmt::print("Invalid PCI (i.e. {}). PCI ranges from 0 to {}.\n", config.pci, MAX_PCI);
     return false;
   }
 

@@ -70,6 +70,24 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
   app.add_option("--clock", rf_driver_params.clock_source, "Clock source.")->capture_default_str();
   app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source.")->capture_default_str();
   app.add_option("--otw_format", rf_driver_params.otw_format, "Over-the-wire format.")->capture_default_str();
+  app.add_option_function<std::string>(
+         "--tx_time_advance_samples",
+         [&rf_driver_params](const std::string& value) {
+           if (!value.empty() && value != "auto") {
+             std::stringstream ss(value);
+             int               ta_sps;
+             ss >> ta_sps;
+             rf_driver_params.tx_time_advance_sps = ta_sps;
+           }
+         },
+         "Rx to Tx radio time alignment calibration in samples. Default: auto")
+      ->check([](const std::string& value) -> std::string {
+        if (value == "auto" ||
+            std::all_of(value.begin(), value.end(), [](const char c) { return (std::isdigit(c)) || (c == '-'); })) {
+          return "";
+        }
+        return "Invalid Tx time advance value: " + value;
+      });
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig& expert_phy_params)
