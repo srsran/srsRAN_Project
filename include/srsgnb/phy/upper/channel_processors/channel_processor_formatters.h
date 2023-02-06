@@ -713,7 +713,7 @@ struct formatter<srsgnb::pusch_processor::codeword_description> {
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rv={}", codeword.value().rv);
-    helper.format_always(ctx, "bg={}", codeword.value().ldpc_base_graph);
+    helper.format_if_verbose(ctx, "bg={}", codeword.value().ldpc_base_graph);
     helper.format_always(ctx, "ndi={}", codeword.value().new_data);
 
     return ctx.out();
@@ -791,7 +791,7 @@ struct formatter<srsgnb::pusch_processor::pdu_t> {
 
     // PUSCH data codeword if available.
     if (pdu.codeword.has_value()) {
-      helper.format_if_verbose(ctx, pdu.codeword.value());
+      helper.format_always(ctx, pdu.codeword.value());
     }
 
     helper.format_if_verbose(ctx, "n_id={}", pdu.n_id);
