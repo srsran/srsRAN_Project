@@ -26,9 +26,9 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   for (unsigned i = 0; i != req.cfg.cells.size(); ++i) {
-    du_cells[i] =
+    ue_du_cells[i] =
         std::make_unique<ue_cell>(ue_index, req.crnti, expert_cfg, cell_cfg_common, req.cfg.cells[i].serv_cell_cfg);
-    ue_cells.push_back(du_cells[i].get());
+    ue_cells.push_back(ue_du_cells[i].get());
   }
 
   dl_lc_ch_mgr.configure(log_channels_configs);
@@ -37,26 +37,26 @@ ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
 
 void ue::slot_indication(slot_point sl_tx)
 {
-  for (unsigned i = 0; i != du_cells.size(); ++i) {
-    if (du_cells[i] != nullptr) {
+  for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
+    if (ue_du_cells[i] != nullptr) {
       // Clear old HARQs.
-      du_cells[i]->harqs.slot_indication(sl_tx);
+      ue_du_cells[i]->harqs.slot_indication(sl_tx);
 
       // Check if the UE has had too many KOs. If so, force a BSR=0.
-      if (du_cells[i]->get_metrics().consecutive_pusch_kos >= expert_cfg.max_consecutive_pusch_kos) {
-        du_cells[i]->get_metrics().consecutive_pusch_kos = 0;
+      if (ue_du_cells[i]->get_metrics().consecutive_pusch_kos >= expert_cfg.max_consecutive_pusch_kos) {
+        ue_du_cells[i]->get_metrics().consecutive_pusch_kos = 0;
         ul_bsr_indication_message bsr{};
         bsr.ue_index   = ue_index;
         bsr.crnti      = crnti;
         bsr.type       = bsr_format::LONG_BSR;
-        bsr.cell_index = du_cells[i]->cell_index;
+        bsr.cell_index = ue_du_cells[i]->cell_index;
         bsr.reported_lcgs.resize(MAX_NOF_LCGS);
         for (unsigned j = 0; j != bsr.reported_lcgs.size(); ++j) {
           bsr.reported_lcgs[j].lcg_id    = uint_to_lcg_id(j);
           bsr.reported_lcgs[j].nof_bytes = 0;
         }
         ul_lc_ch_mgr.handle_bsr_indication(bsr);
-        logger.warning("UE={}: Forcing BSR=0. Cause: Too many consecutive PUSCH KOs");
+        logger.warning("UE={} rnti={:#x}: Forcing BSR=0. Cause: Too many consecutive PUSCH KOs", ue_index, crnti);
       }
     }
   }
@@ -69,8 +69,8 @@ void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& 
   ul_lc_ch_mgr.configure(log_channels_configs);
 
   // Handle removed cells.
-  for (unsigned i = 0; i != du_cells.size(); ++i) {
-    if (du_cells[i] != nullptr) {
+  for (unsigned i = 0; i != ue_du_cells.size(); ++i) {
+    if (ue_du_cells[i] != nullptr) {
       if (std::none_of(msg.cfg.cells.begin(), msg.cfg.cells.end(), [i](const cell_config_dedicated& c) {
             return c.serv_cell_cfg.cell_index == to_du_cell_index(i);
           })) {
@@ -81,8 +81,8 @@ void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& 
 
   // Handle new cells.
   for (const auto& cell : msg.cfg.cells) {
-    if (du_cells[cell.serv_cell_cfg.cell_index] != nullptr) {
-      du_cells[cell.serv_cell_cfg.cell_index]->handle_reconfiguration_request(cell.serv_cell_cfg);
+    if (ue_du_cells[cell.serv_cell_cfg.cell_index] != nullptr) {
+      ue_du_cells[cell.serv_cell_cfg.cell_index]->handle_reconfiguration_request(cell.serv_cell_cfg);
     } else {
       // TODO: Handle SCell creation.
     }

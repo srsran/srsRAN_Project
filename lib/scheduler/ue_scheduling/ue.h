@@ -38,12 +38,12 @@ public:
   ue_cell* find_cell(du_cell_index_t cell_index)
   {
     srsgnb_assert(cell_index < MAX_NOF_DU_CELLS, "Invalid cell_index={}", cell_index);
-    return du_cells[cell_index].get();
+    return ue_du_cells[cell_index].get();
   }
   const ue_cell* find_cell(du_cell_index_t cell_index) const
   {
     srsgnb_assert(cell_index < MAX_NOF_DU_CELLS, "Invalid cell_index={}", cell_index);
-    return du_cells[cell_index].get();
+    return ue_du_cells[cell_index].get();
   }
 
   /// \brief Fetch UE cell based on UE-specific cell identifier. E.g. PCell corresponds to ue_cell_index==0.
@@ -144,7 +144,7 @@ private:
 
   /// List of UE cells indexed by \c du_cell_index_t. If an element is null, it means that the DU cell is not
   /// configured to be used by the UE.
-  std::array<std::unique_ptr<ue_cell>, MAX_NOF_DU_CELLS> du_cells;
+  std::array<std::unique_ptr<ue_cell>, MAX_NOF_DU_CELLS> ue_du_cells;
 
   /// List of UE cells indexed by \c ue_cell_index_t. The size of the list is equal to the number of cells aggregated
   /// and configured for the UE. PCell corresponds to ue_cell_index=0. the first SCell corresponds to ue_cell_index=1,
