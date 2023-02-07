@@ -27,7 +27,7 @@ struct f1ap_ue_context_setup_request {
 struct f1ap_ue_context_setup_response {
   asn1::f1ap::ue_context_setup_resp_s response;
   asn1::f1ap::ue_context_setup_fail_s failure;
-  bool                                success;
+  bool                                success = false;
 };
 
 /// \brief Request from CU to F1AP-CU to start an F1AP "UE Context Modification" procedure, as per TS38.473 8.3.4.
@@ -40,7 +40,7 @@ struct f1ap_ue_context_modification_request {
 struct f1ap_ue_context_modification_response {
   asn1::f1ap::ue_context_mod_resp_s response;
   asn1::f1ap::ue_context_mod_fail_s failure;
-  bool                              success;
+  bool                              success = false;
 };
 
 } // namespace srs_cu_cp

@@ -28,8 +28,8 @@ namespace srsgnb {
 namespace srs_du {
 
 struct f1_rx_pdu {
-  du_ue_index_t           ue_index;
-  lcid_t                  lcid;
+  du_ue_index_t           ue_index = INVALID_DU_UE_INDEX;
+  lcid_t                  lcid     = INVALID_LCID;
   byte_buffer_slice_chain pdu;
 };
 
@@ -42,10 +42,10 @@ struct f1ap_ul_rrc_msg {
 };
 
 struct f1ap_rrc_delivery_report_msg {
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
-  lcid_t          lcid;
-  bool            rrc_delivery_status;
+  du_cell_index_t cell_index          = INVALID_DU_CELL_INDEX;
+  du_ue_index_t   ue_index            = INVALID_DU_UE_INDEX;
+  lcid_t          lcid                = INVALID_LCID;
+  bool            rrc_delivery_status = false;
 };
 
 class f1ap_rrc_message_transfer_procedure_handler
@@ -74,7 +74,7 @@ struct f1_setup_request_message {
 
 struct f1_setup_response_message {
   asn1::f1ap::f1_setup_resp_s msg;
-  bool                        success;
+  bool                        success = false;
 };
 
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
@@ -102,7 +102,7 @@ struct f1ap_ue_context_modification_required_message {
 struct f1ap_ue_context_modification_response_message {
   asn1::f1ap::ue_context_mod_confirm_s confirm;
   asn1::f1ap::ue_context_mod_refuse_s  refuse;
-  bool                                 success;
+  bool                                 success = false;
 };
 
 struct f1ap_ue_inactivity_notification_message {
@@ -114,7 +114,7 @@ struct f1ap_notify_message {
 };
 
 struct f1ap_ue_delete_request {
-  du_ue_index_t ue_index;
+  du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
 };
 
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.

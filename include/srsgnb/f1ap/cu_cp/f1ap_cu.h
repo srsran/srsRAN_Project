@@ -51,7 +51,7 @@ public:
 struct f1_setup_response_message {
   asn1::f1ap::f1_setup_resp_s response;
   asn1::f1ap::f1_setup_fail_s failure;
-  bool                        success;
+  bool                        success = false;
 };
 
 struct f1_setup_request_message {
