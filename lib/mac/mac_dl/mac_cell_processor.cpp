@@ -144,17 +144,6 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
     } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu)) {
       const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu);
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pdu{};
-      switch (pucch.pucch_fmt) {
-        case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_2:
-          pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_2;
-          break;
-        case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_3:
-          pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_3;
-          break;
-        case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_4:
-          pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_4;
-          break;
-      }
       if (pucch.sr_info.has_value()) {
         pdu.sr_info = pucch.sr_info.value();
       }

@@ -77,10 +77,6 @@ struct uci_indication {
       /// Maximum number of SR bits expected on the PUCCH transmission.
       static const unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
 
-      /// \brief PUCCH format.
-      enum class pucch_format { format_2, format_3, format_4 };
-
-      pucch_format                                                   pucch_fmt;
       bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>                       sr_info;
       bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>               harqs;
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part1;

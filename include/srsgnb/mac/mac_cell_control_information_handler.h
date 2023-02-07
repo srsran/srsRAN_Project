@@ -111,9 +111,6 @@ struct mac_uci_pdu {
     /// Maximum number of SR bits expected on the PUCCH transmission.
     static const unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
 
-    /// \brief PUCCH format.
-    enum class pucch_format { format_2, format_3, format_4 };
-
     using sr_information = bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>;
 
     struct harq_information {
@@ -148,7 +145,6 @@ struct mac_uci_pdu {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
     };
 
-    pucch_format pucch_fmt;
     /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
     optional<float> ul_sinr;
     /// \brief Timing Advance measured for the UE. Values: {0, 63}.

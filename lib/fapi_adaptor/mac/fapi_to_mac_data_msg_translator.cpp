@@ -203,17 +203,6 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
 static void convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_uci_pdu::pucch_f2_or_f3_or_f4_type& mac_pucch,
                                                        const fapi::uci_pucch_pdu_format_2_3_4& fapi_pucch)
 {
-  switch (fapi_pucch.pucch_format) {
-    case fapi::uci_pucch_pdu_format_2_3_4::format_type::format_2:
-      mac_pucch.pucch_fmt = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_2;
-      break;
-    case fapi::uci_pucch_pdu_format_2_3_4::format_type::format_3:
-      mac_pucch.pucch_fmt = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_3;
-      break;
-    case fapi::uci_pucch_pdu_format_2_3_4::format_type::format_4:
-      mac_pucch.pucch_fmt = mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_4;
-      break;
-  }
   mac_pucch.ul_sinr = convert_fapi_to_mac_ul_sinr(fapi_pucch.ul_sinr_metric);
   mac_pucch.rssi    = convert_fapi_to_mac_rssi(fapi_pucch.rssi);
   mac_pucch.rsrp    = convert_fapi_to_mac_rsrp(fapi_pucch.rsrp);
