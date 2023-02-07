@@ -191,14 +191,11 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   ASSERT_TRUE(f1u_gw->created_ul_teid_list.empty());
 
   // prepare modification request (to remove bearers)
-  asn1::e1ap::pdu_session_res_to_modify_item_s pdu_session_modify_item;
-  pdu_session_modify_item.pdu_session_id = 0x0d;
+  e1ap_pdu_session_res_to_modify_item pdu_session_modify_item;
+  pdu_session_modify_item.pdu_session_id = uint_to_pdu_session_id(0x0d);
 
-  asn1::e1ap::drb_to_rem_item_ng_ran_s invalid_drb_to_remove;
-  invalid_drb_to_remove.drb_id = 0x0f;
-
-  asn1::e1ap::drb_to_rem_item_ng_ran_s valid_drb_to_remove;
-  valid_drb_to_remove.drb_id = 0x0b;
+  drb_id_t invalid_drb_to_remove = uint_to_drb_id(0x0f);
+  drb_id_t valid_drb_to_remove   = uint_to_drb_id(0x0b);
 
   pdu_session_modify_item.drb_to_rem_list_ng_ran.push_back(invalid_drb_to_remove);
   pdu_session_modify_item.drb_to_rem_list_ng_ran.push_back(valid_drb_to_remove);

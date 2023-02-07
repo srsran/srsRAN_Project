@@ -275,7 +275,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
     }
 
     bearer_context_mod.ue_index = ue_ctxt.ue_index;
-    bearer_context_mod.request  = msg->sys_bearer_context_mod_request.value;
+    fill_e1ap_bearer_context_modification_request(bearer_context_mod, msg);
   }
 
   // Forward message to CU-UP

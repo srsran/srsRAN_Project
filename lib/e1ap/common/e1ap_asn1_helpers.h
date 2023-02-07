@@ -44,7 +44,7 @@ inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&          
 
     for (const auto& asn1_nr_cgi_support_item : asn1_plmn_item.nr_cgi_support_list) {
       nr_cgi_support_item_t nr_cgi_support;
-      nr_cgi_support.nr_cgi = cgi_from_e1ap_asn1(asn1_nr_cgi_support_item.nr_cgi);
+      nr_cgi_support.nr_cgi = e1ap_asn1_to_cgi(asn1_nr_cgi_support_item.nr_cgi);
 
       plmn.nr_cgi_support_list.push_back(nr_cgi_support);
     }
@@ -120,7 +120,7 @@ inline void fill_e1ap_cu_up_e1_setup_request(cu_up_e1_setup_request&            
 
     for (const auto& asn1_nr_cgi_support_item : asn1_plmn_item.nr_cgi_support_list) {
       nr_cgi_support_item_t nr_cgi_support;
-      nr_cgi_support.nr_cgi = cgi_from_e1ap_asn1(asn1_nr_cgi_support_item.nr_cgi);
+      nr_cgi_support.nr_cgi = e1ap_asn1_to_cgi(asn1_nr_cgi_support_item.nr_cgi);
 
       plmn.nr_cgi_support_list.push_back(nr_cgi_support);
     }

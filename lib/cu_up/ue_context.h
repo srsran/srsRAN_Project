@@ -39,8 +39,7 @@ public:
   {
     return pdu_session_manager.setup_pdu_session(session);
   }
-  pdu_session_modification_result
-  modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session) override
+  pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session) override
   {
     return pdu_session_manager.modify_pdu_session(session);
   }

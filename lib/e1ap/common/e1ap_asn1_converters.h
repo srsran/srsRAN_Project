@@ -966,6 +966,7 @@ e1ap_asn1_ng_dl_up_unchanged_to_bool(asn1::e1ap::pdu_session_res_setup_item_s::n
          asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_up_unchanged_opts::options::true_value;
 }
 
+/// \brief Convert E1AP ASN.1 PDCP Count to \c e1ap_pdcp_count type.
 inline e1ap_pdcp_count e1ap_asn1_pdcp_count_to_pdcp_count(asn1::e1ap::pdcp_count_s asn1_pdcp_count)
 {
   e1ap_pdcp_count pdcp_count;
@@ -976,7 +977,8 @@ inline e1ap_pdcp_count e1ap_asn1_pdcp_count_to_pdcp_count(asn1::e1ap::pdcp_count
   return pdcp_count;
 }
 
-inline nr_cell_global_id_t cgi_from_e1ap_asn1(const asn1::e1ap::nr_cgi_s& asn1_cgi)
+/// \brief Convert E1AP ASN.1 CGI to \c nr_cell_global_id_t type.
+inline nr_cell_global_id_t e1ap_asn1_to_cgi(const asn1::e1ap::nr_cgi_s& asn1_cgi)
 {
   nr_cell_global_id_t cgi          = {};
   uint32_t            encoded_plmn = asn1_cgi.plmn_id.to_number();
@@ -996,6 +998,202 @@ inline nr_cell_global_id_t cgi_from_e1ap_asn1(const asn1::e1ap::nr_cgi_s& asn1_c
   cgi.nci.gnb_identity = (asn1_cgi.nr_cell_id.to_number() & 0X3ff0);     // bits 22 to 32
 
   return cgi;
+}
+
+/// \brief Convert E1AP ASN.1 QoS Flow Map Item to \c e1ap_qos_flow_map_item type.
+inline e1ap_qos_flow_map_item
+asn1_e1ap_to_qos_flow_map_item(const asn1::e1ap::qos_flow_map_item_s& asn1_qos_flow_map_item)
+{
+  e1ap_qos_flow_map_item qos_flow_map_item;
+  qos_flow_map_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_map_item.qos_flow_id);
+
+  if (asn1_qos_flow_map_item.qos_flow_map_ind_present) {
+    qos_flow_map_item.qos_flow_map_ind = asn1_qos_flow_map_item.qos_flow_map_ind.to_string();
+  }
+
+  return qos_flow_map_item;
+}
+
+/// \brief Convert E1AP ASN.1 Cell Group Info to \c std::vector<e1ap_cell_group_info_item> type.
+inline void e1ap_asn1_to_cell_group_info(std::vector<e1ap_cell_group_info_item>& cell_group_info,
+                                         const asn1::e1ap::cell_group_info_l&    asn1_cell_group_info)
+{
+  for (const auto& asn1_cell_group_info_item : asn1_cell_group_info) {
+    e1ap_cell_group_info_item cell_group_info_item;
+    cell_group_info_item.cell_group_id = asn1_cell_group_info_item.cell_group_id;
+
+    if (asn1_cell_group_info_item.ul_cfg_present) {
+      cell_group_info_item.ul_cfg = asn1_cell_group_info_item.ul_cfg.to_string();
+    }
+
+    if (asn1_cell_group_info_item.dl_tx_stop_present) {
+      cell_group_info_item.dl_tx_stop = asn1_cell_group_info_item.dl_tx_stop.to_string();
+    }
+
+    if (asn1_cell_group_info_item.rat_type_present) {
+      cell_group_info_item.rat_type = asn1_cell_group_info_item.rat_type.to_string();
+    }
+
+    cell_group_info.push_back(cell_group_info_item);
+  }
+}
+
+/// \brief Convert E1AP ASN.1 QoS Flow Map Info to \c slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item>
+/// type.
+inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item>& flow_map_info,
+                                       const asn1::e1ap::qos_flow_qos_param_list_l& ans1_flow_map_list)
+{
+  for (const auto& asn1_flow_map_item : ans1_flow_map_list) {
+    e1ap_qos_flow_qos_param_item flow_map_item;
+    flow_map_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_map_item.qos_flow_id);
+    // Add qos flow level params
+
+    // Add qos characteristics
+    if (asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.type() ==
+        asn1::e1ap::qos_characteristics_c::types_opts::dyn_5qi) {
+      auto& asn1_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
+
+      e1ap_dynamic_5qi_descriptor dyn_5qi;
+      dyn_5qi.qos_prio_level                 = asn1_dyn_5qi.qos_prio_level;
+      dyn_5qi.packet_delay_budget            = asn1_dyn_5qi.packet_delay_budget;
+      dyn_5qi.packet_error_rate.per_exponent = asn1_dyn_5qi.packet_error_rate.per_exponent;
+      dyn_5qi.packet_error_rate.per_scalar   = asn1_dyn_5qi.packet_error_rate.per_scalar;
+
+      if (asn1_dyn_5qi.five_qi_present) {
+        dyn_5qi.five_qi = asn1_dyn_5qi.five_qi;
+      }
+      if (asn1_dyn_5qi.delay_crit_present) {
+        dyn_5qi.delay_crit = asn1_dyn_5qi.delay_crit.to_string();
+      }
+      if (asn1_dyn_5qi.averaging_win_present) {
+        dyn_5qi.averaging_win = asn1_dyn_5qi.averaging_win;
+      }
+      if (asn1_dyn_5qi.max_data_burst_volume_present) {
+        dyn_5qi.max_data_burst_volume = asn1_dyn_5qi.max_data_burst_volume;
+      }
+
+      flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
+    } else {
+      auto& asn1_non_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
+
+      e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
+      non_dyn_5qi.five_qi = asn1_non_dyn_5qi.five_qi;
+      if (asn1_non_dyn_5qi.qos_prio_level_present) {
+        non_dyn_5qi.qos_prio_level = asn1_non_dyn_5qi.qos_prio_level;
+      }
+      if (asn1_non_dyn_5qi.averaging_win_present) {
+        non_dyn_5qi.averaging_win = asn1_non_dyn_5qi.averaging_win;
+      }
+      if (asn1_non_dyn_5qi.max_data_burst_volume_present) {
+        non_dyn_5qi.max_data_burst_volume = asn1_non_dyn_5qi.max_data_burst_volume;
+      }
+
+      flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+    }
+    // add ng ran alloc retention prio
+    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level =
+        asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.prio_level;
+    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap =
+        asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_cap.to_string();
+    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
+        asn1_flow_map_item.qos_flow_level_qos_params.ngra_nalloc_retention_prio.pre_emption_vulnerability.to_string();
+
+    // Add gbr qos flow info
+    if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info_present) {
+      e1ap_gbr_qos_flow_info gbr_qos_flow_info;
+      gbr_qos_flow_info.max_flow_bit_rate_dl =
+          asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_dl;
+      gbr_qos_flow_info.max_flow_bit_rate_ul =
+          asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_ul;
+      gbr_qos_flow_info.guaranteed_flow_bit_rate_dl =
+          asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl;
+      gbr_qos_flow_info.guaranteed_flow_bit_rate_ul =
+          asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul;
+      if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl_present) {
+        gbr_qos_flow_info.max_packet_loss_rate_dl =
+            asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl;
+      }
+      if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_ul_present) {
+        gbr_qos_flow_info.max_packet_loss_rate_ul =
+            asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_ul;
+      }
+
+      flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info = gbr_qos_flow_info;
+    }
+
+    // Add reflective qos attribute
+    if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
+      flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute =
+          asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
+    }
+
+    // Add add qos info
+    if (asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info_present) {
+      flow_map_item.qos_flow_level_qos_params.add_qos_info =
+          asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info.to_string();
+    }
+
+    // Add paging policy ind
+    if (asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_ind_present) {
+      flow_map_item.qos_flow_level_qos_params.paging_policy_ind =
+          asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_ind;
+    }
+
+    // Add reflective qos ind
+    if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind_present) {
+      flow_map_item.qos_flow_level_qos_params.reflective_qos_ind =
+          asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind.to_string();
+    }
+
+    // Add qos flow map ind
+    if (asn1_flow_map_item.qos_flow_map_ind_present) {
+      flow_map_item.qos_flow_map_ind = asn1_flow_map_item.qos_flow_map_ind.to_string();
+    }
+    flow_map_info.emplace(uint_to_qos_flow_id(asn1_flow_map_item.qos_flow_id), flow_map_item);
+  }
+}
+
+/// \brief Convert E1AP ASN.1 Data Forwarding Info Request to \c e1ap_data_forwarding_info_request type
+inline e1ap_data_forwarding_info_request e1ap_asn1_to_data_forwarding_info_request(
+    const asn1::e1ap::data_forwarding_info_request_s& asn1_data_forwarding_info_request)
+{
+  e1ap_data_forwarding_info_request data_forwarding_info_request;
+
+  // drb data forwarding info request
+  data_forwarding_info_request.data_forwarding_request =
+      asn1_data_forwarding_info_request.data_forwarding_request.to_string();
+
+  for (const auto& asn1_qos_flows_forwarded_item :
+       asn1_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels) {
+    e1ap_qos_flow_map_item qos_flows_forwarded_item = asn1_e1ap_to_qos_flow_map_item(asn1_qos_flows_forwarded_item);
+
+    data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.emplace(
+        uint_to_qos_flow_id(asn1_qos_flows_forwarded_item.qos_flow_id), qos_flows_forwarded_item);
+  }
+
+  return data_forwarding_info_request;
+}
+
+/// \brief Convert E1AP ASN.1 PDCP SN Status Info to \c e1ap_pdcp_sn_status_info type
+inline e1ap_pdcp_sn_status_info
+e1ap_asn1_to_pdcp_sn_status_info(const asn1::e1ap::pdcp_sn_status_info_s& asn1_pdcp_sn_status_info)
+{
+  e1ap_pdcp_sn_status_info pdcp_sn_status_info = {};
+
+  pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.pdcp_sn =
+      asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.pdcp_sn;
+  pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn =
+      asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn;
+
+  if (asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu_present) {
+    pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcpsdu =
+        asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu.to_number();
+  }
+
+  pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn = asn1_pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn;
+  pdcp_sn_status_info.pdcp_status_transfer_dl.hfn     = asn1_pdcp_sn_status_info.pdcp_status_transfer_dl.hfn;
+
+  return pdcp_sn_status_info;
 }
 
 } // namespace srsran

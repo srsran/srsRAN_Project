@@ -175,11 +175,10 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     return response;
   }
 
-  const auto& bearer_ctx_modification_request = msg.request.ng_ran_bearer_context_mod_request();
-
   // pdu session resource to modify list
-  if (bearer_ctx_modification_request.pdu_session_res_to_modify_list_present) {
-    for (const auto& pdu_session_item : bearer_ctx_modification_request.pdu_session_res_to_modify_list.value) {
+  if (msg.ng_ran_bearer_context_mod_request.has_value() &&
+      !msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.empty()) {
+    for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
       pdu_session_modification_result result = ue_ctxt->modify_pdu_session(pdu_session_item);
     }
   }

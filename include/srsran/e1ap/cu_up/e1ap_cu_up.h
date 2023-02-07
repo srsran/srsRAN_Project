@@ -21,13 +21,6 @@
 namespace srsran {
 namespace srs_cu_up {
 
-/// \brief Request to modify a bearer context.
-struct e1ap_bearer_context_modification_request {
-  ue_index_t                                   ue_index = INVALID_UE_INDEX;
-  asn1::e1ap::sys_bearer_context_mod_request_c request;
-  // TODO: add optional fields
-};
-
 /// \brief Response to a bearer context modification request including UE index for E1AP map.
 struct e1ap_bearer_context_modification_response {
   bool       success  = false;

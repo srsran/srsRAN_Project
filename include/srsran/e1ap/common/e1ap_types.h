@@ -307,7 +307,7 @@ struct e1ap_pdu_session_res_to_setup_mod_item {
 struct e1ap_drb_to_modify_item_ng_ran {
   drb_id_t                                                       drb_id = drb_id_t::invalid;
   optional<sdap_config_t>                                        sdap_cfg;
-  optional<pdcp_config_t>                                        pdcp_cfg;
+  optional<e1ap_pdcp_config>                                     pdcp_cfg;
   optional<e1ap_data_forwarding_info>                            drb_data_forwarding_info;
   optional<std::string>                                          pdcp_sn_status_request;
   std::vector<e1ap_up_params_item>                               dl_up_params         = {};

@@ -81,7 +81,49 @@ public:
       const srs_cu_up::e1ap_bearer_context_modification_request& msg) override
   {
     logger.info("Received BearerContextModificationRequest");
-    last_bearer_context_modification_request                      = msg;
+
+    // copy message
+    if (last_bearer_context_modification_request.security_info.has_value()) {
+      e1ap_security_info security_info             = {};
+      security_info.security_algorithm             = msg.security_info.value().security_algorithm;
+      security_info.up_security_key.encryption_key = msg.security_info.value().up_security_key.encryption_key.copy();
+      security_info.up_security_key.integrity_protection_key =
+          msg.security_info.value().up_security_key.integrity_protection_key.copy();
+      last_bearer_context_modification_request.security_info = security_info;
+    }
+    if (msg.ue_dl_aggr_max_bit_rate.has_value()) {
+      last_bearer_context_modification_request.ue_dl_aggr_max_bit_rate = msg.ue_dl_aggr_max_bit_rate.value();
+    }
+    if (msg.ue_dl_max_integrity_protected_data_rate.has_value()) {
+      last_bearer_context_modification_request.ue_dl_max_integrity_protected_data_rate =
+          msg.ue_dl_max_integrity_protected_data_rate.value();
+    }
+    if (msg.bearer_context_status_change.has_value()) {
+      last_bearer_context_modification_request.bearer_context_status_change = msg.bearer_context_status_change.value();
+    }
+    if (msg.new_ul_tnl_info_required.has_value()) {
+      last_bearer_context_modification_request.new_ul_tnl_info_required = msg.new_ul_tnl_info_required.value();
+    }
+    if (msg.ue_inactivity_timer.has_value()) {
+      last_bearer_context_modification_request.ue_inactivity_timer = msg.ue_inactivity_timer.value();
+    }
+    if (msg.data_discard_required.has_value()) {
+      last_bearer_context_modification_request.data_discard_required = msg.data_discard_required.value();
+    }
+    if (msg.ng_ran_bearer_context_mod_request.has_value()) {
+      last_bearer_context_modification_request.ng_ran_bearer_context_mod_request =
+          msg.ng_ran_bearer_context_mod_request.value();
+    }
+    if (msg.ran_ue_id.has_value()) {
+      last_bearer_context_modification_request.ran_ue_id = msg.ran_ue_id.value();
+    }
+    if (msg.gnb_du_id.has_value()) {
+      last_bearer_context_modification_request.gnb_du_id = msg.gnb_du_id.value();
+    }
+    if (msg.activity_notif_level.has_value()) {
+      last_bearer_context_modification_request.activity_notif_level = msg.activity_notif_level.value();
+    }
+
     srs_cu_up::e1ap_bearer_context_modification_response response = {};
     response.ue_index                                             = ue_index;
     response.success                                              = true;

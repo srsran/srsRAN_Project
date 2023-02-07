@@ -11,7 +11,6 @@
 #pragma once
 
 #include "pdu_session.h"
-#include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/ran/cause.h"
 #include "srsran/ran/cu_types.h"
@@ -60,11 +59,10 @@ class pdu_session_manager_ctrl
 public:
   virtual ~pdu_session_manager_ctrl() = default;
 
-  virtual pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) = 0;
-  virtual pdu_session_modification_result
-                 modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session) = 0;
-  virtual void   remove_pdu_session(pdu_session_id_t pdu_session_id)                             = 0;
-  virtual size_t get_nof_pdu_sessions()                                                          = 0;
+  virtual pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)   = 0;
+  virtual pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session) = 0;
+  virtual void                            remove_pdu_session(pdu_session_id_t pdu_session_id)                    = 0;
+  virtual size_t                          get_nof_pdu_sessions()                                                 = 0;
 };
 
 } // namespace srs_cu_up

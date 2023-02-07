@@ -35,11 +35,10 @@ public:
                            gtpu_demux_ctrl&                     gtpu_rx_demux_);
   ~pdu_session_manager_impl() override;
 
-  pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
-  pdu_session_modification_result
-         modify_pdu_session(const asn1::e1ap::pdu_session_res_to_modify_item_s& session) override;
-  void   remove_pdu_session(pdu_session_id_t pdu_session_id) override;
-  size_t get_nof_pdu_sessions() override;
+  pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
+  pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session) override;
+  void                            remove_pdu_session(pdu_session_id_t pdu_session_id) override;
+  size_t                          get_nof_pdu_sessions() override;
 
 private:
   uint32_t allocate_local_teid(pdu_session_id_t pdu_session_id);
