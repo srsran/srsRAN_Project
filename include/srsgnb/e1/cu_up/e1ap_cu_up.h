@@ -30,7 +30,7 @@ struct e1ap_bearer_context_modification_request {
 
 /// \brief Response to a bearer context modification request including UE index for E1 map.
 struct e1ap_bearer_context_modification_response {
-  bool       success;
+  bool       success  = false;
   ue_index_t ue_index = INVALID_UE_INDEX; // Valid UE index if modification was successful.
   asn1::e1ap::sys_bearer_context_mod_resp_c sys_bearer_context_modification_resp;
   asn1::e1ap::cause_c                       cause; // Cause if modification was unsuccessful.

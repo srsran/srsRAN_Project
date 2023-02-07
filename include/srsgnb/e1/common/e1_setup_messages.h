@@ -24,7 +24,7 @@ struct cu_cp_e1_setup_request {
 
 /// \brief Response to CU-CP initiated E1 setup request.
 struct cu_cp_e1_setup_response {
-  bool success;
+  bool success = false;
 
   // e1 setup response
   optional<uint64_t>                  gnb_cu_up_id;
@@ -51,7 +51,7 @@ struct cu_up_e1_setup_request {
 
 /// \brief Response to CU-UP initiated E1 setup request.
 struct cu_up_e1_setup_response {
-  bool success;
+  bool success = false;
 
   // e1 setup response
   optional<std::string> gnb_cu_cp_name;

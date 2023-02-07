@@ -32,7 +32,7 @@ struct e1ap_bearer_context_setup_request {
 
 /// \brief Response to a bearer context setup request including UE index for E1 map.
 struct e1ap_bearer_context_setup_response {
-  bool       success;
+  bool       success  = false;
   ue_index_t ue_index = INVALID_UE_INDEX; // Valid UE index if setup was successful.
   // Bearer Context Setup Response
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>
