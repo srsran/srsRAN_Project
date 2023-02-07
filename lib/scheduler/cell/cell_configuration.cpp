@@ -15,42 +15,6 @@
 
 using namespace srsgnb;
 
-unsigned srsgnb::nof_slots_per_tdd_period(const tdd_ul_dl_config_common& cfg)
-{
-  return cfg.pattern1.dl_ul_tx_period_nof_slots +
-         (cfg.pattern2.has_value() ? cfg.pattern2->dl_ul_tx_period_nof_slots : 0U);
-}
-
-bool srsgnb::slot_is_dl(const tdd_ul_dl_config_common& cfg, slot_point slot)
-{
-  unsigned period_slots = nof_slots_per_tdd_period(cfg);
-
-  // Convert slot into reference SCS.
-  if (slot.numerology() != to_numerology_value(cfg.ref_scs)) {
-    slot = set_slot_numerology(slot, to_numerology_value(cfg.ref_scs));
-  }
-
-  // Calculate slot index within the TDD overall period
-  unsigned slot_idx_period = slot.to_uint() % period_slots; // Slot index within the period
-
-  // Select pattern
-  const tdd_ul_dl_pattern* pattern = &cfg.pattern1;
-  if (slot_idx_period >= cfg.pattern1.dl_ul_tx_period_nof_slots) {
-    pattern = &cfg.pattern2.value();
-    slot_idx_period -= cfg.pattern1.dl_ul_tx_period_nof_slots; // Remove pattern 1 offset
-  }
-
-  // Check DL boundaries. Both fully DL slots and partially DL slots return true.
-  return (slot_idx_period < pattern->nof_dl_slots ||
-          (slot_idx_period == pattern->nof_dl_slots && pattern->nof_dl_symbols != 0));
-}
-
-bool srsgnb::slot_is_ul(const tdd_ul_dl_config_common& cfg, slot_point slot)
-{
-  // TODO: Implement it properly
-  return not slot_is_dl(cfg, slot);
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 cell_configuration::cell_configuration(const sched_cell_configuration_request_message& msg) :
@@ -73,12 +37,12 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
 {
   if (tdd_cfg_common.has_value()) {
     // Cache list of DL and UL slots in case of TDD
-    uint8_t numerology_idx = to_numerology_value(msg.tdd_ul_dl_cfg_common->ref_scs);
-    dl_enabled_slot_lst.resize(nof_slots_per_tdd_period(*msg.tdd_ul_dl_cfg_common));
-    ul_enabled_slot_lst.resize(nof_slots_per_tdd_period(*msg.tdd_ul_dl_cfg_common));
-    for (unsigned i = 0; i < dl_enabled_slot_lst.size(); ++i) {
-      dl_enabled_slot_lst[i] = (uint8_t)slot_is_dl(*msg.tdd_ul_dl_cfg_common, slot_point{numerology_idx, i});
-      ul_enabled_slot_lst[i] = (uint8_t)slot_is_ul(*msg.tdd_ul_dl_cfg_common, slot_point{numerology_idx, i});
+    unsigned tdd_period_slots = nof_slots_per_tdd_period(*msg.tdd_ul_dl_cfg_common);
+    dl_enabled_slot_lst.resize(tdd_period_slots);
+    ul_enabled_slot_lst.resize(tdd_period_slots);
+    for (unsigned slot_period_idx = 0; slot_period_idx < dl_enabled_slot_lst.size(); ++slot_period_idx) {
+      dl_enabled_slot_lst[slot_period_idx] = has_active_tdd_dl_symbols(*msg.tdd_ul_dl_cfg_common, slot_period_idx);
+      ul_enabled_slot_lst[slot_period_idx] = has_active_tdd_ul_symbols(*msg.tdd_ul_dl_cfg_common, slot_period_idx);
     }
   }
 }

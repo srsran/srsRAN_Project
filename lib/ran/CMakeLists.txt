@@ -26,7 +26,8 @@ add_library(srsgnb_ran
         resource_allocation/resource_allocation_frequency.cpp
         sch/sch_segmentation.cpp
         ssb_freq_position_generator.cpp
-        ssb_mapping.cpp)
+        ssb_mapping.cpp
+        tdd_ul_dl_config.cpp)
 target_link_libraries(srsgnb_ran)
 
 install(TARGETS srsgnb_ran EXPORT srsgnb_export)

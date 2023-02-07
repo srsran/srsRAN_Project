@@ -15,15 +15,6 @@
 
 namespace srsgnb {
 
-/// Calculates number of slots, using TDD reference SCS, of the TDD UL-DL configuration.
-unsigned nof_slots_per_tdd_period(const tdd_ul_dl_config_common& cfg);
-
-/// Checks whether provided slot corresponds to a DL slot.
-bool slot_is_dl(const tdd_ul_dl_config_common& cfg, slot_point slot);
-
-/// Checks whether provided slot corresponds to an UL slot.
-bool slot_is_ul(const tdd_ul_dl_config_common& cfg, slot_point slot);
-
 /// Holds the configuration of a cell.
 /// Additionally, this class pre-caches the computation of some const values related to the cell configuration
 /// and provide parameter getter helpers.
@@ -62,15 +53,27 @@ public:
   /// Checks if DL/UL is active for current slot
   bool is_dl_enabled(slot_point sl) const
   {
-    // Note: dl_enabled_slot_lst is empty in the FDD case.
-    return dl_enabled_slot_lst.empty() or
-           static_cast<bool>(dl_enabled_slot_lst[sl.to_uint() % dl_enabled_slot_lst.size()]);
+    if (dl_enabled_slot_lst.empty()) {
+      // Note: dl_enabled_slot_lst is empty in the FDD case.
+      return true;
+    }
+    if (sl.numerology() != to_numerology_value(tdd_cfg_common->ref_scs)) {
+      // Convert slot into equivalent reference SCS.
+      sl = set_slot_numerology(sl, to_numerology_value(tdd_cfg_common->ref_scs));
+    }
+    return dl_enabled_slot_lst[sl.to_uint() % dl_enabled_slot_lst.size()];
   }
   bool is_ul_enabled(slot_point sl) const
   {
-    // Note: ul_enabled_slot_lst is empty in the FDD case.
-    return ul_enabled_slot_lst.empty() or
-           static_cast<bool>(ul_enabled_slot_lst[sl.to_uint() % ul_enabled_slot_lst.size()]);
+    if (ul_enabled_slot_lst.empty()) {
+      // Note: ul_enabled_slot_lst is empty in the FDD case.
+      return true;
+    }
+    if (sl.numerology() != to_numerology_value(tdd_cfg_common->ref_scs)) {
+      // Convert slot into equivalent reference SCS.
+      sl = set_slot_numerology(sl, to_numerology_value(tdd_cfg_common->ref_scs));
+    }
+    return ul_enabled_slot_lst[sl.to_uint() % ul_enabled_slot_lst.size()];
   }
 
 private:

@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/ran/ofdm_symbol_range.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 
 namespace srsgnb {
 
@@ -36,5 +38,24 @@ struct tdd_ul_dl_config_common {
   tdd_ul_dl_pattern           pattern1;
   optional<tdd_ul_dl_pattern> pattern2;
 };
+
+/// \brief Calculates number of slots, using TDD reference SCS, of the TDD UL-DL configuration.
+inline unsigned nof_slots_per_tdd_period(const tdd_ul_dl_config_common& cfg)
+{
+  return cfg.pattern1.dl_ul_tx_period_nof_slots +
+         (cfg.pattern2.has_value() ? cfg.pattern2->dl_ul_tx_period_nof_slots : 0U);
+}
+
+/// \brief Calculates whether there are symbols for DL in the current slot index.
+bool has_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index);
+
+/// \brief Calculates whether there are symbols for UL in the current slot index.
+bool has_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index);
+
+/// \brief Calculates the number of active DL symbols in the current slot_index.
+ofdm_symbol_range get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended);
+
+/// \brief Calculates the number of active UL symbols in the current slot_index.
+ofdm_symbol_range get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended);
 
 } // namespace srsgnb
