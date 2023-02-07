@@ -227,7 +227,7 @@ inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsgnb::rlc_mode rlc_mod)
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_am;
       break;
     default:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::nulltype;
+      srsgnb_assert(false, "Invalid RLC mode ({})", rlc_mod);
   }
 
   return asn1_rlc_mode;
