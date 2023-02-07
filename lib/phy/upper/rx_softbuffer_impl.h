@@ -170,7 +170,11 @@ public:
   bool match_id(const rx_softbuffer_identifier& identifier) const { return reservation_id == identifier; }
 
   /// Determines whether the buffer is available.
-  bool is_available() const { return (current_state == state::available) || (current_state == state::released); }
+  bool is_available() const
+  {
+    std::unique_lock<std::mutex> lock(fsm_mutex);
+    return (current_state == state::available) || (current_state == state::released);
+  }
 
   // See interface for documentation.
   unsigned get_nof_codeblocks() const override { return crc.size(); }
