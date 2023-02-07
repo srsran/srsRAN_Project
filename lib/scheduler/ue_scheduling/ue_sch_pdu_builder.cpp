@@ -36,6 +36,57 @@ static unsigned get_pdsch_n_id(pci_t                              pci,
   return pci;
 }
 
+pdsch_config_params srsgnb::get_pdsch_config_f1_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
+{
+  static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
+  static constexpr unsigned tb_scaling_field = 0;
+  // As per TS 38.214, Section 5.1.3.2, nof_oh_prb by \c xOverhead, defined in \c PDSCH-ServingCellConfig, TS 38.331; it
+  // is in the dedicated resources, configured the after DCI Format 1-0 TC-RNTI is used. Hence, nof_oh_prb is here set
+  // as 0.
+  static constexpr unsigned nof_oh_prb = 0;
+  static constexpr unsigned nof_layers = 1;
+
+  pdsch_config_params pdsch;
+
+  pdsch.dmrs = make_dmrs_info_common(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+
+  pdsch.nof_oh_prb       = nof_oh_prb;
+  pdsch.symbols          = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols;
+  pdsch.mcs_table        = mcs_table;
+  pdsch.tb_scaling_field = tb_scaling_field;
+  pdsch.nof_layers       = nof_layers;
+
+  return pdsch;
+}
+
+pdsch_config_params srsgnb::get_pdsch_config_f1_0_c_rnti(const cell_configuration&    cell_cfg,
+                                                         const ue_cell_configuration& ue_cell_cfg,
+                                                         unsigned                     time_resource)
+{
+  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
+  static constexpr unsigned tb_scaling_field = 0;
+  static constexpr unsigned nof_layers       = 1;
+
+  pdsch_config_params pdsch;
+
+  pdsch.dmrs = make_dmrs_info_common(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
+  // NOTE: x_overhead::not_set is mapped to 0.
+  pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
+                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
+                         : static_cast<unsigned>(x_overhead::not_set);
+
+  pdsch.symbols          = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols;
+  pdsch.mcs_table        = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table;
+  pdsch.tb_scaling_field = tb_scaling_field;
+  pdsch.nof_layers       = nof_layers;
+
+  return pdsch;
+}
+
 pusch_config_params srsgnb::get_pusch_config_f0_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
 {
   constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
@@ -126,20 +177,13 @@ pusch_config_params srsgnb::get_pusch_config_f0_0_c_rnti(const cell_configuratio
 }
 
 void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
+                                      const pdsch_config_params&           pdsch_cfg,
+                                      unsigned                             tbs_bytes,
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
                                       const dci_1_0_tc_rnti_configuration& dci_cfg,
                                       bool                                 is_new_data)
 {
-  static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
-  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
-  static constexpr unsigned tb_scaling_field = 0;
-  // As per TS 38.214, Section 5.1.3.2, nof_oh_prb by \c xOverhead, defined in \c PDSCH-ServingCellConfig, TS 38.331; it
-  // is in the dedicated resources, configured the after DCI Format 1-0 TC-RNTI is used. Hence, nof_oh_prb is here set
-  // as 0.
-  static constexpr unsigned nof_oh_prb = 0;
-  static constexpr unsigned nof_layers = 1;
-
   pdsch.rnti = rnti;
 
   // PDSCH resources.
@@ -154,11 +198,10 @@ void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
     pdsch.coreset_cfg = &*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset;
   }
   pdsch.prbs    = get_prb_interval(dci_cfg.N_rb_dl_bwp, dci_cfg.frequency_resource);
-  pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci_cfg.time_resource].symbols;
+  pdsch.symbols = pdsch_cfg.symbols;
 
   // TODO: Use UE-dedicated DMRS info if needed.
-  pdsch.dmrs = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci_cfg.time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pdsch.dmrs = pdsch_cfg.dmrs;
   // See TS 38.211, 7.3.1.1. - Scrambling.
   pdsch.n_id           = cell_cfg.pci;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
@@ -168,24 +211,18 @@ void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
 
   // One Codeword.
-  pdsch_codeword& cw             = pdsch.codewords.emplace_back();
-  cw.new_data                    = is_new_data;
-  cw.rv_index                    = dci_cfg.redundancy_version;
-  cw.mcs_index                   = dci_cfg.modulation_coding_scheme;
-  cw.mcs_table                   = mcs_table;
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(mcs_table, cw.mcs_index);
-  cw.mcs_descr                   = mcs_config;
-  cw.tb_size_bytes = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch.symbols.length(),
-                                                                           calculate_nof_dmrs_per_rb(pdsch.dmrs),
-                                                                           nof_oh_prb,
-                                                                           mcs_config,
-                                                                           nof_layers,
-                                                                           tb_scaling_field,
-                                                                           pdsch.prbs.prbs().length()}) /
-                     nof_bits_per_byte;
+  pdsch_codeword& cw = pdsch.codewords.emplace_back();
+  cw.new_data        = is_new_data;
+  cw.rv_index        = dci_cfg.redundancy_version;
+  cw.mcs_index       = dci_cfg.modulation_coding_scheme;
+  cw.mcs_table       = pdsch_cfg.mcs_table;
+  cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes   = tbs_bytes;
 }
 
 void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
+                                     const pdsch_config_params&          pdsch_cfg,
+                                     unsigned                            tbs_bytes,
                                      rnti_t                              rnti,
                                      const ue_cell_configuration&        ue_cell_cfg,
                                      bwp_id_t                            active_bwp_id,
@@ -193,11 +230,6 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      const dci_1_0_c_rnti_configuration& dci_cfg,
                                      bool                                is_new_data)
 {
-  static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
-  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
-  static constexpr unsigned tb_scaling_field = 0;
-  static constexpr unsigned nof_layers       = 1;
-
   const cell_configuration&    cell_cfg = ue_cell_cfg.cell_cfg_common;
   const coreset_configuration& cs_cfg   = ue_cell_cfg.coreset(ss_cfg.cs_id);
 
@@ -206,10 +238,9 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.coreset_cfg = &cs_cfg;
 
   pdsch.prbs    = get_prb_interval(dci_cfg.N_rb_dl_bwp, dci_cfg.frequency_resource);
-  pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci_cfg.time_resource].symbols;
+  pdsch.symbols = pdsch_cfg.symbols;
   // TODO: Use UE-dedicated DMRS info if needed.
-  pdsch.dmrs = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci_cfg.time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pdsch.dmrs           = pdsch_cfg.dmrs;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
   // See TS38.213, 10.1.
   pdsch.ss_set_type = ss_cfg.type == search_space_configuration::type_t::ue_dedicated
@@ -222,26 +253,13 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.n_id                               = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_cfg.type);
 
   // One Codeword.
-  pdsch_codeword& cw             = pdsch.codewords.emplace_back();
-  cw.new_data                    = is_new_data;
-  cw.rv_index                    = dci_cfg.redundancy_version;
-  cw.mcs_index                   = dci_cfg.modulation_coding_scheme;
-  cw.mcs_table                   = mcs_table;
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(mcs_table, cw.mcs_index);
-  cw.mcs_descr                   = mcs_config;
-  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
-  // NOTE: x_overhead::not_set is mapped to 0.
-  unsigned nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                            ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                            : static_cast<unsigned>(x_overhead::not_set);
-  cw.tb_size_bytes    = tbs_calculator_calculate(tbs_calculator_configuration{(unsigned)pdsch.symbols.length(),
-                                                                           calculate_nof_dmrs_per_rb(pdsch.dmrs),
-                                                                           nof_oh_prb,
-                                                                           mcs_config,
-                                                                           nof_layers,
-                                                                           tb_scaling_field,
-                                                                           pdsch.prbs.prbs().length()}) /
-                     nof_bits_per_byte;
+  pdsch_codeword& cw = pdsch.codewords.emplace_back();
+  cw.new_data        = is_new_data;
+  cw.rv_index        = dci_cfg.redundancy_version;
+  cw.mcs_index       = dci_cfg.modulation_coding_scheme;
+  cw.mcs_table       = pdsch_cfg.mcs_table;
+  cw.mcs_descr       = pdsch_mcs_get_config(pdsch_cfg.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes   = tbs_bytes;
 }
 
 void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,

@@ -130,7 +130,12 @@ protected:
 
   scheduler_ue_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index) const
   {
-    return scheduler_ue_expert_config{10, 10, 4, max_msg4_mcs_index};
+    scheduler_ue_expert_config cfg{};
+    cfg.fixed_dl_mcs.emplace(10);
+    cfg.fixed_ul_mcs.emplace(10);
+    cfg.max_nof_harq_retxs = 4;
+    cfg.max_msg4_mcs = max_msg4_mcs_index;
+    return cfg;
   }
 
   sched_cell_configuration_request_message create_custom_cell_config_request() const

@@ -13,6 +13,7 @@
 #include "../support/bwp_helpers.h"
 #include "harq_process.h"
 #include "ue_configuration.h"
+#include "srsgnb/ran/uci/uci_constants.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 
 namespace srsgnb {
@@ -35,6 +36,7 @@ public:
     // NOTE: the 0 is only used for initialization and will be overwritten by the first UL SNR report.
     double   pusch_snr_db          = 0.0;
     unsigned consecutive_pusch_kos = 0;
+    unsigned latest_wb_cqi         = 1;
     // TODO: Add other metrics of interest for the scheduler.
   };
 
@@ -58,8 +60,17 @@ public:
 
   void handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg);
 
+  unsigned get_latest_wb_cqi() const { return ue_metrics.latest_wb_cqi; }
+
+  void set_latest_wb_cqi(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload)
+  {
+    ue_metrics.latest_wb_cqi = (static_cast<unsigned>(payload.test(0)) << 3) +
+                               (static_cast<unsigned>(payload.test(1)) << 2) +
+                               (static_cast<unsigned>(payload.test(2)) << 1) + (static_cast<unsigned>(payload.test(4)));
+  }
+
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
-  unsigned required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
+  grant_prbs_mcs required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl_rnti_config_type type) const;
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul_rnti_config_type type) const;

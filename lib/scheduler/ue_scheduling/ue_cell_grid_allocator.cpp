@@ -159,30 +159,62 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     return false;
   }
 
+  pdsch_config_params pdsch_cfg;
+  switch (dci_type) {
+    case dci_dl_rnti_config_type::tc_rnti_f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, grant.time_res_index);
+      break;
+    case dci_dl_rnti_config_type::c_rnti_f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cell_cfg, grant.time_res_index);
+      break;
+    default:
+      report_fatal_error("Unsupported PDCCH DCI UL format");
+  }
+
+  optional<sch_mcs_tbs_prbs> mcs_tbs_info;
+  // If it's a new Tx, compute the MCS and TBS.
+  if (h_dl.empty()) {
+    mcs_tbs_info =
+        compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, u.pending_dl_newtx_bytes(), grant.mcs, grant.crbs.length());
+  } else {
+    // It is a retx.
+    mcs_tbs_info.emplace(sch_mcs_tbs_prbs{.mcs    = h_dl.last_alloc_params().tb[0]->mcs,
+                                          .tbs    = h_dl.last_alloc_params().tb[0]->tbs_bytes,
+                                          .n_prbs = h_dl.last_alloc_params().prbs.prbs().length()});
+  }
+
+  // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
+  if (not mcs_tbs_info.has_value()) {
+    logger.warning("Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.");
+    return false;
+  }
+
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, grant.crbs});
 
   // Allocate UE DL HARQ.
-  prb_interval  prbs = crb_to_prb(bwp_cfg, grant.crbs);
-  sch_mcs_index mcs;
+  prb_interval prbs = crb_to_prb(bwp_cfg, grant.crbs);
+
+  // Allocate UE UL HARQ.
   if (h_dl.empty()) {
     // It is a new tx.
-    // TODO: Support dynamic MCS.
-    mcs = *expert_cfg.fixed_dl_mcs;
-
     h_dl.new_tx(pdsch_alloc.slot, k1, expert_cfg.max_nof_harq_retxs);
   } else {
     // It is a retx.
-    mcs = h_dl.last_alloc_params().tb[0]->mcs;
-
     h_dl.new_retx(pdsch_alloc.slot, k1);
   }
 
   // Fill DL PDCCH DCI PDU.
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
-      build_dci_f1_0_tc_rnti(
-          pdcch->dci, init_dl_bwp, prbs, grant.time_res_index, k1, uci.pucch_grant.pucch_res_indicator, mcs, h_dl);
+      build_dci_f1_0_tc_rnti(pdcch->dci,
+                             init_dl_bwp,
+                             prbs,
+                             grant.time_res_index,
+                             k1,
+                             uci.pucch_grant.pucch_res_indicator,
+                             mcs_tbs_info.value().mcs,
+                             h_dl);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_dci_f1_0_c_rnti(pdcch->dci,
@@ -194,7 +226,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                             k1,
                             uci.pucch_grant.pucch_res_indicator,
                             uci.dai,
-                            mcs,
+                            mcs_tbs_info.value().mcs,
                             h_dl);
       break;
     default:
@@ -208,10 +240,18 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   msg.context.ss_id    = ss_cfg->id;
   switch (pdcch->dci.type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
-      build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg, u.crnti, cell_cfg, pdcch->dci.tc_rnti_f1_0, h_dl.tb(0).nof_retxs == 0);
+      build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg,
+                               pdsch_cfg,
+                               mcs_tbs_info.value().tbs,
+                               u.crnti,
+                               cell_cfg,
+                               pdcch->dci.tc_rnti_f1_0,
+                               h_dl.tb(0).nof_retxs == 0);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_pdsch_f1_0_c_rnti(msg.pdsch_cfg,
+                              pdsch_cfg,
+                              mcs_tbs_info.value().tbs,
                               u.crnti,
                               ue_cell_cfg,
                               ue_cc->active_bwp_id(),
@@ -345,14 +385,14 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Compute MCS and TBS for this transmission.
-  optional<pusch_mcs_tbs> mcs_tbs_info;
+  optional<sch_mcs_tbs_prbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
   if (h_ul.empty()) {
     mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length());
   }
   // If it's a reTx, fetch the MCS and TBS from the previous transmission.
   else {
-    mcs_tbs_info.emplace(pusch_mcs_tbs{.mcs = h_ul.last_tx_params().mcs, .tbs = h_ul.last_tx_params().tbs_bytes});
+    mcs_tbs_info.emplace(sch_mcs_tbs_prbs{.mcs = h_ul.last_tx_params().mcs, .tbs = h_ul.last_tx_params().tbs_bytes});
   }
 
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.

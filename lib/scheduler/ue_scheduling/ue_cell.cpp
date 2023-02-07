@@ -11,6 +11,7 @@
 #include "ue_cell.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
+#include "../support/pdsch/cqi_to_mcs_mapper.h"
 #include "../support/prbs_calculator.h"
 #include "../ue_scheduling/ue_sch_pdu_builder.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
@@ -42,29 +43,51 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
   ue_cfg.reconfigure(new_ue_cell_cfg);
 }
 
-unsigned ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const
+grant_prbs_mcs
+ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl_rnti_config_type dci_type) const
 {
-  static const unsigned     nof_layers = 1;
-  const cell_configuration& cell_cfg   = cfg().cell_cfg_common;
+  const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
-  sch_mcs_index       mcs        = expert_cfg.fixed_dl_mcs.value(); // TODO: Support dynamic MCS.
+  pdsch_config_params pdsch_cfg;
+  switch (dci_type) {
+    case dci_dl_rnti_config_type::tc_rnti_f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, time_resource);
+      break;
+    case dci_dl_rnti_config_type::c_rnti_f1_0:
+      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cfg, time_resource);
+      break;
+    default:
+      report_fatal_error("Unsupported PDCCH DCI UL format");
+  }
+
+  // TODO: initialize this to a proper default value for when the UE has CQI = 0.
+  sch_mcs_index mcs{expert_cfg.default_dl_mcs};
+  if (expert_cfg.fixed_dl_mcs.has_value()) {
+    mcs = expert_cfg.fixed_dl_mcs.value();
+  } else {
+    optional<sch_mcs_index> estimated_mcs = map_cqi_to_mcs(get_latest_wb_cqi(), pdsch_cfg.mcs_table);
+    if (estimated_mcs.has_value()) {
+      mcs = estimated_mcs.value();
+    } else {
+      // Return a grant no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
+      return grant_prbs_mcs{.n_prbs = 0};
+    }
+  }
+
   sch_mcs_description mcs_config = pdsch_mcs_get_config(cfg().cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table, mcs);
 
   dmrs_information dmrs_info = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
-  // NOTE: x_overhead::not_set is mapped to 0.
-  unsigned     nof_oh_prb = cfg().cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                                ? static_cast<unsigned>(cfg().cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                                : static_cast<unsigned>(x_overhead::not_set);
-  sch_prbs_tbs prbs_tbs   = get_nof_prbs(prbs_calculator_sch_config{
-      pending_bytes,
-      (unsigned)cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols.length(),
-      calculate_nof_dmrs_per_rb(dmrs_info),
-      nof_oh_prb,
-      mcs_config,
-      nof_layers});
-  return prbs_tbs.nof_prbs;
+
+  sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
+                                                                  (unsigned)pdsch_cfg.symbols.length(),
+                                                                  calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                  pdsch_cfg.nof_oh_prb,
+                                                                  mcs_config,
+                                                                  pdsch_cfg.nof_layers});
+
+  const bwp_downlink_common& bwp_dl_cmn = ue_cfg.dl_bwp_common(active_bwp_id());
+  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length())};
 }
 
 grant_prbs_mcs

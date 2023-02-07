@@ -18,6 +18,10 @@ add_executable(pdsch_dmrs_symbol_mask_test pdsch/pdsch_dmrs_symbol_mask_test.cpp
 target_link_libraries(pdsch_dmrs_symbol_mask_test srsgnb_sched srslog gtest gtest_main)
 add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
 
+add_executable(cqi_to_mcs_mapper_test pdsch/cqi_to_mcs_mapper_test.cpp)
+target_link_libraries(cqi_to_mcs_mapper_test srsgnb_sched srslog gtest gtest_main)
+add_test(cqi_to_mcs_mapper_test cqi_to_mcs_mapper_test)
+
 add_executable(pucch_default_resource_test pucch/pucch_default_resource_test.cpp)
 target_link_libraries(pucch_default_resource_test srsgnb_sched srslog gtest gtest_main)
 add_test(pucch_default_resource_test pucch_default_resource_test)
@@ -41,3 +45,17 @@ add_test(prbs_calculator_test prbs_calculator_test)
 add_executable(dmrs_helpers_test dmrs_helpers_test.cpp)
 target_link_libraries(dmrs_helpers_test srsgnb_sched srslog)
 add_test(dmrs_helpers_test dmrs_helpers_test)
+
+add_executable(mcs_calculator_test mcs_calculator_test.cpp)
+target_link_libraries(mcs_calculator_test srsgnb_sched gtest gtest_main)
+add_test(mcs_calculator_test.cpp mcs_calculator_test)
+
+add_executable(mcs_tbs_calculator_test mcs_tbs_calculator_test.cpp)
+target_link_libraries(mcs_tbs_calculator_test
+        srsgnb_sched
+        scheduler_test_suite
+        mac_configuration_helpers
+        srsgnb_du_manager
+        gtest
+        gtest_main)
+add_test(mcs_tbs_calculator_test mcs_tbs_calculator_test)

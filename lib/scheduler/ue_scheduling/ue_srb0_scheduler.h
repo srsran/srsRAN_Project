@@ -13,6 +13,7 @@
 #include "../policy/ue_allocator.h"
 #include "../support/slot_event_list.h"
 #include "ue.h"
+#include "ue_sch_pdu_builder.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include <queue>
 
@@ -46,16 +47,18 @@ private:
                      unsigned                          pdsch_time_res,
                      const search_space_configuration& ss_cfg);
 
-  void fill_srb0_grant(ue&                   u,
-                       slot_point            pdsch_slot,
-                       dl_harq_process&      h_dl,
-                       pdcch_dl_information& pdcch,
-                       dl_msg_alloc&         msg,
-                       pucch_harq_ack_grant& pucch,
-                       unsigned              pdsch_time_res,
-                       unsigned              k1,
-                       sch_mcs_index         mcs_idx,
-                       const prb_interval&   ue_grant_prbs);
+  void fill_srb0_grant(ue&                        u,
+                       slot_point                 pdsch_slot,
+                       dl_harq_process&           h_dl,
+                       pdcch_dl_information&      pdcch,
+                       dl_msg_alloc&              msg,
+                       pucch_harq_ack_grant&      pucch,
+                       unsigned                   pdsch_time_res,
+                       unsigned                   k1,
+                       sch_mcs_index              mcs_idx,
+                       const prb_interval&        ue_grant_prbs,
+                       const pdsch_config_params& pdsch_params,
+                       unsigned                   tbs_bytes);
 
   const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const;
 

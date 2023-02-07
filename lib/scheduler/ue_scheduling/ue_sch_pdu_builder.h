@@ -16,6 +16,15 @@
 
 namespace srsgnb {
 
+struct pdsch_config_params {
+  pdsch_mcs_table   mcs_table;
+  ofdm_symbol_range symbols;
+  unsigned          nof_oh_prb;
+  unsigned          tb_scaling_field;
+  unsigned          nof_layers;
+  dmrs_information  dmrs;
+};
+
 /// Contains some of the PUSCH parameters needed to compute the MCS, the number of PRBs, the TBS and to build the PUSCH
 /// PDU.
 struct pusch_config_params {
@@ -34,6 +43,18 @@ struct pusch_config_params {
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
 ///
 /// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
+pdsch_config_params get_pdsch_config_f1_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource);
+
+/// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
+///
+/// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
+pdsch_config_params get_pdsch_config_f1_0_c_rnti(const cell_configuration&    cell_cfg,
+                                                 const ue_cell_configuration& ue_cell_cfg,
+                                                 unsigned                     time_resource);
+
+/// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
+///
+/// The parameters returned by this function are needed to compute the number of PRBs, MCS and TBS.
 pusch_config_params get_pusch_config_f0_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource);
 
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by C-RNTI.
@@ -46,6 +67,8 @@ pusch_config_params get_pusch_config_f0_0_c_rnti(const cell_configuration&    ce
 
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by TC-RNTI.
 void build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
+                              const pdsch_config_params&           pdsch_cfg,
+                              unsigned                             tbs_bytes,
                               rnti_t                               rnti,
                               const cell_configuration&            cell_cfg,
                               const dci_1_0_tc_rnti_configuration& dci_cfg,
@@ -53,6 +76,8 @@ void build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
 
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by C-RNTI.
 void build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
+                             const pdsch_config_params&          pdsch_cfg,
+                             unsigned                            tbs_bytes,
                              rnti_t                              rnti,
                              const ue_cell_configuration&        ue_cell_cfg,
                              bwp_id_t                            active_bwp_id,

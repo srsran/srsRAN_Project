@@ -146,19 +146,38 @@ static bool alloc_dl_ue(const ue&                    u,
           // DL needs to be active for PDSCH in this slot.
           continue;
         }
-        const cell_slot_resource_grid& grid           = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
-        const prb_bitmap               used_crbs      = grid.used_crbs(bwp_cfg, pdsch.symbols);
-        const unsigned                 nof_req_prbs   = is_retx ? h->last_alloc_params().prbs.prbs().length()
-                                                                : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
-        const crb_interval             ue_grant_crbs  = find_empty_interval_of_length(used_crbs, nof_req_prbs, 0);
-        bool                           are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
+        const cell_slot_resource_grid& grid      = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
+        const prb_bitmap               used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
+
+        const dci_dl_rnti_config_type dci_type =
+            h->empty() ? dci_dl_rnti_config_type::c_rnti_f1_0 : h->last_alloc_params().dci_cfg_type;
+
+        // TODO verify the there is at least 1 TB.
+        const grant_prbs_mcs mcs_prbs = is_retx
+                                            ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
+                                                             h->last_alloc_params().prbs.prbs().length()}
+                                            : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes(), dci_type);
+
+        if (mcs_prbs.n_prbs == 0) {
+          return false;
+        }
+
+        const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
+        bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
         if (is_retx) {
           // In case of Retx, the #CRBs need to stay the same.
           are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().prbs.prbs().length();
         }
         if (are_crbs_valid) {
-          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{
-              &u, ue_cc.cell_index, h->id, ss_cfg->id, time_res, ue_grant_crbs, dci_dl_format::f1_0, agg_lvl});
+          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
+                                                                                  ue_cc.cell_index,
+                                                                                  h->id,
+                                                                                  ss_cfg->id,
+                                                                                  time_res,
+                                                                                  ue_grant_crbs,
+                                                                                  dci_dl_format::f1_0,
+                                                                                  agg_lvl,
+                                                                                  mcs_prbs.mcs});
           if (res_allocated) {
             return true;
           }

@@ -27,6 +27,7 @@ struct ue_pdsch_grant {
   crb_interval      crbs;
   dci_dl_format     dci_fmt;
   aggregation_level aggr_lvl = aggregation_level::n4;
+  sch_mcs_index     mcs;
 };
 
 /// Information relative to a UE PUSCH grant.

@@ -213,7 +213,7 @@ struct log_appconfig {
   std::string cu_level      = "info";
   std::string phy_level     = "info";
   std::string radio_level   = "info";
-  std::string mac_level     = "info";
+  std::string mac_level               = "debug";
   std::string rlc_level     = "info";
   std::string f1u_level     = "info";
   std::string pdcp_level    = "info";

@@ -14,6 +14,7 @@
 #include "prbs_calculator.h"
 #include "tbs_calculator.h"
 #include "srsgnb/adt/variant.h"
+#include "srsgnb/ran/pdsch/dlsch_info.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/pusch/ulsch_info.h"
 #include "srsgnb/ran/uci/uci_mapping.h"
@@ -147,10 +148,74 @@ static void update_ulsch_info(ulsch_configuration& ulsch_cfg, unsigned tbs_bytes
   ulsch_cfg.mcs_descr = mcs_info;
 }
 
-optional<pusch_mcs_tbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
-                                                   const ue_cell_configuration& ue_cell_cfg,
-                                                   sch_mcs_index                max_mcs,
-                                                   unsigned                     nof_prbs)
+optional<sch_mcs_tbs_prbs> srsgnb::compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
+                                                      const ue_cell_configuration& ue_cell_cfg,
+                                                      unsigned                     payload_size_bytes,
+                                                      sch_mcs_index                max_mcs,
+                                                      unsigned                     nof_prbs)
+{
+  // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
+  // but we consider the same value for UL.
+  static const double max_supported_code_rate = 0.95;
+  const unsigned      dmrs_prbs               = calculate_nof_dmrs_per_rb(pdsch_params.dmrs);
+  sch_mcs_description mcs_info                = pdsch_mcs_get_config(pdsch_params.mcs_table, max_mcs);
+  unsigned            nof_symbols             = pdsch_params.symbols.length();
+
+  unsigned tbs_bits =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = pdsch_params.nof_oh_prb,
+                                                            .mcs_descr        = mcs_info,
+                                                            .nof_layers       = pdsch_params.nof_layers,
+                                                            .tb_scaling_field = pdsch_params.tb_scaling_field,
+                                                            .n_prb            = nof_prbs});
+
+  // > Compute the effective code rate.
+  dlsch_configuration dlsch_info{.tbs                = static_cast<units::bits>(tbs_bits),
+                                 .mcs_descr          = mcs_info,
+                                 .nof_rb             = nof_prbs,
+                                 .start_symbol_index = pdsch_params.symbols.start(),
+                                 .nof_symbols        = static_cast<unsigned>(pdsch_params.symbols.length()),
+                                 .dmrs_type          = pdsch_params.dmrs.config_type,
+                                 .dmrs_symbol_mask   = pdsch_params.dmrs.dmrs_symb_pos,
+                                 .nof_cdm_groups_without_data =
+                                     static_cast<unsigned>(pdsch_params.dmrs.num_dmrs_cdm_grps_no_data),
+                                 .nof_layers = pdsch_params.nof_layers};
+
+  float effective_code_rate = get_dlsch_information(dlsch_info).get_effective_code_rate();
+
+  // > Decrease the MCS and recompute TBS until the effective code rate is not above the 0.95 threshold.
+  sch_mcs_index mcs = max_mcs;
+  while (effective_code_rate > max_supported_code_rate and mcs > 0) {
+    --mcs;
+    mcs_info = pdsch_mcs_get_config(pdsch_params.mcs_table, mcs);
+    tbs_bits = tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                                     .nof_dmrs_prb     = dmrs_prbs,
+                                                                     .nof_oh_prb       = pdsch_params.nof_oh_prb,
+                                                                     .mcs_descr        = mcs_info,
+                                                                     .nof_layers       = pdsch_params.nof_layers,
+                                                                     .tb_scaling_field = pdsch_params.tb_scaling_field,
+                                                                     .n_prb            = nof_prbs});
+
+    dlsch_info.tbs       = static_cast<units::bits>(tbs_bits);
+    dlsch_info.mcs_descr = mcs_info;
+    effective_code_rate  = get_dlsch_information(dlsch_info).get_effective_code_rate();
+  }
+
+  // If no MCS such that effective code rate <= 0.95, return an empty optional object.
+  if (effective_code_rate > max_supported_code_rate and mcs == 0) {
+    return nullopt;
+  }
+
+  optional<sch_mcs_tbs_prbs> output;
+  const unsigned             tbs_bytes = tbs_bits * NOF_BITS_PER_BYTE;
+  return output.emplace(sch_mcs_tbs_prbs{.mcs = mcs, .tbs = tbs_bytes});
+}
+
+optional<sch_mcs_tbs_prbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
+                                                      const ue_cell_configuration& ue_cell_cfg,
+                                                      sch_mcs_index                max_mcs,
+                                                      unsigned                     nof_prbs)
 {
   // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
@@ -196,6 +261,6 @@ optional<pusch_mcs_tbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   
     return nullopt;
   }
 
-  optional<pusch_mcs_tbs> output;
-  return output.emplace(pusch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes});
+  optional<sch_mcs_tbs_prbs> output;
+  return output.emplace(sch_mcs_tbs_prbs{.mcs = mcs, .tbs = tbs_bytes, .n_prbs = nof_prbs});
 }
