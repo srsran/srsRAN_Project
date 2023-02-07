@@ -14,7 +14,7 @@
 
 namespace srsgnb {
 
-class ngap_pcap : pcap_file_base
+class ngap_pcap : public pcap_file_base
 {
 public:
   ngap_pcap() = default;
@@ -24,7 +24,6 @@ public:
   ngap_pcap(ngap_pcap&& other)                 = delete;
   ngap_pcap& operator=(ngap_pcap&& other)      = delete;
 
-  void enable();
   void open(const char* filename_);
   void close();
   void write_pdu(srsgnb::const_span<uint8_t> pdu);

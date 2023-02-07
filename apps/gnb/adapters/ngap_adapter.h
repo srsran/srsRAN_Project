@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/ngap/ngc_asn1_packer.h"
+#include "../../../lib/ngap/ngc_asn1_packer.h"
 #include "srsgnb/gateways/sctp_network_gateway_factory.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/io_broker/io_broker.h"
@@ -26,9 +26,7 @@ class ngap_network_adapter : public ngc_message_notifier,
                              public network_gateway_data_notifier
 {
 public:
-  ngap_network_adapter(io_broker& broker_) : broker(broker_) {}
-
-  ~ngap_network_adapter()
+  ngap_network_adapter(io_broker& broker_, ngap_pcap& pcap_) : broker(broker_), pcap(pcap_)
   {
     if (gateway_ctrl_handler != nullptr) {
       broker.unregister_fd(gateway_ctrl_handler->get_socket_fd());
@@ -41,7 +39,7 @@ public:
     gateway_ctrl_handler = gateway_ctrl_handler_;
     gateway_data_handler = gateway_data_handler_;
 
-    packer = std::make_unique<ngc_asn1_packer>(*gateway_data_handler, *this);
+    packer = std::make_unique<ngc_asn1_packer>(*gateway_data_handler, *this, pcap);
 
     gateway_ctrl_handler->create_and_connect();
     broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
@@ -105,6 +103,7 @@ private:
   }
 
   io_broker&                         broker;
+  ngap_pcap&                         pcap;
   std::unique_ptr<ngc_asn1_packer>   packer;
   sctp_network_gateway_controller*   gateway_ctrl_handler = nullptr;
   sctp_network_gateway_data_handler* gateway_data_handler = nullptr;

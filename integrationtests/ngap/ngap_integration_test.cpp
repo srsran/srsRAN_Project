@@ -39,7 +39,7 @@ public:
     nw_config(nw_config_),
     epoll_broker(create_io_broker(io_broker_type::epoll)),
     gw(create_sctp_network_gateway({nw_config, *this, *this})),
-    packer(*gw, *this)
+    packer(*gw, *this, pcap)
   {
     gw->create_and_connect();
     epoll_broker->register_fd(gw->get_socket_fd(), [this](int fd) { gw->receive(); });
@@ -69,6 +69,7 @@ private:
   std::unique_ptr<sctp_network_gateway> gw;
   ngc_asn1_packer                       packer;
   ngc_interface*                        ngc = nullptr;
+  ngap_pcap                             pcap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

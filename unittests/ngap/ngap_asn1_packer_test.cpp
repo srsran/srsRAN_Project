@@ -37,9 +37,11 @@ protected:
     srslog::fetch_basic_logger("NGC-ASN1-PCK").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
-    ngc    = std::make_unique<dummy_ngc_message_handler>();
-    packer = std::make_unique<srsgnb::ngc_asn1_packer>(*gw, *ngc);
+    gw  = std::make_unique<dummy_network_gateway_data_handler>();
+    ngc = std::make_unique<dummy_ngc_message_handler>();
+
+    pcap.open("/tmp/ngap.pcap");
+    packer = std::make_unique<srsgnb::ngc_asn1_packer>(*gw, *ngc, pcap);
   }
 
   void TearDown() override
@@ -52,6 +54,7 @@ protected:
   std::unique_ptr<dummy_ngc_message_handler>          ngc;
   std::unique_ptr<srsgnb::ngc_asn1_packer>            packer;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
+  ngap_pcap                                           pcap;
 };
 
 /// Test successful packing and compare with captured test vector

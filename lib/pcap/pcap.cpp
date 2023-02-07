@@ -40,6 +40,10 @@ bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
   }
 
   pcap_fstream.write((char*)&file_header, sizeof(file_header));
+  if (pcap_fstream.fail()) {
+    logger.error("Failed to write to pcap\n");
+    return false;
+  }
 
   write_enabled = true;
 
@@ -51,6 +55,7 @@ void pcap_file_base::dlt_pcap_close()
   if (pcap_fstream.is_open()) {
     logger.info("Saving PCAP file (DLT={}) to {}", dlt, filename.c_str());
     write_enabled = false;
+    pcap_fstream.flush();
     pcap_fstream.close();
   }
 }
@@ -68,12 +73,20 @@ void pcap_file_base::write_pcap_header(uint32_t length)
   packet_header.orig_len = length;
 
   pcap_fstream.write((char*)&packet_header, sizeof(packet_header));
+  if (pcap_fstream.fail()) {
+    logger.error("Failed to write to pcap\n");
+    return;
+  }
 }
 
 void pcap_file_base::write_pcap_pdu(srsgnb::const_span<uint8_t> pdu)
 {
   if (write_enabled) {
     pcap_fstream.write((char*)pdu.data(), pdu.size_bytes());
+    if (pcap_fstream.fail()) {
+      logger.error("Failed to write to pcap\n");
+      return;
+    }
   }
 }
 

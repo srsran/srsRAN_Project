@@ -12,14 +12,22 @@
 
 namespace srsgnb {
 
-ngc_asn1_packer::ngc_asn1_packer(sctp_network_gateway_data_handler& gw_, ngc_message_handler& ngc_handler) :
-  logger(srslog::fetch_basic_logger("NGAP-ASN1-PCK")), gw(gw_), ngc(ngc_handler)
+ngc_asn1_packer::ngc_asn1_packer(sctp_network_gateway_data_handler& gw_,
+                                 ngc_message_handler&               ngc_handler,
+                                 ngap_pcap&                         pcap_) :
+  logger(srslog::fetch_basic_logger("NGAP-ASN1-PCK")), gw(gw_), ngc(ngc_handler), pcap(pcap_)
 {
 }
 
 // Received packed NGAP PDU that needs to be unpacked and forwarded.
 void ngc_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 {
+  if (pcap.is_write_enabled()) {
+    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
+
+    span<const uint8_t> pdu_span = to_span(bytes, tmp_mem);
+    pcap.write_pdu(pdu_span);
+  }
   asn1::cbit_ref         bref(bytes);
   srs_cu_cp::ngc_message msg = {};
   if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
@@ -41,6 +49,10 @@ void ngc_asn1_packer::handle_message(const srs_cu_cp::ngc_message& msg)
     logger.error("Failed to pack PDU");
     return;
   }
+
+  std::array<uint8_t, pcap_max_len> tmp_mem; // no init
+  span<const uint8_t>               pdu_span = to_span(tx_pdu, tmp_mem);
+  pcap.write_pdu(pdu_span);
 
   gw.handle_pdu(tx_pdu);
 }

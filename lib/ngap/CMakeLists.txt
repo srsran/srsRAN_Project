@@ -16,6 +16,6 @@ set(SOURCES
     )
 
 add_library(srsgnb_ngap STATIC ${SOURCES})
-target_link_libraries(srsgnb_ngap ngap_asn1 srsgnb_cu_cp)
+target_link_libraries(srsgnb_ngap ngap_asn1 srsgnb_cu_cp srsgnb_support)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

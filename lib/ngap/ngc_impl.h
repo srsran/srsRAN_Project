@@ -15,6 +15,7 @@
 #include "srsgnb/cu_cp/ue_manager.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/ngap/ngc_configuration.h"
+#include "srsgnb/pcap/ngap_pcap.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 #include <memory>

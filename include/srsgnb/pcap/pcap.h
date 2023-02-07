@@ -19,6 +19,8 @@
 
 #define UDP_DLT 149 // UDP needs to be selected as protocol
 
+constexpr uint16_t pcap_max_len = 2000;
+
 /// This structure gets written to the start of the file
 struct pcap_hdr_t {
   unsigned int   magic_number;  /// magic number
@@ -51,12 +53,13 @@ public:
   pcap_file_base(pcap_file_base&& other)                 = delete;
   pcap_file_base& operator=(pcap_file_base&& other)      = delete;
 
+  bool is_write_enabled();
+
 protected:
   bool dlt_pcap_open(uint32_t dlt, const char* filename);
   void dlt_pcap_close();
   void write_pcap_header(uint32_t length);
   void write_pcap_pdu(srsgnb::const_span<uint8_t> pdu);
-  bool is_write_enabled();
 
 private:
   srslog::basic_logger& logger;

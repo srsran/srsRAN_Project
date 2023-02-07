@@ -14,14 +14,7 @@
 
 namespace srsgnb {
 
-#define NGAP_DLT 152
-
-struct e1ap_context_info_t {
-  uint32_t message_type;
-  uint32_t procedure_code;
-  uint32_t protocol_ie_id;
-  uint32_t protocol_extension_id;
-};
+constexpr uint16_t NGAP_DLT = 152;
 
 ngap_pcap::~ngap_pcap()
 {
@@ -32,6 +25,7 @@ void ngap_pcap::open(const char* filename_)
 {
   dlt_pcap_open(NGAP_DLT, filename_);
 }
+
 void ngap_pcap::close()
 {
   dlt_pcap_close();

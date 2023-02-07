@@ -395,6 +395,10 @@ int main(int argc, char** argv)
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
+  // Set layer-specific pcap options.
+  ngap_pcap ngap_pcap;
+  ngap_pcap.open("/tmp/ngap.pcap");
+
   worker_manager workers{gnb_cfg};
 
   f1c_local_adapter f1c_cu_to_du_adapter("CU-CP-F1"), f1c_du_to_cu_adapter("DU-F1");
@@ -411,7 +415,7 @@ int main(int argc, char** argv)
 
   // Create NGAP adapter.
   std::unique_ptr<srsgnb::srs_cu_cp::ngap_network_adapter> ngap_adapter =
-      std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker);
+      std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker, ngap_pcap);
 
   // Create SCTP network adapter.
   std::unique_ptr<sctp_network_gateway> sctp_gateway =

@@ -38,6 +38,7 @@ target_link_libraries(gnb
         srsgnb_channel_equalizer
         srsgnb_lower_phy
         srsgnb_radio
+        srsgnb_pcap
         srsgnb_support
         srsgnb_build_info
         )
