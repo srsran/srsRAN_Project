@@ -78,7 +78,7 @@ public:
       return;
     }
 
-    srsgnb_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    srsgnb_assert(cb_id < entries.size(), "Codeblock index ({}) is out of range ({}).", cb_id, entries.size());
     srsgnb_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     entries[cb_id].reserved = false;
   }
@@ -88,7 +88,7 @@ public:
   /// \return A view to the codeblock soft-bit buffer.
   span<log_likelihood_ratio> get_soft_bits(unsigned cb_id)
   {
-    srsgnb_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    srsgnb_assert(cb_id < entries.size(), "Codeblock index ({}) is out of range ({}).", cb_id, entries.size());
     srsgnb_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     return entries[cb_id].soft_bits;
   }
@@ -98,7 +98,7 @@ public:
   /// \return A view to the codeblock data-bit buffer.
   bit_buffer& get_data_bits(unsigned cb_id)
   {
-    srsgnb_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    srsgnb_assert(cb_id < entries.size(), "Codeblock index ({}) is out of range ({}).", cb_id, entries.size());
     srsgnb_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     return entries[cb_id].data_bits;
   }

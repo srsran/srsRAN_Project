@@ -23,7 +23,7 @@ namespace srsgnb {
 class rx_softbuffer_impl : public unique_rx_softbuffer::softbuffer
 {
 private:
-  /// Protects finite state machine from concurrent access.
+  /// Protects the finite state machine from concurrent access.
   mutable std::mutex fsm_mutex;
   /// Finite state machine states.
   enum class state {
@@ -43,14 +43,14 @@ private:
     /// - \c release: a transmission matched the CRC and the softbuffer releases all its resources, it transitions to \c
     /// released.
     locked,
-    /// \brief The softbuffer has been released and the resources has not been released.
+    /// \brief The softbuffer has been released and the resources have not been released.
     ///
     /// It allows:
     /// - \c run_slot: releases its resources and transitions to \c available; and
     /// - \c reserve: reserves or reuses its resources for a new transmission.
     released
   };
-  /// Current softbufefr state.
+  /// Current softbuffer state.
   state current_state = state::available;
   /// Reservation identifier.
   rx_softbuffer_identifier reservation_id = {};
@@ -91,12 +91,12 @@ public:
   ///
   /// The reservation is unsuccessful if:
   /// - the softbuffer is already in use in an another scope, or
-  /// - if the pool is out of resources.
+  /// - the pool is out of resources.
   ///
-  /// \param[in] id Indicates the reservation identifier.
-  /// \param[in] expire_slot Indicates the slot at which the reservation expires.
-  /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
-  ///  \return True if the reservation is successful, false otherwise.
+  /// \param[in] id Reservation identifier.
+  /// \param[in] expire_slot Slot at which the reservation expires.
+  /// \param[in] nof_codeblocks Number of codeblocks to reserve.
+  /// \return True if the reservation is successful, false otherwise.
   bool reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
   {
     std::unique_lock<std::mutex> lock(fsm_mutex);
@@ -166,10 +166,10 @@ public:
     }
   }
 
-  /// Determines if the buffer matches the given identifier. It does not require state protection.
+  /// Returns true if the buffer matches the given identifier, false otherwise. It does not require state protection.
   bool match_id(const rx_softbuffer_identifier& identifier) const { return reservation_id == identifier; }
 
-  /// Determines whether the buffer is available.
+  /// Returns true if the buffer is available, false otherwise.
   bool is_available() const
   {
     std::unique_lock<std::mutex> lock(fsm_mutex);

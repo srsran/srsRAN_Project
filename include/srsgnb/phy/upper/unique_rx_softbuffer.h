@@ -30,7 +30,7 @@ public:
     /// Unlocks the softbuffer.
     virtual void unlock() = 0;
 
-    /// Unlocks and releases the softbuffer resources.
+    /// Releases (after unlocking) the softbuffer resources.
     virtual void release() = 0;
   };
 
