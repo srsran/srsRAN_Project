@@ -196,12 +196,13 @@ public:
     mac_uci_indication_message uci{};
     uci.sl_rx = dl_res.slot + k1;
     for (const dl_msg_alloc& ue_grant : dl_res.dl_res->ue_grants) {
-      mac_uci_pdu& pdu = uci.ucis.emplace_back();
-      pdu.type         = srsgnb::mac_uci_pdu::pdu_type::pucch_f0_or_f1;
-      pdu.rnti         = ue_grant.pdsch_cfg.rnti;
-      pdu.pucch_f0_or_f1.harq_info.emplace();
-      pdu.pucch_f0_or_f1.harq_info->harqs.resize(1);
-      pdu.pucch_f0_or_f1.harq_info->harqs[0] = srsgnb::uci_pucch_f0_or_f1_harq_values::ack;
+      mac_uci_pdu& uci_pdu = uci.ucis.emplace_back();
+      uci_pdu.rnti         = ue_grant.pdsch_cfg.rnti;
+      srsgnb::mac_uci_pdu::pucch_f0_or_f1_type pucch{};
+      pucch.harq_info.emplace();
+      pucch.harq_info->harqs.resize(1);
+      pucch.harq_info->harqs[0] = srsgnb::uci_pucch_f0_or_f1_harq_values::ack;
+      uci_pdu.pdu               = pucch;
     }
     ctrl_info_handler->handle_uci(uci);
   }

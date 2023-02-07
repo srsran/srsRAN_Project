@@ -261,23 +261,26 @@ void fapi_to_mac_data_msg_translator::on_uci_indication(const fapi::uci_indicati
     switch (pdu.pdu_type) {
       case fapi::uci_pdu_type::PUSCH: {
         mac_uci_pdu& mac_pdu = mac_msg.ucis.emplace_back();
-        mac_pdu.type         = mac_uci_pdu::pdu_type::pusch;
         mac_pdu.rnti         = to_rnti(pdu.pusch_pdu.rnti);
-        convert_fapi_to_mac_pusch_uci_ind(mac_pdu.pusch, pdu.pusch_pdu);
+        mac_uci_pdu::pusch_type pusch{};
+        convert_fapi_to_mac_pusch_uci_ind(pusch, pdu.pusch_pdu);
+        mac_pdu.pdu = pusch;
         break;
       }
       case fapi::uci_pdu_type::PUCCH_format_0_1: {
         mac_uci_pdu& mac_pdu = mac_msg.ucis.emplace_back();
-        mac_pdu.type         = mac_uci_pdu::pdu_type::pucch_f0_or_f1;
         mac_pdu.rnti         = to_rnti(pdu.pucch_pdu_f01.rnti);
-        convert_fapi_to_mac_pucch_f0_f1_uci_ind(mac_pdu.pucch_f0_or_f1, pdu.pucch_pdu_f01);
+        mac_uci_pdu::pucch_f0_or_f1_type pucch{};
+        convert_fapi_to_mac_pucch_f0_f1_uci_ind(pucch, pdu.pucch_pdu_f01);
+        mac_pdu.pdu = pucch;
         break;
       }
       case fapi::uci_pdu_type::PUCCH_format_2_3_4: {
         mac_uci_pdu& mac_pdu = mac_msg.ucis.emplace_back();
-        mac_pdu.type         = mac_uci_pdu::pdu_type::pucch_f2_or_f3_or_f4;
         mac_pdu.rnti         = to_rnti(pdu.pucch_pdu_f234.rnti);
-        convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_pdu.pucch_f2_or_f3_or_f4, pdu.pucch_pdu_f234);
+        mac_uci_pdu::pucch_f2_or_f3_or_f4_type pucch{};
+        convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(pucch, pdu.pucch_pdu_f234);
+        mac_pdu.pdu = pucch;
         break;
       }
     }

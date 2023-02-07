@@ -86,97 +86,91 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
     ind.ucis[i].ue_index = ue_mng.get_ue_index(msg.ucis[i].rnti);
     ind.ucis[i].crnti    = msg.ucis[i].rnti;
 
-    switch (msg.ucis[i].type) {
-      case mac_uci_pdu::pdu_type::pucch_f0_or_f1: {
-        const auto& pucch = msg.ucis[i].pucch_f0_or_f1;
+    if (variant_holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(msg.ucis[i].pdu)) {
+      const auto& pucch = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(msg.ucis[i].pdu);
 
-        uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
-        pdu.sr_detected = false;
-        if (pucch.sr_info.has_value()) {
-          pdu.sr_detected = pucch.sr_info.value().sr_detected;
-        }
-        if (pucch.harq_info.has_value()) {
-          // NOTES:
-          // - We report to the scheduler only the UCI HARQ-ACKs that contain either an ACK or NACK; we ignore the
-          // UCIc with DTX. In that case, the scheduler will not receive the notification and the HARQ will eventually
-          // retransmit the packet.
-          // - This is to handle the case of simultaneous SR + HARQ UCI, for which we receive 2 UCI PDUs from the PHY,
-          // 1 for SR + HARQ, 1 for HARQ only; note that only the SR + HARQ UCI is filled by the UE, meaning that we
-          // expect the received HARQ-only UCI to be DTX. If reported to the scheduler, the UCI with HARQ-ACK only would
-          // be erroneously treated as a NACK (as the scheduler only accepts ACK or NACK).
+      uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
+      pdu.sr_detected = false;
+      if (pucch.sr_info.has_value()) {
+        pdu.sr_detected = pucch.sr_info.value().sr_detected;
+      }
+      if (pucch.harq_info.has_value()) {
+        // NOTES:
+        // - We report to the scheduler only the UCI HARQ-ACKs that contain either an ACK or NACK; we ignore the
+        // UCIc with DTX. In that case, the scheduler will not receive the notification and the HARQ will eventually
+        // retransmit the packet.
+        // - This is to handle the case of simultaneous SR + HARQ UCI, for which we receive 2 UCI PDUs from the PHY,
+        // 1 for SR + HARQ, 1 for HARQ only; note that only the SR + HARQ UCI is filled by the UE, meaning that we
+        // expect the received HARQ-only UCI to be DTX. If reported to the scheduler, the UCI with HARQ-ACK only would
+        // be erroneously treated as a NACK (as the scheduler only accepts ACK or NACK).
 
-          // NOTE: There is a potential error that need to be handled below, which occurs when there's the 2-bit report
-          // {DTX, (N)ACK}; if this were reported, we would skip the first bit (i.e. DTX) and report the second (i.e.
-          // (N)ACK). Since in the scheduler the HARQ-ACK bits for a given UCI are processed in sequence, the
-          // notification of the second bit of {DTX, (N)ACK} would be seen by the scheduler as the first bit of the
-          // expected 2-bit reporting. To prevent this, we assume that PUCCH Format 0 or 1 UCI is valid if none of the 1
-          // or 2 bits report is DTX (not detected).
+        // NOTE: There is a potential error that need to be handled below, which occurs when there's the 2-bit report
+        // {DTX, (N)ACK}; if this were reported, we would skip the first bit (i.e. DTX) and report the second (i.e.
+        // (N)ACK). Since in the scheduler the HARQ-ACK bits for a given UCI are processed in sequence, the
+        // notification of the second bit of {DTX, (N)ACK} would be seen by the scheduler as the first bit of the
+        // expected 2-bit reporting. To prevent this, we assume that PUCCH Format 0 or 1 UCI is valid if none of the 1
+        // or 2 bits report is DTX (not detected).
 
-          const auto& harq_pdus = pucch.harq_info.value().harqs;
-          bool        is_valid_harq_ack =
-              std::find_if(harq_pdus.begin(), harq_pdus.end(), [](uci_pucch_f0_or_f1_harq_values harq_ack_value) {
-                return harq_ack_value == uci_pucch_f0_or_f1_harq_values::dtx;
-              }) == harq_pdus.end();
+        const auto& harq_pdus = pucch.harq_info.value().harqs;
+        bool        is_valid_harq_ack =
+            std::find_if(harq_pdus.begin(), harq_pdus.end(), [](uci_pucch_f0_or_f1_harq_values harq_ack_value) {
+              return harq_ack_value == uci_pucch_f0_or_f1_harq_values::dtx;
+            }) == harq_pdus.end();
 
-          if (is_valid_harq_ack) {
-            pdu.harqs.resize(harq_pdus.size());
-            for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-              pdu.harqs[j] = harq_pdus[j] == uci_pucch_f0_or_f1_harq_values::ack;
-            }
+        if (is_valid_harq_ack) {
+          pdu.harqs.resize(harq_pdus.size());
+          for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
+            pdu.harqs[j] = harq_pdus[j] == uci_pucch_f0_or_f1_harq_values::ack;
           }
         }
-        ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
-      } break;
-      case mac_uci_pdu::pdu_type::pusch: {
-        const auto&                            pusch = msg.ucis[i].pusch;
-        uci_indication::uci_pdu::uci_pusch_pdu pdu{};
-        if (pusch.harq_info.has_value() and
-            pusch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-          pdu.harqs = pusch.harq_info->payload;
-        }
-        if (pusch.csi_part1_info.has_value() and
-            pusch.csi_part1_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-          pdu.csi_part1 = pusch.csi_part1_info->payload;
-        }
-        if (pusch.csi_part2_info.has_value() and
-            pusch.csi_part2_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-          pdu.csi_part2 = pusch.csi_part2_info->payload;
-        }
-        ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>(pdu);
-      } break;
-      case mac_uci_pdu::pdu_type::pucch_f2_or_f3_or_f4: {
-        const auto&                                           pucch = msg.ucis[i].pucch_f2_or_f3_or_f4;
-        uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pdu{};
-        switch (pucch.pucch_fmt) {
-          case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_2:
-            pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_2;
-            break;
-          case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_3:
-            pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_3;
-            break;
-          case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_4:
-            pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_4;
-            break;
-        }
-        if (pucch.sr_info.has_value()) {
-          pdu.sr_info = pucch.sr_info.value();
-        }
-        if (pucch.harq_info.has_value() and
-            pucch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-          pdu.harqs = pucch.harq_info->payload;
-        }
-        if (pucch.uci_part1_or_csi_part1_info.has_value() and
-            pucch.uci_part1_or_csi_part1_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-          pdu.csi_part1 = pucch.uci_part1_or_csi_part1_info->payload;
-        }
-        if (pucch.uci_part2_or_csi_part2_info.has_value() and
-            pucch.uci_part2_or_csi_part2_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-          pdu.csi_part2 = pucch.uci_part2_or_csi_part2_info->payload;
-        }
-        ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu);
-      } break;
-      default:
-        report_fatal_error("Unsupported PUCCH format");
+      }
+      ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(pdu);
+    } else if (variant_holds_alternative<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu)) {
+      const auto&                            pusch = variant_get<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu);
+      uci_indication::uci_pdu::uci_pusch_pdu pdu{};
+      if (pusch.harq_info.has_value() and
+          pusch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        pdu.harqs = pusch.harq_info->payload;
+      }
+      if (pusch.csi_part1_info.has_value() and
+          pusch.csi_part1_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        pdu.csi_part1 = pusch.csi_part1_info->payload;
+      }
+      if (pusch.csi_part2_info.has_value() and
+          pusch.csi_part2_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        pdu.csi_part2 = pusch.csi_part2_info->payload;
+      }
+      ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>(pdu);
+    } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu)) {
+      const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu);
+      uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pdu{};
+      switch (pucch.pucch_fmt) {
+        case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_2:
+          pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_2;
+          break;
+        case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_3:
+          pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_3;
+          break;
+        case mac_uci_pdu::pucch_f2_or_f3_or_f4_type::pucch_format::format_4:
+          pdu.pucch_fmt = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu::pucch_format::format_4;
+          break;
+      }
+      if (pucch.sr_info.has_value()) {
+        pdu.sr_info = pucch.sr_info.value();
+      }
+      if (pucch.harq_info.has_value() and
+          pucch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        pdu.harqs = pucch.harq_info->payload;
+      }
+      if (pucch.uci_part1_or_csi_part1_info.has_value() and
+          pucch.uci_part1_or_csi_part1_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        pdu.csi_part1 = pucch.uci_part1_or_csi_part1_info->payload;
+      }
+      if (pucch.uci_part2_or_csi_part2_info.has_value() and
+          pucch.uci_part2_or_csi_part2_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
+        pdu.csi_part2 = pucch.uci_part2_or_csi_part2_info->payload;
+      }
+      ind.ucis[i].pdu.emplace<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(pdu);
     }
   }
 

@@ -84,6 +84,7 @@ struct uci_indication {
       bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>                       sr_info;
       bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>               harqs;
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part1;
+      /// CSI Part 2 is for PUCCH format 3 and 4.
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part2;
     };
 

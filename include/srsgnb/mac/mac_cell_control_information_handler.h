@@ -13,6 +13,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/adt/variant.h"
 #include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_pdu_capacity_constants.h"
@@ -44,7 +45,6 @@ struct mac_crc_indication_message {
 };
 
 struct mac_uci_pdu {
-  enum class pdu_type : uint16_t { pusch, pucch_f0_or_f1, pucch_f2_or_f3_or_f4 };
   struct pusch_type {
     struct harq_information {
       /// HARQ Detection Status values for UCI PUSCH.
@@ -163,12 +163,8 @@ struct mac_uci_pdu {
     optional<uci_payload_or_csi_information> uci_part2_or_csi_part2_info;
   };
 
-  pdu_type type;
-  rnti_t   rnti;
-  // :TODO: add variant here.
-  pusch_type                pusch;
-  pucch_f0_or_f1_type       pucch_f0_or_f1;
-  pucch_f2_or_f3_or_f4_type pucch_f2_or_f3_or_f4;
+  rnti_t                                                              rnti;
+  variant<pusch_type, pucch_f0_or_f1_type, pucch_f2_or_f3_or_f4_type> pdu;
 };
 
 /// \brief UCI indication that may contain multiple UCI PDUs.
