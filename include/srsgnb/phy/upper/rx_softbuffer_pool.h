@@ -68,11 +68,6 @@ public:
   virtual unique_rx_softbuffer
   reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned nof_codeblocks) = 0;
 
-  /// \brief Releases the specified softbuffer.
-  /// \param[in] id Identifies the softbuffer.
-  /// \remark If the indicated identifier is invalid, the call is ignored.
-  virtual void free_softbuffer(const rx_softbuffer_identifier& id) = 0;
-
   /// \brief Runs internal state machines and releases expired softbuffers.
   /// \param[in] slot Indicates the current slot.
   virtual void run_slot(const slot_point& slot) = 0;

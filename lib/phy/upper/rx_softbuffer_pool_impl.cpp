@@ -20,27 +20,27 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
   slot_point                   expire_slot = slot + expire_timeout_slots;
 
   // Look for the same identifier.
-  for (rx_softbuffer_impl& buffer : buffers) {
-    if (buffer.match_id(id)) {
+  for (auto& buffer : buffers) {
+    if (buffer->match_id(id)) {
       // Reserve buffer.
-      if (!buffer.reserve(id, expire_slot, nof_codeblocks)) {
+      if (!buffer->reserve(id, expire_slot, nof_codeblocks)) {
         // If the reservation failed, return an invalid softbuffer.
         return unique_rx_softbuffer();
       }
 
-      return unique_rx_softbuffer(buffer);
+      return unique_rx_softbuffer(*buffer);
     }
   }
 
   // If the same identifier was not found, select the first available.
-  for (rx_softbuffer_impl& buffer : buffers) {
-    if (!buffer.is_reserved()) {
+  for (auto& buffer : buffers) {
+    if (buffer->is_available()) {
       // If the reservation failed, return an invalid softbuffer.
-      if (!buffer.reserve(id, expire_slot, nof_codeblocks)) {
+      if (!buffer->reserve(id, expire_slot, nof_codeblocks)) {
         return unique_rx_softbuffer();
       }
 
-      return unique_rx_softbuffer(buffer);
+      return unique_rx_softbuffer(*buffer);
     }
   }
 
@@ -48,27 +48,13 @@ unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_poin
   return unique_rx_softbuffer();
 }
 
-void rx_softbuffer_pool_impl::free_softbuffer(const rx_softbuffer_identifier& id)
-{
-  std::unique_lock<std::mutex> lock(mutex);
-
-  // Search for a buffer that matches the id.
-  for (rx_softbuffer_impl& buffer : buffers) {
-    if (buffer.match_id(id)) {
-      // Free and early return.
-      buffer.free();
-      return;
-    }
-  }
-}
-
 void rx_softbuffer_pool_impl::run_slot(const slot_point& slot)
 {
   std::unique_lock<std::mutex> lock(mutex);
 
   // Run slot for each buffer.
-  for (rx_softbuffer_impl& buffer : buffers) {
-    buffer.run_slot(slot);
+  for (auto& buffer : buffers) {
+    buffer->run_slot(slot);
   }
 }
 

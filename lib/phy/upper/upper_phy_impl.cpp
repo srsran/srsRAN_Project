@@ -40,7 +40,6 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   ul_pdu_validator(std::move(config.ul_pdu_validator)),
   ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
   pdu_repository(config.nof_slots_ul_pdu_repository),
-  rx_results_notifier(*softbuffer_pool),
   rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(*ul_processor_pool,
                                                                        pdu_repository,
                                                                        *softbuffer_pool,

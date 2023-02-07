@@ -110,7 +110,7 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
 }
 
 pusch_processor_result pusch_processor_impl::process(span<uint8_t>                 data,
-                                                     unique_rx_softbuffer          softbuffer,
+                                                     rx_softbuffer&                softbuffer,
                                                      const resource_grid_reader&   grid,
                                                      const pusch_processor::pdu_t& pdu)
 {
@@ -271,7 +271,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
     decoder_config.new_data            = pdu.codeword.value().new_data;
 
     // Decode.
-    decoder->decode(data, result.data.value(), &softbuffer.get(), sch_llr, decoder_config);
+    decoder->decode(data, result.data.value(), &softbuffer, sch_llr, decoder_config);
   }
 
   return result;

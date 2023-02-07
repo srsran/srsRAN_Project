@@ -28,7 +28,7 @@ protected:
   uplink_processor_spy*                  ul_proc_spy;
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   uplink_slot_pdu_repository             pdu_repo;
-  upper_phy_rx_results_notifier_wrapper  rx_results_wrapper{*softbuffer_pool};
+  upper_phy_rx_results_notifier_wrapper  rx_results_wrapper;
   upper_phy_rx_symbol_handler_impl       rx_handler;
   prach_buffer_spy                       buffer_dummy;
   prach_detector::configuration          config;

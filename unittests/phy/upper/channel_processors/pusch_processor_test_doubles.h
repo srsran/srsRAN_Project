@@ -17,10 +17,8 @@ namespace srsgnb {
 class pusch_processor_dummy : public pusch_processor
 {
 public:
-  pusch_processor_result process(span<uint8_t>               data,
-                                 unique_rx_softbuffer        softbuffer,
-                                 const resource_grid_reader& grid,
-                                 const pdu_t&                pdu) override
+  pusch_processor_result
+  process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) override
   {
     return {};
   }

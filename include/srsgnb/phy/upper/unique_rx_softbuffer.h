@@ -24,11 +24,14 @@ public:
   class softbuffer : public rx_softbuffer
   {
   public:
-    /// \brief Locks the softbuffer.
+    /// Locks the softbuffer.
     virtual void lock() = 0;
 
-    /// \brief Unlocks the softbuffer.
+    /// Unlocks the softbuffer.
     virtual void unlock() = 0;
+
+    /// Unlocks and releases the softbuffer resources.
+    virtual void release() = 0;
   };
 
   /// Builds an invalid softbuffer.
@@ -43,7 +46,13 @@ public:
   }
 
   /// Destructor - it releases the softbuffer.
-  ~unique_rx_softbuffer() { release(); }
+  ~unique_rx_softbuffer()
+  {
+    if (ptr != nullptr) {
+      ptr->unlock();
+      ptr = nullptr;
+    }
+  }
 
   /// Copy constructor is deleted to prevent the unique softbuffer from being shared across multiple scopes.
   unique_rx_softbuffer(unique_rx_softbuffer& /**/) = delete;
@@ -67,13 +76,11 @@ public:
   /// Returns true if the unique softbuffer contains a valid softbuffer.
   bool is_valid() const { return ptr != nullptr; }
 
-  /// Releases the softbuffer.
+  /// Unlock and releases the softbuffer resources.
   void release()
   {
-    if (ptr != nullptr) {
-      ptr->unlock();
-      ptr = nullptr;
-    }
+    ptr->release();
+    ptr = nullptr;
   }
 
 private:

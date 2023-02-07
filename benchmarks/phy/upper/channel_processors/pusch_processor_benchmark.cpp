@@ -454,7 +454,7 @@ static void thread_process(const pusch_processor::pdu_t& config, unsigned tbs, c
     unique_rx_softbuffer softbuffer = softbuffer_pool->reserve_softbuffer(config.slot, softbuffer_id, nof_codeblocks);
 
     // Process PDU.
-    proc->process(data, std::move(softbuffer), *grid, config);
+    proc->process(data, softbuffer.get(), *grid, config);
 
     // Notify finish count.
     {

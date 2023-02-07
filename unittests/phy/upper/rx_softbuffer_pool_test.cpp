@@ -72,9 +72,10 @@ static void test_codeblock_limit()
 
   // Reserve softbuffer with all the codeblocks, it shall not fail.
   rx_softbuffer_identifier softbuffer_id0;
-  softbuffer_id0.harq_ack_id = 0x3;
-  softbuffer_id0.rnti        = 0x1234;
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
+  softbuffer_id0.harq_ack_id      = 0x3;
+  softbuffer_id0.rnti             = 0x1234;
+  unique_rx_softbuffer softbuffer = pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks);
+  TESTASSERT(softbuffer.is_valid());
 
   // Create one more softbuffer. No codeblocks are available. It must fail to reserve.
   rx_softbuffer_identifier softbuffer_id1;
@@ -107,7 +108,8 @@ static void test_softbuffer_free()
   TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
 
   // Reserve softbuffer with the same identifier. It shall not fail.
-  TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks).is_valid());
+  unique_rx_softbuffer softbuffer = pool->reserve_softbuffer(slot, softbuffer_id0, pool_config.max_nof_codeblocks);
+  TESTASSERT(softbuffer.is_valid());
 
   // Reserve softbuffer with a different identifier. It shall fail.
   rx_softbuffer_identifier softbuffer_id1;
@@ -116,7 +118,7 @@ static void test_softbuffer_free()
   TESTASSERT(!pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());
 
   // Free the first softbuffer identifier.
-  pool->free_softbuffer(softbuffer_id0);
+  softbuffer.release();
 
   // Reserve softbuffer with all the codeblocks, it shall not fail.
   TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks).is_valid());

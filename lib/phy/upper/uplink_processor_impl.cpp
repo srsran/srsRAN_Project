@@ -59,7 +59,7 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
                                           const resource_grid_reader&        grid,
                                           const uplink_processor::pusch_pdu& pdu)
 {
-  pusch_processor_result proc_result = pusch_proc->process(data, std::move(softbuffer), grid, pdu.pdu);
+  pusch_processor_result proc_result = pusch_proc->process(data, softbuffer.get(), grid, pdu.pdu);
 
   ul_pusch_results result;
   result.slot = pdu.pdu.slot;
@@ -72,6 +72,11 @@ void uplink_processor_impl::process_pusch(span<uint8_t>                      dat
     results_data.harq_id        = pdu.harq_id;
     results_data.decoder_result = *proc_result.data;
     results_data.payload        = (proc_result.data->tb_crc_ok) ? data : span<const uint8_t>();
+
+    // Release softbuffer if the CRC is OK.
+    if (proc_result.data.value().tb_crc_ok) {
+      softbuffer.release();
+    }
   }
 
   // UCI HARQ information.

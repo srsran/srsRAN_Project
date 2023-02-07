@@ -16,6 +16,7 @@
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
+#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/phy/upper/uplink_processor_context.h"
 
 namespace srsgnb {

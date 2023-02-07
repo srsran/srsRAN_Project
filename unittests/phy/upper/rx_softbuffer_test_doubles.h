@@ -54,6 +54,8 @@ public:
 
   void unlock() override { locked = false; }
 
+  void release() override { locked = false; }
+
   /// Clears all counters.
   void clear()
   {

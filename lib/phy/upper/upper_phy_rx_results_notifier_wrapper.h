@@ -23,11 +23,6 @@ class rx_softbuffer_pool;
 class upper_phy_rx_results_notifier_wrapper : public upper_phy_rx_results_notifier
 {
 public:
-  explicit upper_phy_rx_results_notifier_wrapper(rx_softbuffer_pool& softbuffer_pool_) :
-    softbuffer_pool(softbuffer_pool_)
-  {
-  }
-
   // See interface for documentation.
   void on_new_prach_results(const ul_prach_results& result) override;
 
@@ -43,8 +38,6 @@ public:
   void connect(upper_phy_rx_results_notifier& n);
 
 private:
-  /// Softbuffer pool.
-  rx_softbuffer_pool& softbuffer_pool;
   /// Pointer to the upper PHY receive results notifier.
   upper_phy_rx_results_notifier* rx_results_notifier = nullptr;
 };
