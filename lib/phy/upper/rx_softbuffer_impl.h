@@ -177,6 +177,9 @@ public:
   }
 
   // See interface for documentation.
+  uint8_t get_pid() override { return reservation_id.harq_ack_id; }
+
+  // See interface for documentation.
   unsigned get_nof_codeblocks() const override { return crc.size(); }
 
   // See interface for documentation.

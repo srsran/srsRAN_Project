@@ -927,25 +927,52 @@ public:
         // Detailed log information, including a list of all PDU fields.
         logger.debug(data.data(),
                      data.size(),
-                     "PUSCH: {:s} {:s} tbs={} {}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
+                     "PUSCH: harq={} {:s} {:s} tbs={} {}\n  harq={}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
+                     softbuffer.get_pid(),
                      pdu,
                      result,
                      data.size(),
                      time_ns,
+                     softbuffer.get_pid(),
                      pdu,
                      result,
                      data.size(),
                      time_ns);
       } else {
         // Single line log entry.
-        logger.info(data.data(), data.size(), "PUSCH: {:s} {:s} tbs={} {}", pdu, result, data.size(), time_ns);
+        logger.info(data.data(),
+                    data.size(),
+                    "PUSCH: harq={} {:s} {:s} tbs={} {}",
+                    softbuffer.get_pid(),
+                    pdu,
+                    result,
+                    data.size(),
+                    time_ns);
       }
     } else {
       // CRC is KO, do not dump TB.
       if (logger.debug.enabled()) {
-        logger.debug("PUSCH: {:s} {:s} {}\n  {:n}\n  {:n}\n  {}", pdu, result, time_ns, pdu, result, time_ns);
+        logger.debug("PUSCH: harq={} {:s} {:s} tbs={} {}\n  harq={}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
+                     softbuffer.get_pid(),
+                     pdu,
+                     result,
+                     data.size(),
+                     time_ns,
+                     softbuffer.get_pid(),
+                     pdu,
+                     result,
+                     data.size(),
+                     time_ns);
+      } else {
+        logger.info(data.data(),
+                    data.size(),
+                    "PUSCH: harq={} {:s} {:s} tbs={} {}",
+                    softbuffer.get_pid(),
+                    pdu,
+                    result,
+                    data.size(),
+                    time_ns);
       }
-      logger.info("PUSCH: {:s} {:s} {}", pdu, result, time_ns);
     }
 
     return result;

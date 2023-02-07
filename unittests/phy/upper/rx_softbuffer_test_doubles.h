@@ -28,6 +28,8 @@ public:
     }
   }
 
+  uint8_t get_pid() override { return 0; }
+
   unsigned int get_nof_codeblocks() const override
   {
     ++const_count;
