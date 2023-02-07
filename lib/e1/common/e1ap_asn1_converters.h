@@ -302,6 +302,372 @@ inline pdcp_sn_size asn1_to_pdcp_sn_size(asn1::e1ap::pdcp_sn_size_e asn1_sn_size
   return sn_size;
 }
 
+/// \brief Converts E1AP ASN.1 discard timer type to \c pdcp_discard_timer type.
+inline pdcp_discard_timer asn1_to_pdcp_discard_timer(asn1::e1ap::discard_timer_e asn1_discard_timer)
+{
+  pdcp_discard_timer discard_timer;
+
+  switch (asn1_discard_timer) {
+    case asn1::e1ap::discard_timer_opts::ms10:
+      discard_timer = pdcp_discard_timer::ms10;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms20:
+      discard_timer = pdcp_discard_timer::ms20;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms30:
+      discard_timer = pdcp_discard_timer::ms30;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms40:
+      discard_timer = pdcp_discard_timer::ms40;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms50:
+      discard_timer = pdcp_discard_timer::ms50;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms60:
+      discard_timer = pdcp_discard_timer::ms60;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms75:
+      discard_timer = pdcp_discard_timer::ms75;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms100:
+      discard_timer = pdcp_discard_timer::ms100;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms150:
+      discard_timer = pdcp_discard_timer::ms150;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms200:
+      discard_timer = pdcp_discard_timer::ms200;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms250:
+      discard_timer = pdcp_discard_timer::ms250;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms300:
+      discard_timer = pdcp_discard_timer::ms300;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms500:
+      discard_timer = pdcp_discard_timer::ms500;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms750:
+      discard_timer = pdcp_discard_timer::ms750;
+      break;
+    case asn1::e1ap::discard_timer_opts::ms1500:
+      discard_timer = pdcp_discard_timer::ms1500;
+      break;
+    case asn1::e1ap::discard_timer_opts::infinity:
+      discard_timer = pdcp_discard_timer::infinity;
+      break;
+    default:
+      srsgnb_assert(false, "Unsupported PDCP discard timer. PDCP discard timer={}", asn1_discard_timer);
+  }
+  return discard_timer;
+}
+
+/// \brief Converts \c pdcp_discard_timer type to E1AP ASN.1 discard timer type.
+inline asn1::e1ap::discard_timer_e pdcp_discard_timer_to_asn1(pdcp_discard_timer discard_timer)
+{
+  asn1::e1ap::discard_timer_e asn1_discard_timer;
+
+  switch (discard_timer) {
+    case pdcp_discard_timer::ms10:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms10;
+      break;
+    case pdcp_discard_timer::ms20:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms20;
+      break;
+    case pdcp_discard_timer::ms30:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms30;
+      break;
+    case pdcp_discard_timer::ms40:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms40;
+      break;
+    case pdcp_discard_timer::ms50:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms50;
+      break;
+    case pdcp_discard_timer::ms60:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms60;
+      break;
+    case pdcp_discard_timer::ms75:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms75;
+      break;
+    case pdcp_discard_timer::ms100:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms100;
+      break;
+    case pdcp_discard_timer::ms150:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms150;
+      break;
+    case pdcp_discard_timer::ms200:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms200;
+      break;
+    case pdcp_discard_timer::ms250:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms250;
+      break;
+    case pdcp_discard_timer::ms300:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms300;
+      break;
+    case pdcp_discard_timer::ms500:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms500;
+      break;
+    case pdcp_discard_timer::ms750:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms750;
+      break;
+    case pdcp_discard_timer::ms1500:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms1500;
+      break;
+    case pdcp_discard_timer::infinity:
+      asn1_discard_timer = asn1::e1ap::discard_timer_opts::infinity;
+      break;
+    default:
+      srsgnb_assert(false, "Unsupported PDCP discard timer. PDCP discard timer={}", discard_timer);
+  }
+
+  return asn1_discard_timer;
+}
+
+/// \brief Converts E1AP ASN.1 t-Reordering type to \c pdcp_t_reordering type.
+inline pdcp_t_reordering asn1_to_pdcp_t_reordering(asn1::e1ap::t_reordering_e asn1_t_reordering)
+{
+  pdcp_t_reordering t_reordering;
+
+  // t-Reordering
+  switch (asn1_t_reordering) {
+    case asn1::e1ap::t_reordering_e::ms0:
+      t_reordering = pdcp_t_reordering::ms0;
+      break;
+    case asn1::e1ap::t_reordering_e::ms1:
+      t_reordering = pdcp_t_reordering::ms1;
+      break;
+    case asn1::e1ap::t_reordering_e::ms2:
+      t_reordering = pdcp_t_reordering::ms2;
+      break;
+    case asn1::e1ap::t_reordering_e::ms4:
+      t_reordering = pdcp_t_reordering::ms4;
+      break;
+    case asn1::e1ap::t_reordering_e::ms5:
+      t_reordering = pdcp_t_reordering::ms5;
+      break;
+    case asn1::e1ap::t_reordering_e::ms8:
+      t_reordering = pdcp_t_reordering::ms8;
+      break;
+    case asn1::e1ap::t_reordering_e::ms10:
+      t_reordering = pdcp_t_reordering::ms10;
+      break;
+    case asn1::e1ap::t_reordering_e::ms15:
+      t_reordering = pdcp_t_reordering::ms15;
+      break;
+    case asn1::e1ap::t_reordering_e::ms20:
+      t_reordering = pdcp_t_reordering::ms20;
+      break;
+    case asn1::e1ap::t_reordering_e::ms30:
+      t_reordering = pdcp_t_reordering::ms30;
+      break;
+    case asn1::e1ap::t_reordering_e::ms40:
+      t_reordering = pdcp_t_reordering::ms40;
+      break;
+    case asn1::e1ap::t_reordering_e::ms50:
+      t_reordering = pdcp_t_reordering::ms50;
+      break;
+    case asn1::e1ap::t_reordering_e::ms60:
+      t_reordering = pdcp_t_reordering::ms60;
+      break;
+    case asn1::e1ap::t_reordering_e::ms80:
+      t_reordering = pdcp_t_reordering::ms80;
+      break;
+    case asn1::e1ap::t_reordering_e::ms100:
+      t_reordering = pdcp_t_reordering::ms100;
+      break;
+    case asn1::e1ap::t_reordering_e::ms120:
+      t_reordering = pdcp_t_reordering::ms120;
+      break;
+    case asn1::e1ap::t_reordering_e::ms140:
+      t_reordering = pdcp_t_reordering::ms140;
+      break;
+    case asn1::e1ap::t_reordering_e::ms160:
+      t_reordering = pdcp_t_reordering::ms160;
+      break;
+    case asn1::e1ap::t_reordering_e::ms180:
+      t_reordering = pdcp_t_reordering::ms180;
+      break;
+    case asn1::e1ap::t_reordering_e::ms200:
+      t_reordering = pdcp_t_reordering::ms200;
+      break;
+    case asn1::e1ap::t_reordering_e::ms220:
+      t_reordering = pdcp_t_reordering::ms220;
+      break;
+    case asn1::e1ap::t_reordering_e::ms240:
+      t_reordering = pdcp_t_reordering::ms240;
+      break;
+    case asn1::e1ap::t_reordering_e::ms260:
+      t_reordering = pdcp_t_reordering::ms260;
+      break;
+    case asn1::e1ap::t_reordering_e::ms280:
+      t_reordering = pdcp_t_reordering::ms280;
+      break;
+    case asn1::e1ap::t_reordering_e::ms300:
+      t_reordering = pdcp_t_reordering::ms300;
+      break;
+    case asn1::e1ap::t_reordering_e::ms500:
+      t_reordering = pdcp_t_reordering::ms500;
+      break;
+    case asn1::e1ap::t_reordering_e::ms750:
+      t_reordering = pdcp_t_reordering::ms750;
+      break;
+    case asn1::e1ap::t_reordering_e::ms1000:
+      t_reordering = pdcp_t_reordering::ms1000;
+      break;
+    case asn1::e1ap::t_reordering_e::ms1250:
+      t_reordering = pdcp_t_reordering::ms1250;
+      break;
+    case asn1::e1ap::t_reordering_e::ms1500:
+      t_reordering = pdcp_t_reordering::ms1500;
+      break;
+    case asn1::e1ap::t_reordering_e::ms1750:
+      t_reordering = pdcp_t_reordering::ms1750;
+      break;
+    case asn1::e1ap::t_reordering_e::ms2000:
+      t_reordering = pdcp_t_reordering::ms2000;
+      break;
+    case asn1::e1ap::t_reordering_e::ms2250:
+      t_reordering = pdcp_t_reordering::ms2250;
+      break;
+    case asn1::e1ap::t_reordering_e::ms2500:
+      t_reordering = pdcp_t_reordering::ms2500;
+      break;
+    case asn1::e1ap::t_reordering_e::ms2750:
+      t_reordering = pdcp_t_reordering::ms2750;
+      break;
+    case asn1::e1ap::t_reordering_e::ms3000:
+      t_reordering = pdcp_t_reordering::ms3000;
+      break;
+    default:
+      srsgnb_assert(false, "Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", asn1_t_reordering);
+  }
+
+  return t_reordering;
+}
+
+inline asn1::e1ap::t_reordering_e pdcp_t_reordering_to_asn1(pdcp_t_reordering t_reordering)
+{
+  asn1::e1ap::t_reordering_e asn1_t_reordering;
+
+  switch (t_reordering) {
+    case pdcp_t_reordering::ms0:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms0;
+      break;
+    case pdcp_t_reordering::ms1:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1;
+      break;
+    case pdcp_t_reordering::ms2:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2;
+      break;
+    case pdcp_t_reordering::ms4:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms4;
+      break;
+    case pdcp_t_reordering::ms5:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms5;
+      break;
+    case pdcp_t_reordering::ms8:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms8;
+      break;
+    case pdcp_t_reordering::ms10:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms10;
+      break;
+    case pdcp_t_reordering::ms15:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms15;
+      break;
+    case pdcp_t_reordering::ms20:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms20;
+      break;
+    case pdcp_t_reordering::ms30:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms30;
+      break;
+    case pdcp_t_reordering::ms40:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms40;
+      break;
+    case pdcp_t_reordering::ms50:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms50;
+      break;
+    case pdcp_t_reordering::ms60:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms60;
+      break;
+    case pdcp_t_reordering::ms80:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms80;
+      break;
+    case pdcp_t_reordering::ms100:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms100;
+      break;
+    case pdcp_t_reordering::ms120:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms120;
+      break;
+    case pdcp_t_reordering::ms140:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms140;
+      break;
+    case pdcp_t_reordering::ms160:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms160;
+      break;
+    case pdcp_t_reordering::ms180:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms180;
+      break;
+    case pdcp_t_reordering::ms200:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms200;
+      break;
+    case pdcp_t_reordering::ms220:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms220;
+      break;
+    case pdcp_t_reordering::ms240:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms240;
+      break;
+    case pdcp_t_reordering::ms260:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms260;
+      break;
+    case pdcp_t_reordering::ms280:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms280;
+      break;
+    case pdcp_t_reordering::ms300:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms300;
+      break;
+    case pdcp_t_reordering::ms500:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms500;
+      break;
+    case pdcp_t_reordering::ms750:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms750;
+      break;
+    case pdcp_t_reordering::ms1000:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1000;
+      break;
+    case pdcp_t_reordering::ms1250:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1250;
+      break;
+    case pdcp_t_reordering::ms1500:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1500;
+      break;
+    case pdcp_t_reordering::ms1750:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1750;
+      break;
+    case pdcp_t_reordering::ms2000:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2000;
+      break;
+    case pdcp_t_reordering::ms2250:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2250;
+      break;
+    case pdcp_t_reordering::ms2500:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2500;
+      break;
+    case pdcp_t_reordering::ms2750:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2750;
+      break;
+    case pdcp_t_reordering::ms3000:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms3000;
+      break;
+    case pdcp_t_reordering::infinity:
+      asn1_t_reordering = asn1::e1ap::t_reordering_e::nulltype;
+      break;
+    default:
+      srsgnb_assert(false, "Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", t_reordering);
+  }
+
+  return asn1_t_reordering;
+}
+
 /// \brief Converts type \c e1ap_pdcp_config to an E1AP ASN.1 type.
 /// \param pdcp_cfg pdcp config object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
@@ -355,13 +721,14 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
   // t reordering timer
   if (pdcp_cfg.t_reordering_timer.has_value()) {
     asn1_pdcp_cfg.t_reordering_timer_present = true;
-    asn1::number_to_enum(asn1_pdcp_cfg.t_reordering_timer.t_reordering, pdcp_cfg.t_reordering_timer.value());
+
+    asn1_pdcp_cfg.t_reordering_timer.t_reordering = pdcp_t_reordering_to_asn1(pdcp_cfg.t_reordering_timer.value());
   }
 
   // discard timer
   if (pdcp_cfg.discard_timer.has_value()) {
     asn1_pdcp_cfg.discard_timer_present = true;
-    asn1::number_to_enum(asn1_pdcp_cfg.discard_timer, pdcp_cfg.discard_timer.value());
+    asn1_pdcp_cfg.discard_timer         = pdcp_discard_timer_to_asn1(pdcp_cfg.discard_timer.value());
   }
 
   // ul data split thres
@@ -477,12 +844,12 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
 
   // t reordering timer
   if (asn1_pdcp_cfg.t_reordering_timer_present) {
-    pdcp_cfg.t_reordering_timer = asn1_pdcp_cfg.t_reordering_timer.t_reordering.to_number();
+    pdcp_cfg.t_reordering_timer = asn1_to_pdcp_t_reordering(asn1_pdcp_cfg.t_reordering_timer.t_reordering);
   }
 
   // discard timer
   if (asn1_pdcp_cfg.discard_timer_present) {
-    pdcp_cfg.discard_timer = asn1_pdcp_cfg.discard_timer.to_number();
+    pdcp_cfg.discard_timer = asn1_to_pdcp_discard_timer(asn1_pdcp_cfg.discard_timer);
   }
 
   // ul data split thres

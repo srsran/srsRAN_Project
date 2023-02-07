@@ -58,11 +58,7 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
   if (not e1ap_cfg.discard_timer.has_value()) {
     cfg.tx.discard_timer = pdcp_discard_timer::not_configured;
   } else {
-    if (e1ap_cfg.discard_timer.value() == -1) {
-      cfg.tx.discard_timer = pdcp_discard_timer::infinity;
-    } else {
-      cfg.tx.discard_timer = static_cast<pdcp_discard_timer>(e1ap_cfg.discard_timer.value());
-    }
+    cfg.tx.discard_timer = e1ap_cfg.discard_timer.value();
   }
 
   // Status report required
@@ -77,7 +73,9 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
 
   // t-Reordering
   if (e1ap_cfg.t_reordering_timer.has_value()) {
-    cfg.rx.t_reordering = static_cast<pdcp_t_reordering>(e1ap_cfg.t_reordering_timer.value());
+    cfg.rx.t_reordering = e1ap_cfg.t_reordering_timer.value();
+  } else {
+    cfg.rx.t_reordering = pdcp_t_reordering::infinity;
   }
 
   return cfg;

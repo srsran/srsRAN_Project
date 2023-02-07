@@ -165,18 +165,18 @@ struct e1ap_rohc_params {
 };
 
 struct e1ap_pdcp_config {
-  pdcp_sn_size               pdcp_sn_size_ul;
-  pdcp_sn_size               pdcp_sn_size_dl;
-  srsgnb::rlc_mode           rlc_mod;
-  optional<e1ap_rohc_params> rohc_params;
-  optional<uint16_t>         t_reordering_timer;
-  optional<int16_t>          discard_timer;
-  optional<int32_t>          ul_data_split_thres;
-  optional<bool>             pdcp_dupl;
-  optional<bool>             pdcp_reest;
-  optional<bool>             pdcp_data_recovery;
-  optional<std::string>      dupl_activation;
-  optional<bool>             out_of_order_delivery;
+  pdcp_sn_size                 pdcp_sn_size_ul;
+  pdcp_sn_size                 pdcp_sn_size_dl;
+  srsgnb::rlc_mode             rlc_mod;
+  optional<e1ap_rohc_params>   rohc_params;
+  optional<pdcp_t_reordering>  t_reordering_timer;
+  optional<pdcp_discard_timer> discard_timer;
+  optional<int32_t>            ul_data_split_thres;
+  optional<bool>               pdcp_dupl;
+  optional<bool>               pdcp_reest;
+  optional<bool>               pdcp_data_recovery;
+  optional<std::string>        dupl_activation;
+  optional<bool>               out_of_order_delivery;
 };
 
 struct e1ap_drb_to_setup_item_ng_ran {

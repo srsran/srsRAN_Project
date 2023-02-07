@@ -125,7 +125,7 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
   drb_to_setup.pdcp_cfg.rlc_mod            = rlc_mode::um_bidir;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
-  drb_to_setup.pdcp_cfg.t_reordering_timer = 50;
+  drb_to_setup.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms50;
 
   e1ap_qos_flow_qos_param_item qos_to_setup;
   qos_to_setup.qos_flow_id = uint_to_qos_flow_id(0xee);
@@ -199,7 +199,7 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
   drb_to_setup.pdcp_cfg.rlc_mod            = rlc_mode::um_bidir;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
-  drb_to_setup.pdcp_cfg.t_reordering_timer = 50;
+  drb_to_setup.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms50;
 
   e1ap_qos_flow_qos_param_item qos_to_setup;
   qos_to_setup.qos_flow_id = uint_to_qos_flow_id(0xee);
