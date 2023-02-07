@@ -287,8 +287,13 @@ protected:
     const auto& ul_lst =
         u.msg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack;
 
+    // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
+    static const static_vector<uint8_t, 8> dl_data_to_ul_ack_f1_0 = {1, 2, 3, 4, 5, 6, 7, 8};
+
+    const auto& ack_lst = ul_lst.empty() ? dl_data_to_ul_ack_f1_0 : ul_lst;
+
     return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                      : next_slot + ul_lst[it->dci.c_rnti_f1_0.time_resource];
+                                                      : next_slot + ack_lst[it->dci.c_rnti_f1_0.time_resource];
   }
 
   uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
