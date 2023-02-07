@@ -206,6 +206,16 @@ static bool validate_log_appconfig(const log_appconfig& config)
   return true;
 }
 
+/// Validates expert physical layer configuration parameters.
+static bool validate_expert_phy_appconfig(const expert_phy_appconfig& config)
+{
+  if (config.pusch_decoder_max_iterations == 0) {
+    fmt::print("Maximum PUSCH LDPC decoder iterations cannot be 0.\n");
+    return false;
+  }
+  return true;
+}
+
 bool srsgnb::validate_appconfig(const gnb_appconfig& config)
 {
   if (!validate_log_appconfig(config.log_cfg)) {
@@ -225,6 +235,10 @@ bool srsgnb::validate_appconfig(const gnb_appconfig& config)
   }
 
   if (!validate_rf_driver_appconfig(config.rf_driver_cfg)) {
+    return false;
+  }
+
+  if (!validate_expert_phy_appconfig(config.expert_phy_cfg)) {
     return false;
   }
 

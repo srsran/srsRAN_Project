@@ -71,6 +71,19 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
   app.add_option("--otw_format", rf_driver_params.otw_format, "Over-the-wire format.")->capture_default_str();
 }
 
+static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig& expert_phy_params)
+{
+  app.add_option("--pusch_dec_max_iterations",
+                 expert_phy_params.pusch_decoder_max_iterations,
+                 "Maximum number of PUSCH LDPC decoder iterations.")
+      ->capture_default_str()
+      ->check(CLI::Number);
+  app.add_option("--pusch_dec_enable_early_stop",
+                 expert_phy_params.pusch_decoder_early_stop,
+                 "Enables PUSCH LDPC decoder early stop.")
+      ->capture_default_str();
+}
+
 static void to_aggregation_level(aggregation_level& aggr_lvl, unsigned value)
 {
   switch (value) {
@@ -375,4 +388,9 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
     }
   };
   app.add_option_function<std::vector<std::string>>("--qos", qos_lambda, "qos");
+
+  // Expert PHY section.
+  CLI::App* expert_phy_subcmd =
+      app.add_subcommand("expert_phy", "Expert physical layer configuration.")->configurable();
+  configure_cli11_expert_phy_args(*expert_phy_subcmd, gnb_cfg.expert_phy_cfg);
 }

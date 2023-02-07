@@ -95,6 +95,8 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const upper_phy_params&     
   upper_config.crc_calculator_type                         = "auto";
   upper_config.ldpc_rate_dematcher_type                    = "auto";
   upper_config.ldpc_decoder_type                           = "auto";
+  upper_config.ldpc_decoder_iterations                     = 6;
+  upper_config.ldpc_decoder_early_stop                     = true;
   upper_config.rx_symbol_request_notifier                  = rx_symbol_request_notifier;
   upper_config.active_scs                                  = {};
   upper_config.active_scs[to_numerology_value(params.scs)] = true;

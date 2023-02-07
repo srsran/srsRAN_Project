@@ -378,6 +378,8 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
     cfg.enable_evm                 = (cfg.log_level >= srslog::basic_levels::info);
     cfg.sector_id                  = i;
     cfg.nof_ports                  = nof_ports;
+    cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
+    cfg.ldpc_decoder_early_stop    = config.expert_phy_cfg.pusch_decoder_early_stop;
 
     cfg.nof_slots_dl_rg   = dl_pipeline_depth * nof_slots_per_subframe;
     cfg.nof_dl_processors = cfg.nof_slots_dl_rg;

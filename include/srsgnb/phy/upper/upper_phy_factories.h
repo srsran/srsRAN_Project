@@ -192,6 +192,10 @@ struct upper_phy_config {
   /// - \c lut: for using a look-up table CRC calculator, or
   /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
   std::string crc_calculator_type;
+  /// Number of LDPC decoder iterations.
+  unsigned ldpc_decoder_iterations;
+  /// Set to true to enable the LDPC decoder early stop.
+  bool ldpc_decoder_early_stop;
   /// Radio sector identifier.
   unsigned sector_id;
   /// Port identifier within the sector.

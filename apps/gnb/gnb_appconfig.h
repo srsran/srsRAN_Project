@@ -214,6 +214,14 @@ struct log_appconfig {
   std::string phy_rx_symbols_filename = ""; // Set to a valid file path to print the received symbols.
 };
 
+/// Expert Physical layer configuration.
+struct expert_phy_appconfig {
+  /// Number of PUSCH LDPC decoder iterations.
+  unsigned pusch_decoder_max_iterations = 6;
+  /// Set to true to enable the PUSCH LDPC decoder early stop.
+  bool pusch_decoder_early_stop = true;
+};
+
 /// Monolithic gnb application configuration.
 struct gnb_appconfig {
   /// Logging configuration.
@@ -238,6 +246,9 @@ struct gnb_appconfig {
 
   /// \brief QoS configuration.
   std::vector<qos_appconfig> qos_cfg = {};
+
+  /// Expert physical layer configuration.
+  expert_phy_appconfig expert_phy_cfg;
 };
 
 } // namespace srsgnb
