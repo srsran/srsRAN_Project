@@ -58,7 +58,7 @@ public:
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
     last_sched_res = sched->slot_indication(next_slot, cell_idx);
     srsgnb_assert(last_sched_res != nullptr, "No scheduler output was provided");
-    test_scheduler_result_consistency(cell_cfg_list[cell_idx], *last_sched_res);
+    test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res);
     ++next_slot;
   }
 

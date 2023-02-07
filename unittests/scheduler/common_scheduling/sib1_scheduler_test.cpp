@@ -263,7 +263,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
-    test_scheduler_result_consistency(t_bench.cfg, res_slot_grid.result);
+    test_scheduler_result_consistency(t_bench.cfg, res_slot_grid.slot, res_slot_grid.result);
 
     // Verify if for any active beam, the SIB1 got allocated within the proper n0 slots.
     for (size_t ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -321,7 +321,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
-    test_scheduler_result_consistency(t_bench.cfg, res_slot_grid.result);
+    test_scheduler_result_consistency(t_bench.cfg, t_bench.sl_tx, res_slot_grid.result);
 
     // With the SSB bitmap set 0b10000000, only the SSB and SIB1 for the 1 beams are used; we perform the check for
     // this beam.
@@ -374,7 +374,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
-    test_scheduler_result_consistency(t_bench.cfg, res_slot_grid.result);
+    test_scheduler_result_consistency(t_bench.cfg, t_bench.sl_tx, res_slot_grid.result);
 
     test_dl_resource_grid_collisions(t_bench.cfg, res_slot_grid.result.dl);
 

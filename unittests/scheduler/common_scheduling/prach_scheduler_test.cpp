@@ -80,6 +80,6 @@ TEST_F(prach_tester, prach_sched_results_matches_config)
 {
   for (unsigned i = 0; i != nof_slots_run; ++i) {
     slot_indication();
-    test_scheduler_result_consistency(cell_cfg, res_grid[0].result);
+    test_scheduler_result_consistency(cell_cfg, res_grid[0].slot, res_grid[0].result);
   }
 }

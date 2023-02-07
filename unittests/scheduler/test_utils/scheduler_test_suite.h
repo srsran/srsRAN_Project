@@ -25,6 +25,12 @@ class cell_configuration;
 struct cell_resource_allocator;
 
 /// \brief Current checks:
+/// - PDCCHs and PDSCHs are only allocated in DL slots.
+/// - PUCCHs, PUSCHs and PRACHs are only allocated in UL slots.
+/// - In partial DL/UL slots, verifies that allocations are within the respective DL/UL symbols.
+void assert_tdd_pattern_consistency(const cell_configuration& cell_cfg, slot_point sl_tx, const sched_result& result);
+
+/// \brief Current checks:
 /// - RNTIs match.
 /// - The PDSCH symbols match chosen DCI time domain resource assignment.
 /// - The PDSCH PRBs match the chosen DCI freq domain resource assignment.
@@ -67,7 +73,9 @@ void test_dl_resource_grid_collisions(const cell_configuration& cell_cfg, const 
 void test_ul_resource_grid_collisions(const cell_configuration& cell_cfg, const ul_sched_result& result);
 
 /// \brief Run all consistency checks for the scheduler result.
-void test_scheduler_result_consistency(const cell_configuration& cell_cfg, const sched_result& result);
+void test_scheduler_result_consistency(const cell_configuration& cell_cfg,
+                                       slot_point                sl_tx,
+                                       const sched_result&       result);
 
 /// \brief Run all consistency checks for multiple slot scheduler results.
 void test_scheduler_result_consistency(const cell_configuration&      cell_cfg,

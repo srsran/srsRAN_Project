@@ -21,6 +21,55 @@
 
 using namespace srsgnb;
 
+void srsgnb::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
+                                            slot_point                sl_tx,
+                                            const sched_result&       result)
+{
+  if (not cell_cfg.tdd_cfg_common.has_value()) {
+    return;
+  }
+  unsigned          nof_dl_symbol_per_slot = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp_extended
+                                                 ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
+                                                 : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  unsigned          nof_ul_symbol_per_slot = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended
+                                                 ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
+                                                 : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  ofdm_symbol_range dl_symbols             = get_active_tdd_dl_symbols(
+      *cell_cfg.tdd_cfg_common, sl_tx.to_uint(), cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp_extended);
+  ofdm_symbol_range ul_symbols = get_active_tdd_ul_symbols(
+      *cell_cfg.tdd_cfg_common, sl_tx.to_uint(), cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended);
+
+  if (dl_symbols.empty()) {
+    ASSERT_TRUE(result.dl.dl_pdcchs.empty());
+    ASSERT_TRUE(result.dl.ul_pdcchs.empty());
+    ASSERT_TRUE(result.dl.bc.ssb_info.empty());
+    ASSERT_TRUE(result.dl.bc.sibs.empty());
+    ASSERT_TRUE(result.dl.rar_grants.empty());
+    ASSERT_TRUE(result.dl.ue_grants.empty());
+    ASSERT_TRUE(result.dl.paging_grants.empty());
+  } else if (dl_symbols.length() != nof_dl_symbol_per_slot) {
+    for (const auto& sib : result.dl.bc.sibs) {
+      ASSERT_TRUE(dl_symbols.contains(sib.pdsch_cfg.symbols));
+    }
+    for (const auto& rar : result.dl.rar_grants) {
+      ASSERT_TRUE(dl_symbols.contains(rar.pdsch_cfg.symbols));
+    }
+    for (const auto& ue_grant : result.dl.ue_grants) {
+      ASSERT_TRUE(dl_symbols.contains(ue_grant.pdsch_cfg.symbols));
+    }
+  }
+
+  if (ul_symbols.empty()) {
+    ASSERT_TRUE(result.ul.pucchs.empty());
+    ASSERT_TRUE(result.ul.puschs.empty());
+    ASSERT_TRUE(result.ul.prachs.empty());
+  } else if (dl_symbols.length() != nof_ul_symbol_per_slot) {
+    for (const auto& ue_grant : result.ul.puschs) {
+      ASSERT_TRUE(ul_symbols.contains(ue_grant.pusch_cfg.symbols));
+    }
+  }
+}
+
 void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
                                                    const pdcch_dl_information& pdcch,
                                                    const pdsch_information&    pdsch)
@@ -132,7 +181,7 @@ void srsgnb::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
 {
   bool has_coreset0 = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value();
   if (not has_coreset0) {
-    TESTASSERT(sibs.empty(), "SIB1 cannot be scheduled without CORESET#0");
+    ASSERT_TRUE(sibs.empty()) << fmt::format("SIB1 cannot be scheduled without CORESET#0");
     return;
   }
 
@@ -140,23 +189,38 @@ void srsgnb::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
   effective_init_bwp_cfg.crbs              = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 
   for (const sib_information& sib : sibs) {
-    TESTASSERT(sib.pdsch_cfg.prbs.is_alloc_type1());
+    ASSERT_EQ(sib.pdsch_cfg.rnti, SI_RNTI);
+    ASSERT_EQ(sib.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
+    ASSERT_TRUE(sib.pdsch_cfg.prbs.is_alloc_type1());
+    ASSERT_EQ(sib.pdsch_cfg.coreset_cfg->id, to_coreset_id(0));
+    ASSERT_EQ(sib.pdsch_cfg.ss_set_type, search_space_set_type::type0);
+    ASSERT_EQ(sib.pdsch_cfg.codewords.size(), 1);
+    ASSERT_EQ(sib.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
     prb_interval prbs = sib.pdsch_cfg.prbs.prbs();
-    TESTASSERT(prbs.stop() <= effective_init_bwp_cfg.crbs.length(), "PRB grant falls outside CORESET#0 RB boundaries");
+    ASSERT_LE(prbs.stop(), effective_init_bwp_cfg.crbs.length())
+        << fmt::format("PRB grant falls outside CORESET#0 RB boundaries");
   }
 }
 
 void srsgnb::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<const rar_information> rars)
 {
-  std::set<rnti_t>  ra_rntis;
+  std::set<rnti_t>                  ra_rntis;
+  const search_space_configuration& ss_cfg =
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
+          .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id];
   crb_interval      coreset0_lims          = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
   bwp_configuration effective_init_bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
   effective_init_bwp_cfg.crbs              = coreset0_lims;
 
   for (const rar_information& rar : rars) {
     rnti_t ra_rnti = rar.pdsch_cfg.rnti;
-    TESTASSERT(not rar.grants.empty(), "RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
-    TESTASSERT(rar.pdsch_cfg.prbs.is_alloc_type1(), "Invalid allocation type for RAR");
+    ASSERT_FALSE(rar.grants.empty()) << fmt::format("RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
+    ASSERT_EQ(rar.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
+    ASSERT_TRUE(rar.pdsch_cfg.prbs.is_alloc_type1()) << "Invalid allocation type for RAR";
+    ASSERT_EQ(rar.pdsch_cfg.coreset_cfg->id, ss_cfg.cs_id);
+    ASSERT_EQ(rar.pdsch_cfg.ss_set_type, search_space_set_type::type1);
+    ASSERT_EQ(rar.pdsch_cfg.codewords.size(), 1);
+    ASSERT_EQ(rar.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
 
     crb_interval rar_crbs = prb_to_crb(effective_init_bwp_cfg, rar.pdsch_cfg.prbs.prbs());
     TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
@@ -270,18 +334,22 @@ void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
 
   std::vector<test_grant_info> ul_grants = get_ul_grants(cell_cfg, result);
   for (const test_grant_info& test_grant : ul_grants) {
-    TESTASSERT(not grid.collides(test_grant.grant), "Resource collision for grant with rnti={:#x}", test_grant.rnti);
+    ASSERT_FALSE(grid.collides(test_grant.grant))
+        << fmt::format("Resource collision for grant with rnti={:#x}", test_grant.rnti);
     grid.fill(test_grant.grant);
   }
 }
 
-void srsgnb::test_scheduler_result_consistency(const cell_configuration& cell_cfg, const sched_result& result)
+void srsgnb::test_scheduler_result_consistency(const cell_configuration& cell_cfg,
+                                               slot_point                sl_tx,
+                                               const sched_result&       result)
 {
-  test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs);
-  test_prach_opportunity_validity(cell_cfg, result.ul.prachs);
-  test_pdsch_rar_consistency(cell_cfg, result.dl.rar_grants);
-  test_dl_resource_grid_collisions(cell_cfg, result.dl);
-  test_ul_resource_grid_collisions(cell_cfg, result.ul);
+  ASSERT_NO_FATAL_FAILURE(assert_tdd_pattern_consistency(cell_cfg, sl_tx, result));
+  ASSERT_NO_FATAL_FAILURE(test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs));
+  ASSERT_NO_FATAL_FAILURE(test_prach_opportunity_validity(cell_cfg, result.ul.prachs));
+  ASSERT_NO_FATAL_FAILURE(test_pdsch_rar_consistency(cell_cfg, result.dl.rar_grants));
+  ASSERT_NO_FATAL_FAILURE(test_dl_resource_grid_collisions(cell_cfg, result.dl));
+  ASSERT_NO_FATAL_FAILURE(test_ul_resource_grid_collisions(cell_cfg, result.ul));
 }
 
 /// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PDSCHs.
@@ -328,7 +396,7 @@ bool srsgnb::test_res_grid_has_re_set(const cell_resource_allocator& cell_res_gr
 void srsgnb::test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
                                                const cell_resource_allocator& cell_res_grid)
 {
-  test_scheduler_result_consistency(cell_cfg, cell_res_grid[0].result);
+  ASSERT_NO_FATAL_FAILURE(test_scheduler_result_consistency(cell_cfg, cell_res_grid[0].slot, cell_res_grid[0].result));
   assert_pdcch_pdsch_common_consistency(cell_cfg, cell_res_grid);
   assert_dl_resource_grid_filled(cell_cfg, cell_res_grid);
   assert_rar_grant_msg3_pusch_consistency(cell_cfg, cell_res_grid);

@@ -127,7 +127,7 @@ protected:
     bench->sched_res = bench->sch.slot_indication(current_slot, to_du_cell_index(0));
 
     // Check sched result consistency.
-    test_scheduler_result_consistency(bench->cell_cfg, *bench->sched_res);
+    test_scheduler_result_consistency(bench->cell_cfg, current_slot, *bench->sched_res);
   }
 
   static scheduler_expert_config create_expert_config(sch_mcs_index max_msg4_mcs_index)

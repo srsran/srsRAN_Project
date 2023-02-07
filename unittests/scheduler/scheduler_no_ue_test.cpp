@@ -40,7 +40,7 @@ void test_no_ues()
   // Action 2: Run slot.
   const sched_result* res = sch.slot_indication(sl_tx, to_du_cell_index(0));
   TESTASSERT(res != nullptr);
-  test_scheduler_result_consistency(cell_cfg, *res);
+  test_scheduler_result_consistency(cell_cfg, sl_tx, *res);
   TESTASSERT(res->dl.ue_grants.empty());
   TESTASSERT(res->ul.puschs.empty());
 }
@@ -68,7 +68,7 @@ void test_rach_indication()
 
   // TEST: Result exists. No Data allocated. A RAR has been allocated.
   TESTASSERT(res != nullptr);
-  test_scheduler_result_consistency(cell_cfg, *res);
+  test_scheduler_result_consistency(cell_cfg, sl_tx, *res);
   TESTASSERT(res->dl.ue_grants.empty());
   TESTASSERT(not res->dl.rar_grants.empty());
 }

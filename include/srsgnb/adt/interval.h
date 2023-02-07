@@ -25,6 +25,8 @@ class interval
   static_assert(std::is_trivially_copyable<T>::value, "Expected to be trivially copyable");
 
 public:
+  using length_type = std::conditional_t<(sizeof(T) > sizeof(uint32_t)), uint64_t, uint32_t>;
+
   interval() : start_(T{}), stop_(T{}) {}
 
   template <typename U, typename V>
@@ -42,7 +44,7 @@ public:
   bool empty() const { return stop_ == start_; }
 
   /// Interval length
-  auto length() const -> decltype(std::declval<T>() - std::declval<T>()) { return stop_ - start_; }
+  length_type length() const { return stop_ - start_; }
 
   void set(T start_point, T stop_point)
   {

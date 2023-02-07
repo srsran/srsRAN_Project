@@ -93,7 +93,7 @@ void benchmark_rach_scheduling()
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch->handle_cell_configuration_request(cell_cfg_msg);
 
-  auto&                   logger = srslog::fetch_basic_logger("MAC", true);
+  auto&                   logger = srslog::fetch_basic_logger("SCHED", true);
   slot_point              sl_tx{0, 0};
   rach_indication_message rach_ind = test_helpers::generate_rach_ind_msg(sl_tx - 4, to_rnti(0x4601));
 

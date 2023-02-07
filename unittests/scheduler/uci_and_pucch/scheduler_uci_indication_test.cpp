@@ -54,7 +54,7 @@ protected:
   {
     last_sched_res = sched->slot_indication(next_slot, to_du_cell_index(0));
     TESTASSERT(last_sched_res != nullptr);
-    test_scheduler_result_consistency(*cell_cfg, *last_sched_res);
+    test_scheduler_result_consistency(*cell_cfg, next_slot, *last_sched_res);
     ++next_slot;
   }
 

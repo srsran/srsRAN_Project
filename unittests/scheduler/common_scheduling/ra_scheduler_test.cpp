@@ -36,6 +36,7 @@ std::ostream& operator<<(std::ostream& out, const test_params& params)
   return out;
 }
 
+/// Common tester class used by FDD and TDD unit tests for the RA scheduler.
 class base_ra_scheduler_test : public ::testing::TestWithParam<test_params>
 {
 protected:
@@ -45,6 +46,7 @@ protected:
   {
     mac_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_level(srslog::basic_levels::info);
+    srslog::init();
 
     auto& dl_lst = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     for (auto& pdsch : dl_lst) {
@@ -55,7 +57,8 @@ protected:
     auto& ul_lst = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     for (auto& pusch : ul_lst) {
       if (pusch.k2 > max_k_value) {
-        max_k_value = pusch.k2;
+        constexpr unsigned max_msg3_delta = 6;
+        max_k_value                       = pusch.k2 + max_msg3_delta;
       }
     }
   }
@@ -344,7 +347,7 @@ protected:
   slot_point result_slot_tx() const { return res_grid[0].slot; }
 
   test_params           params;
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC", true);
+  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
   scheduler_expert_config        sched_cfg{config_helpers::make_default_scheduler_expert_config()};
@@ -525,14 +528,3 @@ INSTANTIATE_TEST_SUITE_P(ra_scheduler,
                                            test_params{.scs = subcarrier_spacing::kHz30, .k0 = 4, .k2s = {2, 4}}));
 
 } // namespace
-
-int main(int argc, char** argv)
-{
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
-  srslog::init();
-
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
-}
