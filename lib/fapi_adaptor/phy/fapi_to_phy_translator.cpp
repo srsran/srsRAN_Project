@@ -318,8 +318,6 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   rg_context.sector = sector_id;
   // Get ul_resource_grid.
   resource_grid& ul_rg = ul_rg_pool.get_resource_grid(rg_context);
-  // Note: this won't work for multiple UL_TTI.request messages in the same slot.
-  ul_rg.set_all_zero();
   // Request to capture uplink slot.
   ul_request_processor.process_uplink_slot_request(rg_context, ul_rg);
 }
