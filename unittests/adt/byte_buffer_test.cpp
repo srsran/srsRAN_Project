@@ -148,7 +148,7 @@ TEST_P(one_vec_size_param, equality_comparison)
 
   // comparison byte_buffer vs other range of shorter length.
   std::vector<uint8_t> shorter_bytes(bytes.begin(),
-                                     bytes.begin() + test_rgen::uniform_int<unsigned>(1, bytes.size() - 1));
+                                     bytes.begin() + test_rgen::uniform_int<unsigned>(0, bytes.size() - 1));
   std::list<uint8_t>   shorter_not_a_span{shorter_bytes.begin(), shorter_bytes.end()};
   pdu2 = byte_buffer{shorter_bytes};
   ASSERT_NE(pdu, shorter_bytes);
