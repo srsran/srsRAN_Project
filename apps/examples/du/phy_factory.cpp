@@ -81,6 +81,8 @@ std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const upper_phy_params&     
   upper_config.sector_id                                   = 0;
   upper_config.nof_ports                                   = 1;
   upper_config.nof_slots_dl_rg                             = 2 * params.dl_pipeline_depth;
+  upper_config.nof_slots_ul_rg                             = upper_config.nof_slots_dl_rg;
+  upper_config.nof_prach_buffer                            = 1;
   upper_config.nof_dl_processors                           = 2 * params.dl_pipeline_depth;
   upper_config.dl_bw_rb                                    = params.dl_bw_rb;
   upper_config.ul_bw_rb                                    = params.ul_bw_rb;

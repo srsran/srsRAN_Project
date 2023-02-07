@@ -198,6 +198,10 @@ struct upper_phy_config {
   unsigned nof_ports;
   /// Number of slots the downlink resource grid will support.
   unsigned nof_slots_dl_rg;
+  /// Number of slots the uplink resource grid will support.
+  unsigned nof_slots_ul_rg;
+  /// Number of PRACH buffer.
+  unsigned nof_prach_buffer;
   /// Maximum number of concurrent downlink processes.
   unsigned nof_dl_processors;
   /// Maximum number of concurrent uplink processes.

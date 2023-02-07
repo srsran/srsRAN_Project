@@ -158,7 +158,7 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
     out_cfg.log_level                  = config.log_cfg.phy_level;
     out_cfg.scs                        = config.common_cell_cfg.common_scs;
     out_cfg.cp                         = cp;
-    out_cfg.max_processing_delay_slots = 2;
+    out_cfg.max_processing_delay_slots = 2 * get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
     out_cfg.ul_to_dl_subframe_offset   = 1;
 
     out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);
@@ -342,7 +342,33 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
     const base_cell_appconfig& cell = config.cells_cfg[i].cell;
     upper_phy_config           cfg;
 
-    static constexpr unsigned dl_pipeline_depth = 4;
+    // Get bandwidth in PRB.
+    unsigned bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
+    // Build the biggest CORESET possible assuming a duration of 2 symbols and the maximum channel bandwidth.
+    coreset_configuration coreset;
+    coreset.id       = to_coreset_id(1);
+    coreset.duration = 2;
+    coreset.set_freq_domain_resources(~freq_resource_bitmap(bw_rb / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE));
+    // Calculate the maximum number of users assuming the CORESET above.
+    unsigned max_nof_users_slot = coreset.get_nof_cces();
+    // Assume a maximum of 16 HARQ processes.
+    unsigned max_harq_process = 16;
+    // Assume the maximum number of active UL HARQ processes is twice the maximum number of users per slot for the
+    // maximum number of HARQ processes.
+    unsigned max_softbuffers = 2 * max_nof_users_slot * max_harq_process;
+    // Deduce the maximum number of codeblocks that can be scheduled for PUSCH in one slot.
+    unsigned max_nof_pusch_cb_slot =
+        (pusch_constants::MAX_NRE_PER_RB * bw_rb * get_bits_per_symbol(modulation_scheme::QAM256)) /
+        ldpc::MAX_MESSAGE_SIZE;
+    // Assume that the maximum number of codeblocks is equal to the number of HARQ processes times the maximum number of
+    // codeblocks per slot.
+    unsigned max_nof_codeblocks = max_harq_process * max_nof_pusch_cb_slot;
+    // Deduce the number of slots per subframe.
+    unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
+
+    static constexpr unsigned dl_pipeline_depth    = 8;
+    static constexpr unsigned ul_pipeline_depth    = 8;
+    static constexpr unsigned prach_pipeline_depth = 1;
 
     cfg.log_level =
         to_srs_log_level(config.log_cfg.phy_level.empty() ? config.log_cfg.app_level : config.log_cfg.phy_level);
@@ -353,20 +379,22 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
     cfg.sector_id                  = i;
     cfg.nof_ports                  = nof_ports;
 
-    cfg.nof_slots_dl_rg   = 2 * dl_pipeline_depth;
-    cfg.nof_dl_processors = 2 * dl_pipeline_depth;
-    cfg.nof_ul_processors = 8 * dl_pipeline_depth;
+    cfg.nof_slots_dl_rg   = dl_pipeline_depth * nof_slots_per_subframe;
+    cfg.nof_dl_processors = cfg.nof_slots_dl_rg;
+    cfg.nof_slots_ul_rg   = ul_pipeline_depth * nof_slots_per_subframe;
+    cfg.nof_ul_processors = cfg.nof_slots_ul_rg;
+    cfg.nof_prach_buffer  = prach_pipeline_depth * nof_slots_per_subframe;
 
     cfg.active_scs                                                                = {};
     cfg.active_scs[to_numerology_value(config.cells_cfg.front().cell.common_scs)] = true;
 
-    cfg.dl_bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
-    cfg.ul_bw_rb = band_helper::get_n_rbs_from_bw(cell.channel_bw_mhz, cell.common_scs, frequency_range::FR1);
+    cfg.dl_bw_rb = bw_rb;
+    cfg.ul_bw_rb = bw_rb;
 
-    cfg.softbuffer_config.max_softbuffers      = 4 * dl_pipeline_depth;
-    cfg.softbuffer_config.max_nof_codeblocks   = 128;
-    cfg.softbuffer_config.max_codeblock_size   = (1U << 18);
-    cfg.softbuffer_config.expire_timeout_slots = 100 * get_nof_slots_per_subframe(cell.common_scs);
+    cfg.softbuffer_config.max_softbuffers      = max_softbuffers;
+    cfg.softbuffer_config.max_nof_codeblocks   = max_nof_codeblocks;
+    cfg.softbuffer_config.max_codeblock_size   = ldpc::MAX_CODEBLOCK_SIZE;
+    cfg.softbuffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
 
     if (!is_valid_upper_phy_config(cfg)) {
       srsgnb_terminate("Invalid upper PHY configuration. Exiting.\n");

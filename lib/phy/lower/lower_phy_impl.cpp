@@ -299,7 +299,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   sectors(config.sectors),
   ul_slot_context(to_numerology_value(config.scs), 0),
-  dl_slot_context(ul_slot_context + config.ul_to_dl_subframe_offset * ul_slot_context.nof_slots_per_subframe())
+  dl_slot_context(ul_slot_context + config.ul_to_dl_subframe_offset * get_nof_slots_per_subframe(config.scs))
 {
   logger.set_level(srslog::str_to_basic_level(config.log_level));
 

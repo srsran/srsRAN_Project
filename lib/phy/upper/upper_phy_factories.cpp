@@ -263,7 +263,7 @@ static std::unique_ptr<resource_grid_pool> create_dl_resource_grid_pool(const up
 static std::unique_ptr<resource_grid_pool> create_ul_resource_grid_pool(const upper_phy_config& config)
 {
   unsigned                                    nof_sectors = 1;
-  unsigned                                    nof_slots   = config.nof_ul_processors * 4;
+  unsigned                                    nof_slots   = config.nof_slots_ul_rg;
   std::vector<std::unique_ptr<resource_grid>> grids;
   grids.reserve(nof_sectors * nof_slots);
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
@@ -425,9 +425,9 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_pr
 static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_config& config)
 {
   std::vector<std::unique_ptr<prach_buffer>> prach_mem;
-  prach_mem.reserve(config.nof_ul_processors);
+  prach_mem.reserve(config.nof_prach_buffer);
 
-  for (unsigned i = 0, e = config.nof_ul_processors; i != e; ++i) {
+  for (unsigned i = 0, e = config.nof_prach_buffer; i != e; ++i) {
     std::unique_ptr<prach_buffer> buffer = create_prach_buffer_long();
     report_fatal_error_if_not(buffer, "Invalid PRACH buffer.");
     prach_mem.push_back(std::move(buffer));

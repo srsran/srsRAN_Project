@@ -45,7 +45,7 @@ public:
                        span<const cf_t>                    symbols) override;
   void             put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override;
 
-  bool       is_empty(unsigned int port) const override;
+  bool       is_empty(unsigned port) const override;
   void       get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override;
   span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override;
   span<cf_t> get(span<cf_t>                          symbols,
