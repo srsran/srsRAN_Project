@@ -55,26 +55,29 @@ void uci_scheduler_impl::run_slot(cell_resource_allocator& cell_alloc, slot_poin
       }
     }
 
-    // We assume we only use the first CSI report configuration.
-    const unsigned csi_report_cfg_idx = 0;
-    const auto&    csi_report_cfg =
-        ue_cell.cfg().cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
+    // TODO: This check can be removed once the CSI configuration will be enabled.
+    if (ue_cell.cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
+      // We assume we only use the first CSI report configuration.
+      const unsigned csi_report_cfg_idx = 0;
+      const auto&    csi_report_cfg =
+          ue_cell.cfg().cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
 
-    // > Scheduler CSI grants.
-    unsigned csi_offset =
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
-            .report_slot_offset;
-    unsigned csi_period = csi_report_periodicity_to_uint(
-        variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
-            .report_slot_period);
+      // > Scheduler CSI grants.
+      unsigned csi_offset =
+          variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
+              .report_slot_offset;
+      unsigned csi_period = csi_report_periodicity_to_uint(
+          variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
+              .report_slot_period);
 
-    // Check if this slot corresponds to a CSI opportunity for the UE.
-    if ((sl_tx - csi_offset).to_uint() % csi_period == 0) {
-      // We do not allocate the CSI head of time.
-      const unsigned CSI_SLOT_DELAY = 0;
-      auto&          slot_alloc     = cell_alloc[CSI_SLOT_DELAY];
+      // Check if this slot corresponds to a CSI opportunity for the UE.
+      if ((sl_tx - csi_offset).to_uint() % csi_period == 0) {
+        // We do not allocate the CSI head of time.
+        const unsigned CSI_SLOT_DELAY = 0;
+        auto&          slot_alloc     = cell_alloc[CSI_SLOT_DELAY];
 
-      uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user.crnti, ue_cell.cfg());
+        uci_alloc.uci_allocate_csi_opportunity(slot_alloc, user.crnti, ue_cell.cfg());
+      }
     }
   }
 }

@@ -669,10 +669,8 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   serv_cell.pdsch_serv_cell_cfg.emplace(make_default_pdsch_serving_cell_config());
 
   // > CSI-MeasConfig.
-  if (band_helper::is_paired_spectrum(get_band(params))) {
-    // Only for FDD.
-    serv_cell.csi_meas_cfg.emplace(make_default_csi_meas_config(params));
-  }
+  // TODO: add here serv_cell.csi_meas_cfg.emplace(make_default_csi_meas_config(params)); for
+  // band_helper::is_paired_spectrum(get_band(params)) only
 
   return serv_cell;
 }

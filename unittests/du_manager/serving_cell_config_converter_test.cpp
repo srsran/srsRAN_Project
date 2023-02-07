@@ -908,6 +908,11 @@ TEST(serving_cell_config_converter_test, test_initial_csi_meas_cfg_conversion)
 {
   auto dest_cell_grp_cfg = make_initial_cell_group_config();
 
+  if (not dest_cell_grp_cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
+    dest_cell_grp_cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
+        config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
+  }
+
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cell_grp_cfg);
 
@@ -954,6 +959,11 @@ TEST(serving_cell_config_converter_test, test_initial_csi_meas_cfg_conversion)
 TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
 {
   auto src_cell_grp_cfg = make_initial_cell_group_config();
+
+  if (not src_cell_grp_cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
+    src_cell_grp_cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
+        config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
+  }
 
   srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
   auto&                     dest_csi_meas_cfg = dest_cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.value();
@@ -1163,7 +1173,13 @@ TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
 
 TEST(serving_cell_config_converter_test, test_csi_meas_cfg_release_conversion)
 {
-  auto                      src_cell_grp_cfg = make_initial_cell_group_config();
+  auto src_cell_grp_cfg = make_initial_cell_group_config();
+
+  if (not src_cell_grp_cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
+    src_cell_grp_cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
+        config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
+  }
+
   srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
   dest_cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.reset();
 

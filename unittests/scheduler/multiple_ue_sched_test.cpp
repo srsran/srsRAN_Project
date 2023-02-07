@@ -179,7 +179,13 @@ protected:
 
   void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_)
   {
-    auto ue_creation_req     = test_helpers::create_default_sched_ue_creation_request();
+    auto ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+
+    if (not ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
+      ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
+          config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
+    }
+
     ue_creation_req.ue_index = ue_index;
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
 

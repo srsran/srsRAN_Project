@@ -130,6 +130,12 @@ test_bench::test_bench(const test_bench_params& params) :
 
   ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
   ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
+
+  if (not ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.has_value()) {
+    ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.emplace(
+        config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
+  }
+
   auto& csi_report = variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
       ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
   csi_report.report_slot_period = params.csi_period;
@@ -156,6 +162,12 @@ const ue& test_bench::get_ue(du_ue_index_t ue_idx) const
 void test_bench::add_ue()
 {
   sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request();
+
+  if (not ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.has_value()) {
+    ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.emplace(
+        config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
+  }
+
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
   last_allocated_ue_idx =
       to_du_ue_index(static_cast<std::underlying_type<du_ue_index_t>::type>(last_allocated_ue_idx) + 1);
