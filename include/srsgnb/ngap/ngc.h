@@ -59,7 +59,7 @@ struct ng_setup_request {
 
 struct ng_setup_response {
   asn1::ngap::ng_setup_resp_s msg;
-  bool                        success;
+  bool                        success = false;
 };
 
 /// Handle NGC interface management procedures as defined in TS 38.413 section 8.7
