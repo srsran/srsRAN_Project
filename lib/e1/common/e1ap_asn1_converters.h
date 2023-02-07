@@ -28,22 +28,27 @@ namespace srsgnb {
 inline asn1::e1ap::ciphering_algorithm_e
 ciphering_algorithm_to_e1ap_asn1(const srsgnb::security::ciphering_algorithm& ciph_algo)
 {
+  asn1::e1ap::ciphering_algorithm_e asn1_ciph_algo;
+
   switch (ciph_algo) {
     case srsgnb::security::ciphering_algorithm::nea0:
-      return asn1::e1ap::ciphering_algorithm_opts::nea0;
+      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::nea0;
       break;
     case srsgnb::security::ciphering_algorithm::nea1:
-      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1;
+      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1;
       break;
     case srsgnb::security::ciphering_algorithm::nea2:
-      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2;
+      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2;
       break;
     case srsgnb::security::ciphering_algorithm::nea3:
-      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3;
+      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3;
       break;
     default:
-      return asn1::e1ap::ciphering_algorithm_opts::nulltype;
+      srsgnb_assert(false, "Invalid ciphering algorithm ({})", ciph_algo);
+      break;
   }
+
+  return asn1_ciph_algo;
 }
 
 /// \brief Converts E1AP ASN.1 type to type and \c ciphering_algorithm type.
@@ -52,22 +57,26 @@ ciphering_algorithm_to_e1ap_asn1(const srsgnb::security::ciphering_algorithm& ci
 inline srsgnb::security::ciphering_algorithm
 e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_ciph_algo)
 {
+  srsgnb::security::ciphering_algorithm ciph_algo;
+
   switch (asn1_ciph_algo) {
     case asn1::e1ap::ciphering_algorithm_opts::nea0:
-      return srsgnb::security::ciphering_algorithm::nea0;
+      ciph_algo = srsgnb::security::ciphering_algorithm::nea0;
       break;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1:
-      return srsgnb::security::ciphering_algorithm::nea1;
+      ciph_algo = srsgnb::security::ciphering_algorithm::nea1;
       break;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2:
-      return srsgnb::security::ciphering_algorithm::nea2;
+      ciph_algo = srsgnb::security::ciphering_algorithm::nea2;
       break;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3:
-      return srsgnb::security::ciphering_algorithm::nea3;
+      ciph_algo = srsgnb::security::ciphering_algorithm::nea3;
       break;
     default:
-      return srsgnb::security::ciphering_algorithm::nea0;
+      srsgnb_assert(false, "Invalid ciphering algorithm ({})", asn1_ciph_algo);
   }
+
+  return ciph_algo;
 }
 
 /// \brief Converts type \c integrity_algorithm to an E1AP ASN.1 type.
@@ -76,22 +85,26 @@ e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_c
 inline asn1::e1ap::integrity_protection_algorithm_e
 integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& int_algo)
 {
+  asn1::e1ap::integrity_protection_algorithm_e asn1_int_algo;
+
   switch (int_algo) {
     case srsgnb::security::integrity_algorithm::nia0:
-      return asn1::e1ap::integrity_protection_algorithm_opts::nia0;
+      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::nia0;
       break;
     case srsgnb::security::integrity_algorithm::nia1:
-      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1;
+      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1;
       break;
     case srsgnb::security::integrity_algorithm::nia2:
-      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2;
+      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2;
       break;
     case srsgnb::security::integrity_algorithm::nia3:
-      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3;
+      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3;
       break;
     default:
-      return asn1::e1ap::integrity_protection_algorithm_opts::nulltype;
+      srsgnb_assert(false, "Invalid integrity protection algorithm ({})", int_algo);
   }
+
+  return asn1_int_algo;
 }
 
 /// \brief Converts E1AP ASN.1 type to type and \c integrity_algorithm type.
@@ -100,22 +113,26 @@ integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& in
 inline srsgnb::security::integrity_algorithm
 e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorithm_e& asn1_int_algo)
 {
+  srsgnb::security::integrity_algorithm int_algo;
+
   switch (asn1_int_algo) {
     case asn1::e1ap::integrity_protection_algorithm_opts::nia0:
-      return srsgnb::security::integrity_algorithm::nia0;
+      int_algo = srsgnb::security::integrity_algorithm::nia0;
       break;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1:
-      return srsgnb::security::integrity_algorithm::nia1;
+      int_algo = srsgnb::security::integrity_algorithm::nia1;
       break;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2:
-      return srsgnb::security::integrity_algorithm::nia2;
+      int_algo = srsgnb::security::integrity_algorithm::nia2;
       break;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3:
-      return srsgnb::security::integrity_algorithm::nia3;
+      int_algo = srsgnb::security::integrity_algorithm::nia3;
       break;
     default:
-      return srsgnb::security::integrity_algorithm::nia0;
+      srsgnb_assert(false, "Invalid integrity protection algorithm ({})", asn1_int_algo);
   }
+
+  return int_algo;
 }
 
 /// \brief Convert \c s_nssai_t type to E1AP ASN1 s-NSSAI.
