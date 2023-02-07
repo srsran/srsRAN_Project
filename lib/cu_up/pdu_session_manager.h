@@ -23,15 +23,15 @@ namespace srs_cu_up {
 
 // Result when creating a new QoS flow
 struct qos_flow_setup_result {
-  bool          success;
-  qos_flow_id_t qos_flow_id;
+  bool          success     = false;
+  qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
   cause_t       cause; // Cause if setup was unsuccessful.
 };
 
 // Result when creating a new DRB containing QoS flow results
 struct drb_setup_result {
-  bool                               success;
-  drb_id_t                           drb_id;
+  bool                               success = false;
+  drb_id_t                           drb_id  = drb_id_t::invalid;
   cause_t                            cause; // Cause if setup was unsuccessful.
   up_transport_layer_info            gtp_tunnel;
   std::vector<qos_flow_setup_result> qos_flow_results;
@@ -39,18 +39,18 @@ struct drb_setup_result {
 
 // Final result when creating a PDU session with all DRBs and QoS flow results.
 struct pdu_session_setup_result {
-  bool                          success;        // True if PDU session could be set up.
-  pdu_session_id_t              pdu_session_id; // The PDU session ID.
-  cause_t                       cause;          // Cause if setup was unsuccessful.
+  bool                          success        = false;                     // True if PDU session could be set up.
+  pdu_session_id_t              pdu_session_id = pdu_session_id_t::invalid; // The PDU session ID.
+  cause_t                       cause;                                      // Cause if setup was unsuccessful.
   up_transport_layer_info       gtp_tunnel;
   std::vector<drb_setup_result> drb_setup_results;
 };
 
 // Final result when modifying a PDU session with all DRBs and QoS flow results.
 struct pdu_session_modification_result {
-  bool                          success;        // True if PDU session could be set up.
-  pdu_session_id_t              pdu_session_id; // The PDU session ID.
-  cause_t                       cause;          // Cause if setup was unsuccessful.
+  bool                          success        = false;                     // True if PDU session could be set up.
+  pdu_session_id_t              pdu_session_id = pdu_session_id_t::invalid; // The PDU session ID.
+  cause_t                       cause;                                      // Cause if setup was unsuccessful.
   std::vector<drb_setup_result> drb_setup_results;
   std::vector<drb_setup_result> drb_modification_results;
 };
