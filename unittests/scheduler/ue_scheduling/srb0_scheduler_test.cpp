@@ -102,16 +102,23 @@ protected:
         max_k_value = pusch.k2;
       }
     }
-  }
 
-  void run_slot()
-  {
     mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
     test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
 
     bench->res_grid.slot_indication(next_slot);
     bench->pdcch_sch.slot_indication(next_slot);
+  }
+
+  void run_slot()
+  {
     next_slot++;
+
+    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+
+    bench->res_grid.slot_indication(next_slot);
+    bench->pdcch_sch.slot_indication(next_slot);
 
     bench->srb0_sched.run_slot(bench->res_grid);
 
@@ -140,15 +147,11 @@ protected:
     return bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_idx];
   }
 
-  span<const pdcch_dl_information> scheduled_dl_pdcchs() { return bench->res_grid[0].result.dl.dl_pdcchs; }
-
-  static bool ue_is_allocated_pdcch(span<const pdcch_dl_information> dl_pdcchs, const ue& u)
+  bool ue_is_allocated_pdcch(const ue& u)
   {
-    if (dl_pdcchs.empty()) {
-      return false;
-    }
-    return std::any_of(
-        dl_pdcchs.begin(), dl_pdcchs.end(), [&u](const auto& pdcch) { return pdcch.ctx.rnti == u.crnti; });
+    return std::any_of(bench->res_grid[0].result.dl.dl_pdcchs.begin(),
+                       bench->res_grid[0].result.dl.dl_pdcchs.end(),
+                       [&u](const auto& pdcch) { return pdcch.ctx.rnti == u.crnti; });
   }
 
   bool ue_is_allocated_pdsch(const ue& u)
@@ -160,7 +163,7 @@ protected:
       const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
 
       // Fetch PDSCH resource grid allocators.
-      cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[pdsch_td_cfg.k0];
+      const cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[pdsch_td_cfg.k0];
       // Search for PDSCH UE grant.
       for (const auto& grant : pdsch_alloc.result.dl.ue_grants) {
         if (grant.pdsch_cfg.rnti == u.crnti) {
@@ -181,7 +184,7 @@ protected:
       const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
 
       // Fetch PDSCH resource grid allocators.
-      cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[pdsch_td_cfg.k0];
+      const cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[pdsch_td_cfg.k0];
       // Search for PDSCH UE grant.
       for (const auto& grant : pdsch_alloc.result.dl.ue_grants) {
         if (grant.pdsch_cfg.rnti != u.crnti) {
@@ -195,24 +198,18 @@ protected:
     return total_cw_tb_size_bytes >= exp_size;
   }
 
-  bool ue_is_allocated_pucch(const ue& u)
+  bool ue_is_allocated_pucch_in_current_slot(const ue& u)
   {
-    // Search valid PDSCH time domain resource.
-    const auto& bwp_cfg_common = bench->cell_cfg.dl_cfg_common.init_dl_bwp;
-    for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
-         ++time_res_idx) {
-      const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
+    return std::any_of(bench->res_grid[0].result.ul.pucchs.begin(),
+                       bench->res_grid[0].result.ul.pucchs.end(),
+                       [&u](const auto& pucch) { return pucch.crnti == u.crnti; });
+  }
 
-      // Fetch PUCCH resource grid allocators.
-      cell_slot_resource_allocator& pucch_alloc = bench->res_grid[pdsch_td_cfg.k0 + params.k1];
-      // Search for PUCCH grant.
-      for (const auto& grant : pucch_alloc.result.ul.pucchs) {
-        if (grant.crnti == u.crnti) {
-          return true;
-        }
-      }
-    }
-    return false;
+  bool ue_is_allocated_pdsch_in_current_slot(const ue& u)
+  {
+    return std::any_of(bench->res_grid[0].result.dl.ue_grants.begin(),
+                       bench->res_grid[0].result.dl.ue_grants.end(),
+                       [&u](const auto& pdsch) { return pdsch.pdsch_cfg.rnti == u.crnti; });
   }
 
   bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index)
@@ -265,9 +262,10 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
   // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
   // 2. Check for PDSCH allocation.
   // 3. Check whether CW TB bytes matches with pending bytes to be sent.
-  ASSERT_TRUE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(0))));
-  ASSERT_TRUE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
-  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(get_ue(to_du_ue_index(0)), exp_size));
+  const auto& test_ue = get_ue(to_du_ue_index(0));
+  ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
+  ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
+  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
 }
 
 TEST_P(srb0_scheduler_tester, failed_allocating_resources)
@@ -291,8 +289,9 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
   run_slot();
 
   // Allocation for UE2 should fail.
-  ASSERT_FALSE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(1))));
-  ASSERT_FALSE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(1))));
+  const auto& test_ue = get_ue(to_du_ue_index(1));
+  ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
+  ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
 }
 
 TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
@@ -309,9 +308,10 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 
   run_slot();
 
-  ASSERT_TRUE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(0))));
-  ASSERT_TRUE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
-  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(get_ue(to_du_ue_index(0)), exp_size));
+  const auto& test_ue = get_ue(to_du_ue_index(0));
+  ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
+  ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
+  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
 }
 
 TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
@@ -321,14 +321,15 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 360 bytes which requires MCS index > 3.
-  unsigned mac_srb0_sdu_size = 360;
+  const unsigned mac_srb0_sdu_size = 360;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
 
   run_slot();
 
   // Allocation for UE should fail.
-  ASSERT_FALSE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(0))));
-  ASSERT_FALSE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
+  const auto& test_ue = get_ue(to_du_ue_index(0));
+  ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
+  ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
 }
 
 TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
@@ -339,7 +340,7 @@ TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Random payload size.
-  unsigned mac_srb0_sdu_size = get_random_uint(1, 458);
+  const unsigned mac_srb0_sdu_size = get_random_uint(1, 458);
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
 
   srslog::basic_logger& logger(srslog::fetch_basic_logger("TEST"));
@@ -375,9 +376,46 @@ TEST_P(srb0_scheduler_tester, test_msg4_successful_allocation_with_custom_cell_c
   // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
   // 2. Check for PDSCH allocation.
   // 3. Check whether CW TB bytes matches with pending bytes to be sent.
-  ASSERT_TRUE(ue_is_allocated_pdcch(scheduled_dl_pdcchs(), get_ue(to_du_ue_index(0))));
-  ASSERT_TRUE(ue_is_allocated_pdsch(get_ue(to_du_ue_index(0))));
-  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(get_ue(to_du_ue_index(0)), exp_size));
+  const auto& test_ue = get_ue(to_du_ue_index(0));
+  ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
+  ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
+  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+}
+
+TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
+{
+  auto cell_cfg = create_random_cell_config_request(duplex_mode::TDD);
+  setup_sched(create_expert_config(1), cell_cfg);
+
+  const unsigned MAX_UES            = 4;
+  const unsigned MAX_TEST_RUN_SLOTS = 40;
+  const unsigned MAC_SRB0_SDU_SIZE  = 129;
+
+  // Add UEs.
+  for (unsigned idx = 0; idx < MAX_UES; idx++) {
+    add_ue(to_rnti(0x4601 + idx), to_du_ue_index(idx));
+    // Notify about SRB0 message in DL.
+    push_buffer_state_to_dl_ue(to_du_ue_index(idx), MAC_SRB0_SDU_SIZE);
+  }
+
+  for (unsigned idx = 0; idx < MAX_TEST_RUN_SLOTS; idx++) {
+    run_slot();
+    if (bench->cell_cfg.is_ul_enabled(next_slot)) {
+      // Check whether PUCCH/PDSCH is not scheduled in UL slots for any of the UEs.
+      for (unsigned ue_idx = 0; ue_idx < MAX_UES; ue_idx++) {
+        const auto& test_ue = get_ue(to_du_ue_index(ue_idx));
+        ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
+        ASSERT_FALSE(ue_is_allocated_pdsch_in_current_slot(test_ue));
+      }
+    }
+    if (bench->cell_cfg.is_dl_enabled(next_slot)) {
+      // Check whether PUCCH HARQ is not scheduled in DL slots for any of the UEs.
+      for (unsigned ue_idx = 0; ue_idx < MAX_UES; ue_idx++) {
+        const auto& test_ue = get_ue(to_du_ue_index(ue_idx));
+        ASSERT_FALSE(ue_is_allocated_pucch_in_current_slot(test_ue));
+      }
+    }
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
