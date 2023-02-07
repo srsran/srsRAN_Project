@@ -205,7 +205,7 @@ public:
 
 struct rrc_reconfiguration_response_message {
   ue_index_t ue_index = ue_index_t::invalid;
-  bool       success;
+  bool       success  = false;
 };
 
 /// Interface to notify about control messages.
