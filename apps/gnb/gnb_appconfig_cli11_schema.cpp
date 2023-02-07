@@ -71,23 +71,29 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
   app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source.")->capture_default_str();
   app.add_option("--otw_format", rf_driver_params.otw_format, "Over-the-wire format.")->capture_default_str();
   app.add_option_function<std::string>(
-         "--tx_time_advance_samples",
+         "--time_alignment_calibration",
          [&rf_driver_params](const std::string& value) {
            if (!value.empty() && value != "auto") {
              std::stringstream ss(value);
-             int               ta_sps;
-             ss >> ta_sps;
-             rf_driver_params.tx_time_advance_sps = ta_sps;
+             int               ta_samples;
+             ss >> ta_samples;
+             rf_driver_params.time_alignment_calibration = ta_samples;
            }
          },
-         "Rx to Tx radio time alignment calibration in samples. Default: auto")
+         "Rx to Tx radio time alignment calibration in samples.\n"
+         "Positive values reduce the RF transmission delay with respect\n"
+         "to the RF reception, while negative values increase it.")
       ->check([](const std::string& value) -> std::string {
-        if (value == "auto" ||
-            std::all_of(value.begin(), value.end(), [](const char c) { return (std::isdigit(c)) || (c == '-'); })) {
+        // Check for valid option "auto".
+        if (value == "auto") {
           return "";
         }
-        return "Invalid Tx time advance value: " + value;
-      });
+
+        // Check for a valid integer number;
+        CLI::TypeValidator<int> IntegerValidator("INTEGER");
+        return IntegerValidator(value);
+      })
+      ->default_str("auto");
 }
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig& expert_phy_params)

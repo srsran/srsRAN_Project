@@ -292,7 +292,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   amplitude_controllers(std::move(common_config.amplitude_controllers)),
   prach_proc(std::move(common_config.prach_proc)),
   rx_to_tx_delay(get_rx_to_tx_delay(config.ul_to_dl_subframe_offset,
-                                    config.time_advance_calibration,
+                                    config.time_alignment_calibration,
                                     config.ta_offset,
                                     config.srate)),
   max_processing_delay_slots(config.max_processing_delay_slots),
@@ -306,10 +306,10 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   // Assert parameters.
   srsgnb_assert(config.ul_to_dl_subframe_offset > 0, "The UL to DL slot offset must be greater than 0.");
 
-  logger.info("Initialized with time_advance_calibration={:.4f} us ({} samples), ul_to_dl_subframe_offset={}, "
+  logger.info("Initialized with time_alignment_calibration={} ({:.4f} us), ul_to_dl_subframe_offset={}, "
               "max_processing_delay_slots={}.",
-              config.time_advance_calibration.to_seconds() * 1e6,
-              config.time_advance_calibration.to_samples(config.srate.to_Hz()),
+              config.time_alignment_calibration,
+              static_cast<float>(config.time_alignment_calibration) / static_cast<float>(config.srate.to_MHz()),
               config.ul_to_dl_subframe_offset,
               config.max_processing_delay_slots);
 

@@ -167,51 +167,6 @@ public:
     // Round to the nearest integer avoiding using std::round.
     return phy_time_unit(tc_units / 10 + (tc_units % 10) / 5);
   }
-
-  /// \brief Computes time instants in number of samples aligned with NR-PHY time units.
-  ///
-  /// Given a time expressed in number of samples, determine the closest inferior and superior time instants,
-  /// in number of samples, that can be expressed as an integer number of \f$T_c\f$ units.
-  ///
-  /// \param[in] time_samples Time expressed in number of samples.
-  /// \param[in] sampling_rate_Hz Sampling rate associated with the provided \c time_samples.
-  /// \return The computed closest aligned time instants, in number of samples.
-  /// \note If the provided time in number of samples is already aligned with an integer number of \f$T_c\f$, the
-  /// return values are both set to the input \c time_samples.
-  static inline std::pair<int, int> tc_aligned_nof_samples(int time_samples, unsigned sampling_rate_Hz)
-  {
-    // Inverse of Tc.
-    value_type tc_rcp = N_F * MAX_SCS_HZ;
-
-    // Compute the GCD of the Tc inverse and the sampling rate.
-    value_type gcd = std::__gcd(tc_rcp, static_cast<value_type>(sampling_rate_Hz));
-
-    // Use the GCD to derive the Least Common Multiple.
-    value_type lcm = sampling_rate_Hz * tc_rcp / gcd;
-
-    // Compute the periodicity at which the time instants expressed in number of samples align with a time instant
-    // expressed in number of Tc. This can be used to derive which time instants in number of samples can be expressed
-    // as an integer number of Tc, i.e., for a periodicity of N samples: 0, N, 2N, ...
-    value_type periodicity_sps = lcm / tc_rcp;
-
-    // Compute the time in samples aligned with Tc that is closest to time_samples and with smaller absolute value.
-    int lower_aligned_t_sps = static_cast<int>((time_samples / periodicity_sps) * periodicity_sps);
-
-    // If the provided time in number of samples is already aligned, return the same value.
-    if (lower_aligned_t_sps == time_samples) {
-      return std::make_pair(time_samples, time_samples);
-    }
-
-    // Compute the time in samples aligned with Tc that is closest to time_samples and with larger absolute value.
-    int higher_aligned_t_sps = lower_aligned_t_sps;
-    if (lower_aligned_t_sps >= 0) {
-      higher_aligned_t_sps += static_cast<int>(periodicity_sps);
-    } else {
-      higher_aligned_t_sps -= static_cast<int>(periodicity_sps);
-    }
-
-    return std::make_pair(lower_aligned_t_sps, higher_aligned_t_sps);
-  }
 };
 
 /// \brief Gets the sampling rate from a subcarrier spacing and a DFT size combination.

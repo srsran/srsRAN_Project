@@ -86,10 +86,14 @@ struct lower_phy_configuration {
   sampling_rate srate;
   /// Time alignment offset.
   lower_phy_ta_offset ta_offset;
-  /// \brief Time-advance calibration.
+  /// \brief Time alignment calibration in number of samples.
   ///
-  /// This time adjustment is subtracted from the UL-to-DL processing time offset for calibrating the baseband device.
-  phy_time_unit time_advance_calibration;
+  /// Models the reception and transmission time misalignment inherent to the RF device. This time adjustment is
+  /// subtracted from the UL-to-DL processing time offset for calibrating the baseband device.
+  ///
+  /// \remark Positive values cause a reduction of the RF transmission delay with respect to the RF reception, while
+  /// negative values increase it.
+  int time_alignment_calibration;
   /// OFDM modulator scale.
   float tx_scale;
   /// Amplitude control parameters, including baseband gain and clipping.

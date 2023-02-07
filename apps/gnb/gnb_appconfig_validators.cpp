@@ -15,27 +15,6 @@ static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
     return false;
   }
 
-  if (config.tx_time_advance_sps.has_value()) {
-    unsigned srate_Hz = static_cast<unsigned>(config.srate_MHz * 1e6);
-
-    // Compute the Tx time advance times in number of samples closest to the requested value that are aligned with an
-    // integer number of NR-PHY time units. If the requested value is already aligned, the same value is returned.
-    std::pair<int, int> time_adv_candidates =
-        phy_time_unit::tc_aligned_nof_samples(config.tx_time_advance_sps.value(), srate_Hz);
-
-    if (time_adv_candidates.first != config.tx_time_advance_sps) {
-      // If the requested Tx time advance is not aligned, inform the user of the closest candidates.
-      fmt::print(
-          "Requested Tx time advance (i.e, {}) cannot be expressed in integer number of Tc (NR time units).\n"
-          "Choose a sampling rate with a sampling period that is multiple of Tc, or set the time advance to one of the "
-          "closest candidates: {} or {}.\n",
-          config.tx_time_advance_sps,
-          time_adv_candidates.first,
-          time_adv_candidates.second);
-      return false;
-    }
-  }
-
   return true;
 }
 
@@ -95,14 +74,20 @@ static bool validate_amplitude_control_appconfig(const amplitude_control_appconf
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 {
+  if (config.nof_antennas_dl == 0) {
+    fmt::print("The number of DL antennas cannot be zero.");
+    return false;
+  }
+  if (config.nof_antennas_ul == 0) {
+    fmt::print("The number of UL antennas cannot be zero.");
+    return false;
+  }
   if (config.nof_antennas_dl != 1) {
-    fmt::print("The requested number of DL antennas (i.e. {}) is invalid or not currently supported.\n",
-               config.nof_antennas_dl);
+    fmt::print("Currently, only one DL antenna is supported.\n", config.nof_antennas_dl);
     return false;
   }
   if (config.nof_antennas_ul != 1) {
-    fmt::print("The requested number of UL antennas (i.e. {}) is invalid or not currently supported.\n",
-               config.nof_antennas_ul);
+    fmt::print("Currently, only one UL antenna is supported..\n", config.nof_antennas_ul);
     return false;
   }
 

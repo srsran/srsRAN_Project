@@ -169,17 +169,16 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
     out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);
 
     out_cfg.ta_offset = lower_phy_ta_offset::n0;
-    if (config.rf_driver_cfg.tx_time_advance_sps.has_value()) {
+    if (config.rf_driver_cfg.time_alignment_calibration.has_value()) {
       // User specified time advance calibration.
-      out_cfg.time_advance_calibration = phy_time_unit::from_seconds(
-          static_cast<double>(config.rf_driver_cfg.tx_time_advance_sps.value()) / out_cfg.srate.to_Hz<double>());
+      out_cfg.time_alignment_calibration = config.rf_driver_cfg.time_alignment_calibration.value();
     } else {
-      // Default time advance calibration.
-      // NOTE: ZMQ has a delay of 16 samples, so the time advance calibration is adjusted.
+      // Default time alingment calibration.
+      // NOTE: ZMQ has a delay of 16 samples, so the time alignment calibration is adjusted.
       if (config.rf_driver_cfg.device_driver == "zmq") {
-        out_cfg.time_advance_calibration = phy_time_unit::from_seconds(-16.0 / out_cfg.srate.to_Hz<double>());
+        out_cfg.time_alignment_calibration = -16;
       } else if (config.rf_driver_cfg.device_arguments.find("type=x300") != std::string::npos) {
-        out_cfg.time_advance_calibration = phy_time_unit::from_seconds(108.0 / out_cfg.srate.to_Hz<double>());
+        out_cfg.time_alignment_calibration = 108;
       }
     }
 

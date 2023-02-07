@@ -24,7 +24,7 @@ static sampling_rate       srate                      = sampling_rate::from_MHz(
 static subcarrier_spacing  scs                        = subcarrier_spacing::kHz15;
 static unsigned            max_processing_delay_slots = 4;
 static unsigned            ul_to_dl_subframe_offset   = 1;
-static phy_time_unit       time_advance_calibration   = phy_time_unit::from_seconds(0.0);
+static int                 time_alignment_calibration = 0;
 static lower_phy_ta_offset ta_offset                  = lower_phy_ta_offset::n0;
 static float               tx_scale                   = 1.0F;
 static cyclic_prefix       cp                         = cyclic_prefix::NORMAL;
@@ -49,7 +49,7 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&         b
   config.scs                        = scs;
   config.max_processing_delay_slots = max_processing_delay_slots;
   config.ul_to_dl_subframe_offset   = ul_to_dl_subframe_offset;
-  config.time_advance_calibration   = time_advance_calibration;
+  config.time_alignment_calibration = time_alignment_calibration;
   config.ta_offset                  = ta_offset;
   config.tx_scale                   = tx_scale;
   config.cp                         = cp;
@@ -80,9 +80,9 @@ static void test_start_run_stop()
   lower_phy_timing_notifier_spy    timing_notifier(log_level);
 
   // Calculate Rx-to-Tx delay in samples.
-  unsigned rx_to_tx_delay = (phy_time_unit::from_seconds(0.001 * ul_to_dl_subframe_offset) - time_advance_calibration -
-                             phy_time_unit::from_units_of_Tc(static_cast<unsigned>(ta_offset)))
-                                .to_samples(srate.to_Hz());
+  unsigned rx_to_tx_delay = phy_time_unit::from_seconds(0.001 * ul_to_dl_subframe_offset).to_samples(srate.to_Hz()) -
+                            time_alignment_calibration +
+                            phy_time_unit::from_units_of_Tc(static_cast<unsigned>(ta_offset)).to_samples(srate.to_Hz());
 
   lower_phy_configuration phy_config =
       create_phy_config(bb_gateway, error_notifier, rx_symbol_notifier, timing_notifier);

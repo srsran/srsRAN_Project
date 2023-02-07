@@ -76,10 +76,10 @@ static std::vector<std::string>                  rx_channel_args;
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::DEFAULT;
 static radio_configuration::clock_sources        clock_src  = {};
 static sampling_rate                             srate      = sampling_rate::from_MHz(61.44);
-static phy_time_unit                             time_advance_calibration = phy_time_unit::from_seconds(0.0);
-static const lower_phy_ta_offset                 ta_offset                = lower_phy_ta_offset::n0;
-static double                                    tx_gain                  = 60.0;
-static double                                    rx_gain                  = 70.0;
+static int                                       time_alignmemt_calibration = 0;
+static const lower_phy_ta_offset                 ta_offset                  = lower_phy_ta_offset::n0;
+static double                                    tx_gain                    = 60.0;
+static double                                    rx_gain                    = 70.0;
 
 /// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
 static const std::array<uint16_t, NOF_NUMEROLOGIES> nof_prb_dl_grid = {106, 51, 24, 0, 0};
@@ -121,15 +121,15 @@ static const std::vector<configuration_profile> profiles = {
     {"zmq_20MHz_n7",
      "Single 20MHz FDD in band n7 using ZMQ.",
      []() {
-       driver_name              = "zmq";
-       device_arguments         = "";
-       srate                    = sampling_rate::from_MHz(61.44);
-       time_advance_calibration = phy_time_unit::from_seconds(-16.0F / srate.to_Hz());
-       dl_arfcn                 = 536020;
-       K_ssb                    = 6;
-       offset_to_pointA         = 40;
-       band                     = nr_band::n7;
-       otw_format               = radio_configuration::over_the_wire_format::DEFAULT;
+       driver_name                = "zmq";
+       device_arguments           = "";
+       srate                      = sampling_rate::from_MHz(61.44);
+       time_alignmemt_calibration = -16;
+       dl_arfcn                   = 536020;
+       K_ssb                      = 6;
+       offset_to_pointA           = 40;
+       band                       = nr_band::n7;
+       otw_format                 = radio_configuration::over_the_wire_format::DEFAULT;
        tx_channel_args.emplace_back(tx_address);
        rx_channel_args.emplace_back(rx_address);
      }},
@@ -352,7 +352,7 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   phy_config.scs                        = scs;
   phy_config.max_processing_delay_slots = max_processing_delay_slots;
   phy_config.ul_to_dl_subframe_offset   = ul_to_dl_subframe_offset;
-  phy_config.time_advance_calibration   = time_advance_calibration;
+  phy_config.time_alignment_calibration = time_alignmemt_calibration;
   phy_config.ta_offset                  = ta_offset;
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;

@@ -34,8 +34,15 @@ struct rf_driver_appconfig {
   double rx_gain_dB = 60.0;
   /// LO Offset in MHz. It shifts the LO from the center frequency for moving the LO leakage out of the channel.
   double lo_offset_MHz = 0.0;
-  /// Rx to Tx radio time alignment calibration in samples.
-  optional<int> tx_time_advance_sps;
+  /// \brief Rx to Tx radio time alignment calibration in samples.
+  ///
+  /// Compensates for the reception and transmission time misalignment inherent to the RF device. Setting this parameter
+  /// overrides the default calibration, which is dependent on the selected RF device driver. Positive values reduce the
+  /// RF transmission delay with respect to the RF reception. Since the UE receives the DL signal earlier, an incoming
+  /// PRACH will also be detected earlier within the reception window. Negative values have the opposite effect, for
+  /// example, a value of -1000 at a sample rate of 61.44 MHz increases the transmission delay and causes an incoming
+  /// PRACH to be detected 16.3 us later within the reception window.
+  optional<int> time_alignment_calibration;
   /// Synchronization source.
   std::string synch_source = "default";
   /// Clock source.
