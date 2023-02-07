@@ -98,9 +98,21 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   subcarrier_spacing                           scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
 
+  // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
+  static constexpr std::array<uint8_t, 8> dl_data_to_ul_ack_f1_0 = {1, 2, 3, 4, 5, 6, 7, 8};
+
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   cell_slot_resource_allocator& pdsch_alloc = res_alloc[pdsch_td_cfg.k0];
+
+  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
+    logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDCCH slot", pdsch_alloc.slot);
+    return false;
+  }
+  if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
+    logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDSCH slot", pdsch_alloc.slot);
+    return false;
+  }
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
@@ -172,9 +184,15 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
 
   // Allocate PUCCH resources.
-  const unsigned       k1 = 4;
-  pucch_harq_ack_grant pucch_grant =
-      pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1, *pdcch);
+  unsigned             k1          = 4;
+  pucch_harq_ack_grant pucch_grant = {};
+  for (const auto k1_candidate : dl_data_to_ul_ack_f1_0) {
+    pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1_candidate, *pdcch);
+    if (pucch_grant.pucch_pdu != nullptr) {
+      k1 = k1_candidate;
+      break;
+    }
+  }
   if (pucch_grant.pucch_pdu == nullptr) {
     logger.info("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.

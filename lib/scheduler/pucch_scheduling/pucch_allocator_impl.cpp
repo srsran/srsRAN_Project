@@ -229,6 +229,10 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
     return pucch_harq_ack_output;
   }
 
+  if (not cell_cfg.is_ul_enabled(pucch_slot_alloc.slot)) {
+    return pucch_harq_ack_output;
+  }
+
   // Get the PUCCH resources, either from default tables.
   pucch_res_alloc_cfg pucch_res;
   pucch_res = alloc_pucch_common_res_harq(pucch_harq_ack_output.pucch_res_indicator, pucch_slot_alloc, dci_info.ctx);
