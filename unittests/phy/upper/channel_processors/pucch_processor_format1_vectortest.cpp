@@ -159,8 +159,8 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
 
   // Check channel state information is expected.
   ASSERT_EQ(result.csi.time_alignment, phy_time_unit::from_seconds(0));
-  ASSERT_EQ(result.csi.epre_dB, 0.0);
-  ASSERT_EQ(result.csi.sinr_dB, 0.0);
+  ASSERT_NEAR(result.csi.epre_dB, 0.0, 0.09);
+  ASSERT_GT(result.csi.sinr_dB, 25.0);
 
   // The message shall be valid.
   ASSERT_EQ(result.message.get_status(), uci_status::valid);
