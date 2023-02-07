@@ -152,9 +152,7 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
 /// Validates the given QoS configuration. Returns true on success, otherwise false.
 static bool validate_qos_appconfig(span<const qos_appconfig> config)
 {
-  if (config.size() != 0) {
-    return false;
-  }
+  // TODO check validity of QoS configs
   return true;
 }
 

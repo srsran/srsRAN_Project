@@ -108,7 +108,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
 std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appconfig& config)
 {
   std::map<uint8_t, du_qos_config> out_cfg = {};
-  if (config.qos_cfg.size() == 0) {
+  if (config.qos_cfg.empty()) {
     out_cfg = config_helpers::make_default_du_qos_config_list();
     return out_cfg;
   }

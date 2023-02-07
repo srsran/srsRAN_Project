@@ -61,8 +61,8 @@ du_ue_resource_update_response du_ue_ran_resource_updater_impl::update(du_cell_i
 
 ///////////////////////////
 
-du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>       cell_cfg_list_,
-                                                           std::map<uint8_t, du_qos_config> qos_) :
+du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_config>              cell_cfg_list_,
+                                                           const std::map<uint8_t, du_qos_config>& qos_) :
   cell_cfg_list(cell_cfg_list_),
   qos_config(qos_),
   logger(srslog::fetch_basic_logger("DU-MNG")),
@@ -158,7 +158,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       continue;
     }
     logger.debug("Getting RLC config for DRB-Id={} from 5QI={}", drb.drb_id, drb.five_qi);
-    du_qos_config qos = qos_config[drb.five_qi];
+    du_qos_config qos = qos_config.at(drb.five_qi);
 
     ue_mcg.rlc_bearers.emplace_back();
     ue_mcg.rlc_bearers.back().lcid    = lcid;
