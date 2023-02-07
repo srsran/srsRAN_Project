@@ -13,6 +13,7 @@
 #include "nr_cgi.h"
 #include "s_nssai.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/pdcp/pdcp_config.h"
 
 namespace srsgnb {
 
@@ -140,13 +141,13 @@ struct hdr_compress_t {
 };
 
 struct drb_t {
-  hdr_compress_t    hdr_compress;
-  optional<int16_t> discard_timer;
-  optional<uint8_t> pdcp_sn_size_ul;
-  optional<uint8_t> pdcp_sn_size_dl;
-  bool              integrity_protection_present   = false;
-  bool              status_report_required_present = false;
-  bool              out_of_order_delivery_present  = false;
+  hdr_compress_t         hdr_compress;
+  optional<int16_t>      discard_timer;
+  optional<pdcp_sn_size> pdcp_sn_size_ul;
+  optional<pdcp_sn_size> pdcp_sn_size_dl;
+  bool                   integrity_protection_present   = false;
+  bool                   status_report_required_present = false;
+  bool                   out_of_order_delivery_present  = false;
 };
 
 struct primary_path_t {

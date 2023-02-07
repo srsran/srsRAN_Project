@@ -163,8 +163,8 @@ e1ap_bearer_context_setup_request srsgnb::srs_cu_cp::generate_bearer_context_set
   drb_to_setup_item.sdap_cfg.default_drb        = true;
   drb_to_setup_item.sdap_cfg.sdap_hdr_ul        = "present";
   drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = "present";
-  drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = 18;
-  drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = 18;
+  drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
+  drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
   drb_to_setup_item.pdcp_cfg.rlc_mod            = srsgnb::rlc_mode::am;
   drb_to_setup_item.pdcp_cfg.t_reordering_timer = 100;
   drb_to_setup_item.pdcp_cfg.discard_timer      = -1;

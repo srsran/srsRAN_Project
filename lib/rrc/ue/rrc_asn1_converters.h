@@ -86,13 +86,15 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config_t pdcp_cf
     // pdcp sn size ul
     if (pdcp_cfg.drb.value().pdcp_sn_size_ul.has_value()) {
       rrc_pdcp_cfg.drb.pdcp_sn_size_ul_present = true;
-      asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_ul, pdcp_cfg.drb.value().pdcp_sn_size_ul.value());
+      asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_ul,
+                           pdcp_sn_size_to_uint(pdcp_cfg.drb.value().pdcp_sn_size_ul.value()));
     }
 
     // pdcp sn size dl
     if (pdcp_cfg.drb.value().pdcp_sn_size_dl.has_value()) {
       rrc_pdcp_cfg.drb.pdcp_sn_size_dl_present = true;
-      asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_dl, pdcp_cfg.drb.value().pdcp_sn_size_dl.value());
+      asn1::number_to_enum(rrc_pdcp_cfg.drb.pdcp_sn_size_dl,
+                           pdcp_sn_size_to_uint(pdcp_cfg.drb.value().pdcp_sn_size_dl.value()));
     }
 
     // integrity protection present

@@ -59,7 +59,7 @@ protected:
             pdcp_t_reordering t_reordering = pdcp_t_reordering::ms10,
             pdcp_max_count    max_count    = {pdcp_rx_default_max_count_notify, pdcp_rx_default_max_count_hard})
   {
-    logger.info("Creating PDCP RX ({} bit)", to_number(sn_size_));
+    logger.info("Creating PDCP RX ({} bit)", pdcp_sn_size_to_uint(sn_size_));
 
     sn_size = sn_size_;
 

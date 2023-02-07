@@ -72,7 +72,7 @@ protected:
             pdcp_discard_timer discard_timer = pdcp_discard_timer::ms10,
             pdcp_max_count     max_count     = {pdcp_tx_default_max_count_notify, pdcp_tx_default_max_count_hard})
   {
-    logger.info("Creating PDCP TX ({} bit)", to_number(sn_size_));
+    logger.info("Creating PDCP TX ({} bit)", pdcp_sn_size_to_uint(sn_size_));
 
     sn_size     = sn_size_;
     pdu_hdr_len = pdcp_data_pdu_header_size(sn_size); // Round up division

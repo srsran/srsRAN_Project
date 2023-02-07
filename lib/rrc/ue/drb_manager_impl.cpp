@@ -104,8 +104,8 @@ pdcp_config_t drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
   pdcp_cfg.ciphering_disabled_present = true;
 
   drb_t drb;
-  drb.pdcp_sn_size_dl = 18;
-  drb.pdcp_sn_size_ul = 18;
+  drb.pdcp_sn_size_dl = pdcp_sn_size::size18bits;
+  drb.pdcp_sn_size_ul = pdcp_sn_size::size18bits;
   drb.discard_timer   = 100;
 
   pdcp_cfg.drb = drb;

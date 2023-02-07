@@ -38,20 +38,8 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
   }
 
   // SN size
-  if (e1ap_cfg.pdcp_sn_size_dl == -12) {
-    cfg.tx.sn_size = pdcp_sn_size::size12bits;
-  } else if (e1ap_cfg.pdcp_sn_size_dl == -18) {
-    cfg.tx.sn_size = pdcp_sn_size::size18bits;
-  } else {
-    report_fatal_error("Unsupported PDCP SN size for DRB DL. PDCP SN size={}", e1ap_cfg.pdcp_sn_size_dl);
-  }
-  if (e1ap_cfg.pdcp_sn_size_ul == -12) {
-    cfg.rx.sn_size = pdcp_sn_size::size12bits;
-  } else if (e1ap_cfg.pdcp_sn_size_ul == -18) {
-    cfg.rx.sn_size = pdcp_sn_size::size18bits;
-  } else {
-    report_fatal_error("Unsupported PDCP SN size for DRB UL. PDCP SN size={}", e1ap_cfg.pdcp_sn_size_ul);
-  }
+  cfg.tx.sn_size = e1ap_cfg.pdcp_sn_size_dl;
+  cfg.rx.sn_size = e1ap_cfg.pdcp_sn_size_ul;
 
   // Direction
   cfg.tx.direction = pdcp_security_direction::downlink;

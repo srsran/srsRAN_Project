@@ -24,10 +24,12 @@ enum class pdcp_rb_type { srb, drb };
 enum class pdcp_rlc_mode { um, am };
 
 /// PDCP NR sequence number field.
-enum class pdcp_sn_size : uint16_t { size12bits = 12, size18bits = 18 };
-constexpr uint16_t to_number(pdcp_sn_size sn_size)
+enum class pdcp_sn_size : uint8_t { size12bits = 12, size18bits = 18 };
+
+/// \brief Convert PDCP SN size from enum to unsigned integer.
+constexpr uint8_t pdcp_sn_size_to_uint(pdcp_sn_size sn_size)
 {
-  return static_cast<uint16_t>(sn_size);
+  return static_cast<uint8_t>(sn_size);
 }
 
 /// Maximum supported PDCP SDU size, see TS 38.323, section 4.3.1.
@@ -196,7 +198,7 @@ struct formatter<srsgnb::pdcp_sn_size> {
   template <typename FormatContext>
   auto format(srsgnb::pdcp_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{} bit", to_number(sn_size));
+    return format_to(ctx.out(), "{} bit", pdcp_sn_size_to_uint(sn_size));
   }
 };
 

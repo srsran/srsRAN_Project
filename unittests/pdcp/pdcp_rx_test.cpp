@@ -343,7 +343,7 @@ TEST_P(pdcp_rx_test, count_wraparound)
 std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_size>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", to_number(info.param));
+  fmt::format_to(buffer, "{}bit", pdcp_sn_size_to_uint(info.param));
   return fmt::to_string(buffer);
 }
 

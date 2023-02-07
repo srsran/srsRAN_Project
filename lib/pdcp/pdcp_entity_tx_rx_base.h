@@ -32,7 +32,8 @@ constexpr size_t pdcp_data_pdu_header_size(pdcp_sn_size sn_size)
     case pdcp_sn_size::size18bits:
       return pdcp_data_pdu_header_size_18bit;
   }
-  srsgnb_assertion_failure("Cannot determine PDCP data PDU header size: unsupported sn_size {}", to_number(sn_size));
+  srsgnb_assertion_failure("Cannot determine PDCP data PDU header size: unsupported sn_size {}",
+                           pdcp_sn_size_to_uint(sn_size));
   return pdcp_data_pdu_header_size_12bit;
 }
 
@@ -47,7 +48,7 @@ constexpr uint32_t pdcp_window_size(pdcp_sn_size sn_size)
     case pdcp_sn_size::size18bits:
       return pdcp_window_size_18bit;
   }
-  srsgnb_assertion_failure("Cannot determine PDCP window size: unsupported sn_size {}", to_number(sn_size));
+  srsgnb_assertion_failure("Cannot determine PDCP window size: unsupported sn_size {}", pdcp_sn_size_to_uint(sn_size));
   return pdcp_window_size_12bit;
 }
 
