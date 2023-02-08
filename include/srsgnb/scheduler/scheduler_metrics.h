@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/sch_mcs.h"
 
 namespace srsgnb {
