@@ -79,6 +79,19 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
           .search_spaces[cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id];
   for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
        ++time_res_idx) {
+    const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
+
+    // Fetch PDCCH and PDSCH resource grid allocators.
+    const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
+    const cell_slot_resource_allocator& pdsch_alloc = res_alloc[pdsch_td_cfg.k0];
+
+    if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
+      continue;
+    }
+    if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
+      continue;
+    }
+
     if (schedule_srb0(u, res_alloc, time_res_idx, ss)) {
       return true;
     }
@@ -95,24 +108,16 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
                                       const search_space_configuration& ss_cfg)
 {
   ue_cell&                                     ue_pcell     = u.get_pcell();
-  subcarrier_spacing                           scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
+  const subcarrier_spacing                     scs          = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
 
   // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
-  static constexpr std::array<uint8_t, 8> dl_data_to_ul_ack_f1_0 = {1, 2, 3, 4, 5, 6, 7, 8};
+  // However, the tested UEs only support k1 >= 4.
+  static constexpr std::array<uint8_t, 8> dl_data_to_ul_ack_f1_0 = {4, 5, 6, 7, 8};
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
   cell_slot_resource_allocator& pdsch_alloc = res_alloc[pdsch_td_cfg.k0];
-
-  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
-    logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDCCH slot", pdsch_alloc.slot);
-    return false;
-  }
-  if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
-    logger.warning("Failed to allocate PDSCH in slot={}. Cause: DL is not active in the PDSCH slot", pdsch_alloc.slot);
-    return false;
-  }
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {

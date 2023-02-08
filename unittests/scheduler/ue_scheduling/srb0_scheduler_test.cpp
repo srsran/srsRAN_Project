@@ -32,11 +32,13 @@ unsigned get_random_uint(unsigned min, unsigned max)
 // Parameters to be passed to test.
 struct srb0_test_params {
   uint8_t k0;
-  uint8_t k1;
 };
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
+  // Maximum number of slots to run per UE in order to validate the results of scheduler. Implementation defined.
+  static constexpr unsigned max_test_run_slots_per_ue = 40;
+
   scheduler_ue_expert_config    expert_cfg;
   cell_configuration            cell_cfg;
   cell_resource_allocator       res_grid;
@@ -65,7 +67,7 @@ struct test_bench {
 class srb0_scheduler_tester : public ::testing::TestWithParam<srb0_test_params>
 {
 protected:
-  slot_point            next_slot{0, 0};
+  slot_point            current_slot{0, 0};
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST", true);
   optional<test_bench>  bench;
@@ -103,22 +105,22 @@ protected:
       }
     }
 
-    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
 
-    bench->res_grid.slot_indication(next_slot);
-    bench->pdcch_sch.slot_indication(next_slot);
+    bench->res_grid.slot_indication(current_slot);
+    bench->pdcch_sch.slot_indication(current_slot);
   }
 
   void run_slot()
   {
-    next_slot++;
+    current_slot++;
 
-    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
 
-    bench->res_grid.slot_indication(next_slot);
-    bench->pdcch_sch.slot_indication(next_slot);
+    bench->res_grid.slot_indication(current_slot);
+    bench->pdcch_sch.slot_indication(current_slot);
 
     bench->srb0_sched.run_slot(bench->res_grid);
 
@@ -142,11 +144,6 @@ protected:
     return msg;
   }
 
-  const pdsch_time_domain_resource_allocation& get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const
-  {
-    return bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_idx];
-  }
-
   bool ue_is_allocated_pdcch(const ue& u)
   {
     return std::any_of(bench->res_grid[0].result.dl.dl_pdcchs.begin(),
@@ -156,60 +153,34 @@ protected:
 
   bool ue_is_allocated_pdsch(const ue& u)
   {
-    // Search valid PDSCH time domain resource.
-    const auto& bwp_cfg_common = bench->cell_cfg.dl_cfg_common.init_dl_bwp;
-    for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
-         ++time_res_idx) {
-      const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
-
-      // Fetch PDSCH resource grid allocators.
-      const cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[pdsch_td_cfg.k0];
-      // Search for PDSCH UE grant.
-      for (const auto& grant : pdsch_alloc.result.dl.ue_grants) {
-        if (grant.pdsch_cfg.rnti == u.crnti) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return std::any_of(bench->res_grid[0].result.dl.ue_grants.begin(),
+                       bench->res_grid[0].result.dl.ue_grants.end(),
+                       [&u](const auto& grant) { return grant.pdsch_cfg.rnti == u.crnti; });
   }
 
-  bool tbs_scheduled_bytes_matches_given_size(const ue& u, unsigned exp_size)
-  {
-    // Search valid PDSCH time domain resource.
-    const auto& bwp_cfg_common         = bench->cell_cfg.dl_cfg_common.init_dl_bwp;
-    unsigned    total_cw_tb_size_bytes = 0;
-    for (unsigned time_res_idx = 0; time_res_idx != bwp_cfg_common.pdsch_common.pdsch_td_alloc_list.size();
-         ++time_res_idx) {
-      const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
-
-      // Fetch PDSCH resource grid allocators.
-      const cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[pdsch_td_cfg.k0];
-      // Search for PDSCH UE grant.
-      for (const auto& grant : pdsch_alloc.result.dl.ue_grants) {
-        if (grant.pdsch_cfg.rnti != u.crnti) {
-          continue;
-        }
-        for (const auto& cw : grant.pdsch_cfg.codewords) {
-          total_cw_tb_size_bytes += cw.tb_size_bytes;
-        }
-      }
-    }
-    return total_cw_tb_size_bytes >= exp_size;
-  }
-
-  bool ue_is_allocated_pucch_in_current_slot(const ue& u)
+  bool ue_is_allocated_pucch(const ue& u)
   {
     return std::any_of(bench->res_grid[0].result.ul.pucchs.begin(),
                        bench->res_grid[0].result.ul.pucchs.end(),
                        [&u](const auto& pucch) { return pucch.crnti == u.crnti; });
   }
 
-  bool ue_is_allocated_pdsch_in_current_slot(const ue& u)
+  bool tbs_scheduled_bytes_matches_given_size(const ue& u, unsigned exp_size)
   {
-    return std::any_of(bench->res_grid[0].result.dl.ue_grants.begin(),
-                       bench->res_grid[0].result.dl.ue_grants.end(),
-                       [&u](const auto& pdsch) { return pdsch.pdsch_cfg.rnti == u.crnti; });
+    unsigned total_cw_tb_size_bytes = 0;
+
+    // Fetch PDSCH resource grid allocators.
+    const cell_slot_resource_allocator& pdsch_alloc = bench->res_grid[0];
+    // Search for PDSCH UE grant.
+    for (const auto& grant : pdsch_alloc.result.dl.ue_grants) {
+      if (grant.pdsch_cfg.rnti != u.crnti) {
+        continue;
+      }
+      for (const auto& cw : grant.pdsch_cfg.codewords) {
+        total_cw_tb_size_bytes += cw.tb_size_bytes;
+      }
+    }
+    return total_cw_tb_size_bytes >= exp_size;
   }
 
   bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index)
@@ -232,7 +203,7 @@ protected:
   void push_buffer_state_to_dl_ue(du_ue_index_t ue_idx, unsigned buffer_size)
   {
     // Notification from upper layers of DL buffer state.
-    dl_buffer_state_indication_message msg{ue_idx, LCID_SRB0, buffer_size};
+    const dl_buffer_state_indication_message msg{ue_idx, LCID_SRB0, buffer_size};
     bench->ue_db[ue_idx].handle_dl_buffer_state_indication(msg);
 
     // Notify scheduler of DL buffer state.
@@ -251,47 +222,58 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
-  unsigned mac_srb0_sdu_size = 101;
+  const unsigned mac_srb0_sdu_size = 101;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
 
-  unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
-
-  run_slot();
+  const unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
 
   // Test the following:
   // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
   // 2. Check for PDSCH allocation.
   // 3. Check whether CW TB bytes matches with pending bytes to be sent.
   const auto& test_ue = get_ue(to_du_ue_index(0));
-  ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
-  ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
-  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+  bool        is_ue_allocated_pdcch{false};
+  bool        is_ue_allocated_pdsch{false};
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+    run_slot();
+    if (ue_is_allocated_pdcch(test_ue)) {
+      is_ue_allocated_pdcch = true;
+    }
+    if (ue_is_allocated_pdsch(test_ue)) {
+      is_ue_allocated_pdsch = true;
+      ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+    }
+  }
+  ASSERT_TRUE(is_ue_allocated_pdcch);
+  ASSERT_TRUE(is_ue_allocated_pdsch);
 }
 
 TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 {
-  setup_sched(create_expert_config(2),
+  setup_sched(create_expert_config(0),
               create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
-  // Note: This step is for filling resource grid so that no other UE's SRB0 message can be scheduled.
   unsigned ue1_mac_srb0_sdu_size = 101;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), ue1_mac_srb0_sdu_size);
 
   // Add UE 2.
   add_ue(to_rnti(0x4602), to_du_ue_index(1));
-  // Notify about SRB0 message in DL of size 101 bytes.
-  unsigned ue2_mac_srb0_sdu_size = 101;
+  // Notify about SRB0 message in DL of size 350 bytes. i.e. big enough to not get allocated with the max. mcs chosen.
+  unsigned ue2_mac_srb0_sdu_size = 350;
   push_buffer_state_to_dl_ue(to_du_ue_index(1), ue2_mac_srb0_sdu_size);
 
   run_slot();
 
   // Allocation for UE2 should fail.
   const auto& test_ue = get_ue(to_du_ue_index(1));
-  ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
-  ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+    run_slot();
+    ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
+    ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+  }
 }
 
 TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
@@ -301,17 +283,26 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 458 bytes.
-  unsigned mac_srb0_sdu_size = 458;
+  const unsigned mac_srb0_sdu_size = 458;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
 
-  unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
-
-  run_slot();
+  const unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
 
   const auto& test_ue = get_ue(to_du_ue_index(0));
-  ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
-  ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
-  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+  bool        is_ue_allocated_pdcch{false};
+  bool        is_ue_allocated_pdsch{false};
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+    run_slot();
+    if (ue_is_allocated_pdcch(test_ue)) {
+      is_ue_allocated_pdcch = true;
+    }
+    if (ue_is_allocated_pdsch(test_ue)) {
+      is_ue_allocated_pdsch = true;
+      ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+    }
+  }
+  ASSERT_TRUE(is_ue_allocated_pdcch);
+  ASSERT_TRUE(is_ue_allocated_pdsch);
 }
 
 TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
@@ -324,12 +315,13 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
   const unsigned mac_srb0_sdu_size = 360;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
 
-  run_slot();
-
   // Allocation for UE should fail.
   const auto& test_ue = get_ue(to_du_ue_index(0));
-  ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
-  ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+    run_slot();
+    ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
+    ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
+  }
 }
 
 TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
@@ -365,21 +357,30 @@ TEST_P(srb0_scheduler_tester, test_msg4_successful_allocation_with_custom_cell_c
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 129 bytes.
-  unsigned mac_srb0_sdu_size = 129;
+  const unsigned mac_srb0_sdu_size = 129;
   push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
 
-  unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
-
-  run_slot();
+  const unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
 
   // Test the following:
   // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
   // 2. Check for PDSCH allocation.
   // 3. Check whether CW TB bytes matches with pending bytes to be sent.
   const auto& test_ue = get_ue(to_du_ue_index(0));
-  ASSERT_TRUE(ue_is_allocated_pdcch(test_ue));
-  ASSERT_TRUE(ue_is_allocated_pdsch(test_ue));
-  ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+  bool        is_ue_allocated_pdcch{false};
+  bool        is_ue_allocated_pdsch{false};
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+    run_slot();
+    if (ue_is_allocated_pdcch(test_ue)) {
+      is_ue_allocated_pdcch = true;
+    }
+    if (ue_is_allocated_pdsch(test_ue)) {
+      is_ue_allocated_pdsch = true;
+      ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
+    }
+  }
+  ASSERT_TRUE(is_ue_allocated_pdcch);
+  ASSERT_TRUE(is_ue_allocated_pdsch);
 }
 
 TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
@@ -400,19 +401,19 @@ TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
 
   for (unsigned idx = 0; idx < MAX_TEST_RUN_SLOTS; idx++) {
     run_slot();
-    if (bench->cell_cfg.is_ul_enabled(next_slot)) {
+    if (bench->cell_cfg.is_ul_enabled(current_slot)) {
       // Check whether PUCCH/PDSCH is not scheduled in UL slots for any of the UEs.
       for (unsigned ue_idx = 0; ue_idx < MAX_UES; ue_idx++) {
         const auto& test_ue = get_ue(to_du_ue_index(ue_idx));
         ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
-        ASSERT_FALSE(ue_is_allocated_pdsch_in_current_slot(test_ue));
+        ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
       }
     }
-    if (bench->cell_cfg.is_dl_enabled(next_slot)) {
+    if (bench->cell_cfg.is_dl_enabled(current_slot)) {
       // Check whether PUCCH HARQ is not scheduled in DL slots for any of the UEs.
       for (unsigned ue_idx = 0; ue_idx < MAX_UES; ue_idx++) {
         const auto& test_ue = get_ue(to_du_ue_index(ue_idx));
-        ASSERT_FALSE(ue_is_allocated_pucch_in_current_slot(test_ue));
+        ASSERT_FALSE(ue_is_allocated_pucch(test_ue));
       }
     }
   }
@@ -420,7 +421,7 @@ TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
 
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
-                         testing::Values(srb0_test_params{.k0 = 1, .k1 = 4}, srb0_test_params{.k0 = 2, .k1 = 4}));
+                         testing::Values(srb0_test_params{.k0 = 1}, srb0_test_params{.k0 = 2}));
 
 int main(int argc, char** argv)
 {
