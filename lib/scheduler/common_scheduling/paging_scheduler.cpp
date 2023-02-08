@@ -99,6 +99,11 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   const auto sl_point            = res_grid[0].slot;
   const auto paging_search_space = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value();
 
+  const cell_slot_resource_allocator& pdcch_alloc = res_grid[0];
+  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
+    return;
+  }
+
   // Check for maximum paging retries.
   auto it = paging_pending_ues.begin();
   while (it != paging_pending_ues.end()) {
@@ -164,6 +169,17 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
     for (unsigned time_res_idx = 0;
          time_res_idx != cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size();
          ++time_res_idx) {
+      const cell_slot_resource_allocator& paging_alloc =
+          res_grid[cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_res_idx].k0];
+      // Verify Paging slot is DL enabled.
+      if (not cell_cfg.is_dl_enabled(paging_alloc.slot)) {
+        continue;
+      }
+      // Verify there is space in PDSCH and PDCCH result lists for new allocations.
+      if (paging_alloc.result.dl.paging_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
+        continue;
+      }
+
       if (paging_search_space == 0 && schedule_paging_in_search_space0(res_grid, sl_point, time_res_idx, pg_ind, i_s)) {
         if (pg_ind.paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
           cn_paging_retries[pg_ind.paging_identity]++;
@@ -305,12 +321,6 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&         res_grid
   // As per TS 38.214, Table 5.1.3.2-2.
   // TODO: TBS scaling is assumed to be 0. Need to set correct value.
   static const unsigned tbs_scaling = 0;
-
-  // Verify there is space in PDSCH and PDCCH result lists for new allocations.
-  if (res_grid[pdsch_td_cfg.k0].result.dl.paging_grants.full() or res_grid[0].result.dl.dl_pdcchs.full()) {
-    logger.warning("SCHED: Failed to allocate PDSCH. Cause: No space available in scheduler output list");
-    return false;
-  }
 
   // Generate dmrs information to be passed to (i) the fnc that computes number of RE used for DMRS per RB and (ii) to
   // the fnc that fills the DCI.

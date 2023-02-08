@@ -36,8 +36,6 @@ uint64_t get_random_uint(uint64_t min, uint64_t max)
 
 // Parameters to be passed to test.
 struct paging_scheduler_test_params {
-  uint8_t     k0;
-  uint8_t     k1;
   unsigned    max_paging_mcs;
   unsigned    max_paging_retries;
   uint16_t    drx_cycle_in_nof_rf;
@@ -147,13 +145,12 @@ protected:
 
   sched_cell_configuration_request_message create_random_cell_config_request() const
   {
-    sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
-    msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
-
+    cell_config_builder_params cell_cfg{};
     if (params.duplx_mode == duplex_mode::TDD) {
-      msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
+      // Band 41.
+      cell_cfg.dl_arfcn = 520000;
     }
-    return msg;
+    return test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
   }
 
   uint64_t generate_five_g_s_tmsi()
@@ -288,15 +285,11 @@ TEST_P(paging_sched_tester, successfully_paging_multiple_ues)
 
 INSTANTIATE_TEST_SUITE_P(paging_sched_tester,
                          paging_sched_tester,
-                         testing::Values(paging_scheduler_test_params{.k0                  = 1,
-                                                                      .k1                  = 4,
-                                                                      .max_paging_mcs      = 3,
+                         testing::Values(paging_scheduler_test_params{.max_paging_mcs      = 3,
                                                                       .max_paging_retries  = 3,
                                                                       .drx_cycle_in_nof_rf = 128,
                                                                       .duplx_mode          = duplex_mode::FDD},
-                                         paging_scheduler_test_params{.k0                  = 15,
-                                                                      .k1                  = 4,
-                                                                      .max_paging_mcs      = 3,
+                                         paging_scheduler_test_params{.max_paging_mcs      = 3,
                                                                       .max_paging_retries  = 3,
                                                                       .drx_cycle_in_nof_rf = 128,
                                                                       .duplx_mode          = duplex_mode::TDD}));
