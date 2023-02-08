@@ -8,11 +8,8 @@
  */
 
 #include "ue_cell_grid_allocator.h"
-#include "../support/config_helpers.h"
-#include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
 #include "../support/mcs_tbs_calculator.h"
-#include "../support/tbs_calculator.h"
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
 #include "srsgnb/support/error_handling.h"
@@ -215,8 +212,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Save set PDCCH and PDSCH PDU parameters in HARQ process.
   h_dl.save_alloc_params(pdcch->dci.type, msg.pdsch_cfg);
 
-  // Set MAC logical channels to schedule in this PDU.
-  u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
+  if (h_dl.tb(0).nof_retxs == 0) {
+    // Set MAC logical channels to schedule in this PDU if it is a newtx.
+    u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
+  }
 
   logger.debug("UE={}'s PDSCH allocation on slot={} at cell_id={} completed.",
                u.ue_index,
