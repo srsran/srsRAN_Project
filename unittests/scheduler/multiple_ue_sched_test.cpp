@@ -62,8 +62,7 @@ struct test_bench {
   const sched_result*                              sched_res{nullptr};
 
   explicit test_bench(const scheduler_expert_config&                  expert_cfg_,
-                      const sched_cell_configuration_request_message& cell_req =
-                          test_helpers::make_default_sched_cell_configuration_request()) :
+                      const sched_cell_configuration_request_message& cell_req) :
     expert_cfg{expert_cfg_}, cell_cfg{cell_req}, sch{scheduler_config{expert_cfg, cfg_notif, metric_notif}}
   {
     sch.handle_cell_configuration_request(cell_req);
@@ -92,10 +91,10 @@ protected:
     srslog::flush();
   }
 
-  void setup_sched(const scheduler_expert_config&                  expert_cfg,
-                   const sched_cell_configuration_request_message& msg =
-                       test_helpers::make_default_sched_cell_configuration_request())
+  void setup_sched(const scheduler_expert_config& expert_cfg, const sched_cell_configuration_request_message& msg)
   {
+    current_slot = slot_point{to_numerology_value(msg.scs_common), 0};
+
     const auto& dl_lst = msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     for (const auto& pdsch : dl_lst) {
       if (pdsch.k0 > max_k_value) {
@@ -139,12 +138,26 @@ protected:
 
   sched_cell_configuration_request_message create_random_cell_config_request() const
   {
-    sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
-
+    cell_config_builder_params cell_cfg{};
     if (params.duplx_mode == duplex_mode::TDD) {
-      msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
+      // Band 40.
+      cell_cfg.dl_arfcn       = 474000;
+      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+      cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+
+      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+          cell_cfg.channel_bw_mhz,
+          cell_cfg.scs_common,
+          cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
+
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+      cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
+      cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
     }
-    return msg;
+    return test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
   }
 
   unsigned pdsch_tbs_scheduled_bytes_per_lc(const sched_test_ue& u, lcid_t lcid)
