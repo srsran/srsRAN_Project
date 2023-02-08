@@ -71,7 +71,7 @@ public:
   using five_g_s_tmsi = uint64_t;
 
 protected:
-  slot_point                        next_slot{0, 0};
+  slot_point                        current_slot{0, 0};
   srslog::basic_logger&             mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger&             test_logger = srslog::fetch_basic_logger("TEST", true);
   optional<paging_sched_test_bench> bench;
@@ -95,6 +95,8 @@ protected:
                    const sched_cell_configuration_request_message& msg =
                        test_helpers::make_default_sched_cell_configuration_request())
   {
+    current_slot = slot_point{to_numerology_value(msg.scs_common), 0};
+
     const auto& dl_lst = msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
     for (const auto& pdsch : dl_lst) {
       if (pdsch.k0 > max_k_value) {
@@ -111,21 +113,21 @@ protected:
     bench.emplace(expert_cfg, msg);
 
     // Initialize.
-    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    bench->res_grid.slot_indication(next_slot);
-    bench->pdcch_sch.slot_indication(next_slot);
+    mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    bench->res_grid.slot_indication(current_slot);
+    bench->pdcch_sch.slot_indication(current_slot);
   }
 
   void run_slot()
   {
-    next_slot++;
+    current_slot++;
 
-    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
 
-    bench->res_grid.slot_indication(next_slot);
-    bench->pdcch_sch.slot_indication(next_slot);
+    bench->res_grid.slot_indication(current_slot);
+    bench->pdcch_sch.slot_indication(current_slot);
     bench->pg_sch.schedule_paging(bench->res_grid);
 
     // Log scheduling results.
@@ -147,8 +149,22 @@ protected:
   {
     cell_config_builder_params cell_cfg{};
     if (params.duplx_mode == duplex_mode::TDD) {
-      // Band 41.
-      cell_cfg.dl_arfcn = 520000;
+      // Band 40.
+      cell_cfg.dl_arfcn       = 474000;
+      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+      cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+
+      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+          cell_cfg.channel_bw_mhz,
+          cell_cfg.scs_common,
+          cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
+
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+      cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
+      cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
     }
     return test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
   }
