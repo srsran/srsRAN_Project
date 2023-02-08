@@ -75,8 +75,8 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   up_transport_layer_info n3_dl_tunnel_addr;
   n3_dl_tunnel_addr.tp_address.from_string(net_config.n3_bind_addr);
-  n3_dl_tunnel_addr.gtp_teid = int_to_gtp_teid(new_session->local_teid);
-  n3_dl_tunnel_addr          = pdu_session_result.gtp_tunnel;
+  n3_dl_tunnel_addr.gtp_teid    = int_to_gtp_teid(new_session->local_teid);
+  pdu_session_result.gtp_tunnel = n3_dl_tunnel_addr;
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {};

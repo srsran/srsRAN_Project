@@ -101,6 +101,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(setup_result.gtp_tunnel.gtp_teid.value(), 1);
   ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 257);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
