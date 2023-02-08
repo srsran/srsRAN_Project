@@ -17,8 +17,6 @@
 
 #define PCAP_CONTEXT_HEADER_MAX 256
 
-#define UDP_DLT 149 // UDP needs to be selected as protocol
-
 constexpr uint16_t pcap_max_len = 2000;
 
 /// This structure gets written to the start of the file

@@ -36,18 +36,17 @@ typedef struct {
   uint16_t system_frame_number;
   uint8_t  sub_frame_number;
   uint16_t length;
-} mac_nr_context_info_t;
+} mac_nr_context_info;
 
 class mac_pcap : public pcap_file_base
 {
 public:
-  mac_pcap();
+  mac_pcap() = default;
   ~mac_pcap();
 
-  void write_pdu(srsgnb::const_span<uint8_t>& pdu);
-
-private:
-  void write_context(mac_nr_context_info_t* context);
+  void open(const char* filename_);
+  void close();
+  void write_pdu(mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu);
 };
 } // namespace srsgnb
 
