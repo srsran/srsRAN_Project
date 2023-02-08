@@ -927,7 +927,7 @@ public:
         // Detailed log information, including a list of all PDU fields.
         logger.debug(data.data(),
                      data.size(),
-                     "PUSCH: harq={} {:s} {:s} tbs={} {}\n  harq={}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
+                     "PUSCH: harq_id={} {:s} {:s} tbs={} {}\n  harq_id={}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
                      softbuffer.get_pid(),
                      pdu,
                      result,
@@ -942,7 +942,7 @@ public:
         // Single line log entry.
         logger.info(data.data(),
                     data.size(),
-                    "PUSCH: harq={} {:s} {:s} tbs={} {}",
+                    "PUSCH: harq_id={} {:s} {:s} tbs={} {}",
                     softbuffer.get_pid(),
                     pdu,
                     result,
@@ -952,7 +952,7 @@ public:
     } else {
       // CRC is KO, do not dump TB.
       if (logger.debug.enabled()) {
-        logger.debug("PUSCH: harq={} {:s} {:s} tbs={} {}\n  harq={}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
+        logger.debug("PUSCH: harq_id={} {:s} {:s} tbs={} {}\n  harq_id={}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
                      softbuffer.get_pid(),
                      pdu,
                      result,
@@ -966,7 +966,7 @@ public:
       } else {
         logger.info(data.data(),
                     data.size(),
-                    "PUSCH: harq={} {:s} {:s} tbs={} {}",
+                    "PUSCH: harq_id={} {:s} {:s} tbs={} {}",
                     softbuffer.get_pid(),
                     pdu,
                     result,
