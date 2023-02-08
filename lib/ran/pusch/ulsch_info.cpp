@@ -73,6 +73,40 @@ static constexpr unsigned calculate_nof_re_harq_ack_without_sch(units::bits nof_
   return std::min(left, right);
 }
 
+static constexpr unsigned calculate_nof_re_csi_part1(units::bits nof_csi_part1_bits,
+                                                     float       beta_offset_pusch,
+                                                     unsigned    nof_re_uci,
+                                                     unsigned    nof_re_harq_ack,
+                                                     unsigned    sum_nof_cb_size,
+                                                     float       alpha_scaling)
+{
+  using namespace units::literals;
+
+  if (nof_csi_part1_bits == 0_bits) {
+    return 0;
+  }
+
+  units::bits nof_bits_crc = get_crc_size_uci(nof_csi_part1_bits);
+
+  unsigned left  = std::ceil(static_cast<float>((nof_csi_part1_bits + nof_bits_crc).value()) * beta_offset_pusch *
+                            static_cast<float>(nof_re_uci) / static_cast<float>(sum_nof_cb_size));
+  unsigned right = std::ceil(alpha_scaling * static_cast<float>(nof_re_uci)) - nof_re_harq_ack;
+
+  return std::min(left, right);
+}
+
+static constexpr unsigned
+calculate_nof_re_csi_part1_without_sch(units::bits nof_csi_part1_bits, unsigned nof_re_uci, unsigned nof_re_harq_ack)
+{
+  using namespace units::literals;
+
+  if (nof_csi_part1_bits == 0_bits) {
+    return 0;
+  }
+
+  return nof_re_uci - nof_re_harq_ack;
+}
+
 ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& config)
 {
   ulsch_information result = {};
@@ -128,7 +162,8 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   // Count the number of resource elements that can potentially carry UCI after the first burst of OFDM symbols that
   // contain DM-RS.
   unsigned nof_re_uci_l0 = 0;
-  for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.nof_symbols;
+  for (unsigned i_symbol     = config.dmrs_symbol_mask.find_lowest(),
+                i_symbol_end = config.start_symbol_index + config.nof_symbols;
        i_symbol != i_symbol_end;
        ++i_symbol) {
     // Skip if the OFDM symbol contains DM-RS.
@@ -186,9 +221,23 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
     nof_harq_ack_rvd_re = result.nof_harq_ack_re;
   }
 
+  // If two or less HARQ-ACK bits are multiplexed, compute the CSI Part 1 RE using the reserved HARQ-ACK resources.
+  unsigned nof_harq_ack_re_csi = (config.nof_harq_ack_bits < 2_bits) ? nof_harq_ack_rvd_re : result.nof_harq_ack_re;
+
   // Calculate the number of RE occupied by CSI-part1.
-  srsgnb_assert(config.nof_csi_part1_bits == 0_bits, "CSI Part 1 is not currently implemented.");
-  result.nof_csi_part2_re = 0;
+  if (config.tbs > 0_bits) {
+    // In case of PUSCH multiplexing SCH.
+    result.nof_csi_part1_re = calculate_nof_re_csi_part1(config.nof_csi_part1_bits,
+                                                         config.beta_offset_csi_part1,
+                                                         nof_re_uci,
+                                                         nof_harq_ack_re_csi,
+                                                         result.sch.nof_cb * result.sch.nof_bits_per_cb.value(),
+                                                         config.alpha_scaling);
+  } else {
+    // In case of PUSCH NOT multiplexing SCH.
+    result.nof_csi_part1_re =
+        calculate_nof_re_csi_part1_without_sch(config.nof_csi_part1_bits, nof_re_uci, nof_harq_ack_re_csi);
+  }
 
   // Calculate the number of RE occupied by CSI-part2.
   srsgnb_assert(config.nof_csi_part2_bits == 0_bits, "CSI Part 2 is not currently implemented.");

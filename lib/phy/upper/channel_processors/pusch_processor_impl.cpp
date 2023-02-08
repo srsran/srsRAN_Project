@@ -39,8 +39,9 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
     return false;
   }
 
-  // CSI-Part1 multiplexing is not supported.
-  if (pdu.uci.nof_csi_part1 != 0) {
+  // Currently, each UCI field size cannot exceed 11 bit.
+  static constexpr unsigned max_uci_len = 11;
+  if ((pdu.uci.nof_harq_ack > max_uci_len) || (pdu.uci.nof_csi_part1 > max_uci_len)) {
     return false;
   }
 

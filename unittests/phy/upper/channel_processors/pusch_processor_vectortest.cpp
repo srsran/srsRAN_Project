@@ -11,6 +11,7 @@
 #include "../rx_softbuffer_test_doubles.h"
 #include "pusch_processor_test_data.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
@@ -21,7 +22,7 @@ namespace srsgnb {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
-  fmt::print(os, "rg_nof_rb={} rg_nof_symb={}", test_case.context.rg_nof_rb, test_case.context.rg_nof_symb);
+  fmt::print(os, "{:s}", test_case.context.config);
   return os;
 }
 
@@ -172,6 +173,17 @@ TEST_P(PuschProcessorFixture, PuschProcessorVectortest)
   } else {
     ASSERT_TRUE(result.harq_ack.payload.empty());
     ASSERT_EQ(result.harq_ack.status, uci_status::unknown);
+  }
+
+  // Verify CSI Part 1 result.
+  if (config.uci.nof_csi_part1 > 0) {
+    std::vector<uint8_t> expected_csi_part1 = test_case.csi_part1.read();
+
+    ASSERT_EQ(span<const uint8_t>(result.csi_part1.payload), span<const uint8_t>(expected_csi_part1));
+    ASSERT_EQ(result.csi_part1.status, uci_status::valid);
+  } else {
+    ASSERT_TRUE(result.csi_part1.payload.empty());
+    ASSERT_EQ(result.csi_part1.status, uci_status::unknown);
   }
 }
 
