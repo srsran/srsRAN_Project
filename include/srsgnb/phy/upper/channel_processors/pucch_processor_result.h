@@ -23,6 +23,8 @@ struct pucch_processor_result {
   channel_state_information csi;
   /// UCI message.
   pucch_uci_message message;
+  /// Detection metric normalized with respect to the detection threshold (if applicable).
+  optional<float> detection_metric;
 };
 
 } // namespace srsgnb

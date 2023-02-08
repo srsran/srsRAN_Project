@@ -78,8 +78,9 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 
   // Prepare result.
   pucch_processor_result result;
-  result.csi     = estimates.get_channel_state_information();
-  result.message = detection_result.uci_message;
+  result.csi              = estimates.get_channel_state_information();
+  result.message          = detection_result.uci_message;
+  result.detection_metric = detection_result.detection_metric;
 
   return result;
 }

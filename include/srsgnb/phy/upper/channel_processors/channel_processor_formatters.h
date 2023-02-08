@@ -683,6 +683,10 @@ struct formatter<srsgnb::pucch_processor_result> {
       }
     }
 
+    if (result.detection_metric.has_value()) {
+      helper.format_if_verbose(ctx, "detection_metric={:.1f}", result.detection_metric.value());
+    }
+
     // Channel State Information.
     helper.format_if_verbose(ctx, "epre={:+.1f}dB", result.csi.epre_dB);
     helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", result.csi.rsrp_dB);
