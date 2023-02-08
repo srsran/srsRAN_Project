@@ -896,9 +896,9 @@ struct formatter<srsgnb::pusch_processor_result> {
     }
 
     // Channel State Information.
-    helper.format_if_verbose(ctx, "epre={:+.1f}dB", result.csi.epre_dB);
+    helper.format_always(ctx, "epre={:+.1f}dB", result.csi.epre_dB);
     helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", result.csi.rsrp_dB);
-    helper.format_if_verbose(ctx, "sinr={:+.1f}dB", result.csi.sinr_dB);
+    helper.format_always(ctx, "sinr={:+.1f}dB", result.csi.sinr_dB);
     helper.format_if_verbose(ctx, "t_align={:.1f}us", result.csi.time_alignment.to_seconds() * 1e6);
 
     return ctx.out();
