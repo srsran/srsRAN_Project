@@ -284,9 +284,12 @@ protected:
     const auto* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
                                   bench->sched_res->dl.dl_pdcchs.end(),
                                   [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
+
+    // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
+    // PDSCH-to-HARQ-timing-indicator provide the index in {1, 2, 3, 4, 5, 6, 7, 8} starting from 0 .. 7.
     return it == bench->sched_res->dl.dl_pdcchs.end()
                ? optional<slot_point>{nullopt}
-               : current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator;
+               : current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;
   }
 
   uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
