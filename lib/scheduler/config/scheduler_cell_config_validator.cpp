@@ -43,6 +43,7 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
                               msg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD,
                               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
   VERIFY(prach_cfg.format.is_long_preamble(), "Short PRACH preamble formats not supported");
+  VERIFY(prach_cfg.duration > 0, "Invalid PRACH duration {}", prach_cfg.duration);
 
   const prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
 
@@ -50,6 +51,13 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   const unsigned prach_nof_prbs =
       prach_frequency_mapping_get(info.scs, msg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
   for (unsigned i = 0; i != nof_td_occasions; ++i) {
+    unsigned          start_symbol = prach_cfg.starting_symbol + i * prach_cfg.duration;
+    ofdm_symbol_range symbols      = {start_symbol, start_symbol + prach_cfg.duration};
+    ofdm_symbol_range valid_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
+    VERIFY(valid_symbol_range.contains(symbols),
+           "PRACH config not supported. PRACH symbols {} fall outside slot boundary",
+           symbols);
+
     for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
       uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
       prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};

@@ -30,7 +30,7 @@ template <typename... Args>
 template <typename... Args>
 [[gnu::noinline, noreturn]] inline void report_fatal_error(const char* reason_fmt, Args&&... args) noexcept
 {
-  srsgnb_terminate("srsGNB FATAL ERROR: {}", fmt::format(reason_fmt, std::forward<Args>(args)...));
+  srsgnb_terminate("srsGNB FATAL ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
 }
 
 /// \brief Verifies if condition is true. If not, report a fatal error and close application.

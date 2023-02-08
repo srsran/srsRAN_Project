@@ -241,7 +241,7 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   cfg.init_ul_bwp.rach_cfg_common->msg1_scs                                      = subcarrier_spacing::invalid;
   cfg.init_ul_bwp.rach_cfg_common->restricted_set                                = restricted_set_config::UNRESTRICTED;
   cfg.init_ul_bwp.rach_cfg_common->msg3_transform_precoder                       = false;
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 1;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm                     = 1;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 3;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
