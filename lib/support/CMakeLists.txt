@@ -19,7 +19,8 @@ set(SOURCES
         timers.cpp
         bit_encoding.cpp
         config_json.cpp
-        config_yaml.cpp)
+        config_yaml.cpp
+        signal_handler.cpp)
 
 add_library(srsgnb_support STATIC ${SOURCES})
 target_link_libraries(srsgnb_support srsgnb_io_broker ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY} srslog)

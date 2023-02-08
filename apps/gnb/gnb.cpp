@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/support/build_info/build_info.h"
+#include "srsgnb/support/signal_handler.h"
 #include "srsgnb/support/tsan_options.h"
 
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
@@ -228,9 +229,8 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   return phy_config;
 }
 
-static void signal_handler(int sig)
+static void local_signal_handler()
 {
-  fmt::print("Received signal {}\n", sig);
   is_running = false;
 }
 
@@ -570,11 +570,7 @@ int main(int argc, char** argv)
   gnb_logger.info("DU-High created successfully");
 
   // Set signal handler.
-  ::signal(SIGINT, signal_handler);
-  ::signal(SIGTERM, signal_handler);
-  ::signal(SIGHUP, signal_handler);
-  ::signal(SIGQUIT, signal_handler);
-  ::signal(SIGKILL, signal_handler);
+  register_signal_handler(local_signal_handler);
 
   // attach F1C adapter to DU and CU-CP
   f1c_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1c_message_handler(srsgnb::srs_cu_cp::uint_to_du_index(0)));
