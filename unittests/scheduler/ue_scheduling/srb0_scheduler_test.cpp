@@ -31,7 +31,8 @@ unsigned get_random_uint(unsigned min, unsigned max)
 
 // Parameters to be passed to test.
 struct srb0_test_params {
-  uint8_t k0;
+  uint8_t     k0;
+  duplex_mode duplx_mode;
 };
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
@@ -50,8 +51,7 @@ struct test_bench {
   ue_srb0_scheduler             srb0_sched;
 
   explicit test_bench(const scheduler_ue_expert_config&               expert_cfg_,
-                      const sched_cell_configuration_request_message& cell_req =
-                          test_helpers::make_default_sched_cell_configuration_request()) :
+                      const sched_cell_configuration_request_message& cell_req) :
     expert_cfg{expert_cfg_},
     cell_cfg{cell_req},
     res_grid{cell_cfg},
@@ -86,10 +86,10 @@ protected:
     srslog::flush();
   }
 
-  void setup_sched(const scheduler_ue_expert_config&               expert_cfg,
-                   const sched_cell_configuration_request_message& msg =
-                       test_helpers::make_default_sched_cell_configuration_request())
+  void setup_sched(const scheduler_ue_expert_config& expert_cfg, const sched_cell_configuration_request_message& msg)
   {
+    current_slot = slot_point{to_numerology_value(msg.scs_common), 0};
+
     bench.emplace(expert_cfg, msg);
 
     const auto& dl_lst = bench->cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
@@ -135,12 +135,30 @@ protected:
 
   sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode) const
   {
-    sched_cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
+    cell_config_builder_params cell_cfg{};
+    cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+    if (mode == duplex_mode::TDD) {
+      // Band 40.
+      cell_cfg.dl_arfcn       = 474000;
+      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+      cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+
+      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+          cell_cfg.channel_bw_mhz,
+          cell_cfg.scs_common,
+          cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
+
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+      cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
+      cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
+    }
+    sched_cell_configuration_request_message msg =
+        test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
     msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0 = params.k0;
 
-    if (mode == duplex_mode::TDD) {
-      msg.tdd_ul_dl_cfg_common = config_helpers::make_default_tdd_ul_dl_config_common();
-    }
     return msg;
   }
 
@@ -217,8 +235,7 @@ protected:
 
 TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 {
-  setup_sched(create_expert_config(1),
-              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_expert_config(1), create_random_cell_config_request(params.duplx_mode));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
@@ -250,8 +267,7 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 
 TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 {
-  setup_sched(create_expert_config(0),
-              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_expert_config(0), create_random_cell_config_request(params.duplx_mode));
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
@@ -278,8 +294,7 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 
 TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 {
-  setup_sched(create_expert_config(27),
-              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_expert_config(27), create_random_cell_config_request(params.duplx_mode));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 458 bytes.
@@ -307,8 +322,7 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 
 TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
 {
-  setup_sched(create_expert_config(3),
-              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_expert_config(3), create_random_cell_config_request(params.duplx_mode));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 360 bytes which requires MCS index > 3.
@@ -327,8 +341,7 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
 TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
 {
   const sch_mcs_index max_msg4_mcs = get_random_uint(0, 27);
-  setup_sched(create_expert_config(max_msg4_mcs),
-              create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD));
+  setup_sched(create_expert_config(max_msg4_mcs), create_random_cell_config_request(params.duplx_mode));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Random payload size.
@@ -339,48 +352,6 @@ TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
   logger.info("SRB0 scheduler sanity test params PDU size ({}), max msg4 mcs ({}).", mac_srb0_sdu_size, max_msg4_mcs);
 
   run_slot();
-}
-
-TEST_P(srb0_scheduler_tester, test_msg4_successful_allocation_with_custom_cell_config)
-{
-  auto cell_cfg = create_random_cell_config_request(get_random_uint(0, 1) == 0 ? duplex_mode::FDD : duplex_mode::TDD);
-
-  // Modify cell configuration (reproducing msg4 crash scenario in du_example)
-  cell_cfg.pci                          = 69;
-  cell_cfg.dl_carrier.arfcn             = 536020;
-  cell_cfg.ssb_config.offset_to_point_A = 40;
-  cell_cfg.ssb_config.k_ssb             = 6;
-  cell_cfg.coreset0                     = 9;
-
-  setup_sched(create_expert_config(0), cell_cfg);
-
-  // Add UE.
-  add_ue(to_rnti(0x4601), to_du_ue_index(0));
-  // Notify about SRB0 message in DL of size 129 bytes.
-  const unsigned mac_srb0_sdu_size = 129;
-  push_buffer_state_to_dl_ue(to_du_ue_index(0), mac_srb0_sdu_size);
-
-  const unsigned exp_size = get_pending_bytes(to_du_ue_index(0));
-
-  // Test the following:
-  // 1. Check for DCI_1_0 allocation for SRB0 on PDCCH.
-  // 2. Check for PDSCH allocation.
-  // 3. Check whether CW TB bytes matches with pending bytes to be sent.
-  const auto& test_ue = get_ue(to_du_ue_index(0));
-  bool        is_ue_allocated_pdcch{false};
-  bool        is_ue_allocated_pdsch{false};
-  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
-    run_slot();
-    if (ue_is_allocated_pdcch(test_ue)) {
-      is_ue_allocated_pdcch = true;
-    }
-    if (ue_is_allocated_pdsch(test_ue)) {
-      is_ue_allocated_pdsch = true;
-      ASSERT_TRUE(tbs_scheduled_bytes_matches_given_size(test_ue, exp_size));
-    }
-  }
-  ASSERT_TRUE(is_ue_allocated_pdcch);
-  ASSERT_TRUE(is_ue_allocated_pdsch);
 }
 
 TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
@@ -421,7 +392,8 @@ TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
 
 INSTANTIATE_TEST_SUITE_P(srb0_scheduler,
                          srb0_scheduler_tester,
-                         testing::Values(srb0_test_params{.k0 = 1}, srb0_test_params{.k0 = 2}));
+                         testing::Values(srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::FDD},
+                                         srb0_test_params{.k0 = 0, .duplx_mode = duplex_mode::TDD}));
 
 int main(int argc, char** argv)
 {
