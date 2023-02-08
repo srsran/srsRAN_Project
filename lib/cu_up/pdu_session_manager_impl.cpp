@@ -148,7 +148,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     up_transport_layer_info f1u_ul_tunnel_addr;
     f1u_ul_tunnel_addr.tp_address.from_string(net_config.f1u_bind_addr);
     f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(f1u_ul_teid);
-    f1u_ul_tunnel_addr          = drb_result.gtp_tunnel;
+    drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
 
     srsgnb_assert(drb_to_setup.qos_flow_info_to_be_setup.size() <= 1,
                   "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS "
