@@ -109,7 +109,9 @@ TEST_P(PUCCHDetectFixture, Format1Test)
 
   csi.set_noise_variance(test_data.noise_var, 0);
 
-  pucch_uci_message msg = detector_test->detect(grid, csi, test_data.cfg);
+  pucch_detector::pucch_detection_result res = detector_test->detect(grid, csi, test_data.cfg);
+
+  pucch_uci_message& msg = res.uci_message;
 
   if (test_data.cfg.nof_harq_ack == 0) {
     if (test_data.sr_bit.empty()) {
@@ -156,7 +158,8 @@ TEST_P(PUCCHDetectFixture, Format1Variance0Test)
 
   csi.set_noise_variance(0, 0);
 
-  pucch_uci_message msg = detector_test->detect(grid, csi, test_data.cfg);
+  pucch_detector::pucch_detection_result res = detector_test->detect(grid, csi, test_data.cfg);
+  pucch_uci_message&                     msg = res.uci_message;
   ASSERT_EQ(msg.get_status(), uci_status::invalid)
       << "When the signal is ill-conditioned, the detection status should be invalid.";
 }

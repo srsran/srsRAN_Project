@@ -54,9 +54,9 @@ public:
   }
 
   // See interface for documentation.
-  pucch_uci_message detect(const resource_grid_reader&  grid,
-                           const channel_estimate&      estimates,
-                           const format1_configuration& config) override;
+  pucch_detection_result detect(const resource_grid_reader&  grid,
+                                const channel_estimate&      estimates,
+                                const format1_configuration& config) override;
 
 private:
   /// \brief Extracts PUCCH data and channel coefficients.

@@ -80,6 +80,14 @@ public:
     unsigned nof_harq_ack;
   };
 
+  /// Gathers the data obtained from detecting a PUCCH transmission.
+  struct pucch_detection_result {
+    /// UCI message conveyed by the PUCCH transmission.
+    pucch_uci_message uci_message;
+    /// Detection metric normalized with respect to the detection threshold.
+    float detection_metric;
+  };
+
   /// Default destructor.
   virtual ~pucch_detector() = default;
 
@@ -100,7 +108,7 @@ public:
   /// \param[in]  estimates Estimated channel.
   /// \param[in]  config    PUCCH Format 1 configuration parameters.
   /// \return The detected PUCCH message.
-  virtual pucch_uci_message
+  virtual pucch_detection_result
   detect(const resource_grid_reader& grid, const channel_estimate& estimates, const format1_configuration& config) = 0;
 };
 } // namespace srsgnb

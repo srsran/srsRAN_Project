@@ -194,9 +194,9 @@ static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_
   return detection_metric / std::sqrt(eq_noise_var);
 }
 
-pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
-                                              const channel_estimate&      estimates,
-                                              const format1_configuration& config)
+pucch_detector::pucch_detection_result pucch_detector_impl::detect(const resource_grid_reader&  grid,
+                                                                   const channel_estimate&      estimates,
+                                                                   const format1_configuration& config)
 {
   validate_config(config);
 
@@ -235,10 +235,10 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   // This format doesn't support CSI reports.
   pucch_uci_message::configuration pucch_uci_message_config = {};
   pucch_uci_message_config.nof_harq_ack                     = config.nof_harq_ack;
-  pucch_uci_message output(pucch_uci_message_config);
+  pucch_detection_result output                             = {pucch_uci_message(pucch_uci_message_config), 0};
 
   // Select view of the payload.
-  span<uint8_t> bits = output.get_harq_ack_bits();
+  span<uint8_t> bits = output.uci_message.get_harq_ack_bits();
 
   // Recall that, when nof_harq_ack == 0, we still need to look for the positive SR indicator (i.e., a single, 0-valued
   // transmitted bit).
@@ -257,25 +257,26 @@ pucch_uci_message pucch_detector_impl::detect(const resource_grid_reader&  grid,
   // is the tail distribution function of the standard normal distribution.
   constexpr float THRESHOLD = 2.33;
   bool            is_msg_ok = (detection_metric > THRESHOLD);
+  output.detection_metric   = detection_metric / THRESHOLD;
 
   if (!is_msg_ok) {
-    output.set_status(uci_status::invalid);
+    output.uci_message.set_status(uci_status::invalid);
     return output;
   }
 
   if (config.nof_harq_ack > 0) {
-    output.set_status(uci_status::valid);
+    output.uci_message.set_status(uci_status::valid);
     return output;
   }
 
   // If we are here, there should only be a positive SR bit and it should be 0, since nothing is sent for negative
   // SR and no ACK.
   if (bits[0] == 0U) {
-    output.set_status(uci_status::valid);
+    output.uci_message.set_status(uci_status::valid);
     return output;
   }
 
-  output.set_status(uci_status::unknown);
+  output.uci_message.set_status(uci_status::unknown);
   return output;
 }
 

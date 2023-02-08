@@ -74,12 +74,12 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   detector_config.nof_harq_ack         = config.nof_harq_ack;
 
   // Actual message detection.
-  pucch_uci_message message = detector->detect(grid, estimates, detector_config);
+  pucch_detector::pucch_detection_result detection_result = detector->detect(grid, estimates, detector_config);
 
   // Prepare result.
   pucch_processor_result result;
   result.csi     = estimates.get_channel_state_information();
-  result.message = message;
+  result.message = detection_result.uci_message;
 
   return result;
 }
