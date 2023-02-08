@@ -69,7 +69,7 @@ du_high::du_high(const du_high_configuration& config_) :
                               *cfg.du_mng_executor,
                               *cfg.phy_adapter,
                               cfg.sched_cfg,
-                              *metrics_notifier});
+                              cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});
   f1ap = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ue_executors);
   du_manager =
       create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells, cfg.qos},
