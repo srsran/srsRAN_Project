@@ -563,6 +563,7 @@ int main(int argc, char** argv)
   du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
   du_hi_cfg.phy_adapter                   = &phy;
   du_hi_cfg.cells                         = du_cfg;
+  du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
   du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
   du_hi_cfg.qos                           = du_qos_cfg;
 
