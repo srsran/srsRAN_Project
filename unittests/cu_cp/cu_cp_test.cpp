@@ -68,6 +68,37 @@ protected:
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
+/* Initial CU-CP routine manager with connected CU-UPs                              */
+//////////////////////////////////////////////////////////////////////////////////////
+
+/// Test the initail cu-cp routine
+TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
+{
+  // create CU-CP config
+  cu_cp_configuration cfg;
+  cfg.cu_cp_executor = &ctrl_worker;
+  cfg.f1c_notifier   = &f1c_pdu_notifier;
+  cfg.e1_notifier    = &e1_pdu_notifier;
+  cfg.ngc_notifier   = &ngc_amf_notifier;
+
+  cfg.ngc_config.ran_node_name = "srsgnb01";
+  cfg.ngc_config.plmn          = "00101";
+  cfg.ngc_config.tac           = 7;
+
+  // create and start DUT
+  auto dummy_cu_cp = std::make_unique<cu_cp>(std::move(cfg));
+  dummy_cu_cp->handle_new_cu_up_connection();
+
+  dummy_cu_cp->start();
+
+  // check that CU-UP has been added
+  ASSERT_EQ(dummy_cu_cp->get_nof_cu_ups(), 1U);
+  ASSERT_EQ(e1_pdu_notifier.last_e1_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1_pdu_notifier.last_e1_msg.pdu.init_msg().value.type().value,
+            asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
 /* DU connection handling                                                           */
 //////////////////////////////////////////////////////////////////////////////////////
 
