@@ -328,8 +328,6 @@ static std::unique_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_config.dec_nof_iterations    = config.ldpc_decoder_iterations;
   pusch_config.dec_enable_early_stop = config.ldpc_decoder_early_stop;
 
-  report_fatal_error_if_not(pusch_config.dec_nof_iterations != 0, "Maximum number of LDPC iterations cannot be 0.");
-
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols   = 14;
   pusch_config.ch_estimate_dimensions.nof_tx_layers = 1;

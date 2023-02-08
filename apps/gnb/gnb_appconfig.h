@@ -214,7 +214,7 @@ struct log_appconfig {
   std::string phy_rx_symbols_filename = ""; // Set to a valid file path to print the received symbols.
 };
 
-/// Expert Physical layer configuration.
+/// Expert physical layer configuration.
 struct expert_phy_appconfig {
   /// Number of PUSCH LDPC decoder iterations.
   unsigned pusch_decoder_max_iterations = 6;
