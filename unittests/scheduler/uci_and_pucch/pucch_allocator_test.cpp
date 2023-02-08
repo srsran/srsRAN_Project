@@ -61,9 +61,9 @@ static expected_output_params_f1 make_expected_output_params_sr_only()
 {
   return expected_output_params_f1{.format               = pucch_format::FORMAT_1,
                                    .prbs                 = prb_interval{0, 1},
-                                   .second_hop_prbs      = prb_interval{NOF_RBS - 1, NOF_RBS},
+                                   .second_hop_prbs      = prb_interval{0, 0},
                                    .symbols              = ofdm_symbol_range{0, 14},
-                                   .intra_slot_freq_hop  = true,
+                                   .intra_slot_freq_hop  = false,
                                    .initial_cyclic_shift = 0,
                                    .sr_bits              = sr_nof_bits::one,
                                    .harq_ack_nof_bits    = 0,

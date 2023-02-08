@@ -29,7 +29,7 @@ public:
     pucch_expected_f1.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
     pucch_expected_f1.resources.prbs            = prb_interval{NOF_RBS - 1, NOF_RBS};
-    pucch_expected_f1.resources.second_hop_prbs = prb_interval{0, 1};
+    pucch_expected_f1.resources.second_hop_prbs = prb_interval{0, 0};
     pucch_expected_f1.resources.symbols         = ofdm_symbol_range{0, 14};
 
     pucch_expected_f1.format_1.initial_cyclic_shift = 0;

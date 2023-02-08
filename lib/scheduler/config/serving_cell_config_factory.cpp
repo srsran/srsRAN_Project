@@ -363,7 +363,7 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_resource res_basic{.res_id                 = 0,
                            .starting_prb           = nof_rbs - 1,
                            .second_hop_prb         = 0,
-                           .intraslot_freq_hopping = true,
+                           .intraslot_freq_hopping = false,
                            .format                 = pucch_format::FORMAT_1};
   res_basic.format_1.initial_cyclic_shift = 0;
   res_basic.format_1.nof_symbols          = 14;
