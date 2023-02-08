@@ -31,6 +31,7 @@
 #include "srsgnb/ran/uci/uci_configuration.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/config/dmrs.h"
+#include "srsgnb/scheduler/harq_id.h"
 #include "srsgnb/scheduler/scheduler_pucch_format.h"
 #include <cstddef>
 
@@ -120,7 +121,7 @@ struct pdsch_codeword {
   /// Transport block size, in bytes (see TS38.214 Section 5.1.3.2).
   uint32_t tb_size_bytes;
   /// Whether this is the first Tx or retx of the HARQ codeword.
-  unsigned is_new_data;
+  bool new_data;
 };
 
 /// \brief Information relative to a PDSCH grant in a given slot.
@@ -139,7 +140,7 @@ struct pdsch_information {
   search_space_set_type ss_set_type;
   dci_dl_format         dci_fmt;
   /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.
-  uint8_t harq_id;
+  harq_id_t harq_id;
 };
 
 struct dl_msg_lc_info {

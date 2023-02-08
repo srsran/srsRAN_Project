@@ -413,7 +413,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
       const auto* grant = find_ue_pdsch(test_ue);
       if (is_bsr_zero_sent[idx] && pdsch_scheduled_slot_in_future[idx].has_value() &&
           current_slot > pdsch_scheduled_slot_in_future[idx].value()) {
-        ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].is_new_data)
+        ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].new_data)
             << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
         continue;
       }
@@ -427,7 +427,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
         push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
       }
 
-      if (grant != nullptr && grant->pdsch_cfg.codewords[0].is_new_data) {
+      if (grant != nullptr && grant->pdsch_cfg.codewords[0].new_data) {
         if (tbs_sched_bytes > test_ue.dl_bsr_list.back().bs) {
           // Accounting for MAC headers.
           test_ue.dl_bsr_list.back().bs = 0;
