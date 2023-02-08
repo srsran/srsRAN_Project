@@ -73,3 +73,7 @@ add_test(units_test units_test)
 add_executable(backtrace_test backtrace_test.cpp)
 target_link_libraries(backtrace_test srsgnb_support)
 add_backward(backtrace_test)
+
+add_executable(metrics_plotter_stdout_test metrics_plotter_stdout_test.cpp)
+target_link_libraries(metrics_plotter_stdout_test srsgnb_support)
+add_test(metrics_plotter_stdout_test metrics_plotter_stdout_test)

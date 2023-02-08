@@ -10,6 +10,7 @@ add_subdirectory(build_info)
 add_subdirectory(io_broker)
 
 set(SOURCES
+        metrics_plotter_stdout.cpp
         backtrace.cpp
         math_utils.cpp
         unique_thread.cpp
