@@ -364,9 +364,16 @@ int main(int argc, char** argv)
   // Create IO broker.
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll);
 
-  // Create NGAP adapter, NGC and connect them with one another.
+  // Create NGAP adapter.
   std::unique_ptr<srsgnb::srs_cu_cp::ngap_network_adapter> ngap_adapter =
-      std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker, ngap_nw_config);
+      std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker);
+
+  // Create SCTP network adapter.
+  std::unique_ptr<sctp_network_gateway> sctp_gateway =
+      create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
+
+  // Connect NGAP adapter to SCTP network gateway.
+  ngap_adapter->connect_gateway(sctp_gateway.get(), sctp_gateway.get());
 
   // Create CU-UP config.
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
@@ -559,6 +566,10 @@ int main(int argc, char** argv)
   gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();
   gnb_logger.info("Lower PHY stopped successfully");
+
+  gnb_logger.info("Closing network connections...");
+  ngap_adapter->disconnect_gateway();
+  gnb_logger.info("Network connections closed successfully");
 
   gnb_logger.info("Stopping executors...");
   workers.stop();
