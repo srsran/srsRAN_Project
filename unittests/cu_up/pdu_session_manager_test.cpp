@@ -58,15 +58,50 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
 
   // prepare request
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item;
-  pdu_session_setup_item.pdu_session_id = uint_to_pdu_session_id(1);
+  pdu_session_setup_item.pdu_session_id                              = uint_to_pdu_session_id(1);
+  pdu_session_setup_item.pdu_session_type                            = "ipv4";
+  pdu_session_setup_item.snssai.sst                                  = 1;
+  pdu_session_setup_item.snssai.sd                                   = 10203;
+  pdu_session_setup_item.security_ind.integrity_protection_ind       = "not-needed";
+  pdu_session_setup_item.security_ind.confidentiality_protection_ind = "not-needed";
+  pdu_session_setup_item.pdu_session_res_dl_ambr                     = 330000000;
   pdu_session_setup_item.ng_ul_up_tnl_info.tp_address.from_bitstring("01111111000000000000000000000001");
   pdu_session_setup_item.ng_ul_up_tnl_info.gtp_teid = int_to_gtp_teid(0x12345678);
+  pdu_session_setup_item.ng_ul_up_tnl_info          = {transport_layer_address{"0.0.0.0"}, int_to_gtp_teid(0)};
+
+  e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
+  drb_to_setup_item.drb_id                      = uint_to_drb_id(1);
+  drb_to_setup_item.sdap_cfg.default_drb        = true;
+  drb_to_setup_item.sdap_cfg.sdap_hdr_ul        = "present";
+  drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = "present";
+  drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
+  drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
+  drb_to_setup_item.pdcp_cfg.rlc_mod            = srsgnb::rlc_mode::am;
+  drb_to_setup_item.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms100;
+  drb_to_setup_item.pdcp_cfg.discard_timer      = pdcp_discard_timer::infinity;
+
+  e1ap_cell_group_info_item cell_group_info_item;
+  cell_group_info_item.cell_group_id = 0;
+  drb_to_setup_item.cell_group_info.push_back(cell_group_info_item);
+
+  e1ap_qos_flow_qos_param_item qos_flow_info;
+  qos_flow_info.qos_flow_id = uint_to_qos_flow_id(8);
+  e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
+  non_dyn_5qi.five_qi                                                                 = 8;
+  qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi             = non_dyn_5qi;
+  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level      = 1;
+  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap = "shall-not-trigger-pre-emption";
+  qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
+  drb_to_setup_item.qos_flow_info_to_be_setup.emplace(qos_flow_info.qos_flow_id, qos_flow_info);
+
+  pdu_session_setup_item.drb_to_setup_list_ng_ran.emplace(drb_to_setup_item.drb_id, drb_to_setup_item);
 
   // attempt to add session
   pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
+  ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 257);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
   // attempt to remove non-existing session
