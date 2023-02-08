@@ -294,8 +294,12 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config = {};
       tx_ch_config.freq.center_frequency_hz     = cell_tx_freq_Hz;
-      tx_ch_config.freq.lo_frequency_hz         = 0.0;
-      tx_ch_config.gain_dB                      = config.rf_driver_cfg.tx_gain_dB;
+      if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
+        tx_ch_config.freq.lo_frequency_hz = cell_tx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6;
+      } else {
+        tx_ch_config.freq.lo_frequency_hz = 0.0f;
+      }
+      tx_ch_config.gain_dB = config.rf_driver_cfg.tx_gain_dB;
 
       // Add the tx ports.
       if (config.rf_driver_cfg.device_driver == "zmq") {
@@ -307,8 +311,12 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
 
       radio_configuration::channel rx_ch_config = {};
       rx_ch_config.freq.center_frequency_hz     = cell_rx_freq_Hz;
-      rx_ch_config.freq.lo_frequency_hz         = 0.0;
-      rx_ch_config.gain_dB                      = config.rf_driver_cfg.rx_gain_dB;
+      if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
+        rx_ch_config.freq.lo_frequency_hz = cell_rx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6;
+      } else {
+        rx_ch_config.freq.lo_frequency_hz = 0.0f;
+      }
+      rx_ch_config.gain_dB = config.rf_driver_cfg.rx_gain_dB;
 
       if (config.rf_driver_cfg.device_driver == "zmq") {
         srsgnb_assert(sector_id * nof_ports + port_id < zmq_rx_addr.size(),

@@ -44,11 +44,6 @@ static bool validate_lo_freq(const radio_configuration::lo_frequency& lo_freq, b
     return false;
   }
 
-  if (std::isnormal(lo_freq.lo_frequency_hz)) {
-    fmt::print("The custom LO frequency is not currently supported.\n");
-    return false;
-  }
-
   return true;
 }
 

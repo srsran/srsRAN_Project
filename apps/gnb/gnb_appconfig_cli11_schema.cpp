@@ -66,6 +66,7 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
       ->capture_default_str();
   app.add_option("--tx_gain", rf_driver_params.tx_gain_dB, "Transmit gain in decibels.")->capture_default_str();
   app.add_option("--rx_gain", rf_driver_params.rx_gain_dB, "Receive gain in decibels.")->capture_default_str();
+  app.add_option("--lo_offset", rf_driver_params.lo_offset_MHz, "LO frequency offset in MHz.")->capture_default_str();
   app.add_option("--clock", rf_driver_params.clock_source, "Clock source.")->capture_default_str();
   app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source.")->capture_default_str();
   app.add_option("--otw_format", rf_driver_params.otw_format, "Over-the-wire format.")->capture_default_str();
