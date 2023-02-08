@@ -165,6 +165,7 @@ void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   // See TS38.213, 10.1. - Type1-PDCCH CSS set for CRC scrambled by a TC-RNTI on the PCell.
   pdsch.ss_set_type = search_space_set_type::type1;
   pdsch.dci_fmt     = dci_dl_format::f1_0;
+  pdsch.harq_id     = dci_cfg.harq_process_number;
 
   // One Codeword.
   pdsch_codeword& cw             = pdsch.codewords.emplace_back();
@@ -215,6 +216,7 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                           ? search_space_set_type::ue_specific
                           : search_space_set_type::type3;
   pdsch.dci_fmt     = dci_dl_format::f1_0;
+  pdsch.harq_id     = dci_cfg.harq_process_number;
   // See TS 38.211, 7.3.1.1. - Scrambling.
   const bwp_downlink_dedicated* bwp_dl_ded = ue_cell_cfg.find_dl_bwp_ded(active_bwp_id);
   pdsch.n_id                               = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_cfg.type);
