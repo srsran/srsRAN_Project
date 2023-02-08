@@ -185,7 +185,7 @@ TEST_F(mac_dl_sch_assembler_tester, msg4_correctly_assembled)
   dl_msg_tb_info tb_info;
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{lcid_dl_sch_t::UE_CON_RES_ID, conres_ce_size});
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB0, sdu_size});
-  span<const uint8_t> result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
+  span<const uint8_t> result = this->dl_sch_enc.assemble_newtx_pdu(this->req.crnti, to_harq_id(0), 0, tb_info, tb_size);
 
   byte_buffer expected;
   bit_encoder enc(expected);
@@ -241,7 +241,7 @@ TEST_F(mac_dl_sch_assembler_tester, pack_multiple_sdus_of_same_lcid)
   dl_msg_tb_info tb_info;
   tb_info.lc_chs_to_sched.push_back(dl_msg_lc_info{LCID_SRB1, lcid_sched_bytes});
 
-  span<const uint8_t> result = this->dl_sch_enc.assemble_pdu(this->req.crnti, tb_info, tb_size);
+  span<const uint8_t> result = this->dl_sch_enc.assemble_newtx_pdu(this->req.crnti, to_harq_id(0), 0, tb_info, tb_size);
   ASSERT_EQ(result.size(), tb_size);
   ASSERT_EQ(this->dl_bearers[1].last_sdus.size(), nof_sdus);
   for (unsigned i = 0; i != nof_sdus; ++i) {

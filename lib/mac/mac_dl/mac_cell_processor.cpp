@@ -298,10 +298,16 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (unsigned tb_idx = 0; tb_idx != grant.tb_list.size(); ++tb_idx) {
-      const dl_msg_tb_info& tb_info = grant.tb_list[tb_idx];
-      const pdsch_codeword& cw      = grant.pdsch_cfg.codewords[tb_idx];
-      data_res.ue_pdus.emplace_back(tb_idx,
-                                    dlsch_assembler.assemble_pdu(grant.pdsch_cfg.rnti, tb_info, cw.tb_size_bytes));
+      const pdsch_codeword& cw = grant.pdsch_cfg.codewords[tb_idx];
+      span<const uint8_t>   pdu;
+      if (cw.is_new_data) {
+        const dl_msg_tb_info& tb_info = grant.tb_list[tb_idx];
+        pdu =
+            dlsch_assembler.assemble_newtx_pdu(grant.pdsch_cfg.rnti, to_harq_id(0), tb_idx, tb_info, cw.tb_size_bytes);
+      } else {
+        pdu = dlsch_assembler.assemble_retx_pdu(grant.pdsch_cfg.rnti, to_harq_id(0), tb_idx);
+      }
+      data_res.ue_pdus.emplace_back(tb_idx, pdu);
     }
   }
 }

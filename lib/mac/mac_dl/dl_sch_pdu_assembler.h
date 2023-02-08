@@ -13,6 +13,7 @@
 #include "mac_dl_ue_manager.h"
 #include "srsgnb/mac/lcid_dl_sch.h"
 #include "srsgnb/mac/mac_pdu_format.h"
+#include "srsgnb/scheduler/harq_id.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "srsgnb/support/memory_pool/ring_buffer_pool.h"
 
@@ -63,11 +64,24 @@ public:
 
   /// \brief Encodes a MAC DL-SCH PDU with the provided scheduler information.
   /// \param rnti RNTI for which the MAC PDU was allocated.
+  /// \param h_id HARQ-Id of the HARQ process used for this PDU transmission.
+  /// \param tb_idx Transport block index of the HARQ process used for this PDU transmission.
   /// \param tb_info The information relative to the transport block allocated by the scheduler. This class contains
   /// a list of LCIDs of the subPDUs to allocated together with how many bytes each subPDU should take.
   /// \param tb_size_bytes Number of bytes allocated for the Transport Block.
   /// \return Byte container with assembled PDU. This container length should be lower or equal to \c tb_size_bytes.
-  span<const uint8_t> assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
+  span<const uint8_t> assemble_newtx_pdu(rnti_t                rnti,
+                                         harq_id_t             h_id,
+                                         unsigned              tb_idx,
+                                         const dl_msg_tb_info& tb_info,
+                                         unsigned              tb_size_bytes);
+
+  /// \brief Fetches and assembles MAC DL-SCH PDU that corresponds to a HARQ retransmission.
+  /// \param rnti RNTI for which the MAC PDU was allocated.
+  /// \param h_id HARQ-Id of the HARQ process used for this PDU transmission.
+  /// \param tb_idx Transport block index of the HARQ process used for this PDU transmission.
+  /// \return Byte container with assembled PDU.
+  span<const uint8_t> assemble_retx_pdu(rnti_t rnti, harq_id_t harq_id, unsigned tb_idx);
 
 private:
   class dl_sch_pdu_logger;

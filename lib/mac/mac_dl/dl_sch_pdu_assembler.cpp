@@ -133,8 +133,11 @@ dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ticking_r
 {
 }
 
-span<const uint8_t>
-dl_sch_pdu_assembler::assemble_pdu(rnti_t rnti, const dl_msg_tb_info& tb_info, unsigned tb_size_bytes)
+span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t                rnti,
+                                                             harq_id_t             h_id,
+                                                             unsigned              tb_idx,
+                                                             const dl_msg_tb_info& tb_info,
+                                                             unsigned              tb_size_bytes)
 {
   span<uint8_t> pdu_bytes = pdu_pool.allocate_buffer(tb_size_bytes);
   dl_sch_pdu    ue_pdu(pdu_bytes);
@@ -243,4 +246,9 @@ void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
     default:
       report_fatal_error("Invalid MAC CE LCID={}", subpdu.lcid);
   }
+}
+
+span<const uint8_t> dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t harq_id, unsigned tb_idx)
+{
+  return {};
 }
