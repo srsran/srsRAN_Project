@@ -6,6 +6,6 @@
 # the distribution.
 #
 
-set(SOURCES pcap.cpp f1ap_pcap.cpp e2ap_pcap.cpp e1ap_pcap.cpp ngap_pcap.cpp)
+set(SOURCES pcap.cpp mac_pcap.cpp f1ap_pcap.cpp e2ap_pcap.cpp e1ap_pcap.cpp ngap_pcap.cpp)
 add_library(srsgnb_pcap STATIC ${SOURCES})
 INSTALL(TARGETS srsgnb_pcap DESTINATION ${LIBRARY_DIR})
