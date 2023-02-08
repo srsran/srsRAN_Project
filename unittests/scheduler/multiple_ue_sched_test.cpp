@@ -73,7 +73,7 @@ struct test_bench {
 class multiple_ue_sched_tester : public ::testing::TestWithParam<multiple_ue_test_params>
 {
 protected:
-  slot_point              next_slot{0, 0};
+  slot_point              current_slot{0, 0};
   srslog::basic_logger&   mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger&   test_logger = srslog::fetch_basic_logger("TEST", true);
   optional<test_bench>    bench;
@@ -112,19 +112,19 @@ protected:
     bench.emplace(expert_cfg, msg);
 
     // Initialize.
-    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    bench->sched_res = bench->sch.slot_indication(next_slot, to_du_cell_index(0));
+    mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    bench->sched_res = bench->sch.slot_indication(current_slot, to_du_cell_index(0));
   }
 
   void run_slot()
   {
-    next_slot++;
+    current_slot++;
 
-    mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-    test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
 
-    bench->sched_res = bench->sch.slot_indication(next_slot, to_du_cell_index(0));
+    bench->sched_res = bench->sch.slot_indication(current_slot, to_du_cell_index(0));
 
     // Check sched result consistency.
     test_scheduler_result_consistency(bench->cell_cfg, *bench->sched_res);
@@ -263,7 +263,7 @@ protected:
     const auto& ul_lst      = ue_ul_lst.empty() ? cell_ul_lst : ue_ul_lst;
 
     return it == bench->sched_res->dl.ul_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                      : next_slot + ul_lst[it->dci.c_rnti_f0_0.time_resource].k2;
+                                                      : current_slot + ul_lst[it->dci.c_rnti_f0_0.time_resource].k2;
   }
 
   optional<slot_point> get_pdsch_scheduled_slot(const sched_test_ue& u) const
@@ -276,7 +276,7 @@ protected:
     const auto& dl_lst      = ue_dl_lst.empty() ? cell_dl_lst : ue_dl_lst;
 
     return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                      : next_slot + dl_lst[it->dci.c_rnti_f1_0.time_resource].k0;
+                                                      : current_slot + dl_lst[it->dci.c_rnti_f1_0.time_resource].k0;
   }
 
   optional<slot_point> get_pdsch_ack_nack_scheduled_slot(const sched_test_ue& u) const
@@ -284,16 +284,9 @@ protected:
     const auto* it = std::find_if(bench->sched_res->dl.dl_pdcchs.begin(),
                                   bench->sched_res->dl.dl_pdcchs.end(),
                                   [&u](const auto& grant) { return grant.ctx.rnti == u.crnti; });
-    const auto& ul_lst =
-        u.msg.cfg.cells[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack;
-
-    // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
-    static const static_vector<uint8_t, 8> dl_data_to_ul_ack_f1_0 = {1, 2, 3, 4, 5, 6, 7, 8};
-
-    const auto& ack_lst = ul_lst.empty() ? dl_data_to_ul_ack_f1_0 : ul_lst;
-
-    return it == bench->sched_res->dl.dl_pdcchs.end() ? optional<slot_point>{nullopt}
-                                                      : next_slot + ack_lst[it->dci.c_rnti_f1_0.time_resource];
+    return it == bench->sched_res->dl.dl_pdcchs.end()
+               ? optional<slot_point>{nullopt}
+               : current_slot + it->dci.c_rnti_f1_0.pdsch_harq_fb_timing_indicator;
   }
 
   uci_indication build_harq_ack_pucch_f0_f1_uci_ind(const du_ue_index_t ue_idx, const slot_point& sl_tx)
@@ -361,7 +354,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
     std::vector<uci_indication> uci_ind_not_for_current_slot;
     // Send ACKs if there are any to send.
     for (const auto& ind : uci_ind_to_send) {
-      if (next_slot == ind.slot_rx) {
+      if (current_slot == ind.slot_rx) {
         bench->sch.handle_uci_indication(ind);
       } else {
         uci_ind_not_for_current_slot.push_back(ind);
@@ -383,7 +376,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
       const auto* grant = find_ue_pdsch(test_ue);
       if (is_bsr_zero_sent[idx] && pdsch_scheduled_slot_in_future[idx].has_value() &&
-          next_slot > pdsch_scheduled_slot_in_future[idx].value()) {
+          current_slot > pdsch_scheduled_slot_in_future[idx].value()) {
         ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].is_new_data)
             << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
         continue;
@@ -391,8 +384,8 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
       const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, LCID_MIN_DRB);
       if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.back().bs == 0 &&
-          pdsch_scheduled_slot_in_future[idx].has_value() && next_slot > pdsch_scheduled_slot_in_future[idx].value() &&
-          not is_bsr_zero_sent[idx]) {
+          pdsch_scheduled_slot_in_future[idx].has_value() &&
+          current_slot > pdsch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
         is_bsr_zero_sent[idx] = true;
         // Notify buffer status of 0 to ensure scheduler does not schedule further for this UE.
         push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
@@ -443,7 +436,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
     // CRC Indication to send if there PUSCH is scheduled in current slot.
     ul_crc_indication crc_ind{};
     crc_ind.cell_index = to_du_cell_index(0);
-    crc_ind.sl_rx      = next_slot;
+    crc_ind.sl_rx      = current_slot;
 
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
@@ -455,7 +448,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
       const auto* pusch = find_ue_pusch(test_ue);
       if (is_bsr_zero_sent[idx] && pusch_scheduled_slot_in_future[idx].has_value() &&
-          next_slot > pusch_scheduled_slot_in_future[idx].value()) {
+          current_slot > pusch_scheduled_slot_in_future[idx].value()) {
         ASSERT_TRUE(pusch == nullptr or not pusch->pusch_cfg.new_data)
             << fmt::format("Condition failed for UE with CRNTI=0x{:x}", test_ue.crnti);
         continue;
@@ -463,8 +456,8 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
       const unsigned tbs_sched_bytes = pusch_tbs_scheduled_bytes(test_ue);
       if (tbs_sched_bytes == 0 && test_ue.ul_bsr_list.back().nof_bytes == 0 &&
-          pusch_scheduled_slot_in_future[idx].has_value() && next_slot > pusch_scheduled_slot_in_future[idx].value() &&
-          not is_bsr_zero_sent[idx]) {
+          pusch_scheduled_slot_in_future[idx].has_value() &&
+          current_slot > pusch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
         is_bsr_zero_sent[idx] = true;
         // Notify BSR 0 to ensure scheduler does not schedule further for this UE.
         notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
