@@ -33,3 +33,7 @@ target_link_libraries(srsgnb_generic_funcs_dft ${SRSGNB_DFT_LIBRARIES} srsvec sr
 add_library(srsgnb_generic_funcs STATIC generic_functions_factories.cpp)
 set_source_files_properties(generic_functions_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${SRSGNB_DFT_DEFINITIONS}")
 target_link_libraries(srsgnb_generic_funcs srsgnb_generic_funcs_dft srslog)
+
+install(TARGETS srsgnb_generic_funcs
+        srsgnb_generic_funcs_dft
+        EXPORT srsgnb_export)
