@@ -43,6 +43,11 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
+  const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
+  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
+    return;
+  }
+
   // Schedule SRB0 messages.
   auto it = pending_ues.begin();
   while (it != pending_ues.end()) {
@@ -81,13 +86,9 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
        ++time_res_idx) {
     const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(time_res_idx);
 
-    // Fetch PDCCH and PDSCH resource grid allocators.
-    const cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
+    // Fetch PDSCH resource grid allocators.
     const cell_slot_resource_allocator& pdsch_alloc = res_alloc[pdsch_td_cfg.k0];
 
-    if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
-      continue;
-    }
     if (not cell_cfg.is_dl_enabled(pdsch_alloc.slot)) {
       continue;
     }
