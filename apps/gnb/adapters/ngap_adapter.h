@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../../lib/ngap/ngc_asn1_packer.h"
+#include "lib/ngap/ngc_asn1_packer.h"
 #include "srsgnb/gateways/sctp_network_gateway_factory.h"
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/io_broker/io_broker.h"

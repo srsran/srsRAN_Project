@@ -225,6 +225,13 @@ struct log_appconfig {
   std::string phy_rx_symbols_filename = ""; // Set to a valid file path to print the received symbols.
 };
 
+struct pcap_appconfig {
+  struct {
+    std::string filename = "/tmp/gnb_ngap.pcap";
+    bool        enabled  = false;
+  } ngap;
+};
+
 /// Expert physical layer configuration.
 struct expert_phy_appconfig {
   /// Number of PUSCH LDPC decoder iterations.
@@ -237,6 +244,8 @@ struct expert_phy_appconfig {
 struct gnb_appconfig {
   /// Logging configuration.
   log_appconfig log_cfg;
+  /// PCAP configuration.
+  pcap_appconfig pcap_cfg;
   /// gNodeB identifier.
   uint32_t gnb_id = 411;
   /// Node name.

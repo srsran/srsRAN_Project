@@ -50,10 +50,11 @@ void ngc_asn1_packer::handle_message(const srs_cu_cp::ngc_message& msg)
     return;
   }
 
-  std::array<uint8_t, pcap_max_len> tmp_mem; // no init
-  span<const uint8_t>               pdu_span = to_span(tx_pdu, tmp_mem);
-  pcap.write_pdu(pdu_span);
-
+  if (pcap.is_write_enabled()) {
+    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
+    span<const uint8_t>               pdu_span = to_span(tx_pdu, tmp_mem);
+    pcap.write_pdu(pdu_span);
+  }
   gw.handle_pdu(tx_pdu);
 }
 

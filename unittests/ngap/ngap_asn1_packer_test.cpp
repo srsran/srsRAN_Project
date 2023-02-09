@@ -40,7 +40,6 @@ protected:
     gw  = std::make_unique<dummy_network_gateway_data_handler>();
     ngc = std::make_unique<dummy_ngc_message_handler>();
 
-    pcap.open("/tmp/ngap.pcap");
     packer = std::make_unique<srsgnb::ngc_asn1_packer>(*gw, *ngc, pcap);
   }
 

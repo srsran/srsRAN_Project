@@ -397,7 +397,9 @@ int main(int argc, char** argv)
 
   // Set layer-specific pcap options.
   ngap_pcap ngap_pcap;
-  ngap_pcap.open("/tmp/ngap.pcap");
+  if (gnb_cfg.pcap_cfg.ngap.enabled) {
+    ngap_pcap.open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
+  }
 
   worker_manager workers{gnb_cfg};
 
@@ -615,6 +617,8 @@ int main(int argc, char** argv)
   }
 
   console.on_app_stopping();
+
+  ngap_pcap.close();
 
   gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();
