@@ -203,9 +203,29 @@ protected:
 
   bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index)
   {
+    cell_config_builder_params cell_cfg{};
+    cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+    if (params.duplx_mode == duplex_mode::TDD) {
+      // Band 40.
+      cell_cfg.dl_arfcn       = 474000;
+      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+      cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+
+      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+          cell_cfg.channel_bw_mhz,
+          cell_cfg.scs_common,
+          cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
+
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+      cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
+      cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
+    }
     // Add cell to UE cell grid allocator.
     bench->ue_alloc.add_cell(bench->cell_cfg.cell_index, bench->pdcch_sch, bench->uci_alloc, bench->res_grid);
-    auto ue_create_req     = test_helpers::create_default_sched_ue_creation_request();
+    auto ue_create_req     = test_helpers::create_default_sched_ue_creation_request(cell_cfg);
     ue_create_req.crnti    = tc_rnti;
     ue_create_req.ue_index = ue_index;
     // Add UE to UE DB.
@@ -251,7 +271,7 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
   const auto& test_ue = get_ue(to_du_ue_index(0));
   bool        is_ue_allocated_pdcch{false};
   bool        is_ue_allocated_pdsch{false};
-  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
     if (ue_is_allocated_pdcch(test_ue)) {
       is_ue_allocated_pdcch = true;
@@ -285,7 +305,7 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 
   // Allocation for UE2 should fail.
   const auto& test_ue = get_ue(to_du_ue_index(1));
-  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
     ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
     ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
@@ -306,7 +326,7 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
   const auto& test_ue = get_ue(to_du_ue_index(0));
   bool        is_ue_allocated_pdcch{false};
   bool        is_ue_allocated_pdsch{false};
-  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
     if (ue_is_allocated_pdcch(test_ue)) {
       is_ue_allocated_pdcch = true;
@@ -331,7 +351,7 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
 
   // Allocation for UE should fail.
   const auto& test_ue = get_ue(to_du_ue_index(0));
-  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue; sl_idx++) {
+  for (unsigned sl_idx = 0; sl_idx < bench->max_test_run_slots_per_ue * (1U << current_slot.numerology()); sl_idx++) {
     run_slot();
     ASSERT_FALSE(ue_is_allocated_pdcch(test_ue));
     ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
@@ -370,7 +390,7 @@ TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
     push_buffer_state_to_dl_ue(to_du_ue_index(idx), MAC_SRB0_SDU_SIZE);
   }
 
-  for (unsigned idx = 0; idx < MAX_TEST_RUN_SLOTS; idx++) {
+  for (unsigned idx = 0; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
     run_slot();
     if (bench->cell_cfg.is_ul_enabled(current_slot)) {
       // Check whether PUCCH/PDSCH is not scheduled in UL slots for any of the UEs.

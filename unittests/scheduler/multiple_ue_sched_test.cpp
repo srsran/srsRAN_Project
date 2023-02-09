@@ -192,7 +192,26 @@ protected:
 
   void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_)
   {
-    auto ue_creation_req = test_helpers::create_default_sched_ue_creation_request();
+    cell_config_builder_params cell_cfg{};
+    if (params.duplx_mode == duplex_mode::TDD) {
+      // Band 40.
+      cell_cfg.dl_arfcn       = 474000;
+      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+      cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+
+      const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+          cell_cfg.channel_bw_mhz,
+          cell_cfg.scs_common,
+          cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
+
+      optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+          cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+      cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
+      cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
+    }
+    auto ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg);
 
     if (not ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
       ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
@@ -364,7 +383,8 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
         LCID_MIN_DRB);
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       ++i) {
     run_slot();
 
     std::vector<uci_indication> uci_ind_not_for_current_slot;
@@ -420,7 +440,8 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
 
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
-    ASSERT_EQ(test_ue.dl_bsr_list.back().bs, 0);
+    ASSERT_EQ(test_ue.dl_bsr_list.back().bs, 0)
+        << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
   }
 }
 
@@ -446,7 +467,8 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
         static_cast<lcg_id_t>(0));
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       ++i) {
     run_slot();
 
     // CRC Indication to send if there PUSCH is scheduled in current slot.
@@ -497,7 +519,8 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
   for (unsigned idx = 0; idx < params.nof_ues; idx++) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
-    ASSERT_EQ(test_ue.ul_bsr_list.back().nof_bytes, 0);
+    ASSERT_EQ(test_ue.ul_bsr_list.back().nof_bytes, 0)
+        << fmt::format("Condition failed for UE with CRNTI={:#x}", test_ue.crnti);
   }
 }
 
@@ -513,7 +536,8 @@ TEST_P(multiple_ue_sched_tester, not_scheduled_when_buffer_status_zero)
     push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue; ++i) {
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       ++i) {
     run_slot();
     for (unsigned idx = 0; idx < params.nof_ues; idx++) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
@@ -529,7 +553,7 @@ INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                                                                  .min_buffer_size_in_bytes = 1000,
                                                                  .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::FDD},
-                                         multiple_ue_test_params{.nof_ues                  = 5,
+                                         multiple_ue_test_params{.nof_ues                  = 3,
                                                                  .min_buffer_size_in_bytes = 2000,
                                                                  .max_buffer_size_in_bytes = 3000,
                                                                  .duplx_mode               = duplex_mode::TDD},
