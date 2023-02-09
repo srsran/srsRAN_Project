@@ -49,6 +49,7 @@
 #include "srsgnb/radio/radio_factory.h"
 #include <atomic>
 #include <csignal>
+#include <unordered_map>
 
 using namespace srsgnb;
 
@@ -108,19 +109,15 @@ public:
 struct worker_manager {
   static const uint32_t task_worker_queue_size = 2048;
 
-  worker_manager(const gnb_appconfig& appcfg) : zmq_mode(appcfg.rf_driver_cfg.device_driver == "zmq") {}
+  worker_manager(const gnb_appconfig& appcfg) { create_executors(appcfg.rf_driver_cfg.device_driver == "zmq"); }
 
   void stop()
   {
-    ctrl_worker.stop();
-    ue_workers.stop();
-    cell_worker.stop();
-    rt_task_worker.stop();
-    upper_dl_worker.stop();
-    common_prach_worker.stop();
-    upper_puxch_worker.stop();
-    radio_worker.stop();
+    for (auto& worker : workers) {
+      worker.second->stop();
+    }
   }
+
   /*
   du ctrl exec points to general ctrl_worker
   du ue exec points to the general ue_worker
@@ -134,45 +131,79 @@ struct worker_manager {
   - e1_cu_up::handle_message calls cu-up ue exec
   */
 
-  bool zmq_mode = false;
+  std::unique_ptr<task_executor> cu_cp_exec;
+  std::unique_ptr<task_executor> cu_up_exec;
+  std::unique_ptr<task_executor> du_ctrl_exec;
+  std::unique_ptr<task_executor> du_ue_exec;
+  std::unique_ptr<task_executor> du_cell_exec;
+  std::unique_ptr<task_executor> rt_task_exec;
+  std::unique_ptr<task_executor> lower_prach_exec;
+  std::unique_ptr<task_executor> upper_dl_exec;
+  std::unique_ptr<task_executor> upper_pusch_exec;
+  std::unique_ptr<task_executor> upper_pucch_exec;
+  std::unique_ptr<task_executor> upper_prach_exec;
+  std::unique_ptr<task_executor> radio_exec;
 
-  // GNB wide workers and executors
-  task_worker ctrl_worker{"Ctrl-GNB", task_worker_queue_size};
-  task_worker ue_workers{"UE#0", task_worker_queue_size};
-  // CU-CP worker and executers.
-  task_worker_executor cu_cp_ctrl_exec{ctrl_worker};
-  // CU-UP worker and executers.
-  static_vector<task_worker_executor, 1> cu_up_exec{{ue_workers}};
-  // DU workers and executers.
-  task_worker          cell_worker{"DU-CELL#0", task_worker_queue_size, false, os_thread_realtime_priority::max() - 2};
-  task_worker_executor ctrl_exec{ctrl_worker};
-  task_worker_executor cell_exec{cell_worker};
-  task_worker_executor ue_exec{ue_workers};
-  pcell_ul_executor_mapper ue_exec_mapper{&ue_exec};
-  cell_executor_mapper     cell_exec_mapper{{&cell_exec}, zmq_mode};
-  // Lower PHY RT task executor.
-  task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
-  task_worker_executor rt_task_executor{{rt_task_worker}};
-  // Common lower and upper PRACH worker.
-  task_worker common_prach_worker{"PRACH worker",
-                                  task_worker_queue_size,
-                                  false,
-                                  os_thread_realtime_priority::max() - 1};
-  // PRACH lower PHY executor
-  task_worker_executor lower_prach_executor{common_prach_worker};
-  // Upper phy task executor
-  task_worker upper_dl_worker{"PHY DL worker", task_worker_queue_size, false, os_thread_realtime_priority::max() - 10};
-  task_worker_executor upper_dl_executor{upper_dl_worker};
-  task_worker          upper_puxch_worker{"PHY UL worker",
-                                 task_worker_queue_size,
-                                 false,
-                                 os_thread_realtime_priority::max() - 20};
-  task_worker_executor upper_pucch_executor{upper_puxch_worker};
-  task_worker_executor upper_pusch_executor{upper_puxch_worker};
-  task_worker_executor upper_prach_executor{common_prach_worker};
-  // Radio task executor
-  task_worker          radio_worker{"Radio worker", task_worker_queue_size};
-  task_worker_executor radio_executor{radio_worker};
+  std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
+  optional<pcell_ul_executor_mapper>                              ue_exec_mapper;
+  optional<cell_executor_mapper>                                  cell_exec_mapper;
+
+private:
+  std::unordered_map<std::string, std::unique_ptr<task_worker>> workers;
+
+  // helper method to create workers
+  void create_worker(const std::string&          name,
+                     size_t                      queue_size,
+                     os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime())
+  {
+    auto ret = workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, queue_size, false, prio)));
+    srsgnb_assert(ret.second, "Unable to create worker {}", name);
+  }
+
+  void create_executors(bool blocking_mode_active)
+  {
+    // Instantiate workers
+    create_worker("gnb_ctrl", task_worker_queue_size);
+    create_worker("gnb_ue", task_worker_queue_size);
+    create_worker("du_cell", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
+    if (blocking_mode_active) {
+      create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
+    } else {
+      create_worker("rt_task_worker", 1, os_thread_realtime_priority::max());
+      create_worker("prach_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 1);
+      create_worker("upper_dl_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 10);
+      create_worker("upper_puxch_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 20);
+    }
+    create_worker("radio_worker", task_worker_queue_size);
+
+    // Instantiate task executors
+    cu_cp_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
+    cu_up_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+    du_ctrl_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
+    du_ue_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+    du_cell_exec = std::make_unique<task_worker_executor>(*workers.at("du_cell"));
+    if (blocking_mode_active) {
+      task_worker& phy_worker = *workers.at("phy_worker");
+      rt_task_exec            = std::make_unique<task_worker_executor>(phy_worker);
+      lower_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
+      upper_dl_exec           = std::make_unique<task_worker_executor>(phy_worker);
+      upper_pusch_exec        = std::make_unique<task_worker_executor>(phy_worker);
+      upper_pucch_exec        = std::make_unique<task_worker_executor>(phy_worker);
+      upper_prach_exec        = std::make_unique<task_worker_executor>(phy_worker);
+    } else {
+      rt_task_exec     = std::make_unique<task_worker_executor>(*workers.at("rt_task_worker"));
+      lower_prach_exec = std::make_unique<task_worker_executor>(*workers.at("prach_worker"));
+      upper_dl_exec    = std::make_unique<task_worker_executor>(*workers.at("upper_dl_worker"));
+      upper_pusch_exec = std::make_unique<task_worker_executor>(*workers.at("upper_puxch_worker"));
+      upper_pucch_exec = std::make_unique<task_worker_executor>(*workers.at("upper_puxch_worker"));
+      upper_prach_exec = std::make_unique<task_worker_executor>(*workers.at("prach_worker"));
+    }
+    radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio_worker"));
+
+    // Executor mappers.
+    ue_exec_mapper.emplace(pcell_ul_executor_mapper{du_ue_exec.get()});
+    cell_exec_mapper.emplace(cell_executor_mapper{{du_cell_exec.get()}, blocking_mode_active});
+  }
 };
 
 } // namespace
@@ -377,7 +408,7 @@ int main(int argc, char** argv)
 
   // Create CU-UP config.
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
-  cu_up_cfg.cu_up_executor       = &workers.cu_up_exec.front();
+  cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
   cu_up_cfg.e1_notifier          = &e1_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker         = epoll_broker.get();
@@ -390,7 +421,7 @@ int main(int argc, char** argv)
 
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
-  cu_cp_cfg.cu_cp_executor                 = &workers.cu_cp_ctrl_exec;
+  cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec.get();
   cu_cp_cfg.f1c_notifier                   = &f1c_cu_to_du_adapter;
   cu_cp_cfg.e1_notifier                    = &e1_cp_to_up_adapter;
   cu_cp_cfg.ngc_notifier                   = ngap_adapter.get();
@@ -414,7 +445,7 @@ int main(int argc, char** argv)
 
   // Create radio.
   radio_notification_handler_printer radio_event_printer;
-  auto                               radio = build_radio(workers.radio_executor, radio_event_printer, gnb_cfg);
+  auto                               radio = build_radio(*workers.radio_exec, radio_event_printer, gnb_cfg);
   if (radio == nullptr) {
     srsgnb_terminate("Unable to create radio session.\n");
   }
@@ -432,7 +463,7 @@ int main(int argc, char** argv)
                                                                             &phy_rx_adapter,
                                                                             &phy_time_adapter,
                                                                             &phy_err_printer,
-                                                                            workers.lower_prach_executor,
+                                                                            *workers.lower_prach_exec,
                                                                             gnb_cfg);
   static constexpr unsigned max_nof_prach_concurrent_requests = 11;
   auto                      lower = create_lower_phy(lower_phy_config, max_nof_prach_concurrent_requests);
@@ -441,10 +472,10 @@ int main(int argc, char** argv)
 
   auto upper = create_upper_phy(gnb_cfg,
                                 &rg_gateway_adapter,
-                                &workers.upper_dl_executor,
-                                &workers.upper_pucch_executor,
-                                &workers.upper_pusch_executor,
-                                &workers.lower_prach_executor,
+                                workers.upper_dl_exec.get(),
+                                workers.upper_pucch_exec.get(),
+                                workers.upper_pusch_exec.get(),
+                                workers.lower_prach_exec.get(),
                                 &phy_rx_symbol_req_adapter);
   report_fatal_error_if_not(upper, "Unable to create upper PHY.");
   gnb_logger.info("Upper PHY created successfully");
@@ -517,9 +548,9 @@ int main(int argc, char** argv)
   phy_dummy phy(mac_adaptor->get_cell_result_notifier());
 
   srs_du::du_high_configuration du_hi_cfg = {};
-  du_hi_cfg.du_mng_executor               = &workers.ctrl_exec;
-  du_hi_cfg.ue_executors                  = &workers.ue_exec_mapper;
-  du_hi_cfg.cell_executors                = &workers.cell_exec_mapper;
+  du_hi_cfg.du_mng_executor               = workers.du_ctrl_exec.get();
+  du_hi_cfg.ue_executors                  = &*workers.ue_exec_mapper;
+  du_hi_cfg.cell_executors                = &*workers.cell_exec_mapper;
   du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
   du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
   du_hi_cfg.phy_adapter                   = &phy;
@@ -558,7 +589,7 @@ int main(int argc, char** argv)
 
   // Start processing.
   gnb_logger.info("Starting lower PHY...");
-  lower->get_controller().start(workers.rt_task_executor);
+  lower->get_controller().start(*workers.rt_task_exec);
   gnb_logger.info("Lower PHY started successfully");
 
   while (is_running) {
