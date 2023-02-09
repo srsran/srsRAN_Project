@@ -32,6 +32,9 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   expert_cfg(expert_cfg_),
   ue_cfg(cell_cfg_common_, ue_serv_cell)
 {
+  if (not expert_cfg.fixed_ul_mcs.has_value()) {
+    update_pusch_snr(expert_cfg.initial_ul_sinr);
+  }
 }
 
 void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg)

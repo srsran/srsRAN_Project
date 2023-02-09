@@ -30,6 +30,8 @@ struct scheduler_ue_expert_config {
   sch_mcs_index max_msg4_mcs;
   /// Maximum consecutive PUSCH KOs, before scheduler de-prioritizes UE.
   unsigned max_consecutive_pusch_kos;
+  /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).
+  double initial_ul_sinr;
 };
 
 /// \brief System Information scheduling statically configurable expert parameters.
