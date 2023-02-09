@@ -11,9 +11,9 @@
 #pragma once
 
 #include "du_processor_test_messages.h"
-#include "lib/cu_cp/adapters/du_processor_adapters.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -38,9 +38,9 @@ gnb_cu_ue_f1ap_id_t generate_random_gnb_cu_ue_f1ap_id();
 /// \brief Generate a random gnb_du_ue_f1ap_id
 gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
 
-struct dummy_du_processor_to_cu_cp_task_scheduler : public du_processor_to_cu_cp_task_scheduler {
+struct dummy_du_processor_ue_task_scheduler : public du_processor_ue_task_scheduler {
 public:
-  dummy_du_processor_to_cu_cp_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
+  dummy_du_processor_ue_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));

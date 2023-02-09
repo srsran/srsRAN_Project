@@ -43,16 +43,16 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  timer_manager                                               timers;
-  ue_manager                                                  ue_mng;
-  dummy_du_processor_cu_cp_notifier                           cu_cp_notifier;
-  dummy_f1c_pdu_notifier                                      f1c_pdu_notifier;
-  dummy_f1c_du_management_notifier                            f1c_du_mgmt_notifier;
-  dummy_du_processor_e1ap_control_notifier                    e1ap_ctrl_notifier;
-  dummy_rrc_ue_ngc_adapter                                    rrc_ue_ngc_notifier;
-  std::unique_ptr<dummy_du_processor_to_cu_cp_task_scheduler> ue_task_sched;
-  manual_task_worker                                          ctrl_worker{128};
-  std::unique_ptr<du_processor_interface>                     du_processor_obj;
+  timer_manager                                         timers;
+  ue_manager                                            ue_mng;
+  dummy_du_processor_cu_cp_notifier                     cu_cp_notifier;
+  dummy_f1c_pdu_notifier                                f1c_pdu_notifier;
+  dummy_f1c_du_management_notifier                      f1c_du_mgmt_notifier;
+  dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
+  dummy_rrc_ue_ngc_adapter                              rrc_ue_ngc_notifier;
+  std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
+  manual_task_worker                                    ctrl_worker{128};
+  std::unique_ptr<du_processor_interface>               du_processor_obj;
 };
 
 } // namespace srs_cu_cp
