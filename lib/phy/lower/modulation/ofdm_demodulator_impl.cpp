@@ -12,6 +12,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/srsvec/copy.h"
+#include "srsgnb/srsvec/prod.h"
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/error_handling.h"
@@ -23,6 +24,7 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
   dft_size(ofdm_config.dft_size),
   rg_size(ofdm_config.bw_rb * NRE),
   cp(ofdm_config.cp),
+  nof_samples_window_offset(ofdm_config.nof_samples_window_offset),
   scs(to_subcarrier_spacing(ofdm_config.numerology)),
   sampling_rate_Hz(to_sampling_rate_Hz(scs, dft_size)),
   scale(ofdm_config.scale),
@@ -42,6 +44,24 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
 
   // Set the right size to the internal phase compensation buffer.
   compensated_output.resize(dft_size);
+
+  if (ofdm_config.nof_samples_window_offset != 0) {
+    // Verify the window is valid.
+    srsgnb_assert(ofdm_config.nof_samples_window_offset < (144 * ofdm_config.dft_size) / 2048,
+                  "The DFT window offset (i.e., {}) must lower than {}.",
+                  ofdm_config.nof_samples_window_offset,
+                  (144 * ofdm_config.dft_size) / 2048);
+
+    // Prepare phase compensation vector.
+    window_phase_compensation.resize(dft_size);
+
+    // Discrete frequency of the complex exponential.
+    cf_t omega = COMPLEX_J * static_cast<float>(ofdm_config.nof_samples_window_offset) *
+                 static_cast<float>(2.0 * M_PI) / static_cast<float>(dft_size);
+    for (unsigned i = 0; i != dft_size; ++i) {
+      window_phase_compensation[i] = std::exp(omega * static_cast<float>(i));
+    }
+  }
 }
 
 unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsigned slot_index) const
@@ -80,7 +100,7 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
                 scs_to_khz(scs));
 
   // Prepare the DFT inputs, while skipping the cyclic prefix.
-  srsvec::copy(dft->get_input().first(dft_size), input.last(dft_size));
+  srsvec::copy(dft->get_input().first(dft_size), input.subspan(cp_len - nof_samples_window_offset, dft_size));
 
   // Execute DFT.
   span<const cf_t> dft_output = dft->run();
@@ -90,6 +110,11 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
 
   // Apply scaling and phase compensation.
   srsvec::sc_prod(dft_output, phase_compensation * scale, compensated_output);
+
+  // Compensate DFT window offset phase shift.
+  if (!window_phase_compensation.empty()) {
+    srsvec::prod(compensated_output, window_phase_compensation, compensated_output);
+  }
 
   // Map the upper bound frequency domain data.
   span<cf_t> upper_bound(&compensated_output[dft_size - rg_size / 2], rg_size / 2);

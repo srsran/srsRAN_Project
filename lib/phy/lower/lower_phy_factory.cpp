@@ -38,6 +38,8 @@ public:
 
   std::unique_ptr<srsgnb::lower_phy> create(lower_phy_configuration& config) override
   {
+    srsgnb_assert((config.dft_window_offset >= 0.0) && (config.dft_window_offset < 1.0F), "");
+
     lower_phy_common_configuration common_config;
     common_config.modulators.reserve(config.sectors.size());
     common_config.demodulators.reserve(config.sectors.size());
@@ -69,8 +71,10 @@ public:
       configuration.bw_rb                          = sector.bandwidth_rb;
       configuration.dft_size                       = config.srate.get_dft_size(config.scs);
       configuration.cp                             = config.cp;
-      configuration.scale                          = config.tx_scale;
-      configuration.center_freq_hz                 = sector.ul_freq_hz;
+      configuration.nof_samples_window_offset =
+          config.cp.get_length(1, config.scs).to_samples(config.srate.to_Hz()) * config.dft_window_offset;
+      configuration.scale          = 1.0F;
+      configuration.center_freq_hz = sector.ul_freq_hz;
 
       // Create demodulator.
       common_config.demodulators.emplace_back(demodulator_factory->create_ofdm_symbol_demodulator(configuration));

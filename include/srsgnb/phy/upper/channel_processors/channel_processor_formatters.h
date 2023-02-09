@@ -458,7 +458,7 @@ struct formatter<srsgnb::prach_detection_result::preamble_indication> {
       -> decltype(std::declval<FormatContext>().out())
   {
     format_to(ctx.out(),
-              "{{idx={} ta={:.1f}us power={:+.1f}dB snr={:+.1f}dB}}",
+              "{{idx={} ta={:.2f}us power={:+.1f}dB snr={:+.1f}dB}}",
               preamble.preamble_index,
               preamble.time_advance.to_seconds() * 1e6,
               preamble.power_dB,
@@ -488,7 +488,7 @@ struct formatter<srsgnb::prach_detection_result> {
   {
     helper.format_always(ctx, "rssi={:+.1f}dB", result.rssi_dB);
     helper.format_if_verbose(ctx, "res={:.1f}us", result.time_resolution.to_seconds() * 1e6);
-    helper.format_if_verbose(ctx, "max_ta={:.1f}us", result.time_advance_max.to_seconds() * 1e6);
+    helper.format_if_verbose(ctx, "max_ta={:.2f}us", result.time_advance_max.to_seconds() * 1e6);
     helper.format_always(ctx,
                          "det_preambles=[{:,}]",
                          srsgnb::span<const srsgnb::prach_detection_result::preamble_indication>(result.preambles));

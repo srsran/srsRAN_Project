@@ -71,6 +71,8 @@ struct lower_phy_configuration {
   subcarrier_spacing scs;
   /// Cyclic prefix.
   cyclic_prefix cp;
+  /// Shifts the DFT window by a fraction of the cyclic prefix [0, 1).
+  float dft_window_offset;
   /// \brief Number of slots the timing handler is notified in advance of the transmission time.
   ///
   /// Sets the maximum allowed processing delay in slots.

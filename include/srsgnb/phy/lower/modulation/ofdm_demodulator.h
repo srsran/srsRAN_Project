@@ -27,6 +27,8 @@ struct ofdm_demodulator_configuration {
   unsigned dft_size;
   /// Cyclic prefix.
   cyclic_prefix cp;
+  /// Number of samples to advance the DFT window. The demodulator compensates for the phase shift internally.
+  unsigned nof_samples_window_offset;
   /// Scaling factor at the DFT output.
   float scale;
   /// Indicates the center frequency of the carrier in Hz.

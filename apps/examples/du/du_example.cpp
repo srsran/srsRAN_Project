@@ -356,6 +356,7 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   phy_config.ta_offset                  = ta_offset;
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
+  phy_config.dft_window_offset          = 0.5F;
   phy_config.bb_gateway                 = bb_gateway;
   phy_config.error_notifier             = error_notifier;
   phy_config.rx_symbol_notifier         = rx_symbol_notifier;

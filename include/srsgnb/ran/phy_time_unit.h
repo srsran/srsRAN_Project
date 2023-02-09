@@ -97,12 +97,12 @@ public:
 
   /// \brief Gets the time expressed in units of \f$T_{\textup{A}}\f$.
   ///
-  /// Conversion is performed as per TS38.213 Section 4.2.
+  /// Conversion is performed as per TS38.213 Section 4.2, rounding to the nearest integer.
   ///
   /// \param[in] scs Subcarrier spacing.
   constexpr unsigned to_Ta(subcarrier_spacing scs) const
   {
-    return value * pow2(to_numerology_value(scs)) / (16 * KAPPA);
+    return divide_round(value * pow2(to_numerology_value(scs)), 16U * KAPPA);
   }
 
   /// Overload addition operator.

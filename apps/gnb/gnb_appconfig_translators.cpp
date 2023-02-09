@@ -163,6 +163,7 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
     out_cfg.log_level                  = config.log_cfg.phy_level;
     out_cfg.scs                        = config.common_cell_cfg.common_scs;
     out_cfg.cp                         = cp;
+    out_cfg.dft_window_offset          = 0.5F;
     out_cfg.max_processing_delay_slots = 2 * get_nof_slots_per_subframe(config.common_cell_cfg.common_scs);
     out_cfg.ul_to_dl_subframe_offset   = 1;
 

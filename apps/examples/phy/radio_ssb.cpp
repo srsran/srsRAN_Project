@@ -348,6 +348,7 @@ lower_phy_configuration create_lower_phy_configuration(float                    
   phy_config.ta_offset                  = lower_phy_ta_offset::n0;
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
+  phy_config.dft_window_offset          = 0.5F;
   phy_config.bb_gateway                 = &radio->get_baseband_gateway();
   phy_config.error_notifier             = error_notifier;
   phy_config.rx_symbol_notifier         = rx_symbol_notifier;

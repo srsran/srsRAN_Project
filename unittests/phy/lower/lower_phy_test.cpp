@@ -53,6 +53,7 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&         b
   config.ta_offset                  = ta_offset;
   config.tx_scale                   = tx_scale;
   config.cp                         = cp;
+  config.dft_window_offset          = 0.0F;
   config.bb_gateway                 = &bb_gateway;
   config.rx_symbol_notifier         = &rx_symbol_notifier;
   config.timing_notifier            = &timing_notifier;

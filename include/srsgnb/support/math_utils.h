@@ -37,6 +37,17 @@ inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
   return (num + (den - 1)) / den;
 }
 
+/// \brief Performs an integer division rounding to the nearest integer.
+///
+/// \param[in] num Provides the numerator.
+/// \param[out] den Provides the denominator.
+/// \return The result of the operation.
+inline constexpr unsigned divide_round(unsigned num, unsigned den)
+{
+  srsgnb_sanity_check(den != 0, "Denominator cannot be zero.");
+  return static_cast<unsigned>(std::round(static_cast<float>(num) / static_cast<float>(den)));
+}
+
 /// \brief Calculates the integer power of 2.
 ///
 /// \param[in] power Indicates the power of 2 to calculate.

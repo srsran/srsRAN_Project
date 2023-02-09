@@ -13,6 +13,7 @@
 #include "phase_compensation_lut.h"
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
+#include "srsgnb/srsvec/aligned_vec.h"
 #include <memory>
 
 namespace srsgnb {
@@ -33,6 +34,8 @@ private:
   unsigned rg_size;
   /// Cyclic prefix type.
   cyclic_prefix cp;
+  /// DFT window offset.
+  unsigned nof_samples_window_offset;
   /// Numerology.
   subcarrier_spacing scs;
   /// Sampling rate in Hz.
@@ -44,7 +47,9 @@ private:
   /// Phase compensation table.
   phase_compensation_lut phase_compensation_table;
   /// Internal buffer aimed at storing the phase compensated DFT outputs.
-  std::vector<cf_t> compensated_output;
+  srsvec::aligned_vec<cf_t> compensated_output;
+  /// DFT window offset phase compensation.
+  srsvec::aligned_vec<cf_t> window_phase_compensation;
 
 public:
   /// \brief Constructs an OFDM symbol demodulator.
