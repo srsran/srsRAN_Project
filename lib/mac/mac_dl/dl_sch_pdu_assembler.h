@@ -15,7 +15,6 @@
 #include "srsgnb/mac/mac_pdu_format.h"
 #include "srsgnb/scheduler/harq_id.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
-#include "srsgnb/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsgnb {
 
@@ -57,7 +56,7 @@ private:
 class dl_sch_pdu_assembler
 {
 public:
-  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ticking_ring_buffer_pool& pool_);
+  explicit dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_);
 
   /// \brief Encodes a MAC DL-SCH PDU with the provided scheduler information.
   /// \param rnti RNTI for which the MAC PDU was allocated.
@@ -90,9 +89,8 @@ private:
   /// Assemble MAC subPDU with a CE.
   void assemble_ce(dl_sch_pdu& ue_pdu, rnti_t rnti, const dl_msg_lc_info& subpdu, dl_sch_pdu_logger& pdu_logger);
 
-  mac_dl_ue_manager&        ue_mng;
-  ticking_ring_buffer_pool& pdu_pool;
-  srslog::basic_logger&     logger;
+  mac_dl_ue_manager&    ue_mng;
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsgnb

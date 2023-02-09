@@ -129,8 +129,8 @@ private:
 
 // /////////////////////////
 
-dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ticking_ring_buffer_pool& pool_) :
-  ue_mng(ue_mng_), pdu_pool(pool_), logger(srslog::fetch_basic_logger("MAC"))
+dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_) :
+  ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("MAC"))
 {
 }
 

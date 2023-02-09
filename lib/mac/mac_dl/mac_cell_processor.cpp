@@ -38,7 +38,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   ssb_helper(cell_cfg_req_),
   sib_assembler(cell_cfg_req_.bcch_dl_sch_payload),
   rar_assembler(pdu_pool),
-  dlsch_assembler(ue_mng_, pdu_pool),
+  dlsch_assembler(ue_mng_),
   sched_obj(sched_),
   ue_mng(ue_mng_)
 {
