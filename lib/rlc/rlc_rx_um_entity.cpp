@@ -42,14 +42,13 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 {
   metrics.metrics_add_pdus(1, buf.length());
 
-  logger.log_debug(buf.begin(), buf.end(), "RX UMD PDU: pdu_len={}", buf.length());
   rlc_um_pdu_header header = {};
   if (not rlc_um_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
-    logger.log_warning(buf.begin(), buf.end(), "Failed to unpack UMD PDU header. pdu_len={}", buf.length());
+    logger.log_warning(buf.begin(), buf.end(), "RX PDU: type=UMD, pdu_len={}, header=malformed", buf.length());
     metrics.metrics_add_malformed_pdus(1);
     return;
   }
-  logger.log_debug("UMD PDU header={}", header);
+  logger.log_info(buf.begin(), buf.end(), "RX PDU: type=UMD, pdu_len={}, header={}", buf.length(), header);
 
   // strip header, extract payload
   size_t            header_len = rlc_um_nr_packed_length(header);
