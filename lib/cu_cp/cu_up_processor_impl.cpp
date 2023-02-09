@@ -24,7 +24,8 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t       
                                            task_executor&                             ctrl_exec_) :
   cfg(cu_up_processor_config_), cu_cp_notifier(cu_cp_notifier_), e1_notifier(e1_notifier_), task_sched(task_sched_)
 {
-  context.cu_cp_name = cfg.name;
+  context.cu_cp_name  = cfg.name;
+  context.cu_up_index = cfg.index;
 
   // create e1
   e1 = create_e1(task_sched.get_timer_manager(), e1_notifier, e1_ev_notifier, ctrl_exec_);
