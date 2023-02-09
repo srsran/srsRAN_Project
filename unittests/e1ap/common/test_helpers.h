@@ -199,4 +199,21 @@ private:
   srslog::basic_logger& logger;
 };
 
+/// Dummy notifier just printing the received msg.
+class dummy_e1_message_notifier : public e1_message_notifier
+{
+public:
+  dummy_e1_message_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  void on_new_message(const e1_message& msg) override
+  {
+    last_msg = msg;
+    logger.info("Received a E1AP PDU of type {}", msg.pdu.type().to_string());
+  }
+
+  e1_message last_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
 } // namespace srsgnb

@@ -11,6 +11,7 @@ include_directories(../..)
 
 add_subdirectory(common)
 add_subdirectory(du_processor)
+add_subdirectory(cu_up_processor)
 add_subdirectory(ue_manager)
 
 add_executable(cu_cp_test cu_cp_test.cpp)

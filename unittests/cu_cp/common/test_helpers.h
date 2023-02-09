@@ -11,8 +11,11 @@
 #pragma once
 
 #include "du_processor_test_messages.h"
+#include "lib/e1/common/e1ap_asn1_helpers.h"
+#include "unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/cu_cp/cu_up_processor.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/test_utils.h"
@@ -252,6 +255,75 @@ public:
   void on_release_ues() override { logger.info("Releasing all UEs"); };
 
 private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
+struct dummy_cu_up_processor_cu_up_management_notifier : public cu_up_processor_cu_up_management_notifier {
+public:
+  dummy_cu_up_processor_cu_up_management_notifier() = default;
+
+  void on_new_cu_up_connection() override { logger.info("Received a new CU-UP connection notification"); }
+
+  void on_cu_up_remove_request_received(const cu_up_index_t cu_up_index) override
+  {
+    logger.info("Received a CU-UP remove request for cu_up_index={}", cu_up_index);
+    last_cu_up_index_to_remove = cu_up_index;
+  }
+
+  cu_up_index_t last_cu_up_index_to_remove;
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
+struct dummy_cu_up_processor_task_scheduler : public cu_up_processor_task_scheduler {
+public:
+  dummy_cu_up_processor_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
+
+  void schedule_async_task(cu_up_index_t cu_up_index, async_task<void>&& task) override
+  {
+    ctrl_loop.schedule(std::move(task));
+  }
+  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(); }
+  timer_manager& get_timer_manager() override { return timer_db; }
+
+  void tick_timer() { timer_db.tick_all(); }
+
+private:
+  async_task_sequencer ctrl_loop{16};
+  timer_manager&       timer_db;
+};
+
+struct dummy_cu_up_processor_e1ap_control_notifier : public cu_up_processor_e1ap_control_notifier {
+public:
+  dummy_cu_up_processor_e1ap_control_notifier() = default;
+
+  void set_cu_cp_e1_setup_outcome(bool outcome) { cu_cp_e1_setup_outcome = outcome; }
+
+  async_task<cu_cp_e1_setup_response> on_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) override
+  {
+    logger.info("Received a new CU-CP E1 setup request");
+
+    return launch_async([this](coro_context<async_task<cu_cp_e1_setup_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      cu_cp_e1_setup_response res;
+      res.success = cu_cp_e1_setup_outcome;
+      if (cu_cp_e1_setup_outcome) {
+        fill_e1ap_cu_cp_e1_setup_response(
+            res, generate_cu_cp_e1_setup_respose(0).pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp());
+      } else {
+        fill_e1ap_cu_cp_e1_setup_response(
+            res, generate_cu_cp_e1_setup_failure(0).pdu.unsuccessful_outcome().value.gnb_cu_cp_e1_setup_fail());
+      }
+
+      CORO_RETURN(res);
+    });
+  }
+
+private:
+  bool cu_cp_e1_setup_outcome = false;
+
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
