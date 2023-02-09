@@ -287,8 +287,6 @@ cu_up_index_t cu_cp::add_cu_up()
   // Connect e1ap to DU processor
   du_processor_e1ap_notifier.connect_e1ap(cu_up->get_e1_bearer_context_manager());
 
-  // cu_up->start();
-
   srsgnb_assert(cu_up->get_context().cu_up_index != cu_up_index_t::invalid,
                 "Invalid cu_up_index={}",
                 cu_up->get_context().cu_up_index);
