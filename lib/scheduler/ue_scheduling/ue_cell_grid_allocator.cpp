@@ -33,10 +33,6 @@ void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
 
 bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 {
-  // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
-  // However, the tested UEs only support k1 >= 4.
-  static constexpr std::array<uint8_t, 8> dl_data_to_ul_ack_f1_0 = {4, 5, 6, 7, 8};
-
   srsgnb_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
   srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
   ue& u = ues[grant.user->ue_index];
@@ -124,15 +120,17 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
-  unsigned       k1        = 0;
-  const auto&    pucch_cfg = *ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg;
-  auto           k1_list   = pucch_cfg.dl_data_to_ul_ack.empty() ? span<const uint8_t>{dl_data_to_ul_ack_f1_0}
-                                                                 : span<const uint8_t>{pucch_cfg.dl_data_to_ul_ack};
-  uci_allocation uci       = {};
-  // Search for valid k1 in descending order so that the k1 are more uniformly distributed over time in the frame.
-  for (auto rit = k1_list.rbegin(); rit != k1_list.rend(); ++rit) {
-    uint8_t    k1_candidate = *rit;
-    slot_point uci_slot     = pdsch_alloc.slot + k1_candidate;
+  unsigned       k1      = 0;
+  auto           k1_list = ue_cell_cfg.get_k1_candidates();
+  uci_allocation uci     = {};
+  // Note: Right now, k1 candidates are hardcoded for TDD to avoid PUCCH format2.
+  // TODO: Do not hardcode k1.
+  if (k1_list.size() > 1) {
+    static constexpr std::array<uint8_t, 6> tdd_slot_idx_to_k1 = {7, 6, 6, 5, 5, 4};
+    k1_list = span<const uint8_t>{tdd_slot_idx_to_k1}.subspan(pdsch_alloc.slot.slot_index(), 1);
+  }
+  for (const uint8_t k1_candidate : k1_list) {
+    const slot_point uci_slot = pdsch_alloc.slot + k1_candidate;
     if (not cell_cfg.is_ul_enabled(uci_slot)) {
       continue;
     }

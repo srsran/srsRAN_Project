@@ -84,6 +84,16 @@ public:
     return *ret;
   }
 
+  span<const uint8_t> get_k1_candidates() const
+  {
+    // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
+    // However, the tested UEs only support k1 >= 4.
+    static constexpr std::array<uint8_t, 8> dl_data_to_ul_ack_f1_0 = {4, 5, 6, 7, 8};
+    const auto&                             pucch_cfg              = *cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg;
+    return pucch_cfg.dl_data_to_ul_ack.empty() ? span<const uint8_t>{dl_data_to_ul_ack_f1_0}
+                                               : span<const uint8_t>{pucch_cfg.dl_data_to_ul_ack};
+  }
+
 private:
   /// Combination of common and dedicated BWP Parameters for a given UE that can be quickly fechted via BWP-Id.
   struct bwp_params {
