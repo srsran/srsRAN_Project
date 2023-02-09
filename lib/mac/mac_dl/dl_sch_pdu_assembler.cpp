@@ -10,6 +10,7 @@
 
 #include "dl_sch_pdu_assembler.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
+#include "srsgnb/ran/pdsch/pdsch_constants.h"
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/format_utils.h"
 
@@ -133,14 +134,21 @@ dl_sch_pdu_assembler::dl_sch_pdu_assembler(mac_dl_ue_manager& ue_mng_, ticking_r
 {
 }
 
+// Buffer passed to the lower layers when HARQ allocation fails.
+static const std::vector<uint8_t> zero_buffer(MAX_DL_PDU_LENGTH, 0);
+
 span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t                rnti,
                                                              harq_id_t             h_id,
                                                              unsigned              tb_idx,
                                                              const dl_msg_tb_info& tb_info,
                                                              unsigned              tb_size_bytes)
 {
-  span<uint8_t> pdu_bytes = ue_mng.get_dl_harq_buffer(rnti, h_id);
-  dl_sch_pdu    ue_pdu(pdu_bytes);
+  span<uint8_t> buffer = ue_mng.get_dl_harq_buffer(rnti, h_id, tb_idx);
+  if (buffer.size() < tb_size_bytes) {
+    logger.error("DL rnti={:#x} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available", rnti, h_id);
+    return span<const uint8_t>(zero_buffer).first(tb_size_bytes);
+  }
+  dl_sch_pdu ue_pdu(buffer.first(tb_size_bytes));
 
   dl_sch_pdu_logger pdu_logger{rnti, units::bytes{tb_size_bytes}, logger};
 
@@ -248,7 +256,13 @@ void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
   }
 }
 
-span<const uint8_t> dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t harq_id, unsigned tb_idx)
+span<const uint8_t>
+dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t h_id, unsigned tb_idx, unsigned tbs_bytes)
 {
-  return {};
+  span<uint8_t> buffer = ue_mng.get_dl_harq_buffer(rnti, h_id, tb_idx);
+  if (buffer.size() < tbs_bytes) {
+    logger.error("DL rnti={:#x} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available", rnti, h_id);
+    return span<const uint8_t>(zero_buffer).first(tbs_bytes);
+  }
+  return buffer.first(tbs_bytes);
 }

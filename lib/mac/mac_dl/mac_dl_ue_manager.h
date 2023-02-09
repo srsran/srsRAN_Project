@@ -133,7 +133,7 @@ public:
     }
   }
 
-  span<uint8_t> get_dl_harq_buffer(rnti_t rnti, harq_id_t h_id)
+  span<uint8_t> get_dl_harq_buffer(rnti_t rnti, harq_id_t h_id, unsigned tb_idx)
   {
     du_ue_index_t               ue_index = rnti_table[rnti];
     std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);

@@ -298,17 +298,17 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
 
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
-    for (unsigned tb_idx = 0; tb_idx != grant.tb_list.size(); ++tb_idx) {
-      const pdsch_codeword& cw = grant.pdsch_cfg.codewords[tb_idx];
+    for (unsigned cw_idx = 0; cw_idx != grant.pdsch_cfg.codewords.size(); ++cw_idx) {
+      const pdsch_codeword& cw = grant.pdsch_cfg.codewords[cw_idx];
       span<const uint8_t>   pdu;
       if (cw.new_data) {
-        const dl_msg_tb_info& tb_info = grant.tb_list[tb_idx];
-        pdu                           = dlsch_assembler.assemble_newtx_pdu(
-            grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, tb_idx, tb_info, cw.tb_size_bytes);
+        pdu = dlsch_assembler.assemble_newtx_pdu(
+            grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, cw_idx, grant.tb_list[cw_idx], cw.tb_size_bytes);
       } else {
-        pdu = dlsch_assembler.assemble_retx_pdu(grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, tb_idx);
+        pdu =
+            dlsch_assembler.assemble_retx_pdu(grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, cw_idx, cw.tb_size_bytes);
       }
-      data_res.ue_pdus.emplace_back(tb_idx, pdu);
+      data_res.ue_pdus.emplace_back(cw_idx, pdu);
     }
   }
 }

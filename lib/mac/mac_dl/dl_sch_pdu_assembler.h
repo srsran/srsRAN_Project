@@ -77,8 +77,9 @@ public:
   /// \param rnti RNTI for which the MAC PDU was allocated.
   /// \param h_id HARQ-Id of the HARQ process used for this PDU transmission.
   /// \param tb_idx Transport block index of the HARQ process used for this PDU transmission.
+  /// \param tb_size_bytes Number of bytes allocated for the Transport Block.
   /// \return Byte container with assembled PDU.
-  span<const uint8_t> assemble_retx_pdu(rnti_t rnti, harq_id_t harq_id, unsigned tb_idx);
+  span<const uint8_t> assemble_retx_pdu(rnti_t rnti, harq_id_t harq_id, unsigned tb_idx, unsigned tbs_bytes);
 
 private:
   class dl_sch_pdu_logger;
