@@ -57,7 +57,7 @@ ciphering_algorithm_to_e1ap_asn1(const srsgnb::security::ciphering_algorithm& ci
 inline srsgnb::security::ciphering_algorithm
 e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_ciph_algo)
 {
-  srsgnb::security::ciphering_algorithm ciph_algo;
+  srsgnb::security::ciphering_algorithm ciph_algo = {};
 
   switch (asn1_ciph_algo) {
     case asn1::e1ap::ciphering_algorithm_opts::nea0:
@@ -85,7 +85,7 @@ e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_c
 inline asn1::e1ap::integrity_protection_algorithm_e
 integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& int_algo)
 {
-  asn1::e1ap::integrity_protection_algorithm_e asn1_int_algo;
+  asn1::e1ap::integrity_protection_algorithm_e asn1_int_algo = {};
 
   switch (int_algo) {
     case srsgnb::security::integrity_algorithm::nia0:
@@ -113,7 +113,7 @@ integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& in
 inline srsgnb::security::integrity_algorithm
 e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorithm_e& asn1_int_algo)
 {
-  srsgnb::security::integrity_algorithm int_algo;
+  srsgnb::security::integrity_algorithm int_algo = {};
 
   switch (asn1_int_algo) {
     case asn1::e1ap::integrity_protection_algorithm_opts::nia0:
@@ -208,7 +208,7 @@ inline sdap_config_t e1ap_asn1_to_sdap_config(asn1::e1ap::sdap_cfg_s asn1_sdap_c
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
 inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsgnb::rlc_mode rlc_mod)
 {
-  asn1::e1ap::rlc_mode_e asn1_rlc_mode;
+  asn1::e1ap::rlc_mode_e asn1_rlc_mode = {};
 
   switch (rlc_mod) {
     case srsgnb::rlc_mode::tm:
@@ -238,7 +238,7 @@ inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsgnb::rlc_mode rlc_mod)
 /// \return The rlc_mode object where the result of the conversion is stored.
 inline srsgnb::rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
 {
-  srsgnb::rlc_mode rlc_mode;
+  srsgnb::rlc_mode rlc_mode = {};
 
   switch (asn1_rlc_mod) {
     case asn1::e1ap::rlc_mode_opts::rlc_tm:
@@ -267,7 +267,7 @@ inline srsgnb::rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
 /// \brief Convert PDCP SN size from enum to E1AP ASN.1.
 inline asn1::e1ap::pdcp_sn_size_e pdcp_sn_size_to_asn1(pdcp_sn_size sn_size)
 {
-  asn1::e1ap::pdcp_sn_size_e asn1_sn_size;
+  asn1::e1ap::pdcp_sn_size_e asn1_sn_size = {};
 
   switch (sn_size) {
     case pdcp_sn_size::size12bits:
@@ -286,7 +286,7 @@ inline asn1::e1ap::pdcp_sn_size_e pdcp_sn_size_to_asn1(pdcp_sn_size sn_size)
 /// \brief Convert E1AP ASN.1 to PDCP SN size.
 inline pdcp_sn_size asn1_to_pdcp_sn_size(asn1::e1ap::pdcp_sn_size_e asn1_sn_size)
 {
-  pdcp_sn_size sn_size;
+  pdcp_sn_size sn_size = {};
 
   switch (asn1_sn_size) {
     case asn1::e1ap::pdcp_sn_size_e::s_neg12:
@@ -305,7 +305,7 @@ inline pdcp_sn_size asn1_to_pdcp_sn_size(asn1::e1ap::pdcp_sn_size_e asn1_sn_size
 /// \brief Converts E1AP ASN.1 discard timer type to \c pdcp_discard_timer type.
 inline pdcp_discard_timer asn1_to_pdcp_discard_timer(asn1::e1ap::discard_timer_e asn1_discard_timer)
 {
-  pdcp_discard_timer discard_timer;
+  pdcp_discard_timer discard_timer = {};
 
   switch (asn1_discard_timer) {
     case asn1::e1ap::discard_timer_opts::ms10:
@@ -365,7 +365,7 @@ inline pdcp_discard_timer asn1_to_pdcp_discard_timer(asn1::e1ap::discard_timer_e
 /// \brief Converts \c pdcp_discard_timer type to E1AP ASN.1 discard timer type.
 inline asn1::e1ap::discard_timer_e pdcp_discard_timer_to_asn1(pdcp_discard_timer discard_timer)
 {
-  asn1::e1ap::discard_timer_e asn1_discard_timer;
+  asn1::e1ap::discard_timer_e asn1_discard_timer = {};
 
   switch (discard_timer) {
     case pdcp_discard_timer::ms10:
@@ -426,7 +426,7 @@ inline asn1::e1ap::discard_timer_e pdcp_discard_timer_to_asn1(pdcp_discard_timer
 /// \brief Converts E1AP ASN.1 t-Reordering type to \c pdcp_t_reordering type.
 inline pdcp_t_reordering asn1_to_pdcp_t_reordering(asn1::e1ap::t_reordering_e asn1_t_reordering)
 {
-  pdcp_t_reordering t_reordering;
+  pdcp_t_reordering t_reordering = {};
 
   // t-Reordering
   switch (asn1_t_reordering) {
@@ -547,7 +547,7 @@ inline pdcp_t_reordering asn1_to_pdcp_t_reordering(asn1::e1ap::t_reordering_e as
 
 inline asn1::e1ap::t_reordering_e pdcp_t_reordering_to_asn1(pdcp_t_reordering t_reordering)
 {
-  asn1::e1ap::t_reordering_e asn1_t_reordering;
+  asn1::e1ap::t_reordering_e asn1_t_reordering = {};
 
   switch (t_reordering) {
     case pdcp_t_reordering::ms0:
