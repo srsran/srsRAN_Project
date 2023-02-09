@@ -31,8 +31,8 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   slot_exec(slot_exec_),
   ctrl_exec(ctrl_exec_),
   phy_cell(phy_notifier_),
-  // The PDU pool has to be large enough to fit the maximum number of PDUs per slot for all possible K0 values.
-  pdu_pool(MAX_DL_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT,
+  // The PDU pool has to be large enough to fit the maximum number of RARs per slot for all possible K0 values.
+  pdu_pool(MAX_DL_PDU_LENGTH,
            MAX_K0_DELAY,
            get_nof_slots_per_subframe(cell_cfg.scs_common) * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   ssb_helper(cell_cfg_req_),
