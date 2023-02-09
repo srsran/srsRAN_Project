@@ -79,10 +79,16 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      R"(Invalid BWP configuration 0:1 for a VRB mask of size 16\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
-       pdu.uci.nof_csi_part1      = 1;
+       pdu.uci.nof_csi_part1      = 12;
        return pdu;
      },
-     R"(CSI Part 1 is not currently implemented)"},
+     R"(CSI Part 1 UCI field length \(i\.e\.\, 12\) exceeds the maximum supported length \(i\.e\.\, 11\))"},
+    {[] {
+       pusch_processor::pdu_t pdu = base_pdu;
+       pdu.uci.nof_harq_ack       = 12;
+       return pdu;
+     },
+     R"(HARQ-ACK UCI field length \(i\.e\.\, 12\) exceeds the maximum supported length \(i\.e\.\, 11\))"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
        pdu.uci.nof_csi_part2      = 1;

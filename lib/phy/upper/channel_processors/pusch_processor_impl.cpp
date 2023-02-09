@@ -39,7 +39,7 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
     return false;
   }
 
-  // Currently, each UCI field size cannot exceed 11 bit.
+  // Currently, none of the UCI field sizes can exceed 11 bit.
   static constexpr unsigned max_uci_len = 11;
   if ((pdu.uci.nof_harq_ack > max_uci_len) || (pdu.uci.nof_csi_part1 > max_uci_len)) {
     return false;
@@ -297,6 +297,17 @@ void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const
                 "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
                 pdu.rx_ports.size(),
                 ch_estimate.size().nof_rx_ports);
+
+  static constexpr unsigned max_uci_field_len = 11;
+  srsgnb_assert(pdu.uci.nof_harq_ack <= max_uci_field_len,
+                "HARQ-ACK UCI field length (i.e., {}) exceeds the maximum supported length (i.e., {})",
+                pdu.uci.nof_harq_ack,
+                max_uci_field_len);
+
+  srsgnb_assert(pdu.uci.nof_csi_part1 <= max_uci_field_len,
+                "CSI Part 1 UCI field length (i.e., {}) exceeds the maximum supported length (i.e., {})",
+                pdu.uci.nof_csi_part1,
+                max_uci_field_len);
 }
 
 pusch_uci_field pusch_processor_impl::decode_uci_field(span<const log_likelihood_ratio>  llr,
