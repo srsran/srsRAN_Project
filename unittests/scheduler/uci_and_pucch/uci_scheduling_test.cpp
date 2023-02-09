@@ -18,8 +18,6 @@ using namespace srsgnb;
 
 ////////////    Structs with expected parameters and PUCCH sched INPUT     ////////////
 
-const unsigned NOF_RBS = 52;
-
 // Class to test PUCCH schedule with SR occasions only.
 class test_pucch_output_sr_only : public ::testing::TestWithParam<sr_periodicity>
 {
