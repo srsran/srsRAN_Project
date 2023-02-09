@@ -58,19 +58,18 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
   metrics.metrics_add_pdus(1, buf.length());
   metrics.metrics_add_sdus(1, buf.length());
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
-    logger.log_info(buf.begin(), buf.end(), "RX control PDU: pdu_len={}", buf.length());
     handle_control_pdu(std::move(buf));
   } else {
-    logger.log_info(buf.begin(), buf.end(), "RX AMD PDU: pdu_len={}", buf.length());
     handle_data_pdu(std::move(buf));
   }
 }
 
 void rlc_rx_am_entity::handle_control_pdu(byte_buffer_slice buf)
 {
+  logger.log_info(buf.begin(), buf.end(), "RX PDU: type=control, pdu_len={}", buf.length());
   rlc_am_status_pdu status_pdu(cfg.sn_field_length);
   if (status_pdu.unpack(buf.view())) {
-    logger.log_debug(buf.begin(), buf.end(), "Unpacked status PDU. pdu_len={}", buf.length());
+    logger.log_debug("RX status PDU: status={}", status_pdu);
     status_handler->on_status_pdu(std::move(status_pdu));
   } else {
     logger.log_warning(buf.begin(), buf.end(), "Failed to unpack control PDU. pdu_len={}", buf.length());
@@ -95,14 +94,13 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
     }
   });
 
-  logger.log_debug(buf.begin(), buf.end(), "RX AMD PDU: pdu_len={}", buf.length());
   rlc_am_pdu_header header = {};
   if (not rlc_am_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
-    logger.log_warning(buf.begin(), buf.end(), "Failed to unpack AMD PDU header. pdu_len={}", buf.length());
+    logger.log_warning(buf.begin(), buf.end(), "RX PDU: type=AMD, pdu_len={}, header=malformed", buf.length());
     metrics.metrics_add_malformed_pdus(1);
     return;
   }
-  logger.log_debug("AMD PDU header={}", header);
+  logger.log_info(buf.begin(), buf.end(), "RX PDU: type=AMD, pdu_len={}, header={}", buf.length(), header);
 
   // strip header, extract payload
   size_t            header_len = header.get_packed_size();
@@ -117,22 +115,22 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   // because t-PollRetransmit may transmit a PDU that was already
   // received.
   if (header.p != 0U) {
-    logger.log_info("Status report requested via polling bit");
+    logger.log_debug("Status report requested via polling bit");
     status_requested = true;
   }
 
   // Check whether PDU SN is within RX Window
   if (!inside_rx_window(header.sn)) {
-    logger.log_info("Discarded PDU: SN={} is outside the RX window [{}:{}]",
-                    header.sn,
-                    st.rx_next,
-                    (st.rx_next + am_window_size) % mod);
+    logger.log_debug("Discarded PDU: SN={} is outside the RX window [{}:{}]",
+                     header.sn,
+                     st.rx_next,
+                     (st.rx_next + am_window_size) % mod);
     return;
   }
 
   // Section 5.2.3.2.2, discard duplicate PDUs
   if (rx_window->has_sn(header.sn) && (*rx_window)[header.sn].fully_received) {
-    logger.log_info("Discarded PDU: SN={} is fully received", header.sn);
+    logger.log_debug("Discarded PDU: SN={} is fully received", header.sn);
     return;
   }
 
@@ -357,7 +355,7 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
         logger.log_debug("Segment SO={}, len={}: skip", segm.header.so, segm.payload.length());
       }
     }
-    logger.log_info("Assembled SDU from segments. SN={}, sdu_len={}", header.sn, rx_sdu.sdu.length());
+    logger.log_debug("Assembled SDU from segments. SN={}, sdu_len={}", header.sn, rx_sdu.sdu.length());
   }
 }
 
@@ -586,7 +584,7 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
     do_status.store(true, std::memory_order_relaxed);
     notify_status_report_changed();
 
-    logger.log_debug("st={}", st);
+    log_state(srslog::basic_levels::debug);
     logger.log_debug("SDUs in RX window: {}", st.rx_next, st.rx_next_highest, rx_window->size());
     return;
   }
