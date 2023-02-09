@@ -14,6 +14,7 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/du_ue_list.h"
+#include "srsgnb/scheduler/harq_id.h"
 #include <mutex>
 
 namespace srsgnb {
@@ -73,10 +74,14 @@ public:
     return u.dl_bearers.contains(lcid) ? u.dl_bearers[lcid] : nullptr;
   }
 
-  bool add_ue(const mac_ue_create_request_message& request)
+  bool add_ue(const mac_ue_create_request_message& request, std::vector<std::vector<uint8_t>> dl_harq_buffers)
   {
     std::lock_guard<std::mutex> lock(ue_mutex[request.ue_index]);
-    return add_ue_nolock(request.ue_index, request.crnti, request.ul_ccch_msg, *request.ue_activity_timer) and
+    return add_ue_nolock(request.ue_index,
+                         request.crnti,
+                         request.ul_ccch_msg,
+                         *request.ue_activity_timer,
+                         std::move(dl_harq_buffers)) and
            addmod_bearers_nolock(request.ue_index, request.bearers);
   }
 
@@ -128,6 +133,16 @@ public:
     }
   }
 
+  span<uint8_t> get_dl_harq_buffer(rnti_t rnti, harq_id_t h_id)
+  {
+    du_ue_index_t               ue_index = rnti_table[rnti];
+    std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
+    if (not ue_db.contains(ue_index)) {
+      return {};
+    }
+    return ue_db[ue_index].harq_buffers[h_id];
+  }
+
 private:
   struct ue_item {
     rnti_t                              rnti     = INVALID_RNTI;
@@ -135,17 +150,23 @@ private:
     slotted_vector<mac_sdu_tx_builder*> dl_bearers;
     ue_con_res_id_t                     msg3_subpdu;
     unique_timer*                       activity_timer;
+    std::vector<std::vector<uint8_t>>   harq_buffers;
   };
 
-  bool add_ue_nolock(du_ue_index_t ue_index, rnti_t crnti, const byte_buffer* ul_ccch_msg, unique_timer& activity_timer)
+  bool add_ue_nolock(du_ue_index_t                     ue_index,
+                     rnti_t                            crnti,
+                     const byte_buffer*                ul_ccch_msg,
+                     unique_timer&                     activity_timer,
+                     std::vector<std::vector<uint8_t>> dl_harq_buffers)
   {
     if (ue_db.contains(ue_index)) {
       return false;
     }
     ue_db.emplace(ue_index);
-    auto& u    = ue_db[ue_index];
-    u.ue_index = ue_index;
-    u.rnti     = crnti;
+    auto& u        = ue_db[ue_index];
+    u.ue_index     = ue_index;
+    u.rnti         = crnti;
+    u.harq_buffers = std::move(dl_harq_buffers);
     if (ul_ccch_msg != nullptr) {
       // Store Msg3.
       srsgnb_assert(

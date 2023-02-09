@@ -26,9 +26,6 @@ class byte_buffer_slice_chain;
 class dl_sch_pdu
 {
 public:
-  /// Maximum size for a MAC PDU (implementation-defined).
-  static constexpr size_t MAX_PDU_LENGTH = 32768;
-
   explicit dl_sch_pdu(span<uint8_t> pdu_buffer_) : pdu(pdu_buffer_) {}
 
   /// Adds a MAC SDU as a subPDU.

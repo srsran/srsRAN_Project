@@ -139,7 +139,7 @@ span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t             
                                                              const dl_msg_tb_info& tb_info,
                                                              unsigned              tb_size_bytes)
 {
-  span<uint8_t> pdu_bytes = pdu_pool.allocate_buffer(tb_size_bytes);
+  span<uint8_t> pdu_bytes = ue_mng.get_dl_harq_buffer(rnti, h_id);
   dl_sch_pdu    ue_pdu(pdu_bytes);
 
   dl_sch_pdu_logger pdu_logger{rnti, units::bytes{tb_size_bytes}, logger};

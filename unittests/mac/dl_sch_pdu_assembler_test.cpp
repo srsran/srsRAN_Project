@@ -11,6 +11,7 @@
 #include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/mac/mac_dl/dl_sch_pdu_assembler.h"
 #include "mac_test_helpers.h"
+#include "srsgnb/ran/pdsch/pdsch_constants.h"
 #include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -34,7 +35,7 @@ TEST(mac_dl_sch_pdu, mac_ce_con_res_id_pack)
   // |             ...               |  ...
   // |  UE Contention Resolution Id  |  Octet 6
 
-  std::vector<uint8_t> bytes(dl_sch_pdu::MAX_PDU_LENGTH);
+  std::vector<uint8_t> bytes(MAX_DL_PDU_LENGTH);
   dl_sch_pdu           pdu(bytes);
   ue_con_res_id_t      conres = {};
   for (unsigned i = 0; i != UE_CON_RES_ID_LEN; ++i) {
@@ -59,7 +60,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_8bit_L_pack)
   // |             ...               |  ...
   // |            Payload            |  Octet <256 + 2
 
-  std::vector<uint8_t> bytes(dl_sch_pdu::MAX_PDU_LENGTH);
+  std::vector<uint8_t> bytes(MAX_DL_PDU_LENGTH);
   dl_sch_pdu           pdu(bytes);
   unsigned             payload_len = test_rgen::uniform_int<unsigned>(0, 255);
   byte_buffer          payload;
@@ -92,7 +93,7 @@ TEST(mac_dl_sch_pdu, mac_sdu_16bit_L_pack)
   // |            Payload            |  Octet >=256 + 3
 
   static constexpr unsigned HEADER_LEN = 3;
-  std::vector<uint8_t>      bytes(dl_sch_pdu::MAX_PDU_LENGTH);
+  std::vector<uint8_t>      bytes(MAX_DL_PDU_LENGTH);
   dl_sch_pdu                pdu(bytes);
   unsigned                  payload_len = test_rgen::uniform_int<unsigned>(256, bytes.size() - HEADER_LEN);
   byte_buffer               payload;
@@ -140,7 +141,7 @@ class mac_dl_sch_assembler_tester : public testing::Test
 {
 public:
   mac_dl_sch_assembler_tester() :
-    pdu_pool(dl_sch_pdu::MAX_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, 1, 10240),
+    pdu_pool(MAX_DL_PDU_LENGTH * MAX_DL_PDUS_PER_SLOT, 1, 10240),
     ue_mng(rnti_table),
     dl_bearers(2),
     dl_sch_enc(ue_mng, pdu_pool)
@@ -159,8 +160,14 @@ public:
       req.bearers[i].dl_bearer = &dl_bearers[i];
     }
     req.ul_ccch_msg = &msg3_pdu;
+    std::vector<std::vector<uint8_t>> harq_buffers;
+    harq_buffers.resize(MAX_NOF_HARQS);
+    for (auto& h : harq_buffers) {
+      h.resize(MAX_DL_PDU_LENGTH);
+    }
+
     rnti_table.add_ue(req.crnti, req.ue_index);
-    ue_mng.add_ue(req);
+    ue_mng.add_ue(req, std::move(harq_buffers));
   }
 
   ~mac_dl_sch_assembler_tester() { srslog::flush(); }

@@ -9,6 +9,7 @@
  */
 
 #include "mac_dl_processor.h"
+#include "srsgnb/ran/pdsch/pdsch_constants.h"
 
 using namespace srsgnb;
 
@@ -48,16 +49,24 @@ void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
 
 async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& request)
 {
-  return launch_async([this, request](coro_context<async_task<bool>>& ctx) {
+  // > Allocate UE DL HARQ buffers.
+  // Note: This is a large allocation, and therefore, should be done outside of the cell thread to avoid causing lates.
+  std::vector<std::vector<uint8_t>> harq_buffers;
+  harq_buffers.resize(MAX_NOF_HARQS);
+  for (auto& h : harq_buffers) {
+    h.resize(MAX_DL_PDU_LENGTH);
+  }
+
+  return launch_async([this, request, harq_buffers = std::move(harq_buffers)](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
 
-    // 1. Change to respective DL executor
+    // > Change to respective DL executor
     CORO_AWAIT(execute_on(cfg.cell_exec_mapper.executor(request.cell_index)));
 
-    // 2. Insert UE and DL bearers
-    ue_mng.add_ue(request);
+    // > Insert UE and DL bearers
+    ue_mng.add_ue(request, std::move(harq_buffers));
 
-    // 3. Change back to CTRL executor before returning
+    // > Change back to CTRL executor before returning
     CORO_AWAIT(execute_on(cfg.ctrl_exec));
 
     CORO_RETURN(true);
