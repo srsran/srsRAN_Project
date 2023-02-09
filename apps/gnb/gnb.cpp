@@ -31,6 +31,8 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 
+#include "gnb_console_helper.h"
+
 #include "fapi_factory.h"
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
@@ -397,6 +399,9 @@ int main(int argc, char** argv)
 
   // Create IO broker.
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll);
+
+  // Create console helper object for commands and metrics printing.
+  gnb_console_helper console(*epoll_broker);
 
   // Create NGAP adapter.
   std::unique_ptr<srsgnb::srs_cu_cp::ngap_network_adapter> ngap_adapter =

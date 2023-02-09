@@ -14,13 +14,11 @@
 
 namespace srsgnb {
 
-/**
- * It splits a given string into multiple elements given a delimiter. The elements are casted to the specified type.
- * @tparam Insertable It is the list data-type. It needs to implement insert(iterator, element)
- * @param input It is the input string
- * @param delimiter Character used for indicating the end of the strings
- * @param list contains the parsed values
- */
+/// Splits a given string into multiple elements given a delimiter. The elements are casted to the specified type.
+/// Insertable It is the list data-type. It needs to implement insert(iterator, element)
+/// \param input It is the input string
+/// \param delimiter Character used for indicating the end of the strings
+/// \param list contains the parsed values
 template <class Insertable>
 static inline void string_parse_list(const std::string& input, char delimiter, Insertable& list)
 {

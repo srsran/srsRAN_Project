@@ -13,6 +13,7 @@ add_executable(gnb
         gnb_appconfig_cli11_schema.cpp
         gnb_appconfig_validators.cpp
         gnb_appconfig_translators.cpp
+        gnb_console_helper.cpp
         fapi_factory.cpp
         phy_factory.cpp
         )
