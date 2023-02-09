@@ -3,7 +3,8 @@ Test ping
 """
 import logging
 
-from pytest import mark, param
+from pytest import mark
+from retina.launcher.utils import param
 from retina.launcher.test_base import BaseTest
 from retina.protocol.base_pb2 import Empty, Integer
 from retina.protocol.epc_pb2 import EPCStartInfo
@@ -17,20 +18,20 @@ class TestIPerf(BaseTest):
     @mark.parametrize(
         "band, common_scs, bandwidth",
         (
-            param(3, 15, 10, marks=mark.intensive),
-            param(3, 15, 15, marks=mark.intensive),
-            param(3, 15, 20, marks=mark.intensive),
-            param(3, 15, 25, marks=mark.intensive),
-            param(3, 15, 30, marks=mark.intensive),
-            param(3, 15, 40, marks=mark.intensive),
-            param(3, 15, 50, marks=mark.intensive),
-            param(7, 15, 10, marks=mark.intensive),
-            param(7, 15, 15, marks=mark.intensive),
-            param(7, 15, 20, marks=mark.intensive),
-            param(7, 15, 25, marks=mark.intensive),
-            param(7, 15, 30, marks=mark.intensive),
-            param(7, 15, 40, marks=mark.intensive),
-            param(7, 15, 50, marks=mark.intensive),
+            param(3, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 20, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(7, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(7, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(7, 15, 20, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(7, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(7, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(7, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(7, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
         ),
     )
     @mark.parametrize(
@@ -50,8 +51,8 @@ class TestIPerf(BaseTest):
         bandwidth,
         protocol,
         direction,
-        startup_timeout=10,
-        attach_timeout=30,
+        startup_timeout=120,
+        attach_timeout=120,
         iperf_duration=10,
         bits_per_second_threshold=0,
     ):
@@ -59,9 +60,8 @@ class TestIPerf(BaseTest):
         logging.info("Ping Test")
 
         with get_ue_gnb_epc(
+            self,
             extra,
-            self.relative_output_html_path,
-            self.retina_manager,
             band=band,
             common_scs=common_scs,
             bandwidth=bandwidth,

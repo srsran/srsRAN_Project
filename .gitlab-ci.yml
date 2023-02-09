@@ -293,18 +293,16 @@ pages:
       when: always # Even if previous stages/required jobs fail
   image: $CR_REGISTRY_URI/testing-tools/doxygen:1.5.0
   script:
-    - |
-      ls
-      doxygen_generator.sh
-      mv build/public .
-      mv coverage_html public/
-      mv codechecker*html public/
-      mv test_report.html public/
-      mv requirement_report.html public/
-      mv public/index.html public/index_doxygen.html
-      mv docs/index.html public/index.html
-      mv zmq public/
-      mv zmq-tsan public/
+    - mkdir public
+    - mv coverage_html public/
+    - mv codechecker*html public/
+    - mv test_report.html public/
+    - mv requirement_report.html public/
+    - mv docs/index.html public/index.html
+    - doxygen_generator.sh
+    - mv build/index.html build/index_doxygen.html
+    - mv build/public .
+
   after_script:
     - |
       if [ $CI_JOB_STATUS = "failed" ]; then
@@ -313,11 +311,11 @@ pages:
       fi
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
+    - sed -i 's/zmq_job_id/'$( cat ./zmq/job.env  )'/' public/index.html
+    - sed -i 's/zmq_tsan_job_id/'$( cat ./zmq-tsan/job.env  )'/' public/index.html
+    - sed -i 's/rf_job_id/'$( cat ./rf/job.env  )'/' public/index.html
+
   needs:
-    - job: zmq
-      artifacts: true
-    - job: zmq-tsan
-      artifacts: true
     - job: unit coverage
       artifacts: true
     - job: unit requirements
@@ -352,3 +350,4 @@ promote code:
     - git checkout -t origin/$GRADUATION_BRANCH
     - git rebase ${CI_COMMIT_SHA}
     - git push
+

@@ -9,6 +9,7 @@ minversion = "6.0"
 python_files = [
   "tests/*.py",
 ]
+render_collapsed = true
 
 [tool.black]
 line-length = 120
