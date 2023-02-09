@@ -24,10 +24,10 @@ class app_state_notfier
 public:
   virtual ~app_state_notfier() = default;
 
-  virtual void on_start_begin()    = 0;
-  virtual void on_start_complete() = 0;
+  virtual void on_app_starting() = 0;
+  virtual void on_app_running()  = 0;
 
-  virtual void on_stop_begin() = 0;
+  virtual void on_app_stopping() = 0;
 };
 
 /// \brief Helper class to manager interaction with console, i.e. reading from stdin as well as writing
@@ -41,9 +41,9 @@ public:
 
   scheduler_ue_metrics_notifier& get_metrics_notifier() { return metrics_plotter; };
 
-  void on_start_begin() override;
-  void on_start_complete() override;
-  void on_stop_begin() override;
+  void on_app_starting() override;
+  void on_app_running() override;
+  void on_app_stopping() override;
 
   void set_cells(const std::vector<du_cell_config>& cells_);
 

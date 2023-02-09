@@ -102,12 +102,12 @@ void gnb_console_helper::set_cells(const std::vector<du_cell_config>& cells_)
   cells = cells_;
 }
 
-void gnb_console_helper::on_start_begin()
+void gnb_console_helper::on_app_starting()
 {
   fmt::print("\n--== srsRAN gNB (build={}, {}) ==--\n\n", get_build_mode(), get_build_info());
 }
 
-void gnb_console_helper::on_start_complete()
+void gnb_console_helper::on_app_running()
 {
   for (const auto& cell : cells) {
     fmt::print("Cell pci={}, bw={} MHz, dl_arfcn={} (n{}), dl_freq={} MHz, dl_ssb_arfcn={}, ul_freq={} MHz\n",
@@ -125,7 +125,7 @@ void gnb_console_helper::on_start_complete()
   fmt::print("Type <t> to view trace\n");
 }
 
-void gnb_console_helper::on_stop_begin()
+void gnb_console_helper::on_app_stopping()
 {
   fmt::print("Stopping ..\n");
 }

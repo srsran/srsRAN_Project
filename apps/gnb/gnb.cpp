@@ -446,6 +446,8 @@ int main(int argc, char** argv)
   e1_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1_message_handler(srsgnb::srs_cu_cp::uint_to_cu_up_index(0)));
   e1_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1_message_handler());
 
+  console.on_app_starting();
+
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
   cu_cp_obj->start();
@@ -597,9 +599,14 @@ int main(int argc, char** argv)
   lower->get_controller().start(*workers.rt_task_exec);
   gnb_logger.info("Lower PHY started successfully");
 
+  console.set_cells(du_hi_cfg.cells);
+  console.on_app_running();
+
   while (is_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+
+  console.on_app_stopping();
 
   gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();
