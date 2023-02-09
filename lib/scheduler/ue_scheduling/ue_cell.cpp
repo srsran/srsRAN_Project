@@ -87,7 +87,7 @@ ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl
                                                                   pdsch_cfg.nof_layers});
 
   const bwp_downlink_common& bwp_dl_cmn = ue_cfg.dl_bwp_common(active_bwp_id());
-  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length())};
+  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length()), prbs_tbs.tbs_bytes};
 }
 
 grant_prbs_mcs

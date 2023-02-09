@@ -162,6 +162,12 @@ static bool alloc_dl_ue(const ue&                    u,
           return false;
         }
 
+        logger.debug("PDSCH - CQI={} MCS={} bytes={} TBS={}",
+                     ue_cc.get_latest_wb_cqi(),
+                     mcs_prbs.mcs,
+                     mcs_prbs.mcs,
+                     mcs_prbs.tbs_bytes);
+
         const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
         bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.
         if (is_retx) {

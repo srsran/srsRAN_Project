@@ -25,6 +25,7 @@ struct grant_prbs_mcs {
   sch_mcs_index mcs;
   /// Number of PRBs to be allocated for the UE's PUSCH.
   unsigned n_prbs;
+  unsigned tbs_bytes;
 };
 
 /// \brief Context respective to a UE serving cell.
@@ -64,9 +65,10 @@ public:
 
   void set_latest_wb_cqi(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload)
   {
-    ue_metrics.latest_wb_cqi = (static_cast<unsigned>(payload.test(0)) << 3) +
-                               (static_cast<unsigned>(payload.test(1)) << 2) +
-                               (static_cast<unsigned>(payload.test(2)) << 1) + (static_cast<unsigned>(payload.test(4)));
+    ue_metrics.latest_wb_cqi = (static_cast<unsigned>(payload.test(payload.size() - 1)) << 3) +
+                               (static_cast<unsigned>(payload.test(payload.size() - 2)) << 2) +
+                               (static_cast<unsigned>(payload.test(payload.size() - 3)) << 1) +
+                               (static_cast<unsigned>(payload.test(payload.size() - 4)));
   }
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
