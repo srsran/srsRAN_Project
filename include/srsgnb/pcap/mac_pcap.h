@@ -14,6 +14,7 @@
 
 namespace srsgnb {
 
+// PCAP tags
 constexpr const char* MAC_NR_START_STRING            = "mac-nr";
 constexpr uint8_t     MAC_NR_PAYLOAD_TAG             = 0x01;
 constexpr uint8_t     MAC_NR_RNTI_TAG                = 0x02;
@@ -21,6 +22,27 @@ constexpr uint8_t     MAC_NR_UEID_TAG                = 0x03;
 constexpr uint8_t     MAC_NR_FRAME_SUBFRAME_TAG      = 0x04;
 constexpr uint8_t     MAC_NR_PHR_TYPE2_OTHERCELL_TAG = 0x05;
 constexpr uint8_t     MAC_NR_HARQID                  = 0x06;
+
+// Radio Type
+constexpr uint8_t PCAP_FDD_RADIO = 1;
+constexpr uint8_t PCAP_TDD_RADIO = 2;
+
+// Direction
+constexpr uint8_t PCAP_DIRECTION_UPLINK   = 0;
+constexpr uint8_t PCAP_DIRECTION_DOWNLINK = 1;
+
+// RNTI types
+constexpr uint8_t PCAP_NO_RNTI     = 0; /* Used for BCH-BCH */
+constexpr uint8_t PCAP_P_RNTI      = 1;
+constexpr uint8_t PCAP_RA_RNTI     = 2;
+constexpr uint8_t PCAP_C_RNTI      = 3;
+constexpr uint8_t PCAP_SI_RNTI     = 4;
+constexpr uint8_t PCAP_SPS_RNTI    = 5;
+constexpr uint8_t PCAP_M_RNTI      = 6;
+constexpr uint8_t PCAP_SL_BCH_RNTI = 7;
+constexpr uint8_t PCAP_SL_RNTI     = 8;
+constexpr uint8_t PCAP_SC_RNTI     = 9;
+constexpr uint8_t PCAP_G_RNTI      = 10;
 
 /* Context information for every MAC NR PDU that will be logged */
 typedef struct {

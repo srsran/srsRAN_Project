@@ -22,4 +22,4 @@ set(SOURCES mac_factory.cpp
             mac_dl/ssb_assembler.cpp)
 
 add_library(srsgnb_mac STATIC ${SOURCES})
-target_link_libraries(srsgnb_mac srsgnb_sched mac_configuration_helpers srsgnb_ran)
+target_link_libraries(srsgnb_mac srsgnb_sched mac_configuration_helpers srsgnb_ran srsgnb_pcap)

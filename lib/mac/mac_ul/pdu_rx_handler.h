@@ -17,6 +17,7 @@
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/pcap/mac_pcap.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
@@ -116,12 +117,15 @@ private:
   /// \return true if correctly handled.
   bool handle_crnti_ce(decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
 
+  bool write_rx_pdu_pcap(const slot_point& sl_rx, const mac_rx_pdu& pdu);
+
   mac_ul_ccch_notifier&       ccch_notifier;
   du_high_ue_executor_mapper& ue_exec_mapper;
   srslog::basic_logger&       logger;
   scheduler_feedback_handler& sched;
   mac_ul_ue_manager&          ue_manager;
   du_rnti_table&              rnti_table;
+  mac_pcap                    pcap;
 };
 
 } // namespace srsgnb
