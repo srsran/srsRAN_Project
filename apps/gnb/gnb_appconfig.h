@@ -86,7 +86,7 @@ struct pdsch_appconfig {
 /// PUSCH application configuration.
 struct pusch_appconfig {
   /// UE modulation and coding scheme index.
-  unsigned fixed_ue_mcs = 15;
+  unsigned fixed_ue_mcs = std::numeric_limits<unsigned>::max();
 };
 
 /// PUCCH application configuration.

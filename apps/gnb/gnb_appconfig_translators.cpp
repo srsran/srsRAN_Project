@@ -433,8 +433,10 @@ scheduler_expert_config srsgnb::generate_scheduler_expert_config(const gnb_appco
   // UE parameters.
   const pdsch_appconfig& pdsch = config.common_cell_cfg.pdsch_cfg;
   out_cfg.ue.fixed_dl_mcs      = pdsch.fixed_ue_mcs;
-  // NOTE: for setting static UL MCS, provide a value for out_cfg.ue.fixed_ul_mcs
-  // from config.common_cell_cfg.pusch_cfg.fixed_ue_mcs;
+  const pusch_appconfig& pusch = config.common_cell_cfg.pusch_cfg;
+  if (pusch.fixed_ue_mcs < sch_mcs_index::max()) {
+    out_cfg.ue.fixed_ul_mcs = pusch.fixed_ue_mcs;
+  }
 
   // RA parameters.
   const prach_appconfig& prach       = config.common_cell_cfg.prach_cfg;
