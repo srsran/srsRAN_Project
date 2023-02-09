@@ -159,6 +159,7 @@ static bool alloc_dl_ue(const ue&                    u,
                                             : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes(), dci_type);
 
         if (mcs_prbs.n_prbs == 0) {
+          logger.debug("PDSCH - No PRBs returned.");
           return false;
         }
 

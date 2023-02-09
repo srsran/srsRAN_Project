@@ -45,8 +45,8 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.pg.max_paging_retries  = 2;
 
   cfg.ue.max_nof_harq_retxs = 4;
-  cfg.ue.fixed_dl_mcs       = 10;
-  // NOTE: For setting static UL MCS, intialize cfg.ue.fixed_ul_mcs.
+  // cfg.ue.fixed_dl_mcs       = 10;
+  //  NOTE: For setting static UL MCS, intialize cfg.ue.fixed_ul_mcs.
   cfg.ue.default_dl_mcs = 10;
   cfg.ue.fixed_ul_mcs   = 10;
   /// Note: A MCS index of 7 can handle Msg4 of size 458 bytes.
