@@ -129,8 +129,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   auto           k1_list   = pucch_cfg.dl_data_to_ul_ack.empty() ? span<const uint8_t>{dl_data_to_ul_ack_f1_0}
                                                                  : span<const uint8_t>{pucch_cfg.dl_data_to_ul_ack};
   uci_allocation uci       = {};
-  for (uint8_t k1_candidate : k1_list) {
-    slot_point uci_slot = pdsch_alloc.slot + k1_candidate;
+  // Search for valid k1 in descending order so that the k1 are more uniformly distributed over time in the frame.
+  for (auto rit = k1_list.rbegin(); rit != k1_list.rend(); ++rit) {
+    uint8_t    k1_candidate = *rit;
+    slot_point uci_slot     = pdsch_alloc.slot + k1_candidate;
     if (not cell_cfg.is_ul_enabled(uci_slot)) {
       continue;
     }
