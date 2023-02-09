@@ -20,7 +20,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const pdcch_dl_information& pdcch : result.dl.dl_pdcchs) {
     fmt::format_to(fmtbuf,
-                   "\n- DL PDCCH: rnti={:#x} type={} format={} ncce={} L={} ",
+                   "\n- DL PDCCH: rnti={:#x} type={} format={} cce={} al={}",
                    pdcch.ctx.rnti,
                    dci_dl_rnti_config_rnti_type(pdcch.dci.type),
                    dci_dl_rnti_config_format(pdcch.dci.type),
@@ -30,18 +30,20 @@ void scheduler_result_logger::log_debug(const sched_result& result)
       case dci_dl_rnti_config_type::c_rnti_f1_0: {
         auto& dci = pdcch.dci.c_rnti_f1_0;
         fmt::format_to(fmtbuf,
-                       "dci: h_id={} ndi={} rv={}",
+                       "dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
                        dci.new_data_indicator,
-                       dci.redundancy_version);
+                       dci.redundancy_version,
+                       dci.modulation_coding_scheme);
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
         auto& dci = pdcch.dci.tc_rnti_f1_0;
         fmt::format_to(fmtbuf,
-                       "dci: h_id={} ndi={} rv={}",
+                       "dci: h_id={} ndi={} rv={} mcs={}",
                        dci.harq_process_number,
                        dci.new_data_indicator,
-                       dci.redundancy_version);
+                       dci.redundancy_version,
+                       dci.modulation_coding_scheme);
       } break;
       default:
         break;
@@ -49,7 +51,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const pdcch_ul_information& pdcch : result.dl.ul_pdcchs) {
     fmt::format_to(fmtbuf,
-                   "\n- UL PDCCH: rnti={:#x} rnti_type={} format={} ncce={} L={} ",
+                   "\n- UL PDCCH: rnti={:#x} rnti_type={} format={} cce={} al={}",
                    pdcch.ctx.rnti,
                    dci_ul_rnti_config_rnti_type(pdcch.dci.type),
                    dci_ul_rnti_config_format(pdcch.dci.type),
@@ -58,8 +60,12 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     switch (pdcch.dci.type) {
       case dci_ul_rnti_config_type::c_rnti_f0_0: {
         auto& dci = pdcch.dci.c_rnti_f0_0;
-        fmt::format_to(
-            fmtbuf, "h_id={} ndi={} rv={}", dci.harq_process_number, dci.new_data_indicator, dci.redundancy_version);
+        fmt::format_to(fmtbuf,
+                       "h_id={} ndi={} rv={} mcs={}",
+                       dci.harq_process_number,
+                       dci.new_data_indicator,
+                       dci.redundancy_version,
+                       dci.modulation_coding_scheme);
       } break;
       default:
         break;
