@@ -42,6 +42,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   sched_obj(sched_),
   ue_mng(ue_mng_)
 {
+  pcap.open("/tmp/mac2.pcap");
 }
 
 async_task<void> mac_cell_processor::start()
@@ -206,6 +207,8 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
     // Send DL Data to PHY.
     phy_cell.on_new_downlink_data(data_res);
+
+    write_tx_pdu_pcap(sl_tx, data_res);
   }
 
   // Send UL sched result to PHY.
@@ -341,3 +344,21 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
     }
   }
 }
+
+void mac_cell_processor::write_tx_pdu_pcap(const slot_point& sl_tx, const mac_dl_data_result& dl_res)
+{
+  for (const auto& ue_pdu : dl_res.ue_pdus) {
+    srsgnb::mac_nr_context_info context;
+    context.radioType           = PCAP_FDD_RADIO;
+    context.direction           = PCAP_DIRECTION_DOWNLINK;
+    context.rntiType            = PCAP_C_RNTI;
+    context.rnti                = 0;
+    context.ueid                = 0;
+    context.harqid              = 0;
+    context.system_frame_number = sl_tx.sfn();
+    context.sub_frame_number    = sl_tx.subframe_index();
+    context.length              = ue_pdu.pdu.size();
+    pcap.write_pdu(context, ue_pdu.pdu);
+  }
+}
+

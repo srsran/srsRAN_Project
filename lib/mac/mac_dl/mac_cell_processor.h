@@ -17,6 +17,7 @@
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/pcap/mac_pcap.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/support/memory_pool/ring_buffer_pool.h"
 
@@ -67,6 +68,8 @@ private:
   /// Update DL buffer states of the allocated DL bearers.
   void update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res);
 
+  void write_tx_pdu_pcap(const slot_point& sl_tx, const mac_dl_data_result& dl_res);
+
   srslog::basic_logger&           logger;
   const mac_cell_creation_request cell_cfg;
   task_executor&                  cell_exec;
@@ -90,6 +93,8 @@ private:
   /// Represents activation cell state.
   // Note: For now, cells start active.
   enum class cell_state { inactive, active } state = cell_state::active;
+
+  mac_pcap pcap;
 };
 
 } // namespace srsgnb
