@@ -119,6 +119,9 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   // > SSB scheduling.
   cell.ssb_sch.run_slot(cell.res_grid, sl_tx);
 
+  // > Schedule CSI-RS.
+  cell.csi_sch.run_slot(cell.res_grid[0]);
+
   // > Schedule DL signalling.
   cell.sib1_sch.schedule_sib1(cell.res_grid[0], sl_tx);
 

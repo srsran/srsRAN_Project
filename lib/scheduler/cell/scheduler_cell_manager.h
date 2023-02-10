@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../common_scheduling/csi_rs_scheduler.h"
 #include "../common_scheduling/paging_scheduler.h"
 #include "../common_scheduling/prach_scheduler.h"
 #include "../common_scheduling/ra_scheduler.h"
@@ -36,6 +37,7 @@ public:
     res_grid(cell_cfg),
     ssb_sch(cell_cfg),
     pdcch_sch(cell_cfg),
+    csi_sch(cell_cfg),
     ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch, ev_logger),
     prach_sch(cell_cfg),
     pucch_alloc(cell_cfg),
@@ -58,6 +60,7 @@ public:
 
   ssb_scheduler                 ssb_sch;
   pdcch_resource_allocator_impl pdcch_sch;
+  csi_rs_scheduler              csi_sch;
   ra_scheduler                  ra_sch;
   prach_scheduler               prach_sch;
   pucch_allocator_impl          pucch_alloc;
