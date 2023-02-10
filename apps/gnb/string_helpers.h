@@ -20,7 +20,7 @@ namespace srsgnb {
 /// \param delimiter Character used for indicating the end of the strings
 /// \param list contains the parsed values
 template <class Insertable>
-static inline void string_parse_list(const std::string& input, char delimiter, Insertable& list)
+inline void string_parse_list(const std::string& input, char delimiter, Insertable& list)
 {
   std::stringstream ss(input);
 
