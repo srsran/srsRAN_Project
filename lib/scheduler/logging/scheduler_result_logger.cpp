@@ -73,7 +73,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
 
   for (const sib_information& sib : result.dl.bc.sibs) {
     fmt::format_to(fmtbuf,
-                   "\n- SI{} PDSCH: prbs={} symb={} tbs={} mcs={} rv={}",
+                   "\n- SI{} PDSCH: prb={} symb={} tbs={} mcs={} rv={}",
                    sib.si_indicator == sib_information::sib1 ? "B1" : "",
                    sib.pdsch_cfg.prbs.prbs(),
                    sib.pdsch_cfg.symbols,
@@ -83,7 +83,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const rar_information& rar : result.dl.rar_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- RAR PDSCH: ra-rnti={:#x} prbs={} symb={} tbs={} mcs={} rv={} grants ({}): ",
+                   "\n- RAR PDSCH: ra-rnti={:#x} prb={} symb={} tbs={} mcs={} rv={} grants ({}): ",
                    rar.pdsch_cfg.rnti,
                    rar.pdsch_cfg.prbs.prbs(),
                    rar.pdsch_cfg.symbols,
@@ -102,7 +102,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const dl_msg_alloc& ue_dl_grant : result.dl.ue_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- UE PDSCH: c-rnti={:#x} prbs={} symb={} tbs={} mcs={} rv={} grants: ",
+                   "\n- UE PDSCH: c-rnti={:#x} prb={} symb={} tbs={} mcs={} rv={} grants: ",
                    ue_dl_grant.pdsch_cfg.rnti,
                    ue_dl_grant.pdsch_cfg.prbs.prbs(),
                    ue_dl_grant.pdsch_cfg.symbols,
@@ -116,7 +116,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   for (const dl_paging_allocation& pg : result.dl.paging_grants) {
     fmt::format_to(
         fmtbuf,
-        "\n- PCCH: pg{}, pg-id={:#x}, prbs={}, symb={}, tbs={}, mcs={}, rv={}",
+        "\n- PCCH: pg{}, pg-id={:#x}, prb={}, symb={}, tbs={}, mcs={}, rv={}",
         pg.paging_type_indicator == dl_paging_allocation::paging_identity_type::cn_ue_paging_identity ? "cn" : "ran",
         pg.paging_identity,
         pg.pdsch_cfg.prbs.prbs(),
@@ -128,7 +128,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
 
   for (const ul_sched_info& ul_info : result.ul.puschs) {
     fmt::format_to(fmtbuf,
-                   "\n- PUSCH: c-rnti={:#x} h_id={} prbs={} symb={} tbs={} rv={}",
+                   "\n- PUSCH: c-rnti={:#x} h_id={} prb={} symb={} tbs={} rv={}",
                    ul_info.pusch_cfg.rnti,
                    ul_info.pusch_cfg.harq_id,
                    ul_info.pusch_cfg.prbs.prbs(),
@@ -158,7 +158,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
     if (pucch.resources.second_hop_prbs.empty()) {
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symb={}, uci: harq_bits={} sr={} csi-1_bits={}",
+                     "\n- PUCCH: c-rnti={:#x}, format={}, prb={}, symb={}, uci: harq_bits={} sr={} csi-1_bits={}",
                      pucch.crnti,
                      pucch.format,
                      pucch.resources.prbs,
@@ -168,7 +168,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                      nof_csi_part1_bits);
     } else {
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symb={}, second_prbs={}, uci: harq_bits={} sr={} "
+                     "\n- PUCCH: c-rnti={:#x}, format={}, prb={}, symb={}, second_prbs={}, uci: harq_bits={} sr={} "
                      "csi-1_bits={}",
                      pucch.crnti,
                      pucch.format,
@@ -191,7 +191,7 @@ void scheduler_result_logger::log_info(const sched_result& result)
 {
   for (const sib_information& sib_info : result.dl.bc.sibs) {
     fmt::format_to(fmtbuf,
-                   "{}SI{}: prbs={} tbs={}",
+                   "{}SI{}: prb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    sib_info.si_indicator == sib_information::sib1 ? "B1" : "",
                    sib_info.pdsch_cfg.prbs.prbs(),
@@ -199,7 +199,7 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
   for (const rar_information& rar_info : result.dl.rar_grants) {
     fmt::format_to(fmtbuf,
-                   "{}RAR: ra-rnti={:#x} prbs={} tbs={}",
+                   "{}RAR: ra-rnti={:#x} prb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    rar_info.pdsch_cfg.rnti,
                    rar_info.pdsch_cfg.prbs.prbs(),
@@ -207,7 +207,7 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
   for (const dl_msg_alloc& ue_msg : result.dl.ue_grants) {
     fmt::format_to(fmtbuf,
-                   "{}DL: c-rnti={:#x} prbs={} tbs={}",
+                   "{}DL: c-rnti={:#x} prb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    ue_msg.pdsch_cfg.rnti,
                    ue_msg.pdsch_cfg.prbs.prbs(),
@@ -215,7 +215,7 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
   for (const ul_sched_info& ue_msg : result.ul.puschs) {
     fmt::format_to(fmtbuf,
-                   "{}UL: rnti={:#x} h_id={} prbs={} tbs={}",
+                   "{}UL: rnti={:#x} h_id={} prb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    ue_msg.pusch_cfg.rnti,
                    ue_msg.pusch_cfg.harq_id,
@@ -224,7 +224,7 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
   for (const dl_paging_allocation& pg_info : result.dl.paging_grants) {
     fmt::format_to(fmtbuf,
-                   "{}PG{}: pg-id={:#x} prbs={} tbs={}",
+                   "{}PG{}: pg-id={:#x} prb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    pg_info.paging_type_indicator == dl_paging_allocation::paging_identity_type::cn_ue_paging_identity
                        ? "cn"
