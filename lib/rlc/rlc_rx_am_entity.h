@@ -211,17 +211,30 @@ private:
   ///
   /// \param header The header of the PDU, used for sanity check
   /// \param payload The PDU payload, i.e. the SDU
-  void handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
+  /// \return True if SDU was stored. False otherwise (i.e. SDU was dropped).
+  bool handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
 
   /// Handles a received data PDU which contains an SDU segment, puts it into the receive window if required,
   /// reassembles the SDU if possible and forwards it to upper layer.
   ///
   /// \param header The header of the PDU, used for sanity check and tracking of the segment offset
   /// \param payload The PDU payload, i.e. the SDU segment
-  void handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
+  /// \return True if segment was added and repository was changed. False otherwise (i.e. new segment was dropped).
+  bool handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
 
-  void store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu_segment new_segment);
+  /// Stores a newly received SDU segment and avoids overlapping bytes.
+  /// Overlaps are prevented by either trimming the new or previously received segment; or dropping the new segment
+  /// entirely if all of its bytes are already present.
+  ///
+  /// \param sdu_info Container/Info object of the associated SDU
+  /// \param new_segment The newly received SDU segment
+  /// \return True if segment was added and repository was changed. False otherwise (i.e. new segment was dropped).
+  bool store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu_segment new_segment);
 
+  /// Iterates the received SDU segments to check whether it is fully received and whether the received segments are
+  /// contiguous or have gaps.
+  ///
+  /// \param rx_sdu Container/Info object to be inspected
   void update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const;
 
   /// Rebuilds the cached status_report according to missing SDUs and SDU segments in rx_window

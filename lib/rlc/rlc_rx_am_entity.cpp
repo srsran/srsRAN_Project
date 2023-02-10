@@ -136,11 +136,10 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
 
   // Write to rx window either full SDU or SDU segment
   if (header.si == rlc_si_field::full_sdu) {
-    handle_full_data_sdu(header, std::move(payload));
+    status_changed = handle_full_data_sdu(header, std::move(payload));
   } else {
-    handle_segment_data_sdu(header, std::move(payload));
+    status_changed = handle_segment_data_sdu(header, std::move(payload));
   }
-  status_changed = true;
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -272,11 +271,11 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   }
 }
 
-void rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
+bool rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
 {
   if (header.si != rlc_si_field::full_sdu) {
     logger.log_error("Called {} with SDU segment. header={}, payload_len={}", __FUNCTION__, header, payload.length());
-    return;
+    return false;
   }
 
   // Log full SDU reception
@@ -290,13 +289,14 @@ void rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byt
   rx_sdu.sdu            = std::move(payload);
   rx_sdu.fully_received = true;
   rx_sdu.has_gap        = false;
+  return true;
 }
 
-void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
+bool rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload)
 {
   if (header.si == rlc_si_field::full_sdu) {
     logger.log_error("Called {} with full SDU. header={}, payload_len={}", __FUNCTION__, header, payload.length());
-    return;
+    return false;
   }
 
   // Log SDU segment reception
@@ -312,7 +312,7 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
   segment.payload               = std::move(payload);
 
   // Store SDU segment. Sort by SO and check for duplicate bytes.
-  store_segment(rx_sdu, std::move(segment));
+  bool stored = store_segment(rx_sdu, std::move(segment));
 
   // Check whether all segments have been received
   update_segment_inventory(rx_sdu);
@@ -327,9 +327,10 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
     rx_sdu.segments.clear();
     logger.log_debug("Assembled SDU from segments. SN={}, sdu_len={}", header.sn, rx_sdu.sdu.length());
   }
+  return stored;
 }
 
-void rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu_segment new_segment)
+bool rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu_segment new_segment)
 {
   // Section 5.2.3.2.2, discard segments with overlapping bytes
 
@@ -347,8 +348,8 @@ void rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu
       // new segment starts within current segment
       if (new_last_byte <= cur_last_byte) {
         // new segment ends before or at the end of current segment
-        // discard new segment and return
-        return;
+        // discard new segment and return false
+        return false;
       } else {
         // new segment ends after the end of current segment
         // trim new segment
@@ -388,6 +389,7 @@ void rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu
   }
   // insert new segment as close as possible before current segment - this is faster than plain insert
   sdu_info.segments.insert(cur_segment, std::move(new_segment));
+  return true;
 }
 
 void rlc_rx_am_entity::update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const
