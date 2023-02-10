@@ -592,7 +592,8 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   pdcch_ul_information* pdcch =
       pdcch_sch.alloc_ul_pdcch_common(pdcch_alloc, msg3_ctx.preamble.tc_rnti, ss_id, aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.warning("Failed to schedule PDCCH for Msg3 retx");
+    logger.debug("tc-rnti={:#x}: Failed to schedule PDCCH for Msg3 retx. Retrying it in a later slot",
+                 msg3_ctx.preamble.tc_rnti);
     return;
   }
 

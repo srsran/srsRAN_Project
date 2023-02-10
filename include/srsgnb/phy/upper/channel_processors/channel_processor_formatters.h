@@ -718,7 +718,7 @@ struct formatter<srsgnb::pusch_processor::codeword_description> {
   {
     helper.format_always(ctx, "rv={}", codeword.value().rv);
     helper.format_if_verbose(ctx, "bg={}", codeword.value().ldpc_base_graph);
-    helper.format_always(ctx, "ndi={}", codeword.value().new_data);
+    helper.format_always(ctx, "new_data={}", codeword.value().new_data);
 
     return ctx.out();
   }
