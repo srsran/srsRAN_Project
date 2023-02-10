@@ -306,6 +306,7 @@ int main(int argc, char** argv)
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());
+  app.allow_config_extras(CLI::config_extras_mode::error);
   // Fill the generic application arguments to parse.
   populate_cli11_generic_args(app);
 

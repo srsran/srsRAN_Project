@@ -391,6 +391,7 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
         for (unsigned i = 0, e = values.size(); i != e; ++i) {
           CLI::App subapp("srsGNB application");
           subapp.config_formatter(create_yaml_config_parser());
+          subapp.allow_config_extras(CLI::config_extras_mode::error);
           configure_cli11_cells_args(subapp, gnb_cfg.cells_cfg[i]);
           std::istringstream ss(values[i]);
           subapp.parse_from_stream(ss);
@@ -407,6 +408,7 @@ void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
       CLI::App subapp("QoS parameters");
       subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::error);
       configure_cli11_qos_args(subapp, gnb_cfg.qos_cfg[i]);
       std::istringstream ss(values[i]);
       subapp.parse_from_stream(ss);
