@@ -35,6 +35,12 @@ constexpr inline unsigned bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1 b
   return static_cast<unsigned>(bw);
 }
 
+/// Converts the actual BW value in MHz to the BS channel bandwidth label.
+constexpr inline bs_channel_bandwidth_fr1 MHz_to_bs_channel_bandwidth(unsigned bw)
+{
+  return static_cast<bs_channel_bandwidth_fr1>(bw);
+}
+
 /// Labels for the <em>Minimum Channel Bandwidth for FR1<\em>. This is not explicitly defined in the TS, but it is used
 /// by TS 38.213, Section 13 for the Coreset 0 configuration. As per TS 38.104, Table 5.3.5-1, there are three possible
 /// minimum BW: 5MHz, 10MHz, and 40MHz.
