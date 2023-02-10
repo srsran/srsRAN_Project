@@ -12,6 +12,37 @@
 
 using namespace srsgnb;
 
+const unsigned CQI_TABLE_SIZE = 16;
+
+// The table below performs the mapping of the CQI into the closest MCS, based on the corresponding spectral efficiency.
+// The mapping works as follows:
+// - With respect to TS 38.214 V15.14.0,
+//   CQI_table_idx:
+//                1 -> Table 5.2.2.1-2.
+//                2 -> Table 5.2.2.1-3.
+//                3 -> Table 5.2.2.1-4.
+// - With respect to TS 38.214 V15.14.0,
+//   MCS_table_idx:
+//                1 -> Table 5.1.3.1-1.
+//                2 -> Table 5.1.3.1-2.
+//                3 -> Table 5.1.3.1-3
+// - it is assumed that MCS_table_idx == CQI_table_idx, which is given by \c mcs_table, as per TS 38.331.
+// - select spectral efficiency from the CQI from tables Table 5.2.2.1-2, Table 5.2.2.1-3, or Table 5.2.2.1-4.
+// - select MCS corresponding to same spectral efficiency from Table 5.1.3.1-1, Table 5.1.3.1-2, or Table 5.1.3.1-3..
+//
+// The array cqi_to_mcs_table[MCS_table_idx][CQI] provides the mapping of the CQI to the MCS corresponding, based on
+// MCS_table_idx.
+static const int cqi_to_mcs_table[3][CQI_TABLE_SIZE] = {
+    // clang-format off
+    // CQI Table 1 and MCS_table_idx 1
+    {-1, 0, 0, 2, 4, 6, 8, 11, 13, 15, 18, 20, 22, 24, 26, 28},
+    // CQI Table 2 and MCS_table_idx 2
+    {-1, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27},
+    // CQI Table 3 and MCS_table_idx 3
+    {-1, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28}
+    // clang-format on
+};
+
 // TODO: This table is temporary. Note that we might eventually change this table for a SNR vs Spectral Efficiency
 //       table.
 // This table contains the minimum required SNR for a given MCS index; the n-th (n = {0, ..., size - 1}) element of the
@@ -26,6 +57,28 @@ static const std::array<double, 29> ul_snr_mcs_table = {
      13.0250, 13.8375, 14.7160, 15.6525, 16.3725,  17.1450,  17.9175, 18.7425, 20.191
     // clang-format on
 };
+
+optional<sch_mcs_index> srsgnb::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table)
+{
+  optional<sch_mcs_index> mcs;
+  if (cqi == 0 or cqi >= CQI_TABLE_SIZE) {
+    return nullopt;
+  }
+
+  switch (mcs_table) {
+    case pdsch_mcs_table::qam64:
+      return mcs.emplace(cqi_to_mcs_table[0][static_cast<size_t>(cqi)]);
+    case pdsch_mcs_table::qam256:
+      return cqi_to_mcs_table[1][static_cast<size_t>(cqi)];
+    case pdsch_mcs_table::qam64LowSe:
+      return cqi_to_mcs_table[2][static_cast<size_t>(cqi)];
+    default:
+      break;
+  }
+
+  // NOTE: if the MCS needs to be tweaked to compensate for any low BLER, do it here.
+  return mcs;
+}
 
 sch_mcs_index srsgnb::map_snr_to_mcs_ul(double snr)
 {

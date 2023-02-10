@@ -10,9 +10,20 @@
 
 #pragma once
 
+#include "srsgnb/adt/optional.h"
+#include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/ran/sch_mcs.h"
 
 namespace srsgnb {
+
+/// \brief Performs CQI to MCS mapping - for DL.
+///
+/// This is based on Tables 5.2.2.1-2, 5.2.2.1-3, 5.2.2.1-4 and Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, TS 38.214.
+///
+/// \param[in] cqi CQI reported by the UE.
+/// \param[in] mcs_table MCS table to be used for the mapping.
+/// \return The MCS corresponding to map.
+optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table);
 
 /// \brief Maps the (PUSCH) SNR to a given MCS for PUSCH.
 ///

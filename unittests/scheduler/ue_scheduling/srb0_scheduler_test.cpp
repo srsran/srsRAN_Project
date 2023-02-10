@@ -134,7 +134,7 @@ protected:
     cfg.fixed_dl_mcs.emplace(10);
     cfg.fixed_ul_mcs.emplace(10);
     cfg.max_nof_harq_retxs = 4;
-    cfg.max_msg4_mcs = max_msg4_mcs_index;
+    cfg.max_msg4_mcs       = max_msg4_mcs_index;
     return cfg;
   }
 

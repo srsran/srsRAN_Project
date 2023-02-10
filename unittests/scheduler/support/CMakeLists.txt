@@ -18,10 +18,6 @@ add_executable(pdsch_dmrs_symbol_mask_test pdsch/pdsch_dmrs_symbol_mask_test.cpp
 target_link_libraries(pdsch_dmrs_symbol_mask_test srsgnb_sched srslog gtest gtest_main)
 add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
 
-add_executable(cqi_to_mcs_mapper_test pdsch/cqi_to_mcs_mapper_test.cpp)
-target_link_libraries(cqi_to_mcs_mapper_test srsgnb_sched srslog gtest gtest_main)
-add_test(cqi_to_mcs_mapper_test cqi_to_mcs_mapper_test)
-
 add_executable(pucch_default_resource_test pucch/pucch_default_resource_test.cpp)
 target_link_libraries(pucch_default_resource_test srsgnb_sched srslog gtest gtest_main)
 add_test(pucch_default_resource_test pucch_default_resource_test)

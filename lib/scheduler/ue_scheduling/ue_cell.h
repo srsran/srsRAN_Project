@@ -25,7 +25,6 @@ struct grant_prbs_mcs {
   sch_mcs_index mcs;
   /// Number of PRBs to be allocated for the UE's PUSCH.
   unsigned n_prbs;
-  unsigned tbs_bytes;
 };
 
 /// \brief Context respective to a UE serving cell.

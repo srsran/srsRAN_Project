@@ -206,8 +206,8 @@ optional<sch_mcs_tbs> srsgnb::compute_dl_mcs_tbs(const pdsch_config_params&   pd
     return nullopt;
   }
 
-  optional<sch_mcs_tbs>      output;
-  const unsigned             tbs_bytes = tbs_bits / NOF_BITS_PER_BYTE;
+  optional<sch_mcs_tbs> output;
+  const unsigned        tbs_bytes = tbs_bits / NOF_BITS_PER_BYTE;
   return output.emplace(sch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes});
 }
 

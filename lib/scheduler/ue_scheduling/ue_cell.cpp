@@ -11,7 +11,6 @@
 #include "ue_cell.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/mcs_calculator.h"
-#include "../support/pdsch/cqi_to_mcs_mapper.h"
 #include "../support/prbs_calculator.h"
 #include "../ue_scheduling/ue_sch_pdu_builder.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
@@ -71,8 +70,9 @@ ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  // TODO: initialize this to a proper default value for when the UE has CQI = 0.
-  sch_mcs_index mcs{expert_cfg.default_dl_mcs};
+  // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
+  // value.
+  sch_mcs_index mcs{0};
   if (expert_cfg.fixed_dl_mcs.has_value()) {
     mcs = expert_cfg.fixed_dl_mcs.value();
   } else {
@@ -98,7 +98,7 @@ ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl
                                                                   pdsch_cfg.nof_layers});
 
   const bwp_downlink_common& bwp_dl_cmn = ue_cfg.dl_bwp_common(active_bwp_id());
-  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length()), prbs_tbs.tbs_bytes};
+  return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length())};
 }
 
 grant_prbs_mcs

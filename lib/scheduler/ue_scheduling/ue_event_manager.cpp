@@ -223,7 +223,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       // Process DL HARQ ACKs.
       if (pdu.harqs.size() > 0) {
         cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, harq_bits = pdu.harqs](ue_cell& ue_cc) {
+            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, &harq_bits = pdu.harqs](ue_cell& ue_cc) {
               handle_harq_ind(ue_cc, uci_sl, harq_bits);
             });
       }
@@ -231,9 +231,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       // Process CSI part 1 bits. NOTE: we assume there are only 4 bits, which represent the CQI.
       if (pdu.csi_part1.size() > 0) {
         cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) {
-              ue_cc.set_latest_wb_cqi(csi_1_bits);
-            });
+            ind.ucis[i].ue_index,
+            [&csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) { ue_cc.set_latest_wb_cqi(csi_1_bits); });
       }
     } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(ind.ucis[i].pdu)) {
       const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(ind.ucis[i].pdu);
