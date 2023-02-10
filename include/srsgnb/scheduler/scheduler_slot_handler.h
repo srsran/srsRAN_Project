@@ -15,6 +15,7 @@
 #include "scheduler_dci.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/mac/lcid_dl_sch.h"
+#include "srsgnb/ran/csi_rs/csi_rs_types.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/modulation_scheme.h"
@@ -312,13 +313,15 @@ struct csi_rs_info {
   const bwp_configuration* bwp_cfg;
   crb_interval             crbs;
   enum class csi_type { trs, csi_rs_nzp, csi_rs_zp } type;
-  unsigned           row;
-  bounded_bitset<12> freq_domain;
-  uint8_t            symbol0;
-  uint8_t            symbol1;
-  enum class cdm_type_t { no_cdm, fd_cdm2, cdm4_fd2_td2, cdm8_fd2_td4 } cdm_type;
-  enum class freq_density_t { dot5_even_rb, dot5_odd_rb, one, three } freq_density;
-  uint16_t scrambling_id;
+  uint8_t                  row;
+  bounded_bitset<12>       freq_domain;
+  uint8_t                  symbol0;
+  uint8_t                  symbol1;
+  csi_rs_cdm_type          cdm_type;
+  csi_rs_freq_density_type freq_density;
+  uint16_t                 scrambling_id;
+  uint8_t                  power_ctrl_offset_profile_nr;
+  uint8_t                  power_ctrl_offset_ss_profile_nr;
 };
 
 struct dl_sched_result {

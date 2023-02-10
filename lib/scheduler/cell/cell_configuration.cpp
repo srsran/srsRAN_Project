@@ -30,6 +30,7 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   ssb_cfg(msg.ssb_config),
   dmrs_typeA_pos(msg.dmrs_typeA_pos),
   pucch_guardbands(msg.pucch_guardbands),
+  nzp_csi_res(msg.nzp_csi_res),
   // SSB derived params.
   ssb_case(ssb_get_ssb_pattern(msg.ssb_config.scs, msg.dl_carrier.arfcn)),
   paired_spectrum(band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn))),

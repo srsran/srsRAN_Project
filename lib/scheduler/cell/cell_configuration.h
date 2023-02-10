@@ -43,6 +43,9 @@ public:
   /// List of PUCCH guardbands;
   const std::vector<sched_grid_resource> pucch_guardbands;
 
+  /// CSI-RS scheduling parameters.
+  optional<nzp_csi_rs_resource> nzp_csi_res;
+
   // Derived Parameters.
   ssb_pattern_case ssb_case;
   bool             paired_spectrum;

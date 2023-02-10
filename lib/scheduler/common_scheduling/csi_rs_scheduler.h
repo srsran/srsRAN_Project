@@ -18,12 +18,14 @@ namespace srsgnb {
 class csi_rs_scheduler
 {
 public:
-  csi_rs_scheduler(const cell_configuration& cell_cfg);
+  explicit csi_rs_scheduler(const cell_configuration& cell_cfg);
 
   void run_slot(cell_slot_resource_allocator& res_grid);
 
 private:
   const cell_configuration& cell_cfg;
+
+  const optional<const csi_rs_info> cached_csi_rs;
 };
 
 } // namespace srsgnb

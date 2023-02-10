@@ -67,19 +67,19 @@ struct csi_rs_resource_mapping {
 /// periodic and semi-persistent reporting on PUCCH.
 /// \remark See TS 38.331, \c CSI-ResourcePeriodicityAndOffset.
 enum class csi_resource_periodicity {
-  slots4,
-  slots5,
-  slots8,
-  slots10,
-  slots16,
-  slots20,
-  slots32,
-  slots40,
-  slots64,
-  slots80,
-  slots160,
-  slots320,
-  slots640
+  slots4   = 4,
+  slots5   = 5,
+  slots8   = 8,
+  slots10  = 10,
+  slots16  = 16,
+  slots20  = 20,
+  slots32  = 32,
+  slots40  = 40,
+  slots64  = 64,
+  slots80  = 80,
+  slots160 = 160,
+  slots320 = 320,
+  slots640 = 640
 };
 
 /// \brief NZP-CSI-RS-Resource is used to configure Non-Zero-Power (NZP) CSI-RS transmitted in the cell.
