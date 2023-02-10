@@ -68,7 +68,7 @@ private:
   /// Update DL buffer states of the allocated DL bearers.
   void update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res);
 
-  void write_tx_pdu_pcap(const slot_point& sl_tx, const mac_dl_data_result& dl_res);
+  void write_tx_pdu_pcap(const slot_point& sl_tx, const sched_result* sl_res, const mac_dl_data_result& dl_res);
 
   srslog::basic_logger&           logger;
   const mac_cell_creation_request cell_cfg;
