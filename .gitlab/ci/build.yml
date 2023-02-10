@@ -192,6 +192,11 @@ stages:
         TEST_MODE: default
         COMPILER: gcc
         BUILD_TYPE: Release
+      - OS: ubuntu-22.04
+        TEST_MODE: tsan
+        COMPILER: clang
+        BUILD_TYPE: Debug
+        ENABLE_TSAN: "True"
 
 build cached:
   extends: .build_and_unit_main
@@ -447,19 +452,6 @@ sanitizers [asan]:
     COMPILER: gcc
     BUILD_TYPE: Debug
     ENABLE_ASAN: "True"
-    ASSERT_LEVEL: PARANOID
-  cache: []
-
-sanitizers [tsan]:
-  extends: .build_and_unit
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: tsan
-    COMPILER: clang
-    BUILD_TYPE: Debug
-    ENABLE_TSAN: "True"
     ASSERT_LEVEL: PARANOID
   cache: []
 
