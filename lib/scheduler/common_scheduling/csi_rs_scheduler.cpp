@@ -54,6 +54,9 @@ void csi_rs_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
   if (not cached_csi_rs.has_value()) {
     return;
   }
+  if (not cell_cfg.is_dl_enabled(res_grid.slot)) {
+    return;
+  }
 
   slot_point sl_tx = res_grid.slot;
 

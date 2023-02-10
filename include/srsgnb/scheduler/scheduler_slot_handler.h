@@ -311,17 +311,26 @@ struct dl_paging_allocation {
 /// Stores the information associated with a CSI-RS signalling.
 struct csi_rs_info {
   const bwp_configuration* bwp_cfg;
-  crb_interval             crbs;
-  csi_rs_type              type;
-  uint8_t                  row;
-  bounded_bitset<12>       freq_domain;
-  uint8_t                  symbol0;
+  /// Range of RBs where this CSI resource starts and ends, with relation to CRB#0. Only multiples of 4 are allowed.
+  crb_interval crbs;
+  csi_rs_type  type;
+  /// \brief Row entry into the CSI Resource location table, as per 3GP TS 38.211, sec 7.4.1.5.3 and table 7.4.1.5.3-1.
+  /// Values: {1,...,18}.
+  uint8_t row;
+  /// \brief Bitmap defining the frequencyDomainAllocation as per 3GPP TS 38.211, sec 7.4.1.5.3 and 3GPP TS 38.331
+  /// "CSIResource Mapping".
+  bounded_bitset<12> freq_domain;
+  /// \brief The time domain location l0 and firstOFDMSymbolInTimeDomain as per 3GPP TS 38.211, sec 7.4.1.5.3.
+  /// Values: {0,...,13}.
+  uint8_t symbol0;
+  /// \brief The time domain location l1 and firstOFDMSymbolInTimeDomain2 as per 3GPP TS 38.211, sec 7.4.1.5.3.
   uint8_t                  symbol1;
   csi_rs_cdm_type          cdm_type;
   csi_rs_freq_density_type freq_density;
-  uint16_t                 scrambling_id;
-  uint8_t                  power_ctrl_offset_profile_nr;
-  uint8_t                  power_ctrl_offset_ss_profile_nr;
+  /// \brief ScramblingID of the CSI-RS as per 3GPP TS 38.214, sec 5.2.2.3.1. Values: {0,...,1023}.
+  uint16_t scrambling_id;
+  uint8_t  power_ctrl_offset_profile_nr;
+  uint8_t  power_ctrl_offset_ss_profile_nr;
 };
 
 struct dl_sched_result {
