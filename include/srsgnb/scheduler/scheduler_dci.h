@@ -59,7 +59,7 @@ inline const char* dci_dl_rnti_config_rnti_type(dci_dl_rnti_config_type type)
 
 inline const char* dci_dl_rnti_config_format(dci_dl_rnti_config_type type)
 {
-  return "f1_0";
+  return "1_0";
 }
 
 /// \brief Describes an unpacked DL DCI message.
@@ -88,7 +88,7 @@ inline const char* dci_ul_rnti_config_rnti_type(dci_ul_rnti_config_type type)
 
 inline const char* dci_ul_rnti_config_format(dci_ul_rnti_config_type type)
 {
-  return "f0_0";
+  return "0_0";
 }
 
 struct dci_ul_info {

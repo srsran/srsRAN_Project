@@ -99,7 +99,7 @@ static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pu
       fill_format2_parameters(builder, mac_pdu);
       break;
     default:
-      srsgnb_assert(0, "Invalid PUCCH format= {}", mac_pdu.format);
+      srsgnb_assert(0, "Invalid PUCCH format={}", mac_pdu.format);
   }
 }
 
