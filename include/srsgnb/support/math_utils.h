@@ -28,8 +28,8 @@ static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
 
 /// \brief Performs an integer division rounding up.
 ///
-/// \param[in] num Provides the numerator.
-/// \param[out] den Provides the denominator.
+/// \param[in]  num Numerator.
+/// \param[out] den Denominator.
 /// \return The result of the operation.
 inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
 {
@@ -39,8 +39,8 @@ inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
 
 /// \brief Performs an integer division rounding to the nearest integer.
 ///
-/// \param[in] num Provides the numerator.
-/// \param[out] den Provides the denominator.
+/// \param[in]  num Numerator.
+/// \param[out] den Denominator.
 /// \return The result of the operation.
 inline constexpr unsigned divide_round(unsigned num, unsigned den)
 {

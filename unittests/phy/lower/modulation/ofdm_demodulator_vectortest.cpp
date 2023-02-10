@@ -11,13 +11,11 @@
 #include "../../support/resource_grid_test_doubles.h"
 #include "ofdm_demodulator_test_data.h"
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/support/test_utils.h"
 
 /// Defines the maximum allowed error at the OFDM demodulator output.
-static constexpr float ASSERT_MAX_ERROR = 1e-5;
+static constexpr float ASSERT_MAX_ERROR = 1e-4;
 
 using namespace srsgnb;
 

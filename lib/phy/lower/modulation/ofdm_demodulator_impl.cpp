@@ -48,7 +48,7 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
   if (ofdm_config.nof_samples_window_offset != 0) {
     // Verify the window is valid.
     srsgnb_assert(ofdm_config.nof_samples_window_offset < (144 * ofdm_config.dft_size) / 2048,
-                  "The DFT window offset (i.e., {}) must lower than {}.",
+                  "The DFT window offset (i.e., {}) must be lower than {}.",
                   ofdm_config.nof_samples_window_offset,
                   (144 * ofdm_config.dft_size) / 2048);
 
