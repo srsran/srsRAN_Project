@@ -78,7 +78,7 @@ struct sched_cell_configuration_request_message {
   std::vector<sched_grid_resource> pucch_guardbands;
 
   /// CSI-RS scheduling parameters.
-  nzp_csi_rs_resource nzp_csi_res;
+  optional<nzp_csi_rs_resource> nzp_csi_res;
 };
 
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.

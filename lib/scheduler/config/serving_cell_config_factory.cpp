@@ -502,7 +502,7 @@ nzp_csi_rs_resource srsgnb::config_helpers::make_default_nzp_csi_rs_resource(con
   res.pwr_ctrl_offset       = 0;
   res.pwr_ctrl_offset_ss_db = 0;
   // TODO: Set correct scrambling id.
-  res.scrambling_id = 0;
+  res.scrambling_id = 500;
 
   res.csi_res_period = csi_resource_periodicity::slots320;
   res.csi_res_offset = 11;
@@ -599,15 +599,6 @@ csi_meas_config srsgnb::config_helpers::make_default_csi_meas_config(const cell_
   // NZP-CSI-RS-Resource.
   // Resource 0.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
-  auto fd_alloc = csi_rs_resource_mapping::fd_alloc_other(6);
-  // '100000'B.
-  fd_alloc.set(5);
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc     = fd_alloc;
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.nof_ports    = 2;
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.cdm          = csi_rs_cdm_type::fd_CDM2;
-  meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::one;
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_period           = csi_resource_periodicity::slots320;
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 1;
 
   // NZP-CSI-RS-ResourceSet.
   // Resource Set 0.
@@ -670,8 +661,9 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   serv_cell.pdsch_serv_cell_cfg.emplace(make_default_pdsch_serving_cell_config());
 
   // > CSI-MeasConfig.
-  // TODO: add here serv_cell.csi_meas_cfg.emplace(make_default_csi_meas_config(params)); for
-  // band_helper::is_paired_spectrum(get_band(params)) only
+  if (params.csi_rs_enabled) {
+    serv_cell.csi_meas_cfg.emplace(make_default_csi_meas_config(params));
+  }
 
   return serv_cell;
 }
