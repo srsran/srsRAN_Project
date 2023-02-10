@@ -18,7 +18,7 @@ namespace srs_cu_cp {
 
 inline void handle_nas_pdu(srslog::basic_logger& logger, const asn1::unbounded_octstring<true>& nas_pdu, ngap_ue& ue)
 {
-  logger.info("Forwarding NAS PDU to RRC");
+  logger.debug("Forwarding NAS PDU to RRC");
   byte_buffer rrc_nas_pdu;
   rrc_nas_pdu.resize(nas_pdu.size());
   std::copy(nas_pdu.begin(), nas_pdu.end(), rrc_nas_pdu.begin());

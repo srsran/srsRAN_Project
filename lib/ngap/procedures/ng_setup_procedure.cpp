@@ -47,7 +47,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response>>&
     }
 
     // Await timer.
-    logger.info("Received NGSetupFailure with Time to Wait IE. Reinitiating NG setup in {}s (retry={}/{}).",
+    logger.info("Received NGSetupFailure with Time to Wait IE. Reinitiating NG setup in {}s (retry={}/{})",
                 time_to_wait,
                 ng_setup_retry_no,
                 request.max_setup_retries);
@@ -82,12 +82,12 @@ bool ng_setup_procedure::retry_required()
   const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
   if (not ng_fail->time_to_wait_present) {
     // AMF didn't command a waiting time.
-    logger.error("AMF did not set any retry waiting time.");
+    logger.error("AMF did not set any retry waiting time");
     return false;
   }
   if (ng_setup_retry_no++ >= request.max_setup_retries) {
     // Number of retries exceeded, or there is no time to wait.
-    logger.error("Reached maximum number of NG Setup connection retries ({}).", request.max_setup_retries);
+    logger.error("Reached maximum number of NG Setup connection retries ({})", request.max_setup_retries);
     return false;
   }
 
@@ -105,7 +105,7 @@ ng_setup_response ng_setup_procedure::create_ng_setup_result()
     res.success = true;
   } else {
     const asn1::ngap::ng_setup_fail_s& ng_fail = transaction_sink.failure();
-    logger.error("Received NGC PDU with unsuccessful outcome. Cause: {}", get_cause_str(ng_fail->cause.value));
+    logger.error("Received PDU with unsuccessful outcome cause={}", get_cause_str(ng_fail->cause.value));
     res.success = false;
   }
   return res;

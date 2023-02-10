@@ -30,7 +30,7 @@ byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
   byte_buffer   pdu{};
   asn1::bit_ref bref{pdu};
   if (msg.pack(bref) == asn1::SRSASN_ERROR_ENCODE_FAIL) {
-    srslog::fetch_basic_logger("NGAP").error("Failed to pack message in {}. Discarding it.", context_name);
+    srslog::fetch_basic_logger("NGAP").error("Failed to pack message in {} - discarding it", context_name);
   }
   return pdu;
 }

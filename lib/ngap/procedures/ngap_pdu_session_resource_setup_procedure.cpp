@@ -33,7 +33,7 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("PDU Session Resource Setup started");
+  logger.debug("PDU Session Resource Setup Procedure started");
 
   // Handle mandatory IEs
   CORO_AWAIT_VALUE(response, du_processor_ctrl_notifier.on_new_pdu_session_resource_setup_request(request));
@@ -42,7 +42,7 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
 
   send_pdu_session_resource_setup_response();
 
-  logger.debug("PDU Session Resource Setup finished");
+  logger.debug("PDU Session Resource Setup Procedure finished");
   CORO_RETURN();
 }
 
@@ -63,9 +63,9 @@ void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     ngc_msg.pdu.to_json(js);
-    logger.debug("Containerized PDU Session Resource Setup Response Message: {}", js.to_string());
+    logger.debug("Containerized PduSessionResourceSetupResponse: {}", js.to_string());
   }
 
-  logger.info("Sending PDU Session Resource Setup Response to AMF");
+  logger.info("Sending PduSessionResourceSetupResponse");
   amf_notifier.on_new_message(ngc_msg);
 }

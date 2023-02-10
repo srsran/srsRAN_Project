@@ -218,11 +218,11 @@ public:
 
   void on_new_message(const ngc_message& msg) override
   {
-    logger.info("Received NGC message");
+    logger.info("Received message");
     last_ngc_msg = msg;
 
     if (handler != nullptr) {
-      logger.info("Forwarding NGC PDU");
+      logger.info("Forwarding PDU");
       handler->handle_message(msg);
     }
   };
@@ -242,7 +242,7 @@ public:
   void handle_message(const ngc_message& msg) override
   {
     last_msg = msg;
-    logger.info("Received a NGAP PDU of type {}", msg.pdu.type().to_string());
+    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
   }
   ngc_message last_msg;
 

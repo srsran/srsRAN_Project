@@ -24,7 +24,7 @@ ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
   ue_index(ue_index_), request(request_), ue_manager(ue_manager_), amf_notifier(amf_notif_), logger(logger_)
 {
   ue = ue_manager.find_ngap_ue(ue_index);
-  srsgnb_assert(ue != nullptr, "Couldn't find UE with index={}", ue_index);
+  srsgnb_assert(ue != nullptr, "ue={} Couldn't find UE", ue_index);
 }
 
 void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -119,7 +119,7 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
     init_ctxt_setup_resp->crit_diagnostics.value   = msg.crit_diagnostics.value();
   }
 
-  logger.info("Sending Initial Context Setup Response to AMF");
+  logger.info("Sending InitialContextSetupResponse");
   amf_notifier.on_new_message(ngc_msg);
 }
 
@@ -160,6 +160,6 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
     init_ctxt_setup_fail->crit_diagnostics.value   = msg.crit_diagnostics.value();
   }
 
-  logger.info("Sending Initial Context Setup Failure to AMF");
+  logger.info("Sending InitialContextSetupFailure");
   amf_notifier.on_new_message(ngc_msg);
 }

@@ -25,7 +25,7 @@ ngc_impl::ngc_impl(ngc_configuration&     ngc_cfg_,
                    ngap_ue_manager&       ue_manager_,
                    ngc_message_notifier&  ngc_notifier_,
                    task_executor&         ctrl_exec_) :
-  logger(srslog::fetch_basic_logger("NGC")),
+  logger(srslog::fetch_basic_logger("NGAP")),
   ngc_cfg(ngc_cfg_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
@@ -47,11 +47,11 @@ void ngc_impl::create_ngc_ue(ue_index_t                         ue_index,
   ngap_ue* ue = ue_manager.add_ue(ue_index, rrc_ue_pdu_notifier, rrc_ue_ctrl_notifier, du_processor_ctrl_notifier);
 
   if (ue == nullptr) {
-    logger.error("Failed to create NGAP UE (ue_index={})", ue_index);
+    logger.error("ue={} Failed to create UE", ue_index);
     return;
   }
 
-  logger.debug("Created NGAP UE (ran_ue_id={}, ue_index={})", ue->get_ran_ue_id(), ue_index);
+  logger.debug("ue={} Created UE (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 }
 
 async_task<ng_setup_response> ngc_impl::handle_ng_setup_request(const ng_setup_request& request)
@@ -59,7 +59,7 @@ async_task<ng_setup_response> ngc_impl::handle_ng_setup_request(const ng_setup_r
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     request.msg.to_json(js);
-    logger.debug("Containerized NG Setup Request: {}", js.to_string());
+    logger.debug("Containerized NGSetupRequest: {}", js.to_string());
   }
 
   return launch_async<ng_setup_procedure>(request, ngc_notifier, ev_mng, task_sched.get_timer_manager(), logger);
@@ -69,11 +69,9 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 {
   auto* ue = ue_manager.find_ngap_ue(msg.ue_index);
   if (ue == nullptr) {
-    logger.warning("UE with ue_index={} does not exist. Dropping Initial UE Message", msg.ue_index);
+    logger.warning("ue={} does not exist - dropping InitialUeMessage", msg.ue_index);
     return;
   }
-
-  logger.info("Handling Initial UE Message for UE with ran_ue_id={}", ue->get_ran_ue_id());
 
   ngc_message ngc_msg = {};
   ngc_msg.pdu.set_init_msg();
@@ -97,10 +95,12 @@ void ngc_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
 
   // TODO: Add missing optional values
 
+  logger.info("ue={} Sending InitialUeMessage (ran_ue_id={})", msg.ue_index, ue->get_ran_ue_id());
+
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     ngc_msg.pdu.to_json(js);
-    logger.debug("Containerized Initial UE Message: {}", js.to_string());
+    logger.debug("Containerized InitialUeMessage: {}", js.to_string());
   }
 
   // Forward message to AMF
@@ -111,11 +111,9 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
 {
   auto* ue = ue_manager.find_ngap_ue(msg.ue_index);
   if (ue == nullptr) {
-    logger.warning("UE with ue_index={} does not exist. Dropping UL NAS Transport Message", msg.ue_index);
+    logger.warning("ue={} does not exist - dropping UlNasTransportMessage", msg.ue_index);
     return;
   }
-
-  logger.info("Handling UL NAS Transport Message for UE with ran_ue_id={}", ue->get_ran_ue_id());
 
   ngc_message ngc_msg = {};
   ngc_msg.pdu.set_init_msg();
@@ -127,7 +125,7 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
 
   amf_ue_id_t amf_ue_id = ue->get_amf_ue_id();
   if (amf_ue_id == amf_ue_id_t::invalid) {
-    logger.warning("UE AMF ID for ue_index={} not found!", msg.ue_index);
+    logger.warning("ue={} UE AMF ID not found!", msg.ue_index);
     return;
   }
   ul_nas_transport_msg->amf_ue_ngap_id.value.value = amf_ue_id_to_uint(amf_ue_id);
@@ -140,10 +138,12 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
   user_loc_info_nr.tai.plmn_id = msg.nr_cgi.plmn_id;
   user_loc_info_nr.tai.tac.from_number(msg.tac);
 
+  logger.info("ue={} Sending UlNasTransportMessage (ran_ue_id={})", msg.ue_index, ue->get_ran_ue_id());
+
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     ngc_msg.pdu.to_json(js);
-    logger.debug("Containerized UL NAS Transport Message: {}", js.to_string());
+    logger.debug("Containerized UlNasTransportMessage: {}", js.to_string());
   }
 
   // Forward message to AMF
@@ -152,12 +152,12 @@ void ngc_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_messa
 
 void ngc_impl::handle_message(const ngc_message& msg)
 {
-  logger.debug("Handling NGAP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+  logger.debug("Handling PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     msg.pdu.to_json(js);
-    logger.debug("Rx NGAP message: {}", js.to_string());
+    logger.debug("Containerized message: {}", js.to_string());
   }
 
   // Run NGAP protocols in Control executor.
@@ -203,30 +203,29 @@ void ngc_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpor
 {
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(msg->ran_ue_ngap_id.value.value));
   if (ue_index == ue_index_t::invalid) {
-    logger.warning("UE with ue_index={} does not exist. Dropping PDU", ue_index);
+    logger.warning("ue={} does not exist - dropping PDU", ue_index);
     return;
   }
 
   auto* ue = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("UE with ue_index={} does not exist. Dropping PDU", ue_index);
+    logger.warning("ue={} does not exist - dropping PDU", ue_index);
     return;
   }
 
-  logger.info("Handling DL NAS Transport Message for UE with ran_ue_id={}", ue->get_ran_ue_id());
+  logger.info("ue={} Received DlNasTransportMessage (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 
   // Add AMF UE ID to ue ngap context if it is not set (this is the first DL NAS Transport message)
   if (ue->get_amf_ue_id() == amf_ue_id_t::invalid) {
     // Set AMF UE ID in the UE context and also in the lookup
-    logger.debug(
-        "Received AMF UE ID={} for UE with ueID={}", uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value), ue_index);
+    logger.debug("ue={} Received AMF UE ID={}", ue_index, uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
     ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(msg->amf_ue_ngap_id.value.value));
   }
 
   byte_buffer nas_pdu;
   nas_pdu.resize(msg->nas_pdu.value.size());
   std::copy(msg->nas_pdu.value.begin(), msg->nas_pdu.value.end(), nas_pdu.begin());
-  logger.debug(nas_pdu.begin(), nas_pdu.end(), "DL NAS Transport PDU ({} B)", nas_pdu.length());
+  logger.debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
 
   ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
 }
@@ -236,11 +235,11 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("UE with ue_index={} does not exist. Dropping Initial Context Setup Request", ue_index);
+    logger.warning("ue={} does not exist - dropping InitialContextSetupRequest", ue_index);
     return;
   }
 
-  logger.info("Handling Initial Context Setup Request for UE with ran_ue_id={}", ue->get_ran_ue_id());
+  logger.info("ue={} Received InitialContextSetupRequest (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 
   // Update AMF ID and use the one from this Context Setup as per TS 38.413 v16.2 page 38
   ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(request->amf_ue_ngap_id.value.value));
@@ -248,7 +247,7 @@ void ngc_impl::handle_initial_context_setup_request(const asn1::ngap::init_conte
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     request.to_json(js);
-    logger.debug("Received Initial Context Setup Request Message: {}", js.to_string());
+    logger.debug("Containerized InitialContextSetupRequestMessage: {}", js.to_string());
   }
 
   // start routine
@@ -262,16 +261,16 @@ void ngc_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_s
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("UE with ue_index={} does not exist. Dropping PDU Session Resource Setup Request", ue_index);
+    logger.warning("ue={} does not exist - dropping PduSessionResourceSetupRequest", ue_index);
     return;
   }
 
-  logger.info("Handling PDU Session Resource Setup Request for UE with ran_ue_id={}", ue->get_ran_ue_id());
+  logger.info("ue={} Received PduSessionResourceSetupRequest (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     request.to_json(js);
-    logger.debug("Received PDU Session Resource Setup Request Message: {}", js.to_string());
+    logger.debug("Containerized PduSessionResourceSetupRequest: {}", js.to_string());
   }
 
   // Store information in UE context
@@ -310,7 +309,7 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
   ue_index_t ue_index = ue_manager.get_ue_index(amf_ue_id);
   auto*      ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("UE with ue_index={} does not exist. Dropping UE Context Release Command", ue_index);
+    logger.warning("ue={} does not exist - dropping UeContextReleaseCommand", ue_index);
     return;
   }
 
@@ -318,12 +317,12 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
     ran_ue_id = ue->get_ran_ue_id();
   }
 
-  logger.info("Handling UE Context Release Command for UE with ran_ue_id={}", ue->get_ran_ue_id());
+  logger.info("ue={} Received UeContextReleaseCommand (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     cmd.to_json(js);
-    logger.debug("Received UE Context Release Command: {}", js.to_string());
+    logger.debug("Containerized UeContextReleaseCommand: {}", js.to_string());
   }
 
   // Convert to common type
@@ -351,13 +350,13 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     ngc_msg.pdu.to_json(js);
-    logger.debug("Containerized UE Context Release Complete Message: {}", js.to_string());
+    logger.debug("Containerized UeContextReleaseComplete: {}", js.to_string());
   }
 
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);
 
-  logger.info("Sending UE Context Release Complete to AMF");
+  logger.info("Sending UeContextReleaseComplete");
   ngc_notifier.on_new_message(ngc_msg);
 }
 

@@ -13,7 +13,7 @@
 namespace srsgnb {
 
 ngc_asn1_packer::ngc_asn1_packer(sctp_network_gateway_data_handler& gw_, ngc_message_handler& ngc_handler) :
-  logger(srslog::fetch_basic_logger("NGC-ASN1-PCK")), gw(gw_), ngc(ngc_handler)
+  logger(srslog::fetch_basic_logger("NGAP-ASN1-PCK")), gw(gw_), ngc(ngc_handler)
 {
 }
 
@@ -23,7 +23,7 @@ void ngc_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
   asn1::cbit_ref         bref(bytes);
   srs_cu_cp::ngc_message msg = {};
   if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Couldn't unpack NGAP PDU");
+    logger.error("Couldn't unpack PDU");
     return;
   }
 
@@ -38,7 +38,7 @@ void ngc_asn1_packer::handle_message(const srs_cu_cp::ngc_message& msg)
   byte_buffer   tx_pdu;
   asn1::bit_ref bref(tx_pdu);
   if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Failed to pack NGAP PDU");
+    logger.error("Failed to pack PDU");
     return;
   }
 
