@@ -292,6 +292,9 @@ build_radio(task_executor& executor, radio_notification_handler& radio_handler, 
 
 int main(int argc, char** argv)
 {
+  // Set signal handler.
+  register_signal_handler(local_signal_handler);
+
   // Enable backtrace.
   enable_backtrace();
 
@@ -571,9 +574,6 @@ int main(int argc, char** argv)
 
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");
-
-  // Set signal handler.
-  register_signal_handler(local_signal_handler);
 
   // attach F1C adapter to DU and CU-CP
   f1c_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1c_message_handler(srsgnb::srs_cu_cp::uint_to_du_index(0)));
