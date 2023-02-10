@@ -50,7 +50,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const pdcch_ul_information& pdcch : result.dl.ul_pdcchs) {
     fmt::format_to(fmtbuf,
-                   "\n- UL PDCCH: rnti={:#x} rnti_type={} format={} cce={} al={}",
+                   "\n- UL PDCCH: rnti={:#x} type={} format={} cce={} al={}",
                    pdcch.ctx.rnti,
                    dci_ul_rnti_config_rnti_type(pdcch.dci.type),
                    dci_ul_rnti_config_format(pdcch.dci.type),
