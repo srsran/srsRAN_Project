@@ -16,6 +16,7 @@ add_executable(gnb
         gnb_console_helper.cpp
         fapi_factory.cpp
         phy_factory.cpp
+        helpers/metrics_plotter_stdout.cpp
         )
 
 target_link_libraries(gnb

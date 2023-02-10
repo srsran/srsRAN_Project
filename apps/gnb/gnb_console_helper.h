@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "helpers/metrics_plotter_stdout.h"
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/scheduler/scheduler_metrics.h"
 #include "srsgnb/support/io_broker/io_broker.h"
-#include "srsgnb/support/metrics_plotter_stdout.h"
 #include <fcntl.h>
 
 namespace srsgnb {

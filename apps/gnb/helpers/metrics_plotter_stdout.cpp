@@ -8,7 +8,8 @@
  *
  */
 
-#include "srsgnb/support/metrics_plotter_stdout.h"
+#include "metrics_plotter_stdout.h"
+#include "srsgnb/support/math_utils.h"
 #include <float.h>
 #include <iomanip>
 #include <sstream>
@@ -63,23 +64,14 @@ void metrics_plotter_stdout::report_metrics(span<const scheduler_ue_metrics> ue_
 
     fmt::print(" |");
 
-    auto clamp_sinr = [](float sinr) {
-      if (sinr > 99.9f) {
-        return 99.9f;
-      }
-      if (sinr < -99.9f) {
-        return -99.9f;
-      }
-      return sinr;
-    };
     if (not std::isnan(ue.pusch_snr_db) and not iszero(ue.pusch_snr_db)) {
-      fmt::print(" {:>5.1f}", clamp_sinr(ue.pusch_snr_db));
+      fmt::print(" {:>5.1f}", clamp(ue.pusch_snr_db, -99.9f, 99.9f));
     } else {
       fmt::print(" {:>5.5}", "n/a");
     }
 
     if (not std::isnan(ue.pucch_snr_db) and not iszero(ue.pucch_snr_db)) {
-      fmt::print("  {:>5.1f}", clamp_sinr(ue.pucch_snr_db));
+      fmt::print("  {:>5.1f}", clamp(ue.pucch_snr_db, -99.9f, 99.9f));
     } else {
       fmt::print("  {:>5.5}", "n/a");
     }
@@ -114,7 +106,7 @@ void metrics_plotter_stdout::toggle_print()
   print_metrics = !print_metrics;
 }
 
-char const* const prefixes[2][9] = {
+static char const* const prefixes[2][9] = {
     {
         "",
         "m",

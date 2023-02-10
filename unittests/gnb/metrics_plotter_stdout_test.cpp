@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/support/metrics_plotter_stdout.h"
+#include "metrics_plotter_stdout.h"
 
 using namespace srsgnb;
 
