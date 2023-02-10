@@ -54,7 +54,7 @@ void f1_ue_context_setup_procedure::send_ue_context_setup_request()
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     f1c_ue_ctxt_setup_request_msg.pdu.to_json(js);
-    logger.debug("Containerized UE Context Setup Request message: {}", js.to_string());
+    logger.debug("Containerized UeContextSetupRequest: {}", js.to_string());
   }
 
   // send UE context setup request message
@@ -66,16 +66,15 @@ f1ap_ue_context_setup_response f1_ue_context_setup_procedure::create_ue_context_
   f1ap_ue_context_setup_response res{};
 
   if (transaction_sink.successful()) {
-    logger.info("Received F1AP UE Context Setup Response.");
+    logger.debug("Received UeContextSetupResponse");
     res.response = transaction_sink.response();
     res.success  = true;
   } else if (transaction_sink.failed()) {
-    logger.info("Received F1AP UE Context Setup Failure. Cause: {}",
-                get_cause_str(transaction_sink.failure()->cause.value));
+    logger.debug("Received UeContextSetupFailure cause={}", get_cause_str(transaction_sink.failure()->cause.value));
     res.failure = transaction_sink.failure();
     res.success = false;
   } else {
-    logger.warning("F1AP UE Context Setup Timeout.");
+    logger.warning("UeContextSetup timeout");
     res.success = false;
   }
   return res;

@@ -14,19 +14,19 @@
 namespace srsgnb {
 
 f1ap_asn1_packer::f1ap_asn1_packer(sctp_network_gateway_data_handler& gw_, f1c_message_handler& f1c_handler) :
-  logger(srslog::fetch_basic_logger("F1C-ASN1-PCK")), gw(gw_), f1c(f1c_handler)
+  logger(srslog::fetch_basic_logger("F1AP-ASN1-PCK")), gw(gw_), f1c(f1c_handler)
 {
 }
 
 // Received packed F1AP PDU that needs to be unpacked and forwarded.
 void f1ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 {
-  logger.info("Received PDU of {} bytes", bytes.length());
+  logger.debug("Received PDU of {} bytes", bytes.length());
 
   asn1::cbit_ref bref(bytes);
   f1c_message    msg = {};
   if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Couldn't unpack F1C PDU");
+    logger.error("Couldn't unpack PDU");
     return;
   }
 
@@ -41,7 +41,7 @@ void f1ap_asn1_packer::handle_message(const f1c_message& msg)
   byte_buffer   tx_pdu;
   asn1::bit_ref bref(tx_pdu);
   if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Failed to pack F1AP PDU");
+    logger.error("Failed to pack PDU");
     return;
   }
 

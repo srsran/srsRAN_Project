@@ -47,7 +47,7 @@ void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg
   // Pack message into PDU
   f1c_message f1c_msg;
   if (msg.success) {
-    logger.info("Transmitting F1SetupResponse message");
+    logger.debug("Sending F1SetupResponse");
 
     f1c_msg.pdu.set_successful_outcome();
     f1c_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -59,7 +59,7 @@ void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg
     // send response
     pdu_notifier.on_new_message(f1c_msg);
   } else {
-    logger.info("Transmitting F1SetupFailure message");
+    logger.debug("Sending F1SetupFailure");
     f1c_msg.pdu.set_unsuccessful_outcome();
     f1c_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
     f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail() = msg.failure;
@@ -89,7 +89,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   dlrrc_msg->srb_id.value                     = (uint8_t)msg.srb_id;
   dlrrc_msg->rrc_container.value              = msg.rrc_container.copy();
 
-  logger.info("Transmitting DL RRC message");
+  logger.debug("Sending DlRrcMessageTransfer");
   // Pack message into PDU
   f1c_message f1c_dl_rrc_msg;
   f1c_dl_rrc_msg.pdu.set_init_msg();
@@ -99,7 +99,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     f1c_dl_rrc_msg.pdu.to_json(js);
-    logger.debug("Containerized DL RRC message: {}", js.to_string());
+    logger.debug("Containerized DlRrcMessageTransfer: {}", js.to_string());
   }
 
   // send DL RRC message
@@ -115,7 +115,7 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)
 {
   if (not ue_ctx_list.contains(msg.ue_index)) {
-    logger.error("Can't find UE to release (ue_index={})", msg.ue_index);
+    logger.error("ue={} Can't find UE to release", msg.ue_index);
 
     return launch_async([](coro_context<async_task<ue_index_t>>& ctx) mutable {
       CORO_BEGIN(ctx);
@@ -137,7 +137,7 @@ f1ap_cu_impl::handle_ue_context_modification_request(const cu_cp_ue_context_modi
 
 void f1ap_cu_impl::handle_message(const f1c_message& msg)
 {
-  logger.info("Handling F1C PDU of type {}", msg.pdu.type().to_string());
+  logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
 
   // Run F1AP protocols in Control executor.
   ctrl_exec.execute([this, msg]() {
@@ -152,7 +152,7 @@ void f1ap_cu_impl::handle_message(const f1c_message& msg)
         handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
         break;
       default:
-        logger.error("Invalid F1C PDU type");
+        logger.error("Invalid PDU type");
         break;
     }
   });
@@ -190,27 +190,27 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
 {
   // Reject request without served cells
   if (not msg->du_to_cu_rrc_container_present) {
-    logger.error("Not handling Initial UL RRC message transfer without DU to CU container");
+    logger.error("Not handling InitialUlRrcMessageTransfer without DU to CU container");
     /// Assume the DU can't serve the UE. Ignoring the message.
     return;
   }
 
   nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi.value);
   if (not srsgnb::config_helpers::is_valid(cgi)) {
-    logger.error("CGI isn't valid. Dropping Initial UL RRC message.");
+    logger.error("CGI isn't valid - dropping InitialUlRrcMessage");
     return;
   }
 
-  logger.info("Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg->c_rnti.value);
-  logger.debug("plmn={}", cgi.plmn);
+  logger.debug(
+      "Received InitialUlRrcMessageTransfer nr_cgi={} crnti={} plmn={}", cgi.nci.packed, msg->c_rnti.value, cgi.plmn);
 
   if (msg->sul_access_ind_present) {
     logger.debug("Ignoring SUL access indicator");
   }
 
-  gnb_cu_ue_f1ap_id_t cu_ue_id = ue_ctx_list.next_gnb_cu_ue_f1ap_id();
-  if (cu_ue_id == gnb_cu_ue_f1ap_id_t::invalid) {
-    logger.error("No CU UE F1C ID available.");
+  gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id = ue_ctx_list.next_gnb_cu_ue_f1ap_id();
+  if (cu_ue_f1ap_id == gnb_cu_ue_f1ap_id_t::invalid) {
+    logger.error("No CU UE F1AP ID available");
     return;
   }
 
@@ -220,29 +220,29 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(f1ap_init_ul_rrc_msg);
 
   if (ue_creation_complete_msg.ue_index == ue_index_t::invalid) {
-    logger.error("Invalid UE index.");
+    logger.error("Invalid UE index");
     return;
   }
 
   // Create UE context and store it
-  ue_ctx_list.add_ue(ue_creation_complete_msg.ue_index, cu_ue_id);
-  f1ap_ue_context& ue_ctxt = ue_ctx_list[cu_ue_id];
+  ue_ctx_list.add_ue(ue_creation_complete_msg.ue_index, cu_ue_f1ap_id);
+  f1ap_ue_context& ue_ctxt = ue_ctx_list[cu_ue_f1ap_id];
   ue_ctxt.du_ue_f1ap_id    = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id.value);
   ue_ctxt.srbs             = ue_creation_complete_msg.srbs;
 
   logger.debug(
-      "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}).", cu_ue_id, ue_ctxt.du_ue_f1ap_id, ue_ctxt.ue_index);
+      "ue={} Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={})", ue_ctxt.ue_index, cu_ue_f1ap_id, ue_ctxt.du_ue_f1ap_id);
 
   // Forward RRC container
   if (msg->rrc_container_rrc_setup_complete_present) {
     // RRC setup complete over SRB1
-    ue_ctx_list[cu_ue_id].srbs[srb_id_to_uint(srb_id_t::srb1)]->on_new_rrc_message(
+    ue_ctx_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb1)]->on_new_rrc_message(
         msg->rrc_container_rrc_setup_complete.value);
     return;
   }
 
   // Pass container to RRC
-  ue_ctx_list[cu_ue_id].srbs[srb_id_to_uint(srb_id_t::srb0)]->on_new_rrc_message(msg->rrc_container.value);
+  ue_ctx_list[cu_ue_f1ap_id].srbs[srb_id_to_uint(srb_id_t::srb0)]->on_new_rrc_message(msg->rrc_container.value);
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ul_rrc_msg_transfer_s& msg)

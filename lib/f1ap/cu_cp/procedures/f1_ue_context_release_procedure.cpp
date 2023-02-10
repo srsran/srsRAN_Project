@@ -53,7 +53,7 @@ void f1_ue_context_release_procedure::send_ue_context_release_command()
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     f1c_ue_ctxt_rel_msg.pdu.to_json(js);
-    logger.debug("Containerized UE Context Release Command message: {}", js.to_string());
+    logger.debug("Containerized UeContextReleaseCommand: {}", js.to_string());
   }
 
   // send DL RRC message
@@ -63,7 +63,7 @@ void f1_ue_context_release_procedure::send_ue_context_release_command()
 ue_index_t f1_ue_context_release_procedure::create_ue_context_release_complete(
     const asn1::f1ap::ue_context_release_complete_s& msg)
 {
-  logger.info("Received F1AP UE Context Release Complete.");
+  logger.debug("Received UeContextReleaseComplete");
 
   ue_index_t ret = ue_index_t::invalid;
 

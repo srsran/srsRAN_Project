@@ -59,8 +59,7 @@ protected:
 #if JSON_OUTPUT
     asn1::json_writer json_writer1;
     pdu.to_json(json_writer1);
-    test_logger.info(
-        bytes.data(), bytes.size(), "F1AP PDU unpacked ({} B): \n {}", bytes.size(), json_writer1.to_string().c_str());
+    test_logger.info(bytes.data(), bytes.size(), "PDU unpacked ({} B): \n {}", bytes.size(), json_writer1.to_string());
 #endif
 
     ASSERT_EQ(test_pack_unpack_consistency(pdu), asn1::SRSASN_SUCCESS);

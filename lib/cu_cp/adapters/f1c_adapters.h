@@ -46,13 +46,13 @@ public:
 
   void on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
-    srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
+    srsgnb_assert(du_f1c_handler != nullptr, "F1AP handler must not be nullptr");
     du_f1c_handler->handle_f1_setup_request(msg);
   }
 
   ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) override
   {
-    srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
+    srsgnb_assert(du_f1c_handler != nullptr, "F1AP handler must not be nullptr");
 
     ue_creation_message ue_creation_msg    = {};
     ue_creation_msg.c_rnti                 = to_rnti(msg.msg->c_rnti.value);

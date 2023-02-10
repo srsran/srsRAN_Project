@@ -59,7 +59,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
 
   log_ue_event(logger,
                ue_event_prefix{"UL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti,
-               "Initial UL RRC Message Transfer.");
+               "InitialUlRrcMessageTransfer");
 }
 
 void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
@@ -67,7 +67,7 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
   sdu_notifier.on_new_sdu(std::move(pdu));
 
   log_ue_event(
-      logger, ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti, "DL RRC Message Transfer.");
+      logger, ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti, "DlRrcMessageTransfer");
 }
 
 f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&      ue_ctxt_,

@@ -24,7 +24,7 @@ public:
   dummy_f1c_rrc_message_notifier() = default;
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
-    logger.info("Received RRC message.");
+    logger.info("Received RRC message");
     last_rrc_container = rrc_container;
   };
 
@@ -43,13 +43,13 @@ public:
 
   void on_f1_setup_request_received(const srs_cu_cp::f1_setup_request_message& msg) override
   {
-    logger.info("Received F1SetupRequest message.");
+    logger.info("Received F1SetupRequest");
     last_f1_setup_request_msg = msg;
   }
 
   srs_cu_cp::ue_creation_complete_message on_create_ue(const srs_cu_cp::f1ap_initial_ul_rrc_message& msg) override
   {
-    logger.info("Received UE creation request.");
+    logger.info("Received UeCreationRequest");
     last_ue_creation_request_msg                = msg;
     srs_cu_cp::ue_creation_complete_message ret = {};
     ret.ue_index                                = srs_cu_cp::ue_index_t::invalid;
@@ -86,11 +86,11 @@ public:
   void attach_handler(f1c_message_handler* handler_) { handler = handler_; }
   void on_new_message(const f1c_message& msg) override
   {
-    logger.info("Received a F1AP PDU of type {}", msg.pdu.type().to_string());
+    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
     last_f1c_msg = msg; // store msg
 
     if (handler != nullptr) {
-      logger.info("Forwarding F1AP PDU");
+      logger.info("Forwarding PDU");
       handler->handle_message(msg);
     }
   }
@@ -111,7 +111,7 @@ public:
   void on_new_message(const f1c_message& msg) override
   {
     srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-    test_logger.info("Received F1AP PDU");
+    test_logger.info("Received PDU");
     last_f1c_msg = msg;
   }
 };
@@ -133,11 +133,11 @@ public:
   };
   void on_new_message(const f1c_message& msg) override
   {
-    logger.info("Received a F1AP PDU of type {}", msg.pdu.type().to_string());
+    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
     last_f1c_msg = msg; // store msg
 
     if (handler != nullptr) {
-      logger.info("Forwarding F1AP PDU");
+      logger.info("Forwarding PDU");
       handler->handle_message(msg);
     }
   }
@@ -157,7 +157,7 @@ public:
   void handle_message(const f1c_message& msg) override
   {
     last_msg = msg;
-    logger.info("Received a F1AP PDU of type {}", msg.pdu.type().to_string());
+    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
   }
 
   f1c_message last_msg;

@@ -58,7 +58,7 @@ void f1_ue_context_modification_procedure::send_ue_context_modification_request(
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     f1c_ue_ctxt_mod_request_msg.pdu.to_json(js);
-    logger.debug("Containerized UE Context Modification Request message: {}", js.to_string());
+    logger.debug("Containerized UeContextModificationRequest: {}", js.to_string());
   }
 
   // send UE context modification request message
@@ -71,24 +71,24 @@ cu_cp_ue_context_modification_response f1_ue_context_modification_procedure::cre
 
   if (transaction_sink.successful()) {
     const asn1::f1ap::ue_context_mod_resp_s& resp = transaction_sink.response();
-    logger.info("Received F1AP UE Context Modification Response.");
+    logger.debug("Received UeContextModificationResponse");
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       resp.to_json(js);
-      logger.debug("Containerized UE Context Modification Response message: {}", js.to_string());
+      logger.debug("Containerized UeContextModificationResponse: {}", js.to_string());
     }
     fill_f1ap_ue_context_modification_response_message(res, resp);
   } else if (transaction_sink.failed()) {
     const asn1::f1ap::ue_context_mod_fail_s& fail = transaction_sink.failure();
-    logger.info("Received F1AP UE Context Modification Failure. Cause: {}", get_cause_str(fail->cause.value));
+    logger.debug("Received UeContextModificationFailure cause={}", get_cause_str(fail->cause.value));
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       (*transaction_sink.failure()).to_json(js);
-      logger.debug("Containerized UE Context Modification Failure message: {}", js.to_string());
+      logger.debug("Containerized UeContextModificationFailure: {}", js.to_string());
     }
     fill_f1ap_ue_context_modification_response_message(res, fail);
   } else {
-    logger.warning("F1AP UE Context Modification Response timeout.");
+    logger.warning("UeContextModificationResponse timeout");
     res.success = false;
     res.cause   = cause_t::misc;
   }

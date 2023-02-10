@@ -23,8 +23,8 @@ public:
   void attach_handler(f1c_message_handler* handler_) { handler = handler_; }
   void on_new_message(const f1c_message& msg) override
   {
-    report_fatal_error_if_not(handler, "F1C message handler not set.");
-    logger.debug("Received a F1AP PDU of type {}", msg.pdu.type().to_string());
+    report_fatal_error_if_not(handler, "F1AP message handler not set");
+    logger.debug("Received a PDU of type {}", msg.pdu.type().to_string());
     handler->handle_message(msg);
   }
 
