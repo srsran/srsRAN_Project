@@ -38,7 +38,7 @@ public:
   explicit pdcp_rx_control_rrc_ue_adapter()
   {
     // TODO: connect a RRC handler
-    srslog::fetch_basic_logger("PDCP").info("No RRC handler for PDCP Rx control events. All events will be ignored.");
+    srslog::fetch_basic_logger("PDCP").debug("No RRC handler for PDCP Rx control events. All events will be ignored.");
   }
 
   void on_protocol_failure() override
@@ -97,7 +97,7 @@ public:
   explicit pdcp_tx_control_rrc_ue_adapter()
   {
     // TODO: connect a RRC handler
-    srslog::fetch_basic_logger("PDCP").info("No RRC handler for PDCP Tx control events. All events will be ignored.");
+    srslog::fetch_basic_logger("PDCP").debug("No RRC handler for PDCP Tx control events. All events will be ignored.");
   }
 
   void on_protocol_failure() override
