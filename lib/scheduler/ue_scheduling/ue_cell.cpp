@@ -43,6 +43,17 @@ void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_c
   ue_cfg.reconfigure(new_ue_cell_cfg);
 }
 
+void ue_cell::set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload)
+{
+  static const size_t cqi_payload_size = 4;
+  if (payload.size() < cqi_payload_size) {
+    return;
+  }
+  ue_metrics.latest_wb_cqi = (static_cast<unsigned>(payload.test(0)) << 3) +
+                             (static_cast<unsigned>(payload.test(1)) << 2) +
+                             (static_cast<unsigned>(payload.test(2)) << 1) + (static_cast<unsigned>(payload.test(3)));
+}
+
 grant_prbs_mcs
 ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl_rnti_config_type dci_type) const
 {

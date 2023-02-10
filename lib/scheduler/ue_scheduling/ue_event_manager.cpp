@@ -246,8 +246,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       }
 
       // Process SRs.
-      // const size_t sr_bit_position_with_1_sr_bit = 0;
-      if (pdu.sr_info.size() > 0 and pdu.sr_info.test(pdu.sr_info.size() - 1)) {
+      const size_t sr_bit_position_with_1_sr_bit = 0;
+      if (pdu.sr_info.size() > 0 and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
         common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this]() {
           auto& u = ue_db[ue_index];
 
@@ -262,9 +262,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       // Process CSI part 1 bits. NOTE: we assume there are only 4 bits, which represent the CQI.
       if (pdu.csi_part1.size() > 0) {
         cell_specific_events[ind.cell_index].emplace(
-            ind.ucis[i].ue_index, [this, uci_sl = ind.slot_rx, &csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) {
-              ue_cc.set_latest_wb_cqi(csi_1_bits);
-            });
+            ind.ucis[i].ue_index,
+            [&csi_1_bits = pdu.csi_part1](ue_cell& ue_cc) { ue_cc.set_latest_wb_cqi(csi_1_bits); });
       }
     }
   }

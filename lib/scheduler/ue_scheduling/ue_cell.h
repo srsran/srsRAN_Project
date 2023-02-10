@@ -63,13 +63,7 @@ public:
 
   unsigned get_latest_wb_cqi() const { return ue_metrics.latest_wb_cqi; }
 
-  void set_latest_wb_cqi(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload)
-  {
-    ue_metrics.latest_wb_cqi = (static_cast<unsigned>(payload.test(payload.size() - 4)) << 3) +
-                               (static_cast<unsigned>(payload.test(payload.size() - 3)) << 2) +
-                               (static_cast<unsigned>(payload.test(payload.size() - 2)) << 1) +
-                               (static_cast<unsigned>(payload.test(payload.size() - 1)));
-  }
+  void set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl_rnti_config_type type) const;
