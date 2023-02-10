@@ -318,22 +318,13 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
   update_segment_inventory(rx_sdu);
   logger.log_debug("Updated segment inventory: rx_sdu={}", rx_sdu);
   if (rx_sdu.fully_received) {
-    logger.log_debug("Assembling SDU from segments. SN={}", header.sn);
-
     // Assemble SDU from segments
+    logger.log_debug("Assembling SDU from segments. SN={}, nof_segments={}", header.sn, rx_sdu.segments.size());
     for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
-      if (segm.so + segm.payload.length() > rx_sdu.sdu.length()) {
-        uint32_t piece_len = segm.so + segm.payload.length() - rx_sdu.sdu.length();
-        logger.log_debug("Segment SO={}, len={}: append piece_len={} to sdu_len={}",
-                         segm.so,
-                         segm.payload.length(),
-                         piece_len,
-                         rx_sdu.sdu.length());
-        rx_sdu.sdu.push_back(segm.payload.make_slice(segm.payload.length() - piece_len, piece_len));
-      } else {
-        logger.log_debug("Segment SO={}, len={}: skip", segm.so, segm.payload.length());
-      }
+      logger.log_debug("Appending SO={}, len={}", segm.so, segm.payload.length());
+      rx_sdu.sdu.push_back(segm.payload.copy());
     }
+    rx_sdu.segments.clear();
     logger.log_debug("Assembled SDU from segments. SN={}, sdu_len={}", header.sn, rx_sdu.sdu.length());
   }
 }
