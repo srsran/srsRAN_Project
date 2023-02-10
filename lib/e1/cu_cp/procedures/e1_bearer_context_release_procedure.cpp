@@ -47,7 +47,7 @@ void e1_bearer_context_release_procedure::send_bearer_context_release_command()
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     command.pdu.to_json(js);
-    logger.debug("Containerized Bearer Context Release Command message: {}", js.to_string());
+    logger.debug("Containerized BearerContextReleaseCommand: {}", js.to_string());
   }
 
   // send DL RRC message
@@ -58,11 +58,11 @@ void e1_bearer_context_release_procedure::handle_bearer_context_release_complete
 {
   if (transaction_sink.successful()) {
     const asn1::e1ap::bearer_context_release_complete_s& resp = transaction_sink.response();
-    logger.info("Received E1AP Bearer Context Release Complete.");
+    logger.debug("Received BearerContextReleaseComplete");
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       resp.to_json(js);
-      logger.debug("Containerized Bearer Context Release Complete message: {}", js.to_string());
+      logger.debug("Containerized BearerContextReleaseComplete: {}", js.to_string());
     }
     if (command.pdu.init_msg().value.bearer_context_release_cmd()->gnb_cu_cp_ue_e1ap_id.value ==
         resp->gnb_cu_cp_ue_e1ap_id.value) {
@@ -70,6 +70,6 @@ void e1_bearer_context_release_procedure::handle_bearer_context_release_complete
     }
 
   } else {
-    logger.warning("E1AP Bearer Context Release Complete timeout.");
+    logger.warning("BearerContextReleaseComplete timeout");
   }
 }

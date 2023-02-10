@@ -24,7 +24,7 @@ public:
   void on_new_message(const e1_message& msg) override
   {
     report_fatal_error_if_not(handler, "E1AP message handler not set.");
-    logger.debug("Received a E1AP PDU of type {}", msg.pdu.type().to_string());
+    logger.debug("Received a PDU of type {}", msg.pdu.type().to_string());
     handler->handle_message(msg);
   }
 

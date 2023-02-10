@@ -45,7 +45,7 @@ void e1_bearer_context_setup_procedure::send_bearer_context_setup_request()
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     request.pdu.to_json(js);
-    logger.debug("Containerized Bearer Context Setup Request message: {}", js.to_string());
+    logger.debug("Containerized BearerContextSetupRequest: {}", js.to_string());
   }
 
   // send Bearer context setup request message
@@ -58,12 +58,12 @@ e1ap_bearer_context_setup_response e1_bearer_context_setup_procedure::create_bea
 
   if (transaction_sink.successful()) {
     const asn1::e1ap::bearer_context_setup_resp_s& resp = transaction_sink.response();
-    logger.info("Received E1AP Bearer Context Setup Response.");
+    logger.debug("Received BearerContextSetupResponse");
 
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       resp.to_json(js);
-      logger.debug("Containerized Bearer Context Setup Response message: {}", js.to_string());
+      logger.debug("Containerized BearerContextSetupResponse: {}", js.to_string());
     }
 
     // Add CU-UP UE E1AP ID to UE context
@@ -71,7 +71,7 @@ e1ap_bearer_context_setup_response e1_bearer_context_setup_procedure::create_bea
     fill_e1ap_bearer_context_setup_response(res, resp);
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_setup_fail_s& fail = transaction_sink.failure();
-    logger.info("Received E1AP Bearer Context Setup Failure. Cause: {}", get_cause_str(fail->cause.value));
+    logger.debug("Received BearerContextSetupFailure cause={}", get_cause_str(fail->cause.value));
 
     // Add CU-UP UE E1AP ID to UE context
     if (fail->gnb_cu_up_ue_e1ap_id_present) {
@@ -79,7 +79,7 @@ e1ap_bearer_context_setup_response e1_bearer_context_setup_procedure::create_bea
     }
     fill_e1ap_bearer_context_setup_response(res, fail);
   } else {
-    logger.warning("E1AP Bearer Context Setup Response timeout.");
+    logger.warning("BearerContextSetupResponse timeout");
     res.success = false;
   }
 

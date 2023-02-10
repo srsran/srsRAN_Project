@@ -29,7 +29,7 @@ public:
 
   void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) override
   {
-    logger.info("Received E1SetupRequest message.");
+    logger.info("Received E1SetupRequest");
     last_cu_up_e1_setup_request = msg;
   }
 
@@ -49,7 +49,7 @@ public:
 
   cu_cp_e1_setup_response on_cu_cp_e1_setup_request_received(const cu_cp_e1_setup_request& msg) override
   {
-    logger.info("Received E1SetupRequest message.");
+    logger.info("Received E1SetupRequest");
     last_cu_cp_e1_setup_request = msg;
 
     cu_cp_e1_setup_response res = {};
@@ -59,7 +59,7 @@ public:
   srs_cu_up::e1ap_bearer_context_setup_response
   on_bearer_context_setup_request_received(const srs_cu_up::e1ap_bearer_context_setup_request& msg) override
   {
-    logger.info("Received Bearer Context Setup Request message.");
+    logger.info("Received BearerContextSetupRequest");
     last_bearer_context_setup_request.security_info.security_algorithm = msg.security_info.security_algorithm;
     last_bearer_context_setup_request.security_info.up_security_key.encryption_key =
         msg.security_info.up_security_key.encryption_key.copy();
@@ -80,7 +80,7 @@ public:
   srs_cu_up::e1ap_bearer_context_modification_response on_bearer_context_modification_request_received(
       const srs_cu_up::e1ap_bearer_context_modification_request& msg) override
   {
-    logger.info("Received Bearer Context Modification Request message.");
+    logger.info("Received BearerContextModificationRequest");
     last_bearer_context_modification_request                      = msg;
     srs_cu_up::e1ap_bearer_context_modification_response response = {};
     response.ue_index                                             = ue_index;
@@ -91,7 +91,7 @@ public:
 
   void on_bearer_context_release_command_received(const srs_cu_up::e1ap_bearer_context_release_command& msg) override
   {
-    logger.info("Received Bearer Context Release Command.");
+    logger.info("Received BearerContextReleaseCommand");
     last_bearer_context_release_command = msg;
 
     return;
@@ -118,7 +118,7 @@ public:
   void on_new_message(const e1_message& msg) override
   {
     srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-    test_logger.info("Received E1 AP PDU");
+    test_logger.info("Received PDU");
     last_e1_msg = msg;
   }
 };
@@ -134,11 +134,11 @@ public:
   void attach_handler(e1_message_handler* handler_) { handler = handler_; };
   void on_new_message(const e1_message& msg) override
   {
-    logger.info("Received a E1AP PDU of type {}", msg.pdu.type().to_string());
+    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
     last_e1_msg = msg; // store msg
 
     if (handler != nullptr) {
-      logger.info("Forwarding E1AP PDU");
+      logger.info("Forwarding PDU");
       handler->handle_message(msg);
     }
   }
@@ -166,11 +166,11 @@ public:
   };
   void on_new_message(const e1_message& msg) override
   {
-    logger.info("Received a E1AP PDU of type {}", msg.pdu.type().to_string());
+    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
     last_e1_msg = msg; // store msg
 
     if (handler != nullptr) {
-      logger.info("Forwarding E1AP PDU");
+      logger.info("Forwarding PDU");
       handler->handle_message(msg);
     }
   }
@@ -190,7 +190,7 @@ public:
   void handle_message(const e1_message& msg) override
   {
     last_msg = msg;
-    logger.info("Received a E1AP PDU of type {}", msg.pdu.type().to_string());
+    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
   }
 
   e1_message last_msg;
@@ -207,7 +207,7 @@ public:
   void on_new_message(const e1_message& msg) override
   {
     last_msg = msg;
-    logger.info("Received a E1AP PDU of type {}", msg.pdu.type().to_string());
+    logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
   }
 
   e1_message last_msg;

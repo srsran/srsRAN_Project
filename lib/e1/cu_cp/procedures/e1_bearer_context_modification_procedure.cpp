@@ -46,7 +46,7 @@ void e1_bearer_context_modification_procedure::send_bearer_context_modification_
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     request.pdu.to_json(js);
-    logger.debug("Containerized Bearer Context Modification Request message: {}", js.to_string());
+    logger.debug("Containerized BearerContextModificationRequest: {}", js.to_string());
   }
 
   // send UE context modification request message
@@ -60,24 +60,24 @@ e1_bearer_context_modification_procedure::create_bearer_context_modification_res
 
   if (transaction_sink.successful()) {
     const asn1::e1ap::bearer_context_mod_resp_s& resp = transaction_sink.response();
-    logger.info("Received E1AP Bearer Context Modification Response.");
+    logger.debug("Received BearerContextModificationResponse");
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       resp.to_json(js);
-      logger.debug("Containerized Bearer Context Modification Response message: {}", js.to_string());
+      logger.debug("Containerized BearerContextModificationResponse: {}", js.to_string());
     }
     fill_e1ap_bearer_context_modification_response(res, resp);
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
-    logger.info("Received E1AP Bearer Context Modification Failure. Cause: {}", get_cause_str(fail->cause.value));
+    logger.debug("Received BearerContextModificationFailure cause={}", get_cause_str(fail->cause.value));
     if (logger.debug.enabled()) {
       asn1::json_writer js;
       fail.to_json(js);
-      logger.debug("Containerized Bearer Context Modification Failure message: {}", js.to_string());
+      logger.debug("Containerized BearerContextModificationFailure: {}", js.to_string());
     }
     fill_e1ap_bearer_context_modification_response(res, fail);
   } else {
-    logger.warning("E1AP Bearer Context Modification Response timeout.");
+    logger.warning("BearerContextModificationResponse timeout");
     res.success = false;
   }
   return res;

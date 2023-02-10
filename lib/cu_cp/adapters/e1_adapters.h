@@ -28,7 +28,7 @@ public:
 
   void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) override
   {
-    srsgnb_assert(cu_up_e1_handler != nullptr, "E1 handler must not be nullptr");
+    srsgnb_assert(cu_up_e1_handler != nullptr, "E1AP handler must not be nullptr");
     cu_up_e1_handler->handle_cu_up_e1_setup_request(msg);
   }
 
