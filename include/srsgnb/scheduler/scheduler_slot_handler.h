@@ -89,6 +89,13 @@ struct dci_context_information {
   tx_power_pdcch_information tx_pwr;
   /// Parameter \f$N_{ID}\f$ used for PDCCH DMRS scrambling as per TS38.211, 7.4.1.3.1. Values: {0, ..., 65535}.
   unsigned n_id_pdcch_dmrs;
+
+  /// \brief Information relative to a PDCCH allocation decision that is used for the purpose of logging or
+  /// tracing, but not passed to the PHY.
+  struct decision_context {
+    /// Chosen SearchSpace-Id.
+    search_space_id ss_id;
+  } context;
 };
 
 /// PDCCH DL allocation.
@@ -159,6 +166,17 @@ struct dl_msg_tb_info {
 struct dl_msg_alloc {
   pdsch_information                             pdsch_cfg;
   static_vector<dl_msg_tb_info, MAX_NOF_LAYERS> tb_list;
+
+  /// \brief Information relative to a PDSCH allocation decision that is used for the purpose of logging or
+  /// tracing, but not passed to the PHY.
+  struct decision_context {
+    /// UE index of allocated UE.
+    du_ue_index_t ue_index;
+    /// Chosen k1 delay to receive UCI HARQ-ACK.
+    unsigned k1;
+    /// Chosen search space id
+    search_space_id ss_id;
+  } context;
 };
 
 struct pusch_information {
@@ -312,6 +330,13 @@ struct dl_sched_result {
 struct ul_sched_info {
   pusch_information  pusch_cfg;
   optional<uci_info> uci;
+
+  /// \brief Information relative to a PDSCH allocation decision that is used for the purpose of logging or
+  /// tracing, but not passed to the PHY.
+  struct decision_context {
+    du_ue_index_t   ue_index;
+    search_space_id ss_id;
+  } context;
 };
 
 struct prach_occasion_info {

@@ -192,7 +192,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
 
   // Fill PDSCH PDU.
-  dl_msg_alloc& msg = pdsch_alloc.result.dl.ue_grants.emplace_back();
+  dl_msg_alloc& msg    = pdsch_alloc.result.dl.ue_grants.emplace_back();
+  msg.context.ue_index = u.ue_index;
+  msg.context.k1       = k1;
+  msg.context.ss_id    = ss_cfg->id;
   switch (pdcch->dci.type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg, u.crnti, cell_cfg, pdcch->dci.tc_rnti_f1_0, h_dl.tb(0).nof_retxs == 0);
@@ -376,7 +379,9 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                         h_ul);
 
   // Fill PUSCH.
-  ul_sched_info& msg = pusch_alloc.result.ul.puschs.emplace_back();
+  ul_sched_info& msg   = pusch_alloc.result.ul.puschs.emplace_back();
+  msg.context.ue_index = u.ue_index;
+  msg.context.ss_id    = ss_cfg->id;
   switch (pdcch->dci.type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
       build_pusch_f0_0_tc_rnti(msg.pusch_cfg,

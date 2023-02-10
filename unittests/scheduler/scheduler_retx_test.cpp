@@ -234,7 +234,7 @@ INSTANTIATE_TEST_SUITE_P(msg3_retx,
 
 int main(int argc, char** argv)
 {
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::info);
   srslog::init();
 
   ::testing::InitGoogleTest(&argc, argv);

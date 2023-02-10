@@ -544,6 +544,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
     // Fill PUSCH for Msg3.
     ul_sched_info& pusch     = msg3_alloc.result.ul.puschs.emplace_back();
+    pusch.context.ue_index   = INVALID_DU_UE_INDEX;
+    pusch.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
     pusch.pusch_cfg          = msg3_data[msg3_candidate.pusch_td_res_index].pusch;
     pusch.pusch_cfg.rnti     = pending_msg3.preamble.tc_rnti;
     pusch.pusch_cfg.prbs     = prbs;
@@ -611,6 +613,8 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
 
   // Fill PUSCH.
   ul_sched_info& ul_info     = pusch_alloc.result.ul.puschs.emplace_back();
+  ul_info.context.ue_index   = INVALID_DU_UE_INDEX;
+  ul_info.context.ss_id      = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
   ul_info.pusch_cfg          = msg3_data[pusch_td_res_index].pusch;
   ul_info.pusch_cfg.rnti     = msg3_ctx.preamble.tc_rnti;
   ul_info.pusch_cfg.prbs     = prbs;
