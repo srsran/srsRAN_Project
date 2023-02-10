@@ -32,7 +32,7 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 
-#include "gnb_console_helper.h"
+#include "helpers/gnb_console_helper.h"
 
 #include "fapi_factory.h"
 #include "lib/du_high/du_high.h"

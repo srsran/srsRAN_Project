@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "helpers/metrics_plotter_stdout.h"
+#include "metrics_plotter_stdout.h"
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/scheduler/scheduler_metrics.h"
 #include "srsgnb/support/io_broker/io_broker.h"

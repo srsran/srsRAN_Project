@@ -12,11 +12,11 @@ add_executable(gnb
         gnb.cpp
         gnb_appconfig_cli11_schema.cpp
         gnb_appconfig_validators.cpp
-        gnb_appconfig_translators.cpp
-        gnb_console_helper.cpp
+        gnb_appconfig_translators.cpp        
         fapi_factory.cpp
         phy_factory.cpp
         helpers/metrics_plotter_stdout.cpp
+        helpers/gnb_console_helper.cpp
         )
 
 target_link_libraries(gnb
