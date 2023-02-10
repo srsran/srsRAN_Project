@@ -186,9 +186,15 @@ protected:
     std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
     ASSERT_NE(short_block_det_factory, nullptr);
 
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+    if (!dft_factory) {
+      dft_factory = create_dft_processor_factory_generic();
+    }
+    ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
+
     // Create port channel estimator factory.
     std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-        create_port_channel_estimator_factory_sw();
+        create_port_channel_estimator_factory_sw(dft_factory);
     ASSERT_NE(port_chan_estimator_factory, nullptr);
 
     // Create DM-RS for PUSCH channel estimator.

@@ -338,9 +338,15 @@ static std::tuple<std::unique_ptr<pusch_processor>, std::unique_ptr<pusch_pdu_va
   std::shared_ptr<short_block_detector_factory> short_block_det_factory = create_short_block_detector_factory_sw();
   TESTASSERT(short_block_det_factory);
 
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+  if (!dft_factory) {
+    dft_factory = create_dft_processor_factory_generic();
+  }
+  TESTASSERT(dft_factory, "Cannot create DFT factory.");
+
   // Create port channel estimator factory.
   std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-      create_port_channel_estimator_factory_sw();
+      create_port_channel_estimator_factory_sw(dft_factory);
   TESTASSERT(port_chan_estimator_factory);
 
   // Create DM-RS for PUSCH channel estimator.

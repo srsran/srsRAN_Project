@@ -49,7 +49,13 @@ protected:
   static void SetUpTestSuite()
   {
     if (!ch_est_factory) {
-      ch_est_factory = create_port_channel_estimator_factory_sw();
+      std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+      if (!dft_factory) {
+        dft_factory = create_dft_processor_factory_generic();
+      }
+      ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
+
+      ch_est_factory = create_port_channel_estimator_factory_sw(std::move(dft_factory));
       ASSERT_NE(ch_est_factory, nullptr);
     }
   }
@@ -147,6 +153,7 @@ TEST_P(ChannelEstFixture, test)
   ASSERT_NEAR(estimates.get_epre(0, 0), test_params.epre, tolerance);
   ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, tolerance);
   ASSERT_NEAR(estimates.get_snr_dB(0, 0), test_params.snr_est, tolerance);
+  ASSERT_NEAR(estimates.get_time_alignment(0, 0).to_seconds() * 1e6, test_params.ta_us, tolerance);
 }
 
 INSTANTIATE_TEST_SUITE_P(ChannelEstSuite, ChannelEstFixture, ::testing::ValuesIn(port_channel_estimator_test_data));

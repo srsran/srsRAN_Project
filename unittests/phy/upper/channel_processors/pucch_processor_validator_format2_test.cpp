@@ -252,9 +252,15 @@ protected:
           create_low_papr_sequence_collection_sw_factory(lpg_factory);
       ASSERT_NE(lpc_factory, nullptr) << "Cannot create low PAPR sequence collection factory.";
 
+      std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+      if (!dft_factory) {
+        dft_factory = create_dft_processor_factory_generic();
+      }
+      ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
+
       // Create channel estimator factory.
       std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-          create_port_channel_estimator_factory_sw();
+          create_port_channel_estimator_factory_sw(dft_factory);
       ASSERT_NE(port_chan_estimator_factory, nullptr) << "Cannot create port channel estimator factory.";
 
       std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
@@ -87,7 +88,8 @@ public:
   virtual std::unique_ptr<port_channel_estimator> create() = 0;
 };
 
-std::shared_ptr<port_channel_estimator_factory> create_port_channel_estimator_factory_sw();
+std::shared_ptr<port_channel_estimator_factory>
+create_port_channel_estimator_factory_sw(std::shared_ptr<dft_processor_factory> dft_f);
 
 class pss_processor_factory
 {

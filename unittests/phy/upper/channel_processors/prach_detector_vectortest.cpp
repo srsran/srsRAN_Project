@@ -47,6 +47,9 @@ protected:
     unsigned dft_size_detector = std::get<0>(GetParam());
 
     std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+    if (!dft_factory) {
+      dft_factory = create_dft_processor_factory_generic();
+    }
     ASSERT_TRUE(dft_factory);
 
     std::shared_ptr<prach_generator_factory> generator_factory = create_prach_generator_factory_sw();

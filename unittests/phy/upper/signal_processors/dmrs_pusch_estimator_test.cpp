@@ -74,8 +74,15 @@ protected:
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
     ASSERT_TRUE(prg_factory);
 
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+    if (!dft_factory) {
+      dft_factory = create_dft_processor_factory_generic();
+    }
+    ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
+
     // Create port estimator.
-    std::shared_ptr<port_channel_estimator_factory> port_estimator_factory = create_port_channel_estimator_factory_sw();
+    std::shared_ptr<port_channel_estimator_factory> port_estimator_factory =
+        create_port_channel_estimator_factory_sw(dft_factory);
     ASSERT_TRUE(port_estimator_factory);
 
     // Create estimator factory.

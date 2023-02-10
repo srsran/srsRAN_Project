@@ -79,9 +79,15 @@ protected:
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
     ASSERT_NE(prg_factory, nullptr);
 
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+    if (!dft_factory) {
+      dft_factory = create_dft_processor_factory_generic();
+    }
+    ASSERT_NE(dft_factory, nullptr) << "Cannot create DFT factory.";
+
     // Create channel estimator factory.
     std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-        create_port_channel_estimator_factory_sw();
+        create_port_channel_estimator_factory_sw(dft_factory);
     ASSERT_NE(port_chan_estimator_factory, nullptr) << "Cannot create port channel estimator factory.";
 
     std::shared_ptr<dmrs_pucch_estimator_factory> estimator_factory =
@@ -157,9 +163,12 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
 
   pucch_processor_result result = processor->process(grid, param.config);
 
-  // Check channel state information is expected.
-  ASSERT_EQ(result.csi.time_alignment, phy_time_unit::from_seconds(0));
+  // Check channel state information.
+  // Time alignment shouldn't exceed plus minus 3 us.
+  ASSERT_NEAR(result.csi.time_alignment.to_seconds(), 0, 3e-6);
+  // EPRE should be close to zero.
   ASSERT_NEAR(result.csi.epre_dB, 0.0, 0.09);
+  // SINR should be larger than 25 dB.
   ASSERT_GT(result.csi.sinr_dB, 25.0);
 
   // The message shall be valid.

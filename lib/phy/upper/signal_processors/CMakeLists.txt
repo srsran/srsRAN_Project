@@ -23,6 +23,6 @@ set(SOURCES
 include_directories(../../../../include/srsgnb/phy/upper/signal_processors)
 
 add_library(srsgnb_signal_processors STATIC ${SOURCES})
-target_link_libraries(srsgnb_signal_processors srsvec srsgnb_phy_support srsgnb_upper_phy_support srsgnb_ran)
+target_link_libraries(srsgnb_signal_processors srsvec srsgnb_phy_support srsgnb_upper_phy_support srsgnb_ran srsgnb_generic_funcs)
 
 install(TARGETS srsgnb_signal_processors EXPORT srsgnb_export)

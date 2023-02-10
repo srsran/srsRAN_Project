@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/support/interpolator.h"
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 
@@ -23,11 +24,23 @@ namespace srsgnb {
 class port_channel_estimator_average_impl : public port_channel_estimator
 {
 public:
-  /// Constructor - Sets the internal interpolator.
-  explicit port_channel_estimator_average_impl(std::unique_ptr<interpolator> interp) :
-    freq_interpolator(std::move(interp))
+  /// \brief Size of the internal inverse Discrete Fourier Transform.
+  ///
+  /// The inverse DFT is used to estimate the time alignment. A DFT size of 4096 points allows of a resolution of 16.3
+  /// and 8.1 nanoseconds with a subcarrier spacing of 15 kHz and 30 kHz, respectively.
+  static constexpr unsigned DFT_SIZE = 4096;
+
+  /// Constructor - Sets the internal interpolator and inverse DFT processor of size \c DFT_SIZE.
+  port_channel_estimator_average_impl(std::unique_ptr<interpolator> interp, std::unique_ptr<dft_processor> idft_proc) :
+    freq_interpolator(std::move(interp)), idft(std::move(idft_proc))
   {
     srsgnb_assert(freq_interpolator, "Invalid interpolator.");
+    srsgnb_assert(idft->get_direction() == dft_processor::direction::INVERSE,
+                  "The port channel estimator requires an inverse (not direct) DFT processor.");
+    srsgnb_assert(idft->get_size() == DFT_SIZE,
+                  "The port channel estimator requires an iDFT of size {}, provided {}.",
+                  static_cast<unsigned>(DFT_SIZE),
+                  idft->get_size());
   }
 
   // See interface for documentation.
@@ -53,6 +66,9 @@ private:
   /// REs without pilots.
   std::unique_ptr<interpolator> freq_interpolator;
 
+  /// Inverse DFT processor of size \c DFT_SIZE.
+  std::unique_ptr<dft_processor> idft;
+
   /// Buffer of received signal samples corresponding to pilots.
   dmrs_symbol_list rx_pilots;
 
@@ -69,6 +85,9 @@ private:
 
   /// Estimated noise variance (single layer).
   float noise_var = 0;
+
+  /// Estimated time alignment in seconds.
+  float time_alignment_s = 0;
 
   /// Size of the noise average window.
   unsigned window_size = 0;

@@ -164,11 +164,26 @@ private:
 class port_channel_estimator_factory_sw : public port_channel_estimator_factory
 {
 public:
+  explicit port_channel_estimator_factory_sw(std::shared_ptr<dft_processor_factory> dft_f) :
+    dft_factory(std::move(dft_f))
+  {
+    srsgnb_assert(dft_factory, "Invalid DFT factory.");
+  }
+
   std::unique_ptr<port_channel_estimator> create() override
   {
     std::unique_ptr<interpolator> interp = create_interpolator();
-    return std::make_unique<port_channel_estimator_average_impl>(std::move(interp));
+
+    dft_processor::configuration idft_config = {};
+    idft_config.size                         = port_channel_estimator_average_impl::DFT_SIZE;
+    idft_config.dir                          = dft_processor::direction::INVERSE;
+    std::unique_ptr<dft_processor> idft_proc = dft_factory->create(idft_config);
+
+    return std::make_unique<port_channel_estimator_average_impl>(std::move(interp), std::move(idft_proc));
   }
+
+private:
+  std::shared_ptr<dft_processor_factory> dft_factory;
 };
 
 class pss_processor_factory_sw : public pss_processor_factory
@@ -224,9 +239,10 @@ srsgnb::create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_gen
   return std::make_shared<nzp_csi_rs_generator_factory_sw>(std::move(prg_factory));
 }
 
-std::shared_ptr<port_channel_estimator_factory> srsgnb::create_port_channel_estimator_factory_sw()
+std::shared_ptr<port_channel_estimator_factory>
+srsgnb::create_port_channel_estimator_factory_sw(std::shared_ptr<dft_processor_factory> dft_f)
 {
-  return std::make_shared<port_channel_estimator_factory_sw>();
+  return std::make_shared<port_channel_estimator_factory_sw>(std::move(dft_f));
 }
 
 std::shared_ptr<pss_processor_factory> srsgnb::create_pss_processor_factory_sw()

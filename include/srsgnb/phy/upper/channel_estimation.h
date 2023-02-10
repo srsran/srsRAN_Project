@@ -63,6 +63,7 @@ public:
     epre.reserve(MAX_TX_RX_PATHS);
     rsrp.reserve(MAX_TX_RX_PATHS);
     snr.reserve(MAX_TX_RX_PATHS);
+    time_alignment.reserve(MAX_TX_RX_PATHS);
   }
 
   /// Constructor: sets the size of the internal buffers.
@@ -104,6 +105,8 @@ public:
     rsrp.resize(nof_paths);
     snr.reserve(MAX_TX_RX_PATHS);
     snr.resize(nof_paths);
+    time_alignment.reserve(MAX_TX_RX_PATHS);
+    time_alignment.resize(nof_paths);
   }
 
   /// Default destructor
@@ -154,6 +157,12 @@ public:
     return convert_power_to_dB(get_snr(rx_port, tx_layer));
   }
 
+  /// Returns the estimated time alignment in PHY time units between the given Rx port and Tx layer.
+  phy_time_unit get_time_alignment(unsigned rx_port, unsigned tx_layer = 0) const
+  {
+    return time_alignment[path_to_index(rx_port, tx_layer)];
+  }
+
   /// \brief Returns a read-write view to the RE channel estimates of the path between the given Rx port and Tx layer.
   ///
   /// The view is represented as a vector indexed by i) subcarriers and ii) OFDM symbols.
@@ -193,9 +202,10 @@ public:
 
     srsgnb_assert(nof_rx_ports == 1, "For now, only one Rx port is supported.");
     srsgnb_assert(nof_tx_layers == 1, "For now, only one Tx layer is supported.");
-    csi.epre_dB = get_epre_dB(0, 0);
-    csi.rsrp_dB = get_rsrp_dB(0, 0);
-    csi.sinr_dB = get_snr_dB(0, 0);
+    csi.epre_dB        = get_epre_dB(0, 0);
+    csi.rsrp_dB        = get_rsrp_dB(0, 0);
+    csi.sinr_dB        = get_snr_dB(0, 0);
+    csi.time_alignment = get_time_alignment(0, 0);
     return csi;
   }
 
@@ -225,6 +235,12 @@ public:
   void set_snr(float snr_val, unsigned rx_port, unsigned tx_layer = 0)
   {
     snr[path_to_index(rx_port, tx_layer)] = snr_val;
+  }
+
+  /// Sets the estimated time alignment in PHY units of time for the path between the given Rx port and Tx layer.
+  void set_time_alignment(phy_time_unit ta, unsigned rx_port, unsigned tx_layer = 0)
+  {
+    time_alignment[path_to_index(rx_port, tx_layer)] = ta;
   }
 
   /// Sets the channel estimate for the resource element at the given coordinates.
@@ -300,6 +316,9 @@ private:
 
   /// Estimated signal-to-noise ratios (linear scale).
   std::vector<float> snr;
+
+  /// Estimated time alignment.
+  std::vector<phy_time_unit> time_alignment;
   ///@}
 
   /// \brief Container for channel estimates.
