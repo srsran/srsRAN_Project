@@ -428,8 +428,10 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   // Release default one.
   dest_pucch_cfg.format_1_common_param.reset();
 
+  // Note: Set a configuration different from the one already existing the starting config; this will trigger the
+  // calculate_cell_group_config_diff() to add an element in format2 in the generated ASN1 message.
   dest_pucch_cfg.format_2_common_param.emplace();
-  dest_pucch_cfg.format_2_common_param.value().max_c_rate                = max_pucch_code_rate::dot_25;
+  dest_pucch_cfg.format_2_common_param.value().max_c_rate                = max_pucch_code_rate::dot_08;
   dest_pucch_cfg.format_2_common_param.value().simultaneous_harq_ack_csi = true;
 
   dest_pucch_cfg.format_3_common_param.emplace();

@@ -441,7 +441,8 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
                                                                      .pucch_res_id = pucch_sr_res_id});
 
   pucch_cfg.format_1_common_param.emplace();
-  pucch_cfg.format_2_common_param.emplace(pucch_common_all_formats{.max_c_rate = max_pucch_code_rate::dot_25});
+  pucch_cfg.format_2_common_param.emplace(
+      pucch_common_all_formats{.max_c_rate = max_pucch_code_rate::dot_25, .simultaneous_harq_ack_csi = true});
 
   // >>> dl-DataToUl-Ack
   // TS38.213, 9.1.2.1 - "If a UE is provided dl-DataToUL-ACK, the UE does not expect to be indicated by DCI format 1_0
