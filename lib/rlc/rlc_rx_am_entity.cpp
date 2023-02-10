@@ -134,28 +134,6 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
     return;
   }
 
-  // Section 5.2.3.2.2, discard segments with overlapping bytes
-  if (rx_window->has_sn(header.sn) && header.si != rlc_si_field::full_sdu) {
-    for (const rlc_rx_am_sdu_segment& segm : (*rx_window)[header.sn].segments) {
-      uint32_t segm_last_byte = segm.so + segm.payload.length() - 1;
-      uint32_t pdu_last_byte  = header.so + payload.length() - 1;
-      if ((header.so >= segm.so && header.so <= segm_last_byte) ||
-          (pdu_last_byte >= segm.so && pdu_last_byte <= segm_last_byte)) {
-        logger.log_info("Discarded segment with overlapping bytes: SN={}, SO={}, last_byte={}, payload_len={}",
-                        header.sn,
-                        header.so,
-                        pdu_last_byte,
-                        payload.length());
-        logger.log_info("Overlapped with SDU segment: SN={}, SO={}, last_byte={}, payload_len={}",
-                        header.sn,
-                        segm.so,
-                        segm_last_byte,
-                        segm.payload.length());
-        return;
-      }
-    }
-  }
-
   // Write to rx window either full SDU or SDU segment
   if (header.si == rlc_si_field::full_sdu) {
     handle_full_data_sdu(header, std::move(payload));
@@ -362,6 +340,8 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
 
 void rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu_segment new_segment)
 {
+  // Section 5.2.3.2.2, discard segments with overlapping bytes
+
   std::set<rlc_rx_am_sdu_segment, rlc_rx_am_sdu_segment_cmp>::iterator cur_segment = sdu_info.segments.begin();
   while (cur_segment != sdu_info.segments.end()) {
     uint32_t cur_last_byte = cur_segment->so + cur_segment->payload.length() - 1;
