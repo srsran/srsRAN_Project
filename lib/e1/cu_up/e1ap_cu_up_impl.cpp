@@ -95,6 +95,12 @@ void e1ap_cu_up_impl::handle_message(const e1_message& msg)
       logger.info("E1AP SDU, \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
     }
 
+    if (logger.debug.enabled()) {
+      asn1::json_writer js;
+      msg.pdu.to_json(js);
+      logger.debug("Rx E1AP SDU: {}", js.to_string());
+    }
+
     switch (msg.pdu.type().value) {
       case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
         handle_initiating_message(msg.pdu.init_msg());
