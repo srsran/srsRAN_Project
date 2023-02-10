@@ -54,6 +54,16 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   const dci_dl_rnti_config_type dci_type =
       h_dl.empty() ? dci_dl_rnti_config_type::c_rnti_f1_0 : h_dl.last_alloc_params().dci_cfg_type;
 
+  // See 3GPP TS 38.213, clause 10.1,
+  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
+  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
+  if (dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 and
+      grant.ss_id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id) {
+    logger.debug("Failed to allocate PDSCH. Cause: SearchSpace not valid for re-transmission of msg4.");
+    return false;
+  }
+
   // Find a SearchSpace candidate.
   const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
   if (ss_cfg == nullptr) {
