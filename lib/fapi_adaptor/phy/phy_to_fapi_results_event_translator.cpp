@@ -350,7 +350,7 @@ static void fill_format_2_3_4_sr(fapi::uci_pucch_pdu_format_2_3_4_builder& build
                                 message.get_sr_bits().begin(), message.get_sr_bits().end()));
 }
 
-/// Fills the CSI-Part1 parameters for PUCCH Format 2/3/4 using the given builder and message.
+/// Fills the CSI Part 1 parameters for PUCCH Format 2/3/4 using the given builder and message.
 static void fill_format_2_3_4_csi_part1(fapi::uci_pucch_pdu_format_2_3_4_builder& builder,
                                         const pucch_uci_message&                  message)
 {
@@ -397,7 +397,7 @@ static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder
   // Fill HARQ parameters.
   fill_format_2_3_4_harq(builder_format234, result.processor_result.message);
 
-  // Fill CSI-Part1 parameters.
+  // Fill CSI Part 1 parameters.
   fill_format_2_3_4_csi_part1(builder_format234, result.processor_result.message);
 }
 

@@ -143,7 +143,7 @@ pusch_config_params srsgnb::get_pusch_config_f0_0_c_rnti(const cell_configuratio
   // DL slots in TDD, currently 6.
   // TODO verify if this is the correct value.
   constexpr unsigned nof_harq_ack_bits = 6;
-  // We assume only 4 bits for CSI part-1.
+  // We assume only 4 bits for CSI Part 1.
   constexpr unsigned nof_csi_part1_bits = 4;
   constexpr unsigned nof_csi_part2_bits = 0;
 

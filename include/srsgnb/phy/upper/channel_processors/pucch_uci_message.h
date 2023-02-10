@@ -35,9 +35,9 @@ public:
     unsigned nof_sr;
     /// Number of HARQ-ACK information bits.
     unsigned nof_harq_ack;
-    /// Number of CSI-Part1 information bits.
+    /// Number of CSI Part 1 information bits.
     unsigned nof_csi_part1;
-    /// Number of CSI-Part2 information bits.
+    /// Number of CSI Part 2 information bits.
     unsigned nof_csi_part2;
   };
 
@@ -84,10 +84,10 @@ public:
   /// Returns the number of expected HARQ-ACK information bits.
   unsigned get_expected_nof_harq_ack_bits() const { return nof_harq_ack_bits; }
 
-  /// Returns the number of expected of CSI-Part1 information bits.
+  /// Returns the number of expected of CSI Part 1 information bits.
   unsigned get_expected_nof_csi_part1_bits() const { return nof_csi_part1_bits; }
 
-  /// Returns the number of expected of CSI-Part2 information bits.
+  /// Returns the number of expected of CSI Part 2 information bits.
   unsigned get_expected_nof_csi_part2_bits() const { return nof_csi_part2_bits; }
 
   /// Gets a read-write view of the SR bits.
@@ -102,25 +102,25 @@ public:
   /// Gets a read-only view of the HARQ-ACK bits.
   span<const uint8_t> get_harq_ack_bits() const { return span<const uint8_t>(data).subspan(0, nof_harq_ack_bits); }
 
-  /// Gets a read-write view of the CSI-Part1 bits.
+  /// Gets a read-write view of the CSI Part 1 bits.
   span<uint8_t> get_csi_part1_bits()
   {
     return span<uint8_t>(data).subspan(nof_sr_bits + nof_harq_ack_bits, nof_csi_part1_bits);
   }
 
-  /// Gets a read-only view of the CSI-Part1 bits.
+  /// Gets a read-only view of the CSI Part 1 bits.
   span<const uint8_t> get_csi_part1_bits() const
   {
     return span<const uint8_t>(data).subspan(nof_harq_ack_bits + nof_sr_bits, nof_csi_part1_bits);
   }
 
-  /// Gets a read-write view of the CSI-Part1 bits.
+  /// Gets a read-write view of the CSI Part 1 bits.
   span<uint8_t> get_csi_part2_bits()
   {
     return span<uint8_t>(data).subspan(nof_harq_ack_bits + nof_sr_bits + nof_csi_part1_bits, nof_csi_part2_bits);
   }
 
-  /// Gets a read-only view of the CSI-Part1 bits.
+  /// Gets a read-only view of the CSI Part 1 bits.
   span<const uint8_t> get_csi_part2_bits() const
   {
     return span<const uint8_t>(data).subspan(nof_harq_ack_bits + nof_sr_bits + nof_csi_part1_bits, nof_csi_part2_bits);
@@ -133,9 +133,9 @@ private:
   unsigned nof_sr_bits = 0;
   /// Number of HARQ-ACK bits.
   unsigned nof_harq_ack_bits = 0;
-  /// Number of CSI-Part1 bits.
+  /// Number of CSI Part 1 bits.
   unsigned nof_csi_part1_bits = 0;
-  /// Number of CSI-Part2 bits.
+  /// Number of CSI Part 2 bits.
   unsigned nof_csi_part2_bits = 0;
   /// Message decode or detection status.
   uci_status status = uci_status::invalid;

@@ -47,8 +47,8 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   ulsch_info.alpha_scaling = alpha_scaling_to_float(
       ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling);
 
-  // HARQ-ACK beta offset. Which of the beta_offset to be used among the indices 1, 2, 3 is determined as per TS 38.213,
-  // Section 9.3 and TS 38.331, \c BetaOffsets.
+  // HARQ-ACK beta offset. Which of the beta_offset to be used among the indices 1, 2, 3 is determined as per TS38.213,
+  // Section 9.3 and TS38.331, \c BetaOffsets.
   // If no HARQ-ACK reporting, this value won't be used.
   if (pusch_cfg.nof_harq_ack_bits == 0) {
     ulsch_info.beta_offset_harq_ack = 0;
@@ -84,13 +84,13 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                    .beta_offset_ack_idx_3.value());
   }
 
-  // CSI part 1 beta offset. Which of the beta_offset to be used among the indices 1, 2 is determined as per TS 38.213,
-  // Section 9.3 and TS 38.331, \c BetaOffsets.
-  // If no CSI-part1 reporting, this value won't be used.
+  // CSI Part 1 beta offset. Which of the beta_offset to be used among the indices 1, 2 is determined as per TS38.213,
+  // Section 9.3 and TS38.331, \c BetaOffsets.
+  // If no CSI Part 1 reporting, this value won't be used.
   if (pusch_cfg.nof_csi_part1_bits == 0) {
     ulsch_info.beta_offset_csi_part1 = 0;
   }
-  // Use \c betaOffsetCSI-Part1-Index1 for up to 11 bits CSI-Part1 reporting.
+  // Use \c betaOffsetCSI-Part1-Index1 for up to 11 bits CSI Part 1 reporting.
   else if (pusch_cfg.nof_csi_part1_bits < 12) {
     ulsch_info.beta_offset_csi_part1 =
         beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
@@ -100,7 +100,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                                                                   .beta_offsets_cfg.value())
                               .beta_offset_csi_p1_idx_1.value());
   }
-  // Use \c betaOffsetCSI-Part1-Index2 for more than 11 bits CSI-Part1 reporting.
+  // Use \c betaOffsetCSI-Part1-Index2 for more than 11 bits CSI Part 1 reporting.
   else {
     ulsch_info.beta_offset_csi_part1 =
         beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
@@ -111,13 +111,13 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                               .beta_offset_csi_p1_idx_2.value());
   }
 
-  // CSI part 2 beta offset. Which of the beta_offset to be used among the indices 1, 2 is determined as per TS 38.213,
-  // Section 9.3 and TS 38.331, \c BetaOffsets.
-  // If no CSI-part2 reporting, this value won't be used.
+  // CSI Part 2 beta offset. The beta_offset to be used among the indices 1, 2 is determined as per TS38.213, Section
+  // 9.3 and TS38.331, \c BetaOffsets.
+  // If no CSI Part 2 reporting, this value won't be used.
   if (pusch_cfg.nof_csi_part2_bits == 0) {
     ulsch_info.beta_offset_csi_part2 = 0;
   }
-  // Use \c betaOffsetCSI-Part2-Index1 for up to 11 bits CSI-Part2 reporting.
+  // Use \c betaOffsetCSI-Part2-Index1 for up to 11 bits CSI Part 2 reporting.
   else if (pusch_cfg.nof_csi_part2_bits < 12) {
     ulsch_info.beta_offset_csi_part2 =
         beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
@@ -127,7 +127,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                                                                   .beta_offsets_cfg.value())
                               .beta_offset_csi_p2_idx_1.value());
   }
-  // Use \c betaOffsetCSI-Part2-Index2 for more than 11 bits CSI-Part2 reporting.
+  // Use \c betaOffsetCSI-Part2-Index2 for more than 11 bits CSI Part 2 reporting.
   else {
     ulsch_info.beta_offset_csi_part2 =
         beta_csi_to_float(variant_get<uci_on_pusch::beta_offsets_semi_static>(ue_cell_cfg.cfg_dedicated()
@@ -153,7 +153,7 @@ optional<sch_mcs_tbs> srsgnb::compute_dl_mcs_tbs(const pdsch_config_params&   pd
                                                  sch_mcs_index                max_mcs,
                                                  unsigned                     nof_prbs)
 {
-  // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
+  // The maximum supported code rate is 0.95, as per TS38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
   static const double max_supported_code_rate = 0.95;
   const unsigned      dmrs_prbs               = calculate_nof_dmrs_per_rb(pdsch_params.dmrs);
@@ -216,7 +216,7 @@ optional<sch_mcs_tbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pu
                                                  sch_mcs_index                max_mcs,
                                                  unsigned                     nof_prbs)
 {
-  // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
+  // The maximum supported code rate is 0.95, as per TS38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
   static const double max_supported_code_rate = 0.95;
   const unsigned      dmrs_prbs               = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);

@@ -92,7 +92,7 @@ private:
   static constexpr unsigned MAX_NOF_HARQ_ACK_LLR =
       MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
 
-  /// \brief Maximum number of LLRs for CSI Part1 in a single transmission.
+  /// \brief Maximum number of LLRs for CSI Part 1 in a single transmission.
   ///
   /// As per TS38.212 Section 6.3.2.4.1.1 in \f$Q_{CSI-1}'\f$ formula. The value of \f$\sum
   /// ^{N_{symb,all}^{PUSCH}-1}_{l=l_0}M_{sc}^{UCI}(l)\f$ is bounded above by the maximum number of resource elements in
@@ -100,7 +100,7 @@ private:
   static constexpr unsigned MAX_NOF_CSI_PART1_LLR =
       MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
 
-  /// \brief Maximum number of LLRs for CSI Part2 in a single transmission.
+  /// \brief Maximum number of LLRs for CSI Part 2 in a single transmission.
   ///
   /// As per TS38.212 Section 6.3.2.4.1.1 in \f$Q_{CSI-2}'\f$ formula. Ceiling the value of \f$\sum
   /// ^{N_{symb,all}^{PUSCH}-1}_{l=l_0}M_{sc}^{UCI}(l)\f$ to the maximum number of resource elements in a PUSCH
@@ -145,9 +145,9 @@ private:
   std::array<log_likelihood_ratio, pusch_demodulator::MAX_NOF_DATA_LLR> temp_sch_llr;
   /// HARQ-ACK LLR buffer.
   std::array<log_likelihood_ratio, MAX_NOF_HARQ_ACK_LLR> temp_harq_ack_llr;
-  /// CSI Part1 LLR buffer.
+  /// CSI Part 1 LLR buffer.
   std::array<log_likelihood_ratio, MAX_NOF_CSI_PART1_LLR> temp_csi_part1_llr;
-  /// CSI Part2 LLR buffer type.
+  /// CSI Part 2 LLR buffer type.
   std::array<log_likelihood_ratio, MAX_NOF_CSI_PART2_LLR> temp_csi_part2_llr;
 };
 

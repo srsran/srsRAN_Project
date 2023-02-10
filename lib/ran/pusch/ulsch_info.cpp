@@ -224,7 +224,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   // If two or less HARQ-ACK bits are multiplexed, compute the CSI Part 1 RE using the reserved HARQ-ACK resources.
   unsigned nof_harq_ack_re_csi = (config.nof_harq_ack_bits < 2_bits) ? nof_harq_ack_rvd_re : result.nof_harq_ack_re;
 
-  // Calculate the number of RE occupied by CSI-part1.
+  // Calculate the number of RE occupied by CSI Part 1.
   if (config.tbs > 0_bits) {
     // In case of PUSCH multiplexing SCH.
     result.nof_csi_part1_re = calculate_nof_re_csi_part1(config.nof_csi_part1_bits,
@@ -239,7 +239,7 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
         calculate_nof_re_csi_part1_without_sch(config.nof_csi_part1_bits, nof_re_uci, nof_harq_ack_re_csi);
   }
 
-  // Calculate the number of RE occupied by CSI-part2.
+  // Calculate the number of RE occupied by CSI Part 2.
   srsgnb_assert(config.nof_csi_part2_bits == 0_bits, "CSI Part 2 is not currently implemented.");
   result.nof_csi_part2_re = 0;
 
@@ -262,10 +262,10 @@ ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& confi
   // Number of bits reserved for HARQ-ACK.
   result.nof_harq_ack_rvd = units::bits(nof_harq_ack_rvd_re * config.nof_layers * modulation_order);
 
-  // Number of bits used for CSI-part1.
+  // Number of bits used for CSI Part 1.
   result.nof_csi_part1_bits = units::bits(result.nof_csi_part1_re * config.nof_layers * modulation_order);
 
-  // Number of bits used for CSI-part2.
+  // Number of bits used for CSI Part 2.
   result.nof_csi_part2_bits = units::bits(result.nof_csi_part2_re * config.nof_layers * modulation_order);
 
   return result;

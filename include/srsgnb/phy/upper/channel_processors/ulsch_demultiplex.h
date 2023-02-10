@@ -53,13 +53,13 @@ public:
     unsigned nof_harq_ack_bits;
     /// Number of encoded and rate-matched HARQ-ACK data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
     unsigned nof_enc_harq_ack_bits;
-    /// Number of CSI-Part1 information bits multiplexed in the PUSCH message. Parameter \f$O_\textup{CSI-1}\f$.
+    /// Number of CSI Part 1 information bits multiplexed in the PUSCH message. Parameter \f$O_\textup{CSI-1}\f$.
     unsigned nof_csi_part1_bits;
-    /// Number of encoded and rate-matched CSI-Part1 data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
+    /// Number of encoded and rate-matched CSI Part 1 data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
     unsigned nof_enc_csi_part1_bits;
-    /// Number of CSI-Part2 information bits multiplexed in the PUSCH message. Parameter \f$O_\textup{CSI-1}\f$.
+    /// Number of CSI Part 2 information bits multiplexed in the PUSCH message. Parameter \f$O_\textup{CSI-1}\f$.
     unsigned nof_csi_part2_bits;
-    /// Number of encoded and rate-matched CSI-Part2 data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
+    /// Number of encoded and rate-matched CSI Part 2 data bits. Parameter \f$G^\textup{HARQ-ACK}\f$.
     unsigned nof_enc_csi_part2_bits;
   };
 
@@ -72,8 +72,8 @@ public:
   ///
   /// \param[out] sch_data   Destination of the resultant shared channel data soft bits.
   /// \param[out] harq_ack   Destination of HARQ-ACK information soft bits.
-  /// \param[out] csi_part1  Destination CSI Part1 report soft bits.
-  /// \param[out] csi_part2  Destination CSI Part2 report soft bits.
+  /// \param[out] csi_part1  Destination CSI Part 1 report soft bits.
+  /// \param[out] csi_part2  Destination CSI Part 2 report soft bits.
   /// \param[in] input       Input soft bits to demultiplex.
   /// \param[in] config      UL-SCH demultiplexing parameters.
   virtual void demultiplex(span<log_likelihood_ratio>       sch_data,

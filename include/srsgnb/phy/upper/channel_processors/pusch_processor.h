@@ -50,9 +50,9 @@ public:
   struct uci_description {
     /// Number of HARQ-ACK information bits.
     unsigned nof_harq_ack;
-    /// Number of CSI-Part1 information bits.
+    /// Number of CSI Part 1 information bits.
     unsigned nof_csi_part1;
-    /// Number of CSI-Part2 information bits.
+    /// Number of CSI Part 2 information bits.
     unsigned nof_csi_part2;
     /// \brief Parameter \f$\alpha\f$ as per TS38.212 Section 6.3.2.4.
     ///

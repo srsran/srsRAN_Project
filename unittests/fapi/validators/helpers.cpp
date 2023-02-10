@@ -547,7 +547,7 @@ uci_pusch_pdu unittest::build_valid_uci_pusch_pdu()
   pdu.rssi                     = generate_rssi_or_rsrp();
   pdu.rsrp                     = generate_rssi_or_rsrp();
 
-  // Enable HARQ, CSI part 1 and CSI Part 2.
+  // Enable HARQ, CSI Part 1 and CSI Part 2.
   pdu.pdu_bitmap = 14U;
   pdu.harq       = generate_harq_pdu();
   pdu.csi_part1  = generate_csi_part1_pdu();
@@ -634,7 +634,7 @@ uci_pucch_pdu_format_2_3_4 unittest::build_valid_uci_pucch_format234_pdu()
   std::uniform_int_distribution<unsigned> dist(0, 2);
   pdu.pucch_format = static_cast<uci_pucch_pdu_format_2_3_4::format_type>(dist(gen));
 
-  // Enable SR, HARQ, CSI part 1. CSI part 2, UCI payload part 1 and UCI payload part 2.
+  // Enable SR, HARQ, CSI Part 1. CSI Part 2, UCI payload Part 1 and UCI payload Part 2.
   pdu.pdu_bitmap = 15U;
   pdu.sr         = generate_sr_format234_pdu();
   pdu.harq       = generate_harq_pdu();

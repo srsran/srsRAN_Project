@@ -61,7 +61,7 @@ static void fill_format2_parameters(pucch_processor::format2_configuration& conf
   config.nof_harq_ack  = fapi_pdu.bit_len_harq;
   config.nof_sr        = fapi_pdu.sr_bit_len;
   config.nof_csi_part1 = fapi_pdu.csi_part1_bit_length;
-  // CSI-Part2 disabled.
+  // CSI Part 2 disabled.
   config.nof_csi_part2 = 0;
 }
 

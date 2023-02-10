@@ -77,9 +77,9 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
   static_assert(std::is_convertible<FuncHarqAck, std::function<void()>>::value,
                 "The function for multiplexing HARQ-ACK signature must be \"void () ()\"");
   static_assert(std::is_convertible<FuncCsiPart1, std::function<void()>>::value,
-                "The function for multiplexing CSI-Part1 signature must be \"void () ()\"");
+                "The function for multiplexing CSI Part 1 signature must be \"void () ()\"");
   static_assert(std::is_convertible<FuncCsiPart2, std::function<void(bool reserved)>>::value,
-                "The function for multiplexing CSI-Part2 signature must be \"void () ()\"");
+                "The function for multiplexing CSI Part 2 signature must be \"void () ()\"");
 
   // Calculates the number of bits per resource element.
   unsigned nof_bits_per_re = get_bits_per_symbol(config.modulation) * config.nof_layers;
@@ -131,11 +131,11 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
     unsigned rvd_d          = 0;
     unsigned rvd_m_re_count = 0;
 
-    // Stride and counter for the number of CSI part 1 bits multiplexed in the OFDM symbol.
+    // Stride and counter for the number of CSI Part 1 bits multiplexed in the OFDM symbol.
     unsigned csi1_d          = 0;
     unsigned csi1_m_re_count = 0;
 
-    // Stride and counter for the number of CSI part 2 bits multiplexed in the OFDM symbol.
+    // Stride and counter for the number of CSI Part 2 bits multiplexed in the OFDM symbol.
     unsigned csi2_d          = 0;
     unsigned csi2_m_re_count = 0;
 
@@ -175,12 +175,12 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
       }
     }
 
-    // Prepare CSI Part1 and Part2 reserved bits.
+    // Prepare CSI Part 1 and Part 2 reserved bits.
     if (i_symbol >= l1_csi) {
-      // Calculate the remainder of CSI Part1 bits.
+      // Calculate the remainder of CSI Part 1 bits.
       unsigned G_csi1_remainder = G_csi_part1 - m_csi_part1_count;
 
-      // Calculate the remainder of CSI Part2 bits.
+      // Calculate the remainder of CSI Part 2 bits.
       unsigned G_csi2_remainder = G_csi_part2 - m_csi_part2_count;
 
       // Prepare CSI Part 1 bits.
@@ -220,7 +220,7 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
       // Detect if the resource element is reserved.
       bool is_reserved = ((rvd_m_re_count != 0) && (i_subcarrier % rvd_d == 0));
 
-      // Set to true if a reserved RE is used for HARQ-ACK and either CSI-Part1 or UL-SCH.
+      // Set to true if a reserved RE is used for HARQ-ACK and either CSI Part 1 or UL-SCH.
       bool is_zero = false;
 
       // Decrement number of pending Reserved RE for the symbol.
@@ -252,23 +252,23 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
         }
       }
 
-      // Process CSI-Part1. It is not allowed to use reserved RE.
+      // Process CSI Part 1. It is not allowed to use reserved RE.
       if (!is_reserved && (csi1_m_re_count != 0) && ((i_csi1++) % csi1_d == 0)) {
-        // Multiplex CSI-Part1.
+        // Multiplex CSI Part 1.
         func_csi_part1();
 
-        // Decrement number of pending CSI-Part1 RE for the symbol.
+        // Decrement number of pending CSI Part 1 RE for the symbol.
         --csi1_m_re_count;
 
         continue;
       }
 
-      // Process CSI-Part2.
+      // Process CSI Part 2.
       if ((csi2_m_re_count != 0) && ((i_csi2++) % csi2_d == 0)) {
-        // Multiplex CSI-Part2.
+        // Multiplex CSI Part 2.
         func_csi_part2(is_zero);
 
-        // Decrement number of pending CSI-Part2 RE for the symbol.
+        // Decrement number of pending CSI Part 2 RE for the symbol.
         --csi2_m_re_count;
 
         continue;
@@ -284,8 +284,8 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
 
     // Assert that all RE have been allocated.
     srsgnb_assert(ack_m_re_count == 0, "{} RE for HARQ-ACK are not processed.", ack_m_re_count);
-    srsgnb_assert(csi1_m_re_count == 0, "{} RE for CSI-Part1 are not processed.", csi1_m_re_count);
-    srsgnb_assert(csi2_m_re_count == 0, "{} RE for CSI-Part2 are not processed.", csi2_m_re_count);
+    srsgnb_assert(csi1_m_re_count == 0, "{} RE for CSI Part 1 are not processed.", csi1_m_re_count);
+    srsgnb_assert(csi2_m_re_count == 0, "{} RE for CSI Part 2 are not processed.", csi2_m_re_count);
     srsgnb_assert(ulsch_m_re_count == 0, "{} RE for SCH data are not processed.", ulsch_m_re_count);
   }
 
@@ -294,9 +294,9 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
   srsgnb_assert(
       m_harq_ack_count == G_harq_ack, "Only {} of {} HARQ-ACK elements processed.", m_harq_ack_count, G_harq_ack);
   srsgnb_assert(
-      m_csi_part1_count == G_csi_part1, "Only {} of {} CSI-Part1 elements processed.", m_csi_part1_count, G_csi_part1);
+      m_csi_part1_count == G_csi_part1, "Only {} of {} CSI Part 1 elements processed.", m_csi_part1_count, G_csi_part1);
   srsgnb_assert(
-      m_csi_part2_count == G_csi_part2, "Only {} of {} CSI-Part2 elements processed.", m_csi_part2_count, G_csi_part2);
+      m_csi_part2_count == G_csi_part2, "Only {} of {} CSI Part 2 elements processed.", m_csi_part2_count, G_csi_part2);
 }
 
 } // namespace
@@ -340,14 +340,14 @@ void ulsch_demultiplex_impl::demultiplex(span<log_likelihood_ratio>             
     harq_ack = harq_ack.last(harq_ack.size() - nof_bits_per_re);
   };
 
-  // Function to demultiplex CSI-Part1 bits.
+  // Function to demultiplex CSI Part 1 bits.
   auto func_csi_part1 = [&csi_part1, &input, &nof_bits_per_re]() {
     srsvec::copy(csi_part1.first(nof_bits_per_re), input.first(nof_bits_per_re));
     input     = input.last(input.size() - nof_bits_per_re);
     csi_part1 = csi_part1.last(csi_part1.size() - nof_bits_per_re);
   };
 
-  // Function to demultiplex CSI-Part2 bits.
+  // Function to demultiplex CSI Part 2 bits.
   auto func_csi_part2 = [&csi_part2, &input, &nof_bits_per_re](bool is_reserved) {
     if (is_reserved) {
       srsvec::zero(csi_part2.first(nof_bits_per_re));
@@ -371,8 +371,8 @@ void ulsch_demultiplex_impl::demultiplex(span<log_likelihood_ratio>             
 
   // Assert that input buffers have been consumed.
   srsgnb_assert(harq_ack.empty(), "{} soft bits have not been multiplexed for HARQ-ACK.", harq_ack.size());
-  srsgnb_assert(csi_part1.empty(), "{} soft bits have not been multiplexed for CSI-Part1.", csi_part1.size());
-  srsgnb_assert(csi_part2.empty(), "{} soft bits have not been multiplexed for CSI-Part2.", csi_part2.size());
+  srsgnb_assert(csi_part1.empty(), "{} soft bits have not been multiplexed for CSI Part 1.", csi_part1.size());
+  srsgnb_assert(csi_part2.empty(), "{} soft bits have not been multiplexed for CSI Part 2.", csi_part2.size());
   srsgnb_assert(sch_data.empty(), "{} soft bits have not been multiplexed for SCH data.", sch_data.size());
   srsgnb_assert(input.empty(), "{} input soft bits have not been multiplexed.", input.size());
 }
@@ -410,7 +410,7 @@ ulsch_placeholder_list ulsch_demultiplex_impl::get_placeholders(const message_in
     ++re_counter;
   };
 
-  // Function to demultiplex CSI-Part1 bits.
+  // Function to demultiplex CSI Part 1 bits.
   auto func_csi_part1 = [&re_counter, &message_info, &result]() {
     if (message_info.nof_csi_part1_bits == 1) {
       result.push_back(re_counter);
@@ -418,7 +418,7 @@ ulsch_placeholder_list ulsch_demultiplex_impl::get_placeholders(const message_in
     ++re_counter;
   };
 
-  // Function to demultiplex CSI-Part2 bits.
+  // Function to demultiplex CSI Part 2 bits.
   auto func_csi_part2 = [&re_counter, &message_info, &result](bool is_reserved) {
     if (is_reserved) {
       return;

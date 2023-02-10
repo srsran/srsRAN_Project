@@ -30,7 +30,7 @@ uci_allocator_impl::~uci_allocator_impl() = default;
 static void
 fill_uci_on_pusch(uci_info& uci, const uci_on_pusch& uci_cfg, unsigned harq_ack_nof_bits, unsigned csi_part1_nof_bits)
 {
-  // [Implementation-defined] CSI part2 reporting not supported.
+  // [Implementation-defined] CSI Part 2 reporting not supported.
   const unsigned CSI_PART2_NOF_BITS = 0;
 
   uci.harq_ack_nof_bits  = harq_ack_nof_bits;
@@ -43,7 +43,7 @@ fill_uci_on_pusch(uci_info& uci, const uci_on_pusch& uci_cfg, unsigned harq_ack_
   // We assume the configuration contains the values for beta_offsets.
   const auto& beta_offsets = variant_get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
 
-  // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+  // The values of \c beta_offsets are set according to Section 9.3, TS38.213.
   if (uci.harq_ack_nof_bits <= 2) {
     uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_1.value();
   }
@@ -53,14 +53,14 @@ fill_uci_on_pusch(uci_info& uci, const uci_on_pusch& uci_cfg, unsigned harq_ack_
     uci.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_3.value();
   }
 
-  // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
+  // The values of \c beta_offsets are set according to Section 9.3, TS38.213.
   if (uci.csi_part1_nof_bits <= 11) {
     uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_1.value();
   } else {
     uci.beta_offset_csi_1 = beta_offsets.beta_offset_csi_p1_idx_2.value();
   }
 
-  // When this allocation is done, there is no CSI_part2 to be reported. Therefore, as per Section 9.3, TS 38.213, the
+  // When this allocation is done, there is no CSI Part 2 to be reported. Therefore, as per Section 9.3, TS38.213, the
   // \c beta_offsets values to be used are those with index 1.
   uci.beta_offset_csi_2 = beta_offsets.beta_offset_csi_p2_idx_1.value();
 }

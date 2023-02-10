@@ -1364,8 +1364,8 @@ public:
     return *this;
   }
 
-  /// \brief Sets the CSI part 1 PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part1 PDU.
+  /// \brief Sets the CSI Part 1 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part 1 PDU.
   uci_pusch_pdu_builder&
   set_csi_part1_parameters(uci_pusch_or_pucch_f2_3_4_detection_status                            detection,
                            uint16_t                                                              expected_bit_length,
@@ -1381,8 +1381,8 @@ public:
     return *this;
   }
 
-  /// \brief Sets the CSI part 2 PDU parameters and returns a reference to the builder.
-  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part2 PDU.
+  /// \brief Sets the CSI Part 2 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 Section 3.4.9.4 in Table CSI Part 2 PDU.
   uci_pusch_pdu_builder&
   set_csi_part2_parameters(uci_pusch_or_pucch_f2_3_4_detection_status                            detection,
                            uint16_t                                                              expected_bit_length,
@@ -2024,7 +2024,7 @@ public:
     return *this;
   }
 
-  /// Sets the PUCCH PDU bit length for SR, HARQ and CSI part1 parameters and returns a reference to the builder.
+  /// Sets the PUCCH PDU bit length for SR, HARQ and CSI Part 1 parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
   ul_pucch_pdu_builder&
   set_bit_length_parameters(uint8_t sr_bit_len, uint16_t bit_len_harq, uint16_t csi_part1_bit_length)

@@ -30,13 +30,17 @@ struct pusch_processor_result {
   channel_state_information csi;
   /// Error vector Magnitude (EVM) calculated from the modulation demapper soft bits.
   optional<float> evm;
-  /// SCH decoding information. Available only if the PUSCH transmission carried data.
+  /// \brief SCH decoding information.
+  /// \remark Available only if the PUSCH transmission carries data.
   optional<pusch_decoder_result> data;
-  /// Decoded HARQ-ACK information bits. Leave empty if no HARQ-ACK information bits are multiplexed with the UL-SCH.
+  /// \brief Decoded HARQ-ACK information bits.
+  /// \remark Leave empty if no HARQ-ACK information bits are multiplexed with the UL-SCH.
   pusch_uci_field harq_ack;
-  /// Decoded CSI-Part1 information bits. Leave empty if no CSI-Part1 information bits are multiplexed with the UL-SCH.
+  /// \brief Decoded CSI Part 1 information bits.
+  /// \remark Leave empty if no CSI Part 1 information bits are multiplexed with the UL-SCH.
   pusch_uci_field csi_part1;
-  /// Decoded CSI-Part2 information bits. Leave empty if no CSI-Part2 information bits are multiplexed with the UL-SCH.
+  /// \brief Decoded CSI Part 2 information bits.
+  /// \remark Leave empty if no CSI Part 2 information bits are multiplexed with the UL-SCH.
   pusch_uci_field csi_part2;
 };
 

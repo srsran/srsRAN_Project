@@ -95,11 +95,11 @@ TEST_P(UlschDemultiplexFixture, FromVector)
   std::vector<log_likelihood_ratio> expected_harq_ack = test_case.output_harq_ack.read();
   std::vector<log_likelihood_ratio> harq_ack(expected_harq_ack.size());
 
-  // Load CSI-Part1 output.
+  // Load CSI Part 1 output.
   std::vector<log_likelihood_ratio> expected_csi_part1 = test_case.output_csi_part1.read();
   std::vector<log_likelihood_ratio> csi_part1(expected_csi_part1.size());
 
-  // Load CSI-Part2 output.
+  // Load CSI Part 2 output.
   std::vector<log_likelihood_ratio> expected_csi_part2 = test_case.output_csi_part2.read();
   std::vector<log_likelihood_ratio> csi_part2(expected_csi_part2.size());
 

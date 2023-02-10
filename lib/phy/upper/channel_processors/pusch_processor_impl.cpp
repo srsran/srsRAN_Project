@@ -45,7 +45,7 @@ bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu)
     return false;
   }
 
-  // CSI-Part2 multiplexing is not supported.
+  // CSI Part 2 multiplexing is not supported.
   if (pdu.uci.nof_csi_part2 != 0) {
     return false;
   }
@@ -247,7 +247,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   // Decode HARQ-ACK.
   result.harq_ack = decode_uci_field(harq_ack_llr, pdu.uci.nof_harq_ack, uci_dec_config);
 
-  // Decode CSI-Part1.
+  // Decode CSI Part 1.
   result.csi_part1 = decode_uci_field(csi_part1_llr, pdu.uci.nof_csi_part1, uci_dec_config);
 
   // Decode HARQ-ACK.

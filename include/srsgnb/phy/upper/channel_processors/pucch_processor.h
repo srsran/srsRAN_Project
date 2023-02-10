@@ -128,9 +128,9 @@ public:
     unsigned nof_harq_ack;
     /// Number of expected SR bits {0, ..., 4}.
     unsigned nof_sr;
-    /// Number of expected CSI part 1 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
+    /// Number of expected CSI Part 1 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
     unsigned nof_csi_part1;
-    /// Number of expected CSI part 2 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
+    /// Number of expected CSI Part 2 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
     unsigned nof_csi_part2;
   };
 

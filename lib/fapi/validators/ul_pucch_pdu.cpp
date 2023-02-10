@@ -22,7 +22,7 @@ static constexpr message_type_id msg_type = message_type_id::ul_tti_request;
 /// This validator checks the PRACH PDU.
 static constexpr unsigned pdu_type = static_cast<unsigned>(ul_pdu_type::PUCCH);
 
-/// Validates the RNTI property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the RNTI property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_rnti(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -31,7 +31,7 @@ static bool validate_rnti(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "RNTI", msg_type, pdu_type, report);
 }
 
-/// Validates the BWP size property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the BWP size property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_bwp_size(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -40,7 +40,7 @@ static bool validate_bwp_size(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "BWP size", msg_type, pdu_type, report);
 }
 
-/// Validates the BWP start property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the BWP start property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_bwp_start(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -49,7 +49,7 @@ static bool validate_bwp_start(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "BWP start", msg_type, pdu_type, report);
 }
 
-/// Validates the subcarrier spacing property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the subcarrier spacing property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_scs(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -58,7 +58,7 @@ static bool validate_scs(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Subcarrier spacing", msg_type, pdu_type, report);
 }
 
-/// Validates the cyclic prefix property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the cyclic prefix property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_cyclic_prefix(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -67,7 +67,7 @@ static bool validate_cyclic_prefix(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Cyclic prefix", msg_type, pdu_type, report);
 }
 
-/// Validates the format type property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the format type property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_format_type(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -76,7 +76,7 @@ static bool validate_format_type(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Format type", msg_type, pdu_type, report);
 }
 
-/// Validates the multi slot tx indicator property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the multi slot tx indicator property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_multi_slot_tx_indicator(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -85,7 +85,7 @@ static bool validate_multi_slot_tx_indicator(unsigned value, validator_report& r
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Multi slot tx indicator", msg_type, pdu_type, report);
 }
 
-/// Validates the PRB start property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the PRB start property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_prb_start(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -94,7 +94,7 @@ static bool validate_prb_start(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PRB start", msg_type, pdu_type, report);
 }
 
-/// Validates the PRB size property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the PRB size property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_prb_size(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -103,7 +103,7 @@ static bool validate_prb_size(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PRB size", msg_type, pdu_type, report);
 }
 
-/// Validates the start symbol index property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the start symbol index property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_start_symbol_index(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -112,7 +112,7 @@ static bool validate_start_symbol_index(unsigned value, validator_report& report
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Start symbol index", msg_type, pdu_type, report);
 }
 
-/// Validates the duration symbols property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the duration symbols property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_duration_symbols(unsigned value, pucch_format format_type, validator_report& report)
 {
   if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_2) {
@@ -128,7 +128,7 @@ static bool validate_duration_symbols(unsigned value, pucch_format format_type, 
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Duration in symbols", msg_type, pdu_type, report);
 }
 
-/// Validates the second hop PRB property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the second hop PRB property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_second_hop_prb(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -137,7 +137,7 @@ static bool validate_second_hop_prb(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Second hop PRB", msg_type, pdu_type, report);
 }
 
-/// Validates the PUCCH group hopping property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the PUCCH group hopping property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_pucch_group_hopping(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -146,7 +146,7 @@ static bool validate_pucch_group_hopping(unsigned value, validator_report& repor
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PUCCH group hopping", msg_type, pdu_type, report);
 }
 
-/// Validates the nID PUCCH hopping property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the nID PUCCH hopping property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_nid_pucch_hopping(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -155,7 +155,7 @@ static bool validate_nid_pucch_hopping(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "NID PUCCH hopping", msg_type, pdu_type, report);
 }
 
-/// Validates the initial cyclic shift property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the initial cyclic shift property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_initial_cyclic_shift(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -164,7 +164,7 @@ static bool validate_initial_cyclic_shift(unsigned value, validator_report& repo
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Initial cyclic shift", msg_type, pdu_type, report);
 }
 
-/// Validates the nID PUCCH scrambling property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the nID PUCCH scrambling property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_nid_pucch_scrambling(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -173,7 +173,7 @@ static bool validate_nid_pucch_scrambling(unsigned value, validator_report& repo
   return validate_field(MIN_VALUE, MAX_VALUE, value, "NID PUCCH scrambling", msg_type, pdu_type, report);
 }
 
-/// Validates the time domain occ index property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the time domain occ index property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_time_domain_occ_idx(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -182,7 +182,7 @@ static bool validate_time_domain_occ_idx(unsigned value, validator_report& repor
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Time domain occ index", msg_type, pdu_type, report);
 }
 
-/// Validates the pre DFT occ index property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the pre DFT occ index property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_pre_dft_occ_index(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -191,7 +191,7 @@ static bool validate_pre_dft_occ_index(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Pre DFT occ index", msg_type, pdu_type, report);
 }
 
-/// Validates the Pre DFT occ len property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the Pre DFT occ len property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_pre_dft_occ_len(unsigned value, validator_report& report)
 {
   if (value == 2U || value == 4U) {
@@ -202,7 +202,7 @@ static bool validate_pre_dft_occ_len(unsigned value, validator_report& report)
   return false;
 }
 
-/// Validates the m0 PUCCH DMRS cyclic shift property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the m0 PUCCH DMRS cyclic shift property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_m0_pucch_dmrs_cyclic_shift(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -211,7 +211,7 @@ static bool validate_m0_pucch_dmrs_cyclic_shift(unsigned value, validator_report
   return validate_field(MIN_VALUE, MAX_VALUE, value, "M0 PUCCH DMRS cyclic shift", msg_type, pdu_type, report);
 }
 
-/// Validates the SR bit len property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the SR bit len property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_sr_bit_len(unsigned value, pucch_format format_type, validator_report& report)
 {
   if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_1) {
@@ -227,7 +227,7 @@ static bool validate_sr_bit_len(unsigned value, pucch_format format_type, valida
   return validate_field(MIN_VALUE, MAX_VALUE, value, "SR bit len", msg_type, pdu_type, report);
 }
 
-/// Validates the HARQ bit len property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the HARQ bit len property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_harq_bit_len(unsigned value, pucch_format format_type, validator_report& report)
 {
   if (value == 0) {
@@ -247,7 +247,7 @@ static bool validate_harq_bit_len(unsigned value, pucch_format format_type, vali
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ bit len", msg_type, pdu_type, report);
 }
 
-/// Validates the CSI part1 bit length property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the CSI Part 1 bit length property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_csi_part1_bit_len(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -256,7 +256,7 @@ static bool validate_csi_part1_bit_len(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "CSI part1 bit length", msg_type, pdu_type, report);
 }
 
-/// Validates the max code rate property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the max code rate property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_max_code_rate(unsigned value, pucch_format format_type, validator_report& report)
 {
   if (format_type == pucch_format::FORMAT_0 || format_type == pucch_format::FORMAT_1) {
@@ -277,7 +277,7 @@ static bool validate_max_code_rate(unsigned value, pucch_format format_type, val
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Max code rate", msg_type, pdu_type, report);
 }
 
-/// Validates the part2 size map scope property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
+/// Validates the part2 size map scope property of the PUCCH PDU, as per SCF-222 v4.0 Section 3.4.3.3.
 static bool validate_part2_size_map_scope(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;

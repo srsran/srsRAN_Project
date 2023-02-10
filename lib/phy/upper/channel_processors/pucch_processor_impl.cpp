@@ -337,7 +337,7 @@ bool pucch_pdu_validator_impl::is_valid(const pucch_processor::format2_configura
     return false;
   }
 
-  // CSI-Part2 is not supported.
+  // CSI Part 2 is not supported.
   if (config.nof_csi_part2 != 0) {
     return false;
   }

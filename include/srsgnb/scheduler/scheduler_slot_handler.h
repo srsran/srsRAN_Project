@@ -238,9 +238,9 @@ struct pusch_information {
 struct uci_info {
   /// Number of bits of ACK to be reported.
   uint16_t harq_ack_nof_bits;
-  /// Number of bits of CSI part 1 to be reported.
+  /// Number of bits of CSI Part 1 to be reported.
   uint16_t csi_part1_nof_bits;
-  /// Number of bits of CSI part 2 to be reported.
+  /// Number of bits of CSI Part 2 to be reported.
   uint16_t csi_part2_nof_bits;
 
   /// \f$\alpha\f$ parameter, as per Section 6.3.2.4.1.1-3, TS 38.212.

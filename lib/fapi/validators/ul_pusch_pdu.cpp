@@ -22,7 +22,7 @@ static constexpr message_type_id msg_type = message_type_id::ul_tti_request;
 /// This validator checks the PRACH PDU.
 static constexpr unsigned pdu_type = static_cast<unsigned>(ul_pdu_type::PUSCH);
 
-/// Validates the RNTI property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the RNTI property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_rnti(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -31,7 +31,7 @@ static bool validate_rnti(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "RNTI", msg_type, pdu_type, report);
 }
 
-/// Validates the BWP size property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the BWP size property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_bwp_size(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -40,7 +40,7 @@ static bool validate_bwp_size(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "BWP size", msg_type, pdu_type, report);
 }
 
-/// Validates the BWP start property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the BWP start property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_bwp_start(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -49,7 +49,7 @@ static bool validate_bwp_start(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "BWP start", msg_type, pdu_type, report);
 }
 
-/// Validates the subcarrier spacing property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the subcarrier spacing property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_scs(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -58,7 +58,7 @@ static bool validate_scs(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Subcarrier spacing", msg_type, pdu_type, report);
 }
 
-/// Validates the cyclic prefix property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the cyclic prefix property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_cyclic_prefix(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -67,7 +67,7 @@ static bool validate_cyclic_prefix(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Cyclic prefix", msg_type, pdu_type, report);
 }
 
-/// Validates the QAM modulation order property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the QAM modulation order property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_qam_mod_order(unsigned value, bool transform_precoding, validator_report& report)
 {
   if (value == 2U || value == 4U || value == 6U || value == 8U) {
@@ -83,7 +83,7 @@ static bool validate_qam_mod_order(unsigned value, bool transform_precoding, val
   return false;
 }
 
-/// Validates the MCS index property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the MCS index property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_mcs_index(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -92,7 +92,7 @@ static bool validate_mcs_index(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "MCS index", msg_type, pdu_type, report);
 }
 
-/// Validates the MCS table property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the MCS table property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_mcs_table(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -101,7 +101,7 @@ static bool validate_mcs_table(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "MCS table", msg_type, pdu_type, report);
 }
 
-/// Validates the nID PUSCH property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the nID PUSCH property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_nid_pusch(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -110,7 +110,7 @@ static bool validate_nid_pusch(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "NID PUSCH", msg_type, pdu_type, report);
 }
 
-/// Validates the number of layers property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the number of layers property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_num_layers(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -119,7 +119,7 @@ static bool validate_num_layers(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of layers", msg_type, pdu_type, report);
 }
 
-/// Validates the DMRS config type property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the DMRS config type property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_dmrs_config_type(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -128,7 +128,7 @@ static bool validate_dmrs_config_type(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "DMRS config type", msg_type, pdu_type, report);
 }
 
-/// Validates the Low PAPR DMRS property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the Low PAPR DMRS property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_low_papr_dmrs(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -137,7 +137,7 @@ static bool validate_low_papr_dmrs(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Low PAPR DMRS", msg_type, pdu_type, report);
 }
 
-/// Validates the PUSCH DMRS identity property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the PUSCH DMRS identity property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_pusch_dmrs_identity(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -146,7 +146,7 @@ static bool validate_pusch_dmrs_identity(unsigned value, validator_report& repor
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PUSCH DMRS identity", msg_type, pdu_type, report);
 }
 
-/// Validates the nSCID property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the nSCID property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_nscid(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -155,7 +155,7 @@ static bool validate_nscid(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "NSCID", msg_type, pdu_type, report);
 }
 
-/// Validates the number of DMRS CDM groups without data property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the number of DMRS CDM groups without data property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_num_dmrs_cdm_grps_no_data(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -165,7 +165,7 @@ static bool validate_num_dmrs_cdm_grps_no_data(unsigned value, validator_report&
       MIN_VALUE, MAX_VALUE, value, "Number of DMRS CDM groups without data", msg_type, pdu_type, report);
 }
 
-/// Validates the resource allocation property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the resource allocation property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_resource_allocation(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -174,7 +174,7 @@ static bool validate_resource_allocation(unsigned value, validator_report& repor
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Resource allocation type", msg_type, pdu_type, report);
 }
 
-/// Validates the RB start property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the RB start property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_rb_start(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -183,7 +183,7 @@ static bool validate_rb_start(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "RB start", msg_type, pdu_type, report);
 }
 
-/// Validates the RB size property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the RB size property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_rb_size(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -192,7 +192,7 @@ static bool validate_rb_size(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "RB size", msg_type, pdu_type, report);
 }
 
-/// Validates the VRB-to-PRB mapping property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the VRB-to-PRB mapping property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_vrb_to_prb_mapping(unsigned value, validator_report& report)
 {
   if (value == 0) {
@@ -204,7 +204,7 @@ static bool validate_vrb_to_prb_mapping(unsigned value, validator_report& report
   return false;
 }
 
-/// Validates the tx direct current location property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the tx direct current location property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_tx_direct_current_location(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -213,7 +213,7 @@ static bool validate_tx_direct_current_location(unsigned value, validator_report
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Tx direct current location", msg_type, pdu_type, report);
 }
 
-/// Validates the start symbol index property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the start symbol index property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_start_symbol_index(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -222,7 +222,7 @@ static bool validate_start_symbol_index(unsigned value, validator_report& report
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Start symbol index", msg_type, pdu_type, report);
 }
 
-/// Validates the number of symbols property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the number of symbols property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_num_symbols(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -231,7 +231,7 @@ static bool validate_num_symbols(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of symbols", msg_type, pdu_type, report);
 }
 
-/// Validates the RV index property of the optional PUSCH data information, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the RV index property of the optional PUSCH data information, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_rv_index(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -240,7 +240,7 @@ static bool validate_rv_index(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "RV index", msg_type, pdu_type, report);
 }
 
-/// Validates the HARQ process id property of the optional PUSCH data information, as per SCF-222 v4.0 section 3.4.3.2.
+/// Validates the HARQ process id property of the optional PUSCH data information, as per SCF-222 v4.0 Section 3.4.3.2.
 static bool validate_harq_process_id(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -250,7 +250,7 @@ static bool validate_harq_process_id(unsigned value, validator_report& report)
 }
 
 /// Validates the HARQ ACK bit length property of the optional PUSCH UCI information, as per SCF-222 v4.0
-/// section 3.4.3.2.
+/// Section 3.4.3.2.
 static bool validate_harq_ack_bit_len(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -259,8 +259,8 @@ static bool validate_harq_ack_bit_len(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ ACK bit length", msg_type, pdu_type, report);
 }
 
-/// Validates the CSI part1 bit length property of the optional PUSCH UCI information, as per SCF-222 v4.0
-/// section 3.4.3.2.
+/// Validates the CSI Part 1 bit length property of the optional PUSCH UCI information, as per SCF-222 v4.0
+/// Section 3.4.3.2.
 static bool validate_csi_part1_bit_len(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -269,8 +269,8 @@ static bool validate_csi_part1_bit_len(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "CSI part1 bit length", msg_type, pdu_type, report);
 }
 
-/// Validates the flag CSI part2 property of the optional PUSCH UCI information, as per SCF-222 v4.0
-/// section 3.4.3.2.
+/// Validates the flag CSI Part 2 property of the optional PUSCH UCI information, as per SCF-222 v4.0
+/// Section 3.4.3.2.
 static bool validate_flag_csi_part2(unsigned value, validator_report& report)
 {
   if (value == 0U || value == 65535) {
@@ -282,7 +282,7 @@ static bool validate_flag_csi_part2(unsigned value, validator_report& report)
 }
 
 /// Validates the alpha scaling property of the optional PUSCH UCI information, as per SCF-222 v4.0
-/// section 3.4.3.2.
+/// Section 3.4.3.2.
 static bool validate_alpha_scaling(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -292,7 +292,7 @@ static bool validate_alpha_scaling(unsigned value, validator_report& report)
 }
 
 /// Validates the beta offset HARQ ACK property of the optional PUSCH UCI information, as per SCF-222 v4.0
-/// section 3.4.3.2.
+/// Section 3.4.3.2.
 static bool validate_beta_offset_harq_ack(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -301,8 +301,8 @@ static bool validate_beta_offset_harq_ack(unsigned value, validator_report& repo
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Beta offset HARQ ACK", msg_type, pdu_type, report);
 }
 
-/// Validates the beta offset CSI part1 property of the optional PUSCH UCI information, as per SCF-222 v4.0
-/// section 3.4.3.2.
+/// Validates the beta offset CSI Part 1 property of the optional PUSCH UCI information, as per SCF-222 v4.0
+/// Section 3.4.3.2.
 static bool validate_beta_offset_csi1(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -311,8 +311,8 @@ static bool validate_beta_offset_csi1(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Beta offset CSI Part1", msg_type, pdu_type, report);
 }
 
-/// Validates the beta offset CSI Part2 property of the optional PUSCH UCI information, as per SCF-222 v4.0
-/// section 3.4.3.2.
+/// Validates the beta offset CSI Part 2 property of the optional PUSCH UCI information, as per SCF-222 v4.0
+/// Section 3.4.3.2.
 static bool validate_beta_offset_csi2(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -321,7 +321,7 @@ static bool validate_beta_offset_csi2(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Beta offset CSI Part2", msg_type, pdu_type, report);
 }
 
-/// Validates the part2 size map scope property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2, in table UCI
+/// Validates the part2 size map scope property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2, in table UCI
 /// information for determining UCI Part1 to Part2 correspondence.
 static bool validate_part2_size_map_scope(unsigned value, validator_report& report)
 {
@@ -331,7 +331,7 @@ static bool validate_part2_size_map_scope(unsigned value, validator_report& repo
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Part2 size map scope", msg_type, pdu_type, report);
 }
 
-/// Validates the PTRS DMRS port property of the optional PUSCH PTRS, as per SCF-222 v4.0 section 3.4.3.2, in table
+/// Validates the PTRS DMRS port property of the optional PUSCH PTRS, as per SCF-222 v4.0 Section 3.4.3.2, in table
 /// optional PUSCH PTRS information.
 static bool validate_ptrs_dmrs_port(unsigned value, validator_report& report)
 {
@@ -341,7 +341,7 @@ static bool validate_ptrs_dmrs_port(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PTRS DMRS port", msg_type, pdu_type, report);
 }
 
-/// Validates the PTRS RE offset property of the optional PUSCH PTRS, as per SCF-222 v4.0 section 3.4.3.2, in table
+/// Validates the PTRS RE offset property of the optional PUSCH PTRS, as per SCF-222 v4.0 Section 3.4.3.2, in table
 /// optional PUSCH PTRS information.
 static bool validate_ptrs_re_offset(unsigned value, validator_report& report)
 {
@@ -351,7 +351,7 @@ static bool validate_ptrs_re_offset(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PTRS RE offset", msg_type, pdu_type, report);
 }
 
-/// Validates the PTRS time density property of the optional PUSCH PTRS, as per SCF-222 v4.0 section 3.4.3.2, in table
+/// Validates the PTRS time density property of the optional PUSCH PTRS, as per SCF-222 v4.0 Section 3.4.3.2, in table
 /// optional PUSCH PTRS information.
 static bool validate_ptrs_time_density(unsigned value, validator_report& report)
 {
@@ -361,7 +361,7 @@ static bool validate_ptrs_time_density(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PTRS time density", msg_type, pdu_type, report);
 }
 
-/// Validates the PTRS frequency density property of the optional PUSCH PTRS, as per SCF-222 v4.0 section 3.4.3.2, in
+/// Validates the PTRS frequency density property of the optional PUSCH PTRS, as per SCF-222 v4.0 Section 3.4.3.2, in
 /// table optional PUSCH PTRS information.
 static bool validate_ptrs_freq_density(unsigned value, validator_report& report)
 {
@@ -371,7 +371,7 @@ static bool validate_ptrs_freq_density(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PTRS frequency density", msg_type, pdu_type, report);
 }
 
-/// Validates the UL PTRS power property of the optional PUSCH PTRS, as per SCF-222 v4.0 section 3.4.3.2, in table
+/// Validates the UL PTRS power property of the optional PUSCH PTRS, as per SCF-222 v4.0 Section 3.4.3.2, in table
 /// optional PUSCH PTRS information.
 static bool validate_ul_ptrs_power(unsigned value, validator_report& report)
 {
@@ -381,7 +381,7 @@ static bool validate_ul_ptrs_power(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "UL PTRS power", msg_type, pdu_type, report);
 }
 
-/// Validates the low PAPR group number property of the optional PUSCH DFTS OFDM, as per SCF-222 v4.0 section 3.4.3.2,
+/// Validates the low PAPR group number property of the optional PUSCH DFTS OFDM, as per SCF-222 v4.0 Section 3.4.3.2,
 /// in table optional DFTS OFDM information.
 static bool validate_low_papr_group_number(unsigned value, validator_report& report)
 {
@@ -391,7 +391,7 @@ static bool validate_low_papr_group_number(unsigned value, validator_report& rep
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Low PAPR group number", msg_type, pdu_type, report);
 }
 
-/// Validates the UL PTRS sample density property of the optional DFTS OFDM, as per SCF-222 v4.0 section 3.4.3.2, in
+/// Validates the UL PTRS sample density property of the optional DFTS OFDM, as per SCF-222 v4.0 Section 3.4.3.2, in
 /// table optional DFTS OFDM information.
 static bool validate_ul_ptrs_sample_density(unsigned value, validator_report& report)
 {
@@ -402,7 +402,7 @@ static bool validate_ul_ptrs_sample_density(unsigned value, validator_report& re
 }
 
 /// Validates the UL PTRS time density transform precoding property of the optional PUSCH DFTS OFDM, as per SCF-222 v4.0
-/// section 3.4.3.2, in table optional DFTS OFDM information.
+/// Section 3.4.3.2, in table optional DFTS OFDM information.
 static bool validate_ul_ptrs_time_density_transform_precoding(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -412,7 +412,7 @@ static bool validate_ul_ptrs_time_density_transform_precoding(unsigned value, va
       MIN_VALUE, MAX_VALUE, value, "UL PTRS time density transform precoding", msg_type, pdu_type, report);
 }
 
-/// Validates the PUSCH trans type property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2, in table PUSCH
+/// Validates the PUSCH trans type property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2, in table PUSCH
 /// maintenance FAPIv3.
 static bool validate_pusch_trans_type(unsigned value, validator_report& report)
 {
@@ -422,7 +422,7 @@ static bool validate_pusch_trans_type(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PUSCH trans type", msg_type, pdu_type, report);
 }
 
-/// Validates the delta BWP0 start from active BWP property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2, in
+/// Validates the delta BWP0 start from active BWP property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2, in
 /// table PUSCH maintenance FAPIv3.
 static bool validate_delta_bwp0_start_from_active_bwp(unsigned value, validator_report& report)
 {
@@ -432,7 +432,7 @@ static bool validate_delta_bwp0_start_from_active_bwp(unsigned value, validator_
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Delta BWP0 start from active BWP", msg_type, pdu_type, report);
 }
 
-/// Validates the initial UL BWP size property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2, in table PUSCH
+/// Validates the initial UL BWP size property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2, in table PUSCH
 /// maintenance FAPIv3.
 static bool validate_initial_ul_bwp_size(unsigned value, validator_report& report)
 {
@@ -442,7 +442,7 @@ static bool validate_initial_ul_bwp_size(unsigned value, validator_report& repor
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Initial UL BWP size", msg_type, pdu_type, report);
 }
 
-/// Validates the group or sequence hopping property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2, in table
+/// Validates the group or sequence hopping property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2, in table
 /// PUSCH maintenance FAPIv3.
 static bool validate_group_or_sequence_hopping(unsigned value, validator_report& report)
 {
@@ -452,7 +452,7 @@ static bool validate_group_or_sequence_hopping(unsigned value, validator_report&
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Group or sequence hopping", msg_type, pdu_type, report);
 }
 
-/// Validates the PUSCH second hop PRB property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2, in table PUSCH
+/// Validates the PUSCH second hop PRB property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2, in table PUSCH
 /// maintenance FAPIv3.
 static bool validate_pusch_second_hop_prb(unsigned value, validator_report& report)
 {
@@ -462,7 +462,7 @@ static bool validate_pusch_second_hop_prb(unsigned value, validator_report& repo
   return validate_field(MIN_VALUE, MAX_VALUE, value, "PUSCH second hop PRB", msg_type, pdu_type, report);
 }
 
-/// Validates the LDPC base graph property of the PUSCH PDU, as per SCF-222 v4.0 section 3.4.3.2, in table  PUSCH
+/// Validates the LDPC base graph property of the PUSCH PDU, as per SCF-222 v4.0 Section 3.4.3.2, in table  PUSCH
 /// maintenance FAPIv3.
 static bool validate_ldpc_base_graph(unsigned value, validator_report& report)
 {

@@ -61,7 +61,7 @@ struct mac_uci_pdu {
     };
 
     struct csi_information {
-      /// CSI Part1/CSI Part2 Detection Status values for UCI PUSCH.
+      /// CSI Part 1/CSI Part 2 Detection Status values for UCI PUSCH.
       using csi_part1_or_part2_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
 
       /// Indicates detection outcome on UCI/CSI.
@@ -131,7 +131,7 @@ struct mac_uci_pdu {
       /// \brief Indicates whether information include UCI parts payload or CSI parts payload.
       enum class payload_type_t { uci_part_payload, csi_part_payload };
 
-      /// UCI payload Part 1/ Part 2 or CSI Part1/CSI Part2 Detection Status values for UCI PUCCH Format 2, 3, 4.
+      /// UCI payload Part 1/Part 2 or CSI Part 1/CSI Part 2 Detection Status values for UCI PUCCH Format 2, 3, 4.
       using part1_or_part2_detection_status = uci_pusch_or_pucch_f2_3_4_detection_status;
 
       payload_type_t payload_type;

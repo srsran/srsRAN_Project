@@ -914,14 +914,14 @@ struct crc_indication_message : public base_message {
   static_vector<crc_ind_pdu, MAX_NUM_CRCS_PER_SLOT> pdus;
 };
 
-/// UCI CSI part1 information.
+/// UCI CSI Part 1 information.
 struct uci_csi_part1 {
   uci_pusch_or_pucch_f2_3_4_detection_status                     detection_status;
   uint16_t                                                       expected_bit_length;
   bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> payload;
 };
 
-/// UCI CSI part2 information.
+/// UCI CSI Part 2 information.
 struct uci_csi_part2 {
   uci_pusch_or_pucch_f2_3_4_detection_status                     detection_status;
   uint16_t                                                       expected_bit_length;

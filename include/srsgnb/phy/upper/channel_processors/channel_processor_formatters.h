@@ -543,7 +543,7 @@ struct formatter<srsgnb::pusch_processor::uci_description> {
   auto format(const srsgnb::pusch_processor::uci_description& uci_desc, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    // Number of ACK, CSI-Part1 and CSI-Part2 bits.
+    // Number of ACK, CSI Part 1 and CSI Part 2 bits.
     helper.format_if_verbose(ctx, "oack={}", uci_desc.nof_harq_ack);
     helper.format_if_verbose(ctx, "ocsi1={}", uci_desc.nof_csi_part1);
     helper.format_if_verbose(ctx, "ocsi2={}", uci_desc.nof_csi_part2);
