@@ -89,6 +89,23 @@ static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& bui
   }
 }
 
+static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
+                                          span<const csi_rs_info>               csi_rs_list)
+{
+  for (const auto& pdu : csi_rs_list) {
+    builder.add_csi_rs_pdu(pdu.crbs.start(),
+                           pdu.crbs.length(),
+                           pdu.type,
+                           pdu.row,
+                           pdu.freq_domain.to_uint64(),
+                           pdu.symbol0,
+                           pdu.symbol1,
+                           pdu.cdm_type,
+                           pdu.freq_density,
+                           pdu.scrambling_id);
+  }
+}
+
 static void add_pdsch_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
                                          span<const sib_information>           sibs,
                                          span<const rar_information>           rars,
@@ -131,6 +148,9 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 
   // Add SSB PDUs to the DL_TTI.request message.
   add_ssb_pdus_to_dl_request(builder, dl_res.ssb_pdus);
+
+  // Add CSI-RS PDUs to the DL_TTI.request message.
+  add_csi_rs_pdus_to_dl_request(builder, dl_res.dl_res->csi_rs);
 
   // Add PDSCH PDUs to the DL_TTI.request message.
   add_pdsch_pdus_to_dl_request(builder, dl_res.dl_res->bc.sibs, dl_res.dl_res->rar_grants, dl_res.dl_res->ue_grants);

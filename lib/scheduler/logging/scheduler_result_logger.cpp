@@ -82,7 +82,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   for (const csi_rs_info& csi_rs : result.dl.csi_rs) {
     fmt::format_to(fmtbuf,
                    "\n- CSI-RS: type={} crbs={} row={} freq={} symb0={} cdm_type={} freq_density={} scramb_id={}",
-                   csi_rs.type == csi_rs_info::csi_type::csi_rs_nzp ? "nzp" : "zp",
+                   csi_rs.type == csi_rs_type::CSI_RS_NZP ? "nzp" : "zp",
                    csi_rs.crbs,
                    csi_rs.row,
                    csi_rs.freq_domain,

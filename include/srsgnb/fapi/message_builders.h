@@ -761,16 +761,20 @@ public:
                                               csi_rs_freq_density_type freq_density,
                                               uint16_t                 scrambling_id)
   {
-    pdu.start_rb     = start_rb;
-    pdu.num_rbs      = nof_rbs;
-    pdu.type         = type;
-    pdu.row          = row;
-    pdu.freq_domain  = freq_domain;
-    pdu.symb_L0      = symb_l0;
-    pdu.symb_L1      = symb_l1;
-    pdu.cdm_type     = cdm_type;
-    pdu.freq_density = freq_density;
-    pdu.scramb_id    = scrambling_id;
+    pdu.start_rb                                              = start_rb;
+    pdu.num_rbs                                               = nof_rbs;
+    pdu.type                                                  = type;
+    pdu.row                                                   = row;
+    pdu.freq_domain                                           = freq_domain;
+    pdu.symb_L0                                               = symb_l0;
+    pdu.symb_L1                                               = symb_l1;
+    pdu.cdm_type                                              = cdm_type;
+    pdu.freq_density                                          = freq_density;
+    pdu.scramb_id                                             = scrambling_id;
+    pdu.power_control_offset_profile_nr                       = 0;
+    pdu.power_control_offset_ss_profile_nr                    = nzp_csi_rs_epre_to_ssb::dB0;
+    pdu.csi_rs_maintenance_v3.csi_rs_pdu_index                = 0;
+    pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = -32768;
 
     return *this;
   }

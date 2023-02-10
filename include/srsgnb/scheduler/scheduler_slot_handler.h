@@ -312,7 +312,7 @@ struct dl_paging_allocation {
 struct csi_rs_info {
   const bwp_configuration* bwp_cfg;
   crb_interval             crbs;
-  enum class csi_type { trs, csi_rs_nzp, csi_rs_zp } type;
+  csi_rs_type              type;
   uint8_t                  row;
   bounded_bitset<12>       freq_domain;
   uint8_t                  symbol0;

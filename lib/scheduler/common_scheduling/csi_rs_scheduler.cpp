@@ -19,7 +19,7 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp
   csi_rs.bwp_cfg = &bwp_cfg;
   csi_rs.crbs    = {nzp_csi_rs_res.res_mapping.freq_band_start_rb,
                     nzp_csi_rs_res.res_mapping.freq_band_start_rb + nzp_csi_rs_res.res_mapping.freq_band_nof_rb};
-  csi_rs.type    = csi_rs_info::csi_type::csi_rs_nzp;
+  csi_rs.type    = srsgnb::csi_rs_type::CSI_RS_NZP;
   // TODO: Handle other rows
   auto& row1 = variant_get<csi_rs_resource_mapping::fd_alloc_row1>(nzp_csi_rs_res.res_mapping.fd_alloc);
   csi_rs.row = 1;
@@ -30,7 +30,7 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp
   csi_rs.symbol0                      = nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td;
   csi_rs.symbol1                      = nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td2.has_value()
                                             ? *nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td2
-                                            : 0;
+                                            : 2;
   csi_rs.cdm_type                     = nzp_csi_rs_res.res_mapping.cdm;
   csi_rs.freq_density                 = nzp_csi_rs_res.res_mapping.freq_density;
   csi_rs.scrambling_id                = nzp_csi_rs_res.scrambling_id;
