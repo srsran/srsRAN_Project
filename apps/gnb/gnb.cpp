@@ -293,6 +293,9 @@ int main(int argc, char** argv)
   // Enable backtrace.
   enable_backtrace();
 
+  // Setup size of byte buffer pool.
+  init_byte_buffer_segment_pool(524288);
+
   // Setup and configure config parsing.
   CLI::App app("srsGNB application");
   app.config_formatter(create_yaml_config_parser());
