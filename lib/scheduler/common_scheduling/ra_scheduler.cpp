@@ -306,6 +306,12 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
+  if (not res_alloc[0].result.dl.csi_rs.empty()) {
+    // TODO: Remove this once multiplexing is possible.
+    // Early exit. At the moment, we do not multiple PDSCH and CSI-RS.
+    return;
+  }
+
   // Ensure there are UL slots where Msg3s can be allocated.
   bool pusch_slots_available = false;
   for (const auto& pusch_td_alloc :

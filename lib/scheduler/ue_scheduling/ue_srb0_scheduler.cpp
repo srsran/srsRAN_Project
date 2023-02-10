@@ -47,6 +47,10 @@ void ue_srb0_scheduler::run_slot(cell_resource_allocator& res_alloc)
   if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
     return;
   }
+  // Note: Unable at the moment to multiplex CSI and PDSCH.
+  if (not res_alloc[0].result.dl.csi_rs.empty()) {
+    return;
+  }
 
   // Schedule SRB0 messages.
   auto it = pending_ues.begin();
