@@ -88,7 +88,7 @@ static bool alloc_dl_ue(const ue&                    u,
     if (h == nullptr) {
       if (not is_retx) {
         logger.debug(
-            "UE={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
+            "ue={} rnti={:#x} PDSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
       }
       continue;
     }
@@ -170,7 +170,7 @@ static bool alloc_ul_ue(const ue&                    u,
       // No HARQs available.
       if (not is_retx) {
         logger.debug(
-            "UE={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
+            "ue={} rnti={:#x} PUSCH allocation skipped. Cause: No available HARQs", ue_cc.ue_index, ue_cc.rnti());
       }
       continue;
     }

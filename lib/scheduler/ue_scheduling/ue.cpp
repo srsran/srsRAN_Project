@@ -56,7 +56,7 @@ void ue::slot_indication(slot_point sl_tx)
           bsr.reported_lcgs[j].nof_bytes = 0;
         }
         ul_lc_ch_mgr.handle_bsr_indication(bsr);
-        logger.warning("UE={} rnti={:#x}: Forcing BSR=0. Cause: Too many consecutive PUSCH KOs", ue_index, crnti);
+        logger.warning("ue={} rnti={:#x}: Forcing BSR=0. Cause: Too many consecutive PUSCH KOs", ue_index, crnti);
       }
     }
   }

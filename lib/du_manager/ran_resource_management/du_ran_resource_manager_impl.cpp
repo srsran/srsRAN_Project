@@ -74,7 +74,7 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
                                                                                            du_cell_index_t pcell_index)
 {
   if (ue_res_pool.contains(ue_index)) {
-    logger.warning("Double allocation of same UE={} not supported", ue_index);
+    logger.warning("Double allocation of same ue={} not supported", ue_index);
     return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
   }
   ue_res_pool.emplace(ue_index);
@@ -83,7 +83,7 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
 
   // UE initialized PCell.
   if (not allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX)) {
-    logger.warning("RAN Resource Allocation failed for UE={}", ue_index);
+    logger.warning("RAN Resource Allocation failed for ue={}", ue_index);
     return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
   }
 
@@ -214,7 +214,7 @@ bool du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_
     ue_res.pcg_cfg.pdsch_harq_codebook = pdsch_harq_ack_codebook::dynamic;
 
     if (not pucch_res_mng.alloc_resources(ue_res)) {
-      logger.warning("Unable to allocate dedicated PUCCH resources for UE={}, cell={}", ue_index, cell_index);
+      logger.warning("Unable to allocate dedicated PUCCH resources for ue={}, cell={}", ue_index, cell_index);
       return false;
     }
   } else {

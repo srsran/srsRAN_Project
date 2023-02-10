@@ -51,7 +51,7 @@ void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_
 {
   error_type<std::string> result = config_validators::validate_sched_ue_creation_request_message(ue_request);
   if (result.is_error()) {
-    report_fatal_error("Invalid UE={} creation request message. Cause: {}", ue_request.crnti, result.error());
+    report_fatal_error("Invalid ue={} creation request message. Cause: {}", ue_request.crnti, result.error());
   }
 
   ue_cfg_handler.handle_ue_creation_request(ue_request);

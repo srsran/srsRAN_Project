@@ -40,7 +40,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Verify UE carrier is active.
   ue_cell* ue_cc = u.find_cell(grant.cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active()) {
-    logger.warning("PDSCH allocation failed. Cause: The UE={} carrier with cell_index={} is inactive",
+    logger.warning("PDSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive",
                    u.ue_index,
                    grant.cell_index);
     return false;
@@ -218,7 +218,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
   }
 
-  logger.debug("UE={}'s PDSCH allocation on slot={} at cell_id={} completed.",
+  logger.debug("ue={}'s PDSCH allocation on slot={} at cell_id={} completed.",
                u.ue_index,
                pdsch_alloc.slot.to_uint(),
                grant.cell_index);
@@ -237,7 +237,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // Verify UE carrier is active.
   ue_cell* ue_cc = u.find_cell(grant.cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active()) {
-    logger.warning("PUSCH allocation failed. Cause: The UE={} carrier with cell_index={} is inactive",
+    logger.warning("PUSCH allocation failed. Cause: The ue={} carrier with cell_index={} is inactive",
                    u.ue_index,
                    grant.cell_index);
     return false;
@@ -410,7 +410,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // In case there is a SR pending. Reset it.
   u.reset_sr_indication();
 
-  logger.debug("UE={}'s PUSCH allocation on slot={} at cell_id={} completed.",
+  logger.debug("ue={}'s PUSCH allocation on slot={} at cell_id={} completed.",
                u.ue_index,
                pusch_alloc.slot.to_uint(),
                grant.cell_index);

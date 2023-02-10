@@ -41,7 +41,7 @@ struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
   {
     fmt::format_to(ctx.out(), "{} rnti={:#x}", p.type, p.rnti);
     if (p.ue_index != srsgnb::INVALID_DU_UE_INDEX) {
-      fmt::format_to(ctx.out(), " UE={}", p.ue_index);
+      fmt::format_to(ctx.out(), " ue={}", p.ue_index);
     }
     if (p.lcid.has_value()) {
       const char* event = p.lcid->is_sdu() ? p.lcid->is_ccch() ? "UL-CCCH" : "UL-DCCH" : "CE";
@@ -103,8 +103,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
 {
   mac_ul_ue_context* ue = ue_manager.find_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning(
-        "UL subPDU UE={}, lcid={} UL-CCCH: Received UL-CCCH for inexistent UE Id={}", ue_index, LCID_SRB0, ue_index);
+    logger.warning("UL subPDU ue={}, lcid={} UL-CCCH: Received UL-CCCH for inexistent UE", ue_index, LCID_SRB0);
     return false;
   }
 

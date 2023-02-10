@@ -73,39 +73,39 @@ void scheduler_event_logger::enqueue_impl(const ue_creation_event& ue_request)
 {
   if (mode == debug) {
     fmt::format_to(fmtbuf,
-                   "\n- UE creation: UE={} rnti={:#x} PCell={}",
+                   "\n- UE creation: ue={} rnti={:#x} PCell={}",
                    ue_request.ue_index,
                    ue_request.rnti,
                    ue_request.pcell_index);
   } else if (logger.info.enabled()) {
-    fmt::format_to(fmtbuf, "{}UE={} creation", separator(), ue_request.ue_index);
+    fmt::format_to(fmtbuf, "{}ue={} creation", separator(), ue_request.ue_index);
   }
 }
 
 void scheduler_event_logger::enqueue_impl(const sched_ue_reconfiguration_message& ue_request)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- UE reconfiguration: UE={} rnti={:#x}", ue_request.ue_index, ue_request.crnti);
+    fmt::format_to(fmtbuf, "\n- UE reconfiguration: ue={} rnti={:#x}", ue_request.ue_index, ue_request.crnti);
   } else if (logger.info.enabled()) {
-    fmt::format_to(fmtbuf, "{}UE={} reconf", separator(), ue_request.ue_index);
+    fmt::format_to(fmtbuf, "{}ue={} reconf", separator(), ue_request.ue_index);
   }
 }
 
 void scheduler_event_logger::enqueue_impl(const sched_ue_delete_message& ue_request)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- UE removal: UE={} rnti={:#x}", ue_request.ue_index, ue_request.crnti);
+    fmt::format_to(fmtbuf, "\n- UE removal: ue={} rnti={:#x}", ue_request.ue_index, ue_request.crnti);
   } else if (logger.info.enabled()) {
-    fmt::format_to(fmtbuf, "{}UE={} removal", separator(), ue_request.ue_index);
+    fmt::format_to(fmtbuf, "{}ue={} removal", separator(), ue_request.ue_index);
   }
 }
 
 void scheduler_event_logger::enqueue_impl(const sr_event& sr)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- SR: UE={}, rnti={:#x}", sr.ue_index, sr.rnti);
+    fmt::format_to(fmtbuf, "\n- SR: ue={}, rnti={:#x}", sr.ue_index, sr.rnti);
   } else {
-    fmt::format_to(fmtbuf, "{}UE={} SR ind", separator(), sr.ue_index);
+    fmt::format_to(fmtbuf, "{}ue={} SR ind", separator(), sr.ue_index);
   }
 }
 
@@ -113,7 +113,7 @@ void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
 {
   if (mode == debug) {
     fmt::format_to(
-        fmtbuf, "\n- BSR: UE={} rnti={:#x} type=\"{}\" report={{", bsr.ue_index, bsr.rnti, to_string(bsr.type));
+        fmtbuf, "\n- BSR: ue={} rnti={:#x} type=\"{}\" report={{", bsr.ue_index, bsr.rnti, to_string(bsr.type));
 
     if (bsr.type == bsr_format::LONG_BSR or bsr.type == bsr_format::LONG_TRUNC_BSR or bsr.reported_lcgs.full()) {
       std::array<int, MAX_NOF_LCGS> report;
@@ -141,14 +141,14 @@ void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
     for (const auto& lcg : bsr.reported_lcgs) {
       tot_bytes += lcg.nof_bytes;
     }
-    fmt::format_to(fmtbuf, "{}UE={} BSR={}", separator(), bsr.ue_index, tot_bytes);
+    fmt::format_to(fmtbuf, "{}ue={} BSR={}", separator(), bsr.ue_index, tot_bytes);
   }
 }
 
 void scheduler_event_logger::enqueue_impl(const harq_ack_event& harq_ev)
 {
   fmt::format_to(fmtbuf,
-                 "\n- HARQ-ACK: UE={} rnti={:#x} cell={} slot_rx={} h_id={} ack={}",
+                 "\n- HARQ-ACK: ue={} rnti={:#x} cell={} slot_rx={} h_id={} ack={}",
                  harq_ev.ue_index,
                  harq_ev.rnti,
                  harq_ev.cell_index,
@@ -165,7 +165,7 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
   if (mode == debug) {
     if (crc_ev.ul_sinr_db.has_value()) {
       fmt::format_to(fmtbuf,
-                     "\n- CRC: UE={} rnti={:#x} cell={} rx_slot={} h_id={} crc={} sinr={}dB",
+                     "\n- CRC: ue={} rnti={:#x} cell={} rx_slot={} h_id={} crc={} sinr={}dB",
                      crc_ev.ue_index,
                      crc_ev.rnti,
                      crc_ev.cell_index,
@@ -175,7 +175,7 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
                      crc_ev.ul_sinr_db.value());
     } else {
       fmt::format_to(fmtbuf,
-                     "\n- CRC: UE={} rnti={:#x} cell={} rx_slot={} h_id={} crc={} sinr=N/A",
+                     "\n- CRC: ue={} rnti={:#x} cell={} rx_slot={} h_id={} crc={} sinr=N/A",
                      crc_ev.ue_index,
                      crc_ev.rnti,
                      crc_ev.cell_index,
@@ -191,18 +191,18 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
 void scheduler_event_logger::enqueue_impl(const dl_mac_ce_indication& mac_ce)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- MAC CE: UE={}, LCID={}", mac_ce.ue_index, mac_ce.ce_lcid.value());
+    fmt::format_to(fmtbuf, "\n- MAC CE: ue={}, LCID={}", mac_ce.ue_index, mac_ce.ce_lcid.value());
   } else {
-    fmt::format_to(fmtbuf, "{}mac_ce(UE={} LCID={})", separator(), mac_ce.ue_index, mac_ce.ce_lcid);
+    fmt::format_to(fmtbuf, "{}mac_ce(ue={} LCID={})", separator(), mac_ce.ue_index, mac_ce.ce_lcid);
   }
 }
 
 void scheduler_event_logger::enqueue_impl(const dl_buffer_state_indication_message& bs)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- RLC Buffer State: UE={} lcid={} pending_bytes={}", bs.ue_index, bs.lcid, bs.bs);
+    fmt::format_to(fmtbuf, "\n- RLC Buffer State: ue={} lcid={} pending_bytes={}", bs.ue_index, bs.lcid, bs.bs);
   } else {
-    fmt::format_to(fmtbuf, "{}rlc_bs(UE={} lcid={} pending={})", separator(), bs.ue_index, bs.lcid, bs.bs);
+    fmt::format_to(fmtbuf, "{}rlc_bs(ue={} lcid={} pending={})", separator(), bs.ue_index, bs.lcid, bs.bs);
   }
 }
 

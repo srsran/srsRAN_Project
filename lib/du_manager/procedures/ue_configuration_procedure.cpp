@@ -35,7 +35,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
 
   prev_cell_group = ue->resources.value();
   if (ue->resources.update(ue->pcell_index, request).release_required) {
-    logger.warning("Failed to allocate UE={} resources", ue->ue_index);
+    logger.warning("Failed to allocate ue={} resources", ue->ue_index);
     CORO_EARLY_RETURN(make_ue_config_failure());
   }
 

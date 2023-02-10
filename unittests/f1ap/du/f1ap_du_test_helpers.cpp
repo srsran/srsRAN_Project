@@ -259,6 +259,6 @@ f1ap_ue_configuration_response f1ap_du_test::update_f1_ue_config(du_ue_index_t  
     req.f1c_bearers_to_add.push_back(b);
   }
 
-  test_logger.info("Configuring UE={}", ue_index);
+  test_logger.info("Configuring ue={}", ue_index);
   return f1ap->handle_ue_configuration_request(req);
 }

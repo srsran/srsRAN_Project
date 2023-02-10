@@ -767,7 +767,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucc
   output.pucch_pdu           = &existing_harq_grant;
   output.pucch_res_indicator = pucch_res_idx;
 
-  logger.debug("UE={:#x}'s HARQ-ACK mltplxd on existing PUCCH for slot={}", rnti, sl_tx.to_uint());
+  logger.debug("ue={:#x}'s HARQ-ACK mltplxd on existing PUCCH for slot={}", rnti, sl_tx.to_uint());
   return output;
 }
 
@@ -932,7 +932,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
     existing_f2_grant.resources.second_hop_prbs.set(res_cfg->second_hop_prb, res_cfg->second_hop_prb + nof_prbs);
   }
 
-  logger.debug("UE={:#x}'s UCI mltplxd on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx.to_uint());
+  logger.debug("ue={:#x}'s UCI mltplxd on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx.to_uint());
   return pucch_harq_ack_grant{.pucch_res_indicator = static_cast<unsigned>(res_indicator),
                               .pucch_pdu           = &existing_f2_grant};
 }

@@ -73,7 +73,7 @@ void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
 {
   common_events.emplace(ue_index, [this, ue_index]() {
     if (not ue_db.contains(ue_index)) {
-      logger.warning("Received request to delete UE={} that does not exist", ue_index);
+      logger.warning("Received request to delete ue={} that does not exist", ue_index);
     }
     rnti_t rnti = ue_db[ue_index].crnti;
 
@@ -97,7 +97,7 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 
   common_events.emplace(bsr_ind.ue_index, [this, bsr_ind]() {
     if (not ue_db.contains(bsr_ind.ue_index)) {
-      logger.warning("BSR received for inexistent UE={}", bsr_ind.ue_index);
+      logger.warning("BSR received for inexistent ue={}", bsr_ind.ue_index);
       return;
     }
     auto& u = ue_db[bsr_ind.ue_index];
