@@ -14,26 +14,24 @@
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/scheduler/scheduler_metrics.h"
 #include "srsgnb/support/io_broker/io_broker.h"
-#include <fcntl.h>
 
 namespace srsgnb {
 
 /// \brief Notifier from application to signal current operation state.
-class app_state_notfier
+class app_state_notifier
 {
 public:
-  virtual ~app_state_notfier() = default;
+  virtual ~app_state_notifier() = default;
 
   virtual void on_app_starting() = 0;
   virtual void on_app_running()  = 0;
-
   virtual void on_app_stopping() = 0;
 };
 
 /// \brief Helper class to manager interaction with console, i.e. reading from stdin as well as writing
 /// to stdout to print traces. Class uses the IO broker to register callback handlers. When they are
 /// called they run in the context of the IO broker thread.
-class gnb_console_helper : public app_state_notfier
+class gnb_console_helper : public app_state_notifier
 {
 public:
   gnb_console_helper(io_broker& io_broker_);
@@ -45,7 +43,7 @@ public:
   void on_app_running() override;
   void on_app_stopping() override;
 
-  void set_cells(const std::vector<du_cell_config>& cells_);
+  void set_cells(const span<du_cell_config>& cells_);
 
 private:
   void stdin_handler(int fd);
@@ -55,8 +53,7 @@ private:
   srslog::basic_logger&  logger;
   io_broker&             io_broker_handle;
   metrics_plotter_stdout metrics_plotter;
-
-  std::vector<du_cell_config> cells;
+  span<du_cell_config>   cells;
 };
 
 } // namespace srsgnb

@@ -12,6 +12,7 @@
 #include "string_helpers.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/support/build_info/build_info.h"
+#include <fcntl.h>
 #include <list>
 #include <signal.h>
 #include <unistd.h>
@@ -97,7 +98,7 @@ void gnb_console_helper::print_help()
   fmt::print("\n");
 }
 
-void gnb_console_helper::set_cells(const std::vector<du_cell_config>& cells_)
+void gnb_console_helper::set_cells(const span<du_cell_config>& cells_)
 {
   cells = cells_;
 }
