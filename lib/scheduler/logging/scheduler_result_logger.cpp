@@ -15,8 +15,7 @@ using namespace srsgnb;
 void scheduler_result_logger::log_debug(const sched_result& result)
 {
   for (const ssb_information& ssb_info : result.dl.bc.ssb_info) {
-    fmt::format_to(
-        fmtbuf, "\n- SSB: ssbIdx={}, crbs={}, symbols={}", ssb_info.ssb_index, ssb_info.crbs, ssb_info.symbols);
+    fmt::format_to(fmtbuf, "\n- SSB: ssbIdx={}, crbs={}, symb={}", ssb_info.ssb_index, ssb_info.crbs, ssb_info.symbols);
   }
   for (const pdcch_dl_information& pdcch : result.dl.dl_pdcchs) {
     fmt::format_to(fmtbuf,
@@ -74,7 +73,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
 
   for (const sib_information& sib : result.dl.bc.sibs) {
     fmt::format_to(fmtbuf,
-                   "\n- SI{} PDSCH: prbs={} symbols={} tbs={} mcs={} rv={}",
+                   "\n- SI{} PDSCH: prbs={} symb={} tbs={} mcs={} rv={}",
                    sib.si_indicator == sib_information::sib1 ? "B1" : "",
                    sib.pdsch_cfg.prbs.prbs(),
                    sib.pdsch_cfg.symbols,
@@ -84,7 +83,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const rar_information& rar : result.dl.rar_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- RAR PDSCH: ra-rnti={:#x} prbs={} symbols={} tbs={} mcs={} rv={} grants ({}): ",
+                   "\n- RAR PDSCH: ra-rnti={:#x} prbs={} symb={} tbs={} mcs={} rv={} grants ({}): ",
                    rar.pdsch_cfg.rnti,
                    rar.pdsch_cfg.prbs.prbs(),
                    rar.pdsch_cfg.symbols,
@@ -103,7 +102,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const dl_msg_alloc& ue_dl_grant : result.dl.ue_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- UE PDSCH: c-rnti={:#x} prbs={} symbols={} tbs={} mcs={} rv={} grants: ",
+                   "\n- UE PDSCH: c-rnti={:#x} prbs={} symb={} tbs={} mcs={} rv={} grants: ",
                    ue_dl_grant.pdsch_cfg.rnti,
                    ue_dl_grant.pdsch_cfg.prbs.prbs(),
                    ue_dl_grant.pdsch_cfg.symbols,
@@ -117,7 +116,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   for (const dl_paging_allocation& pg : result.dl.paging_grants) {
     fmt::format_to(
         fmtbuf,
-        "\n- PCCH: pg{}, pg-id={:#x}, prbs={}, symbols={}, tbs={}, mcs={}, rv={}",
+        "\n- PCCH: pg{}, pg-id={:#x}, prbs={}, symb={}, tbs={}, mcs={}, rv={}",
         pg.paging_type_indicator == dl_paging_allocation::paging_identity_type::cn_ue_paging_identity ? "cn" : "ran",
         pg.paging_identity,
         pg.pdsch_cfg.prbs.prbs(),
@@ -129,7 +128,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
 
   for (const ul_sched_info& ul_info : result.ul.puschs) {
     fmt::format_to(fmtbuf,
-                   "\n- PUSCH: c-rnti={:#x} h_id={} prbs={} symbols={} tbs={} rv={}",
+                   "\n- PUSCH: c-rnti={:#x} h_id={} prbs={} symb={} tbs={} rv={}",
                    ul_info.pusch_cfg.rnti,
                    ul_info.pusch_cfg.harq_id,
                    ul_info.pusch_cfg.prbs.prbs(),
@@ -159,7 +158,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
     if (pucch.resources.second_hop_prbs.empty()) {
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symbols={}, uci: harq_bits={} sr={} csi-1_bits={}",
+                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symb={}, uci: harq_bits={} sr={} csi-1_bits={}",
                      pucch.crnti,
                      pucch.format,
                      pucch.resources.prbs,
@@ -169,7 +168,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                      nof_csi_part1_bits);
     } else {
       fmt::format_to(fmtbuf,
-                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symbols={}, second_prbs={}, uci: harq_bits={} sr={} "
+                     "\n- PUCCH: c-rnti={:#x}, format={}, prbs={}, symb={}, second_prbs={}, uci: harq_bits={} sr={} "
                      "csi-1_bits={}",
                      pucch.crnti,
                      pucch.format,
