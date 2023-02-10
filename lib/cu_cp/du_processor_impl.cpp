@@ -231,7 +231,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   srb0_msg.ue_index = ue->get_ue_index();
   create_srb(srb0_msg);
 
-  logger.info("UE Created (ue_index={}, c-rnti={})", ue->get_ue_index(), msg.c_rnti);
+  logger.info("ue={} UE Created (c-rnti={})", ue->get_ue_index(), msg.c_rnti);
 
   ue_creation_complete_msg.ue_index = ue->get_ue_index();
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
@@ -244,7 +244,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 void du_processor_impl::create_srb(const srb_creation_message& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsgnb_assert(ue != nullptr, "Could not find DU UE");
+  srsgnb_assert(ue != nullptr, "Could not find UE");
 
   // create entry for SRB
   ue->get_srbs()[msg.srb_id] = {};

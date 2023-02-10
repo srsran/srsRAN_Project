@@ -25,7 +25,7 @@ public:
 
   async_task<ng_setup_response> on_ng_setup_request(const ng_setup_request& request) override
   {
-    srsgnb_assert(ngc_conn_mng != nullptr, "ngc_conn_mng must not be nullptr");
+    srsgnb_assert(ngc_conn_mng != nullptr, "NGAP handler must not be nullptr");
     return ngc_conn_mng->handle_ng_setup_request(request);
   }
 

@@ -83,7 +83,7 @@ public:
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
   {
-    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
 
     return e1_bearer_context_mng->handle_bearer_context_setup_request(msg);
   }
@@ -91,14 +91,14 @@ public:
   async_task<e1ap_bearer_context_modification_response>
   on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override
   {
-    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
 
     return e1_bearer_context_mng->handle_bearer_context_modification_request(msg);
   }
 
   async_task<void> on_bearer_context_release_command(const e1ap_bearer_context_release_command& cmd) override
   {
-    srsgnb_assert(e1_bearer_context_mng != nullptr, "e1_bearer_context_mng must not be nullptr");
+    srsgnb_assert(e1_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
 
     return e1_bearer_context_mng->handle_bearer_context_release_command(cmd);
   }
@@ -118,20 +118,20 @@ public:
   async_task<f1ap_ue_context_setup_response>
   on_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override
   {
-    srsgnb_assert(handler != nullptr, "F1C handler must not be nullptr");
+    srsgnb_assert(handler != nullptr, "F1AP handler must not be nullptr");
     return handler->handle_ue_context_setup_request(request);
   }
 
   async_task<ue_index_t> on_ue_context_release_command(const f1ap_ue_context_release_command& msg) override
   {
-    srsgnb_assert(handler != nullptr, "F1C handler must not be nullptr");
+    srsgnb_assert(handler != nullptr, "F1AP handler must not be nullptr");
     return handler->handle_ue_context_release_command(msg);
   }
 
   virtual async_task<cu_cp_ue_context_modification_response>
   on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override
   {
-    srsgnb_assert(handler != nullptr, "F1C handler must not be nullptr");
+    srsgnb_assert(handler != nullptr, "F1AP handler must not be nullptr");
     return handler->handle_ue_context_modification_request(request);
   }
 
