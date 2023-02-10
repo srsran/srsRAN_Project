@@ -35,7 +35,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
   header_length = 1;
 
   if (not lcid_val.is_valid_lcid()) {
-    srslog::fetch_basic_logger("MAC").warning("Invalid UL MAC PDU. Cause: Unrecognized LCID={}.", lcid_val);
+    srslog::fetch_basic_logger("MAC").warning("Invalid UL MAC PDU. Cause: Unrecognized lcid={}.", lcid_val);
     return false;
   }
 

@@ -103,7 +103,7 @@ void scheduler_event_logger::enqueue_impl(const sched_ue_delete_message& ue_requ
 void scheduler_event_logger::enqueue_impl(const sr_event& sr)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- SR: ue={}, rnti={:#x}", sr.ue_index, sr.rnti);
+    fmt::format_to(fmtbuf, "\n- SR: ue={} rnti={:#x}", sr.ue_index, sr.rnti);
   } else {
     fmt::format_to(fmtbuf, "{}ue={} SR ind", separator(), sr.ue_index);
   }
@@ -191,9 +191,9 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
 void scheduler_event_logger::enqueue_impl(const dl_mac_ce_indication& mac_ce)
 {
   if (mode == debug) {
-    fmt::format_to(fmtbuf, "\n- MAC CE: ue={}, LCID={}", mac_ce.ue_index, mac_ce.ce_lcid.value());
+    fmt::format_to(fmtbuf, "\n- MAC CE: ue={} lcid={}", mac_ce.ue_index, mac_ce.ce_lcid.value());
   } else {
-    fmt::format_to(fmtbuf, "{}mac_ce(ue={} LCID={})", separator(), mac_ce.ue_index, mac_ce.ce_lcid);
+    fmt::format_to(fmtbuf, "{}mac_ce(ue={} lcid={})", separator(), mac_ce.ue_index, mac_ce.ce_lcid);
   }
 }
 

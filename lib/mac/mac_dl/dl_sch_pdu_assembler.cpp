@@ -89,8 +89,8 @@ void dl_sch_pdu::encode_subheader(bool F_bit, lcid_dl_sch_t lcid, unsigned heade
 class dl_sch_pdu_assembler::dl_sch_pdu_logger
 {
 public:
-  explicit dl_sch_pdu_logger(rnti_t rnti_, units::bytes tbs_, srslog::basic_logger& logger_) :
-    rnti(rnti_), tbs(tbs_), logger(logger_)
+  explicit dl_sch_pdu_logger(du_ue_index_t ue_index_, rnti_t rnti_, units::bytes tbs_, srslog::basic_logger& logger_) :
+    ue_index(ue_index_), rnti(rnti_), tbs(tbs_), logger(logger_)
   {
   }
 
@@ -99,7 +99,7 @@ public:
     if (not logger.info.enabled()) {
       return;
     }
-    fmt::format_to(fmtbuf, "{}SDU: LCID={} al={}", separator(), lcid, len);
+    fmt::format_to(fmtbuf, "{}SDU: lcid={} al={}", separator(), lcid, len);
   }
 
   void add_conres_id(const ue_con_res_id_t& conres)
@@ -115,12 +115,13 @@ public:
     if (not logger.info.enabled()) {
       return;
     }
-    logger.info("DL PDU, rnti={:#x}, size={}: {}", rnti, tbs, to_c_str(fmtbuf));
+    logger.info("DL PDU, ue={} rnti={:#x} size={}: {}", ue_index, rnti, tbs, to_c_str(fmtbuf));
   }
 
 private:
   const char* separator() const { return fmtbuf.size() == 0 ? "" : ", "; }
 
+  du_ue_index_t         ue_index;
   rnti_t                rnti;
   units::bytes          tbs;
   srslog::basic_logger& logger;
@@ -145,12 +146,15 @@ span<const uint8_t> dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t             
 {
   span<uint8_t> buffer = ue_mng.get_dl_harq_buffer(rnti, h_id, tb_idx);
   if (buffer.size() < tb_size_bytes) {
-    logger.error("DL rnti={:#x} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available", rnti, h_id);
+    logger.error("DL ue={} rnti={:#x} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
+                 ue_mng.get_ue_index(rnti),
+                 rnti,
+                 h_id);
     return span<const uint8_t>(zero_buffer).first(tb_size_bytes);
   }
   dl_sch_pdu ue_pdu(buffer.first(tb_size_bytes));
 
-  dl_sch_pdu_logger pdu_logger{rnti, units::bytes{tb_size_bytes}, logger};
+  dl_sch_pdu_logger pdu_logger{ue_mng.get_ue_index(rnti), rnti, units::bytes{tb_size_bytes}, logger};
 
   // Encode added subPDUs.
   for (const dl_msg_lc_info& sched_lch : tb_info.lc_chs_to_sched) {
@@ -195,7 +199,8 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Fetch MAC Tx SDU.
     byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(get_mac_sdu_payload_size(rem_bytes));
     if (sdu.empty()) {
-      logger.debug("rnti={:#x}, LCID={}: Failed to encode MAC SDU in MAC opportunity of size={}.",
+      logger.debug("ue={} rnti={:#x} lcid={}: Failed to encode MAC SDU in MAC opportunity of size={}.",
+                   ue_mng.get_ue_index(rnti),
                    rnti,
                    lc_grant_info.lcid.to_lcid(),
                    get_mac_sdu_payload_size(rem_bytes));
@@ -209,7 +214,8 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Add SDU as a subPDU.
     unsigned nwritten = ue_pdu.add_sdu(lc_grant_info.lcid.to_lcid(), std::move(sdu));
     if (nwritten == 0) {
-      logger.error("rnti={:#x}, LCID={}: Scheduled SubPDU with al={} cannot fit in scheduled DL grant",
+      logger.error("ue={} rnti={:#x} lcid={}: Scheduled SubPDU with al={} cannot fit in scheduled DL grant",
+                   ue_mng.get_ue_index(rnti),
                    rnti,
                    lc_grant_info.lcid.to_lcid(),
                    lc_grant_info.sched_bytes);
@@ -227,12 +233,14 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Causes for failure to create MAC SDU include: RLC Tx window is full, mismatch between the logical channel
     // buffer states in the scheduler and RLC bearers, or the MAC opportunity is too small.
     if (rem_bytes < MIN_MAC_SDU_SIZE) {
-      logger.warning("rnti={:#x}, LCID={}: Skipping MAC SDU encoding. Cause: Allocated SDU size={} is too small.",
+      logger.warning("ue={} rnti={:#x} lcid={}: Skipping MAC SDU encoding. Cause: Allocated SDU size={} is too small.",
+                     ue_mng.get_ue_index(rnti),
                      rnti,
                      lc_grant_info.lcid.to_lcid(),
                      lc_grant_info.sched_bytes);
     } else {
-      logger.warning("rnti={:#x}, LCID={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",
+      logger.warning("ue={} rnti={:#x} lcid={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",
+                     ue_mng.get_ue_index(rnti),
                      rnti,
                      lc_grant_info.lcid.to_lcid());
     }
@@ -252,7 +260,7 @@ void dl_sch_pdu_assembler::assemble_ce(dl_sch_pdu&           ue_pdu,
       pdu_logger.add_conres_id(conres);
     } break;
     default:
-      report_fatal_error("Invalid MAC CE LCID={}", subpdu.lcid);
+      report_fatal_error("Invalid MAC CE lcid={}", subpdu.lcid);
   }
 }
 
@@ -261,7 +269,10 @@ dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t h_id, unsigned tb
 {
   span<uint8_t> buffer = ue_mng.get_dl_harq_buffer(rnti, h_id, tb_idx);
   if (buffer.size() < tbs_bytes) {
-    logger.error("DL rnti={:#x} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available", rnti, h_id);
+    logger.error("DL ue={} rnti={:#x} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
+                 ue_mng.get_ue_index(rnti),
+                 rnti,
+                 h_id);
     return span<const uint8_t>(zero_buffer).first(tbs_bytes);
   }
   return buffer.first(tbs_bytes);

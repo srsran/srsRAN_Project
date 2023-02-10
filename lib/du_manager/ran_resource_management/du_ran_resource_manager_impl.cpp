@@ -137,7 +137,7 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       if (std::any_of(ue_mcg.rlc_bearers.begin(), ue_mcg.rlc_bearers.end(), [&drb](const auto& item) {
             return *drb.lcid == item.lcid;
           })) {
-        logger.warning("Failed to allocate DRB-Id={}. Cause: Specified LCID={} already exists", drb.drb_id, lcid);
+        logger.warning("Failed to allocate DRB-Id={}. Cause: Specified lcid={} already exists", drb.drb_id, lcid);
         resp.failed_drbs.push_back(drb.drb_id);
         continue;
       }

@@ -98,7 +98,7 @@ struct formatter<srsgnb::mac_ul_sch_subpdu> {
   {
     using namespace srsgnb;
     if (subpdu.lcid().is_sdu()) {
-      format_to(ctx.out(), "LCID={}: len={}", subpdu.lcid(), subpdu.sdu_length());
+      format_to(ctx.out(), "lcid={}: len={}", subpdu.lcid(), subpdu.sdu_length());
       return ctx.out();
     }
     switch (subpdu.lcid().value()) {
