@@ -848,13 +848,11 @@ public:
       // Detailed log information, including a list of all PDU fields.
       logger.debug(data.front().data(),
                    data.front().size(),
-                   "PDSCH: {:s} tbs={} {}\n  {:n}\n  tbs={}\n  {}",
+                   "PDSCH: {:s} tbs={} {}\n  {:n}",
                    pdu,
                    data.front().size(),
                    time_ns,
-                   pdu,
-                   data.front().size(),
-                   time_ns);
+                   pdu);
       return;
     }
     // Single line log entry.
@@ -888,7 +886,7 @@ public:
     if (log_all_opportunities || !result.preambles.empty()) {
       if (logger.debug.enabled()) {
         // Detailed log information, including a list of all PRACH config and result fields.
-        logger.debug("PRACH: {:s} {:s} {}\n  {:n}\n  {:n}\n  {}", config, result, time_ns, config, result, time_ns);
+        logger.debug("PRACH: {:s} {:s} {}\n  {:n}\n  {:n}\n", config, result, time_ns, config, result);
       } else {
         // Single line log entry.
         logger.info("PRACH: {:s} {:s} {}", config, result, time_ns);
@@ -921,58 +919,26 @@ public:
     std::chrono::nanoseconds time_ns =
         time_execution([&]() { result = processor->process(data, softbuffer, grid, pdu); });
 
-    if (result.data->tb_crc_ok) {
-      // If CRC is OK, dump TB.
-      if (logger.debug.enabled()) {
-        // Detailed log information, including a list of all PDU fields.
-        logger.debug(data.data(),
-                     data.size(),
-                     "PUSCH: harq_id={} {:s} {:s} tbs={} {}\n  harq_id={}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
-                     softbuffer.get_pid(),
-                     pdu,
-                     result,
-                     data.size(),
-                     time_ns,
-                     softbuffer.get_pid(),
-                     pdu,
-                     result,
-                     data.size(),
-                     time_ns);
-      } else {
-        // Single line log entry.
-        logger.info(data.data(),
-                    data.size(),
-                    "PUSCH: harq_id={} {:s} {:s} tbs={} {}",
-                    softbuffer.get_pid(),
-                    pdu,
-                    result,
-                    data.size(),
-                    time_ns);
-      }
+    if (logger.debug.enabled()) {
+      // Detailed log information, including a list of all PDU fields.
+      logger.debug(data.data(),
+                   result.data->tb_crc_ok ? data.size() : 0,
+                   "PUSCH: {:s} tbs={} {:s} {}\n  {:n}\n  {:n}",
+                   pdu,
+                   data.size(),
+                   result,
+                   time_ns,
+                   pdu,
+                   result);
     } else {
-      // CRC is KO, do not dump TB.
-      if (logger.debug.enabled()) {
-        logger.debug("PUSCH: harq_id={} {:s} {:s} tbs={} {}\n  harq_id={}\n  {:n}\n  {:n}\n  tbs={}\n  {}",
-                     softbuffer.get_pid(),
-                     pdu,
-                     result,
-                     data.size(),
-                     time_ns,
-                     softbuffer.get_pid(),
-                     pdu,
-                     result,
-                     data.size(),
-                     time_ns);
-      } else {
-        logger.info(data.data(),
-                    data.size(),
-                    "PUSCH: harq_id={} {:s} {:s} tbs={} {}",
-                    softbuffer.get_pid(),
-                    pdu,
-                    result,
-                    data.size(),
-                    time_ns);
-      }
+      // Single line log entry.
+      logger.info(data.data(),
+                  result.data->tb_crc_ok ? data.size() : 0,
+                  "PUSCH: {:s} tbs={} {:s} {}",
+                  pdu,
+                  data.size(),
+                  result,
+                  time_ns);
     }
 
     return result;
@@ -993,7 +959,7 @@ class logging_pucch_processor_decorator : public pucch_processor
     std::chrono::nanoseconds time_ns = time_execution([&]() { result = processor->process(grid, config); });
     if (logger.debug.enabled()) {
       // Detailed log information, including a list of all PUCCH configuration and result fields.
-      logger.debug("PUCCH: {:s} {:s} {}\n  {:n}\n  {:n}\n  {}", config, result, time_ns, config, result, time_ns);
+      logger.debug("PUCCH: {:s} {:s} {}\n  {:n}\n  {:n}", config, result, time_ns, config, result);
     } else {
       // Single line log entry.
       logger.info("PUCCH: {:s} {:s} {}", config, result, time_ns);

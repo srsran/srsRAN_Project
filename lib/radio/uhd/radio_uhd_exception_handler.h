@@ -32,7 +32,7 @@ class uhd_exception_handler
 private:
   std::string error_message;
 
-protected:
+public:
   template <typename S, typename... Args>
   void on_error(const S& format_str, Args&&... args)
   {
@@ -68,7 +68,6 @@ protected:
     return is_successful();
   }
 
-public:
   bool               is_successful() const { return error_message.empty(); }
   const std::string& get_error_message() const { return error_message; }
 };

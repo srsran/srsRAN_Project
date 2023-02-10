@@ -33,9 +33,6 @@ public:
   /// Default destructor.
   virtual ~rx_softbuffer() = default;
 
-  /// Get the HARQ Process identifier.
-  virtual uint8_t get_pid() = 0;
-
   /// Gets the number of codeblocks.
   virtual unsigned get_nof_codeblocks() const = 0;
 

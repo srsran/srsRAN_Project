@@ -18,6 +18,7 @@
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/phy/upper/rx_softbuffer.h"
+#include "srsgnb/ran/pusch/pusch_context.h"
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/uci/uci_constants.h"
@@ -69,6 +70,8 @@ public:
   ///
   /// For a valid PUSCH transmission the codeword, the UCI information or both must be present.
   struct pdu_t {
+    /// Context information.
+    optional<pusch_context> context;
     /// Indicates the slot and numerology.
     slot_point slot;
     /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 6.3.1.1 Scrambling.

@@ -18,6 +18,7 @@
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/ran/modulation_scheme.h"
+#include "srsgnb/ran/pdsch/pdsch_context.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
@@ -49,6 +50,8 @@ public:
 
   /// \brief Describes the PDSCH processing parameters.
   struct pdu_t {
+    /// Context information.
+    optional<pdsch_context> context;
     /// Indicates the slot and numerology.
     slot_point slot;
     /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 7.3.1.1 Scrambling.

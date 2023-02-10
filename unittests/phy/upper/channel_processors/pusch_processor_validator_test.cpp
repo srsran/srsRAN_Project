@@ -20,7 +20,8 @@ using namespace srsgnb;
 
 namespace {
 
-const pusch_processor::pdu_t base_pdu = {{0, 9},
+const pusch_processor::pdu_t base_pdu = {nullopt,
+                                         {0, 9},
                                          8323,
                                          25,
                                          0,

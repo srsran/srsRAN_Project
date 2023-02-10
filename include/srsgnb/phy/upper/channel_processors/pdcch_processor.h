@@ -15,6 +15,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pdcch/coreset.h"
+#include "srsgnb/ran/pdcch/pdcch_context.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
@@ -117,6 +118,8 @@ public:
 
   /// Collects the PDCCH parameters for a transmission.
   struct pdu_t {
+    /// Context information.
+    optional<pdcch_context> context;
     /// Indicates the slot and numerology.
     slot_point slot;
     /// Cyclic prefix type.

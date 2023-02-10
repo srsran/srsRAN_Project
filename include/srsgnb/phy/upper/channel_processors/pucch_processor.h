@@ -18,6 +18,7 @@
 #include "srsgnb/phy/upper/channel_processors/pucch_uci_message.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/modulation_scheme.h"
+#include "srsgnb/ran/pucch/pucch_context.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
@@ -43,6 +44,8 @@ public:
 
   /// Collects PUCCH Format 1 parameters.
   struct format1_configuration {
+    /// Context information.
+    optional<pucch_context> context;
     /// Slot and numerology.
     slot_point slot;
     /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
@@ -82,6 +85,8 @@ public:
 
   /// Collects PUCCH Format 2 parameters.
   struct format2_configuration {
+    /// Context information.
+    optional<pucch_context> context;
     /// Slot and numerology.
     slot_point slot;
     /// Cyclic prefix configuration for the slot.

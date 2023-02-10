@@ -21,7 +21,8 @@ using namespace srsgnb;
 namespace {
 
 // Valid PDSCH configuration used as a base for the test cases.
-const pdsch_processor::pdu_t base_pdu = {{0, 19},
+const pdsch_processor::pdu_t base_pdu = {nullopt,
+                                         {0, 19},
                                          1,
                                          52,
                                          0,

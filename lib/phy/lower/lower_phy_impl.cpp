@@ -243,7 +243,6 @@ void lower_phy_impl::process_symbol()
   // Detect symbol index overflow.
   if (symbol_slot_idx == nof_symbols_per_slot) {
     // Reset DL resource grid buffers.
-    logger.debug("Clearing DL resource grid slot {}.", dl_slot_context.system_slot());
     dl_rg_buffers[dl_slot_context.system_slot()].reset();
     ul_rg_buffers[ul_slot_context.system_slot()].reset();
 
@@ -274,8 +273,6 @@ void lower_phy_impl::realtime_process_loop(task_executor& realtime_task_executor
 
 void lower_phy_impl::handle_resource_grid(const resource_grid_context& context, const resource_grid_reader& grid)
 {
-  logger.debug("Writing DL resource grid for sector {} and slot {}.", context.sector, context.slot.system_slot());
-
   // Set grid. Concurrent protection is at resource grid buffer level.
   dl_rg_buffers[context.slot.system_slot()].set_grid(grid, context.sector);
 }
@@ -396,6 +393,5 @@ void lower_phy_impl::request_prach_window(const prach_buffer_context& context, p
 
 void lower_phy_impl::request_uplink_slot(const resource_grid_context& context, resource_grid& grid)
 {
-  logger.debug("Writing UL resource grid for sector {} and slot {}.", context.sector, context.slot.system_slot());
   ul_rg_buffers[context.slot.system_slot()].set_grid(grid, context.sector);
 }
