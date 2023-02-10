@@ -32,6 +32,7 @@ class TestPing(BaseTest):
             param(7, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
             param(7, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
             param(7, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(41, 30, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
         ),
     )
     def test(

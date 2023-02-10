@@ -8,25 +8,19 @@
 .e2e-run:
   stage: test-e2e
   timeout: 8h
+  interruptible: false
   image:
     name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.13
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
-    IGNORE: "none"
+    LOG_LEVEL: ""
   tags:
-    - on-prem-amd64
+    - on-prem-tester
   extends:
     - .prepare_test
   rules:
-    - if: $ON_MR
-      when: manual
-      allow_failure: true
-      variables:
-        mark: "smoke"
     - if: $CI_DESCRIPTION =~ /Nightly/
-      variables:
-        mark: "smoke or intensive"
   artifacts:
     paths:
       - $CI_JOB_NAME/*
@@ -37,7 +31,9 @@
     - |
       cd e2e_tests
       export LOGNAME="gitlab-ci"
-    - retina-launcher --retina-request $PWD/${REQUEST}.yml --self-contained-html --html=./log/report.html --junitxml=out.xml -m "${mark}" --ignore="$IGNORE" .
+      export RETINA_LOGLEVEL="$LOG_LEVEL"
+
+    - retina-launcher --retina-request $PWD/${REQUEST}.yml --self-contained-html --html=./log/report.html --junitxml=out.xml -x -m smoke .
   after_script:
     - mv e2e_tests/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
     - echo "$CI_JOB_ID" >> ${CI_PROJECT_DIR}/$CI_JOB_NAME/job.env
@@ -46,34 +42,23 @@
 ## e2e build
 ################################################################################
 e2e-build:
-  extends: .build_and_unit
+  extends: .build_and_unit_big
   stage: test-e2e
   tags:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
-  parallel:
-    matrix:
-      - AUTO_DETECT_ISA: "False"
-        ENABLE_TSAN: "False"
-        COMPILER: gcc
-        BUILD_TYPE: Release
-        ASSERT_LEVEL: MINIMAL
-      - AUTO_DETECT_ISA: "False"
-        ENABLE_TSAN: "True"
-        COMPILER: clang
-        BUILD_TYPE: Debug
-        ASSERT_LEVEL: PARANOID
   variables:
     OS: ubuntu-22.04
     TEST_MODE: none
     PLATFORM: "amd64"
+    AUTO_DETECT_ISA: "False"
+    ENABLE_TSAN: "False"
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
   needs: []
   rules:
     - if: $ON_MR
-      when: manual
-      allow_failure: true
     - if: $CI_DESCRIPTION =~ /Nightly/
-  script:
-    - build_srsgnb
   after_script:
     - echo "Empty after script"
   artifacts:
@@ -89,23 +74,10 @@ zmq:
   extends: .e2e-run
   variables:
     REQUEST: "request_srsgnb_zmq"
+    LOG_LEVEL: "info"
+  rules:
+    - if: $ON_MR
+    - if: $CI_DESCRIPTION =~ /Nightly/
   needs:
-  - job: "e2e-build: [False, False, gcc, Release, MINIMAL]"
-    artifacts: true
-
-zmq-tsan:
-  extends: .e2e-run
-  variables:
-    REQUEST: "request_srsgnb_zmq"
-    IGNORE: "iperf.py"
-  needs:
-  - job: "e2e-build: [False, True, clang, Debug, PARANOID]"
-    artifacts: true
-
-rf:
-  extends: .e2e-run
-  variables:
-    REQUEST: "request_srsgnb_rf"
-  needs:
-  - job: "e2e-build: [False, False, gcc, Release, MINIMAL]"
-    artifacts: true
+    - job: "e2e-build"
+      artifacts: true

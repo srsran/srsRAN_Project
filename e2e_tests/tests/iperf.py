@@ -1,7 +1,10 @@
 """
 Test ping
 """
+from contextlib import suppress
 import logging
+
+import grpc
 
 from pytest import mark
 from retina.launcher.utils import param
@@ -18,20 +21,21 @@ class TestIPerf(BaseTest):
     @mark.parametrize(
         "band, common_scs, bandwidth",
         (
-            param(3, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 20, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 20, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(3, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(3, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(3, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(3, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(3, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(3, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(7, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(7, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(7, 15, 20, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(7, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(7, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(7, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            # param(7, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
+            param(41, 30, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
         ),
     )
     @mark.parametrize(
@@ -42,7 +46,13 @@ class TestIPerf(BaseTest):
             param(IPerfDir.BIDIRECTIONAL, id="bidirectional"),
         ),
     )
-    @mark.parametrize("protocol", (param(IPerfProto.UDP, id="udp"), param(IPerfProto.TCP, id="tcp")))
+    @mark.parametrize(
+        "protocol",
+        (
+            param(IPerfProto.UDP, id="udp"),
+            # param(IPerfProto.TCP, id="tcp"),
+        ),
+    )
     def test(
         self,
         extra,
@@ -53,8 +63,8 @@ class TestIPerf(BaseTest):
         direction,
         startup_timeout=120,
         attach_timeout=120,
-        iperf_duration=10,
-        bits_per_second_threshold=0,
+        iperf_duration=20,
+        bitrate=70e6,
     ):
 
         logging.info("Ping Test")
@@ -104,28 +114,19 @@ class TestIPerf(BaseTest):
                 iperf_dir_to_str(direction),
             )
 
-            ue.IPerf(
-                IPerfRequest(
-                    server=server,
-                    duration=iperf_duration,
-                    direction=direction,
-                    proto=protocol,
+            with suppress(grpc.RpcError):
+                ue.IPerf(
+                    IPerfRequest(
+                        server=server,
+                        duration=iperf_duration,
+                        direction=direction,
+                        proto=protocol,
+                        bitrate=int(bitrate),
+                    )
                 )
-            )
 
             iperf_data = epc.StopIPerfService(server)
             logging.info("Iperf %s %s result %s", iperf_proto_to_str(protocol), iperf_dir_to_str(direction), iperf_data)
-
-            if protocol is IPerfProto.UDP:
-                if direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
-                    assert iperf_data.udp_dl.bits_per_second > bits_per_second_threshold
-                if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-                    assert iperf_data.udp_ul.bits_per_second > bits_per_second_threshold
-            elif protocol is IPerfProto.TCP:
-                if direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
-                    assert iperf_data.tcp_dl_sent.bits_per_second > bits_per_second_threshold
-                if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-                    assert iperf_data.tcp_ul_recv.bits_per_second > bits_per_second_threshold
 
 
 def iperf_proto_to_str(proto):

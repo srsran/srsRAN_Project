@@ -1,5 +1,5 @@
 import logging
-import math
+import os
 from collections import defaultdict
 from contextlib import contextmanager, suppress
 from pprint import pformat
@@ -22,7 +22,9 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
                     "dl_arfcn": get_dl_arfcn(band),
                     "ssb_arfcn": get_ssb_arfcn(band, bandwidth),
                     "common_scs": common_scs,
+                    "ssb_scs": common_scs,
                     "bandwidth": bandwidth,
+                    "log_level": get_loglevel(),
                 }
             },
             "gnb": {
@@ -31,6 +33,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
                     "dl_arfcn": get_dl_arfcn(band),
                     "common_scs": common_scs,
                     "bandwidth": bandwidth,
+                    "log_level": get_loglevel(),
                 }
             },
         }
@@ -45,31 +48,41 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
 
         yield ue, gnb, epc
 
-        logging.info("Test passed")
-
     except Exception as err:
-        logging.error("Test failed")
         raise err from None
 
     finally:
+
+        teardown_ok = True
 
         with suppress(UnboundLocalError, NameError):
             extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
 
         with suppress(NameError, grpc._channel._InactiveRpcError):
             return_code = gnb.Stop(Empty()).value
-            if return_code:
-                logging.warning("GNB stopped with invalid exit code %s", return_code)
+            teardown_ok &= return_code == 0
+            if return_code < 0:
+                logging.error("GNB crashed with exit code %s", return_code)
+            elif return_code > 0:
+                logging.error("GNB has %d errors or warnings", return_code)
         with suppress(NameError, grpc._channel._InactiveRpcError):
-            return_code = epc.Stop(Empty()).value
+            epc.Stop(Empty()).value
         with suppress(NameError, grpc._channel._InactiveRpcError):
             return_code = ue.Stop(Empty()).value
+            teardown_ok &= return_code == 0
+            if return_code < 0:
+                logging.error("UE crashed with exit code %s", return_code)
+            elif return_code > 0:
+                logging.error("UE has %d errors or warnings", return_code)
+
+        assert teardown_ok is True
+
 
 def get_dl_arfcn(band):
     """
     Get dl arfcn
     """
-    return {3: 368500, 7: 536020}[band]
+    return {3: 368500, 7: 536020, 41: 520000}[band]
 
 
 def get_ssb_arfcn(band, bandwidth):
@@ -93,4 +106,15 @@ def get_ssb_arfcn(band, bandwidth):
                 50: 533050,
             },
         ),
+        41: defaultdict(lambda: 520090, {20: 519850}),
     }[band][bandwidth]
+
+
+def get_loglevel():
+    """
+    Get retina loglevel
+    """
+    try:
+        return os.environ["RETINA_LOGLEVEL"]
+    except KeyError:
+        return "info"
