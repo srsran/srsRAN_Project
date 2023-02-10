@@ -341,6 +341,52 @@ protected:
     EXPECT_EQ(tester->status_trigger_counter, 0);
   }
 
+  void rx_overlapping_sdu_segments(uint32_t& sn_state,
+                                   uint32_t  sdu_size       = 12,
+                                   uint32_t  segment_size_a = 3,
+                                   uint32_t  segment_size_b = 4,
+                                   uint32_t  skip_a         = 0)
+  {
+    // check status report
+    rlc_am_status_pdu status_report = rlc->get_status_pdu();
+    EXPECT_EQ(status_report.ack_sn, sn_state);
+    EXPECT_EQ(status_report.get_nacks().size(), 0);
+    EXPECT_EQ(status_report.get_packed_size(), 3);
+    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+    // Create SDU and PDUs with SDU segments
+    std::list<byte_buffer> pdu_list_a = {};
+    std::list<byte_buffer> pdu_list_b = {};
+    byte_buffer            sdu;
+    ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list_a, sdu, sn_state, sdu_size, segment_size_a, sn_state));
+    ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list_b, sdu, sn_state, sdu_size, segment_size_b, sn_state));
+    sn_state++;
+
+    // Push A PDUs except for one into RLC
+    uint32_t i = 0;
+    for (const byte_buffer& pdu_buf : pdu_list_a) {
+      if (i != skip_a) {
+        byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+        rlc->handle_pdu(std::move(pdu));
+      }
+      i++;
+    }
+
+    // Check that nothing was forwarded to upper layer
+    EXPECT_EQ(tester->sdu_queue.size(), 0);
+
+    // Push all PDUs again; check that nothing is forwarded to upper layer before except after Rx of 5th segment
+    // Push B PDUs into RLC
+    for (const byte_buffer& pdu_buf : pdu_list_b) {
+      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      rlc->handle_pdu(std::move(pdu));
+    }
+    ASSERT_EQ(tester->sdu_queue.size(), 1);
+    EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
+    EXPECT_EQ(tester->sdu_queue.front(), sdu);
+    tester->sdu_queue.pop();
+  }
+
   srslog::basic_logger&                 logger  = srslog::fetch_basic_logger("TEST", false);
   rlc_am_sn_size                        sn_size = GetParam();
   rlc_rx_am_config                      config;
@@ -652,6 +698,86 @@ TEST_P(rlc_rx_am_test, rx_duplicate_segments)
     }
     i++;
   }
+}
+
+/// Verify that reception of fully overlapping segments is properly managed, i.e. segments get trimmed or are discarded
+/// as required.
+/// This test received a 8-byte SDU in 2-byte segments, leaving out one of the segments. Then the same SDU
+/// is received in 4-byte segments. The content of the final SDU is checked against the original. The test is repeated
+/// for all positions of the missing element.
+TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_2_4)
+{
+  init(GetParam());
+
+  uint32_t sn_state       = 0;
+  uint32_t sdu_size       = 8;
+  uint32_t segment_size_a = 2;
+  uint32_t segment_size_b = 4;
+
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 3);
+}
+
+/// Verify that reception of fully overlapping segments is properly managed, i.e. segments get trimmed or are discarded
+/// as required.
+/// This test received a 8-byte SDU in 4-byte segments, leaving out one of the segments.
+/// Then the same SDU is received in 2-byte segments.
+/// The content of the final SDU is checked against the original.
+/// The test is repeated for all positions of the missing element.
+TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_4_2)
+{
+  init(GetParam());
+
+  uint32_t sn_state       = 0;
+  uint32_t sdu_size       = 8;
+  uint32_t segment_size_a = 4;
+  uint32_t segment_size_b = 2;
+
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1);
+}
+
+/// Verify that reception of partially overlapping segments is properly managed, i.e. segments get trimmed or are
+/// discarded as required.
+/// This test received a 12-byte SDU in 3-byte segments, leaving out one of the segments.
+/// Then the same SDU is received in 4-byte segments.
+/// The content of the final SDU is checked against the original.
+/// The test is repeated for all positions of the missing element.
+TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_3_4)
+{
+  init(GetParam());
+
+  uint32_t sn_state       = 0;
+  uint32_t sdu_size       = 12;
+  uint32_t segment_size_a = 3;
+  uint32_t segment_size_b = 4;
+
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 3);
+}
+
+/// Verify that reception of partially overlapping segments is properly managed, i.e. segments get trimmed or are
+/// discarded as required.
+/// This test received a 12-byte SDU in 4-byte segments, leaving out one of the segments.
+/// Then the same SDU is received in 3-byte segments.
+/// The content of the final SDU is checked against the original.
+/// The test is repeated for all positions of the missing element.
+TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_4_3)
+{
+  init(GetParam());
+
+  uint32_t sn_state       = 0;
+  uint32_t sdu_size       = 12;
+  uint32_t segment_size_a = 4;
+  uint32_t segment_size_b = 3;
+
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2);
 }
 
 /// Verify status prohibit timer:
