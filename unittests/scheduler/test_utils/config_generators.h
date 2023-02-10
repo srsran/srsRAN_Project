@@ -51,6 +51,10 @@ make_default_sched_cell_configuration_request(const cell_config_builder_params& 
   sched_req.pucch_guardbands =
       config_helpers::build_pucch_guardbands_list(config_helpers::make_default_ue_uplink_config(params));
 
+  if (params.csi_rs_enabled) {
+    sched_req.nzp_csi_res = config_helpers::make_default_csi_meas_config(params).nzp_csi_rs_res_list[0];
+  }
+
   return sched_req;
 }
 

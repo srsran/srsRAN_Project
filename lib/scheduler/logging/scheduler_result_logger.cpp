@@ -79,6 +79,19 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
   }
 
+  for (const csi_rs_info& csi_rs : result.dl.csi_rs) {
+    fmt::format_to(fmtbuf,
+                   "\n- CSI-RS: type={} crbs={} row={} freq={} symb0={} cdm_type={} freq_density={} scramb_id={}",
+                   csi_rs.type == csi_rs_info::csi_type::csi_rs_nzp ? "nzp" : "zp",
+                   csi_rs.crbs,
+                   csi_rs.row,
+                   csi_rs.freq_domain,
+                   csi_rs.symbol0,
+                   csi_rs.cdm_type == csi_rs_cdm_type::no_CDM ? "no_cdm" : "other",
+                   (unsigned)csi_rs.freq_density,
+                   csi_rs.scrambling_id);
+  }
+
   for (const sib_information& sib : result.dl.bc.sibs) {
     fmt::format_to(fmtbuf,
                    "\n- SI{} PDSCH: prb={} symb={} tbs={} mcs={} rv={}",
