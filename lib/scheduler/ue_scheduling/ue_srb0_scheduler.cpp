@@ -99,7 +99,7 @@ bool ue_srb0_scheduler::schedule_srb0(cell_resource_allocator& res_alloc, ue& u)
   }
 
   // No resource found in UE's carriers and Search spaces.
-  logger.warning("Not enough PDSCH space for SRB0 message. Will re-try in next slot");
+  logger.debug("rnti={}: Not enough PDSCH space for SRB0 message. Will re-try in next slot.", u.crnti);
   return false;
 }
 
@@ -122,7 +122,8 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
   if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
-    logger.warning("Failed to allocate PDSCH. Cause: No space available in scheduler output list");
+    logger.debug("rnti={}: Failed to allocate PDSCH for SRB0. Cause: No space available in scheduler output list.",
+                 u.crnti);
     return false;
   }
 
@@ -159,33 +160,33 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
 
   if (prbs_tbs.tbs_bytes < pending_bytes) {
-    logger.warning(
-        "SRB0 PDU size ({}) exceeds TBS calculated ({}) for rnti={:#x}.", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
+    logger.debug(
+        "rnti={:#x}: SRB0 PDU size ({}) exceeds TBS calculated ({}).", pending_bytes, prbs_tbs.tbs_bytes, u.crnti);
     return false;
   }
 
   if (mcs_idx > expert_cfg.max_msg4_mcs) {
-    logger.warning("MCS index chosen ({}) exceeds maximum allowed MCS index ({}) for rnti={:#x}.",
-                   mcs_idx,
-                   expert_cfg.max_msg4_mcs,
-                   u.crnti);
+    logger.debug("rnti={:#x}: MCS index chosen ({}) for SRB0 exceeds maximum allowed MCS index ({}).",
+                 u.crnti,
+                 mcs_idx,
+                 expert_cfg.max_msg4_mcs);
     return false;
   }
 
   crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
   prb_interval ue_grant_prbs = crb_to_prb(initial_active_dl_bwp, ue_grant_crbs);
   if (ue_grant_prbs.length() < prbs_tbs.nof_prbs) {
-    logger.warning("Postponed SRB0 PDU scheduling for rnti={:#x}. Cause: Not enough PRBs ({} < {})",
-                   u.crnti,
-                   ue_grant_prbs.length(),
-                   prbs_tbs.nof_prbs);
+    logger.debug("rnti={:#x}: Postponed SRB0 PDU scheduling. Cause: Not enough PRBs ({} < {})",
+                 u.crnti,
+                 ue_grant_prbs.length(),
+                 prbs_tbs.nof_prbs);
     return false;
   }
 
   // Allocate PDCCH resources.
   pdcch_dl_information* pdcch = pdcch_sch.alloc_pdcch_common(pdcch_alloc, u.crnti, ss_cfg.id, aggregation_level::n4);
   if (pdcch == nullptr) {
-    logger.info("Failed to allocate PDSCH. Cause: No space in PDCCH.");
+    logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PDCCH.");
     return false;
   }
 
@@ -200,7 +201,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
     }
   }
   if (pucch_grant.pucch_pdu == nullptr) {
-    logger.info("Failed to allocate PDSCH. Cause: No space in PUCCH.");
+    logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PUCCH.");
     // TODO: remove PDCCH allocation.
     return false;
   }
