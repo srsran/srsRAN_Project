@@ -39,7 +39,7 @@ void e2ap_asn1_packer::handle_message(const e2_message& msg)
   byte_buffer   tx_pdu;
   asn1::bit_ref bref(tx_pdu);
   if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Failed to pack E1AP PDU");
+    logger.error("Failed to pack E2 PDU");
     return;
   }
 
