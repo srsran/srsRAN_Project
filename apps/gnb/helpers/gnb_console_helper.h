@@ -46,9 +46,10 @@ public:
   void set_cells(const span<du_cell_config>& cells_);
 
 private:
-  void stdin_handler(int fd);
-  void handle_command(const std::string& command);
-  void print_help();
+  void     stdin_handler(int fd);
+  void     handle_command(const std::string& command);
+  void     print_help();
+  unsigned derive_ssb_arfcn(const du_cell_config& cell);
 
   srslog::basic_logger&  logger;
   io_broker&             io_broker_handle;

@@ -11,6 +11,7 @@
 #include "gnb_console_helper.h"
 #include "string_helpers.h"
 #include "srsgnb/ran/band_helper.h"
+#include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/support/build_info/build_info.h"
 #include <fcntl.h>
 #include <list>
@@ -117,7 +118,7 @@ void gnb_console_helper::on_app_running()
                cell.dl_carrier.arfcn,
                srsgnb::nr_band_to_uint(cell.dl_carrier.band),
                srsgnb::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn) / 1e6,
-               0 /* FIXME: SSB-ARFCN field/derivation missing */,
+               derive_ssb_arfcn(cell),
                srsgnb::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn) / 1e6);
   }
   fmt::print("\n");
@@ -129,4 +130,17 @@ void gnb_console_helper::on_app_running()
 void gnb_console_helper::on_app_stopping()
 {
   fmt::print("Stopping ..\n");
+}
+
+unsigned gnb_console_helper::derive_ssb_arfcn(const du_cell_config& cell)
+{
+  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz),
+                                                     cell.scs_common,
+                                                     band_helper::get_freq_range(cell.dl_carrier.band));
+  uint8_t  ss0_idx  = 0;
+  optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+      cell.dl_carrier.arfcn, cell.dl_carrier.band, nof_crbs, cell.scs_common, cell.scs_common, ss0_idx);
+
+  srsgnb_assert(ssb_freq_loc.has_value(), "Unable to derive SSB location correctly.");
+  return ssb_freq_loc->ssb_arfcn;
 }
