@@ -102,7 +102,7 @@ cu_up::handle_bearer_context_setup_request(const e1ap_bearer_context_setup_reque
     logger.error("Could not create UE context");
     return response;
   }
-  logger.info("UE Created (ue_index={})", ue_ctxt->get_index());
+  logger.info("ue={} UE Created", ue_ctxt->get_index());
 
   // 2. Handle bearer context setup request
   for (const auto& pdu_session : msg.pdu_session_res_to_setup_list) {
