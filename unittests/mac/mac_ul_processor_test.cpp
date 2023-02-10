@@ -151,7 +151,8 @@ private:
   dummy_dl_executor_mapper         dl_exec_mapper{&task_exec};
   dummy_mac_result_notifier        phy_notifier;
   dummy_mac_event_indicator        du_mng_notifier;
-  mac_common_config_t              cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier};
+  mac_pcap                         pcap;
+  mac_common_config_t              cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier, pcap};
   du_rnti_table                    rnti_table;
   dummy_scheduler_feedback_handler sched_feedback;
   // This is the RNTI of the UE that appears in the mac_rx_pdu created by send_rx_indication_msg()

@@ -127,7 +127,8 @@ void test_dl_ue_procedure_execution_contexts()
   dummy_dl_executor_mapper    dl_exec_mapper{dl_execs[0]};
   dummy_mac_event_indicator   du_mng_notifier;
   dummy_mac_result_notifier   phy_notifier;
-  mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier};
+  mac_pcap                    pcap;
+  mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
   du_rnti_table               rnti_table;
 
   srs_sched_config_adapter sched_cfg_adapter{cfg};
@@ -173,7 +174,8 @@ void test_dl_ue_procedure_tsan()
   dummy_dl_executor_mapper  dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
   dummy_mac_event_indicator du_mng_notifier;
   dummy_mac_result_notifier phy_notifier;
-  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier};
+  mac_pcap                  pcap;
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
   du_rnti_table             rnti_table;
 
   srs_sched_config_adapter sched_cfg_adapter{cfg};

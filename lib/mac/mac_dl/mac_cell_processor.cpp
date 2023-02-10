@@ -24,7 +24,8 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
                                        mac_cell_result_notifier&        phy_notifier_,
                                        task_executor&                   cell_exec_,
                                        task_executor&                   slot_exec_,
-                                       task_executor&                   ctrl_exec_) :
+                                       task_executor&                   ctrl_exec_,
+                                       mac_pcap&                        pcap_) :
   logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
   cell_exec(cell_exec_),
@@ -40,9 +41,9 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   rar_assembler(pdu_pool),
   dlsch_assembler(ue_mng_),
   sched_obj(sched_),
-  ue_mng(ue_mng_)
+  ue_mng(ue_mng_),
+  pcap(pcap_)
 {
-  pcap.open("/tmp/mac2.pcap");
 }
 
 async_task<void> mac_cell_processor::start()

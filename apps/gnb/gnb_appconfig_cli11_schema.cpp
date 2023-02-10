@@ -54,6 +54,8 @@ static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params
 {
   app.add_option("--ngap_filename", pcap_params.ngap.filename, "NGAP PCAP file output path")->capture_default_str();
   app.add_option("--ngap_enable", pcap_params.ngap.enabled, "Enable NGAP packet capture")->always_capture_default();
+  app.add_option("--mac_filename", pcap_params.mac.filename, "MAC PCAP file output path")->capture_default_str();
+  app.add_option("--mac_enable", pcap_params.mac.enabled, "Enable MAC packet capture")->always_capture_default();
 }
 
 static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)

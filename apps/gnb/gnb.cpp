@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsgnb/pcap/mac_pcap.h"
 #include "srsgnb/support/build_info/build_info.h"
 #include "srsgnb/support/signal_handler.h"
 #include "srsgnb/support/tsan_options.h"
@@ -400,6 +401,11 @@ int main(int argc, char** argv)
   if (gnb_cfg.pcap_cfg.ngap.enabled) {
     ngap_pcap.open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
   }
+  mac_pcap mac_pcap;
+  // if (gnb_cfg.pcap_cfg.mac.enabled) {
+  if (true) {
+    mac_pcap.open(gnb_cfg.pcap_cfg.mac.filename.c_str());
+  }
 
   worker_manager workers{gnb_cfg};
 
@@ -581,6 +587,7 @@ int main(int argc, char** argv)
   du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
   du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
   du_hi_cfg.qos                           = du_qos_cfg;
+  du_hi_cfg.pcap                          = &mac_pcap;
 
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");
@@ -619,6 +626,7 @@ int main(int argc, char** argv)
   console.on_app_stopping();
 
   ngap_pcap.close();
+  mac_pcap.close();
 
   gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();

@@ -34,7 +34,8 @@ public:
                      mac_cell_result_notifier&        phy_notifier,
                      task_executor&                   cell_exec,
                      task_executor&                   slot_exec,
-                     task_executor&                   ctrl_exec);
+                     task_executor&                   ctrl_exec,
+                     mac_pcap&                        pcap);
 
   /// Starts configured cell.
   async_task<void> start() override;
@@ -94,7 +95,7 @@ private:
   // Note: For now, cells start active.
   enum class cell_state { inactive, active } state = cell_state::active;
 
-  mac_pcap pcap;
+  mac_pcap& pcap;
 };
 
 } // namespace srsgnb

@@ -19,7 +19,8 @@ mac_impl::mac_impl(const mac_config& mac_cfg) :
       mac_cfg.ul_exec_mapper,
       mac_cfg.dl_exec_mapper,
       mac_cfg.ctrl_exec,
-      mac_cfg.phy_notifier),
+      mac_cfg.phy_notifier,
+      mac_cfg.pcap),
   sched_cfg_adapter(cfg),
   sched_obj(create_scheduler(
       scheduler_config{mac_cfg.sched_cfg, sched_cfg_adapter.get_sched_notifier(), mac_cfg.metric_notifier})),

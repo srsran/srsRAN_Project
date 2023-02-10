@@ -7,6 +7,7 @@
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/mac/mac_cell_result.h"
+#include "srsgnb/pcap/mac_pcap.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/scheduler_metrics.h"
 #include <map>
@@ -28,6 +29,7 @@ struct du_high_configuration {
   std::vector<du_cell_config>      cells;
   std::map<uint8_t, du_qos_config> qos; // 5QI as key
   scheduler_expert_config          sched_cfg;
+  mac_pcap*                        pcap = nullptr;
 };
 
 } // namespace srs_du

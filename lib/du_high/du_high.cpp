@@ -63,7 +63,8 @@ du_high::du_high(const du_high_configuration& config_) :
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
-  mac  = create_mac(mac_config{mac_ev_notifier,
+  mac  = create_mac(mac_config{*cfg.pcap,
+                              mac_ev_notifier,
                               *cfg.ue_executors,
                               *cfg.cell_executors,
                               *cfg.du_mng_executor,

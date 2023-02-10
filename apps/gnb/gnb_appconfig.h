@@ -230,6 +230,10 @@ struct pcap_appconfig {
     std::string filename = "/tmp/gnb_ngap.pcap";
     bool        enabled  = false;
   } ngap;
+  struct {
+    std::string filename = "/tmp/gnb_mac.pcap";
+    bool        enabled  = false;
+  } mac;
 };
 
 /// Expert physical layer configuration.
