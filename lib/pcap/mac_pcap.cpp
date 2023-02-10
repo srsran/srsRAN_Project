@@ -74,12 +74,14 @@ mac_pcap::~mac_pcap()
 
 void mac_pcap::open(const char* filename_)
 {
-  dlt_pcap_open(UDP_DLT, filename_);
+  auto fn = [this, &filename_]() { dlt_pcap_open(UDP_DLT, filename_); };
+  worker.push_task_blocking(fn);
 }
 
 void mac_pcap::close()
 {
-  dlt_pcap_close();
+  auto fn = [this]() { dlt_pcap_close(); };
+  worker.push_task_blocking(fn);
 }
 
 void mac_pcap::write_pdu(mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)

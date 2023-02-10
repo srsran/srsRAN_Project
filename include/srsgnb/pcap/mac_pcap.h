@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/pcap/pcap.h"
+#include "srsgnb/support/executors/task_worker.h"
 
 namespace srsgnb {
 
@@ -63,12 +64,13 @@ typedef struct {
 class mac_pcap : public pcap_file_base
 {
 public:
-  mac_pcap() = default;
+  mac_pcap() : worker("PCAP", 128) {}
   ~mac_pcap();
 
-  void open(const char* filename_);
-  void close();
-  void write_pdu(mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu);
+  task_worker worker;
+  void        open(const char* filename_);
+  void        close();
+  void        write_pdu(mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu);
 };
 } // namespace srsgnb
 
