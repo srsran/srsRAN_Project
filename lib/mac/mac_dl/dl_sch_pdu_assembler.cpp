@@ -99,7 +99,7 @@ public:
     if (not logger.info.enabled()) {
       return;
     }
-    fmt::format_to(fmtbuf, "{}SDU: LCID={} L={}", separator(), lcid, len);
+    fmt::format_to(fmtbuf, "{}SDU: LCID={} al={}", separator(), lcid, len);
   }
 
   void add_conres_id(const ue_con_res_id_t& conres)
@@ -209,7 +209,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     // Add SDU as a subPDU.
     unsigned nwritten = ue_pdu.add_sdu(lc_grant_info.lcid.to_lcid(), std::move(sdu));
     if (nwritten == 0) {
-      logger.error("rnti={:#x}, LCID={}: Scheduled SubPDU with L={} cannot fit in scheduled DL grant",
+      logger.error("rnti={:#x}, LCID={}: Scheduled SubPDU with al={} cannot fit in scheduled DL grant",
                    rnti,
                    lc_grant_info.lcid.to_lcid(),
                    lc_grant_info.sched_bytes);

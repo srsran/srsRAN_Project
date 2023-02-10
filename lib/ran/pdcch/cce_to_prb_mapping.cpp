@@ -47,7 +47,7 @@ static reg_index_list cce_to_reg_mapping_interleaved(unsigned N_rb_coreset,
 
   // Validate parameters.
   srsgnb_assert(N_reg_coreset > 0 && (N_reg_coreset % (L * R) == 0) && (L % N_symb_coreset == 0),
-                "Invalid CORESET configuration N_reg_coreset={}, L={}, R={}, Nsymb_coreset={}.",
+                "Invalid CORESET configuration N_reg_coreset={}, al={}, R={}, Nsymb_coreset={}.",
                 N_reg_coreset,
                 L,
                 R,
