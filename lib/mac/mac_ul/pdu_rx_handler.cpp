@@ -55,15 +55,16 @@ pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&       ccch_notifier_,
                                du_high_ue_executor_mapper& ue_exec_mapper_,
                                scheduler_feedback_handler& sched_,
                                mac_ul_ue_manager&          ue_manager_,
-                               du_rnti_table&              rnti_table_) :
+                               du_rnti_table&              rnti_table_,
+                               mac_pcap&                   pcap_) :
   ccch_notifier(ccch_notifier_),
   ue_exec_mapper(ue_exec_mapper_),
   logger(srslog::fetch_basic_logger("MAC")),
   sched(sched_),
   ue_manager(ue_manager_),
-  rnti_table(rnti_table_)
+  rnti_table(rnti_table_),
+  pcap(pcap_)
 {
-  pcap.open("/tmp/mac.pcap");
 }
 
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)

@@ -73,7 +73,8 @@ public:
                  du_high_ue_executor_mapper& ue_exec_mapper_,
                  scheduler_feedback_handler& sched_,
                  mac_ul_ue_manager&          ue_manager_,
-                 du_rnti_table&              rnti_table_);
+                 du_rnti_table&              rnti_table_,
+                 mac_pcap&                   pcap_);
 
   /// Decode MAC Rx PDU, log contents and handle subPDUs.
   /// \param sl_rx Slot when MAC UL PDU was received.
@@ -125,7 +126,7 @@ private:
   scheduler_feedback_handler& sched;
   mac_ul_ue_manager&          ue_manager;
   du_rnti_table&              rnti_table;
-  mac_pcap                    pcap;
+  mac_pcap&                   pcap;
 };
 
 } // namespace srsgnb

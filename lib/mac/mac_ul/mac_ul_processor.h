@@ -30,7 +30,7 @@ public:
     logger(cfg.logger),
     rnti_table(rnti_table_),
     ue_manager(rnti_table),
-    pdu_handler(cfg.event_notifier, cfg.ue_exec_mapper, sched_, ue_manager, rnti_table)
+    pdu_handler(cfg.event_notifier, cfg.ue_exec_mapper, sched_, ue_manager, rnti_table, cfg.pcap)
   {
     (void)logger;
   }
