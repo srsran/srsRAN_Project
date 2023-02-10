@@ -111,7 +111,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
                    ue_dl_grant.pdsch_cfg.codewords[0].mcs_index,
                    ue_dl_grant.pdsch_cfg.codewords[0].rv_index);
     for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].lc_chs_to_sched) {
-      fmt::format_to(fmtbuf, " lcid={}: size={}bytes", lc.lcid, lc.sched_bytes);
+      fmt::format_to(fmtbuf, " lcid={}: size={}", lc.lcid, lc.sched_bytes);
     }
   }
   for (const dl_paging_allocation& pg : result.dl.paging_grants) {

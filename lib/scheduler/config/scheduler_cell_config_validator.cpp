@@ -112,14 +112,13 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
                                                                        mcs_descr,
                                                                        nof_layers});
 
-  VERIFY(
-      sib1_prbs_tbs.nof_prbs <= msg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
-      "Not enough initial DL BWP PRBs ({} > {}) to send SIB1, given the chosen MCS={} and SIB1 payload size={} bytes. "
-      "Consider increasing SIB1 MCS or decrease the SIB1 payload size.",
-      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
-      sib1_prbs_tbs.nof_prbs,
-      expert_cfg.si.sib1_mcs_index,
-      msg.sib1_payload_size);
+  VERIFY(sib1_prbs_tbs.nof_prbs <= msg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+         "Not enough initial DL BWP PRBs ({} > {}) to send SIB1, given the chosen MCS={} and SIB1 payload size={}. "
+         "Consider increasing SIB1 MCS or decrease the SIB1 payload size.",
+         msg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+         sib1_prbs_tbs.nof_prbs,
+         expert_cfg.si.sib1_mcs_index,
+         msg.sib1_payload_size);
 
   return {};
 }
