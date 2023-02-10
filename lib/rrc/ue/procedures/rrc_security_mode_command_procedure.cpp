@@ -29,18 +29,18 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
 {
   CORO_BEGIN(ctx);
 
-  logger.debug("rnti=0x{:x}: \"{}\" initialized.", context.c_rnti, name());
+  logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
   // create new transaction for RRCSecurityModeCommand
   transaction = event_mng.transactions.create_transaction(rrc_smc_timeout_ms);
 
   // select security algorithms to be used
   if (not select_security_algo()) {
-    logger.debug("{}: \"{}\" could not select security algorithms.", context.c_rnti, name());
+    logger.debug("{}: \"{}\" could not select security algorithms", context.ue_index, name());
     rrc_ue.on_ue_delete_request(); // delete UE context if SMC fails
   } else {
     // send RRC SMC to UE
-    logger.debug("rnti=0x{:x}: \"{}\" selected security algorithms. Integrity=NIA{}, Ciphering=NEA{}",
-                 context.c_rnti,
+    logger.debug("ue={} \"{}\" selected security algorithms integrity=NIA{} ciphering=NEA{}",
+                 context.ue_index,
                  name(),
                  sec_cfg.integ_algo,
                  sec_cfg.cipher_algo);
@@ -56,14 +56,14 @@ void rrc_security_mode_command_procedure::operator()(coro_context<async_task<boo
 
     auto coro_res = transaction.result();
     if (coro_res.has_value()) {
-      logger.debug("{}: \"{}\" finished successfully.", context.c_rnti, name());
+      logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
       procedure_result = true;
     } else {
-      logger.debug("{}: \"{}\" timed out.", context.c_rnti, name());
+      logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
       rrc_ue.on_ue_delete_request(); // delete UE context if SMC fails
     }
   }
-  logger.debug("rnti=0x{:x}: \"{}\" finalized.", context.c_rnti, name());
+  logger.debug("ue={} \"{}\" finalized.", context.ue_index, name());
   CORO_RETURN(procedure_result);
 }
 
@@ -88,11 +88,11 @@ bool rrc_security_mode_command_procedure::select_security_algo()
                                       sec_ctx.supported_int_algos,
                                       sec_ctx.supported_enc_algos,
                                       logger)) {
-    logger.error("0x{:x}: \"{}\" could not select security algorithm. ", context.c_rnti, name());
+    logger.error("ue={} \"{}\" could not select security algorithm", context.ue_index, name());
     return false;
   }
-  logger.debug("0x{:x}: \"{}\" selected security algorithms. NIA=NIA{}, NEA=NEA{}. ",
-               context.c_rnti,
+  logger.debug("ue={} \"{}\" selected security algorithms NIA=NIA{} NEA=NEA{} ",
+               context.ue_index,
                name(),
                sec_cfg.integ_algo,
                sec_cfg.cipher_algo);
@@ -107,11 +107,11 @@ void rrc_security_mode_command_procedure::generate_as_keys()
   // Generate K_up_enc and K_up_int
   security::generate_k_up(sec_cfg.k_up_enc, sec_cfg.k_up_int, sec_ctx.k, sec_cfg.cipher_algo, sec_cfg.integ_algo);
 
-  logger.info(sec_ctx.k.data(), 32, "K_gNB (k_gnb)");
-  logger.info(sec_cfg.k_rrc_int.data(), 32, "RRC Integrity Key (k_rrc_int)");
-  logger.info(sec_cfg.k_rrc_enc.data(), 32, "RRC Encryption Key (k_rrc_enc)");
-  logger.info(sec_cfg.k_up_int.data(), 32, "UP Encryption Key (k_up_enc)");
-  logger.info(sec_cfg.k_up_enc.data(), 32, "UP Integrity Key (k_up_int)");
+  logger.debug("K_gNB {}", security::sec_as_key_to_string(sec_ctx.k));
+  logger.debug("RRC Integrity Key {}", security::sec_as_key_to_string(sec_cfg.k_rrc_int));
+  logger.debug("RRC Encryption Key {}", security::sec_as_key_to_string(sec_cfg.k_rrc_enc));
+  logger.debug("UP Encryption Key {}", security::sec_as_key_to_string(sec_cfg.k_up_enc));
+  logger.debug("UP Integrity Key {}", security::sec_as_key_to_string(sec_cfg.k_up_int));
 }
 
 void rrc_security_mode_command_procedure::send_rrc_security_mode_command()

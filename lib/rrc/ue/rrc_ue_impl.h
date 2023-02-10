@@ -114,8 +114,11 @@ private:
   template <class T>
   void
   log_rrc_message(const char* source, const direction_t dir, byte_buffer_view pdu, const T& msg, const char* msg_type);
-  void
-  log_rx_pdu_fail(uint16_t rnti, const char* source, byte_buffer_view pdu, const char* cause_str, bool log_hex = true);
+  void log_rx_pdu_fail(ue_index_t       ue_index,
+                       const char*      source,
+                       byte_buffer_view pdu,
+                       const char*      cause_str,
+                       bool             log_hex = true);
 
   rrc_ue_context_t              context;
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor

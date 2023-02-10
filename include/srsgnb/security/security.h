@@ -21,6 +21,9 @@
 #include "fmt/format.h"
 #include <array>
 #include <cstdint>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 namespace srsgnb {
 namespace security {
@@ -154,6 +157,15 @@ inline void zero_tailing_bits(uint8_t& tail_byte, uint8_t length_bits)
 {
   uint8_t bits = (8 - (length_bits & 0x07)) & 0x07;
   tail_byte &= (uint8_t)(0xff << bits);
+}
+
+inline std::string sec_as_key_to_string(const sec_as_key& key)
+{
+  std::stringstream ss;
+  for (auto val : key) {
+    ss << std::hex << std::setw(2) << std::setfill('0') << (int)val;
+  }
+  return ss.str();
 }
 
 /******************************************************************************

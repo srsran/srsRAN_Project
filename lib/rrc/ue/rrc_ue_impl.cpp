@@ -113,8 +113,7 @@ void rrc_ue_impl::log_rrc_message(const char*       source,
     logger.debug("Content: {}", json_writer.to_string().c_str());
   } else if (logger.info.enabled()) {
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    logger.info(
-        bytes.data(), bytes.size(), "{} - {} {} ({} B)", source, (dir == Rx) ? "Rx" : "Tx", msg_type, pdu.length());
+    logger.info(bytes.data(), bytes.size(), "{} {}", source, msg_type);
   }
 }
 template void rrc_ue_impl::log_rrc_message<ul_ccch_msg_s>(const char*          source,
@@ -148,7 +147,7 @@ template void rrc_ue_impl::log_rrc_message<radio_bearer_cfg_s>(const char*      
                                                                const radio_bearer_cfg_s& msg,
                                                                const char*               msg_type);
 
-void rrc_ue_impl::log_rx_pdu_fail(uint16_t         rnti,
+void rrc_ue_impl::log_rx_pdu_fail(ue_index_t       ue_index,
                                   const char*      source,
                                   byte_buffer_view pdu,
                                   const char*      cause_str,
@@ -156,8 +155,8 @@ void rrc_ue_impl::log_rx_pdu_fail(uint16_t         rnti,
 {
   if (log_hex) {
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    logger.error(bytes.data(), bytes.size(), "Rx {} PDU, rnti=0x{:x} - Discarding. Cause: {}", source, rnti, cause_str);
+    logger.error(bytes.data(), bytes.size(), "ue={} Rx {} PDU - discarding cause={}", ue_index, source, cause_str);
   } else {
-    logger.error("Rx {} PDU, rnti=0x{:x} - Discarding. Cause: {}", source, rnti, cause_str);
+    logger.error("ue={} Rx {} PDU - discarding cause={}", ue_index, source, cause_str);
   }
 }

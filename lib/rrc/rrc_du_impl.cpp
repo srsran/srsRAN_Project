@@ -34,14 +34,14 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
   asn1::cbit_ref                 bref({msg.du_to_cu_container.begin(), msg.du_to_cu_container.end()});
   if (cell_group_cfg.unpack(bref) != asn1::SRSASN_SUCCESS) {
-    logger.error("Failed to unpack DU to CU RRC container. Aborting user creation.");
+    logger.error("Failed to unpack DU to CU RRC container - aborting user creation");
     return nullptr;
   }
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     cell_group_cfg.to_json(js);
-    logger.debug("Containerized MasterCellGroup: %s", js.to_string().c_str());
+    logger.debug("Containerized MasterCellGroup: {}", js.to_string());
   }
 
   // create UE object

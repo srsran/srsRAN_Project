@@ -25,15 +25,15 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer_slice pdu)
     asn1::cbit_ref bref({pdu.begin(), pdu.end()});
     if (ul_ccch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(context.c_rnti, "UL-CCCH", pdu.view(), "Failed to unpack message", true);
+      log_rx_pdu_fail(context.ue_index, "CCCH UL", pdu.view(), "Failed to unpack message", true);
       return;
     }
   }
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}", context.c_rnti);
-  fmt::format_to(fmtbuf2, "UL-CCCH.{}", ul_ccch_msg.msg.c1().type().to_string());
+  fmt::format_to(fmtbuf, "ue={}", context.ue_index);
+  fmt::format_to(fmtbuf2, "CCCH UL {}", ul_ccch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_ccch_msg, to_c_str(fmtbuf2));
 
   // Handle message
@@ -45,7 +45,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer_slice pdu)
       handle_rrc_reest_request(ul_ccch_msg.msg.c1().rrc_reest_request());
       break;
     default:
-      log_rx_pdu_fail(context.c_rnti, "UL-CCCH", pdu.view(), "Unsupported message type");
+      log_rx_pdu_fail(context.ue_index, "CCCH UL", pdu.view(), "Unsupported message type");
       // TODO Remove user
   }
 }
@@ -96,15 +96,15 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
     asn1::cbit_ref bref({pdu.begin(), pdu.end()});
     if (ul_dcch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_dcch_msg.msg.type().value != ul_dcch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(context.c_rnti, "UL-DCCH", pdu.view(), "Failed to unpack message", true);
+      log_rx_pdu_fail(context.ue_index, "DCCH UL", pdu.view(), "Failed to unpack message", true);
       return;
     }
   }
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB1", context.c_rnti);
-  fmt::format_to(fmtbuf2, "UL-DCCH.{}", ul_dcch_msg.msg.c1().type().to_string());
+  fmt::format_to(fmtbuf, "ue={} SRB1", context.ue_index);
+  fmt::format_to(fmtbuf2, "DCCH UL {}", ul_dcch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_dcch_msg, to_c_str(fmtbuf2));
 
   switch (ul_dcch_msg.msg.c1().type().value) {
@@ -121,7 +121,7 @@ void rrc_ue_impl::handle_ul_dcch_pdu(byte_buffer_slice pdu)
       handle_rrc_transaction_complete(ul_dcch_msg, ul_dcch_msg.msg.c1().rrc_recfg_complete().rrc_transaction_id);
       break;
     default:
-      log_rx_pdu_fail(context.c_rnti, "UL-DCCH", pdu.view(), "Unsupported message type");
+      log_rx_pdu_fail(context.ue_index, "DCCH UL", pdu.view(), "Unsupported message type");
       break;
   }
   // TODO: Handle message
@@ -141,7 +141,7 @@ void rrc_ue_impl::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_
 
 void rrc_ue_impl::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
 {
-  logger.debug("Received DL NAS Transport message ({} B)", msg.nas_pdu.length());
+  logger.debug("Received DlNasTransportMessage ({} B)", msg.nas_pdu.length());
 
   dl_dcch_msg_s           dl_dcch_msg;
   dl_info_transfer_ies_s& dl_info_transfer =

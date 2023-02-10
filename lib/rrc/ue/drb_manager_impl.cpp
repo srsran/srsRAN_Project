@@ -31,7 +31,7 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
         // no existing DRB with same FiveQI, create new DRB
         drb_id_t id = allocate_drb_id();
         if (id == drb_id_t::invalid) {
-          logger.error("No more DRBs available.");
+          logger.error("No more DRBs available");
           return drb_to_add_list;
         }
 
@@ -62,7 +62,7 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
 drb_id_t drb_manager_impl::allocate_drb_id()
 {
   if (drbs.size() >= MAX_NOF_DRBS) {
-    logger.error("No more DRBs available.");
+    logger.error("No more DRBs available");
     return drb_id_t::invalid;
     ;
   }
@@ -75,7 +75,7 @@ drb_id_t drb_manager_impl::allocate_drb_id()
       /// try next
       new_drb_id = uint_to_drb_id(drb_id_to_uint(new_drb_id) + 1);
       if (new_drb_id == drb_id_t::invalid) {
-        logger.error("No more DRBs available.");
+        logger.error("No more DRBs available");
         return drb_id_t::invalid;
       }
     }

@@ -52,11 +52,11 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   auto coro_res = transaction.result();
   if (coro_res.has_value()) {
-    logger.debug("{}: \"{}\" finished successfully.", context.c_rnti, name());
+    logger.debug("ue={} \"{}\" finished successfully", context.ue_index, name());
     context.state = rrc_state::connected;
     send_initial_ue_msg(coro_res.value().msg.c1().rrc_setup_complete());
   } else {
-    logger.debug("{}: \"{}\" timed out.", context.c_rnti, name());
+    logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
     rrc_ue.on_ue_delete_request();
   }
 

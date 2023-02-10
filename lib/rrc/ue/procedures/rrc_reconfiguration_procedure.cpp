@@ -29,11 +29,11 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   CORO_BEGIN(ctx);
 
   if (context.state != rrc_state::connected) {
-    logger.error("rnti=0x{:x}: \"{}\" failed. UE is not RRC connected.", context.c_rnti, name());
+    logger.error("ue={} \"{}\" failed - UE is not RRC connected", context.ue_index, name());
     CORO_EARLY_RETURN(false);
   }
 
-  logger.debug("rnti=0x{:x}: \"{}\" initialized.", context.c_rnti, name());
+  logger.debug("ue={} \"{}\" initialized", context.ue_index, name());
   // create new transaction for RRC Reconfiguration procedure
   transaction = event_mng.transactions.create_transaction(timeout_ms);
 
@@ -42,14 +42,14 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
 
   auto coro_res = transaction.result();
   if (coro_res.has_value()) {
-    logger.debug("{}: \"{}\" finished successfully.", context.c_rnti, name());
+    logger.debug("ue={} \"{}\" finished successfull.", context.ue_index, name());
     procedure_result = true;
   } else {
-    logger.debug("{}: \"{}\" timed out.", context.c_rnti, name());
+    logger.debug("ue={} \"{}\" timed out", context.ue_index, name());
     rrc_ue.on_ue_delete_request(); // delete UE context if reconfig fails
   }
 
-  logger.debug("rnti=0x{:x}: \"{}\" finalized.", context.c_rnti, name());
+  logger.debug("ue={} \"{}\" finalized.", context.ue_index, name());
   CORO_RETURN(procedure_result);
 }
 
