@@ -24,6 +24,8 @@
 
 using namespace srsgnb;
 
+TEST_RGEN_SET_SEED(161689507);
+
 using dl_bsr_lc_report_list = static_vector<dl_buffer_state_indication_message, MAX_NOF_RB_LCIDS>;
 
 struct sched_test_ue {

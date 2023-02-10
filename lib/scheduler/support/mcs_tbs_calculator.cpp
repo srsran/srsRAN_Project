@@ -148,11 +148,10 @@ static void update_ulsch_info(ulsch_configuration& ulsch_cfg, unsigned tbs_bytes
   ulsch_cfg.mcs_descr = mcs_info;
 }
 
-optional<sch_mcs_tbs_prbs> srsgnb::compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
-                                                      const ue_cell_configuration& ue_cell_cfg,
-                                                      unsigned                     payload_size_bytes,
-                                                      sch_mcs_index                max_mcs,
-                                                      unsigned                     nof_prbs)
+optional<sch_mcs_tbs> srsgnb::compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
+                                                 const ue_cell_configuration& ue_cell_cfg,
+                                                 sch_mcs_index                max_mcs,
+                                                 unsigned                     nof_prbs)
 {
   // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
@@ -207,15 +206,15 @@ optional<sch_mcs_tbs_prbs> srsgnb::compute_dl_mcs_tbs(const pdsch_config_params&
     return nullopt;
   }
 
-  optional<sch_mcs_tbs_prbs> output;
+  optional<sch_mcs_tbs>      output;
   const unsigned             tbs_bytes = tbs_bits / NOF_BITS_PER_BYTE;
-  return output.emplace(sch_mcs_tbs_prbs{.mcs = mcs, .tbs = tbs_bytes});
+  return output.emplace(sch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes});
 }
 
-optional<sch_mcs_tbs_prbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
-                                                      const ue_cell_configuration& ue_cell_cfg,
-                                                      sch_mcs_index                max_mcs,
-                                                      unsigned                     nof_prbs)
+optional<sch_mcs_tbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
+                                                 const ue_cell_configuration& ue_cell_cfg,
+                                                 sch_mcs_index                max_mcs,
+                                                 unsigned                     nof_prbs)
 {
   // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
@@ -261,6 +260,6 @@ optional<sch_mcs_tbs_prbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&
     return nullopt;
   }
 
-  optional<sch_mcs_tbs_prbs> output;
-  return output.emplace(sch_mcs_tbs_prbs{.mcs = mcs, .tbs = tbs_bytes, .n_prbs = nof_prbs});
+  optional<sch_mcs_tbs> output;
+  return output.emplace(sch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes});
 }

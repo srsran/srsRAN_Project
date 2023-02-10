@@ -171,16 +171,14 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  optional<sch_mcs_tbs_prbs> mcs_tbs_info;
+  optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS.
   if (h_dl.empty()) {
-    mcs_tbs_info =
-        compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, u.pending_dl_newtx_bytes(), grant.mcs, grant.crbs.length());
+    mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length());
   } else {
     // It is a retx.
-    mcs_tbs_info.emplace(sch_mcs_tbs_prbs{.mcs    = h_dl.last_alloc_params().tb[0]->mcs,
-                                          .tbs    = h_dl.last_alloc_params().tb[0]->tbs_bytes,
-                                          .n_prbs = h_dl.last_alloc_params().prbs.prbs().length()});
+    mcs_tbs_info.emplace(
+        sch_mcs_tbs{.mcs = h_dl.last_alloc_params().tb[0]->mcs, .tbs = h_dl.last_alloc_params().tb[0]->tbs_bytes});
   }
 
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
@@ -385,14 +383,14 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   }
 
   // Compute MCS and TBS for this transmission.
-  optional<sch_mcs_tbs_prbs> mcs_tbs_info;
+  optional<sch_mcs_tbs> mcs_tbs_info;
   // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
   if (h_ul.empty()) {
     mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg, grant.mcs, grant.crbs.length());
   }
   // If it's a reTx, fetch the MCS and TBS from the previous transmission.
   else {
-    mcs_tbs_info.emplace(sch_mcs_tbs_prbs{.mcs = h_ul.last_tx_params().mcs, .tbs = h_ul.last_tx_params().tbs_bytes});
+    mcs_tbs_info.emplace(sch_mcs_tbs{.mcs = h_ul.last_tx_params().mcs, .tbs = h_ul.last_tx_params().tbs_bytes});
   }
 
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.

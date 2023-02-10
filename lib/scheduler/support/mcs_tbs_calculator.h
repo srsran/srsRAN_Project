@@ -21,20 +21,17 @@ struct pdsch_config_params;
 class ue_cell_configuration;
 
 /// Container for MCS, TBS and number of PRBs results.
-struct sch_mcs_tbs_prbs {
+struct sch_mcs_tbs {
   /// MCS to use for the UE's PUSCH.
   sch_mcs_index mcs;
   /// TBS to be allocated on the UE's PUSCH.
   unsigned tbs;
-  /// Number of PRBs to be allocated for the UE's PUSCH.
-  unsigned n_prbs;
 };
 
-optional<sch_mcs_tbs_prbs> compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
-                                              const ue_cell_configuration& ue_cell_cfg,
-                                              unsigned                     payload_size_bytes,
-                                              sch_mcs_index                max_mcs,
-                                              unsigned                     nof_prbs);
+optional<sch_mcs_tbs> compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
+                                         const ue_cell_configuration& ue_cell_cfg,
+                                         sch_mcs_index                max_mcs,
+                                         unsigned                     nof_prbs);
 
 /// \brief Computes the PUSCH MCS, TBS and number of PRBs such that the effective code rate does not exceed 0.95.
 ///
@@ -52,9 +49,9 @@ optional<sch_mcs_tbs_prbs> compute_dl_mcs_tbs(const pdsch_config_params&   pdsch
 /// \param[in] max_nof_prbs Maximum number of PRBs available for the PUSCH transmission.
 /// \return The MCS, TBS, and number of PRBs used, if for these values the effective code rate does not exceed 0.95;
 /// else, it returns an empty optional object.
-optional<sch_mcs_tbs_prbs> compute_ul_mcs_tbs(const pusch_config_params&   pusch_params,
-                                              const ue_cell_configuration& ue_cell_cfg,
-                                              sch_mcs_index                max_mcs,
-                                              unsigned                     max_nof_prbs);
+optional<sch_mcs_tbs> compute_ul_mcs_tbs(const pusch_config_params&   pusch_params,
+                                         const ue_cell_configuration& ue_cell_cfg,
+                                         sch_mcs_index                max_mcs,
+                                         unsigned                     max_nof_prbs);
 
 } // namespace srsgnb
