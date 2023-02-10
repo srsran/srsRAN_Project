@@ -85,6 +85,8 @@ class bytes : public strong_type<unsigned,
 public:
   using bytes_base::bytes_base;
 
+  constexpr bytes(const bytes_base& other) : bytes_base(other) {}
+
   explicit constexpr operator bits() const { return to_bits(); }
 
   /// Returns the amount of digital information as a number of bits.
