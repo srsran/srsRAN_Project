@@ -307,6 +307,20 @@ struct dl_paging_allocation {
   pdsch_information pdsch_cfg;
 };
 
+/// Stores the information associated with a CSI-RS signalling.
+struct csi_rs_info {
+  const bwp_configuration* bwp_cfg;
+  crb_interval             crbs;
+  enum class csi_type { trs, csi_rs_nzp, csi_rs_zp } type;
+  unsigned           row;
+  bounded_bitset<12> freq_domain;
+  uint8_t            symbol0;
+  uint8_t            symbol1;
+  enum class cdm_type_t { no_cdm, fd_cdm2, cdm4_fd2_td2, cdm8_fd2_td4 } cdm_type;
+  enum class freq_density_t { dot5_even_rb, dot5_odd_rb, one, three } freq_density;
+  uint16_t scrambling_id;
+};
+
 struct dl_sched_result {
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
   static_vector<pdcch_dl_information, MAX_DL_PDCCH_PDUS_PER_SLOT> dl_pdcchs;
@@ -325,6 +339,9 @@ struct dl_sched_result {
 
   /// Allocation of dedicated UE messages.
   static_vector<dl_msg_alloc, MAX_UE_PDUS_PER_SLOT> ue_grants;
+
+  /// Allocation of CSI-RS messages.
+  static_vector<csi_rs_info, MAX_CSI_RS_PDUS_PER_SLOT> csi_rs;
 };
 
 struct ul_sched_info {

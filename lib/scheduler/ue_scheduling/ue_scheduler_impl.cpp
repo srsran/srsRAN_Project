@@ -48,20 +48,19 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
 
   // Perform round-robin prioritization of UL and DL scheduling. This avoids that we give unfair preference to DL over
   // UL scheduling or vice-versa, when allocating PDCCHs.
-  if (slot_tx.to_uint() % 2 == 0) {
-    // Start with DL re-Tx and then new Tx.
-    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
-    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
-    // UL re-Tx and then new Tx
-    sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, true);
-    sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, false);
-  } else {
-    // Start with UL re-Tx and then new Tx
-    sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, true);
-    sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, false);
-    // Start with DL re-Tx, then SRB0 and then new Tx
-    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
-    sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
+  unsigned dl_idx = slot_tx.to_uint() % 2 == 0;
+  for (unsigned rr_idx = 0; rr_idx != 2; ++rr_idx) {
+    if (rr_idx == dl_idx) {
+      // TODO: We are not able to multiplex CSI and PDSCH. Avoid PDSCH allocations when CSI is set.
+      if (not(*cells[0]->cell_res_alloc)[0].result.dl.csi_rs.empty()) {
+        continue;
+      }
+      sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, true);
+      sched_strategy->dl_sched(ue_alloc, ue_res_grid_view, ue_db, false);
+    } else {
+      sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, true);
+      sched_strategy->ul_sched(ue_alloc, ue_res_grid_view, ue_db, false);
+    }
   }
 }
 
