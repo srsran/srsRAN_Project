@@ -133,7 +133,7 @@ protected:
     return scheduler_ue_expert_config{10, 10, 4, max_msg4_mcs_index};
   }
 
-  sched_cell_configuration_request_message create_random_cell_config_request(duplex_mode mode) const
+  sched_cell_configuration_request_message create_custom_cell_config_request(duplex_mode mode) const
   {
     cell_config_builder_params cell_cfg{};
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
@@ -255,7 +255,7 @@ protected:
 
 TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 {
-  setup_sched(create_expert_config(1), create_random_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(1), create_custom_cell_config_request(params.duplx_mode));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 101 bytes.
@@ -287,7 +287,7 @@ TEST_P(srb0_scheduler_tester, successfully_allocated_resources)
 
 TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 {
-  setup_sched(create_expert_config(0), create_random_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(0), create_custom_cell_config_request(params.duplx_mode));
 
   // Add UE 1.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
@@ -314,7 +314,7 @@ TEST_P(srb0_scheduler_tester, failed_allocating_resources)
 
 TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 {
-  setup_sched(create_expert_config(27), create_random_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(27), create_custom_cell_config_request(params.duplx_mode));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 458 bytes.
@@ -342,7 +342,7 @@ TEST_P(srb0_scheduler_tester, test_large_srb0_buffer_size)
 
 TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index)
 {
-  setup_sched(create_expert_config(3), create_random_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(3), create_custom_cell_config_request(params.duplx_mode));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Notify about SRB0 message in DL of size 360 bytes which requires MCS index > 3.
@@ -361,7 +361,7 @@ TEST_P(srb0_scheduler_tester, test_srb0_buffer_size_exceeding_max_msg4_mcs_index
 TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
 {
   const sch_mcs_index max_msg4_mcs = get_random_uint(0, 27);
-  setup_sched(create_expert_config(max_msg4_mcs), create_random_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(max_msg4_mcs), create_custom_cell_config_request(params.duplx_mode));
   // Add UE.
   add_ue(to_rnti(0x4601), to_du_ue_index(0));
   // Random payload size.
@@ -376,7 +376,7 @@ TEST_P(srb0_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_size)
 
 TEST_P(srb0_scheduler_tester, test_allocation_in_appropriate_slots_in_tdd)
 {
-  auto cell_cfg = create_random_cell_config_request(duplex_mode::TDD);
+  auto cell_cfg = create_custom_cell_config_request(duplex_mode::TDD);
   setup_sched(create_expert_config(1), cell_cfg);
 
   const unsigned MAX_UES            = 4;
