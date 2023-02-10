@@ -137,10 +137,10 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   // Section 5.2.3.2.2, discard segments with overlapping bytes
   if (rx_window->has_sn(header.sn) && header.si != rlc_si_field::full_sdu) {
     for (const rlc_rx_am_sdu_segment& segm : (*rx_window)[header.sn].segments) {
-      uint32_t segm_last_byte = segm.header.so + segm.payload.length() - 1;
+      uint32_t segm_last_byte = segm.so + segm.payload.length() - 1;
       uint32_t pdu_last_byte  = header.so + payload.length() - 1;
-      if ((header.so >= segm.header.so && header.so <= segm_last_byte) ||
-          (pdu_last_byte >= segm.header.so && pdu_last_byte <= segm_last_byte)) {
+      if ((header.so >= segm.so && header.so <= segm_last_byte) ||
+          (pdu_last_byte >= segm.so && pdu_last_byte <= segm_last_byte)) {
         logger.log_info("Discarded segment with overlapping bytes: SN={}, SO={}, last_byte={}, payload_len={}",
                         header.sn,
                         header.so,
@@ -148,7 +148,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
                         payload.length());
         logger.log_info("Overlapped with SDU segment: SN={}, SO={}, last_byte={}, payload_len={}",
                         header.sn,
-                        segm.header.so,
+                        segm.so,
                         segm_last_byte,
                         segm.payload.length());
         return;
@@ -329,11 +329,12 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
 
   // Create SDU segment, to be stored later
   rlc_rx_am_sdu_segment segment = {};
-  segment.header                = header;
+  segment.si                    = header.si;
+  segment.so                    = header.so;
   segment.payload               = std::move(payload);
 
   // Store SDU segment. Sort by SO and check for duplicate bytes.
-  rx_sdu.segments.insert(std::move(segment));
+  store_segment(rx_sdu, std::move(segment));
 
   // Check whether all segments have been received
   update_segment_inventory(rx_sdu);
@@ -343,20 +344,79 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
 
     // Assemble SDU from segments
     for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
-      if (segm.header.so + segm.payload.length() > rx_sdu.sdu.length()) {
-        uint32_t piece_len = segm.header.so + segm.payload.length() - rx_sdu.sdu.length();
+      if (segm.so + segm.payload.length() > rx_sdu.sdu.length()) {
+        uint32_t piece_len = segm.so + segm.payload.length() - rx_sdu.sdu.length();
         logger.log_debug("Segment SO={}, len={}: append piece_len={} to sdu_len={}",
-                         segm.header.so,
+                         segm.so,
                          segm.payload.length(),
                          piece_len,
                          rx_sdu.sdu.length());
         rx_sdu.sdu.push_back(segm.payload.make_slice(segm.payload.length() - piece_len, piece_len));
       } else {
-        logger.log_debug("Segment SO={}, len={}: skip", segm.header.so, segm.payload.length());
+        logger.log_debug("Segment SO={}, len={}: skip", segm.so, segm.payload.length());
       }
     }
     logger.log_debug("Assembled SDU from segments. SN={}, sdu_len={}", header.sn, rx_sdu.sdu.length());
   }
+}
+
+void rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu_segment new_segment)
+{
+  std::set<rlc_rx_am_sdu_segment, rlc_rx_am_sdu_segment_cmp>::iterator cur_segment = sdu_info.segments.begin();
+  while (cur_segment != sdu_info.segments.end()) {
+    uint32_t cur_last_byte = cur_segment->so + cur_segment->payload.length() - 1;
+    uint32_t new_last_byte = new_segment.so + new_segment.payload.length() - 1;
+    if (new_segment.so > cur_last_byte) {
+      // new segment starts behind the end of current segment
+      // check next segment
+      ++cur_segment;
+      continue;
+    }
+    if (new_segment.so >= cur_segment->so) {
+      // new segment starts within current segment
+      if (new_last_byte <= cur_last_byte) {
+        // new segment ends before or at the end of current segment
+        // discard new segment and return
+        return;
+      } else {
+        // new segment ends after the end of current segment
+        // trim new segment
+        new_segment.payload.advance(cur_last_byte + 1 - new_segment.so);
+        new_segment.so = cur_last_byte + 1;
+        // check next segment
+        ++cur_segment;
+        continue;
+      }
+    } else {
+      // new segment starts before current segment
+      if (new_last_byte < cur_segment->so) {
+        // new segment ends before current segment
+        // exit loop and insert new segment afterwards
+        break;
+      } else {
+        // new segment ends within or behind current segment
+        if (new_last_byte < cur_last_byte) {
+          // new segment ends within current segment
+          // trim current segment
+          rlc_rx_am_sdu_segment cut_segment{*cur_segment};
+          cut_segment.payload.advance(new_last_byte + 1 - cur_segment->so);
+          cut_segment.so = new_last_byte + 1;
+          sdu_info.segments.erase(cur_segment++);
+          // insert cut segment as close as possible before (next) current segment - this is faster than plain insert
+          sdu_info.segments.insert(cur_segment, std::move(cut_segment));
+          // exit loop and insert new segment afterwards
+          break;
+        } else {
+          // new segment ends behind current segment
+          // remove current segment, check next segment
+          sdu_info.segments.erase(cur_segment++);
+          continue;
+        }
+      }
+    }
+  }
+  // insert new segment as close as possible before current segment - this is faster than plain insert
+  sdu_info.segments.insert(cur_segment, std::move(new_segment));
 }
 
 void rlc_rx_am_entity::update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const
@@ -370,13 +430,13 @@ void rlc_rx_am_entity::update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) cons
   // Check for gaps and if all segments have been received
   uint32_t next_byte = 0;
   for (const rlc_rx_am_sdu_segment& segm : rx_sdu.segments) {
-    if (segm.header.so != next_byte) {
+    if (segm.so != next_byte) {
       // Found gap: set flags and return
       rx_sdu.has_gap        = true;
       rx_sdu.fully_received = false;
       return;
     }
-    if (segm.header.si == rlc_si_field::last_segment) {
+    if (segm.si == rlc_si_field::last_segment) {
       // Reached last segment without any gaps: set flags and return
       rx_sdu.has_gap        = false;
       rx_sdu.fully_received = true;
@@ -417,13 +477,13 @@ void rlc_rx_am_entity::refresh_status_report()
         uint32_t last_so           = 0;
         bool     have_last_segment = false;
         for (auto segm = (*rx_window)[i].segments.begin(); segm != (*rx_window)[i].segments.end(); segm++) {
-          if (segm->header.so != last_so) {
+          if (segm->so != last_so) {
             // Some bytes were not received
             rlc_am_status_nack nack;
             nack.nack_sn  = i;
             nack.has_so   = true;
             nack.so_start = last_so;
-            nack.so_end   = segm->header.so - 1; // set to last missing byte
+            nack.so_end   = segm->so - 1; // set to last missing byte
             logger.log_debug("Adding NACK={}", nack);
             status_report.push_nack(nack);
 
@@ -432,19 +492,17 @@ void rlc_rx_am_entity::refresh_status_report()
               // Print segment list
               for (auto segm_it = (*rx_window)[i].segments.begin(); segm_it != (*rx_window)[i].segments.end();
                    segm_it++) {
-                logger.log_error("Segment SO={}, len={}", segm_it->header.so, segm_it->payload.length());
+                logger.log_error("Segment SO={}, len={}", segm_it->so, segm_it->payload.length());
               }
-              logger.log_error("Invalid segment offsets in NACK={} for segment SO={}", nack, segm->header.so);
-              srsgnb_assert(nack.so_start <= nack.so_end,
-                            "Invalid segment offsets in NACK={} for segment SO={}",
-                            nack,
-                            segm->header.so);
+              logger.log_error("Invalid segment offsets in NACK={} for segment SO={}", nack, segm->so);
+              srsgnb_assert(
+                  nack.so_start <= nack.so_end, "Invalid segment offsets in NACK={} for segment SO={}", nack, segm->so);
             }
           }
-          if (segm->header.si == rlc_si_field::last_segment) {
+          if (segm->si == rlc_si_field::last_segment) {
             have_last_segment = true;
           }
-          last_so = segm->header.so + segm->payload.length();
+          last_so = segm->so + segm->payload.length();
         } // Segment loop
 
         // Check for last segment

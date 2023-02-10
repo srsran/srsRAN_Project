@@ -23,16 +23,14 @@ namespace srsgnb {
 
 /// AM SDU segment container
 struct rlc_rx_am_sdu_segment {
-  rlc_am_pdu_header header;  ///< PDU header
+  rlc_si_field      si;      ///< Segmentation info
+  uint16_t          so;      ///< Segment offset (SO)
   byte_buffer_slice payload; ///< Payload (SDU segment)
 };
 
 /// AM SDU segment compare object
 struct rlc_rx_am_sdu_segment_cmp {
-  bool operator()(const rlc_rx_am_sdu_segment& a, const rlc_rx_am_sdu_segment& b) const
-  {
-    return a.header.so < b.header.so;
-  }
+  bool operator()(const rlc_rx_am_sdu_segment& a, const rlc_rx_am_sdu_segment& b) const { return a.so < b.so; }
 };
 
 /// Container to collect received SDU segments and to assemble the SDU upon completion
@@ -221,6 +219,8 @@ private:
   /// \param header The header of the PDU, used for sanity check and tracking of the segment offset
   /// \param payload The PDU payload, i.e. the SDU segment
   void handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice payload);
+
+  void store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu_segment new_segment);
 
   void update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) const;
 
