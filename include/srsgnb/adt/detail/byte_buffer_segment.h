@@ -224,7 +224,7 @@ inline void init_byte_buffer_segment_pool(std::size_t nof_segments)
 inline void* byte_buffer_segment::operator new(size_t sz, const std::nothrow_t& /**/) noexcept
 {
   // Initialize byte buffer segment pool, if not yet initialized.
-  constexpr static size_t default_byte_buffer_segment_pool_size = 1U << 20U;
+  constexpr static size_t default_byte_buffer_segment_pool_size = 1U << 19U;
   static auto&            pool =
       byte_buffer_segment_pool::get_instance(default_byte_buffer_segment_pool_size, sizeof(byte_buffer_segment));
   return pool.allocate_node(sz);

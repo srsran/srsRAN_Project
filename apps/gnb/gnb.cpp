@@ -107,8 +107,6 @@ public:
 
 /// Manages the workers of the app.
 struct worker_manager {
-  static const uint32_t task_worker_queue_size = 2048;
-
   worker_manager(const gnb_appconfig& appcfg) { create_executors(appcfg.rf_driver_cfg.device_driver == "zmq"); }
 
   void stop()
@@ -162,9 +160,11 @@ private:
 
   void create_executors(bool blocking_mode_active)
   {
+    static const uint32_t task_worker_queue_size = 2048;
+
     // Instantiate workers
     create_worker("gnb_ctrl", task_worker_queue_size);
-    create_worker("gnb_ue", task_worker_queue_size);
+    create_worker("gnb_ue", 512);
     create_worker("du_cell", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
     if (blocking_mode_active) {
       create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
