@@ -326,6 +326,8 @@ pages:
       artifacts: true
     - job: cppcheck
       artifacts: true
+    - job: zmq
+      artifacts: true
   artifacts:
     paths:
       - public
