@@ -70,7 +70,7 @@ pdu_rx_handler::pdu_rx_handler(mac_ul_ccch_notifier&       ccch_notifier_,
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)
 {
   // 0. Store PCAP
-  write_rx_pdu_pcap(sl_rx, pdu);
+  write_pcap_rx_pdu(sl_rx, pdu);
 
   // 1. Fetch UE index based on PDU RNTI.
   du_ue_index_t ue_index = rnti_table[pdu.rnti];
@@ -289,8 +289,12 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   return true;
 }
 
-bool pdu_rx_handler::write_rx_pdu_pcap(const slot_point& sl_rx, const mac_rx_pdu& pdu)
+void pdu_rx_handler::write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu& pdu)
 {
+  if (not pcap.is_write_enabled()) {
+    return;
+  }
+
   srsgnb::mac_nr_context_info context;
   context.radioType           = PCAP_FDD_RADIO;
   context.direction           = PCAP_DIRECTION_UPLINK;
@@ -301,11 +305,5 @@ bool pdu_rx_handler::write_rx_pdu_pcap(const slot_point& sl_rx, const mac_rx_pdu
   context.system_frame_number = sl_rx.sfn();
   context.sub_frame_number    = sl_rx.subframe_index();
   context.length              = pdu.pdu.length();
-
-  if (pcap.is_write_enabled()) {
-    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
-    span<const uint8_t>               pdu_span = to_span(pdu.pdu, tmp_mem);
-    pcap.write_pdu(context, pdu_span);
-  }
-  return true;
+  pcap.push_pdu(context, pdu.pdu.copy());
 }

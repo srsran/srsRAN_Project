@@ -18,7 +18,7 @@ namespace srsgnb {
 
 constexpr uint16_t UDP_DLT = 149;
 
-inline int NR_PCAP_PACK_MAC_CONTEXT_TO_BUFFER(mac_nr_context_info* context, uint8_t* buffer, unsigned int length)
+inline int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length)
 {
   int      offset = 0;
   uint16_t tmp16;
@@ -30,34 +30,34 @@ inline int NR_PCAP_PACK_MAC_CONTEXT_TO_BUFFER(mac_nr_context_info* context, uint
 
   /*****************************************************************/
   /* Context information (same as written by UDP heuristic clients */
-  buffer[offset++] = context->radioType;
-  buffer[offset++] = context->direction;
-  buffer[offset++] = context->rntiType;
+  buffer[offset++] = context.radioType;
+  buffer[offset++] = context.direction;
+  buffer[offset++] = context.rntiType;
 
   /* RNTI */
   buffer[offset++] = MAC_NR_RNTI_TAG;
-  tmp16            = htons(context->rnti);
+  tmp16            = htons(context.rnti);
   memcpy(buffer + offset, &tmp16, 2);
   offset += 2;
 
   /* UEId */
   buffer[offset++] = MAC_NR_UEID_TAG;
-  tmp16            = htons(context->ueid);
+  tmp16            = htons(context.ueid);
   memcpy(buffer + offset, &tmp16, 2);
   offset += 2;
 
   /* HARQID */
   buffer[offset++] = MAC_NR_HARQID;
-  buffer[offset++] = context->harqid;
+  buffer[offset++] = context.harqid;
 
   /* PHR Type2 other cell */
   buffer[offset++] = MAC_NR_PHR_TYPE2_OTHERCELL_TAG;
-  buffer[offset++] = context->phr_type2_othercell;
+  buffer[offset++] = context.phr_type2_othercell;
 
   /* Subframe Number and System Frame Number */
   /* SFN is stored in 12 MSB and SF in 4 LSB */
   buffer[offset++] = MAC_NR_FRAME_SUBFRAME_TAG;
-  tmp16            = (context->system_frame_number << 4) | context->sub_frame_number;
+  tmp16            = (context.system_frame_number << 4) | context.sub_frame_number;
   tmp16            = htons(tmp16);
   memcpy(buffer + offset, &tmp16, 2);
   offset += 2;
@@ -74,17 +74,37 @@ mac_pcap::~mac_pcap()
 
 void mac_pcap::open(const char* filename_)
 {
-  auto fn = [this, &filename_]() { dlt_pcap_open(UDP_DLT, filename_); };
+  auto fn = [this, filename_]() { dlt_pcap_open(UDP_DLT, filename_); };
   worker.push_task_blocking(fn);
 }
 
 void mac_pcap::close()
 {
-  auto fn = [this]() { dlt_pcap_close(); };
-  worker.push_task_blocking(fn);
+  if (is_write_enabled()) {
+    auto fn = [this]() { dlt_pcap_close(); };
+    worker.push_task_blocking(fn);
+    worker.wait_pending_tasks();
+    worker.stop();
+  }
 }
 
-void mac_pcap::write_pdu(mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
+void mac_pcap::push_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
+{
+  auto fn = [this, context, pdu]() { write_pdu(context, pdu); };
+  worker.push_task(fn);
+}
+
+void mac_pcap::push_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer pdu)
+{
+  auto fn = [this, context, pdu]() {
+    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
+    span<const uint8_t>               pdu_span = to_span(pdu, tmp_mem);
+    write_pdu(context, pdu_span);
+  };
+  worker.push_task(fn);
+}
+
+void mac_pcap::write_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
 {
   uint8_t        context_header[PCAP_CONTEXT_HEADER_MAX] = {};
   const uint16_t length                                  = pdu.size();
@@ -112,7 +132,7 @@ void mac_pcap::write_pdu(mac_nr_context_info& context, srsgnb::const_span<uint8_
   memcpy(&context_header[offset], MAC_NR_START_STRING, strlen(MAC_NR_START_STRING));
   offset += strlen(MAC_NR_START_STRING);
 
-  offset += NR_PCAP_PACK_MAC_CONTEXT_TO_BUFFER(&context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
+  offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
 
   udp_header->len = htons(offset + length);
 

@@ -35,9 +35,10 @@ bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
 
   pcap_fstream.open(filename.c_str(), std::ios::out | std::ios::binary);
   if (!pcap_fstream.is_open()) {
-    logger.error("Failed to open file {} for writing\n", filename);
+    logger.error("Failed to open file {} for writing", filename);
     return false;
   }
+  logger.debug("Opened file {} for writing. DLT={}", filename, dlt);
 
   pcap_fstream.write((char*)&file_header, sizeof(file_header));
   if (pcap_fstream.fail()) {

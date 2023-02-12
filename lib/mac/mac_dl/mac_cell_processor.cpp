@@ -202,14 +202,12 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
   // Start assembling Slot Data Result.
+  mac_dl_data_result data_res;
   if (not sl_res->dl.ue_grants.empty() or not sl_res->dl.rar_grants.empty() or not sl_res->dl.bc.sibs.empty()) {
-    mac_dl_data_result data_res;
     assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
     // Send DL Data to PHY.
     phy_cell.on_new_downlink_data(data_res);
-
-    write_tx_pdu_pcap(sl_tx, sl_res, data_res);
   }
 
   // Send UL sched result to PHY.
@@ -225,6 +223,9 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
   // Update DL buffer state for the allocated logical channels.
   update_logical_channel_dl_buffer_states(sl_res->dl);
+
+  // Write PCAP
+  write_tx_pdu_pcap(sl_tx, sl_res, data_res);
 }
 
 /// Encodes DL DCI.
@@ -350,6 +351,10 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
                                            const sched_result*       sl_res,
                                            const mac_dl_data_result& dl_res)
 {
+  if (not pcap.is_write_enabled()) {
+    return;
+  }
+
   for (unsigned i = 0; i < dl_res.ue_pdus.size(); ++i) {
     const mac_dl_data_result::dl_pdu& ue_pdu    = dl_res.ue_pdus[i];
     const pdsch_information&          pdsch_cfg = sl_res->dl.ue_grants[i].pdsch_cfg;
@@ -363,7 +368,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     context.system_frame_number = sl_tx.sfn();
     context.sub_frame_number    = sl_tx.subframe_index();
     context.length              = ue_pdu.pdu.size();
-    pcap.write_pdu(context, ue_pdu.pdu);
+    pcap.push_pdu(context, ue_pdu.pdu);
   }
 }
 

@@ -25,23 +25,20 @@ protected:
     test_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_hex_dump_max_size(-1);
 
-    srslog::init();
-
-    mac_pcap_writer.open("mac.pcap");
-    ngap_pcap_writer.open("ngap.pcap");
-
     // Start the log backend.
     srslog::init();
+
+    // Start the PCAP
+    mac_pcap_writer.open("mac.pcap");
   }
 
   void TearDown() override
   {
-    ngap_pcap_writer.close();
+    mac_pcap_writer.close();
     // flush logger after each test
     srslog::flush();
   }
 
-  srsgnb::ngap_pcap     ngap_pcap_writer;
   srsgnb::mac_pcap      mac_pcap_writer;
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
@@ -66,6 +63,6 @@ TEST_F(pcap_mac_test, write_pdu)
   context.harqid              = harqid;
   context.system_frame_number = tti / 10;
   context.sub_frame_number    = tti % 10;
-  mac_pcap_writer.write_pdu(context, tv);
+  mac_pcap_writer.push_pdu(context, tv);
   // ngap_pcap_writer.write_pdu(tv);
 }

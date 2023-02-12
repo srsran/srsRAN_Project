@@ -118,7 +118,8 @@ private:
   /// \return true if correctly handled.
   bool handle_crnti_ce(decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
 
-  bool write_rx_pdu_pcap(const slot_point& sl_rx, const mac_rx_pdu& pdu);
+  /// Handle PDU to PCAP file
+  void write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu& pdu);
 
   mac_ul_ccch_notifier&       ccch_notifier;
   du_high_ue_executor_mapper& ue_exec_mapper;
