@@ -149,7 +149,9 @@ static bool alloc_dl_ue(const ue&                    u,
           const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{
               &u, ue_cc.cell_index, h->id, ss_cfg->id, time_res, ue_grant_crbs, dci_dl_format::f1_0, agg_lvl});
           if (res_allocated) {
-            return true;
+            // If the whole grid is used, stop iteration.
+            // TODO: account for other BWPs.
+            return used_crbs.all();
           }
         }
       }

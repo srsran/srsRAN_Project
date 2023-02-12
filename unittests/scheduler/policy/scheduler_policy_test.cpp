@@ -23,14 +23,19 @@ enum class policy_type { time_rr };
 class dummy_pdsch_allocator : public ue_pdsch_allocator
 {
 public:
-  cell_slot_resource_allocator& slot_res_grid;
-  std::vector<ue_pdsch_grant>   last_grants;
+  cell_resource_allocator&    res_grid;
+  std::vector<ue_pdsch_grant> last_grants;
 
-  dummy_pdsch_allocator(cell_slot_resource_allocator& slot_res_grid_) : slot_res_grid(slot_res_grid_) {}
+  dummy_pdsch_allocator(cell_resource_allocator& res_grid_) : res_grid(res_grid_) {}
 
   bool allocate_dl_grant(const ue_pdsch_grant& grant) override
   {
     last_grants.push_back(grant);
+    const auto& cell_cfg_cmn = grant.user->get_pcell().cfg().cell_cfg_common;
+    res_grid[0].dl_res_grid.fill(grant_info{
+        cell_cfg_cmn.dl_cfg_common.init_dl_bwp.generic_params.scs,
+        cell_cfg_cmn.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[grant.time_res_index].symbols,
+        grant.crbs});
     return true;
   }
 };
@@ -38,14 +43,18 @@ public:
 class dummy_pusch_allocator : public ue_pusch_allocator
 {
 public:
-  cell_slot_resource_allocator& slot_res_grid;
-  std::vector<ue_pusch_grant>   last_grants;
+  cell_resource_allocator&    res_grid;
+  std::vector<ue_pusch_grant> last_grants;
 
-  dummy_pusch_allocator(cell_slot_resource_allocator& slot_res_grid_) : slot_res_grid(slot_res_grid_) {}
+  dummy_pusch_allocator(cell_resource_allocator& res_grid_) : res_grid(res_grid_) {}
 
   bool allocate_ul_grant(const ue_pusch_grant& grant) override
   {
     last_grants.push_back(grant);
+    const auto& cell_cfg_cmn = grant.user->get_pcell().cfg().cell_cfg_common;
+    unsigned k2 = cell_cfg_cmn.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[grant.time_res_index].k2;
+    res_grid[k2].ul_res_grid.fill(
+        grant_info{cell_cfg_cmn.ul_cfg_common.init_ul_bwp.generic_params.scs, {0, 14}, grant.crbs});
     return true;
   }
 };
@@ -53,7 +62,7 @@ public:
 class scheduler_policy_test : public ::testing::TestWithParam<policy_type>
 {
 protected:
-  scheduler_policy_test() : res_grid(cell_cfg), pdsch_alloc(res_grid[0]), pusch_alloc(res_grid[0])
+  scheduler_policy_test() : res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid)
   {
     ue_res_grid.add_cell(res_grid);
 
@@ -235,6 +244,24 @@ TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their
   run_slot();
 
   ASSERT_EQ(pusch_alloc.last_grants.size(), 2);
+  ASSERT_NE(pusch_alloc.last_grants[0].user->ue_index, pusch_alloc.last_grants[1].user->ue_index);
+  ASSERT_FALSE(pusch_alloc.last_grants[0].crbs.overlaps(pusch_alloc.last_grants[1].crbs));
+}
+
+TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their_dl_buffer_state_is_low)
+{
+  lcg_id_t  lcg_id = uint_to_lcg_id(2);
+  const ue& u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
+  const ue& u2     = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {uint_to_lcid(5)}, lcg_id));
+
+  push_dl_bs(u1.ue_index, uint_to_lcid(5), 10);
+  push_dl_bs(u2.ue_index, uint_to_lcid(5), 10);
+
+  run_slot();
+
+  ASSERT_EQ(pdsch_alloc.last_grants.size(), 2);
+  ASSERT_NE(pdsch_alloc.last_grants[0].user->ue_index, pdsch_alloc.last_grants[1].user->ue_index);
+  ASSERT_FALSE(pdsch_alloc.last_grants[0].crbs.overlaps(pdsch_alloc.last_grants[1].crbs));
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_test, testing::Values(policy_type::time_rr));
