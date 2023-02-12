@@ -726,7 +726,7 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
   }
 
   // discard timer
-  if (pdcp_cfg.discard_timer.has_value()) {
+  if (pdcp_cfg.discard_timer.has_value() && pdcp_cfg.discard_timer != pdcp_discard_timer::not_configured) {
     asn1_pdcp_cfg.discard_timer_present = true;
     asn1_pdcp_cfg.discard_timer         = pdcp_discard_timer_to_asn1(pdcp_cfg.discard_timer.value());
   }
