@@ -8,3 +8,4 @@
 
 add_executable(scheduler_policy_test scheduler_policy_test.cpp)
 target_link_libraries(scheduler_policy_test srsgnb_sched scheduler_test_suite srslog gtest gtest_main)
+gtest_discover_tests(scheduler_policy_test)
