@@ -59,14 +59,14 @@ public:
   }
 };
 
-class scheduler_policy_test : public ::testing::TestWithParam<policy_type>
+class base_scheduler_policy_test
 {
 protected:
-  scheduler_policy_test() : res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid)
+  base_scheduler_policy_test(policy_type policy) : res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid)
   {
     ue_res_grid.add_cell(res_grid);
 
-    switch (GetParam()) {
+    switch (policy) {
       case policy_type::time_rr:
         sched = std::make_unique<scheduler_time_rr>();
         break;
@@ -77,6 +77,9 @@ protected:
 
   void run_slot()
   {
+    pdsch_alloc.last_grants.clear();
+    pusch_alloc.last_grants.clear();
+
     res_grid.slot_indication(next_slot);
 
     unsigned dl_idx = next_slot.to_uint() % 2;
@@ -154,6 +157,12 @@ protected:
   ue_list                           ues;
   std::unique_ptr<scheduler_policy> sched;
   slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
+};
+
+class scheduler_policy_test : public base_scheduler_policy_test, public ::testing::TestWithParam<policy_type>
+{
+protected:
+  scheduler_policy_test() : base_scheduler_policy_test(GetParam()) {}
 };
 
 TEST_P(scheduler_policy_test, when_coreset0_used_then_dl_grant_is_within_bounds_of_coreset0_rbs)
@@ -262,6 +271,36 @@ TEST_P(scheduler_policy_test, scheduler_allocates_more_than_one_ue_in_case_their
   ASSERT_EQ(pdsch_alloc.last_grants.size(), 2);
   ASSERT_NE(pdsch_alloc.last_grants[0].user->ue_index, pdsch_alloc.last_grants[1].user->ue_index);
   ASSERT_FALSE(pdsch_alloc.last_grants[0].crbs.overlaps(pdsch_alloc.last_grants[1].crbs));
+}
+
+class scheduler_round_robin_test : public base_scheduler_policy_test, public ::testing::Test
+{
+protected:
+  scheduler_round_robin_test() : base_scheduler_policy_test(policy_type::time_rr) {}
+};
+
+TEST_F(scheduler_round_robin_test, round_robin_does_not_account_ues_with_empty_buffers)
+{
+  lcg_id_t  lcg_id = uint_to_lcg_id(2);
+  const ue& u1     = add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, lcg_id));
+  const ue& u2     = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {uint_to_lcid(5)}, lcg_id));
+  const ue& u3     = add_ue(make_ue_create_req(to_du_ue_index(2), to_rnti(0x4603), {uint_to_lcid(5)}, lcg_id));
+
+  push_dl_bs(u1.ue_index, uint_to_lcid(5), 1000000);
+  push_dl_bs(u3.ue_index, uint_to_lcid(5), 1000000);
+
+  std::array<du_ue_index_t, 2> rr_ues = {u1.ue_index, u3.ue_index};
+  unsigned                     offset = 0;
+  for (unsigned i = 0; i != 10; ++i) {
+    run_slot();
+    ASSERT_EQ(pdsch_alloc.last_grants.size(), 1);
+    if (i == 0) {
+      offset = pdsch_alloc.last_grants[0].user->ue_index == u1.ue_index ? 0 : 1;
+      ASSERT_NE(pdsch_alloc.last_grants[0].user->ue_index, u2.ue_index);
+    } else {
+      ASSERT_EQ(pdsch_alloc.last_grants[0].user->ue_index, rr_ues[(i + offset) % rr_ues.size()]);
+    }
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_policy_test, testing::Values(policy_type::time_rr));
