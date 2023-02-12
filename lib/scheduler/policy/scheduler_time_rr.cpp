@@ -240,7 +240,9 @@ static bool alloc_ul_ue(const ue&                    u,
         const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
             &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, time_res, ss_cfg->id, agg_lvl, mcs_prbs.mcs});
         if (res_allocated) {
-          return true;
+          // If the whole grid is used, stop iteration.
+          // TODO: account for other BWPs.
+          return used_crbs.all();
         }
       }
     }

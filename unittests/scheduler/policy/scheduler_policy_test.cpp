@@ -204,15 +204,6 @@ TEST_P(scheduler_policy_test, scheduler_favors_coreset_gt_0_when_ss_has_equal_no
 {
   sched_ue_creation_request_message ue_req =
       make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {uint_to_lcid(5)}, uint_to_lcg_id(2));
-  // Default CORESET(s) and SearchSpace(s) configurations are as follows:
-  // CS#0 - PRBs [0, 48)
-  // CS#1 - PRBs [0, 36)
-  // SS#0 - Nof. Candidates at Aggregation level [ [0 -> 0], [2 -> 0], [4 -> 1], [8 -> 0], [16 -> 0] ] - CS#0
-  // SS#1 - Nof. Candidates at Aggregation level [ [0 -> 0], [2 -> 2], [4 -> 1], [8 -> 0], [16 -> 0] ] - CS#0
-  // SS#2 - Nof. Candidates at Aggregation level [ [0 -> 0], [2 -> 2], [4 -> 1], [8 -> 0], [16 -> 0] ] - CS#1
-
-  // NOTE: Policy scheduler currently uses fixed aggr. lvl of 4 so test is based on nof. PDCCH candidates for aggr.
-  // lvl. 4.
 
   const ue& u = add_ue(ue_req);
 
