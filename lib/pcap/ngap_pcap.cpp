@@ -16,6 +16,8 @@ namespace srsgnb {
 
 constexpr uint16_t NGAP_DLT = 152;
 
+ngap_pcap::ngap_pcap() : worker("NGAP-PCAP", 256) {}
+
 ngap_pcap::~ngap_pcap()
 {
   close();
@@ -23,12 +25,34 @@ ngap_pcap::~ngap_pcap()
 
 void ngap_pcap::open(const char* filename_)
 {
-  dlt_pcap_open(NGAP_DLT, filename_);
+  auto fn = [this, filename_]() { dlt_pcap_open(NGAP_DLT, filename_); };
+  worker.push_task_blocking(fn);
 }
 
 void ngap_pcap::close()
 {
-  dlt_pcap_close();
+  if (is_write_enabled()) {
+    auto fn = [this]() { dlt_pcap_close(); };
+    worker.push_task_blocking(fn);
+    worker.wait_pending_tasks();
+    worker.stop();
+  }
+}
+
+void ngap_pcap::push_pdu(srsgnb::byte_buffer pdu)
+{
+  auto fn = [this, pdu]() {
+    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
+    span<const uint8_t>               pdu_span = to_span(pdu, tmp_mem);
+    write_pdu(pdu_span);
+  };
+  worker.push_task(fn);
+}
+
+void ngap_pcap::push_pdu(srsgnb::const_span<uint8_t> pdu)
+{
+  auto fn = [this, pdu]() { write_pdu(pdu); };
+  worker.push_task(fn);
 }
 
 void ngap_pcap::write_pdu(srsgnb::const_span<uint8_t> pdu)

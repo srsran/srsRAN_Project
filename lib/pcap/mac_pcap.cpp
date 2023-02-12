@@ -18,7 +18,96 @@ namespace srsgnb {
 
 constexpr uint16_t UDP_DLT = 149;
 
-inline int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length)
+int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
+
+mac_pcap::~mac_pcap()
+{
+  close();
+}
+
+void mac_pcap::open(const char* filename_)
+{
+  auto fn = [this, filename_]() { dlt_pcap_open(UDP_DLT, filename_); };
+  worker.push_task_blocking(fn);
+}
+
+void mac_pcap::close()
+{
+  if (is_write_enabled()) {
+    auto fn = [this]() { dlt_pcap_close(); };
+    worker.push_task_blocking(fn);
+    worker.wait_pending_tasks();
+    worker.stop();
+  }
+}
+
+void mac_pcap::push_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
+{
+  auto fn = [this, context, pdu]() { write_pdu(context, pdu); };
+  worker.push_task(fn);
+}
+
+void mac_pcap::push_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer pdu)
+{
+  auto fn = [this, context, pdu]() {
+    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
+    span<const uint8_t>               pdu_span = to_span(pdu, tmp_mem);
+    write_pdu(context, pdu_span);
+  };
+  worker.push_task(fn);
+}
+
+void mac_pcap::write_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
+{
+  if (!is_write_enabled() || pdu.empty()) {
+    // skip
+    return;
+  }
+
+  uint8_t        context_header[PCAP_CONTEXT_HEADER_MAX] = {};
+  const uint16_t length                                  = pdu.size();
+
+  struct udphdr* udp_header;
+  int            offset = 0;
+
+  /* Can't write if file wasn't successfully opened */
+  // TODO
+
+  // Add dummy UDP header, start with src and dest port
+  udp_header       = (struct udphdr*)context_header;
+  udp_header->dest = htons(0xdead);
+  offset += 2;
+  udp_header->source = htons(0xbeef);
+  offset += 2;
+  // length to be filled later
+  udp_header->len = 0x0000;
+  offset += 2;
+  // dummy CRC
+  udp_header->check = 0x0000;
+  offset += 2;
+
+  // Start magic string
+  memcpy(&context_header[offset], MAC_NR_START_STRING, strlen(MAC_NR_START_STRING));
+  offset += strlen(MAC_NR_START_STRING);
+
+  offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
+
+  udp_header->len = htons(offset + length);
+
+  if (offset != 31) {
+    printf("ERROR Does not match offset %d != 31\n", offset);
+  }
+
+  // Write header
+  write_pcap_header(offset + pdu.size());
+  // Write context
+  write_pcap_pdu(span<uint8_t>(context_header, offset));
+  // Write PDU
+  write_pcap_pdu(pdu);
+}
+
+/// Helper function to serialize MAC NR context
+int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length)
 {
   int      offset = 0;
   uint16_t tmp16;
@@ -65,86 +154,6 @@ inline int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context
   /* Data tag immediately preceding PDU */
   buffer[offset++] = MAC_NR_PAYLOAD_TAG;
   return offset;
-}
-
-mac_pcap::~mac_pcap()
-{
-  close();
-}
-
-void mac_pcap::open(const char* filename_)
-{
-  auto fn = [this, filename_]() { dlt_pcap_open(UDP_DLT, filename_); };
-  worker.push_task_blocking(fn);
-}
-
-void mac_pcap::close()
-{
-  if (is_write_enabled()) {
-    auto fn = [this]() { dlt_pcap_close(); };
-    worker.push_task_blocking(fn);
-    worker.wait_pending_tasks();
-    worker.stop();
-  }
-}
-
-void mac_pcap::push_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
-{
-  auto fn = [this, context, pdu]() { write_pdu(context, pdu); };
-  worker.push_task(fn);
-}
-
-void mac_pcap::push_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer pdu)
-{
-  auto fn = [this, context, pdu]() {
-    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
-    span<const uint8_t>               pdu_span = to_span(pdu, tmp_mem);
-    write_pdu(context, pdu_span);
-  };
-  worker.push_task(fn);
-}
-
-void mac_pcap::write_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
-{
-  uint8_t        context_header[PCAP_CONTEXT_HEADER_MAX] = {};
-  const uint16_t length                                  = pdu.size();
-
-  struct udphdr* udp_header;
-  int            offset = 0;
-
-  /* Can't write if file wasn't successfully opened */
-  // TODO
-
-  // Add dummy UDP header, start with src and dest port
-  udp_header       = (struct udphdr*)context_header;
-  udp_header->dest = htons(0xdead);
-  offset += 2;
-  udp_header->source = htons(0xbeef);
-  offset += 2;
-  // length to be filled later
-  udp_header->len = 0x0000;
-  offset += 2;
-  // dummy CRC
-  udp_header->check = 0x0000;
-  offset += 2;
-
-  // Start magic string
-  memcpy(&context_header[offset], MAC_NR_START_STRING, strlen(MAC_NR_START_STRING));
-  offset += strlen(MAC_NR_START_STRING);
-
-  offset += nr_pcap_pack_mac_context_to_buffer(context, &context_header[offset], PCAP_CONTEXT_HEADER_MAX);
-
-  udp_header->len = htons(offset + length);
-
-  if (offset != 31) {
-    printf("ERROR Does not match offset %d != 31\n", offset);
-  }
-
-  /****************************************************************/
-  /* PCAP Header                                                  */
-  write_pcap_header(offset + pdu.size());
-  write_pcap_pdu(span<uint8_t>(context_header, offset));
-  write_pcap_pdu(pdu);
 }
 } // namespace srsgnb
 

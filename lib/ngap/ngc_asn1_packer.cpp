@@ -23,10 +23,7 @@ ngc_asn1_packer::ngc_asn1_packer(sctp_network_gateway_data_handler& gw_,
 void ngc_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 {
   if (pcap.is_write_enabled()) {
-    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
-
-    span<const uint8_t> pdu_span = to_span(bytes, tmp_mem);
-    pcap.write_pdu(pdu_span);
+    pcap.push_pdu(bytes.copy());
   }
   asn1::cbit_ref         bref(bytes);
   srs_cu_cp::ngc_message msg = {};
@@ -51,9 +48,7 @@ void ngc_asn1_packer::handle_message(const srs_cu_cp::ngc_message& msg)
   }
 
   if (pcap.is_write_enabled()) {
-    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
-    span<const uint8_t>               pdu_span = to_span(tx_pdu, tmp_mem);
-    pcap.write_pdu(pdu_span);
+    pcap.push_pdu(tx_pdu.copy());
   }
   gw.handle_pdu(tx_pdu);
 }

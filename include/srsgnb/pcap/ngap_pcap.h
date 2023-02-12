@@ -11,13 +11,15 @@
 #pragma once
 
 #include "pcap.h"
+#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/support/executors/task_worker.h"
 
 namespace srsgnb {
 
 class ngap_pcap : public pcap_file_base
 {
 public:
-  ngap_pcap() = default;
+  ngap_pcap();
   ~ngap_pcap();
   ngap_pcap(const ngap_pcap& other)            = delete;
   ngap_pcap& operator=(const ngap_pcap& other) = delete;
@@ -26,7 +28,12 @@ public:
 
   void open(const char* filename_);
   void close();
-  void write_pdu(srsgnb::const_span<uint8_t> pdu);
+  void push_pdu(srsgnb::byte_buffer pdu);
+  void push_pdu(srsgnb::const_span<uint8_t> pdu);
+
+private:
+  void        write_pdu(srsgnb::const_span<uint8_t> pdu);
+  task_worker worker;
 };
 
 } // namespace srsgnb

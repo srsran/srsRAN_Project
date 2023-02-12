@@ -402,8 +402,7 @@ int main(int argc, char** argv)
     ngap_pcap.open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
   }
   mac_pcap mac_pcap;
-  // if (gnb_cfg.pcap_cfg.mac.enabled) {
-  if (true) {
+  if (gnb_cfg.pcap_cfg.mac.enabled) {
     mac_pcap.open(gnb_cfg.pcap_cfg.mac.filename.c_str());
   }
 

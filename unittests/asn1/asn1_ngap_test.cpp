@@ -9,7 +9,6 @@
  */
 
 #include "srsgnb/asn1/ngap/ngap.h"
-#include "srsgnb/pcap/ngap_pcap.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -31,8 +30,6 @@ protected:
 
     srslog::init();
 
-    pcap_writer.open("ngap.pcap");
-
     // Start the log backend.
     srslog::init();
   }
@@ -41,11 +38,8 @@ protected:
   {
     // flush logger after each test
     srslog::flush();
-
-    pcap_writer.close();
   }
 
-  srsgnb::ngap_pcap     pcap_writer;
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -94,7 +88,6 @@ TEST_F(asn1_ngap_test, when_setup_message_correct_then_packing_successful)
   test_logger.info(
       bytes.data(), bytes.size(), "NGAP PDU unpacked ({} B): \n {}", bytes.size(), json_writer1.to_string().c_str());
 #endif
-  pcap_writer.write_pdu(bytes);
 }
 
 // successful outcome NGSetupResponse
@@ -142,7 +135,6 @@ TEST_F(asn1_ngap_test, when_setup_response_correct_then_packing_successful)
                    tx_buffer.size(),
                    json_writer1.to_string().c_str());
 #endif
-  pcap_writer.write_pdu(srsgnb::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
 }
 
 // unsuccessful outcome NGSetupFailure
@@ -176,5 +168,4 @@ TEST_F(asn1_ngap_test, when_setup_failure_correct_then_packing_successful)
                    tx_buffer.size(),
                    json_writer1.to_string().c_str());
 #endif
-  pcap_writer.write_pdu(srsgnb::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
 }
