@@ -16,7 +16,7 @@ namespace srsgnb {
 
 constexpr uint16_t NGAP_DLT = 152;
 
-ngap_pcap::ngap_pcap() : worker("NGAP-PCAP", 256) {}
+ngap_pcap::ngap_pcap() : worker("NGAP-PCAP", 1024) {}
 
 ngap_pcap::~ngap_pcap()
 {
