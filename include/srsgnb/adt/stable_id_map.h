@@ -151,8 +151,16 @@ public:
   const_iterator begin() const { return {elems.begin(), elems.end()}; }
   const_iterator end() const { return {elems.end(), elems.end()}; }
 
-  iterator       lower_bound(IdType id) { return {elems.begin() + static_cast<size_t>(id), elems.end()}; }
-  const_iterator lower_bound(IdType id) const { return {elems.begin() + static_cast<size_t>(id), elems.end()}; }
+  iterator lower_bound(IdType id)
+  {
+    return static_cast<size_t>(id) >= MAX_SIZE ? iterator{elems.end(), elems.end()}
+                                               : iterator{elems.begin() + static_cast<size_t>(id), elems.end()};
+  }
+  const_iterator lower_bound(IdType id) const
+  {
+    return static_cast<size_t>(id) >= MAX_SIZE ? const_iterator{elems.end(), elems.end()}
+                                               : const_iterator{elems.begin() + static_cast<size_t>(id), elems.end()};
+  }
 
 private:
   size_t                                   nof_elems = 0;

@@ -14,27 +14,38 @@ using namespace srsgnb;
 
 /// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
 /// \param[in] ue_db map of "slot_ue"
-/// \param[in] rr_count starting index to select next UE
-/// \param[in] p callable with signature "bool(slot_ue&)" that returns true if UE allocation was successful
-/// \return true if a UE was allocated
-template <typename Predicate>
-bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate& p)
+/// \param[in] next_ue_index UE index with the highest priority to be allocated.
+/// \param[in] alloc_ue callable with signature "bool(ue&)" that returns true if UE allocation was successful.
+/// \param[in] stop_cond callable with signature "bool()" that verifies if the conditions are present for the
+/// round-robin to early-stop the iteration.
+/// \return Index of next UE to allocate.
+template <typename AllocUEFunc, typename StopIterationFunc>
+du_ue_index_t round_robin_apply(const ue_list&           ue_db,
+                                du_ue_index_t            next_ue_index,
+                                const AllocUEFunc&       alloc_ue,
+                                const StopIterationFunc& stop_cond)
 {
   if (ue_db.empty()) {
-    return false;
+    return next_ue_index;
   }
-  auto next_it = ue_db.begin();
-  std::advance(next_it, rr_count % ue_db.size());
-  for (uint32_t count = 0; count < ue_db.size(); ++count, ++next_it) {
-    if (next_it == ue_db.end()) {
+  auto it          = ue_db.lower_bound(next_ue_index);
+  bool first_alloc = true;
+  for (unsigned count = 0; count < ue_db.size(); ++count, ++it) {
+    if (it == ue_db.end()) {
       // wrap-around
-      next_it = ue_db.begin();
+      it = ue_db.begin();
     }
-    if (p(*next_it)) {
-      return true;
+    if (alloc_ue(*it)) {
+      if (first_alloc) {
+        next_ue_index = to_du_ue_index((unsigned)it->ue_index + 1U);
+        first_alloc   = false;
+      }
+      if (stop_cond()) {
+        break;
+      }
     }
   }
-  return false;
+  return next_ue_index;
 }
 
 /// \brief Gets SearchSpace configurations prioritized based on nof. candidates for a given aggregation level in a UE
@@ -149,9 +160,7 @@ static bool alloc_dl_ue(const ue&                    u,
           const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{
               &u, ue_cc.cell_index, h->id, ss_cfg->id, time_res, ue_grant_crbs, dci_dl_format::f1_0, agg_lvl});
           if (res_allocated) {
-            // If the whole grid is used, stop iteration.
-            // TODO: account for other BWPs.
-            return used_crbs.all();
+            return true;
           }
         }
       }
@@ -242,9 +251,7 @@ static bool alloc_ul_ue(const ue&                    u,
         const bool res_allocated = pusch_alloc.allocate_ul_grant(ue_pusch_grant{
             &u, ue_cc.cell_index, h->id, ue_grant_crbs, pusch_symbols, time_res, ss_cfg->id, agg_lvl, mcs_prbs.mcs});
         if (res_allocated) {
-          // If the whole grid is used, stop iteration.
-          // TODO: account for other BWPs.
-          return used_crbs.all();
+          return true;
         }
       }
     }
@@ -254,20 +261,31 @@ static bool alloc_ul_ue(const ue&                    u,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-scheduler_time_rr::scheduler_time_rr() : logger(srslog::fetch_basic_logger("SCHED")) {}
+scheduler_time_rr::scheduler_time_rr() :
+  logger(srslog::fetch_basic_logger("SCHED")),
+  next_dl_ue_index(INVALID_DU_UE_INDEX),
+  next_ul_ue_index(INVALID_DU_UE_INDEX)
+{
+}
 
 void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
                                  const ue_list&               ues,
                                  bool                         is_retx)
 {
-  unsigned rr_priority_idx = res_grid.get_pdcch_slot().to_uint();
-  auto     tx_ue_function  = [this, &res_grid, &pdsch_alloc, is_retx](const ue& u) {
+  auto tx_ue_function = [this, &res_grid, &pdsch_alloc, is_retx](const ue& u) {
     return alloc_dl_ue(u, res_grid, pdsch_alloc, is_retx, logger);
   };
-  if (round_robin_apply(ues, rr_priority_idx, tx_ue_function)) {
-    return;
-  }
+  auto stop_iter = [&res_grid]() {
+    // TODO: Account for different BWPs and cells.
+    du_cell_index_t cell_idx    = to_du_cell_index(0);
+    auto&           init_dl_bwp = res_grid.get_cell_cfg_common(cell_idx).dl_cfg_common.init_dl_bwp;
+    // If all RBs are occupied, stop iteration.
+    return res_grid.get_pdsch_grid(cell_idx, init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0)
+        .used_crbs(init_dl_bwp.generic_params, init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols)
+        .all();
+  };
+  next_dl_ue_index = round_robin_apply(ues, next_dl_ue_index, tx_ue_function, stop_iter);
 }
 
 void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
@@ -275,11 +293,17 @@ void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_list&               ues,
                                  bool                         is_retx)
 {
-  unsigned rr_priority_idx = res_grid.get_pdcch_slot().to_uint();
-  auto     tx_ue_function  = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
+  auto tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {
     return alloc_ul_ue(u, res_grid, pusch_alloc, is_retx, logger);
   };
-  if (round_robin_apply(ues, rr_priority_idx, tx_ue_function)) {
-    return;
-  }
+  auto stop_iter = [&res_grid]() {
+    // TODO: Account for different BWPs and cells.
+    du_cell_index_t cell_idx    = to_du_cell_index(0);
+    auto&           init_ul_bwp = res_grid.get_cell_cfg_common(cell_idx).ul_cfg_common.init_ul_bwp;
+    // If all RBs are occupied, stop iteration.
+    return res_grid.get_pusch_grid(cell_idx, init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2)
+        .used_crbs(init_ul_bwp.generic_params, init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols)
+        .all();
+  };
+  next_ul_ue_index = round_robin_apply(ues, next_ul_ue_index, tx_ue_function, stop_iter);
 }

@@ -30,6 +30,7 @@ public:
 
 private:
   srslog::basic_logger& logger;
+  du_ue_index_t         next_dl_ue_index, next_ul_ue_index;
 };
 
 } // namespace srsgnb
