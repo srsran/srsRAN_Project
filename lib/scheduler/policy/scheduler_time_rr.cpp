@@ -61,6 +61,16 @@ get_ue_cell_prioritized_ss_for_agg_lvl(const ue_cell& ue_cc, aggregation_level a
   return search_spaces;
 }
 
+/// \brief Gets SearchSpace configuration of Type-1 PDCCH CSS for a UE.
+/// \param[in] ue_cc UE's cell context.
+/// \return List containing Type-1 PDCCH CSS configuration.
+static static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP>
+get_type1_pdcch_css(const ue_cell& ue_cc)
+{
+  return {ue_cc.cfg().find_search_space(
+      ue_cc.cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id)};
+}
+
 /// Allocate UE PDSCH grant.
 static bool alloc_dl_ue(const ue&                    u,
                         const ue_resource_grid_view& res_grid,
@@ -95,7 +105,18 @@ static bool alloc_dl_ue(const ue&                    u,
 
     // Search for available symbolxRB resources in different SearchSpaces.
     const cell_configuration& cell_cfg_cmn = ue_cc.cfg().cell_cfg_common;
-    for (const search_space_configuration* ss_cfg : get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl)) {
+    static_vector<const search_space_configuration*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
+    // See 3GPP TS 38.213, clause 10.1,
+    // A UE monitors PDCCH candidates in one or more of the following search spaces sets
+    //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+    //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
+    if (is_retx && h->last_alloc_params().dci_cfg_type == srsgnb::dci_dl_rnti_config_type::tc_rnti_f1_0) {
+      search_spaces = get_type1_pdcch_css(ue_cc);
+    } else {
+      search_spaces = get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl);
+    }
+
+    for (const search_space_configuration* ss_cfg : search_spaces) {
       const span<const pdsch_time_domain_resource_allocation> pdsch_list =
           ue_cc.cfg().get_pdsch_time_domain_list(ss_cfg->id);
 
