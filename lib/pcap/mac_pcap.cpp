@@ -20,6 +20,8 @@ constexpr uint16_t UDP_DLT = 149;
 
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
 
+mac_pcap::mac_pcap() : worker("MAC-PCAP", 1024) {}
+
 mac_pcap::~mac_pcap()
 {
   close();
@@ -41,13 +43,13 @@ void mac_pcap::close()
   }
 }
 
-void mac_pcap::push_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
+void mac_pcap::push_pdu(mac_nr_context_info context, srsgnb::const_span<uint8_t> pdu)
 {
   auto fn = [this, context, pdu]() { write_pdu(context, pdu); };
   worker.push_task(fn);
 }
 
-void mac_pcap::push_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer pdu)
+void mac_pcap::push_pdu(mac_nr_context_info context, srsgnb::byte_buffer pdu)
 {
   auto fn = [this, context, pdu]() {
     std::array<uint8_t, pcap_max_len> tmp_mem; // no init

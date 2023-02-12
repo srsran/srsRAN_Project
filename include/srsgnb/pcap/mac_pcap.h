@@ -65,14 +65,14 @@ typedef struct {
 class mac_pcap : public pcap_file_base
 {
 public:
-  mac_pcap() : worker("PCAP", 256) {}
+  mac_pcap();
   ~mac_pcap();
 
   task_worker worker;
   void        open(const char* filename_);
   void        close();
-  void        push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu);
-  void        push_pdu(const mac_nr_context_info& context, byte_buffer pdu);
+  void        push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu);
+  void        push_pdu(mac_nr_context_info context, byte_buffer pdu);
 
 private:
   void write_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu);

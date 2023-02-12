@@ -61,7 +61,7 @@ protected:
 
 private:
   srslog::basic_logger& logger;
-  bool                  write_enabled = false;
+  std::atomic<bool>     write_enabled{false};
   std::ofstream         pcap_fstream;
   std::string           filename;
   uint32_t              dlt = 0;
