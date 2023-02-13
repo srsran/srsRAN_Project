@@ -50,7 +50,9 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu)
   }
 
   auto fn = [this, teid, p = std::move(pdu)]() mutable { handle_pdu_impl(teid, std::move(p)); };
-  cu_up_exec.execute(std::move(fn));
+  if (not cu_up_exec.execute(std::move(fn))) {
+    logger.info("TEID={}: Dropping GTP-U PDU. Cause: Overflow of GTP-U PDU tunnel.", teid);
+  }
 }
 
 void gtpu_demux_impl::handle_pdu_impl(uint32_t teid, byte_buffer pdu)

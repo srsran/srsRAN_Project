@@ -31,7 +31,7 @@ class sync_task_executor final : public task_executor
 public:
   sync_task_executor() = default;
   sync_task_executor(task_executor& exec_) : exec(&exec_) {}
-  void execute(unique_task task) override
+  bool execute(unique_task task) override
   {
     std::unique_lock<std::mutex> lock(mutex);
     done = false;
@@ -40,8 +40,9 @@ public:
     while (not done) {
       cvar.wait(lock);
     }
+    return true;
   }
-  void defer(unique_task task) override { execute(std::move(task)); }
+  bool defer(unique_task task) override { return execute(std::move(task)); }
 
 private:
   task_executor* exec = nullptr;

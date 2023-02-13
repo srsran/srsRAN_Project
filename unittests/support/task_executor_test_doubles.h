@@ -25,9 +25,13 @@ public:
 
   std::thread::id get_thread_id() const { return t_id; }
 
-  void execute(unique_task task) override { defer(std::move(task)); }
+  bool execute(unique_task task) override { return defer(std::move(task)); }
 
-  void defer(unique_task task) override { pending_tasks.push_blocking(std::move(task)); }
+  bool defer(unique_task task) override
+  {
+    pending_tasks.push_blocking(std::move(task));
+    return true;
+  }
 
   bool has_pending_tasks() const { return not pending_tasks.empty(); }
 

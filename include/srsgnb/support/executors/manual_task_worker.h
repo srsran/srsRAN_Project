@@ -24,16 +24,21 @@ public:
 
   std::thread::id get_thread_id() const { return t_id; }
 
-  void execute(unique_task task) override
+  bool execute(unique_task task) override
   {
     if (std::this_thread::get_id() == t_id) {
       task();
     } else {
       defer(std::move(task));
     }
+    return true;
   }
 
-  void defer(unique_task task) override { pending_tasks.push_blocking(std::move(task)); }
+  bool defer(unique_task task) override
+  {
+    pending_tasks.push_blocking(std::move(task));
+    return true;
+  }
 
   bool has_pending_tasks() const { return not pending_tasks.empty(); }
 

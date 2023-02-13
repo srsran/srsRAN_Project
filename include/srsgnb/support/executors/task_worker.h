@@ -52,13 +52,15 @@ public:
   void start(os_thread_realtime_priority      prio_ = os_thread_realtime_priority::no_realtime(),
              const os_sched_affinity_bitmask& mask_ = {});
 
-  bool push_task(task_t&& task)
+  bool push_task(task_t&& task, bool log_on_failure = true)
   {
     auto ret = pending_tasks.try_push(std::move(task));
     if (ret.is_error()) {
-      logger.error("Cannot push anymore tasks into the {} worker queue. maximum size is {}",
-                   worker_name,
-                   uint32_t(pending_tasks.max_size()));
+      if (log_on_failure) {
+        logger.error("Cannot push anymore tasks into the {} worker queue. maximum size is {}",
+                     worker_name,
+                     uint32_t(pending_tasks.max_size()));
+      }
       return false;
     }
     return true;
@@ -107,20 +109,27 @@ class task_worker_executor : public task_executor
 {
 public:
   task_worker_executor() = default;
-  task_worker_executor(task_worker& worker_) : worker(&worker_) {}
-  void execute(unique_task task) override
+
+  task_worker_executor(task_worker& worker_, bool report_on_push_failure = true) :
+    worker(&worker_), report_on_failure(report_on_push_failure)
+  {
+  }
+
+  bool execute(unique_task task) override
   {
     if (worker->get_id() == std::this_thread::get_id()) {
       // Same thread. Run task right away.
       task();
-    } else {
-      worker->push_task(std::move(task));
+      return true;
     }
+    return worker->push_task(std::move(task), report_on_failure);
   }
-  void defer(unique_task task) override { worker->push_task(std::move(task)); }
+
+  bool defer(unique_task task) override { return worker->push_task(std::move(task), report_on_failure); }
 
 private:
-  task_worker* worker = nullptr;
+  task_worker* worker            = nullptr;
+  bool         report_on_failure = true;
 };
 
 inline std::unique_ptr<task_executor> make_task_executor(task_worker& w)

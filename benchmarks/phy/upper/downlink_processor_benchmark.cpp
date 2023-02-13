@@ -199,15 +199,17 @@ using namespace srsgnb;
 class immediate_task_executor : public task_executor
 {
 public:
-  void execute(unique_task task) override
+  bool execute(unique_task task) override
   {
     srsgnb_assert(!task.is_empty(), "Invalid task.");
     task();
+    return true;
   }
-  void defer(unique_task task) override
+  bool defer(unique_task task) override
   {
     srsgnb_assert(!task.is_empty(), "Invalid task.");
     task();
+    return true;
   }
 };
 

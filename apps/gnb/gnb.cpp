@@ -134,6 +134,7 @@ struct worker_manager {
 
   std::unique_ptr<task_executor> cu_cp_exec;
   std::unique_ptr<task_executor> cu_up_exec;
+  std::unique_ptr<task_executor> gtpu_pdu_exec;
   std::unique_ptr<task_executor> du_ctrl_exec;
   std::unique_ptr<task_executor> du_ue_exec;
   std::unique_ptr<task_executor> du_cell_exec;
@@ -180,11 +181,12 @@ private:
     create_worker("radio_worker", task_worker_queue_size);
 
     // Instantiate task executors
-    cu_cp_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
-    cu_up_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    du_ctrl_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
-    du_ue_exec   = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
-    du_cell_exec = std::make_unique<task_worker_executor>(*workers.at("du_cell"));
+    cu_cp_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
+    cu_up_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+    gtpu_pdu_exec = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"), false);
+    du_ctrl_exec  = std::make_unique<task_worker_executor>(*workers.at("gnb_ctrl"));
+    du_ue_exec    = std::make_unique<task_worker_executor>(*workers.at("gnb_ue"));
+    du_cell_exec  = std::make_unique<task_worker_executor>(*workers.at("du_cell"));
     if (blocking_mode_active) {
       task_worker& phy_worker = *workers.at("phy_worker");
       rt_task_exec            = std::make_unique<task_worker_executor>(phy_worker);
@@ -420,6 +422,7 @@ int main(int argc, char** argv)
   // Create CU-UP config.
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
+  cu_up_cfg.gtpu_pdu_executor    = workers.gtpu_pdu_exec.get();
   cu_up_cfg.e1_notifier          = &e1_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker         = epoll_broker.get();
