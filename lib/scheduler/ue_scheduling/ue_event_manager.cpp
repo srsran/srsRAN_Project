@@ -145,7 +145,8 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const bool> harq_bits)
 {
   for (const bool ack : harq_bits) {
-    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(uci_sl, ack);
+    const dl_harq_process* h_dl =
+        ue_cc.harqs.dl_ack_info(uci_sl, ack ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack);
     if (h_dl != nullptr) {
       // Log Event.
       ev_logger.enqueue(
@@ -168,7 +169,8 @@ void ue_event_manager::handle_harq_ind(ue_cell&                                 
                                        const bounded_bitset<uci_constants::MAX_NOF_PAYLOAD_BITS>& harq_bits)
 {
   for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
-    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(uci_sl, harq_bits.test(bit_idx));
+    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(
+        uci_sl, harq_bits.test(bit_idx) ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack);
     if (h_dl != nullptr) {
       // Log Event.
       ev_logger.enqueue(

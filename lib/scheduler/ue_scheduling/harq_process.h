@@ -74,6 +74,8 @@ private:
   bool                  is_dl;
 };
 
+enum class mac_harq_ack_report_status { nack = 0, ack, dtx };
+
 namespace detail {
 
 /// Basic class for HARQ processes: will be extended by DL and UL HARQ process classes
@@ -87,6 +89,8 @@ public:
   /// \brief Default timeout in slots after which the HARQ process assumes that the CRC/ACK went missing
   /// (implementation-defined).
   constexpr static unsigned DEFAULT_ACK_TIMEOUT_SLOTS = 256U;
+
+  constexpr static unsigned SHORT_ACK_TIMEOUT_DTX = 2U;
 
   /// Maximum number of Transport Blocks as per TS38.321, 5.3.2.1 and 5.4.2.1.
   constexpr static size_t MAX_NOF_TBS = IsDownlink ? 2 : 1;
@@ -119,7 +123,7 @@ public:
   explicit harq_process(harq_id_t    h_id,
                         harq_logger& logger_,
                         unsigned     max_ack_wait_in_slots_ = DEFAULT_ACK_TIMEOUT_SLOTS) :
-    id(h_id), logger(logger_), max_ack_wait_in_slots(max_ack_wait_in_slots_)
+    id(h_id), logger(logger_), max_ack_wait_in_slots(max_ack_wait_in_slots_), ack_wait_in_slots(max_ack_wait_in_slots)
   {
   }
 
@@ -178,6 +182,9 @@ protected:
 
   /// Time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   const unsigned max_ack_wait_in_slots;
+
+  /// Time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
+  unsigned ack_wait_in_slots;
 
   /// For DL, slot_tx corresponds to the slot when the TB in the HARQ process is going to be transmitted by the gNB.
   /// For UL, slot_tx corresponds to the slot when the TB in the HARQ process is going to be transmitted by the UE.
@@ -239,7 +246,7 @@ public:
 
   /// \brief Updates the ACK state of the HARQ process.
   /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
-  int ack_info(uint32_t tb_idx, bool ack);
+  int ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack);
 
   /// \brief Stores grant parameters that are associated with the HARQ allocation (e.g. DCI format, PRBs, MCS) so that
   /// they can be later fetched and optionally reused.
@@ -338,7 +345,7 @@ public:
 
   /// \brief Update the state of the DL HARQ for the specified UCI slot.
   /// \return HARQ process whose state was updated. Nullptr, if no HARQ for which the ACK/NACK was directed was found.
-  const dl_harq_process* dl_ack_info(slot_point uci_slot, bool ack);
+  const dl_harq_process* dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack);
 
   /// Update UL HARQ state given the received CRC indication.
   int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);

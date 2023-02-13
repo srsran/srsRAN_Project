@@ -21,7 +21,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
     if (tb.state == transport_block::state_t::empty) {
       continue;
     }
-    if (last_slot_ack + max_ack_wait_in_slots > slot_tx) {
+    if (last_slot_ack + ack_wait_in_slots > slot_tx) {
       // Wait more slots for ACK/NACK to arrive.
       return;
     }
@@ -51,6 +51,7 @@ bool detail::harq_process<IsDownlink>::ack_info_common(unsigned tb_idx, bool ack
     return false;
   }
   tb_array[tb_idx].ack_state = ack;
+
   if (ack) {
     tb_array[tb_idx].state = transport_block::state_t::empty;
   } else {
@@ -148,10 +149,17 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
   }
 }
 
-int dl_harq_process::ack_info(uint32_t tb_idx, bool ack)
+int dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
 {
-  if (base_type::ack_info_common(tb_idx, ack)) {
-    if (not ack and empty(tb_idx)) {
+  if (ack == mac_harq_ack_report_status::dtx) {
+    ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
+    return 0;
+  }
+
+  ack_wait_in_slots = DEFAULT_ACK_TIMEOUT_SLOTS;
+  // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
+  if (base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack)) {
+    if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
       logger.warning(id,
                      "Discarding HARQ tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
                      tb_idx,
@@ -267,11 +275,14 @@ void harq_entity::slot_indication(slot_point slot_tx_)
   }
 }
 
-const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, bool ack)
+const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack)
 {
+  // For the time being, we assume 1 TB only.
+  static const size_t tb_index = 0;
+
   for (dl_harq_process& h_dl : dl_harqs) {
     if (not h_dl.empty() and h_dl.slot_ack() == uci_slot) {
-      h_dl.ack_info(0, ack);
+      h_dl.ack_info(tb_index, ack);
       return &h_dl;
     }
   }
