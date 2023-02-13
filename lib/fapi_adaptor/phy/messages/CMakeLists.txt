@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+        csi_rs.cpp
         pdcch.cpp
         pdsch.cpp
         prach.cpp

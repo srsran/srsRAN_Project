@@ -750,16 +750,16 @@ public:
 
   /// Sets the CSI-RS PDU basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
-  dl_csi_rs_pdu_builder& set_basic_parameters(uint16_t                 start_rb,
-                                              uint16_t                 nof_rbs,
-                                              csi_rs_type              type,
-                                              uint8_t                  row,
-                                              uint16_t                 freq_domain,
-                                              uint8_t                  symb_l0,
-                                              uint8_t                  symb_l1,
-                                              csi_rs_cdm_type          cdm_type,
-                                              csi_rs_freq_density_type freq_density,
-                                              uint16_t                 scrambling_id)
+  dl_csi_rs_pdu_builder& set_basic_parameters(uint16_t                  start_rb,
+                                              uint16_t                  nof_rbs,
+                                              csi_rs_type               type,
+                                              uint8_t                   row,
+                                              const bounded_bitset<12>& freq_domain,
+                                              uint8_t                   symb_l0,
+                                              uint8_t                   symb_l1,
+                                              csi_rs_cdm_type           cdm_type,
+                                              csi_rs_freq_density_type  freq_density,
+                                              uint16_t                  scrambling_id)
   {
     pdu.start_rb     = start_rb;
     pdu.num_rbs      = nof_rbs;
@@ -904,16 +904,16 @@ public:
   }
 
   /// Adds a CSI-RS PDU to the message and returns a CSI-RS PDU builder.
-  dl_csi_rs_pdu_builder add_csi_rs_pdu(uint16_t                 start_rb,
-                                       uint16_t                 nof_rbs,
-                                       csi_rs_type              type,
-                                       uint8_t                  row,
-                                       uint16_t                 freq_domain,
-                                       uint8_t                  symb_l0,
-                                       uint8_t                  symb_l1,
-                                       csi_rs_cdm_type          cdm_type,
-                                       csi_rs_freq_density_type freq_density,
-                                       uint16_t                 scrambling_id)
+  dl_csi_rs_pdu_builder add_csi_rs_pdu(uint16_t                  start_rb,
+                                       uint16_t                  nof_rbs,
+                                       csi_rs_type               type,
+                                       uint8_t                   row,
+                                       const bounded_bitset<12>& freq_domain,
+                                       uint8_t                   symb_l0,
+                                       uint8_t                   symb_l1,
+                                       csi_rs_cdm_type           cdm_type,
+                                       csi_rs_freq_density_type  freq_density,
+                                       uint16_t                  scrambling_id)
   {
     // Add a new PDU.
     dl_tti_request_pdu& pdu = msg.pdus.emplace_back();

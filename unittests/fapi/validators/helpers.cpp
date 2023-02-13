@@ -270,7 +270,8 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   pdu.start_rb                                              = 23;
   pdu.num_rbs                                               = 25;
   pdu.type                                                  = csi_rs_type::CSI_RS_NZP;
-  pdu.row                                                   = 3;
+  pdu.row                                                   = 4;
+  pdu.freq_domain                                           = {1, 0, 0};
   pdu.symb_L0                                               = 8;
   pdu.symb_L1                                               = 7;
   pdu.cdm_type                                              = csi_rs_cdm_type::no_CDM;

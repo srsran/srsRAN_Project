@@ -50,25 +50,29 @@ class downlink_processor_validator_impl : public downlink_pdu_validator
 {
 public:
   /// Constructs an downlink PDU validator containing the validators for each channel.
-  downlink_processor_validator_impl(std::unique_ptr<ssb_pdu_validator>   ssb_,
-                                    std::unique_ptr<pdcch_pdu_validator> pdcch_,
-                                    std::unique_ptr<pdsch_pdu_validator> pdsch_) :
-    ssb(std::move(ssb_)), pdcch(std::move(pdcch_)), pdsch(std::move(pdsch_))
+  downlink_processor_validator_impl(std::unique_ptr<ssb_pdu_validator>                  ssb_,
+                                    std::unique_ptr<pdcch_pdu_validator>                pdcch_,
+                                    std::unique_ptr<pdsch_pdu_validator>                pdsch_,
+                                    std::unique_ptr<nzp_csi_rs_configuration_validator> csi_) :
+    ssb(std::move(ssb_)), pdcch(std::move(pdcch_)), pdsch(std::move(pdsch_)), csi(std::move(csi_))
   {
     srsgnb_assert(ssb, "Invalid SSB processor validator.");
     srsgnb_assert(pdcch, "Invalid PDCCH processor validator.");
     srsgnb_assert(pdsch, "Invalid PDSCH processor validator.");
+    srsgnb_assert(csi, "Invalid NZP-CSI-RS processor validator.");
   }
 
   // See interface for documentation.
   bool is_valid(const ssb_processor::pdu_t& pdu) const override { return ssb->is_valid(pdu); }
   bool is_valid(const pdcch_processor::pdu_t& pdu) const override { return pdcch->is_valid(pdu); }
   bool is_valid(const pdsch_processor::pdu_t& pdu) const override { return pdsch->is_valid(pdu); }
+  bool is_valid(const nzp_csi_rs_generator::config_t& config) const override { return csi->is_valid(config); }
 
 private:
-  std::unique_ptr<ssb_pdu_validator>   ssb;
-  std::unique_ptr<pdcch_pdu_validator> pdcch;
-  std::unique_ptr<pdsch_pdu_validator> pdsch;
+  std::unique_ptr<ssb_pdu_validator>                  ssb;
+  std::unique_ptr<pdcch_pdu_validator>                pdcch;
+  std::unique_ptr<pdsch_pdu_validator>                pdsch;
+  std::unique_ptr<nzp_csi_rs_configuration_validator> csi;
 };
 
 } // namespace srsgnb

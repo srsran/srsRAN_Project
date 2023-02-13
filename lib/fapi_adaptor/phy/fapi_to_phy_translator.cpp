@@ -9,6 +9,7 @@
  */
 
 #include "fapi_to_phy_translator.h"
+#include "srsgnb/fapi_adaptor/phy/messages/csi_rs.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/prach.h"
@@ -83,11 +84,13 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::~slot_based_upper_phy_c
 }
 
 namespace {
+
 /// Helper struct to store the downlink channel PHY PDUs.
 struct downlink_pdus {
-  static_vector<pdcch_processor::pdu_t, MAX_DL_PDCCH_PDUS_PER_SLOT> pdcch;
-  static_vector<pdsch_processor::pdu_t, MAX_DL_PDSCH_PDUS_PER_SLOT> pdsch;
-  static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>             ssb;
+  static_vector<pdcch_processor::pdu_t, MAX_DL_PDCCH_PDUS_PER_SLOT>       pdcch;
+  static_vector<pdsch_processor::pdu_t, MAX_DL_PDSCH_PDUS_PER_SLOT>       pdsch;
+  static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>                   ssb;
+  static_vector<nzp_csi_rs_generator::config_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rs;
 };
 
 /// Helper struct to store the uplink channel PHY PDUs.
@@ -109,8 +112,23 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
   downlink_pdus pdus;
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
-      case fapi::dl_pdu_type::CSI_RS:
+      case fapi::dl_pdu_type::CSI_RS: {
+        if (pdu.csi_rs_pdu.type != csi_rs_type::CSI_RS_NZP) {
+          logger.warning(
+              "Only NZP-CSI-RS PDU type is supported. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+
+          return {};
+        }
+        nzp_csi_rs_generator::config_t& csi_pdu = pdus.csi_rs.emplace_back();
+        convert_csi_rs_fapi_to_phy(csi_pdu, pdu.csi_rs_pdu, msg.sfn, msg.slot);
+        if (!dl_pdu_validator.is_valid(csi_pdu)) {
+          logger.warning(
+              "Unsupported CSI-RS PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
+
+          return {};
+        }
         break;
+      }
       case fapi::dl_pdu_type::PDCCH: {
         // For each DCI in the PDCCH PDU, create a pdcch_processor::pdu_t.
         for (unsigned i_dci = 0, i_dci_end = pdu.pdcch_pdu.dl_dci.size(); i_dci != i_dci_end; ++i_dci) {
@@ -119,6 +137,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
           if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
             logger.warning(
                 "Unsupported DL DCI {} detected. Skipping DL_DCI.request message in {}.{}.", i_dci, msg.sfn, msg.slot);
+
             return {};
           }
         }
@@ -178,6 +197,9 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   }
   for (const auto& pdcch : pdus.pdcch) {
     current_slot_controller->process_pdcch(pdcch);
+  }
+  for (const auto& csi : pdus.csi_rs) {
+    current_slot_controller->process_nzp_csi_rs(csi);
   }
   for (const auto& pdsch : pdus.pdsch) {
     pdsch_pdu_repository.push_back(pdsch);

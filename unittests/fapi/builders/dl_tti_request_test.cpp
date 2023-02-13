@@ -91,7 +91,7 @@ TEST(dl_ssb_pdu_builder, add_csi_pdu_passes)
   uint16_t                 nof_rbs       = 4;
   csi_rs_type              type          = csi_rs_type::CSI_RS_NZP;
   uint8_t                  row           = 3;
-  uint16_t                 freq_domain   = 6;
+  bounded_bitset<12>       freq_domain   = {1, 0, 0};
   uint8_t                  symb_l0       = 5;
   uint8_t                  symb_l1       = 2;
   csi_rs_cdm_type          cdm_type      = csi_rs_cdm_type::cdm8_FD2_TD4;

@@ -123,12 +123,14 @@ private:
 class downlink_processor_single_executor_factory : public downlink_processor_factory
 {
 public:
-  downlink_processor_single_executor_factory(std::shared_ptr<pdcch_processor_factory> pdcch_proc_factory_,
-                                             std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory_,
-                                             std::shared_ptr<ssb_processor_factory>   ssb_proc_factory_) :
+  downlink_processor_single_executor_factory(std::shared_ptr<pdcch_processor_factory>      pdcch_proc_factory_,
+                                             std::shared_ptr<pdsch_processor_factory>      pdsch_proc_factory_,
+                                             std::shared_ptr<ssb_processor_factory>        ssb_proc_factory_,
+                                             std::shared_ptr<nzp_csi_rs_generator_factory> nzp_csi_rs_factory_) :
     pdcch_proc_factory(pdcch_proc_factory_),
     pdsch_proc_factory(pdsch_proc_factory_),
-    ssb_proc_factory(ssb_proc_factory_)
+    ssb_proc_factory(ssb_proc_factory_),
+    nzp_csi_rs_factory(nzp_csi_rs_factory_)
   {
   }
 
@@ -144,12 +146,11 @@ public:
     std::unique_ptr<ssb_processor> ssb = ssb_proc_factory->create();
     report_fatal_error_if_not(ssb, "Invalid SSB processor.");
 
-    return std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
-                                                                     std::move(pdcch),
-                                                                     std::move(pdsch),
-                                                                     std::move(ssb),
-                                                                     std::make_unique<csi_rs_processor_dummy>(),
-                                                                     *config.executor);
+    std::unique_ptr<nzp_csi_rs_generator> nzp_csi = nzp_csi_rs_factory->create();
+    report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
+
+    return std::make_unique<downlink_processor_single_executor_impl>(
+        *config.gateway, std::move(pdcch), std::move(pdsch), std::move(ssb), std::move(nzp_csi), *config.executor);
   }
 
   // See interface for documentation.
@@ -170,13 +171,11 @@ public:
     }
     report_fatal_error_if_not(ssb, "Invalid SSB processor.");
 
-    std::unique_ptr<downlink_processor> downlink_proc =
-        std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
-                                                                  std::move(pdcch),
-                                                                  std::move(pdsch),
-                                                                  std::move(ssb),
-                                                                  std::make_unique<csi_rs_processor_dummy>(),
-                                                                  *config.executor);
+    std::unique_ptr<nzp_csi_rs_generator> nzp_csi = nzp_csi_rs_factory->create();
+    report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
+
+    std::unique_ptr<downlink_processor> downlink_proc = std::make_unique<downlink_processor_single_executor_impl>(
+        *config.gateway, std::move(pdcch), std::move(pdsch), std::move(ssb), std::move(nzp_csi), *config.executor);
 
     return std::make_unique<logging_downlink_processor_decorator>(std::move(downlink_proc), logger);
   }
@@ -185,13 +184,15 @@ public:
   {
     return std::make_unique<downlink_processor_validator_impl>(ssb_proc_factory->create_validator(),
                                                                pdcch_proc_factory->create_validator(),
-                                                               pdsch_proc_factory->create_validator());
+                                                               pdsch_proc_factory->create_validator(),
+                                                               nzp_csi_rs_factory->create_validator());
   }
 
 private:
-  std::shared_ptr<pdcch_processor_factory> pdcch_proc_factory;
-  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
-  std::shared_ptr<ssb_processor_factory>   ssb_proc_factory;
+  std::shared_ptr<pdcch_processor_factory>      pdcch_proc_factory;
+  std::shared_ptr<pdsch_processor_factory>      pdsch_proc_factory;
+  std::shared_ptr<ssb_processor_factory>        ssb_proc_factory;
+  std::shared_ptr<nzp_csi_rs_generator_factory> nzp_csi_rs_factory;
 };
 
 static std::unique_ptr<downlink_processor_pool>
@@ -512,7 +513,7 @@ srsgnb::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create channel coding factories - Polar
   std::shared_ptr<polar_factory> polar_factory = create_polar_factory_sw();
-  report_fatal_error_if_not(polar_factory, "Invalid CRC factory.");
+  report_fatal_error_if_not(polar_factory, "Invalid POLAR factory.");
 
   // Create sequence generators factories - PRG
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
@@ -520,12 +521,12 @@ srsgnb::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create modulation mapper factory.
   std::shared_ptr<channel_modulation_factory> mod_factory = create_channel_modulation_sw_factory();
-  report_fatal_error_if_not(prg_factory, "Invalid modulation factory.");
+  report_fatal_error_if_not(mod_factory, "Invalid modulation factory.");
 
   // Create channel processors encoder factories - PBCH
   std::shared_ptr<pbch_encoder_factory> pbch_enc_factory =
       create_pbch_encoder_factory_sw(crc_calc_factory, prg_factory, polar_factory);
-  report_fatal_error_if_not(pbch_enc_factory, "Invalid PDCCH encoder factory.");
+  report_fatal_error_if_not(pbch_enc_factory, "Invalid PBCH encoder factory.");
 
   // Create channel processors encoder factories - PDCCH
   std::shared_ptr<pdcch_encoder_factory> pdcch_enc_factory =
@@ -594,10 +595,15 @@ srsgnb::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   ssb_factory_config.pss_factory                          = pss_proc_factory;
   ssb_factory_config.sss_factory                          = sss_proc_factory;
   std::shared_ptr<ssb_processor_factory> ssb_proc_factory = create_ssb_processor_factory_sw(ssb_factory_config);
-  report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+  report_fatal_error_if_not(ssb_proc_factory, "Invalid SSB processor factory.");
+
+  // Create signal generators - NZP-CSI-RS
+  std::shared_ptr<nzp_csi_rs_generator_factory> nzp_csi_rs_factory =
+      create_nzp_csi_rs_generator_factory_sw(prg_factory);
+  report_fatal_error_if_not(nzp_csi_rs_factory, "Invalid NZP-CSI-RS generator factory.");
 
   return std::make_shared<downlink_processor_single_executor_factory>(
-      pdcch_proc_factory, pdsch_proc_factory, ssb_proc_factory);
+      pdcch_proc_factory, pdsch_proc_factory, ssb_proc_factory, nzp_csi_rs_factory);
 }
 
 std::unique_ptr<uplink_processor_pool> srsgnb::create_uplink_processor_pool(uplink_processor_pool_config config)

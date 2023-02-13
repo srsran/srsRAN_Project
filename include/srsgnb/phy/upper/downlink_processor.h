@@ -90,16 +90,20 @@ public:
   virtual ~downlink_pdu_validator() = default;
 
   /// \brief Validates SSB processor configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
   virtual bool is_valid(const ssb_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates PDCCH processor configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
   virtual bool is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates PDSCH processor configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
   virtual bool is_valid(const pdsch_processor::pdu_t& pdu) const = 0;
+
+  /// \brief Validates NZP-CSI-RS generator configuration parameters.
+  /// \return True if the parameters contained in \c config are supported, false otherwise.
+  virtual bool is_valid(const nzp_csi_rs_generator::config_t& config) const = 0;
 };
 
 /// Pool to access a downlink processor.

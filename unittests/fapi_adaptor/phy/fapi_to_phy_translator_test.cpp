@@ -33,6 +33,7 @@ public:
   bool is_valid(const ssb_processor::pdu_t& pdu) const override { return true; }
   bool is_valid(const pdcch_processor::pdu_t& pdu) const override { return true; }
   bool is_valid(const pdsch_processor::pdu_t& pdu) const override { return true; }
+  bool is_valid(const nzp_csi_rs_generator::config_t& config) const override { return true; }
 };
 
 class uplink_pdu_validator_dummy : public uplink_pdu_validator

@@ -113,7 +113,7 @@ static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& 
                                                                      pdu.crbs.length(),
                                                                      pdu.type,
                                                                      pdu.row,
-                                                                     pdu.freq_domain.to_uint64(),
+                                                                     pdu.freq_domain,
                                                                      pdu.symbol0,
                                                                      pdu.symbol1,
                                                                      pdu.cdm_type,
