@@ -340,35 +340,53 @@ bool rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu
     uint32_t new_last_byte = new_segment.so + new_segment.payload.length() - 1;
     if (new_segment.so > cur_last_byte) {
       // new segment starts after the end of the current segment
+      // cur: ...abcde
+      // new:          ghij...
       // check next segment
       ++cur_segment;
       continue;
     }
     if (new_segment.so >= cur_segment->so) {
       // new segment starts within the current segment
+      // cur: ...abcd...
+      // new:     bcd...
       if (new_last_byte <= cur_last_byte) {
         // new segment ends before or at the end of the current segment
+        // cur: ...abcdef
+        // new:     bcde
         // discard new segment and return false
         return false;
       }
       // new segment ends after the end of the current segment
-      // trim new segment
+      // cur: ...abcdef
+      // new:     bcdefghij...
+      // trim new segment:
+      // cur: ...abcdef
+      // new':         ghij...
       new_segment.payload.advance(cur_last_byte + 1 - new_segment.so);
       new_segment.so = cur_last_byte + 1;
       // check next segment (it might overlap the new segment)
+      // new':         ghij...
+      // next:           ij...
       ++cur_segment;
       continue;
     }
     // new segment starts before current segment
     if (new_last_byte < cur_segment->so) {
       // new segment ends before the end of the current segment
+      // cur:          ghij...
+      // new: ...abcde
       // exit loop and insert new segment afterwards
       break;
     }
     // new segment ends within or after the current segment
     if (new_last_byte < cur_last_byte) {
       // new segment ends within current segment
+      // cur:     bcdefghij...
+      // new: ...abcdef
       // trim current segment
+      // cur':         ghij...
+      // new: ...abcdef
       rlc_rx_am_sdu_segment cut_segment{*cur_segment};
       cut_segment.payload.advance(new_last_byte + 1 - cur_segment->so);
       cut_segment.so = new_last_byte + 1;
@@ -379,6 +397,8 @@ bool rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu
       break;
     }
     // new segment ends after the end of the current segment
+    // cur:     bcde
+    // new: ...abcdef...
     // remove current segment, check next segment
     sdu_info.segments.erase(cur_segment++);
   }
