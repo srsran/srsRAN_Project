@@ -358,17 +358,19 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
   for (unsigned i = 0; i < dl_res.ue_pdus.size(); ++i) {
     const mac_dl_data_result::dl_pdu& ue_pdu    = dl_res.ue_pdus[i];
     const pdsch_information&          pdsch_cfg = sl_res->dl.ue_grants[i].pdsch_cfg;
-    srsgnb::mac_nr_context_info       context;
-    context.radioType           = PCAP_FDD_RADIO;
-    context.direction           = PCAP_DIRECTION_DOWNLINK;
-    context.rntiType            = PCAP_C_RNTI;
-    context.rnti                = pdsch_cfg.rnti;
-    context.ueid                = 0;
-    context.harqid              = pdsch_cfg.harq_id;
-    context.system_frame_number = sl_tx.sfn();
-    context.sub_frame_number    = sl_tx.subframe_index();
-    context.length              = ue_pdu.pdu.size();
-    pcap.push_pdu(context, ue_pdu.pdu);
+    if (pdsch_cfg.codewords[0].new_data) {
+      srsgnb::mac_nr_context_info context;
+      context.radioType           = PCAP_FDD_RADIO;
+      context.direction           = PCAP_DIRECTION_DOWNLINK;
+      context.rntiType            = PCAP_C_RNTI;
+      context.rnti                = pdsch_cfg.rnti;
+      context.ueid                = 0;
+      context.harqid              = pdsch_cfg.harq_id;
+      context.system_frame_number = sl_tx.sfn();
+      context.sub_frame_number    = sl_tx.subframe_index();
+      context.length              = ue_pdu.pdu.size();
+      pcap.push_pdu(context, ue_pdu.pdu);
+    }
   }
 }
 
