@@ -345,7 +345,8 @@ protected:
                                    uint32_t  sdu_size       = 12,
                                    uint32_t  segment_size_a = 3,
                                    uint32_t  segment_size_b = 4,
-                                   uint32_t  skip_a         = 0)
+                                   uint32_t  skip_a1        = 0,
+                                   uint32_t  skip_a2        = 0)
   {
     // check status report
     rlc_am_status_pdu status_report = rlc->get_status_pdu();
@@ -365,7 +366,7 @@ protected:
     // Push A PDUs except for one into RLC
     uint32_t i = 0;
     for (const byte_buffer& pdu_buf : pdu_list_a) {
-      if (i != skip_a) {
+      if (i != skip_a1 && i != skip_a2) {
         byte_buffer_slice pdu = {pdu_buf.deep_copy()};
         rlc->handle_pdu(std::move(pdu));
       }
@@ -714,10 +715,18 @@ TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_2_4)
   uint32_t segment_size_a = 2;
   uint32_t segment_size_b = 4;
 
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 3);
+  // One segment missing
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0, 0);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1, 1);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2, 2);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 3, 3);
+  // Two segments missing
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0, 1);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0, 2);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0, 3);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1, 2);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1, 3);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2, 3);
 }
 
 /// Verify that reception of fully overlapping segments is properly managed, i.e. segments get trimmed or are discarded
@@ -735,8 +744,8 @@ TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_4_2)
   uint32_t segment_size_a = 4;
   uint32_t segment_size_b = 2;
 
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0, 0);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1, 1);
 }
 
 /// Verify that reception of partially overlapping segments is properly managed, i.e. segments get trimmed or are
@@ -754,10 +763,10 @@ TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_3_4)
   uint32_t segment_size_a = 3;
   uint32_t segment_size_b = 4;
 
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 3);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0, 0);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1, 1);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2, 2);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 3, 3);
 }
 
 /// Verify that reception of partially overlapping segments is properly managed, i.e. segments get trimmed or are
@@ -775,9 +784,9 @@ TEST_P(rlc_rx_am_test, rx_partially_overlapping_segments_4_3)
   uint32_t segment_size_a = 4;
   uint32_t segment_size_b = 3;
 
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1);
-  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 0, 0);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 1, 1);
+  rx_overlapping_sdu_segments(sn_state, sdu_size, segment_size_a, segment_size_b, 2, 2);
 }
 
 /// Verify status prohibit timer:
