@@ -58,6 +58,7 @@ protected:
     // create config
     cu_up_configuration cfg;
     cfg.cu_up_executor       = executor.get();
+    cfg.gtpu_pdu_executor    = executor.get();
     cfg.e1_notifier          = &e1_message_notifier;
     cfg.f1u_gateway          = f1u_gw.get();
     cfg.epoll_broker         = broker.get();
