@@ -89,20 +89,42 @@ static void add_ssb_pdus_to_dl_request(fapi::dl_tti_request_message_builder& bui
   }
 }
 
+static fapi::nzp_csi_rs_epre_to_ssb to_nzp_csi_rs_epre_to_ssb(int value)
+{
+  switch (value) {
+    case -3:
+      return fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3;
+    case 0:
+      return fapi::nzp_csi_rs_epre_to_ssb::dB0;
+    case 3:
+      return fapi::nzp_csi_rs_epre_to_ssb::dB3;
+    case 6:
+      return fapi::nzp_csi_rs_epre_to_ssb::dB6;
+    default:
+      return fapi::nzp_csi_rs_epre_to_ssb::dB0;
+  }
+}
+
 static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& builder,
                                           span<const csi_rs_info>               csi_rs_list)
 {
   for (const auto& pdu : csi_rs_list) {
-    builder.add_csi_rs_pdu(pdu.crbs.start(),
-                           pdu.crbs.length(),
-                           pdu.type,
-                           pdu.row,
-                           pdu.freq_domain.to_uint64(),
-                           pdu.symbol0,
-                           pdu.symbol1,
-                           pdu.cdm_type,
-                           pdu.freq_density,
-                           pdu.scrambling_id);
+    fapi::dl_csi_rs_pdu_builder csi_builder = builder.add_csi_rs_pdu(pdu.crbs.start(),
+                                                                     pdu.crbs.length(),
+                                                                     pdu.type,
+                                                                     pdu.row,
+                                                                     pdu.freq_domain.to_uint64(),
+                                                                     pdu.symbol0,
+                                                                     pdu.symbol1,
+                                                                     pdu.cdm_type,
+                                                                     pdu.freq_density,
+                                                                     pdu.scrambling_id);
+
+    csi_builder.set_bwp_parameters(pdu.bwp_cfg->scs,
+                                   pdu.bwp_cfg->cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL);
+    csi_builder.set_tx_power_info_parameters(pdu.power_ctrl_offset_profile_nr,
+                                             to_nzp_csi_rs_epre_to_ssb(pdu.power_ctrl_offset_ss_profile_nr));
+    csi_builder.set_maintenance_v3_tx_power_info_parameters({});
   }
 }
 
