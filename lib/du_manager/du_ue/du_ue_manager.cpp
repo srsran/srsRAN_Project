@@ -108,7 +108,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
     srsgnb_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
     rnti_to_ue_index[ue_db[ue_index].rnti % MAX_NOF_DU_UES] = INVALID_DU_UE_INDEX;
     ue_db.erase(ue_index);
-    logger.info("Removed ueId={}", ue_index);
+    logger.debug("Removed ueId={}", ue_index);
     CORO_RETURN();
   });
 }

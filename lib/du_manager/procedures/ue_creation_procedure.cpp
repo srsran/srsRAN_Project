@@ -135,7 +135,7 @@ bool ue_creation_procedure::setup_du_ue_resources()
   const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
   ue_ctx->activity_timer                    = services.timers.create_unique_timer();
   ue_ctx->activity_timer.set(UE_ACTIVITY_TIMEOUT, [ue_index = ue_ctx->ue_index, &logger = this->logger](unsigned tid) {
-    logger.info("UE Manager: ue={} activity timeout.", ue_index);
+    logger.debug("UE Manager: ue={} activity timeout.", ue_index);
     // TODO: Handle.
   });
 

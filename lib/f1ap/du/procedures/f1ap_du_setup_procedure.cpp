@@ -49,10 +49,10 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_respon
     }
 
     // Await timer.
-    logger.info("Received F1SetupFailure with Time to Wait IE. Reinitiating F1 setup in {}s (retry={}/{}).",
-                time_to_wait,
-                f1_setup_retry_no,
-                request.max_setup_retries);
+    logger.debug("Received F1SetupFailure with Time to Wait IE. Reinitiating F1 setup in {}s (retry={}/{}).",
+                 time_to_wait,
+                 f1_setup_retry_no,
+                 request.max_setup_retries);
     CORO_AWAIT(async_wait_for(f1_setup_wait_timer, time_to_wait * 1000));
   }
 
@@ -113,7 +113,7 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 
   if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value ==
                                           f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
-    logger.info("Received F1AP PDU with successful outcome.");
+    logger.debug("Received F1AP PDU with successful outcome.");
     res.msg     = cu_pdu_response.value().value.f1_setup_resp();
     res.success = true;
 
@@ -131,8 +131,8 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
                  cu_pdu_response.value().value.type().to_string());
     res.success = false;
   } else {
-    logger.info("Received F1AP PDU with unsuccessful outcome. Cause: {}",
-                get_cause_str(cu_pdu_response.error().value.f1_setup_fail()->cause.value));
+    logger.debug("Received F1AP PDU with unsuccessful outcome. Cause: {}",
+                 get_cause_str(cu_pdu_response.error().value.f1_setup_fail()->cause.value));
     res.success = false;
   }
   return res;

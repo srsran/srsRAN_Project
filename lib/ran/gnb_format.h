@@ -74,17 +74,17 @@ struct ue_event_prefix {
 
 inline void log_proc_started(srslog::basic_logger& logger, du_ue_index_t ue_index, rnti_t rnti, const char* proc_name)
 {
-  logger.info("{}: \"{}\" started.", ue_event_prefix{"CTRL", ue_index, rnti}, proc_name);
+  logger.debug("{}: \"{}\" started.", ue_event_prefix{"CTRL", ue_index, rnti}, proc_name);
 }
 
 inline void log_proc_started(srslog::basic_logger& logger, du_ue_index_t ue_index, const char* proc_name)
 {
-  logger.info("{}: \"{}\" started.", ue_event_prefix{"CTRL", ue_index}, proc_name);
+  logger.debug("{}: \"{}\" started.", ue_event_prefix{"CTRL", ue_index}, proc_name);
 }
 
 inline void log_proc_completed(srslog::basic_logger& logger, du_ue_index_t ue_index, rnti_t rnti, const char* proc_name)
 {
-  logger.info("{}: \"{}\" completed.", ue_event_prefix{"CTRL", ue_index, rnti}, proc_name);
+  logger.debug("{}: \"{}\" completed.", ue_event_prefix{"CTRL", ue_index, rnti}, proc_name);
 }
 
 template <typename... Args>
@@ -125,20 +125,23 @@ void log_proc_event(srslog::basic_logger& logger,
                     const char*           cause_fmt,
                     Args&&... args)
 {
+  if (not logger.debug.enabled()) {
+    return;
+  }
   fmt::memory_buffer fmtbuf;
   fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
-  logger.info("{}: {}", ue_event_prefix{"CTRL", ue_index}, to_c_str(fmtbuf));
+  logger.debug("{}: {}", ue_event_prefix{"CTRL", ue_index}, to_c_str(fmtbuf));
 }
 
 template <typename... Args>
 void log_ue_event(srslog::basic_logger& logger, const ue_event_prefix& ue_prefix, const char* cause_fmt, Args&&... args)
 {
-  if (not logger.info.enabled()) {
+  if (not logger.debug.enabled()) {
     return;
   }
   fmt::memory_buffer fmtbuf;
   fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
-  logger.info("{}: {}", ue_prefix, to_c_str(fmtbuf));
+  logger.debug("{}: {}", ue_prefix, to_c_str(fmtbuf));
 }
 
 template <typename... Args>

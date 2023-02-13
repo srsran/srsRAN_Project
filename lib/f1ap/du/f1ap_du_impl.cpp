@@ -187,11 +187,11 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
     CORO_AWAIT_VALUE(ue_ctxt_mod_resp, events->f1ap_ue_context_modification_response);
 
     if (ue_ctxt_mod_resp.has_value()) {
-      logger.info("Received F1AP PDU with successful outcome.");
+      logger.debug("Received F1AP PDU with successful outcome.");
       res.confirm = *ue_ctxt_mod_resp.value();
       res.success = true;
     } else {
-      logger.info("Received F1AP PDU with unsuccessful outcome.");
+      logger.debug("Received F1AP PDU with unsuccessful outcome.");
       res.refuse  = *ue_ctxt_mod_resp.error();
       res.success = false;
     }
@@ -206,17 +206,17 @@ void f1ap_du_impl::handle_message(const f1c_message& msg)
   expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg.pdu);
   expected<uint8_t>             transaction_id    = get_transaction_id(msg.pdu);
   if (transaction_id.has_value()) {
-    logger.info("F1AP SDU, \"{}::{}\", transaction id={}",
-                msg.pdu.type().to_string(),
-                get_message_type_str(msg.pdu),
-                transaction_id.value());
+    logger.debug("F1AP SDU, \"{}::{}\", transaction id={}",
+                 msg.pdu.type().to_string(),
+                 get_message_type_str(msg.pdu),
+                 transaction_id.value());
   } else if (gnb_du_ue_f1ap_id.has_value()) {
-    logger.info("F1AP SDU, \"{}::{}\", GNB-DU-UE-F1AP-ID={}",
-                msg.pdu.type().to_string(),
-                get_message_type_str(msg.pdu),
-                gnb_du_ue_f1ap_id.value());
+    logger.debug("F1AP SDU, \"{}::{}\", GNB-DU-UE-F1AP-ID={}",
+                 msg.pdu.type().to_string(),
+                 get_message_type_str(msg.pdu),
+                 gnb_du_ue_f1ap_id.value());
   } else {
-    logger.info("F1AP SDU, \"{}::{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+    logger.debug("F1AP SDU, \"{}::{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
   }
 
   if (logger.debug.enabled()) {
