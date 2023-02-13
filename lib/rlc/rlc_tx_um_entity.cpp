@@ -18,15 +18,13 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
                                    const rlc_tx_um_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
-                                   rlc_tx_lower_layer_notifier&         lower_dn_,
-                                   task_executor&                       ue_executor_) :
+                                   rlc_tx_lower_layer_notifier&         lower_dn_) :
   rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
   head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),
-  head_len_not_first(rlc_um_pdu_header_size_with_so(cfg.sn_field_length)),
-  ue_executor(ue_executor_)
+  head_len_not_first(rlc_um_pdu_header_size_with_so(cfg.sn_field_length))
 {
 }
 
@@ -90,11 +88,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
 
     // Notify the upper layer about the beginning of the transfer of the current SDU
     if (sdu.pdcp_sn.has_value()) {
-      // Redirect upper layer notification to ue_executor
-      auto handle_func = [this, pdcp_sn = std::move(sdu.pdcp_sn.value())]() mutable {
-        upper_dn.on_transmitted_sdu(pdcp_sn);
-      };
-      ue_executor.execute(std::move(handle_func));
+      upper_dn.on_transmitted_sdu(sdu.pdcp_sn.value());
     }
   }
 

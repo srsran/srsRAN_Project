@@ -56,16 +56,13 @@ private:
   const uint32_t head_len_first;
   const uint32_t head_len_not_first;
 
-  task_executor& ue_executor;
-
 public:
   rlc_tx_um_entity(du_ue_index_t                        du_index,
                    rb_id_t                              rb_id,
                    const rlc_tx_um_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
-                   rlc_tx_lower_layer_notifier&         lower_dn_,
-                   task_executor&                       ue_executor_);
+                   rlc_tx_lower_layer_notifier&         lower_dn_);
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu_) override;
