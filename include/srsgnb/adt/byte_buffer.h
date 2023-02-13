@@ -841,7 +841,10 @@ inline span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem
     return *src.segments().begin();
   }
   // non-contiguous: copy required
-  srsgnb_assert(src.length() <= tmp_mem.size_bytes(), "Insufficient temporary memory to fit the byte_buffer.");
+  srsgnb_assert(src.length() <= tmp_mem.size_bytes(),
+                "Insufficient temporary memory to fit the byte_buffer. buffer_size={}, tmp_size={}",
+                src.length(),
+                tmp_mem.size());
   span<uint8_t> result = {tmp_mem.data(), src.length()};
   copy_segments(src, result);
   return result;

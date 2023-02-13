@@ -17,7 +17,7 @@
 
 #define PCAP_CONTEXT_HEADER_MAX 256
 
-constexpr uint16_t pcap_max_len = 2000;
+constexpr uint16_t pcap_max_len = 10000;
 
 /// This structure gets written to the start of the file
 struct pcap_hdr_t {
