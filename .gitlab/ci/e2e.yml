@@ -16,7 +16,7 @@
     REQUEST: "" # Retina YAML request
     LOG_LEVEL: ""
   tags:
-    - on-prem-tester
+    - on-prem-amd64
   extends:
     - .prepare_test
   rules:
