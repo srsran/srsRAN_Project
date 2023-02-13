@@ -75,7 +75,7 @@ public:
   void        push_pdu(mac_nr_context_info context, byte_buffer pdu);
 
 private:
-  void write_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu);
+  void write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
 };
 } // namespace srsgnb
 

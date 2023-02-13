@@ -45,26 +45,25 @@ void mac_pcap::close()
 
 void mac_pcap::push_pdu(mac_nr_context_info context, srsgnb::const_span<uint8_t> pdu)
 {
-  auto fn = [this, context, pdu]() { write_pdu(context, pdu); };
+  byte_buffer buffer{pdu};
+  auto        fn = [this, context, buffer]() mutable { write_pdu(context, std::move(buffer)); };
   worker.push_task(fn);
 }
 
 void mac_pcap::push_pdu(mac_nr_context_info context, srsgnb::byte_buffer pdu)
 {
-  auto fn = [this, context, pdu]() {
-    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
-    span<const uint8_t>               pdu_span = to_span(pdu, tmp_mem);
-    write_pdu(context, pdu_span);
-  };
+  auto fn = [this, context, pdu]() mutable { write_pdu(context, std::move(pdu)); };
   worker.push_task(fn);
 }
 
-void mac_pcap::write_pdu(const mac_nr_context_info& context, srsgnb::const_span<uint8_t> pdu)
+void mac_pcap::write_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer buf)
 {
-  if (!is_write_enabled() || pdu.empty()) {
+  if (!is_write_enabled() || buf.empty()) {
     // skip
     return;
   }
+  std::array<uint8_t, pcap_max_len> tmp_mem; // no init
+  span<const uint8_t>               pdu = to_span(buf, tmp_mem);
 
   uint8_t        context_header[PCAP_CONTEXT_HEADER_MAX] = {};
   const uint16_t length                                  = pdu.size();

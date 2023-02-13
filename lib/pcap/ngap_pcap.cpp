@@ -41,26 +41,26 @@ void ngap_pcap::close()
 
 void ngap_pcap::push_pdu(srsgnb::byte_buffer pdu)
 {
-  auto fn = [this, pdu]() {
-    std::array<uint8_t, pcap_max_len> tmp_mem; // no init
-    span<const uint8_t>               pdu_span = to_span(pdu, tmp_mem);
-    write_pdu(pdu_span);
-  };
+  auto fn = [this, pdu]() mutable { write_pdu(std::move(pdu)); };
   worker.push_task(fn);
 }
 
 void ngap_pcap::push_pdu(srsgnb::const_span<uint8_t> pdu)
 {
-  auto fn = [this, pdu]() { write_pdu(pdu); };
+  byte_buffer buffer{pdu};
+  auto        fn = [this, buffer]() mutable { write_pdu(std::move(buffer)); };
   worker.push_task(fn);
 }
 
-void ngap_pcap::write_pdu(srsgnb::const_span<uint8_t> pdu)
+void ngap_pcap::write_pdu(srsgnb::byte_buffer buf)
 {
-  if (!is_write_enabled() || pdu.empty()) {
+  if (!is_write_enabled() || buf.empty()) {
     // skip
     return;
   }
+
+  std::array<uint8_t, pcap_max_len> tmp_mem; // no init
+  span<const uint8_t>               pdu = to_span(buf, tmp_mem);
 
   // write packet header
   write_pcap_header(pdu.size_bytes());
