@@ -373,4 +373,3 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     }
   }
 }
-

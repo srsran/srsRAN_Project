@@ -78,4 +78,3 @@ private:
   void write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
 };
 } // namespace srsgnb
-

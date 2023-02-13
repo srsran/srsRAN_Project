@@ -157,4 +157,3 @@ int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8
   return offset;
 }
 } // namespace srsgnb
-

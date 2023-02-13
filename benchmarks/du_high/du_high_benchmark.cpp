@@ -259,6 +259,7 @@ public:
     cfg.cells           = {config_helpers::make_default_du_cell_config()};
     cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
     cfg.qos             = config_helpers::make_default_du_qos_config_list();
+    cfg.pcap            = &pcap;
     du_hi               = std::make_unique<du_high>(cfg);
 
     // Connect CU back to DU.
@@ -321,6 +322,7 @@ public:
   std::unique_ptr<du_high>           du_hi;
   slot_point                         next_sl_tx{0, 0};
   unsigned                           slot_count;
+  mac_pcap                           pcap;
 
   byte_buffer pdcp_pdu;
 };
