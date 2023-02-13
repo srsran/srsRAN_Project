@@ -339,53 +339,48 @@ bool rlc_rx_am_entity::store_segment(rlc_rx_am_sdu_info& sdu_info, rlc_rx_am_sdu
     uint32_t cur_last_byte = cur_segment->so + cur_segment->payload.length() - 1;
     uint32_t new_last_byte = new_segment.so + new_segment.payload.length() - 1;
     if (new_segment.so > cur_last_byte) {
-      // new segment starts behind the end of current segment
+      // new segment starts after the end of the current segment
       // check next segment
       ++cur_segment;
       continue;
     }
     if (new_segment.so >= cur_segment->so) {
-      // new segment starts within current segment
+      // new segment starts within the current segment
       if (new_last_byte <= cur_last_byte) {
-        // new segment ends before or at the end of current segment
+        // new segment ends before or at the end of the current segment
         // discard new segment and return false
         return false;
-      } else {
-        // new segment ends after the end of current segment
-        // trim new segment
-        new_segment.payload.advance(cur_last_byte + 1 - new_segment.so);
-        new_segment.so = cur_last_byte + 1;
-        // check next segment
-        ++cur_segment;
-        continue;
       }
-    } else {
-      // new segment starts before current segment
-      if (new_last_byte < cur_segment->so) {
-        // new segment ends before current segment
-        // exit loop and insert new segment afterwards
-        break;
-      } else {
-        // new segment ends within or behind current segment
-        if (new_last_byte < cur_last_byte) {
-          // new segment ends within current segment
-          // trim current segment
-          rlc_rx_am_sdu_segment cut_segment{*cur_segment};
-          cut_segment.payload.advance(new_last_byte + 1 - cur_segment->so);
-          cut_segment.so = new_last_byte + 1;
-          sdu_info.segments.erase(cur_segment++);
-          // insert cut segment as close as possible before (next) current segment - this is faster than plain insert
-          sdu_info.segments.insert(cur_segment, std::move(cut_segment));
-          // exit loop and insert new segment afterwards
-          break;
-        } else {
-          // new segment ends behind current segment
-          // remove current segment, check next segment
-          sdu_info.segments.erase(cur_segment++);
-          continue;
-        }
-      }
+      // new segment ends after the end of the current segment
+      // trim new segment
+      new_segment.payload.advance(cur_last_byte + 1 - new_segment.so);
+      new_segment.so = cur_last_byte + 1;
+      // check next segment (it might overlap the new segment)
+      ++cur_segment;
+      continue;
     }
+    // new segment starts before current segment
+    if (new_last_byte < cur_segment->so) {
+      // new segment ends before the end of the current segment
+      // exit loop and insert new segment afterwards
+      break;
+    }
+    // new segment ends within or after the current segment
+    if (new_last_byte < cur_last_byte) {
+      // new segment ends within current segment
+      // trim current segment
+      rlc_rx_am_sdu_segment cut_segment{*cur_segment};
+      cut_segment.payload.advance(new_last_byte + 1 - cur_segment->so);
+      cut_segment.so = new_last_byte + 1;
+      sdu_info.segments.erase(cur_segment++);
+      // insert cut segment as close as possible before (next) current segment - this is faster than plain insert
+      sdu_info.segments.insert(cur_segment, std::move(cut_segment));
+      // exit loop and insert new segment afterwards
+      break;
+    }
+    // new segment ends after the end of the current segment
+    // remove current segment, check next segment
+    sdu_info.segments.erase(cur_segment++);
   }
   // insert new segment as close as possible before current segment - this is faster than plain insert
   sdu_info.segments.insert(cur_segment, std::move(new_segment));
