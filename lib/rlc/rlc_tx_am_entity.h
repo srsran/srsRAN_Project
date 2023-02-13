@@ -105,7 +105,6 @@ private:
   unique_timer      poll_retransmit_timer;
   std::atomic<bool> is_poll_retransmit_timer_expired;
 
-  task_executor& ue_executor;
   task_executor& pcell_executor;
 
 public:
@@ -116,7 +115,6 @@ public:
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
                    timer_manager&                       timers,
-                   task_executor&                       ue_executor_,
                    task_executor&                       pcell_executor_);
 
   // TX/RX interconnect
