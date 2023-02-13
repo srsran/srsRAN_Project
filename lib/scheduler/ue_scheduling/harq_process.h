@@ -123,7 +123,7 @@ public:
   explicit harq_process(harq_id_t    h_id,
                         harq_logger& logger_,
                         unsigned     max_ack_wait_in_slots_ = DEFAULT_ACK_TIMEOUT_SLOTS) :
-    id(h_id), logger(logger_), max_ack_wait_in_slots(max_ack_wait_in_slots_), ack_wait_in_slots(max_ack_wait_in_slots)
+    id(h_id), logger(logger_), ack_wait_in_slots(max_ack_wait_in_slots_)
   {
   }
 
@@ -179,9 +179,6 @@ protected:
 
   /// HARQ entity logger used by this HARQ process.
   harq_logger& logger;
-
-  /// Time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
-  const unsigned max_ack_wait_in_slots;
 
   /// Time interval, in slots, before the HARQ process assumes that the ACK/CRC went missing.
   unsigned ack_wait_in_slots;

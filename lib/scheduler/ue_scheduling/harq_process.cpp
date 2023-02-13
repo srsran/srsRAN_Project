@@ -28,9 +28,8 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
     if (tb.state == transport_block::state_t::waiting_ack) {
       // ACK went missing.
       tb.state = transport_block::state_t::pending_retx;
-      logger.warning(id,
-                     "Setting HARQ to \"pending reTx\" state. Cause: ACK Wait Timeout={} slots reached",
-                     max_ack_wait_in_slots);
+      logger.warning(
+          id, "Setting HARQ to \"pending reTx\" state. Cause: ACK Wait Timeout={} slots reached", ack_wait_in_slots);
     }
     if (tb.nof_retxs + 1 > tb.max_nof_harq_retxs) {
       // Max number of reTxs was exceeded. Clear HARQ process
@@ -39,7 +38,7 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
           id,
           "Discarding HARQ. Cause: ACK Wait Timeout={} slots reached and maximum number of reTxs {} exceeded",
           max_nof_harq_retxs(0),
-          max_ack_wait_in_slots);
+          ack_wait_in_slots);
     }
   }
 }
@@ -165,7 +164,7 @@ int dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
                      tb_idx,
                      prev_tx_params.tb[tb_idx]->tbs_bytes,
                      max_nof_harq_retxs(tb_idx),
-                     max_ack_wait_in_slots);
+                     ack_wait_in_slots);
       return (int)prev_tx_params.tb[tb_idx]->tbs_bytes;
     }
     return 0;
@@ -218,7 +217,7 @@ int ul_harq_process::crc_info(bool ack)
                      "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
                      prev_tx_params.tbs_bytes,
                      max_nof_harq_retxs(),
-                     max_ack_wait_in_slots);
+                     ack_wait_in_slots);
       return (int)prev_tx_params.tbs_bytes;
     }
     return 0;
