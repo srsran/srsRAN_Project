@@ -14,43 +14,53 @@ from retina.protocol.epc_pb2 import EPCStartInfo
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, IPerfRequest, UEStartInfo
 
-from .utils import get_ue_gnb_epc
+from .utils import get_ue_gnb_epc, ATTACH_TIMEOUT, STARTUP_TIMEOUT
 
+SHORT_DURATION = 20
+LONG_DURATION = 20*60
+BITRATE = 1e6
 
 class TestIPerf(BaseTest):
     @mark.parametrize(
-        "band, common_scs, bandwidth",
+        "iperf_duration, band, common_scs, bandwidth, ul_mcs, dl_mcs",
         (
-            # param(3, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(3, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(3, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(3, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(3, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(3, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(7, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(7, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(7, 15, 20, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(7, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(7, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(7, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            # param(7, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
+            # Smoke
+            param(SHORT_DURATION, 3, 15, 20, 28, 28, marks=mark.smoke, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.smoke, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            # ZMQ
+            param(SHORT_DURATION, 3, 15, 5, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 3, 15, 10, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 3, 15, 15, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 3, 15, 20, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 3, 15, 50, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 7, 15, 5, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 7, 15, 10, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 7, 15, 15, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 7, 15, 20, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 7, 15, 50, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 41, 30, 5, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 41, 30, 10, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 41, 30, 15, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(SHORT_DURATION, 41, 30, 50, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            # RF
+            param(LONG_DURATION, 3, 15, 10, 10, 10, marks=mark.rf, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(LONG_DURATION, 41, 30, 10, 10, 10, marks=mark.rf, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
         ),
     )
     @mark.parametrize(
         "direction",
         (
-            param(IPerfDir.DOWNLINK, id="downlink"),
-            param(IPerfDir.UPLINK, id="uplink"),
-            param(IPerfDir.BIDIRECTIONAL, id="bidirectional"),
+            param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+            param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+            param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
         ),
     )
     @mark.parametrize(
         "protocol",
         (
-            param(IPerfProto.UDP, id="udp"),
-            # param(IPerfProto.TCP, id="tcp"),
+            param(IPerfProto.UDP, id="udp", marks=mark.udp),
+            param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
         ),
     )
     def test(
@@ -59,12 +69,14 @@ class TestIPerf(BaseTest):
         band,
         common_scs,
         bandwidth,
+        ul_mcs,
+        dl_mcs,
         protocol,
         direction,
-        startup_timeout=120,
-        attach_timeout=120,
-        iperf_duration=20,
-        bitrate=70e6,
+        iperf_duration,
+        startup_timeout=ATTACH_TIMEOUT,
+        attach_timeout=STARTUP_TIMEOUT,
+        bitrate=BITRATE,
     ):
 
         logging.info("Ping Test")

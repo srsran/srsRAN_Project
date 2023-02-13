@@ -293,6 +293,9 @@ pages:
       when: always # Even if previous stages/required jobs fail
   image: $CR_REGISTRY_URI/testing-tools/doxygen:1.5.0
   script:
+    - ls
+    - ls zmq
+    - cat ./zmq/job.env
     - mkdir public
     - mv coverage_html public/
     - mv codechecker*html public/
@@ -312,8 +315,8 @@ pages:
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
     - sed -i 's/zmq_job_id/'$( cat ./zmq/job.env  )'/' public/index.html
+    - sed -i 's/rf_job_id/'$( cat ./rf/job.env  )'/' public/index.html
     # - sed -i 's/zmq_tsan_job_id/'$( cat ./zmq-tsan/job.env  )'/' public/index.html
-    # - sed -i 's/rf_job_id/'$( cat ./rf/job.env  )'/' public/index.html
 
   needs:
     - job: unit coverage
@@ -327,6 +330,8 @@ pages:
     - job: cppcheck
       artifacts: true
     - job: zmq
+      artifacts: true
+    - job: rf
       artifacts: true
   artifacts:
     paths:

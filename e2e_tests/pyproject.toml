@@ -3,7 +3,13 @@ log_cli = true
 log_level = "INFO"
 markers = [
   "smoke",
-  "intensive",
+  "zmq",
+  "rf",
+  "udp",
+  "tcp",
+  "downlink",
+  "uplink",
+  "bidirectional",
 ]
 minversion = "6.0"
 python_files = [

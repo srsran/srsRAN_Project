@@ -11,28 +11,37 @@ from retina.protocol.epc_pb2 import EPCStartInfo
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.ue_pb2 import UEStartInfo
 
-from .utils import get_ue_gnb_epc
+from .utils import get_ue_gnb_epc, ATTACH_TIMEOUT, STARTUP_TIMEOUT
 
+PING_COUNT = 10
 
 class TestPing(BaseTest):
     @mark.parametrize(
-        "band, common_scs, bandwidth",
+        "band, common_scs, bandwidth, ul_mcs, dl_mcs",
         (
-            param(3, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 10, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 15, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 20, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 25, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 30, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 40, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 50, marks=mark.intensive, id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
+            # Smoke
+            param(3, 15, 20, 28, 28, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(41, 30, 20, 28, 28, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            # ZMQ intensive
+            param(3, 15, 5, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(3, 15, 10, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(3, 15, 15, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(3, 15, 20, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(3, 15, 50, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(7, 15, 5, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(7, 15, 10, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(7, 15, 15, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(7, 15, 20, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(7, 15, 50, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(41, 30, 5, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(41, 30, 10, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(41, 30, 15, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(41, 30, 20, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(41, 30, 50, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            # RF intensive
+            param(3, 15, 10, 10, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(7, 15, 10, 10, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(41, 30, 10, 10, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
         ),
     )
     def test(
@@ -41,9 +50,11 @@ class TestPing(BaseTest):
         band,
         common_scs,
         bandwidth,
-        startup_timeout=120,
-        attach_timeout=120,
-        ping_count=10,
+        ul_mcs,
+        dl_mcs,
+        startup_timeout=STARTUP_TIMEOUT,
+        attach_timeout=ATTACH_TIMEOUT,
+        ping_count=PING_COUNT,
     ):
 
         logging.info("Ping Test")

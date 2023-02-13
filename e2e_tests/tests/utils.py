@@ -8,6 +8,11 @@ import grpc
 from pytest_html import extras
 from retina.protocol.base_pb2 import Empty
 
+ATTACH_TIMEOUT = 120
+STARTUP_TIMEOUT = 120
+
+logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.INFO)
+
 
 @contextmanager
 def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):

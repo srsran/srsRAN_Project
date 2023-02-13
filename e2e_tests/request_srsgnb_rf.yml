@@ -1,6 +1,6 @@
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2021-09-18_ba49eb7_47a0213a4_0.1.9
+  image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2021-09-18_ba49eb7_47a0213a4_0.1.10
   resources:
     - type: sdr
       model: b200 
@@ -9,7 +9,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.1_0.1.9
+  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.1_0.1.10
   resources:
     - type: sdr
       model: b200 
@@ -18,4 +18,4 @@
 
 - name: open5gs
   type: epc
-  image: registry.gitlab.com/softwareradiosystems/retina/images/open5gs:2.5.6_0.1.9
+  image: registry.gitlab.com/softwareradiosystems/retina/images/open5gs:2.5.6_0.1.10

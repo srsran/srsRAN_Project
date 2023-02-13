@@ -15,6 +15,8 @@
   variables:
     REQUEST: "" # Retina YAML request
     LOG_LEVEL: ""
+    MARKERS: ""
+    ARGS: ""
   tags:
     - on-prem-amd64
   extends:
@@ -30,11 +32,15 @@
   script:
     - |
       cd e2e_tests
-      export LOGNAME="gitlab-ci"
+      export LOGNAME=$GITLAB_USER_LOGIN
       export RETINA_LOGLEVEL="$LOG_LEVEL"
 
-    - retina-launcher --retina-request $PWD/${REQUEST}.yml --self-contained-html --html=./log/report.html --junitxml=out.xml -x -m smoke .
+    - retina-launcher --retina-request $PWD/${REQUEST}.yml --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
   after_script:
+    - |
+      echo "**************************************************************************************"
+      echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/$CI_JOB_NAME/report.html"
+      echo "**************************************************************************************"
     - mv e2e_tests/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
     - echo "$CI_JOB_ID" >> ${CI_PROJECT_DIR}/$CI_JOB_NAME/job.env
 
@@ -74,9 +80,30 @@ zmq:
   extends: .e2e-run
   variables:
     REQUEST: "request_srsgnb_zmq"
+    MARKERS: "smoke and not tcp"
     LOG_LEVEL: "info"
+    ARGS: "-x"
   rules:
     - if: $ON_MR
+      # when: manual
+      # allow_failure: false
+    # - if: $ON_MR == "true" && $GITLAB_USER_NAME == $CODEBOT_USERNAME
+    - if: $CI_DESCRIPTION =~ /Nightly/
+      variables:
+        MARKERS: "zmq and not udp"
+        LOG_LEVEL: "warning"
+        ARGS: ""
+  needs:
+    - job: "e2e-build"
+      artifacts: true
+
+rf:
+  extends: .e2e-run
+  variables:
+    REQUEST: "request_srsgnb_rf"
+    LOG_LEVEL: "warning"
+    MARKERS: "rf and not udp"
+  rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   needs:
     - job: "e2e-build"
