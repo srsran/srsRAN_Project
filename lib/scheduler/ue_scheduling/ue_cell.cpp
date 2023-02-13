@@ -35,6 +35,7 @@ ue_cell::ue_cell(du_ue_index_t                     ue_index_,
   if (not expert_cfg.fixed_ul_mcs.has_value()) {
     update_pusch_snr(expert_cfg.initial_ul_sinr);
   }
+  ue_metrics.latest_wb_cqi = expert_cfg.initial_cqi;
 }
 
 void ue_cell::handle_reconfiguration_request(const serving_cell_config& new_ue_cell_cfg)
@@ -48,6 +49,8 @@ void ue_cell::set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_
   if (payload.size() < cqi_payload_size) {
     return;
   }
+  // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
+  // encoding.
   ue_metrics.latest_wb_cqi = (static_cast<unsigned>(payload.test(0)) << 3) +
                              (static_cast<unsigned>(payload.test(1)) << 2) +
                              (static_cast<unsigned>(payload.test(2)) << 1) + (static_cast<unsigned>(payload.test(3)));

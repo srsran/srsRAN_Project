@@ -14,8 +14,6 @@
 
 using namespace srsgnb;
 
-static constexpr unsigned nof_bits_per_byte = 8U;
-
 static prb_interval get_prb_interval(unsigned N_rb_bwp, unsigned frequency_resource)
 {
   ra_frequency_type1_configuration ra_freq_cfg = ra_frequency_type1_from_riv(N_rb_bwp, frequency_resource);

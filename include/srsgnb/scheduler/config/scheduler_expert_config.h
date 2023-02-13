@@ -24,7 +24,7 @@ namespace srsgnb {
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
   optional<sch_mcs_index> fixed_dl_mcs;
-  sch_mcs_index           default_dl_mcs;
+  unsigned                initial_cqi;
   optional<sch_mcs_index> fixed_ul_mcs;
   sch_mcs_index           default_ul_mcs;
   unsigned                max_nof_harq_retxs;

@@ -21,8 +21,6 @@
 
 using namespace srsgnb;
 
-const unsigned NOF_BITS_PER_BYTE = 8U;
-
 ///////////////       HELPER FUNCTIONS         ///////////////
 
 // Contains the input test parameters.

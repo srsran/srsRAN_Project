@@ -36,7 +36,8 @@ public:
     // NOTE: the 0 is only used for initialization and will be overwritten by the first UL SNR report.
     double   pusch_snr_db          = 0.0;
     unsigned consecutive_pusch_kos = 0;
-    unsigned latest_wb_cqi         = 1;
+    // This gets initialized in the ue_cell constructor.
+    unsigned latest_wb_cqi;
     // TODO: Add other metrics of interest for the scheduler.
   };
 
