@@ -55,7 +55,7 @@ TEST_F(gtpu_demux_test, when_tunnel_not_registered_pdu_is_dropped)
 
   worker.start();
   dut->handle_pdu(std::move(pdu));
-  worker.stop();
+  worker.wait_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
 }
@@ -67,7 +67,7 @@ TEST_F(gtpu_demux_test, when_tunnel_registered_pdu_is_forwarded)
 
   worker.start();
   dut->handle_pdu(std::move(pdu));
-  worker.stop();
+  worker.wait_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), sizeof(gtpu_ping_vec));
 }
@@ -80,7 +80,7 @@ TEST_F(gtpu_demux_test, when_tunnel_is_removed_pdu_is_dropped)
 
   worker.start();
   dut->handle_pdu(std::move(pdu));
-  worker.stop();
+  worker.wait_pending_tasks();
 
   ASSERT_EQ(gtpu_tunnel->last_rx.length(), 0);
 }
