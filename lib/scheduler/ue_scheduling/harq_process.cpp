@@ -25,6 +25,8 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       // Wait more slots for ACK/NACK to arrive.
       return;
     }
+    // Reset the ACK wait time.
+    ack_wait_in_slots = max_ack_wait_in_slots;
     if (tb.state == transport_block::state_t::waiting_ack) {
       // ACK went missing.
       tb.state = transport_block::state_t::pending_retx;
@@ -82,6 +84,7 @@ void detail::harq_process<IsDownlink>::tx_common(slot_point slot_tx_, slot_point
 {
   last_slot_tx  = slot_tx_;
   last_slot_ack = slot_ack_;
+  ack_wait_in_slots = max_ack_wait_in_slots;
 }
 
 template <bool IsDownlink>
@@ -155,7 +158,7 @@ int dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
     return 0;
   }
 
-  ack_wait_in_slots = DEFAULT_ACK_TIMEOUT_SLOTS;
+  ack_wait_in_slots = max_ack_wait_in_slots;
   // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
   if (base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack)) {
     if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
