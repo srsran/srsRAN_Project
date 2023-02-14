@@ -11,6 +11,7 @@
 #pragma once
 
 #include "ring_buffer.h"
+#include "srsgnb/adt/optional.h"
 #include <condition_variable>
 #include <functional>
 #include <mutex>
@@ -167,6 +168,15 @@ public:
   /// \param[in] until Maximum time point to wait for a pushed element.
   /// \return True if element was successfully popped. False, otherwise.
   bool pop_wait_until(T& obj, const std::chrono::steady_clock::time_point& until) { return pop_(obj, true, &until); }
+
+  /// \brief Keeps popping and discarding elements until the \c stop_condition returns true.
+  /// \param[in] stop_condition Callable with signature "bool(const T&)" that checks if the discarding can be halted.
+  /// \return The element for which \c stop_condition returned true if it exists. Nullopt otherwise.
+  template <typename StopCondition>
+  optional<T> pop_and_discard_until(const StopCondition& stop_condition)
+  {
+    return pop_until_(stop_condition);
+  }
 
   /// \brief Clear all elements of the queue.
   void clear()
@@ -372,6 +382,28 @@ protected:
       cvar_full.notify_one();
     }
     return count;
+  }
+  template <typename StopCondition>
+  optional<T> pop_until_(const StopCondition& cond)
+  {
+    optional<T>                  ret{};
+    bool                         notify_needed = false;
+    std::unique_lock<std::mutex> lock(mutex);
+    while (pop_is_possible(lock, false)) {
+      pop_func(ring_buf.top());
+      notify_needed = true;
+      if (cond(ring_buf.top())) {
+        ret = std::move(ring_buf.top());
+        ring_buf.pop();
+        break;
+      }
+      ring_buf.pop();
+    }
+    if (notify_needed) {
+      cvar_full.notify_one();
+      lock.unlock();
+    }
+    return ret;
   }
 };
 
