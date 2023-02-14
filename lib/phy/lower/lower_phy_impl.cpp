@@ -257,13 +257,10 @@ void lower_phy_impl::process_symbol()
 
 void lower_phy_impl::realtime_process_loop(task_executor& realtime_task_executor)
 {
-  // Process symbol.
-  process_symbol();
-
   // Feedbacks the task if no stop has been signaled.
-  if (state_fsm.is_running()) {
-    realtime_task_executor.defer([this, &realtime_task_executor]() { realtime_process_loop(realtime_task_executor); });
-    return;
+  while (state_fsm.is_running()) {
+    // Process symbol.
+    process_symbol();
   }
 
   // Notify the stop of the asynchronous operation.
