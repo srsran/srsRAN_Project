@@ -118,8 +118,7 @@ int main(int argc, char** argv)
       std::make_unique<pdcp_entity_tx>(0, srb_id_t::srb1, config, frame, frame, timers);
   pdcp_tx_state st = {args.count};
   pdcp_tx->set_state(st);
-  pdcp_tx->set_as_security_config(sec_cfg);
-  pdcp_tx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+  pdcp_tx->enable_security(sec_cfg);
 
   // Write SDU
   byte_buffer sdu = {sdu1};

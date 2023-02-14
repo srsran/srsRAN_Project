@@ -20,6 +20,7 @@
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/support/timers.h"
+#include "fmt/format.h"
 #include <map>
 
 namespace srsgnb {
@@ -80,18 +81,20 @@ public:
   /*
    * Security configuration
    */
-  void set_as_security_config(security::sec_128_as_config sec_cfg_) final
+  void enable_security(security::sec_128_as_config sec_cfg_) final
   {
-    sec_cfg = sec_cfg_;
-    logger.log_info(
-        "Set RX security configuration, integ=NIA{}, cipher=NEA{}", sec_cfg.integ_algo, sec_cfg.cipher_algo);
-  };
-
-  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) final
-  {
-    integrity_enabled = integ;
-    ciphering_enabled = cipher;
-    logger.log_info("Enabled/disabled RX security integrity={}, ciphering={}", integ, cipher);
+    integrity_enabled = security::integrity_enabled::on;
+    ciphering_enabled = security::ciphering_enabled::on;
+    sec_cfg           = sec_cfg_;
+    logger.log_info("Security configured. NIA{} ({}) NEA{} ({})",
+                    sec_cfg.integ_algo,
+                    integrity_enabled,
+                    sec_cfg.cipher_algo,
+                    ciphering_enabled);
+    logger.log_debug(sec_cfg.k_128_rrc_int.data(), 16, "128 K_rrc_int");
+    logger.log_debug(sec_cfg.k_128_rrc_enc.data(), 16, "128 K_rrc_enc");
+    logger.log_debug(sec_cfg.k_128_up_int.data(), 16, "128 K_up_enc");
+    logger.log_debug(sec_cfg.k_128_up_enc.data(), 16, "128 K_up_enc");
   }
 
   /*
@@ -105,8 +108,8 @@ private:
 
   security::sec_128_as_config  sec_cfg           = {};
   security::security_direction direction         = security::security_direction::uplink;
-  security::integrity_enabled  integrity_enabled = security::integrity_enabled::no;
-  security::ciphering_enabled  ciphering_enabled = security::ciphering_enabled::no;
+  security::integrity_enabled  integrity_enabled = security::integrity_enabled::off;
+  security::ciphering_enabled  ciphering_enabled = security::ciphering_enabled::off;
 
   pdcp_rx_state st = {};
 
@@ -141,6 +144,8 @@ private:
   pdcp_rx_upper_control_notifier& upper_cn;
 
   timer_manager& timers;
+
+  void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };
 
 // Reordering callback (t-Reordering)
@@ -154,3 +159,21 @@ private:
   pdcp_entity_rx* parent;
 };
 } // namespace srsgnb
+
+namespace fmt {
+template <>
+struct formatter<srsgnb::pdcp_rx_state> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pdcp_rx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "rx_next={} rx_deliv={} rx_reord={}", st.rx_next, st.rx_deliv, st.rx_reord);
+  }
+};
+
+} // namespace fmt

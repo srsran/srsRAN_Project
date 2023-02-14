@@ -121,14 +121,7 @@ public:
   }
 
   // Setup security
-  void set_as_security_config(security::sec_128_as_config sec_cfg) override
-  {
-    pdcp_handler.set_as_security_config(sec_cfg);
-  }
-  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) override
-  {
-    pdcp_handler.enable_or_disable_security(integ, cipher);
-  };
+  void enable_security(security::sec_128_as_config sec_cfg) override { pdcp_handler.enable_security(sec_cfg); }
 
 private:
   pdcp_tx_upper_control_interface& pdcp_handler;
@@ -143,14 +136,7 @@ public:
   }
 
   // Setup security
-  void set_as_security_config(security::sec_128_as_config sec_cfg) override
-  {
-    pdcp_handler.set_as_security_config(sec_cfg);
-  }
-  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) override
-  {
-    pdcp_handler.enable_or_disable_security(integ, cipher);
-  };
+  void enable_security(security::sec_128_as_config sec_cfg) override { pdcp_handler.enable_security(sec_cfg); }
 
 private:
   pdcp_rx_upper_control_interface& pdcp_handler;

@@ -118,8 +118,7 @@ public:
   pdcp_tx_upper_control_interface& operator=(const pdcp_tx_upper_control_interface&&) = delete;
 
   // Setup security
-  virtual void set_as_security_config(security::sec_128_as_config sec_cfg)                                       = 0;
-  virtual void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) = 0;
+  virtual void enable_security(security::sec_128_as_config sec_cfg) = 0;
 
   // Trigger data recovery
   virtual void data_recovery() = 0;

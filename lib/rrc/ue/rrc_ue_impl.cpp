@@ -75,13 +75,8 @@ void rrc_ue_impl::on_new_security_config(security::sec_as_config sec_cfg)
   // store in rrc ue context
   context.sec_cfg = sec_cfg;
 
-  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_or_disable_security(
-      security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
-  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_or_disable_security(
-      security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
-
-  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->set_as_security_config(security::truncate_config(sec_cfg));
-  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->set_as_security_config(security::truncate_config(sec_cfg));
+  srbs[srb_id_to_uint(srb_id_t::srb1)].tx_sec_notifier->enable_security(security::truncate_config(sec_cfg));
+  srbs[srb_id_to_uint(srb_id_t::srb1)].rx_sec_notifier->enable_security(security::truncate_config(sec_cfg));
 }
 
 async_task<bool> rrc_ue_impl::handle_init_security_context(const rrc_init_security_context& sec_ctx)

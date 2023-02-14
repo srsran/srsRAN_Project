@@ -62,7 +62,7 @@ struct formatter<srsgnb::pdcp_tx_metrics_container> {
   auto format(srsgnb::pdcp_tx_metrics_container m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "num_sdus={}, num_sdu_bytes={}, num_pdus={}, num_pdu_bytes={}, num_discard_timeouts={}",
+                     "num_sdus={} num_sdu_bytes={} num_pdus={} num_pdu_bytes={} num_discard_timeouts={}",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_pdus,

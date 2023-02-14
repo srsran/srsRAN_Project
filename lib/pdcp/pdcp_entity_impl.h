@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "pdcp_bearer_logger.h"
 #include "pdcp_entity_rx.h"
 #include "pdcp_entity_tx.h"
 #include "srsgnb/pdcp/pdcp_config.h"
@@ -31,13 +30,10 @@ public:
                    pdcp_tx_upper_control_notifier& tx_upper_cn,
                    pdcp_rx_upper_data_notifier&    rx_upper_dn,
                    pdcp_rx_upper_control_notifier& rx_upper_cn,
-                   timer_manager&                  timers) :
-    logger("PDCP", {ue_index, rb_id})
+                   timer_manager&                  timers)
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index, rb_id, config.tx, tx_lower_dn, tx_upper_cn, timers);
-    logger.log_info("PDCP TX configured: {}", config.tx);
     rx = std::make_unique<pdcp_entity_rx>(ue_index, rb_id, config.rx, rx_upper_dn, rx_upper_cn, timers);
-    logger.log_info("PDCP RX configured: {}", config.rx);
 
     // Tx/Rx interconnect
     tx->set_status_provider(rx.get());
@@ -59,8 +55,6 @@ public:
   };
 
 private:
-  pdcp_bearer_logger logger;
-
   std::unique_ptr<pdcp_entity_tx> tx = {};
   std::unique_ptr<pdcp_entity_rx> rx = {};
 };

@@ -91,7 +91,7 @@ struct formatter<srsgnb::pdcp_dc_field> {
   template <typename FormatContext>
   auto format(srsgnb::pdcp_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"Control PDU", "Data PDU"};
+    constexpr static const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
   }
 };
@@ -107,7 +107,7 @@ struct formatter<srsgnb::pdcp_control_pdu_type> {
   template <typename FormatContext>
   auto format(srsgnb::pdcp_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"PDCP status report", "Interspersed ROHC feedback", "EHC feedback"};
+    constexpr static const char* options[] = {"status_report", "rohc_feedback", "ehc_feedback"};
     return format_to(ctx.out(), "{}", options[to_number(cpt)]);
   }
 };
@@ -124,7 +124,7 @@ struct formatter<srsgnb::pdcp_data_pdu_header> {
   auto format(const srsgnb::pdcp_data_pdu_header& hdr, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "[SN={}]", hdr.sn);
+    return format_to(ctx.out(), "sn={}", hdr.sn);
   }
 };
 
@@ -140,7 +140,7 @@ struct formatter<srsgnb::pdcp_control_pdu_header> {
   auto format(const srsgnb::pdcp_control_pdu_header& hdr, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "[cpt={}]", hdr.cpt);
+    return format_to(ctx.out(), "cpt={}", hdr.cpt);
   }
 };
 

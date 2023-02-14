@@ -25,7 +25,7 @@ using namespace srsgnb;
 void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 {
   metrics_add_sdus(1, sdu.length());
-  logger.log_debug(sdu.begin(), sdu.end(), "RX SDU ({} B)", sdu.length());
+  logger.log_debug(sdu.begin(), sdu.end(), "TX SDU. sdu_len={}", sdu.length());
 
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
@@ -33,7 +33,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   // we reached a maximum hard COUNT, after which we simply refuse to TX any further.
   if (st.tx_next >= cfg.max_count.hard) {
     if (!max_count_overflow) {
-      logger.log_error("Reached maximum COUNT, refusing to transmit further. COUNT={}", st.tx_next);
+      logger.log_error("Reached maximum count, refusing to transmit further. count={}", st.tx_next);
       upper_cn.on_protocol_failure();
       max_count_overflow = true;
     }
@@ -41,7 +41,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   }
   if (st.tx_next >= cfg.max_count.notify) {
     if (!max_count_notified) {
-      logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}", st.tx_next);
+      logger.log_warning("Approaching count wrap-around, notifying RRC. count={}", st.tx_next);
       upper_cn.on_max_count_reached();
       max_count_notified = true;
     }
@@ -78,8 +78,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
       info = {protected_buf.copy(), std::move(discard_timer)};
     }
     discard_timers_map.insert(std::make_pair(st.tx_next, std::move(info)));
-    logger.log_debug(
-        "Discard timer set for COUNT {}. Timeout: {}ms", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
+    logger.log_debug("Set discard timer. count={} timeout={}", st.tx_next, static_cast<uint32_t>(cfg.discard_timer));
   }
 
   // Write to lower layers
@@ -91,15 +90,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
 
 void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf)
 {
-  logger.log_info(buf.begin(),
-                  buf.end(),
-                  "TX Data PDU ({} B), COUNT={}, HFN={}, SN={}, integrity={}, encryption={}",
-                  buf.length(),
-                  count,
-                  HFN(count),
-                  SN(count),
-                  integrity_enabled,
-                  ciphering_enabled);
+  logger.log_info(
+      buf.begin(), buf.end(), "TX PDU. type=data pdu_len={} sn={} count={}", buf.length(), SN(count), count);
   metrics_add_pdus(1, buf.length());
   pdcp_tx_pdu tx_pdu = {};
   tx_pdu.buf         = std::move(buf);
@@ -111,7 +103,7 @@ void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer 
 
 void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
 {
-  logger.log_info(buf.begin(), buf.end(), "TX Control PDU ({}B)", buf.length());
+  logger.log_info(buf.begin(), buf.end(), "TX PDU. type=ctrl pdu_len={}", buf.length());
   metrics_add_pdus(1, buf.length());
   pdcp_tx_pdu tx_pdu = {};
   tx_pdu.buf         = std::move(buf);
@@ -128,11 +120,8 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
   uint32_t dc;
   dec.unpack(dc, 1);
   if (dc != to_number(pdcp_dc_field::control)) {
-    logger.log_warning(buf.begin(),
-                       buf.end(),
-                       "Cannot handle status report due to invalid D/C field: Expected {}, Got {}",
-                       to_number(pdcp_dc_field::control),
-                       dc);
+    logger.log_warning(
+        buf.begin(), buf.end(), "Invalid D/C field in status report. dc={}", to_number(pdcp_dc_field::control), dc);
     return;
   }
   uint32_t cpt;
@@ -140,7 +129,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
   if (cpt != to_number(pdcp_control_pdu_type::status_report)) {
     logger.log_warning(buf.begin(),
                        buf.end(),
-                       "Cannot handle status report due to invalid control PDU type: Expected {}, Got {}",
+                       "Invalid CPT field in status report. cpt={}",
                        to_number(pdcp_control_pdu_type::status_report),
                        cpt);
     return;
@@ -148,19 +137,20 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
   uint32_t reserved;
   dec.unpack(reserved, 4);
   if (reserved != 0) {
-    logger.log_warning(buf.begin(), buf.end(), "Ignoring status report because reserved bits are set: {}", reserved);
+    logger.log_warning(
+        buf.begin(), buf.end(), "Ignoring status report because reserved bits are set. reserved={:#x}", reserved);
     return;
   }
 
   // Unpack FMC field
   uint32_t fmc;
   dec.unpack(fmc, 32);
-  logger.log_info("Received PDCP status report with FMC={}", fmc);
+  logger.log_info("Status report. fmc={}", fmc);
 
   // Discard any SDU with COUNT < FMC
   for (auto it = discard_timers_map.begin(); it != discard_timers_map.end();) {
     if (it->first < fmc) {
-      logger.log_debug("Discarding SDU with COUNT={}", it->first);
+      logger.log_debug("SDU discarded. count={}", it->first);
       lower_dn.on_discard_pdu(SN(it->first));
       it = discard_timers_map.erase(it);
     } else {
@@ -175,7 +165,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_slice_chain status)
     // Bit == 0: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is missing.
     // Bit == 1: PDCP SDU with COUNT = (FMC + bit position) modulo 2^32 is correctly received.
     if (bit == 1) {
-      logger.log_debug("Discarding SDU with COUNT={}", fmc);
+      logger.log_debug("SDU discarded. count={}", fmc);
       lower_dn.on_discard_pdu(SN(fmc));
       discard_timers_map.erase(fmc);
     }
@@ -191,7 +181,7 @@ byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer
   // The data unit that is integrity protected is the PDU header
   // and the data part of the PDU before ciphering.
   security::sec_mac mac = {};
-  if (integrity_enabled == security::integrity_enabled::enabled) {
+  if (integrity_enabled == security::integrity_enabled::on) {
     byte_buffer buf = {};
     buf.append(hdr);
     buf.append(sdu);
@@ -203,18 +193,18 @@ byte_buffer pdcp_entity_tx::apply_ciphering_and_integrity_protection(byte_buffer
   // data part of the PDCP Data PDU except the
   // SDAP header and the SDAP Control PDU if included in the PDCP SDU.
   byte_buffer ct;
-  if (ciphering_enabled == security::ciphering_enabled::enabled) {
+  if (ciphering_enabled == security::ciphering_enabled::on) {
     byte_buffer buf = {};
     buf.append(sdu);
     // Append MAC-I
-    if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::enabled))) {
+    if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
       buf.append(mac);
     }
     ct = cipher_encrypt(buf, count);
   } else {
     ct.append(sdu);
     // Append MAC-I
-    if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::enabled))) {
+    if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
       ct.append(mac);
     }
   }
@@ -247,10 +237,10 @@ void pdcp_entity_tx::integrity_generate(security::sec_mac& mac, byte_buffer_view
       break;
   }
 
-  logger.log_debug("Integrity gen input: COUNT {}, Bearer ID {}, Direction {}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)k_int.data(), k_int.size(), "Integrity gen key:");
-  logger.log_debug(buf.begin(), buf.end(), "Integrity gen input message:");
-  logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC (generated)");
+  logger.log_debug("Integrity gen. count={} bearer_id={} dir={}", count, bearer_id, direction);
+  logger.log_debug((uint8_t*)k_int.data(), k_int.size(), "Integrity gen key.");
+  logger.log_debug(buf.begin(), buf.end(), "Integrity gen input message.");
+  logger.log_debug((uint8_t*)mac.data(), mac.size(), "MAC generated.");
 }
 
 byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
@@ -258,9 +248,9 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
   // If control plane use RRC integrity key. If data use user plane key
   const security::sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
-  logger.log_debug("Cipher encrypt input: COUNT: {}, Bearer ID: {}, Direction {}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher encrypt key:");
-  logger.log_debug(msg.begin(), msg.end(), "Cipher encrypt input msg");
+  logger.log_debug("Cipher encrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
+  logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher encrypt key.");
+  logger.log_debug(msg.begin(), msg.end(), "Cipher encrypt input msg.");
 
   byte_buffer ct;
 
@@ -280,7 +270,7 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
     default:
       break;
   }
-  logger.log_debug(ct.begin(), ct.end(), "Cipher encrypt output msg");
+  logger.log_debug(ct.begin(), ct.end(), "Cipher encrypt output msg.");
   return ct;
 }
 
@@ -290,18 +280,18 @@ byte_buffer pdcp_entity_tx::cipher_encrypt(byte_buffer_view msg, uint32_t count)
 void pdcp_entity_tx::send_status_report()
 {
   if (cfg.status_report_required) {
-    logger.log_info("Status report triggered");
+    logger.log_info("Status report triggered.");
     byte_buffer status_report = status_provider->compile_status_report();
     write_control_pdu_to_lower_layers(std::move(status_report));
   } else {
-    logger.log_warning("Status report triggered but not configured");
+    logger.log_warning("Status report triggered but not configured.");
   }
 }
 
 void pdcp_entity_tx::data_recovery()
 {
   srsgnb_assert(is_drb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
-  logger.log_info("Data recovery requested");
+  logger.log_info("Data recovery requested.");
 
   /*
    * TS 38.323 Sec. 5.4.1:
@@ -320,8 +310,9 @@ void pdcp_entity_tx::data_recovery()
  */
 void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
 {
-  // Sanity check: 18bit SRB not allowed
-  srsgnb_assert(!(is_srb() && cfg.sn_size == pdcp_sn_size::size18bits), "Invalid 18 bit SRB PDU");
+  // Sanity check: 18-bit SN not allowed for SRBs
+  srsgnb_assert(
+      !(is_srb() && cfg.sn_size == pdcp_sn_size::size18bits), "Invalid SN size for SRB. sn_size={}", cfg.sn_size);
 
   byte_buffer_writer hdr_writer = buf;
 
@@ -344,7 +335,7 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
       hdr_writer.append((hdr.sn & 0x000000ffU));
       break;
     default:
-      logger.log_error("Invalid SN length configuration: {} bits", cfg.sn_size);
+      logger.log_error("Invalid sn_size={}", cfg.sn_size);
   }
 }
 
@@ -355,11 +346,11 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
 {
   if (!(cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured)) {
-    logger.log_warning("Cannot stop discard timer up to highest_sn={}: discard_timer is not configured or infinite.");
+    logger.log_warning("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_sn);
     return;
   }
   if (discard_timers_map.empty()) {
-    logger.log_debug("Cannot stop discard timer up to highest_sn={}: discard_timers_map is empty.");
+    logger.log_debug("Cannot stop discard timers. No timers active. highest_sn={}", highest_sn);
     return;
   }
 
@@ -386,7 +377,7 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
     highest_hfn = HFN(tx_next_deliv);
   }
   highest_count = COUNT(highest_hfn, highest_sn);
-  logger.log_debug("Stopping discard timer up to highest_count={}. highest_sn={}, st.tx_next_deliv={}",
+  logger.log_debug("Stopping discard timers. highest_count={} highest_sn={} tx_next_deliv={}",
                    highest_count,
                    highest_sn,
                    tx_next_deliv);
@@ -394,14 +385,14 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
   // Remove timers from map
   for (uint32_t count = tx_next_deliv; count <= highest_count; count++) {
     discard_timers_map.erase(count);
-    logger.log_debug("Stopped discard timer for COUNT={}", count);
+    logger.log_debug("Stopped discard timer. count={}", count);
   }
 }
 
 // Discard Timer Callback (discardTimer)
 void pdcp_entity_tx::discard_callback::operator()(uint32_t timer_id)
 {
-  parent->logger.log_debug("Discard timer expired for PDU with COUNT={}", discard_count);
+  parent->logger.log_debug("Discard timer expired. count={}", discard_count);
 
   // Notify the RLC of the discard. It's the RLC to actually discard, if no segment was transmitted yet.
   parent->lower_dn.on_discard_pdu(pdcp_compute_sn(discard_count, parent->sn_size));

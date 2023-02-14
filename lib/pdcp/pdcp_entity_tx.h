@@ -50,7 +50,7 @@ public:
                  pdcp_tx_upper_control_notifier& upper_cn_,
                  timer_manager&                  timers_) :
     pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
-    logger("PDCP", {ue_index, rb_id_}),
+    logger("PDCP", {ue_index, rb_id_, "DL"}),
     cfg(cfg_),
     lower_dn(lower_dn_),
     upper_cn(upper_cn_),
@@ -58,12 +58,11 @@ public:
   {
     // Validate configuration
     srsgnb_assert((is_um() && cfg.discard_timer == pdcp_discard_timer::not_configured) || is_am(),
-                  "RLC UM with discard timer is un-supported. RLC mode={}, discardTimer={}",
-                  cfg.rlc_mode,
-                  cfg.discard_timer);
+                  "RLC UM with discard timer is not supported. {}",
+                  cfg);
     direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                  : security::security_direction::downlink;
-    logger.log_info("PDCP TX entity configured. Configuration: {}", cfg);
+    logger.log_info("PDCP configured. {}", cfg);
   }
 
   // Tx/Rx interconnect
@@ -96,7 +95,7 @@ public:
     if (is_am()) {
       stop_discard_timer(highest_sn);
     } else {
-      logger.log_warning("Received PDU delivery notification on UM bearer. SN<={}", highest_sn);
+      logger.log_warning("Received PDU delivery notification on UM bearer. sn<={}", highest_sn);
     }
   }
 
@@ -128,22 +127,21 @@ public:
   /*
    * Security configuration
    */
-  void set_as_security_config(security::sec_128_as_config sec_cfg_) final
+  void enable_security(security::sec_128_as_config sec_cfg_) final
   {
-    sec_cfg = sec_cfg_;
-    logger.log_info("Set TX security configuration, {}", sec_cfg.integ_algo, sec_cfg.cipher_algo);
-    logger.log_info(sec_cfg.k_128_rrc_int.data(), 16, "128 K_rrc_int");
-    logger.log_info(sec_cfg.k_128_rrc_enc.data(), 16, "128 K_rrc_enc");
-    logger.log_info(sec_cfg.k_128_up_int.data(), 16, "128 K_up_enc");
-    logger.log_info(sec_cfg.k_128_up_enc.data(), 16, "128 K_up_enc");
+    integrity_enabled = security::integrity_enabled::on;
+    ciphering_enabled = security::ciphering_enabled::on;
+    sec_cfg           = sec_cfg_;
+    logger.log_info("Security configured: NIA{} ({}) NEA{} ({})",
+                    sec_cfg.integ_algo,
+                    integrity_enabled,
+                    sec_cfg.cipher_algo,
+                    ciphering_enabled);
+    logger.log_debug(sec_cfg.k_128_rrc_int.data(), 16, "128 K_rrc_int");
+    logger.log_debug(sec_cfg.k_128_rrc_enc.data(), 16, "128 K_rrc_enc");
+    logger.log_debug(sec_cfg.k_128_up_int.data(), 16, "128 K_up_enc");
+    logger.log_debug(sec_cfg.k_128_up_enc.data(), 16, "128 K_up_enc");
   };
-
-  void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) final
-  {
-    integrity_enabled = integ;
-    ciphering_enabled = cipher;
-    logger.log_info("Enabled/disabled TX security integrity={}, ciphering={}", integ, cipher);
-  }
 
   /// Sends a status report, as specified in TS 38.323, Sec. 5.4.
   void send_status_report();
@@ -164,8 +162,8 @@ private:
   security::security_direction direction = security::security_direction::downlink;
 
   security::sec_128_as_config sec_cfg           = {};
-  security::integrity_enabled integrity_enabled = security::integrity_enabled::no;
-  security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::no;
+  security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
+  security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
 
   void write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf);
   void write_control_pdu_to_lower_layers(byte_buffer buf);

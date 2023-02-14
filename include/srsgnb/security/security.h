@@ -102,8 +102,8 @@ constexpr uint8_t to_number(security_direction direction)
 }
 
 /// integrity/ciphering enabled
-enum class integrity_enabled { no, enabled };
-enum class ciphering_enabled { no, enabled };
+enum class integrity_enabled { off = 0, on = 1 };
+enum class ciphering_enabled { off = 0, on = 1 };
 
 using sec_mac = std::array<uint8_t, sec_mac_len>;
 
@@ -277,8 +277,44 @@ struct formatter<srsgnb::security::security_direction> {
   auto format(srsgnb::security::security_direction dir, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"Uplink", "Downlink"};
+    constexpr static const char* options[] = {"UL", "DL"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(dir)]);
+  }
+};
+
+// Integrity enabled
+template <>
+struct formatter<srsgnb::security::integrity_enabled> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::security::integrity_enabled integrity_flag, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    constexpr static const char* options[] = {"off", "on"};
+    return format_to(ctx.out(), "{}", options[static_cast<unsigned>(integrity_flag)]);
+  }
+};
+
+// Ciphering enabled
+template <>
+struct formatter<srsgnb::security::ciphering_enabled> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::security::ciphering_enabled ciphering_flag, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    constexpr static const char* options[] = {"off", "on"};
+    return format_to(ctx.out(), "{}", options[static_cast<unsigned>(ciphering_flag)]);
   }
 };
 

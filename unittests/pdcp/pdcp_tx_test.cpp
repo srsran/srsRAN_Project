@@ -69,8 +69,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->set_as_security_config(sec_cfg);
-    pdcp_tx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_tx->enable_security(sec_cfg);
 
     // Write SDU
     byte_buffer sdu = {sdu1};
@@ -113,8 +112,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->set_as_security_config(sec_cfg);
-    pdcp_tx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_tx->enable_security(sec_cfg);
 
     // Write first SDU
     {
@@ -158,8 +156,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
   auto test_discard_timer_stop = [this](pdcp_tx_state st) {
     // Set state of PDCP entiy
     pdcp_tx->set_state(st);
-    pdcp_tx->set_as_security_config(sec_cfg);
-    pdcp_tx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_tx->enable_security(sec_cfg);
 
     constexpr uint32_t nof_sdus = 5;
 
@@ -240,8 +237,7 @@ TEST_P(pdcp_tx_test, count_wraparound)
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);
-    pdcp_tx->set_as_security_config(sec_cfg);
-    pdcp_tx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_tx->enable_security(sec_cfg);
 
     // Write first SDU
     for (uint32_t i = 0; i < n_sdus; i++) {

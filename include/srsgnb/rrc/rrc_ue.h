@@ -48,8 +48,7 @@ class rrc_tx_security_notifier
 public:
   virtual ~rrc_tx_security_notifier() = default;
 
-  virtual void set_as_security_config(security::sec_128_as_config sec_cfg)                                       = 0;
-  virtual void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) = 0;
+  virtual void enable_security(security::sec_128_as_config sec_cfg) = 0;
 };
 
 /// Interface to configure security in a SRB.
@@ -59,8 +58,7 @@ class rrc_rx_security_notifier
 public:
   virtual ~rrc_rx_security_notifier() = default;
 
-  virtual void set_as_security_config(security::sec_128_as_config sec_cfg)                                       = 0;
-  virtual void enable_or_disable_security(security::integrity_enabled integ, security::ciphering_enabled cipher) = 0;
+  virtual void enable_security(security::sec_128_as_config sec_cfg) = 0;
 };
 
 /// Struct to hold notifiers for a specific SRB

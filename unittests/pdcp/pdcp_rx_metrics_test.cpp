@@ -28,8 +28,7 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
     srsgnb::test_delimit_logger delimiter("RX PDU/SDU metrics tests. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
@@ -77,8 +76,7 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
         "RX PDU with bad integrity metrics test. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu;
     get_test_pdu(count, test_pdu);
@@ -124,8 +122,7 @@ TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
         "t-Reordering expiration metrics test. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms10);
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);

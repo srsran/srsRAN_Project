@@ -22,7 +22,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                pdcp_rx_upper_control_notifier& upper_cn_,
                                timer_manager&                  timers_) :
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
-  logger("PDCP", {ue_index, rb_id_}),
+  logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
@@ -41,7 +41,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   } else if (cfg.rlc_mode == pdcp_rlc_mode::um) {
     logger.log_error("{} possible PDCP-NR misconfiguration: using infinite re-ordering timer with RLC UM bearer.");
   }
-  logger.log_info("Configured PDCP RX entity. Configuration: {}", cfg);
+  logger.log_info("PDCP configured. {}", cfg);
 }
 
 void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
@@ -49,20 +49,16 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_slice_chain pdu)
   metrics_add_pdus(1, pdu.length());
 
   // Log PDU
-  logger.log_info(pdu.begin(),
-                  pdu.end(),
-                  "RX PDU ({} B), integrity={}, ciphering={}",
-                  pdu.length(),
-                  integrity_enabled,
-                  ciphering_enabled);
+  logger.log_debug(pdu.begin(), pdu.end(), "RX PDU. pdu_len={}", pdu.length());
   // Sanity check
   if (pdu.length() == 0) {
     metrics_add_dropped_pdus(1);
-    logger.log_error("PDCP PDU is empty.");
+    logger.log_error("Dropping empty PDU.");
     return;
   }
 
-  if (is_srb() || pdcp_pdu_get_dc(*(pdu.begin())) == pdcp_dc_field::data) {
+  pdcp_dc_field dc = pdcp_pdu_get_dc(*(pdu.begin()));
+  if (is_srb() || dc == pdcp_dc_field::data) {
     handle_data_pdu(std::move(pdu));
   } else {
     handle_control_pdu(std::move(pdu));
@@ -74,16 +70,18 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
     metrics_add_dropped_pdus(1);
-    logger.log_error("PDCP PDU is too small. PDU length={}, header length={}", pdu.length(), hdr_len_bytes);
+    logger.log_error(pdu.begin(), pdu.end(), "RX PDU too small. pdu_len={} hdr_len={}", pdu.length(), hdr_len_bytes);
     return;
   }
-  logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
+  // Log state
+  log_state(srslog::basic_levels::debug);
 
   // Unpack header
   pdcp_data_pdu_header hdr = {};
   if (not read_data_pdu_header(hdr, pdu)) {
     metrics_add_dropped_pdus(1);
-    logger.log_error("Error extracting PDCP SN");
+    logger.log_error(
+        pdu.begin(), pdu.end(), "Failed to extract SN. pdu_len={} hdr_len={}", pdu.length(), hdr_len_bytes);
     return;
   }
 
@@ -108,20 +106,23 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
   }
   rcvd_count = COUNT(rcvd_hfn, hdr.sn);
 
+  logger.log_info(
+      pdu.begin(), pdu.end(), "RX PDU. type=data pdu_len={} sn={} count={}", pdu.length(), hdr.sn, rcvd_count);
+
   // The PDCP is not allowed to use the same COUNT value more than once for a given security key,
   // see TS 38.331, section 5.3.1.2. To avoid this, we notify the RRC once we exceed a "maximum"
   // notification COUNT. It is then the RRC's responsibility to refresh the keys. We continue receiving until
   // we reach a hard maximum RCVD_COUNT, after which we refuse to receive any further.
   if (rcvd_count > cfg.max_count.notify) {
     if (!max_count_notified) {
-      logger.log_warning("Approaching COUNT wrap-around, notifying RRC. COUNT={}", rcvd_count);
+      logger.log_warning("Approaching max_count, notifying RRC. count={}", rcvd_count);
       upper_cn.on_max_count_reached();
       max_count_notified = true;
     }
   }
-  if (rcvd_count >= cfg.max_count.hard && !max_count_overflow) {
+  if (rcvd_count >= cfg.max_count.hard) {
     if (!max_count_overflow) {
-      logger.log_error("Reached maximum COUNT, refusing to receive further. COUNT={}", rcvd_count);
+      logger.log_error("Reached max_count, refusing further RX. count={}", rcvd_count);
       upper_cn.on_protocol_failure();
       max_count_overflow = true;
     }
@@ -136,7 +137,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    * SDAP header and the SDAP Control PDU if included in the PDCP SDU.
    */
   byte_buffer sdu;
-  if (ciphering_enabled == security::ciphering_enabled::enabled) {
+  if (ciphering_enabled == security::ciphering_enabled::on) {
     sdu = cipher_decrypt(pdu.begin() + hdr_len_bytes, pdu.end(), rcvd_count);
     std::array<uint8_t, pdcp_data_pdu_header_size_max> header_buf;
     std::copy(pdu.begin(), pdu.begin() + hdr_len_bytes, header_buf.begin());
@@ -150,7 +151,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    * Always extract from SRBs, only extract from DRBs if integrity is enabled
    */
   security::sec_mac mac = {};
-  if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::enabled))) {
+  if (is_srb() || (is_drb() && (integrity_enabled == security::integrity_enabled::on))) {
     extract_mac(sdu, mac);
   }
 
@@ -160,17 +161,17 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    * The data unit that is integrity protected is the PDU header
    * and the data part of the PDU before ciphering.
    */
-  if (integrity_enabled == security::integrity_enabled::enabled) {
+  if (integrity_enabled == security::integrity_enabled::on) {
     bool is_valid = integrity_verify(sdu, rcvd_count, mac);
     if (!is_valid) {
-      logger.log_warning(sdu.begin(), sdu.end(), "Integrity failed. Dropping PDU");
+      logger.log_warning(sdu.begin(), sdu.end(), "Integrity failed, dropping PDU.");
       metrics_add_integrity_failed_pdus(1);
       // TODO: Re-enable once the RRC supports notifications from the PDCP
       // upper_cn.on_integrity_failure();
       return; // Invalid packet, drop.
     }
     metrics_add_integrity_verified_pdus(1);
-    logger.log_debug(sdu.begin(), sdu.end(), "Integrity verification successful");
+    logger.log_debug(sdu.begin(), sdu.end(), "Integrity passed.");
   }
   // After checking the integrity, we can discard the header.
   discard_data_header(sdu);
@@ -183,14 +184,13 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
    *   - discard the PDCP Data PDU;
    */
   if (rcvd_count < st.rx_deliv) {
-    logger.log_debug("Out-of-order after time-out, duplicate or COUNT wrap-around");
-    logger.log_debug("RCVD_COUNT {}, RCVD_COUNT {}", rcvd_count, st.rx_deliv);
+    logger.log_debug("Out-of-order after timeout, duplicate or count wrap-around. count={} {}", rcvd_count, st);
     return; // Invalid count, drop.
   }
 
   // Check if PDU has been received
   if (reorder_queue.find(rcvd_count) != reorder_queue.end()) {
-    logger.log_debug("Duplicate PDU, dropping");
+    logger.log_debug("Duplicate PDU dropped. count={}", rcvd_count);
     return; // PDU already present, drop.
   }
 
@@ -217,7 +217,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
   // Handle reordering timers
   if (reordering_timer.is_running() and st.rx_deliv >= st.rx_reord) {
     reordering_timer.stop();
-    logger.log_debug("Stopped t-Reordering - RX_DELIV={}, RX_REORD={}", st.rx_deliv, st.rx_reord);
+    logger.log_debug("Stopped t-Reordering.", st);
   }
 
   if (cfg.t_reordering != pdcp_t_reordering::infinity) {
@@ -226,12 +226,12 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer_slice_chain pdu)
       handle_t_reordering_expire();
     } else if (not reordering_timer.is_running() and st.rx_deliv < st.rx_next) {
       reordering_timer.run();
-      logger.log_debug(
-          "Started t-Reordering - RX_REORD={}, RX_DELIV={}, RX_NEXT={}", st.rx_reord, st.rx_deliv, st.rx_next);
+      logger.log_debug("Started t-Reordering.");
     }
   }
 
-  logger.log_debug("Rx PDCP state - RX_NEXT={}, RX_DELIV={}, RX_REORD={}", st.rx_next, st.rx_deliv, st.rx_reord);
+  // Log state
+  log_state(srslog::basic_levels::debug);
 }
 
 void pdcp_entity_rx::handle_control_pdu(byte_buffer_slice_chain pdu)
@@ -241,10 +241,7 @@ void pdcp_entity_rx::handle_control_pdu(byte_buffer_slice_chain pdu)
 
   // Assert control PDU
   pdcp_dc_field dc = pdcp_pdu_get_dc(hdr_byte);
-  srsgnb_assert(dc == pdcp_dc_field::control,
-                "Cannot handle status report due to invalid D/C field: Expected {}, Got {}",
-                pdcp_dc_field::control,
-                dc);
+  srsgnb_assert(dc == pdcp_dc_field::control, "Invalid D/C field in control PDU. dc={}", dc);
 
   // Switch control PDU type (CPT)
   pdcp_control_pdu_header control_hdr = {};
@@ -254,7 +251,7 @@ void pdcp_entity_rx::handle_control_pdu(byte_buffer_slice_chain pdu)
       status_handler->on_status_report(std::move(pdu));
       break;
     default:
-      logger.log_error(pdu.begin(), pdu.end(), "Received unsupported control PDU: {}", control_hdr);
+      logger.log_error(pdu.begin(), pdu.end(), "Unsupported control PDU type. {}", control_hdr);
   }
 }
 
@@ -265,7 +262,7 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
   for (std::map<uint32_t, byte_buffer>::iterator it = reorder_queue.begin();
        it != reorder_queue.end() && it->first == st.rx_deliv;
        reorder_queue.erase(it++)) {
-    logger.log_debug("Delivering SDU with RCVD_COUNT {}", it->first);
+    logger.log_info("RX SDU. count={}", it->first);
 
     // Pass PDCP SDU to the upper layers
     metrics_add_sdus(1, it->second.length());
@@ -345,14 +342,15 @@ bool pdcp_entity_rx::integrity_verify(byte_buffer_view buf, uint32_t count, cons
     logger.log(level,
                buf.begin(),
                buf.end(),
-               "Integrity check input - COUNT: {}, Bearer ID: {}, Direction: {}",
+               "Integrity check. is_valid={} count={} bearer_id={} dir={}",
+               is_valid,
                count,
                bearer_id,
                direction);
-    logger.log(level, (uint8_t*)k_int.data(), 16, "Integrity check key:");
-    logger.log(level, (uint8_t*)mac_exp.data(), 4, "MAC {} (expected):", is_valid ? "match" : "mismatch");
-    logger.log(level, (uint8_t*)mac.data(), 4, "MAC {} (found):", is_valid ? "match" : "mismatch");
-    logger.log(level, buf.begin(), buf.end(), "Integrity check input msg (Bytes={})", buf.length());
+    logger.log(level, (uint8_t*)k_int.data(), 16, "Integrity check key.");
+    logger.log(level, (uint8_t*)mac_exp.data(), 4, "MAC expected.");
+    logger.log(level, (uint8_t*)mac.data(), 4, "MAC found.");
+    logger.log(level, buf.begin(), buf.end(), "Integrity check input message. len={}", buf.length());
   }
 
   return is_valid;
@@ -365,9 +363,9 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
   // If control plane use RRC integrity key. If data use user plane key
   const security::sec_128_as_key& k_enc = is_srb() ? sec_cfg.k_128_rrc_enc : sec_cfg.k_128_up_enc;
 
-  logger.log_debug("Cipher decrypt input: COUNT: {}, Bearer ID: {}, Direction: {}", count, bearer_id, direction);
-  logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key:");
-  logger.log_debug(msg_begin, msg_end, "Cipher decrypt input msg");
+  logger.log_debug("Cipher decrypt. count={} bearer_id={} dir={}", count, bearer_id, direction);
+  logger.log_debug((uint8_t*)k_enc.data(), k_enc.size(), "Cipher decrypt key.");
+  logger.log_debug(msg_begin, msg_end, "Cipher decrypt input msg.");
 
   byte_buffer ct;
 
@@ -387,7 +385,7 @@ byte_buffer pdcp_entity_rx::cipher_decrypt(byte_buffer_slice_chain::const_iterat
     default:
       break;
   }
-  logger.log_debug(ct.begin(), ct.end(), "Cipher decrypt output msg");
+  logger.log_debug(ct.begin(), ct.end(), "Cipher decrypt output msg.");
   return ct;
 }
 
@@ -411,13 +409,15 @@ void pdcp_entity_rx::handle_t_reordering_expire()
   // Deliver all PDCP SDU(s) consecutively associated COUNT value(s) starting from RX_REORD
   deliver_all_consecutive_counts();
 
+  // Log state
+  log_state(srslog::basic_levels::debug);
+
   if (st.rx_deliv < st.rx_next) {
     if (cfg.t_reordering == pdcp_t_reordering::ms0) {
-      logger.log_error(
-          "RX_DELIV={} < RX_NEXT={}, but t-Reordering is 0ms. RX_REORD={}", st.rx_deliv, st.rx_next, st.rx_reord);
+      logger.log_error("Reordering timer expired after 0ms and rx_deliv < rx_next. {}", st);
       return;
     }
-    logger.log_debug("Updating RX_REORD to {}. Old RX_REORD={}, RX_DELIV={}", st.rx_next, st.rx_reord, st.rx_deliv);
+    logger.log_debug("Updating rx_reord to rx_next. {}", st);
     st.rx_reord = st.rx_next;
     reordering_timer.run();
   }
@@ -426,9 +426,8 @@ void pdcp_entity_rx::handle_t_reordering_expire()
 // Reordering Timer Callback (t-reordering)
 void pdcp_entity_rx::reordering_callback::operator()(uint32_t /*timer_id*/)
 {
-  parent->logger.log_info("Reordering timer expired. RX_REORD={}, re-order queue size={}",
-                          parent->st.rx_reord,
-                          parent->reorder_queue.size());
+  parent->logger.log_info(
+      "Reordering timer expired. rx_reord={} queued_sdus={}", parent->st.rx_reord, parent->reorder_queue.size());
   parent->handle_t_reordering_expire();
 }
 
@@ -439,7 +438,7 @@ bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_
 {
   // Check PDU is long enough to extract header
   if (buf.length() <= hdr_len_bytes) {
-    logger.log_error("PDU too small to extract header");
+    logger.log_error("PDU too small to extract header. pdu_len={} hdr_len={}", buf.length(), hdr_len_bytes);
     return false;
   }
 
@@ -462,7 +461,7 @@ bool pdcp_entity_rx::read_data_pdu_header(pdcp_data_pdu_header& hdr, const byte_
       ++buf_it;
       break;
     default:
-      logger.log_error("Cannot extract RCVD_SN, invalid SN length configured: {}", cfg.sn_size);
+      logger.log_error("Invalid SN size config. sn_size={}", cfg.sn_size);
       return false;
   }
   return true;
@@ -476,7 +475,7 @@ void pdcp_entity_rx::discard_data_header(byte_buffer& buf) const
 void pdcp_entity_rx::extract_mac(byte_buffer& buf, security::sec_mac& mac) const
 {
   if (buf.length() <= security::sec_mac_len) {
-    logger.log_error("PDU too small to extract MAC-I");
+    logger.log_error("PDU too small to extract MAC-I. pdu_len={} mac_len={}", buf.length(), security::sec_mac_len);
     return;
   }
   for (unsigned i = 0; i < security::sec_mac_len; i++) {

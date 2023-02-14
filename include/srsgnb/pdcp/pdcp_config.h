@@ -198,7 +198,7 @@ struct formatter<srsgnb::pdcp_sn_size> {
   template <typename FormatContext>
   auto format(srsgnb::pdcp_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{} bit", pdcp_sn_size_to_uint(sn_size));
+    return format_to(ctx.out(), "{}", pdcp_sn_size_to_uint(sn_size));
   }
 };
 
@@ -250,7 +250,7 @@ struct formatter<srsgnb::pdcp_config::pdcp_tx_config> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rb_type={}, rlc_mode={}, sn_size={}, discard_timer={}, max_count=[{}, {}]",
+                     "rb_type={} rlc_mode={} sn_size={} discard_timer={} count_notify={} count_max={}",
                      cfg.rb_type,
                      cfg.rlc_mode,
                      cfg.sn_size,
@@ -274,7 +274,7 @@ struct formatter<srsgnb::pdcp_config::pdcp_rx_config> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rb_type={}, rlc_mode={}, sn_size={}, t_reordering={}, max_count=[{}, {}]",
+                     "rb_type={} rlc_mode={} sn_size={} t_reordering={} count_notify={} count_max={}",
                      cfg.rb_type,
                      cfg.rlc_mode,
                      cfg.sn_size,

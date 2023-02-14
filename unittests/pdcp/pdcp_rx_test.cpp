@@ -65,8 +65,7 @@ TEST_P(pdcp_rx_test, rx_in_order)
     srsgnb::test_delimit_logger delimiter("RX in order test. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -106,8 +105,7 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
         "RX out-of-order test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms10);
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -147,8 +145,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
         "RX out-of-order test, t-Reordering expires. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms10);
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -189,8 +186,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
         "RX out-of-order test, t-Reordering is set to 0. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms0);
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -230,8 +226,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
         "RX out-of-order test, t-Reordering is set to infinity. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::infinity);
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -270,8 +265,7 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
     srsgnb::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
-    pdcp_rx->set_as_security_config(sec_cfg);
-    pdcp_rx->enable_or_disable_security(security::integrity_enabled::enabled, security::ciphering_enabled::enabled);
+    pdcp_rx->enable_security(sec_cfg);
 
     byte_buffer test_pdu1;
     get_test_pdu(count, test_pdu1);
@@ -314,7 +308,6 @@ TEST_P(pdcp_rx_test, count_wraparound)
     // Do not enable integrity or ciphering, to make it easier to generate test vectors.
     pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
     pdcp_rx->set_state(init_state);
-    pdcp_rx->set_as_security_config(sec_cfg);
 
     // Write SDUs
     for (uint32_t i = 0; i < n_sdus; i++) {

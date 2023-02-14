@@ -19,10 +19,10 @@ namespace srsgnb {
 class pdcp_bearer_log_prefix
 {
 public:
-  pdcp_bearer_log_prefix(uint32_t ue_index, rb_id_t rb_id)
+  pdcp_bearer_log_prefix(uint32_t ue_index, rb_id_t rb_id, const char* dir)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "UE={}, {}: ", ue_index, rb_id);
+    fmt::format_to(buffer, "ue={} {} {}: ", ue_index, rb_id, dir);
     prefix = srsgnb::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
