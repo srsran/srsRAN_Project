@@ -25,23 +25,40 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
       // Wait more slots for ACK/NACK to arrive.
       return;
     }
-    // Reset the ACK wait time.
-    ack_wait_in_slots = max_ack_wait_in_slots;
     if (tb.state == transport_block::state_t::waiting_ack) {
       // ACK went missing.
       tb.state = transport_block::state_t::pending_retx;
-      logger.warning(
-          id, "Setting HARQ to \"pending reTx\" state. Cause: ACK Wait Timeout={} slots reached", ack_wait_in_slots);
+      if (ack_wait_in_slots == max_ack_wait_in_slots) {
+        logger.warning(id,
+                       "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
+                       "but no HARQ-ACK report was received.",
+                       ack_wait_in_slots);
+      } else {
+        logger.info(id,
+                    "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
+                    "but only invalid HARQ-ACKs were received so far.",
+                    ack_wait_in_slots);
+      }
     }
     if (tb.nof_retxs + 1 > tb.max_nof_harq_retxs) {
       // Max number of reTxs was exceeded. Clear HARQ process
       tb.state = transport_block::state_t::empty;
-      logger.warning(
-          id,
-          "Discarding HARQ. Cause: ACK Wait Timeout={} slots reached and maximum number of reTxs {} exceeded",
-          max_nof_harq_retxs(0),
-          ack_wait_in_slots);
+      if (ack_wait_in_slots == max_ack_wait_in_slots) {
+        logger.warning(id,
+                       "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached without a HARQ-ACK report "
+                       "being received and the maximum number of reTxs {} was exceeded",
+                       max_nof_harq_retxs(0),
+                       ack_wait_in_slots);
+      } else {
+        logger.info(id,
+                    "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached but only invalid HARQ-ACKs "
+                    "were received and the maximum number of reTxs {} was exceeded",
+                    max_nof_harq_retxs(0),
+                    ack_wait_in_slots);
+      }
     }
+    // Reset the ACK wait time.
+    ack_wait_in_slots = max_ack_wait_in_slots;
   }
 }
 
@@ -163,12 +180,12 @@ int dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
   // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
   if (base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack)) {
     if (ack == mac_harq_ack_report_status::nack and empty(tb_idx)) {
-      logger.warning(id,
-                     "Discarding HARQ tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                     tb_idx,
-                     prev_tx_params.tb[tb_idx]->tbs_bytes,
-                     max_nof_harq_retxs(tb_idx),
-                     ack_wait_in_slots);
+      logger.info(id,
+                  "Discarding HARQ tb={} with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                  tb_idx,
+                  prev_tx_params.tb[tb_idx]->tbs_bytes,
+                  max_nof_harq_retxs(tb_idx),
+                  ack_wait_in_slots);
       return (int)prev_tx_params.tb[tb_idx]->tbs_bytes;
     }
     return 0;
@@ -217,11 +234,11 @@ int ul_harq_process::crc_info(bool ack)
 {
   if (base_type::ack_info_common(0, ack)) {
     if (not ack and empty()) {
-      logger.warning(id,
-                     "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
-                     prev_tx_params.tbs_bytes,
-                     max_nof_harq_retxs(),
-                     ack_wait_in_slots);
+      logger.info(id,
+                  "Discarding HARQ with tbs={}. Cause: Maximum number of reTxs {} exceeded",
+                  prev_tx_params.tbs_bytes,
+                  max_nof_harq_retxs(),
+                  ack_wait_in_slots);
       return (int)prev_tx_params.tbs_bytes;
     }
     return 0;
