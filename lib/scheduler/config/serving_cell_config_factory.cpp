@@ -57,10 +57,15 @@ carrier_configuration
 srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
   carrier_configuration cfg;
-  cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
-  cfg.arfcn          = params.dl_arfcn;
-  cfg.nof_ant        = 1;
-  cfg.band           = get_band(params);
+  cfg.carrier_bw_mhz                         = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
+  cfg.arfcn                                  = params.dl_arfcn;
+  cfg.nof_ant                                = 1;
+  cfg.band                                   = get_band(params);
+  const min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(cfg.band, params.scs_common);
+  srsgnb_assert(cfg.carrier_bw_mhz >= min_channel_bandwidth_to_MHz(min_channel_bw),
+                "Carrier BW {}Mhz must be greater than or equal to minimum channel BW {}Mhz",
+                cfg.carrier_bw_mhz,
+                min_channel_bandwidth_to_MHz(min_channel_bw));
   return cfg;
 }
 

@@ -10,6 +10,7 @@
 
 #include "lib/scheduler/common_scheduling/sib_scheduler.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
+#include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/support/ssb_helpers.h"
 #include "unittests/scheduler/test_utils/config_generators.h"
 #include "unittests/scheduler/test_utils/scheduler_test_suite.h"
@@ -71,9 +72,10 @@ public:
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct sib_test_bench {
-  const bwp_id_t        bwp_id      = to_bwp_id(0);
-  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("SCHED", true);
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  const bwp_id_t          bwp_id       = to_bwp_id(0);
+  srslog::basic_logger&   sched_logger = srslog::fetch_basic_logger("SCHED", true);
+  srslog::basic_logger&   test_logger  = srslog::fetch_basic_logger("TEST");
+  scheduler_result_logger sched_res_logger;
 
   scheduler_si_expert_config               si_cfg;
   sched_cell_configuration_request_message cfg_msg;
@@ -86,14 +88,23 @@ struct sib_test_bench {
   sib_test_bench(subcarrier_spacing   init_bwp_scs,
                  uint8_t              pdcch_config_sib1,
                  uint8_t              ssb_bitmap,
+                 uint16_t             carrier_bw_mhz,
+                 duplex_mode          duplx_mode,
                  sib1_rtx_periodicity sib1_rtx_period = sib1_rtx_periodicity::ms160,
                  ssb_periodicity      ssb_period      = ssb_periodicity::ms5) :
     si_cfg{10, aggregation_level::n4, sib1_rtx_period},
-    cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap, ssb_period)},
+    cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs,
+                                            pdcch_config_sib1,
+                                            ssb_bitmap,
+                                            ssb_period,
+                                            carrier_bw_mhz,
+                                            duplx_mode)},
     cfg{cfg_msg},
     res_grid{cfg},
     sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
+    test_logger.set_context(0, 0);
+    sched_logger.set_context(0, 0);
     res_grid.slot_indication(sl_tx);
   };
 
@@ -103,20 +114,22 @@ struct sib_test_bench {
                  uint8_t            k_ssb,
                  uint8_t            ssb_bitmap,
                  subcarrier_spacing init_bwp_scs,
-                 uint8_t            pdcch_config_sib1) :
+                 uint8_t            pdcch_config_sib1,
+                 uint16_t           carrier_bw_mhz) :
     si_cfg{10, aggregation_level::n4, sib1_rtx_periodicity::ms10},
     cfg_msg{make_cell_cfg_req_for_sib_sched(freq_arfcn,
                                             offset_to_point_A,
                                             k_ssb,
                                             ssb_bitmap,
                                             init_bwp_scs,
-                                            pdcch_config_sib1)},
+                                            pdcch_config_sib1,
+                                            carrier_bw_mhz)},
     cfg{cfg_msg},
     res_grid{cfg},
     sl_tx{to_numerology_value(init_bwp_scs), 0}
   {
     test_logger.set_context(0, 0);
-    mac_logger.set_context(0, 0);
+    sched_logger.set_context(0, 0);
     res_grid.slot_indication(sl_tx);
   }
 
@@ -126,33 +139,47 @@ struct sib_test_bench {
   sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(subcarrier_spacing init_bwp_scs,
                                                                            uint8_t            pdcch_config_sib1,
                                                                            uint8_t            ssb_bitmap,
-                                                                           ssb_periodicity    ssb_period)
+                                                                           ssb_periodicity    ssb_period,
+                                                                           uint16_t           carrier_bw_mhz,
+                                                                           duplex_mode        duplx_mode)
   {
-    sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request();
-    msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
-    msg.ssb_config.scs                               = init_bwp_scs;
-    msg.scs_common                                   = init_bwp_scs;
-    // Change Carrier parameters when SCS is 15kHz.
-    if (init_bwp_scs == subcarrier_spacing::kHz15) {
-      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
-      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs =
-          crb_interval{0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
-    }
-    // Change Carrier parameters when SCS is 30kHz.
-    else if (init_bwp_scs == subcarrier_spacing::kHz30) {
-      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
-          scs_specific_carrier{0, subcarrier_spacing::kHz30, 51});
-      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
-          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
+    cell_config_builder_params cell_cfg{};
+    cell_cfg.dl_arfcn = 536020;
+    if (duplx_mode == srsgnb::duplex_mode::TDD) {
       // Random ARFCN that must be in FR1 and > 3GHz.
-      msg.dl_carrier.arfcn          = 700000;
-      msg.dl_carrier.carrier_bw_mhz = 20;
-      msg.dl_carrier.nof_ant        = 1;
+      cell_cfg.dl_arfcn = 465000;
     }
+    cell_cfg.scs_common     = init_bwp_scs;
+    cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+    cell_cfg.channel_bw_mhz = static_cast<bs_channel_bandwidth_fr1>(carrier_bw_mhz);
+
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+        cell_cfg.channel_bw_mhz,
+        cell_cfg.scs_common,
+        cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
+
+    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+        cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+    srsgnb_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
+    cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+    cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
+    cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
+
+    sched_cell_configuration_request_message msg =
+        test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
+
     msg.coreset0              = (pdcch_config_sib1 >> 4U) & 0b00001111;
     msg.searchspace0          = pdcch_config_sib1 & 0b00001111;
     msg.ssb_config.ssb_bitmap = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
     msg.ssb_config.ssb_period = ssb_period;
+
+    if (duplx_mode == srsgnb::duplex_mode::TDD) {
+      // Change TDD pattern so that PDCCH slots falls in DL slot when using 5Mhz carrier BW.
+      msg.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots = 20;
+      msg.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_slots              = 12;
+      msg.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots              = 7;
+    }
+
     return msg;
   }
 
@@ -162,35 +189,44 @@ struct sib_test_bench {
                                                                            uint8_t            k_ssb,
                                                                            uint8_t            ssb_bitmap,
                                                                            subcarrier_spacing init_bwp_scs,
-                                                                           uint8_t            pdcch_config_sib1)
+                                                                           uint8_t            pdcch_config_sib1,
+                                                                           uint16_t           carrier_bw_mhz)
   {
-    sched_cell_configuration_request_message msg     = test_helpers::make_default_sched_cell_configuration_request();
-    msg.dl_carrier.arfcn                             = freq_arfcn;
+    cell_config_builder_params cell_cfg{};
+    cell_cfg.dl_arfcn       = freq_arfcn;
+    cell_cfg.scs_common     = init_bwp_scs;
+    cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
+    cell_cfg.channel_bw_mhz = static_cast<bs_channel_bandwidth_fr1>(carrier_bw_mhz);
+
+    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
+        cell_cfg.channel_bw_mhz,
+        cell_cfg.scs_common,
+        cell_cfg.band.has_value() ? band_helper::get_freq_range(cell_cfg.band.value()) : frequency_range::FR1);
+
+    optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
+        cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+    srsgnb_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
+    cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
+    cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
+    cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
+
+    sched_cell_configuration_request_message msg =
+        test_helpers::make_default_sched_cell_configuration_request(cell_cfg);
     msg.dl_cfg_common.freq_info_dl.offset_to_point_a = offset_to_point_A;
-    msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
-    msg.ssb_config.scs                               = init_bwp_scs;
-    msg.scs_common                                   = init_bwp_scs;
     msg.ssb_config.ssb_bitmap                        = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
     msg.ssb_config.ssb_period                        = ssb_periodicity::ms10;
     msg.ssb_config.offset_to_point_A                 = ssb_offset_to_pointA{offset_to_point_A};
     msg.ssb_config.k_ssb                             = k_ssb;
-    // Change Carrier parameters when SCS is 15kHz.
-    if (init_bwp_scs == subcarrier_spacing::kHz15) {
-      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
-      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs =
-          crb_interval{0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
+    msg.dl_carrier.carrier_bw_mhz                    = carrier_bw_mhz;
+    msg.coreset0                                     = (pdcch_config_sib1 >> 4U) & 0b00001111;
+    msg.searchspace0                                 = pdcch_config_sib1 & 0b00001111;
+
+    if (band_helper::get_duplex_mode(band_helper::get_band_from_dl_arfcn(freq_arfcn)) == srsgnb::duplex_mode::TDD) {
+      // Change TDD pattern so that PDCCH slots falls in DL slot when using 5Mhz carrier BW.
+      msg.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots = 20;
+      msg.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_slots              = 12;
+      msg.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots              = 7;
     }
-    // Change Carrier parameters when SCS is 30kHz.
-    else if (init_bwp_scs == subcarrier_spacing::kHz30) {
-      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
-          scs_specific_carrier{0, subcarrier_spacing::kHz30, 51});
-      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
-          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
-    }
-    msg.coreset0                  = (pdcch_config_sib1 >> 4U) & 0b00001111;
-    msg.searchspace0              = pdcch_config_sib1 & 0b00001111;
-    msg.dl_carrier.carrier_bw_mhz = 20;
-    msg.dl_carrier.nof_ant        = 1;
 
     return msg;
   }
@@ -198,9 +234,8 @@ struct sib_test_bench {
   void slot_indication()
   {
     sl_tx++;
-    mac_logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
+    sched_logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
     test_logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
-    test_logger.info("Starting new slot {}", sl_tx);
     res_grid.slot_indication(sl_tx);
   }
 
@@ -237,16 +272,22 @@ struct sib_test_bench {
 
 /// \brief Tests if the SIB1 scheduler schedules the SIB1s at the right slot n0.
 /// \param[in] scs_common SCS corresponding to subCarrierSpacingCommon.
-/// \param[in] sib1_n0_slots array of n0 slots; the n-th array's value is the n0 corresponding to the n-th SSB beam.
+/// \param[in] sib1_pdcch_slots array of PDCCH slots; the n-th array's value is the PDCCH slot corresponding to the
+/// n-th SSB beam.
 /// \param[in] pdcch_config_sib1 is the parameter (in the MIB) determining the n0 for each beam.
 /// \param[in] ssb_beam_bitmap corresponds to the ssb-PositionsInBurst in the TS 38.331, with L_max = 8.
-void test_sib1_scheduler(subcarrier_spacing                   scs_common,
-                         std::array<unsigned, MAX_NUM_BEAMS>& sib1_n0_slots,
-                         uint8_t                              pdcch_config_sib1,
-                         uint8_t                              ssb_beam_bitmap)
+/// \param[in] carrier_bw_mhz corresponds to the width of this carrier in MHz. Values: 5, 10, 15, 20, 25, 30, 40,
+/// 50, 60, 70, 80, 90, 100, 200, 400.
+/// \param[in] duplx_mode corresponds to duplex mode FDD or TDD.
+void test_sib1_scheduler(subcarrier_spacing                         scs_common,
+                         const std::array<unsigned, MAX_NUM_BEAMS>& sib1_pdcch_slots,
+                         uint8_t                                    pdcch_config_sib1,
+                         uint8_t                                    ssb_beam_bitmap,
+                         uint16_t                                   carrier_bw_mhz,
+                         duplex_mode                                duplx_mode)
 {
   // Instantiate the sib_test_bench and the SIB1 scheduler.
-  sib_test_bench t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap};
+  sib_test_bench t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap, carrier_bw_mhz, duplx_mode};
   sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
 
   // SIB1 periodicity in slots.
@@ -268,7 +309,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
     // Verify if for any active beam, the SIB1 got allocated within the proper n0 slots.
     for (size_t ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
       // Only check for the active slots.
-      if (is_nth_ssb_beam_active(ssb_bitmap, ssb_idx) && (sl_idx % sib1_period_slots == sib1_n0_slots[ssb_idx])) {
+      if (is_nth_ssb_beam_active(ssb_bitmap, ssb_idx) && (sl_idx % sib1_period_slots == sib1_pdcch_slots[ssb_idx])) {
         // Verify that the scheduler results list contain 1 element with the SIB1 information.
         TESTASSERT_EQ(1, res_slot_grid.result.dl.bc.sibs.size());
         // Verify the PDCCH grants and DCI have been filled correctly.
@@ -277,6 +318,9 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
         t_bench.verify_prbs_allocation();
       }
     }
+
+    // Log results.
+    t_bench.sched_res_logger.log(t_bench.get_slot_res_grid().result);
 
     // Update SLOT.
     t_bench.slot_indication();
@@ -296,7 +340,8 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
 void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity ssb_period)
 {
   // Instantiate the sib_test_bench and the SIB1 scheduler.
-  sib_test_bench t_bench{subcarrier_spacing::kHz15, 9U, 0b10000000, sib1_rtx_period, ssb_period};
+  sib_test_bench t_bench{
+      subcarrier_spacing::kHz15, 9U, 0b10000000, 20, srsgnb::duplex_mode::FDD, sib1_rtx_period, ssb_period};
   sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
 
   // Determine the expected SIB1 retx periodicity.
@@ -332,6 +377,9 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
       TESTASSERT(res_slot_grid.result.dl.bc.sibs.empty());
     }
 
+    // Log results.
+    t_bench.sched_res_logger.log(t_bench.get_slot_res_grid().result);
+
     // Update SLOT.
     t_bench.slot_indication();
   }
@@ -345,15 +393,18 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
 /// \param[in] ssb_bitmap is \c ssb-PositionsInBurst.inOneGroup, as per TS38.331, \c ServingCellConfigCommonSIB.
 /// \param[in] scs subcarrier spacing of SSB and SCScommon.
 /// \param[in] pdcch_config_sib1 is \c pdcch-ConfigSIB1, as per TS38.213, Section 13.
+/// \param[in] carrier_bw_mhz corresponds to the width of this carrier in MHz. Values: 5, 10, 15, 20, 25, 30, 40,
+/// 50, 60, 70, 80, 90, 100, 200, 400.
 void test_ssb_sib1_collision(uint32_t           freq_arfcn,
                              uint16_t           offset_to_point_A,
                              uint8_t            k_ssb,
                              uint8_t            ssb_bitmap,
                              subcarrier_spacing scs,
-                             uint8_t            pdcch_config_sib1)
+                             uint8_t            pdcch_config_sib1,
+                             uint16_t           carrier_bw_mhz)
 {
   // Instantiate the sib_test_bench and the SIB1 scheduler.
-  sib_test_bench t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1};
+  sib_test_bench t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1, carrier_bw_mhz};
   sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
   ssb_scheduler  ssb_sched{t_bench.cfg};
 
@@ -378,20 +429,30 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
 
     test_dl_resource_grid_collisions(t_bench.cfg, res_slot_grid.result.dl);
 
+    // Log results.
+    t_bench.sched_res_logger.log(t_bench.get_slot_res_grid().result);
+
     // Update SLOT.
     t_bench.slot_indication();
   }
 }
 
 // Test for potential collisions between SIB1 PDCCH/PDSCH and SSB.
-void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs)
+void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs, uint16_t carrier_bw_mhz)
 {
+  const auto min_ch_bw = band_helper::get_min_channel_bw(band_helper::get_band_from_dl_arfcn(freq_arfcn), scs);
+  srsgnb_assert(carrier_bw_mhz >= min_channel_bandwidth_to_MHz(min_ch_bw), "Invalid carrier BW");
+
+  const auto nof_rbs_bpw =
+      band_helper::get_n_rbs_from_bw(static_cast<bs_channel_bandwidth_fr1>(carrier_bw_mhz),
+                                     scs,
+                                     band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(freq_arfcn)));
+
   // NOTE: We only test 1 beam, as we don't have resource grids for multiple beams implemented yet.
   uint8_t ssb_bitmap = 0b10000000;
   // Allocate SIB1 in the same slot as SSB - searchspace0 = 0U.
-  uint8_t  searchspace0 = 0U;
-  unsigned nof_rbs_bpw  = scs == subcarrier_spacing::kHz15 ? 106 : 51;
-  uint8_t  coreset0_max = scs == subcarrier_spacing::kHz15 ? 15 : 16;
+  uint8_t searchspace0 = 0U;
+  uint8_t coreset0_max = scs == subcarrier_spacing::kHz15 ? 15 : 16;
 
   // Test different combinations of offsetToPointA and k_SSB.
   unsigned max_offset_to_point_A = nof_rbs_bpw - NOF_SSB_PRBS;
@@ -419,64 +480,121 @@ void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs)
         }
 
         uint8_t pdcch_config_sib1 = static_cast<uint8_t>((coreset0 << 4U) + searchspace0);
-        test_ssb_sib1_collision(freq_arfcn, offset_to_point_A, k_ssb_val, ssb_bitmap, scs, pdcch_config_sib1);
+        test_ssb_sib1_collision(
+            freq_arfcn, offset_to_point_A, k_ssb_val, ssb_bitmap, scs, pdcch_config_sib1, carrier_bw_mhz);
       }
     }
   }
 }
 
-TEST(sib1_scheduler_test, test_all)
+TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_fdd)
 {
-  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
-  srslog::init();
+  // Test SIB1 scheduler for different values of searchSpaceZero (4 LSBs of pdcch_config_sib1) and for different
+  // SSB_bitmaps.
+  // The array sib1_slots contains the expected slots n0 or n0 + 1, at which the SIB1 is scheduled. The i-th element of
+  // the array refers to the n0 or n0 + 1 for the i-th SSB's beam. The slots n0 have been pre-computed based on
+  // TS 38.213, Section 13.
 
   // SCS Common: 15kHz
-  // Test SIB1 scheduler for different values of searchSpaceZero (4 LSBs of pdcch_config_sib1) and for different
-  // SSB_bitmaps.
-  // The array sib1_slots contains the expected slots n0, at which the SIB1 is scheduled. The i-th element of the array
-  // refers to the n0 for the i-th SSB's beam. The slots n0 have been pre-computed based on TS 38.213, Section 13.
-  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots{5, 7, 9, 11, 13, 15, 17, 19};
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots = {5, 7, 9, 11, 13, 15, 17, 19};
   // pdcch_config_sib1 = 9U => { coreset0 = 0U, searchspace0 = 9U).
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10101010);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10101010, 20, srsgnb::duplex_mode::FDD);
   // pdcch_config_sib1 = 57U => { coreset0 = 3U, searchspace0 = 9U).
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 57U, 0b01010101);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 57U, 0b01010101, 20, srsgnb::duplex_mode::FDD);
   // pdcch_config_sib1 = 105U => { coreset0 = 0U, searchspace0 = 9U).
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 105U, 0b11111111);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 105U, 0b11111111, 20, srsgnb::duplex_mode::FDD);
 
-  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_1{2, 3, 4, 5, 6, 7, 8, 9};
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_1, 2U, 0b10101010);
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_1, 2U, 0b01010101);
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_1, 2U, 0b11111111);
+  // 5Mhz Carrier BW.
+  sib1_slots = {6, 8, 10, 12, 14, 16, 18, 20};
+  // pdcch_config_sib1 = 9U => { coreset0 = 0U, searchspace0 = 9U).
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10101010, 5, srsgnb::duplex_mode::FDD);
+  // pdcch_config_sib1 = 57U => { coreset0 = 3U, searchspace0 = 9U).
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 57U, 0b01010101, 5, srsgnb::duplex_mode::FDD);
+  // pdcch_config_sib1 = 105U => { coreset0 = 0U, searchspace0 = 9U).
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 105U, 0b11111111, 5, srsgnb::duplex_mode::FDD);
 
-  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_2{7, 8, 9, 10, 11, 12, 13, 14};
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_2, 6U, 0b10101010);
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_2, 6U, 0b01010101);
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_2, 6U, 0b11111111);
+  sib1_slots = {2, 3, 4, 5, 6, 7, 8, 9};
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b10101010, 20, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b01010101, 20, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b11111111, 20, srsgnb::duplex_mode::FDD);
+
+  // 5Mhz Carrier BW.
+  sib1_slots = {3, 4, 5, 6, 7, 8, 9, 10};
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b10101010, 5, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b01010101, 5, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b11111111, 5, srsgnb::duplex_mode::FDD);
+
+  sib1_slots = {7, 8, 9, 10, 11, 12, 13, 14};
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b10101010, 20, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b01010101, 20, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b11111111, 20, srsgnb::duplex_mode::FDD);
+
+  // 5Mhz Carrier BW.
+  sib1_slots = {8, 9, 10, 11, 12, 13, 14, 15};
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b10101010, 5, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b01010101, 5, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b11111111, 5, srsgnb::duplex_mode::FDD);
 
   // SCS Common: 30kHz
-  // Test SIB1 scheduler for different values of searchSpaceZero (4 LSBs of pdcch_config_sib1) and for different
-  // SSB_bitmaps.
-  // The array sib1_slots contains the expected slots n0, at which the SIB1 is scheduled. The i-th element of the array
-  // refers to the n0 for the i-th SSB's beam. The slots n0 have been pre-computed based on TS 38.213, Section 13.
-  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_3{10, 12, 14, 16, 18, 20, 22, 24};
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_3, 9U, 0b10101010);
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_3, 9U, 0b01010101);
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_3, 9U, 0b11111111);
+  sib1_slots = {10, 12, 14, 16, 18, 20, 22, 24};
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 9U, 0b10101010, 10, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 9U, 0b01010101, 10, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 9U, 0b11111111, 10, srsgnb::duplex_mode::FDD);
 
-  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_4{10, 11, 12, 13, 14, 15, 16, 17};
+  sib1_slots = {10, 11, 12, 13, 14, 15, 16, 17};
   // pdcch_config_sib1 = 4U => { coreset0 = 0U, searchspace0 = 4U).
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 4U, 0b10101010);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 4U, 0b10101010, 10, srsgnb::duplex_mode::FDD);
   // pdcch_config_sib1 = 68U => { coreset0 = 3U, searchspace0 = 4U).
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 68U, 0b01010101);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 68U, 0b01010101, 10, srsgnb::duplex_mode::FDD);
   // pdcch_config_sib1 = 100U => { coreset0 = 6U, searchspace0 = 4U).
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 100U, 0b11111111);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 100U, 0b11111111, 10, srsgnb::duplex_mode::FDD);
 
-  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_5{4, 5, 6, 7, 8, 9, 10, 11};
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b10101010);
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b01010101);
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b11111111);
+  sib1_slots = {4, 5, 6, 7, 8, 9, 10, 11};
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b10101010, 10, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b01010101, 10, srsgnb::duplex_mode::FDD);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b11111111, 10, srsgnb::duplex_mode::FDD);
+}
 
+TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_tdd)
+{
+  // SCS Common: 15kHz
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots = {5};
+  // pdcch_config_sib1 = 9U => { coreset0 = 0U, searchspace0 = 9U).
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10000000, 20, srsgnb::duplex_mode::TDD);
+
+  // 5Mhz Carrier BW.
+  sib1_slots = {6};
+  // pdcch_config_sib1 = 9U => { coreset0 = 0U, searchspace0 = 9U).
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10000000, 5, srsgnb::duplex_mode::TDD);
+
+  sib1_slots = {2};
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b10000000, 20, srsgnb::duplex_mode::TDD);
+
+  // 5Mhz Carrier BW.
+  sib1_slots = {3};
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b10000000, 5, srsgnb::duplex_mode::TDD);
+
+  sib1_slots = {7};
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b10000000, 20, srsgnb::duplex_mode::TDD);
+
+  // 5Mhz Carrier BW.
+  sib1_slots = {8};
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b10000000, 5, srsgnb::duplex_mode::TDD);
+
+  // SCS Common: 30kHz
+  sib1_slots = {10};
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 9U, 0b10000000, 10, srsgnb::duplex_mode::TDD);
+
+  sib1_slots = {10};
+  // pdcch_config_sib1 = 4U => { coreset0 = 0U, searchspace0 = 4U).
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 4U, 0b10000000, 10, srsgnb::duplex_mode::TDD);
+
+  sib1_slots = {4};
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b10000000, 10, srsgnb::duplex_mode::TDD);
+}
+
+TEST(sib1_scheduler_test, test_sib1_periodicity)
+{
   // Test the SIB1 scheduler periodicity for different combinations of SIB1 retx perdiod and SSB period values.
   // This test uses a standard set of values for SCS, searchSpaceSetZero and SSB bitmap.
   test_sib1_periodicity(sib1_rtx_periodicity::ms5, ssb_periodicity::ms40);
@@ -487,19 +605,37 @@ TEST(sib1_scheduler_test, test_all)
   test_sib1_periodicity(sib1_rtx_periodicity::ms40, ssb_periodicity::ms10);
   test_sib1_periodicity(sib1_rtx_periodicity::ms160, ssb_periodicity::ms80);
   test_sib1_periodicity(sib1_rtx_periodicity::ms80, ssb_periodicity::ms160);
+}
 
-  // TEST SIB1/SSB collision on the resource grid. Test both SCS 15kHz and SCS 30kHz.
+TEST(sib1_scheduler_test, test_sib1_ssb_collision_for_15khz_scs)
+{
+  // TEST SIB1/SSB collision on the resource grid.
   // SCS 15kHz.
   subcarrier_spacing scs = subcarrier_spacing::kHz15;
   // This can be any frequency such that the DL band has SSB SCS 15kHz (case A, in this case).
   uint32_t freq_arfcn = 500000;
 
-  test_sib_1_pdsch_collisions(freq_arfcn, scs);
+  test_sib_1_pdsch_collisions(freq_arfcn, scs, 20);
+}
 
+TEST(sib1_scheduler_test, test_sib1_ssb_collision_for_30khz_scs)
+{
+  // TEST SIB1/SSB collision on the resource grid.
   // SCS 30kHz.
-  scs = subcarrier_spacing::kHz30;
+  subcarrier_spacing scs = subcarrier_spacing::kHz30;
   // This can be any frequency such that the DL band has SSB SCS 30kHz (case B, in this case).
-  freq_arfcn = 176000;
+  uint32_t freq_arfcn = 176000;
 
-  test_sib_1_pdsch_collisions(freq_arfcn, scs);
+  test_sib_1_pdsch_collisions(freq_arfcn, scs, 10);
+}
+
+int main(int argc, char** argv)
+{
+  srslog::init();
+  srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
+
+  ::testing::InitGoogleTest(&argc, argv);
+
+  return RUN_ALL_TESTS();
 }

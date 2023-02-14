@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsgnb/support/error_handling.h"
+
 namespace srsgnb {
 
 /// Labels for the BS Channel Bandwidth for FR1, described in TS38.104, Table 5.3.2-1.
@@ -45,5 +47,20 @@ constexpr inline bs_channel_bandwidth_fr1 MHz_to_bs_channel_bandwidth(unsigned b
 /// by TS 38.213, Section 13 for the Coreset 0 configuration. As per TS 38.104, Table 5.3.5-1, there are three possible
 /// minimum BW: 5MHz, 10MHz, and 40MHz.
 enum class min_channel_bandwidth { MHz5 = 0, MHz10 = 1, MHz40 = 2, invalid = 3 };
+
+/// Converts the Minimum Channel Bandwidth for FR1 into the actual BW value in MHz.
+constexpr inline unsigned min_channel_bandwidth_to_MHz(min_channel_bandwidth bw)
+{
+  switch (bw) {
+    case min_channel_bandwidth::MHz5:
+      return 5;
+    case min_channel_bandwidth::MHz10:
+      return 10;
+    case min_channel_bandwidth::MHz40:
+      return 40;
+    default:
+      report_fatal_error("Un-supported minimum channel bw.");
+  }
+}
 
 } // namespace srsgnb

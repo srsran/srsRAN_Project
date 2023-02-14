@@ -82,7 +82,7 @@ private:
                        unsigned                         beam_idx,
                        search_space_id                  ss_id);
 
-  /// \brief Fills the Paging n0 slots.
+  /// \brief Fills the Paging grant.
   ///
   /// \param[out,in] pg_grant Paging grant to be filled.
   /// \param[out,in] pdcch Allocated PDCCH for Paging.
@@ -121,9 +121,9 @@ private:
   /// Number of paging occasions per paging frame. Value of Ns in the equation in clause 7.1 of TS 38.304.
   uint8_t nof_po_per_pf;
 
-  /// Array of Type0-PDCCH CSS monitoring slot n0 (1 per beam) that will be used for Paging scheduling if
+  /// Array of Type0-PDCCH CSS monitoring slots (1 per beam) that will be used for Paging scheduling if
   /// pagingSearchSpace is 0 [TS 38.213, Section 13].
-  std::array<slot_point, MAX_NUM_BEAMS> type0_pdcch_css_n0_slots;
+  std::array<slot_point, MAX_NUM_BEAMS> type0_pdcch_css_slots;
   /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
   unsigned sib1_period;
 

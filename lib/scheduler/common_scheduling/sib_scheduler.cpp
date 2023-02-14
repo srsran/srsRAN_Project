@@ -42,7 +42,17 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
     if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
       continue;
     }
-    sib1_n0_slots[i_ssb] = (precompute_type0_pdcch_css_n0(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb));
+    // NOTE:
+    // - [Implementation defined]
+    //   Precompute n0 PDCCH/DCI_1_0 for SIB1 if channel BW > 10 Mhz. Otherwise, (n0 + 1) slot to make space for SSB.
+    // Channel BW = 5 Mhz.
+    if (cell_cfg.dl_carrier.carrier_bw_mhz == 5) {
+      sib1_type0_pdcch_css_slots[i_ssb] =
+          precompute_type0_pdcch_css_n0_plus_1(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb);
+    } else {
+      sib1_type0_pdcch_css_slots[i_ssb] =
+          precompute_type0_pdcch_css_n0(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb);
+    }
   }
 
   // Define a BWP configuration limited by CORESET#0 RBs.
@@ -53,9 +63,10 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
 void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_point sl_point)
 {
   // NOTE:
-  // - [Implementation defined] The UE monitors the SearchSpaceSet 0 for SIB1 in 2 consecutive slots, starting from n0.
+  // - [Implementation defined]
+  //   The UE monitors the SearchSpaceSet 0 for SIB1 in 2 consecutive slots, starting from n0.
   //   In this function, it is assumed that the GNB only allocates the PDCCH/DCI_1_0 for SIB1 in the first slot, i.e.,
-  //   in n0.
+  //   in n0 if channel BW > 10 Mhz. Otherwise, in (n0 + 1) slot to make space for SSB.
   // - [Implementation defined] We assume the SIB1 is (re)transmitted every 20ms if the SSB periodicity <= 20ms.
   //   Else, we set the (re)transmission periodicity as the SSB's.
 
@@ -70,10 +81,10 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
       continue;
     }
 
-    if (sl_point.to_uint() % sib1_period_slots == sib1_n0_slots[ssb_idx].to_uint()) {
+    if (sl_point.to_uint() % sib1_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
       // Ensure slot for SIB1 has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
-        logger.error("Could not allocated SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
+        logger.error("Could not allocate SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
         return;
       }
 

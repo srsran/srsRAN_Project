@@ -145,15 +145,17 @@ protected:
     return cfg;
   }
 
-  sched_cell_configuration_request_message create_custom_cell_config_request() const
+  sched_cell_configuration_request_message
+  create_custom_cell_config_request(subcarrier_spacing       scs        = srsgnb::subcarrier_spacing::kHz30,
+                                    bs_channel_bandwidth_fr1 carrier_bw = srsgnb::bs_channel_bandwidth_fr1::MHz20) const
   {
     cell_config_builder_params cell_cfg{};
     if (params.duplx_mode == duplex_mode::TDD) {
       // Band 40.
-      cell_cfg.dl_arfcn       = 474000;
-      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.dl_arfcn       = 465000;
+      cell_cfg.scs_common     = scs;
       cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
-      cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
+      cell_cfg.channel_bw_mhz = carrier_bw;
 
       const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
           cell_cfg.channel_bw_mhz,
@@ -162,6 +164,7 @@ protected:
 
       optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
           cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
+      srsgnb_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
       cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
@@ -242,6 +245,34 @@ TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_gt_0)
 TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_eq_0)
 {
   auto sched_cell_cfg = create_custom_cell_config_request();
+  // In default config Paging Search Space is set to 1. Therefore, modify it to be equal to 0 for this test case.
+  sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id = to_search_space_id(0);
+  // Since we support CORESET multiplexing pattern 1. The value of N (Number of Paging Frames per DRX Cycle) can be 2,
+  // 4, 8, 16).
+  sched_cell_cfg.dl_cfg_common.pcch_cfg.nof_pf = srsgnb::pcch_config::nof_pf_per_drx_cycle::halfT;
+
+  setup_sched(create_expert_config(params.max_paging_mcs, params.max_paging_retries), sched_cell_cfg);
+
+  // Notify scheduler of paging message.
+  const five_g_s_tmsi s_tmsi = generate_five_g_s_tmsi();
+  push_paging_indication_message(s_tmsi, params.drx_cycle_in_nof_rf);
+
+  unsigned paging_attempts = 0;
+  for (unsigned i = 0; i != (params.max_paging_retries + 1) * params.drx_cycle_in_nof_rf *
+                                bench->res_grid.slot_tx().nof_slots_per_frame();
+       ++i) {
+    run_slot();
+    if (is_ue_allocated_paging_grant(s_tmsi)) {
+      paging_attempts++;
+    }
+  }
+
+  ASSERT_EQ(paging_attempts, params.max_paging_retries);
+}
+
+TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_eq_0_5mhz_carrier_bw)
+{
+  auto sched_cell_cfg = create_custom_cell_config_request(subcarrier_spacing::kHz15, bs_channel_bandwidth_fr1::MHz5);
   // In default config Paging Search Space is set to 1. Therefore, modify it to be equal to 0 for this test case.
   sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id = to_search_space_id(0);
   // Since we support CORESET multiplexing pattern 1. The value of N (Number of Paging Frames per DRX Cycle) can be 2,

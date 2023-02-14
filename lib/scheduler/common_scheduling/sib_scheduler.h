@@ -43,7 +43,7 @@ private:
   /// \param[in] beam_idx SSB or beam index which the SIB1 corresponds to.
   bool allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx);
 
-  /// \brief Fills  the SIB1 n0 slots, at which each beam's SIB1 is allocated.
+  /// \brief Fills the SIB1 slots, at which each beam's SIB1 is allocated.
   ///
   /// These slots are computed and saved in the body of the constructor.
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
@@ -74,8 +74,8 @@ private:
   /// This is a dummy BWP configuration dimensioned based on CORESET#0 RB limits. It's used for CRB-to-PRB conversion.
   bwp_configuration coreset0_bwp_cfg;
 
-  /// Array of slots n0 (1 per beam) that will be used for SIB1 scheduling [TS 38.213, Section 13].
-  std::array<slot_point, MAX_NUM_BEAMS> sib1_n0_slots;
+  /// Array of Type0-PDCCH CSS slots  (1 per beam) that will be used for SIB1 scheduling [TS 38.213, Section 13].
+  std::array<slot_point, MAX_NUM_BEAMS> sib1_type0_pdcch_css_slots;
 };
 
 } // end of namespace srsgnb

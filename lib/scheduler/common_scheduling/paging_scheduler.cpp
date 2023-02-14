@@ -41,8 +41,18 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
           continue;
         }
-        type0_pdcch_css_n0_slots[i_ssb] =
-            precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
+        // NOTE:
+        // - [Implementation defined]
+        //   Precompute n0 PDCCH slots for Paging if channel BW > 5 Mhz. Otherwise, the (n0 + 1) slot to make space for
+        //   SSB.
+        // Channel BW = 5 Mhz.
+        if (cell_cfg.dl_carrier.carrier_bw_mhz == 5) {
+          type0_pdcch_css_slots[i_ssb] =
+              precompute_type0_pdcch_css_n0_plus_1(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
+        } else {
+          type0_pdcch_css_slots[i_ssb] =
+              precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
+        }
       }
     } else {
       bool ss_cfg_set = false;
@@ -268,7 +278,8 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_resource_allocator&
   // - [Implementation defined] When pagingSearchSpace = 0, the UE monitors the SearchSpaceSet 0 for Paging in 2
   //   consecutive slots, starting from n0 for multiplexing pattern 1.
   //   In this function, it is assumed that the GNB only allocates the PDCCH/DCI_1_0 for Paging in the first slot, i.e.,
-  //   in n0. This simplification is taken from SIB1 scheduler.
+  //   in n0 if channel BW > 5 Mhz. Otherwise, in (n0 + 1) slot to make space for SSB. This simplification is taken
+  //   from SIB1 scheduler.
 
   // The paging_period_slots is expressed in unit of slots.
   // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
@@ -284,7 +295,7 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_resource_allocator&
     // TODO: Support multi-beam operations. As per TS 38.304, clause 7.1, In multi-beam operations, the same paging
     //  message are repeated in all transmitted beams.
 
-    if (sl_point.to_uint() % paging_period_slots == type0_pdcch_css_n0_slots[ssb_idx].to_uint()) {
+    if (sl_point.to_uint() % paging_period_slots == type0_pdcch_css_slots[ssb_idx].to_uint()) {
       // Ensure slot for Paging has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
         logger.error("Could not allocated paging for beam idx {} as slot is not DL enabled.", ssb_idx);
