@@ -74,7 +74,7 @@ slot_point srsgnb::precompute_type0_pdcch_css_n0(uint8_t                   searc
   const unsigned nof_symb_coreset0 = coreset0_param.nof_rb_coreset;
 
   srsgnb_assert(band_helper::get_freq_range(cell_cfg.dl_carrier.band) == frequency_range::FR1,
-                "Bands only in FR1 supported.");
+                "Only bands in FR1 supported.");
 
   const pdcch_type0_css_occasion_pattern1_description ss0_config_occasion_param =
       pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
