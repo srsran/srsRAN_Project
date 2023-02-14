@@ -241,7 +241,7 @@ static bool validate_harq_bit_len(unsigned value, pucch_format format_type, vali
     return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ bit len", msg_type, pdu_type, report);
   }
 
-  static constexpr unsigned MIN_VALUE = 2;
+  static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1706;
 
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ bit len", msg_type, pdu_type, report);
