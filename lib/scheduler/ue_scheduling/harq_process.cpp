@@ -82,8 +82,8 @@ void detail::harq_process<IsDownlink>::reset_tb(unsigned tb_idx)
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::tx_common(slot_point slot_tx_, slot_point slot_ack_)
 {
-  last_slot_tx  = slot_tx_;
-  last_slot_ack = slot_ack_;
+  last_slot_tx      = slot_tx_;
+  last_slot_ack     = slot_ack_;
   ack_wait_in_slots = max_ack_wait_in_slots;
 }
 
@@ -153,7 +153,8 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
 
 int dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
 {
-  if (ack == mac_harq_ack_report_status::dtx) {
+  if (tb_idx == 0 and not empty(tb_idx) and tb(tb_idx).state == transport_block::state_t::waiting_ack and
+      ack == mac_harq_ack_report_status::dtx) {
     ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
     return 0;
   }
