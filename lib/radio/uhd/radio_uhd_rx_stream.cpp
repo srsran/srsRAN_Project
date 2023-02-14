@@ -48,7 +48,7 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                nof_rxd_samples
 radio_uhd_rx_stream::radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                                          const stream_description&    description,
                                          radio_notification_handler&  notifier_) :
-  id(description.id), notifier(notifier_), logger(srslog::fetch_basic_logger("RF"))
+  id(description.id), notifier(notifier_)
 {
   // Build stream arguments.
   uhd::stream_args_t stream_args = {};

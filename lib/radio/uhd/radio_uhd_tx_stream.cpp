@@ -22,7 +22,8 @@ void radio_uhd_tx_stream::recv_async_msg()
   if (!exception_handler.safe_execution([this, &valid, &async_metadata]() {
         valid = stream->recv_async_msg(async_metadata, RECV_ASYNC_MSG_TIMEOUT_S);
       })) {
-    fmt::print("Error: receiving asynchronous message for stream {}. {}.\n",
+    fmt::print(stderr,
+               "Error: receiving asynchronous message for stream {}. {}.\n",
                stream_id,
                exception_handler.get_error_message().c_str());
     return;
