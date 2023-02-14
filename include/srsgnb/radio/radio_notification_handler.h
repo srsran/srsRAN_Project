@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/radio/radio_base.h"
 
 namespace srsgnb {
@@ -73,6 +74,10 @@ public:
     enum types {
       /// Default event value meaning it is not set.
       UNDEFINED = 0,
+      /// Indicates an start of a burst.
+      START_OF_BURST,
+      /// Indicates the end of a burst.
+      END_OF_BURST,
       /// The transmit data arrives late to the baseband unit.
       LATE,
       /// The transmit data is not generated fast enough.
@@ -89,6 +94,10 @@ public:
       switch (value) {
         case types::UNDEFINED:
           return "undefined";
+        case START_OF_BURST:
+          return "start-of-burst";
+        case END_OF_BURST:
+          return "end-of-burst";
         case types::LATE:
           return "late";
         case types::UNDERFLOW:
@@ -123,6 +132,8 @@ public:
     event_source source = event_source::UNDEFINED;
     /// Indicates the event type.
     event_type type = event_type::UNDEFINED;
+    /// Optional - Event timestamp.
+    optional<uint64_t> timestamp;
   };
 
   /// Notifies a new event that affected the real-time operation of the radio.

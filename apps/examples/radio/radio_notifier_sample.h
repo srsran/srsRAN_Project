@@ -73,6 +73,10 @@ public:
           count_rx_other++;
         }
         break;
+      case event_type::START_OF_BURST:
+      case event_type::END_OF_BURST:
+        // Ignore cases.
+        break;
     }
   }
 

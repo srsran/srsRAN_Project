@@ -395,6 +395,9 @@ int main(int argc, char** argv)
   gtpu_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.gtpu_level));
   gtpu_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
+  auto& rf_logger = srslog::fetch_basic_logger("RF", false);
+  gtpu_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.radio_level));
+
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
@@ -477,7 +480,7 @@ int main(int argc, char** argv)
   gnb_logger.info("CU-CP started successfully");
 
   // Create radio.
-  radio_notification_handler_printer radio_event_printer;
+  radio_notification_handler_printer radio_event_printer(rf_logger);
   auto                               radio = build_radio(*workers.radio_exec, radio_event_printer, gnb_cfg);
   if (radio == nullptr) {
     report_error("Unable to create radio session.\n");
@@ -623,8 +626,13 @@ int main(int argc, char** argv)
   console.set_cells(du_hi_cfg.cells);
   console.on_app_running();
 
+  unsigned count = 0;
   while (is_running) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if ((++count) == 10) {
+      radio_event_printer.print();
+      count = 0;
+    }
   }
 
   console.on_app_stopping();
