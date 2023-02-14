@@ -46,8 +46,9 @@ static unsigned get_bitmap_size(unsigned row)
 }
 
 /// Converts a frequency domain bitmap to the corresponding k_n values.
-static void
-convert_freq_domain(const bounded_bitset<12>& src, static_vector<unsigned, CSI_RS_MAX_NOF_K_INDEXES>& dst, unsigned row)
+static void convert_freq_domain(const bounded_bitset<12, true>&                    src,
+                                static_vector<unsigned, CSI_RS_MAX_NOF_K_INDEXES>& dst,
+                                unsigned                                           row)
 {
   unsigned scale = get_bitpos_scale(row);
   unsigned size  = get_bitmap_size(row);

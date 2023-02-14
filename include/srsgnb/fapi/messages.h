@@ -303,7 +303,7 @@ struct dl_csi_rs_pdu {
   uint16_t                 num_rbs;
   csi_rs_type              type;
   uint8_t                  row;
-  bounded_bitset<12>       freq_domain;
+  bounded_bitset<12, true> freq_domain;
   uint8_t                  symb_L0;
   uint8_t                  symb_L1;
   csi_rs_cdm_type          cdm_type;

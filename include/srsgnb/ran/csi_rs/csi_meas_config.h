@@ -27,10 +27,10 @@ namespace srsgnb {
 /// \remark See TS 38.331, \c CSI-RS-ResourceMapping.
 struct csi_rs_resource_mapping {
   /// See TS 38.331, \c frequencyDomainAllocation in \c CSI-RS-ResourceMapping.
-  using fd_alloc_row1  = bounded_bitset<4>;
-  using fd_alloc_row2  = bounded_bitset<12>;
-  using fd_alloc_row4  = bounded_bitset<3>;
-  using fd_alloc_other = bounded_bitset<6>;
+  using fd_alloc_row1  = bounded_bitset<4, true>;
+  using fd_alloc_row2  = bounded_bitset<12, true>;
+  using fd_alloc_row4  = bounded_bitset<3, true>;
+  using fd_alloc_other = bounded_bitset<6, true>;
 
   /// Frequency domain allocation within a physical resource block in accordance with TS 38.211, clause 7.4.1.5.3.
   variant<fd_alloc_row1, fd_alloc_row2, fd_alloc_row4, fd_alloc_other> fd_alloc;

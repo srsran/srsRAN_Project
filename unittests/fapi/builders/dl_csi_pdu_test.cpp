@@ -23,7 +23,7 @@ TEST(dl_csi_pdu_builder, valid_basic_parameters_passes)
   unsigned                 nof_rb       = 150;
   csi_rs_type              type         = csi_rs_type::CSI_RS_ZP;
   unsigned                 row          = 10;
-  bounded_bitset<12>       freq_domain  = {1, 0, 0};
+  bounded_bitset<12, true> freq_domain  = {1, 0, 0};
   unsigned                 sym_l0       = 2;
   unsigned                 sym_l1       = 3;
   csi_rs_cdm_type          cdm          = csi_rs_cdm_type::cdm8_FD2_TD4;

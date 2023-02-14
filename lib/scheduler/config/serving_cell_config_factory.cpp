@@ -488,9 +488,7 @@ nzp_csi_rs_resource srsgnb::config_helpers::make_default_nzp_csi_rs_resource(con
   res.res_id = static_cast<nzp_csi_rs_res_id_t>(0);
 
   // Fill csi_rs_resource_mapping.
-  auto fd_alloc = csi_rs_resource_mapping::fd_alloc_row1(4);
-  // '1'H.
-  fd_alloc.from_uint64(0x01);
+  auto fd_alloc                           = csi_rs_resource_mapping::fd_alloc_row1({false, false, false, true});
   res.res_mapping.fd_alloc                = fd_alloc;
   res.res_mapping.nof_ports               = 1;
   res.res_mapping.first_ofdm_symbol_in_td = 4;

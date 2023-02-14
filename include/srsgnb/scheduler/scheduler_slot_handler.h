@@ -319,7 +319,7 @@ struct csi_rs_info {
   uint8_t row;
   /// \brief Bitmap defining the frequencyDomainAllocation as per 3GPP TS 38.211, sec 7.4.1.5.3 and 3GPP TS 38.331
   /// "CSIResource Mapping".
-  bounded_bitset<12> freq_domain;
+  bounded_bitset<12, true> freq_domain;
   /// \brief The time domain location l0 and firstOFDMSymbolInTimeDomain as per 3GPP TS 38.211, sec 7.4.1.5.3.
   /// Values: {0,...,13}.
   uint8_t symbol0;
