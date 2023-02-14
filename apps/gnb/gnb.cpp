@@ -175,8 +175,8 @@ private:
     } else {
       create_worker("rt_task_worker", 1, os_thread_realtime_priority::max());
       create_worker("prach_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 1);
-      create_worker("upper_dl_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 10);
-      create_worker("upper_puxch_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 20);
+      create_worker("uphy_dl_worker", task_worker_queue_size, os_thread_realtime_priority::max() - 10);
+      create_worker("uphy_puxch_wrkr", task_worker_queue_size, os_thread_realtime_priority::max() - 20);
     }
     create_worker("radio_worker", task_worker_queue_size);
 
@@ -198,9 +198,9 @@ private:
     } else {
       rt_task_exec     = std::make_unique<task_worker_executor>(*workers.at("rt_task_worker"));
       lower_prach_exec = std::make_unique<task_worker_executor>(*workers.at("prach_worker"));
-      upper_dl_exec    = std::make_unique<task_worker_executor>(*workers.at("upper_dl_worker"));
-      upper_pusch_exec = std::make_unique<task_worker_executor>(*workers.at("upper_puxch_worker"));
-      upper_pucch_exec = std::make_unique<task_worker_executor>(*workers.at("upper_puxch_worker"));
+      upper_dl_exec    = std::make_unique<task_worker_executor>(*workers.at("uphy_dl_worker"));
+      upper_pusch_exec = std::make_unique<task_worker_executor>(*workers.at("uphy_puxch_wrkr"));
+      upper_pucch_exec = std::make_unique<task_worker_executor>(*workers.at("uphy_puxch_wrkr"));
       upper_prach_exec = std::make_unique<task_worker_executor>(*workers.at("prach_worker"));
     }
     radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio_worker"));

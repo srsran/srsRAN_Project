@@ -127,8 +127,21 @@ std::thread unique_thread::make_thread(const std::string&               name,
 {
   // Launch thread.
   return std::thread([name, prio, cpu_mask, callable = std::move(callable)]() {
+    std::string fixed_name = name;
+
+    // Truncate the thread name if it exceeds the maximum length.
+    static const unsigned MAX_THREADNAME_LEN = 15;
+    if (fixed_name.size() > MAX_THREADNAME_LEN) {
+      fixed_name.erase(MAX_THREADNAME_LEN, std::string::npos);
+      fmt::print("Thread [{}]: Thread name '{}' exceeds {} characters, truncating to '{}'\n",
+                 std::this_thread::get_id(),
+                 name,
+                 MAX_THREADNAME_LEN,
+                 fixed_name);
+    }
+
     pthread_t tself = pthread_self();
-    if (pthread_setname_np(tself, name.c_str()) != 0) {
+    if (pthread_setname_np(tself, fixed_name.c_str()) != 0) {
       perror("pthread_setname_np");
       fmt::print("Thread [{}]: Error while setting thread name to {}.\n", std::this_thread::get_id(), name);
     }
