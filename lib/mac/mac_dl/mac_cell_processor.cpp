@@ -113,15 +113,17 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
         // or 2 bits report is DTX (not detected).
 
         const auto& harq_pdus = pucch.harq_info.value().harqs;
-        bool        is_valid_harq_ack =
-            std::find_if(harq_pdus.begin(), harq_pdus.end(), [](uci_pucch_f0_or_f1_harq_values harq_ack_value) {
-              return harq_ack_value == uci_pucch_f0_or_f1_harq_values::dtx;
-            }) == harq_pdus.end();
-
-        if (is_valid_harq_ack) {
-          pdu.harqs.resize(harq_pdus.size());
-          for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-            pdu.harqs[j] = harq_pdus[j] == uci_pucch_f0_or_f1_harq_values::ack;
+        pdu.harqs.resize(harq_pdus.size());
+        for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
+          switch (harq_pdus[j]) {
+            case uci_pucch_f0_or_f1_harq_values::ack:
+              pdu.harqs[j] = mac_harq_ack_report_status::ack;
+              break;
+            case uci_pucch_f0_or_f1_harq_values::nack:
+              pdu.harqs[j] = mac_harq_ack_report_status::nack;
+              break;
+            default:
+              pdu.harqs[j] = mac_harq_ack_report_status::dtx;
           }
         }
       }

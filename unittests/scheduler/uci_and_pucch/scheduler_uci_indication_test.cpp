@@ -68,7 +68,7 @@ protected:
     uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{.sr_detected = sr_ind};
     pdu.harqs.resize(harq_bits.size());
     for (unsigned i = 0; i != harq_bits.size(); ++i) {
-      pdu.harqs[i] = harq_bits[i];
+      pdu.harqs[i] = harq_bits[i] ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack;
     }
     uci_ind.ucis[0].pdu = pdu;
 

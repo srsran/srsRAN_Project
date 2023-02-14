@@ -335,7 +335,7 @@ protected:
 
     uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
     pucch_pdu.sr_detected = false;
-    pucch_pdu.harqs.push_back(true);
+    pucch_pdu.harqs.push_back(mac_harq_ack_report_status::ack);
 
     uci_indication::uci_pdu pdu{};
     pdu.crnti    = u.crnti;
@@ -356,7 +356,7 @@ protected:
 
     uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
     pucch_pdu.sr_detected = false;
-    pucch_pdu.harqs.push_back(false);
+    pucch_pdu.harqs.push_back(mac_harq_ack_report_status::nack);
 
     uci_indication::uci_pdu pdu{};
     pdu.crnti    = u.crnti;

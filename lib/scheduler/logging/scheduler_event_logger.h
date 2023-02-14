@@ -42,13 +42,13 @@ public:
     optional<float> ul_sinr_db;
   };
   struct harq_ack_event {
-    du_ue_index_t   ue_index;
-    rnti_t          rnti;
-    du_cell_index_t cell_index;
-    slot_point      sl_ack_rx;
-    harq_id_t       h_id;
-    bool            ack;
-    units::bytes    tbs;
+    du_ue_index_t              ue_index;
+    rnti_t                     rnti;
+    du_cell_index_t            cell_index;
+    slot_point                 sl_ack_rx;
+    harq_id_t                  h_id;
+    mac_harq_ack_report_status ack;
+    units::bytes               tbs;
   };
   struct sr_event {
     du_ue_index_t ue_index;

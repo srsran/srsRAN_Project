@@ -142,11 +142,12 @@ void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
   }
 }
 
-void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const bool> harq_bits)
+void ue_event_manager::handle_harq_ind(ue_cell&                               ue_cc,
+                                       slot_point                             uci_sl,
+                                       span<const mac_harq_ack_report_status> harq_bits)
 {
-  for (const bool ack : harq_bits) {
-    const dl_harq_process* h_dl =
-        ue_cc.harqs.dl_ack_info(uci_sl, ack ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack);
+  for (const mac_harq_ack_report_status ack_value : harq_bits) {
+    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(uci_sl, ack_value);
     if (h_dl != nullptr) {
       // Log Event.
       ev_logger.enqueue(
@@ -155,11 +156,13 @@ void ue_event_manager::handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<c
                                                  ue_cc.cell_index,
                                                  uci_sl,
                                                  h_dl->id,
-                                                 ack,
+                                                 ack_value,
                                                  units::bytes{h_dl->last_alloc_params().tb[0]->tbs_bytes}});
 
-      // Notify metric.
-      metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack);
+      if (ack_value != mac_harq_ack_report_status::dtx) {
+        // Notify metric.
+        metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack_value == mac_harq_ack_report_status::ack);
+      }
     }
   }
 }
@@ -173,14 +176,14 @@ void ue_event_manager::handle_harq_ind(ue_cell&                                 
         uci_sl, harq_bits.test(bit_idx) ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack);
     if (h_dl != nullptr) {
       // Log Event.
-      ev_logger.enqueue(
-          scheduler_event_logger::harq_ack_event{ue_cc.ue_index,
-                                                 ue_cc.rnti(),
-                                                 ue_cc.cell_index,
-                                                 uci_sl,
-                                                 h_dl->id,
-                                                 harq_bits.test(bit_idx),
-                                                 units::bytes{h_dl->last_alloc_params().tb[0]->tbs_bytes}});
+      ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
+          ue_cc.ue_index,
+          ue_cc.rnti(),
+          ue_cc.cell_index,
+          uci_sl,
+          h_dl->id,
+          harq_bits.test(bit_idx) ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack,
+          units::bytes{h_dl->last_alloc_params().tb[0]->tbs_bytes}});
 
       // Notify metric.
       metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, harq_bits.test(bit_idx));

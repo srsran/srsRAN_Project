@@ -64,9 +64,9 @@ struct ul_crc_indication {
 struct uci_indication {
   struct uci_pdu {
     struct uci_pucch_f0_or_f1_pdu {
-      constexpr static size_t                NOF_HARQS_PER_UCI = 2;
-      bool                                   sr_detected;
-      static_vector<bool, NOF_HARQS_PER_UCI> harqs;
+      constexpr static size_t                                      NOF_HARQS_PER_UCI = 2;
+      bool                                                         sr_detected;
+      static_vector<mac_harq_ack_report_status, NOF_HARQS_PER_UCI> harqs;
     };
     struct uci_pusch_pdu {
       bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>               harqs;

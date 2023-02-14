@@ -154,8 +154,8 @@ void scheduler_event_logger::enqueue_impl(const harq_ack_event& harq_ev)
                  harq_ev.cell_index,
                  harq_ev.sl_ack_rx,
                  harq_ev.h_id,
-                 harq_ev.ack ? 1 : 0);
-  if (harq_ev.ack) {
+                 (unsigned)harq_ev.ack);
+  if (harq_ev.ack == mac_harq_ack_report_status::ack) {
     fmt::format_to(fmtbuf, ", tbs={}", harq_ev.tbs);
   }
 }

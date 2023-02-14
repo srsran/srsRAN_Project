@@ -20,4 +20,7 @@ constexpr inline harq_id_t to_harq_id(unsigned h_id)
   return static_cast<harq_id_t>(h_id);
 }
 
+/// Outcomes of a HARQ-ACK report.
+enum class mac_harq_ack_report_status { nack = 0, ack, dtx };
+
 } // namespace srsgnb

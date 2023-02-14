@@ -74,8 +74,6 @@ private:
   bool                  is_dl;
 };
 
-enum class mac_harq_ack_report_status { nack = 0, ack, dtx };
-
 namespace detail {
 
 /// Basic class for HARQ processes: will be extended by DL and UL HARQ process classes
