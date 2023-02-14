@@ -104,6 +104,28 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_sample
   // Make UHD buffers.
   uhd::tx_streamer::buffs_type buffs_cpp(buffs_flat_ptr.data(), nof_channels);
 
+  // Notify start of burst.
+  if (metadata.start_of_burst) {
+    radio_notification_handler::event_description event_description = {};
+    event_description.stream_id                                     = stream_id;
+    event_description.channel_id                                    = 0;
+    event_description.source = radio_notification_handler::event_source::TRANSMIT;
+    event_description.type   = radio_notification_handler::event_type::START_OF_BURST;
+    event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
+    notifier.on_radio_rt_event(event_description);
+  }
+
+  // Notify end of burst.
+  if (metadata.end_of_burst) {
+    radio_notification_handler::event_description event_description = {};
+    event_description.stream_id                                     = stream_id;
+    event_description.channel_id                                    = 0;
+    event_description.source = radio_notification_handler::event_source::TRANSMIT;
+    event_description.type   = radio_notification_handler::event_type::END_OF_BURST;
+    event_description.timestamp.emplace(time_spec.to_ticks(srate_hz));
+    notifier.on_radio_rt_event(event_description);
+  }
+
   // Safe transmission.
   return safe_execution([this, &buffs_cpp, num_samples, &metadata, &nof_txd_samples]() {
     nof_txd_samples = stream->send(buffs_cpp, num_samples, metadata, TRANSMIT_TIMEOUT_S);
@@ -186,6 +208,14 @@ void radio_uhd_tx_stream::stop()
   // Send end-of-burst if it is in the middle of a burst.
   if (metadata.end_of_burst) {
     std::unique_lock<std::mutex> transmit_lock(stream_transmit_mutex);
+
+    // Notify end of burst.
+    radio_notification_handler::event_description event_description = {};
+    event_description.stream_id                                     = stream_id;
+    event_description.channel_id                                    = 0;
+    event_description.source = radio_notification_handler::event_source::TRANSMIT;
+    event_description.type   = radio_notification_handler::event_type::END_OF_BURST;
+    notifier.on_radio_rt_event(event_description);
 
     // Flatten buffers.
     std::array<radio_sample_type, 4>             buffer;

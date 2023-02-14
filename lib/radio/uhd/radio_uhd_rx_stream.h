@@ -22,7 +22,7 @@ class radio_uhd_rx_stream : public uhd_exception_handler
 {
 private:
   /// Receive timeout in seconds.
-  static constexpr double RECEIVE_TIMEOUT_S = 0.1f;
+  static constexpr double RECEIVE_TIMEOUT_S = 0.2f;
   /// Set to true for receiving data in a single packet.
   static constexpr bool ONE_PACKET = false;
 

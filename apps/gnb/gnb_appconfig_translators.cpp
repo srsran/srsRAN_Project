@@ -188,12 +188,14 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
           out_cfg.time_alignment_calibration = 60;
         } else if (config.rf_driver_cfg.srate_MHz == 46.08) {
           out_cfg.time_alignment_calibration = 72;
+        } else if (config.rf_driver_cfg.srate_MHz == 61.44) {
+          out_cfg.time_alignment_calibration = 64;
         } else if (config.rf_driver_cfg.srate_MHz == 92.16) {
           out_cfg.time_alignment_calibration = 96;
         } else if (config.rf_driver_cfg.srate_MHz == 184.32) {
           out_cfg.time_alignment_calibration = 192;
         } else {
-          fmt::print("Time advance calibration not available for X300 devices and sampling rate of {:.2f} MHz.",
+          fmt::print("Time advance calibration not available for X300 devices and sampling rate of {:.2f} MHz.\n",
                      config.rf_driver_cfg.srate_MHz);
         }
       }
