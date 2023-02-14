@@ -48,7 +48,7 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                nof_rxd_samples
 radio_uhd_rx_stream::radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                                          const stream_description&    description,
                                          radio_notification_handler&  notifier_) :
-  id(description.id), notifier(notifier_)
+  id(description.id), notifier(notifier_), logger(srslog::fetch_basic_logger("RF"))
 {
   // Build stream arguments.
   uhd::stream_args_t stream_args = {};
@@ -68,7 +68,6 @@ radio_uhd_rx_stream::radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   stream_args.args     = description.args;
   stream_args.channels = description.ports;
 
-  Debug("Creating Tx stream " << id);
   if (!safe_execution([this, usrp, &stream_args]() {
         stream          = usrp->get_rx_stream(stream_args);
         max_packet_size = stream->get_max_num_samps();
@@ -85,8 +84,6 @@ bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
   if (state != states::SUCCESSFUL_INIT) {
     return true;
   }
-
-  Debug("Starting Rx stream " << id);
 
   if (!safe_execution([this, &time_spec]() {
         uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
@@ -176,8 +173,6 @@ bool radio_uhd_rx_stream::stop()
 
   // Transition state to stop before locking to prevent real time priority thread owning the lock constantly.
   state = states::STOP;
-
-  Debug("Stopping Rx stream " << id);
 
   // Try to stop the stream.
   if (!safe_execution([this]() {

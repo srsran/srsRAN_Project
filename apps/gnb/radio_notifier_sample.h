@@ -15,13 +15,51 @@
 
 namespace srsgnb {
 
-class radio_notification_handler_printer : public radio_notification_handler
+class radio_notification_handler_logger : public radio_notification_handler
 {
 public:
-  radio_notification_handler_printer(srslog::basic_logger& logger_) : logger(logger_) {}
+  radio_notification_handler_logger(std::unique_ptr<radio_notification_handler> handler_,
+                                    srslog::basic_logger&                       logger_) :
+    handler(std::move(handler_)), logger(logger_)
+  {
+  }
 
   void on_radio_rt_event(const event_description& description) override
   {
+    // Forward event.
+    if (handler) {
+      handler->on_radio_rt_event(description);
+    }
+
+    static const auto& log_format = "Radio realtime event: Type={} Source={} Timestamp={}";
+
+    if (description.timestamp.has_value()) {
+      logger.warning(
+          log_format, description.type.to_string(), description.source.to_string(), description.timestamp.value());
+    } else {
+      logger.warning(log_format, description.type.to_string(), description.source.to_string(), "na");
+    }
+  }
+
+private:
+  std::unique_ptr<radio_notification_handler> handler;
+  srslog::basic_logger&                       logger;
+};
+
+class radio_notification_handler_counter : public radio_notification_handler
+{
+public:
+  radio_notification_handler_counter(std::unique_ptr<radio_notification_handler> handler_) :
+    handler(std::move(handler_))
+  {
+  }
+
+  void on_radio_rt_event(const event_description& description) override
+  {
+    if (handler) {
+      handler->on_radio_rt_event(description);
+    }
+
     // Count events.
     switch (description.type) {
       case event_type::LATE:
@@ -40,15 +78,6 @@ public:
         // Uncounted.
         break;
     }
-
-    static const auto& log_format = "Radio realtime event: Type={} Source={} Timestamp={}";
-
-    if (description.timestamp.has_value()) {
-      logger.warning(
-          log_format, description.type.to_string(), description.source.to_string(), description.timestamp.value());
-    } else {
-      logger.warning(log_format, description.type.to_string(), description.source.to_string(), "na");
-    }
   }
 
   void print()
@@ -65,10 +94,10 @@ public:
   }
 
 private:
-  std::atomic<unsigned> late_count      = {};
-  std::atomic<unsigned> underflow_count = {};
-  std::atomic<unsigned> overflow_count  = {};
-  srslog::basic_logger& logger;
+  std::atomic<unsigned>                       late_count      = {};
+  std::atomic<unsigned>                       underflow_count = {};
+  std::atomic<unsigned>                       overflow_count  = {};
+  std::unique_ptr<radio_notification_handler> handler;
 };
 
 } // namespace srsgnb

@@ -42,6 +42,8 @@ private:
   unsigned nof_channels;
   /// Protects stream from concurrent receive and stop.
   std::mutex stream_mutex;
+  /// RF Logger.
+  srslog::basic_logger& logger;
 
   /// \brief Receives a single block of baseband samples.
   /// \param[out] nof_rxd_samples Indicate the number of samples received in the block.

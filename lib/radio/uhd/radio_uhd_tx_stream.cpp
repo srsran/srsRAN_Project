@@ -14,14 +14,17 @@ using namespace srsgnb;
 
 void radio_uhd_tx_stream::recv_async_msg()
 {
+  uhd_exception_handler exception_handler;
   bool                  valid;
   uhd::async_metadata_t async_metadata;
 
   // Retrieve asynchronous message.
-  if (!safe_execution([this, &valid, &async_metadata]() {
+  if (!exception_handler.safe_execution([this, &valid, &async_metadata]() {
         valid = stream->recv_async_msg(async_metadata, RECV_ASYNC_MSG_TIMEOUT_S);
       })) {
-    printf("Error: receiving asynchronous message for stream %d. %s.", stream_id, get_error_message().c_str());
+    fmt::print("Error: receiving asynchronous message for stream {}. {}.\n",
+               stream_id,
+               exception_handler.get_error_message().c_str());
     return;
   }
 
@@ -160,7 +163,6 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   stream_args.args     = description.args;
   stream_args.channels = description.ports;
 
-  Debug("Creating Tx stream " << stream_id);
   if (!safe_execution([this, usrp, &stream_args]() { stream = usrp->get_tx_stream(stream_args); })) {
     printf("Error:  failed to create transmit stream %d. %s.\n", stream_id, get_error_message().c_str());
     return;

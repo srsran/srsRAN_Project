@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "radio_uhd_logger.h"
 #include "fmt/format.h"
 #include <boost/exception/diagnostic_information.hpp>
 #include <string>
@@ -29,9 +28,6 @@ namespace srsgnb {
 
 class uhd_exception_handler
 {
-private:
-  std::string error_message;
-
 public:
   template <typename S, typename... Args>
   void on_error(const S& format_str, Args&&... args)
@@ -70,6 +66,9 @@ public:
 
   bool               is_successful() const { return error_message.empty(); }
   const std::string& get_error_message() const { return error_message; }
+
+private:
+  std::string error_message;
 };
 
 } // namespace srsgnb

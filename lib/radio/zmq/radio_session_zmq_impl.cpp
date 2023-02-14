@@ -15,7 +15,7 @@ using namespace srsgnb;
 radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio& config,
                                                task_executor&                    async_task_executor,
                                                radio_notification_handler&       notifier) :
-  logger(srslog::fetch_basic_logger("ZMQ Session", false))
+  logger(srslog::fetch_basic_logger("RF", false))
 {
   // Make ZMQ context.
   zmq_context = zmq_ctx_new();

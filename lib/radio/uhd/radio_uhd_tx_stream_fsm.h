@@ -69,7 +69,6 @@ public:
   {
     std::unique_lock<std::mutex> lock(mutex);
     if (state == states::IN_BURST) {
-      Debug("Underflow detected. Ending burst...");
       state            = states::END_OF_BURST;
       wait_eob_timeout = time_spec;
       wait_eob_timeout += WAIT_EOB_ACK_TIMEOUT_S;
@@ -82,7 +81,6 @@ public:
   {
     std::unique_lock<std::mutex> lock(mutex);
     if (state == states::WAIT_END_OF_BURST) {
-      Debug("EOB ACK Received. Staring burst...");
       state = states::START_BURST;
     }
   }
@@ -93,9 +91,9 @@ public:
   /// \return True if the block shall be transmitted. False if the block shall be ignored.
   bool transmit_block(uhd::tx_metadata_t& metadata, uhd::time_spec_t& time_spec)
   {
+    std::unique_lock<std::mutex> lock(mutex);
     switch (state) {
       case states::START_BURST:
-        Debug("Start of burst.");
         // Set start of burst flag and time spec.
         metadata.has_time_spec  = true;
         metadata.start_of_burst = true;
@@ -114,12 +112,10 @@ public:
           wait_eob_timeout = metadata.time_spec;
           wait_eob_timeout += WAIT_EOB_ACK_TIMEOUT_S;
         }
-        Debug("End of burst. Waiting for end-of-burst ACK (until " << wait_eob_timeout.get_real_secs() << ")... ");
         break;
       case states::WAIT_END_OF_BURST:
         // Consider starting the burst if the wait for end-of-burst expired.
         if (wait_eob_timeout.get_real_secs() < time_spec.get_real_secs()) {
-          Debug("Expired wait for EOB ACK. Start of burst.");
           // Set start of burst flag and time spec.
           metadata.has_time_spec  = true;
           metadata.start_of_burst = true;
@@ -127,9 +123,6 @@ public:
           // Transition to in-burst.
           state = states::IN_BURST;
           break;
-        } else {
-          Debug("Waiting for end-of-burst ACK (until " << wait_eob_timeout.get_real_secs() << "), now "
-                                                       << time_spec.get_real_secs() << "... ");
         }
       case states::UNINITIALIZED:
       case states::STOP:

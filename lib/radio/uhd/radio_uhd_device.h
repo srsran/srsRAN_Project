@@ -46,11 +46,9 @@ namespace srsgnb {
 
 class radio_uhd_device : public uhd_exception_handler
 {
-private:
-  uhd::usrp::multi_usrp::sptr usrp = nullptr;
-  radio_uhd_device_type       type = radio_uhd_device_type::types::UNKNOWN;
-
 public:
+  radio_uhd_device() : logger(srslog::fetch_basic_logger("RF")) {}
+
   bool is_valid() const { return usrp != nullptr; }
 
   bool usrp_make(const std::string& device_address)
@@ -74,7 +72,7 @@ public:
 
       // Select the first available device.
       uhd::device_addr_t first_device_addr = devices.front();
-      Info("No device type given, found device with address '" << first_device_addr.to_string() << "'");
+      fmt::print("No device type given, found device with address '{}'\n", first_device_addr.to_string());
 
       // Append to the device address the device type.
       if (first_device_addr.has_key("type")) {
@@ -122,7 +120,7 @@ public:
       }
     }
 
-    Info("Making USRP object with args '" << device_addr.to_string() << "'");
+    fmt::print("Making USRP object with args '{}'\n", device_addr.to_string());
 
     return safe_execution([this, &device_addr]() { usrp = uhd::usrp::multi_usrp::make(device_addr); });
   }
@@ -202,7 +200,7 @@ public:
         break;
     }
 
-    Debug("Setting PPS source to '" << sync_src << "' and clock source to '" << clock_src << "'");
+    logger.debug("Setting PPS source to '{}' and clock source to '{}'.", sync_src, clock_src);
 #if UHD_VERSION < 3140099
     return safe_execution([this, &sync_src, &clock_src]() {
       std::vector<std::string> time_sources = usrp->get_time_sources(0);
@@ -225,7 +223,7 @@ public:
   }
   bool set_rx_rate(double rate)
   {
-    Debug("Setting Rx Rate to " << to_MHz(rate) << "MHz");
+    logger.debug("Setting Rx Rate to {} MHz.", to_MHz(rate));
 
     return safe_execution([this, rate]() {
       uhd::meta_range_t range = usrp->get_rx_rates();
@@ -242,7 +240,7 @@ public:
   }
   bool set_tx_rate(double rate)
   {
-    Debug("Setting Tx Rate to " << to_MHz(rate) << "MHz");
+    logger.debug("Setting Tx Rate to {} MHz.", to_MHz(rate));
 
     return safe_execution([this, rate]() {
       uhd::meta_range_t range = usrp->get_tx_rates();
@@ -288,7 +286,7 @@ public:
   }
   bool set_tx_gain(unsigned ch, double gain)
   {
-    Debug("Setting channel " << ch << " Tx gain to " << gain << " dB");
+    logger.debug("Setting channel {} Tx gain to {:.2f} dB.", ch, gain);
 
     return safe_execution([this, ch, gain]() {
       uhd::gain_range_t range = usrp->get_tx_gain_range(ch);
@@ -307,7 +305,7 @@ public:
   }
   bool set_rx_gain(size_t ch, double gain)
   {
-    Debug("Setting channel " << ch << " Rx gain to " << gain << " dB");
+    logger.debug("Setting channel {} Rx gain to {:.2f} dB.", ch, gain);
 
     return safe_execution([this, ch, gain]() {
       uhd::gain_range_t range = usrp->get_rx_gain_range(ch);
@@ -326,7 +324,7 @@ public:
   }
   bool set_tx_freq(uint32_t ch, const radio_configuration::lo_frequency& config)
   {
-    Debug("Setting channel " << ch << " Tx frequency to " << to_MHz(config.center_frequency_hz) << " MHz");
+    logger.debug("Setting channel {} Tx frequency to {} MHz.", ch, to_MHz(config.center_frequency_hz));
 
     return safe_execution([this, ch, &config]() {
       uhd::freq_range_t range = usrp->get_tx_freq_range(ch);
@@ -353,7 +351,7 @@ public:
   }
   bool set_rx_freq(uint32_t ch, const radio_configuration::lo_frequency& config)
   {
-    Debug("Setting channel " << ch << " Rx frequency to " << to_MHz(config.center_frequency_hz) << " MHz");
+    logger.debug("Setting channel {} Rx frequency to {} MHz.", ch, to_MHz(config.center_frequency_hz));
 
     return safe_execution([this, ch, &config]() {
       uhd::freq_range_t range = usrp->get_rx_freq_range(ch);
@@ -378,6 +376,11 @@ public:
       usrp->set_rx_freq(tune_request, ch);
     });
   }
+
+private:
+  uhd::usrp::multi_usrp::sptr usrp = nullptr;
+  radio_uhd_device_type       type = radio_uhd_device_type::types::UNKNOWN;
+  srslog::basic_logger&       logger;
 };
 
 } // namespace srsgnb
