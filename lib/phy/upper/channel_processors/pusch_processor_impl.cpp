@@ -275,8 +275,8 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
     decoder->decode(data, result.data.value(), &softbuffer, sch_llr, decoder_config);
   }
 
-  // Current SNR estimation is not accurate for the purpose of adaptive MCS
-  // temporary use a evm to sinr conversion function
+  // Current SINR estimation is not accurate enough for the purpose of adaptive MCS.
+  // Temporarily use an EVM-to-SINR conversion function.
   if (result.evm.has_value()) {
     result.csi.sinr_dB = - 20 * log10f(result.evm.value()) - 3.7;
   }
