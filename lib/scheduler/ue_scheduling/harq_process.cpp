@@ -170,12 +170,18 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
 
 int dl_harq_process::ack_info(uint32_t tb_idx, mac_harq_ack_report_status ack)
 {
+  // When receing a DTX for the TB_idx 0 that is waiting for an ACK, reduce the ack_wait_in_slots.
   if (tb_idx == 0 and not empty(tb_idx) and tb(tb_idx).state == transport_block::state_t::waiting_ack and
       ack == mac_harq_ack_report_status::dtx) {
     ack_wait_in_slots = SHORT_ACK_TIMEOUT_DTX;
     return 0;
   }
+  // For any other case of receiving a DTX, don't take any action and exit.
+  if (ack == mac_harq_ack_report_status::dtx) {
+    return 0;
+  }
 
+  // When receiving a ACK or NACK, reset the ack_wait_in_slots to the maximum value.
   ack_wait_in_slots = max_ack_wait_in_slots;
   // From this point on, ack is either mac_harq_ack_report_status::ack or mac_harq_ack_report_status::nack;
   if (base_type::ack_info_common(tb_idx, ack == mac_harq_ack_report_status::ack)) {

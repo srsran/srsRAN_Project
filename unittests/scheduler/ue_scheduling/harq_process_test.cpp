@@ -220,3 +220,169 @@ INSTANTIATE_TEST_SUITE_P(dl_harq_param_combine,
                          testing::Combine(testing::Values(0, 1, 2, 4),   // max_retxs
                                           testing::Values(2, 4, 6, 8),   // max_ack_wait_slots
                                           testing::Values(1, 2, 4, 6))); // k1
+
+class dl_harq_process_param_tester_dtx : public ::testing::Test
+{
+protected:
+  dl_harq_process_param_tester_dtx() :
+    max_harq_retxs(1),
+    max_ack_wait_slots(12),
+    k1(1),
+    dl_logger(srslog::fetch_basic_logger("SCHED"), to_rnti(0x4601), to_du_cell_index(0), true),
+    h_dl(to_harq_id(0), dl_logger, max_ack_wait_slots)
+  {
+    srslog::init();
+  }
+
+  void slot_indication()
+  {
+    ++sl_tx;
+    srslog::fetch_basic_logger("SCHED").set_context(sl_tx.sfn(), sl_tx.slot_index());
+    h_dl.slot_indication(sl_tx);
+  }
+
+  ~dl_harq_process_param_tester_dtx() { srslog::flush(); }
+
+  const unsigned max_harq_retxs;
+  const unsigned max_ack_wait_slots;
+  const unsigned shortened_ack_wait_slots{10};
+  const unsigned k1;
+
+  harq_logger     dl_logger;
+  dl_harq_process h_dl;
+  slot_point      sl_tx{0, 0};
+};
+
+TEST_F(dl_harq_process_param_tester_dtx, test_dtx)
+{
+  const unsigned dtx_slot = 1;
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
+    // Notify HARQ process with DTX (ACK not decoded).
+    if (i == dtx_slot) {
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
+    }
+
+    // Before reaching the ack_wait_slots, the HARQ should be neither empty nor having pending TX.
+    if (i < shortened_ack_wait_slots + k1) {
+      ASSERT_FALSE(h_dl.empty());
+      ASSERT_FALSE(h_dl.has_pending_retx());
+    }
+    // Once the shortened_ack_wait_slots has passed, expect pending transmissions.
+    else {
+      ASSERT_FALSE(h_dl.empty());
+      ASSERT_TRUE(h_dl.has_pending_retx());
+    }
+    slot_indication();
+  }
+}
+
+TEST_F(dl_harq_process_param_tester_dtx, test_dtx_ack)
+{
+  // DTX arrives first, then NACK.
+  const unsigned dtx_slot = 1;
+  const unsigned ack_slot = 2;
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
+    if (i == dtx_slot) {
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
+    }
+    if (i == ack_slot) {
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) >= 0);
+    }
+
+    // Before ACK, the process is waiting for an ACK.
+    // NOTE: The DTX will only change the ack_wait_in_slots, with no effect on pending transmissions.
+    if (i < ack_slot) {
+      ASSERT_FALSE(h_dl.empty());
+      ASSERT_FALSE(h_dl.has_pending_retx());
+    }
+    // When ACK arrives, the process will be emptied. NOTE: DTX won't do anything in this case.
+    else {
+      ASSERT_TRUE(h_dl.empty());
+    }
+    slot_indication();
+  }
+}
+
+TEST_F(dl_harq_process_param_tester_dtx, test_ack_dtx)
+{
+  // ACK arrives first, then DTX.
+  const unsigned ack_slot = 1;
+  const unsigned dtx_slot = 2;
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
+    if (i == ack_slot) {
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) >= 0);
+    }
+    if (i == dtx_slot) {
+      h_dl.ack_info(0, mac_harq_ack_report_status::dtx);
+    }
+
+    // Before ACK, the process is waiting for an ACK.
+    if (i < ack_slot) {
+      ASSERT_FALSE(h_dl.empty());
+      ASSERT_FALSE(h_dl.has_pending_retx());
+    }
+    // When ACK arrives, the process will be emptied. NOTE: DTX won't do anything in this case.
+    else {
+      ASSERT_TRUE(h_dl.empty());
+    }
+    slot_indication();
+  }
+}
+
+TEST_F(dl_harq_process_param_tester_dtx, test_dtx_nack)
+{
+  // DTX arrives first, then NACK.
+  const unsigned dtx_slot  = 1;
+  const unsigned nack_slot = 2;
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
+    if (i == dtx_slot) {
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
+    }
+    if (i == nack_slot) {
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack) >= 0);
+    }
+
+    // Before NACK, the process is waiting for an ACK.
+    // NOTE: The DTX will only change the ack_wait_in_slots, with no effect on pending transmissions.
+    if (i < nack_slot) {
+      ASSERT_FALSE(h_dl.empty());
+      ASSERT_FALSE(h_dl.has_pending_retx());
+    }
+    // When NACK arrives, the process has pending_retx.
+    else {
+      ASSERT_TRUE(h_dl.has_pending_retx());
+    }
+    slot_indication();
+  }
+}
+
+TEST_F(dl_harq_process_param_tester_dtx, test_nack_dtx)
+{
+  // NACK arrives first, then DTX.
+  const unsigned nack_slot = 1;
+  const unsigned dtx_slot  = 2;
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
+    if (i == nack_slot) {
+      ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack) >= 0);
+    }
+    if (i == dtx_slot) {
+      h_dl.ack_info(0, mac_harq_ack_report_status::dtx);
+    }
+
+    // Before NACK, the process is waiting for an ACK.
+    if (i < nack_slot) {
+      ASSERT_FALSE(h_dl.empty());
+      ASSERT_FALSE(h_dl.has_pending_retx());
+    }
+    // When NACK arrives, the process has pending_retx. NOTE: DTX won't do anything in this case.
+    else {
+      ASSERT_TRUE(h_dl.has_pending_retx());
+    }
+    slot_indication();
+  }
+}
