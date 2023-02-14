@@ -410,7 +410,7 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
     cfg.enable_logging_broadcast   = config.log_cfg.phy_broadcast;
     cfg.rx_symbol_printer_filename = config.log_cfg.phy_rx_symbols_filename;
     cfg.logger_max_hex_size        = config.log_cfg.hex_max_size;
-    cfg.enable_evm                 = (cfg.log_level >= srslog::basic_levels::info);
+    cfg.enable_evm                 = true;
     cfg.sector_id                  = i;
     cfg.nof_ports                  = nof_ports;
     cfg.ldpc_decoder_iterations    = config.expert_phy_cfg.pusch_decoder_max_iterations;
