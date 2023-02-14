@@ -15,7 +15,7 @@
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/pcap/mac_pcap.h"
+#include "srsgnb/pcap/pcap.h"
 
 namespace srsgnb {
 

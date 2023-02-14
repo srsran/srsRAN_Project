@@ -14,6 +14,7 @@
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "unittests/f1ap/du/f1ap_du_test_helpers.h"
+#include "unittests/mac/mac_test_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/du_high/du_high_configuration.h"
 #include "srsgnb/f1u/du/f1u_gateway.h"
@@ -322,7 +323,7 @@ public:
   std::unique_ptr<du_high>           du_hi;
   slot_point                         next_sl_tx{0, 0};
   unsigned                           slot_count;
-  mac_pcap                           pcap;
+  test_helpers::dummy_mac_pcap       pcap;
 
   byte_buffer pdcp_pdu;
 };

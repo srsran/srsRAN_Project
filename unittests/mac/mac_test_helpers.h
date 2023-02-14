@@ -15,6 +15,7 @@
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
+#include "srsgnb/pcap/pcap.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -136,6 +137,18 @@ struct mac_test_ue {
 
   void                          add_bearer(lcid_t lcid);
   mac_ue_create_request_message make_ue_create_request();
+};
+
+class dummy_mac_pcap : public mac_pcap
+{
+public:
+  ~dummy_mac_pcap() override = default;
+
+  void open(const char* filename_) override {}
+  void close() override {}
+  bool is_write_enabled() override { return false; }
+  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) override {}
+  void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
 };
 
 } // namespace test_helpers

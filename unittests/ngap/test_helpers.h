@@ -18,6 +18,7 @@
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/ngap/ngc.h"
+#include "srsgnb/pcap/pcap.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include <unordered_map>
 
@@ -326,6 +327,16 @@ public:
 
 private:
   srslog::basic_logger& logger;
+};
+
+class dummy_ngap_pcap : public ngap_pcap
+{
+public:
+  void open(const char* filename_) override {}
+  void close() override {}
+  bool is_write_enabled() override { return false; }
+  void push_pdu(const_span<uint8_t> pdu) override {}
+  void push_pdu(byte_buffer pdu) override {}
 };
 
 } // namespace srs_cu_cp

@@ -12,7 +12,7 @@
 
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/pcap/mac_pcap.h"
+#include "srsgnb/pcap/pcap.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/scheduler_metrics.h"
 

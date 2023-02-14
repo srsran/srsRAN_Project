@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/pcap/mac_pcap.h"
+#include "srsgnb/pcap/pcap.h"
 #include "srsgnb/support/build_info/build_info.h"
 #include "srsgnb/support/signal_handler.h"
 #include "srsgnb/support/tsan_options.h"
@@ -38,6 +38,8 @@
 #include "fapi_factory.h"
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
+#include "lib/pcap/mac_pcap_impl.h"
+#include "lib/pcap/ngap_pcap_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
@@ -397,13 +399,13 @@ int main(int argc, char** argv)
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 
   // Set layer-specific pcap options.
-  ngap_pcap ngap_pcap;
+  std::unique_ptr<ngap_pcap> ngap_p = std::make_unique<ngap_pcap_impl>();
   if (gnb_cfg.pcap_cfg.ngap.enabled) {
-    ngap_pcap.open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
+    ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
   }
-  mac_pcap mac_pcap;
+  std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>();
   if (gnb_cfg.pcap_cfg.mac.enabled) {
-    mac_pcap.open(gnb_cfg.pcap_cfg.mac.filename.c_str());
+    mac_p->open(gnb_cfg.pcap_cfg.mac.filename.c_str());
   }
 
   worker_manager workers{gnb_cfg};
@@ -422,7 +424,7 @@ int main(int argc, char** argv)
 
   // Create NGAP adapter.
   std::unique_ptr<srsgnb::srs_cu_cp::ngap_network_adapter> ngap_adapter =
-      std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker, ngap_pcap);
+      std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
 
   // Create SCTP network adapter.
   std::unique_ptr<sctp_network_gateway> sctp_gateway =
@@ -586,7 +588,7 @@ int main(int argc, char** argv)
   du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
   du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);
   du_hi_cfg.qos                           = du_qos_cfg;
-  du_hi_cfg.pcap                          = &mac_pcap;
+  du_hi_cfg.pcap                          = mac_p.get();
 
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");
@@ -624,8 +626,8 @@ int main(int argc, char** argv)
 
   console.on_app_stopping();
 
-  ngap_pcap.close();
-  mac_pcap.close();
+  ngap_p->close();
+  mac_p->close();
 
   gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();

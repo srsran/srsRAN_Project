@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/pcap/ngap_pcap.h"
+#include "ngap_pcap_impl.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include <stdint.h>
 
@@ -16,46 +16,53 @@ namespace srsgnb {
 
 constexpr uint16_t NGAP_DLT = 152;
 
-ngap_pcap::ngap_pcap() : worker("NGAP-PCAP", 1024)
+constexpr uint16_t pcap_ngap_max_len = 2000;
+
+ngap_pcap_impl::ngap_pcap_impl() : worker("NGAP-PCAP", 1024)
 {
-  tmp_mem.resize(pcap_max_len);
+  tmp_mem.resize(pcap_ngap_max_len);
 }
 
-ngap_pcap::~ngap_pcap()
+ngap_pcap_impl::~ngap_pcap_impl()
 {
   close();
 }
 
-void ngap_pcap::open(const char* filename_)
+void ngap_pcap_impl::open(const char* filename_)
 {
-  auto fn = [this, filename_]() { dlt_pcap_open(NGAP_DLT, filename_); };
+  auto fn = [this, filename_]() { writter.dlt_pcap_open(NGAP_DLT, filename_); };
   worker.push_task_blocking(fn);
 }
 
-void ngap_pcap::close()
+bool ngap_pcap_impl::is_write_enabled()
+{
+  return writter.is_write_enabled();
+}
+
+void ngap_pcap_impl::close()
 {
   if (is_write_enabled()) {
-    auto fn = [this]() { dlt_pcap_close(); };
+    auto fn = [this]() { writter.dlt_pcap_close(); };
     worker.push_task_blocking(fn);
     worker.wait_pending_tasks();
     worker.stop();
   }
 }
 
-void ngap_pcap::push_pdu(srsgnb::byte_buffer pdu)
+void ngap_pcap_impl::push_pdu(srsgnb::byte_buffer pdu)
 {
   auto fn = [this, pdu]() mutable { write_pdu(std::move(pdu)); };
   worker.push_task(fn);
 }
 
-void ngap_pcap::push_pdu(srsgnb::const_span<uint8_t> pdu)
+void ngap_pcap_impl::push_pdu(srsgnb::const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, buffer]() mutable { write_pdu(std::move(buffer)); };
   worker.push_task(fn);
 }
 
-void ngap_pcap::write_pdu(srsgnb::byte_buffer buf)
+void ngap_pcap_impl::write_pdu(srsgnb::byte_buffer buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip
@@ -66,10 +73,10 @@ void ngap_pcap::write_pdu(srsgnb::byte_buffer buf)
   span<const uint8_t> pdu = to_span(buf, tmp_mem);
 
   // write packet header
-  write_pcap_header(pdu.size_bytes());
+  writter.write_pcap_header(pdu.size_bytes());
 
   // write PDU payload
-  write_pcap_pdu(pdu);
+  writter.write_pcap_pdu(pdu);
 }
 
 } // namespace srsgnb

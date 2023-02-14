@@ -7,6 +7,6 @@
 #
 
 add_executable(ngap_integration_test ngap_integration_test.cpp)
-target_link_libraries(ngap_integration_test  srslog srsgnb_io_broker srsgnb_ngap ngap_asn1 srsgnb_gateway srsgnb_pcap srsgnb_support gtest gtest_main)
+target_link_libraries(ngap_integration_test  srslog srsgnb_io_broker srsgnb_ngap ngap_asn1 srsgnb_gateway srsgnb_support gtest gtest_main)
 target_include_directories(ngap_integration_test PRIVATE ${CMAKE_SOURCE_DIR})
 #gtest_discover_tests(ngap_integration_test)

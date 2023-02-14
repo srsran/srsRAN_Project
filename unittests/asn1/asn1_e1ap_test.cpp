@@ -8,8 +8,8 @@
  *
  */
 
+#include "lib/pcap/e1ap_pcap.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/pcap/e1ap_pcap.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 

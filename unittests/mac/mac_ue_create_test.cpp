@@ -10,6 +10,7 @@
 
 #include "lib/mac/mac_ctrl/ue_creation_procedure.h"
 #include "mac_ctrl_test_dummies.h"
+#include "unittests/mac/mac_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
@@ -59,12 +60,12 @@ protected:
   }
 
   // Run all async tasks in same thread.
-  manual_task_worker        worker{128};
-  dummy_ue_executor_mapper  ul_exec_mapper{worker};
-  dummy_dl_executor_mapper  dl_exec_mapper{&worker};
-  dummy_mac_event_indicator du_mng_notif;
-  dummy_mac_result_notifier phy_notifier;
-  mac_pcap                  pcap;
+  manual_task_worker           worker{128};
+  dummy_ue_executor_mapper     ul_exec_mapper{worker};
+  dummy_dl_executor_mapper     dl_exec_mapper{&worker};
+  dummy_mac_event_indicator    du_mng_notif;
+  dummy_mac_result_notifier    phy_notifier;
+  test_helpers::dummy_mac_pcap pcap;
 
   // Create a MAC config object.
   mac_common_config_t         mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker, phy_notifier, pcap};

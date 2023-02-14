@@ -119,17 +119,17 @@ void test_dl_ue_procedure_execution_contexts()
 {
   test_delimit_logger delimiter{"Test UE procedures execution contexts"};
 
-  auto&                       logger = srslog::fetch_basic_logger("TEST");
-  manual_task_worker          ctrl_worker{128};
-  manual_task_worker          dl_worker{128};
-  std::vector<task_executor*> dl_execs = {&dl_worker};
-  dummy_ue_executor_mapper    ul_exec_mapper{ctrl_worker};
-  dummy_dl_executor_mapper    dl_exec_mapper{dl_execs[0]};
-  dummy_mac_event_indicator   du_mng_notifier;
-  dummy_mac_result_notifier   phy_notifier;
-  mac_pcap                    pcap;
-  mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
-  du_rnti_table               rnti_table;
+  auto&                        logger = srslog::fetch_basic_logger("TEST");
+  manual_task_worker           ctrl_worker{128};
+  manual_task_worker           dl_worker{128};
+  std::vector<task_executor*>  dl_execs = {&dl_worker};
+  dummy_ue_executor_mapper     ul_exec_mapper{ctrl_worker};
+  dummy_dl_executor_mapper     dl_exec_mapper{dl_execs[0]};
+  dummy_mac_event_indicator    du_mng_notifier;
+  dummy_mac_result_notifier    phy_notifier;
+  test_helpers::dummy_mac_pcap pcap;
+  mac_common_config_t          cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
+  du_rnti_table                rnti_table;
 
   srs_sched_config_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
@@ -167,16 +167,16 @@ void test_dl_ue_procedure_tsan()
 {
   test_delimit_logger delimiter{"Test UE procedures TSAN"};
 
-  blocking_task_worker      ctrl_worker{128};
-  task_worker               dl_workers[] = {{"DL#1", 128}, {"DL#2", 128}};
-  task_worker_executor      dl_execs[]   = {{dl_workers[0]}, {dl_workers[1]}};
-  dummy_ue_executor_mapper  ul_exec_mapper{ctrl_worker};
-  dummy_dl_executor_mapper  dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
-  dummy_mac_event_indicator du_mng_notifier;
-  dummy_mac_result_notifier phy_notifier;
-  mac_pcap                  pcap;
-  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
-  du_rnti_table             rnti_table;
+  blocking_task_worker         ctrl_worker{128};
+  task_worker                  dl_workers[] = {{"DL#1", 128}, {"DL#2", 128}};
+  task_worker_executor         dl_execs[]   = {{dl_workers[0]}, {dl_workers[1]}};
+  dummy_ue_executor_mapper     ul_exec_mapper{ctrl_worker};
+  dummy_dl_executor_mapper     dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
+  dummy_mac_event_indicator    du_mng_notifier;
+  dummy_mac_result_notifier    phy_notifier;
+  test_helpers::dummy_mac_pcap pcap;
+  mac_common_config_t          cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap};
+  du_rnti_table                rnti_table;
 
   srs_sched_config_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};

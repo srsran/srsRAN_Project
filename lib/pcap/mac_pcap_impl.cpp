@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/pcap/mac_pcap.h"
+#include "mac_pcap_impl.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include <linux/udp.h>
 #include <netinet/in.h>
@@ -18,48 +18,55 @@ namespace srsgnb {
 
 constexpr uint16_t UDP_DLT = 149;
 
+constexpr uint16_t pcap_mac_max_pdu_len = 32768;
+
 int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8_t* buffer, unsigned int length);
 
-mac_pcap::mac_pcap() : worker("MAC-PCAP", 1024)
+mac_pcap_impl::mac_pcap_impl() : worker("MAC-PCAP", 1024)
 {
-  tmp_mem.resize(pcap_max_len);
+  tmp_mem.resize(pcap_mac_max_pdu_len);
 }
 
-mac_pcap::~mac_pcap()
+mac_pcap_impl::~mac_pcap_impl()
 {
   close();
 }
 
-void mac_pcap::open(const char* filename_)
+void mac_pcap_impl::open(const char* filename_)
 {
-  auto fn = [this, filename_]() { dlt_pcap_open(UDP_DLT, filename_); };
+  auto fn = [this, filename_]() { writter.dlt_pcap_open(UDP_DLT, filename_); };
   worker.push_task_blocking(fn);
 }
 
-void mac_pcap::close()
+void mac_pcap_impl::close()
 {
   if (is_write_enabled()) {
-    auto fn = [this]() { dlt_pcap_close(); };
+    auto fn = [this]() { writter.dlt_pcap_close(); };
     worker.push_task_blocking(fn);
     worker.wait_pending_tasks();
     worker.stop();
   }
 }
 
-void mac_pcap::push_pdu(mac_nr_context_info context, srsgnb::const_span<uint8_t> pdu)
+bool mac_pcap_impl::is_write_enabled()
+{
+  return writter.is_write_enabled();
+}
+
+void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsgnb::const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, std::move(buffer)); };
   worker.push_task(fn);
 }
 
-void mac_pcap::push_pdu(mac_nr_context_info context, srsgnb::byte_buffer pdu)
+void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsgnb::byte_buffer pdu)
 {
   auto fn = [this, context, pdu = std::move(pdu)]() mutable { write_pdu(context, std::move(pdu)); };
   worker.push_task(fn);
 }
 
-void mac_pcap::write_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer buf)
+void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip
@@ -103,11 +110,11 @@ void mac_pcap::write_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer
   }
 
   // Write header
-  write_pcap_header(offset + pdu.size());
+  writter.write_pcap_header(offset + pdu.size());
   // Write context
-  write_pcap_pdu(span<uint8_t>(context_header, offset));
+  writter.write_pcap_pdu(span<uint8_t>(context_header, offset));
   // Write PDU
-  write_pcap_pdu(pdu);
+  writter.write_pcap_pdu(pdu);
 }
 
 /// Helper function to serialize MAC NR context

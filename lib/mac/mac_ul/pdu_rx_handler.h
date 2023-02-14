@@ -17,7 +17,7 @@
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/pcap/mac_pcap.h"
+#include "srsgnb/pcap/pcap.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"

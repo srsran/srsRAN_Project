@@ -42,7 +42,7 @@ protected:
   mac_dl_ue_manager                            ue_mng;
   test_helpers::dummy_mac_cell_result_notifier phy_notifier;
   manual_task_worker                           task_worker{128};
-  mac_pcap                                     pcap;
+  test_helpers::dummy_mac_pcap                 pcap;
   mac_cell_processor                           mac_cell;
 
   bool is_pdsch_scheduled() const

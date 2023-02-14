@@ -11,6 +11,7 @@
 #include "lib/mac/du_rnti_table.h"
 #include "lib/mac/mac_ctrl/mac_controller.h"
 #include "mac_ctrl_test_dummies.h"
+#include "unittests/mac/mac_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
@@ -26,7 +27,7 @@ void test_mac_ctrl_ue_procedures()
   dummy_dl_executor_mapper        dl_exec_mapper{&worker};
   dummy_mac_event_indicator       du_mng_notifier;
   dummy_mac_result_notifier       phy_notifier;
-  mac_pcap                        pcap;
+  test_helpers::dummy_mac_pcap    pcap;
   mac_common_config_t             cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, worker, phy_notifier, pcap};
   mac_ul_dummy_configurer         ul_unit;
   mac_dl_dummy_configurer         dl_unit;

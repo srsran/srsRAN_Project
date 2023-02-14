@@ -10,59 +10,72 @@
 
 #pragma once
 
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/srslog/srslog.h"
-#include <fstream>
-#include <string>
+#include <cstdint>
 
-#define PCAP_CONTEXT_HEADER_MAX 256
+namespace srsgnb {
 
-constexpr uint16_t pcap_max_len = 10000;
+// Radio Type
+constexpr uint8_t PCAP_FDD_RADIO = 1;
+constexpr uint8_t PCAP_TDD_RADIO = 2;
 
-/// This structure gets written to the start of the file
-struct pcap_hdr_t {
-  unsigned int   magic_number;  /// magic number
-  unsigned short version_major; /// major version number
-  unsigned short version_minor; /// minor version number
-  unsigned int   thiszone;      /// GMT to local correction
-  unsigned int   sigfigs;       /// accuracy of timestamps
-  unsigned int   snaplen;       /// max length of captured packets, in octets
-  unsigned int   network;       /// data link type
+// Direction
+constexpr uint8_t PCAP_DIRECTION_UPLINK   = 0;
+constexpr uint8_t PCAP_DIRECTION_DOWNLINK = 1;
+
+// RNTI types
+constexpr uint8_t PCAP_NO_RNTI     = 0; // Used for BCH-BCH
+constexpr uint8_t PCAP_P_RNTI      = 1;
+constexpr uint8_t PCAP_RA_RNTI     = 2;
+constexpr uint8_t PCAP_C_RNTI      = 3;
+constexpr uint8_t PCAP_SI_RNTI     = 4;
+constexpr uint8_t PCAP_SPS_RNTI    = 5;
+constexpr uint8_t PCAP_M_RNTI      = 6;
+constexpr uint8_t PCAP_SL_BCH_RNTI = 7;
+constexpr uint8_t PCAP_SL_RNTI     = 8;
+constexpr uint8_t PCAP_SC_RNTI     = 9;
+constexpr uint8_t PCAP_G_RNTI      = 10;
+
+// Context information for every MAC NR PDU that will be logged
+struct mac_nr_context_info {
+  uint8_t  radioType;
+  uint8_t  direction;
+  uint8_t  rntiType;
+  uint16_t rnti;
+  uint16_t ueid;
+  uint8_t  harqid;
+
+  uint8_t phr_type2_othercell;
+
+  uint16_t system_frame_number;
+  uint8_t  sub_frame_number;
+  uint16_t length;
 };
 
-/// This structure precedes each packet
-struct pcaprec_hdr_t {
-  unsigned int ts_sec;   /// timestamp seconds
-  unsigned int ts_usec;  /// timestamp microseconds
-  unsigned int incl_len; /// number of octets of packet saved in file
-  unsigned int orig_len; /// actual length of packet
-};
-
-/// @brief Base class for PCAP writing to files.
-/// The class in *not* thread-safe. Proper protection from multiple threads
-/// needs to be implemented by the user of the class.
-class pcap_file_base
+/// @brief Interface class for writing a MAC PCAP to a file.
+class mac_pcap
 {
 public:
-  pcap_file_base() : logger(srslog::fetch_basic_logger("PCAP")){};
-  ~pcap_file_base()                                      = default;
-  pcap_file_base(const pcap_file_base& other)            = delete;
-  pcap_file_base& operator=(const pcap_file_base& other) = delete;
-  pcap_file_base(pcap_file_base&& other)                 = delete;
-  pcap_file_base& operator=(pcap_file_base&& other)      = delete;
+  virtual ~mac_pcap() = default;
 
-  bool is_write_enabled();
-
-protected:
-  bool dlt_pcap_open(uint32_t dlt, const char* filename);
-  void dlt_pcap_close();
-  void write_pcap_header(uint32_t length);
-  void write_pcap_pdu(srsgnb::const_span<uint8_t> pdu);
-
-private:
-  srslog::basic_logger& logger;
-  std::atomic<bool>     write_enabled{false};
-  std::ofstream         pcap_fstream;
-  std::string           filename;
-  uint32_t              dlt = 0;
+  virtual void open(const char* filename_)                                    = 0;
+  virtual void close()                                                        = 0;
+  virtual bool is_write_enabled()                                             = 0;
+  virtual void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu) = 0;
+  virtual void push_pdu(mac_nr_context_info context, byte_buffer pdu)         = 0;
 };
+
+/// @brief Interface class for writing a NGAP PCAP to a file.
+class ngap_pcap
+{
+public:
+  virtual ~ngap_pcap() = default;
+
+  virtual void open(const char* filename_)       = 0;
+  virtual void close()                           = 0;
+  virtual bool is_write_enabled()                = 0;
+  virtual void push_pdu(const_span<uint8_t> pdu) = 0;
+  virtual void push_pdu(byte_buffer pdu)         = 0;
+};
+} // namespace srsgnb

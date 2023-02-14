@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/pcap/e1ap_pcap.h"
+#include "e1ap_pcap.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include <stdint.h>
 

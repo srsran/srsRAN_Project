@@ -53,7 +53,7 @@ protected:
   std::unique_ptr<dummy_ngc_message_handler>          ngc;
   std::unique_ptr<srsgnb::ngc_asn1_packer>            packer;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
-  ngap_pcap                                           pcap;
+  dummy_ngap_pcap                                     pcap;
 };
 
 /// Test successful packing and compare with captured test vector

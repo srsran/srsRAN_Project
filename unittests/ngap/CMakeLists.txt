@@ -19,5 +19,5 @@ set(SOURCES
 
 add_executable(ngap_test ${SOURCES})
 target_include_directories(ngap_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(ngap_test ngap_test_helpers srsgnb_ngap srsgnb_pcap srsgnb_support ngap_asn1 srsgnb_ran srslog gtest gtest_main)
+target_link_libraries(ngap_test ngap_test_helpers srsgnb_ngap srsgnb_support ngap_asn1 srsgnb_ran srslog gtest gtest_main)
 gtest_discover_tests(ngap_test PROPERTIES "LABELS;ngap")

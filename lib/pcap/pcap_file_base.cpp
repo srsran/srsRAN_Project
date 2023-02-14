@@ -8,8 +8,10 @@
  *
  */
 
-#include "srsgnb/pcap/pcap.h"
+#include "pcap_file_base.h"
 #include <sys/time.h>
+
+using namespace srsgnb;
 
 bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
 {

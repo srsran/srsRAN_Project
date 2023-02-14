@@ -16,6 +16,7 @@
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/mac/mac_cell_result.h"
+#include "srsgnb/pcap/pcap.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/executors/task_executor.h"
 

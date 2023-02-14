@@ -8,9 +8,8 @@
  *
  */
 
+#include "lib/pcap/ngap_pcap_impl.h"
 #include "srsgnb/asn1/ngap/ngap.h"
-#include "srsgnb/pcap/mac_pcap.h"
-#include "srsgnb/pcap/ngap_pcap.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -39,8 +38,8 @@ protected:
     srslog::flush();
   }
 
-  srsgnb::ngap_pcap     ngap_pcap_writer;
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  srsgnb::ngap_pcap_impl ngap_pcap_writer;
+  srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 TEST_F(pcap_ngap_test, write_pdu)

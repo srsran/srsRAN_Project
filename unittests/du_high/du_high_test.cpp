@@ -32,7 +32,7 @@ void test_f1_setup_local()
   dummy_f1c_pdu_notifier    notifier(&msg_handler);
 
   phy_test_dummy phy;
-  mac_pcap       pcap;
+  mac_pcap_dummy pcap;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -76,7 +76,7 @@ void test_f1_setup_network()
   f1c_network_adapter    pdu_handler;
   dummy_f1c_pdu_notifier notifier(&pdu_handler);
   phy_test_dummy         phy;
-  mac_pcap               pcap;
+  mac_pcap_dummy         pcap;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -119,7 +119,7 @@ void test_du_ue_create()
   phy_test_dummy phy;
 
   dummy_f1c_pdu_notifier notifier(&pdu_handler);
-  mac_pcap               pcap;
+  mac_pcap_dummy         pcap;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;

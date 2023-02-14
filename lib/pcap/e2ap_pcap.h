@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "pcap.h"
+#include "pcap_file_base.h"
 
 namespace srsgnb {
 
