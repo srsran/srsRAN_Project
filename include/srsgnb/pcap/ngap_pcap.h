@@ -32,8 +32,9 @@ public:
   void push_pdu(srsgnb::const_span<uint8_t> pdu);
 
 private:
-  void        write_pdu(srsgnb::byte_buffer buf);
-  task_worker worker;
+  void                 write_pdu(srsgnb::byte_buffer buf);
+  task_worker          worker;
+  std::vector<uint8_t> tmp_mem;
 };
 
 } // namespace srsgnb

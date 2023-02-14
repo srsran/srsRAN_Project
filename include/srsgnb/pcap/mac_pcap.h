@@ -68,13 +68,14 @@ public:
   mac_pcap();
   ~mac_pcap();
 
-  task_worker worker;
-  void        open(const char* filename_);
-  void        close();
-  void        push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu);
-  void        push_pdu(mac_nr_context_info context, byte_buffer pdu);
+  void open(const char* filename_);
+  void close();
+  void push_pdu(mac_nr_context_info context, const_span<uint8_t> pdu);
+  void push_pdu(mac_nr_context_info context, byte_buffer pdu);
 
 private:
-  void write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
+  void                 write_pdu(const mac_nr_context_info& context, byte_buffer pdu);
+  std::vector<uint8_t> tmp_mem;
+  task_worker          worker;
 };
 } // namespace srsgnb

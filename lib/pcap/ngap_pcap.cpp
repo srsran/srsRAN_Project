@@ -16,7 +16,10 @@ namespace srsgnb {
 
 constexpr uint16_t NGAP_DLT = 152;
 
-ngap_pcap::ngap_pcap() : worker("NGAP-PCAP", 1024) {}
+ngap_pcap::ngap_pcap() : worker("NGAP-PCAP", 1024)
+{
+  tmp_mem.resize(pcap_max_len);
+}
 
 ngap_pcap::~ngap_pcap()
 {
@@ -59,8 +62,8 @@ void ngap_pcap::write_pdu(srsgnb::byte_buffer buf)
     return;
   }
 
-  std::array<uint8_t, pcap_max_len> tmp_mem; // no init
-  span<const uint8_t>               pdu = to_span(buf, tmp_mem);
+  tmp_mem.clear();
+  span<const uint8_t> pdu = to_span(buf, tmp_mem);
 
   // write packet header
   write_pcap_header(pdu.size_bytes());
