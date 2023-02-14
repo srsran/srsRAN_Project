@@ -15,17 +15,6 @@ using namespace srsgnb;
 
 using namespace srsgnb;
 
-const unsigned CQI_TABLE_SIZE = 16;
-
-// Duplicate of the SNR vs MCS table in \ref lib/scheduler/support/mcs_calculator.cpp, for test purposes.
-static const int ra_nr_cqi_to_mcs_table[3][CQI_TABLE_SIZE] = {
-    /* ROW 1 - CQI Table 1 */
-    /* MCS Table 1 */ {-1, 0, 0, 2, 4, 6, 8, 11, 13, 15, 18, 20, 22, 24, 26, 28},
-    /* ROW 2 - CQI Table 2 */
-    /* MCS Table 2 */ {-1, 0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27},
-    /* ROW 3 - CQI Table 3 */
-    /* MCS Table 3 */ {-1, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28}};
-
 TEST(test_manual_values, test)
 {
   ASSERT_EQ(0, map_cqi_to_mcs(1, srsgnb::pdsch_mcs_table::qam64).value());
@@ -55,14 +44,6 @@ static const std::array<double, 29> ul_snr_mcs_table = {
     /* MCS 20    21       22       23       24      25       26        27       28 */
      13.0250, 13.8375, 14.7160, 15.6525, 16.3725,  17.1450,  17.9175, 18.7425, 20.191
     // clang-format on
-};
-
-// SNR vs MCS entry for the table.
-struct snr_mcs_test_entry {
-  // Minimum SNR required for a given MCS index.
-  double snr;
-  // MCS index.
-  unsigned mcs;
 };
 
 // Helper that searches (linearly) for the maximum MCS that can be used for a given SNR. Used to benchmark \ref
