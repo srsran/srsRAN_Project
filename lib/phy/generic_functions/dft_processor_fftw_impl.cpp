@@ -65,10 +65,12 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
   // Avoid that two or more plan creations are called at same time.
   std::lock_guard<std::mutex> lock(mutex_init);
 
-  // Load FFT wisdom if it is not marked to avoid, and it was not loaded by a different instance.
-  if (!fftw_config.avoid_wisdom && wisdom_filename.empty()) {
+  // Load FFT wisdom if it is not marked to avoid.
+  if (!fftw_config.avoid_wisdom) {
     // Use file name given in the configuration by default.
-    wisdom_filename = fftw_config.wisdom_filename;
+    if (!fftw_config.wisdom_filename.empty()) {
+      wisdom_filename = fftw_config.wisdom_filename;
+    }
 
     // If no file name is given, get default.
     if (wisdom_filename.empty()) {
