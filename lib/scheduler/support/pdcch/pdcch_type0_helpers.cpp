@@ -83,7 +83,7 @@ slot_point srsgnb::precompute_type0_pdcch_css_n0(uint8_t                   searc
   const auto pdcch_slot = get_type0_pdcch_css_n0(
       static_cast<unsigned>(ss0_config_occasion_param.offset), ss0_config_occasion_param.M, scs_common, ssb_index);
 
-  srsgnb_assert(cell_cfg.is_dl_enabled(pdcch_slot), "PDCCH slot is not DL enabled.");
+  report_fatal_error_if_not(cell_cfg.is_dl_enabled(pdcch_slot), "PDCCH slot is not DL enabled.");
 
   return pdcch_slot;
 }
@@ -95,6 +95,6 @@ slot_point srsgnb::precompute_type0_pdcch_css_n0_plus_1(uint8_t                 
                                                         unsigned                  ssb_index)
 {
   const auto pdcch_slot = precompute_type0_pdcch_css_n0(searchspace0, coreset0, cell_cfg, scs_common, ssb_index) + 1;
-  srsgnb_assert(cell_cfg.is_dl_enabled(pdcch_slot), "PDCCH slot is not DL enabled.");
+  report_fatal_error_if_not(cell_cfg.is_dl_enabled(pdcch_slot), "PDCCH slot is not DL enabled.");
   return pdcch_slot;
 }
