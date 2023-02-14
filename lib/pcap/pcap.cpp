@@ -9,8 +9,6 @@
  */
 
 #include "srsgnb/pcap/pcap.h"
-#include <stdio.h>
-#include <string.h>
 #include <sys/time.h>
 
 bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
@@ -34,8 +32,8 @@ bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
   };
 
   pcap_fstream.open(filename.c_str(), std::ios::out | std::ios::binary);
-  if (!pcap_fstream.is_open()) {
-    logger.error("Failed to open file {} for writing", filename);
+  if (pcap_fstream.fail()) {
+    logger.error("Failed to open file {} for writing: {}", filename, strerror(errno));
     return false;
   }
   logger.debug("Opened file {} for writing. DLT={}", filename, dlt);
@@ -66,8 +64,8 @@ void pcap_file_base::write_pcap_header(uint32_t length)
   pcaprec_hdr_t packet_header = {};
 
   // PCAP header
-  struct timeval t;
-  gettimeofday(&t, NULL);
+  struct timeval t = {};
+  gettimeofday(&t, nullptr);
   packet_header.ts_sec   = t.tv_sec;
   packet_header.ts_usec  = t.tv_usec;
   packet_header.incl_len = length;
