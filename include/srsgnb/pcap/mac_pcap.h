@@ -34,7 +34,7 @@ constexpr uint8_t PCAP_DIRECTION_UPLINK   = 0;
 constexpr uint8_t PCAP_DIRECTION_DOWNLINK = 1;
 
 // RNTI types
-constexpr uint8_t PCAP_NO_RNTI     = 0; /* Used for BCH-BCH */
+constexpr uint8_t PCAP_NO_RNTI     = 0; // Used for BCH-BCH
 constexpr uint8_t PCAP_P_RNTI      = 1;
 constexpr uint8_t PCAP_RA_RNTI     = 2;
 constexpr uint8_t PCAP_C_RNTI      = 3;
@@ -46,8 +46,8 @@ constexpr uint8_t PCAP_SL_RNTI     = 8;
 constexpr uint8_t PCAP_SC_RNTI     = 9;
 constexpr uint8_t PCAP_G_RNTI      = 10;
 
-/* Context information for every MAC NR PDU that will be logged */
-typedef struct {
+// Context information for every MAC NR PDU that will be logged
+struct mac_nr_context_info {
   uint8_t  radioType;
   uint8_t  direction;
   uint8_t  rntiType;
@@ -60,7 +60,7 @@ typedef struct {
   uint16_t system_frame_number;
   uint8_t  sub_frame_number;
   uint16_t length;
-} mac_nr_context_info;
+};
 
 class mac_pcap : public pcap_file_base
 {
