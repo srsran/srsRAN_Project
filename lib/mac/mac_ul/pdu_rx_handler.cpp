@@ -300,7 +300,7 @@ void pdu_rx_handler::write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu
   context.direction           = PCAP_DIRECTION_UPLINK;
   context.rntiType            = PCAP_C_RNTI;
   context.rnti                = pdu.rnti;
-  context.ueid                = 0;
+  context.ueid                = rnti_table[pdu.rnti];
   context.harqid              = pdu.harq_id;
   context.system_frame_number = sl_rx.sfn();
   context.sub_frame_number    = sl_rx.subframe_index();

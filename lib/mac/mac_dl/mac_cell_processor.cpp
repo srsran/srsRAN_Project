@@ -356,16 +356,16 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
   }
 
   for (unsigned i = 0; i < dl_res.ue_pdus.size(); ++i) {
-    const mac_dl_data_result::dl_pdu& ue_pdu    = dl_res.ue_pdus[i];
-    const pdsch_information&          pdsch_cfg = sl_res->dl.ue_grants[i].pdsch_cfg;
-    if (pdsch_cfg.codewords[0].new_data) {
-      srsgnb::mac_nr_context_info context;
-      context.radioType           = PCAP_FDD_RADIO;
-      context.direction           = PCAP_DIRECTION_DOWNLINK;
-      context.rntiType            = PCAP_C_RNTI;
-      context.rnti                = pdsch_cfg.rnti;
-      context.ueid                = 0;
-      context.harqid              = pdsch_cfg.harq_id;
+    const mac_dl_data_result::dl_pdu& ue_pdu   = dl_res.ue_pdus[i];
+    const dl_msg_alloc&               dl_alloc = sl_res->dl.ue_grants[i];
+    if (dl_alloc.pdsch_cfg.codewords[0].new_data) {
+      srsgnb::mac_nr_context_info context = {};
+      context.radioType = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
+      context.direction = PCAP_DIRECTION_DOWNLINK;
+      context.rntiType  = PCAP_C_RNTI;
+      context.rnti      = dl_alloc.pdsch_cfg.rnti;
+      context.ueid      = dl_alloc.context.ue_index;
+      context.harqid    = dl_alloc.pdsch_cfg.harq_id;
       context.system_frame_number = sl_tx.sfn();
       context.sub_frame_number    = sl_tx.subframe_index();
       context.length              = ue_pdu.pdu.size();
