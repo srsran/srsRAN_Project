@@ -300,14 +300,23 @@ const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ac
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
 
+  const dl_harq_process* harq_candidate = nullptr;
   for (dl_harq_process& h_dl : dl_harqs) {
-    if (not h_dl.empty() and h_dl.slot_ack() == uci_slot) {
-      h_dl.ack_info(tb_index, ack);
-      return &h_dl;
+    if (h_dl.slot_ack() == uci_slot) {
+      if (not h_dl.empty()) {
+        // Update HARQ state.
+        h_dl.ack_info(tb_index, ack);
+        return &h_dl;
+      } else {
+        // Handle case when two HARQ-ACKs arrive for the same HARQ, and the first ACK empties the HARQ.
+        harq_candidate = &h_dl;
+      }
     }
   }
-  logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
-  return nullptr;
+  if (harq_candidate == nullptr) {
+    logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
+  }
+  return harq_candidate;
 }
 
 int harq_entity::ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot)
