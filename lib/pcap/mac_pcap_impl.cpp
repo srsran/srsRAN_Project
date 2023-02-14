@@ -72,8 +72,7 @@ void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsgnb::byte_b
     // skip
     return;
   }
-  tmp_mem.clear();
-  span<const uint8_t> pdu = to_span(buf, tmp_mem);
+  span<const uint8_t> pdu = to_span(buf, span<uint8_t>(tmp_mem).first(buf.length()));
 
   uint8_t        context_header[PCAP_CONTEXT_HEADER_MAX] = {};
   const uint16_t length                                  = pdu.size();

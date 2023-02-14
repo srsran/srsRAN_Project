@@ -69,8 +69,7 @@ void ngap_pcap_impl::write_pdu(srsgnb::byte_buffer buf)
     return;
   }
 
-  tmp_mem.clear();
-  span<const uint8_t> pdu = to_span(buf, tmp_mem);
+  span<const uint8_t> pdu = to_span(buf, span<uint8_t>(tmp_mem).first(buf.length()));
 
   // write packet header
   writter.write_pcap_header(pdu.size_bytes());
