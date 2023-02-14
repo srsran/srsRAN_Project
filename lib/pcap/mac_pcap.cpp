@@ -49,13 +49,13 @@ void mac_pcap::close()
 void mac_pcap::push_pdu(mac_nr_context_info context, srsgnb::const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
-  auto        fn = [this, context, buffer]() mutable { write_pdu(context, std::move(buffer)); };
+  auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, std::move(buffer)); };
   worker.push_task(fn);
 }
 
 void mac_pcap::push_pdu(mac_nr_context_info context, srsgnb::byte_buffer pdu)
 {
-  auto fn = [this, context, pdu]() mutable { write_pdu(context, std::move(pdu)); };
+  auto fn = [this, context, pdu = std::move(pdu)]() mutable { write_pdu(context, std::move(pdu)); };
   worker.push_task(fn);
 }
 
