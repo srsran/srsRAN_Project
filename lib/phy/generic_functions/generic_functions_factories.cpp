@@ -60,7 +60,6 @@ std::shared_ptr<dft_processor_factory> srsgnb::create_dft_processor_factory_fftw
                                                                                  const std::string& wisdom_filename)
 {
 #ifdef ENABLE_FFTW
-
   return std::make_shared<dft_processor_factory_fftw>(avoid_wisdom, wisdom_filename);
 #else  // ENABLE_FFTW
   return nullptr;
