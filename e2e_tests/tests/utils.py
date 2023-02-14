@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 from collections import defaultdict
 from contextlib import contextmanager, suppress
 from pprint import pformat
@@ -11,14 +12,12 @@ from retina.protocol.base_pb2 import Empty
 ATTACH_TIMEOUT = 120
 STARTUP_TIMEOUT = 120
 
-logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.INFO)
-
-
 @contextmanager
 def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
     """
     Get test elements
     """
+    test_successful = True
     try:
         test_config = {
             "ue": {
@@ -54,14 +53,13 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
         yield ue, gnb, epc
 
     except Exception as err:
+        test_successful = False
         raise err from None
 
     finally:
 
         teardown_ok = True
 
-        with suppress(UnboundLocalError, NameError):
-            extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
 
         with suppress(NameError, grpc._channel._InactiveRpcError):
             return_code = gnb.Stop(Empty()).value
@@ -79,6 +77,14 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
                 logging.error("UE crashed with exit code %s", return_code)
             elif return_code > 0:
                 logging.error("UE has %d errors or warnings", return_code)
+        if teardown_ok is False:
+            test_successful = False
+
+        if test_successful:
+            self.disable_download_report()
+        else:
+            with suppress(UnboundLocalError, NameError):
+                extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
 
         assert teardown_ok is True
 

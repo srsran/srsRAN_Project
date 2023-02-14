@@ -303,8 +303,8 @@ pages:
     - mv requirement_report.html public/
     - mv docs/index.html public/index.html
     - doxygen_generator.sh
-    - mv build/index.html build/index_doxygen.html
-    - mv build/public .
+    - mv build/public/index.html build/public/index_doxygen.html
+    - find build/public/ -name '*.*' -exec mv {} public/ \;
 
   after_script:
     - |

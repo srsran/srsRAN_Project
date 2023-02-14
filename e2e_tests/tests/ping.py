@@ -19,6 +19,8 @@ class TestPing(BaseTest):
     @mark.parametrize(
         "band, common_scs, bandwidth, ul_mcs, dl_mcs",
         (
+            # Test
+            param(3, 15, 20, 28, 28, marks=mark.test, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
             # Smoke
             param(3, 15, 20, 28, 28, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
             param(41, 30, 20, 28, 28, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),

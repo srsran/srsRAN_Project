@@ -10,7 +10,7 @@
   timeout: 8h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.13
+    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.14
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -81,7 +81,7 @@ zmq:
   variables:
     REQUEST: "request_srsgnb_zmq"
     MARKERS: "smoke and not tcp"
-    LOG_LEVEL: "info"
+    LOG_LEVEL: "debug"
     ARGS: "-x"
   rules:
     - if: $ON_MR

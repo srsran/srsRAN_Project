@@ -18,34 +18,35 @@ from .utils import get_ue_gnb_epc, ATTACH_TIMEOUT, STARTUP_TIMEOUT
 
 SHORT_DURATION = 20
 LONG_DURATION = 20*60
-BITRATE = 1e6
+LOW_BITRATE = 1e6
+HIGH_BITRATE = 70e6
 
 class TestIPerf(BaseTest):
     @mark.parametrize(
-        "iperf_duration, band, common_scs, bandwidth, ul_mcs, dl_mcs",
+        "bitrate, iperf_duration, band, common_scs, bandwidth, ul_mcs, dl_mcs",
         (
             # Smoke
-            param(SHORT_DURATION, 3, 15, 20, 28, 28, marks=mark.smoke, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.smoke, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(LOW_BITRATE, SHORT_DURATION, 3, 15, 20, 28, 28, marks=mark.smoke, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(LOW_BITRATE, SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.smoke, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
             # ZMQ
-            param(SHORT_DURATION, 3, 15, 5, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 3, 15, 10, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 3, 15, 15, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 3, 15, 20, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 3, 15, 50, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 7, 15, 5, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 7, 15, 10, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 7, 15, 15, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 7, 15, 20, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 7, 15, 50, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 41, 30, 5, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 41, 30, 10, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 41, 30, 15, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(SHORT_DURATION, 41, 30, 50, 28, 28, marks=mark.zmq, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 5, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 10, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 15, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 20, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 50, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 5, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 10, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 15, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 20, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 50, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 5, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 10, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 15, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 50, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
             # RF
-            param(LONG_DURATION, 3, 15, 10, 10, 10, marks=mark.rf, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(LONG_DURATION, 41, 30, 10, 10, 10, marks=mark.rf, id="iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, LONG_DURATION, 3, 15, 10, 10, 10, marks=mark.rf, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, LONG_DURATION, 41, 30, 10, 10, 10, marks=mark.rf, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
         ),
     )
     @mark.parametrize(
@@ -74,12 +75,12 @@ class TestIPerf(BaseTest):
         protocol,
         direction,
         iperf_duration,
+        bitrate,
         startup_timeout=ATTACH_TIMEOUT,
         attach_timeout=STARTUP_TIMEOUT,
-        bitrate=BITRATE,
     ):
 
-        logging.info("Ping Test")
+        logging.info("Iperf Test")
 
         with get_ue_gnb_epc(
             self,
