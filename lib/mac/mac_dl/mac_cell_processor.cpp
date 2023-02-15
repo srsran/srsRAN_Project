@@ -79,6 +79,22 @@ void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
   sched_obj.handle_crc_indication(ind);
 }
 
+static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4_detection_status harq_status,
+                                                       const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
+{
+  bool crc_pass = harq_status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+  static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> ret(
+      payload.size(), crc_pass ? mac_harq_ack_report_status::nack : mac_harq_ack_report_status::dtx);
+  if (crc_pass) {
+    for (unsigned i = 0; i != ret.size(); ++i) {
+      if (payload.test(i)) {
+        ret[i] = srsgnb::mac_harq_ack_report_status::ack;
+      }
+    }
+  }
+  return ret;
+}
+
 void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
 {
   uci_indication ind{};
@@ -134,15 +150,8 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       const auto&                            pusch = variant_get<mac_uci_pdu::pusch_type>(msg.ucis[i].pdu);
       uci_indication::uci_pdu::uci_pusch_pdu pdu{};
       if (pusch.harq_info.has_value()) {
-        pdu.harqs.resize(pusch.harq_info->payload.size());
-        if (pusch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-          for (unsigned j = 0; j != pdu.harqs.size(); ++j) {
-            pdu.harqs[j] =
-                pusch.harq_info->payload.test(j) ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack;
-          }
-        } else {
-          std::fill(pdu.harqs.begin(), pdu.harqs.end(), mac_harq_ack_report_status::dtx);
-        }
+        pdu.harqs =
+            convert_mac_harq_bits_to_sched_harq_values(pusch.harq_info.value().harq_status, pusch.harq_info->payload);
       }
       if (pusch.csi_part1_info.has_value() and
           pusch.csi_part1_info.value().csi_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
@@ -159,9 +168,9 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       if (pucch.sr_info.has_value()) {
         pdu.sr_info = pucch.sr_info.value();
       }
-      if (pucch.harq_info.has_value() and
-          pucch.harq_info.value().harq_status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {
-        pdu.harqs = pucch.harq_info->payload;
+      if (pucch.harq_info.has_value()) {
+        pdu.harqs =
+            convert_mac_harq_bits_to_sched_harq_values(pucch.harq_info.value().harq_status, pucch.harq_info->payload);
       }
       if (pucch.uci_part1_or_csi_part1_info.has_value() and
           pucch.uci_part1_or_csi_part1_info.value().status == uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass) {

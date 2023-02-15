@@ -77,9 +77,9 @@ struct uci_indication {
       /// Maximum number of SR bits expected on the PUCCH transmission.
       static const unsigned MAX_SR_PAYLOAD_SIZE_BITS = 4;
 
-      bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>                       sr_info;
-      bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>               harqs;
-      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part1;
+      bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS>                                    sr_info;
+      static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>              csi_part1;
       /// CSI Part 2 is for PUCCH format 3 and 4.
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part2;
     };
