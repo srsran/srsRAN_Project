@@ -85,7 +85,7 @@ protected:
     uci_indication::uci_pdu::uci_pusch_pdu pdu{};
     pdu.harqs.resize(harq_bits.size());
     for (unsigned i = 0; i != harq_bits.size(); ++i) {
-      pdu.harqs.set(i, harq_bits[i]);
+      pdu.harqs[i] = harq_bits[i] ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack;
     }
     uci_ind.ucis[0].pdu = pdu;
 

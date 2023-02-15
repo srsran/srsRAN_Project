@@ -69,9 +69,9 @@ struct uci_indication {
       static_vector<mac_harq_ack_report_status, NOF_HARQS_PER_UCI> harqs;
     };
     struct uci_pusch_pdu {
-      bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>               harqs;
-      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part1;
-      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part2;
+      static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>              csi_part1;
+      bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>              csi_part2;
     };
     struct uci_pucch_f2_or_f3_or_f4_pdu {
       /// Maximum number of SR bits expected on the PUCCH transmission.
