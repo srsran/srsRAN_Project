@@ -329,8 +329,6 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
   ue_ctxt_list.remove_ue(ue_ctxt.ue_index);
 
   e1_message e1_msg;
-  logger.debug("ue={} Sending BearerContextReleaseComplete", ue_ctxt.ue_index);
-
   e1_msg.pdu.set_successful_outcome();
   e1_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
   e1_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_cp_ue_e1ap_id =
@@ -339,6 +337,7 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
       msg->gnb_cu_up_ue_e1ap_id;
 
   // send response
+  logger.debug("ue={} Sending BearerContextReleaseComplete", e1_bearer_context_release_cmd.ue_index);
   pdu_notifier.on_new_message(e1_msg);
 }
 
