@@ -207,7 +207,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
   // Set real time priority to UHD threads. All threads created from this thread inherit the priority.
   if (uhd_set_thread_priority(1.0, true) != UHD_ERROR_NONE) {
-    fprintf(stderr, "Warning: Scheduling priority of UHD not changed. Cause: Not enough privileges.\n");
+    fmt::print(stderr, "Warning: Scheduling priority of UHD not changed. Cause: Not enough privileges.\n");
   }
 
   // Set the logging level.
