@@ -517,8 +517,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
    * makes sure we discard out of order status reports (with different ACN_SNs).
    * 2. Checking if ACK_SN > Tx_Next + 1 makes sure we do not receive a ACK/NACK for something we did not TX
    * ACK_SN may be equal to TX_NEXT + 1, if not all SDU segments with SN=TX_NEXT have been transmitted.
-   * 3. Checking for the first NACK_SN to be inside the TX_WINDOW makes sure that even out-of-order status
-   * report with the same ACK_SN arrive, we do not set the stop_sn to be larger than tx_next_ack.
+   * 3. Checking if all NACK_SNs are valid. These can be invalid either due to issues on the sender,
+   * or due to out-of-order status reports with the same ACK_SN.
    *
    * Note: dropping out-of-order status report may lose information as the more recent status report could
    * be trimmed. But if that is the case, the peer can always request another status report later on.
@@ -535,11 +535,12 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
     return;
   }
 
-  if (!status.get_nacks().empty() && !inside_tx_window(status.get_nacks()[0].nack_sn)) {
-    logger.log_info("Received NACK with SN outside of TX_WINDOW, ignoring status report. NACK_SN={}, st=[{}]",
-                    status.get_nacks()[0].nack_sn,
-                    st);
-    return;
+  if (!status.get_nacks().empty()) {
+    for (const auto& nack : status.get_nacks()) {
+      if (not valid_nack(status.ack_sn, nack)) {
+        return;
+      }
+    }
   }
 
   /**
@@ -946,4 +947,51 @@ bool rlc_tx_am_entity::valid_ack_sn(uint32_t sn) const
 {
   // Tx_Next_Ack < SN <= TX_Next + AM_Window_Size
   return (0 < tx_mod_base(sn)) && (tx_mod_base(sn) <= am_window_size);
+}
+
+bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nack) const
+{
+  // NACK_SN >= ACK_SN
+  if (tx_mod_base(nack.nack_sn) > tx_mod_base(ack_sn)) {
+    logger.log_info("Dropping status PDU. NACK_SN={} >= ACK_SN={}, st={}", ack_sn, nack.nack_sn, st);
+    return false;
+  }
+  // NACK_SN + range >= ACK_SN
+  if (nack.has_nack_range) {
+    if (tx_mod_base(nack.nack_sn + nack.nack_range) > tx_mod_base(ack_sn)) {
+      logger.log_info(
+          "Dropping status PDU. NACK_SN={} + range={} >= ACK_SN={}, st={}", ack_sn, nack.nack_sn, nack.nack_range, st);
+      return false;
+    }
+  }
+  // NACK_SN within TX Window
+  if (not inside_tx_window(nack.nack_sn)) {
+    logger.log_info("Dropping status PDU. NACK_SN={} not within TX window, st={}", nack.nack_sn, st);
+    return false;
+  }
+  // NACK_SN + range within TX Window
+  if (nack.has_nack_range) {
+    if (not inside_tx_window(nack.nack_sn + nack.nack_range)) {
+      logger.log_info(
+          "Dropping status PDU. NACK_SN={} + range={} not within TX window, st={}", nack.nack_sn, nack.nack_range, st);
+      return false;
+    }
+  }
+  // NACK_SN >= tx_next
+  if (tx_mod_base(nack.nack_sn) > tx_mod_base(st.tx_next)) {
+    logger.log_info("Dropping status PDU. NACK_SN={} >= tx_next={}, st={}", nack.nack_sn, st.tx_next, st);
+    return false;
+  }
+  // NACK_SN + range >= tx_next
+  if (nack.has_nack_range) {
+    if (tx_mod_base(nack.nack_sn + nack.nack_range) > tx_mod_base(st.tx_next)) {
+      logger.log_info("Dropping status PDU. NACK_SN={} + range={} >= tx_next={}, st={}",
+                      nack.nack_sn,
+                      nack.nack_range,
+                      st.tx_next,
+                      st);
+      return false;
+    }
+  }
+  return true;
 }
