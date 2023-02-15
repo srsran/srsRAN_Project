@@ -38,6 +38,8 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     param.channel_bw_mhz                 = base_cell.channel_bw_mhz;
     param.dl_arfcn                       = base_cell.dl_arfcn;
     param.band                           = base_cell.band;
+    // Enable CSI-RS if the PDSCH mcs is dynamic (fixed_ue_mcs is empty).
+    param.csi_rs_enabled = not cell.cell.pdsch_cfg.fixed_ue_mcs.has_value();
 
     unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
         base_cell.channel_bw_mhz,
