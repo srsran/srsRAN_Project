@@ -26,11 +26,11 @@ gnb_console_helper::gnb_console_helper(io_broker& io_broker_) :
   // set STDIN file descripter into non-blocking mode
   int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
   if (fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK) == -1) {
-    logger.error("Couldn't configure fd to non-blocking.");
+    logger.error("Couldn't configure fd to non-blocking");
   }
 
   if (io_broker_handle.register_fd(STDIN_FILENO, [this](int fd) { stdin_handler(fd); }) == false) {
-    logger.error("Couldn't register stdin hanlder.");
+    logger.error("Couldn't register stdin handler");
   }
 }
 
@@ -56,18 +56,18 @@ void gnb_console_helper::stdin_handler(int fd)
         break;
       }
     } else if (bytes_read == 0) {
-      logger.debug("Connection closed\n");
+      logger.debug("Connection closed");
       return;
     } else {
       total_bytes_read += bytes_read;
       if (total_bytes_read + read_chunk > buffer.size()) {
-        logger.error("Can't read more than {} B from stdin.\n", buffer.size());
+        logger.error("Can't read more than {} B from stdin", buffer.size());
         return;
       }
     }
   } while (true);
 
-  logger.debug("read {} B from stdin\n", total_bytes_read);
+  logger.debug("read {} B from stdin", total_bytes_read);
 
   // convert buffer to string
   std::string input_line(buffer.begin(), buffer.begin() + total_bytes_read);
@@ -141,6 +141,6 @@ unsigned gnb_console_helper::derive_ssb_arfcn(const du_cell_config& cell)
   optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
       cell.dl_carrier.arfcn, cell.dl_carrier.band, nof_crbs, cell.scs_common, cell.scs_common, ss0_idx);
 
-  srsgnb_assert(ssb_freq_loc.has_value(), "Unable to derive SSB location correctly.");
+  srsgnb_assert(ssb_freq_loc.has_value(), "Unable to derive SSB location correctly");
   return ssb_freq_loc->ssb_arfcn;
 }
