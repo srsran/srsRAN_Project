@@ -311,15 +311,14 @@ const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ac
 
   const dl_harq_process* harq_candidate = nullptr;
   for (dl_harq_process& h_dl : dl_harqs) {
-    if (h_dl.slot_ack() == uci_slot and h_dl.tb(0).dai == dai) {
-      if (not h_dl.empty()) {
+    if (h_dl.slot_ack() == uci_slot) {
+      if (not h_dl.empty() and h_dl.tb(0).dai == dai) {
         // Update HARQ state.
         h_dl.ack_info(tb_index, ack);
         return &h_dl;
-      } else {
-        // Handle case when two HARQ-ACKs arrive for the same HARQ, and the first ACK empties the HARQ.
-        harq_candidate = &h_dl;
       }
+      // Handle case when two HARQ-ACKs arrive for the same HARQ, and the first ACK empties the HARQ.
+      harq_candidate = &h_dl;
     }
   }
   if (harq_candidate == nullptr) {
