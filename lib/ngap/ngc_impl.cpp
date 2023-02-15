@@ -56,6 +56,8 @@ void ngc_impl::create_ngc_ue(ue_index_t                         ue_index,
 
 async_task<ng_setup_response> ngc_impl::handle_ng_setup_request(const ng_setup_request& request)
 {
+  logger.info("Sending NgSetupRequest");
+
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     request.msg.to_json(js);
@@ -347,16 +349,17 @@ void ngc_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_re
   ue_context_release_complete->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
   ue_context_release_complete->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
 
+  // Remove NGAP UE
+  ue_manager.remove_ngap_ue(ue_index);
+
+  logger.info("Sending UeContextReleaseComplete");
+
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     ngc_msg.pdu.to_json(js);
     logger.debug("Containerized UeContextReleaseComplete: {}", js.to_string());
   }
 
-  // Remove NGAP UE
-  ue_manager.remove_ngap_ue(ue_index);
-
-  logger.info("Sending UeContextReleaseComplete");
   ngc_notifier.on_new_message(ngc_msg);
 }
 
