@@ -15,7 +15,7 @@ using namespace srsgnb;
 radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio& config,
                                                task_executor&                    async_task_executor,
                                                radio_notification_handler&       notifier) :
-  logger(srslog::fetch_basic_logger("RF", false))
+  logger(srslog::fetch_basic_logger("RF", false)), notification_handler(notifier)
 {
   // Make ZMQ context.
   zmq_context = zmq_ctx_new();
@@ -126,7 +126,18 @@ void radio_session_zmq_impl::transmit(unsigned                                  
                             tx_streams.size());
 
   // Align stream to the new timestamp.
-  tx_streams[stream_id]->align(metadata.ts);
+  bool timestamp_passed = tx_streams[stream_id]->align(metadata.ts);
+
+  // Notify that a timestamp is late.
+  if (timestamp_passed) {
+    radio_notification_handler::event_description event_description;
+    event_description.stream_id  = radio_notification_handler::UNKNOWN_ID;
+    event_description.channel_id = radio_notification_handler::UNKNOWN_ID;
+    event_description.source     = radio_notification_handler::event_source::TRANSMIT;
+    event_description.type       = radio_notification_handler::event_type::LATE;
+    notification_handler.on_radio_rt_event(event_description);
+    return;
+  }
 
   // Actual transmission.
   tx_streams[stream_id]->transmit(data);

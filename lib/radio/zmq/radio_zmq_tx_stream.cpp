@@ -58,11 +58,14 @@ void radio_zmq_tx_stream::wait_stop()
   }
 }
 
-void radio_zmq_tx_stream::align(uint64_t timestamp)
+bool radio_zmq_tx_stream::align(uint64_t timestamp)
 {
+  // Returns true if at least one channel is in the past.
+  bool timestamp_passed = false;
   for (auto& channel : channels) {
-    channel->align(timestamp);
+    timestamp_passed = timestamp_passed || channel->align(timestamp);
   }
+  return timestamp_passed;
 }
 
 void radio_zmq_tx_stream::transmit(baseband_gateway_buffer& data)

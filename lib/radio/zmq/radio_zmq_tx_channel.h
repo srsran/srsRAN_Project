@@ -103,7 +103,7 @@ public:
 
   void run_async();
 
-  void align(uint64_t timestamp);
+  bool align(uint64_t timestamp);
 
   void transmit(span<radio_sample_type> buffer);
 

@@ -51,7 +51,7 @@ public:
 
   bool is_successful() const { return successful; }
 
-  void align(uint64_t timestamp);
+  bool align(uint64_t timestamp);
 
   void transmit(baseband_gateway_buffer& data);
 

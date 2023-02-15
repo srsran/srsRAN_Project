@@ -43,6 +43,8 @@ private:
   std::vector<std::unique_ptr<radio_zmq_rx_stream>> rx_streams;
   /// Indicates the session has been created succesfully.
   bool successful = false;
+  /// Interface to notificate events.
+  radio_notification_handler& notification_handler;
 
 public:
   /// \brief Default constructor.

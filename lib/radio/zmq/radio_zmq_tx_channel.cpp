@@ -236,13 +236,14 @@ void radio_zmq_tx_channel::transmit_samples(span<radio_sample_type> data)
   sample_count += count;
 }
 
-void radio_zmq_tx_channel::align(uint64_t timestamp)
+bool radio_zmq_tx_channel::align(uint64_t timestamp)
 {
   unsigned count = 0;
 
   // Early return if alignment is unnecessary.
   if (sample_count >= timestamp) {
-    return;
+    // Return true if the timestamp is in the past.
+    return sample_count > timestamp;
   }
 
   // Protect concurrent alignment and transmit.
@@ -260,6 +261,7 @@ void radio_zmq_tx_channel::align(uint64_t timestamp)
   if (count > 0) {
     logger.debug("Aligned with {} zeros.", count);
   }
+  return false;
 }
 
 void radio_zmq_tx_channel::transmit(span<radio_sample_type> data)
