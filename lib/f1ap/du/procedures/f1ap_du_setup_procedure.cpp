@@ -90,8 +90,8 @@ bool f1ap_du_setup_procedure::retry_required()
     return false;
   }
 
-  const f1_setup_fail_ies_container& f1_fail = *cu_pdu_response.error().value.f1_setup_fail();
-  if (not f1_fail.time_to_wait_present) {
+  const f1_setup_fail_ies_container& f1_setup_fail = *cu_pdu_response.error().value.f1_setup_fail();
+  if (not f1_setup_fail.time_to_wait_present) {
     // CU didn't command a waiting time.
     logger.error("CU-CP did not set any retry waiting time");
     return false;
@@ -102,7 +102,7 @@ bool f1ap_du_setup_procedure::retry_required()
     return false;
   }
 
-  time_to_wait = f1_fail.time_to_wait->to_number();
+  time_to_wait = f1_setup_fail.time_to_wait->to_number();
   return true;
 }
 

@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1_ue_context_modification_procedure.h"
+#include "ue_context_modification_procedure.h"
 #include "../../common/asn1_helpers.h"
 #include "../f1ap_asn1_helpers.h"
 

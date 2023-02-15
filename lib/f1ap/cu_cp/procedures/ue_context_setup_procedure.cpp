@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1_ue_context_setup_procedure.h"
+#include "ue_context_setup_procedure.h"
 
 using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;

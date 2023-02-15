@@ -7,7 +7,7 @@
 #
 
 
-set(SOURCES f1c_configuration_helpers.cpp
+set(SOURCES f1ap_configuration_helpers.cpp
         asn1_cell_group_config_helpers.cpp
         asn1_csi_meas_config_helpers.cpp
         rlc_config_helpers.cpp

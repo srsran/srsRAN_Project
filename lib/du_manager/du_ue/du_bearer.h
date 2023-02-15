@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../adapters/f1_adapters.h"
+#include "../adapters/f1ap_adapters.h"
 #include "../adapters/mac_adapters.h"
 #include "../adapters/rlc_adapters.h"
 #include "srsgnb/adt/optional.h"

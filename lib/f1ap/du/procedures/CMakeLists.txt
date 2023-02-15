@@ -13,5 +13,5 @@ set(SOURCES
         f1ap_du_ue_context_modification_procedure.cpp
         )
 
-add_library(srsgnb_f1c_du_procedures STATIC ${SOURCES})
-target_link_libraries(srsgnb_f1c_du_procedures f1ap_asn1)
+add_library(srsgnb_f1ap_du_procedures STATIC ${SOURCES})
+target_link_libraries(srsgnb_f1ap_du_procedures f1ap_asn1)

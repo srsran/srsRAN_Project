@@ -13,7 +13,7 @@
 #include "adapters/cu_cp_adapters.h"
 #include "adapters/cu_up_processor_adapters.h"
 #include "adapters/du_processor_adapters.h"
-#include "adapters/f1c_adapters.h"
+#include "adapters/f1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "cu_up_processor_impl.h"

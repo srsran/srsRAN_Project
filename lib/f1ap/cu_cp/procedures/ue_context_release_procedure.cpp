@@ -8,7 +8,7 @@
  *
  */
 
-#include "f1_ue_context_release_procedure.h"
+#include "ue_context_release_procedure.h"
 #include "../f1ap_asn1_converters.h"
 
 using namespace srsgnb;

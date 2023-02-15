@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "procedures/f1_ue_context_modification_procedure.h"
-#include "procedures/f1_ue_context_release_procedure.h"
-#include "procedures/f1_ue_context_setup_procedure.h"
+#include "procedures/ue_context_modification_procedure.h"
+#include "procedures/ue_context_release_procedure.h"
+#include "procedures/ue_context_setup_procedure.h"
 #include "ue_context/f1ap_cu_ue_context.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"

@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/du_manager/converters/f1c_configuration_helpers.h"
+#include "lib/du_manager/converters/f1ap_configuration_helpers.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"

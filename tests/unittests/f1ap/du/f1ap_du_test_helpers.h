@@ -12,7 +12,7 @@
 
 #include "../common/f1ap_du_test_messages.h"
 #include "../common/test_helpers.h"
-#include "lib/du_manager/converters/f1c_configuration_helpers.h"
+#include "lib/du_manager/converters/f1ap_configuration_helpers.h"
 #include "lib/f1ap/common/f1ap_asn1_utils.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/du/du_cell_config_helpers.h"

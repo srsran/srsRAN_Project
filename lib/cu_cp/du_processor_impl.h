@@ -11,7 +11,7 @@
 #pragma once
 
 #include "adapters/du_processor_adapters.h"
-#include "adapters/f1c_adapters.h"
+#include "adapters/f1ap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "routine_managers/du_processor_routine_manager.h"
 #include "ue_manager_impl.h"

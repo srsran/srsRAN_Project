@@ -12,7 +12,7 @@
 #include "../lib/f1ap/common/asn1_helpers.h"
 #include "adapters/pdcp_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
-#include "helpers/f1c_asn1_helpers.h"
+#include "helpers/f1ap_asn1_helpers.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/ran/nr_cgi_helpers.h"
