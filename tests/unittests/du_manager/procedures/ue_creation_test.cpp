@@ -38,13 +38,13 @@ protected:
 
   void start_procedure(du_ue_index_t ue_index = to_du_ue_index(0), rnti_t rnti = to_rnti(0x4601), bool success = true)
   {
-    f1ap.f1_ues.emplace(ue_index);
-    f1ap.f1_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb0);
-    f1ap.f1_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb1);
+    f1ap.f1ap_ues.emplace(ue_index);
+    f1ap.f1ap_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb0);
+    f1ap.f1ap_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb1);
     f1ap.next_ue_create_response.result = success;
     f1ap.next_ue_create_response.f1c_bearers_added.resize(2);
-    f1ap.next_ue_create_response.f1c_bearers_added[0] = &f1ap.f1_ues[ue_index].f1c_bearers[srb_id_t::srb0];
-    f1ap.next_ue_create_response.f1c_bearers_added[1] = &f1ap.f1_ues[ue_index].f1c_bearers[srb_id_t::srb1];
+    f1ap.next_ue_create_response.f1c_bearers_added[0] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb0];
+    f1ap.next_ue_create_response.f1c_bearers_added[1] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb1];
 
     proc = launch_async<ue_creation_procedure>(ue_index,
                                                create_test_ul_ccch_message(rnti),

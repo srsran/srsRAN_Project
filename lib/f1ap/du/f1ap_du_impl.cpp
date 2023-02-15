@@ -21,16 +21,16 @@ using namespace srsgnb;
 using namespace asn1::f1ap;
 using namespace srs_du;
 
-f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
-                           f1c_du_configurator&        du_mng_,
+f1ap_du_impl::f1ap_du_impl(f1ap_message_notifier&      message_notifier_,
+                           f1ap_du_configurator&       du_mng_,
                            task_executor&              ctrl_exec_,
                            du_high_ue_executor_mapper& ue_exec_mapper_) :
   logger(srslog::fetch_basic_logger("DU-F1")),
-  f1c_notifier(message_notifier_),
+  f1ap_notifier(message_notifier_),
   ctrl_exec(ctrl_exec_),
   ue_exec_mapper(ue_exec_mapper_),
   du_mng(du_mng_),
-  ues(du_mng_, f1c_notifier),
+  ues(du_mng_, f1ap_notifier),
   events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_manager()))
 {
 }
@@ -38,9 +38,9 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_du_impl::~f1ap_du_impl() {}
 
-async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
+async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, du_mng.get_timer_manager(), ctxt);
+  return launch_async<f1ap_du_setup_procedure>(request, f1ap_notifier, *events, du_mng.get_timer_manager(), ctxt);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
@@ -55,7 +55,7 @@ f1ap_ue_configuration_response f1ap_du_impl::handle_ue_configuration_request(con
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg)
 {
-  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, f1c_notifier));
+  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, f1ap_notifier));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
@@ -198,7 +198,7 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
   });
 }
 
-void f1ap_du_impl::handle_message(const f1c_message& msg)
+void f1ap_du_impl::handle_message(const f1ap_message& msg)
 {
   // Log message.
   expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg.pdu);

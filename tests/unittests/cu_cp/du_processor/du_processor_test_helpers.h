@@ -46,8 +46,8 @@ protected:
   timer_manager                                         timers;
   ue_manager                                            ue_mng;
   dummy_du_processor_cu_cp_notifier                     cu_cp_notifier;
-  dummy_f1c_pdu_notifier                                f1c_pdu_notifier;
-  dummy_f1c_du_management_notifier                      f1c_du_mgmt_notifier;
+  dummy_f1ap_pdu_notifier                               f1ap_pdu_notifier;
+  dummy_f1ap_du_management_notifier                     f1ap_du_mgmt_notifier;
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
   dummy_rrc_ue_ngap_adapter                             rrc_ue_ngap_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;

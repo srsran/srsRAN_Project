@@ -51,7 +51,7 @@ void cu_up_processor_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_re
   send_cu_up_e1_setup_response();
 }
 
-/// Sender for F1C messages
+/// Sender for F1AP messages
 void cu_up_processor_impl::send_cu_up_e1_setup_response()
 {
   cu_up_e1_setup_response response;

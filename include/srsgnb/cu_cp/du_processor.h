@@ -41,11 +41,11 @@ struct cu_srb_pdcp_context {
   std::unique_ptr<rrc_rx_security_notifier>       rrc_rx_sec_notifier;
 };
 
-/// Context for a SRB with adapters between DU processor, F1C, RRC and optionally PDCP.
+/// Context for a SRB with adapters between DU processor, F1AP, RRC and optionally PDCP.
 struct cu_srb_context {
-  std::unique_ptr<f1c_rrc_message_notifier> rx_notifier     = std::make_unique<f1c_rrc_null_notifier>();
-  std::unique_ptr<rrc_pdu_notifier>         rrc_tx_notifier = std::make_unique<rrc_pdu_null_notifier>();
-  optional<cu_srb_pdcp_context>             pdcp_context;
+  std::unique_ptr<f1ap_rrc_message_notifier> rx_notifier     = std::make_unique<f1ap_rrc_null_notifier>();
+  std::unique_ptr<rrc_pdu_notifier>          rrc_tx_notifier = std::make_unique<rrc_pdu_null_notifier>();
+  optional<cu_srb_pdcp_context>              pdcp_context;
 };
 
 /// Interface to request SRB creations at the DU processor.
@@ -67,11 +67,11 @@ struct ue_creation_message {
   rnti_t                          c_rnti;
 };
 
-/// Interface for an F1C notifier to communicate with the DU processor.
-class du_processor_f1c_interface : public du_processor_srb_interface
+/// Interface for an F1AP notifier to communicate with the DU processor.
+class du_processor_f1ap_interface : public du_processor_srb_interface
 {
 public:
-  virtual ~du_processor_f1c_interface() = default;
+  virtual ~du_processor_f1ap_interface() = default;
 
   /// \brief Get the DU index.
   /// \return The DU index.
@@ -90,17 +90,17 @@ public:
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) = 0;
 
-  /// \brief Get the F1C message handler interface of the DU processor object.
-  /// \return The F1C message handler interface of the DU processor object.
-  virtual f1c_message_handler& get_f1c_message_handler() = 0;
+  /// \brief Get the F1AP message handler interface of the DU processor object.
+  /// \return The F1AP message handler interface of the DU processor object.
+  virtual f1ap_message_handler& get_f1ap_message_handler() = 0;
 
-  /// \brief Get the F1C UE context management handler interface of the DU processor object.
-  /// \return The F1C UE context management handler interface of the DU processor object.
-  virtual f1c_ue_context_manager& get_f1c_ue_context_manager() = 0;
+  /// \brief Get the F1AP UE context management handler interface of the DU processor object.
+  /// \return The F1AP UE context management handler interface of the DU processor object.
+  virtual f1ap_ue_context_manager& get_f1ap_ue_context_manager() = 0;
 
-  /// \brief Get the F1C statistics handler interface of the DU processor object.
-  /// \return The F1C statistics handler interface of the DU processor object.
-  virtual f1c_statistics_handler& get_f1c_statistics_handler() = 0;
+  /// \brief Get the F1AP statistics handler interface of the DU processor object.
+  /// \return The F1AP statistics handler interface of the DU processor object.
+  virtual f1ap_statistics_handler& get_f1ap_statistics_handler() = 0;
 };
 
 /// Interface to notifiy UE context management procedures.
@@ -220,10 +220,10 @@ public:
 };
 
 /// Interface to notify the F1AP about control messages.
-class du_processor_f1c_control_notifier
+class du_processor_f1ap_control_notifier
 {
 public:
-  virtual ~du_processor_f1c_control_notifier() = default;
+  virtual ~du_processor_f1ap_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup List.
   virtual async_task<cu_cp_ue_context_modification_response>
@@ -277,7 +277,7 @@ public:
   virtual size_t get_nof_ues() = 0;
 };
 
-class du_processor_interface : public du_processor_f1c_interface,
+class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_rrc_interface,
                                public du_processor_rrc_ue_interface,
                                public du_processor_ngap_interface,

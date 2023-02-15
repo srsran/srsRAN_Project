@@ -15,18 +15,18 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::f1ap;
 
-f1_ue_context_release_procedure::f1_ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,
-                                                                 const f1ap_ue_context_release_command& cmd_,
-                                                                 f1c_message_notifier&                  f1c_notif_,
-                                                                 srslog::basic_logger&                  logger_) :
-  ue_ctxt_list(ue_ctx_list_), ue_ctxt(ue_ctxt_list[cmd_.ue_index]), f1c_notifier(f1c_notif_), logger(logger_)
+ue_context_release_procedure::ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,
+                                                           const f1ap_ue_context_release_command& cmd_,
+                                                           f1ap_message_notifier&                 f1ap_notif_,
+                                                           srslog::basic_logger&                  logger_) :
+  ue_ctxt_list(ue_ctx_list_), ue_ctxt(ue_ctxt_list[cmd_.ue_index]), f1ap_notifier(f1ap_notif_), logger(logger_)
 {
   command->gnb_cu_ue_f1ap_id.value = gnb_cu_ue_f1ap_id_to_uint(ue_ctxt.cu_ue_f1ap_id);
   command->gnb_du_ue_f1ap_id.value = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
   command->cause.value             = cause_to_f1ap_cause(cmd_.cause);
 }
 
-void f1_ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t>>& ctx)
+void ue_context_release_procedure::operator()(coro_context<async_task<ue_index_t>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -42,26 +42,26 @@ void f1_ue_context_release_procedure::operator()(coro_context<async_task<ue_inde
   CORO_RETURN(create_ue_context_release_complete(transaction_sink.response()));
 }
 
-void f1_ue_context_release_procedure::send_ue_context_release_command()
+void ue_context_release_procedure::send_ue_context_release_command()
 {
   // Pack message into PDU
-  f1c_message f1c_ue_ctxt_rel_msg;
-  f1c_ue_ctxt_rel_msg.pdu.set_init_msg();
-  f1c_ue_ctxt_rel_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
-  f1c_ue_ctxt_rel_msg.pdu.init_msg().value.ue_context_release_cmd() = command;
+  f1ap_message f1ap_ue_ctxt_rel_msg;
+  f1ap_ue_ctxt_rel_msg.pdu.set_init_msg();
+  f1ap_ue_ctxt_rel_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
+  f1ap_ue_ctxt_rel_msg.pdu.init_msg().value.ue_context_release_cmd() = command;
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    f1c_ue_ctxt_rel_msg.pdu.to_json(js);
+    f1ap_ue_ctxt_rel_msg.pdu.to_json(js);
     logger.debug("Containerized UeContextReleaseCommand: {}", js.to_string());
   }
 
   // send DL RRC message
-  f1c_notifier.on_new_message(f1c_ue_ctxt_rel_msg);
+  f1ap_notifier.on_new_message(f1ap_ue_ctxt_rel_msg);
 }
 
-ue_index_t f1_ue_context_release_procedure::create_ue_context_release_complete(
-    const asn1::f1ap::ue_context_release_complete_s& msg)
+ue_index_t
+ue_context_release_procedure::create_ue_context_release_complete(const asn1::f1ap::ue_context_release_complete_s& msg)
 {
   logger.debug("Received UeContextReleaseComplete");
 

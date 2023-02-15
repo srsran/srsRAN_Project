@@ -20,13 +20,13 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class f1_ue_context_setup_procedure
+class ue_context_setup_procedure
 {
 public:
-  f1_ue_context_setup_procedure(const asn1::f1ap::ue_context_setup_request_s& request_,
-                                f1ap_ue_context&                              ue_ctx_,
-                                f1c_message_notifier&                         f1c_notif_,
-                                srslog::basic_logger&                         logger_);
+  ue_context_setup_procedure(const asn1::f1ap::ue_context_setup_request_s& request_,
+                             f1ap_ue_context&                              ue_ctx_,
+                             f1ap_message_notifier&                        f1ap_notif_,
+                             srslog::basic_logger&                         logger_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_setup_response>>& ctx);
 
@@ -39,7 +39,7 @@ private:
 
   const asn1::f1ap::ue_context_setup_request_s request;
   f1ap_ue_context&                             ue_ctx;
-  f1c_message_notifier&                        f1c_notifier;
+  f1ap_message_notifier&                       f1ap_notifier;
   srslog::basic_logger&                        logger;
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_setup_resp_s, asn1::f1ap::ue_context_setup_fail_s>

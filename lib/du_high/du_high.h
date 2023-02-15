@@ -36,7 +36,7 @@ public:
   void start();
   void stop();
 
-  f1c_message_handler& get_f1c_message_handler();
+  f1ap_message_handler& get_f1ap_message_handler();
 
   mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index);
 
@@ -51,12 +51,12 @@ private:
 
   timer_manager& timers;
 
-  f1c_du_configurator_adapter f1c_du_cfg_handler;
+  f1ap_du_configurator_adapter f1ap_du_cfg_handler;
 
   std::unique_ptr<scheduler_ue_metrics_notifier> metrics_notifier;
 
   std::unique_ptr<du_manager_interface> du_manager;
-  std::unique_ptr<f1_interface>         f1ap;
+  std::unique_ptr<f1ap_interface>       f1ap;
   std::unique_ptr<mac_interface>        mac;
 
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;

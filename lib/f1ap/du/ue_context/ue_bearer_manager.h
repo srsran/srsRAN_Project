@@ -28,8 +28,8 @@ class f1ap_event_manager;
 class ue_bearer_manager
 {
 public:
-  ue_bearer_manager(f1ap_ue_context& ue_ctx_, f1c_message_notifier& f1c_notif_) :
-    ue_ctx(ue_ctx_), f1c_notifier(f1c_notif_)
+  ue_bearer_manager(f1ap_ue_context& ue_ctx_, f1ap_message_notifier& f1ap_notif_) :
+    ue_ctx(ue_ctx_), f1ap_notifier(f1ap_notif_)
   {
   }
 
@@ -50,8 +50,8 @@ public:
   }
 
 private:
-  f1ap_ue_context&      ue_ctx;
-  f1c_message_notifier& f1c_notifier;
+  f1ap_ue_context&       ue_ctx;
+  f1ap_message_notifier& f1ap_notifier;
 
   slotted_array<std::unique_ptr<f1c_bearer>, MAX_NOF_SRBS> f1c_bearers;
 };

@@ -25,7 +25,7 @@ namespace srs_cu_cp {
 /// Reusable notifier class that a) stores the received du_index for test inspection and b)
 /// calls the registered DU handler (if any). The handler can be added upon construction
 /// or later via the attach_handler() method.
-class dummy_f1c_du_management_notifier : public f1c_du_management_notifier
+class dummy_f1ap_du_management_notifier : public f1ap_du_management_notifier
 {
 public:
   void attach_handler(cu_cp_du_handler* handler_) { handler = handler_; };
@@ -75,11 +75,11 @@ protected:
 
   slotted_id_table<ue_index_t, test_ue, MAX_NOF_UES_PER_DU> test_ues;
 
-  dummy_f1c_pdu_notifier           f1c_pdu_notifier;
-  dummy_f1c_du_processor_notifier  du_processor_notifier;
-  dummy_f1c_du_management_notifier f1c_du_mgmt_notifier;
-  manual_task_worker               ctrl_worker{128};
-  std::unique_ptr<f1ap_cu>         f1ap;
+  dummy_f1ap_pdu_notifier           f1ap_pdu_notifier;
+  dummy_f1ap_du_processor_notifier  du_processor_notifier;
+  dummy_f1ap_du_management_notifier f1ap_du_mgmt_notifier;
+  manual_task_worker                ctrl_worker{128};
+  std::unique_ptr<f1ap_cu>          f1ap;
 };
 
 } // namespace srs_cu_cp

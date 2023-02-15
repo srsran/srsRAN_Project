@@ -19,8 +19,8 @@ namespace srs_du {
 class f1ap_du_ue_manager
 {
 public:
-  f1ap_du_ue_manager(f1c_du_configurator& du_handler_, f1c_message_notifier& f1c_msg_notifier_) :
-    du_handler(du_handler_), f1c_msg_notifier(f1c_msg_notifier_)
+  f1ap_du_ue_manager(f1ap_du_configurator& du_handler_, f1ap_message_notifier& f1ap_msg_notifier_) :
+    du_handler(du_handler_), f1ap_msg_notifier(f1ap_msg_notifier_)
   {
   }
 
@@ -28,8 +28,8 @@ public:
   {
     srsgnb_assert(not ues.contains(ue_index), "Duplicate ueId={} detected", ue_index);
 
-    gnb_du_ue_f1ap_id_t f1ap_id = static_cast<gnb_du_ue_f1ap_id_t>(next_gnb_f1_du_ue_id++);
-    ues.emplace(ue_index, ue_index, f1ap_id, du_handler, f1c_msg_notifier);
+    gnb_du_ue_f1ap_id_t f1ap_id = static_cast<gnb_du_ue_f1ap_id_t>(next_gnb_f1ap_du_ue_id++);
+    ues.emplace(ue_index, ue_index, f1ap_id, du_handler, f1ap_msg_notifier);
 
     {
       std::lock_guard<std::mutex> lock(map_mutex);
@@ -87,10 +87,10 @@ public:
   }
 
 private:
-  f1c_du_configurator&  du_handler;
-  f1c_message_notifier& f1c_msg_notifier;
+  f1ap_du_configurator&  du_handler;
+  f1ap_message_notifier& f1ap_msg_notifier;
 
-  uint64_t next_gnb_f1_du_ue_id = 0;
+  uint64_t next_gnb_f1ap_du_ue_id = 0;
 
   slotted_array<f1ap_du_ue, MAX_NOF_DU_UES> ues;
 

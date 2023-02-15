@@ -62,8 +62,8 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   }
 
   // > Initiate creation of F1 UE context and await result.
-  create_f1_ue();
-  if (not f1_resp.result) {
+  create_f1ap_ue();
+  if (not f1ap_resp.result) {
     log_proc_failure(logger, ue_ctx->ue_index, msg.crnti, name(), "UE failed to be created in F1AP.");
     clear_ue();
     CORO_EARLY_RETURN();
@@ -97,7 +97,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
 void ue_creation_procedure::clear_ue()
 {
-  if (f1_resp.result) {
+  if (f1ap_resp.result) {
     // TODO: Remove UE from F1AP.
   }
 
@@ -188,23 +188,23 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
   return mac_mng.ue_cfg.handle_ue_create_request(mac_ue_create_msg);
 }
 
-void ue_creation_procedure::create_f1_ue()
+void ue_creation_procedure::create_f1ap_ue()
 {
   using namespace asn1::rrc_nr;
 
-  f1ap_ue_creation_request f1_msg{};
-  f1_msg.ue_index    = ue_ctx->ue_index;
-  f1_msg.c_rnti      = ue_ctx->rnti;
-  f1_msg.pcell_index = ue_ctx->pcell_index;
-  f1_msg.f1c_bearers_to_add.resize(2);
+  f1ap_ue_creation_request f1ap_msg{};
+  f1ap_msg.ue_index    = ue_ctx->ue_index;
+  f1ap_msg.c_rnti      = ue_ctx->rnti;
+  f1ap_msg.pcell_index = ue_ctx->pcell_index;
+  f1ap_msg.f1c_bearers_to_add.resize(2);
 
   // Create SRB0 and SRB1.
-  du_ue_srb& srb0                              = ue_ctx->bearers.srbs()[srb_id_t::srb0];
-  f1_msg.f1c_bearers_to_add[0].srb_id          = srb_id_t::srb0;
-  f1_msg.f1c_bearers_to_add[0].rx_sdu_notifier = &srb0.connector.f1c_rx_sdu_notif;
-  du_ue_srb& srb1                              = ue_ctx->bearers.srbs()[srb_id_t::srb1];
-  f1_msg.f1c_bearers_to_add[1].srb_id          = srb_id_t::srb1;
-  f1_msg.f1c_bearers_to_add[1].rx_sdu_notifier = &srb1.connector.f1c_rx_sdu_notif;
+  du_ue_srb& srb0                                = ue_ctx->bearers.srbs()[srb_id_t::srb0];
+  f1ap_msg.f1c_bearers_to_add[0].srb_id          = srb_id_t::srb0;
+  f1ap_msg.f1c_bearers_to_add[0].rx_sdu_notifier = &srb0.connector.f1c_rx_sdu_notif;
+  du_ue_srb& srb1                                = ue_ctx->bearers.srbs()[srb_id_t::srb1];
+  f1ap_msg.f1c_bearers_to_add[1].srb_id          = srb_id_t::srb1;
+  f1ap_msg.f1c_bearers_to_add[1].rx_sdu_notifier = &srb1.connector.f1c_rx_sdu_notif;
 
   // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per TS38.473,
   // Section 8.4.1.2.
@@ -227,12 +227,12 @@ void ue_creation_procedure::create_f1_ue()
   // TODO: Fill Remaining.
 
   {
-    asn1::bit_ref     bref{f1_msg.du_cu_rrc_container};
+    asn1::bit_ref     bref{f1ap_msg.du_cu_rrc_container};
     asn1::SRSASN_CODE result = cell_group.pack(bref);
     srsgnb_assert(result == asn1::SRSASN_SUCCESS, "Failed to generate CellConfigGroup");
   }
 
-  f1_resp = f1ap_mng.ue_mng.handle_ue_creation_request(f1_msg);
+  f1ap_resp = f1ap_mng.ue_mng.handle_ue_creation_request(f1ap_msg);
 }
 
 void ue_creation_procedure::connect_layer_bearers()
@@ -240,10 +240,10 @@ void ue_creation_procedure::connect_layer_bearers()
   // Connect SRB0 bearer layers.
   du_ue_srb& srb0 = ue_ctx->bearers.srbs()[srb_id_t::srb0];
   srb0.connector.connect(
-      ue_ctx->ue_index, srb_id_t::srb0, *f1_resp.f1c_bearers_added[0], *srb0.rlc_bearer, rlc_cfg.mac_ue_info_handler);
+      ue_ctx->ue_index, srb_id_t::srb0, *f1ap_resp.f1c_bearers_added[0], *srb0.rlc_bearer, rlc_cfg.mac_ue_info_handler);
 
   // Connect SRB1 bearer layers.
   du_ue_srb& srb1 = ue_ctx->bearers.srbs()[srb_id_t::srb1];
   srb1.connector.connect(
-      ue_ctx->ue_index, srb_id_t::srb1, *f1_resp.f1c_bearers_added[1], *srb1.rlc_bearer, rlc_cfg.mac_ue_info_handler);
+      ue_ctx->ue_index, srb_id_t::srb1, *f1ap_resp.f1c_bearers_added[1], *srb1.rlc_bearer, rlc_cfg.mac_ue_info_handler);
 }

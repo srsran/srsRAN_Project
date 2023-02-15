@@ -24,23 +24,23 @@ namespace srs_du {
 
 class f1ap_event_manager;
 
-class f1ap_du_impl final : public f1_interface
+class f1ap_du_impl final : public f1ap_interface
 {
 public:
-  f1ap_du_impl(f1c_message_notifier&       event_notifier_,
-               f1c_du_configurator&        task_sched_,
+  f1ap_du_impl(f1ap_message_notifier&      event_notifier_,
+               f1ap_du_configurator&       task_sched_,
                task_executor&              ctrl_exec,
                du_high_ue_executor_mapper& ue_exec_mapper);
   ~f1ap_du_impl();
 
   // F1AP interface management procedures functions as per TS38.473, Section 8.2.
-  async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
+  async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override;
 
   // F1AP RRC Message Transfer Procedure functions as per TS38.473, Section 8.4.
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
 
-  // f1c message handler functions
-  void handle_message(const f1c_message& msg) override;
+  // F1AP message handler functions
+  void handle_message(const f1ap_message& msg) override;
   void handle_connection_loss() override {}
 
   // F1AP UE configuration functions
@@ -87,11 +87,11 @@ private:
   void send_error_indication(const asn1::f1ap::cause_c& cause);
 
   srslog::basic_logger&       logger;
-  f1c_message_notifier&       f1c_notifier;
+  f1ap_message_notifier&      f1ap_notifier;
   task_executor&              ctrl_exec;
   du_high_ue_executor_mapper& ue_exec_mapper;
 
-  f1c_du_configurator& du_mng;
+  f1ap_du_configurator& du_mng;
 
   f1ap_du_ue_manager ues;
 

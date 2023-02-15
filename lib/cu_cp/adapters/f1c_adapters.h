@@ -20,8 +20,8 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between F1C and CU-CP, to handle DU specific procedure outcomes (e.g. F1 Remove)
-class f1c_cu_cp_adapter : public f1c_du_management_notifier
+/// Adapter between F1AP and CU-CP, to handle DU specific procedure outcomes (e.g. F1 Remove)
+class f1ap_cu_cp_adapter : public f1ap_du_management_notifier
 {
 public:
   void connect_cu_cp(cu_cp_du_handler& cu_cp_mng_) { du_handler = &cu_cp_mng_; }
@@ -36,41 +36,41 @@ private:
   cu_cp_du_handler* du_handler = nullptr;
 };
 
-/// Adapter between F1C and DU processor
-class f1c_du_processor_adapter : public f1c_du_processor_notifier
+/// Adapter between F1AP and DU processor
+class f1ap_du_processor_adapter : public f1ap_du_processor_notifier
 {
 public:
-  void connect_du_processor(du_processor_f1c_interface& du_processor_f1c_) { du_f1c_handler = &du_processor_f1c_; }
+  void connect_du_processor(du_processor_f1ap_interface& du_processor_f1ap_) { du_f1ap_handler = &du_processor_f1ap_; }
 
-  du_index_t get_du_index() override { return du_f1c_handler->get_du_index(); }
+  du_index_t get_du_index() override { return du_f1ap_handler->get_du_index(); }
 
   void on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
-    srsgnb_assert(du_f1c_handler != nullptr, "F1AP handler must not be nullptr");
-    du_f1c_handler->handle_f1_setup_request(msg);
+    srsgnb_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
+    du_f1ap_handler->handle_f1_setup_request(msg);
   }
 
   ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) override
   {
-    srsgnb_assert(du_f1c_handler != nullptr, "F1AP handler must not be nullptr");
+    srsgnb_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
 
     ue_creation_message ue_creation_msg    = {};
     ue_creation_msg.c_rnti                 = to_rnti(msg.msg->c_rnti.value);
     ue_creation_msg.cgi                    = cgi_from_asn1(msg.msg->nr_cgi.value);
     ue_creation_msg.du_to_cu_rrc_container = msg.msg->du_to_cu_rrc_container.value;
 
-    return du_f1c_handler->handle_ue_creation_request(ue_creation_msg);
+    return du_f1ap_handler->handle_ue_creation_request(ue_creation_msg);
   }
 
 private:
-  du_processor_f1c_interface* du_f1c_handler = nullptr;
+  du_processor_f1ap_interface* du_f1ap_handler = nullptr;
 };
 
-/// Adapter between F1C and RRC UE
-class f1c_rrc_ue_adapter : public f1c_rrc_message_notifier
+/// Adapter between F1AP and RRC UE
+class f1ap_rrc_ue_adapter : public f1ap_rrc_message_notifier
 {
 public:
-  explicit f1c_rrc_ue_adapter(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
+  explicit f1ap_rrc_ue_adapter(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
 
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
@@ -82,11 +82,11 @@ private:
   rrc_ul_ccch_pdu_handler& rrc_handler;
 };
 
-/// Adapter between F1C and PDCP in UL direction (Rx)
-class f1c_pdcp_adapter : public f1c_rrc_message_notifier
+/// Adapter between F1AP and PDCP in UL direction (Rx)
+class f1ap_pdcp_adapter : public f1ap_rrc_message_notifier
 {
 public:
-  explicit f1c_pdcp_adapter(pdcp_rx_lower_interface& pdcp_rx_) : pdcp_rx(pdcp_rx_) {}
+  explicit f1ap_pdcp_adapter(pdcp_rx_lower_interface& pdcp_rx_) : pdcp_rx(pdcp_rx_) {}
 
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {

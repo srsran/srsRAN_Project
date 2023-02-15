@@ -21,13 +21,13 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class f1_ue_context_release_procedure
+class ue_context_release_procedure
 {
 public:
-  f1_ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,
-                                  const f1ap_ue_context_release_command& cmd_,
-                                  f1c_message_notifier&                  f1c_notif_,
-                                  srslog::basic_logger&                  logger_);
+  ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,
+                               const f1ap_ue_context_release_command& cmd_,
+                               f1ap_message_notifier&                 f1ap_notif_,
+                               srslog::basic_logger&                  logger_);
 
   void operator()(coro_context<async_task<ue_index_t>>& ctx);
 
@@ -41,7 +41,7 @@ private:
   f1ap_ue_context_list&                ue_ctxt_list;
   f1ap_ue_context&                     ue_ctxt;
   asn1::f1ap::ue_context_release_cmd_s command;
-  f1c_message_notifier&                f1c_notifier;
+  f1ap_message_notifier&               f1ap_notifier;
   srslog::basic_logger&                logger;
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_release_complete_s> transaction_sink;

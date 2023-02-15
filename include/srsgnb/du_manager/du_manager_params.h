@@ -47,8 +47,8 @@ struct du_manager_params {
   };
   struct rlc_config_params {
     mac_ue_control_information_handler&          mac_ue_info_handler;
-    f1c_message_handler&                         f1c_rx_msg_handler;
-    f1ap_rrc_message_transfer_procedure_handler& f1c_rx_proc_handler;
+    f1ap_message_handler&                        f1ap_rx_msg_handler;
+    f1ap_rrc_message_transfer_procedure_handler& f1ap_rx_proc_handler;
   };
   struct mac_config_params {
     mac_cell_manager&       cell_mng;

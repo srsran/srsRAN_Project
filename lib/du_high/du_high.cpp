@@ -57,7 +57,7 @@ public:
 du_high::du_high(const du_high_configuration& config_) :
   cfg(config_),
   timers(*config_.timers),
-  f1c_du_cfg_handler(*config_.timers),
+  f1ap_du_cfg_handler(*config_.timers),
   metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
 {
   assert_du_high_configuration_valid(cfg);
@@ -71,7 +71,7 @@ du_high::du_high(const du_high_configuration& config_) :
                               *cfg.phy_adapter,
                               cfg.sched_cfg,
                               cfg.metrics_notifier ? *cfg.metrics_notifier : *metrics_notifier});
-  f1ap = create_f1ap(*cfg.f1c_notifier, f1c_du_cfg_handler, *cfg.du_mng_executor, *cfg.ue_executors);
+  f1ap = create_f1ap(*cfg.f1ap_notifier, f1ap_du_cfg_handler, *cfg.du_mng_executor, *cfg.ue_executors);
   du_manager =
       create_du_manager(du_manager_params{{"srsgnb", 1, 1, cfg.cells, cfg.qos},
                                           {timers, *cfg.du_mng_executor, *cfg.ue_executors, *cfg.cell_executors},
@@ -82,7 +82,7 @@ du_high::du_high(const du_high_configuration& config_) :
 
   // Connect Layer<->DU manager adapters.
   mac_ev_notifier.connect(*du_manager);
-  f1c_du_cfg_handler.connect(*du_manager);
+  f1ap_du_cfg_handler.connect(*du_manager);
 
   // Cell slot handler.
   main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac);
@@ -100,7 +100,7 @@ void du_high::start()
 
 void du_high::stop() {}
 
-f1c_message_handler& du_high::get_f1c_message_handler()
+f1ap_message_handler& du_high::get_f1ap_message_handler()
 {
   return *f1ap;
 }

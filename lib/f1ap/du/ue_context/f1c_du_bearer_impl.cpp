@@ -17,13 +17,13 @@ using namespace srsgnb::srs_du;
 f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&            ue_ctxt_,
                                        const asn1::f1ap::nr_cgi_s& nr_cgi_,
                                        const byte_buffer&          du_cu_rrc_container_,
-                                       f1c_message_notifier&       f1c_notifier_,
+                                       f1ap_message_notifier&      f1ap_notifier_,
                                        f1c_rx_sdu_notifier&        f1c_rx_sdu_notifier_,
                                        f1ap_event_manager&         ev_manager_) :
   ue_ctxt(ue_ctxt_),
   nr_cgi(nr_cgi_),
   du_cu_rrc_container(du_cu_rrc_container_.copy()),
-  f1c_notifier(f1c_notifier_),
+  f1ap_notifier(f1ap_notifier_),
   sdu_notifier(f1c_rx_sdu_notifier_),
   ev_manager(ev_manager_),
   logger(srslog::fetch_basic_logger("DU-F1"))
@@ -35,7 +35,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
   protocol_transaction<f1ap_outcome> transaction = ev_manager.transactions.create_transaction();
 
   // Pack Initial UL RRC Message Transfer as per TS38.473, Section 8.4.1.
-  f1c_message msg;
+  f1ap_message msg;
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
   asn1::f1ap::init_ul_rrc_msg_transfer_s& init_msg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
   init_msg->gnb_du_ue_f1ap_id->value               = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.gnb_du_ue_f1ap_id);
@@ -52,7 +52,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
   init_msg->rrc_container_rrc_setup_complete_present = false;
 
   // Notify upper layers of the initial UL RRC Message Transfer.
-  f1c_notifier.on_new_message(msg);
+  f1ap_notifier.on_new_message(msg);
 
   // Signal that the transaction has completed and the DU does not expect a response.
   ev_manager.transactions.set(transaction.id(), f1ap_outcome{});
@@ -70,13 +70,13 @@ void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
       logger, ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti, "DlRrcMessageTransfer");
 }
 
-f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&      ue_ctxt_,
-                                                 srb_id_t              srb_id_,
-                                                 f1c_message_notifier& f1c_notifier_,
-                                                 f1c_rx_sdu_notifier&  f1c_sdu_notifier_) :
+f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&       ue_ctxt_,
+                                                 srb_id_t               srb_id_,
+                                                 f1ap_message_notifier& f1ap_notifier_,
+                                                 f1c_rx_sdu_notifier&   f1c_sdu_notifier_) :
   ue_ctxt(ue_ctxt_),
   srb_id(srb_id_),
-  f1c_notifier(f1c_notifier_),
+  f1ap_notifier(f1ap_notifier_),
   sdu_notifier(f1c_sdu_notifier_),
   logger(srslog::fetch_basic_logger("DU-F1"))
 {
@@ -84,7 +84,7 @@ f1c_other_srb_du_bearer::f1c_other_srb_du_bearer(f1ap_ue_context&      ue_ctxt_,
 
 void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
 {
-  f1c_message msg;
+  f1ap_message msg;
 
   // Fill F1AP UL RRC Message Transfer.
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);
@@ -97,7 +97,7 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
   ul_msg->sel_plmn_id_present           = false;
   ul_msg->new_gnb_du_ue_f1ap_id_present = false;
 
-  f1c_notifier.on_new_message(msg);
+  f1ap_notifier.on_new_message(msg);
 
   log_ue_event(logger,
                ue_event_prefix{"UL", ue_ctxt.ue_index}.set_channel(srb_id_to_string(srb_id)) | ue_ctxt.rnti,

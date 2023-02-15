@@ -154,7 +154,7 @@ TEST_F(ue_config_tester, when_du_manager_finishes_processing_ue_config_request_t
   // > Push MAC Rx SDU through MAC logical channel.
   mac.last_ue_reconf_msg->bearers_to_addmod[0].ul_bearer->on_new_sdu({mac_rx_sdu.copy()});
   // > Check arrival of F1-C Tx SDU to F1-C bearer.
-  ASSERT_EQ(test_payload, f1ap.f1_ues[test_ue->ue_index].f1c_bearers[srb_id_t::srb2].last_tx_sdu);
+  ASSERT_EQ(test_payload, f1ap.f1ap_ues[test_ue->ue_index].f1c_bearers[srb_id_t::srb2].last_tx_sdu);
 
   // Forward F1-C Rx SDU through SRB2 (DL).
   // > Create data buffer.

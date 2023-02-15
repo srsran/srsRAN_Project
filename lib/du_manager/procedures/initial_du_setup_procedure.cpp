@@ -78,7 +78,7 @@ async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup
   }
 
   // Initiate F1 Setup Request.
-  return params.f1ap.conn_mng.handle_f1ap_setup_request(request_msg);
+  return params.f1ap.conn_mng.handle_f1_setup_request(request_msg);
 }
 
 void initial_du_setup_procedure::handle_f1_setup_response(const asn1::f1ap::f1_setup_resp_s& resp)

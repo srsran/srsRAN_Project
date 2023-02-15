@@ -19,15 +19,15 @@ using namespace srsgnb;
 using namespace asn1::f1ap;
 using namespace srs_cu_cp;
 
-f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
-                           f1c_du_processor_notifier&  f1c_du_processor_notifier_,
-                           f1c_du_management_notifier& f1c_du_management_notifier_,
-                           task_executor&              ctrl_exec_) :
+f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
+                           f1ap_du_processor_notifier&  f1ap_du_processor_notifier_,
+                           f1ap_du_management_notifier& f1ap_du_management_notifier_,
+                           task_executor&               ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
   ue_ctx_list(timers),
-  pdu_notifier(f1c_pdu_notifier_),
-  du_processor_notifier(f1c_du_processor_notifier_),
-  du_management_notifier(f1c_du_management_notifier_),
+  pdu_notifier(f1ap_pdu_notifier_),
+  du_processor_notifier(f1ap_du_processor_notifier_),
+  du_management_notifier(f1ap_du_management_notifier_),
   ctrl_exec(ctrl_exec_)
 {
 }
@@ -35,7 +35,7 @@ f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
 
-void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier)
+void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1ap_rrc_message_notifier& notifier)
 {
   f1ap_ue_context& ue_ctxt = ue_ctx_list[ue_index];
 
@@ -45,25 +45,25 @@ void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1
 void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg)
 {
   // Pack message into PDU
-  f1c_message f1c_msg;
+  f1ap_message f1ap_msg;
   if (msg.success) {
     logger.debug("Sending F1SetupResponse");
 
-    f1c_msg.pdu.set_successful_outcome();
-    f1c_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    f1c_msg.pdu.successful_outcome().value.f1_setup_resp() = msg.response;
+    f1ap_msg.pdu.set_successful_outcome();
+    f1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    f1ap_msg.pdu.successful_outcome().value.f1_setup_resp() = msg.response;
 
     // set values handled by F1
-    f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = current_transaction_id;
+    f1ap_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = current_transaction_id;
 
     // send response
-    pdu_notifier.on_new_message(f1c_msg);
+    pdu_notifier.on_new_message(f1ap_msg);
   } else {
     logger.debug("Sending F1SetupFailure");
-    f1c_msg.pdu.set_unsuccessful_outcome();
-    f1c_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail() = msg.failure;
-    auto& setup_fail                                         = f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
+    f1ap_msg.pdu.set_unsuccessful_outcome();
+    f1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail() = msg.failure;
+    auto& setup_fail = f1ap_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
 
     // set values handled by F1
     setup_fail->transaction_id.value = current_transaction_id;
@@ -71,7 +71,7 @@ void f1ap_cu_impl::handle_f1_setup_response(const f1_setup_response_message& msg
     setup_fail->cause.value.radio_network() = asn1::f1ap::cause_radio_network_opts::options::no_radio_res_available;
 
     // send response
-    pdu_notifier.on_new_message(f1c_msg);
+    pdu_notifier.on_new_message(f1ap_msg);
 
     // send DU remove request
     du_index_t du_index = du_processor_notifier.get_du_index();
@@ -91,25 +91,25 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 
   logger.debug("Sending DlRrcMessageTransfer");
   // Pack message into PDU
-  f1c_message f1c_dl_rrc_msg;
-  f1c_dl_rrc_msg.pdu.set_init_msg();
-  f1c_dl_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
-  f1c_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = dlrrc_msg;
+  f1ap_message f1ap_dl_rrc_msg;
+  f1ap_dl_rrc_msg.pdu.set_init_msg();
+  f1ap_dl_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+  f1ap_dl_rrc_msg.pdu.init_msg().value.dl_rrc_msg_transfer() = dlrrc_msg;
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    f1c_dl_rrc_msg.pdu.to_json(js);
+    f1ap_dl_rrc_msg.pdu.to_json(js);
     logger.debug("Containerized DlRrcMessageTransfer: {}", js.to_string());
   }
 
   // send DL RRC message
-  pdu_notifier.on_new_message(f1c_dl_rrc_msg);
+  pdu_notifier.on_new_message(f1ap_dl_rrc_msg);
 }
 
 async_task<f1ap_ue_context_setup_response>
 f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request)
 {
-  return launch_async<f1_ue_context_setup_procedure>(request.msg, ue_ctx_list[request.ue_index], pdu_notifier, logger);
+  return launch_async<ue_context_setup_procedure>(request.msg, ue_ctx_list[request.ue_index], pdu_notifier, logger);
 }
 
 async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command& msg)
@@ -123,7 +123,7 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
     });
   }
 
-  return launch_async<f1_ue_context_release_procedure>(ue_ctx_list, msg, pdu_notifier, logger);
+  return launch_async<ue_context_release_procedure>(ue_ctx_list, msg, pdu_notifier, logger);
 }
 
 async_task<cu_cp_ue_context_modification_response>
@@ -131,11 +131,10 @@ f1ap_cu_impl::handle_ue_context_modification_request(const cu_cp_ue_context_modi
 {
   srsgnb_assert(
       ue_ctx_list.contains(request.ue_index) == true, "UE with index {} is not a valid F1AP UE", request.ue_index);
-  return launch_async<f1_ue_context_modification_procedure>(
-      request, ue_ctx_list[request.ue_index], pdu_notifier, logger);
+  return launch_async<ue_context_modification_procedure>(request, ue_ctx_list[request.ue_index], pdu_notifier, logger);
 }
 
-void f1ap_cu_impl::handle_message(const f1c_message& msg)
+void f1ap_cu_impl::handle_message(const f1ap_message& msg)
 {
   logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
 

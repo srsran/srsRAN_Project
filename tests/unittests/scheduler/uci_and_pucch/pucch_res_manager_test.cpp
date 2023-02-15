@@ -158,7 +158,7 @@ TEST_F(test_pucch_resource_manager, allocate_and_release_f1)
 }
 
 // Tests allocation and removal of PUCCH resource format 1 for multiple UEs.
-TEST_F(test_pucch_resource_manager, allocate_and_release_f1_multiple_ues)
+TEST_F(test_pucch_resource_manager, allocate_and_release_multiple_f1ap_ues)
 {
   // Allocate 3 UEs.
   allocate_ues(3);

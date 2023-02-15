@@ -432,8 +432,8 @@ int main(int argc, char** argv)
 
   worker_manager workers{gnb_cfg};
 
-  f1c_local_adapter f1c_cu_to_du_adapter("CU-CP-F1"), f1c_du_to_cu_adapter("DU-F1");
-  e1_local_adapter  e1_cp_to_up_adapter("CU-CP"), e1_up_to_cp_adapter("CU-UP");
+  f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1"), f1ap_du_to_cu_adapter("DU-F1");
+  e1_local_adapter   e1_cp_to_up_adapter("CU-CP"), e1_up_to_cp_adapter("CU-UP");
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -478,7 +478,7 @@ int main(int argc, char** argv)
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
   cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec.get();
-  cu_cp_cfg.f1c_notifier                   = &f1c_cu_to_du_adapter;
+  cu_cp_cfg.f1ap_notifier                  = &f1ap_cu_to_du_adapter;
   cu_cp_cfg.e1_notifier                    = &e1_cp_to_up_adapter;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
 
@@ -614,7 +614,7 @@ int main(int argc, char** argv)
   du_hi_cfg.du_mng_executor               = workers.du_ctrl_exec.get();
   du_hi_cfg.ue_executors                  = &*workers.ue_exec_mapper;
   du_hi_cfg.cell_executors                = &*workers.cell_exec_mapper;
-  du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
+  du_hi_cfg.f1ap_notifier                 = &f1ap_du_to_cu_adapter;
   du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
   du_hi_cfg.phy_adapter                   = &phy;
   du_hi_cfg.timers                        = &app_timers;
@@ -627,9 +627,9 @@ int main(int argc, char** argv)
   srs_du::du_high du_obj(du_hi_cfg);
   gnb_logger.info("DU-High created successfully");
 
-  // attach F1C adapter to DU and CU-CP
-  f1c_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1c_message_handler(srsgnb::srs_cu_cp::uint_to_du_index(0)));
-  f1c_cu_to_du_adapter.attach_handler(&du_obj.get_f1c_message_handler());
+  // attach F1AP adapter to DU and CU-CP
+  f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsgnb::srs_cu_cp::uint_to_du_index(0)));
+  f1ap_cu_to_du_adapter.attach_handler(&du_obj.get_f1ap_message_handler());
 
   // Start execution.
   gnb_logger.info("Starting DU-High...");

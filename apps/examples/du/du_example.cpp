@@ -194,20 +194,20 @@ namespace {
 
 /// This implementation returns back to the F1 interface a dummy F1 Setup Response message upon the receival of the F1
 /// Setup Request message.
-class dummy_cu_cp_handler : public f1c_message_notifier
+class dummy_cu_cp_handler : public f1ap_message_notifier
 {
 public:
-  explicit dummy_cu_cp_handler(f1c_message_handler* handler_ = nullptr) : handler(handler_) {}
+  explicit dummy_cu_cp_handler(f1ap_message_handler* handler_ = nullptr) : handler(handler_) {}
 
-  void attach_handler(f1c_message_handler* handler_) { handler = handler_; };
+  void attach_handler(f1ap_message_handler* handler_) { handler = handler_; };
 
-  void on_new_message(const f1c_message& msg) override
+  void on_new_message(const f1ap_message& msg) override
   {
     if (msg.pdu.type() != asn1::f1ap::f1ap_pdu_c::types::init_msg) {
       return;
     }
 
-    f1c_message response;
+    f1ap_message response;
     if (msg.pdu.init_msg().value.type().value ==
         asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer) {
       // Generate a dummy DL RRC Message transfer message and pass it back to the DU.
@@ -277,7 +277,7 @@ public:
   }
 
 private:
-  f1c_message_handler* handler = nullptr;
+  f1ap_message_handler* handler = nullptr;
 };
 
 /// Dummy implementation of the mac_result_notifier.
@@ -676,14 +676,14 @@ int main(int argc, char** argv)
   cell_config.offset_to_point_a = offset_to_pointA;
   cell_config.coreset0_index    = coreset0_index;
 
-  dummy_cu_cp_handler f1c_notifier;
+  dummy_cu_cp_handler f1ap_notifier;
   phy_dummy           phy(mac_adaptor->get_cell_result_notifier());
 
   du_high_configuration du_hi_cfg = {};
   du_hi_cfg.du_mng_executor       = &workers.ctrl_exec;
   du_hi_cfg.ue_executors          = &workers.ue_exec_mapper;
   du_hi_cfg.cell_executors        = &workers.cell_exec_mapper;
-  du_hi_cfg.f1c_notifier          = &f1c_notifier;
+  du_hi_cfg.f1ap_notifier         = &f1ap_notifier;
   du_hi_cfg.phy_adapter           = &phy;
   du_hi_cfg.cells                 = {config_helpers::make_default_du_cell_config(cell_config)};
   du_hi_cfg.sched_cfg             = config_helpers::make_default_scheduler_expert_config();
@@ -695,7 +695,7 @@ int main(int argc, char** argv)
   fill_cell_prach_cfg(cell_cfg);
 
   du_high du_obj(du_hi_cfg);
-  f1c_notifier.attach_handler(&du_obj.get_f1c_message_handler());
+  f1ap_notifier.attach_handler(&du_obj.get_f1ap_message_handler());
   du_logger.info("DU-High created successfully");
 
   // Set signal handler.

@@ -78,7 +78,7 @@ public:
 
 class f1ap_test_dummy : public f1ap_connection_manager,
                         public f1ap_ue_context_manager,
-                        public f1c_message_handler,
+                        public f1ap_message_handler,
                         public f1ap_rrc_message_transfer_procedure_handler
 {
   struct drb_to_idx {
@@ -87,11 +87,11 @@ class f1ap_test_dummy : public f1ap_connection_manager,
   };
 
 public:
-  struct f1_ue_context {
+  struct f1ap_ue_context {
     slotted_id_table<srb_id_t, dummy_f1c_bearer, MAX_NOF_SRBS> f1c_bearers;
   };
 
-  slotted_id_table<du_ue_index_t, f1_ue_context, MAX_NOF_DU_UES> f1_ues;
+  slotted_id_table<du_ue_index_t, f1ap_ue_context, MAX_NOF_DU_UES> f1ap_ues;
 
   wait_manual_event_tester<f1_setup_response_message>                     wait_f1_setup;
   optional<f1ap_ue_creation_request>                                      last_ue_create{};
@@ -101,7 +101,7 @@ public:
   optional<f1ap_ue_context_release_request_message>                       last_ue_release{};
   wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
 
-  async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override
+  async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
   {
     return wait_f1_setup.launch();
   }
@@ -134,7 +134,7 @@ public:
 
   void handle_notify(const f1ap_notify_message& msg) override {}
 
-  void handle_message(const f1c_message& msg) override {}
+  void handle_message(const f1ap_message& msg) override {}
 
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
 };

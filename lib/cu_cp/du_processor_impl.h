@@ -34,8 +34,8 @@ class du_processor_impl : public du_processor_interface
 public:
   du_processor_impl(const du_processor_config_t         du_processor_config_,
                     du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                    f1c_du_management_notifier&         f1c_du_mgmt_notifier_,
-                    f1c_message_notifier&               f1c_notifier_,
+                    f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
+                    f1ap_message_notifier&              f1ap_notifier_,
                     du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
                     rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
@@ -49,11 +49,11 @@ public:
 
   // getter functions
 
-  du_index_t              get_du_index() override { return context.du_index; }
-  du_processor_context&   get_context() override { return context; }
-  f1c_message_handler&    get_f1c_message_handler() override { return *f1c; }
-  f1c_ue_context_manager& get_f1c_ue_context_manager() override { return *f1c; }
-  f1c_statistics_handler& get_f1c_statistics_handler() override { return *f1c; }
+  du_index_t               get_du_index() override { return context.du_index; }
+  du_processor_context&    get_context() override { return context; }
+  f1ap_message_handler&    get_f1ap_message_handler() override { return *f1ap; }
+  f1ap_ue_context_manager& get_f1ap_ue_context_manager() override { return *f1ap; }
+  f1ap_statistics_handler& get_f1ap_statistics_handler() override { return *f1ap; }
 
   size_t get_nof_ues() override { return ue_manager.get_nof_du_ues(); };
 
@@ -83,7 +83,7 @@ public:
 
 private:
   /// \brief Lookup the cell based on a given NR cell ID.
-  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1C.
+  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
   du_cell_index_t find_cell(uint64_t packed_nr_cell_id);
 
   /// \brief Get the next available DU cell index.
@@ -94,7 +94,7 @@ private:
   /// \return The DU processor cell database.
   slotted_id_vector<du_cell_index_t, du_cell_context>& get_cell_db() { return cell_db; };
 
-  // F1C senders
+  // F1AP senders
 
   /// \brief Create and transmit the F1 Setup response message.
   /// \param[in] du_ctxt The context of the DU that should receive the message.
@@ -108,30 +108,30 @@ private:
   du_processor_config_t cfg;
 
   du_processor_cu_cp_notifier&        cu_cp_notifier;
-  f1c_du_management_notifier&         f1c_du_mgmt_notifier;
-  f1c_message_notifier&               f1c_notifier;
+  f1ap_du_management_notifier&        f1ap_du_mgmt_notifier;
+  f1ap_message_notifier&              f1ap_notifier;
   du_processor_e1ap_control_notifier& e1ap_ctrl_notifier;
   rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier;
   rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier;
   du_processor_ue_task_scheduler&     task_sched;
   du_processor_ue_manager&            ue_manager;
-  du_processor_f1c_adapter            f1c_ue_context_notifier;
+  du_processor_f1ap_adapter           f1ap_ue_context_notifier;
 
   du_processor_context context;
   slotted_id_vector<du_cell_index_t, du_cell_context>
-                        cell_db; /// flattened version of served cells list provided by DU/F1C
+                        cell_db; /// flattened version of served cells list provided by DU/F1AP
   std::atomic<uint16_t> next_du_cell_index{0};
 
   // timers associated with a given DU.
   timer_manager timer_db;
 
   // Components
-  std::unique_ptr<f1ap_cu>                                     f1c;
+  std::unique_ptr<f1ap_cu>                                     f1ap;
   std::unique_ptr<rrc_du_interface>                            rrc;
   std::unordered_map<ue_index_t, std::unique_ptr<pdcp_entity>> pdcp_bearers;
 
-  // F1C to DU processor adapter
-  f1c_du_processor_adapter f1c_ev_notifier;
+  // F1AP to DU processor adapter
+  f1ap_du_processor_adapter f1ap_ev_notifier;
 
   // RRC UE to DU processor adapter
   rrc_ue_du_processor_adapter rrc_ue_ev_notifier;

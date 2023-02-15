@@ -50,10 +50,10 @@ asn1::f1ap::drbs_to_be_setup_item_s srsgnb::srs_du::generate_drb_am_setup_item(d
   return drb;
 }
 
-f1c_message srsgnb::srs_du::generate_f1_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add)
+f1ap_message srsgnb::srs_du::generate_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   using namespace asn1::f1ap;
-  f1c_message msg;
+  f1ap_message msg;
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
   ue_context_setup_request_s& dl_msg    = msg.pdu.init_msg().value.ue_context_setup_request();
@@ -107,11 +107,11 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s srsgnb::srs_du::generate_drb_am_mod_item
   return drb;
 }
 
-f1c_message
-srsgnb::srs_du::generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add)
+f1ap_message
+srsgnb::srs_du::generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   using namespace asn1::f1ap;
-  f1c_message msg;
+  f1ap_message msg;
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
   ue_context_mod_request_s& dl_msg = msg.pdu.init_msg().value.ue_context_mod_request();
@@ -139,8 +139,8 @@ f1ap_du_test::f1ap_du_test()
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  f1ap = create_f1ap(msg_notifier, f1c_du_cfg_handler, ctrl_worker, ue_exec_mapper);
-  f1c_du_cfg_handler.connect(*f1ap);
+  f1ap = create_f1ap(msg_notifier, f1ap_du_cfg_handler, ctrl_worker, ue_exec_mapper);
+  f1ap_du_cfg_handler.connect(*f1ap);
 }
 
 f1ap_du_test::~f1ap_du_test()
@@ -154,17 +154,17 @@ void f1ap_du_test::run_f1_setup_procedure()
   // Action 1: Launch F1 setup procedure
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
   test_logger.info("Launch f1 setup request procedure...");
-  async_task<f1_setup_response_message>         t = f1ap->handle_f1ap_setup_request(request_msg);
+  async_task<f1_setup_response_message>         t = f1ap->handle_f1_setup_request(request_msg);
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Action 2: F1 setup response received.
-  unsigned    transaction_id    = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
-  f1c_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
+  unsigned     transaction_id    = get_transaction_id(msg_notifier.last_f1ap_msg.pdu).value();
+  f1ap_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
   test_logger.info("Injecting F1SetupResponse");
   f1ap->handle_message(f1_setup_response);
 }
 
-f1ap_du_test::ue_test_context* f1ap_du_test::run_f1_ue_create(du_ue_index_t ue_index)
+f1ap_du_test::ue_test_context* f1ap_du_test::run_f1ap_ue_create(du_ue_index_t ue_index)
 {
   unsigned srb1_idx = srb_id_to_uint(srb_id_t::srb1);
   test_ues.emplace(ue_index);
@@ -197,14 +197,14 @@ f1ap_du_test::ue_test_context* f1ap_du_test::run_f1_ue_create(du_ue_index_t ue_i
   return nullptr;
 }
 
-void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const f1c_message& msg)
+void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const f1ap_message& msg)
 {
   ue_test_context& ue = test_ues[ue_index];
 
   // Generate dummy DU manager UE Config Update command to F1AP.
-  const auto& f1c_req                         = msg.pdu.init_msg().value.ue_context_setup_request();
-  f1c_du_cfg_handler.next_ue_cfg_req.ue_index = ue_index;
-  for (const auto& srb : f1c_req->srbs_to_be_setup_list.value) {
+  const auto& f1ap_req                         = msg.pdu.init_msg().value.ue_context_setup_request();
+  f1ap_du_cfg_handler.next_ue_cfg_req.ue_index = ue_index;
+  for (const auto& srb : f1ap_req->srbs_to_be_setup_list.value) {
     srb_id_t srb_id = (srb_id_t)srb.value().srbs_to_be_setup_item().srb_id;
 
     // Create F1-C bearer in test ue.
@@ -214,9 +214,9 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
     f1c_bearer_to_addmod bearer;
     bearer.srb_id          = srb_id;
     bearer.rx_sdu_notifier = &ue.f1c_bearers[srb_id_to_uint(srb_id)].rx_sdu_notifier;
-    f1c_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.push_back(bearer);
+    f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add.push_back(bearer);
   }
-  for (const auto& drb : f1c_req->drbs_to_be_setup_list.value) {
+  for (const auto& drb : f1ap_req->drbs_to_be_setup_list.value) {
     drb_id_t drb_id = (drb_id_t)drb.value().drbs_to_be_setup_item().drb_id;
     ue.f1u_bearers.emplace(drb_id_to_uint(drb_id) - 1);
     auto& f1u_bearer  = ue.f1u_bearers[drb_id_to_uint(drb_id) - 1];
@@ -224,21 +224,21 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
   }
 
   // Generate DU manager response to UE context update.
-  f1c_du_cfg_handler.next_ue_context_update_response.result                 = true;
-  f1c_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
+  f1ap_du_cfg_handler.next_ue_context_update_response.result                 = true;
+  f1ap_du_cfg_handler.next_ue_context_update_response.du_to_cu_rrc_container = {0x1, 0x2, 0x3};
 
   // Send UE CONTEXT SETUP REQUEST message to F1AP.
   f1ap->handle_message(msg);
 
   // Register created F1-C and F1-U bearers in dummy DU manager.
-  for (const auto& created_srb : f1c_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added) {
+  for (const auto& created_srb : f1ap_du_cfg_handler.last_ue_cfg_response->f1c_bearers_added) {
     ue.f1c_bearers[srb_id_to_uint(created_srb.srb_id)].bearer = created_srb.bearer;
   }
 }
 
-f1ap_ue_configuration_response f1ap_du_test::update_f1_ue_config(du_ue_index_t                   ue_index,
-                                                                 std::initializer_list<srb_id_t> srbs,
-                                                                 std::initializer_list<drb_id_t> drbs)
+f1ap_ue_configuration_response f1ap_du_test::update_f1ap_ue_config(du_ue_index_t                   ue_index,
+                                                                   std::initializer_list<srb_id_t> srbs,
+                                                                   std::initializer_list<drb_id_t> drbs)
 {
   for (srb_id_t srb_id : srbs) {
     test_ues[ue_index].f1c_bearers.emplace(srb_id_to_uint(srb_id));

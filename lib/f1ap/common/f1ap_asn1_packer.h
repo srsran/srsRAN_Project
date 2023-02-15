@@ -18,19 +18,19 @@
 
 namespace srsgnb {
 
-class f1ap_asn1_packer : public f1c_message_handler
+class f1ap_asn1_packer : public f1ap_message_handler
 {
 public:
-  explicit f1ap_asn1_packer(sctp_network_gateway_data_handler& gw, f1c_message_handler& f1c);
+  explicit f1ap_asn1_packer(sctp_network_gateway_data_handler& gw, f1ap_message_handler& f1ap);
 
   void handle_packed_pdu(const byte_buffer& pdu);
 
-  void handle_message(const f1c_message& msg) override;
+  void handle_message(const f1ap_message& msg) override;
 
 private:
   srslog::basic_logger&              logger;
   sctp_network_gateway_data_handler& gw;
-  f1c_message_handler&               f1c;
+  f1ap_message_handler&              f1ap;
 };
 
 } // namespace srsgnb

@@ -27,7 +27,7 @@
 namespace srsgnb {
 namespace srs_du {
 
-struct f1_rx_pdu {
+struct f1ap_rx_pdu {
   du_ue_index_t           ue_index = INVALID_DU_UE_INDEX;
   lcid_t                  lcid     = INVALID_LCID;
   byte_buffer_slice_chain pdu;
@@ -88,7 +88,7 @@ public:
   /// \return Returns a f1_setup_response_message struct with the success member set to 'true' in case of a
   /// successful outcome, 'false' otherwise. \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3
   /// and awaits the response. If a F1SetupFailure is received the F1AP will handle the failure.
-  virtual async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) = 0;
+  virtual async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) = 0;
 };
 
 struct f1ap_ue_context_release_request_message {
@@ -149,11 +149,11 @@ public:
   virtual void handle_notify(const f1ap_notify_message& msg) = 0;
 };
 
-/// The F1c uses this interface to request services such as timers and scheduling of asynchronous tasks.
-class f1c_ue_task_scheduler
+/// The F1AP uses this interface to request services such as timers and scheduling of asynchronous tasks.
+class f1ap_ue_task_scheduler
 {
 public:
-  virtual ~f1c_ue_task_scheduler() = default;
+  virtual ~f1ap_ue_task_scheduler() = default;
 
   /// \brief Create timer for a given UE.
   virtual unique_timer create_timer() = 0;
@@ -162,11 +162,11 @@ public:
   virtual void schedule_async_task(async_task<void>&& task) = 0;
 };
 
-/// Class to manage scheduling of asynchronous F1c tasks and timers.
-class f1c_task_scheduler
+/// Class to manage scheduling of asynchronous F1AP tasks and timers.
+class f1ap_task_scheduler
 {
 public:
-  virtual ~f1c_task_scheduler() = default;
+  virtual ~f1ap_task_scheduler() = default;
 
   virtual timer_manager& get_timer_manager() = 0;
 
@@ -176,10 +176,10 @@ public:
 
 /// The F1AP uses this interface to notify the DU of new required updates (e.g. UE config modification, etc.) and to
 /// request services such as timers, scheduling of async tasks, etc.
-class f1c_du_configurator : public f1c_task_scheduler
+class f1ap_du_configurator : public f1ap_task_scheduler
 {
 public:
-  virtual ~f1c_du_configurator() = default;
+  virtual ~f1ap_du_configurator() = default;
 
   /// \brief Request the update of the UE configuration in the DU.
   virtual async_task<f1ap_ue_context_update_response>
@@ -189,18 +189,18 @@ public:
   virtual async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) = 0;
 
   /// \brief Retrieve task scheduler specific to a given UE.
-  virtual f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;
+  virtual f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;
 };
 
-/// Combined entry point for F1C/U handling.
-class f1_interface : public f1c_message_handler,
-                     public f1c_event_handler,
-                     public f1ap_rrc_message_transfer_procedure_handler,
-                     public f1ap_connection_manager,
-                     public f1ap_ue_context_manager
+/// Combined entry point for F1AP handling.
+class f1ap_interface : public f1ap_message_handler,
+                       public f1ap_event_handler,
+                       public f1ap_rrc_message_transfer_procedure_handler,
+                       public f1ap_connection_manager,
+                       public f1ap_ue_context_manager
 {
 public:
-  virtual ~f1_interface() = default;
+  virtual ~f1ap_interface() = default;
 };
 
 } // namespace srs_du

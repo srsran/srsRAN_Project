@@ -17,12 +17,12 @@ namespace srsgnb {
 
 /// This implementation forwards all F1AP messages through a network gateway. It is useful for distributed scenarios
 /// where the F1 interfaces reside in different machines.
-class remote_f1c_pdu_handler : public f1c_message_handler
+class remote_f1ap_pdu_handler : public f1ap_message_handler
 {
   network_gateway_data_handler& network;
 
 public:
-  explicit remote_f1c_pdu_handler(network_gateway_data_handler& network) : network(network) {}
+  explicit remote_f1ap_pdu_handler(network_gateway_data_handler& network) : network(network) {}
 
   void handle_message(const asn1::f1ap::f1ap_pdu_c& msg) override
   {

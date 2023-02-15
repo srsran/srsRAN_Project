@@ -27,8 +27,8 @@ namespace srs_cu_cp {
 class rrc_ue_f1ap_pdu_adapter : public rrc_pdu_notifier
 {
 public:
-  explicit rrc_ue_f1ap_pdu_adapter(f1c_rrc_message_handler& f1c_handler_, ue_index_t ue_index_) :
-    f1c_handler(f1c_handler_), ue_index(ue_index_)
+  explicit rrc_ue_f1ap_pdu_adapter(f1ap_rrc_message_handler& f1ap_handler_, ue_index_t ue_index_) :
+    f1ap_handler(f1ap_handler_), ue_index(ue_index_)
   {
   }
 
@@ -39,12 +39,12 @@ public:
     f1ap_msg.srb_id              = srb_id_t::srb0;
     f1ap_msg.rrc_container.resize(msg.pdu.length());
     std::copy(msg.pdu.begin(), msg.pdu.end(), f1ap_msg.rrc_container.begin());
-    f1c_handler.handle_dl_rrc_message_transfer(f1ap_msg);
+    f1ap_handler.handle_dl_rrc_message_transfer(f1ap_msg);
   }
 
 private:
-  f1c_rrc_message_handler& f1c_handler;
-  const ue_index_t         ue_index;
+  f1ap_rrc_message_handler& f1ap_handler;
+  const ue_index_t          ue_index;
 };
 
 /// Adapter between RRC UE and DU processor

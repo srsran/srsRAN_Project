@@ -78,15 +78,15 @@ public:
   /// \return The number of UEs.
   virtual size_t get_nof_ues() const = 0;
 
-  /// \brief Get the F1C message handler interface of the DU processor object.
+  /// \brief Get the F1AP message handler interface of the DU processor object.
   /// \param[in] du_index The index of the DU processor object.
-  /// \return The F1C message handler interface of the DU processor object.
-  virtual f1c_message_handler& get_f1c_message_handler(const du_index_t du_index) = 0;
+  /// \return The F1AP message handler interface of the DU processor object.
+  virtual f1ap_message_handler& get_f1ap_message_handler(const du_index_t du_index) = 0;
 
-  /// \brief Get the F1C statistics handler interface of the DU processor object.
+  /// \brief Get the F1AP statistics handler interface of the DU processor object.
   /// \param[in] du_index The index of the DU processor object.
-  /// \return The F1C statistics handler interface of the DU processor object.
-  virtual f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) = 0;
+  /// \return The F1AP statistics handler interface of the DU processor object.
+  virtual f1ap_statistics_handler& get_f1ap_statistics_handler(du_index_t du_index) = 0;
 };
 
 /// Interface used to handle CU-UP specific procedures

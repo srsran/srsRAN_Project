@@ -52,9 +52,9 @@ asn1::f1ap::gnb_du_served_cells_item_s srsgnb::srs_cu_cp::generate_served_cells_
   return served_cells_item;
 }
 
-f1c_message srsgnb::srs_cu_cp::generate_f1_setup_request()
+f1ap_message srsgnb::srs_cu_cp::generate_f1_setup_request()
 {
-  f1c_message msg;
+  f1ap_message msg;
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
 
@@ -73,11 +73,11 @@ f1c_message srsgnb::srs_cu_cp::generate_f1_setup_request()
   return msg;
 }
 
-f1c_message srsgnb::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                     rnti_t              crnti,
-                                                                     byte_buffer         cell_group_cfg)
+f1ap_message srsgnb::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                      rnti_t              crnti,
+                                                                      byte_buffer         cell_group_cfg)
 {
-  f1c_message init_ul_rrc_msg;
+  f1ap_message init_ul_rrc_msg;
 
   init_ul_rrc_msg.pdu.set_init_msg();
   init_ul_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
@@ -107,12 +107,12 @@ f1c_message srsgnb::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_f
   return init_ul_rrc_msg;
 }
 
-f1c_message srsgnb::srs_cu_cp::generate_ul_rrc_message_transfer(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                srb_id_t            srb_id,
-                                                                byte_buffer         rrc_container)
+f1ap_message srsgnb::srs_cu_cp::generate_ul_rrc_message_transfer(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                 gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                 srb_id_t            srb_id,
+                                                                 byte_buffer         rrc_container)
 {
-  f1c_message ul_rrc_msg = {};
+  f1ap_message ul_rrc_msg = {};
 
   ul_rrc_msg.pdu.set_init_msg();
   ul_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);
@@ -126,10 +126,10 @@ f1c_message srsgnb::srs_cu_cp::generate_ul_rrc_message_transfer(gnb_cu_ue_f1ap_i
   return ul_rrc_msg;
 }
 
-f1c_message srsgnb::srs_cu_cp::generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                    gnb_du_ue_f1ap_id_t du_ue_id)
+f1ap_message srsgnb::srs_cu_cp::generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                     gnb_du_ue_f1ap_id_t du_ue_id)
 {
-  f1c_message ue_ctxt_rel_complete_msg = {};
+  f1ap_message ue_ctxt_rel_complete_msg = {};
   ue_ctxt_rel_complete_msg.pdu.set_successful_outcome();
   ue_ctxt_rel_complete_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   ue_context_release_complete_s& rel_complete_msg =
@@ -140,10 +140,10 @@ f1c_message srsgnb::srs_cu_cp::generate_ue_context_release_complete(gnb_cu_ue_f1
   return ue_ctxt_rel_complete_msg;
 }
 
-f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                 gnb_du_ue_f1ap_id_t du_ue_id)
+f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                  gnb_du_ue_f1ap_id_t du_ue_id)
 {
-  f1c_message msg;
+  f1ap_message msg;
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
 
@@ -162,11 +162,11 @@ f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap_
   return msg;
 }
 
-f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                  gnb_du_ue_f1ap_id_t du_ue_id,
-                                                                  rnti_t              crnti)
+f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                   gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                   rnti_t              crnti)
 {
-  f1c_message ue_context_setup_response = {};
+  f1ap_message ue_context_setup_response = {};
 
   ue_context_setup_response.pdu.set_successful_outcome();
   ue_context_setup_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
@@ -180,10 +180,10 @@ f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1ap
   return ue_context_setup_response;
 }
 
-f1c_message srsgnb::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                 gnb_du_ue_f1ap_id_t du_ue_id)
+f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                  gnb_du_ue_f1ap_id_t du_ue_id)
 {
-  f1c_message ue_context_setup_failure = {};
+  f1ap_message ue_context_setup_failure = {};
 
   ue_context_setup_failure.pdu.set_unsuccessful_outcome();
   ue_context_setup_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
@@ -221,13 +221,13 @@ srsgnb::srs_cu_cp::generate_ue_context_modification_request(ue_index_t          
   return msg;
 }
 
-f1c_message
+f1ap_message
 srsgnb::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
                                                              gnb_du_ue_f1ap_id_t                    du_ue_id,
                                                              rnti_t                                 crnti,
                                                              const std::initializer_list<drb_id_t>& drbs_added)
 {
-  f1c_message ue_context_modification_response = {};
+  f1ap_message ue_context_modification_response = {};
 
   ue_context_modification_response.pdu.set_successful_outcome();
   ue_context_modification_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
@@ -247,10 +247,10 @@ srsgnb::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t
   return ue_context_modification_response;
 }
 
-f1c_message srsgnb::srs_cu_cp::generate_ue_context_modification_failure(gnb_cu_ue_f1ap_id_t cu_ue_id,
-                                                                        gnb_du_ue_f1ap_id_t du_ue_id)
+f1ap_message srsgnb::srs_cu_cp::generate_ue_context_modification_failure(gnb_cu_ue_f1ap_id_t cu_ue_id,
+                                                                         gnb_du_ue_f1ap_id_t du_ue_id)
 {
-  f1c_message ue_context_modification_failure = {};
+  f1ap_message ue_context_modification_failure = {};
 
   ue_context_modification_failure.pdu.set_unsuccessful_outcome();
   ue_context_modification_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);

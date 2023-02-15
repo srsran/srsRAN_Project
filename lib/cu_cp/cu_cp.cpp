@@ -21,7 +21,7 @@ using namespace srs_cu_cp;
 void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsgnb_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsgnb_assert(cfg.f1c_notifier != nullptr, "Invalid F1C notifier");
+  srsgnb_assert(cfg.f1ap_notifier != nullptr, "Invalid F1AP notifier");
   srsgnb_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
 }
 
@@ -31,7 +31,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   assert_cu_cp_configuration_valid(cfg);
 
   // connect event notifiers to layers
-  f1c_ev_notifier.connect_cu_cp(*this);
+  f1ap_ev_notifier.connect_cu_cp(*this);
   cu_up_processor_ev_notifier.connect_cu_cp(*this);
   ngap_cu_cp_ev_notifier.connect_cu_cp(*this);
 
@@ -83,16 +83,16 @@ size_t cu_cp::get_nof_ues() const
   return nof_ues;
 }
 
-f1c_message_handler& cu_cp::get_f1c_message_handler(du_index_t du_index)
+f1ap_message_handler& cu_cp::get_f1ap_message_handler(du_index_t du_index)
 {
   auto& du_it = find_du(du_index);
-  return du_it.get_f1c_message_handler();
+  return du_it.get_f1ap_message_handler();
 }
 
-f1c_statistics_handler& cu_cp::get_f1c_statistics_handler(du_index_t du_index)
+f1ap_statistics_handler& cu_cp::get_f1ap_statistics_handler(du_index_t du_index)
 {
   auto& du_it = find_du(du_index);
-  return du_it.get_f1c_statistics_handler();
+  return du_it.get_f1ap_statistics_handler();
 }
 
 size_t cu_cp::get_nof_cu_ups() const
@@ -202,8 +202,8 @@ du_index_t cu_cp::add_du()
 
   std::unique_ptr<du_processor_interface> du = create_du_processor(std::move(du_cfg),
                                                                    du_processor_ev_notifier,
-                                                                   f1c_ev_notifier,
-                                                                   *cfg.f1c_notifier,
+                                                                   f1ap_ev_notifier,
+                                                                   *cfg.f1ap_notifier,
                                                                    du_processor_e1ap_notifier,
                                                                    rrc_ue_ngap_notifier,
                                                                    rrc_ue_ngap_notifier,

@@ -28,8 +28,8 @@ du_processor_test::du_processor_test()
 
   du_processor_obj = create_du_processor(std::move(du_cfg),
                                          cu_cp_notifier,
-                                         f1c_du_mgmt_notifier,
-                                         f1c_pdu_notifier,
+                                         f1ap_du_mgmt_notifier,
+                                         f1ap_pdu_notifier,
                                          e1ap_ctrl_notifier,
                                          rrc_ue_ngap_notifier,
                                          rrc_ue_ngap_notifier,

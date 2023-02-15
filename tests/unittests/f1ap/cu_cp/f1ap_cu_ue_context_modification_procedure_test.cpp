@@ -34,14 +34,14 @@ protected:
 
   bool was_ue_context_modification_msg_sent(gnb_du_ue_f1ap_id_t du_ue_id) const
   {
-    if (this->f1c_pdu_notifier.last_f1c_msg.pdu.type().value != f1ap_pdu_c::types::init_msg) {
+    if (this->f1ap_pdu_notifier.last_f1ap_msg.pdu.type().value != f1ap_pdu_c::types::init_msg) {
       return false;
     }
-    if (this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.type().value !=
+    if (this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value !=
         asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request) {
       return false;
     }
-    auto& req = this->f1c_pdu_notifier.last_f1c_msg.pdu.init_msg().value.ue_context_mod_request();
+    auto& req = this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_mod_request();
 
     return req->gnb_du_ue_f1ap_id.value == (unsigned)du_ue_id;
   }
@@ -66,7 +66,7 @@ TEST_F(f1ap_cu_ue_context_modification_test, when_f1ap_receives_response_then_pr
 {
   // Start UE CONTEXT MODIFICATION procedure and return back the response from the DU.
   this->start_procedure(generate_ue_context_modification_request(testue.ue_index, {drb_id_t::drb1}));
-  f1c_message ue_context_modification_response =
+  f1ap_message ue_context_modification_response =
       generate_ue_context_modification_response(*testue.cu_ue_id, *testue.du_ue_id, to_rnti(0x4601), {drb_id_t::drb1});
   f1ap->handle_message(ue_context_modification_response);
 
@@ -82,7 +82,7 @@ TEST_F(f1ap_cu_ue_context_modification_test,
 {
   // Start UE CONTEXT MODIFICATION procedure and return back the Failure Response from the DU.
   this->start_procedure(generate_ue_context_modification_request(testue.ue_index, {drb_id_t::drb1}));
-  f1c_message ue_context_modification_response =
+  f1ap_message ue_context_modification_response =
       generate_ue_context_modification_response(*testue.cu_ue_id, *testue.du_ue_id, to_rnti(0x4601), {drb_id_t::drb1});
   auto& resp = *ue_context_modification_response.pdu.successful_outcome().value.ue_context_mod_resp();
   resp.drbs_failed_to_be_setup_mod_list_present = true;
@@ -106,7 +106,7 @@ TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_failure_receiv
 {
   // Start UE CONTEXT MODIFICATION procedure and return back the Failure Response from the DU.
   this->start_procedure(generate_ue_context_modification_request(testue.ue_index, {drb_id_t::drb1}));
-  f1c_message ue_context_modification_failure =
+  f1ap_message ue_context_modification_failure =
       generate_ue_context_modification_failure(*testue.cu_ue_id, *testue.du_ue_id);
   f1ap->handle_message(ue_context_modification_failure);
 

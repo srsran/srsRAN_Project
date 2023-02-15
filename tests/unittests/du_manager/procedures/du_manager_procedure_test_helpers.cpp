@@ -30,14 +30,14 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
 {
   ul_ccch_indication_message ul_ccch_msg = create_test_ul_ccch_message(to_rnti(0x4601 + (unsigned)ue_index));
 
-  f1ap.f1_ues.emplace(ue_index);
-  f1ap.f1_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb0);
-  f1ap.f1_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb1);
+  f1ap.f1ap_ues.emplace(ue_index);
+  f1ap.f1ap_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb0);
+  f1ap.f1ap_ues[ue_index].f1c_bearers.emplace(srb_id_t::srb1);
 
   f1ap.next_ue_create_response.result = true;
   f1ap.next_ue_create_response.f1c_bearers_added.resize(2);
-  f1ap.next_ue_create_response.f1c_bearers_added[0] = &f1ap.f1_ues[ue_index].f1c_bearers[srb_id_t::srb0];
-  f1ap.next_ue_create_response.f1c_bearers_added[1] = &f1ap.f1_ues[ue_index].f1c_bearers[srb_id_t::srb1];
+  f1ap.next_ue_create_response.f1c_bearers_added[0] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb0];
+  f1ap.next_ue_create_response.f1c_bearers_added[1] = &f1ap.f1ap_ues[ue_index].f1c_bearers[srb_id_t::srb1];
   mac.wait_ue_create.result.result                  = true;
   mac.wait_ue_create.result.ue_index                = ue_index;
   mac.wait_ue_create.result.cell_index              = ul_ccch_msg.cell_index;
@@ -57,10 +57,10 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
 {
   // Prepare F1AP response.
   for (srb_id_t srb_id : req.srbs_to_setup) {
-    f1ap.f1_ues[req.ue_index].f1c_bearers.emplace(srb_id);
+    f1ap.f1ap_ues[req.ue_index].f1c_bearers.emplace(srb_id);
     f1c_bearer_addmodded b;
     b.srb_id = srb_id;
-    b.bearer = &f1ap.f1_ues[req.ue_index].f1c_bearers[srb_id];
+    b.bearer = &f1ap.f1ap_ues[req.ue_index].f1c_bearers[srb_id];
     f1ap.next_ue_config_response.f1c_bearers_added.push_back(b);
   }
 

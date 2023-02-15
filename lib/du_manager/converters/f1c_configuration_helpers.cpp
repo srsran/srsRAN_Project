@@ -538,20 +538,20 @@ void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
     // Add Cell in list of served cells.
     request->gnb_du_served_cells_list->push_back({});
     request->gnb_du_served_cells_list->back().load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
-    asn1::f1ap::gnb_du_served_cells_item_s& f1_cell =
+    asn1::f1ap::gnb_du_served_cells_item_s& f1ap_cell =
         request->gnb_du_served_cells_list->back()->gnb_du_served_cells_item();
 
     // Fill Served Cell Information.
-    f1_cell.served_cell_info.nr_pci = cell_cfg->pci;
-    f1_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->plmn));
-    f1_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg->cell_id); // TODO: add gnbID
-    f1_cell.served_cell_info.five_gs_tac_present = true;
-    f1_cell.served_cell_info.five_gs_tac.from_number(cell_cfg->tac);
+    f1ap_cell.served_cell_info.nr_pci = cell_cfg->pci;
+    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->plmn));
+    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg->cell_id); // TODO: add gnbID
+    f1ap_cell.served_cell_info.five_gs_tac_present = true;
+    f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg->tac);
 
     // Add System Information related to the cell.
-    f1_cell.gnb_du_sys_info_present = true;
-    buf                             = make_asn1_rrc_cell_mib_buffer(*cell_cfg);
-    f1_cell.gnb_du_sys_info.mib_msg = std::move(buf);
+    f1ap_cell.gnb_du_sys_info_present = true;
+    buf                               = make_asn1_rrc_cell_mib_buffer(*cell_cfg);
+    f1ap_cell.gnb_du_sys_info.mib_msg = std::move(buf);
 
     // Enable json conversion if argument is present.
     std::string* js_str = nullptr;
@@ -559,8 +559,8 @@ void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
       cell_json_strs->emplace_back();
       js_str = &cell_json_strs->back();
     }
-    buf                              = make_asn1_rrc_cell_sib1_buffer(*cell_cfg, js_str);
-    f1_cell.gnb_du_sys_info.sib1_msg = std::move(buf);
+    buf                                = make_asn1_rrc_cell_sib1_buffer(*cell_cfg, js_str);
+    f1ap_cell.gnb_du_sys_info.sib1_msg = std::move(buf);
   }
 }
 

@@ -45,10 +45,10 @@ public:
   void stop();
 
   // DU interface
-  size_t                  get_nof_dus() const override;
-  size_t                  get_nof_ues() const override;
-  f1c_message_handler&    get_f1c_message_handler(du_index_t du_index) override;
-  f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) override;
+  size_t                   get_nof_dus() const override;
+  size_t                   get_nof_ues() const override;
+  f1ap_message_handler&    get_f1ap_message_handler(du_index_t du_index) override;
+  f1ap_statistics_handler& get_f1ap_statistics_handler(du_index_t du_index) override;
 
   // CU-CP CU-UP interface
   size_t              get_nof_cu_ups() const override;
@@ -145,8 +145,8 @@ private:
   cu_up_processor_to_cu_cp_task_scheduler cu_up_processor_task_sched;
   cu_up_processor_cu_cp_adapter           cu_up_processor_ev_notifier;
 
-  // F1C to CU-CP adapter
-  f1c_cu_cp_adapter f1c_ev_notifier;
+  // F1AP to CU-CP adapter
+  f1ap_cu_cp_adapter f1ap_ev_notifier;
 
   // NGAP to CU-CP adapters
   ngap_to_cu_cp_task_scheduler ngap_task_sched;

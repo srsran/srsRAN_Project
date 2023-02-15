@@ -20,10 +20,10 @@
 #include <random>
 
 namespace srsgnb {
-class f1_dummy : public pdcp_tx_lower_notifier,
-                 public rlc_tx_upper_layer_data_notifier,
-                 public rlc_tx_upper_layer_control_notifier,
-                 public rlc_rx_upper_layer_data_notifier
+class f1ap_dummy : public pdcp_tx_lower_notifier,
+                   public rlc_tx_upper_layer_data_notifier,
+                   public rlc_tx_upper_layer_control_notifier,
+                   public rlc_rx_upper_layer_data_notifier
 {
   rlc_bearer_logger logger;
 
@@ -31,7 +31,7 @@ class f1_dummy : public pdcp_tx_lower_notifier,
   pdcp_rx_lower_interface*           pdcp_rx_lower = nullptr;
 
 public:
-  f1_dummy(uint32_t id) : logger("F1", {id, drb_id_t::drb1}) {}
+  f1ap_dummy(uint32_t id) : logger("F1AP", {id, drb_id_t::drb1}) {}
 
   // PDCP -> F1 -> RLC
   void on_new_pdu(pdcp_tx_pdu pdu) final
@@ -39,32 +39,32 @@ public:
     rlc_sdu sdu = {};
     sdu.buf     = std::move(pdu.buf);
     sdu.pdcp_sn = pdu.pdcp_sn;
-    logger.log_info("Passing F1 PDU to RLC");
+    logger.log_info("Passing F1AP PDU to RLC");
     rlc_tx_upper->handle_sdu(std::move(sdu));
   }
 
-  // PDCP -> F1 -> RLC
+  // PDCP -> F1AP -> RLC
   void on_discard_pdu(uint32_t pdcp_sn) final
   {
     logger.log_debug("Discard PDU called");
     // TODO
   }
 
-  // RLC -> F1 -> PDCP
+  // RLC -> F1AP -> PDCP
   void on_transmitted_sdu(uint32_t max_tx_pdcp_sn) final
   {
     logger.log_debug("Transmitted SDU called");
     // TODO
   }
 
-  // RLC -> F1 -> PDCP
+  // RLC -> F1AP -> PDCP
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) final
   {
     logger.log_debug("Delivered SDU called");
     // TODO
   }
 
-  // RLC -> F1 -> PDCP
+  // RLC -> F1AP -> PDCP
   void on_new_sdu(byte_buffer_slice_chain pdu) final
   {
     logger.log_debug("Passing SDU to PDCP");

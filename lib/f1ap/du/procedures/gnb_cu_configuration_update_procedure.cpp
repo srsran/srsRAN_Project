@@ -18,12 +18,12 @@ void gnb_cu_configuration_update_procedure::send_gnb_cu_configuration_update_ack
 {
   using namespace asn1::f1ap;
 
-  f1c_message msg = {};
+  f1ap_message msg = {};
 
   msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_GNB_CU_CFG_UPD);
   gnb_cu_cfg_upd_ack_s& ack  = msg.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack();
   ack->transaction_id->value = request->transaction_id->value;
 
-  // send F1c message.
+  // send F1AP message.
   cu_notif.on_new_message(msg);
 }

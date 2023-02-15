@@ -16,16 +16,16 @@
 namespace srsgnb {
 
 /// \brief Generate dummy F1AP SETUP RESPONSE message (CU -> DU).
-f1c_message generate_f1_setup_response_message(unsigned transaction_id);
+f1ap_message generate_f1_setup_response_message(unsigned transaction_id);
 
 /// \brief Generate dummy F1AP SETUP Failure message (CU -> DU).
 /// \param[in] transaction_id Transaction ID of the message.
 /// \param[in] time_to_wait Time that DU needs to wait. Nulltype if time_to_wait not present in the message.
-f1c_message
+f1ap_message
 generate_f1_setup_failure_message(unsigned                   transaction_id,
                                   asn1::f1ap::time_to_wait_e time_to_wait = asn1::f1ap::time_to_wait_opts::nulltype);
 
 /// \brief Generate dummy F1AP DL RRC Message Transfer message (CU -> DU).
-f1c_message generate_f1_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container);
+f1ap_message generate_f1ap_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container);
 
 } // namespace srsgnb

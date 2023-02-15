@@ -18,10 +18,10 @@
 namespace srsgnb {
 namespace srs_du {
 
-class f1c_ue_task_scheduler_adapter final : public f1c_ue_task_scheduler
+class f1ap_ue_task_scheduler_adapter final : public f1ap_ue_task_scheduler
 {
 public:
-  explicit f1c_ue_task_scheduler_adapter(du_ue_index_t ue_index_, timer_manager& timers_) :
+  explicit f1ap_ue_task_scheduler_adapter(du_ue_index_t ue_index_, timer_manager& timers_) :
     ue_index(ue_index_), timers(timers_)
   {
   }
@@ -38,10 +38,10 @@ private:
   du_manager_configurator* du_mng = nullptr;
 };
 
-class f1c_du_configurator_adapter : public f1c_du_configurator
+class f1ap_du_configurator_adapter : public f1ap_du_configurator
 {
 public:
-  explicit f1c_du_configurator_adapter(timer_manager& timers_) : timers(timers_)
+  explicit f1ap_du_configurator_adapter(timer_manager& timers_) : timers(timers_)
   {
     for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
       ues.emplace(i, to_du_ue_index(i), timers);
@@ -60,7 +60,7 @@ public:
 
   void schedule_async_task(async_task<void>&& task) override { du_mng->schedule_async_task(std::move(task)); }
 
-  f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ues[ue_index]; }
+  f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ues[ue_index]; }
 
   async_task<f1ap_ue_context_update_response>
   request_ue_context_update(const f1ap_ue_context_update_request& request) override
@@ -74,9 +74,9 @@ public:
   }
 
 private:
-  timer_manager&                                               timers;
-  du_manager_configurator*                                     du_mng = nullptr;
-  slotted_array<f1c_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
+  timer_manager&                                                timers;
+  du_manager_configurator*                                      du_mng = nullptr;
+  slotted_array<f1ap_ue_task_scheduler_adapter, MAX_NOF_DU_UES> ues;
 };
 
 } // namespace srs_du

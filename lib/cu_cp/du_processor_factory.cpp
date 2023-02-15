@@ -19,8 +19,8 @@ using namespace srs_cu_cp;
 std::unique_ptr<du_processor_interface>
 srsgnb::srs_cu_cp::create_du_processor(const du_processor_config_t         du_processor_config_,
                                        du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                                       f1c_du_management_notifier&         f1c_du_mgmt_notifier_,
-                                       f1c_message_notifier&               f1c_notifier_,
+                                       f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
+                                       f1ap_message_notifier&              f1ap_notifier_,
                                        du_processor_e1ap_control_notifier& du_processor_e1ap_ctrl_notifier_,
                                        rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                        rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
@@ -30,8 +30,8 @@ srsgnb::srs_cu_cp::create_du_processor(const du_processor_config_t         du_pr
 {
   auto du_processor = std::make_unique<du_processor_impl>(du_processor_config_,
                                                           cu_cp_notifier_,
-                                                          f1c_du_mgmt_notifier_,
-                                                          f1c_notifier_,
+                                                          f1ap_du_mgmt_notifier_,
+                                                          f1ap_notifier_,
                                                           du_processor_e1ap_ctrl_notifier_,
                                                           rrc_ue_nas_pdu_notifier_,
                                                           rrc_ue_ngap_ctrl_notifier_,

@@ -18,10 +18,10 @@
 
 namespace srsgnb {
 
-class dummy_f1c_rrc_message_notifier : public srs_cu_cp::f1c_rrc_message_notifier
+class dummy_f1ap_rrc_message_notifier : public srs_cu_cp::f1ap_rrc_message_notifier
 {
 public:
-  dummy_f1c_rrc_message_notifier() = default;
+  dummy_f1ap_rrc_message_notifier() = default;
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
     logger.info("Received RRC message");
@@ -34,10 +34,10 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
-class dummy_f1c_du_processor_notifier : public srs_cu_cp::f1c_du_processor_notifier
+class dummy_f1ap_du_processor_notifier : public srs_cu_cp::f1ap_du_processor_notifier
 {
 public:
-  dummy_f1c_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_f1ap_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
   srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::du_index_t::min; }
 
@@ -66,10 +66,10 @@ public:
 
   void set_ue_id(uint16_t ue_id_) { ue_id = ue_id_; }
 
-  srs_cu_cp::f1_setup_request_message             last_f1_setup_request_msg;
-  srs_cu_cp::f1ap_initial_ul_rrc_message          last_ue_creation_request_msg;
-  optional<srs_cu_cp::ue_index_t>                 last_created_ue_index;
-  std::unique_ptr<dummy_f1c_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1c_rrc_message_notifier>();
+  srs_cu_cp::f1_setup_request_message              last_f1_setup_request_msg;
+  srs_cu_cp::f1ap_initial_ul_rrc_message           last_ue_creation_request_msg;
+  optional<srs_cu_cp::ue_index_t>                  last_created_ue_index;
+  std::unique_ptr<dummy_f1ap_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1ap_rrc_message_notifier>();
 
 private:
   srslog::basic_logger& logger;
@@ -79,15 +79,15 @@ private:
 /// Reusable notifier class that a) stores the received PDU for test inspection and b)
 /// calls the registered PDU handler (if any). The handler can be added upon construction
 /// or later via the attach_handler() method.
-class dummy_f1c_pdu_notifier : public f1c_message_notifier
+class dummy_f1ap_pdu_notifier : public f1ap_message_notifier
 {
 public:
-  explicit dummy_f1c_pdu_notifier(f1c_message_handler* handler_ = nullptr) : handler(handler_) {}
-  void attach_handler(f1c_message_handler* handler_) { handler = handler_; }
-  void on_new_message(const f1c_message& msg) override
+  explicit dummy_f1ap_pdu_notifier(f1ap_message_handler* handler_ = nullptr) : handler(handler_) {}
+  void attach_handler(f1ap_message_handler* handler_) { handler = handler_; }
+  void on_new_message(const f1ap_message& msg) override
   {
     logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
-    last_f1c_msg = msg; // store msg
+    last_f1ap_msg = msg; // store msg
 
     if (handler != nullptr) {
       logger.info("Forwarding PDU");
@@ -95,72 +95,72 @@ public:
     }
   }
 
-  f1c_message last_f1c_msg;
+  f1ap_message last_f1ap_msg;
 
 private:
   srslog::basic_logger& logger  = srslog::fetch_basic_logger("TEST");
-  f1c_message_handler*  handler = nullptr;
+  f1ap_message_handler* handler = nullptr;
 };
 
 /// Reusable class implementing the notifier interface.
-class f1c_null_notifier : public f1c_message_notifier
+class f1ap_null_notifier : public f1ap_message_notifier
 {
 public:
-  f1c_message last_f1c_msg;
+  f1ap_message last_f1ap_msg;
 
-  void on_new_message(const f1c_message& msg) override
+  void on_new_message(const f1ap_message& msg) override
   {
     srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
     test_logger.info("Received PDU");
-    last_f1c_msg = msg;
+    last_f1ap_msg = msg;
   }
 };
 
 /// Reusable notifier class that a) stores the received PDU for test inspection and b)
 /// calls the registered PDU handler (if any). The handler can be added upon construction
 /// or later via the attach_handler() method.
-class dummy_cu_cp_f1c_pdu_notifier : public f1c_message_notifier
+class dummy_cu_cp_f1ap_pdu_notifier : public f1ap_message_notifier
 {
 public:
-  dummy_cu_cp_f1c_pdu_notifier(srs_cu_cp::cu_cp_interface* cu_cp_, f1c_message_handler* handler_) :
+  dummy_cu_cp_f1ap_pdu_notifier(srs_cu_cp::cu_cp_interface* cu_cp_, f1ap_message_handler* handler_) :
     logger(srslog::fetch_basic_logger("TEST")), cu_cp(cu_cp_), handler(handler_){};
 
-  void attach_handler(srs_cu_cp::cu_cp_interface* cu_cp_, f1c_message_handler* handler_)
+  void attach_handler(srs_cu_cp::cu_cp_interface* cu_cp_, f1ap_message_handler* handler_)
   {
     cu_cp   = cu_cp_;
     handler = handler_;
     cu_cp->handle_new_du_connection();
   };
-  void on_new_message(const f1c_message& msg) override
+  void on_new_message(const f1ap_message& msg) override
   {
     logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
-    last_f1c_msg = msg; // store msg
+    last_f1ap_msg = msg; // store msg
 
     if (handler != nullptr) {
       logger.info("Forwarding PDU");
       handler->handle_message(msg);
     }
   }
-  f1c_message last_f1c_msg;
+  f1ap_message last_f1ap_msg;
 
 private:
   srslog::basic_logger&       logger;
   srs_cu_cp::cu_cp_interface* cu_cp   = nullptr;
-  f1c_message_handler*        handler = nullptr;
+  f1ap_message_handler*       handler = nullptr;
 };
 
 /// Dummy handler just printing the received PDU.
-class dummy_f1c_message_handler : public f1c_message_handler
+class dummy_f1ap_message_handler : public f1ap_message_handler
 {
 public:
-  dummy_f1c_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
-  void handle_message(const f1c_message& msg) override
+  dummy_f1ap_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+  void handle_message(const f1ap_message& msg) override
   {
     last_msg = msg;
     logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
   }
 
-  f1c_message last_msg;
+  f1ap_message last_msg;
 
 private:
   srslog::basic_logger& logger;

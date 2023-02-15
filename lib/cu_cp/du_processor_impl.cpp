@@ -22,8 +22,8 @@ using namespace srs_cu_cp;
 
 du_processor_impl::du_processor_impl(const du_processor_config_t         du_processor_config_,
                                      du_processor_cu_cp_notifier&        cu_cp_notifier_,
-                                     f1c_du_management_notifier&         f1c_du_mgmt_notifier_,
-                                     f1c_message_notifier&               f1c_notifier_,
+                                     f1ap_du_management_notifier&        f1ap_du_mgmt_notifier_,
+                                     f1ap_message_notifier&              f1ap_notifier_,
                                      du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
                                      rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
@@ -32,8 +32,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
                                      task_executor&                      ctrl_exec_) :
   cfg(du_processor_config_),
   cu_cp_notifier(cu_cp_notifier_),
-  f1c_du_mgmt_notifier(f1c_du_mgmt_notifier_),
-  f1c_notifier(f1c_notifier_),
+  f1ap_du_mgmt_notifier(f1ap_du_mgmt_notifier_),
+  f1ap_notifier(f1ap_notifier_),
   e1ap_ctrl_notifier(e1ap_ctrl_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
@@ -42,11 +42,11 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
 {
   context.du_index = cfg.du_index;
 
-  // create f1c
-  f1c = create_f1ap(f1c_notifier, f1c_ev_notifier, f1c_du_mgmt_notifier, ctrl_exec_);
-  f1c_ev_notifier.connect_du_processor(*this);
+  // create f1ap
+  f1ap = create_f1ap(f1ap_notifier, f1ap_ev_notifier, f1ap_du_mgmt_notifier, ctrl_exec_);
+  f1ap_ev_notifier.connect_du_processor(*this);
 
-  f1c_ue_context_notifier.connect_f1(f1c->get_f1c_ue_context_manager());
+  f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
   // create RRC
   rrc_du_creation_message rrc_creation_msg(
@@ -57,7 +57,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   rrc_ue_ev_notifier.connect_du_processor(*this);
 
   routine_mng = std::make_unique<du_processor_routine_manager>(
-      e1ap_ctrl_notifier, f1c_ue_context_notifier, rrc_du_adapter, ue_manager, logger);
+      e1ap_ctrl_notifier, f1ap_ue_context_notifier, rrc_du_adapter, ue_manager, logger);
 }
 
 void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& msg)
@@ -140,13 +140,13 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
   return du_cell_index_t::invalid;
 }
 
-/// Sender for F1C messages
+/// Sender for F1AP messages
 void du_processor_impl::send_f1_setup_response(const du_processor_context& du_ctxt)
 {
   f1_setup_response_message response;
   response.success = true;
   fill_asn1_f1_setup_response(response.response, cfg.name, cfg.rrc_version, cell_db);
-  f1c->handle_f1_setup_response(response);
+  f1ap->handle_f1_setup_response(response);
 }
 
 void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause)
@@ -154,7 +154,7 @@ void du_processor_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::option
   f1_setup_response_message response;
   response.success = false;
   response.failure->cause->set(cause);
-  f1c->handle_f1_setup_response(response);
+  f1ap->handle_f1_setup_response(response);
 }
 
 du_cell_index_t du_processor_impl::get_next_du_cell_index()
@@ -253,8 +253,8 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
     // create direct connection with UE manager to RRC adapter
-    srb.rx_notifier     = std::make_unique<f1c_rrc_ue_adapter>(rrc->find_ue(msg.ue_index)->get_ul_ccch_pdu_handler());
-    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_pdu_adapter>(*f1c, msg.ue_index);
+    srb.rx_notifier     = std::make_unique<f1ap_rrc_ue_adapter>(rrc->find_ue(msg.ue_index)->get_ul_ccch_pdu_handler());
+    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_pdu_adapter>(*f1ap, msg.ue_index);
 
     // update notifier in RRC
     rrc->find_ue(msg.ue_index)
@@ -263,8 +263,8 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     // create PDCP context for this SRB
     srb.pdcp_context.emplace();
 
-    // add adapter for PDCP to talk to F1C (Tx), RRC data (Rx) and RRC control (Tx/Rx)
-    srb.pdcp_context->pdcp_tx_notifier = std::make_unique<pdcp_du_processor_adapter>(*f1c, msg.ue_index, msg.srb_id);
+    // add adapter for PDCP to talk to F1AP (Tx), RRC data (Rx) and RRC control (Tx/Rx)
+    srb.pdcp_context->pdcp_tx_notifier = std::make_unique<pdcp_du_processor_adapter>(*f1ap, msg.ue_index, msg.srb_id);
     srb.pdcp_context->rrc_tx_control_notifier =
         std::make_unique<pdcp_tx_control_rrc_ue_adapter>(); // TODO: pass actual RRC handler
     srb.pdcp_context->rrc_rx_data_notifier =
@@ -291,8 +291,8 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     pdcp_bearers.emplace(msg.ue_index, create_pdcp_entity(srb_pdcp));
     auto& pdcp_bearer = pdcp_bearers.at(msg.ue_index);
 
-    // created adapters between F1C to PDCP (Rx) and RRC to PDCP (Tx)
-    srb.rx_notifier     = std::make_unique<f1c_pdcp_adapter>(pdcp_bearer->get_rx_lower_interface());
+    // created adapters between F1AP to PDCP (Rx) and RRC to PDCP (Tx)
+    srb.rx_notifier     = std::make_unique<f1ap_pdcp_adapter>(pdcp_bearer->get_rx_lower_interface());
     srb.rrc_tx_notifier = std::make_unique<rrc_ue_pdcp_pdu_adapter>(pdcp_bearer->get_tx_upper_data_interface());
 
     srb.pdcp_context->rrc_tx_sec_notifier =
@@ -308,8 +308,8 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
                                ue->get_srbs().at(msg.srb_id).pdcp_context->rrc_tx_sec_notifier.get(),
                                ue->get_srbs().at(msg.srb_id).pdcp_context->rrc_rx_sec_notifier.get());
 
-    // update notifier in F1C
-    f1c->connect_srb_notifier(msg.ue_index, msg.srb_id, *ue->get_srbs().at(msg.srb_id).rx_notifier);
+    // update notifier in F1AP
+    f1ap->connect_srb_notifier(msg.ue_index, msg.srb_id, *ue->get_srbs().at(msg.srb_id).rx_notifier);
   } else {
     logger.error("Couldn't create SRB{}.", msg.srb_id);
   }

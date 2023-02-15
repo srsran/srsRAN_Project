@@ -13,9 +13,9 @@
 using namespace srsgnb;
 using namespace asn1::f1ap;
 
-f1c_message srsgnb::generate_f1_setup_response_message(unsigned transaction_id)
+f1ap_message srsgnb::generate_f1_setup_response_message(unsigned transaction_id)
 {
-  f1c_message f1_setup_response = {};
+  f1ap_message f1_setup_response = {};
 
   f1_setup_response.pdu.set_successful_outcome();
   f1_setup_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -29,9 +29,9 @@ f1c_message srsgnb::generate_f1_setup_response_message(unsigned transaction_id)
   return f1_setup_response;
 }
 
-f1c_message srsgnb::generate_f1_setup_failure_message(unsigned transaction_id, asn1::f1ap::time_to_wait_e time_to_wait)
+f1ap_message srsgnb::generate_f1_setup_failure_message(unsigned transaction_id, asn1::f1ap::time_to_wait_e time_to_wait)
 {
-  f1c_message f1_setup_failure = {};
+  f1ap_message f1_setup_failure = {};
 
   f1_setup_failure.pdu.set_unsuccessful_outcome();
   f1_setup_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -53,9 +53,9 @@ f1c_message srsgnb::generate_f1_setup_failure_message(unsigned transaction_id, a
   return f1_setup_failure;
 }
 
-f1c_message srsgnb::generate_f1_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container)
+f1ap_message srsgnb::generate_f1ap_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container)
 {
-  f1c_message msg;
+  f1ap_message msg;
 
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
   auto& dl_msg                     = msg.pdu.init_msg().value.dl_rrc_msg_transfer();

@@ -26,7 +26,7 @@ class f1ap_du_setup_procedure
 {
 public:
   f1ap_du_setup_procedure(const f1_setup_request_message& request_,
-                          f1c_message_notifier&           cu_notif_,
+                          f1ap_message_notifier&          cu_notif_,
                           f1ap_event_manager&             ev_mng_,
                           timer_manager&                  timers,
                           f1ap_du_context&                du_ctxt_);
@@ -44,7 +44,7 @@ private:
   f1_setup_response_message create_f1_setup_result();
 
   const f1_setup_request_message request;
-  f1c_message_notifier&          cu_notifier;
+  f1ap_message_notifier&         cu_notifier;
   f1ap_event_manager&            ev_mng;
   srslog::basic_logger&          logger;
   f1ap_du_context&               du_ctxt;

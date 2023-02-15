@@ -72,9 +72,9 @@ void f1ap_du_ue_context_setup_procedure::send_rrc_container()
 
 void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
 {
-  f1c_message f1c_msg;
-  f1c_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
-  ue_context_setup_resp_s& resp = f1c_msg.pdu.successful_outcome().value.ue_context_setup_resp();
+  f1ap_message f1ap_msg;
+  f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+  ue_context_setup_resp_s& resp = f1ap_msg.pdu.successful_outcome().value.ue_context_setup_resp();
 
   resp->gnb_du_ue_f1ap_id->value = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
   resp->gnb_cu_ue_f1ap_id->value = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
@@ -115,18 +115,18 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   }
 
   // Send Response to CU-CP.
-  ue.f1c_msg_notifier.on_new_message(f1c_msg);
+  ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
 }
 
 void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
 {
-  f1c_message f1c_msg;
-  f1c_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
-  ue_context_setup_fail_s& resp = f1c_msg.pdu.unsuccessful_outcome().value.ue_context_setup_fail();
+  f1ap_message f1ap_msg;
+  f1ap_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+  ue_context_setup_fail_s& resp = f1ap_msg.pdu.unsuccessful_outcome().value.ue_context_setup_fail();
 
   resp->gnb_du_ue_f1ap_id->value         = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
   resp->gnb_cu_ue_f1ap_id->value         = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
   resp->cause->set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
 
-  ue.f1c_msg_notifier.on_new_message(f1c_msg);
+  ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
 }

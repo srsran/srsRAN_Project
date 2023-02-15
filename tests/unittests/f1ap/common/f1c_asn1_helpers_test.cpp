@@ -17,7 +17,7 @@
 using namespace srsgnb;
 
 /// Test PLMN decoding
-TEST(f1c_asn1_helpers_test, test_ngi_converter)
+TEST(f1ap_asn1_helpers_test, test_ngi_converter)
 {
   // use known a PLMN
   asn1::f1ap::nrcgi_s asn1_cgi;

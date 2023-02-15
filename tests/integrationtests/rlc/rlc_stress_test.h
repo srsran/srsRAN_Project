@@ -88,8 +88,8 @@ private:
   // RLC
   std::unique_ptr<rlc_entity> rlc = nullptr;
 
-  // F1
-  std::unique_ptr<f1_dummy> f1 = nullptr;
+  // F1AP
+  std::unique_ptr<f1ap_dummy> f1ap = nullptr;
 
   // PDCP
   std::unique_ptr<pdcp_entity> pdcp = nullptr;

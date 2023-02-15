@@ -27,13 +27,13 @@
 namespace srsgnb {
 namespace srs_du {
 
-class dummy_f1c_du_configurator : public f1c_du_configurator
+class dummy_f1ap_du_configurator : public f1ap_du_configurator
 {
 public:
-  struct dummy_ue_task_sched : public f1c_ue_task_scheduler {
-    dummy_f1c_du_configurator* parent;
+  struct dummy_ue_task_sched : public f1ap_ue_task_scheduler {
+    dummy_f1ap_du_configurator* parent;
 
-    explicit dummy_ue_task_sched(dummy_f1c_du_configurator* parent_) : parent(parent_) {}
+    explicit dummy_ue_task_sched(dummy_f1ap_du_configurator* parent_) : parent(parent_) {}
 
     unique_timer create_timer() override { return parent->timers.create_unique_timer(); }
 
@@ -44,7 +44,7 @@ public:
   timer_manager&       timers;
   async_task_sequencer task_loop;
   dummy_ue_task_sched  ue_sched;
-  f1_interface*        f1ap_inst;
+  f1ap_interface*      f1ap;
 
   // DU manager -> F1AP.
   f1ap_ue_configuration_request            next_ue_cfg_req;
@@ -54,9 +54,9 @@ public:
   optional<f1ap_ue_context_update_request> last_ue_context_update_req;
   f1ap_ue_context_update_response          next_ue_context_update_response;
 
-  explicit dummy_f1c_du_configurator(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
+  explicit dummy_f1ap_du_configurator(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
-  void connect(f1_interface& f1ap_inst_) { f1ap_inst = &f1ap_inst_; }
+  void connect(f1ap_interface& f1ap_) { f1ap = &f1ap_; }
 
   timer_manager& get_timer_manager() override { return timers; }
 
@@ -68,7 +68,7 @@ public:
     last_ue_context_update_req = request;
     return launch_async([this](coro_context<async_task<f1ap_ue_context_update_response>>& ctx) {
       CORO_BEGIN(ctx);
-      last_ue_cfg_response = f1ap_inst->handle_ue_configuration_request(next_ue_cfg_req);
+      last_ue_cfg_response = f1ap->handle_ue_configuration_request(next_ue_cfg_req);
       CORO_RETURN(next_ue_context_update_response);
     });
   }
@@ -82,7 +82,7 @@ public:
   }
 
   /// \brief Retrieve task scheduler specific to a given UE.
-  f1c_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }
+  f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) override { return ue_sched; }
 };
 
 class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
@@ -105,13 +105,13 @@ f1_setup_request_message generate_f1_setup_request_message();
 asn1::f1ap::drbs_to_be_setup_item_s generate_drb_am_setup_item(drb_id_t drbid);
 
 /// \brief Generate an F1AP UE Context Setup Request message with specified list of DRBs.
-f1c_message generate_f1_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add);
+f1ap_message generate_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add);
 
 /// \brief Generate F1AP ASN.1 DRB AM Setup configuration.
 asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid);
 
 /// \brief Generate an F1AP UE Context Modification Request message with specified list of DRBs.
-f1c_message generate_f1_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add);
+f1ap_message generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add);
 
 class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 {
@@ -165,23 +165,23 @@ protected:
   void run_f1_setup_procedure();
 
   /// \brief Create new UE in F1AP.
-  ue_test_context* run_f1_ue_create(du_ue_index_t ue_index);
+  ue_test_context* run_f1ap_ue_create(du_ue_index_t ue_index);
 
-  void run_ue_context_setup_procedure(du_ue_index_t ue_index, const f1c_message& msg);
+  void run_ue_context_setup_procedure(du_ue_index_t ue_index, const f1ap_message& msg);
 
   /// \brief Update UE config in F1AP.
-  f1ap_ue_configuration_response update_f1_ue_config(du_ue_index_t                   ue_index,
-                                                     std::initializer_list<srb_id_t> srbs,
-                                                     std::initializer_list<drb_id_t> drbs);
+  f1ap_ue_configuration_response update_f1ap_ue_config(du_ue_index_t                   ue_index,
+                                                       std::initializer_list<srb_id_t> srbs,
+                                                       std::initializer_list<drb_id_t> drbs);
 
-  /// Notifier for messages coming out from F1c to Gateway.
-  f1c_null_notifier msg_notifier = {};
+  /// Notifier for messages coming out from F1AP to Gateway.
+  f1ap_null_notifier msg_notifier = {};
 
-  timer_manager                 timers;
-  dummy_f1c_du_configurator     f1c_du_cfg_handler{timers};
-  manual_task_worker            ctrl_worker{128};
-  dummy_ue_executor_mapper      ue_exec_mapper{ctrl_worker};
-  std::unique_ptr<f1_interface> f1ap;
+  timer_manager                   timers;
+  dummy_f1ap_du_configurator      f1ap_du_cfg_handler{timers};
+  manual_task_worker              ctrl_worker{128};
+  dummy_ue_executor_mapper        ue_exec_mapper{ctrl_worker};
+  std::unique_ptr<f1ap_interface> f1ap;
 
   /// Storage of UE context related to the current unit test.
   slotted_array<ue_test_context, MAX_NOF_DU_UES> test_ues;

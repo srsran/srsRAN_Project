@@ -48,13 +48,13 @@ protected:
     srslog::init();
 
     // create message handler for CU and DU to relay messages back and forth
-    dummy_cu_cp_f1c_pdu_notifier       cu_msg_handler(nullptr, nullptr);
-    dummy_f1c_pdu_notifier             du_msg_handler(nullptr);
+    dummy_cu_cp_f1ap_pdu_notifier      cu_msg_handler(nullptr, nullptr);
+    dummy_f1ap_pdu_notifier            du_msg_handler(nullptr);
     srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
     cu_cfg.cu_cp_executor = &workers.ctrl_worker;
-    cu_cfg.f1c_notifier   = &cu_msg_handler;
+    cu_cfg.f1ap_notifier  = &cu_msg_handler;
     cu_cfg.ngap_notifier  = &ngap_amf_notifier;
 
     // create and start CU
@@ -67,7 +67,7 @@ protected:
     du_cfg.du_mng_executor = &workers.ctrl_worker;
     du_cfg.cell_executors  = &workers.cell_exec_mapper;
     du_cfg.ue_executors    = &workers.ue_exec_mapper;
-    du_cfg.f1c_notifier    = &du_msg_handler;
+    du_cfg.f1ap_notifier   = &du_msg_handler;
     du_cfg.phy_adapter     = &phy;
     du_cfg.timers          = &timers;
     du_cfg.cells           = {config_helpers::make_default_du_cell_config()};
@@ -77,8 +77,8 @@ protected:
     du_obj = std::make_unique<srs_du::du_high>(std::move(du_cfg));
 
     // attach DU msg handler to CU message handler and vice-versa (in this order)
-    cu_msg_handler.attach_handler(cu_cp_obj.get(), &du_obj->get_f1c_message_handler());
-    du_msg_handler.attach_handler(&cu_cp_obj->get_f1c_message_handler(srs_cu_cp::uint_to_du_index(0)));
+    cu_msg_handler.attach_handler(cu_cp_obj.get(), &du_obj->get_f1ap_message_handler());
+    du_msg_handler.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srs_cu_cp::uint_to_du_index(0)));
 
     // start CU and DU
     du_obj->start();

@@ -62,10 +62,10 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
 
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_response()
 {
-  f1c_message f1c_msg;
+  f1ap_message f1ap_msg;
 
-  f1c_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
-  ue_context_mod_resp_s& resp = f1c_msg.pdu.successful_outcome().value.ue_context_mod_resp();
+  f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  ue_context_mod_resp_s& resp = f1ap_msg.pdu.successful_outcome().value.ue_context_mod_resp();
 
   resp->gnb_du_ue_f1ap_id->value                    = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
   resp->gnb_cu_ue_f1ap_id->value                    = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
@@ -127,18 +127,18 @@ void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_res
     resp->du_to_cu_rrc_info.value.cell_group_cfg.append(du_response.du_to_cu_rrc_container);
   }
 
-  ue.f1c_msg_notifier.on_new_message(f1c_msg);
+  ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
 }
 
 void f1ap_du_ue_context_modification_procedure::send_ue_context_modification_failure()
 {
-  f1c_message f1c_msg;
-  f1c_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
-  ue_context_mod_fail_s& resp = f1c_msg.pdu.unsuccessful_outcome().value.ue_context_mod_fail();
+  f1ap_message f1ap_msg;
+  f1ap_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  ue_context_mod_fail_s& resp = f1ap_msg.pdu.unsuccessful_outcome().value.ue_context_mod_fail();
 
   resp->gnb_du_ue_f1ap_id->value         = gnb_du_ue_f1ap_id_to_uint(ue.context.gnb_du_ue_f1ap_id);
   resp->gnb_cu_ue_f1ap_id->value         = gnb_cu_ue_f1ap_id_to_uint(ue.context.gnb_cu_ue_f1ap_id);
   resp->cause->set_radio_network().value = asn1::f1ap::cause_radio_network_opts::unspecified;
 
-  ue.f1c_msg_notifier.on_new_message(f1c_msg);
+  ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
 }

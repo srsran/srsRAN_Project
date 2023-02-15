@@ -20,7 +20,7 @@ using namespace srs_cu_cp;
 
 f1_setup_request_message srsgnb::srs_cu_cp::generate_valid_f1_setup_request()
 {
-  f1c_message              f1setup_msg          = generate_f1_setup_request();
+  f1ap_message             f1setup_msg          = generate_f1_setup_request();
   f1_setup_request_message f1_setup_request_msg = {};
   f1_setup_request_msg.request                  = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   return f1_setup_request_msg;
@@ -28,7 +28,7 @@ f1_setup_request_message srsgnb::srs_cu_cp::generate_valid_f1_setup_request()
 
 f1_setup_request_message srsgnb::srs_cu_cp::generate_f1_setup_request_base()
 {
-  f1c_message f1setup_msg                                                               = generate_f1_setup_request();
+  f1ap_message f1setup_msg                                                              = generate_f1_setup_request();
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list->clear();
   f1_setup_request_message f1_setup_request_msg = {};
@@ -127,7 +127,7 @@ srsgnb::srs_cu_cp::generate_cu_cp_ue_context_modification_response(gnb_cu_ue_f1a
 {
   cu_cp_ue_context_modification_response resp;
 
-  f1c_message asn1_res = generate_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
+  f1ap_message asn1_res = generate_ue_context_modification_response(cu_ue_f1ap_id, du_ue_f1ap_id);
 
   fill_f1ap_ue_context_modification_response_message(resp,
                                                      asn1_res.pdu.successful_outcome().value.ue_context_mod_resp());

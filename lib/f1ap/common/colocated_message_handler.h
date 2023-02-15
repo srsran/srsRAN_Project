@@ -16,12 +16,12 @@ namespace srsgnb {
 
 /// This implementation forwards F1AP messages through a function call to the peer F1 interface. It is useful for
 /// co-located scenarios where both F1 interfaces reside in the same process.
-class colocated_f1c_pdu_handler : public f1c_message_handler
+class colocated_f1ap_pdu_handler : public f1ap_message_handler
 {
-  f1c_message_handler& peer_handler;
+  f1ap_message_handler& peer_handler;
 
 public:
-  explicit colocated_f1c_pdu_handler(f1c_message_handler& peer_handler) : peer_handler(peer_handler) {}
+  explicit colocated_f1ap_pdu_handler(f1ap_message_handler& peer_handler) : peer_handler(peer_handler) {}
 
   void handle_message(const asn1::f1ap::f1ap_pdu_c& msg) override { peer_handler.handle_message(msg); }
 };

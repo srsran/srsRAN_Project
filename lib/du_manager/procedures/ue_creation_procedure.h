@@ -66,7 +66,7 @@ private:
   bool setup_du_ue_resources();
 
   /// Creates UE object in F1.
-  void create_f1_ue();
+  void create_f1ap_ue();
 
   /// Creates SRB0 and SRB1 in RLC.
   void create_rlc_srbs();
@@ -86,7 +86,7 @@ private:
 
   du_ue*                         ue_ctx = nullptr;
   mac_ue_create_response_message mac_resp{};
-  f1ap_ue_creation_response      f1_resp{};
+  f1ap_ue_creation_response      f1ap_resp{};
 };
 
 } // namespace srs_du

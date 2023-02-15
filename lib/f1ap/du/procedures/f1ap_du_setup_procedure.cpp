@@ -17,7 +17,7 @@ using namespace srsgnb::srs_du;
 using namespace asn1::f1ap;
 
 f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message& request_,
-                                                 f1c_message_notifier&           cu_notif_,
+                                                 f1ap_message_notifier&          cu_notif_,
                                                  f1ap_event_manager&             ev_mng_,
                                                  timer_manager&                  timers,
                                                  f1ap_du_context&                du_ctxt_) :
@@ -62,7 +62,7 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_respon
 
 void f1ap_du_setup_procedure::send_f1_setup_request()
 {
-  f1c_message msg = {};
+  f1ap_message msg = {};
   // set F1AP PDU contents
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
