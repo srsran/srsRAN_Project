@@ -296,8 +296,7 @@ bool srsgnb::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t ar
 {
   for (const nr_band_raster& raster_band : nr_band_table_fr1) {
     if (raster_band.band == band) {
-      return arfcn >= raster_band.dl_nref_first and arfcn <= raster_band.dl_nref_last and
-             (arfcn % raster_band.dl_nref_step == 0);
+      return arfcn >= raster_band.dl_nref_first and arfcn <= raster_band.dl_nref_last;
     }
   }
   return false;
