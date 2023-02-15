@@ -191,7 +191,7 @@ static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_par
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
 {
   app.add_option("--fixed_ue_mcs", pusch_params.fixed_ue_mcs, "Fixed UE MCS")
-      ->capture_default_str()
+      ->default_str("dynamic")
       ->check(CLI::Range(0, 28));
 }
 
@@ -211,7 +211,8 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
       ->check(CLI::Range(0, 31));
   app.add_option(
          "--max_msg3_harq_retx", prach_params.max_msg3_harq_retx, "Maximum number of message 3 HARQ retransmissions")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(0, 4));
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
