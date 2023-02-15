@@ -15,7 +15,7 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/ue_manager.h"
-#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/pcap/pcap.h"

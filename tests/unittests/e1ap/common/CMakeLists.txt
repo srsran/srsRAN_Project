@@ -13,7 +13,7 @@ target_link_libraries(e1ap_test_helpers srsgnb_support e1ap_asn1 srslog)
 add_executable(e1ap_asn1_packer_test e1ap_asn1_packer_test.cpp)
 target_link_libraries(e1ap_asn1_packer_test
                       e1ap_test_helpers
-                      srsgnb_e1
+                      srsgnb_e1ap
                       srsgnb_support
                       srslog
                       e1ap_asn1

@@ -9,7 +9,7 @@
  */
 
 #include "cu_up_test_helpers.h"
-#include "lib/e1/cu_up/e1ap_cu_up_asn1_helpers.h"
+#include "lib/e1ap/cu_up/e1ap_cu_up_asn1_helpers.h"
 #include "srsgnb/cu_up/cu_up_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"

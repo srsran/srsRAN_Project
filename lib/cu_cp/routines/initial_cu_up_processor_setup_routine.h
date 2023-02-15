@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/cu_cp/cu_up_processor.h"
-#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {

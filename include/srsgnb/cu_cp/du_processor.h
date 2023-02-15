@@ -13,7 +13,7 @@
 #include "cu_cp_types.h"
 #include "du_processor_context.h"
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/e1/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
 #include "srsgnb/ran/nr_cgi.h"

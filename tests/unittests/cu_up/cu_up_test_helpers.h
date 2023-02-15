@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/e1/common/e1_common.h"
+#include "srsgnb/e1ap/common/e1ap_common.h"
 #include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 #include "srsgnb/gtpu/gtpu_tunnel_tx.h"

@@ -14,7 +14,7 @@
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/ran/bcd_helpers.h"
 #include "srsgnb/rrc/rrc_ue.h"

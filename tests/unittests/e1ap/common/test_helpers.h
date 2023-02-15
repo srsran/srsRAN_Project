@@ -14,10 +14,10 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_up/cu_up.h"
 #include "srsgnb/cu_up/cu_up_types.h"
-#include "srsgnb/e1/common/e1_common.h"
-#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
-#include "srsgnb/e1/cu_up/e1ap_cu_up.h"
-#include "srsgnb/e1/cu_up/e1ap_cu_up_bearer_context_update.h"
+#include "srsgnb/e1ap/common/e1ap_common.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsgnb/e1ap/cu_up/e1ap_cu_up.h"
+#include "srsgnb/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsgnb/gateways/network_gateway.h"
 
 namespace srsgnb {

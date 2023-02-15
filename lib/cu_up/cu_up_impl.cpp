@@ -9,8 +9,8 @@
  */
 
 #include "cu_up_impl.h"
-#include "srsgnb/e1/cu_up/e1ap_config_converters.h"
-#include "srsgnb/e1/cu_up/e1ap_cu_up_factory.h"
+#include "srsgnb/e1ap/cu_up/e1ap_config_converters.h"
+#include "srsgnb/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "srsgnb/gateways/udp_network_gateway_factory.h"
 #include "srsgnb/gtpu/gtpu_demux_factory.h"
 #include "srsgnb/ran/bcd_helpers.h"

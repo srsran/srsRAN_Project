@@ -8,7 +8,7 @@
 
 add_library(cu_cp_ue_manager_test_helpers ue_manager_test_helpers.cpp)
 target_include_directories(cu_cp_ue_manager_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(cu_cp_ue_manager_test_helpers cu_cp_test_helpers srsgnb_cu_cp srsgnb_e1 rrc_ue_test_helpers ngap_test_helpers srsgnb_support srslog)
+target_link_libraries(cu_cp_ue_manager_test_helpers cu_cp_test_helpers srsgnb_cu_cp srsgnb_e1ap rrc_ue_test_helpers ngap_test_helpers srsgnb_support srslog)
 
 set(SOURCES
         ue_manager_test.cpp)

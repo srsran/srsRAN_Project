@@ -13,7 +13,7 @@
 #include "cu_cp_types.h"
 #include "cu_up_processor_context.h"
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/support/timers.h"
 #include <string>
 

@@ -9,7 +9,7 @@
  */
 
 #include "du_processor_test_messages.h"
-#include "lib/e1/cu_cp/e1ap_cu_cp_asn1_helpers.h"
+#include "lib/e1ap/cu_cp/e1ap_cu_cp_asn1_helpers.h"
 #include "lib/f1ap/common/asn1_helpers.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"

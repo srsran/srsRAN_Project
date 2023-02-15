@@ -9,10 +9,10 @@
  */
 
 #include "cu_up_processor_impl.h"
-#include "adapters/e1_adapters.h"
+#include "adapters/e1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "routines/initial_cu_up_processor_setup_routine.h"
-#include "srsgnb/e1/cu_cp/e1_cu_cp_factory.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_factory.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

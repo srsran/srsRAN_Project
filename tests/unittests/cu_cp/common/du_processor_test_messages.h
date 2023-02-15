@@ -12,7 +12,7 @@
 
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/e1/common/e1_types.h"
+#include "srsgnb/e1ap/common/e1ap_types.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {

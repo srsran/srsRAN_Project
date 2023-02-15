@@ -20,9 +20,9 @@ set(SOURCES
 
 add_executable(rrc_ue_test ${SOURCES})
 target_include_directories(rrc_ue_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(rrc_ue_test rrc_ue_test_helpers srsgnb_e1 srsgnb_rrc srsgnb_support srslog gtest gtest_main)
+target_link_libraries(rrc_ue_test rrc_ue_test_helpers srsgnb_e1ap srsgnb_rrc srsgnb_support srslog gtest gtest_main)
 gtest_discover_tests(rrc_ue_test PROPERTIES "LABELS;rrc_ue")
 
 add_executable(drb_manager_test drb_manager_test.cpp)
-target_link_libraries(drb_manager_test rrc_ue_test_helpers du_processor_test_helpers srsgnb_rrc srsgnb_e1 srsgnb_support srslog gtest gtest_main)
+target_link_libraries(drb_manager_test rrc_ue_test_helpers du_processor_test_helpers srsgnb_rrc srsgnb_e1ap srsgnb_support srslog gtest gtest_main)
 gtest_discover_tests(drb_manager_test)

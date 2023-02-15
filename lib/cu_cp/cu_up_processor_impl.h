@@ -11,13 +11,13 @@
 #pragma once
 
 #include "adapters/cu_up_processor_adapters.h"
-#include "adapters/e1_adapters.h"
+#include "adapters/e1ap_adapters.h"
 #include "adapters/ngap_adapters.h"
 #include "routine_managers/cu_up_processor_routine_manager.h"
 #include "srsgnb/adt/slotted_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/cu_up_processor_config.h"
-#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include <string>

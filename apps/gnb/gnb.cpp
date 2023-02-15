@@ -23,7 +23,7 @@
 #include "adapters/ngap_adapter.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"
 
-#include "adapters/e1_adapter.h"
+#include "adapters/e1ap_adapter.h"
 #include "adapters/f1ap_adapter.h"
 #include "srsgnb/support/backtrace.h"
 #include "srsgnb/support/config_parsers.h"

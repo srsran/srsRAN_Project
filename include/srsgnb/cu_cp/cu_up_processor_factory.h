@@ -12,7 +12,7 @@
 
 #include "cu_up_processor.h"
 #include "cu_up_processor_config.h"
-#include "srsgnb/e1/common/e1_common.h"
+#include "srsgnb/e1ap/common/e1ap_common.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 

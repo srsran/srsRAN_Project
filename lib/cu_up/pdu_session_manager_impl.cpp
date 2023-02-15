@@ -10,8 +10,8 @@
 
 #include "pdu_session_manager_impl.h"
 #include "ue_context.h"
-#include "srsgnb/e1/common/e1_types.h"
-#include "srsgnb/e1/cu_up/e1ap_config_converters.h"
+#include "srsgnb/e1ap/common/e1ap_types.h"
+#include "srsgnb/e1ap/cu_up/e1ap_config_converters.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/sdap/sdap_factory.h"
 

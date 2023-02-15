@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/e1/common/e1_types.h"
+#include "srsgnb/e1ap/common/e1ap_types.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/ran/cu_types.h"

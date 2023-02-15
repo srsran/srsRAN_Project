@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/e1/cu_up/e1ap_cu_up.h"
+#include "srsgnb/e1ap/cu_up/e1ap_cu_up.h"
 
 namespace srsgnb {
 namespace srs_cu_up {

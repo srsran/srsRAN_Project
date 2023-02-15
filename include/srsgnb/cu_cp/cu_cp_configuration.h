@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/e1/cu_cp/e1_cu_cp.h"
+#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/ngap/ngap_configuration.h"

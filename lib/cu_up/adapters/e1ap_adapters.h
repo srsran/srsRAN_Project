@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/cu_up/cu_up.h"
-#include "srsgnb/e1/cu_up/e1ap_cu_up.h"
+#include "srsgnb/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {

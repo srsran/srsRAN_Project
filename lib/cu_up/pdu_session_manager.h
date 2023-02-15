@@ -12,7 +12,7 @@
 
 #include "pdu_session.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/e1/common/e1_types.h"
+#include "srsgnb/e1ap/common/e1ap_types.h"
 #include "srsgnb/ran/cause.h"
 #include "srsgnb/ran/cu_types.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
