@@ -427,11 +427,14 @@ int main(int argc, char** argv)
       std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
 
   // Create SCTP network adapter.
+  gnb_logger.info("Connecting to AMF ({})..", ngap_nw_config.connect_address, ngap_nw_config.connect_port);
   std::unique_ptr<sctp_network_gateway> sctp_gateway =
       create_sctp_network_gateway({ngap_nw_config, *ngap_adapter, *ngap_adapter});
 
   // Connect NGAP adapter to SCTP network gateway.
   ngap_adapter->connect_gateway(sctp_gateway.get(), sctp_gateway.get());
+
+  gnb_logger.info("AMF connection established");
 
   // Create CU-UP config.
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
