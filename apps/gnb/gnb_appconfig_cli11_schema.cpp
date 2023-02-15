@@ -227,7 +227,7 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
   app.add_option("--dl_arfcn", cell_params.dl_arfcn, "Donwlink ARFCN")->capture_default_str();
-  app.add_option("--band", cell_params.band, "NR band")->capture_default_str();
+  add_auto_enum_option(app, "--band", cell_params.band, "NR band");
   app.add_option("--common_scs", cell_params.common_scs, "Cell common subcarrier spacing")
       ->transform([](const std::string& value) {
         subcarrier_spacing scs = to_subcarrier_spacing(value);

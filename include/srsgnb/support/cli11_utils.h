@@ -29,4 +29,34 @@ bool lexical_cast(const std::string& in, srsgnb::optional<T>& output)
   return true;
 }
 
+/// \brief Parsing an integer with additional option "auto" into an optional of an enum type.
+template <typename Param>
+void add_auto_enum_option(CLI::App&          app,
+                          const std::string& option_name,
+                          optional<Param>&   param,
+                          const std::string& desc)
+{
+  app.add_option_function<std::string>(
+         option_name,
+         [&param](const std::string& in) -> void {
+           if (in.empty() or in == "auto") {
+             return;
+           }
+           std::stringstream             ss(in);
+           std::underlying_type_t<Param> val;
+           ss >> val;
+           param = (Param)val;
+         },
+         desc)
+      ->check([](const std::string& in_str) -> std::string {
+        if (in_str == "auto" or in_str.empty()) {
+          return "";
+        }
+        // Check for a valid integer number;
+        CLI::TypeValidator<int> IntegerValidator("INTEGER");
+        return IntegerValidator(in_str);
+      })
+      ->default_str("auto");
+}
+
 } // namespace srsgnb
