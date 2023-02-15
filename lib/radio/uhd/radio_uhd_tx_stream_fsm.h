@@ -28,7 +28,7 @@ class radio_uhd_tx_stream_fsm
 {
 private:
   /// Wait for end-of-burst acknowledgement timeout in seconds.
-  static constexpr double WAIT_EOB_ACK_TIMEOUT_S = 0.1;
+  static constexpr double WAIT_EOB_ACK_TIMEOUT_S = 0.01;
 
   /// Defines the Tx stream internal states.
   enum class states {
@@ -62,10 +62,10 @@ public:
     state = states::START_BURST;
   }
 
-  /// \brief Notifies an underflow event.
+  /// \brief Notifies a late or an underflow event.
   /// \remark Transitions state end of burst if it is in a burst.
   /// \param[in] time_spec Indicates the time the underflow event occurred.
-  void async_event_underflow(const uhd::time_spec_t& time_spec)
+  void async_event_late_underflow(const uhd::time_spec_t& time_spec)
   {
     std::unique_lock<std::mutex> lock(mutex);
     if (state == states::IN_BURST) {

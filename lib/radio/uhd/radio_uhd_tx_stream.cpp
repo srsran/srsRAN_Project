@@ -46,11 +46,12 @@ void radio_uhd_tx_stream::recv_async_msg()
       break;
     case uhd::async_metadata_t::EVENT_CODE_TIME_ERROR:
       event_description.type = radio_notification_handler::event_type::LATE;
+      state_fsm.async_event_late_underflow(async_metadata.time_spec);
       break;
     case uhd::async_metadata_t::EVENT_CODE_UNDERFLOW:
     case uhd::async_metadata_t::EVENT_CODE_UNDERFLOW_IN_PACKET:
       event_description.type = radio_notification_handler::event_type::UNDERFLOW;
-      state_fsm.async_event_underflow(async_metadata.time_spec);
+      state_fsm.async_event_late_underflow(async_metadata.time_spec);
       break;
     case uhd::async_metadata_t::EVENT_CODE_SEQ_ERROR:
     case uhd::async_metadata_t::EVENT_CODE_SEQ_ERROR_IN_BURST:
