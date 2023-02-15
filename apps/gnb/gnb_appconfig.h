@@ -77,7 +77,7 @@ struct pdcch_appconfig {
 /// PDSCH application configuration.
 struct pdsch_appconfig {
   /// UE modulation and coding scheme index.
-  optional<uint8_t> fixed_ue_mcs{10};
+  optional<uint8_t> fixed_ue_mcs;
   /// RAR modulation and coding scheme index.
   unsigned fixed_rar_mcs = 0;
   /// SI modulation and coding scheme index.
