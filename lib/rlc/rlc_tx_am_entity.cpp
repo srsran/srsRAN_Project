@@ -952,13 +952,13 @@ bool rlc_tx_am_entity::valid_ack_sn(uint32_t sn) const
 bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nack) const
 {
   // NACK_SN >= ACK_SN
-  if (tx_mod_base(nack.nack_sn) > tx_mod_base(ack_sn)) {
+  if (tx_mod_base(nack.nack_sn) >= tx_mod_base(ack_sn)) {
     logger.log_info("Dropping status PDU. NACK_SN={} >= ACK_SN={}, st={}", ack_sn, nack.nack_sn, st);
     return false;
   }
   // NACK_SN + range >= ACK_SN
   if (nack.has_nack_range) {
-    if (tx_mod_base(nack.nack_sn + nack.nack_range) > tx_mod_base(ack_sn)) {
+    if (tx_mod_base(nack.nack_sn + nack.nack_range) >= tx_mod_base(ack_sn)) {
       logger.log_info(
           "Dropping status PDU. NACK_SN={} + range={} >= ACK_SN={}, st={}", ack_sn, nack.nack_sn, nack.nack_range, st);
       return false;

@@ -904,12 +904,11 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
-TEST_P(rlc_tx_am_test, out_of_order_status_report_same_ack_sn)
+TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_inside_rx_window)
 {
   init(GetParam());
-  const uint32_t sdu_size = 3;
-  // const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
-  const uint32_t          n_pdus = 12;
+  const uint32_t          sdu_size = 3;
+  const uint32_t          n_pdus   = 12;
   byte_buffer_slice_chain pdus[n_pdus];
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
@@ -947,19 +946,18 @@ TEST_P(rlc_tx_am_test, out_of_order_status_report_same_ack_sn)
   rlc_tx_am_state st0 = rlc->get_state();
   ASSERT_EQ(st0.tx_next_ack, 7); // TX_NEXT_ACK should be the same as NACK_SN now
 
-  // Receive 2 now
-  rlc->on_status_pdu(status_pdu1);
+  // Receive 1 now
+  rlc->on_status_pdu(status_pdu1);       // NACK SN=6 is now outside TX window
   ASSERT_EQ(rlc->get_buffer_state(), 0); // should have ignored status report
   rlc_tx_am_state st1 = rlc->get_state();
   ASSERT_EQ(st1.tx_next_ack, 7); // TX_NEXT_ACK should have not changed
 }
 
-TEST_P(rlc_tx_am_test, invalid_nack_sn)
+TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
 {
   init(GetParam());
-  const uint32_t sdu_size = 3;
-  // const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
-  const uint32_t          n_pdus = 12;
+  const uint32_t          sdu_size = 3;
+  const uint32_t          n_pdus   = 12;
   byte_buffer_slice_chain pdus[n_pdus];
 
   tx_full_pdus(pdus, n_pdus, sdu_size);
@@ -974,13 +972,61 @@ TEST_P(rlc_tx_am_test, invalid_nack_sn)
   status_pdu1.ack_sn = 8;
   {
     rlc_am_status_nack nack = {};
-    nack.nack_sn            = 11;
+    nack.nack_sn            = 8;
     nack.has_nack_range     = false;
+    status_pdu1.push_nack(nack);
+  }
+
+  // Receive Status 1
+  rlc->on_status_pdu(status_pdu1);
+  ASSERT_EQ(rlc->get_buffer_state(), 0); // should have ignored status report
+  rlc_tx_am_state st1 = rlc->get_state();
+  ASSERT_EQ(st1.tx_next_ack, 5); // TX_NEXT_ACK should have not changed
+
+  // Status PDU 2
+  rlc_am_status_pdu status_pdu2(sn_size);
+  status_pdu2.ack_sn = 8;
+  {
+    rlc_am_status_nack nack = {};
+    nack.nack_sn            = 6;
+    nack.has_nack_range     = true;
+    nack.nack_range         = 2;
+    status_pdu2.push_nack(nack);
+  }
+
+  // Receive Status 2
+  rlc->on_status_pdu(status_pdu2);
+  ASSERT_EQ(rlc->get_buffer_state(), 0); // should have ignored status report
+  rlc_tx_am_state st2 = rlc->get_state();
+  ASSERT_EQ(st2.tx_next_ack, 5); // TX_NEXT_ACK should have not changed
+}
+
+TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_tx_next)
+{
+  init(GetParam());
+  const uint32_t          sdu_size = 3;
+  const uint32_t          n_pdus   = 12;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+
+  // ACK up until 5
+  rlc_am_status_pdu status_pdu0(sn_size);
+  status_pdu0.ack_sn = 5;
+  rlc->on_status_pdu(status_pdu0);
+
+  // Status PDU 1
+  rlc_am_status_pdu status_pdu1(sn_size);
+  status_pdu1.ack_sn = 12;
+  {
+    rlc_am_status_nack nack = {};
+    nack.nack_sn            = 11;
+    nack.has_nack_range     = true;
     nack.nack_range         = 2;
     status_pdu1.push_nack(nack);
   }
 
-  // Receive 2 now
+  // Receive Status 1
   rlc->on_status_pdu(status_pdu1);
   ASSERT_EQ(rlc->get_buffer_state(), 0); // should have ignored status report
   rlc_tx_am_state st1 = rlc->get_state();
@@ -1076,70 +1122,6 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
     EXPECT_TRUE(std::equal(retx_pdu.begin() + 1, retx_pdu.end(), pdus[i - sn_start].begin() + 1)); // skip header P bit
     EXPECT_EQ(rlc->get_buffer_state(), (nack_sn + range - 1 - i) * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
-    EXPECT_EQ(tester->bsr_count, n_bsr);
-  }
-
-  // Verify transmit notification for queued SDUs
-  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
-  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
-    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
-    tester->highest_transmitted_pdcp_sn_list.pop_front();
-  }
-
-  // Verify delivery notification for fully ACK'ed SDUs
-  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
-  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 0);
-}
-
-TEST_P(rlc_tx_am_test, retx_pdu_range_invalid_range)
-{
-  init(GetParam());
-
-  const uint32_t          sdu_size        = 3;
-  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
-  const uint32_t          n_pdus          = 5;
-  byte_buffer_slice_chain pdus[n_pdus];
-
-  uint32_t sn_start = cardinality(to_number(sn_size)) - 2;
-  uint32_t nack_sn  = sn_start + 1;
-  uint32_t overstep = 1;
-  uint32_t range    = 4 + overstep; // maximum valid range is 4
-
-  // Configure state to upper edge
-  rlc_tx_am_state st = {};
-  st.tx_next         = sn_start;
-  st.tx_next_ack     = sn_start;
-  st.poll_sn         = sn_start;
-  rlc->set_state(st);
-
-  tx_full_pdus(pdus, n_pdus, sdu_size);
-  uint32_t n_bsr = tester->bsr_count;
-
-  // NACK SN=nack_sn..nack_sn+range-1
-  rlc_am_status_nack nack = {};
-  nack.nack_sn            = nack_sn;
-  nack.has_nack_range     = true;
-  nack.nack_range         = range;
-  rlc_am_status_pdu status_pdu(sn_size);
-  status_pdu.ack_sn = (sn_start + n_pdus) % cardinality(to_number(sn_size));
-  status_pdu.push_nack(nack);
-  rlc->on_status_pdu(status_pdu);
-  EXPECT_EQ(rlc->get_buffer_state(), (range - overstep) * (sdu_size + header_min_size));
-  EXPECT_EQ(tester->bsr, (range - overstep) * (sdu_size + header_min_size));
-  EXPECT_EQ(tester->bsr_count, ++n_bsr);
-
-  // Read ReTx as full PDU
-  for (uint32_t i = nack_sn; i < nack_sn + range - overstep; i++) {
-    byte_buffer_slice_chain retx_pdu;
-    retx_pdu = rlc->pull_pdu(sdu_size + header_min_size);
-    logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
-    logger.debug(pdus[i - sn_start].begin(), pdus[i - sn_start].end(), "pdus[{}]:", i - sn_start);
-    ASSERT_EQ(retx_pdu.length(), pdus[i - sn_start].length());
-    // compare PDUs, ignore P bit in first header byte
-    EXPECT_EQ(*retx_pdu.begin() & 0x4, *pdus[i - sn_start].begin() & 0x4);                         // mask P bit
-    EXPECT_TRUE(std::equal(retx_pdu.begin() + 1, retx_pdu.end(), pdus[i - sn_start].begin() + 1)); // check rest
-    EXPECT_EQ(rlc->get_buffer_state(), (nack_sn + range - overstep - 1 - i) * (sdu_size + header_min_size));
-    EXPECT_EQ(tester->bsr, (range - overstep) * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr_count, n_bsr);
   }
 
