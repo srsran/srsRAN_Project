@@ -513,10 +513,15 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
   /*
    * Sanity check the received status report.
-   * Checking if the ACK_SN is inside the valid ACK_SN window (the TX window "off-by-one")
-   * makes sure we discard out of order status reports.
-   * Checking if ACK_SN > Tx_Next + 1 makes sure we do not receive a ACK/NACK for something we did not TX
+   * 1. Checking if the ACK_SN is inside the valid ACK_SN window (the TX window "off-by-one")
+   * makes sure we discard out of order status reports (with different ACN_SNs).
+   * 2. Checking if ACK_SN > Tx_Next + 1 makes sure we do not receive a ACK/NACK for something we did not TX
    * ACK_SN may be equal to TX_NEXT + 1, if not all SDU segments with SN=TX_NEXT have been transmitted.
+   * 3. Checking for the first NACK_SN to be inside the TX_WINDOW makes sure that even out-of-order status
+   * report with the same ACK_SN arrive, we do not set the stop_sn to be larger than tx_next_ack.
+   *
+   * Note: dropping out-of-order status report may lose information as the more recent status report could
+   * be trimmed. But if that is the case, the peer can always request another status report later on.
    */
   if (not valid_ack_sn(status.ack_sn)) {
     logger.log_info(
@@ -527,6 +532,13 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
   if (tx_mod_base(status.ack_sn) > tx_mod_base(st.tx_next + 1)) {
     logger.log_warning(
         "Received ACK with SN larger than TX_NEXT, ignoring status report. ACK_SN={}, st=[{}]", status.ack_sn, st);
+    return;
+  }
+
+  if (!status.get_nacks().empty() && !inside_tx_window(status.get_nacks()[0].nack_sn)) {
+    logger.log_info("Received NACK with SN outside of TX_WINDOW, ignoring status report. NACK_SN={}, st=[{}]",
+                    status.get_nacks()[0].nack_sn,
+                    st);
     return;
   }
 

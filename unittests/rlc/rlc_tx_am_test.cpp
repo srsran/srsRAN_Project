@@ -904,6 +904,56 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
+TEST_P(rlc_tx_am_test, out_of_order_status_report_same_ack_sn)
+{
+  init(GetParam());
+  const uint32_t sdu_size = 3;
+  // const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          n_pdus = 12;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+
+  // ACK up until 5
+  rlc_am_status_pdu status_pdu0(sn_size);
+  status_pdu0.ack_sn = 5;
+  rlc->on_status_pdu(status_pdu0);
+
+  // Status PDU 1
+  rlc_am_status_pdu status_pdu1(sn_size);
+  status_pdu1.ack_sn = 8;
+  {
+    rlc_am_status_nack nack = {};
+    nack.nack_sn            = 6;
+    nack.has_nack_range     = true;
+    nack.nack_range         = 2;
+    status_pdu1.push_nack(nack);
+  }
+
+  // Status PDU 2
+  rlc_am_status_pdu status_pdu2(sn_size);
+  {
+    status_pdu2.ack_sn      = 8;
+    rlc_am_status_nack nack = {};
+    nack.nack_sn            = 7;
+    status_pdu2.push_nack(nack);
+  }
+
+  // Receive 2 before 1
+  rlc->on_status_pdu(status_pdu2);
+  ASSERT_NE(rlc->get_buffer_state(), 0); // should have one PDU to RETX
+  byte_buffer_slice_chain retx_pdu;
+  rlc->pull_pdu(rlc->get_buffer_state());
+  rlc_tx_am_state st0 = rlc->get_state();
+  ASSERT_EQ(st0.tx_next_ack, 7); // TX_NEXT_ACK should be the same as NACK_SN now
+
+  // Receive 2 now
+  rlc->on_status_pdu(status_pdu1);
+  ASSERT_EQ(rlc->get_buffer_state(), 0); // should have ignored status report
+  rlc_tx_am_state st1 = rlc->get_state();
+  ASSERT_EQ(st1.tx_next_ack, 7); // TX_NEXT_ACK should have not changed
+}
+
 TEST_P(rlc_tx_am_test, retx_insufficient_space)
 {
   init(GetParam());
