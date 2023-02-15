@@ -43,16 +43,9 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
       continue;
     }
     // NOTE:
-    // - [Implementation defined]
-    //   Precompute n0 PDCCH/DCI_1_0 for SIB1 if channel BW > 10 Mhz. Otherwise, (n0 + 1) slot to make space for SSB.
-    // Channel BW = 5 Mhz.
-    if (cell_cfg.dl_carrier.carrier_bw_mhz == 5) {
-      sib1_type0_pdcch_css_slots[i_ssb] =
-          precompute_type0_pdcch_css_n0_plus_1(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb);
-    } else {
-      sib1_type0_pdcch_css_slots[i_ssb] =
-          precompute_type0_pdcch_css_n0(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb);
-    }
+    // - [Implementation defined] Use (n0 + 1) slot to avoid collisions between SSB and SIB1.
+    sib1_type0_pdcch_css_slots[i_ssb] =
+        precompute_type0_pdcch_css_n0_plus_1(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb);
   }
 
   // Define a BWP configuration limited by CORESET#0 RBs.
