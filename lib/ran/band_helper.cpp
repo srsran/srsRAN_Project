@@ -292,6 +292,17 @@ nr_band srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
   return nr_band::invalid;
 }
 
+bool srsgnb::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn)
+{
+  for (const nr_band_raster& raster_band : nr_band_table_fr1) {
+    if (raster_band.band == band) {
+      return arfcn >= raster_band.dl_nref_first and arfcn <= raster_band.dl_nref_last and
+             (arfcn % raster_band.dl_nref_step == 0);
+    }
+  }
+  return false;
+}
+
 uint32_t srsgnb::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
 {
   // NOTE: The procedure implemented in this function is implementation-defined.

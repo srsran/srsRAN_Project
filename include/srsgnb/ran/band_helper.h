@@ -95,6 +95,12 @@ duplex_mode get_duplex_mode(nr_band band);
 /// \return    The band number if the ARFCN is bounded in a band, UINT16_MAX otherwise.
 nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 
+/// \brief     Checks whether a Downlink ARFCN is valid for a given band.
+/// \param[in] band Given NR band.
+/// \param[in] arfcn Given Downlink ARFCN.
+/// \return    True if band includes Downlink ARFCN. False, otherwise.
+bool is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn);
+
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
 /// For paired spectrum (FDD) the function returns the respective ARFCN in the same band.

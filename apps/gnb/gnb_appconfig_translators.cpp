@@ -37,18 +37,16 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
     param.scs_common                     = base_cell.common_scs;
     param.channel_bw_mhz                 = base_cell.channel_bw_mhz;
     param.dl_arfcn                       = base_cell.dl_arfcn;
-    param.band                           = base_cell.band;
+    param.band = base_cell.band.has_value() ? *base_cell.band : band_helper::get_band_from_dl_arfcn(base_cell.dl_arfcn);
     // Enable CSI-RS if the PDSCH mcs is dynamic (fixed_ue_mcs is empty).
     param.csi_rs_enabled = not cell.cell.pdsch_cfg.fixed_ue_mcs.has_value();
 
     unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-        base_cell.channel_bw_mhz,
-        param.scs_common,
-        param.band.has_value() ? band_helper::get_freq_range(param.band.value()) : frequency_range::FR1);
+        base_cell.channel_bw_mhz, param.scs_common, band_helper::get_freq_range(*param.band));
 
     static const uint8_t                              ss0_idx      = 0;
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
-        base_cell.dl_arfcn, base_cell.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
+        base_cell.dl_arfcn, *param.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
 
     if (!ssb_freq_loc.has_value()) {
       report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", cell.pci);

@@ -87,7 +87,11 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
   if (config.nof_antennas_ul != 1) {
-    fmt::print("Currently, only one UL antenna is supported..\n", config.nof_antennas_ul);
+    fmt::print("Currently, only one UL antenna is supported.\n", config.nof_antennas_ul);
+    return false;
+  }
+  if (config.band.has_value() and not band_helper::is_dl_arfcn_valid_given_band(*config.band, config.dl_arfcn)) {
+    fmt::print("Chosen band={} does not include chosen DL ARFCN={}.\n", *config.band, config.dl_arfcn);
     return false;
   }
 

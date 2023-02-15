@@ -110,7 +110,7 @@ struct base_cell_appconfig {
   /// Downlink arfcn.
   unsigned dl_arfcn = 536020;
   /// NR band.
-  nr_band band = nr_band::n7;
+  optional<nr_band> band;
   /// Channel bandwidth in MHz.
   bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
   /// Number of antennas in downlink.
