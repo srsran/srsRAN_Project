@@ -130,15 +130,15 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     pdcp_msg.rb_id                                = drb_to_setup.drb_id;
     pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg);
     pdcp_msg.tx_lower                             = &new_drb->pdcp_to_f1u_adapter;
-    pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1_adapter;
+    pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
     pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
-    pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1_adapter;
+    pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
     pdcp_msg.timers                               = &timers;
     new_drb->pdcp                                 = srsgnb::create_pdcp_entity(pdcp_msg);
 
-    // Connect "PDCP-E1" adapter to E1
-    new_drb->pdcp_tx_to_e1_adapter.connect_e1(); // TODO: pass actual E1 handler
-    new_drb->pdcp_rx_to_e1_adapter.connect_e1(); // TODO: pass actual E1 handler
+    // Connect "PDCP-E1AP" adapter to E1AP
+    new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
+    new_drb->pdcp_rx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler
 
     // Create  F1-U bearer
     uint32_t f1u_ul_teid = allocate_local_f1u_teid(new_session->pdu_session_id, drb_to_setup.drb_id);

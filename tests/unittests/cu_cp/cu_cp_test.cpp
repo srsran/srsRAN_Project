@@ -37,7 +37,7 @@ protected:
     cu_cp_configuration cfg;
     cfg.cu_cp_executor = &ctrl_worker;
     cfg.f1ap_notifier  = &f1ap_pdu_notifier;
-    cfg.e1_notifier    = &e1_pdu_notifier;
+    cfg.e1ap_notifier  = &e1ap_pdu_notifier;
     cfg.ngap_notifier  = &ngap_amf_notifier;
 
     cfg.ngap_config.ran_node_name = "srsgnb01";
@@ -60,7 +60,7 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
   dummy_f1ap_pdu_notifier f1ap_pdu_notifier;
-  dummy_e1_pdu_notifier   e1_pdu_notifier;
+  dummy_e1ap_pdu_notifier e1ap_pdu_notifier;
   dummy_ngap_amf_notifier ngap_amf_notifier;
 
   manual_task_worker ctrl_worker{128};
@@ -79,7 +79,7 @@ TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
   cu_cp_configuration cfg;
   cfg.cu_cp_executor = &ctrl_worker;
   cfg.f1ap_notifier  = &f1ap_pdu_notifier;
-  cfg.e1_notifier    = &e1_pdu_notifier;
+  cfg.e1ap_notifier  = &e1ap_pdu_notifier;
   cfg.ngap_notifier  = &ngap_amf_notifier;
 
   cfg.ngap_config.ran_node_name = "srsgnb01";
@@ -94,8 +94,8 @@ TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
 
   // check that CU-UP has been added
   ASSERT_EQ(dummy_cu_cp->get_nof_cu_ups(), 1U);
-  ASSERT_EQ(e1_pdu_notifier.last_e1_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(e1_pdu_notifier.last_e1_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 }
 

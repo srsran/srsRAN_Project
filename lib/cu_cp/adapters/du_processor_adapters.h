@@ -75,36 +75,36 @@ private:
 class du_processor_e1ap_adapter : public du_processor_e1ap_control_notifier
 {
 public:
-  void connect_e1ap(e1_bearer_context_manager& e1_bearer_context_mng_)
+  void connect_e1ap(e1ap_bearer_context_manager& e1ap_bearer_context_mng_)
   {
-    e1_bearer_context_mng = &e1_bearer_context_mng_;
+    e1ap_bearer_context_mng = &e1ap_bearer_context_mng_;
   }
 
   async_task<e1ap_bearer_context_setup_response>
   on_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override
   {
-    srsgnb_assert(e1_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
+    srsgnb_assert(e1ap_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
 
-    return e1_bearer_context_mng->handle_bearer_context_setup_request(msg);
+    return e1ap_bearer_context_mng->handle_bearer_context_setup_request(msg);
   }
 
   async_task<e1ap_bearer_context_modification_response>
   on_bearer_context_modification_request(const e1ap_bearer_context_modification_request& msg) override
   {
-    srsgnb_assert(e1_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
+    srsgnb_assert(e1ap_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
 
-    return e1_bearer_context_mng->handle_bearer_context_modification_request(msg);
+    return e1ap_bearer_context_mng->handle_bearer_context_modification_request(msg);
   }
 
   async_task<void> on_bearer_context_release_command(const e1ap_bearer_context_release_command& cmd) override
   {
-    srsgnb_assert(e1_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
+    srsgnb_assert(e1ap_bearer_context_mng != nullptr, "E1AP handler must not be nullptr");
 
-    return e1_bearer_context_mng->handle_bearer_context_release_command(cmd);
+    return e1ap_bearer_context_mng->handle_bearer_context_release_command(cmd);
   }
 
 private:
-  e1_bearer_context_manager* e1_bearer_context_mng = nullptr;
+  e1ap_bearer_context_manager* e1ap_bearer_context_mng = nullptr;
 };
 
 // Adapter between DU processor and F1AP

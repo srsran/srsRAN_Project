@@ -26,13 +26,13 @@ TEST_F(cu_up_processor_test, when_cu_up_processor_is_started_then_e1_setup_reque
   cu_up_processor_obj->start();
 
   // check that CU-CP E1 setup request has been sent
-  ASSERT_EQ(e1_notifier.last_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(e1_notifier.last_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e1ap_notifier.last_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_notifier.last_msg.pdu.init_msg().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 
   // inject CU-CP E1 setup response
-  e1_message e1_msg = generate_cu_cp_e1_setup_respose(0);
-  cu_up_processor_obj->get_e1_message_handler().handle_message(e1_msg);
+  e1ap_message e1ap_msg = generate_cu_cp_e1_setup_respose(0);
+  cu_up_processor_obj->get_e1ap_message_handler().handle_message(e1ap_msg);
 
   // check that CU-UP has been added
   ASSERT_EQ(cu_up_processor_obj->get_context().id, 1);
@@ -46,13 +46,13 @@ TEST_F(cu_up_processor_test, when_cu_cp_e1_setup_response_is_received_then_conte
   cu_up_processor_obj->start();
 
   // check that CU-CP E1 setup request has been sent
-  ASSERT_EQ(e1_notifier.last_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
-  ASSERT_EQ(e1_notifier.last_msg.pdu.init_msg().value.type().value,
+  ASSERT_EQ(e1ap_notifier.last_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  ASSERT_EQ(e1ap_notifier.last_msg.pdu.init_msg().value.type().value,
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cp_e1_setup_request);
 
   // inject CU-CP E1 setup response
-  e1_message e1_msg = generate_cu_cp_e1_setup_respose(0);
-  cu_up_processor_obj->get_e1_message_handler().handle_message(e1_msg);
+  e1ap_message e1ap_msg = generate_cu_cp_e1_setup_respose(0);
+  cu_up_processor_obj->get_e1ap_message_handler().handle_message(e1ap_msg);
 
   // check that CU-UP has been added and context has been updated
   ASSERT_EQ(cu_up_processor_obj->get_context().id, 1);

@@ -43,11 +43,11 @@ protected:
 
   slotted_id_table<ue_index_t, test_ue, MAX_NOF_CU_UES> test_ues;
 
-  timer_manager                     timers;
-  dummy_e1_pdu_notifier             e1_pdu_notifier;
-  dummy_e1_cu_up_processor_notifier cu_up_processor_notifier;
-  manual_task_worker                ctrl_worker{128};
-  std::unique_ptr<e1_interface>     e1ap;
+  timer_manager                       timers;
+  dummy_e1ap_pdu_notifier             e1ap_pdu_notifier;
+  dummy_e1ap_cu_up_processor_notifier cu_up_processor_notifier;
+  manual_task_worker                  ctrl_worker{128};
+  std::unique_ptr<e1ap_interface>     e1ap;
 };
 
 } // namespace srs_cu_cp

@@ -14,9 +14,9 @@ using namespace srsgnb;
 using namespace srs_cu_up;
 using namespace asn1::e1ap;
 
-e1_message srsgnb::srs_cu_up::generate_cu_cp_e1_setup_request()
+e1ap_message srsgnb::srs_cu_up::generate_cu_cp_e1_setup_request()
 {
-  e1_message e1_setup_request = {};
+  e1ap_message e1_setup_request = {};
   e1_setup_request.pdu.set_init_msg();
   e1_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
 
@@ -28,15 +28,15 @@ e1_message srsgnb::srs_cu_up::generate_cu_cp_e1_setup_request()
   return e1_setup_request;
 }
 
-e1_message srsgnb::srs_cu_up::generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1_id)
+e1ap_message srsgnb::srs_cu_up::generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
 {
-  e1_message bearer_context_setup_request = {};
+  e1ap_message bearer_context_setup_request = {};
 
   bearer_context_setup_request.pdu.set_init_msg();
   bearer_context_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
 
   auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
-  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
+  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
   bearer_context_setup_req->security_info.value.security_algorithm.ciphering_algorithm =
       asn1::e1ap::ciphering_algorithm_e::nea0;
   bearer_context_setup_req->security_info.value.up_securitykey.encryption_key.from_string(
@@ -111,15 +111,15 @@ e1_message srsgnb::srs_cu_up::generate_bearer_context_setup_request(unsigned int
   return bearer_context_setup_request;
 }
 
-e1_message srsgnb::srs_cu_up::generate_invalid_bearer_context_setup_request(unsigned int cu_cp_ue_e1_id)
+e1ap_message srsgnb::srs_cu_up::generate_invalid_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
 {
-  e1_message bearer_context_setup_request = {};
+  e1ap_message bearer_context_setup_request = {};
 
   bearer_context_setup_request.pdu.set_init_msg();
   bearer_context_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
 
   auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
-  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
+  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
   bearer_context_setup_req->security_info.value.security_algorithm.ciphering_algorithm =
       asn1::e1ap::ciphering_algorithm_e::nea0;
   bearer_context_setup_req->security_info.value.up_securitykey.encryption_key.from_string(
@@ -135,17 +135,17 @@ e1_message srsgnb::srs_cu_up::generate_invalid_bearer_context_setup_request(unsi
   return bearer_context_setup_request;
 }
 
-e1_message srsgnb::srs_cu_up::generate_bearer_context_modification_request(unsigned int cu_cp_ue_e1_id,
-                                                                           unsigned int cu_up_ue_e1_id)
+e1ap_message srsgnb::srs_cu_up::generate_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
+                                                                             unsigned int cu_up_ue_e1ap_id)
 {
-  e1_message bearer_context_modification_request = {};
+  e1ap_message bearer_context_modification_request = {};
 
   bearer_context_modification_request.pdu.set_init_msg();
   bearer_context_modification_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
 
   auto& bearer_context_mod_req = bearer_context_modification_request.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
-  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1_id;
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
+  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1ap_id;
 
   bearer_context_mod_req->sys_bearer_context_mod_request_present = true;
   bearer_context_mod_req->sys_bearer_context_mod_request.id      = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_MOD_REQUEST;
@@ -179,17 +179,17 @@ e1_message srsgnb::srs_cu_up::generate_bearer_context_modification_request(unsig
   return bearer_context_modification_request;
 }
 
-e1_message srsgnb::srs_cu_up::generate_invalid_bearer_context_modification_request(unsigned int cu_cp_ue_e1_id,
-                                                                                   unsigned int cu_up_ue_e1_id)
+e1ap_message srsgnb::srs_cu_up::generate_invalid_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
+                                                                                     unsigned int cu_up_ue_e1ap_id)
 {
-  e1_message bearer_context_modification_request = {};
+  e1ap_message bearer_context_modification_request = {};
 
   bearer_context_modification_request.pdu.set_init_msg();
   bearer_context_modification_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
 
   auto& bearer_context_mod_req = bearer_context_modification_request.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
-  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1_id;
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
+  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1ap_id;
 
   bearer_context_mod_req->sys_bearer_context_mod_request_present = true;
   bearer_context_mod_req->sys_bearer_context_mod_request.id      = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_MOD_REQUEST;
@@ -199,17 +199,17 @@ e1_message srsgnb::srs_cu_up::generate_invalid_bearer_context_modification_reque
   return bearer_context_modification_request;
 }
 
-e1_message srsgnb::srs_cu_up::generate_bearer_context_release_command(unsigned int cu_cp_ue_e1_id,
-                                                                      unsigned int cu_up_ue_e1_id)
+e1ap_message srsgnb::srs_cu_up::generate_bearer_context_release_command(unsigned int cu_cp_ue_e1ap_id,
+                                                                        unsigned int cu_up_ue_e1ap_id)
 {
-  e1_message bearer_context_release_command = {};
+  e1ap_message bearer_context_release_command = {};
 
   bearer_context_release_command.pdu.set_init_msg();
   bearer_context_release_command.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
 
   auto& bearer_context_release_cmd = bearer_context_release_command.pdu.init_msg().value.bearer_context_release_cmd();
-  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
-  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1_id;
+  bearer_context_release_cmd->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
+  bearer_context_release_cmd->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1ap_id;
   bearer_context_release_cmd->cause.value.set_radio_network();
 
   return bearer_context_release_command;

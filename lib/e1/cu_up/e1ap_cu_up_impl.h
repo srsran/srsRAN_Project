@@ -21,23 +21,23 @@
 namespace srsgnb {
 namespace srs_cu_up {
 
-class e1_event_manager;
+class e1ap_event_manager;
 
-class e1ap_cu_up_impl final : public e1_interface
+class e1ap_cu_up_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_up_impl(e1_message_notifier& e1_pdu_notifier_,
-                  e1ap_cu_cp_notifier& e1_cu_up_notifier_,
-                  task_executor&       cu_up_exec_);
+  e1ap_cu_up_impl(e1ap_message_notifier& e1ap_pdu_notifier_,
+                  e1ap_cu_up_notifier&   cu_up_notifier_,
+                  task_executor&         cu_up_exec_);
   ~e1ap_cu_up_impl();
 
-  // e1 connection manager functions
+  // e1ap connection manager functions
 
   void handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& msg) override;
 
-  // e1 message handler functions
+  // e1ap message handler functions
 
-  void handle_message(const e1_message& msg) override;
+  void handle_message(const e1ap_message& msg) override;
 
   void handle_connection_loss() override {}
 
@@ -52,17 +52,17 @@ private:
 
   /// \brief Notify about the reception of an Bearer Context Setup Request message.
   /// This starts the UE context creation at the UE manager and E1.
-  /// \param[in] msg The E1 Bearer Context Setup message.
+  /// \param[in] msg The Bearer Context Setup message.
   void handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg);
 
   /// \brief Notify about the reception of an Bearer Context Modification Request message.
   /// This starts the UE context creation at the UE manager and E1.
-  /// \param[in] msg The E1 Bearer Context Modification message.
+  /// \param[in] msg The Bearer Context Modification message.
   void handle_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& msg);
 
   /// \brief Notify about the reception of an Bearer Context Release Command message.
   /// This starts the UE context release at the UE manager and E1.
-  /// \param[in] msg The E1 Bearer Context Release Command.
+  /// \param[in] msg The Bearer Context Release Command.
   void handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg);
 
   /// \brief Notify about the reception of an successful outcome.
@@ -81,8 +81,8 @@ private:
   e1ap_ue_context_list ue_ctxt_list;
 
   // nofifiers and handles
-  e1_message_notifier& pdu_notifier;
-  e1ap_cu_cp_notifier& e1_cu_up_notifier;
+  e1ap_message_notifier& pdu_notifier;
+  e1ap_cu_up_notifier&   cu_up_notifier;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id
 };

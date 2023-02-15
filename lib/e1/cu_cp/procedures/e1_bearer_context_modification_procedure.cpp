@@ -15,15 +15,15 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
-e1_bearer_context_modification_procedure::e1_bearer_context_modification_procedure(const e1_message&     request_,
-                                                                                   e1ap_ue_context&      ue_ctxt_,
-                                                                                   e1_message_notifier&  e1_notif_,
-                                                                                   srslog::basic_logger& logger_) :
-  request(request_), ue_ctxt(ue_ctxt_), e1_notifier(e1_notif_), logger(logger_)
+bearer_context_modification_procedure::bearer_context_modification_procedure(const e1ap_message&    request_,
+                                                                             e1ap_ue_context&       ue_ctxt_,
+                                                                             e1ap_message_notifier& e1ap_notif_,
+                                                                             srslog::basic_logger&  logger_) :
+  request(request_), ue_ctxt(ue_ctxt_), e1ap_notifier(e1ap_notif_), logger(logger_)
 {
 }
 
-void e1_bearer_context_modification_procedure::operator()(
+void bearer_context_modification_procedure::operator()(
     coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx)
 {
   CORO_BEGIN(ctx);
@@ -41,7 +41,7 @@ void e1_bearer_context_modification_procedure::operator()(
   CORO_RETURN(create_bearer_context_modification_result());
 }
 
-void e1_bearer_context_modification_procedure::send_bearer_context_modification_request()
+void bearer_context_modification_procedure::send_bearer_context_modification_request()
 {
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -50,11 +50,11 @@ void e1_bearer_context_modification_procedure::send_bearer_context_modification_
   }
 
   // send UE context modification request message
-  e1_notifier.on_new_message(request);
+  e1ap_notifier.on_new_message(request);
 }
 
 e1ap_bearer_context_modification_response
-e1_bearer_context_modification_procedure::create_bearer_context_modification_result()
+bearer_context_modification_procedure::create_bearer_context_modification_result()
 {
   e1ap_bearer_context_modification_response res{};
 

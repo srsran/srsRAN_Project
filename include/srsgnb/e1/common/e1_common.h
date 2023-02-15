@@ -14,36 +14,36 @@
 
 namespace srsgnb {
 
-struct e1_message {
+struct e1ap_message {
   asn1::e1ap::e1ap_pdu_c pdu;
 };
 
-/// This interface is used to push E1 messages to the E1 interface.
-class e1_message_handler
+/// This interface is used to push E1AP messages to the E1AP interface.
+class e1ap_message_handler
 {
 public:
-  virtual ~e1_message_handler() = default;
+  virtual ~e1ap_message_handler() = default;
 
-  /// Handle the incoming E1 message.
-  virtual void handle_message(const e1_message& msg) = 0;
+  /// Handle the incoming E1AP message.
+  virtual void handle_message(const e1ap_message& msg) = 0;
 };
 
-/// Interface used by E1 to inform about events.
-class e1_event_handler
+/// Interface used by E1AP to inform about events.
+class e1ap_event_handler
 {
 public:
-  virtual ~e1_event_handler()           = default;
+  virtual ~e1ap_event_handler()         = default;
   virtual void handle_connection_loss() = 0;
 };
 
-/// This interface notifies the reception of new E1 messages over the E1 interface.
-class e1_message_notifier
+/// This interface notifies the reception of new E1AP messages over the E1AP interface.
+class e1ap_message_notifier
 {
 public:
-  virtual ~e1_message_notifier() = default;
+  virtual ~e1ap_message_notifier() = default;
 
-  /// This callback is invoked on each received E1 message.
-  virtual void on_new_message(const e1_message& msg) = 0;
+  /// This callback is invoked on each received E1AP message.
+  virtual void on_new_message(const e1ap_message& msg) = 0;
 };
 
 } // namespace srsgnb

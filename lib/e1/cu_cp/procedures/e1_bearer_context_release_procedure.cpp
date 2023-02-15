@@ -14,16 +14,16 @@ using namespace srsgnb;
 using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
-e1_bearer_context_release_procedure::e1_bearer_context_release_procedure(const ue_index_t      ue_index_,
-                                                                         const e1_message&     command_,
-                                                                         e1ap_ue_context_list& ue_ctxt_list_,
-                                                                         e1_message_notifier&  e1_notif_,
-                                                                         srslog::basic_logger& logger_) :
-  ue_index(ue_index_), command(command_), ue_ctxt_list(ue_ctxt_list_), e1_notifier(e1_notif_), logger(logger_)
+bearer_context_release_procedure::bearer_context_release_procedure(const ue_index_t       ue_index_,
+                                                                   const e1ap_message&    command_,
+                                                                   e1ap_ue_context_list&  ue_ctxt_list_,
+                                                                   e1ap_message_notifier& e1ap_notif_,
+                                                                   srslog::basic_logger&  logger_) :
+  ue_index(ue_index_), command(command_), ue_ctxt_list(ue_ctxt_list_), e1ap_notifier(e1ap_notif_), logger(logger_)
 {
 }
 
-void e1_bearer_context_release_procedure::operator()(coro_context<async_task<void>>& ctx)
+void bearer_context_release_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -42,7 +42,7 @@ void e1_bearer_context_release_procedure::operator()(coro_context<async_task<voi
   CORO_RETURN();
 }
 
-void e1_bearer_context_release_procedure::send_bearer_context_release_command()
+void bearer_context_release_procedure::send_bearer_context_release_command()
 {
   if (logger.debug.enabled()) {
     asn1::json_writer js;
@@ -51,10 +51,10 @@ void e1_bearer_context_release_procedure::send_bearer_context_release_command()
   }
 
   // send DL RRC message
-  e1_notifier.on_new_message(command);
+  e1ap_notifier.on_new_message(command);
 }
 
-void e1_bearer_context_release_procedure::handle_bearer_context_release_complete()
+void bearer_context_release_procedure::handle_bearer_context_release_complete()
 {
   if (transaction_sink.successful()) {
     const asn1::e1ap::bearer_context_release_complete_s& resp = transaction_sink.response();

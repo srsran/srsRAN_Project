@@ -31,25 +31,25 @@ protected:
     t_launcher.emplace(t);
 
     ASSERT_FALSE(t.ready());
-    ASSERT_EQ(this->e1_pdu_notifier.last_e1_msg.pdu.init_msg().value.type().value,
+    ASSERT_EQ(this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
               e1ap_elem_procs_o::init_msg_c::types::bearer_context_release_cmd);
 
     test_ues[req.ue_index].cu_cp_ue_e1ap_id =
-        int_to_gnb_cu_cp_ue_e1ap_id(this->e1_pdu_notifier.last_e1_msg.pdu.init_msg()
+        int_to_gnb_cu_cp_ue_e1ap_id(this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg()
                                         .value.bearer_context_release_cmd()
                                         ->gnb_cu_cp_ue_e1ap_id.value);
   }
 
   bool was_bearer_context_release_command_sent(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const
   {
-    if (this->e1_pdu_notifier.last_e1_msg.pdu.type().value != e1ap_pdu_c::types::init_msg) {
+    if (this->e1ap_pdu_notifier.last_e1ap_msg.pdu.type().value != e1ap_pdu_c::types::init_msg) {
       return false;
     }
-    if (this->e1_pdu_notifier.last_e1_msg.pdu.init_msg().value.type().value !=
+    if (this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value !=
         e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_release_cmd) {
       return false;
     }
-    auto& req = this->e1_pdu_notifier.last_e1_msg.pdu.init_msg().value.bearer_context_release_cmd();
+    auto& req = this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_release_cmd();
 
     return req->gnb_cu_cp_ue_e1ap_id.value == gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
   }
@@ -89,8 +89,8 @@ TEST_F(e1ap_cu_cp_bearer_context_release_test, when_bearer_release_complete_rece
   // Start BEARER CONTEXT RELEASE procedure and return back the response from the CU-UP.
   this->start_procedure(command);
 
-  auto&      ue = test_ues[command.ue_index];
-  e1_message response =
+  auto&        ue = test_ues[command.ue_index];
+  e1ap_message response =
       generate_bearer_context_release_complete(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
   e1ap->handle_message(response);
 

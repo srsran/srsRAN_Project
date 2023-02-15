@@ -36,9 +36,9 @@ struct drb_context {
   pdcp_f1u_adapter  pdcp_to_f1u_adapter;
   f1u_pdcp_adapter  f1u_to_pdcp_adapter;
 
-  // Adapter PDCP->E1
-  pdcp_rx_e1_adapter pdcp_rx_to_e1_adapter;
-  pdcp_tx_e1_adapter pdcp_tx_to_e1_adapter;
+  // Adapter PDCP->E1AP
+  pdcp_rx_e1ap_adapter pdcp_rx_to_e1ap_adapter;
+  pdcp_tx_e1ap_adapter pdcp_tx_to_e1ap_adapter;
 
   uint8_t cell_group_id; /// This can/should be a list of cell groups.
 

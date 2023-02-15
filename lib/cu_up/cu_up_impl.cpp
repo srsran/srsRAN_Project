@@ -22,7 +22,7 @@ using namespace srs_cu_up;
 void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 {
   srsgnb_assert(cfg.cu_up_executor != nullptr, "Invalid CU-UP executor");
-  srsgnb_assert(cfg.e1_notifier != nullptr, "Invalid E1 notifier");
+  srsgnb_assert(cfg.e1ap_notifier != nullptr, "Invalid E1AP notifier");
   srsgnb_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
   srsgnb_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
 }
@@ -60,8 +60,8 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   ue_mng = std::make_unique<ue_manager>(cfg.net_cfg, logger, timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux);
 
   // create e1ap
-  e1 = create_e1(*cfg.e1_notifier, e1_cu_up_ev_notifier, *cfg.cu_up_executor);
-  e1_cu_up_ev_notifier.connect_cu_up(*this);
+  e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor);
+  e1ap_cu_up_ev_notifier.connect_cu_up(*this);
 }
 
 cu_up::~cu_up()
@@ -197,12 +197,12 @@ void cu_up::handle_bearer_context_release_command(const e1ap_bearer_context_rele
   ue_mng->remove_ue(msg.ue_index);
 }
 
-void cu_up::on_e1_connection_establish()
+void cu_up::on_e1ap_connection_establish()
 {
-  e1_connected = true;
+  e1ap_connected = true;
 }
 
-void cu_up::on_e1_connection_drop()
+void cu_up::on_e1ap_connection_drop()
 {
-  e1_connected = false;
+  e1ap_connected = false;
 }

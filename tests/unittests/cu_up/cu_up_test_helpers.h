@@ -177,15 +177,15 @@ public:
   std::list<uint32_t> removed_ul_teid_list  = {};
 };
 
-e1_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1_id)
+e1ap_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1ap_id)
 {
-  e1_message bearer_context_setup_request = {};
+  e1ap_message bearer_context_setup_request = {};
 
   bearer_context_setup_request.pdu.set_init_msg();
   bearer_context_setup_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
 
   auto& bearer_context_setup_req = bearer_context_setup_request.pdu.init_msg().value.bearer_context_setup_request();
-  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1_id;
+  bearer_context_setup_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
   bearer_context_setup_req->security_info.value.security_algorithm.ciphering_algorithm =
       asn1::e1ap::ciphering_algorithm_e::nea0;
   bearer_context_setup_req->security_info.value.up_securitykey.encryption_key.from_string(

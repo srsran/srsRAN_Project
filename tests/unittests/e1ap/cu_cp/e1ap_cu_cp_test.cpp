@@ -26,44 +26,44 @@ using namespace asn1::e1ap;
 TEST_F(e1ap_cu_cp_test, when_unsupported_init_msg_received_then_message_ignored)
 {
   // Set last message of PDU notifier to successful outcome
-  e1_pdu_notifier.last_e1_msg.pdu.set_init_msg();
+  e1ap_pdu_notifier.last_e1ap_msg.pdu.set_init_msg();
 
   // Generate unupported E1AP PDU
-  e1_message unsupported_msg = {};
+  e1ap_message unsupported_msg = {};
   unsupported_msg.pdu.set_init_msg();
 
   e1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(e1_pdu_notifier.last_e1_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(e1ap_cu_cp_test, when_unsupported_successful_outcome_received_then_message_ignored)
 {
   // Set last message of PDU notifier to init_msg
-  e1_pdu_notifier.last_e1_msg.pdu.set_init_msg();
+  e1ap_pdu_notifier.last_e1ap_msg.pdu.set_init_msg();
 
   // Generate unupported E1AP PDU
-  e1_message unsupported_msg = {};
+  e1ap_message unsupported_msg = {};
   unsupported_msg.pdu.set_successful_outcome();
 
   e1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(e1_pdu_notifier.last_e1_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
 }
 
 TEST_F(e1ap_cu_cp_test, when_unsupported_unsuccessful_outcome_received_then_message_ignored)
 {
   // Set last message of PDU notifier to init_msg
-  e1_pdu_notifier.last_e1_msg.pdu.set_init_msg();
+  e1ap_pdu_notifier.last_e1ap_msg.pdu.set_init_msg();
 
   // Generate unupported E1AP PDU
-  e1_message unsupported_msg = {};
+  e1ap_message unsupported_msg = {};
   unsupported_msg.pdu.set_unsuccessful_outcome();
 
   e1ap->handle_message(unsupported_msg);
 
   // Check that PDU has not been forwarded (last PDU is still init_msg)
-  EXPECT_EQ(e1_pdu_notifier.last_e1_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
+  EXPECT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type(), asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg);
 }

@@ -16,11 +16,13 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-std::unique_ptr<e1_interface> srsgnb::srs_cu_cp::create_e1(srsgnb::timer_manager&       timers_,
-                                                           e1_message_notifier&         e1_pdu_notifier_,
-                                                           e1_cu_up_processor_notifier& e1_cu_up_processor_notifier_,
-                                                           task_executor&               ctrl_exec_)
+std::unique_ptr<e1ap_interface>
+srsgnb::srs_cu_cp::create_e1ap(srsgnb::timer_manager&         timers_,
+                               e1ap_message_notifier&         e1ap_pdu_notifier_,
+                               e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
+                               task_executor&                 ctrl_exec_)
 {
-  auto e1_cu_cp = std::make_unique<e1_cu_cp_impl>(timers_, e1_pdu_notifier_, e1_cu_up_processor_notifier_, ctrl_exec_);
-  return e1_cu_cp;
+  auto e1ap_cu_cp =
+      std::make_unique<e1ap_cu_cp_impl>(timers_, e1ap_pdu_notifier_, e1ap_cu_up_processor_notifier_, ctrl_exec_);
+  return e1ap_cu_cp;
 }

@@ -500,11 +500,11 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 
 inline void
 fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&            res,
-                                        const asn1::e1ap::bearer_context_setup_fail_s& e1_bearer_context_setup_fail)
+                                        const asn1::e1ap::bearer_context_setup_fail_s& e1ap_bearer_context_setup_fail)
 {
   res.success = false;
-  res.cause   = e1ap_cause_to_cause(e1_bearer_context_setup_fail->cause.value);
-  if (e1_bearer_context_setup_fail->crit_diagnostics_present) {
+  res.cause   = e1ap_cause_to_cause(e1ap_bearer_context_setup_fail->cause.value);
+  if (e1ap_bearer_context_setup_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics
   }
 }

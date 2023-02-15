@@ -54,7 +54,7 @@ void pdu_session_resource_setup_routine::operator()(
     // prepare BearerContextSetupRequest
     fill_e1ap_bearer_context_setup_request(bearer_context_setup_request);
 
-    // call E1 procedure
+    // call E1AP procedure
     CORO_AWAIT_VALUE(bearer_context_setup_response,
                      e1ap_ctrl_notifier.on_bearer_context_setup_request(bearer_context_setup_request));
 
@@ -166,7 +166,7 @@ void pdu_session_resource_setup_routine::operator()(
     // prepare BearerContextModificationRequest
     fill_e1ap_bearer_context_modification_request(bearer_context_modification_request);
 
-    // call E1 procedure and wait for BearerContextModificationResponse
+    // call E1AP procedure and wait for BearerContextModificationResponse
     CORO_AWAIT_VALUE(bearer_context_modification_response,
                      e1ap_ctrl_notifier.on_bearer_context_modification_request(bearer_context_modification_request));
 

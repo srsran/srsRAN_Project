@@ -37,32 +37,32 @@ private:
   sdap_rx_pdu_handler* sdap_handler = nullptr;
 };
 
-/// Adapter between PDCP Rx and E1 (to be forwarded to RRC in the DU)
-class pdcp_rx_e1_adapter : public pdcp_rx_upper_control_notifier
+/// Adapter between PDCP Rx and E1AP (to be forwarded to RRC in the DU)
+class pdcp_rx_e1ap_adapter : public pdcp_rx_upper_control_notifier
 {
 public:
-  pdcp_rx_e1_adapter()  = default;
-  ~pdcp_rx_e1_adapter() = default;
+  pdcp_rx_e1ap_adapter()  = default;
+  ~pdcp_rx_e1ap_adapter() = default;
 
-  void connect_e1()
+  void connect_e1ap()
   {
-    // TODO: Connect a E1 handler
-    srslog::fetch_basic_logger("PDCP").info("No E1 handler for PDCP Rx control events. All events will be ignored.");
+    // TODO: Connect a E1AP handler
+    srslog::fetch_basic_logger("PDCP").debug("No E1AP handler for PDCP Rx control events. All events will be ignored.");
   }
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Rx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Rx: No E1AP handler.");
   }
 
   void on_integrity_failure() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_integrity_failure() from PDCP Rx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_integrity_failure() from PDCP Rx: No E1AP handler.");
   }
 
   void on_max_count_reached() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Rx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Rx: No E1AP handler.");
   }
 };
 
@@ -91,27 +91,27 @@ private:
   f1u_tx_sdu_handler* f1u_handler = nullptr;
 };
 
-/// Adapter between PDCP Tx and E1 (to be forwarded to RRC in the DU)
-class pdcp_tx_e1_adapter : public pdcp_tx_upper_control_notifier
+/// Adapter between PDCP Tx and E1AP (to be forwarded to RRC in the DU)
+class pdcp_tx_e1ap_adapter : public pdcp_tx_upper_control_notifier
 {
 public:
-  pdcp_tx_e1_adapter()  = default;
-  ~pdcp_tx_e1_adapter() = default;
+  pdcp_tx_e1ap_adapter()  = default;
+  ~pdcp_tx_e1ap_adapter() = default;
 
-  void connect_e1()
+  void connect_e1ap()
   {
-    // TODO: connect a E1 handler
-    srslog::fetch_basic_logger("PDCP").info("No E1 handler for PDCP Tx control events. All events will be ignored.");
+    // TODO: connect a E1AP handler
+    srslog::fetch_basic_logger("PDCP").debug("No E1AP handler for PDCP Tx control events. All events will be ignored.");
   }
 
   void on_protocol_failure() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Tx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_protocol_failure() from PDCP Tx: No E1AP handler.");
   }
 
   void on_max_count_reached() override
   {
-    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Tx: No E1 handler.");
+    srslog::fetch_basic_logger("PDCP").warning("Ignoring on_max_count_reached() from PDCP Tx: No E1AP handler.");
   }
 };
 

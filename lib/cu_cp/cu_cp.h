@@ -51,8 +51,8 @@ public:
   f1ap_statistics_handler& get_f1ap_statistics_handler(du_index_t du_index) override;
 
   // CU-CP CU-UP interface
-  size_t              get_nof_cu_ups() const override;
-  e1_message_handler& get_e1_message_handler(cu_up_index_t cu_up_index) override;
+  size_t                get_nof_cu_ups() const override;
+  e1ap_message_handler& get_e1ap_message_handler(cu_up_index_t cu_up_index) override;
 
   // NG interface
   ngap_message_handler& get_ngap_message_handler() override;
@@ -138,7 +138,7 @@ private:
   du_processor_to_cu_cp_task_scheduler du_processor_task_sched;
   du_processor_cu_cp_adapter           du_processor_ev_notifier;
 
-  // DU Processor to E1 adapter
+  // DU Processor to E1AP adapter
   du_processor_e1ap_adapter du_processor_e1ap_notifier;
 
   // CU-UP processor to CU-CP adapters

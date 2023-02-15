@@ -100,7 +100,7 @@ srsgnb::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap
 {
   e1ap_bearer_context_setup_response resp;
 
-  e1_message asn1_res = generate_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+  e1ap_message asn1_res = generate_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
   fill_e1ap_bearer_context_setup_response(resp, asn1_res.pdu.successful_outcome().value.bearer_context_setup_resp());
 
@@ -113,7 +113,7 @@ srsgnb::srs_cu_cp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_
 {
   e1ap_bearer_context_modification_response resp;
 
-  e1_message asn1_res = generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
+  e1ap_message asn1_res = generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
   fill_e1ap_bearer_context_modification_response(resp,
                                                  asn1_res.pdu.successful_outcome().value.bearer_context_mod_resp());

@@ -112,10 +112,10 @@ public:
   /// \return The number of CU-UPs.
   virtual size_t get_nof_cu_ups() const = 0;
 
-  /// \brief Get the E1 message handler interface of the CU-UP processor object.
+  /// \brief Get the E1AP message handler interface of the CU-UP processor object.
   /// \param[in] cu_up_index The index of the CU-UP processor object.
-  /// \return The E1 message handler interface of the CU-UP processor object.
-  virtual e1_message_handler& get_e1_message_handler(const cu_up_index_t cu_up_index) = 0;
+  /// \return The E1AP message handler interface of the CU-UP processor object.
+  virtual e1ap_message_handler& get_e1ap_message_handler(const cu_up_index_t cu_up_index) = 0;
 };
 
 class cu_cp_ng_interface

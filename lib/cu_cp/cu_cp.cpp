@@ -100,10 +100,10 @@ size_t cu_cp::get_nof_cu_ups() const
   return cu_up_db.size();
 }
 
-e1_message_handler& cu_cp::get_e1_message_handler(cu_up_index_t cu_up_index)
+e1ap_message_handler& cu_cp::get_e1ap_message_handler(cu_up_index_t cu_up_index)
 {
   auto& cu_up_it = find_cu_up(cu_up_index);
-  return cu_up_it.get_e1_message_handler();
+  return cu_up_it.get_e1ap_message_handler();
 }
 
 ngap_message_handler& cu_cp::get_ngap_message_handler()
@@ -278,14 +278,14 @@ cu_up_index_t cu_cp::add_cu_up()
 
   std::unique_ptr<cu_up_processor_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
                                                                             cu_up_processor_ev_notifier,
-                                                                            *cfg.e1_notifier,
+                                                                            *cfg.e1ap_notifier,
                                                                             cu_up_processor_task_sched,
                                                                             *cfg.cu_cp_executor);
 
   cu_up->get_context().cu_up_index = cu_up_index;
 
   // Connect e1ap to DU processor
-  du_processor_e1ap_notifier.connect_e1ap(cu_up->get_e1_bearer_context_manager());
+  du_processor_e1ap_notifier.connect_e1ap(cu_up->get_e1ap_bearer_context_manager());
 
   srsgnb_assert(cu_up->get_context().cu_up_index != cu_up_index_t::invalid,
                 "Invalid cu_up_index={}",

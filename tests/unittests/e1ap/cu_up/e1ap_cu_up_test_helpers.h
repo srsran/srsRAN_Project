@@ -29,15 +29,15 @@ protected:
   ~e1ap_cu_up_test() override;
 
   /// \brief Helper method to setup a bearer at the CU-UP
-  void setup_bearer(unsigned int cu_cp_ue_e1_id);
+  void setup_bearer(unsigned int cu_cp_ue_e1ap_id);
 
   srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("E1AP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  dummy_e1_pdu_notifier         msg_notifier;
-  dummy_e1ap_cu_up_notifier     cu_up_notifier;
-  manual_task_worker            cu_up_worker{128};
-  std::unique_ptr<e1_interface> e1ap;
+  dummy_e1ap_pdu_notifier         msg_notifier;
+  dummy_e1ap_cu_up_notifier       cu_up_notifier;
+  manual_task_worker              cu_up_worker{128};
+  std::unique_ptr<e1ap_interface> e1ap;
 };
 
 } // namespace srs_cu_up

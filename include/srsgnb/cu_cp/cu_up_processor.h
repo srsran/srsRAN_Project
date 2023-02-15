@@ -20,11 +20,11 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Interface for an E1 notifier to communicate with the CU-UP processor.
-class cu_up_processor_e1_interface
+/// Interface for an E1AP notifier to communicate with the CU-UP processor.
+class cu_up_processor_e1ap_interface
 {
 public:
-  virtual ~cu_up_processor_e1_interface() = default;
+  virtual ~cu_up_processor_e1ap_interface() = default;
 
   /// \brief Get the CU-UP index.
   /// \return The CU-UP index.
@@ -39,16 +39,16 @@ public:
   /// \param[in] msg The received GNB-CU-UP E1 Setup Request message.
   virtual void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) = 0;
 
-  /// \brief Get the E1 message handler interface of the CU-UP processor object.
-  /// \return The E1 message handler interface of the CU-UP processor object.
-  virtual e1_message_handler& get_e1_message_handler() = 0;
+  /// \brief Get the E1AP message handler interface of the CU-UP processor object.
+  /// \return The E1AP message handler interface of the CU-UP processor object.
+  virtual e1ap_message_handler& get_e1ap_message_handler() = 0;
 
-  /// \brief Get the E1 bearer context manager interface.
-  /// \return The  E1 bearer context manager interface of the CU-UP processor object.
-  virtual e1_bearer_context_manager& get_e1_bearer_context_manager() = 0;
+  /// \brief Get the E1AP bearer context manager interface.
+  /// \return The  E1AP bearer context manager interface of the CU-UP processor object.
+  virtual e1ap_bearer_context_manager& get_e1ap_bearer_context_manager() = 0;
 };
 
-/// Methods used by CU-UP Processor to initiate E1 connection procedures.
+/// Methods used by CU-UP Processor to initiate E1AP connection procedures.
 class cu_up_processor_e1ap_control_notifier
 {
 public:
@@ -92,7 +92,7 @@ public:
   virtual void stop()                   = 0;
 };
 
-class cu_up_processor_interface : public cu_up_processor_e1_interface, public cu_up_processor_controller
+class cu_up_processor_interface : public cu_up_processor_e1ap_interface, public cu_up_processor_controller
 {
 public:
   virtual ~cu_up_processor_interface() = default;

@@ -18,10 +18,10 @@ namespace srsgnb {
 namespace srs_cu_up {
 
 /// Adapter between E1AP and CU-UP
-class e1ap_cu_up_adapter : public e1ap_cu_cp_notifier
+class e1ap_cu_up_adapter : public e1ap_cu_up_notifier
 {
 public:
-  void connect_cu_up(cu_up_e1_interface& cu_up_handler_) { cu_up_handler = &cu_up_handler_; }
+  void connect_cu_up(cu_up_e1ap_interface& cu_up_handler_) { cu_up_handler = &cu_up_handler_; }
 
   cu_cp_e1_setup_response on_cu_cp_e1_setup_request_received(const srsgnb::cu_cp_e1_setup_request& msg) override
   {
@@ -50,7 +50,7 @@ public:
   }
 
 private:
-  cu_up_e1_interface* cu_up_handler = nullptr;
+  cu_up_e1ap_interface* cu_up_handler = nullptr;
 };
 
 } // namespace srs_cu_up

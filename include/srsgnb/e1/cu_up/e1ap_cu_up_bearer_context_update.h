@@ -30,7 +30,7 @@ struct e1ap_bearer_context_setup_request {
   optional<uint64_t>                                                      gnb_du_id;
 };
 
-/// \brief Response to a bearer context setup request including UE index for E1 map.
+/// \brief Response to a bearer context setup request including UE index for E1AP map.
 struct e1ap_bearer_context_setup_response {
   bool       success  = false;
   ue_index_t ue_index = INVALID_UE_INDEX; // Valid UE index if setup was successful.

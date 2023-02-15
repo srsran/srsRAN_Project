@@ -25,7 +25,7 @@ class cu_cp_e1_setup_procedure
 {
 public:
   cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
-                           e1_message_notifier&          cu_up_notif_,
+                           e1ap_message_notifier&        cu_up_notif_,
                            e1ap_transaction_manager&     ev_mng_,
                            timer_manager&                timers,
                            srslog::basic_logger&         logger_);
@@ -43,7 +43,7 @@ private:
   cu_cp_e1_setup_response create_e1_setup_result();
 
   const cu_cp_e1_setup_request request;
-  e1_message_notifier&         cu_up_notifier;
+  e1ap_message_notifier&       cu_up_notifier;
   e1ap_transaction_manager&    ev_mng;
   srslog::basic_logger&        logger;
 

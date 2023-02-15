@@ -19,23 +19,23 @@
 namespace srsgnb {
 namespace srs_cu_up {
 
-/// Interface to notify about E1 connections (from the CU-CP) to the CU-UP
-class cu_up_e1_connection_notifier
+/// Interface to notify about E1AP connections (from the CU-CP) to the CU-UP
+class cu_up_e1ap_connection_notifier
 {
 public:
-  virtual ~cu_up_e1_connection_notifier() = default;
+  virtual ~cu_up_e1ap_connection_notifier() = default;
 
-  /// \brief Notifies the CU-UP about a successful E1 connection.
-  virtual void on_e1_connection_establish() = 0;
+  /// \brief Notifies the CU-UP about a successful E1AP connection.
+  virtual void on_e1ap_connection_establish() = 0;
 
-  /// \brief Notifies the CU-CP about a dropped E1 connection.
-  virtual void on_e1_connection_drop() = 0;
+  /// \brief Notifies the CU-CP about a dropped E1AP connection.
+  virtual void on_e1ap_connection_drop() = 0;
 };
 
-class cu_up_e1_interface
+class cu_up_e1ap_interface
 {
 public:
-  virtual ~cu_up_e1_interface() = default;
+  virtual ~cu_up_e1ap_interface() = default;
 
   /// \brief Handle E1 Setup Request received from the CU-CP.
   /// \param[in] msg The CU-CP E1 Setup Request.
@@ -58,12 +58,12 @@ public:
   /// \param[in] msg The original bearer release command.
   virtual void handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) = 0;
 
-  /// \brief Get the E1 message handler interface.
-  virtual e1_message_handler& get_e1_message_handler() = 0;
+  /// \brief Get the E1AP message handler interface.
+  virtual e1ap_message_handler& get_e1ap_message_handler() = 0;
 
-  /// \brief Get the state of the E1 connection.
-  /// \return True if E1 is connected, false otherwise.
-  virtual bool e1_is_connected() = 0;
+  /// \brief Get the state of the E1AP connection.
+  /// \return True if E1AP is connected, false otherwise.
+  virtual bool e1ap_is_connected() = 0;
 };
 
 /// Interface to notify about GTP-U packets (from the NGU) to the CU-UP
@@ -77,7 +77,7 @@ public:
   virtual gtpu_demux_rx_upper_layer_interface& get_ngu_pdu_handler() = 0;
 };
 
-class cu_up_interface : public cu_up_e1_connection_notifier, public cu_up_e1_interface, public cu_up_ngu_interface
+class cu_up_interface : public cu_up_e1ap_connection_notifier, public cu_up_e1ap_interface, public cu_up_ngu_interface
 {
 public:
   virtual ~cu_up_interface() = default;

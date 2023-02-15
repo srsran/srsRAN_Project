@@ -38,11 +38,11 @@ struct network_interface_config {
 
 /// Configuration passed to CU-UP.
 struct cu_up_configuration {
-  task_executor*       cu_up_executor    = nullptr;
-  task_executor*       gtpu_pdu_executor = nullptr;
-  e1_message_notifier* e1_notifier       = nullptr; ///< Callback for incoming E1 messages.
-  f1u_cu_up_gateway*   f1u_gateway       = nullptr;
-  io_broker*           epoll_broker      = nullptr; ///< IO broker to receive messages from a network gateway
+  task_executor*         cu_up_executor    = nullptr;
+  task_executor*         gtpu_pdu_executor = nullptr;
+  e1ap_message_notifier* e1ap_notifier     = nullptr; ///< Callback for incoming E1AP messages.
+  f1u_cu_up_gateway*     f1u_gateway       = nullptr;
+  io_broker*             epoll_broker      = nullptr; ///< IO broker to receive messages from a network gateway
 
   network_interface_config net_cfg;
 

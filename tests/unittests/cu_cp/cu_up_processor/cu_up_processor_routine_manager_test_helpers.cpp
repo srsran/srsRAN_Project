@@ -27,7 +27,7 @@ cu_up_processor_routine_manager_test::cu_up_processor_routine_manager_test()
 
   // create routine manager
   routine_mng =
-      std::make_unique<cu_up_processor_routine_manager>(context, e1_conn_notifier, cu_cp_notifier, *task_sched.get());
+      std::make_unique<cu_up_processor_routine_manager>(context, e1ap_conn_notifier, cu_cp_notifier, *task_sched.get());
 }
 
 cu_up_processor_routine_manager_test::~cu_up_processor_routine_manager_test()

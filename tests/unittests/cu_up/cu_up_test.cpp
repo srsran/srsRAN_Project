@@ -25,9 +25,9 @@ using namespace srsgnb;
 using namespace srs_cu_up;
 using namespace asn1::e1ap;
 
-class dummy_e1_notifier : public e1_message_notifier
+class dummy_e1ap_notifier : public e1ap_message_notifier
 {
-  void on_new_message(const e1_message& msg) override
+  void on_new_message(const e1ap_message& msg) override
   {
     // do nothing
   }
@@ -59,7 +59,7 @@ protected:
     cu_up_configuration cfg;
     cfg.cu_up_executor       = executor.get();
     cfg.gtpu_pdu_executor    = executor.get();
-    cfg.e1_notifier          = &e1_message_notifier;
+    cfg.e1ap_notifier        = &e1ap_message_notifier;
     cfg.f1u_gateway          = f1u_gw.get();
     cfg.epoll_broker         = broker.get();
     cfg.net_cfg.n3_bind_port = 0; // Random free port selected by the OS.
@@ -75,7 +75,7 @@ protected:
     srslog::flush();
   }
 
-  dummy_e1_notifier                           e1_message_notifier;
+  dummy_e1ap_notifier                         e1ap_message_notifier;
   dummy_inner_f1u_bearer                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>          f1u_gw;
   std::unique_ptr<io_broker>                  broker;
@@ -90,32 +90,32 @@ protected:
   void create_drb()
   {
     // Generate BearerContextSetupRequest
-    e1_message asn1_e1_bearer_context_setup_msg = generate_bearer_context_setup_request_msg(9);
+    e1ap_message asn1_bearer_context_setup_msg = generate_bearer_context_setup_request_msg(9);
 
     // Convert to common type
-    e1ap_bearer_context_setup_request e1_bearer_context_setup;
+    e1ap_bearer_context_setup_request bearer_context_setup;
     fill_e1ap_bearer_context_setup_request(
-        e1_bearer_context_setup, asn1_e1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request());
+        bearer_context_setup, asn1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request());
 
     // Setup bearer
-    cu_up->handle_bearer_context_setup_request(e1_bearer_context_setup);
+    cu_up->handle_bearer_context_setup_request(bearer_context_setup);
   }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
-/* E1 connection handling                                                           */
+/* E1APonnection handling                                                           */
 //////////////////////////////////////////////////////////////////////////////////////
 
-/// Test the E1 connection
-TEST_F(cu_up_test, when_e1_connection_established_then_e1_connected)
+/// Test the E1AP connection
+TEST_F(cu_up_test, when_e1ap_connection_established_then_e1ap_connected)
 {
   init(get_default_cu_up_config());
 
-  // Connect E1
-  cu_up->on_e1_connection_establish();
+  // Connect E1AP
+  cu_up->on_e1ap_connection_establish();
 
-  // check that E1 is in connected state
-  ASSERT_TRUE(cu_up->e1_is_connected());
+  // check that E1AP is in connected state
+  ASSERT_TRUE(cu_up->e1ap_is_connected());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

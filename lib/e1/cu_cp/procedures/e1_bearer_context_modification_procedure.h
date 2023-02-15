@@ -20,27 +20,27 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class e1_bearer_context_modification_procedure
+class bearer_context_modification_procedure
 {
 public:
-  e1_bearer_context_modification_procedure(const e1_message&     request_,
-                                           e1ap_ue_context&      ue_ctxt_,
-                                           e1_message_notifier&  e1_notif_,
-                                           srslog::basic_logger& logger_);
+  bearer_context_modification_procedure(const e1ap_message&    request_,
+                                        e1ap_ue_context&       ue_ctxt_,
+                                        e1ap_message_notifier& e1ap_notif_,
+                                        srslog::basic_logger&  logger_);
 
   void operator()(coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx);
 
 private:
-  /// Send E1 Bearer Context Modification Request to CU-UP.
+  /// Send Bearer Context Modification Request to CU-UP.
   void send_bearer_context_modification_request();
 
   /// Creates procedure result to send back to procedure caller.
   e1ap_bearer_context_modification_response create_bearer_context_modification_result();
 
-  const e1_message      request;
-  e1ap_ue_context&      ue_ctxt;
-  e1_message_notifier&  e1_notifier;
-  srslog::basic_logger& logger;
+  const e1ap_message     request;
+  e1ap_ue_context&       ue_ctxt;
+  e1ap_message_notifier& e1ap_notifier;
+  srslog::basic_logger&  logger;
 
   protocol_transaction_outcome_observer<asn1::e1ap::bearer_context_mod_resp_s, asn1::e1ap::bearer_context_mod_fail_s>
       transaction_sink;

@@ -31,20 +31,20 @@ protected:
     t_launcher.emplace(t);
 
     ASSERT_FALSE(t.ready());
-    ASSERT_EQ(this->e1_pdu_notifier.last_e1_msg.pdu.init_msg().value.type().value,
+    ASSERT_EQ(this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value,
               e1ap_elem_procs_o::init_msg_c::types::bearer_context_mod_request);
   }
 
   bool was_bearer_context_modification_request_sent(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const
   {
-    if (this->e1_pdu_notifier.last_e1_msg.pdu.type().value != e1ap_pdu_c::types::init_msg) {
+    if (this->e1ap_pdu_notifier.last_e1ap_msg.pdu.type().value != e1ap_pdu_c::types::init_msg) {
       return false;
     }
-    if (this->e1_pdu_notifier.last_e1_msg.pdu.init_msg().value.type().value !=
+    if (this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.type().value !=
         e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_mod_request) {
       return false;
     }
-    auto& req = this->e1_pdu_notifier.last_e1_msg.pdu.init_msg().value.bearer_context_mod_request();
+    auto& req = this->e1ap_pdu_notifier.last_e1ap_msg.pdu.init_msg().value.bearer_context_mod_request();
 
     return req->gnb_cu_cp_ue_e1ap_id.value == gnb_cu_cp_ue_e1ap_id_to_uint(cu_cp_ue_e1ap_id);
   }
@@ -87,8 +87,8 @@ TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_response_received_then_
   // Start BEARER CONTEXT MODIFICATION procedure and return back the response from the CU-UP.
   this->start_procedure(request);
 
-  auto&      ue = test_ues[request.ue_index];
-  e1_message response =
+  auto&        ue = test_ues[request.ue_index];
+  e1ap_message response =
       generate_bearer_context_modification_response(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
   e1ap->handle_message(response);
 
@@ -107,7 +107,7 @@ TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_ue_setup_failure_receiv
 
   auto& ue = test_ues[request.ue_index];
 
-  e1_message response =
+  e1ap_message response =
       generate_bearer_context_modification_failure(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
   e1ap->handle_message(response);
 

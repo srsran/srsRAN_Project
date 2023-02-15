@@ -17,7 +17,7 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::e1ap;
 
 cu_cp_e1_setup_procedure::cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
-                                                   e1_message_notifier&          cu_up_notif_,
+                                                   e1ap_message_notifier&        cu_up_notif_,
                                                    e1ap_transaction_manager&     ev_mng_,
                                                    timer_manager&                timers,
                                                    srslog::basic_logger&         logger_) :
@@ -61,7 +61,7 @@ void cu_cp_e1_setup_procedure::operator()(coro_context<async_task<cu_cp_e1_setup
 
 void cu_cp_e1_setup_procedure::send_e1_setup_request()
 {
-  e1_message msg = {};
+  e1ap_message msg = {};
   // set E1AP PDU contents
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);

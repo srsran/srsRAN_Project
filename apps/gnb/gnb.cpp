@@ -138,8 +138,8 @@ struct worker_manager {
   The handler side is responsible for executor dispatching:
   - ngap::handle_message calls cu-cp ctrl exec
   - f1ap_cu::handle_message calls cu-cp ctrl exec
-  - e1_cu_cp::handle_message calls cu-cp ctrl exec
-  - e1_cu_up::handle_message calls cu-up ue exec
+  - e1ap_cu_cp::handle_message calls cu-cp ctrl exec
+  - e1ap_cu_up::handle_message calls cu-up ue exec
   */
 
   std::unique_ptr<task_executor> cu_cp_exec;
@@ -433,7 +433,7 @@ int main(int argc, char** argv)
   worker_manager workers{gnb_cfg};
 
   f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1"), f1ap_du_to_cu_adapter("DU-F1");
-  e1_local_adapter   e1_cp_to_up_adapter("CU-CP"), e1_up_to_cp_adapter("CU-UP");
+  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP"), e1ap_up_to_cp_adapter("CU-UP");
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -465,7 +465,7 @@ int main(int argc, char** argv)
   srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
   cu_up_cfg.gtpu_pdu_executor    = workers.gtpu_pdu_exec.get();
-  cu_up_cfg.e1_notifier          = &e1_up_to_cp_adapter;
+  cu_up_cfg.e1ap_notifier        = &e1ap_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker         = epoll_broker.get();
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
@@ -479,7 +479,7 @@ int main(int argc, char** argv)
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
   cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec.get();
   cu_cp_cfg.f1ap_notifier                  = &f1ap_cu_to_du_adapter;
-  cu_cp_cfg.e1_notifier                    = &e1_cp_to_up_adapter;
+  cu_cp_cfg.e1ap_notifier                  = &e1ap_cp_to_up_adapter;
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
 
   // create CU-CP.
@@ -491,8 +491,8 @@ int main(int argc, char** argv)
   ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
 
   // attach E1AP adapters to CU-UP and CU-CP
-  e1_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1_message_handler(srsgnb::srs_cu_cp::uint_to_cu_up_index(0)));
-  e1_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1_message_handler());
+  e1ap_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1ap_message_handler(srsgnb::srs_cu_cp::uint_to_cu_up_index(0)));
+  e1ap_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1ap_message_handler());
 
   console.on_app_starting();
 

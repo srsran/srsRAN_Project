@@ -30,7 +30,7 @@ class cu_up_processor_impl : public cu_up_processor_interface
 public:
   cu_up_processor_impl(const cu_up_processor_config_t             cu_up_processor_config_,
                        cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
-                       e1_message_notifier&                       e1_notifier_,
+                       e1ap_message_notifier&                     e1ap_notifier_,
                        cu_up_processor_task_scheduler&            task_sched_,
                        task_executor&                             ctrl_exec_);
   ~cu_up_processor_impl() = default;
@@ -43,13 +43,13 @@ public:
 
   // getter functions
 
-  cu_up_index_t              get_cu_up_index() override { return context.cu_up_index; };
-  cu_up_processor_context&   get_context() override { return context; };
-  e1_message_handler&        get_e1_message_handler() override { return *e1; };
-  e1_bearer_context_manager& get_e1_bearer_context_manager() override { return *e1; }
+  cu_up_index_t                get_cu_up_index() override { return context.cu_up_index; };
+  cu_up_processor_context&     get_context() override { return context; };
+  e1ap_message_handler&        get_e1ap_message_handler() override { return *e1ap; };
+  e1ap_bearer_context_manager& get_e1ap_bearer_context_manager() override { return *e1ap; }
 
 private:
-  // E1 senders
+  // E1AP senders
 
   /// \brief Create and transmit the GNB-CU-UP E1 Setup response message.
   /// \param[in] du_ctxt The context of the DU that should receive the message.
@@ -63,16 +63,16 @@ private:
   cu_up_processor_config_t cfg;
 
   cu_up_processor_cu_up_management_notifier& cu_cp_notifier;
-  e1_message_notifier&                       e1_notifier;
+  e1ap_message_notifier&                     e1ap_notifier;
   cu_up_processor_task_scheduler&            task_sched;
 
   cu_up_processor_context context;
 
   // Components
-  std::unique_ptr<e1_interface> e1;
+  std::unique_ptr<e1ap_interface> e1ap;
 
-  // E1 to CU-UP processor adapter
-  e1_cu_up_processor_adapter e1_ev_notifier;
+  // E1AP to CU-UP processor adapter
+  e1ap_cu_up_processor_adapter e1ap_ev_notifier;
 
   // CU-UP Processor to E1AP adapter
   cu_up_processor_e1ap_adapter e1ap_adapter;

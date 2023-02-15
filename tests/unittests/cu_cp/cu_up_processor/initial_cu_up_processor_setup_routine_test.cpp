@@ -23,7 +23,7 @@ class initial_cu_up_processor_setup_routine_test : public cu_up_processor_routin
 protected:
   void start_procedure(bool cu_cp_e1_setup_outcome)
   {
-    e1_conn_notifier.set_cu_cp_e1_setup_outcome(cu_cp_e1_setup_outcome);
+    e1ap_conn_notifier.set_cu_cp_e1_setup_outcome(cu_cp_e1_setup_outcome);
 
     routine_mng->start_initial_cu_up_processor_setup_routine();
   }

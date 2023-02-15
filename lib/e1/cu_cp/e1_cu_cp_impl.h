@@ -25,24 +25,24 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class e1_event_manager;
+class e1ap_event_manager;
 
-class e1_cu_cp_impl final : public e1_interface
+class e1ap_cu_cp_impl final : public e1ap_interface
 {
 public:
-  e1_cu_cp_impl(srsgnb::timer_manager&       timers_,
-                e1_message_notifier&         e1_pdu_notifier_,
-                e1_cu_up_processor_notifier& e1_cu_up_processor_notifier_,
-                task_executor&               ctrl_exec_);
-  ~e1_cu_cp_impl();
+  e1ap_cu_cp_impl(srsgnb::timer_manager&         timers_,
+                  e1ap_message_notifier&         e1ap_pdu_notifier_,
+                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
+                  task_executor&                 ctrl_exec_);
+  ~e1ap_cu_cp_impl();
 
-  // e1 connection manager functions
+  // e1ap connection manager functions
 
   void handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& msg) override;
 
   async_task<cu_cp_e1_setup_response> handle_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) override;
 
-  // e1 bearer context manager functions
+  // e1ap bearer context manager functions
 
   async_task<e1ap_bearer_context_setup_response>
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
@@ -52,9 +52,9 @@ public:
 
   async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& command) override;
 
-  // e1 message handler functions
+  // e1ap message handler functions
 
-  void handle_message(const e1_message& msg) override;
+  void handle_message(const e1ap_message& msg) override;
 
   void handle_connection_loss() override {}
 
@@ -81,9 +81,9 @@ private:
   e1ap_transaction_manager ev_mng;
 
   // nofifiers and handles
-  e1_message_notifier&         pdu_notifier;
-  e1_cu_up_processor_notifier& cu_up_processor_notifier;
-  task_executor&               ctrl_exec;
+  e1ap_message_notifier&         pdu_notifier;
+  e1ap_cu_up_processor_notifier& cu_up_processor_notifier;
+  task_executor&                 ctrl_exec;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id
 };

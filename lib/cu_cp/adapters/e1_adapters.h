@@ -17,23 +17,23 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between E1 and CU-UP processor
-class e1_cu_up_processor_adapter : public e1_cu_up_processor_notifier
+/// Adapter between E1AP and CU-UP processor
+class e1ap_cu_up_processor_adapter : public e1ap_cu_up_processor_notifier
 {
 public:
-  void connect_cu_up_processor(cu_up_processor_e1_interface& cu_up_processor_e1_)
+  void connect_cu_up_processor(cu_up_processor_e1ap_interface& cu_up_processor_e1ap_)
   {
-    cu_up_e1_handler = &cu_up_processor_e1_;
+    cu_up_e1ap_handler = &cu_up_processor_e1ap_;
   }
 
   void on_cu_up_e1_setup_request_received(const cu_up_e1_setup_request& msg) override
   {
-    srsgnb_assert(cu_up_e1_handler != nullptr, "E1AP handler must not be nullptr");
-    cu_up_e1_handler->handle_cu_up_e1_setup_request(msg);
+    srsgnb_assert(cu_up_e1ap_handler != nullptr, "E1AP handler must not be nullptr");
+    cu_up_e1ap_handler->handle_cu_up_e1_setup_request(msg);
   }
 
 private:
-  cu_up_processor_e1_interface* cu_up_e1_handler = nullptr;
+  cu_up_processor_e1ap_interface* cu_up_e1ap_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

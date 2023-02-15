@@ -15,9 +15,9 @@ using namespace srs_cu_cp;
 
 initial_cu_up_processor_setup_routine::initial_cu_up_processor_setup_routine(
     cu_up_processor_context&                   context_,
-    cu_up_processor_e1ap_control_notifier&     e1_conn_notifier_,
+    cu_up_processor_e1ap_control_notifier&     e1ap_conn_notifier_,
     cu_up_processor_cu_up_management_notifier& cu_cp_notifier_) :
-  context(context_), e1_conn_notifier(e1_conn_notifier_), cu_cp_notifier(cu_cp_notifier_)
+  context(context_), e1ap_conn_notifier(e1ap_conn_notifier_), cu_cp_notifier(cu_cp_notifier_)
 {
 }
 
@@ -46,7 +46,7 @@ async_task<cu_cp_e1_setup_response> initial_cu_up_processor_setup_routine::start
   request.gnb_cu_cp_name         = context.cu_cp_name;
 
   // Initiate CU-CP E1 Setup Request.
-  return e1_conn_notifier.on_cu_cp_e1_setup_request(request);
+  return e1ap_conn_notifier.on_cu_cp_e1_setup_request(request);
 }
 
 void initial_cu_up_processor_setup_routine::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_response& resp)
