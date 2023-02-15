@@ -172,6 +172,7 @@ bool sctp_network_gateway_impl::create_and_bind()
   freeaddrinfo(results);
 
   if (sock_fd == -1) {
+    fmt::print("Error connecting to {}:{} - {}\n", config.connect_address, config.connect_port, strerror(ret));
     logger.error("Error binding to {}:{} - {}", config.bind_address, config.bind_port, strerror(ret));
     return false;
   }
