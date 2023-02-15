@@ -454,8 +454,8 @@ scheduler_expert_config srsgnb::generate_scheduler_expert_config(const gnb_appco
   const pdsch_appconfig& pdsch = config.common_cell_cfg.pdsch_cfg;
   out_cfg.ue.fixed_dl_mcs      = pdsch.fixed_ue_mcs;
   const pusch_appconfig& pusch = config.common_cell_cfg.pusch_cfg;
-  if (pusch.fixed_ue_mcs < sch_mcs_index::max()) {
-    out_cfg.ue.fixed_ul_mcs = pusch.fixed_ue_mcs;
+  if (pusch.fixed_ue_mcs.has_value()) {
+    out_cfg.ue.fixed_ul_mcs = sch_mcs_index{*pusch.fixed_ue_mcs};
   }
 
   // RA parameters.

@@ -10,6 +10,7 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
+#include "srsgnb/support/cli11_utils.h"
 #include "srsgnb/support/config_parsers.h"
 #include "srsgnb/support/error_handling.h"
 
@@ -174,13 +175,13 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
 {
   app.add_option("--fixed_ue_mcs", pdsch_params.fixed_ue_mcs, "Fixed UE MCS")
       ->capture_default_str()
-      ->check(CLI::Range(0, 31));
+      ->check(CLI::Range(0, 28));
   app.add_option("--fixed_rar_mcs", pdsch_params.fixed_rar_mcs, "Fixed RAR MCS")
       ->capture_default_str()
-      ->check(CLI::Range(0, 31));
+      ->check(CLI::Range(0, 28));
   app.add_option("--fixed_si_mci", pdsch_params.fixed_si_mcs, "Fixed SI MCS")
       ->capture_default_str()
-      ->check(CLI::Range(0, 31));
+      ->check(CLI::Range(0, 28));
 }
 
 static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params) {}
@@ -191,7 +192,7 @@ static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_par
 {
   app.add_option("--fixed_ue_mcs", pusch_params.fixed_ue_mcs, "Fixed UE MCS")
       ->capture_default_str()
-      ->check(CLI::Range(0, 31));
+      ->check(CLI::Range(0, 28));
 }
 
 static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_params)
