@@ -56,22 +56,11 @@ void ue_cell::set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_
                              (static_cast<unsigned>(payload.test(2)) << 1) + (static_cast<unsigned>(payload.test(3)));
 }
 
-grant_prbs_mcs
-ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl_rnti_config_type dci_type) const
+grant_prbs_mcs ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const
 {
   const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
-  pdsch_config_params pdsch_cfg;
-  switch (dci_type) {
-    case dci_dl_rnti_config_type::tc_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, time_resource);
-      break;
-    case dci_dl_rnti_config_type::c_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cfg, time_resource);
-      break;
-    default:
-      report_fatal_error("Unsupported PDCCH DCI UL format");
-  }
+  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cfg, time_resource);
 
   // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
   // value.

@@ -149,17 +149,13 @@ static bool alloc_dl_ue(const ue&                    u,
         const cell_slot_resource_grid& grid      = res_grid.get_pdsch_grid(ue_cc.cell_index, pdsch.k0);
         const prb_bitmap               used_crbs = grid.used_crbs(bwp_cfg, pdsch.symbols);
 
-        const dci_dl_rnti_config_type dci_type =
-            h->empty() ? dci_dl_rnti_config_type::c_rnti_f1_0 : h->last_alloc_params().dci_cfg_type;
-
         // TODO verify the there is at least 1 TB.
-        const grant_prbs_mcs mcs_prbs = is_retx
-                                            ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
-                                                             h->last_alloc_params().prbs.prbs().length()}
-                                            : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes(), dci_type);
+        const grant_prbs_mcs mcs_prbs = is_retx ? grant_prbs_mcs{h->last_alloc_params().tb.front().value().mcs,
+                                                                 h->last_alloc_params().prbs.prbs().length()}
+                                                : ue_cc.required_dl_prbs(time_res, u.pending_dl_newtx_bytes());
 
         if (mcs_prbs.n_prbs == 0) {
-          logger.debug("PDSCH - No PRBs returned.");
+          logger.debug("ue={} rnti={:#x} PDSCH allocation skipped. Cause: UE's CQI=0 ", ue_cc.ue_index, ue_cc.rnti());
           return false;
         }
 

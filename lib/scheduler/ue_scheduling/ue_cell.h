@@ -66,7 +66,7 @@ public:
   void set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload);
 
   /// \brief Estimate the number of required DL PRBs to allocate the given number of bytes.
-  grant_prbs_mcs required_dl_prbs(unsigned time_resource, unsigned pending_bytes, dci_dl_rnti_config_type type) const;
+  grant_prbs_mcs required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const;
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
   grant_prbs_mcs required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul_rnti_config_type type) const;
