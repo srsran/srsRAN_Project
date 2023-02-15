@@ -322,7 +322,7 @@ int main(int argc, char** argv)
 
   // Check the modified configuration.
   if (!validate_appconfig(gnb_cfg)) {
-    srsgnb_terminate("Invalid configuration detected.\n");
+    report_error("Invalid configuration detected.\n");
   }
 
   // Compute derived parameters.
@@ -332,7 +332,7 @@ int main(int argc, char** argv)
   srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
                                                                   : srslog::create_file_sink(gnb_cfg.log_cfg.filename);
   if (!log_sink) {
-    return -1;
+    report_error("Could not create application main log sink.\n");
   }
   srslog::set_default_sink(*log_sink);
   srslog::init();
@@ -477,7 +477,7 @@ int main(int argc, char** argv)
   radio_notification_handler_printer radio_event_printer;
   auto                               radio = build_radio(*workers.radio_exec, radio_event_printer, gnb_cfg);
   if (radio == nullptr) {
-    srsgnb_terminate("Unable to create radio session.\n");
+    report_error("Unable to create radio session.\n");
   }
   gnb_logger.info("Radio driver '{}' created successfully", gnb_cfg.rf_driver_cfg.device_driver);
 

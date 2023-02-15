@@ -221,7 +221,7 @@ static void parse_args(int argc, char** argv)
     }
     if (!found) {
       usage(argv[0]);
-      srsgnb_terminate("Invalid profile {}.", profile_name);
+      report_error("Invalid profile {}.", profile_name);
     }
   }
 }

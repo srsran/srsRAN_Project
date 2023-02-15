@@ -113,7 +113,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const
                      ? static_cast<int>(params.offset_to_point_a.to_uint()) - desc.offset
                      : static_cast<int>(params.offset_to_point_a.to_uint() / 2) - desc.offset;
   if (rb_start < 0) {
-    srsgnb_terminate("Coreset#0 CRB starts before pointA.");
+    report_error("Coreset#0 CRB starts before pointA.");
   }
   cfg.set_coreset0_crbs({static_cast<unsigned>(rb_start), static_cast<unsigned>(rb_start) + desc.nof_rb_coreset});
   // Implicit CORESET#0 parameters as per TS38.211-7.3.2.2.

@@ -18,7 +18,7 @@ srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngc_config.tac                 = config.common_cell_cfg.tac;
 
   if (!config_helpers::is_valid_configuration(out_cfg)) {
-    srsgnb_terminate("Invalid CU-CP configuration. Exiting.\n");
+    report_error("Invalid CU-CP configuration.\n");
   }
 
   return out_cfg;
@@ -49,7 +49,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
         base_cell.dl_arfcn, base_cell.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
 
     if (!ssb_freq_loc.has_value()) {
-      srsgnb_terminate("Unable to derive a valid SSB pointA and k_SSB for cell id ({}). Exiting.\n", cell.pci);
+      report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", cell.pci);
     }
 
     srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
@@ -97,7 +97,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {
-      srsgnb_terminate("Invalid configuration DU cell detected: {}\n", error.error());
+      report_error("Invalid configuration DU cell detected: {}\n", error.error());
     }
     ++cell_id;
   }
@@ -115,30 +115,30 @@ std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appcon
 
   for (const qos_appconfig& qos : config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
-      srsgnb_terminate("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
     }
     // Convert RLC config
     auto& out_rlc = out_cfg[qos.five_qi].rlc;
     if (!from_string(out_rlc.mode, qos.rlc.mode)) {
-      srsgnb_terminate("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
     if (out_rlc.mode == rlc_mode::um_bidir) {
       // UM Config
       //< RX SN
       if (!from_number(out_rlc.um.rx.sn_field_length, qos.rlc.um.rx.sn_field_length)) {
-        srsgnb_terminate("Invalid RLC UM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.rx.sn_field_length);
+        report_error("Invalid RLC UM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.rx.sn_field_length);
       }
       //< RX t-reassembly
       out_rlc.um.rx.t_reassembly = qos.rlc.um.rx.t_reassembly;
       //< TX SN
       if (!from_number(out_rlc.um.tx.sn_field_length, qos.rlc.um.tx.sn_field_length)) {
-        srsgnb_terminate("Invalid RLC UM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
+        report_error("Invalid RLC UM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.um.tx.sn_field_length);
       }
     } else if (out_rlc.mode == rlc_mode::am) {
       // AM Config
       //<  TX SN
       if (!from_number(out_rlc.am.tx.sn_field_length, qos.rlc.am.tx.sn_field_length)) {
-        srsgnb_terminate("Invalid RLC AM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.tx.sn_field_length);
+        report_error("Invalid RLC AM TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.tx.sn_field_length);
       }
       out_rlc.am.tx.t_poll_retx     = qos.rlc.am.tx.t_poll_retx;
       out_rlc.am.tx.max_retx_thresh = qos.rlc.am.tx.max_retx_thresh;
@@ -146,7 +146,7 @@ std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appcon
       out_rlc.am.tx.poll_byte       = qos.rlc.am.tx.poll_byte;
       //< RX SN
       if (!from_number(out_rlc.am.rx.sn_field_length, qos.rlc.am.rx.sn_field_length)) {
-        srsgnb_terminate("Invalid RLC AM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.rx.sn_field_length);
+        report_error("Invalid RLC AM RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.rx.sn_field_length);
       }
       out_rlc.am.rx.t_reassembly      = qos.rlc.am.rx.t_reassembly;
       out_rlc.am.rx.t_status_prohibit = qos.rlc.am.rx.t_status_prohibit;
@@ -238,7 +238,7 @@ lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
   }
 
   if (!is_valid_lower_phy_config(out_cfg)) {
-    srsgnb_terminate("Invalid lower PHY configuration. Exiting.\n");
+    report_error("Invalid lower PHY configuration.\n");
   }
 
   return out_cfg;
@@ -352,7 +352,7 @@ radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&   
   }
 
   if (!validator.is_configuration_valid(out_cfg)) {
-    srsgnb_terminate("Invalid radio configuration. Exiting.\n");
+    report_error("Invalid radio configuration.\n");
   }
 
   return out_cfg;
@@ -434,7 +434,7 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
     cfg.softbuffer_config.expire_timeout_slots = 100 * nof_slots_per_subframe;
 
     if (!is_valid_upper_phy_config(cfg)) {
-      srsgnb_terminate("Invalid upper PHY configuration. Exiting.\n");
+      report_error("Invalid upper PHY configuration.\n");
     }
 
     out_cfg.push_back(cfg);
@@ -468,7 +468,7 @@ scheduler_expert_config srsgnb::generate_scheduler_expert_config(const gnb_appco
 
   error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {
-    srsgnb_terminate("Invalid scheduler expert configuration detected. Exiting.\n");
+    report_error("Invalid scheduler expert configuration detected.\n");
   }
 
   return out_cfg;
