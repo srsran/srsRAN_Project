@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {

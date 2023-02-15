@@ -8,7 +8,7 @@
  *
  */
 
-#include "ngc_impl.h"
+#include "ngap_impl.h"
 #include "ngap_asn1_helpers.h"
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"

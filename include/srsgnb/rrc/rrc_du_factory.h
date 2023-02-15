@@ -13,7 +13,7 @@
 #include "rrc_config.h"
 #include "rrc_ue_config.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/rrc/rrc_du.h"
 #include "srsgnb/rrc/rrc_ue.h"

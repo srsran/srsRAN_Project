@@ -7,9 +7,9 @@
 #
 
 set(SOURCES
-        ngc_factory.cpp
-        ngc_impl.cpp
-        ngc_asn1_packer.cpp
+        ngap_factory.cpp
+        ngap_impl.cpp
+        ngap_asn1_packer.cpp
         procedures/ng_setup_procedure.cpp
         procedures/ngap_initial_context_setup_procedure.cpp
         procedures/ngap_pdu_session_resource_setup_procedure.cpp

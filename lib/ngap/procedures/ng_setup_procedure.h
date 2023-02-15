@@ -12,7 +12,7 @@
 
 #include "../ngap_asn1_utils.h"
 #include "ngap_transaction_manager.h"
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/async_timer.h"
 

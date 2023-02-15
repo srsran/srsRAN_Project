@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/ngap/ngap.h"
-#include "srsgnb/ngap/ngc_types.h"
+#include "srsgnb/ngap/ngap_types.h"
 #include "srsgnb/security/security.h"
 #include "srsgnb/support/error_handling.h"
 

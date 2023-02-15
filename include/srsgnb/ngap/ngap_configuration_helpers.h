@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ngc_configuration.h"
+#include "ngap_configuration.h"
 
 namespace srsgnb {
 namespace config_helpers {

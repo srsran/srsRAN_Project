@@ -12,8 +12,8 @@
 
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
-#include "srsgnb/ngap/ngc.h"
-#include "srsgnb/ngap/ngc_configuration.h"
+#include "srsgnb/ngap/ngap.h"
+#include "srsgnb/ngap/ngap_configuration.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {

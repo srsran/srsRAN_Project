@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "ngc.h"
-#include "ngc_configuration.h"
+#include "ngap.h"
+#include "ngap_configuration.h"
 #include "srsgnb/cu_cp/ue_manager.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"

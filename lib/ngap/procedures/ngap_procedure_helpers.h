@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/cu_cp/ue_manager.h" // for ngap_ue
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {

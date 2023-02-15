@@ -14,9 +14,9 @@
 #include "ngap_test_messages.h"
 #include "test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/ngap/ngc.h"
-#include "srsgnb/ngap/ngc_configuration.h"
-#include "srsgnb/ngap/ngc_factory.h"
+#include "srsgnb/ngap/ngap.h"
+#include "srsgnb/ngap/ngap_configuration.h"
+#include "srsgnb/ngap/ngap_factory.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 

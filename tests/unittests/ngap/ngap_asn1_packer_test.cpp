@@ -8,8 +8,8 @@
  *
  */
 
+#include "lib/ngap/ngap_asn1_packer.h"
 #include "lib/ngap/ngap_asn1_utils.h"
-#include "lib/ngap/ngc_asn1_packer.h"
 #include "ngap_test_messages.h"
 #include "test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"

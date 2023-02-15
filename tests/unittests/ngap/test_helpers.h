@@ -17,7 +17,7 @@
 #include "srsgnb/cu_cp/ue_manager.h"
 #include "srsgnb/e1/cu_cp/e1_cu_cp.h"
 #include "srsgnb/gateways/network_gateway.h"
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/pcap/pcap.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include <unordered_map>

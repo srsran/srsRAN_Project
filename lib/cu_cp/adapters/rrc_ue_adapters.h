@@ -15,7 +15,7 @@
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/rrc/rrc_ue.h"

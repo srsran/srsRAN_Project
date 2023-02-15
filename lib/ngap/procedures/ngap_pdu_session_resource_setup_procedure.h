@@ -12,7 +12,7 @@
 
 #include "../ngap_asn1_utils.h"
 #include "srsgnb/cu_cp/ue_manager.h" // for ngap_ue
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {

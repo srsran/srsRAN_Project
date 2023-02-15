@@ -11,7 +11,7 @@
 #pragma once
 
 #include "cu_cp_configuration.h"
-#include "srsgnb/ngap/ngc_configuration_helpers.h"
+#include "srsgnb/ngap/ngap_configuration_helpers.h"
 
 namespace srsgnb {
 namespace config_helpers {

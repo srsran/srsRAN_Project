@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {

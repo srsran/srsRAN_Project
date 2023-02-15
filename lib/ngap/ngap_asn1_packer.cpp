@@ -8,7 +8,7 @@
  *
  */
 
-#include "ngc_asn1_packer.h"
+#include "ngap_asn1_packer.h"
 
 namespace srsgnb {
 

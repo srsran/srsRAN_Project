@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/rrc/rrc_ue.h"
 
 namespace srsgnb {

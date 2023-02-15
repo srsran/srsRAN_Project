@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/gateways/sctp_network_gateway.h"
-#include "srsgnb/ngap/ngc.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/pcap/pcap.h"
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
