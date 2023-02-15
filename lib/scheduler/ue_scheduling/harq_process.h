@@ -109,6 +109,9 @@ public:
     /// Maximum number of retransmission before Transport Block is reset.
     unsigned max_nof_harq_retxs = 0;
 
+    /// Downlink Assignment Index used in case of PDSCH.
+    uint8_t dai;
+
     bool empty() const { return state == state_t::empty; }
   };
 
@@ -166,8 +169,8 @@ public:
 
 protected:
   void tx_common(slot_point slot_tx, slot_point slot_ack);
-  void new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs);
-  void new_retx_tb_common(unsigned tb_idx);
+  void new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t dai);
+  void new_retx_tb_common(unsigned tb_idx, uint8_t dai);
 
   /// \brief Updates the ACK state of the TB of the HARQ process.
   bool ack_info_common(uint32_t tb_idx, bool ack);
@@ -234,15 +237,19 @@ public:
 
   /// \brief Called on every new TB transmission, when only one TB is active. It marks this HARQ process as busy and
   /// stores respective TB information.
-  void new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs);
+  void new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs, uint8_t dai);
 
   /// \brief Called on every TB retransmission, when only one TB is active. This function assumes that the HARQ TB is
   /// in pending new_retx state.
-  void new_retx(slot_point pdsch_slot, unsigned k1);
+  void new_retx(slot_point pdsch_slot, unsigned k1, uint8_t dai);
 
   /// \brief Called on every new TB transmission/retransmission, when 2 TBs are used.
   enum class tb_tx_request { newtx, retx, disabled };
-  void tx_2_tb(slot_point pdsch_slot, unsigned k1, span<const tb_tx_request> tb_tx_req, unsigned max_harq_nof_retxs);
+  void tx_2_tb(slot_point                pdsch_slot,
+               unsigned                  k1,
+               span<const tb_tx_request> tb_tx_req,
+               unsigned                  max_harq_nof_retxs,
+               uint8_t                   dai);
 
   /// \brief Updates the ACK state of the HARQ process.
   /// \return The number of bytes of the TB in case of ack==true, zero in case ack==false, and -1 if HARQ is inactive.
@@ -345,7 +352,7 @@ public:
 
   /// \brief Update the state of the DL HARQ for the specified UCI slot.
   /// \return HARQ process whose state was updated. Nullptr, if no HARQ for which the ACK/NACK was directed was found.
-  const dl_harq_process* dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack);
+  const dl_harq_process* dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai);
 
   /// Update UL HARQ state given the received CRC indication.
   int ul_crc_info(harq_id_t h_id, bool ack, slot_point pusch_slot);

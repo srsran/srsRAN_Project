@@ -35,7 +35,7 @@ TEST(harq_entity, when_all_harqs_are_allocated_harq_entity_cannot_find_empty_har
   unsigned    ack_delay = 4;
 
   for (unsigned i = 0; i != nof_harqs; ++i) {
-    harq_ent.find_empty_dl_harq()->new_tx(sl_tx, ack_delay, 4);
+    harq_ent.find_empty_dl_harq()->new_tx(sl_tx, ack_delay, 4, 0);
     harq_ent.find_empty_ul_harq()->new_tx(sl_tx, 4);
   }
   ASSERT_EQ(harq_ent.find_empty_dl_harq(), nullptr);
@@ -50,7 +50,7 @@ TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_retx)
   unsigned    ack_delay = 4;
 
   for (unsigned i = 0; i != nof_harqs; ++i) {
-    harq_ent.find_empty_dl_harq()->new_tx(sl_tx, ack_delay, 4);
+    harq_ent.find_empty_dl_harq()->new_tx(sl_tx, ack_delay, 4, 0);
   }
   for (unsigned i = 0; i != max_ack_wait_slots + ack_delay; ++i) {
     ASSERT_EQ(harq_ent.find_empty_dl_harq(), nullptr);

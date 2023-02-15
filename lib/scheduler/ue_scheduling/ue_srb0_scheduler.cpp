@@ -242,7 +242,7 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
                                         unsigned                   tbs_bytes)
 {
   // Allocate DL HARQ.
-  h_dl.new_tx(pdsch_slot, k1, expert_cfg.max_nof_harq_retxs);
+  h_dl.new_tx(pdsch_slot, k1, expert_cfg.max_nof_harq_retxs, 0);
 
   // Fill DL PDCCH DCI.
   build_dci_f1_0_tc_rnti(pdcch.dci,

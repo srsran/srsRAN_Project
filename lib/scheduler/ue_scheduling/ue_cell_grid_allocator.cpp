@@ -196,10 +196,10 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // Allocate UE UL HARQ.
   if (h_dl.empty()) {
     // It is a new tx.
-    h_dl.new_tx(pdsch_alloc.slot, k1, expert_cfg.max_nof_harq_retxs);
+    h_dl.new_tx(pdsch_alloc.slot, k1, expert_cfg.max_nof_harq_retxs, uci.dai);
   } else {
     // It is a retx.
-    h_dl.new_retx(pdsch_alloc.slot, k1);
+    h_dl.new_retx(pdsch_alloc.slot, k1, uci.dai);
   }
 
   // Fill DL PDCCH DCI PDU.

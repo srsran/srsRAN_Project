@@ -146,8 +146,9 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
                                        slot_point                             uci_sl,
                                        span<const mac_harq_ack_report_status> harq_bits)
 {
-  for (const mac_harq_ack_report_status ack_value : harq_bits) {
-    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(uci_sl, ack_value);
+  for (unsigned dai = 0; dai != harq_bits.size(); ++dai) {
+    const mac_harq_ack_report_status ack_value = harq_bits[dai];
+    const dl_harq_process*           h_dl      = ue_cc.harqs.dl_ack_info(uci_sl, ack_value, dai);
     if (h_dl != nullptr) {
       // Log Event.
       ev_logger.enqueue(
@@ -163,30 +164,6 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
         // Notify metric.
         metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, ack_value == mac_harq_ack_report_status::ack);
       }
-    }
-  }
-}
-
-void ue_event_manager::handle_harq_ind(ue_cell&                                                   ue_cc,
-                                       slot_point                                                 uci_sl,
-                                       const bounded_bitset<uci_constants::MAX_NOF_PAYLOAD_BITS>& harq_bits)
-{
-  for (unsigned bit_idx = 0; bit_idx != harq_bits.size(); ++bit_idx) {
-    const dl_harq_process* h_dl = ue_cc.harqs.dl_ack_info(
-        uci_sl, harq_bits.test(bit_idx) ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack);
-    if (h_dl != nullptr) {
-      // Log Event.
-      ev_logger.enqueue(scheduler_event_logger::harq_ack_event{
-          ue_cc.ue_index,
-          ue_cc.rnti(),
-          ue_cc.cell_index,
-          uci_sl,
-          h_dl->id,
-          harq_bits.test(bit_idx) ? mac_harq_ack_report_status::ack : mac_harq_ack_report_status::nack,
-          units::bytes{h_dl->last_alloc_params().tb[0]->tbs_bytes}});
-
-      // Notify metric.
-      metrics_handler.handle_dl_harq_ack(ue_cc.ue_index, harq_bits.test(bit_idx));
     }
   }
 }

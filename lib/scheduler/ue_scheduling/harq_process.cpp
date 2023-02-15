@@ -105,7 +105,7 @@ void detail::harq_process<IsDownlink>::tx_common(slot_point slot_tx_, slot_point
 }
 
 template <bool IsDownlink>
-void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs)
+void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t dai)
 {
   srsgnb_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
   srsgnb_assert(empty(tb_idx), "Cannot allocate newTx non-empty HARQ TB");
@@ -114,16 +114,18 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigne
   tb_array[tb_idx].max_nof_harq_retxs = max_nof_harq_retxs;
   tb_array[tb_idx].ack_state          = false;
   tb_array[tb_idx].nof_retxs          = 0;
+  tb_array[tb_idx].dai                = dai;
 }
 
 template <bool IsDownlink>
-void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx)
+void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8_t dai)
 {
   srsgnb_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
   srsgnb_assert(tb_array[tb_idx].state == transport_block::state_t::pending_retx,
                 "Cannot allocate reTx in HARQ without a pending reTx");
   tb_array[tb_idx].state     = transport_block::state_t::waiting_ack;
   tb_array[tb_idx].ack_state = false;
+  tb_array[tb_idx].dai       = dai;
   tb_array[tb_idx].nof_retxs++;
 }
 
@@ -131,25 +133,26 @@ void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx)
 template class detail::harq_process<true>;
 template class detail::harq_process<false>;
 
-void dl_harq_process::new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs)
+void dl_harq_process::new_tx(slot_point pdsch_slot, unsigned k1, unsigned max_harq_nof_retxs, uint8_t dai)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
-  base_type::new_tx_tb_common(0, max_harq_nof_retxs);
+  base_type::new_tx_tb_common(0, max_harq_nof_retxs, dai);
   prev_tx_params = {};
   prev_tx_params.tb[0].emplace();
   prev_tx_params.tb[1].reset();
 }
 
-void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1)
+void dl_harq_process::new_retx(slot_point pdsch_slot, unsigned k1, uint8_t dai)
 {
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
-  base_type::new_retx_tb_common(0);
+  base_type::new_retx_tb_common(0, dai);
 }
 
 void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
                               unsigned                  k1,
                               span<const tb_tx_request> tb_tx_req,
-                              unsigned                  max_harq_nof_retxs)
+                              unsigned                  max_harq_nof_retxs,
+                              uint8_t                   dai)
 {
   srsgnb_assert(tb_tx_req.size() == 2, "This function should only be called when 2 TBs are active");
   srsgnb_assert(
@@ -158,10 +161,10 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   for (unsigned i = 0; i != tb_tx_req.size(); ++i) {
     if (tb_tx_req[i] == tb_tx_request::newtx) {
-      base_type::new_tx_tb_common(i, max_harq_nof_retxs);
+      base_type::new_tx_tb_common(i, max_harq_nof_retxs, dai + i);
       prev_tx_params.tb[i].emplace();
     } else if (tb_tx_req[i] == tb_tx_request::retx) {
-      base_type::new_retx_tb_common(i);
+      base_type::new_retx_tb_common(i, dai + i);
     } else {
       prev_tx_params.tb[i].reset();
     }
@@ -227,13 +230,13 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
 void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
 {
   harq_process::tx_common(pusch_slot, pusch_slot);
-  base_type::new_tx_tb_common(0, max_harq_retxs);
+  base_type::new_tx_tb_common(0, max_harq_retxs, 0);
 }
 
 void ul_harq_process::new_retx(slot_point pusch_slot)
 {
   harq_process::tx_common(pusch_slot, pusch_slot);
-  base_type::new_retx_tb_common(0);
+  base_type::new_retx_tb_common(0, 0);
 }
 
 int ul_harq_process::crc_info(bool ack)
@@ -301,14 +304,14 @@ void harq_entity::slot_indication(slot_point slot_tx_)
   }
 }
 
-const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack)
+const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ack_report_status ack, uint8_t dai)
 {
   // For the time being, we assume 1 TB only.
   static const size_t tb_index = 0;
 
   const dl_harq_process* harq_candidate = nullptr;
   for (dl_harq_process& h_dl : dl_harqs) {
-    if (h_dl.slot_ack() == uci_slot) {
+    if (h_dl.slot_ack() == uci_slot and h_dl.tb(0).dai == dai) {
       if (not h_dl.empty()) {
         // Update HARQ state.
         h_dl.ack_info(tb_index, ack);

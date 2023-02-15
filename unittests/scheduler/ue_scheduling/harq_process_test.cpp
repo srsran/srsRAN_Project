@@ -55,7 +55,7 @@ TEST_F(dl_harq_process_tester, newtx_set_harq_to_not_empty)
   unsigned      k1 = 4, max_harq_retxs = 5, tbs_bytes = 1000;
   sch_mcs_index mcs = 10;
 
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   ASSERT_FALSE(h_dl.empty());
   ASSERT_FALSE(h_dl.empty(0));
   ASSERT_TRUE(h_dl.empty(1));
@@ -82,7 +82,7 @@ TEST_F(dl_harq_process_tester, retx_of_empty_harq_asserts)
 {
   (void)(::testing::GTEST_FLAG(death_test_style) = "threadsafe");
   slot_point sl_tx{0, 0};
-  ASSERT_DEATH(h_dl.new_retx(sl_tx, 4), ".*") << "Retxing an empty HARQ should assert";
+  ASSERT_DEATH(h_dl.new_retx(sl_tx, 4, 0), ".*") << "Retxing an empty HARQ should assert";
 }
 #endif
 
@@ -102,11 +102,11 @@ TEST_F(dl_harq_process_timeout_tester, when_max_retx_exceeded_and_nack_is_receiv
   unsigned   k1 = 1, max_harq_retxs = 1;
   slot_point sl_tx{0, 0};
 
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   h_dl.slot_indication(++sl_tx);
   ASSERT_FALSE(h_dl.has_pending_retx(0));
   ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::nack), 0);
-  h_dl.new_retx(sl_tx, k1);
+  h_dl.new_retx(sl_tx, k1, 0);
   h_dl.slot_indication(++sl_tx);
   ASSERT_EQ(h_dl.ack_info(0, mac_harq_ack_report_status::nack), 0);
   ASSERT_TRUE(h_dl.empty());
@@ -120,10 +120,10 @@ TEST_F(dl_harq_process_timeout_tester, when_harq_has_no_pending_retx_calling_new
   unsigned   k1 = 1, max_harq_retxs = 1;
   slot_point sl_tx{0, 0};
 
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   ASSERT_TRUE(not h_dl.empty(0) and not h_dl.has_pending_retx(0));
-  ASSERT_DEATH(h_dl.new_tx(sl_tx, k1, max_harq_retxs), ".*");
-  ASSERT_DEATH(h_dl.new_retx(sl_tx, k1), ".*");
+  ASSERT_DEATH(h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0), ".*");
+  ASSERT_DEATH(h_dl.new_retx(sl_tx, k1, 0), ".*");
 }
 #endif
 
@@ -161,7 +161,7 @@ protected:
 
 TEST_P(dl_harq_process_param_tester, when_ack_is_received_harq_is_set_as_empty)
 {
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 - 1; ++i) {
     ASSERT_FALSE(h_dl.empty());
     ASSERT_FALSE(h_dl.has_pending_retx());
@@ -174,7 +174,7 @@ TEST_P(dl_harq_process_param_tester, when_ack_is_received_harq_is_set_as_empty)
 
 TEST_P(dl_harq_process_param_tester, when_ack_rx_wait_time_elapsed_harq_is_available_for_retx)
 {
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   bool ndi = h_dl.tb(0).ndi;
   for (unsigned i = 0; i != this->max_ack_wait_slots + this->k1; ++i) {
     ASSERT_FALSE(h_dl.empty()) << "It is too early for HARQ to be reset";
@@ -187,7 +187,7 @@ TEST_P(dl_harq_process_param_tester, when_ack_rx_wait_time_elapsed_harq_is_avail
     ASSERT_FALSE(h_dl.empty()) << "It is too early for HARQ to be reset";
     ASSERT_TRUE(h_dl.has_pending_retx()) << "It is too early for HARQ to be available for retx";
 
-    h_dl.new_retx(sl_tx, this->k1);
+    h_dl.new_retx(sl_tx, this->k1, 0);
     ASSERT_EQ(h_dl.tb(0).ndi, ndi) << "NDI should not change during retxs";
     for (unsigned j = 0; j != max_ack_wait_slots + this->k1; ++j) {
       ASSERT_FALSE(h_dl.empty()) << "It is too early for HARQ to be reset";
@@ -202,7 +202,7 @@ TEST_P(dl_harq_process_param_tester, when_ack_rx_wait_time_elapsed_harq_is_avail
 
 TEST_P(dl_harq_process_param_tester, harq_newtxs_flip_ndi)
 {
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != this->max_ack_wait_slots + k1 - 1; ++i) {
     ASSERT_FALSE(h_dl.empty());
     ASSERT_FALSE(h_dl.has_pending_retx());
@@ -211,7 +211,7 @@ TEST_P(dl_harq_process_param_tester, harq_newtxs_flip_ndi)
 
   bool prev_ndi = h_dl.tb(0).ndi;
   ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) >= 0);
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   ASSERT_NE(prev_ndi, h_dl.tb(0).ndi);
 }
 
@@ -256,7 +256,7 @@ protected:
 TEST_F(dl_harq_process_param_tester_dtx, test_dtx)
 {
   const unsigned dtx_slot = 1;
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     // Notify HARQ process with DTX (ACK not decoded).
     if (i == dtx_slot) {
@@ -282,7 +282,7 @@ TEST_F(dl_harq_process_param_tester_dtx, test_dtx_ack)
   // DTX arrives first, then NACK.
   const unsigned dtx_slot = 1;
   const unsigned ack_slot = 2;
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == dtx_slot) {
       ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
@@ -310,7 +310,7 @@ TEST_F(dl_harq_process_param_tester_dtx, test_ack_dtx)
   // ACK arrives first, then DTX.
   const unsigned ack_slot = 1;
   const unsigned dtx_slot = 2;
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == ack_slot) {
       ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::ack) >= 0);
@@ -337,7 +337,7 @@ TEST_F(dl_harq_process_param_tester_dtx, test_dtx_nack)
   // DTX arrives first, then NACK.
   const unsigned dtx_slot  = 1;
   const unsigned nack_slot = 2;
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == dtx_slot) {
       ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::dtx) >= 0);
@@ -365,7 +365,7 @@ TEST_F(dl_harq_process_param_tester_dtx, test_nack_dtx)
   // NACK arrives first, then DTX.
   const unsigned nack_slot = 1;
   const unsigned dtx_slot  = 2;
-  h_dl.new_tx(sl_tx, k1, max_harq_retxs);
+  h_dl.new_tx(sl_tx, k1, max_harq_retxs, 0);
   for (unsigned i = 0; i != max_ack_wait_slots + k1 + 1; ++i) {
     if (i == nack_slot) {
       ASSERT_TRUE(h_dl.ack_info(0, mac_harq_ack_report_status::nack) >= 0);
