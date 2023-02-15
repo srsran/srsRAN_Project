@@ -48,14 +48,14 @@ protected:
     srslog::init();
 
     // create message handler for CU and DU to relay messages back and forth
-    dummy_cu_cp_f1c_pdu_notifier      cu_msg_handler(nullptr, nullptr);
-    dummy_f1c_pdu_notifier            du_msg_handler(nullptr);
-    srs_cu_cp::dummy_ngc_amf_notifier ngc_amf_notifier;
+    dummy_cu_cp_f1c_pdu_notifier       cu_msg_handler(nullptr, nullptr);
+    dummy_f1c_pdu_notifier             du_msg_handler(nullptr);
+    srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
     cu_cfg.cu_cp_executor = &workers.ctrl_worker;
     cu_cfg.f1c_notifier   = &cu_msg_handler;
-    cu_cfg.ngc_notifier   = &ngc_amf_notifier;
+    cu_cfg.ngap_notifier  = &ngap_amf_notifier;
 
     // create and start CU
     cu_cp_obj = create_cu_cp(cu_cfg);

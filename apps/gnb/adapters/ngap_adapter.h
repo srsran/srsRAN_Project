@@ -20,8 +20,8 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// \brief NGAP bridge that uses the IO broker to handle the SCTP connection
-class ngap_network_adapter : public ngc_message_notifier,
-                             public ngc_message_handler,
+class ngap_network_adapter : public ngap_message_notifier,
+                             public ngap_message_handler,
                              public sctp_network_gateway_control_notifier,
                              public network_gateway_data_notifier
 {
@@ -39,16 +39,16 @@ public:
     gateway_ctrl_handler = gateway_ctrl_handler_;
     gateway_data_handler = gateway_data_handler_;
 
-    packer = std::make_unique<ngc_asn1_packer>(*gateway_data_handler, *this, pcap);
+    packer = std::make_unique<ngap_asn1_packer>(*gateway_data_handler, *this, pcap);
 
     gateway_ctrl_handler->create_and_connect();
     broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
   }
 
-  void connect_ngc(ngc_message_handler* ngc_msg_handler_, ngc_event_handler* ngc_evt_handler_)
+  void connect_ngap(ngap_message_handler* ngap_msg_handler_, ngap_event_handler* event_handler_)
   {
-    ngc_msg_handler = ngc_msg_handler_;
-    ngc_evt_handler = ngc_evt_handler_;
+    ngap_msg_handler = ngap_msg_handler_;
+    event_handler    = event_handler_;
   }
 
   void disconnect_gateway()
@@ -64,7 +64,7 @@ public:
 
 private:
   // NGAP calls interface to send (unpacked) NGAP PDUs
-  void on_new_message(const ngc_message& msg) override
+  void on_new_message(const ngap_message& msg) override
   {
     if (packer) {
       packer->handle_message(msg);
@@ -84,16 +84,16 @@ private:
   }
 
   // The packer calls this interface to inject unpacked NGAP PDUs
-  void handle_message(const ngc_message& msg) override
+  void handle_message(const ngap_message& msg) override
   {
-    report_fatal_error_if_not(ngc_msg_handler, "NGAP handler not set.");
-    ngc_msg_handler->handle_message(msg);
+    report_fatal_error_if_not(ngap_msg_handler, "NGAP handler not set.");
+    ngap_msg_handler->handle_message(msg);
   }
 
   void on_connection_loss() override
   {
-    report_fatal_error_if_not(ngc_evt_handler, "NGAP handler not set.");
-    ngc_evt_handler->handle_connection_loss();
+    report_fatal_error_if_not(event_handler, "NGAP handler not set.");
+    event_handler->handle_connection_loss();
   }
 
   void on_connection_established() override
@@ -104,11 +104,11 @@ private:
 
   io_broker&                         broker;
   ngap_pcap&                         pcap;
-  std::unique_ptr<ngc_asn1_packer>   packer;
+  std::unique_ptr<ngap_asn1_packer>  packer;
   sctp_network_gateway_controller*   gateway_ctrl_handler = nullptr;
   sctp_network_gateway_data_handler* gateway_data_handler = nullptr;
-  ngc_message_handler*               ngc_msg_handler      = nullptr;
-  ngc_event_handler*                 ngc_evt_handler      = nullptr;
+  ngap_message_handler*              ngap_msg_handler     = nullptr;
+  ngap_event_handler*                event_handler        = nullptr;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCTP-GW");
 };

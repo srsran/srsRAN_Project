@@ -45,8 +45,8 @@ protected:
       rrc_ue_create_msg.srbs[i].rx_sec_notifier = rx_security_notifier.get();
     }
     rrc_ue = std::make_unique<rrc_ue_impl>(rrc_ue_ev_notifier,
-                                           rrc_ue_ngc_notifier,
-                                           rrc_ue_ngc_notifier,
+                                           rrc_ue_ngap_notifier,
+                                           rrc_ue_ngap_notifier,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -128,7 +128,7 @@ protected:
 
   void check_smc_pdu() { ASSERT_EQ(rrc_pdu_notifier->last_pdu, rrc_smc_pdu); }
 
-  void check_initial_ue_message_sent() { ASSERT_TRUE(rrc_ue_ngc_notifier.initial_ue_msg_received); }
+  void check_initial_ue_message_sent() { ASSERT_TRUE(rrc_ue_ngap_notifier.initial_ue_msg_received); }
 
   void check_integrity_enabled(bool enabled)
   {
@@ -171,7 +171,7 @@ private:
   rrc_cfg_t        cfg{}; // empty config
 
   dummy_rrc_ue_du_processor_adapter               rrc_ue_ev_notifier;
-  dummy_rrc_ue_ngc_adapter                        rrc_ue_ngc_notifier;
+  dummy_rrc_ue_ngap_adapter                       rrc_ue_ngap_notifier;
   timer_manager                                   timers;
   std::unique_ptr<dummy_rrc_pdu_notifier>         rrc_pdu_notifier;
   std::unique_ptr<dummy_rrc_tx_security_notifier> tx_security_notifier;

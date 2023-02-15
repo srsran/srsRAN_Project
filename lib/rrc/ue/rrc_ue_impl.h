@@ -28,7 +28,7 @@ class rrc_ue_impl final : public rrc_ue_interface
 public:
   rrc_ue_impl(rrc_ue_du_processor_notifier&          du_proc_notif_,
               rrc_ue_nas_notifier&                   nas_notif_,
-              rrc_ue_control_notifier&               ngc_ctrl_notif_,
+              rrc_ue_control_notifier&               ngap_ctrl_notif_,
               const ue_index_t                       ue_index_,
               const rnti_t                           c_rnti_,
               const rrc_cell_context                 cell_,
@@ -122,8 +122,8 @@ private:
 
   rrc_ue_context_t              context;
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&          nas_notifier;          // PDU notifier to the NGC
-  rrc_ue_control_notifier&      ngc_ctrl_notifier;     // Control message notifier to the NGC
+  rrc_ue_nas_notifier&          nas_notifier;          // PDU notifier to the NGAP
+  rrc_ue_control_notifier&      ngap_ctrl_notifier;    // Control message notifier to the NGAP
   srb_notifiers_array           srbs;                  // set notifiers for all SRBs
   byte_buffer                   du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&        task_sched;

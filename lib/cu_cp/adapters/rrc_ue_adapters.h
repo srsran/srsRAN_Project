@@ -142,15 +142,15 @@ private:
   pdcp_rx_upper_control_interface& pdcp_handler;
 };
 
-// Adapter between RRC UE and NGC
-class rrc_ue_ngc_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
+// Adapter between RRC UE and NGAP
+class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
-  void connect_ngc(ngc_nas_message_handler& ngc_nas_msg_handler_) { ngc_nas_msg_handler = &ngc_nas_msg_handler_; }
+  void connect_ngap(ngap_nas_message_handler& ngap_nas_msg_handler_) { ngap_nas_msg_handler = &ngap_nas_msg_handler_; }
 
   void on_initial_ue_message(const initial_ue_message& msg) override
   {
-    srsgnb_assert(ngc_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
+    srsgnb_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
 
     ngap_initial_ue_message ngap_init_ue_msg;
     ngap_init_ue_msg.ue_index = msg.ue_index;
@@ -163,12 +163,12 @@ public:
     ngap_init_ue_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
     ngap_init_ue_msg.tac = msg.cell.tac;
 
-    ngc_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
+    ngap_nas_msg_handler->handle_initial_ue_message(ngap_init_ue_msg);
   }
 
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
   {
-    srsgnb_assert(ngc_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
+    srsgnb_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
 
     ngap_ul_nas_transport_message ngap_ul_nas_msg;
     ngap_ul_nas_msg.ue_index = msg.ue_index;
@@ -178,11 +178,11 @@ public:
     ngap_ul_nas_msg.nr_cgi.plmn_id.from_string(msg.cell.cgi.plmn_hex);
     ngap_ul_nas_msg.tac = msg.cell.tac;
 
-    ngc_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
+    ngap_nas_msg_handler->handle_ul_nas_transport_message(ngap_ul_nas_msg);
   }
 
 private:
-  ngc_nas_message_handler* ngc_nas_msg_handler = nullptr;
+  ngap_nas_message_handler* ngap_nas_msg_handler = nullptr;
 
   /// \brief Convert a RRC Establishment Cause to a NGAP RRC Establishment Cause.
   /// \param establishment_cause The RRC Establishment Cause.

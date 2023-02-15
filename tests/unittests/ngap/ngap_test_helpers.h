@@ -23,7 +23,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Fixture class for NGC
+/// Fixture class for NGAP
 class ngap_test : public ::testing::Test
 {
 protected:
@@ -57,15 +57,15 @@ protected:
 
   std::unordered_map<ue_index_t, test_ue> test_ues;
 
-  ngc_configuration               cfg;
-  timer_manager                   timers;
-  dummy_ngap_ue_manager           ue_mng;
-  dummy_ngc_amf_notifier          msg_notifier;
-  dummy_ngc_rrc_ue_notifier       rrc_ue_notifier;
-  dummy_ngc_du_processor_notifier du_processor_notifier;
-  dummy_ngc_ue_task_scheduler     ngap_ue_task_scheduler;
-  manual_task_worker              ctrl_worker{128};
-  std::unique_ptr<ngc_interface>  ngap;
+  ngap_configuration               cfg;
+  timer_manager                    timers;
+  dummy_ngap_ue_manager            ue_mng;
+  dummy_ngap_amf_notifier          msg_notifier;
+  dummy_ngap_rrc_ue_notifier       rrc_ue_notifier;
+  dummy_ngap_du_processor_notifier du_processor_notifier;
+  dummy_ngap_ue_task_scheduler     ngap_ue_task_scheduler;
+  manual_task_worker               ctrl_worker{128};
+  std::unique_ptr<ngap_interface>  ngap;
 };
 
 } // namespace srs_cu_cp

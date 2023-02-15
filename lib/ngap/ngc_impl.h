@@ -24,36 +24,36 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-class ngc_event_manager;
+class ngap_event_manager;
 
-class ngc_impl final : public ngc_interface
+class ngap_impl final : public ngap_interface
 {
 public:
-  ngc_impl(ngc_configuration&     ngc_cfg_,
-           ngc_ue_task_scheduler& task_sched_,
-           ngap_ue_manager&       ue_manager_,
-           ngc_message_notifier&  ngc_notifier_,
-           task_executor&         ctrl_exec_);
-  ~ngc_impl();
+  ngap_impl(ngap_configuration&     ngap_cfg_,
+            ngap_ue_task_scheduler& task_sched_,
+            ngap_ue_manager&        ue_manager_,
+            ngap_message_notifier&  ngap_notifier_,
+            task_executor&          ctrl_exec_);
+  ~ngap_impl();
 
-  // ngc ue control manager functions
-  void create_ngc_ue(ue_index_t                         ue_index,
-                     ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                     ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                     ngc_du_processor_control_notifier& du_processor_ctrl_notifier) override;
+  // ngap ue control manager functions
+  void create_ngap_ue(ue_index_t                          ue_index,
+                      ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+                      ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+                      ngap_du_processor_control_notifier& du_processor_ctrl_notifier) override;
 
-  // ngc connection manager functions
+  // ngap connection manager functions
   async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) override;
 
   void handle_initial_ue_message(const ngap_initial_ue_message& msg) override;
 
   void handle_ul_nas_transport_message(const ngap_ul_nas_transport_message& msg) override;
 
-  // ngc message handler functions
-  void handle_message(const ngc_message& msg) override;
+  // ngap message handler functions
+  void handle_message(const ngap_message& msg) override;
   void handle_connection_loss() override {}
 
-  // ngc_statistic_interface
+  // ngap_statistic_interface
   size_t get_nof_ues() const override;
 
 private:
@@ -85,12 +85,12 @@ private:
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::ngap::unsuccessful_outcome_s& outcome);
 
-  srslog::basic_logger&  logger;
-  ngc_configuration&     ngc_cfg;
-  ngc_ue_task_scheduler& task_sched;
-  ngap_ue_manager&       ue_manager;
-  ngc_message_notifier&  ngc_notifier;
-  task_executor&         ctrl_exec;
+  srslog::basic_logger&   logger;
+  ngap_configuration&     ngap_cfg;
+  ngap_ue_task_scheduler& task_sched;
+  ngap_ue_manager&        ue_manager;
+  ngap_message_notifier&  ngap_notifier;
+  task_executor&          ctrl_exec;
 
   ngap_transaction_manager ev_mng;
 };

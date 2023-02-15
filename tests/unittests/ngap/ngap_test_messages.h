@@ -78,43 +78,43 @@ const static uint8_t ng_setup_request_packed[] = {
 ng_setup_request generate_ng_setup_request();
 
 /// \brief Generate a dummy NG Setup Response.
-ngc_message generate_ng_setup_response();
+ngap_message generate_ng_setup_response();
 
 /// \brief Generate a dummy NG Setup Failure.
-ngc_message generate_ng_setup_failure();
+ngap_message generate_ng_setup_failure();
 
 /// \brief Generate a dummy NG Setup Failure with a time to wait.
-ngc_message generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wait_e time_to_wait);
+ngap_message generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wait_e time_to_wait);
 
 const uint32_t nas_pdu_len = 4; // Dummy length used for testing (content is not important)
 /// \brief Generate a dummy Initial UE Message.
 ngap_initial_ue_message generate_initial_ue_message(ue_index_t ue_index);
 
 /// \brief Generate a dummy DL NAS Transport Message.
-ngc_message generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a dummy UL NAS Transport Message.
 ngap_ul_nas_transport_message generate_ul_nas_transport_message(ue_index_t ue_index);
 
 /// \brief Generate a dummy Initial Context Setup Request base.
-ngc_message generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a valid dummy Initial Context Setup Request Message.
-ngc_message generate_valid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message generate_valid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate an invalid dummy Initial Context Setup Request Message.
-ngc_message generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a dummy PDU Session Resource Setup Request base.
-ngc_message generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a valid dummy PDU Session Resource Setup Request Message.
-ngc_message generate_valid_pdu_session_resource_setup_request_message(amf_ue_id_t      amf_ue_id,
-                                                                      ran_ue_id_t      ran_ue_id,
-                                                                      pdu_session_id_t pdu_session_id);
+ngap_message generate_valid_pdu_session_resource_setup_request_message(amf_ue_id_t      amf_ue_id,
+                                                                       ran_ue_id_t      ran_ue_id,
+                                                                       pdu_session_id_t pdu_session_id);
 
 /// \brief Generate an invalid dummy PDU Session Resource Setup Request Message.
-ngc_message generate_invalid_pdu_session_resource_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+ngap_message generate_invalid_pdu_session_resource_setup_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate a dummy PDU Session Resource Setup Response.
 cu_cp_pdu_session_resource_setup_response

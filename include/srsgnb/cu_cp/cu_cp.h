@@ -125,11 +125,11 @@ public:
 
   /// \brief Get the NG message handler interface.
   /// \return The NG message handler interface.
-  virtual ngc_message_handler& get_ngc_message_handler() = 0;
+  virtual ngap_message_handler& get_ngap_message_handler() = 0;
 
   /// \brief Get the NG event handler interface.
   /// \return The NG event handler interface.
-  virtual ngc_event_handler& get_ngc_event_handler() = 0;
+  virtual ngap_event_handler& get_ngap_event_handler() = 0;
 
   /// \brief Get the state of the AMF connection.
   /// \return True if AMF is connected, false otherwise.

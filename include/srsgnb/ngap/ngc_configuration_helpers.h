@@ -16,9 +16,9 @@ namespace srsgnb {
 namespace config_helpers {
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
-inline srs_cu_cp::ngc_configuration make_default_ngc_config()
+inline srs_cu_cp::ngap_configuration make_default_ngap_config()
 {
-  srs_cu_cp::ngc_configuration cfg{};
+  srs_cu_cp::ngap_configuration cfg{};
   cfg.gnb_id        = 411;
   cfg.ran_node_name = "srsgnb01";
   cfg.plmn          = "00101";
@@ -27,7 +27,7 @@ inline srs_cu_cp::ngc_configuration make_default_ngc_config()
 }
 
 /// Returns true if the given CU-CP configuration is valid, otherwise false.
-inline bool is_valid_configuration(const srs_cu_cp::ngc_configuration& config)
+inline bool is_valid_configuration(const srs_cu_cp::ngap_configuration& config)
 {
   if (config.ran_node_name.empty()) {
     fmt::print("RAN node name is empty");

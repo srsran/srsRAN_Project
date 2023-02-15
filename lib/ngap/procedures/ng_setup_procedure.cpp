@@ -15,7 +15,7 @@ using namespace srsgnb::srs_cu_cp;
 using namespace asn1::ngap;
 
 ng_setup_procedure::ng_setup_procedure(const ng_setup_request&   request_,
-                                       ngc_message_notifier&     amf_notif_,
+                                       ngap_message_notifier&    amf_notif_,
                                        ngap_transaction_manager& ev_mng_,
                                        timer_manager&            timers,
                                        srslog::basic_logger&     logger_) :
@@ -47,7 +47,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response>>&
     }
 
     // Await timer.
-    logger.info("Received NGSetupFailure with Time to Wait IE. Reinitiating NG setup in {}s (retry={}/{})",
+    logger.info("Received NGSetupFailure with Time to Wait IE - Reinitiating NG setup in {}s (retry={}/{})",
                 time_to_wait,
                 ng_setup_retry_no,
                 request.max_setup_retries);
@@ -60,8 +60,8 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response>>&
 
 void ng_setup_procedure::send_ng_setup_request()
 {
-  ngc_message msg = {};
-  // set NGC PDU contents
+  ngap_message msg = {};
+  // set NGAP PDU contents
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
   msg.pdu.init_msg().value.ng_setup_request() = request.msg;
@@ -100,7 +100,7 @@ ng_setup_response ng_setup_procedure::create_ng_setup_result()
   ng_setup_response res{};
 
   if (transaction_sink.successful()) {
-    logger.debug("Received NGC PDU with successful outcome.");
+    logger.debug("Received PDU with successful outcome");
     res.msg     = transaction_sink.response();
     res.success = true;
   } else {

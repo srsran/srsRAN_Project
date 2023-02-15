@@ -480,15 +480,15 @@ int main(int argc, char** argv)
   cu_cp_cfg.cu_cp_executor                 = workers.cu_cp_exec.get();
   cu_cp_cfg.f1c_notifier                   = &f1c_cu_to_du_adapter;
   cu_cp_cfg.e1_notifier                    = &e1_cp_to_up_adapter;
-  cu_cp_cfg.ngc_notifier                   = ngap_adapter.get();
+  cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
 
   // create CU-CP.
   std::unique_ptr<srsgnb::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cp_cfg));
   cu_cp_obj->handle_new_du_connection();    // trigger DU addition
   cu_cp_obj->handle_new_cu_up_connection(); // trigger CU-UP addition
 
-  // Connect NGAP adpter to CU-CP to pass NGC messages.
-  ngap_adapter->connect_ngc(&cu_cp_obj->get_ngc_message_handler(), &cu_cp_obj->get_ngc_event_handler());
+  // Connect NGAP adpter to CU-CP to pass NGAP messages.
+  ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
 
   // attach E1AP adapters to CU-UP and CU-CP
   e1_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1_message_handler(srsgnb::srs_cu_cp::uint_to_cu_up_index(0)));

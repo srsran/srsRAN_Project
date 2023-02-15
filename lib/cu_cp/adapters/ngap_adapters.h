@@ -25,11 +25,11 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between NGC and Task Scheduler
-class ngc_to_cu_cp_task_scheduler : public ngc_ue_task_scheduler
+/// Adapter between NGAP and Task Scheduler
+class ngap_to_cu_cp_task_scheduler : public ngap_ue_task_scheduler
 {
 public:
-  ngc_to_cu_cp_task_scheduler() = default;
+  ngap_to_cu_cp_task_scheduler() = default;
 
   void connect_cu_cp(ue_task_scheduler& cu_cp_task_sched_) { cu_cp_task_sched = &cu_cp_task_sched_; }
 
@@ -78,11 +78,11 @@ private:
   cu_cp_ngap_connection_handler* cu_cp_handler = nullptr;
 };
 
-/// Adapter between NGC and RRC UE
-class ngc_rrc_ue_adapter : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
+/// Adapter between NGAP and RRC UE
+class ngap_rrc_ue_adapter : public ngap_rrc_ue_pdu_notifier, public ngap_rrc_ue_control_notifier
 {
 public:
-  ngc_rrc_ue_adapter() = default;
+  ngap_rrc_ue_adapter() = default;
 
   void connect_rrc_ue(rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler_,
                       rrc_ue_control_message_handler*       rrc_ue_ctrl_handler_,
@@ -126,11 +126,11 @@ private:
   srslog::basic_logger&                 logger                  = srslog::fetch_basic_logger("NGAP");
 };
 
-/// Adapter between NGC and DU Processor
-class ngc_du_processor_adapter : public ngc_du_processor_control_notifier
+/// Adapter between NGAP and DU Processor
+class ngap_du_processor_adapter : public ngap_du_processor_control_notifier
 {
 public:
-  ngc_du_processor_adapter() = default;
+  ngap_du_processor_adapter() = default;
 
   void connect_du_processor(du_processor_ngap_interface* du_processor_ngap_handler_)
   {

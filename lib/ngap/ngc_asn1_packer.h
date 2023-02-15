@@ -19,19 +19,19 @@
 
 namespace srsgnb {
 
-class ngc_asn1_packer : public srs_cu_cp::ngc_message_handler
+class ngap_asn1_packer : public srs_cu_cp::ngap_message_handler
 {
 public:
-  ngc_asn1_packer(sctp_network_gateway_data_handler& gw, ngc_message_handler& ngc, ngap_pcap& pcap_);
+  ngap_asn1_packer(sctp_network_gateway_data_handler& gw, ngap_message_handler& ngap, ngap_pcap& pcap_);
 
   void handle_packed_pdu(const byte_buffer& pdu);
 
-  void handle_message(const srs_cu_cp::ngc_message& msg) override;
+  void handle_message(const srs_cu_cp::ngap_message& msg) override;
 
 private:
   srslog::basic_logger&              logger;
   sctp_network_gateway_data_handler& gw;
-  ngc_message_handler&               ngc;
+  ngap_message_handler&              ngap;
   ngap_pcap&                         pcap;
 };
 

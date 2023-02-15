@@ -23,7 +23,7 @@ class ng_setup_procedure
 {
 public:
   ng_setup_procedure(const ng_setup_request&   request_,
-                     ngc_message_notifier&     amf_notif_,
+                     ngap_message_notifier&    amf_notif_,
                      ngap_transaction_manager& ev_mng_,
                      timer_manager&            timers,
                      srslog::basic_logger&     logger_);
@@ -34,14 +34,14 @@ private:
   /// Send NG SETUP REQUEST to AMF.
   void send_ng_setup_request();
 
-  /// Checks whether the NGC should attempt again to connect to AMF.
+  /// Checks whether the NGAP should attempt again to connect to AMF.
   bool retry_required();
 
   /// Creates procedure result to send back to procedure caller.
   ng_setup_response create_ng_setup_result();
 
   const ng_setup_request    request;
-  ngc_message_notifier&     amf_notifier;
+  ngap_message_notifier&    amf_notifier;
   ngap_transaction_manager& ev_mng;
   srslog::basic_logger&     logger;
 

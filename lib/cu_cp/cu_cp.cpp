@@ -22,7 +22,7 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsgnb_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
   srsgnb_assert(cfg.f1c_notifier != nullptr, "Invalid F1C notifier");
-  srsgnb_assert(cfg.ngc_notifier != nullptr, "Invalid NGC notifier");
+  srsgnb_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
@@ -36,13 +36,13 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   ngap_cu_cp_ev_notifier.connect_cu_cp(*this);
 
   // connect task schedulers
-  ngc_task_sched.connect_cu_cp(ue_task_sched);
+  ngap_task_sched.connect_cu_cp(ue_task_sched);
   du_processor_task_sched.connect_cu_cp(ue_task_sched);
   cu_up_processor_task_sched.connect_cu_cp(cu_up_task_sched);
 
   // Create layers
-  ngc_entity = create_ngc(cfg.ngc_config, ngc_task_sched, ue_mng, *cfg.ngc_notifier, *cfg.cu_cp_executor);
-  ngap_adapter.connect_ngap(*ngc_entity);
+  ngap_entity = create_ngap(cfg.ngap_config, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
+  ngap_adapter.connect_ngap(*ngap_entity);
 
   routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, cu_up_db);
 }
@@ -59,7 +59,7 @@ void cu_cp::start()
 
   cfg.cu_cp_executor->execute([this, &p]() {
     // start NG setup procedure.
-    routine_mng->start_initial_cu_cp_setup_routine(cfg.ngc_config);
+    routine_mng->start_initial_cu_cp_setup_routine(cfg.ngap_config);
     p.set_value();
   });
 
@@ -106,14 +106,14 @@ e1_message_handler& cu_cp::get_e1_message_handler(cu_up_index_t cu_up_index)
   return cu_up_it.get_e1_message_handler();
 }
 
-ngc_message_handler& cu_cp::get_ngc_message_handler()
+ngap_message_handler& cu_cp::get_ngap_message_handler()
 {
-  return *ngc_entity;
+  return *ngap_entity;
 };
 
-ngc_event_handler& cu_cp::get_ngc_event_handler()
+ngap_event_handler& cu_cp::get_ngap_event_handler()
 {
-  return *ngc_entity;
+  return *ngap_entity;
 }
 
 void cu_cp::handle_new_du_connection()
@@ -140,9 +140,9 @@ void cu_cp::handle_rrc_ue_creation(du_index_t du_index, ue_index_t ue_index, rrc
 {
   ngap_rrc_ue_ev_notifiers.emplace(ue_index_to_uint(ue_index));
 
-  ngc_rrc_ue_adapter&       rrc_ue_adapter       = ngap_rrc_ue_ev_notifiers[ue_index_to_uint(ue_index)];
-  ngc_du_processor_adapter& du_processor_adapter = ngap_du_processor_ev_notifiers.at(du_index);
-  ngc_entity->create_ngc_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
+  ngap_rrc_ue_adapter&       rrc_ue_adapter       = ngap_rrc_ue_ev_notifiers[ue_index_to_uint(ue_index)];
+  ngap_du_processor_adapter& du_processor_adapter = ngap_du_processor_ev_notifiers.at(du_index);
+  ngap_entity->create_ngap_ue(ue_index, rrc_ue_adapter, rrc_ue_adapter, du_processor_adapter);
   rrc_ue_adapter.connect_rrc_ue(&rrc_ue->get_rrc_ue_dl_nas_message_handler(),
                                 &rrc_ue->get_rrc_ue_control_message_handler(),
                                 &rrc_ue->get_rrc_ue_init_security_context_handler());
@@ -205,14 +205,14 @@ du_index_t cu_cp::add_du()
                                                                    f1c_ev_notifier,
                                                                    *cfg.f1c_notifier,
                                                                    du_processor_e1ap_notifier,
-                                                                   rrc_ue_ngc_notifier,
-                                                                   rrc_ue_ngc_notifier,
+                                                                   rrc_ue_ngap_notifier,
+                                                                   rrc_ue_ngap_notifier,
                                                                    du_processor_task_sched,
                                                                    ue_mng,
                                                                    *cfg.cu_cp_executor);
 
   du_processor_ev_notifier.connect_cu_cp(*this);
-  rrc_ue_ngc_notifier.connect_ngc(*ngc_entity);
+  rrc_ue_ngap_notifier.connect_ngap(*ngap_entity);
   ngap_du_processor_ev_notifiers[du_index] = {};
   ngap_du_processor_ev_notifiers.at(du_index).connect_du_processor(du.get());
 

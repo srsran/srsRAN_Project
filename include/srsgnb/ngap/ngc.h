@@ -20,36 +20,36 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-struct ngc_message {
+struct ngap_message {
   asn1::ngap::ngap_pdu_c pdu;
 };
 
-/// This interface is used to push NGC messages to the NGC interface.
-class ngc_message_handler
+/// This interface is used to push NGAP messages to the NGAP interface.
+class ngap_message_handler
 {
 public:
-  virtual ~ngc_message_handler() = default;
+  virtual ~ngap_message_handler() = default;
 
-  /// Handle the incoming NGC message.
-  virtual void handle_message(const ngc_message& msg) = 0;
+  /// Handle the incoming NGAP message.
+  virtual void handle_message(const ngap_message& msg) = 0;
 };
 
-/// Interface used by NG to inform about events.
-class ngc_event_handler
+/// Interface used by NGAP to inform about events.
+class ngap_event_handler
 {
 public:
-  virtual ~ngc_event_handler()          = default;
+  virtual ~ngap_event_handler()         = default;
   virtual void handle_connection_loss() = 0;
 };
 
-/// This interface notifies the reception of new NGC messages over the NGC interface.
-class ngc_message_notifier
+/// This interface notifies the reception of new NGAP messages over the NGAP interface.
+class ngap_message_notifier
 {
 public:
-  virtual ~ngc_message_notifier() = default;
+  virtual ~ngap_message_notifier() = default;
 
-  /// This callback is invoked on each received NGC message.
-  virtual void on_new_message(const ngc_message& msg) = 0;
+  /// This callback is invoked on each received NGAP message.
+  virtual void on_new_message(const ngap_message& msg) = 0;
 };
 
 struct ng_setup_request {
@@ -62,18 +62,18 @@ struct ng_setup_response {
   bool                        success = false;
 };
 
-/// Handle NGC interface management procedures as defined in TS 38.413 section 8.7
-class ngc_connection_manager
+/// Handle NGAP interface management procedures as defined in TS 38.413 section 8.7
+class ngap_connection_manager
 {
 public:
-  virtual ~ngc_connection_manager() = default;
+  virtual ~ngap_connection_manager() = default;
 
   /// \brief Initiates the NG Setup procedure.
   /// \param[in] request The NGSetupRequest message to transmit.
   /// \return Returns a ng_setup_response struct with the success member set to 'true' in case of a
   /// successful outcome, 'false' otherwise.
   /// \remark The CU transmits the NGSetupRequest as per TS 38.413 section 8.7.1
-  /// and awaits the response. If a NGSetupFailure is received the NGC will handle the failure.
+  /// and awaits the response. If a NGSetupFailure is received the NGAP will handle the failure.
   virtual async_task<ng_setup_response> handle_ng_setup_request(const ng_setup_request& request) = 0;
 };
 
@@ -105,11 +105,11 @@ struct ngap_ul_nas_transport_message {
   uint32_t             tac;
 };
 
-/// Handle NGC NAS Message procedures as defined in TS 38.413 section 8.6.
-class ngc_nas_message_handler
+/// Handle NGAP NAS Message procedures as defined in TS 38.413 section 8.6.
+class ngap_nas_message_handler
 {
 public:
-  virtual ~ngc_nas_message_handler() = default;
+  virtual ~ngap_nas_message_handler() = default;
 
   /// \brief Initiates Initial UE message procedure as per TS 38.413 section 8.6.1.
   /// \param[in] msg The initial UE message to transmit.
@@ -127,10 +127,10 @@ struct ngap_pdu_session_res_item {
 using ngap_pdu_session_res_list = std::vector<ngap_pdu_session_res_item>;
 
 /// Interface to notify about NAS PDUs and messages.
-class ngc_rrc_ue_pdu_notifier
+class ngap_rrc_ue_pdu_notifier
 {
 public:
-  virtual ~ngc_rrc_ue_pdu_notifier() = default;
+  virtual ~ngap_rrc_ue_pdu_notifier() = default;
 
   /// \brief Notify about the a new nas pdu.
   /// \param [in] nas_pdu The nas pdu.
@@ -138,10 +138,10 @@ public:
 };
 
 /// Interface to notify the RRC UE about control messages.
-class ngc_rrc_ue_control_notifier
+class ngap_rrc_ue_control_notifier
 {
 public:
-  virtual ~ngc_rrc_ue_control_notifier() = default;
+  virtual ~ngap_rrc_ue_control_notifier() = default;
 
   /// \brief Notify about the reception of new security capabilities and key.
   virtual async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
@@ -149,10 +149,10 @@ public:
 };
 
 /// Interface to notify the DU Processor about control messages.
-class ngc_du_processor_control_notifier
+class ngap_du_processor_control_notifier
 {
 public:
-  virtual ~ngc_du_processor_control_notifier() = default;
+  virtual ~ngap_du_processor_control_notifier() = default;
 
   /// \brief Notify about the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
@@ -162,54 +162,54 @@ public:
   virtual void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) = 0;
 };
 
-/// Interface to control the NGC.
-class ngc_ue_control_manager
+/// Interface to control the NGAP.
+class ngap_ue_control_manager
 {
 public:
-  virtual ~ngc_ue_control_manager() = default;
+  virtual ~ngap_ue_control_manager() = default;
 
-  /// \brief Creates a NGC UE.
+  /// \brief Creates a NGAP UE.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue_pdu_notifier The pdu notifier to the RRC UE.
   /// \param[in] rrc_ue_ctrl_notifier The control notifier to the RRC UE.
   /// \param[in] du_processor_ctrl_notifier The pdu notifier to the DU processor.
-  virtual void create_ngc_ue(ue_index_t                         ue_index,
-                             ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                             ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                             ngc_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
+  virtual void create_ngap_ue(ue_index_t                          ue_index,
+                              ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+                              ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+                              ngap_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
 };
 
 /// \brief Schedules asynchronous tasks associated with an UE.
-class ngc_ue_task_scheduler
+class ngap_ue_task_scheduler
 {
 public:
-  virtual ~ngc_ue_task_scheduler()                                                         = default;
+  virtual ~ngap_ue_task_scheduler()                                                        = default;
   virtual void           schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
   virtual unique_timer   make_unique_timer()                                               = 0;
   virtual timer_manager& get_timer_manager()                                               = 0;
 };
 
-/// \brief Interface to query statistics from the NGC interface.
-class ngc_statistic_interface
+/// \brief Interface to query statistics from the NGAP interface.
+class ngap_statistic_interface
 {
 public:
-  virtual ~ngc_statistic_interface() = default;
+  virtual ~ngap_statistic_interface() = default;
 
-  /// \brief Get the number of UEs registered at the NGC.
+  /// \brief Get the number of UEs registered at the NGAP.
   /// \return The number of UEs.
   virtual size_t get_nof_ues() const = 0;
 };
 
-/// Combined entry point for the NGC object.
-class ngc_interface : public ngc_message_handler,
-                      public ngc_event_handler,
-                      public ngc_connection_manager,
-                      public ngc_nas_message_handler,
-                      public ngc_ue_control_manager,
-                      public ngc_statistic_interface
+/// Combined entry point for the NGAP object.
+class ngap_interface : public ngap_message_handler,
+                       public ngap_event_handler,
+                       public ngap_connection_manager,
+                       public ngap_nas_message_handler,
+                       public ngap_ue_control_manager,
+                       public ngap_statistic_interface
 {
 public:
-  virtual ~ngc_interface() = default;
+  virtual ~ngap_interface() = default;
 };
 
 } // namespace srs_cu_cp

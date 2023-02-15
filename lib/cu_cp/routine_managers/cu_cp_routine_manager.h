@@ -26,15 +26,15 @@ class cu_cp_routine_manager
 {
 public:
   explicit cu_cp_routine_manager(
-      cu_cp_ngap_control_notifier&                                                   ngc_ctrl_notifier_,
+      cu_cp_ngap_control_notifier&                                                   ngap_ctrl_notifier_,
       ngap_cu_cp_connection_notifier&                                                cu_cp_ngap_ev_notifier_,
       std::unordered_map<cu_up_index_t, std::unique_ptr<cu_up_processor_interface>>& cu_up_db_);
   ~cu_cp_routine_manager() = default;
 
-  void start_initial_cu_cp_setup_routine(const ngc_configuration& ngc_cfg);
+  void start_initial_cu_cp_setup_routine(const ngap_configuration& ngap_cfg);
 
 private:
-  cu_cp_ngap_control_notifier&    ngc_ctrl_notifier;
+  cu_cp_ngap_control_notifier&    ngap_ctrl_notifier;
   ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier;
 
   std::unordered_map<cu_up_index_t, std::unique_ptr<cu_up_processor_interface>>& cu_up_db;

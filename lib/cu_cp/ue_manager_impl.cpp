@@ -105,10 +105,10 @@ void ue_manager::remove_du_ue(ue_index_t ue_index)
 
 // ngap_ue_manager
 
-ngap_ue* ue_manager::add_ue(ue_index_t                         ue_index,
-                            ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
-                            ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
-                            ngc_du_processor_control_notifier& du_processor_ctrl_notifier_)
+ngap_ue* ue_manager::add_ue(ue_index_t                          ue_index,
+                            ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+                            ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+                            ngap_du_processor_control_notifier& du_processor_ctrl_notifier_)
 {
   // check if ue index is valid
   if (ue_index == ue_index_t::invalid) {

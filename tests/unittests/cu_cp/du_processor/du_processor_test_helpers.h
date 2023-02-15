@@ -49,7 +49,7 @@ protected:
   dummy_f1c_pdu_notifier                                f1c_pdu_notifier;
   dummy_f1c_du_management_notifier                      f1c_du_mgmt_notifier;
   dummy_du_processor_e1ap_control_notifier              e1ap_ctrl_notifier;
-  dummy_rrc_ue_ngc_adapter                              rrc_ue_ngc_notifier;
+  dummy_rrc_ue_ngap_adapter                             rrc_ue_ngap_notifier;
   std::unique_ptr<dummy_du_processor_ue_task_scheduler> ue_task_sched;
   manual_task_worker                                    ctrl_worker{128};
   std::unique_ptr<du_processor_interface>               du_processor_obj;

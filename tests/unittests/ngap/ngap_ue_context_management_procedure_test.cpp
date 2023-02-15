@@ -33,13 +33,13 @@ protected:
 
   bool was_initial_context_setup_response_sent() const
   {
-    return msg_notifier.last_ngc_msg.pdu.successful_outcome().value.type() ==
+    return msg_notifier.last_ngap_msg.pdu.successful_outcome().value.type() ==
            asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::init_context_setup_resp;
   }
 
   bool was_initial_context_setup_failure_sent() const
   {
-    return msg_notifier.last_ngc_msg.pdu.unsuccessful_outcome().value.type() ==
+    return msg_notifier.last_ngap_msg.pdu.unsuccessful_outcome().value.type() ==
            asn1::ngap::ngap_elem_procs_o::unsuccessful_outcome_c::types_opts::init_context_setup_fail;
   }
 
@@ -59,7 +59,7 @@ TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_set
   auto& ue = test_ues.at(ue_index);
 
   // Inject Initial Context Setup Request
-  ngc_message init_context_setup_request =
+  ngap_message init_context_setup_request =
       generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
   ngap->handle_message(init_context_setup_request);
 
@@ -98,7 +98,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
   ASSERT_NE(old_id, new_id);
 
   // Inject Initial Context Setup Request with new ID
-  ngc_message init_context_setup_request =
+  ngap_message init_context_setup_request =
       generate_valid_initial_context_setup_request_message(new_id, ue.ran_ue_id.value());
   ngap->handle_message(init_context_setup_request);
 
@@ -122,7 +122,7 @@ TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_s
   auto& ue = test_ues.at(ue_index);
 
   // Inject Initial Context Setup Request
-  ngc_message init_context_setup_request =
+  ngap_message init_context_setup_request =
       generate_invalid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
   ngap->handle_message(init_context_setup_request);
 

@@ -63,13 +63,13 @@ public:
   // ngap_ue
 
   /// \brief Get the RRC UE PDU notifier of the UE.
-  ngc_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override { return *rrc_ue_pdu_notifier; }
+  ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() override { return *rrc_ue_pdu_notifier; }
 
   /// \brief Get the RRC UE control notifier of the UE.
-  ngc_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override { return *rrc_ue_ctrl_notifier; }
+  ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() override { return *rrc_ue_ctrl_notifier; }
 
   /// \brief Get the DU processor control notifier of the UE.
-  ngc_du_processor_control_notifier& get_du_processor_control_notifier() override
+  ngap_du_processor_control_notifier& get_du_processor_control_notifier() override
   {
     return *du_processor_ctrl_notifier;
   }
@@ -99,21 +99,21 @@ public:
 
   /// \brief Set the RRC UE PDU notifier of the UE.
   /// \param[in] rrc_ue_pdu_notifier_ RRC UE PDU notifier for the UE.
-  void set_rrc_ue_pdu_notifier(ngc_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_)
+  void set_rrc_ue_pdu_notifier(ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_)
   {
     rrc_ue_pdu_notifier = &rrc_ue_pdu_notifier_;
   }
 
   /// \brief Set the RRC UE control notifier of the UE.
   /// \param[in] rrc_ue_ctrl_notifier_ RRC UE control notifier for the UE.
-  void set_rrc_ue_ctrl_notifier(ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
+  void set_rrc_ue_ctrl_notifier(ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
   {
     rrc_ue_ctrl_notifier = &rrc_ue_ctrl_notifier_;
   }
 
   /// \brief Set the DU processor control notifier of the UE.
   /// \param[in] du_processor_ctrl_notifier_ DU processor control notifier for the UE.
-  void set_du_processor_ctrl_notifier(ngc_du_processor_control_notifier& du_processor_ctrl_notifier_)
+  void set_du_processor_ctrl_notifier(ngap_du_processor_control_notifier& du_processor_ctrl_notifier_)
   {
     du_processor_ctrl_notifier = &du_processor_ctrl_notifier_;
   }
@@ -139,9 +139,9 @@ private:
   ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
   uint64_t    aggregate_maximum_bit_rate_dl = 0;
 
-  ngc_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
-  ngc_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
-  ngc_du_processor_control_notifier* du_processor_ctrl_notifier = nullptr;
+  ngap_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
+  ngap_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
+  ngap_du_processor_control_notifier* du_processor_ctrl_notifier = nullptr;
 };
 
 class ue_manager : public du_processor_ue_manager, public ngap_ue_manager
@@ -200,10 +200,10 @@ public:
   /// \param[in] rrc_ue_ctrl_notifier RRC UE control notifier for the UE.
   /// \param[in] du_processor_ctrl_notifier DU processor control notifier for the UE.
   /// \return Pointer to the NGAP UE if found, nullptr otherwise.
-  ngap_ue* add_ue(ue_index_t                         ue_index,
-                  ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
-                  ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
-                  ngc_du_processor_control_notifier& du_processor_ctrl_notifier_) override;
+  ngap_ue* add_ue(ue_index_t                          ue_index,
+                  ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+                  ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+                  ngap_du_processor_control_notifier& du_processor_ctrl_notifier_) override;
 
   /// \brief Remove the NGAP UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.

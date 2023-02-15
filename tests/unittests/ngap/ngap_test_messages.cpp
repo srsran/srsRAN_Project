@@ -45,9 +45,9 @@ ng_setup_request srsgnb::srs_cu_cp::generate_ng_setup_request()
   return request_msg;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_ng_setup_response()
+ngap_message srsgnb::srs_cu_cp::generate_ng_setup_response()
 {
-  ngc_message ng_setup_response = {};
+  ngap_message ng_setup_response = {};
 
   ng_setup_response.pdu.set_successful_outcome();
   ng_setup_response.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
@@ -76,9 +76,9 @@ ngc_message srsgnb::srs_cu_cp::generate_ng_setup_response()
   return ng_setup_response;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_ng_setup_failure()
+ngap_message srsgnb::srs_cu_cp::generate_ng_setup_failure()
 {
-  ngc_message ng_setup_failure = {};
+  ngap_message ng_setup_failure = {};
 
   ng_setup_failure.pdu.set_unsuccessful_outcome();
   ng_setup_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_NGAP_ID_NG_SETUP);
@@ -93,9 +93,9 @@ ngc_message srsgnb::srs_cu_cp::generate_ng_setup_failure()
   return ng_setup_failure;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time_to_wait_e time_to_wait)
+ngap_message srsgnb::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time_to_wait_e time_to_wait)
 {
-  ngc_message ng_setup_failure = generate_ng_setup_failure();
+  ngap_message ng_setup_failure = generate_ng_setup_failure();
 
   auto& setup_fail                 = ng_setup_failure.pdu.unsuccessful_outcome().value.ng_setup_fail();
   setup_fail->time_to_wait_present = true;
@@ -115,9 +115,9 @@ ngap_initial_ue_message srsgnb::srs_cu_cp::generate_initial_ue_message(ue_index_
   return msg;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+ngap_message srsgnb::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
 {
-  ngc_message dl_nas_transport = {};
+  ngap_message dl_nas_transport = {};
 
   dl_nas_transport.pdu.set_init_msg();
   dl_nas_transport.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_DL_NAS_TRANSPORT);
@@ -140,14 +140,15 @@ ngap_ul_nas_transport_message srsgnb::srs_cu_cp::generate_ul_nas_transport_messa
   return ul_nas_transport;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+ngap_message srsgnb::srs_cu_cp::generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id,
+                                                                            ran_ue_id_t ran_ue_id)
 {
-  ngc_message ngc_msg = {};
+  ngap_message ngap_msg = {};
 
-  ngc_msg.pdu.set_init_msg();
-  ngc_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_INIT_CONTEXT_SETUP);
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_INIT_CONTEXT_SETUP);
 
-  auto& init_context_setup_req                 = ngc_msg.pdu.init_msg().value.init_context_setup_request();
+  auto& init_context_setup_req                 = ngap_msg.pdu.init_msg().value.init_context_setup_request();
   init_context_setup_req->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
   init_context_setup_req->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
 
@@ -169,47 +170,47 @@ ngc_message srsgnb::srs_cu_cp::generate_initial_context_setup_request_base(amf_u
 
   init_context_setup_req->allowed_nssai->push_back(allowed_nssai);
 
-  return ngc_msg;
+  return ngap_msg;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_valid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
-                                                                                    ran_ue_id_t ran_ue_id)
+ngap_message srsgnb::srs_cu_cp::generate_valid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
+                                                                                     ran_ue_id_t ran_ue_id)
 {
-  ngc_message ngc_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
+  ngap_message ngap_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
 
-  auto& init_context_setup_req = ngc_msg.pdu.init_msg().value.init_context_setup_request();
+  auto& init_context_setup_req = ngap_msg.pdu.init_msg().value.init_context_setup_request();
   init_context_setup_req->ue_security_cap->nr_encryption_algorithms.from_number(57344);
   init_context_setup_req->ue_security_cap->nr_integrity_protection_algorithms.from_number(57344);
   init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(57344);
   init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(57344);
 
-  return ngc_msg;
+  return ngap_msg;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
-                                                                                      ran_ue_id_t ran_ue_id)
+ngap_message srsgnb::srs_cu_cp::generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
+                                                                                       ran_ue_id_t ran_ue_id)
 {
-  ngc_message ngc_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
+  ngap_message ngap_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
 
   // NIA0 is not allowed
-  auto& init_context_setup_req = ngc_msg.pdu.init_msg().value.init_context_setup_request();
+  auto& init_context_setup_req = ngap_msg.pdu.init_msg().value.init_context_setup_request();
   init_context_setup_req->ue_security_cap->nr_encryption_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->nr_integrity_protection_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->eutr_aencryption_algorithms.from_number(0);
   init_context_setup_req->ue_security_cap->eutr_aintegrity_protection_algorithms.from_number(0);
 
-  return ngc_msg;
+  return ngap_msg;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id,
-                                                                                ran_ue_id_t ran_ue_id)
+ngap_message srsgnb::srs_cu_cp::generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id,
+                                                                                 ran_ue_id_t ran_ue_id)
 {
-  ngc_message ngc_msg;
+  ngap_message ngap_msg;
 
-  ngc_msg.pdu.set_init_msg();
-  ngc_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_SETUP);
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_SETUP);
 
-  auto& pdu_session_res_setup_req                 = ngc_msg.pdu.init_msg().value.pdu_session_res_setup_request();
+  auto& pdu_session_res_setup_req                 = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
   pdu_session_res_setup_req->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
   pdu_session_res_setup_req->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
 
@@ -217,17 +218,17 @@ ngc_message srsgnb::srs_cu_cp::generate_pdu_session_resource_setup_request_base(
   pdu_session_res_setup_req->ue_aggr_max_bit_rate.value.ue_aggr_max_bit_rate_dl = 300000000U;
   pdu_session_res_setup_req->ue_aggr_max_bit_rate.value.ue_aggr_max_bit_rate_ul = 200000000U;
 
-  return ngc_msg;
+  return ngap_msg;
 }
 
-ngc_message
+ngap_message
 srsgnb::srs_cu_cp::generate_valid_pdu_session_resource_setup_request_message(amf_ue_id_t      amf_ue_id,
                                                                              ran_ue_id_t      ran_ue_id,
                                                                              pdu_session_id_t pdu_session_id)
 {
-  ngc_message ngc_msg = generate_pdu_session_resource_setup_request_base(amf_ue_id, ran_ue_id);
+  ngap_message ngap_msg = generate_pdu_session_resource_setup_request_base(amf_ue_id, ran_ue_id);
 
-  auto& pdu_session_res_setup_req = ngc_msg.pdu.init_msg().value.pdu_session_res_setup_request();
+  auto& pdu_session_res_setup_req = ngap_msg.pdu.init_msg().value.pdu_session_res_setup_request();
 
   pdu_session_res_setup_item_su_req_s pdu_session_res_item;
 
@@ -251,15 +252,15 @@ srsgnb::srs_cu_cp::generate_valid_pdu_session_resource_setup_request_message(amf
 
   pdu_session_res_setup_req->pdu_session_res_setup_list_su_req.value.push_back(pdu_session_res_item);
 
-  return ngc_msg;
+  return ngap_msg;
 }
 
-ngc_message srsgnb::srs_cu_cp::generate_invalid_pdu_session_resource_setup_request_message(amf_ue_id_t amf_ue_id,
-                                                                                           ran_ue_id_t ran_ue_id)
+ngap_message srsgnb::srs_cu_cp::generate_invalid_pdu_session_resource_setup_request_message(amf_ue_id_t amf_ue_id,
+                                                                                            ran_ue_id_t ran_ue_id)
 {
-  ngc_message ngc_msg = generate_pdu_session_resource_setup_request_base(amf_ue_id, ran_ue_id);
+  ngap_message ngap_msg = generate_pdu_session_resource_setup_request_base(amf_ue_id, ran_ue_id);
 
-  return ngc_msg;
+  return ngap_msg;
 }
 
 cu_cp_pdu_session_resource_setup_response

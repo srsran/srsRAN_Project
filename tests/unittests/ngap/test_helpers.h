@@ -25,9 +25,9 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-struct dummy_ngc_ue_task_scheduler : public ngc_ue_task_scheduler {
+struct dummy_ngap_ue_task_scheduler : public ngap_ue_task_scheduler {
 public:
-  dummy_ngc_ue_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
+  dummy_ngap_ue_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));
@@ -53,9 +53,9 @@ public:
     aggregate_maximum_bit_rate_dl = aggregate_maximum_bit_rate_dl_;
   }
 
-  ngc_rrc_ue_pdu_notifier&           get_rrc_ue_pdu_notifier() override { return *rrc_ue_pdu_notifier; }
-  ngc_rrc_ue_control_notifier&       get_rrc_ue_control_notifier() override { return *rrc_ue_ctrl_notifier; }
-  ngc_du_processor_control_notifier& get_du_processor_control_notifier() override
+  ngap_rrc_ue_pdu_notifier&           get_rrc_ue_pdu_notifier() override { return *rrc_ue_pdu_notifier; }
+  ngap_rrc_ue_control_notifier&       get_rrc_ue_control_notifier() override { return *rrc_ue_ctrl_notifier; }
+  ngap_du_processor_control_notifier& get_du_processor_control_notifier() override
   {
     return *du_processor_ctrl_notifier;
   }
@@ -70,17 +70,17 @@ public:
 
   void set_ran_ue_id(ran_ue_id_t ran_ue_id_) { ran_ue_id = ran_ue_id_; }
 
-  void set_rrc_ue_pdu_notifier(ngc_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_)
+  void set_rrc_ue_pdu_notifier(ngap_rrc_ue_pdu_notifier& rrc_ue_pdu_notifier_)
   {
     rrc_ue_pdu_notifier = &rrc_ue_pdu_notifier_;
   }
 
-  void set_rrc_ue_ctrl_notifier(ngc_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
+  void set_rrc_ue_ctrl_notifier(ngap_rrc_ue_control_notifier& rrc_ue_ctrl_notifier_)
   {
     rrc_ue_ctrl_notifier = &rrc_ue_ctrl_notifier_;
   }
 
-  void set_du_processor_ctrl_notifier(ngc_du_processor_control_notifier& du_processor_ctrl_notifier_)
+  void set_du_processor_ctrl_notifier(ngap_du_processor_control_notifier& du_processor_ctrl_notifier_)
   {
     du_processor_ctrl_notifier = &du_processor_ctrl_notifier_;
   }
@@ -96,17 +96,17 @@ private:
   ran_ue_id_t ran_ue_id                     = ran_ue_id_t::invalid;
   uint64_t    aggregate_maximum_bit_rate_dl = 0;
 
-  ngc_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
-  ngc_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
-  ngc_du_processor_control_notifier* du_processor_ctrl_notifier = nullptr;
+  ngap_rrc_ue_pdu_notifier*           rrc_ue_pdu_notifier        = nullptr;
+  ngap_rrc_ue_control_notifier*       rrc_ue_ctrl_notifier       = nullptr;
+  ngap_du_processor_control_notifier* du_processor_ctrl_notifier = nullptr;
 };
 
 struct dummy_ngap_ue_manager : public ngap_ue_manager {
 public:
-  ngap_ue* add_ue(ue_index_t                         ue_index,
-                  ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
-                  ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
-                  ngc_du_processor_control_notifier& du_processor_ctrl_notifier_) override
+  ngap_ue* add_ue(ue_index_t                          ue_index,
+                  ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier_,
+                  ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier_,
+                  ngap_du_processor_control_notifier& du_processor_ctrl_notifier_) override
   {
     ran_ue_id_t ran_ue_id = get_next_ran_ue_id();
     if (ran_ue_id == ran_ue_id_t::invalid) {
@@ -210,17 +210,17 @@ private:
 /// Reusable notifier class that a) stores the received msg for test inspection and b)
 /// calls the registered msg handler (if any). The handler can be added upon construction
 /// or later via the attach_handler() method.
-class dummy_ngc_amf_notifier : public ngc_message_notifier
+class dummy_ngap_amf_notifier : public ngap_message_notifier
 {
 public:
-  dummy_ngc_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_amf_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
-  void attach_handler(ngc_message_handler* handler_) { handler = handler_; };
+  void attach_handler(ngap_message_handler* handler_) { handler = handler_; };
 
-  void on_new_message(const ngc_message& msg) override
+  void on_new_message(const ngap_message& msg) override
   {
     logger.info("Received message");
-    last_ngc_msg = msg;
+    last_ngap_msg = msg;
 
     if (handler != nullptr) {
       logger.info("Forwarding PDU");
@@ -228,34 +228,34 @@ public:
     }
   };
 
-  ngc_message last_ngc_msg;
+  ngap_message last_ngap_msg;
 
 private:
   srslog::basic_logger& logger;
-  ngc_message_handler*  handler = nullptr;
+  ngap_message_handler* handler = nullptr;
 };
 
 /// Dummy handler storing and printing the received PDU.
-class dummy_ngc_message_handler : public ngc_message_handler
+class dummy_ngap_message_handler : public ngap_message_handler
 {
 public:
-  dummy_ngc_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
-  void handle_message(const ngc_message& msg) override
+  dummy_ngap_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+  void handle_message(const ngap_message& msg) override
   {
     last_msg = msg;
     logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
   }
-  ngc_message last_msg;
+  ngap_message last_msg;
 
 private:
   srslog::basic_logger& logger;
 };
 
-/// Dummy NGC to RRC UE notifier
-class dummy_ngc_rrc_ue_notifier : public ngc_rrc_ue_pdu_notifier, public ngc_rrc_ue_control_notifier
+/// Dummy NGAP to RRC UE notifier
+class dummy_ngap_rrc_ue_notifier : public ngap_rrc_ue_pdu_notifier, public ngap_rrc_ue_control_notifier
 {
 public:
-  dummy_ngc_rrc_ue_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_rrc_ue_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
   void on_new_pdu(byte_buffer nas_pdu) override
   {
@@ -287,11 +287,11 @@ private:
   srslog::basic_logger& logger;
 };
 
-/// Dummy NGC to DU processor notifier
-class dummy_ngc_du_processor_notifier : public ngc_du_processor_control_notifier
+/// Dummy NGAP to DU processor notifier
+class dummy_ngap_du_processor_notifier : public ngap_du_processor_control_notifier
 {
 public:
-  dummy_ngc_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
 
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override

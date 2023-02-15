@@ -81,7 +81,7 @@ private:
   /// \remark Send RRC Setup, see section 5.3.3 in TS 36.331
   void send_rrc_setup();
 
-  /// \remark Forward the Initial UE Message to the NGC
+  /// \remark Forward the Initial UE Message to the NGAP
   void send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_complete_s& rrc_setup_complete_msg);
 
   rrc_ue_context_t&                       context;
@@ -91,7 +91,7 @@ private:
 
   rrc_ue_setup_proc_notifier&   rrc_ue;                // handler to the parent RRC UE object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&          nas_notifier;          // notifier to the NGC
+  rrc_ue_nas_notifier&          nas_notifier;          // notifier to the NGAP
   rrc_ue_event_manager&         event_mng;             // event manager for the RRC UE entity
   srslog::basic_logger&         logger;
 

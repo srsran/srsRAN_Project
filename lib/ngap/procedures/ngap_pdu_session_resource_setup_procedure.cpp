@@ -18,8 +18,8 @@ using namespace asn1::ngap;
 ngap_pdu_session_resource_setup_procedure::ngap_pdu_session_resource_setup_procedure(
     ngap_ue&                                  ue_,
     cu_cp_pdu_session_resource_setup_request& request_,
-    ngc_du_processor_control_notifier&        du_processor_ctrl_notif_,
-    ngc_message_notifier&                     amf_notif_,
+    ngap_du_processor_control_notifier&       du_processor_ctrl_notif_,
+    ngap_message_notifier&                    amf_notif_,
     srslog::basic_logger&                     logger_) :
   ue(ue_),
   request(request_),
@@ -48,24 +48,24 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
 
 void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response()
 {
-  ngc_message ngc_msg = {};
+  ngap_message ngap_msg = {};
 
-  ngc_msg.pdu.set_successful_outcome();
-  ngc_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_SETUP);
+  ngap_msg.pdu.set_successful_outcome();
+  ngap_msg.pdu.successful_outcome().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_SETUP);
 
-  fill_asn1_pdu_session_res_setup_response(ngc_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp(),
+  fill_asn1_pdu_session_res_setup_response(ngap_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp(),
                                            response);
 
-  auto& pdu_session_res_setup_resp = ngc_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp();
+  auto& pdu_session_res_setup_resp = ngap_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp();
   pdu_session_res_setup_resp->amf_ue_ngap_id.value = amf_ue_id_to_uint(ue.get_amf_ue_id());
   pdu_session_res_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    ngc_msg.pdu.to_json(js);
+    ngap_msg.pdu.to_json(js);
     logger.debug("Containerized PduSessionResourceSetupResponse: {}", js.to_string());
   }
 
   logger.info("Sending PduSessionResourceSetupResponse");
-  amf_notifier.on_new_message(ngc_msg);
+  amf_notifier.on_new_message(ngap_msg);
 }

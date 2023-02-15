@@ -12,10 +12,10 @@ static constexpr unsigned      nof_ports = 1U;
 srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig& config)
 {
   srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
-  out_cfg.ngc_config.gnb_id              = config.gnb_id;
-  out_cfg.ngc_config.ran_node_name       = config.ran_node_name;
-  out_cfg.ngc_config.plmn                = config.common_cell_cfg.plmn;
-  out_cfg.ngc_config.tac                 = config.common_cell_cfg.tac;
+  out_cfg.ngap_config.gnb_id             = config.gnb_id;
+  out_cfg.ngap_config.ran_node_name      = config.ran_node_name;
+  out_cfg.ngap_config.plmn               = config.common_cell_cfg.plmn;
+  out_cfg.ngap_config.tac                = config.common_cell_cfg.tac;
 
   if (!config_helpers::is_valid_configuration(out_cfg)) {
     report_error("Invalid CU-CP configuration.\n");

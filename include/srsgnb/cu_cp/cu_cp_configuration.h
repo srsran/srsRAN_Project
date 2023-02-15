@@ -21,11 +21,11 @@ namespace srs_cu_cp {
 
 /// Configuration passed to CU CP.
 struct cu_cp_configuration {
-  task_executor*        cu_cp_executor = nullptr;
-  f1c_message_notifier* f1c_notifier   = nullptr; /// Callback for incoming F1C messages.
-  e1_message_notifier*  e1_notifier    = nullptr; /// Callback for incoming E1 messages.
-  ngc_message_notifier* ngc_notifier   = nullptr; /// Callack for outgoing NGC messages
-  ngc_configuration     ngc_config;
+  task_executor*         cu_cp_executor = nullptr;
+  f1c_message_notifier*  f1c_notifier   = nullptr; /// Callback for incoming F1C messages.
+  e1_message_notifier*   e1_notifier    = nullptr; /// Callback for incoming E1 messages.
+  ngap_message_notifier* ngap_notifier  = nullptr; /// Callack for outgoing NGAP messages
+  ngap_configuration     ngap_config;
 };
 
 } // namespace srs_cu_cp

@@ -34,7 +34,7 @@ protected:
     run_inital_context_setup(ue_index);
   }
 
-  bool was_conversion_successful(ngc_message pdu_session_resource_setup_request, pdu_session_id_t pdu_session_id) const
+  bool was_conversion_successful(ngap_message pdu_session_resource_setup_request, pdu_session_id_t pdu_session_id) const
   {
     bool test_1 = pdu_session_resource_setup_request.pdu.init_msg()
                       .value.pdu_session_res_setup_request()
@@ -50,11 +50,11 @@ protected:
   bool was_pdu_session_resource_setup_request_valid() const
   {
     // Check that AMF notifier was called with right type
-    bool test_1 = msg_notifier.last_ngc_msg.pdu.successful_outcome().value.type() ==
+    bool test_1 = msg_notifier.last_ngap_msg.pdu.successful_outcome().value.type() ==
                   asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::pdu_session_res_setup_resp;
 
     // Check that response contains PDU Session Resource Setup List
-    bool test_2 = msg_notifier.last_ngc_msg.pdu.successful_outcome()
+    bool test_2 = msg_notifier.last_ngap_msg.pdu.successful_outcome()
                       .value.pdu_session_res_setup_resp()
                       ->pdu_session_res_setup_list_su_res_present;
 
@@ -64,16 +64,16 @@ protected:
   bool was_pdu_session_resource_setup_request_invalid() const
   {
     // Check that AMF notifier was called with right type
-    bool test_1 = msg_notifier.last_ngc_msg.pdu.successful_outcome().value.type() ==
+    bool test_1 = msg_notifier.last_ngap_msg.pdu.successful_outcome().value.type() ==
                   asn1::ngap::ngap_elem_procs_o::successful_outcome_c::types_opts::pdu_session_res_setup_resp;
 
     // Check that response contains PDU Session Resource Setup List
-    bool test_2 = !msg_notifier.last_ngc_msg.pdu.successful_outcome()
+    bool test_2 = !msg_notifier.last_ngap_msg.pdu.successful_outcome()
                        .value.pdu_session_res_setup_resp()
                        ->pdu_session_res_setup_list_su_res_present;
 
     // Check that response contains PDU Session Resource Failed to Setup List
-    bool test_3 = msg_notifier.last_ngc_msg.pdu.successful_outcome()
+    bool test_3 = msg_notifier.last_ngap_msg.pdu.successful_outcome()
                       .value.pdu_session_res_setup_resp()
                       ->pdu_session_res_failed_to_setup_list_su_res_present;
 
@@ -96,7 +96,7 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
 
   auto& ue = test_ues.at(ue_index);
 
-  ngc_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
+  ngap_message pdu_session_resource_setup_request = generate_valid_pdu_session_resource_setup_request_message(
       ue.amf_ue_id.value(), ue.ran_ue_id.value(), pdu_session_id);
   ngap->handle_message(pdu_session_resource_setup_request);
 
@@ -119,7 +119,7 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
   auto& ue = test_ues.at(ue_index);
 
   // Inject invalid PDU Session Resource Setup Request
-  ngc_message pdu_session_resource_setup_request =
+  ngap_message pdu_session_resource_setup_request =
       generate_invalid_pdu_session_resource_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
   ngap->handle_message(pdu_session_resource_setup_request);
 

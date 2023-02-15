@@ -26,7 +26,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
                                      f1c_message_notifier&               f1c_notifier_,
                                      du_processor_e1ap_control_notifier& e1ap_ctrl_notifier_,
                                      rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier_,
-                                     rrc_ue_control_notifier&            rrc_ue_ngc_ctrl_notifier_,
+                                     rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier_,
                                      du_processor_ue_task_scheduler&     task_sched_,
                                      du_processor_ue_manager&            ue_manager_,
                                      task_executor&                      ctrl_exec_) :
@@ -36,7 +36,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   f1c_notifier(f1c_notifier_),
   e1ap_ctrl_notifier(e1ap_ctrl_notifier_),
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
-  rrc_ue_ngc_ctrl_notifier(rrc_ue_ngc_ctrl_notifier_),
+  rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_)
 {
@@ -50,7 +50,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
 
   // create RRC
   rrc_du_creation_message rrc_creation_msg(
-      cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngc_ctrl_notifier);
+      cfg.rrc_cfg, rrc_ue_ev_notifier, rrc_ue_nas_pdu_notifier, rrc_ue_ngap_ctrl_notifier);
   rrc = create_rrc_du(rrc_creation_msg);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_ue_repository());
 

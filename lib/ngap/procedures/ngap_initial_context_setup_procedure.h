@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../ngap_asn1_utils.h"
-#include "srsgnb/cu_cp/ue_manager.h" // for ngc_ue
+#include "srsgnb/cu_cp/ue_manager.h" // for ngap_ue
 #include "srsgnb/ngap/ngc.h"
 #include "srsgnb/support/async/async_task.h"
 
@@ -36,7 +36,7 @@ public:
   ngap_initial_context_setup_procedure(const ue_index_t                                ue_index_,
                                        const asn1::ngap::init_context_setup_request_s& request_,
                                        ngap_ue_manager&                                ue_manager_,
-                                       ngc_message_notifier&                           amf_notif_,
+                                       ngap_message_notifier&                          amf_notif_,
                                        srslog::basic_logger&                           logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
@@ -53,7 +53,7 @@ private:
   const ue_index_t                               ue_index;
   const asn1::ngap::init_context_setup_request_s request;
   ngap_ue_manager&                               ue_manager;
-  ngc_message_notifier&                          amf_notifier;
+  ngap_message_notifier&                         amf_notifier;
   srslog::basic_logger&                          logger;
 
   ngap_ue* ue = nullptr;

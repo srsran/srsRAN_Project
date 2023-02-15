@@ -15,10 +15,10 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-initial_cu_cp_setup_routine::initial_cu_cp_setup_routine(const ngc_configuration&        ngc_config_,
-                                                         cu_cp_ngap_control_notifier&    ngc_ctrl_notifier_,
+initial_cu_cp_setup_routine::initial_cu_cp_setup_routine(const ngap_configuration&       ngap_config_,
+                                                         cu_cp_ngap_control_notifier&    ngap_ctrl_notifier_,
                                                          ngap_cu_cp_connection_notifier& cu_cp_ngap_ev_notifier_) :
-  ngc_cfg(ngc_config_), ngc_ctrl_notifier(ngc_ctrl_notifier_), cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_)
+  ngap_cfg(ngap_config_), ngap_ctrl_notifier(ngap_ctrl_notifier_), cu_cp_ngap_ev_notifier(cu_cp_ngap_ev_notifier_)
 {
 }
 
@@ -45,10 +45,10 @@ async_task<ng_setup_response> initial_cu_cp_setup_routine::send_ng_setup_request
   // Prepare request to send to ng.
   ng_setup_request request_msg = {};
 
-  fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn, ngc_cfg.tac);
+  fill_asn1_ng_setup_request(request_msg.msg, ngap_cfg.gnb_id, ngap_cfg.ran_node_name, ngap_cfg.plmn, ngap_cfg.tac);
 
   // Initiate NG Setup Request.
-  return ngc_ctrl_notifier.on_ng_setup_request(request_msg);
+  return ngap_ctrl_notifier.on_ng_setup_request(request_msg);
 }
 
 void initial_cu_cp_setup_routine::handle_ng_setup_response(const asn1::ngap::ng_setup_resp_s& resp)

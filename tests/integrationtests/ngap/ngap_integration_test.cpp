@@ -29,8 +29,8 @@ using namespace srs_cu_cp;
 /// * NGAP (including ASN1 packer and NG setup procedure)
 /// * SCTP network gateway
 /// * IO broker
-class ngap_network_adapter : public ngc_message_notifier,
-                             public ngc_message_handler,
+class ngap_network_adapter : public ngap_message_notifier,
+                             public ngap_message_handler,
                              public sctp_network_gateway_control_notifier,
                              public network_gateway_data_notifier
 {
@@ -47,17 +47,17 @@ public:
 
   ~ngap_network_adapter() {}
 
-  void connect_ngc(ngc_interface* ngc_) { ngc = ngc_; }
+  void connect_ngap(ngap_interface* ngap_) { ngap = ngap_; }
 
 private:
   // NGAP calls interface to send (unpacked) NGAP PDUs
-  void on_new_message(const ngc_message& msg) override { packer.handle_message(msg); }
+  void on_new_message(const ngap_message& msg) override { packer.handle_message(msg); }
 
   // SCTP network gateway calls interface to inject received PDUs (ASN1 packed)
   void on_new_pdu(byte_buffer pdu) override { packer.handle_packed_pdu(pdu); }
 
   // The packer calls this interface to inject unpacked NGAP PDUs
-  void handle_message(const ngc_message& msg) override { ngc->handle_message(msg); }
+  void handle_message(const ngap_message& msg) override { ngap->handle_message(msg); }
 
   /// \brief Simply log those events for now
   void on_connection_loss() override { test_logger.info("on_connection_loss"); }
@@ -67,8 +67,8 @@ private:
   const sctp_network_gateway_config&    nw_config;
   std::unique_ptr<io_broker>            epoll_broker;
   std::unique_ptr<sctp_network_gateway> gw;
-  ngc_asn1_packer                       packer;
-  ngc_interface*                        ngc = nullptr;
+  ngap_asn1_packer                      packer;
+  ngap_interface*                       ngap = nullptr;
   dummy_ngap_pcap                       pcap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
@@ -95,27 +95,27 @@ protected:
     nw_config.non_blocking_mode = true;
     adapter                     = std::make_unique<ngap_network_adapter>(nw_config);
 
-    ngc_ue_task_scheduler = std::make_unique<dummy_ngc_ue_task_scheduler>(timers);
+    ngap_ue_task_scheduler = std::make_unique<dummy_ngap_ue_task_scheduler>(timers);
 
-    ngc = create_ngc(cfg, *ngc_ue_task_scheduler, ue_mng, *adapter, ctrl_worker);
-    adapter->connect_ngc(ngc.get());
+    ngap = create_ngap(cfg, *ngap_ue_task_scheduler, ue_mng, *adapter, ctrl_worker);
+    adapter->connect_ngap(ngap.get());
   }
 
-  ngc_configuration                            cfg;
-  timer_manager                                timers;
-  ue_manager                                   ue_mng;
-  std::unique_ptr<dummy_ngc_ue_task_scheduler> ngc_ue_task_scheduler;
-  std::unique_ptr<ngap_network_adapter>        adapter;
-  manual_task_worker                           ctrl_worker{128};
-  std::unique_ptr<ngc_interface>               ngc;
+  ngap_configuration                            cfg;
+  timer_manager                                 timers;
+  ue_manager                                    ue_mng;
+  std::unique_ptr<dummy_ngap_ue_task_scheduler> ngap_ue_task_scheduler;
+  std::unique_ptr<ngap_network_adapter>         adapter;
+  manual_task_worker                            ctrl_worker{128};
+  std::unique_ptr<ngap_interface>               ngap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-ng_setup_request generate_ng_setup_request(ngc_configuration ngc_cfg)
+ng_setup_request generate_ng_setup_request(ngap_configuration ngap_cfg)
 {
   ng_setup_request request_msg = {};
-  fill_asn1_ng_setup_request(request_msg.msg, ngc_cfg.gnb_id, ngc_cfg.ran_node_name, ngc_cfg.plmn, ngc_cfg.tac);
+  fill_asn1_ng_setup_request(request_msg.msg, ngap_cfg.gnb_id, ngap_cfg.ran_node_name, ngap_cfg.plmn, ngap_cfg.tac);
   return request_msg;
 }
 
@@ -123,11 +123,11 @@ ng_setup_request generate_ng_setup_request(ngc_configuration ngc_cfg)
 TEST_F(ngap_integration_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Action 1: Launch NG setup procedure
-  ngc_configuration ngc_cfg = srsgnb::config_helpers::make_default_ngc_config();
+  ngap_configuration ngap_cfg = srsgnb::config_helpers::make_default_ngap_config();
 
-  ng_setup_request request_msg = generate_ng_setup_request(ngc_cfg);
+  ng_setup_request request_msg = generate_ng_setup_request(ngap_cfg);
   test_logger.info("Launching NG setup procedure...");
-  async_task<ng_setup_response>         t = ngc->handle_ng_setup_request(request_msg);
+  async_task<ng_setup_response>         t = ngap->handle_ng_setup_request(request_msg);
   lazy_task_launcher<ng_setup_response> t_launcher(t);
 
   // Status: Procedure not yet ready.

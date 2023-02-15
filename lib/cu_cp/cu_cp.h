@@ -55,8 +55,8 @@ public:
   e1_message_handler& get_e1_message_handler(cu_up_index_t cu_up_index) override;
 
   // NG interface
-  ngc_message_handler& get_ngc_message_handler() override;
-  ngc_event_handler&   get_ngc_event_handler() override;
+  ngap_message_handler& get_ngap_message_handler() override;
+  ngap_event_handler&   get_ngap_event_handler() override;
 
   bool amf_is_connected() override { return amf_connected; };
 
@@ -115,7 +115,7 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
 
   // Components
-  std::unique_ptr<ngc_interface> ngc_entity;
+  std::unique_ptr<ngap_interface> ngap_entity;
 
   std::unordered_map<du_index_t, std::unique_ptr<du_processor_interface>>       du_db;
   std::unordered_map<cu_up_index_t, std::unique_ptr<cu_up_processor_interface>> cu_up_db;
@@ -148,18 +148,18 @@ private:
   // F1C to CU-CP adapter
   f1c_cu_cp_adapter f1c_ev_notifier;
 
-  // NGC to CU-CP adapters
-  ngc_to_cu_cp_task_scheduler ngc_task_sched;
-  ngap_cu_cp_adapter          ngap_cu_cp_ev_notifier;
+  // NGAP to CU-CP adapters
+  ngap_to_cu_cp_task_scheduler ngap_task_sched;
+  ngap_cu_cp_adapter           ngap_cu_cp_ev_notifier;
 
-  // RRC UE to NGC adapter
-  rrc_ue_ngc_adapter rrc_ue_ngc_notifier;
+  // RRC UE to NGAP adapter
+  rrc_ue_ngap_adapter rrc_ue_ngap_notifier;
 
   // NGAP to RRC UE adapter array
-  slotted_array<ngc_rrc_ue_adapter, MAX_NOF_CU_UES> ngap_rrc_ue_ev_notifiers;
+  slotted_array<ngap_rrc_ue_adapter, MAX_NOF_CU_UES> ngap_rrc_ue_ev_notifiers;
 
   // NGAP to DU processor adapters
-  std::map<du_index_t, ngc_du_processor_adapter> ngap_du_processor_ev_notifiers; // indexed by DU index
+  std::map<du_index_t, ngap_du_processor_adapter> ngap_du_processor_ev_notifiers; // indexed by DU index
 
   std::atomic<bool> amf_connected = {false};
 

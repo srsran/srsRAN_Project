@@ -93,7 +93,7 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
-class dummy_rrc_ue_ngc_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
+class dummy_rrc_ue_ngap_adapter : public rrc_ue_nas_notifier, public rrc_ue_control_notifier
 {
 public:
   void on_initial_ue_message(const initial_ue_message& msg) override

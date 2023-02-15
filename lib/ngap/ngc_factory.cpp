@@ -16,12 +16,12 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-std::unique_ptr<ngc_interface> srsgnb::srs_cu_cp::create_ngc(ngc_configuration&     ngc_cfg_,
-                                                             ngc_ue_task_scheduler& task_sched_,
-                                                             ngap_ue_manager&       ue_manager_,
-                                                             ngc_message_notifier&  ngc_notifier_,
-                                                             task_executor&         ctrl_exec_)
+std::unique_ptr<ngap_interface> srsgnb::srs_cu_cp::create_ngap(ngap_configuration&     ngap_cfg_,
+                                                               ngap_ue_task_scheduler& task_sched_,
+                                                               ngap_ue_manager&        ue_manager_,
+                                                               ngap_message_notifier&  ngap_notifier_,
+                                                               task_executor&          ctrl_exec_)
 {
-  auto ngc = std::make_unique<ngc_impl>(ngc_cfg_, task_sched_, ue_manager_, ngc_notifier_, ctrl_exec_);
-  return ngc;
+  auto ngap = std::make_unique<ngap_impl>(ngap_cfg_, task_sched_, ue_manager_, ngap_notifier_, ctrl_exec_);
+  return ngap;
 }

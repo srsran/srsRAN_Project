@@ -40,7 +40,7 @@ protected:
 
   bool was_ul_nas_transport_forwarded() const
   {
-    return msg_notifier.last_ngc_msg.pdu.init_msg().value.type() ==
+    return msg_notifier.last_ngap_msg.pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ul_nas_transport;
   }
 };
@@ -56,7 +56,7 @@ TEST_F(ngap_nas_message_routine_test, when_initial_ue_message_is_received_then_n
   this->start_procedure(ue_index);
 
   // check that initial UE message is sent to AMF and that UE objects has been created
-  ASSERT_EQ(msg_notifier.last_ngc_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(msg_notifier.last_ngap_msg.pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(ngap->get_nof_ues(), 1);
 }
 
@@ -73,7 +73,7 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwar
       test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max) - 1));
 
   // Inject DL NAS transport message from AMF
-  ngc_message dl_nas_transport = generate_downlink_nas_transport_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
+  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
   ngap->handle_message(dl_nas_transport);
 
   // Check that RRC notifier was called
@@ -83,7 +83,7 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwar
 TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dropped)
 {
   // Inject DL NAS transport message from AMF
-  ngc_message dl_nas_transport = generate_downlink_nas_transport_message(
+  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(
 
       uint_to_amf_ue_id(test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min),
                                                          amf_ue_id_to_uint(amf_ue_id_t::max) - 1)),

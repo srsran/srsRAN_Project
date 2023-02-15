@@ -104,13 +104,13 @@ public:
   virtual ~ngap_ue() = default;
 
   /// \brief Get the RRC UE PDU notifier of the UE.
-  virtual ngc_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() = 0;
+  virtual ngap_rrc_ue_pdu_notifier& get_rrc_ue_pdu_notifier() = 0;
 
   /// \brief Get the RRC UE control notifier of the UE.
-  virtual ngc_rrc_ue_control_notifier& get_rrc_ue_control_notifier() = 0;
+  virtual ngap_rrc_ue_control_notifier& get_rrc_ue_control_notifier() = 0;
 
   /// \brief Get the DU processor control notifier of the UE.
-  virtual ngc_du_processor_control_notifier& get_du_processor_control_notifier() = 0;
+  virtual ngap_du_processor_control_notifier& get_du_processor_control_notifier() = 0;
 
   /// \brief Get the AMF UE ID of the UE.
   virtual amf_ue_id_t get_amf_ue_id() = 0;
@@ -139,10 +139,10 @@ public:
   /// \param[in] rrc_ue_ctrl_notifier RRC UE control notifier for the UE.
   /// \param[in] du_processor_ctrl_notifier DU processor control notifier for the UE.
   /// \return Pointer to the NGAP UE if found, nullptr otherwise.
-  virtual ngap_ue* add_ue(ue_index_t                         ue_index,
-                          ngc_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
-                          ngc_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
-                          ngc_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
+  virtual ngap_ue* add_ue(ue_index_t                          ue_index,
+                          ngap_rrc_ue_pdu_notifier&           rrc_ue_pdu_notifier,
+                          ngap_rrc_ue_control_notifier&       rrc_ue_ctrl_notifier,
+                          ngap_du_processor_control_notifier& du_processor_ctrl_notifier) = 0;
 
   /// \brief Remove the NGAP UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.

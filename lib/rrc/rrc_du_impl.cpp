@@ -19,11 +19,11 @@ using namespace asn1::rrc_nr;
 rrc_du_impl::rrc_du_impl(const rrc_cfg_t&              cfg_,
                          rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
                          rrc_ue_nas_notifier&          nas_notif_,
-                         rrc_ue_control_notifier&      ngc_ctrl_notif_) :
+                         rrc_ue_control_notifier&      ngap_ctrl_notif_) :
   cfg(cfg_),
   rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
   nas_notifier(nas_notif_),
-  ngc_ctrl_notifier(ngc_ctrl_notif_),
+  ngap_ctrl_notifier(ngap_ctrl_notif_),
   logger(cfg_.logger)
 {
 }
@@ -49,7 +49,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
   auto       res      = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(rrc_ue_du_proc_notifier,
                                                          nas_notifier,
-                                                         ngc_ctrl_notifier,
+                                                         ngap_ctrl_notifier,
                                                          msg.ue_index,
                                                          msg.c_rnti,
                                                          msg.cell,

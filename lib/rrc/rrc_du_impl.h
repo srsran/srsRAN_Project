@@ -26,7 +26,7 @@ public:
   rrc_du_impl(const rrc_cfg_t&              cfg_,
               rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
               rrc_ue_nas_notifier&          nas_notif_,
-              rrc_ue_control_notifier&      ngc_ctrl_notif_);
+              rrc_ue_control_notifier&      ngap_ctrl_notif_);
   ~rrc_du_impl() = default;
 
   // rrc_du_ue_manager
@@ -55,8 +55,8 @@ private:
   bool reject_users = true; ///< Reject all connection attempts, i.e. when AMF is not connected.
 
   rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier; // notifier to the DU processor
-  rrc_ue_nas_notifier&          nas_notifier;            // PDU notifier to the NGC
-  rrc_ue_control_notifier&      ngc_ctrl_notifier;       // Control notifier to the NGC
+  rrc_ue_nas_notifier&          nas_notifier;            // PDU notifier to the NGAP
+  rrc_ue_control_notifier&      ngap_ctrl_notifier;      // Control notifier to the NGAP
   srslog::basic_logger&         logger;
 
   // RRC-internal user database indexed by ue_index
