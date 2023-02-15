@@ -104,6 +104,7 @@ def get_ssb_arfcn(band, bandwidth):
         3: defaultdict(
             lambda: 368410,
             {
+                5:  368410,
                 30: 367450,
                 40: 366490,
                 50: 365530,
@@ -112,12 +113,21 @@ def get_ssb_arfcn(band, bandwidth):
         7: defaultdict(
             lambda: 535930,
             {
+                5:  535930,
                 30: 534970,
                 40: 534010,
                 50: 533050,
             },
         ),
-        41: defaultdict(lambda: 520090, {20: 519850}),
+        41: defaultdict(lambda: 520090, {
+                10: 520090,
+                15: 519850,
+                20: 519850,
+                30: 518890,
+                40: 517930,
+                50: 516970,
+            }
+        ),
     }[band][bandwidth]
 
 
