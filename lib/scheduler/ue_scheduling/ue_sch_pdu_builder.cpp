@@ -144,8 +144,7 @@ pusch_config_params srsgnb::get_pusch_config_f0_0_c_rnti(const cell_configuratio
   // TODO verify if this is the correct value.
   constexpr unsigned nof_harq_ack_bits = 6;
   // We assume only 4 bits for CSI part-1.
-  // TODO set this to 4 when PHY supports it.
-  constexpr unsigned nof_csi_part1_bits = 0;
+  constexpr unsigned nof_csi_part1_bits = 4;
   constexpr unsigned nof_csi_part2_bits = 0;
 
   pusch_config_params pusch;

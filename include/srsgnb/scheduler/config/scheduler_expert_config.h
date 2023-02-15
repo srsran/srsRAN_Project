@@ -26,7 +26,6 @@ struct scheduler_ue_expert_config {
   optional<sch_mcs_index> fixed_dl_mcs;
   unsigned                initial_cqi;
   optional<sch_mcs_index> fixed_ul_mcs;
-  sch_mcs_index           default_ul_mcs;
   unsigned                max_nof_harq_retxs;
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;
