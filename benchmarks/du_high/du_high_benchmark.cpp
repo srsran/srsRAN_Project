@@ -257,6 +257,7 @@ public:
     cfg.f1c_notifier    = &sim_cu_cp;
     cfg.f1u_gw          = &sim_cu_up;
     cfg.phy_adapter     = &sim_phy;
+    cfg.timers          = &timers;
     cfg.cells           = {config_helpers::make_default_du_cell_config()};
     cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
     cfg.qos             = config_helpers::make_default_du_qos_config_list();
@@ -319,6 +320,7 @@ public:
   cu_cp_simulator                    sim_cu_cp;
   cu_up_simulator                    sim_cu_up;
   phy_simulator                      sim_phy;
+  timer_manager                      timers;
   du_high_single_cell_worker_manager workers;
   std::unique_ptr<du_high>           du_hi;
   slot_point                         next_sl_tx{0, 0};

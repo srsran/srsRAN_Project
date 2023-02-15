@@ -165,7 +165,7 @@ class timer_manager
 public:
   /// Default ctor
   /// \param capacity Number of timers to pre-reserve and speed up timer construction.
-  explicit timer_manager(size_t capacity = 64);
+  explicit timer_manager(size_t pre_reserve_capacity = 64);
 
   /// Advances one tick all running timers.
   void tick_all();

@@ -69,6 +69,7 @@ protected:
     du_cfg.ue_executors    = &workers.ue_exec_mapper;
     du_cfg.f1c_notifier    = &du_msg_handler;
     du_cfg.phy_adapter     = &phy;
+    du_cfg.timers          = &timers;
     du_cfg.cells           = {config_helpers::make_default_du_cell_config()};
     du_cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
 
@@ -87,6 +88,7 @@ public:
   std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
   std::unique_ptr<srs_du::du_high>            du_obj;
   du_high_worker_manager                      workers;
+  timer_manager                               timers;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
 };
 

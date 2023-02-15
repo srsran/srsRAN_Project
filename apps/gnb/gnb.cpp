@@ -416,6 +416,9 @@ int main(int argc, char** argv)
   f1c_local_adapter f1c_cu_to_du_adapter("CU-CP-F1"), f1c_du_to_cu_adapter("DU-F1");
   e1_local_adapter  e1_cp_to_up_adapter("CU-CP"), e1_up_to_cp_adapter("CU-UP");
 
+  // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
+  timer_manager app_timers{256};
+
   // Create F1-U connector
   std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();
 
@@ -595,6 +598,7 @@ int main(int argc, char** argv)
   du_hi_cfg.f1c_notifier                  = &f1c_du_to_cu_adapter;
   du_hi_cfg.f1u_gw                        = f1u_conn->get_f1u_du_gateway();
   du_hi_cfg.phy_adapter                   = &phy;
+  du_hi_cfg.timers                        = &app_timers;
   du_hi_cfg.cells                         = du_cfg;
   du_hi_cfg.metrics_notifier              = &console.get_metrics_notifier();
   du_hi_cfg.sched_cfg                     = generate_scheduler_expert_config(gnb_cfg);

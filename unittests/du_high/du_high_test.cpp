@@ -33,6 +33,7 @@ void test_f1_setup_local()
 
   phy_test_dummy phy;
   mac_pcap_dummy pcap;
+  timer_manager  timers;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -40,6 +41,7 @@ void test_f1_setup_local()
   cfg.ue_executors    = &workers.ue_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
+  cfg.timers          = &timers;
   cfg.cells           = {config_helpers::make_default_du_cell_config()};
   cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
   cfg.pcap            = &pcap;
@@ -77,6 +79,7 @@ void test_f1_setup_network()
   dummy_f1c_pdu_notifier notifier(&pdu_handler);
   phy_test_dummy         phy;
   mac_pcap_dummy         pcap;
+  timer_manager          timers;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -84,6 +87,7 @@ void test_f1_setup_network()
   cfg.ue_executors    = &workers.ue_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
+  cfg.timers          = &timers;
   cfg.cells           = {config_helpers::make_default_du_cell_config()};
   cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
   cfg.pcap            = &pcap;
@@ -120,6 +124,7 @@ void test_du_ue_create()
 
   dummy_f1c_pdu_notifier notifier(&pdu_handler);
   mac_pcap_dummy         pcap;
+  timer_manager          timers;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -127,6 +132,7 @@ void test_du_ue_create()
   cfg.ue_executors    = &workers.ue_exec_mapper;
   cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
+  cfg.timers          = &timers;
   cfg.cells           = {config_helpers::make_default_du_cell_config()};
   cfg.sched_cfg       = config_helpers::make_default_scheduler_expert_config();
   cfg.pcap            = &pcap;

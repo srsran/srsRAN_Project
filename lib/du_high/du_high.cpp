@@ -56,8 +56,8 @@ public:
 
 du_high::du_high(const du_high_configuration& config_) :
   cfg(config_),
-  timers(128),
-  f1c_du_cfg_handler(timers),
+  timers(*config_.timers),
+  f1c_du_cfg_handler(*config_.timers),
   metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
 {
   assert_du_high_configuration_valid(cfg);
