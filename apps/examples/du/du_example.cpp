@@ -192,12 +192,12 @@ static const std::vector<configuration_profile> profiles = {
 
 namespace {
 
-/// This implementation returns back to the F1 interface a fake F1 Setup Response message upon the receival of the F1
+/// This implementation returns back to the F1 interface a dummy F1 Setup Response message upon the receival of the F1
 /// Setup Request message.
-class fake_cucp_handler : public f1c_message_notifier
+class dummy_cu_cp_handler : public f1c_message_notifier
 {
 public:
-  explicit fake_cucp_handler(f1c_message_handler* handler_ = nullptr) : handler(handler_) {}
+  explicit dummy_cu_cp_handler(f1c_message_handler* handler_ = nullptr) : handler(handler_) {}
 
   void attach_handler(f1c_message_handler* handler_) { handler = handler_; };
 
@@ -210,7 +210,7 @@ public:
     f1c_message response;
     if (msg.pdu.init_msg().value.type().value ==
         asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer) {
-      // Generate a fake DL RRC Message transfer message and pass it back to the DU.
+      // Generate a dummy DL RRC Message transfer message and pass it back to the DU.
       response.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
 
       auto& resp                      = response.pdu.init_msg().value.dl_rrc_msg_transfer();
@@ -248,7 +248,7 @@ public:
       std::copy(msg4_pdu.begin(), msg4_pdu.end(), resp->rrc_container.value.begin());
     } else if (msg.pdu.init_msg().value.type().value ==
                asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request) {
-      // Generate a fake F1 Setup response message and pass it back to the DU.
+      // Generate a dummy F1 Setup response message and pass it back to the DU.
       response.pdu.set_successful_outcome();
       response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
 
@@ -676,8 +676,8 @@ int main(int argc, char** argv)
   cell_config.offset_to_point_a = offset_to_pointA;
   cell_config.coreset0_index    = coreset0_index;
 
-  fake_cucp_handler f1c_notifier;
-  phy_dummy         phy(mac_adaptor->get_cell_result_notifier());
+  dummy_cu_cp_handler f1c_notifier;
+  phy_dummy           phy(mac_adaptor->get_cell_result_notifier());
 
   du_high_configuration du_hi_cfg = {};
   du_hi_cfg.du_mng_executor       = &workers.ctrl_exec;
