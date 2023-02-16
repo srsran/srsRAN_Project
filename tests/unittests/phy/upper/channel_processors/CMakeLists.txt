@@ -31,6 +31,10 @@ add_executable(pdcch_processor_unittest pdcch_processor_unittest.cpp)
 target_link_libraries(pdcch_processor_unittest srsgnb_channel_processors srslog)
 add_test(pdcch_processor_unittest pdcch_processor_unittest)
 
+add_executable(pdcch_processor_vectortest pdcch_processor_vectortest.cpp)
+target_link_libraries(pdcch_processor_vectortest srsgnb_channel_processors srslog)
+add_test_vector(pdcch_processor_vectortest pdcch_processor_test_data.tar.gz "")
+
 add_executable(pdsch_encoder_test pdsch_encoder_test.cpp)
 target_link_libraries(pdsch_encoder_test srsgnb_channel_processors srslog)
 add_test_vector(pdsch_encoder_test pdsch_encoder_test_data.tar.gz "")

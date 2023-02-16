@@ -60,14 +60,16 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
   bounded_bitset<MAX_RB* NRE> rg_subc_mask = config.rb_mask.kronecker_product<NRE>(re_mask);
 
   // Generate and map for each symbol of the PDCCH transmission.
-  for (unsigned symbol = 0; symbol != config.start_symbol_index + config.duration; ++symbol) {
+  for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.duration;
+       i_symbol != i_symbol_end;
+       ++i_symbol) {
     // Temporal allocation of the sequence.
     span<cf_t> sequence = span<cf_t>(temp_sequence).first(count_dmrs);
 
     // Generate sequence.
-    sequence_generation(sequence, symbol, config);
+    sequence_generation(sequence, i_symbol, config);
 
     // Map sequence in symbols.
-    mapping(grid, sequence, rg_subc_mask, symbol, config.ports);
+    mapping(grid, sequence, rg_subc_mask, i_symbol, config.ports);
   }
 }
