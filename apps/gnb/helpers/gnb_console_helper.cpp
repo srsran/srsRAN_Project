@@ -94,7 +94,7 @@ void gnb_console_helper::handle_command(const std::string& command)
 void gnb_console_helper::print_help()
 {
   fmt::print("Available commands:\n");
-  fmt::print("\tt: starts console trace\n");
+  fmt::print("\tt: start/stop console trace\n");
   fmt::print("\tq: quit application\n");
   fmt::print("\n");
 }
@@ -106,7 +106,7 @@ void gnb_console_helper::set_cells(const span<du_cell_config>& cells_)
 
 void gnb_console_helper::on_app_starting()
 {
-  fmt::print("\n--== srsRAN gNB (build={}, {}) ==--\n\n", get_build_mode(), get_build_info());
+  fmt::print("\n--== srsRAN gNB (commit {}) ==--\n\n", get_build_hash());
 }
 
 void gnb_console_helper::on_app_running()

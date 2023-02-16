@@ -14,7 +14,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace srsgnb {
+using namespace srsgnb;
 
 void metrics_plotter_stdout::print_header()
 {
@@ -170,5 +170,3 @@ std::string metrics_plotter_stdout::float_to_eng_string(float f, int digits)
     return " " + float_to_string(scaled, digits, 5 - factor.length()) + factor;
   }
 }
-
-} // namespace srsgnb
