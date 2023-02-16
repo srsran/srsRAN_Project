@@ -597,9 +597,8 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
      *   - start t-Reassembly;
      *   - set RX_Next_Status_Trigger to RX_Next_Highest.
      */
-    uint32_t sn_upd = {};
-    for (sn_upd = st.rx_next_status_trigger; rx_mod_base(sn_upd) < rx_mod_base(st.rx_next_highest);
-         sn_upd = (sn_upd + 1) % mod) {
+    uint32_t sn_upd = st.rx_next_status_trigger;
+    for (; rx_mod_base(sn_upd) < rx_mod_base(st.rx_next_highest); sn_upd = (sn_upd + 1) % mod) {
       if (not rx_window->has_sn(sn_upd) || (rx_window->has_sn(sn_upd) && not(*rx_window)[sn_upd].fully_received)) {
         break;
       }
@@ -622,6 +621,7 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
     if (restart_reassembly_timer) {
       reassembly_timer.run();
       st.rx_next_status_trigger = st.rx_next_highest;
+      logger.log_debug("Restarted t-Reassmebly. {}", st);
     }
 
     /* 5.3.4 Status reporting:

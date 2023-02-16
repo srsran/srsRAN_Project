@@ -183,7 +183,6 @@ public:
   /*
    * Testing helpers
    */
-
   /// Set the internal state variables
   /// Note: This function should only be used for testing
   ///
@@ -195,6 +194,12 @@ public:
   ///
   /// \return A copy of the internal state variables
   rlc_rx_am_state get_state() { return st; }
+
+  /// Get whether the reassembly timer is running
+  /// Note: This function should only be used for testing
+  ///
+  /// \return true is t-Reassembly is running
+  bool is_t_reassembly_running() { return reassembly_timer.is_running(); }
 
 private:
   /// Handles a received control PDU. The PDU is unpacked and forwarded to the RX entity

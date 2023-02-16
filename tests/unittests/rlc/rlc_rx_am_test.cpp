@@ -915,6 +915,152 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
   EXPECT_EQ(status_report.get_nacks().front().so_end, 5);
 }
 
+/// Verify reassembly timer is triggered upon reception of PDUs:
+///
+/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+///   - if RX_Next_Highest> RX_Next +1; or
+///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
+///     with SN = RX_Next before the last byte of all received segments of this SDU:
+///
+TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_reassembly_timer_triggered)
+{
+  init(GetParam());
+
+  uint32_t sn_state     = 0;
+  uint32_t sdu_size     = 10;
+  uint32_t segment_size = 1;
+
+  // Create SDU and PDUs with SDU segments
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+  sn_state++;
+
+  // Check:
+  ///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
+  ///     with SN = RX_Next before the last byte of all received segments of this SDU:
+  // Push PDUs except for 5th into RLC (rx_next=0 rx_next_highest=1)
+  int i = 0;
+  for (const byte_buffer& pdu_buf : pdu_list) {
+    rlc_rx_am_state st = rlc->get_state();
+    if (i == 0) {
+      ASSERT_EQ(0, st.rx_next_highest);
+    } else {
+      ASSERT_EQ(1, st.rx_next_highest);
+    }
+    ASSERT_EQ(0, st.rx_next);
+    if (i != 5) {
+      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      rlc->handle_pdu(std::move(pdu));
+    }
+    i++;
+  }
+
+  // Check if t-Reassembly is running
+  ASSERT_EQ(true, rlc->is_t_reassembly_running());
+
+  /// Expiration checks are left for their own unit test.
+}
+
+/// Verify reassembly timer is triggered upon reception of PDUs:
+///
+/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+///   - if RX_Next_Highest> RX_Next +1; or
+///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
+///     with SN = RX_Next before the last byte of all received segments of this SDU:
+///
+TEST_P(rlc_rx_am_test, when_rx_next_highest_larger_then_rx_next_reassembly_timer_triggered)
+{
+  init(GetParam());
+
+  uint32_t sn_state     = 0;
+  uint32_t sdu_size     = 1;
+  uint32_t segment_size = 1;
+  uint32_t n_sdus       = 10;
+
+  // Create SDU and PDUs with SDU segments
+  std::list<std::list<byte_buffer>> pdus = {};
+  std::list<byte_buffer>            sdus = {};
+
+  // Create 10 PDUs out of 10 SDUs
+  for (uint32_t i = 0; i < n_sdus; i++) {
+    std::list<byte_buffer> pdu_list = {};
+    byte_buffer            sdu;
+    ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+    sn_state++;
+
+    // save original PDUs
+    pdus.push_back(std::move(pdu_list));
+
+    // save original SDU
+    sdus.push_back(std::move(sdu));
+  }
+
+  // Check:
+  //   - if RX_Next_Highest> RX_Next +1; or
+  // Push PDUs except for 5th into RLC (rx_next=0 rx_next_highest=1)
+  int i = 0;
+  for (const auto& pdu_it : pdus) {
+    if (i != 5) {
+      byte_buffer_slice pdu = {pdu_it.front().deep_copy()};
+      rlc->handle_pdu(std::move(pdu));
+    }
+    i++;
+  }
+
+  // Check if t-Reassembly is running
+  ASSERT_EQ(true, rlc->is_t_reassembly_running());
+
+  /// Expiration checks are left for their own unit test.
+}
+
+/// Verify reassembly timer is *not* triggered upon reception of PDUs:
+///
+/// - if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+///   - if RX_Next_Highest> RX_Next +1; or
+///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
+///     with SN = RX_Next before the last byte of all received segments of this SDU:
+///
+TEST_P(rlc_rx_am_test, when_rx_next_highest_equal_to_rx_next_but_no_byte_missing_then_reassembly_timer_not_triggered)
+{
+  init(GetParam());
+
+  uint32_t sn_state     = 0;
+  uint32_t sdu_size     = 10;
+  uint32_t segment_size = 1;
+
+  // Create SDU and PDUs with SDU segments
+  std::list<byte_buffer> pdu_list = {};
+  byte_buffer            sdu;
+  ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
+  sn_state++;
+
+  // Check:
+  ///   - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
+  ///     with SN = RX_Next before the last byte of all received segments of this SDU:
+  // Push PDUs except for 5th into RLC (rx_next=0 rx_next_highest=1)
+  int i = 0;
+  for (const byte_buffer& pdu_buf : pdu_list) {
+    rlc_rx_am_state st = rlc->get_state();
+    if (i == 0) {
+      ASSERT_EQ(0, st.rx_next_highest);
+    } else {
+      ASSERT_EQ(1, st.rx_next_highest);
+    }
+    ASSERT_EQ(0, st.rx_next);
+    if (i != 9) {
+      byte_buffer_slice pdu = {pdu_buf.deep_copy()};
+      rlc->handle_pdu(std::move(pdu));
+    }
+    i++;
+  }
+
+  // Check if t-Reassembly is running
+  ASSERT_EQ(false, rlc->is_t_reassembly_running());
+
+  /// Expiration checks are left for their own unit test.
+}
+
 /// Verify complex status report (SDU segments (single, sequence, last segment), full SDUs and SDU ranges)
 /// - Receive SDU in segments, but loose one segment; two consecutive segments and the final segment
 /// - Receive full SDUs, but loose one SDU and a sequence of two consecutive SDUs
