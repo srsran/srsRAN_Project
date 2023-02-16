@@ -27,7 +27,7 @@ void scheduler_event_logger::enqueue_impl(const prach_event& rach_ev)
 {
   if (mode == debug) {
     fmt::format_to(fmtbuf,
-                   "\n- PRACH: slot={}, cell={} preamble={} ra-rnti=0x{:x} temp_crnti=0x{:x} ta_cmd={}",
+                   "\n- PRACH: slot={}, cell={} preamble={} ra-rnti={:#x} temp_crnti=0x{:x} ta_cmd={}",
                    rach_ev.slot_rx,
                    rach_ev.cell_index,
                    rach_ev.preamble_id,
@@ -136,27 +136,32 @@ void scheduler_event_logger::enqueue_impl(const bsr_event& bsr)
       }
     }
     fmt::format_to(fmtbuf, "}} to_alloc={:B}", bsr.tot_ul_pending_bytes);
-  } else if (logger.info.enabled()) {
+  } else {
     unsigned tot_bytes = 0;
     for (const auto& lcg : bsr.reported_lcgs) {
       tot_bytes += lcg.nof_bytes;
     }
-    fmt::format_to(fmtbuf, "{}ue={} BSR={}", separator(), bsr.ue_index, tot_bytes);
+    fmt::format_to(fmtbuf, "{}bsr(rnti={:#x} sum={})", separator(), bsr.rnti, tot_bytes);
   }
 }
 
 void scheduler_event_logger::enqueue_impl(const harq_ack_event& harq_ev)
 {
-  fmt::format_to(fmtbuf,
-                 "\n- HARQ-ACK: ue={} rnti={:#x} cell={} slot_rx={} h_id={} ack={}",
-                 harq_ev.ue_index,
-                 harq_ev.rnti,
-                 harq_ev.cell_index,
-                 harq_ev.sl_ack_rx,
-                 harq_ev.h_id,
-                 (unsigned)harq_ev.ack);
-  if (harq_ev.ack == mac_harq_ack_report_status::ack) {
-    fmt::format_to(fmtbuf, ", tbs={}", harq_ev.tbs);
+  if (mode == debug) {
+    fmt::format_to(fmtbuf,
+                   "\n- HARQ-ACK: ue={} rnti={:#x} cell={} slot_rx={} h_id={} ack={}",
+                   harq_ev.ue_index,
+                   harq_ev.rnti,
+                   harq_ev.cell_index,
+                   harq_ev.sl_ack_rx,
+                   harq_ev.h_id,
+                   (unsigned)harq_ev.ack);
+    if (harq_ev.ack == mac_harq_ack_report_status::ack) {
+      fmt::format_to(fmtbuf, " tbs={}", harq_ev.tbs);
+    }
+  } else {
+    fmt::format_to(
+        fmtbuf, "{}harq_ack(rnti={:#x} h_id={} ack={})", separator(), harq_ev.rnti, harq_ev.h_id, harq_ev.h_id);
   }
 }
 
@@ -183,8 +188,8 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
                      crc_ev.h_id,
                      crc_ev.crc);
     }
-  } else if (logger.info.enabled()) {
-    fmt::format_to(fmtbuf, "{}CRC ind", separator());
+  } else {
+    fmt::format_to(fmtbuf, "{}crc(rnti={:#x} h_id={} crc={})", separator(), crc_ev.rnti, crc_ev.h_id, crc_ev.crc);
   }
 }
 
