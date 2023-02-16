@@ -9,10 +9,8 @@
  */
 #pragma once
 
-#include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/prefixed_logger.h"
 #include "fmt/format.h"
-#include <string.h>
 
 namespace srsgnb {
 
