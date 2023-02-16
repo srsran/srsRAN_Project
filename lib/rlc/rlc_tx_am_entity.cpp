@@ -977,19 +977,29 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
       return false;
     }
   }
+
+  // It should not be possible for NACK_SN to be larger than TX_NEXT,
+  // since we check earlier if ACK_SN > tx_next +1
+  // * ACK_SN > TX_NEXT + 1 => drop
+  //     * implies ACK_SN <= TX_NEXT
+  // * NACK_SN >= ACK_SN => drop
+  //     * implies NACK_SN < ACK_SN
+  // * Therefore:
+  //     * NACK_SN < ACK_SN <= TX_NEXT
+
   // NACK_SN >= tx_next
   if (tx_mod_base(nack.nack_sn) > tx_mod_base(st.tx_next)) {
-    logger.log_info("Dropping status PDU. NACK_SN={} >= tx_next={}, st={}", nack.nack_sn, st.tx_next, st);
+    logger.log_error("Dropping status PDU. NACK_SN={} >= tx_next={}, st={}", nack.nack_sn, st.tx_next, st);
     return false;
   }
   // NACK_SN + range >= tx_next
   if (nack.has_nack_range) {
     if (tx_mod_base(nack.nack_sn + nack.nack_range) > tx_mod_base(st.tx_next)) {
-      logger.log_info("Dropping status PDU. NACK_SN={} + range={} >= tx_next={}, st={}",
-                      nack.nack_sn,
-                      nack.nack_range,
-                      st.tx_next,
-                      st);
+      logger.log_error("Dropping status PDU. NACK_SN={} + range={} >= tx_next={}, st={}",
+                       nack.nack_sn,
+                       nack.nack_range,
+                       st.tx_next,
+                       st);
       return false;
     }
   }
