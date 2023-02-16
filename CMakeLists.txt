@@ -270,7 +270,7 @@ set(ALL_HEADER_DIRS
   apps
   lib
   include
-  unittests
+  tests/unittests
 )
 set(ALL_HEADER_FILES "")
 foreach(TMP_DIR ${ALL_HEADER_DIRS})
@@ -289,9 +289,9 @@ add_subdirectory(external)
 add_subdirectory(lib)
 
 if (BUILD_TESTS)
-    add_subdirectory(unittests)
-    add_subdirectory(integrationtests)
-    add_subdirectory(benchmarks)
+    add_subdirectory(tests/unittests)
+    add_subdirectory(tests/integrationtests)
+    add_subdirectory(tests/benchmarks)
 endif (BUILD_TESTS)
 
 ########################################################################

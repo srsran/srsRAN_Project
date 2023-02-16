@@ -1,0 +1,56 @@
+#
+# Copyright 2013-2022 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+set_directory_properties(PROPERTIES LABELS "du_manager")
+
+include_directories(../../..)
+
+add_library(du_manager_test_helpers du_manager_test_helpers.cpp procedures/du_manager_procedure_test_helpers.cpp)
+target_include_directories(du_manager_test_helpers PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_manager_test_helpers srsgnb_du_manager srsgnb_support srslog f1ap_asn1)
+
+add_executable(du_bearer_test du_bearer_test.cpp)
+target_link_libraries(du_bearer_test du_manager_test_helpers srsgnb_du_manager srsgnb_support srslog gtest gtest_main)
+gtest_discover_tests(du_bearer_test)
+
+add_executable(ue_manager_test ue_manager_test.cpp)
+target_link_libraries(ue_manager_test
+        srsgnb_du_manager
+        srsgnb_support
+        srslog
+        f1ap_asn1
+        du_manager_test_helpers
+        gtest
+        gtest_main)
+target_include_directories(ue_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(ue_manager_test)
+
+add_executable(serving_cell_config_converter_test ../du_manager/serving_cell_config_converter_test.cpp)
+target_link_libraries(serving_cell_config_converter_test srsgnb_du_manager srsgnb_support asn1_utils rrc_nr_asn1 srslog gtest gtest_main)
+add_test(serving_cell_config_converter_test serving_cell_config_converter_test)
+gtest_discover_tests(serving_cell_config_converter_test)
+
+add_executable(mac_cell_group_config_converter_test ../du_manager/mac_cell_group_config_converter_test.cpp)
+target_link_libraries(mac_cell_group_config_converter_test srsgnb_du_manager srsgnb_support asn1_utils rrc_nr_asn1 srslog gtest gtest_main)
+add_test(mac_cell_group_config_converter_test mac_cell_group_config_converter_test)
+gtest_discover_tests(mac_cell_group_config_converter_test)
+
+add_executable(du_manager_ue_creation_test procedures/ue_creation_test.cpp)
+target_include_directories(du_manager_ue_creation_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_manager_ue_creation_test du_manager_test_helpers gtest gtest_main)
+gtest_discover_tests(du_manager_ue_creation_test)
+
+add_executable(du_ue_config_test procedures/ue_configuration_test.cpp)
+target_include_directories(du_ue_config_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_ue_config_test du_manager_test_helpers gtest gtest_main)
+gtest_discover_tests(du_ue_config_test)
+
+add_executable(du_ran_resource_manager_test du_ran_resource_manager_test.cpp)
+target_include_directories(du_ran_resource_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_ran_resource_manager_test du_manager_test_helpers gtest gtest_main)
+gtest_discover_tests(du_ran_resource_manager_test)
