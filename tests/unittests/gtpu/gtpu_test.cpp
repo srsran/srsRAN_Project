@@ -11,7 +11,6 @@
 #include "gtpu_test.h"
 #include "srsgnb/gtpu/gtpu_tunnel_factory.h"
 #include "srsgnb/support/test_utils.h"
-#include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -148,6 +147,7 @@ TEST_F(gtpu_test, entity_creation)
 {
   srsgnb::test_delimit_logger  delimiter("GTP-U entity creation test");
   gtpu_tunnel_creation_message msg  = {};
+  msg.cfg.tx.peer_addr              = "127.0.0.1";
   std::unique_ptr<gtpu_tunnel> gtpu = create_gtpu_tunnel(msg);
 
   ASSERT_NE(gtpu, nullptr);
@@ -162,6 +162,7 @@ TEST_F(gtpu_test, rx_sdu)
   gtpu_test_tx_upper           gtpu_tx = {};
   gtpu_tunnel_creation_message msg     = {};
   msg.cfg.rx.local_teid                = 0x1;
+  msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
   std::unique_ptr<gtpu_tunnel> gtpu    = create_gtpu_tunnel(msg);
@@ -186,6 +187,7 @@ TEST_F(gtpu_test, tx_pdu)
   gtpu_test_rx_lower           gtpu_rx = {};
   gtpu_tunnel_creation_message msg     = {};
   msg.cfg.tx.peer_teid                 = 0x1;
+  msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
   std::unique_ptr<gtpu_tunnel> gtpu    = create_gtpu_tunnel(msg);
