@@ -1,3 +1,11 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 .prepare_test:
   before_script:
     - |
@@ -6,7 +14,7 @@
       kubectl config set current-context kubernetes-admin@srs-k8s-lab
 
 .e2e-run:
-  stage: test-e2e
+  stage: e2e
   timeout: 8h
   interruptible: false
   image:
@@ -28,20 +36,20 @@
       - $CI_JOB_NAME/*
     when: always
     reports:
-      junit: e2e_tests/out.xml
+      junit: tests/e2e/out.xml
   script:
     - |
-      cd e2e_tests
+      cd tests/e2e
       export LOGNAME=$GITLAB_USER_LOGIN
       export RETINA_LOGLEVEL="$LOG_LEVEL"
 
-    - retina-launcher --retina-request $PWD/${REQUEST}.yml --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
+    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
   after_script:
     - |
       echo "**************************************************************************************"
       echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/$CI_JOB_NAME/report.html"
       echo "**************************************************************************************"
-    - mv e2e_tests/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
+    - mv tests/e2e/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
     - echo "$CI_JOB_ID" >> ${CI_PROJECT_DIR}/$CI_JOB_NAME/job.env
 
 ################################################################################
@@ -49,7 +57,7 @@
 ################################################################################
 e2e-build:
   extends: .build_and_unit_big
-  stage: test-e2e
+  stage: e2e
   tags:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   variables:
@@ -79,7 +87,7 @@ e2e-build:
 zmq:
   extends: .e2e-run
   variables:
-    REQUEST: "request_srsgnb_zmq"
+    REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "smoke and not tcp"
     LOG_LEVEL: "debug"
     ARGS: "-x"
@@ -100,7 +108,7 @@ zmq:
 rf:
   extends: .e2e-run
   variables:
-    REQUEST: "request_srsgnb_rf"
+    REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     LOG_LEVEL: "warning"
     MARKERS: "rf and not udp"
   rules:

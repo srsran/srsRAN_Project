@@ -1,3 +1,11 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 - name: amarisoft-ue
   type: ue
   image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2021-09-18_ba49eb7_47a0213a4_0.1.11
@@ -11,7 +19,7 @@
   image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.1_0.1.11
   resources:
     - type: zmq
-  path: ../build/apps/gnb/gnb
+  path: ../../build/apps/gnb/gnb
 
 - name: open5gs
   type: epc

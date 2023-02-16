@@ -1,3 +1,11 @@
+#
+# Copyright 2013-2023 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 # How to test nighlt/weekly schedules
 # Generate a schedule for your branch whit a CI_DESCRIPTION variable
 # that contains "Nightly"/"Weekly" and an extra word
@@ -20,7 +28,7 @@ stages:
   - ci
   - static
   - build and unit tests
-  - test-e2e
+  - e2e
   - documentation
 
 ################################################################################
@@ -54,8 +62,9 @@ include-guards:
     - |
       echo "
       -/usr/lib
-      -*unittests
-      -*integrationtests
+      -*tests/unittests
+      -*tests/integrationtests
+      -*tests/benchmarks
       -*benchmarks
       -*apps/examples
       -*external
@@ -197,16 +206,6 @@ intermediate commits:
       optional: true
       artifacts: true
 
-unit requirements:
-  stage: documentation
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-      when: always # Even if previous stages/required jobs fail
-  extends: .test_reporter
-  variables:
-    TEST_FOLDER: unittests
-  needs: []
-
 unit coverage:
   stage: documentation
   extends: .depends on unit test jobs
@@ -300,7 +299,6 @@ pages:
     - mv coverage_html public/
     - mv codechecker*html public/
     - mv test_report.html public/
-    - mv requirement_report.html public/
     - mv docs/index.html public/index.html
     - doxygen_generator.sh
     - mv build/public/index.html build/public/index_doxygen.html
@@ -320,8 +318,6 @@ pages:
 
   needs:
     - job: unit coverage
-      artifacts: true
-    - job: unit requirements
       artifacts: true
     - job: unit tests web
       artifacts: true
@@ -357,4 +353,3 @@ promote code:
     - git checkout -t origin/$GRADUATION_BRANCH
     - git rebase ${CI_COMMIT_SHA}
     - git push
-
