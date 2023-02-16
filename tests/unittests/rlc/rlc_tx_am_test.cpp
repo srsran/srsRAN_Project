@@ -1126,6 +1126,69 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 0);
 }
 
+TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
+{
+  init(GetParam());
+
+  const uint32_t          sdu_size        = 3;
+  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          n_pdus          = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  uint32_t sn_start = cardinality(to_number(sn_size)) - 2;
+  uint32_t nack_sn  = sn_start + 1;
+  uint32_t range    = 4; // maximum valid range is 4
+
+  // Configure state to upper edge
+  rlc_tx_am_state st = {};
+  st.tx_next         = sn_start;
+  st.tx_next_ack     = sn_start;
+  st.poll_sn         = sn_start;
+  rlc->set_state(st);
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  uint32_t n_bsr = tester->bsr_count;
+
+  // NACK SN=nack_sn..nack_sn+range-1
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = nack_sn;
+  nack.has_nack_range     = true;
+  nack.nack_range         = range;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = (sn_start + n_pdus) % cardinality(to_number(sn_size));
+  status_pdu.push_nack(nack);
+  rlc->on_status_pdu(status_pdu);
+  EXPECT_EQ(rlc->get_buffer_state(), range * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr_count, ++n_bsr);
+
+  // Read ReTx as full PDU
+  for (uint32_t i = nack_sn; i < nack_sn + range; i++) {
+    byte_buffer_slice_chain retx_pdu;
+    retx_pdu = rlc->pull_pdu(sdu_size + header_min_size);
+    logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
+    logger.debug(pdus[i - sn_start].begin(), pdus[i - sn_start].end(), "pdus[{}]:", i - sn_start);
+    ASSERT_EQ(retx_pdu.length(), pdus[i - sn_start].length());
+    // compare PDUs, ignore P bit in first header byte
+    EXPECT_EQ(*retx_pdu.begin() & 0x4, *pdus[i - sn_start].begin() & 0x4);                         // mask P bit
+    EXPECT_TRUE(std::equal(retx_pdu.begin() + 1, retx_pdu.end(), pdus[i - sn_start].begin() + 1)); // check rest
+    EXPECT_EQ(rlc->get_buffer_state(), (nack_sn + range - 1 - i) * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr_count, n_bsr);
+  }
+
+  // Verify transmit notification for queued SDUs
+  ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), n_pdus);
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_pdus; pdcp_sn++) {
+    EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.front(), pdcp_sn);
+    tester->highest_transmitted_pdcp_sn_list.pop_front();
+  }
+
+  // Verify delivery notification for fully ACK'ed SDUs
+  ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 1);
+  EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 0);
+}
+
 TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
 {
   init(GetParam());

@@ -994,7 +994,7 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
   }
   // NACK_SN + range >= tx_next
   if (nack.has_nack_range) {
-    if (tx_mod_base(nack.nack_sn + nack.nack_range) > tx_mod_base(st.tx_next)) {
+    if (tx_mod_base(nack.nack_sn + nack.nack_range - 1) > tx_mod_base(st.tx_next)) {
       logger.log_error("Dropping status PDU. NACK_SN={} + range={} >= tx_next={}, st={}",
                        nack.nack_sn,
                        nack.nack_range,

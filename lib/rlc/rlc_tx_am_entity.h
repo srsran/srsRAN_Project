@@ -168,7 +168,7 @@ public:
   /// \return true if sn is valid, false otherwise
   bool valid_ack_sn(uint32_t sn) const;
 
-  /// \brief This function is used to check if a received NACK within a status report is a valid.
+  /// \brief This function is used to check if a received NACK within a status report is valid.
   ///
   /// \param ack_sn ACK_SN of status report
   /// \param nack NACK to check validity of
