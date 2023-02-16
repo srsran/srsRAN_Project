@@ -18,6 +18,8 @@
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/pdcch/dci_packing.h"
+#include "srsgnb/ran/pdcch/pdcch_context.h"
+#include "srsgnb/ran/pdsch/pdsch_context.h"
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/pucch/pucch_mapping.h"
@@ -125,6 +127,8 @@ struct dl_dci_pdu {
   uint8_t     beta_pdcch_1_0;
   int8_t      power_control_offset_ss_profile_nr;
   dci_payload payload;
+  // Vendor specific parameters.
+  pdcch_context context;
 };
 
 /// CORESET CCE to REG mapping type.
@@ -287,6 +291,8 @@ struct dl_pdsch_pdu {
   dl_pdsch_ptrs_maintenance_v3             ptrs_maintenance_v3;
   // :TODO: Rel16 PDSCH params v3
   dl_pdsch_parameters_v4 pdsch_parameters_v4;
+  // Vendor specific parameters.
+  pdsch_context context;
 };
 
 /// CSI-RS maintenance parameters added in FAPIv3.

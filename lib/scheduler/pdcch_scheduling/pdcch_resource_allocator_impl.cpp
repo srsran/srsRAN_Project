@@ -402,6 +402,11 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch.ctx.n_rnti_pdcch_data = get_scrambling_n_RNTI(rnti, cs_cfg, ss_cfg);
   pdcch.ctx.n_id_pdcch_dmrs   = get_N_ID_dmrs(cell_cfg, cs_cfg);
   pdcch.ctx.context.ss_id     = ss_cfg.id;
+  pdcch.ctx.context.dci_format =
+      ((ss_cfg.type == search_space_configuration::type_t::common) ||
+       (ss_cfg.ue_specific == search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0))
+          ? "1_0"
+          : "1_1";
 
   // Allocate a position for DL PDCCH in CORESET.
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);

@@ -272,6 +272,12 @@ public:
     return *this;
   }
 
+  dl_dci_pdu_builder set_context_vendor_specific(search_space_id ss_id, const char* dci_format)
+  {
+    pdu.context = pdcch_context(ss_id, dci_format);
+    return *this;
+  }
+
 private:
   dl_dci_pdu&                                    pdu;
   dl_pdcch_pdu_maintenance_v3::maintenance_info& pdu_v3;
@@ -731,6 +737,13 @@ public:
 
     pdu.pdsch_parameters_v4.lte_crs_mbsfn_pattern.assign(lte_crs_mbsfn_pattern.begin(), lte_crs_mbsfn_pattern.end());
 
+    return *this;
+  }
+
+  /// Sets the PDSCH context as vendor specific.
+  dl_pdsch_pdu_builder& set_context_vendor_specific(harq_id_t harq_id)
+  {
+    pdu.context = pdsch_context(harq_id);
     return *this;
   }
 

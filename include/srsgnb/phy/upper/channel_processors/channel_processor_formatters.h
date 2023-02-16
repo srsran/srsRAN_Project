@@ -69,40 +69,6 @@ struct formatter<srsran::pdcch_processor::coreset_description> {
   }
 };
 
-/// \brief Custom formatter for \c pdcch_processor::dci_description.
-template <>
-struct formatter<srsran::pdcch_processor::dci_description> {
-  /// Helper used to parse formatting options and format fields.
-  srsran::delimited_formatter helper;
-
-  /// Default constructor.
-  formatter() = default;
-
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
-  {
-    return helper.parse(ctx);
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::pdcch_processor::dci_description& dci, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
-  {
-    helper.format_always(ctx, "cce={}", dci.cce_index);
-    helper.format_always(ctx, "al={}", dci.aggregation_level);
-    helper.format_if_verbose(ctx, "rnti=0x{:04x}", dci.rnti);
-    helper.format_if_verbose(ctx, "size={}", dci.payload.size());
-    helper.format_if_verbose(ctx, "n_id_dmrs={}", dci.n_id_pdcch_dmrs);
-    helper.format_if_verbose(ctx, "n_id_data={}", dci.n_id_pdcch_data);
-    helper.format_if_verbose(ctx, "n_rnti={}", dci.n_rnti);
-    helper.format_if_verbose(ctx, "power_dmrs={:+.1f}dB", dci.dmrs_power_offset_dB);
-    helper.format_if_verbose(ctx, "power_data={:+.1f}dB", dci.data_power_offset_dB);
-    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(dci.ports));
-
-    return ctx.out();
-  }
-};
-
 /// \brief Custom formatter for \c pdcch_processor::pdu_t.
 template <>
 struct formatter<srsran::pdcch_processor::pdu_t> {
@@ -122,13 +88,22 @@ struct formatter<srsran::pdcch_processor::pdu_t> {
   auto format(const srsran::pdcch_processor::pdu_t& pdu, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
+    helper.format_always(ctx, "rnti=0x{:04x}", pdu.dci.rnti);
     if (pdu.context.has_value()) {
       helper.format_always(ctx, "{}", pdu.context.value());
     }
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
     helper.format_if_verbose(ctx, pdu.coreset);
-    helper.format_always(ctx, pdu.dci);
+    helper.format_always(ctx, "cce={}", pdu.dci.cce_index);
+    helper.format_always(ctx, "al={}", pdu.dci.aggregation_level);
+    helper.format_if_verbose(ctx, "size={}", pdu.dci.payload.size());
+    helper.format_if_verbose(ctx, "n_id_dmrs={}", pdu.dci.n_id_pdcch_dmrs);
+    helper.format_if_verbose(ctx, "n_id_data={}", pdu.dci.n_id_pdcch_data);
+    helper.format_if_verbose(ctx, "n_rnti={}", pdu.dci.n_rnti);
+    helper.format_if_verbose(ctx, "power_dmrs={:+.1f}dB", pdu.dci.dmrs_power_offset_dB);
+    helper.format_if_verbose(ctx, "power_data={:+.1f}dB", pdu.dci.data_power_offset_dB);
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.dci.ports));
     return ctx.out();
   }
 };
@@ -178,10 +153,9 @@ struct formatter<srsran::pdsch_processor::pdu_t> {
   auto format(const srsran::pdsch_processor::pdu_t& pdu, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
+    helper.format_always(ctx, "rnti=0x{:04x}", pdu.rnti);
     if (pdu.context.has_value()) {
-      helper.format_always(ctx, "{}", pdu.context.value());
-    } else {
-      helper.format_always(ctx, "rnti=0x{:04x}", pdu.rnti);
+      helper.format_always(ctx, pdu.context.value());
     }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb);
     helper.format_always(ctx, "prb={}", pdu.freq_alloc);

@@ -95,8 +95,9 @@ void srsran::fapi_adaptor::convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&   p
                                                      uint16_t                  slot,
                                                      uint16_t                  i_dci)
 {
-  proc_pdu.slot = slot_point(fapi_pdu.scs, sfn, slot);
-  proc_pdu.cp   = fapi_pdu.cp;
+  proc_pdu.slot    = slot_point(fapi_pdu.scs, sfn, slot);
+  proc_pdu.cp      = fapi_pdu.cp;
+  proc_pdu.context = fapi_pdu.dl_dci[i_dci].context;
 
   fill_coreset(proc_pdu.coreset, fapi_pdu);
 

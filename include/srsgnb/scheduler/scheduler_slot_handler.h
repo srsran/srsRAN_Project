@@ -96,6 +96,8 @@ struct dci_context_information {
   struct decision_context {
     /// Chosen SearchSpace-Id.
     search_space_id ss_id;
+    /// DCI format string.
+    const char* dci_format;
   } context;
 };
 
