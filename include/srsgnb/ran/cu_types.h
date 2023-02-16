@@ -14,6 +14,7 @@
 #include "s_nssai.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/pdcp/pdcp_config.h"
+#include "fmt/format.h"
 
 namespace srsgnb {
 
@@ -174,3 +175,21 @@ struct security_result_t {
 };
 
 } // namespace srsgnb
+
+// Formatters
+namespace fmt {
+template <>
+struct formatter<srsgnb::pdu_session_id_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::pdu_session_id_t& sid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{:#x}", pdu_session_id_to_uint(sid));
+  }
+};
+} // namespace fmt
