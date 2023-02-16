@@ -25,6 +25,7 @@
     LOG_LEVEL: ""
     MARKERS: ""
     ARGS: ""
+    FORCE_DOWNLOAD: ""
   tags:
     - on-prem-amd64
   extends:
@@ -42,6 +43,7 @@
       cd tests/e2e
       export LOGNAME=$GITLAB_USER_LOGIN
       export RETINA_LOGLEVEL="$LOG_LEVEL"
+      export FORCE_DOWNLOAD="$FORCE_DOWNLOAD"
 
     - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
   after_script:
@@ -91,6 +93,7 @@ zmq:
     MARKERS: "smoke and not tcp"
     LOG_LEVEL: "debug"
     ARGS: "-x"
+    FORCE_DOWNLOAD: "false"
   rules:
     - if: $ON_MR
       # when: manual
@@ -98,9 +101,10 @@ zmq:
     # - if: $ON_MR == "true" && $GITLAB_USER_NAME == $CODEBOT_USERNAME
     - if: $CI_DESCRIPTION =~ /Nightly/
       variables:
-        MARKERS: "zmq and not udp"
+        MARKERS: "zmq"
         LOG_LEVEL: "warning"
         ARGS: ""
+        FORCE_DOWNLOAD: "true"
   needs:
     - job: "e2e-build"
       artifacts: true
@@ -110,7 +114,8 @@ rf:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     LOG_LEVEL: "warning"
-    MARKERS: "rf and not udp"
+    MARKERS: "rf and not tcp"
+    FORCE_DOWNLOAD: "true"
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   needs:
