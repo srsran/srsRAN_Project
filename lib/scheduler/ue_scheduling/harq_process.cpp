@@ -161,10 +161,10 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
   for (unsigned i = 0; i != tb_tx_req.size(); ++i) {
     if (tb_tx_req[i] == tb_tx_request::newtx) {
-      base_type::new_tx_tb_common(i, max_harq_nof_retxs, dai + i);
+      base_type::new_tx_tb_common(i, max_harq_nof_retxs, dai);
       prev_tx_params.tb[i].emplace();
     } else if (tb_tx_req[i] == tb_tx_request::retx) {
-      base_type::new_retx_tb_common(i, dai + i);
+      base_type::new_retx_tb_common(i, dai);
     } else {
       prev_tx_params.tb[i].reset();
     }
@@ -230,12 +230,14 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
 void ul_harq_process::new_tx(slot_point pusch_slot, unsigned max_harq_retxs)
 {
   harq_process::tx_common(pusch_slot, pusch_slot);
+  // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_tx_tb_common(0, max_harq_retxs, 0);
 }
 
 void ul_harq_process::new_retx(slot_point pusch_slot)
 {
   harq_process::tx_common(pusch_slot, pusch_slot);
+  // Note: For UL, DAI is not used, so we set it to zero.
   base_type::new_retx_tb_common(0, 0);
 }
 
