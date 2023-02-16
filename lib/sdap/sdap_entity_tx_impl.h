@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "sdap_user_logger.h"
+#include "sdap_session_logger.h"
 #include "srsgnb/sdap/sdap.h"
 
 namespace srsgnb {
@@ -20,8 +20,8 @@ namespace srs_cu_up {
 class sdap_entity_tx_impl : public sdap_tx_sdu_handler
 {
 public:
-  sdap_entity_tx_impl(uint32_t ue_index, sdap_tx_pdu_notifier& pdu_notifier_) :
-    logger("SDAP", {ue_index, "DL"}), pdu_notifier(pdu_notifier_)
+  sdap_entity_tx_impl(uint32_t ue_index, pdu_session_id_t sid, sdap_tx_pdu_notifier& pdu_notifier_) :
+    logger("SDAP", {ue_index, sid, "DL"}), pdu_notifier(pdu_notifier_)
   {
   }
 
@@ -33,7 +33,7 @@ public:
   }
 
 private:
-  sdap_user_logger      logger;
+  sdap_session_logger   logger;
   sdap_tx_pdu_notifier& pdu_notifier;
 };
 

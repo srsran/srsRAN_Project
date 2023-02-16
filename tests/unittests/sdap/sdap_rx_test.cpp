@@ -46,7 +46,7 @@ protected:
     tester = std::make_unique<sdap_rx_test_frame>();
 
     // Create SDAP RX entity
-    sdap = std::make_unique<sdap_entity_rx_impl>(7, *tester);
+    sdap = std::make_unique<sdap_entity_rx_impl>(7, pdu_session_id_t::min, *tester);
   }
 
   void TearDown() override

@@ -46,7 +46,7 @@ protected:
     tester = std::make_unique<sdap_tx_test_frame>();
 
     // Create SDAP TX entity
-    sdap = std::make_unique<sdap_entity_tx_impl>(7, *tester);
+    sdap = std::make_unique<sdap_entity_tx_impl>(7, pdu_session_id_t::min, *tester);
   }
 
   void TearDown() override

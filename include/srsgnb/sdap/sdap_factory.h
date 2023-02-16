@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/ran/cu_types.h"
 #include "srsgnb/sdap/sdap.h"
 #include <memory>
 
@@ -22,6 +23,7 @@ namespace srs_cu_up {
 
 struct sdap_entity_creation_message {
   uint32_t              ue_index;
+  pdu_session_id_t      pdu_session_id;
   sdap_rx_sdu_notifier* rx_sdu_notifier;
   sdap_tx_pdu_notifier* tx_pdu_notifier;
 };

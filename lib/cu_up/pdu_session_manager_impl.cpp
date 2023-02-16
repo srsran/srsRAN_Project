@@ -80,6 +80,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Create SDAP entity
   sdap_entity_creation_message sdap_msg = {};
+  sdap_msg.ue_index                     = ue_index;
   sdap_msg.rx_sdu_notifier              = &new_session->sdap_to_gtpu_adapter;
   sdap_msg.tx_pdu_notifier              = &new_session->sdap_to_pdcp_adapter;
   new_session->sdap                     = create_sdap(sdap_msg);
