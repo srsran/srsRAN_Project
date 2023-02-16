@@ -14,6 +14,9 @@
 
 namespace srsgnb {
 
+/// \brief Returns a formatted string containing the current commit hash.
+const char* get_build_hash();
+
 /// \brief Returns a formatted string containing the current commit hash and branch name (if available).
 const char* get_build_info();
 

@@ -13,10 +13,15 @@
 
 namespace srsgnb {
 
+const char* get_build_hash()
+{
+  return build_hash;
+}
+
 const char* get_build_info()
 {
   return build_info;
-};
+}
 
 const char* get_build_mode()
 {
