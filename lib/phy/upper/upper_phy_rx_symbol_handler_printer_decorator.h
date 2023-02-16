@@ -26,7 +26,7 @@ public:
                                                 unsigned                                     nof_rb) :
     handler(std::move(handler_)),
     logger(logger_),
-    worker("rx_symbol_handler_printer", 40),
+    worker("rx_symb_print", 40),
     temp_buffer(nof_rb * NRE),
     nof_symbols(MAX_NSYMB_PER_SLOT)
   {
