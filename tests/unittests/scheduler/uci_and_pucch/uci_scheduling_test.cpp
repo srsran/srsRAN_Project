@@ -146,12 +146,26 @@ public:
     pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
     pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
 
+    pucch_expected_csi.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_csi.crnti                     = to_rnti(0x4601);
+    pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_expected_csi.resources.prbs            = prb_interval{2, 3};
+    pucch_expected_csi.resources.second_hop_prbs = prb_interval{0, 0};
+    pucch_expected_csi.resources.symbols         = ofdm_symbol_range{12, 14};
+
+    pucch_expected_csi.format_2.harq_ack_nof_bits = 0;
+    pucch_expected_csi.format_2.sr_bits           = sr_nof_bits::one;
+    pucch_expected_csi.format_2.csi_part1_bits    = 4;
+    pucch_expected_csi.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_csi.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+    pucch_expected_csi.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+
     pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
     pucch_expected_f2.crnti                     = to_rnti(0x4601);
     pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
     pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{12, 14};
+    pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
 
     pucch_expected_f2.format_2.harq_ack_nof_bits = 1;
     pucch_expected_f2.format_2.sr_bits           = sr_nof_bits::one;
@@ -173,6 +187,7 @@ protected:
   test_bench             t_bench;
   // Expected SR PUCCH PDU that would be passed to PHY.
   pucch_info pucch_expected;
+  pucch_info pucch_expected_csi;
   pucch_info pucch_expected_f2;
 };
 

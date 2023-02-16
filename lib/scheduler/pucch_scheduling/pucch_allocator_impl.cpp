@@ -291,6 +291,14 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
 
   // Case 1) If there is a PUCCH format 2 grant, update it.
   if (existing_grants.format2_grant != nullptr) {
+    // Case 1-A) If the allocated resource is the one specific for CSI, change resource and allocate grant.
+    if (existing_grants.format2_grant->format_2.harq_ack_nof_bits == 0 and
+        existing_grants.format2_grant->format_2.csi_part1_bits > 0) {
+      return change_format2_resource(
+          pucch_slot_alloc, *existing_grants.format2_grant, crnti, ue_cell_cfg, harq_ack_bits);
+    }
+
+    // Case 1-B) If the allocated resource is for HARQ too, just update the resource.
     return update_format2_grant(
         *existing_grants.format2_grant, pucch_slot_alloc.slot, ue_cell_cfg, harq_ack_bits, sr_bits, csi_part1_bits);
   }
@@ -387,7 +395,6 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
                                                           const ue_cell_configuration&  ue_cell_cfg,
                                                           unsigned                      csi_part1_nof_bits)
 {
-  // Get the index of the PUCCH resource to be used for CSI (Format2).
   const unsigned    HARQ_ACK_NOF_BITS = 0;
   const sr_nof_bits SR_BITS           = sr_nof_bits::no_sr;
 
@@ -404,25 +411,12 @@ void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_all
 
   // Case B) There is a PUCCH Format 2 grant.
   if (existing_grants.format2_grant != nullptr) {
-    // Retrieve the PUCCH Format 2 resource from the Resource Manager.
-    const pucch_resource* res_cfg = resource_manager.reserve_csi_resource(pucch_slot_alloc.slot, crnti, ue_cell_cfg);
-
-    if (res_cfg == nullptr) {
-      logger.warning("No available PUCCH Format2 resources to allocate CSI for RNTI {:#x} on slot={}.",
-                     crnti,
-                     pucch_slot_alloc.slot.to_uint());
-      return;
-    }
-
-    // Remove previous allocated bits and allocate a new Format 2 frant.
-    pucch_uci_bits removed_uci_bits = remove_ue_uci_from_pucch(
-        pucch_slot_alloc, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    allocate_new_format2_grant(pucch_slot_alloc,
-                               crnti,
-                               ue_cell_cfg,
-                               removed_uci_bits.harq_ack_nof_bits,
-                               removed_uci_bits.sr_bits,
-                               removed_uci_bits.csi_part1_bits + csi_part1_nof_bits);
+    update_format2_grant(*existing_grants.format2_grant,
+                         pucch_slot_alloc.slot,
+                         ue_cell_cfg,
+                         HARQ_ACK_NOF_BITS,
+                         SR_BITS,
+                         csi_part1_nof_bits);
     return;
   }
   // Case C) There are existing PUCCH Format 1 grants; convert to Format 2
@@ -671,9 +665,11 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
                 "Pointers for existing resources are null.");
   pucch_harq_ack_grant output;
 
-  // Get a PUCCH Format 2 resource (if for CSI report, get the resource specific for with CSI).
+  unsigned curr_harq_bits = existing_harq_grant != nullptr ? existing_harq_grant->format_1.harq_ack_nof_bits : 0;
+
+  // Get a PUCCH Format 2 resource (if for CSI report and NOT for HARQ-ACK, get the resource specific for with CSI).
   pucch_harq_resource_alloc_record format2_res{.pucch_res = nullptr, .pucch_res_indicator = 0};
-  if (csi_part1_nof_bits > 0) {
+  if (csi_part1_nof_bits > 0 and curr_harq_bits == 0 and harq_ack_nof_bits == 0) {
     format2_res.pucch_res = resource_manager.reserve_csi_resource(pucch_slot_alloc.slot, rnti, ue_cell_cfg);
   } else {
     format2_res = resource_manager.reserve_next_format2_res_available(
@@ -694,7 +690,6 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
                                                          .max_c_rate);
   // Compute the number of and which UCI bits that can be reported so as not to exceed the Max Code Rate of PUCCH
   // Format 2.
-  unsigned       curr_harq_bits = existing_harq_grant != nullptr ? existing_harq_grant->format_1.harq_ack_nof_bits : 0;
   sr_nof_bits    curr_sr_bits = existing_sr_grant != nullptr ? existing_sr_grant->format_1.sr_bits : sr_nof_bits::no_sr;
   pucch_uci_bits uci_bits     = compute_format2_uci_bits(*format2_res.pucch_res,
                                                      max_pucch_code_rate,
@@ -711,6 +706,82 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
 
   // Remove the previously allocated PUCCH format-1 resources.
   remove_pucch_format1_from_grants(
+      pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+
+  // Allocate PUCCH SR grant only.
+  if (pucch_slot_alloc.result.ul.pucchs.full()) {
+    logger.error("List still full after removing PUCCH f1 grant for RNTI {:#x} for slot={}.",
+                 rnti,
+                 pucch_slot_alloc.slot.to_uint());
+    return output;
+  }
+
+  // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
+  pucch_info& pucch_pdu = pucch_slot_alloc.result.ul.pucchs.emplace_back();
+  fill_pucch_format2_grant(pucch_pdu,
+                           rnti,
+                           *format2_res.pucch_res,
+                           ue_cell_cfg,
+                           nof_prbs,
+                           uci_bits.harq_ack_nof_bits,
+                           uci_bits.sr_bits,
+                           uci_bits.csi_part1_bits);
+  logger.debug(
+      "PUCCH Format 2 grant allocation with {} H-ACK, {} SR, {} CSI bits for RNTI {:#x} for slot={} completed.",
+      uci_bits.harq_ack_nof_bits,
+      uci_bits.sr_bits,
+      uci_bits.csi_part1_bits,
+      rnti,
+      pucch_slot_alloc.slot.to_uint());
+  output.pucch_pdu           = &pucch_pdu;
+  output.pucch_res_indicator = static_cast<unsigned>(format2_res.pucch_res_indicator);
+
+  return output;
+}
+
+pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_resource_allocator& pucch_slot_alloc,
+                                                                   pucch_info&                   existing_grant,
+                                                                   rnti_t                        rnti,
+                                                                   const ue_cell_configuration&  ue_cell_cfg,
+                                                                   unsigned harq_ack_bits_increment)
+{
+  pucch_harq_ack_grant output;
+
+  pucch_harq_resource_alloc_record format2_res = resource_manager.reserve_next_format2_res_available(
+      pucch_slot_alloc.slot, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+
+  if (format2_res.pucch_res == nullptr) {
+    remove_format2_csi_from_grants(
+        pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+    logger.error("No available PUCCH Format2 resources to allocate UCI for RNTI {:#x} on slot={}.",
+                 rnti,
+                 pucch_slot_alloc.slot.to_uint());
+    return output;
+  }
+
+  float max_pucch_code_rate = to_max_code_rate_float(ue_cell_cfg.cfg_dedicated()
+                                                         .ul_config.value()
+                                                         .init_ul_bwp.pucch_cfg.value()
+                                                         .format_2_common_param.value()
+                                                         .max_c_rate);
+  // Compute the number of and which UCI bits that can be reported so as not to exceed the Max Code Rate of PUCCH
+  // Format 2.
+  pucch_uci_bits uci_bits =
+      compute_format2_uci_bits(*format2_res.pucch_res,
+                               max_pucch_code_rate,
+                               existing_grant.format_2.harq_ack_nof_bits + harq_ack_bits_increment,
+                               existing_grant.format_2.sr_bits,
+                               existing_grant.format_2.csi_part1_bits);
+
+  // Compute the number of PRBs required for the uci bits computed above.
+  unsigned nof_prbs = get_pucch_format2_nof_prbs(uci_bits.harq_ack_nof_bits + sr_nof_bits_to_uint(uci_bits.sr_bits) +
+                                                     uci_bits.csi_part1_bits,
+                                                 format2_res.pucch_res->format_2.nof_prbs,
+                                                 format2_res.pucch_res->format_2.nof_symbols,
+                                                 max_pucch_code_rate);
+
+  // Remove the previously allocated PUCCH format-1 resource.
+  remove_format2_csi_from_grants(
       pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
 
   // Allocate PUCCH SR grant only.
@@ -799,6 +870,23 @@ void pucch_allocator_impl::remove_pucch_format1_from_grants(cell_slot_resource_a
   }
 }
 
+void pucch_allocator_impl::remove_format2_csi_from_grants(cell_slot_resource_allocator& slot_alloc,
+                                                          rnti_t                        crnti,
+                                                          const pucch_config&           pucch_cfg)
+{
+  auto& pucchs = slot_alloc.result.ul.pucchs;
+
+  // Remove PUCCH Format2 resource specific for CSI.
+  auto* it = std::find_if(pucchs.begin(), pucchs.end(), [crnti](pucch_info& pucch) {
+    return pucch.crnti == crnti and pucch.format_2.harq_ack_nof_bits == 0 and pucch.format_2.csi_part1_bits > 0;
+  });
+
+  if (it != pucchs.end()) {
+    pucchs.erase(it);
+    resource_manager.release_csi_resource(slot_alloc.slot, crnti);
+  }
+}
+
 pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_resource_allocator& pucch_slot_alloc,
                                                                       rnti_t                        crnti,
                                                                       const ue_cell_configuration&  ue_cell_cfg,
@@ -877,9 +965,9 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_
 pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&                  existing_f2_grant,
                                                                 slot_point                   sl_tx,
                                                                 const ue_cell_configuration& ue_cell_cfg,
-                                                                unsigned                     nof_harq_ack_bits,
-                                                                sr_nof_bits                  nof_sr_bits,
-                                                                unsigned                     nof_csi_part1_bits)
+                                                                unsigned                     harq_ack_bits_increment,
+                                                                sr_nof_bits                  sr_bits_increment,
+                                                                unsigned                     csi_part1_bits_increment)
 {
   // TODO replace this with value from config.
   const unsigned PUCCH_FORMAT2_RES_SET_IDX = 1;
@@ -888,15 +976,21 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
   // If so:  (i) the resource indicator is meaningless; (ii) the PUCCH resource configuration is the CSI specific one.
   // If not: (i) the resource indicator is needed; (ii) the PUCCH resource configuration is retrieved from the resource
   //             indicator.
-  unsigned current_csi_part1_bits = existing_f2_grant.format_2.csi_part1_bits;
+  const unsigned current_csi_part1_bits = existing_f2_grant.format_2.csi_part1_bits;
+  const unsigned current_harq_ack_bits  = existing_f2_grant.format_2.harq_ack_nof_bits;
 
-  int res_indicator =
-      current_csi_part1_bits > 0 ? 0 : resource_manager.fetch_f2_pucch_res_indic(sl_tx, existing_f2_grant.crnti);
+  // This function cannot be called if the resource of for CSI and needs to be converted into HARQ-ACK.
+  srsgnb_sanity_check(not(current_csi_part1_bits > 0 and current_harq_ack_bits == 0 and harq_ack_bits_increment > 0),
+                      "PUCCH resource CSI cannot be converted into HARQ-ACK through this function.");
+
+  int res_indicator = current_csi_part1_bits > 0 and current_harq_ack_bits == 0
+                          ? 0
+                          : resource_manager.fetch_f2_pucch_res_indic(sl_tx, existing_f2_grant.crnti);
   srsgnb_sanity_check(res_indicator >= 0,
                       "The resource indicator for the allocated PUCCH Format 2 grant is expected to be non-negative");
 
   const pucch_resource* res_cfg =
-      current_csi_part1_bits > 0
+      current_csi_part1_bits > 0 and current_harq_ack_bits == 0
           ? resource_manager.fetch_csi_pucch_res_config(sl_tx, existing_f2_grant.crnti, ue_cell_cfg)
           : &ue_cell_cfg.cfg_dedicated()
                  .ul_config.value()
@@ -916,8 +1010,12 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
                                                          .init_ul_bwp.pucch_cfg.value()
                                                          .format_2_common_param.value()
                                                          .max_c_rate);
-  update_format2_uci_bits(
-      existing_f2_grant, *res_cfg, max_pucch_code_rate, nof_harq_ack_bits, nof_sr_bits, nof_csi_part1_bits);
+  update_format2_uci_bits(existing_f2_grant,
+                          *res_cfg,
+                          max_pucch_code_rate,
+                          harq_ack_bits_increment,
+                          sr_bits_increment,
+                          csi_part1_bits_increment);
 
   unsigned uci_bits = existing_f2_grant.format_2.harq_ack_nof_bits +
                       sr_nof_bits_to_uint(existing_f2_grant.format_2.sr_bits) +
