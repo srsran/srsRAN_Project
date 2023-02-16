@@ -354,9 +354,10 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
   unsigned expected_sib1_period_slots = expected_sib1_period_ms * t_bench.sl_tx.nof_slots_per_subframe();
 
   // Slot (or offset) at which SIB1 PDCCH is allocated, measured as a delay compared to the slot with SSB. Specifically,
-  // 5 is the offset of the SIB1 for the first beam, for searcSpaceZero = 9U, multiplexing pattern 1 (15kHz SCS, FR1);
-  // as per Section 13, TS 38.213.
-  const unsigned sib1_allocation_slot{5};
+  // n0 = 5 is the offset of the SIB1 for the first beam, for searcSpaceZero = 9U, multiplexing pattern 1 (15kHz SCS,
+  // FR1); as per Section 13, TS 38.213. As the scheduler allocate the SIB1 PDCCH in the n0 + 1 slot,
+  // sib1_allocation_slot is 6.
+  const unsigned sib1_allocation_slot{6};
 
   // Run the test for 10000 slots.
   size_t test_length_slots = 10000;
@@ -491,12 +492,14 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_fdd)
 {
   // Test SIB1 scheduler for different values of searchSpaceZero (4 LSBs of pdcch_config_sib1) and for different
   // SSB_bitmaps.
-  // The array sib1_slots contains the expected slots n0 or n0 + 1, at which the SIB1 is scheduled. The i-th element of
-  // the array refers to the n0 or n0 + 1 for the i-th SSB's beam. The slots n0 have been pre-computed based on
+  // Depending on the SIB1 scheduler implementation, the array sib1_slots contains the expected slots n0 or n0 + 1, at
+  // which the SIB1 is scheduled.
+  // NOTE: As the current SIB1 scheduler implementation allocates the SIB1 PDCCH on the slot n0 + 1, i-th element of the
+  // sib1_slots array refers to the n0 + 1 for the i-th SSB's beam. The slots n0 have been pre-computed based on
   // TS 38.213, Section 13.
 
   // SCS Common: 15kHz
-  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots = {5, 7, 9, 11, 13, 15, 17, 19};
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots = {6, 8, 10, 12, 14, 16, 18, 20};
   // pdcch_config_sib1 = 9U => { coreset0 = 0U, searchspace0 = 9U).
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10101010, 20, srsgnb::duplex_mode::FDD);
   // pdcch_config_sib1 = 57U => { coreset0 = 3U, searchspace0 = 9U).
@@ -513,7 +516,7 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_fdd)
   // pdcch_config_sib1 = 105U => { coreset0 = 0U, searchspace0 = 9U).
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 105U, 0b11111111, 5, srsgnb::duplex_mode::FDD);
 
-  sib1_slots = {2, 3, 4, 5, 6, 7, 8, 9};
+  sib1_slots = {3, 4, 5, 6, 7, 8, 9, 10};
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b10101010, 20, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b01010101, 20, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b11111111, 20, srsgnb::duplex_mode::FDD);
@@ -524,7 +527,7 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_fdd)
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b01010101, 5, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b11111111, 5, srsgnb::duplex_mode::FDD);
 
-  sib1_slots = {7, 8, 9, 10, 11, 12, 13, 14};
+  sib1_slots = {8, 9, 10, 11, 12, 13, 14, 15};
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b10101010, 20, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b01010101, 20, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b11111111, 20, srsgnb::duplex_mode::FDD);
@@ -536,12 +539,12 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_fdd)
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b11111111, 5, srsgnb::duplex_mode::FDD);
 
   // SCS Common: 30kHz
-  sib1_slots = {10, 12, 14, 16, 18, 20, 22, 24};
+  sib1_slots = {11, 13, 15, 17, 19, 21, 23, 25};
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 9U, 0b10101010, 10, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 9U, 0b01010101, 10, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 9U, 0b11111111, 10, srsgnb::duplex_mode::FDD);
 
-  sib1_slots = {10, 11, 12, 13, 14, 15, 16, 17};
+  sib1_slots = {11, 12, 13, 14, 15, 16, 17, 18};
   // pdcch_config_sib1 = 4U => { coreset0 = 0U, searchspace0 = 4U).
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 4U, 0b10101010, 10, srsgnb::duplex_mode::FDD);
   // pdcch_config_sib1 = 68U => { coreset0 = 3U, searchspace0 = 4U).
@@ -549,7 +552,7 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_fdd)
   // pdcch_config_sib1 = 100U => { coreset0 = 6U, searchspace0 = 4U).
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 100U, 0b11111111, 10, srsgnb::duplex_mode::FDD);
 
-  sib1_slots = {4, 5, 6, 7, 8, 9, 10, 11};
+  sib1_slots = {5, 6, 7, 8, 9, 10, 11, 12};
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b10101010, 10, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b01010101, 10, srsgnb::duplex_mode::FDD);
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b11111111, 10, srsgnb::duplex_mode::FDD);
@@ -557,8 +560,16 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_fdd)
 
 TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_tdd)
 {
+  // Test SIB1 scheduler for different values of searchSpaceZero (4 LSBs of pdcch_config_sib1), for
+  // SSB_bitmap = 0b10000000.
+  // Depending on the SIB1 scheduler implementation, the array sib1_slots contains the expected slots n0 or n0 + 1, at
+  // which the SIB1 is scheduled.
+  // NOTE: (i) As in this test we assume only the first SSB beam gets transmitted, sib1_slots only contains one element,
+  // which is slot n0 + 1, as the current SIB1 scheduler implementation allocates the SIB1 PDCCH on the slot n0 + 1.
+  // (ii) The slots n0 have been pre-computed based on TS 38.213, Section 13.
+
   // SCS Common: 15kHz
-  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots = {5};
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots = {6};
   // pdcch_config_sib1 = 9U => { coreset0 = 0U, searchspace0 = 9U).
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10000000, 20, srsgnb::duplex_mode::TDD);
 
@@ -567,14 +578,14 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_tdd)
   // pdcch_config_sib1 = 9U => { coreset0 = 0U, searchspace0 = 9U).
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10000000, 5, srsgnb::duplex_mode::TDD);
 
-  sib1_slots = {2};
+  sib1_slots = {3};
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b10000000, 20, srsgnb::duplex_mode::TDD);
 
   // 5Mhz Carrier BW.
   sib1_slots = {3};
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 2U, 0b10000000, 5, srsgnb::duplex_mode::TDD);
 
-  sib1_slots = {7};
+  sib1_slots = {8};
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b10000000, 20, srsgnb::duplex_mode::TDD);
 
   // 5Mhz Carrier BW.
@@ -582,14 +593,14 @@ TEST(sib1_scheduler_test, test_sib1_scheduler_allocation_tdd)
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 6U, 0b10000000, 5, srsgnb::duplex_mode::TDD);
 
   // SCS Common: 30kHz
-  sib1_slots = {10};
+  sib1_slots = {11};
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 9U, 0b10000000, 10, srsgnb::duplex_mode::TDD);
 
-  sib1_slots = {10};
+  sib1_slots = {11};
   // pdcch_config_sib1 = 4U => { coreset0 = 0U, searchspace0 = 4U).
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 4U, 0b10000000, 10, srsgnb::duplex_mode::TDD);
 
-  sib1_slots = {4};
+  sib1_slots = {5};
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots, 12U, 0b10000000, 10, srsgnb::duplex_mode::TDD);
 }
 
