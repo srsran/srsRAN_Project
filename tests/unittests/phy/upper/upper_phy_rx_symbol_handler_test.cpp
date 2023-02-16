@@ -31,7 +31,6 @@ protected:
   upper_phy_rx_results_notifier_wrapper  rx_results_wrapper;
   upper_phy_rx_symbol_handler_impl       rx_handler;
   prach_buffer_spy                       buffer_dummy;
-  prach_detector::configuration          config;
   resource_grid_dummy                    rg;
 
   void handle_prach_symbol()
@@ -100,6 +99,8 @@ protected:
   }
 };
 
+} // namespace
+
 TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_prach_calls_uplink_processor)
 {
   ASSERT_FALSE(ul_proc_spy->is_process_prach_method_called());
@@ -126,5 +127,3 @@ TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_pucch_pdu_calls_uplink_pro
 
   ASSERT_TRUE(ul_proc_spy->is_process_pucch_method_called());
 }
-
-} // namespace
