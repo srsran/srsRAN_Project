@@ -53,7 +53,7 @@ struct formatter<srsgnb::gtpu_config::gtpu_rx_config> {
   auto format(const srsgnb::gtpu_config::gtpu_rx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "local teid={}", cfg.local_teid);
+    return format_to(ctx.out(), "local_teid={:#x}", cfg.local_teid);
   }
 };
 
@@ -71,7 +71,7 @@ struct formatter<srsgnb::gtpu_config::gtpu_tx_config> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(
-        ctx.out(), "peer teid={}, peer addr={}, peer port={}", cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
+        ctx.out(), "peer_teid={:#x} peer_addr={} peer_port={}", cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
   }
 };
 
@@ -87,7 +87,7 @@ struct formatter<srsgnb::gtpu_config> {
   template <typename FormatContext>
   auto format(const srsgnb::gtpu_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "rx=[{}], tx=[{}]", cfg.rx, cfg.tx);
+    return format_to(ctx.out(), "{} {}", cfg.rx, cfg.tx);
   }
 };
 } // namespace fmt

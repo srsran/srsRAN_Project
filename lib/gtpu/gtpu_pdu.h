@@ -168,7 +168,7 @@ struct formatter<srsgnb::gtpu_header::gtpu_flags> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "GTP-U version={} bit, PT={}, E={}, S={}, PN={}",
+                     "v={} pt={} e={} s={} pn={}",
                      flags.version,
                      flags.protocol_type,
                      flags.ext_hdr,
@@ -188,7 +188,7 @@ struct formatter<srsgnb::gtpu_header> {
   template <typename FormatContext>
   auto format(const srsgnb::gtpu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "Flags[{}], Length={}, TEID={}", hdr.flags, hdr.length, hdr.teid);
+    return format_to(ctx.out(), "{} len={} teid={:#x}", hdr.flags, hdr.length, hdr.teid);
   }
 };
 

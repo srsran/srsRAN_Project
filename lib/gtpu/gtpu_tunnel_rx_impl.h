@@ -24,10 +24,10 @@ class gtpu_tunnel_rx : public gtpu_tunnel_rx_upper_layer_interface
 {
 public:
   gtpu_tunnel_rx(uint32_t ue_index, gtpu_config::gtpu_rx_config cfg_, gtpu_tunnel_rx_lower_layer_notifier& rx_lower_) :
-    logger("GTPU", gtpu_tunnel_log_prefix{ue_index, "local", cfg_.local_teid}), cfg(cfg_), lower_dn(rx_lower_)
+    logger("GTPU", {ue_index, cfg_.local_teid, "DL"}), cfg(cfg_), lower_dn(rx_lower_)
   {
     // Validate configuration
-    logger.log_info("GTPU DL entity configured. Configuration={}", cfg);
+    logger.log_info("GTPU configured. {}", cfg);
   }
 
   /*
@@ -38,14 +38,14 @@ public:
     gtpu_header hdr;
     bool        read_ok = gtpu_read_and_strip_header(hdr, buf, logger);
     if (!read_ok) {
-      logger.log_error("Error reading GTP-U header, discarding.");
+      logger.log_error("Dropped PDU, error reading GTP-U header. sdu_len={}", buf.length());
       return;
     }
     if (hdr.teid != cfg.local_teid) {
-      logger.log_error("Mismatched TEID, discarding. Header TEID={}", hdr.teid);
+      logger.log_error("Dropped PDU, mismatched TEID. sdu_len={} teid={:#x}", buf.length(), hdr.teid);
       return;
     }
-    logger.log_info(buf.begin(), buf.end(), "RX GTP-U SDU (len={} B, teid={})", buf.length(), hdr.teid);
+    logger.log_info(buf.begin(), buf.end(), "RX SDU. sdu_len={} teid={:#x}", buf.length(), hdr.teid);
     lower_dn.on_new_sdu(std::move(buf));
   }
 

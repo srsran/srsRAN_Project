@@ -11,17 +11,16 @@
 
 #include "srsgnb/support/prefixed_logger.h"
 #include "fmt/format.h"
-#include <cstring>
 
 namespace srsgnb {
 
 class gtpu_tunnel_log_prefix
 {
 public:
-  gtpu_tunnel_log_prefix(uint32_t ue_index, std::string local_peer, uint32_t teid)
+  gtpu_tunnel_log_prefix(uint32_t ue_index, uint32_t teid, const char* dir)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "UE={}, {} TEID={}: ", ue_index, local_peer, teid);
+    fmt::format_to(buffer, "ue={} {} teid={:#x}: ", ue_index, dir, teid);
     prefix = srsgnb::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
