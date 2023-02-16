@@ -86,7 +86,7 @@ private:
 
   uint32_t get_buffer_state_nolock();
 
-  void log_state(srslog::basic_levels level) { logger.log(level, "TX entity state: st=[{}], next_so={}", st, next_so); }
+  void log_state(srslog::basic_levels level) { logger.log(level, "TX entity state. {} next_so={}", st, next_so); }
 };
 
 } // namespace srsgnb

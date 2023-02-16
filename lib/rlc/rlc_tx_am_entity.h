@@ -276,16 +276,11 @@ private:
 
   void log_state(srslog::basic_levels level)
   {
-    fmt::memory_buffer buffer;
     if (sn_under_segmentation == INVALID_RLC_SN) {
-      fmt::format_to(buffer, "{}", "none");
+      logger.log(level, "TX entity state. {} sn_under_segmentation=none", st, sn_under_segmentation);
     } else {
-      fmt::format_to(buffer, "{}", sn_under_segmentation);
+      logger.log(level, "TX entity state. {} sn_under_segmentation={}", st, sn_under_segmentation);
     }
-    //
-    // TODO: avoid string construction
-    //
-    logger.log(level, "TX entity state: st=[{}], sn_under_segmentation={}", st, fmt::to_string(buffer));
   }
 };
 

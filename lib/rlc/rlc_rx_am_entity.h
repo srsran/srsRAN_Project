@@ -256,7 +256,7 @@ private:
   /// \return unique pointer to rx_window instance
   std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> create_rx_window(rlc_am_sn_size sn_size);
 
-  void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state: st=[{}]", st); }
+  void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };
 
 } // namespace srsgnb
