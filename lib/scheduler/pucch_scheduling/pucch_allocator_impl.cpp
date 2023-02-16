@@ -252,7 +252,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_common_pucch_harq_ack_ue(cell_r
   fill_pucch_harq_common_grant(pucch_info, tcrnti, pucch_res);
   pucch_harq_ack_output.pucch_pdu = &pucch_info;
 
-  logger.debug("PUCCH for TC-RNTI={:#x} allocated for slot={}.", tcrnti, pucch_slot_alloc.slot.to_uint());
+  logger.debug("PUCCH for TC-RNTI={:#x} allocated for slot={}.", tcrnti, pucch_slot_alloc.slot);
 
   return pucch_harq_ack_output;
 }
@@ -353,7 +353,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   if (existing_grants.format2_grant != nullptr) {
     logger.debug("SR occasion for RNTI {:#x} for slot={} scheduled on existing PUCCH Format 2 grant.",
                  crnti,
-                 pucch_slot_alloc.slot.to_uint());
+                 pucch_slot_alloc.slot);
     update_format2_grant(*existing_grants.format2_grant,
                          pucch_slot_alloc.slot,
                          ue_cell_cfg,
@@ -368,7 +368,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   if (pucch_sr_res == nullptr) {
     logger.warning("SR allocation skipped for RNTI {:#x} for slot={} due to PUCCH ded. resource not available.",
                    crnti,
-                   pucch_slot_alloc.slot.to_uint());
+                   pucch_slot_alloc.slot);
     return;
   }
 
@@ -376,7 +376,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     logger.warning("SR occasion allocation for RNTI {:#x} for slot={} skipped. CAUSE: no more PUCCH grants available.",
                    crnti,
-                   pucch_slot_alloc.slot.to_uint());
+                   pucch_slot_alloc.slot);
     return;
   }
 
@@ -387,7 +387,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   fill_pucch_ded_format1_grant(
       pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
-  logger.debug("SR occasion for RNTI {:#x} for slot={} scheduling completed.", crnti, pucch_slot_alloc.slot.to_uint());
+  logger.debug("SR occasion for RNTI {:#x} for slot={} scheduling completed.", crnti, pucch_slot_alloc.slot);
 }
 
 void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -621,7 +621,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
     logger.warning(
         "PUCCH HARQ-ACK grant for RNTI {:#x} for slot={} not allocated. CAUSE: no more PUCCH grants available.",
         crnti,
-        pucch_slot_alloc.slot.to_uint());
+        pucch_slot_alloc.slot);
     return pucch_harq_ack_output;
   }
 
@@ -631,7 +631,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
     logger.warning("PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} skipped due to PUCCH ded. resources "
                    "not available.",
                    crnti,
-                   pucch_slot_alloc.slot.to_uint());
+                   pucch_slot_alloc.slot);
     return pucch_harq_ack_output;
   }
 
@@ -645,8 +645,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   const unsigned HARQ_BITS_IN_NEW_PUCCH_GRANT = 1;
   fill_pucch_ded_format1_grant(
       pucch_pdu, crnti, *pucch_harq_res_info.pucch_res, HARQ_BITS_IN_NEW_PUCCH_GRANT, sr_nof_bits::no_sr);
-  logger.debug(
-      "PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} completed.", crnti, pucch_slot_alloc.slot.to_uint());
+  logger.debug("PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} completed.", crnti, pucch_slot_alloc.slot);
   pucch_harq_ack_output.pucch_pdu           = &pucch_pdu;
   pucch_harq_ack_output.pucch_res_indicator = static_cast<unsigned>(pucch_harq_res_info.pucch_res_indicator);
 
@@ -677,9 +676,8 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
   }
 
   if (format2_res.pucch_res == nullptr) {
-    logger.error("No available PUCCH Format2 resources to allocate UCI for RNTI {:#x} on slot={}.",
-                 rnti,
-                 pucch_slot_alloc.slot.to_uint());
+    logger.error(
+        "No available PUCCH Format2 resources to allocate UCI for RNTI {:#x} on slot={}.", rnti, pucch_slot_alloc.slot);
     return output;
   }
 
@@ -710,9 +708,8 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.error("List still full after removing PUCCH f1 grant for RNTI {:#x} for slot={}.",
-                 rnti,
-                 pucch_slot_alloc.slot.to_uint());
+    logger.error(
+        "List still full after removing PUCCH f1 grant for RNTI {:#x} for slot={}.", rnti, pucch_slot_alloc.slot);
     return output;
   }
 
@@ -732,7 +729,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
       uci_bits.sr_bits,
       uci_bits.csi_part1_bits,
       rnti,
-      pucch_slot_alloc.slot.to_uint());
+      pucch_slot_alloc.slot);
   output.pucch_pdu           = &pucch_pdu;
   output.pucch_res_indicator = static_cast<unsigned>(format2_res.pucch_res_indicator);
 
@@ -753,9 +750,8 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
   if (format2_res.pucch_res == nullptr) {
     remove_format2_csi_from_grants(
         pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    logger.error("No available PUCCH Format2 resources to allocate UCI for RNTI {:#x} on slot={}.",
-                 rnti,
-                 pucch_slot_alloc.slot.to_uint());
+    logger.error(
+        "No available PUCCH Format2 resources to allocate UCI for RNTI {:#x} on slot={}.", rnti, pucch_slot_alloc.slot);
     return output;
   }
 
@@ -786,9 +782,8 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.error("List still full after removing PUCCH f1 grant for RNTI {:#x} for slot={}.",
-                 rnti,
-                 pucch_slot_alloc.slot.to_uint());
+    logger.error(
+        "List still full after removing PUCCH f1 grant for RNTI {:#x} for slot={}.", rnti, pucch_slot_alloc.slot);
     return output;
   }
 
@@ -808,7 +803,7 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
       uci_bits.sr_bits,
       uci_bits.csi_part1_bits,
       rnti,
-      pucch_slot_alloc.slot.to_uint());
+      pucch_slot_alloc.slot);
   output.pucch_pdu           = &pucch_pdu;
   output.pucch_res_indicator = static_cast<unsigned>(format2_res.pucch_res_indicator);
 
@@ -901,7 +896,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_
     logger.warning(
         "PUCCH Format 2 grant allocation for RNTI {:#x} for slot={} skipped. CAUSE: no more PUCCH grants available.",
         crnti,
-        pucch_slot_alloc.slot.to_uint());
+        pucch_slot_alloc.slot);
     return output;
   }
 
@@ -917,7 +912,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_
   if (format2_res.pucch_res == nullptr) {
     logger.error("No available PUCCH Format2 resources to allocate CSI for RNTI {:#x} on slot={}.",
                  crnti,
-                 pucch_slot_alloc.slot.to_uint());
+                 pucch_slot_alloc.slot);
     return output;
   }
 
@@ -955,7 +950,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_
       uci_bits.sr_bits,
       uci_bits.csi_part1_bits,
       crnti,
-      pucch_slot_alloc.slot.to_uint());
+      pucch_slot_alloc.slot);
   output.pucch_pdu           = &pucch_pdu;
   output.pucch_res_indicator = static_cast<unsigned>(format2_res.pucch_res_indicator);
 
