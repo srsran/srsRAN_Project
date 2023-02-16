@@ -13,7 +13,6 @@
 #include "lib/rlc/rlc_bearer_logger.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
 class rrc_dummy : public pdcp_rx_upper_control_notifier, public pdcp_tx_upper_control_notifier
@@ -21,7 +20,7 @@ class rrc_dummy : public pdcp_rx_upper_control_notifier, public pdcp_tx_upper_co
   rlc_bearer_logger logger;
 
 public:
-  explicit rrc_dummy(uint32_t id) : logger("RRC", {id, drb_id_t::drb1}) {}
+  explicit rrc_dummy(uint32_t id) : logger("RRC", {id, drb_id_t::drb1, "DL/UL"}) {}
 
   // PDCP -> RRC
   void on_integrity_failure() final {}

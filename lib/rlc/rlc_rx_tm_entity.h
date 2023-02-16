@@ -21,6 +21,7 @@ public:
     rlc_rx_entity(du_index, rb_id, upper_dn_)
   {
     metrics.metrics_set_mode(rlc_mode::tm);
+    logger.log_info("RLC TM created.");
   }
 
   void handle_pdu(byte_buffer_slice buf) override

@@ -30,6 +30,7 @@ public:
     rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_)
   {
     metrics.metrics_set_mode(rlc_mode::tm);
+    logger.log_info("RLC TM created.");
   }
 
   // Interfaces for higher layers

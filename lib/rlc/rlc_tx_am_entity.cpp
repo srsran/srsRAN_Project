@@ -44,6 +44,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
       pcell_executor_.execute([this, timerid]() { on_expired_poll_retransmit_timer(timerid); });
     });
   }
+  logger.log_info("RLC AM configured. {}", cfg);
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.3.1

@@ -11,12 +11,10 @@
 #pragma once
 
 #include "lib/rlc/rlc_bearer_logger.h"
-#include "rlc_stress_test_args.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
-#include "srsgnb/srslog/srslog.h"
 #include <random>
 
 namespace srsgnb {
@@ -31,7 +29,7 @@ class f1ap_dummy : public pdcp_tx_lower_notifier,
   pdcp_rx_lower_interface*           pdcp_rx_lower = nullptr;
 
 public:
-  f1ap_dummy(uint32_t id) : logger("F1AP", {id, drb_id_t::drb1}) {}
+  f1ap_dummy(uint32_t id) : logger("F1AP", {id, drb_id_t::drb1, "DL"}) {}
 
   // PDCP -> F1 -> RLC
   void on_new_pdu(pdcp_tx_pdu pdu) final

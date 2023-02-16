@@ -31,10 +31,7 @@ public:
     rlc_base_entity(du_index, rb_id)
   {
     tx = std::make_unique<rlc_tx_um_entity>(du_index, rb_id, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn);
-    logger.log_info("RLC TX UM configured: sn_field_length={}", config.tx);
-
     rx = std::make_unique<rlc_rx_um_entity>(du_index, rb_id, config.rx, rx_upper_dn, timers, ue_executor);
-    logger.log_info("RLC RX UM configured: {}", config.rx);
   }
 };
 

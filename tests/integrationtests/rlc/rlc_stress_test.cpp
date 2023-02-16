@@ -22,7 +22,7 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   pcell_name("PCell-Worker-" + std::to_string(id)),
   ue_worker{ue_name, task_worker_queue_size, true},
   pcell_worker{pcell_name, task_worker_queue_size, true},
-  logger("STACK", {id, rb_id})
+  logger("STACK", {id, rb_id, "DL/UL"})
 {
   ue_executor    = make_task_executor(ue_worker);
   pcell_executor = make_task_executor(pcell_worker);

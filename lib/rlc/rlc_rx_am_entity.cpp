@@ -50,6 +50,8 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
 
   // initialize status report
   status_report.ack_sn = st.rx_next_highest;
+
+  logger.log_info("RLC AM configured. {}", cfg);
 }
 
 // Interfaces for lower layers

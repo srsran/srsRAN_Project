@@ -26,6 +26,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
   head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),
   head_len_not_first(rlc_um_pdu_header_size_with_so(cfg.sn_field_length))
 {
+  logger.log_info("RLC UM configured. {}", cfg);
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1

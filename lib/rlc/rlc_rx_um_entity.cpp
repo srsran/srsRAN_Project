@@ -35,6 +35,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
       ue_executor.execute([this, tid]() { on_expired_status_prohibit_timer(tid); });
     });
   }
+  logger.log_info("RLC UM configured. {}", cfg);
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.3.2.2

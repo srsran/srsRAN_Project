@@ -26,7 +26,7 @@ namespace srsgnb {
 class rlc_base_entity : public rlc_entity
 {
 public:
-  rlc_base_entity(du_ue_index_t du_index, rb_id_t rb_id) : logger("RLC", {du_index, rb_id}) {}
+  rlc_base_entity(du_ue_index_t du_index, rb_id_t rb_id) {}
   ~rlc_base_entity() override                         = default;
   rlc_base_entity(const rlc_base_entity&)             = delete;
   rlc_base_entity& operator=(const rlc_base_entity&)  = delete;
@@ -52,8 +52,6 @@ public:
   }
 
 protected:
-  rlc_bearer_logger logger;
-
   std::unique_ptr<rlc_tx_entity> tx = {};
   std::unique_ptr<rlc_rx_entity> rx = {};
 };

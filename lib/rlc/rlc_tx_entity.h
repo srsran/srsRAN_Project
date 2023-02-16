@@ -30,7 +30,7 @@ protected:
                 rlc_tx_upper_layer_data_notifier&    upper_dn_,
                 rlc_tx_upper_layer_control_notifier& upper_cn_,
                 rlc_tx_lower_layer_notifier&         lower_dn_) :
-    logger("RLC", {du_index, rb_id}), upper_dn(upper_dn_), upper_cn(upper_cn_), lower_dn(lower_dn_)
+    logger("RLC", {du_index, rb_id, "DL"}), upper_dn(upper_dn_), upper_cn(upper_cn_), lower_dn(lower_dn_)
   {
   }
 
