@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "sdap_user_logger.h"
 #include "srsgnb/sdap/sdap.h"
 
 namespace srsgnb {
@@ -19,20 +20,20 @@ namespace srs_cu_up {
 class sdap_entity_rx_impl : public sdap_rx_pdu_handler
 {
 public:
-  sdap_entity_rx_impl(sdap_rx_sdu_notifier& sdu_notifier_) :
-    logger(srslog::fetch_basic_logger("SDAP")), sdu_notifier(sdu_notifier_)
+  sdap_entity_rx_impl(uint32_t ue_index, sdap_rx_sdu_notifier& sdu_notifier_) :
+    logger("SDAP", {ue_index, "UL"}), sdu_notifier(sdu_notifier_)
   {
   }
 
   void handle_pdu(byte_buffer pdu) final
   {
     // pass through
-    logger.info("SDAP Rx received PDU of size {} and forwards it as SDU.", pdu.length());
+    logger.log_debug("RX SDU. sdu_len={}", pdu.length());
     sdu_notifier.on_new_sdu(std::move(pdu));
   }
 
 private:
-  srslog::basic_logger& logger;
+  sdap_user_logger      logger;
   sdap_rx_sdu_notifier& sdu_notifier;
 };
 

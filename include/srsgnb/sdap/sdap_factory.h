@@ -21,6 +21,7 @@ namespace srsgnb {
 namespace srs_cu_up {
 
 struct sdap_entity_creation_message {
+  uint32_t              ue_index;
   sdap_rx_sdu_notifier* rx_sdu_notifier;
   sdap_tx_pdu_notifier* tx_pdu_notifier;
 };
