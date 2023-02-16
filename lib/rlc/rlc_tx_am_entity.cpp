@@ -958,7 +958,7 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
   }
   // NACK_SN + range >= ACK_SN
   if (nack.has_nack_range) {
-    if (tx_mod_base(nack.nack_sn + nack.nack_range) >= tx_mod_base(ack_sn)) {
+    if (tx_mod_base(nack.nack_sn + nack.nack_range - 1) >= tx_mod_base(ack_sn)) {
       logger.log_info(
           "Dropping status PDU. NACK_SN={} + range={} >= ACK_SN={}, st={}", ack_sn, nack.nack_sn, nack.nack_range, st);
       return false;
@@ -971,7 +971,7 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
   }
   // NACK_SN + range within TX Window
   if (nack.has_nack_range) {
-    if (not inside_tx_window(nack.nack_sn + nack.nack_range)) {
+    if (not inside_tx_window(nack.nack_sn + nack.nack_range - 1)) {
       logger.log_info(
           "Dropping status PDU. NACK_SN={} + range={} not within TX window, st={}", nack.nack_sn, nack.nack_range, st);
       return false;

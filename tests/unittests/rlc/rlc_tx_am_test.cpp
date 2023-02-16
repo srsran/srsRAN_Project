@@ -904,7 +904,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
-TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_inside_rx_window)
+TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
 {
   init(GetParam());
   const uint32_t          sdu_size = 3;
@@ -988,17 +988,38 @@ TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_ack_sn)
   status_pdu2.ack_sn = 8;
   {
     rlc_am_status_nack nack = {};
-    nack.nack_sn            = 6;
+    nack.nack_sn            = 5;
     nack.has_nack_range     = true;
-    nack.nack_range         = 2;
+    nack.nack_range         = 3; // NACK 5, 6 and 7, should be valid
     status_pdu2.push_nack(nack);
   }
 
   // Receive Status 2
   rlc->on_status_pdu(status_pdu2);
-  ASSERT_EQ(rlc->get_buffer_state(), 0); // should have ignored status report
+  ASSERT_NE(rlc->get_buffer_state(), 0);  // should have processed status report
+  rlc->pull_pdu(rlc->get_buffer_state()); // RETX 5
+  rlc->pull_pdu(rlc->get_buffer_state()); // RETX 6
+  rlc->pull_pdu(rlc->get_buffer_state()); // RETX 7
+  ASSERT_EQ(rlc->get_buffer_state(), 0);
   rlc_tx_am_state st2 = rlc->get_state();
   ASSERT_EQ(st2.tx_next_ack, 5); // TX_NEXT_ACK should have not changed
+
+  // Status PDU 3
+  rlc_am_status_pdu status_pdu3(sn_size);
+  status_pdu3.ack_sn = 8;
+  {
+    rlc_am_status_nack nack = {};
+    nack.nack_sn            = 6;
+    nack.has_nack_range     = true;
+    nack.nack_range         = 3; // NACK 6, 7 and 8, should be invalid
+    status_pdu3.push_nack(nack);
+  }
+
+  // Receive Status 3
+  rlc->on_status_pdu(status_pdu3);
+  ASSERT_EQ(rlc->get_buffer_state(), 0); // should have dropped status report
+  rlc_tx_am_state st3 = rlc->get_state();
+  ASSERT_EQ(st3.tx_next_ack, 5); // TX_NEXT_ACK should have not changed
 }
 
 TEST_P(rlc_tx_am_test, invalid_nack_sn_larger_than_tx_next)
