@@ -8,6 +8,8 @@
 
 [tool.pytest.ini_options]
 log_cli = true
+log_date_format = "%Y-%m-%d %H:%M:%S"
+log_format = "%(asctime)s [%(levelname)s] %(message)s"
 log_level = "INFO"
 markers = [
   "smoke",
@@ -18,6 +20,7 @@ markers = [
   "downlink",
   "uplink",
   "bidirectional",
+  "multiue",
   "test",
 ]
 minversion = "6.0"
@@ -25,8 +28,6 @@ python_files = [
   "tests/*.py",
 ]
 render_collapsed = true
-log_format = "%(asctime)s [%(levelname)s] %(message)s"
-log_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.black]
 line-length = 120

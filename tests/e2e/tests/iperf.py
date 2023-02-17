@@ -9,48 +9,32 @@
 """
 Test ping
 """
-from contextlib import suppress
 import logging
+from contextlib import suppress
 
 import grpc
-
 from pytest import mark
-from retina.launcher.utils import param
 from retina.launcher.test_base import BaseTest
-from retina.protocol.base_pb2 import Empty, Integer
+from retina.launcher.utils import param
+from retina.protocol.base_pb2 import Empty, String, UInteger
 from retina.protocol.epc_pb2 import EPCStartInfo
 from retina.protocol.gnb_pb2 import GNBStartInfo
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, IPerfRequest, UEStartInfo
 
-from .utils import get_ue_gnb_epc, ATTACH_TIMEOUT, STARTUP_TIMEOUT
+from .utils import ATTACH_TIMEOUT, DEFAULT_MCS, STARTUP_TIMEOUT, get_ue_gnb_epc
 
 SHORT_DURATION = 20
-LONG_DURATION = 20*60
-LOW_BITRATE = 1e6
-HIGH_BITRATE = 70e6
+LONG_DURATION = 20 * 60
+LOW_BITRATE = int(1e6)
+HIGH_BITRATE = int(70e6)
+
 
 class TestIPerf(BaseTest):
     @mark.parametrize(
-        "bitrate, iperf_duration, band, common_scs, bandwidth, ul_mcs, dl_mcs",
+        "ue_count",
         (
-            # Smoke
-            param(LOW_BITRATE, SHORT_DURATION, 3, 15, 20, 28, 28, marks=mark.smoke, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(LOW_BITRATE, SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.smoke, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            # ZMQ
-            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 5, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 10, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 20, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 3, 15, 50, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 5, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 10, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 20, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 7, 15, 50, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 10, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 50, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            # RF
-            param(HIGH_BITRATE, LONG_DURATION, 3, 15, 10, 10, 10, marks=[mark.rf, mark.xfail], id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, LONG_DURATION, 41, 30, 10, 10, 10, marks=[mark.rf, mark.xfail], id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(1, id="singleue"),
+            param(4, id="multiue", marks=mark.multiue),
         ),
     )
     @mark.parametrize(
@@ -68,39 +52,58 @@ class TestIPerf(BaseTest):
             param(IPerfProto.TCP, id="tcp", marks=mark.tcp),
         ),
     )
+    @mark.parametrize(
+        "band, common_scs, bandwidth, bitrate, iperf_duration",
+        (
+            # Smoke
+            param(3, 15, 20, LOW_BITRATE, SHORT_DURATION, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(41, 30, 20, LOW_BITRATE, SHORT_DURATION, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            # ZMQ
+            param(3, 15, 5, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 10, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 20, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 50, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(7, 15, 5, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(7, 15, 10, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(7, 15, 20, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(7, 15, 50, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(41, 30, 10, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(41, 30, 20, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(41, 30, 50, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            # RF
+            param(3, 15, 10, HIGH_BITRATE, LONG_DURATION, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(41, 30, 10, HIGH_BITRATE, LONG_DURATION, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+        ),
+    )
     def test(
         self,
         extra,
         band,
         common_scs,
         bandwidth,
-        ul_mcs,
-        dl_mcs,
         protocol,
         direction,
         iperf_duration,
         bitrate,
+        ue_count,
+        mcs=DEFAULT_MCS,
         startup_timeout=ATTACH_TIMEOUT,
         attach_timeout=STARTUP_TIMEOUT,
     ):
-
         logging.info("Iperf Test")
 
         with get_ue_gnb_epc(
-            self,
-            extra,
-            band=band,
-            common_scs=common_scs,
-            bandwidth=bandwidth,
+            self, extra, band=band, common_scs=common_scs, bandwidth=bandwidth, mcs=mcs, ue_count=ue_count
         ) as items:
-
             ue, gnb, epc = items
 
             ue_def = ue.GetDefinition(Empty())
             gnb_def = gnb.GetDefinition(Empty())
             epc_def = epc.GetDefinition(Empty())
 
-            epc.AddUESubscriber(ue_def)
+            for subscriber in ue_def.subscriber_list:
+                epc.AddUESubscriber(subscriber)
+
             epc.Start(EPCStartInfo())
             logging.info("EPC started")
 
@@ -116,34 +119,43 @@ class TestIPerf(BaseTest):
             ue.Start(
                 UEStartInfo(
                     gnb_definition=gnb_def,
+                    epc_definition=epc_def,
                     timeout=startup_timeout,
                 )
             )
             logging.info("UE started")
 
-            ue_attached_info = ue.WainUntilAttached(Integer(value=attach_timeout))
-            logging.info("UE Attached %s", ue_attached_info)
+            ue_attached_info_list = ue.WainUntilAttached(UInteger(value=attach_timeout))
+            logging.info("UEs attached %s", ue_attached_info_list)
 
-            server = epc.StartIPerfService(Empty())
-            logging.info(
-                "IPerf %s %s in progress",
-                iperf_proto_to_str(protocol),
-                iperf_dir_to_str(direction),
-            )
-
-            with suppress(grpc.RpcError):
-                ue.IPerf(
-                    IPerfRequest(
-                        server=server,
-                        duration=iperf_duration,
-                        direction=direction,
-                        proto=protocol,
-                        bitrate=int(bitrate),
-                    )
+            for ue_attached_info in ue_attached_info_list.value:
+                server = epc.StartIPerfService(String(value=ue_attached_info.ipv4_gateway))
+                logging.info(
+                    "\nIPerf %s [%s %s] in progress",
+                    ue_attached_info.ipv4_gateway,
+                    iperf_proto_to_str(protocol),
+                    iperf_dir_to_str(direction),
                 )
 
-            iperf_data = epc.StopIPerfService(server)
-            logging.info("Iperf %s %s result %s", iperf_proto_to_str(protocol), iperf_dir_to_str(direction), iperf_data)
+                with suppress(grpc.RpcError):
+                    ue.IPerf(
+                        IPerfRequest(
+                            server=server,
+                            duration=iperf_duration,
+                            direction=direction,
+                            proto=protocol,
+                            bitrate=int(bitrate),
+                        )
+                    )
+
+                iperf_data = epc.StopIPerfService(server)
+                logging.info(
+                    "Iperf %s [%s %s] result %s",
+                    ue_attached_info.ipv4_gateway,
+                    iperf_proto_to_str(protocol),
+                    iperf_dir_to_str(direction),
+                    iperf_data,
+                )
 
 
 def iperf_proto_to_str(proto):

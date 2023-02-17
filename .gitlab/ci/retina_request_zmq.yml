@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2021-09-18_ba49eb7_47a0213a4_0.1.11
+  image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2021-09-18_ba49eb7_47a0213a4_0.2.0
   resources:
     - type: zmq
     - type: license
@@ -16,11 +16,11 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.1_0.1.11
+  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.1_0.2.0
   resources:
     - type: zmq
   path: ../../build/apps/gnb/gnb
 
 - name: open5gs
   type: epc
-  image: registry.gitlab.com/softwareradiosystems/retina/images/open5gs:2.5.6_0.1.11
+  image: registry.gitlab.com/softwareradiosystems/retina/images/open5gs:2.5.6_0.2.0

@@ -18,9 +18,11 @@ from retina.protocol.base_pb2 import Empty
 
 ATTACH_TIMEOUT = 120
 STARTUP_TIMEOUT = 120
+DEFAULT_MCS = 10
+
 
 @contextmanager
-def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
+def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
     """
     Get test elements
     """
@@ -36,6 +38,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
                     "ssb_scs": common_scs,
                     "bandwidth": bandwidth,
                     "log_level": get_loglevel(),
+                    "ue_count": ue_count,
                 }
             },
             "gnb": {
@@ -44,6 +47,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
                     "dl_arfcn": get_dl_arfcn(band),
                     "common_scs": common_scs,
                     "bandwidth": bandwidth,
+                    "mcs": mcs,
                     "log_level": get_loglevel(),
                 }
             },
@@ -64,9 +68,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth):
         raise err from None
 
     finally:
-
         teardown_ok = True
-
 
         with suppress(NameError, grpc._channel._InactiveRpcError):
             return_code = gnb.Stop(Empty()).value
@@ -111,7 +113,6 @@ def get_ssb_arfcn(band, bandwidth):
         3: defaultdict(
             lambda: 368410,
             {
-                5:  368410,
                 30: 367450,
                 40: 366490,
                 50: 365530,
@@ -120,20 +121,20 @@ def get_ssb_arfcn(band, bandwidth):
         7: defaultdict(
             lambda: 535930,
             {
-                5:  535930,
                 30: 534970,
                 40: 534010,
                 50: 533050,
             },
         ),
-        41: defaultdict(lambda: 520090, {
-                10: 520090,
+        41: defaultdict(
+            lambda: 520090,
+            {
                 15: 519850,
                 20: 519850,
                 30: 518890,
                 40: 517930,
                 50: 516970,
-            }
+            },
         ),
     }[band][bandwidth]
 
