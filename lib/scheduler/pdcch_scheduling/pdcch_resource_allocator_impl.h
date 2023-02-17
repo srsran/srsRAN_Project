@@ -49,6 +49,8 @@ public:
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override;
 
+  bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) override;
+
 private:
   class pdcch_slot_allocator;
 

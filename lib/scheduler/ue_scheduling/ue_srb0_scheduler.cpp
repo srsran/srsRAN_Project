@@ -205,7 +205,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   }
   if (pucch_grant.pucch_pdu == nullptr) {
     logger.debug("Failed to allocate PDSCH for SRB0. Cause: No space in PUCCH.");
-    // TODO: remove PDCCH allocation.
+    pdcch_sch.cancel_last_pdcch(pdcch_alloc);
     return false;
   }
 

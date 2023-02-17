@@ -61,6 +61,9 @@ public:
                                                   bwp_id_t                      bwpid,
                                                   search_space_id               ss_id,
                                                   aggregation_level             aggr_lvl) = 0;
+
+  /// Cancels the last PDCCH allocation.
+  virtual bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) = 0;
 };
 
 } // namespace srsgnb

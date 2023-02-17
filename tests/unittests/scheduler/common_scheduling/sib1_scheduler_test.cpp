@@ -68,6 +68,12 @@ public:
     srsgnb_terminate("Common PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
+
+  bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) override
+  {
+    srsgnb_terminate("Not supported");
+    return true;
+  }
 };
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.

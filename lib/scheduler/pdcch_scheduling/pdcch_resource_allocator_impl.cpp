@@ -43,6 +43,8 @@ public:
                    cell_slot_resource_allocator&     slot_alloc,
                    const search_space_configuration& ss_cfg);
 
+  bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc);
+
 private:
   bool alloc_dfs_node(cell_slot_resource_allocator& slot_alloc, const alloc_record& record, unsigned dci_iter_index);
   bool get_next_dfs(cell_slot_resource_allocator& slot_alloc);
@@ -114,6 +116,26 @@ bool pdcch_resource_allocator_impl::pdcch_slot_allocator::alloc_pdcch(dci_contex
   dfs_tree.swap(saved_dfs_tree);
 
   return false;
+}
+
+bool pdcch_resource_allocator_impl::pdcch_slot_allocator::cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc)
+{
+  if (records.empty()) {
+    return false;
+  }
+  if (not slot_alloc.result.dl.dl_pdcchs.empty() and
+      records.back().pdcch_ctx == &slot_alloc.result.dl.dl_pdcchs.back().ctx) {
+    slot_alloc.result.dl.dl_pdcchs.pop_back();
+  } else if (not slot_alloc.result.dl.ul_pdcchs.empty() and
+             records.back().pdcch_ctx == &slot_alloc.result.dl.ul_pdcchs.back().ctx) {
+    slot_alloc.result.dl.ul_pdcchs.pop_back();
+  } else {
+    return false;
+  }
+
+  dfs_tree.pop_back();
+  records.pop_back();
+  return true;
 }
 
 bool pdcch_resource_allocator_impl::pdcch_slot_allocator::alloc_dfs_node(cell_slot_resource_allocator& slot_alloc,
@@ -388,6 +410,12 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
     return nullptr;
   }
   return &pdcch;
+}
+
+bool pdcch_resource_allocator_impl::cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc)
+{
+  pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
+  return pdcch_alloc.cancel_last_pdcch(slot_alloc);
 }
 
 pdcch_resource_allocator_impl::pdcch_slot_allocator& pdcch_resource_allocator_impl::get_pdcch_slot_alloc(slot_point sl)

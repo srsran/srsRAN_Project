@@ -155,7 +155,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   }
   if (not uci.alloc_successful) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
-    // TODO: remove PDCCH allocation.
+    get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
   }
 
@@ -184,6 +184,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
   if (not mcs_tbs_info.has_value()) {
     logger.warning("Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.");
+    get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
   }
 
@@ -394,6 +395,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
   if (not mcs_tbs_info.has_value()) {
     logger.warning("Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95.");
+    get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
   }
 

@@ -69,6 +69,12 @@ public:
     return &next_ue_ul_pdcch_alloc;
   }
 
+  bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) override
+  {
+    srsgnb_terminate("Cancellations not supported");
+    return false;
+  }
+
 private:
   unsigned get_ncce(slot_point pdcch_sl)
   {
