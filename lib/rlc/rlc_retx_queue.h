@@ -97,13 +97,13 @@ public:
 
   const rlc_tx_amd_retx& front() const
   {
-    srsgnb_assert(not queue.empty(), "Cannot return front element of empty queue");
+    srsgnb_assert(not queue.empty(), "Cannot return front element of empty queue.");
     return queue.front();
   }
 
   void replace_front(const rlc_tx_amd_retx& elem)
   {
-    srsgnb_assert(not queue.empty(), "Cannot replace front of empty queue");
+    srsgnb_assert(not queue.empty(), "Cannot replace front of empty queue.");
     st.subtract(queue.front());
     st.add(elem);
     queue.front() = elem;
@@ -194,7 +194,7 @@ struct formatter<srsgnb::rlc_tx_amd_retx> {
   template <typename FormatContext>
   auto format(const srsgnb::rlc_tx_amd_retx retx, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "SN={}, SO={}, len={}", retx.sn, retx.so, retx.length);
+    return format_to(ctx.out(), "sn={} so={} len={}", retx.sn, retx.so, retx.length);
   }
 };
 } // namespace fmt

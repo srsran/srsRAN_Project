@@ -299,7 +299,7 @@ struct formatter<srsgnb::rlc_tx_am_state> {
   auto format(const srsgnb::rlc_tx_am_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "tx_next_ack={}, tx_next={}, poll_sn={}, pdu_without_poll={}, byte_without_poll={}",
+                     "tx_next_ack={} tx_next={} poll_sn={} pdu_without_poll={} byte_without_poll={}",
                      st.tx_next_ack,
                      st.tx_next,
                      st.poll_sn,

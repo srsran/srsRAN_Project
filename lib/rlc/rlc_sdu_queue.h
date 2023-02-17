@@ -133,7 +133,7 @@ struct formatter<srsgnb::rlc_sdu_queue> {
   template <typename FormatContext>
   auto format(const srsgnb::rlc_sdu_queue& q, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "size_sdus={}, size_bytes={}", q.size_sdus(), q.size_bytes());
+    return format_to(ctx.out(), "queued_sdus={} queued_bytes={}", q.size_sdus(), q.size_bytes());
   }
 };
 } // namespace fmt

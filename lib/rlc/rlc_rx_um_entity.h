@@ -122,7 +122,7 @@ struct formatter<srsgnb::rlc_rx_um_state> {
   auto format(const srsgnb::rlc_rx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rx_next_reassembly={}, rx_timer_trigger={}, rx_next_highest={}",
+                     "rx_next_reassembly={} rx_timer_trigger={} rx_next_highest={}",
                      st.rx_next_reassembly,
                      st.rx_timer_trigger,
                      st.rx_next_highest);

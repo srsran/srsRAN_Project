@@ -36,7 +36,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   metrics.metrics_set_mode(rlc_mode::am);
 
   // check timer t_poll_retransmission timer
-  srsgnb_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC TX AM: timers not configured");
+  srsgnb_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC TX AM, timers not configured.");
 
   //  configure t_poll_retransmission timer
   if (cfg.t_poll_retx > 0) {
@@ -51,17 +51,13 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
 void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
 {
   size_t sdu_length = sdu.buf.length();
-  logger.log_info(sdu.buf.begin(),
-                  sdu.buf.end(),
-                  "TX SDU: sdu_len={}, pdcp_sn={}, sdu_queue=[{}]",
-                  sdu.buf.length(),
-                  sdu.pdcp_sn,
-                  sdu_queue);
   if (sdu_queue.write(sdu)) {
+    logger.log_info(
+        sdu.buf.begin(), sdu.buf.end(), "TX SDU. sdu_len={} pdcp_sn={} {}", sdu.buf.length(), sdu.pdcp_sn, sdu_queue);
     metrics.metrics_add_sdus(1, sdu_length);
     handle_buffer_state_update(); // take lock
   } else {
-    logger.log_info("Dropped TX SDU: sdu_len={}, pdcp_sn={}, sdu_queue=[{}]", sdu_length, sdu.pdcp_sn, sdu_queue);
+    logger.log_info("Dropped SDU. sdu_len={} pdcp_sn={} {}", sdu_length, sdu.pdcp_sn, sdu_queue);
     metrics.metrics_add_lost_sdus(1);
   }
 }
@@ -69,12 +65,12 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
 // TS 38.322 v16.2.0 Sec. 5.4
 void rlc_tx_am_entity::discard_sdu(uint32_t pdcp_sn)
 {
-  logger.log_info("Discarding SDU with pdcp_sn={}", pdcp_sn);
   if (sdu_queue.discard(pdcp_sn)) {
+    logger.log_info("Discarded SDU. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard(1);
     handle_buffer_state_update(); // take lock
   } else {
-    logger.log_info("Could not discard SDU with pdcp_sn={}", pdcp_sn);
+    logger.log_info("Could not discard SDU. pdcp_sn={}", pdcp_sn);
     metrics.metrics_add_discard_failure(1);
   }
 }
@@ -84,7 +80,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
-  logger.log_debug("MAC opportunity: grant_len={}, tx_window_size={} PDUs", grant_len, tx_window->size());
+  logger.log_debug("MAC opportunity. grant_len={} tx_window_size={}", grant_len, tx_window->size());
 
   // TX STATUS if requested
   if (status_provider->status_report_required()) {
@@ -92,15 +88,15 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
 
     if (status_pdu.get_packed_size() > grant_len) {
       if (not status_pdu.trim(grant_len)) {
-        logger.log_warning("Could not trim status PDU down to grant_len={}", grant_len);
+        logger.log_warning("Could not trim status PDU down to grant_len={}.", grant_len);
         return {};
       }
-      logger.log_info("Trimmed status PDU to fit into grant_len={}", grant_len);
-      logger.log_debug("Trimmed status PDU: {}", status_pdu);
+      logger.log_info("Trimmed status PDU to fit into grant_len={}.", grant_len);
+      logger.log_debug("Trimmed status PDU. {}", status_pdu);
     }
     byte_buffer pdu;
     status_pdu.pack(pdu);
-    logger.log_info(pdu.begin(), pdu.end(), "TX status PDU: pdu_len={}, grant_len={}", pdu.length(), grant_len);
+    logger.log_info(pdu.begin(), pdu.end(), "TX status PDU. pdu_len={} grant_len={}", pdu.length(), grant_len);
 
     // Update metrics
     metrics.metrics_add_pdus(1, pdu.length());
@@ -113,7 +109,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
 
   // Retransmit if required
   if (not retx_queue.empty()) {
-    logger.log_debug("Re-transmission required: retx_queue_size={}", retx_queue.size());
+    logger.log_debug("Re-transmission required. retx_queue_size={}", retx_queue.size());
     return build_retx_pdu(grant_len);
   }
 
@@ -123,15 +119,14 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
       return build_continued_sdu_segment((*tx_window)[sn_under_segmentation], grant_len);
     } else {
       sn_under_segmentation = INVALID_RLC_SN;
-      logger.log_error("SDU under segmentation does not exist in tx_window. Aborting segmentation for SN={}",
-                       sn_under_segmentation);
+      logger.log_error("SDU under segmentation does not exist in tx_window. sn={}", sn_under_segmentation);
       // attempt to send next SDU
     }
   }
 
   // Check whether there is something to TX
   if (sdu_queue.is_empty()) {
-    logger.log_debug("No data available to be sent. grant_len={}", grant_len);
+    logger.log_debug("SDU queue empty. grant_len={}", grant_len);
     return {};
   }
 
@@ -141,24 +136,24 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t grant_len)
 byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
 {
   if (grant_len <= head_min_size) {
-    logger.log_debug("Cannot fit any SDU into grant_len={}: head_min_size={}", grant_len, head_min_size);
+    logger.log_debug("Cannot fit SDU into grant_len={}. head_min_size={}", grant_len, head_min_size);
     return {};
   }
 
   // do not build any more PDU if window is already full
   if (tx_window->full()) {
-    logger.log_warning("Cannot build data PDU: tx_window is full. grant_len={}", grant_len);
+    logger.log_warning("Cannot build data PDU, tx_window is full. grant_len={}", grant_len);
     return {};
   }
 
   // Read new SDU from TX queue
   rlc_sdu sdu;
-  logger.log_debug("Reading SDU from sdu_queue=[{}]", sdu_queue);
+  logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue);
   if (not sdu_queue.read(sdu)) {
-    logger.log_debug("No SDUs left in the SDU queue. grant_len={}", grant_len);
+    logger.log_debug("SDU queue empty. grant_len={}", grant_len);
     return {};
   }
-  logger.log_debug("Read SDU: SN={}, pdcp_sn={}, sdu_len={}", st.tx_next, sdu.pdcp_sn, sdu.buf.length());
+  logger.log_debug("Read SDU. sn={} pdcp_sn={} sdu_len={}", st.tx_next, sdu.pdcp_sn, sdu.buf.length());
 
   // insert newly assigned SN into window and use reference for in-place operations
   // NOTE: from now on, we can't return from this function anymore before increasing tx_next
@@ -173,10 +168,9 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
 
   // Segment new SDU if necessary
   if (sdu_info.sdu.length() + head_min_size > grant_len) {
-    logger.log_debug("Creating PDU with SDU segment: sdu_len={}, grant_len={}", sdu_info.sdu.length(), grant_len);
     return build_first_sdu_segment(sdu_info, grant_len);
   }
-  logger.log_debug("Creating PDU with full SDU: sdu_len={}, grant_len={}", sdu_info.sdu.length(), grant_len);
+  logger.log_debug("Creating PDU with full SDU. sdu_len={} grant_len={}", sdu_info.sdu.length(), grant_len);
 
   // Prepare header
   rlc_am_pdu_header hdr = {};
@@ -185,7 +179,6 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
   hdr.si                = rlc_si_field::full_sdu;
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
-  logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
   byte_buffer header_buf = {};
@@ -195,13 +188,8 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu});
-  logger.log_info(pdu_buf.begin(),
-                  pdu_buf.end(),
-                  "TX PDU ({}): SN={}, pdu_len={}, grant_len={}",
-                  hdr.si,
-                  hdr.sn,
-                  pdu_buf.length(),
-                  grant_len);
+  logger.log_info(
+      pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
 
   // Update TX Next
   st.tx_next = (st.tx_next + 1) % mod;
@@ -217,18 +205,17 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t grant_len)
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
 {
-  logger.log_debug("Creating PDU with first SDU segment: sdu_len={}, grant_len={}", sdu_info.sdu.length(), grant_len);
+  logger.log_debug("Creating PDU with first SDU segment. sdu_len={} grant_len={}", sdu_info.sdu.length(), grant_len);
 
   // Sanity check: can this SDU be sent this in a single PDU?
   if ((sdu_info.sdu.length() + head_min_size) <= grant_len) {
-    logger.log_error(
-        "Attempted to segment SDU that fits into grant_len={}: sdu_len={}", grant_len, sdu_info.sdu.length());
+    logger.log_error("Unnecessary segmentation. sdu_len={} grant_len={}", sdu_info.sdu.length(), grant_len);
     return {};
   }
 
   // Sanity check: can this SDU be sent considering header overhead?
   if (grant_len <= head_min_size) { // Small header, since first segment has no SO field, ref: TS 38.322 Sec. 6.2.2.4
-    logger.log_debug("Cannot fit first SDU segment into grant_len={}: head_min_size={}", grant_len, head_min_size);
+    logger.log_debug("Cannot fit first SDU segment into grant_len={}. head_min_size={}", grant_len, head_min_size);
     return {};
   }
 
@@ -247,7 +234,6 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
   hdr.so                = sdu_info.next_so;
-  logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
   byte_buffer header_buf = {};
@@ -257,13 +243,8 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
-  logger.log_info(pdu_buf.begin(),
-                  pdu_buf.end(),
-                  "TX PDU ({}): SN={}, pdu_len={}, grant_len={}",
-                  hdr.si,
-                  hdr.sn,
-                  pdu_buf.length(),
-                  grant_len);
+  logger.log_info(
+      pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
@@ -279,7 +260,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_am_sdu_
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_sdu_info& sdu_info, uint32_t grant_len)
 {
-  logger.log_debug("Creating PDU with continued SDU segment. SN={}, next_so={}, sdu_len={}, grant_len={}",
+  logger.log_debug("Creating PDU with continued SDU segment. sn={} next_so={} sdu_len={} grant_len={}",
                    sn_under_segmentation,
                    sdu_info.next_so,
                    sdu_info.sdu.length(),
@@ -288,7 +269,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   // Sanity check: is there an initial SDU segment?
   if (sdu_info.next_so == 0) {
     logger.log_error(
-        "Attempted to continue segmentation, but there was no initial segment. SN={}, sdu_len={}, grant_len={}",
+        "Attempted to continue segmentation, but there was no initial segment. sn={} sdu_len={} grant_len={}",
         sn_under_segmentation,
         sdu_info.sdu.length(),
         grant_len);
@@ -298,7 +279,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
 
   // Sanity check: last byte must be smaller than SDU size
   if (sdu_info.next_so >= sdu_info.sdu.length()) {
-    logger.log_error("Segmentation progress next_so={} exceeds sdu_len={} for SN={}. grant_len={}",
+    logger.log_error("Segmentation progress next_so={} exceeds sdu_len={}. sn={} grant_len={}",
                      sdu_info.next_so,
                      sdu_info.sdu.length(),
                      sn_under_segmentation,
@@ -309,7 +290,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
 
   // Sanity check: can this SDU be sent considering header overhead?
   if (grant_len <= head_max_size) { // Large header, since continued segment has SO field, ref: TS 38.322 Sec. 6.2.2.4
-    logger.log_debug("Cannot fit continued SDU segment into grant_len={}: head_max_size={}", grant_len, head_max_size);
+    logger.log_debug("Cannot fit continued SDU segment into grant_len={}. head_max_size={}", grant_len, head_max_size);
     return {};
   }
 
@@ -325,11 +306,6 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
     // Release SN of SDU under segmentation
     sn_under_segmentation = INVALID_RLC_SN;
   }
-  logger.log_debug("Creating PDU ({}): segment_payload_len={}, head_max_size={}, grant_len={}",
-                   si,
-                   segment_payload_len,
-                   head_max_size,
-                   grant_len);
 
   // Prepare header
   rlc_am_pdu_header hdr = {};
@@ -339,7 +315,6 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
   hdr.so                = sdu_info.next_so;
-  logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
   byte_buffer header_buf = {};
@@ -349,14 +324,8 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_am_
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, segment_payload_len});
-  logger.log_info(pdu_buf.begin(),
-                  pdu_buf.end(),
-                  "TX PDU ({}): SN={}, SO={}, pdu_len={}, grant_len={}",
-                  hdr.si,
-                  hdr.sn,
-                  hdr.so,
-                  pdu_buf.length(),
-                  grant_len);
+  logger.log_info(
+      pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
 
   // Store segmentation progress
   sdu_info.next_so += segment_payload_len;
@@ -379,30 +348,29 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
 {
   // Check there is at least 1 element before calling front()
   if (retx_queue.empty()) {
-    logger.log_error("build_retx_pdu(): retx_queue is empty");
+    logger.log_error("Called build_retx_pdu() but retx_queue is empty.");
     return {};
   }
 
   // Sanity check - drop any retx SNs not present in tx_window
   while (not tx_window->has_sn(retx_queue.front().sn)) {
-    logger.log_info("Missing SN={} in tx window, probably already ACKed. Skip and remove from retx_queue",
-                    retx_queue.front().sn);
+    logger.log_info("Could not find sn={} in tx window, dropping RETX.", retx_queue.front().sn);
     retx_queue.pop();
     if (retx_queue.empty()) {
-      logger.log_info("Empty retx_queue, cannot provide any PDU for retransmission");
+      logger.log_info("Empty retx_queue, cannot provide any PDU for retransmission.");
       return {};
     }
   }
 
   const rlc_tx_amd_retx retx = retx_queue.front(); // local copy, since front may change below
-  logger.log_debug("Processing retx=[{}]", retx);
+  logger.log_debug("Processing RETX. {}", retx);
 
   // Get sdu_info info from tx_window
   rlc_tx_am_sdu_info& sdu_info = (*tx_window)[retx.sn];
 
   // Check RETX boundaries
   if (retx.so + retx.length > sdu_info.sdu.length()) {
-    logger.log_error("Skipping invalid RETX that exceeds SDU boundaries. retx=[{}], sdu_len={}, grant_len={}",
+    logger.log_error("Skipping invalid RETX that exceeds SDU boundaries. {} sdu_len={} grant_len={}",
                      retx,
                      sdu_info.sdu.length(),
                      grant_len);
@@ -414,7 +382,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   uint32_t expected_hdr_len = get_retx_expected_hdr_len(retx);
   // Sanity check: can this RETX be sent considering header overhead?
   if (grant_len <= expected_hdr_len) {
-    logger.log_debug("Cannot fit RETX SDU into grant_len={}: expected_hdr_len={}", grant_len, expected_hdr_len);
+    logger.log_debug("Cannot fit RETX SDU into grant_len={}. expected_hdr_len={}", grant_len, expected_hdr_len);
     return {};
   }
 
@@ -441,9 +409,9 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   }
 
   // Log RETX info
-  logger.log_debug("Creating RETX PDU ({}): retx=[{}], retx_payload_len={}, expected_hdr_len={}, grant_len={}",
-                   si,
+  logger.log_debug("Creating RETX PDU. {} si={} retx_payload_len={} expected_hdr_len={} grant_len={}",
                    retx,
+                   si,
                    retx_payload_len,
                    expected_hdr_len,
                    grant_len);
@@ -469,13 +437,12 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = retx.sn;
   hdr.so                = retx.so;
-  logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
   byte_buffer header_buf = {};
   rlc_am_write_data_pdu_header(hdr, header_buf);
   srsgnb_assert(header_buf.length() == expected_hdr_len,
-                "RETX header length ({}) differs from expected_hdr_len ({})",
+                "RETX hdr_len={} differs from expected_hdr_len={}",
                 header_buf.length(),
                 expected_hdr_len);
 
@@ -483,13 +450,8 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{sdu_info.sdu, hdr.so, retx_payload_len});
-  logger.log_info(pdu_buf.begin(),
-                  pdu_buf.end(),
-                  "RETX PDU ({}): SN={}, pdu_len={}, grant_len={}",
-                  hdr.si,
-                  hdr.sn,
-                  pdu_buf.length(),
-                  grant_len);
+  logger.log_info(
+      pdu_buf.begin(), pdu_buf.end(), "RETX PDU. {} pdu_len={} grant_len={}", hdr, pdu_buf.length(), grant_len);
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -510,7 +472,7 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 {
   std::lock_guard<std::mutex> lock(mutex);
-  logger.log_info("Processing status PDU: {}", status);
+  logger.log_info("Handling status report. {}", status);
 
   /*
    * Sanity check the received status report.
@@ -525,14 +487,12 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
    * be trimmed. But if that is the case, the peer can always request another status report later on.
    */
   if (not valid_ack_sn(status.ack_sn)) {
-    logger.log_info(
-        "Received ACK with SN outside of TX_WINDOW, ignoring status report. ACK_SN={}, st=[{}]", status.ack_sn, st);
+    logger.log_info("Ignoring status report with ack_sn={} outside TX window. {}", status.ack_sn, st);
     return;
   }
 
   if (tx_mod_base(status.ack_sn) > tx_mod_base(st.tx_next + 1)) {
-    logger.log_warning(
-        "Received ACK with SN larger than TX_NEXT, ignoring status report. ACK_SN={}, st=[{}]", status.ack_sn, st);
+    logger.log_warning("Ignoring status report with ack_sn={} > tx_next. {}", status.ack_sn, st);
     return;
   }
 
@@ -553,13 +513,13 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
    */
   if (tx_mod_base(st.poll_sn) < tx_mod_base(status.ack_sn)) {
     if (poll_retransmit_timer.is_running()) {
-      logger.log_debug("Received ACK or NACK for POLL_SN={}. Stopping t-PollRetransmit", st.poll_sn);
+      logger.log_debug("Received ACK or NACK for poll_sn={}. Stopping t-PollRetransmit.", st.poll_sn);
       poll_retransmit_timer.stop();
     } else {
-      logger.log_debug("Received ACK or NACK for POLL_SN={}. t-PollRetransmit already stopped", st.poll_sn);
+      logger.log_debug("Received ACK or NACK for poll_sn={}. t-PollRetransmit already stopped.", st.poll_sn);
     }
   } else {
-    logger.log_debug("POLL_SN={} > ACK_SN={}. Not stopping t-PollRetransmit ", st.poll_sn, status.ack_sn);
+    logger.log_debug("poll_sn={} > ack_sn={}. Not stopping t-PollRetransmit.", st.poll_sn, status.ack_sn);
   }
 
   /*
@@ -584,14 +544,14 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
       tx_window->remove_sn(sn);
       st.tx_next_ack = (sn + 1) % mod;
     } else {
-      logger.log_error("Missing ACK'ed SN from TX window");
+      logger.log_error("Could not find ACK'ed sn={} in TX window.", sn);
       break;
     }
   }
   if (max_deliv_pdcp_sn.has_value()) {
     upper_dn.on_delivered_sdu(max_deliv_pdcp_sn.value());
   }
-  logger.log_debug("Processed status report ACKs. ACK_SN={}, Tx_Next_Ack={}", status.ack_sn, st.tx_next_ack);
+  logger.log_debug("Processed status report ACKs. ack_sn={} tx_next_ack={}", status.ack_sn, st.tx_next_ack);
 
   // Process NACKs
   std::set<uint32_t> retx_sn_set; // Set of PDU SNs added for retransmission (no duplicates)
@@ -603,7 +563,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
         // Sanity check
         if (range_sn == status.ack_sn) {
           logger.log_warning(
-              "Truncating invalid NACK range at ACK_SN={}: nack={}", status.ack_sn, status.get_nacks()[nack_idx]);
+              "Truncating invalid NACK range at ack_sn={}. nack={}", status.ack_sn, status.get_nacks()[nack_idx]);
           break;
         }
         rlc_am_status_nack nack = {};
@@ -659,17 +619,16 @@ void rlc_tx_am_entity::on_status_report_changed()
 bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
 {
   if (nack.has_nack_range) {
-    logger.log_error("handle_nack must not be called with nacks that have a nack range. Ignoring NACK={}", nack);
+    logger.log_error("handle_nack must not be called with nacks that have a nack range. Ignoring nack={}.", nack);
     return false;
   }
 
-  logger.log_debug("Handling NACK={}", nack);
+  logger.log_debug("Handling nack={}.", nack);
 
   // Check if NACK applies to a SN within tx window
   if (!(tx_mod_base(st.tx_next_ack) <= tx_mod_base(nack.nack_sn) &&
         tx_mod_base(nack.nack_sn) <= tx_mod_base(st.tx_next))) {
-    logger.log_info(
-        "NACK SN not in expected range. Tx_Next_Ack={}, Tx_Next={}, NACK={}", nack.nack_sn, st.tx_next_ack, st.tx_next);
+    logger.log_info("Invalid nack_sn={}. tx_next_ack={} tx_next={}", nack.nack_sn, st.tx_next_ack, st.tx_next);
     return false;
   }
 
@@ -686,20 +645,15 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
   }
   // Sanity checks
   if (nack.so_start > nack.so_end) {
-    logger.log_warning(
-        "Invalid NACK: so_start > so_end. sdu_length={}, NACK={}. Setting so_start to 0", sdu_length, nack);
+    logger.log_warning("Invalid NACK with so_start > so_end. nack={}, sdu_length={}", nack, sdu_length);
     nack.so_start = 0;
   }
   if (nack.so_start >= sdu_length) {
-    logger.log_warning(
-        "Invalid NACK: so_start out of bounds. sdu_length={}, NACK={}. Setting so_start to 0", sdu_length, nack);
+    logger.log_warning("Invalid NACK with so_start >= sdu_length. nack={} sdu_length={}.", nack, sdu_length);
     nack.so_start = 0;
   }
   if (nack.so_end >= sdu_length) {
-    logger.log_warning("Invalid NACK: so_end out of bounds. sdu_length={}, NACK={}. Setting so_end to {}",
-                       sdu_length,
-                       nack,
-                       sdu_length - 1);
+    logger.log_warning("Invalid NACK: so_end >= sdu_length. nack={}, sdu_length={}.", nack, sdu_length);
     nack.so_end = sdu_length - 1;
   }
 
@@ -710,9 +664,9 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
     retx.sn              = nack.nack_sn;
     retx.length          = nack.so_end - nack.so_start + 1;
     retx_queue.push(retx);
-    logger.log_debug("Scheduled retransmission for NACK={}. retx=[{}] ", nack, retx);
+    logger.log_debug("Scheduled RETX for nack={}. {}", nack, retx);
   } else {
-    logger.log_info("NACK'ed SDU or SDU segment is already queued for retransmission. NACK={}", nack);
+    logger.log_info("NACK'ed SDU or SDU segment is already queued for RETX. nack={}", nack);
     return false;
   }
 
@@ -722,8 +676,7 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
 void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
 {
   if ((*tx_window)[sn].retx_count == cfg.max_retx_thresh) {
-    logger.log_warning(
-        "Reached maximum number of retransmissions for SN={}. retx_count={}", sn, (*tx_window)[sn].retx_count);
+    logger.log_warning("Reached maximum number of RETX. sn={} retx_count={}", sn, (*tx_window)[sn].retx_count);
     upper_cn.on_max_retx();
   }
 }
@@ -743,9 +696,9 @@ void rlc_tx_am_entity::handle_buffer_state_update()
 
 void rlc_tx_am_entity::handle_buffer_state_update_nolock()
 {
-  uint32_t bytes = get_buffer_state_nolock();
-  logger.log_debug("Sending buffer state update to lower layer: {} B", bytes);
-  lower_dn.on_buffer_state_update(bytes);
+  unsigned bs = get_buffer_state_nolock();
+  logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
+  lower_dn.on_buffer_state_update(bs);
 }
 
 uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
@@ -760,7 +713,7 @@ uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
       rlc_tx_am_sdu_info& sdu_info = (*tx_window)[sn_under_segmentation];
       segment_bytes                = sdu_info.sdu.length() - sdu_info.next_so + head_max_size;
     } else {
-      logger.log_info("Buffer state ignores SDU under segmentation: SN={} not in tx_window", sn_under_segmentation);
+      logger.log_info("Buffer state ignores SDU under segmentation. sn={} not in tx_window.", sn_under_segmentation);
     }
   }
 
@@ -780,7 +733,7 @@ uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
 
 uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t payload_size)
 {
-  logger.log_debug("Checking poll bit requirements for PDU. SN={}, is_retx={}, sdu_bytes={}, POLL_SN={}",
+  logger.log_debug("Checking poll bit requirements for PDU. sn={} is_retx={} sdu_bytes={} poll_sn={}",
                    sn,
                    is_retx ? "true" : "false",
                    payload_size,
@@ -799,11 +752,11 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
     st.byte_without_poll += payload_size;
     if (cfg.poll_pdu > 0 && st.pdu_without_poll >= (uint32_t)cfg.poll_pdu) {
       poll = 1;
-      logger.log_debug("Setting poll bit due to PollPDU. SN={}, POLL_SN={}", sn, st.poll_sn);
+      logger.log_debug("Setting poll bit due to PollPDU. sn={} poll_sn={}", sn, st.poll_sn);
     }
     if (cfg.poll_byte > 0 && st.byte_without_poll >= (uint32_t)cfg.poll_byte) {
       poll = 1;
-      logger.log_debug("Setting poll bit due to PollBYTE. SN={}, POLL_SN={}", sn, st.poll_sn);
+      logger.log_debug("Setting poll bit due to PollBYTE. sn={} poll_sn={}", sn, st.poll_sn);
     }
   }
 
@@ -815,7 +768,7 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
    *   - include a poll in the AMD PDU as described below.
    */
   if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
-    logger.log_debug("Setting poll bit due to empty buffers/inablity to TX. SN={}, POLL_SN={}", sn, st.poll_sn);
+    logger.log_debug("Setting poll bit due to empty buffers/inablity to TX. sn={} poll_sn={}", sn, st.poll_sn);
     poll = 1;
   }
 
@@ -825,7 +778,7 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
    * - include a poll in an AMD PDU as described in clause 5.3.3.2.
    */
   if (is_poll_retransmit_timer_expired.exchange(false, std::memory_order_relaxed)) {
-    logger.log_debug("Setting poll bit due to expired poll retransmit timer. SN={}, POLL_SN={}", sn, st.poll_sn);
+    logger.log_debug("Setting poll bit due to expired poll retransmit timer. sn={} poll_sn={}", sn, st.poll_sn);
     poll = 1;
   }
 
@@ -848,7 +801,7 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
       // This is not an RETX, but a new transmission
       // As such it should be the highest SN submitted to the lower layers
       st.poll_sn = sn;
-      logger.log_debug("Setting new POLL_SN={}", sn);
+      logger.log_debug("Updated poll_sn={}.", sn);
     }
     if (cfg.t_poll_retx > 0) {
       if (not poll_retransmit_timer.is_running()) {
@@ -857,7 +810,7 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
         poll_retransmit_timer.stop();
         poll_retransmit_timer.run();
       }
-      logger.log_debug("Started t-PollRetransmit. POLL_SN={}", st.poll_sn);
+      logger.log_debug("Started poll retransmit timer. poll_sn={}", st.poll_sn);
     }
   }
   return poll;
@@ -869,7 +822,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
 
   // t-PollRetransmit
   if (poll_retransmit_timer.is_valid() && poll_retransmit_timer.id() == timeout_id) {
-    logger.log_info("t-PollRetransmit expired after {} ms", poll_retransmit_timer.duration());
+    logger.log_info("Poll retransmit timer expired after {}ms.", poll_retransmit_timer.duration());
     log_state(srslog::basic_levels::debug);
     /*
      * - if both the transmission buffer and the retransmission buffer are empty
@@ -882,14 +835,13 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
     if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
       if (tx_window->empty()) {
         logger.log_error(
-            "t-PollRetransmit expired, but the tx_window is empty. st=[{}], tx_window_size={}", st, tx_window->size());
+            "Poll retransmit timer expired, but the TX window is empty. {} tx_window_size={}", st, tx_window->size());
         return;
       }
       if (not tx_window->has_sn(st.tx_next_ack)) {
-        logger.log_error(
-            "t-PollRetransmit expired, but Tx_Next_Ack is not in the tx_window. st=[{}], tx_window_size={}",
-            st,
-            tx_window->size());
+        logger.log_error("Poll retransmit timer expired, but tx_next_ack is not in the TX window. {} tx_window_size={}",
+                         st,
+                         tx_window->size());
         return;
       }
       // RETX first RLC SDU that has not been ACKed
@@ -904,7 +856,7 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
       // TODO: Revise this: shall we send a minimum-sized segment instead?
       //
 
-      logger.log_debug("Retransmission because of t-PollRetransmit. retx=[{}]", retx);
+      logger.log_debug("Scheduled RETX due to expired poll retransmit timer. {}", retx);
       //
       // TODO: Increment RETX counter, handle max_retx
       //
@@ -933,7 +885,7 @@ std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create
               logger);
       break;
     default:
-      srsgnb_assertion_failure("Cannot create tx_window: unsupported SN field length");
+      srsgnb_assertion_failure("Cannot create tx_window for unsupported sn_size={}.", to_number(sn_size));
   }
   return tx_window_;
 }
@@ -954,27 +906,32 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
 {
   // NACK_SN >= ACK_SN
   if (tx_mod_base(nack.nack_sn) >= tx_mod_base(ack_sn)) {
-    logger.log_info("Dropping status PDU. NACK_SN={} >= ACK_SN={}, st={}", ack_sn, nack.nack_sn, st);
+    logger.log_info("Ignoring status report with nack_sn={} >= ack_sn={}. {}", nack.nack_sn, ack_sn, st);
     return false;
   }
   // NACK_SN + range >= ACK_SN
   if (nack.has_nack_range) {
     if (tx_mod_base(nack.nack_sn + nack.nack_range - 1) >= tx_mod_base(ack_sn)) {
-      logger.log_info(
-          "Dropping status PDU. NACK_SN={} + range={} >= ACK_SN={}, st={}", ack_sn, nack.nack_sn, nack.nack_range, st);
+      logger.log_info("Ignoring status report with nack_sn={} + nack_range={} - 1 >= ack_sn={}. {}",
+                      nack.nack_sn,
+                      nack.nack_range,
+                      ack_sn,
+                      st);
       return false;
     }
   }
   // NACK_SN within TX Window
   if (not inside_tx_window(nack.nack_sn)) {
-    logger.log_info("Dropping status PDU. NACK_SN={} not within TX window, st={}", nack.nack_sn, st);
+    logger.log_info("Ignoring status report with nack_sn={} outside TX window. {}", nack.nack_sn, st);
     return false;
   }
   // NACK_SN + range within TX Window
   if (nack.has_nack_range) {
     if (not inside_tx_window(nack.nack_sn + nack.nack_range - 1)) {
-      logger.log_info(
-          "Dropping status PDU. NACK_SN={} + range={} not within TX window, st={}", nack.nack_sn, nack.nack_range, st);
+      logger.log_info("Ignoring status report with nack_sn={} + nack_range={} - 1 outside TX window. {}",
+                      nack.nack_sn,
+                      nack.nack_range,
+                      st);
       return false;
     }
   }
@@ -990,16 +947,15 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
 
   // NACK_SN >= tx_next
   if (tx_mod_base(nack.nack_sn) > tx_mod_base(st.tx_next)) {
-    logger.log_error("Dropping status PDU. NACK_SN={} >= tx_next={}, st={}", nack.nack_sn, st.tx_next, st);
+    logger.log_error("Ignoring status report with nack_sn={} >= tx_next. {}", nack.nack_sn, st);
     return false;
   }
   // NACK_SN + range >= tx_next
   if (nack.has_nack_range) {
     if (tx_mod_base(nack.nack_sn + nack.nack_range - 1) > tx_mod_base(st.tx_next)) {
-      logger.log_error("Dropping status PDU. NACK_SN={} + range={} >= tx_next={}, st={}",
+      logger.log_error("Ignoring status report with nack_sn={} + nack_range={} - 1 >= tx_next. {}",
                        nack.nack_sn,
                        nack.nack_range,
-                       st.tx_next,
                        st);
       return false;
     }

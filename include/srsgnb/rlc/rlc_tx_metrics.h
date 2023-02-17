@@ -91,8 +91,8 @@ struct formatter<srsgnb::rlc_tx_metrics> {
   auto format(srsgnb::rlc_tx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "num_sdus={}, num_sdu_bytes={}, num_dropped_sdus={}, num_discarded_sdus={}, "
-                     "num_discard_failures={}, num_pdus={}, num_pdu_bytes={}",
+                     "num_sdus={} num_sdu_bytes={} num_dropped_sdus={} num_discarded_sdus={} "
+                     "num_discard_failures={} num_pdus={} num_pdu_bytes={}",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_dropped_sdus,

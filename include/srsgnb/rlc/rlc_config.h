@@ -92,7 +92,7 @@ inline bool from_number(rlc_am_sn_size& sn_size, uint16_t num)
 /// \return cardinality of sn_size
 constexpr uint32_t cardinality(uint16_t sn_size)
 {
-  srsgnb_assert(sn_size < 32, "Cardinality of SN size {} bit exceeds return type 'uint32_t'", sn_size);
+  srsgnb_assert(sn_size < 32, "Cardinality of sn_size={} exceeds return type 'uint32_t'", sn_size);
   return (1 << sn_size);
 }
 
@@ -220,7 +220,7 @@ struct formatter<srsgnb::rlc_um_sn_size> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_um_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{} bit", to_number(sn_size));
+    return format_to(ctx.out(), "{}", to_number(sn_size));
   }
 };
 
@@ -235,7 +235,7 @@ struct formatter<srsgnb::rlc_am_sn_size> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_am_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{} bit", to_number(sn_size));
+    return format_to(ctx.out(), "{}", to_number(sn_size));
   }
 };
 
@@ -250,7 +250,7 @@ struct formatter<srsgnb::rlc_dc_field> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"Control PDU", "Data PDU"};
+    constexpr static const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
   }
 };
@@ -266,8 +266,7 @@ struct formatter<srsgnb::rlc_si_field> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_si_field si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {
-        "full SDU", "first SDU segment", "last SDU segment", "middle SDU segment"};
+    constexpr static const char* options[] = {"full", "first", "last", "mid"};
     return format_to(ctx.out(), "{}", options[to_number(si)]);
   }
 };
@@ -281,10 +280,9 @@ struct formatter<srsgnb::rlc_control_pdu_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_control_pdu_type type, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::rlc_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    constexpr static const char* options[] = {"Control PDU"};
-    return format_to(ctx.out(), "{}", options[to_number(type)]);
+    return format_to(ctx.out(), "{}", to_number(cpt));
   }
 };
 
@@ -300,7 +298,7 @@ struct formatter<srsgnb::rlc_tx_um_config> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_tx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "sn_field_length={}", cfg.sn_field_length);
+    return format_to(ctx.out(), "tx_sn_size={}", cfg.sn_field_length);
   }
 };
 
@@ -316,7 +314,7 @@ struct formatter<srsgnb::rlc_rx_um_config> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_rx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "sn_field_length={}, t_reassembly_ms={}", cfg.sn_field_length, cfg.t_reassembly);
+    return format_to(ctx.out(), "rx_sn_size={} t_reassembly={}", cfg.sn_field_length, cfg.t_reassembly);
   }
 };
 
@@ -332,7 +330,7 @@ struct formatter<srsgnb::rlc_um_config> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "um_tx=[{}]; um_rx=[{}]", cfg.tx, cfg.rx);
+    return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
   }
 };
 
@@ -349,7 +347,7 @@ struct formatter<srsgnb::rlc_tx_am_config> {
   auto format(srsgnb::rlc_tx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "sn_field_length={}, t_poll_retx={}, max_retx_thresh={}, poll_pdu={}, poll_byte={}",
+                     "tx_sn_size={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={}",
                      cfg.sn_field_length,
                      cfg.t_poll_retx,
                      cfg.max_retx_thresh,
@@ -371,7 +369,7 @@ struct formatter<srsgnb::rlc_rx_am_config> {
   auto format(srsgnb::rlc_rx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "sn_field_length={}, t_reassembly={}, t_status_prohibit={}",
+                     "rx_sn_size={} t_reassembly={} t_status_prohibit={}",
                      cfg.sn_field_length,
                      cfg.t_reassembly,
                      cfg.t_status_prohibit);
@@ -390,7 +388,7 @@ struct formatter<srsgnb::rlc_am_config> {
   template <typename FormatContext>
   auto format(srsgnb::rlc_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "am_tx=[{}]; am_rx=[{}]", cfg.tx, cfg.rx);
+    return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
   }
 };
 
@@ -407,12 +405,12 @@ struct formatter<srsgnb::rlc_config> {
   auto format(srsgnb::rlc_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (cfg.mode == srsgnb::rlc_mode::um_bidir) {
-      return format_to(ctx.out(), "mode={}, {}", cfg.mode, cfg.um);
+      return format_to(ctx.out(), "{} {}", cfg.mode, cfg.um);
     }
     if (cfg.mode == srsgnb::rlc_mode::am) {
-      return format_to(ctx.out(), "mode={}, {}", cfg.mode, cfg.am);
+      return format_to(ctx.out(), "{} {}", cfg.mode, cfg.am);
     }
-    return format_to(ctx.out(), "unhandled mode. mode={}", cfg.mode);
+    return format_to(ctx.out(), "unhandled mode={}", cfg.mode);
   }
 };
 } // namespace fmt

@@ -179,7 +179,7 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_header_ack_sn) {
-    srslog::fetch_basic_logger("RLC").warning("Cannot unpack status PDU: input too short, {}B < {}B",
+    srslog::fetch_basic_logger("RLC").warning("Cannot unpack status PDU, input too short. rem_len={} hdr_ack_sn_len={}",
                                               pdu_reader.length(),
                                               rlc_am_nr_status_pdu_sizeof_header_ack_sn);
     return false;
@@ -187,7 +187,7 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
 
   // sanity check: is control PDU
   if (not is_control_pdu(pdu)) {
-    srslog::fetch_basic_logger("RLC").warning("Cannot unpack status PDU: input is not a status PDU");
+    srslog::fetch_basic_logger("RLC").warning("Cannot unpack status PDU, input is not a status PDU.");
     return false;
   }
 
@@ -198,7 +198,7 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
 
   // sanity check: is control PDU type (CPT) supported?
   if (cpt != rlc_control_pdu_type::status_pdu) {
-    srslog::fetch_basic_logger("RLC").warning("Unsupported control PDU type: reserved bits are set in CPT");
+    srslog::fetch_basic_logger("RLC").warning("Unsupported control PDU type, reserved bits are set. cpt={}", cpt);
     return false;
   }
 
@@ -213,7 +213,7 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
 
   // sanity check for reserved bits
   if ((*pdu_reader & 0x7f) != 0) {
-    srslog::fetch_basic_logger("RLC").warning("Malformed status PDU: reserved bits are set in 3rd Byte");
+    srslog::fetch_basic_logger("RLC").warning("Malformed status PDU, reserved bits are set in 3rd byte.");
     return false;
   }
 
@@ -222,9 +222,10 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
   while (e1 != 0) {
     // check remaining buffer size
     if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_nack_sn_ext_12bit_sn) {
-      srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK: input too short, {}B < {}B",
-                                                pdu_reader.length(),
-                                                rlc_am_nr_status_pdu_sizeof_nack_sn_ext_12bit_sn);
+      srslog::fetch_basic_logger("RLC").warning(
+          "Cannot unpack NACK SN, input too short. rem_len={}, hdr_nack_sn_len={}",
+          pdu_reader.length(),
+          rlc_am_nr_status_pdu_sizeof_nack_sn_ext_12bit_sn);
       return false;
     }
 
@@ -239,7 +240,7 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
 
     // sanity check for reserved bits
     if ((*pdu_reader & 0x01) != 0) {
-      srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK: reserved bits are set");
+      srslog::fetch_basic_logger("RLC").warning("Malformed NACK, reserved bits are set.");
       return false;
     }
     nack.nack_sn |= (*pdu_reader & 0xf0) >> 4;
@@ -248,9 +249,10 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
     if (e2 != 0) {
       // check remaining buffer size
       if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_nack_so) {
-        srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK SO: input too short, {}B < {}B",
-                                                  pdu_reader.length(),
-                                                  rlc_am_nr_status_pdu_sizeof_nack_so);
+        srslog::fetch_basic_logger("RLC").warning(
+            "Cannot unpack NACK SO, input too short. rem_len={} hdr_nack_so_len={}",
+            pdu_reader.length(),
+            rlc_am_nr_status_pdu_sizeof_nack_so);
         return false;
       }
       nack.has_so   = true;
@@ -266,9 +268,10 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
     if (e3 != 0) {
       // check remaining buffer size
       if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_nack_range) {
-        srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK range: input too short, {}B < {}B",
-                                                  pdu_reader.length(),
-                                                  rlc_am_nr_status_pdu_sizeof_nack_range);
+        srslog::fetch_basic_logger("RLC").warning(
+            "Cannot unpack NACK range: input too short. rem_len={} hdr_nack_range_len={}",
+            pdu_reader.length(),
+            rlc_am_nr_status_pdu_sizeof_nack_range);
         return false;
       }
       nack.has_nack_range = true;
@@ -285,7 +288,7 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_header_ack_sn) {
-    srslog::fetch_basic_logger("RLC").warning("Cannot unpack status PDU: input too short, {}B < {}B",
+    srslog::fetch_basic_logger("RLC").warning("Cannot unpack status PDU, input too short. rem_len={} hdr_ack_sn_len={}",
                                               pdu_reader.length(),
                                               rlc_am_nr_status_pdu_sizeof_header_ack_sn);
     return false;
@@ -293,7 +296,7 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
 
   // sanity check: is control PDU
   if (not is_control_pdu(pdu)) {
-    srslog::fetch_basic_logger("RLC").warning("Cannot unpack status PDU: input is not a status PDU");
+    srslog::fetch_basic_logger("RLC").warning("Cannot unpack status PDU, input is not a status PDU.");
     return false;
   }
 
@@ -304,7 +307,7 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
 
   // sanity check: is control PDU type (CPT) supported?
   if (cpt != rlc_control_pdu_type::status_pdu) {
-    srslog::fetch_basic_logger("RLC").warning("Unsupported control PDU type: reserved bits are set in CPT");
+    srslog::fetch_basic_logger("RLC").warning("Unsupported control PDU type, reserved bits are set. cpt={}", cpt);
     return false;
   }
 
@@ -321,7 +324,7 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
 
   // sanity check for reserved bits
   if ((*pdu_reader & 0x01) != 0) {
-    srslog::fetch_basic_logger("RLC").warning("Malformed status PDU: reserved bits are set in 3rd Byte");
+    srslog::fetch_basic_logger("RLC").warning("Malformed status PDU, reserved bits are set in 3rd byte.");
     return false;
   }
 
@@ -330,9 +333,10 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
   while (e1 != 0) {
     // check remaining buffer size
     if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_nack_sn_ext_18bit_sn) {
-      srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK: input too short, {}B < {}B",
-                                                pdu_reader.length(),
-                                                rlc_am_nr_status_pdu_sizeof_nack_sn_ext_18bit_sn);
+      srslog::fetch_basic_logger("RLC").warning(
+          "Cannot unpack NACK SN, input too short. rem_len={}, hdr_nack_sn_len={}",
+          pdu_reader.length(),
+          rlc_am_nr_status_pdu_sizeof_nack_sn_ext_18bit_sn);
       return false;
     }
 
@@ -351,7 +355,7 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
 
     // sanity check for reserved bits
     if ((*pdu_reader & 0x07) != 0) {
-      srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK: reserved bits are set");
+      srslog::fetch_basic_logger("RLC").warning("Malformed NACK, reserved bits are set.");
       return false;
     }
 
@@ -359,9 +363,10 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
     if (e2 != 0) {
       // check remaining buffer size
       if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_nack_so) {
-        srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK SO: input too short, {}B < {}B",
-                                                  pdu_reader.length(),
-                                                  rlc_am_nr_status_pdu_sizeof_nack_so);
+        srslog::fetch_basic_logger("RLC").warning(
+            "Cannot unpack NACK SO, input too short. rem_len={} hdr_nack_so_len={}",
+            pdu_reader.length(),
+            rlc_am_nr_status_pdu_sizeof_nack_so);
         return false;
       }
       nack.has_so   = true;
@@ -377,9 +382,10 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
     if (e3 != 0) {
       // check remaining buffer size
       if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_nack_range) {
-        srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK range: input too short, {}B < {}B",
-                                                  pdu_reader.length(),
-                                                  rlc_am_nr_status_pdu_sizeof_nack_range);
+        srslog::fetch_basic_logger("RLC").warning(
+            "Cannot unpack NACK range: input too short. rem_len={} hdr_nack_range_len={}",
+            pdu_reader.length(),
+            rlc_am_nr_status_pdu_sizeof_nack_range);
         return false;
       }
       nack.has_nack_range = true;

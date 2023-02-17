@@ -39,7 +39,7 @@ constexpr size_t rlc_am_pdu_header_min_size(rlc_am_sn_size sn_size)
     case rlc_am_sn_size::size18bits:
       return rlc_am_pdu_header_min_size_18bit;
   }
-  srsgnb_assertion_failure("Cannot determine RLC AM PDU header minimum size: unsupported sn_size {}",
+  srsgnb_assertion_failure("Cannot determine RLC AM PDU header minimum size: unsupported sn_size={}.",
                            to_number(sn_size));
   return rlc_am_pdu_header_min_size_12bit;
 }
@@ -50,7 +50,7 @@ constexpr size_t rlc_am_pdu_header_max_size(rlc_am_sn_size sn_size)
     case rlc_am_sn_size::size18bits:
       return rlc_am_pdu_header_min_size(sn_size) + rlc_am_pdu_header_so_size;
   }
-  srsgnb_assertion_failure("Cannot determine RLC AM PDU header maximum size: unsupported sn_size {}",
+  srsgnb_assertion_failure("Cannot determine RLC AM PDU header maximum size: unsupported sn_size={}.",
                            to_number(sn_size));
   return rlc_am_pdu_header_min_size_12bit + rlc_am_pdu_header_so_size;
 }
@@ -163,8 +163,8 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.length() <= rlc_am_pdu_header_min_size(sn_size)) {
-    srslog::fetch_basic_logger("RLC").warning("AMD PDU too short for minimum header and payload: length={}",
-                                              pdu.length());
+    srslog::fetch_basic_logger("RLC").warning(
+        "AMD PDU too small. pdu_len={} hdr_len={}", pdu.length(), rlc_am_pdu_header_min_size(sn_size));
     return false;
   }
 
@@ -184,7 +184,7 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
   } else if (sn_size == rlc_am_sn_size::size18bits) {
     // sanity check
     if ((*pdu_reader & 0x0cU) != 0) {
-      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
+      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set.");
       return false;
     }
     header->sn = (*pdu_reader & 0x03U) << 16U; // first 4 bits SN
@@ -194,7 +194,7 @@ rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn
     header->sn |= (*pdu_reader & 0xffU); // last 8 bits SN
     ++pdu_reader;
   } else {
-    srslog::fetch_basic_logger("RLC").error("Unsupported SN length");
+    srslog::fetch_basic_logger("RLC").error("Unsupported sn_size={}.", to_number(sn_size));
     return false;
   }
 
@@ -253,7 +253,7 @@ struct formatter<srsgnb::rlc_am_pdu_header> {
   auto format(const srsgnb::rlc_am_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(
-        ctx.out(), "[{}, P={}, SI={}, SN_SIZE={}, SN={}, SO={}]", hdr.dc, hdr.p, hdr.si, hdr.sn_size, hdr.sn, hdr.so);
+        ctx.out(), "dc={} p={} si={} sn_size={} sn={} so={}", hdr.dc, hdr.p, hdr.si, hdr.sn_size, hdr.sn, hdr.so);
   }
 };
 
@@ -298,9 +298,9 @@ struct formatter<srsgnb::rlc_am_status_pdu> {
       -> decltype(std::declval<FormatContext>().out())
   {
     memory_buffer buffer;
-    format_to(buffer, "ACK_SN={}, N_nack={}", status.ack_sn, status.get_nacks().size());
+    format_to(buffer, "ack_sn={} n_nack={}", status.ack_sn, status.get_nacks().size());
     if (status.get_nacks().size() > 0) {
-      format_to(buffer, ", NACK=");
+      format_to(buffer, " nack=");
       for (auto nack : status.get_nacks()) {
         format_to(buffer, "{}", nack);
       }

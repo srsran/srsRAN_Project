@@ -28,7 +28,7 @@ constexpr size_t rlc_um_pdu_header_size_no_so(rlc_um_sn_size sn_size)
     case rlc_um_sn_size::size12bits:
       return rlc_um_pdu_header_size_12bit_sn_no_so;
   }
-  srsgnb_assertion_failure("Cannot determine RLC UM PDU header size without SO: unsupported sn_size {}",
+  srsgnb_assertion_failure("Cannot determine RLC UM PDU header size without SO: unsupported sn_size={}.",
                            to_number(sn_size));
   return rlc_um_pdu_header_size_6bit_sn_no_so;
 }
@@ -43,7 +43,7 @@ constexpr size_t rlc_um_pdu_header_size_with_so(rlc_um_sn_size sn_size)
     case rlc_um_sn_size::size12bits:
       return rlc_um_pdu_header_size_12bit_sn_with_so;
   }
-  srsgnb_assertion_failure("Cannot determine RLC UM PDU header size with SO: unsupported sn_size {}",
+  srsgnb_assertion_failure("Cannot determine RLC UM PDU header size with SO: unsupported sn_size={}.",
                            to_number(sn_size));
   return rlc_um_pdu_header_size_6bit_sn_no_so;
 }
@@ -64,7 +64,7 @@ rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.empty()) {
-    srslog::fetch_basic_logger("RLC").warning("Unpacking header of empty RLC PDU");
+    srslog::fetch_basic_logger("RLC").warning("Cannot read header of empty PDU.");
     return false;
   }
 
@@ -76,7 +76,7 @@ rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn
     header->sn = *pdu_reader & 0x3fU;                         // 6 bits SN
     // sanity check
     if (header->si == rlc_si_field::full_sdu and header->sn != 0) {
-      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
+      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set.");
       return false;
     }
     ++pdu_reader;
@@ -84,7 +84,7 @@ rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn
     header->si = (rlc_si_field)((*pdu_reader >> 6U) & 0x03U); // 2 bits SI
     header->sn = (*pdu_reader & 0x0fU) << 8U;                 // 4 bits SN
     if (header->si == rlc_si_field::full_sdu and header->sn != 0) {
-      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
+      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set.");
       return false;
     }
 
@@ -92,7 +92,7 @@ rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn
     if (header->si == rlc_si_field::first_segment) {
       // make sure two reserved bits are not set
       if (((*pdu_reader >> 4U) & 0x03U) != 0) {
-        srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
+        srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set.");
         return false;
       }
     }
@@ -105,7 +105,7 @@ rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn
 
     ++pdu_reader;
   } else {
-    srslog::fetch_basic_logger("RLC").error("Unsupported SN length\n");
+    srslog::fetch_basic_logger("RLC").error("Unsupported sn_size={}.", to_number(sn_size));
     return false;
   }
 
@@ -184,7 +184,7 @@ struct formatter<srsgnb::rlc_um_pdu_header> {
   template <typename FormatContext>
   auto format(const srsgnb::rlc_um_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "[SI={}, SN_SIZE={}, SN={}, SO={}]", hdr.si, hdr.sn_size, hdr.sn, hdr.so);
+    return format_to(ctx.out(), "si={} sn_size={} sn={} so={}", hdr.si, hdr.sn_size, hdr.sn, hdr.so);
   }
 };
 } // namespace fmt

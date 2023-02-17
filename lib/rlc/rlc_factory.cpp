@@ -45,7 +45,7 @@ std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_creation_
                                              *msg.pcell_executor,
                                              *msg.ue_executor);
     default:
-      srsgnb_terminate("RLC mode not supported");
+      srsgnb_terminate("RLC mode not supported.");
   }
   return nullptr;
 }

@@ -87,7 +87,7 @@ struct formatter<srsgnb::rlc_rx_metrics> {
   auto format(srsgnb::rlc_rx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "num_pdus={}, num_pdu_bytes={}, num_dropped_pdus={}, num_sdus={}, num_sdu_bytes={}",
+                     "num_pdus={} num_pdu_bytes={} num_lost_pdus={} num_malformed_pdus={} num_sdus={} num_sdu_bytes={}",
                      m.num_pdus,
                      m.num_pdu_bytes,
                      m.num_lost_pdus,

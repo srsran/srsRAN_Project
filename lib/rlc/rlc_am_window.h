@@ -46,10 +46,10 @@ public:
   T& add_sn(size_t sn) override
   {
     if (has_sn(sn)) {
-      logger.log_error("SN={} already present in window, overwriting.", sn);
-      srsgnb_assertion_failure("SN={} already present in window.", sn);
+      logger.log_error("sn={} already present in window, overwriting.", sn);
+      srsgnb_assertion_failure("sn={} already present in window.", sn);
     } else {
-      logger.log_debug("Adding SN={} to window", sn);
+      logger.log_debug("Adding sn={} to window.", sn);
     }
     window.overwrite(sn, T());
     return window[sn];
@@ -57,11 +57,11 @@ public:
   void remove_sn(size_t sn) override
   {
     if (not has_sn(sn)) {
-      logger.log_error("Cannot remove SN={} because not contained in the window.", sn);
-      srsgnb_assertion_failure("Cannot remove SN={} because not contained in the window.", sn);
+      logger.log_error("Cannot remove sn={} because not contained in the window.", sn);
+      srsgnb_assertion_failure("Cannot remove sn={} because not contained in the window.", sn);
       return;
     }
-    logger.log_debug("Removing SN={} from window", sn);
+    logger.log_debug("Removing sn={} from window", sn);
     window.erase(sn);
   }
   T&     operator[](size_t sn) override { return window[sn]; }

@@ -27,7 +27,7 @@ public:
   void handle_pdu(byte_buffer_slice buf) override
   {
     metrics.metrics_add_pdus(1, buf.length());
-    logger.log_info(buf.begin(), buf.end(), "RX SDU: sdu_len={}", buf.length());
+    logger.log_info(buf.begin(), buf.end(), "RX SDU. sdu_len={}", buf.length());
     metrics.metrics_add_sdus(1, buf.length());
     upper_dn.on_new_sdu(std::move(buf));
   }

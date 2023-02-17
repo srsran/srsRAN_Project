@@ -276,7 +276,7 @@ struct formatter<srsgnb::rlc_rx_am_sdu_info> {
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "nof_segments={}, has_gap={}, fully_received={}, sdu_len={}",
+                     "nof_segments={} has_gap={} fully_received={} sdu_len={}",
                      info.segments.size(),
                      info.has_gap,
                      info.fully_received,
@@ -296,7 +296,7 @@ struct formatter<srsgnb::rlc_rx_am_state> {
   auto format(const srsgnb::rlc_rx_am_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
-                     "rx_next={}, rx_next_status_trigger={}, rx_highest_status={}, rx_next_highest={}",
+                     "rx_next={} rx_next_status_trigger={} rx_highest_status={} rx_next_highest={}",
                      st.rx_next,
                      st.rx_next_status_trigger,
                      st.rx_highest_status,
