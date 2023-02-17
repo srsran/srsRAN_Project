@@ -363,7 +363,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
       get_pdcch_sched(grant.cell_index)
           .alloc_ul_pdcch_ue(pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl);
   if (pdcch == nullptr) {
-    logger.warning("Failed to allocate PUSCH. Cause: No space in PDCCH.");
+    logger.info("Failed to allocate PUSCH. Cause: No space in PDCCH.");
     return false;
   }
 
