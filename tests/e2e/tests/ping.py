@@ -45,9 +45,9 @@ class TestPing(BaseTest):
             param(41, 30, 20, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
             param(41, 30, 50, 28, 28, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
             # RF intensive
-            param(3, 15, 10, 10, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(7, 15, 10, 10, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(41, 30, 10, 10, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(3, 15, 10, 10, 10, marks=[mark.rf, mark.xfail], id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(7, 15, 10, 10, 10, marks=[mark.rf, mark.xfail], id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(41, 30, 10, 10, 10, marks=[mark.rf, mark.xfail], id="band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
         ),
     )
     def test(

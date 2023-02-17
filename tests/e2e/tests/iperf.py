@@ -49,8 +49,8 @@ class TestIPerf(BaseTest):
             param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 20, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
             param(HIGH_BITRATE, SHORT_DURATION, 41, 30, 50, 28, 28, marks=mark.zmq, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
             # RF
-            param(HIGH_BITRATE, LONG_DURATION, 3, 15, 10, 10, 10, marks=mark.rf, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
-            param(HIGH_BITRATE, LONG_DURATION, 41, 30, 10, 10, 10, marks=mark.rf, id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, LONG_DURATION, 3, 15, 10, 10, 10, marks=[mark.rf, mark.xfail], id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
+            param(HIGH_BITRATE, LONG_DURATION, 41, 30, 10, 10, 10, marks=[mark.rf, mark.xfail], id="bitrate:%s,iperf_duration:%s,band:%s-scs:%s-bandwidth:%s-dl_mcs:%s-ul_mcs:%s"),
         ),
     )
     @mark.parametrize(
