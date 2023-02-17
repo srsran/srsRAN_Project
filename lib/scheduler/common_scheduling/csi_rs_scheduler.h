@@ -25,7 +25,7 @@ public:
 private:
   const cell_configuration& cell_cfg;
 
-  const optional<const csi_rs_info> cached_csi_rs;
+  std::vector<csi_rs_info> cached_csi_rs;
 };
 
 } // namespace srsgnb
