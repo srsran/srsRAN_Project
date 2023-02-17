@@ -21,6 +21,13 @@ static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
 /// Validates the given PDCCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pdcch_cell_app_config(const pdcch_appconfig& config)
 {
+  // As per Table 10.1-1, TS 38.213.
+  if (config.si_aggregation_level_index < srsgnb::aggregation_level::n4) {
+    fmt::print("Specified aggregation level value n{} for Type0-PDCCH CSS is invalid. It must be n4, n8 or n16.\n",
+               to_nof_cces(config.si_aggregation_level_index));
+    return false;
+  }
+
   return true;
 }
 
@@ -51,6 +58,22 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
 static bool validate_prach_cell_app_config(const prach_appconfig& config)
 {
+  // The maximum value of 137 for \c l139 is defined by \c prach-RootSequenceIndex, in RACH-ConfigCommon, TS 38.331.
+  // The lengths \c l839 or \c l139 depend on the PRACH preamble format, defined in Tables 6.3.3.1-1 and
+  // Table 6.3.3.1-2, TS 38.211. \n
+  // The PRACH preamble format depends on prach_root_sequence_index, as per Tables Table 6.3.3.2-2 (FR1 and paired
+  // spectrum) and Table 6.3.3.2-3 (FR1 and unpaired spectrum), TS 38.211.
+  // NOTE: This check is condition on whether the GNB uses paired or unpaired spectrum; since this information is not
+  // available here, in unpaired spectrum there are some invalid combinations of prach_config_index and
+  // prach_root_sequence_index that are not rejected by this validator.
+  if (config.prach_config_index > 86 and config.prach_root_sequence_index > 137) {
+    fmt::print("The PRACH preamble format for PRACH configuration index {} is not compatible with Root seq. idx. {}. "
+               "The max Root seq. idx. for this PRACH configuration index is 137 \n",
+               config.prach_config_index,
+               config.prach_root_sequence_index);
+    return false;
+  }
+
   return true;
 }
 

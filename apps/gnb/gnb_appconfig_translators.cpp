@@ -469,7 +469,7 @@ scheduler_expert_config srsgnb::generate_scheduler_expert_config(const gnb_appco
 
   // SI parameters.
   const pdcch_appconfig& pdcch = config.common_cell_cfg.pdcch_cfg;
-  out_cfg.si.sib1_mcs_index    = pdsch.fixed_si_mcs;
+  out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;
   out_cfg.si.sib1_dci_aggr_lev = pdcch.si_aggregation_level_index;
 
   error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);

@@ -81,7 +81,7 @@ struct pdsch_appconfig {
   /// RAR modulation and coding scheme index.
   unsigned fixed_rar_mcs = 0;
   /// SI modulation and coding scheme index.
-  unsigned fixed_si_mcs = 5;
+  unsigned fixed_sib1_mcs = 5;
 };
 
 /// PUSCH application configuration.

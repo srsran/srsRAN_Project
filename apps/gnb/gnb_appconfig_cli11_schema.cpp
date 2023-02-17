@@ -182,7 +182,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--fixed_rar_mcs", pdsch_params.fixed_rar_mcs, "Fixed RAR MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
-  app.add_option("--fixed_si_mci", pdsch_params.fixed_si_mcs, "Fixed SI MCS")
+  app.add_option("--fixed_sib1_mci", pdsch_params.fixed_sib1_mcs, "Fixed SIB1 MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
 }
@@ -211,7 +211,7 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
       ->check(CLI::Range(0, 15));
   app.add_option("--fixed_msg3_mcs", prach_params.fixed_msg3_mcs, "Fixed message 3 MCS")
       ->capture_default_str()
-      ->check(CLI::Range(0, 31));
+      ->check(CLI::Range(0, 28));
   app.add_option(
          "--max_msg3_harq_retx", prach_params.max_msg3_harq_retx, "Maximum number of message 3 HARQ retransmissions")
       ->capture_default_str()
