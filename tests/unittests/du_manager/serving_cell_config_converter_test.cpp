@@ -989,9 +989,7 @@ TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
   // Resource 5.
   dest_csi_meas_cfg.nzp_csi_rs_res_list.push_back(config_helpers::make_default_nzp_csi_rs_resource({}));
   dest_csi_meas_cfg.nzp_csi_rs_res_list.back().res_id = static_cast<nzp_csi_rs_res_id_t>(5);
-  auto fd_alloc                                       = csi_rs_resource_mapping::fd_alloc_row2(12);
-  fd_alloc.all();
-  dest_csi_meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc     = fd_alloc;
+  dest_csi_meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
   dest_csi_meas_cfg.nzp_csi_rs_res_list.back().res_mapping.nof_ports    = 2;
   dest_csi_meas_cfg.nzp_csi_rs_res_list.back().res_mapping.cdm          = csi_rs_cdm_type::cdm4_FD2_TD2;
   dest_csi_meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::dot5_odd_RB;

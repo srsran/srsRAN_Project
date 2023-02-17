@@ -18,22 +18,20 @@ using namespace asn1::rrc_nr;
 asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(const csi_rs_resource_mapping& cfg)
 {
   csi_rs_res_map_s out{};
-  if (variant_holds_alternative<csi_rs_resource_mapping::fd_alloc_row1>(cfg.fd_alloc)) {
-    auto& row     = out.freq_domain_alloc.set_row1();
-    auto& row_val = variant_get<csi_rs_resource_mapping::fd_alloc_row1>(cfg.fd_alloc);
-    row.from_number(row_val.to_uint64());
-  } else if (variant_holds_alternative<csi_rs_resource_mapping::fd_alloc_row2>(cfg.fd_alloc)) {
-    auto& row     = out.freq_domain_alloc.set_row2();
-    auto& row_val = variant_get<csi_rs_resource_mapping::fd_alloc_row2>(cfg.fd_alloc);
-    row.from_number(row_val.to_uint64());
-  } else if (variant_holds_alternative<csi_rs_resource_mapping::fd_alloc_row4>(cfg.fd_alloc)) {
-    auto& row     = out.freq_domain_alloc.set_row4();
-    auto& row_val = variant_get<csi_rs_resource_mapping::fd_alloc_row4>(cfg.fd_alloc);
-    row.from_number(row_val.to_uint64());
-  } else if (variant_holds_alternative<csi_rs_resource_mapping::fd_alloc_other>(cfg.fd_alloc)) {
-    auto& row     = out.freq_domain_alloc.set_other();
-    auto& row_val = variant_get<csi_rs_resource_mapping::fd_alloc_other>(cfg.fd_alloc);
-    row.from_number(row_val.to_uint64());
+  if (cfg.fd_alloc.size() == 4) {
+    asn1::fixed_bitstring<4>& row = out.freq_domain_alloc.set_row1();
+    row.from_number(cfg.fd_alloc.to_uint64());
+  } else if (cfg.fd_alloc.size() == 12) {
+    asn1::fixed_bitstring<12>& row = out.freq_domain_alloc.set_row2();
+    row.from_number(cfg.fd_alloc.to_uint64());
+  } else if (cfg.fd_alloc.size() == 3) {
+    asn1::fixed_bitstring<3>& row = out.freq_domain_alloc.set_row4();
+    row.from_number(cfg.fd_alloc.to_uint64());
+  } else if (cfg.fd_alloc.size() == 6) {
+    asn1::fixed_bitstring<6>& row = out.freq_domain_alloc.set_other();
+    row.from_number(cfg.fd_alloc.to_uint64());
+  } else {
+    report_fatal_error("Invalid freq domain row bitmap size={}", cfg.fd_alloc.size());
   }
 
   switch (cfg.nof_ports) {

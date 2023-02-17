@@ -20,12 +20,21 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp
   csi_rs.crbs    = {nzp_csi_rs_res.res_mapping.freq_band_start_rb,
                     nzp_csi_rs_res.res_mapping.freq_band_start_rb + nzp_csi_rs_res.res_mapping.freq_band_nof_rb};
   csi_rs.type    = srsgnb::csi_rs_type::CSI_RS_NZP;
-  // TODO: Handle other rows
-  auto& row1 = variant_get<csi_rs_resource_mapping::fd_alloc_row1>(nzp_csi_rs_res.res_mapping.fd_alloc);
-  csi_rs.row = 1;
-  csi_rs.freq_domain.resize(row1.size());
-  for (unsigned i = 0; i != row1.size(); ++i) {
-    csi_rs.freq_domain.set(i, row1.test(i));
+
+  csi_rs.freq_domain = nzp_csi_rs_res.res_mapping.fd_alloc;
+  switch (csi_rs.freq_domain.size()) {
+    case 4:
+      csi_rs.row = 1;
+      break;
+    case 12:
+      csi_rs.row = 2;
+      break;
+    case 3:
+      csi_rs.row = 4;
+      break;
+    case 6:
+    default:
+      report_fatal_error("Not supported");
   }
   csi_rs.symbol0                      = nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td;
   csi_rs.symbol1                      = nzp_csi_rs_res.res_mapping.first_ofdm_symbol_in_td2.has_value()

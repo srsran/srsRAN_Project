@@ -26,14 +26,10 @@ namespace srsgnb {
 /// domain
 /// \remark See TS 38.331, \c CSI-RS-ResourceMapping.
 struct csi_rs_resource_mapping {
-  /// See TS 38.331, \c frequencyDomainAllocation in \c CSI-RS-ResourceMapping.
-  using fd_alloc_row1  = bounded_bitset<4, true>;
-  using fd_alloc_row2  = bounded_bitset<12, true>;
-  using fd_alloc_row4  = bounded_bitset<3, true>;
-  using fd_alloc_other = bounded_bitset<6, true>;
-
-  /// Frequency domain allocation within a physical resource block in accordance with TS 38.211, clause 7.4.1.5.3.
-  variant<fd_alloc_row1, fd_alloc_row2, fd_alloc_row4, fd_alloc_other> fd_alloc;
+  /// \brief Frequency domain allocation within a physical resource block in accordance with TS 38.211,
+  /// clause 7.4.1.5.3, and \c frequencyDomainAllocation in \c CSI-RS-ResourceMapping in TS38.331. Possible sizes:
+  /// {row1: 4, row2: 12, row4: 3, row_other: 6}
+  bounded_bitset<12, true> fd_alloc;
   /// Number of ports. Values {1, 2, 4, 8, 12, 16, 24, 32}.
   unsigned nof_ports;
   /// The time domain location reference \f$l_0\f$ in TS 38.211, clause 7.4.1.5.3. Values {0,...,13}.
@@ -291,21 +287,20 @@ using csi_semi_persistent_on_pusch_trigger_state_list =
 /// \brief CSI-MeasConfig is used to configure CSI-RS belonging to the serving cell in which CSI-MeasConfig is included.
 /// \remark See TS 38.331, \c CSI-MeasConfig.
 struct csi_meas_config {
-  /// Pool of \c NZP-CSI-RS-Resource which can be referred to from \c NZP-CSI-RS-ResourceSet.
-  static_vector<nzp_csi_rs_resource, nzp_csi_rs_res_id_t::MAX_NOF_NZP_CSI_RS_RESOURCES> nzp_csi_rs_res_list;
-  /// Pool of NZP-CSI-RS-ResourceSet which can be referred to from CSI-ResourceConfig or from MAC CEs.
-  static_vector<nzp_csi_rs_resource_set, nzp_csi_rs_res_set_id_t::MAX_NOF_NZP_CSI_RS_RESOURCE_SETS>
-      nzp_csi_rs_res_set_list;
-  /// Pool of CSI-IM-Resource which can be referred to from CSI-IM-ResourceSet.
-  static_vector<csi_im_resource, csi_im_res_id_t::MAX_NOF_CSI_IM_RESOURCES> csi_im_res_list;
-  /// Pool of CSI-IM-ResourceSet which can be referred to from CSI-ResourceConfig or from MAC CEs.
-  static_vector<csi_im_resource_set, csi_im_res_set_id_t::MAX_NOF_CSI_IM_RESOURCE_SETS> csi_im_res_set_list;
-  /// Pool of CSI-SSB-ResourceSet which can be referred to from CSI-ResourceConfig.
-  static_vector<csi_ssb_resource_set, csi_ssb_res_set_id_t::MAX_NOF_CSI_SSB_RESOURCE_SETS> csi_ssb_res_set_list;
-  /// Configured CSI resource settings as specified in TS 38.214 clause 5.2.1.2.
-  static_vector<csi_resource_config, csi_res_config_id_t::MAX_NOF_CSI_RESOURCE_CONFIGS> csi_res_cfg_list;
-  /// Configured CSI report settings as specified in TS 38.214 clause 5.2.1.1.
-  static_vector<csi_report_config, csi_report_config_id_t::MAX_NOF_CSI_REPORT_CONFIGS> csi_report_cfg_list;
+  /// Pool of \c NZP-CSI-RS-Resource which can be referred to from \c NZP-CSI-RS-ResourceSet. Maximum size: 192.
+  std::vector<nzp_csi_rs_resource> nzp_csi_rs_res_list;
+  /// Pool of NZP-CSI-RS-ResourceSet which can be referred to from CSI-ResourceConfig or from MAC CEs. Maximum size: 64.
+  std::vector<nzp_csi_rs_resource_set> nzp_csi_rs_res_set_list;
+  /// Pool of CSI-IM-Resource which can be referred to from CSI-IM-ResourceSet. Maximum size: 32.
+  std::vector<csi_im_resource> csi_im_res_list;
+  /// Pool of CSI-IM-ResourceSet which can be referred to from CSI-ResourceConfig or from MAC CEs. Maximum size: 64.
+  std::vector<csi_im_resource_set> csi_im_res_set_list;
+  /// Pool of CSI-SSB-ResourceSet which can be referred to from CSI-ResourceConfig. Maximum size: 64.
+  std::vector<csi_ssb_resource_set> csi_ssb_res_set_list;
+  /// Configured CSI resource settings as specified in TS 38.214 clause 5.2.1.2. Maximum size: 112.
+  std::vector<csi_resource_config> csi_res_cfg_list;
+  /// Configured CSI report settings as specified in TS 38.214 clause 5.2.1.1. Maximum size: 48.
+  std::vector<csi_report_config> csi_report_cfg_list;
   /// Size of CSI request field in DCI (bits). See TS 38.214, clause 5.2.1.5.1.
   optional<unsigned>                                        report_trigger_size;
   optional<csi_aperiodic_trigger_state_list>                aperiodic_trigger_state_list;
