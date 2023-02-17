@@ -31,7 +31,7 @@ public:
 class prach_detector_simple_impl : public prach_detector
 {
   /// Correlation detection threshold.
-  static constexpr float DETECTION_THRESHOLD = 0.1F;
+  static constexpr float DETECTION_THRESHOLD = 0.07F;
   /// Correlation DFT size assertion of multiples. It is the ratio of the minimum time alignment command granularity
   /// (1.92 MHz) over the minimum PRACH subcarrier spacing (1.25 kHz).
   static constexpr unsigned ASSERT_DFT_SIZE_MULTIPLE = 1536;
