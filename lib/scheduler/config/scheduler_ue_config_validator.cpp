@@ -9,6 +9,7 @@
  */
 
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
+#include "srsran/support/config/validator_helpers.h"
 
 using namespace srsran;
 using namespace config_validators;
@@ -65,7 +66,24 @@ error_type<std::string> srsran::config_validators::validate_csi_meas_cfg(const s
 {
   for (const cell_config_dedicated& cell : msg.cfg.cells) {
     if (cell.serv_cell_cfg.csi_meas_cfg.has_value()) {
-      const auto& csi_meas_cfg = cell.serv_cell_cfg.csi_meas_cfg.value();
+      const csi_meas_config& csi_meas_cfg = cell.serv_cell_cfg.csi_meas_cfg.value();
+
+      // Ensure no Resource and ResourceSet ID duplications.
+      VERIFY(has_unique_ids(csi_meas_cfg.nzp_csi_rs_res_list, &nzp_csi_rs_resource::res_id),
+             "Duplication of NZP-CSI-RS-ResourceId");
+      VERIFY(has_unique_ids(csi_meas_cfg.nzp_csi_rs_res_set_list, &nzp_csi_rs_resource_set::res_set_id),
+             "Duplication of NZP-CSI-RS-ResourceSetId");
+      VERIFY(has_unique_ids(csi_meas_cfg.csi_im_res_list, &csi_im_resource::res_id),
+             "Duplication of CSI-IM-ResourceId");
+      VERIFY(has_unique_ids(csi_meas_cfg.csi_im_res_set_list, &csi_im_resource_set::res_set_id),
+             "Duplication of CSI-IM-ResourceSetId");
+      VERIFY(has_unique_ids(csi_meas_cfg.csi_ssb_res_set_list, &csi_ssb_resource_set::res_set_id),
+             "Duplication of CSI-SSB-ResourceSetId");
+      VERIFY(has_unique_ids(csi_meas_cfg.csi_res_cfg_list, &csi_resource_config::res_cfg_id),
+             "Duplication of CSI-ResourceConfigId");
+      VERIFY(has_unique_ids(csi_meas_cfg.csi_report_cfg_list, &csi_report_config::report_cfg_id),
+             "Duplication of CSI-ReportConfigId");
+
       // NZP-CSI-RS-ResourceSet.
       for (const auto& res_set : csi_meas_cfg.nzp_csi_rs_res_set_list) {
         for (const auto& res_id : res_set.nzp_csi_rs_res) {
