@@ -115,6 +115,8 @@ void srsran::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu
 
   fill_uci(proc_pdu, fapi_pdu);
 
+  proc_pdu.context = fapi_pdu.context;
+
   // :TODO: Check the ports.
   proc_pdu.rx_ports = {0};
 }

@@ -20,6 +20,9 @@ public:
   /// Default constructor.
   pucch_context() = default;
 
+  /// Constructs from value.
+  explicit pucch_context(rnti_t rnti_) : rnti(rnti_) {}
+
 private:
   friend struct fmt::formatter<pucch_context>;
   rnti_t rnti = INVALID_RNTI;

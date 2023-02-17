@@ -224,9 +224,6 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   fill_coreset(
       builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
 
-  // Set vendor specific context.
-  builder.set_context_vendor_specific(mac_pdu.pdsch_cfg.harq_id);
-
   // :TODO Rate-Matching related parameters, not used now.
 }
 
@@ -323,6 +320,9 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
 
   fill_coreset(
       builder, *mac_pdu.pdsch_cfg.coreset_cfg, *mac_pdu.pdsch_cfg.bwp_cfg, trans_type, is_coreset0_configured_for_cell);
+
+  // Fill PDSCH context for logging.
+  builder.set_context_vendor_specific(mac_pdu.pdsch_cfg.harq_id, mac_pdu.context.k1);
 
   // :TODO Rate-Matching related parameters, not used now.
 }

@@ -90,7 +90,7 @@ struct formatter<srsran::pdcch_processor::pdu_t> {
   {
     helper.format_always(ctx, "rnti=0x{:04x}", pdu.dci.rnti);
     if (pdu.context.has_value()) {
-      helper.format_always(ctx, "{}", pdu.context.value());
+      helper.format_always(ctx, pdu.context.value());
     }
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
@@ -304,10 +304,10 @@ struct formatter<srsran::pucch_processor::format1_configuration> {
       -> decltype(std::declval<FormatContext>().out())
   {
     if (config.context.has_value()) {
-      helper.format_always(ctx, "{:s}", config.context);
+      helper.format_always(ctx, config.context.value());
     }
     helper.format_always(ctx, "format=1");
-    helper.format_always(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
+    helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb1={}", config.starting_prb);
     helper.format_always(
         ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
@@ -344,12 +344,12 @@ struct formatter<srsran::pucch_processor::format2_configuration> {
       -> decltype(std::declval<FormatContext>().out())
   {
     if (config.context.has_value()) {
-      helper.format_always(ctx, "{:s}", config.context);
+      helper.format_always(ctx, config.context.value());
     } else {
       helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
     }
     helper.format_always(ctx, "format=2");
-    helper.format_always(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
+    helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + config.nof_prb);
     helper.format_always(
         ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
@@ -424,6 +424,8 @@ struct formatter<srsran::pucch_processor_result> {
     unsigned nof_csi_part1 = result.message.get_expected_nof_csi_part1_bits();
     unsigned nof_csi_part2 = result.message.get_expected_nof_csi_part2_bits();
 
+    helper.format_always(ctx, "status={}", to_string(result.message.get_status()));
+
     if (result.message.get_status() == srsran::uci_status::valid) {
       // Valid UCI payload.
       if (nof_harq_ack) {
@@ -464,7 +466,7 @@ struct formatter<srsran::pucch_processor_result> {
     // Channel State Information.
     helper.format_if_verbose(ctx, "epre={:+.1f}dB", result.csi.epre_dB);
     helper.format_if_verbose(ctx, "rsrp={:+.1f}dB", result.csi.rsrp_dB);
-    helper.format_always(ctx, "sinr={:+.1f}dB", result.csi.sinr_dB);
+    helper.format_if_verbose(ctx, "sinr={:+.1f}dB", result.csi.sinr_dB);
     helper.format_if_verbose(ctx, "t_align={:.1f}us", result.csi.time_alignment.to_seconds() * 1e6);
 
     return ctx.out();
@@ -557,7 +559,7 @@ struct formatter<srsran::pusch_processor::pdu_t> {
     if (pdu.context.has_value()) {
       helper.format_always(ctx, pdu.context.value());
     } else {
-      helper.format_if_verbose(ctx, "rnti=0x{:04x}", pdu.rnti);
+      helper.format_always(ctx, "rnti=0x{:04x}", pdu.rnti);
     }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb);
     helper.format_always(ctx, "prb={}", pdu.freq_alloc);

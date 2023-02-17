@@ -21,12 +21,16 @@ public:
   /// Default constructor.
   pdcch_context() = default;
 
-  explicit pdcch_context(search_space_id ss_id_, const char* dci_format_) : ss_id(ss_id_), dci_format(dci_format_) {}
+  explicit pdcch_context(search_space_id ss_id_, const char* dci_format_, optional<unsigned> harq_feedback_timing_) :
+    ss_id(ss_id_), dci_format(dci_format_), harq_feedback_timing(harq_feedback_timing_)
+  {
+  }
 
 private:
   friend struct fmt::formatter<pdcch_context>;
-  search_space_id ss_id      = MAX_NOF_SEARCH_SPACES;
-  const char*     dci_format = nullptr;
+  search_space_id    ss_id      = MAX_NOF_SEARCH_SPACES;
+  const char*        dci_format = nullptr;
+  optional<unsigned> harq_feedback_timing;
 };
 
 } // namespace srsran

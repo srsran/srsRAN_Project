@@ -21,6 +21,9 @@ public:
   /// Default constructor.
   pusch_context() = default;
 
+  /// Constructs from values.
+  explicit pusch_context(rnti_t rnti_, harq_id_t h_id_) : rnti(rnti_), h_id(h_id_) {}
+
 private:
   friend struct fmt::formatter<pusch_context>;
   rnti_t    rnti = INVALID_RNTI;

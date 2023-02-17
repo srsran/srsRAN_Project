@@ -95,6 +95,8 @@ void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
 
     dci_builder.set_payload(*dci.payload);
 
-    dci_builder.set_context_vendor_specific(dci.info->context.ss_id, dci.info->context.dci_format);
+    // Set DCI context for logging.
+    dci_builder.set_context_vendor_specific(
+        dci.info->context.ss_id, dci.info->context.dci_format, dci.info->context.harq_feedback_timing);
   }
 }

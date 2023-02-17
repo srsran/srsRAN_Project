@@ -98,6 +98,8 @@ struct dci_context_information {
     search_space_id ss_id;
     /// DCI format string.
     const char* dci_format;
+    /// Number of slots the UE is expected to wait before transmitting a DL HARQ-ACK, upon a PDSCH reception.
+    optional<unsigned> harq_feedback_timing;
   } context;
 };
 

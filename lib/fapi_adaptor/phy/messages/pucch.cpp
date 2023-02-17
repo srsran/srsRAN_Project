@@ -35,6 +35,9 @@ static void fill_format1_parameters(pucch_processor::format1_configuration& conf
   config.nof_symbols          = fapi_pdu.nr_of_symbols;
   config.start_symbol_index   = fapi_pdu.start_symbol_index;
   config.time_domain_occ      = fapi_pdu.time_domain_occ_index;
+
+  // Fill PUCCH context for logging.
+  config.context = pucch_context(fapi_pdu.rnti);
 }
 
 static void fill_format2_parameters(pucch_processor::format2_configuration& config,
@@ -63,6 +66,9 @@ static void fill_format2_parameters(pucch_processor::format2_configuration& conf
   config.nof_csi_part1 = fapi_pdu.csi_part1_bit_length;
   // CSI Part 2 disabled.
   config.nof_csi_part2 = 0;
+
+  // Fill PUCCH context for logging.
+  config.context = pucch_context(fapi_pdu.rnti);
 }
 
 /// Fills the context for Format 0 and Format 1.

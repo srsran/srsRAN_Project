@@ -28,6 +28,7 @@ public:
   auto format(const srsran::pdsch_context& context, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "h_id={}", context.h_id);
+    helper.format_always(ctx, "k1={}", context.k1);
     return ctx.out();
   }
 

@@ -23,6 +23,7 @@
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/pucch/pucch_mapping.h"
+#include "srsgnb/ran/pusch/pusch_context.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_pdu_capacity_constants.h"
@@ -128,7 +129,7 @@ struct dl_dci_pdu {
   int8_t      power_control_offset_ss_profile_nr;
   dci_payload payload;
   // Vendor specific parameters.
-  pdcch_context context;
+  optional<pdcch_context> context;
 };
 
 /// CORESET CCE to REG mapping type.
@@ -292,7 +293,7 @@ struct dl_pdsch_pdu {
   // :TODO: Rel16 PDSCH params v3
   dl_pdsch_parameters_v4 pdsch_parameters_v4;
   // Vendor specific parameters.
-  pdsch_context context;
+  optional<pdsch_context> context;
 };
 
 /// CSI-RS maintenance parameters added in FAPIv3.
@@ -645,6 +646,8 @@ struct ul_pusch_pdu {
   ul_pusch_maintenance_v3              pusch_maintenance_v3;
   ul_pusch_params_v4                   pusch_params_v4;
   uci_part1_to_part2_correspondence_v3 uci_correspondence;
+  // Vendor specific parameters.
+  optional<pusch_context> context;
 };
 
 /// PUCCH PDU maintenance information added in FAPIv3.

@@ -29,6 +29,9 @@ public:
   {
     helper.format_always(ctx, "ss_id={}", context.ss_id);
     helper.format_always(ctx, "format={}", context.dci_format);
+    if (context.harq_feedback_timing.has_value()) {
+      helper.format_if_verbose(ctx, "harq_feedback_timing={}", context.harq_feedback_timing.value());
+    }
     return ctx.out();
   }
 

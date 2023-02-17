@@ -272,9 +272,11 @@ public:
     return *this;
   }
 
-  dl_dci_pdu_builder set_context_vendor_specific(search_space_id ss_id, const char* dci_format)
+  /// Sets the PDCCH context as vendor specific.
+  dl_dci_pdu_builder
+  set_context_vendor_specific(search_space_id ss_id, const char* dci_format, optional<unsigned> harq_feedback_timing)
   {
-    pdu.context = pdcch_context(ss_id, dci_format);
+    pdu.context = pdcch_context(ss_id, dci_format, harq_feedback_timing);
     return *this;
   }
 
@@ -741,9 +743,9 @@ public:
   }
 
   /// Sets the PDSCH context as vendor specific.
-  dl_pdsch_pdu_builder& set_context_vendor_specific(harq_id_t harq_id)
+  dl_pdsch_pdu_builder& set_context_vendor_specific(harq_id_t harq_id, unsigned k1)
   {
-    pdu.context = pdsch_context(harq_id);
+    pdu.context = pdsch_context(harq_id, k1);
     return *this;
   }
 
@@ -2389,6 +2391,13 @@ public:
     ofdm.ul_ptrs_sample_density                   = ul_ptrs_sample_density;
     ofdm.ul_ptrs_time_density_transform_precoding = ul_ptrs_time_density_transform_precoding;
 
+    return *this;
+  }
+
+  /// Sets the PUSCH context as vendor specific.
+  ul_pusch_pdu_builder& set_context_vendor_specific(rnti_t rnti, harq_id_t harq_id)
+  {
+    pdu.context = pusch_context(rnti, harq_id);
     return *this;
   }
 };

@@ -120,4 +120,7 @@ void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder&
 
   // Fill the UCI parameters.
   fill_optional_uci_parameters(builder, mac_pdu.uci);
+
+  // Set PUSCH context for logging.
+  builder.set_context_vendor_specific(pusch_pdu.rnti, static_cast<harq_id_t>(pusch_pdu.harq_id));
 }
