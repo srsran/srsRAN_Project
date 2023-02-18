@@ -45,11 +45,12 @@ static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params
   // number is the minimum of 24 and the width of the associated BWP.
   // NOTE: If the configured value is larger than the width of the corresponding BWP, the UE shall assume that the
   // actual CSI-RS bandwidth is equal to the width of the BWP.
-  const unsigned nof_rbs_in_multiples_of_4 = 4 * (nof_crbs / 4);
+  const unsigned nof_rbs_in_multiples_of_4 = 4 * divide_ceil(nof_crbs, 4);
 
   if (nof_rbs_in_multiples_of_4 > 24) {
     return nof_rbs_in_multiples_of_4;
   }
+
   return 24;
 }
 
