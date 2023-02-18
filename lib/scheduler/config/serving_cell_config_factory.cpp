@@ -508,7 +508,7 @@ nzp_csi_rs_resource srsran::config_helpers::make_default_nzp_csi_rs_resource(con
 
   res.csi_res_period = csi_resource_periodicity::slots40;
   // Note: Avoid slots with SSB and SIB1.
-  res.csi_res_offset = 11;
+  res.csi_res_offset = 12;
 
   res.qcl_info_periodic_csi_rs = static_cast<tci_state_id_t>(0);
 
@@ -535,7 +535,7 @@ csi_im_resource srsran::config_helpers::make_default_csi_im_resource(const cell_
   res.freq_band_start_rb.emplace(0);
   res.freq_band_nof_rb.emplace(get_csi_freq_occupation_nof_rbs(params));
   res.csi_res_period.emplace(csi_resource_periodicity::slots320);
-  res.csi_res_offset.emplace(1);
+  res.csi_res_offset.emplace(2);
 
   return res;
 }
@@ -609,7 +609,7 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(0, true);
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::one;
   meas_cfg.nzp_csi_rs_res_list.back().csi_res_period           = csi_resource_periodicity::slots80;
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 1;
+  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 2;
   // Resource 1.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
   meas_cfg.nzp_csi_rs_res_list.back().res_id = static_cast<nzp_csi_rs_res_id_t>(1);
@@ -620,12 +620,12 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   // Resource 3.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
   meas_cfg.nzp_csi_rs_res_list.back().res_id         = static_cast<nzp_csi_rs_res_id_t>(3);
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset = 12;
+  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset = 13;
   // Resource 4.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
   meas_cfg.nzp_csi_rs_res_list.back().res_id                              = static_cast<nzp_csi_rs_res_id_t>(4);
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.first_ofdm_symbol_in_td = 8;
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset                      = 12;
+  meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset                      = 13;
 
   // NZP-CSI-RS-ResourceSet.
   // Resource Set 0.
