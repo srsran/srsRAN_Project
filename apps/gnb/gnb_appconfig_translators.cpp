@@ -468,9 +468,8 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appco
   out_cfg.ra.msg3_mcs_index          = prach.fixed_msg3_mcs;
 
   // SI parameters.
-  const pdcch_appconfig& pdcch = config.common_cell_cfg.pdcch_cfg;
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;
-  out_cfg.si.sib1_dci_aggr_lev = pdcch.si_aggregation_level_index;
+  out_cfg.si.sib1_dci_aggr_lev = aggregation_level::n4;
 
   error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {

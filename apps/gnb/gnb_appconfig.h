@@ -70,8 +70,6 @@ struct pdcch_appconfig {
   aggregation_level ue_aggregation_level_index = aggregation_level::n4;
   /// Aggregation level for the RAR.
   aggregation_level rar_aggregation_level_index = aggregation_level::n4;
-  /// Aggregation level for the SI.
-  aggregation_level si_aggregation_level_index = aggregation_level::n4;
 };
 
 /// PDSCH application configuration.

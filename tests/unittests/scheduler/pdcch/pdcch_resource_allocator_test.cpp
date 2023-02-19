@@ -105,16 +105,37 @@ protected:
             : cell_cfg.pci;
     ASSERT_EQ(pdcch_ctx.n_id_pdcch_data, expected_n_id) << "Invalid n_{ID} (see TS38.211, 7.3.2.3)";
 
-    auto ncce_candidates = this->get_pdcch_candidates(cs_cfg, ss_cfg, pdcch_ctx.cces.aggr_lvl);
+    auto ncce_candidates =
+        get_ue_pdcch_candidates((next_slot - 1).slot_index(), u.rnti, cs_cfg, ss_cfg, pdcch_ctx.cces.aggr_lvl);
     ASSERT_TRUE(std::any_of(ncce_candidates.begin(), ncce_candidates.end(), [&pdcch_ctx](auto ncce) {
       return ncce == pdcch_ctx.cces.ncce;
     })) << "Chosen ncce is not in the list of candidates";
   }
 
-  pdcch_candidate_list get_pdcch_candidates(const coreset_configuration&      cs_cfg,
-                                            const search_space_configuration& ss_cfg,
-                                            aggregation_level                 aggr_lvl) const
+  pdcch_candidate_list get_common_pdcch_candidates(const coreset_configuration&      cs_cfg,
+                                                   const search_space_configuration& ss_cfg,
+                                                   aggregation_level                 aggr_lvl) const
   {
+    return pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
+        aggr_lvl, ss_cfg.nof_candidates[to_aggregation_level_index(aggr_lvl)], cs_cfg.get_nof_cces()});
+  }
+
+  pdcch_candidate_list get_ue_pdcch_candidates(unsigned                          slot_index,
+                                               rnti_t                            rnti,
+                                               const coreset_configuration&      cs_cfg,
+                                               const search_space_configuration& ss_cfg,
+                                               aggregation_level                 aggr_lvl) const
+  {
+    if (ss_cfg.type == search_space_configuration::type_t::common) {
+      return get_common_pdcch_candidates(cs_cfg, ss_cfg, aggr_lvl);
+    }
+    return pdcch_candidates_ue_ss_get_lowest_cce(
+        pdcch_candidates_ue_ss_configuration{aggr_lvl,
+                                             ss_cfg.nof_candidates[to_aggregation_level_index(aggr_lvl)],
+                                             cs_cfg.get_nof_cces(),
+                                             cs_cfg.id,
+                                             rnti,
+                                             slot_index});
     return pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
         aggr_lvl, ss_cfg.nof_candidates[to_aggregation_level_index(aggr_lvl)], cs_cfg.get_nof_cces()});
   }
@@ -157,7 +178,7 @@ protected:
                                          const search_space_configuration& ss_cfg,
                                          aggregation_level                 aggr_lvl)
   {
-    auto ncce_candidates = this->get_pdcch_candidates(cs_cfg, ss_cfg, aggr_lvl);
+    auto ncce_candidates = this->get_common_pdcch_candidates(cs_cfg, ss_cfg, aggr_lvl);
     for (auto ncce : ncce_candidates) {
       prb_index_list pdcch_prbs = cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, aggr_lvl, ncce);
       bool           success    = true;
@@ -393,8 +414,9 @@ struct multi_alloc_test_params {
     optional<unsigned> expected_ncce;
   };
 
-  bs_channel_bandwidth_fr1 cell_bw;
-  std::vector<alloc>       allocs;
+  bs_channel_bandwidth_fr1         cell_bw;
+  optional<std::array<uint8_t, 5>> ss2_nof_candidates;
+  std::vector<alloc>               allocs;
 };
 
 template <>
@@ -438,6 +460,9 @@ protected:
         [params = GetParam()]() {
           cell_config_dedicated ue_cell = test_helpers::create_test_initial_ue_spcell_cell_config(
               cell_config_builder_params{.channel_bw_mhz = params.cell_bw});
+          if (params.ss2_nof_candidates.has_value()) {
+            ue_cell.serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0].nof_candidates = *params.ss2_nof_candidates;
+          }
           return ue_cell;
         }()),
     params(GetParam())
@@ -560,27 +585,27 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // clang-format off
   //    allocation type        RNTI            aggregation level      search space        expected NCCE (nullopt=no alloc)
-  multi_alloc_test_params{cell_bw::MHz10,
+  multi_alloc_test_params{cell_bw::MHz10, nullopt,
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 0}}},
-  multi_alloc_test_params{cell_bw::MHz10,
+  multi_alloc_test_params{cell_bw::MHz10, nullopt,
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 4}}},
-  multi_alloc_test_params{cell_bw::MHz10,
+  multi_alloc_test_params{cell_bw::MHz10, nullopt,
     {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(1), nullopt}}},
-  multi_alloc_test_params{cell_bw::MHz10,
+  multi_alloc_test_params{cell_bw::MHz10, nullopt,
     {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), nullopt}}},
-  multi_alloc_test_params{cell_bw::MHz20,
+  multi_alloc_test_params{cell_bw::MHz20, nullopt,
     {{alloc_type::si_rnti,  SI_RNTI,         aggregation_level::n4, to_search_space_id(0), 0},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 8}}},
-  multi_alloc_test_params{cell_bw::MHz10,
+  multi_alloc_test_params{cell_bw::MHz10, std::array<uint8_t, 5>{0,5,0,0,0},
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n2, to_search_space_id(2), 0},
      {alloc_type::dl_crnti, to_rnti(0x4602), aggregation_level::n2, to_search_space_id(2), 2},
      {alloc_type::dl_crnti, to_rnti(0x4603), aggregation_level::n2, to_search_space_id(2), 4},
      {alloc_type::ul_crnti, to_rnti(0x4601), aggregation_level::n2, to_search_space_id(2), 6},
      {alloc_type::ul_crnti, to_rnti(0x4602), aggregation_level::n2, to_search_space_id(2), 8}}},
-  multi_alloc_test_params{cell_bw::MHz20,
+  multi_alloc_test_params{cell_bw::MHz20, std::array<uint8_t, 5>{0,0,5,0,0},
     {{alloc_type::dl_crnti, to_rnti(0x4601), aggregation_level::n4, to_search_space_id(2), 0},
      {alloc_type::dl_crnti, to_rnti(0x4602), aggregation_level::n4, to_search_space_id(2), 4},
      {alloc_type::dl_crnti, to_rnti(0x4603), aggregation_level::n4, to_search_space_id(2), 8},

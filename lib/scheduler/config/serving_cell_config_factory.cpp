@@ -681,7 +681,8 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
-  pdcch_cfg.search_spaces[0].nof_candidates = {0, 0, 2, 0, 0};
+  pdcch_cfg.search_spaces[0].nof_candidates = {
+      0, 0, std::min((uint8_t)2U, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0])), 0, 0};
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg.emplace();

@@ -167,12 +167,6 @@ static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_par
          "RAR aggregation level index")
       ->capture_default_str()
       ->check(agg_validator);
-  app.add_option_function<unsigned>(
-         "--si_aggr_lvl_index",
-         [&pdcch_params](unsigned value) { to_aggregation_level(pdcch_params.si_aggregation_level_index, value); },
-         "SI aggregation level index")
-      ->capture_default_str()
-      ->check(agg_validator);
 }
 
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)

@@ -21,13 +21,6 @@ static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
 /// Validates the given PDCCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pdcch_cell_app_config(const pdcch_appconfig& config)
 {
-  // As per Table 10.1-1, TS 38.213.
-  if (config.si_aggregation_level_index < srsran::aggregation_level::n4) {
-    fmt::print("Specified aggregation level value n{} for Type0-PDCCH CSS is invalid. It must be n4, n8 or n16.\n",
-               to_nof_cces(config.si_aggregation_level_index));
-    return false;
-  }
-
   return true;
 }
 
