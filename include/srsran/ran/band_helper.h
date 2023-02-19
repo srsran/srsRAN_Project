@@ -13,6 +13,7 @@
 /// This header is currently used only by the MAC to compute extra SSB parameters (needed for scheduling) from those
 /// provided by DU.
 
+#include "srsran/adt/expected.h"
 #include "srsran/adt/optional.h"
 #include "srsran/ran/ssb_properties.h"
 #include <stdint.h>
@@ -98,8 +99,8 @@ nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 /// \brief     Checks whether a Downlink ARFCN is valid for a given band.
 /// \param[in] band Given NR band.
 /// \param[in] arfcn Given Downlink ARFCN.
-/// \return    True if band includes Downlink ARFCN. False, otherwise.
-bool is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn);
+/// \return    If the DL ARFCN is invalid for the band, a std::string value is returned with the reason.
+error_type<std::string> is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn);
 
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///

@@ -285,22 +285,28 @@ nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 {
   for (const nr_band_raster& band : nr_band_table_fr1) {
     // Check given ARFCN is between the first and last possible ARFCN.
-    if (arfcn >= band.dl_nref_first and arfcn <= band.dl_nref_last) {
+    if (arfcn >= band.dl_nref_first and arfcn <= band.dl_nref_last and (arfcn % band.dl_nref_step) == 0) {
       return band.band;
     }
   }
   return nr_band::invalid;
 }
 
-bool srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn)
+error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn)
 {
   for (const nr_band_raster& raster_band : nr_band_table_fr1) {
     if (raster_band.band == band) {
-      return arfcn >= raster_band.dl_nref_first and arfcn <= raster_band.dl_nref_last and
-             (arfcn % raster_band.dl_nref_step) == 0;
+      if (arfcn >= raster_band.dl_nref_first and arfcn <= raster_band.dl_nref_last and
+          (arfcn % raster_band.dl_nref_step) == 0) {
+        return {};
+      }
+      return {fmt::format("DL ARFCN must be within the interval [{},{}], step {}, for the chosen band",
+                          raster_band.dl_nref_first,
+                          raster_band.dl_nref_last,
+                          raster_band.dl_nref_step)};
     }
   }
-  return false;
+  return {fmt::format("Band is not valid")};
 }
 
 uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
@@ -313,7 +319,7 @@ uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
   }
 
   // Derive UL ARFCN for FDD bands.
-  for (const auto& band : nr_band_table_fr1) {
+  for (const nr_band_raster& band : nr_band_table_fr1) {
     if (band.band == get_band_from_dl_arfcn(dl_arfcn)) {
       uint32_t offset = (dl_arfcn - band.dl_nref_first) / band.dl_nref_step;
       return (band.ul_nref_first + offset * band.ul_nref_step);

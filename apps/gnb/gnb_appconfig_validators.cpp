@@ -113,9 +113,17 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     fmt::print("Currently, only one UL antenna is supported.\n", config.nof_antennas_ul);
     return false;
   }
-  if (config.band.has_value() and not band_helper::is_dl_arfcn_valid_given_band(*config.band, config.dl_arfcn)) {
-    fmt::print("Chosen band={} does not include chosen DL ARFCN={}.\n", *config.band, config.dl_arfcn);
-    return false;
+  if (config.band.has_value()) {
+    error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(*config.band, config.dl_arfcn);
+    if (ret.is_error()) {
+      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_arfcn, *config.band, ret.error());
+      return false;
+    }
+  } else {
+    if (band_helper::get_band_from_dl_arfcn(config.dl_arfcn) == nr_band::invalid) {
+      fmt::print("Invalid DL ARFCN={}. Cause: Could not find a valid band.\n", config.dl_arfcn);
+      return false;
+    }
   }
 
   if (!validate_pdcch_cell_app_config(config.pdcch_cfg)) {
