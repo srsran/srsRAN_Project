@@ -146,7 +146,7 @@ search_space_configuration srsran::config_helpers::make_default_common_search_sp
 {
   search_space_configuration cfg = make_default_search_space_zero_config();
   cfg.id                         = to_search_space_id(1);
-  cfg.nof_candidates             = {0, 2, 1, 0, 0};
+  cfg.nof_candidates             = {0, 0, 1, 0, 0};
   cfg.monitoring_symbols_within_slot.emplace();
   cfg.monitoring_symbols_within_slot->set(cfg.monitoring_symbols_within_slot->size() - 1, true);
   return cfg;
@@ -681,13 +681,7 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   pdcch_cfg.coresets[0].id = to_coreset_id(1);
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
-  pdcch_cfg.search_spaces[0].nof_candidates = {
-      compute_max_nof_candidates(aggregation_level::n1, pdcch_cfg.coresets[0]),
-      compute_max_nof_candidates(aggregation_level::n2, pdcch_cfg.coresets[0]),
-      compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]),
-      compute_max_nof_candidates(aggregation_level::n8, pdcch_cfg.coresets[0]),
-      compute_max_nof_candidates(aggregation_level::n16, pdcch_cfg.coresets[0]),
-  };
+  pdcch_cfg.search_spaces[0].nof_candidates = {0, 0, 2, 0, 0};
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg.emplace();
