@@ -278,10 +278,11 @@ public:
   /// \param[in] val Value to set the bit.
   void set(size_t pos, bool val)
   {
-    assert_within_bounds_(pos, true);
     if (val) {
+      assert_within_bounds_(pos, true);
       set_(pos);
     } else {
+      assert_within_bounds_(pos, true);
       reset_(pos);
     }
   }
@@ -875,14 +876,12 @@ private:
   void set_(size_t bitpos) noexcept
   {
     bitpos = get_bitidx_(bitpos);
-    srsgnb_assume(bitpos <= nof_words_());
     get_word_(bitpos) |= maskbit(bitpos);
   }
 
   void reset_(size_t bitpos) noexcept
   {
     bitpos = get_bitidx_(bitpos);
-    srsgnb_assume(bitpos <= nof_words_());
     get_word_(bitpos) &= ~(maskbit(bitpos));
   }
 
