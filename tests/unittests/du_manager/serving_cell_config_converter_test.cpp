@@ -961,11 +961,16 @@ TEST(serving_cell_config_converter_test, test_initial_csi_meas_cfg_conversion)
 TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
 {
   auto src_cell_grp_cfg = make_initial_cell_group_config();
-
-  if (not src_cell_grp_cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
-    src_cell_grp_cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
-        config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
+  if (not src_cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
+    src_cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.emplace(config_helpers::make_default_csi_meas_config());
   }
+  auto& src_meas = src_cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.value();
+  src_meas.nzp_csi_rs_res_list.clear();
+  src_meas.nzp_csi_rs_res_list.push_back(config_helpers::make_default_nzp_csi_rs_resource({}));
+  src_meas.nzp_csi_rs_res_set_list.clear();
+  src_meas.nzp_csi_rs_res_set_list.push_back(config_helpers::make_default_nzp_csi_rs_resource_set());
+  src_meas.csi_res_cfg_list.clear();
+  src_meas.csi_res_cfg_list.push_back(config_helpers::make_default_csi_resource_config());
 
   srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
   auto&                     dest_csi_meas_cfg = dest_cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.value();
@@ -1142,33 +1147,34 @@ TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.csi_meas_cfg_present);
   ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg_present, dest_sp_cell_cfg_ded.csi_meas_cfg.has_value());
   ASSERT_TRUE(rrc_sp_cell_cfg_ded.csi_meas_cfg.is_setup());
+  const auto& setup = rrc_sp_cell_cfg_ded.csi_meas_cfg.setup();
 
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().nzp_csi_rs_res_to_add_mod_list.size(), 5);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().nzp_csi_rs_res_to_release_list.size(), 1);
+  ASSERT_EQ(setup.nzp_csi_rs_res_to_add_mod_list.size(), 5);
+  ASSERT_EQ(setup.nzp_csi_rs_res_to_release_list.size(), 1);
 
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().nzp_csi_rs_res_set_to_add_mod_list.size(), 2);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().nzp_csi_rs_res_set_to_release_list.size(), 1);
+  ASSERT_EQ(setup.nzp_csi_rs_res_set_to_add_mod_list.size(), 2);
+  ASSERT_EQ(setup.nzp_csi_rs_res_set_to_release_list.size(), 1);
 
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_im_res_to_add_mod_list.size(), 2);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_im_res_to_release_list.size(), 0);
+  ASSERT_EQ(setup.csi_im_res_to_add_mod_list.size(), 2);
+  ASSERT_EQ(setup.csi_im_res_to_release_list.size(), 0);
 
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_im_res_set_to_add_mod_list.size(), 2);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_im_res_set_to_release_list.size(), 0);
+  ASSERT_EQ(setup.csi_im_res_set_to_add_mod_list.size(), 2);
+  ASSERT_EQ(setup.csi_im_res_set_to_release_list.size(), 0);
 
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_ssb_res_set_to_add_mod_list.size(), 1);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_ssb_res_set_to_release_list.size(), 0);
+  ASSERT_EQ(setup.csi_ssb_res_set_to_add_mod_list.size(), 1);
+  ASSERT_EQ(setup.csi_ssb_res_set_to_release_list.size(), 0);
 
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_res_cfg_to_add_mod_list.size(), 3);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_res_cfg_to_release_list.size(), 1);
+  ASSERT_EQ(setup.csi_res_cfg_to_add_mod_list.size(), 3);
+  ASSERT_EQ(setup.csi_res_cfg_to_release_list.size(), 1);
 
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_report_cfg_to_add_mod_list.size(), 1);
-  ASSERT_EQ(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().csi_report_cfg_to_release_list.size(), 1);
+  ASSERT_EQ(setup.csi_report_cfg_to_add_mod_list.size(), 1);
+  ASSERT_EQ(setup.csi_report_cfg_to_release_list.size(), 1);
 
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().aperiodic_trigger_state_list_present);
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().aperiodic_trigger_state_list.is_setup());
+  ASSERT_TRUE(setup.aperiodic_trigger_state_list_present);
+  ASSERT_TRUE(setup.aperiodic_trigger_state_list.is_setup());
 
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().semi_persistent_on_pusch_trigger_state_list_present);
-  ASSERT_TRUE(rrc_sp_cell_cfg_ded.csi_meas_cfg.setup().semi_persistent_on_pusch_trigger_state_list.is_setup());
+  ASSERT_TRUE(setup.semi_persistent_on_pusch_trigger_state_list_present);
+  ASSERT_TRUE(setup.semi_persistent_on_pusch_trigger_state_list.is_setup());
 }
 
 TEST(serving_cell_config_converter_test, test_csi_meas_cfg_release_conversion)

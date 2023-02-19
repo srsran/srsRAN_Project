@@ -58,7 +58,7 @@ csi_resource_config make_default_csi_resource_config();
 
 csi_report_config make_default_csi_report_config();
 
-csi_meas_config make_default_csi_meas_config(const cell_config_builder_params& params);
+csi_meas_config make_default_csi_meas_config(const cell_config_builder_params& params = {});
 
 /// \brief Creates a default UE Serving Cell configuration.
 serving_cell_config create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params = {});
