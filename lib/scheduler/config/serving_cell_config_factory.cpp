@@ -506,7 +506,7 @@ nzp_csi_rs_resource srsran::config_helpers::make_default_nzp_csi_rs_resource(con
   res.pwr_ctrl_offset_ss_db = 0;
   res.scrambling_id         = 1;
 
-  res.csi_res_period = csi_resource_periodicity::slots40;
+  res.csi_res_period = csi_resource_periodicity::slots320;
   // Note: Avoid slots with SSB and SIB1.
   res.csi_res_offset = 12;
 
@@ -608,7 +608,7 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(0, true);
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::one;
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_period           = csi_resource_periodicity::slots80;
+  meas_cfg.nzp_csi_rs_res_list.back().csi_res_period           = csi_resource_periodicity::slots640;
   meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 2;
   // Resource 1.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
@@ -642,7 +642,7 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   // csi-IM-Resource.
   meas_cfg.csi_im_res_list.push_back(make_default_csi_im_resource(params));
   meas_cfg.csi_im_res_list.back().res_id         = static_cast<csi_im_res_id_t>(0);
-  meas_cfg.csi_im_res_list.back().csi_res_period = csi_resource_periodicity::slots80;
+  meas_cfg.csi_im_res_list.back().csi_res_period = csi_resource_periodicity::slots640;
 
   // csi-IM-ResourceSet.
   meas_cfg.csi_im_res_set_list.push_back(make_default_csi_im_resource_set());
