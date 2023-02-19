@@ -630,7 +630,7 @@ TEST(sib1_scheduler_test, test_sib1_ssb_collision_for_15khz_scs)
   // SCS 15kHz.
   subcarrier_spacing scs = subcarrier_spacing::kHz15;
   // This can be any frequency such that the DL band has SSB SCS 15kHz (case A, in this case).
-  uint32_t freq_arfcn = 500000;
+  uint32_t freq_arfcn = 536020;
 
   test_sib_1_pdsch_collisions(freq_arfcn, scs, 20);
 }

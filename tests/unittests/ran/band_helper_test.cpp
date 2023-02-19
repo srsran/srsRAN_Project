@@ -26,7 +26,7 @@ TEST(test_get_band_from_arfcn, mix_bands)
   ASSERT_EQ(nr_band::n25, band_helper::get_band_from_dl_arfcn(399000U));
   ASSERT_EQ(nr_band::n34, band_helper::get_band_from_dl_arfcn(404000U));
   ASSERT_EQ(nr_band::n38, band_helper::get_band_from_dl_arfcn(515000U));
-  ASSERT_EQ(nr_band::n41, band_helper::get_band_from_dl_arfcn(499900U));
+  ASSERT_EQ(nr_band::n41, band_helper::get_band_from_dl_arfcn(499902U));
   ASSERT_EQ(nr_band::n41, band_helper::get_band_from_dl_arfcn(504000U));
   ASSERT_EQ(nr_band::n50, band_helper::get_band_from_dl_arfcn(286500U));
   ASSERT_EQ(nr_band::n51, band_helper::get_band_from_dl_arfcn(285500U));

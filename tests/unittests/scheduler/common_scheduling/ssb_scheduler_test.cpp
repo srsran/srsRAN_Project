@@ -452,7 +452,7 @@ TEST(ssb_scheduler_test, test_time_domain_ssb_scheduling)
   //                   TEST CASE A
   // ##########################################################
   // TEST Case A, frequency < 3GHz.
-  uint32_t freq_arfcn = 500000;
+  uint32_t freq_arfcn = 536020;
   //
   uint64_t           in_burst_bitmap = static_cast<uint64_t>(0b01100000U) << static_cast<uint64_t>(56U);
   subcarrier_spacing ssb_scs         = subcarrier_spacing::kHz15;
@@ -610,7 +610,7 @@ TEST(ssb_scheduler_test, test_freq_domain_ssb_scheduling)
   //                   TEST CASE A
   // ##########################################################
   // TEST Case A, frequency < 3GHz.
-  uint32_t           freq_arfcn      = 500000;
+  uint32_t           freq_arfcn      = 536020;
   uint64_t           in_burst_bitmap = static_cast<uint64_t>(0b11110000U) << static_cast<uint64_t>(56U);
   subcarrier_spacing ssb_scs         = subcarrier_spacing::kHz15;
   ssb_periodicity    periodicity     = ssb_periodicity::ms10;
