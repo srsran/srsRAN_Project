@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/circular_map.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/circular_map.h"
+#include "srsran/support/test_utils.h"
 
 namespace srsran {
 

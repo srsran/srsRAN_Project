@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../du_manager_test_helpers.h"
-#include "srsgnb/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/mac/config/mac_cell_group_config_factory.h"
 
 namespace srsran {
 namespace srs_du {

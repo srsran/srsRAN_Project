@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
+#include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

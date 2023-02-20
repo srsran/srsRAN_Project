@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/support/executors/task_worker_pool.h"
+#include "srsran/support/executors/task_worker_pool.h"
 #include <future>
 #include <gtest/gtest.h>
 

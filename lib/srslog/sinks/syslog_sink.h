@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/srslog/shared_types.h"
-#include "srsgnb/srslog/sink.h"
+#include "srsran/srslog/shared_types.h"
+#include "srsran/srslog/sink.h"
 #include <syslog.h>
 
 namespace srslog {

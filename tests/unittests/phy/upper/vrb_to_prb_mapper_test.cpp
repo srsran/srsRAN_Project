@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsgnb/adt/span.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/vrb_to_prb_mapper.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/adt/span.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/phy/constants.h"
+#include "srsran/phy/upper/vrb_to_prb_mapper.h"
+#include "srsran/support/srsran_test.h"
 #include <array>
 
 using namespace srsran;

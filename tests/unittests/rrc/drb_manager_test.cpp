@@ -10,9 +10,9 @@
 
 #include "../cu_cp/common/du_processor_test_messages.h"
 #include "../lib/rrc/ue/drb_manager_impl.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/rrc/drb_manager.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/rrc/drb_manager.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

@@ -10,7 +10,7 @@
 #include "ue_sch_pdu_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/tbs_calculator.h"
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsran;
 

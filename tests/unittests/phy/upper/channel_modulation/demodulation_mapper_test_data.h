@@ -13,9 +13,9 @@
 // This file was generated using the following MATLAB class on 01-02-2023:
 //   + "srsDemodulationMapperUnittest.m"
 
-#include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
-#include "srsgnb/phy/upper/log_likelihood_ratio.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

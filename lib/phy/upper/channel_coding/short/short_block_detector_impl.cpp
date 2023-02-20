@@ -10,10 +10,10 @@
 
 #include "short_block_detector_impl.h"
 #include "short_block_encoder_impl.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/dot_prod.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/dot_prod.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

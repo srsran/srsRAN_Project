@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
+#include "srsran/support/math_utils.h"
 #include <map>
 
 namespace srsran {

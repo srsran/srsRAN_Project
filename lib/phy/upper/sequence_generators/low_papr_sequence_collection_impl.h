@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/adt/tensor.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
-#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
+#include "srsran/adt/tensor.h"
+#include "srsran/phy/constants.h"
+#include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
+#include "srsran/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 
 namespace srsran {
 

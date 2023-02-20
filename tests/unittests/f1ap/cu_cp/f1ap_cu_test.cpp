@@ -9,8 +9,8 @@
  */
 
 #include "f1ap_cu_test_helpers.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

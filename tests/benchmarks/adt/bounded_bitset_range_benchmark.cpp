@@ -9,8 +9,8 @@
  */
 
 #include "bounded_bitset_benchmark_helpers.h"
-#include "srsgnb/adt/bounded_bitset.h"
-#include "srsgnb/support/benchmark_utils.h"
+#include "srsran/adt/bounded_bitset.h"
+#include "srsran/support/benchmark_utils.h"
 #include <getopt.h>
 
 using namespace srsran;

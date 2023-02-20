@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/short/short_block_encoder.h"
+#include "srsran/phy/upper/channel_coding/short/short_block_encoder.h"
 
 namespace srsran {
 

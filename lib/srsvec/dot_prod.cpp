@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/srsvec/dot_prod.h"
+#include "srsran/srsvec/dot_prod.h"
 
 #include "simd.h"
 

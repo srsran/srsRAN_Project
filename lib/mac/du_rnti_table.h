@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/rnti.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/rnti.h"
+#include "srsran/support/srsran_assert.h"
 #include <atomic>
 #include <limits>
 #include <vector>

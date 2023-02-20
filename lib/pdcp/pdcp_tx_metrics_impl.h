@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "srsran/pdcp/pdcp_tx_metrics.h"
 #include <mutex>
-#include <srsgnb/pdcp/pdcp_tx_metrics.h>
 
 namespace srsran {
 

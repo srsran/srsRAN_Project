@@ -13,7 +13,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../policy/ue_allocator.h"
 #include "../uci_scheduling/uci_scheduler.h"
-#include "srsgnb/scheduler/config/scheduler_expert_config.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 
 namespace srsran {
 

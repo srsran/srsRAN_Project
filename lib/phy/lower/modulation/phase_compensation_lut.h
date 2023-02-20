@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
 

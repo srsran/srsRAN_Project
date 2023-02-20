@@ -9,8 +9,8 @@
  */
 
 #include "rlc_tx_am_entity.h"
-#include "srsgnb/adt/scope_exit.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/adt/scope_exit.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

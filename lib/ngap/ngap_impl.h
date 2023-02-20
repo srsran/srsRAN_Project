@@ -11,13 +11,13 @@
 #pragma once
 
 #include "procedures/ngap_transaction_manager.h"
-#include "srsgnb/asn1/ngap/ngap.h"
-#include "srsgnb/cu_cp/ue_manager.h"
-#include "srsgnb/ngap/ngap.h"
-#include "srsgnb/ngap/ngap_configuration.h"
-#include "srsgnb/pcap/pcap.h"
-#include "srsgnb/support/executors/task_executor.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/asn1/ngap/ngap.h"
+#include "srsran/cu_cp/ue_manager.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/ngap/ngap_configuration.h"
+#include "srsran/pcap/pcap.h"
+#include "srsran/support/executors/task_executor.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

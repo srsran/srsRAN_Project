@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/rlc/rlc_factory.h"
+#include "srsran/rlc/rlc_factory.h"
 #include "rlc_am_entity.h"
 #include "rlc_tm_entity.h"
 #include "rlc_um_entity.h"

@@ -11,10 +11,10 @@
 #pragma once
 
 #include "procedures/e2_setup_procedure.h"
-#include "srsgnb/asn1/e2ap/e2ap.h"
-#include "srsgnb/e2/e2.h"
-#include "srsgnb/ran/nr_cgi.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/asn1/e2ap/e2ap.h"
+#include "srsran/e2/e2.h"
+#include "srsran/ran/nr_cgi.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

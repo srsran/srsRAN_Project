@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include <array>
 
 namespace srsran {

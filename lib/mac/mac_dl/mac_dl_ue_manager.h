@@ -11,10 +11,10 @@
 #pragma once
 
 #include "../du_rnti_table.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/du_ue_list.h"
-#include "srsgnb/scheduler/harq_id.h"
+#include "srsran/mac/mac.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/du_ue_list.h"
+#include "srsran/scheduler/harq_id.h"
 #include <mutex>
 
 namespace srsran {

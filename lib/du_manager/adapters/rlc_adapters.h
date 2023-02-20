@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/f1ap/du/f1c_bearer.h"
-#include "srsgnb/f1u/du/f1u_bearer.h"
-#include "srsgnb/mac/mac_ue_control_information_handler.h"
-#include "srsgnb/rlc/rlc_entity.h"
+#include "srsran/f1ap/du/f1c_bearer.h"
+#include "srsran/f1u/du/f1u_bearer.h"
+#include "srsran/mac/mac_ue_control_information_handler.h"
+#include "srsran/rlc/rlc_entity.h"
 
 namespace srsran {
 namespace srs_du {

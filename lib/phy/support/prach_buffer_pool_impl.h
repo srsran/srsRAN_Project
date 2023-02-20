@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/phy/support/prach_buffer_pool.h"
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/prach_buffer_pool.h"
 #include <memory>
 
 namespace srsran {

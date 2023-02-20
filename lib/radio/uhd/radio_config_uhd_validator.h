@@ -12,7 +12,7 @@
 
 #include "radio_uhd_device.h"
 #include "radio_uhd_multi_usrp.h"
-#include "srsgnb/radio/radio_configuration.h"
+#include "srsran/radio/radio_configuration.h"
 
 namespace srsran {
 

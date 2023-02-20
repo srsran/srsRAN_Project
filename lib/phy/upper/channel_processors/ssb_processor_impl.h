@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
-#include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
-#include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
-#include "srsgnb/phy/upper/signal_processors/pss_processor.h"
-#include "srsgnb/phy/upper/signal_processors/sss_processor.h"
+#include "srsran/phy/upper/channel_processors/pbch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pbch_modulator.h"
+#include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pbch_processor.h"
+#include "srsran/phy/upper/signal_processors/pss_processor.h"
+#include "srsran/phy/upper/signal_processors/sss_processor.h"
 
 namespace srsran {
 

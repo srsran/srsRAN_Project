@@ -12,7 +12,7 @@
 #include "../signal_processors/dmrs_pdcch_processor_test_doubles.h"
 #include "pdcch_encoder_test_doubles.h"
 #include "pdcch_modulator_test_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include <random>
 
 static std::mt19937 rgen(0);

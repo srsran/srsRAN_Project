@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/mac/messages/pucch.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/scheduler/scheduler_pucch_format.h"
+#include "srsran/fapi_adaptor/mac/messages/pucch.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/scheduler/scheduler_pucch_format.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

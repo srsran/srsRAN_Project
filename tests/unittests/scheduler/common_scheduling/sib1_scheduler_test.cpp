@@ -12,9 +12,9 @@
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/support/ssb_helpers.h"
+#include "srsran/support/test_utils.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

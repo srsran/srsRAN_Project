@@ -10,17 +10,17 @@
 
 #pragma once
 
+#include "srsran/phy/support/prach_buffer_pool.h"
+#include "srsran/phy/support/resource_grid_pool.h"
+#include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/uplink_processor.h"
+#include "srsran/phy/upper/upper_phy.h"
+#include "srsran/phy/upper/upper_phy_timing_handler.h"
+#include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "uplink_request_processor_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_impl.h"
-#include "srsgnb/phy/support/prach_buffer_pool.h"
-#include "srsgnb/phy/support/resource_grid_pool.h"
-#include "srsgnb/phy/upper/downlink_processor.h"
-#include "srsgnb/phy/upper/uplink_processor.h"
-#include "srsgnb/phy/upper/upper_phy.h"
-#include "srsgnb/phy/upper/upper_phy_timing_handler.h"
-#include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
 
 namespace srsran {
 

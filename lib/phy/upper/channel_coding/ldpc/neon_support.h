@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/support/srsran_assert.h"
 #include <arm_neon.h>
 #include <array>
 

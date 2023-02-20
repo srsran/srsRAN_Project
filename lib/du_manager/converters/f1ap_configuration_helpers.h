@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/du/du_cell_config.h"
-#include "srsgnb/f1ap/du/f1ap_du.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/du/du_cell_config.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 
 namespace srsran {
 

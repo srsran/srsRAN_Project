@@ -13,9 +13,9 @@
 #include "adapters/gtpu_adapters.h"
 #include "adapters/sdap_adapters.h"
 #include "drb_context.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/gtpu/gtpu_tunnel_factory.h"
-#include "srsgnb/ran/up_transport_layer_info.h"
+#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/gtpu/gtpu_tunnel_factory.h"
+#include "srsran/ran/up_transport_layer_info.h"
 
 namespace srsran {
 namespace srs_cu_up {

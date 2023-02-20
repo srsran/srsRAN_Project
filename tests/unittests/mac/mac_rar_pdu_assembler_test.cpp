@@ -10,9 +10,9 @@
 
 #include "lib/mac/mac_dl/rar_pdu_assembler.h"
 #include "mac_test_helpers.h"
-#include "srsgnb/adt/circular_array.h"
-#include "srsgnb/support/bit_encoding.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/circular_array.h"
+#include "srsran/support/bit_encoding.h"
+#include "srsran/support/test_utils.h"
 #include <random>
 
 using namespace srsran;

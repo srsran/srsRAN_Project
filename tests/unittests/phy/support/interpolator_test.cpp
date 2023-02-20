@@ -11,7 +11,7 @@
 /// \file
 /// \brief Interpolator unit test.
 
-#include "srsgnb/phy/support/support_factories.h"
+#include "srsran/phy/support/support_factories.h"
 
 #include <gtest/gtest.h>
 

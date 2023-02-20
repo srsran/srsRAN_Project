@@ -12,9 +12,9 @@
 #pragma once
 
 #include "f1u_local_bearer_adapter.h"
-#include "srsgnb/f1u/cu_up/f1u_gateway.h"
-#include "srsgnb/f1u/du/f1u_gateway.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/f1u/du/f1u_gateway.h"
+#include "srsran/srslog/srslog.h"
 #include <cstdint>
 #include <map>
 

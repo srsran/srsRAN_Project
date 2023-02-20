@@ -9,7 +9,7 @@
  */
 
 #include "../../../fapi/validators/helpers.h"
-#include "srsgnb/fapi_adaptor/phy/messages/pucch.h"
+#include "srsran/fapi_adaptor/phy/messages/pucch.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

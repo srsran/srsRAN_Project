@@ -9,8 +9,8 @@
  */
 
 #include "lib/ran/ssb_freq_position_generator.h"
+#include "srsran/ran/band_helper.h"
 #include "ssb_coreset0_freq_pos_checker.h"
-#include "srsgnb/ran/band_helper.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

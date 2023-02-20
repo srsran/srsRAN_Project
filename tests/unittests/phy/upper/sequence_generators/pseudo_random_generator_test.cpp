@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/srsvec/aligned_vec.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/support/srsran_test.h"
 #include <random>
 
 static std::mt19937 rgen(0);

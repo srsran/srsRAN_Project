@@ -8,26 +8,26 @@
  *
  */
 
-#include "srsgnb/pcap/pcap.h"
-#include "srsgnb/support/build_info/build_info.h"
-#include "srsgnb/support/signal_handler.h"
-#include "srsgnb/support/tsan_options.h"
+#include "srsran/pcap/pcap.h"
+#include "srsran/support/build_info/build_info.h"
+#include "srsran/support/signal_handler.h"
+#include "srsran/support/tsan_options.h"
 
-#include "srsgnb/cu_cp/cu_cp_configuration.h"
-#include "srsgnb/cu_cp/cu_cp_factory.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_factory.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 
 #include "adapters/f1u_connector/f1u_local_connector.h"
-#include "srsgnb/cu_up/cu_up_factory.h"
+#include "srsran/cu_up/cu_up_factory.h"
 
 #include "adapters/ngap_adapter.h"
-#include "srsgnb/support/io_broker/io_broker_factory.h"
+#include "srsran/support/io_broker/io_broker_factory.h"
 
 #include "adapters/e1ap_adapter.h"
 #include "adapters/f1ap_adapter.h"
-#include "srsgnb/support/backtrace.h"
-#include "srsgnb/support/config_parsers.h"
-#include "srsgnb/support/executors/task_worker_pool.h"
+#include "srsran/support/backtrace.h"
+#include "srsran/support/config_parsers.h"
+#include "srsran/support/executors/task_worker_pool.h"
 
 #include "gnb_appconfig.h"
 #include "gnb_appconfig_cli11_schema.h"
@@ -43,17 +43,17 @@
 #include "lib/pcap/ngap_pcap_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/fapi/logging_decorator_factories.h"
-#include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
-#include "srsgnb/phy/adapters/phy_error_adapter.h"
-#include "srsgnb/phy/adapters/phy_rg_gateway_adapter.h"
-#include "srsgnb/phy/adapters/phy_rx_symbol_adapter.h"
-#include "srsgnb/phy/adapters/phy_rx_symbol_request_adapter.h"
-#include "srsgnb/phy/adapters/phy_timing_adapter.h"
-#include "srsgnb/phy/lower/lower_phy_factory.h"
-#include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
-#include "srsgnb/radio/radio_factory.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/fapi/logging_decorator_factories.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
+#include "srsran/phy/adapters/phy_error_adapter.h"
+#include "srsran/phy/adapters/phy_rg_gateway_adapter.h"
+#include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
+#include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
+#include "srsran/phy/adapters/phy_timing_adapter.h"
+#include "srsran/phy/lower/lower_phy_factory.h"
+#include "srsran/phy/upper/upper_phy_timing_notifier.h"
+#include "srsran/radio/radio_factory.h"
 #include <atomic>
 #include <csignal>
 #include <unordered_map>

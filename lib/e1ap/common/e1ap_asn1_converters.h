@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
-#include "srsgnb/ran/bcd_helpers.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/optional.h"
+#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsran/ran/bcd_helpers.h"
 #include <string>
 #include <vector>
 

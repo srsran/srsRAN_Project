@@ -9,7 +9,7 @@
  */
 
 #include "lib/du_manager/du_ue/du_bearer.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <numeric>
 

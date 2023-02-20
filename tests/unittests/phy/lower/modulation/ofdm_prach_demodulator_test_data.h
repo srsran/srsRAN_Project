@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class on 10-Aug-2022:
 //   + "srsPRACHDemodulatorUnittest.m"
 
-#include "srsgnb/phy/lower/modulation/ofdm_prach_demodulator.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/lower/modulation/ofdm_prach_demodulator.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/f1ap/common/f1ap_common.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
-#include "srsgnb/gateways/network_gateway.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/gateways/network_gateway.h"
 
 namespace srsran {
 

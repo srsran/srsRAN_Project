@@ -9,7 +9,7 @@
  */
 
 #include "polar_allocator_impl.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 

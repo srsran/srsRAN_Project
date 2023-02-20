@@ -18,10 +18,10 @@
 /// few LDPC iterations.
 
 #include "pusch_decoder_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/rx_softbuffer_pool.h"
-#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/rx_softbuffer_pool.h"
+#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/support/test_utils.h"
 #include <getopt.h>
 
 /// \cond

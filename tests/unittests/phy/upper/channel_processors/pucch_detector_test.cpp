@@ -15,7 +15,7 @@
 /// and compares the resulting bits (SR or HARQ-ACK) with the expected ones.
 
 #include "pucch_detector_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 
 #include <gtest/gtest.h>
 

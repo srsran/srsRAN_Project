@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/asn1/ngap/ngap.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/asn1/ngap/ngap.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace std;

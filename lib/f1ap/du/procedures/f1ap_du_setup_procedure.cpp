@@ -10,7 +10,7 @@
 
 #include "f1ap_du_setup_procedure.h"
 #include "../f1ap_du_context.h"
-#include "srsgnb/support/async/async_timer.h"
+#include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;

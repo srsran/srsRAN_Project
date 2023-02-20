@@ -11,7 +11,7 @@
 #pragma once
 
 #include "cell_group_config.h"
-#include "srsgnb/f1ap/du/f1ap_du_ue_context_update.h"
+#include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 
 namespace srsran {
 namespace srs_du {

@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/async/async_event_source.h"
-#include "srsgnb/support/async/eager_async_task.h"
+#include "srsran/support/async/async_event_source.h"
+#include "srsran/support/async/eager_async_task.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

@@ -9,9 +9,9 @@
  */
 
 #include "pdsch_processor_impl.h"
-#include "srsgnb/ran/dmrs.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/copy.h"
+#include "srsran/ran/dmrs.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/copy.h"
 
 using namespace srsran;
 

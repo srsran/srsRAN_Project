@@ -9,8 +9,8 @@
  */
 #pragma once
 
-#include "srsgnb/ran/lcid.h"
-#include "srsgnb/support/prefixed_logger.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/support/prefixed_logger.h"
 #include "fmt/format.h"
 #include <string.h>
 

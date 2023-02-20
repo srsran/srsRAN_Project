@@ -9,8 +9,8 @@
  */
 
 #include "helpers.h"
-#include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/fapi/message_validators.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace fapi;

@@ -11,10 +11,10 @@
 #pragma once
 
 #include "harq_process.h"
-#include "srsgnb/mac/bsr_format.h"
-#include "srsgnb/mac/mac_pdu_format.h"
-#include "srsgnb/scheduler/config/logical_channel_config.h"
-#include "srsgnb/scheduler/scheduler_feedback_handler.h"
+#include "srsran/mac/bsr_format.h"
+#include "srsran/mac/mac_pdu_format.h"
+#include "srsran/scheduler/config/logical_channel_config.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
 
 namespace srsran {
 

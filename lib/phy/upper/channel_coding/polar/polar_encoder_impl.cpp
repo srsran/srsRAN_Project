@@ -9,8 +9,8 @@
  */
 
 #include "polar_encoder_impl.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

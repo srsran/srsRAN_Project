@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/gateways/sctp_network_gateway.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/srslog/srslog.h"
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/generic_functions/dft_processor.h"
-#include "srsgnb/phy/support/interpolator.h"
-#include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
+#include "srsran/phy/generic_functions/dft_processor.h"
+#include "srsran/phy/support/interpolator.h"
+#include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
 
 namespace srsran {
 

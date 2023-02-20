@@ -9,10 +9,10 @@
  */
 
 #include "ulsch_demultiplex_impl.h"
-#include "srsgnb/ran/dmrs.h"
-#include "srsgnb/ran/pusch/pusch_constants.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/ran/dmrs.h"
+#include "srsran/ran/pusch/pusch_constants.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 

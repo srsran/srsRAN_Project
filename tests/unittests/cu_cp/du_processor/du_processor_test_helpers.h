@@ -15,15 +15,15 @@
 #include "du_processor_test_helpers.h"
 #include "lib/cu_cp/ue_manager_impl.h"
 #include "lib/f1ap/common/asn1_helpers.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/du_processor.h"
+#include "srsran/cu_cp/du_processor_factory.h"
+#include "srsran/rrc/rrc.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/test_utils.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/rrc/test_helpers.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/cu_cp/du_processor_factory.h"
-#include "srsgnb/rrc/rrc.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
-#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

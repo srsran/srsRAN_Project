@@ -11,7 +11,7 @@
 #include "asn1_cell_group_config_helpers.h"
 #include "../../asn1/asn1_diff_utils.h"
 #include "asn1_csi_meas_config_helpers.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;

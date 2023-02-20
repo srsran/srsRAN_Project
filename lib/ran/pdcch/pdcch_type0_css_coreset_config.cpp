@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/adt/span.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
 
 using namespace srsran;
 

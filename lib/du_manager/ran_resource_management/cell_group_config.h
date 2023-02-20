@@ -11,12 +11,12 @@
 #pragma once
 
 #include "../converters/rlc_config_helpers.h"
-#include "srsgnb/mac/mac_cell_group_config.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/lcid.h"
-#include "srsgnb/ran/physical_cell_group.h"
-#include "srsgnb/rlc/rlc_config.h"
-#include "srsgnb/scheduler/config/serving_cell_config.h"
+#include "srsran/mac/mac_cell_group_config.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/ran/physical_cell_group.h"
+#include "srsran/rlc/rlc_config.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 
 namespace srsran {
 namespace srs_du {

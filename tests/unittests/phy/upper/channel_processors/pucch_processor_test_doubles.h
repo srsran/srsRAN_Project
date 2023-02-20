@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
+#include "srsran/phy/upper/channel_processors/pucch_processor.h"
 
 namespace srsran {
 

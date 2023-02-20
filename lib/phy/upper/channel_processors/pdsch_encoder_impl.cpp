@@ -9,7 +9,7 @@
  */
 
 #include "pdsch_encoder_impl.h"
-#include "srsgnb/srsvec/bit.h"
+#include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 

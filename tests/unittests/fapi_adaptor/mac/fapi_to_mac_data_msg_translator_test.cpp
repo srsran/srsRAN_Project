@@ -9,8 +9,8 @@
  */
 
 #include "../../../lib/fapi_adaptor/mac/fapi_to_mac_data_msg_translator.h"
-#include "srsgnb/fapi/messages.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/fapi/messages.h"
+#include "srsran/support/math_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

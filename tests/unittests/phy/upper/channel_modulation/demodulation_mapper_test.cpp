@@ -16,8 +16,8 @@
 /// also provided by test vectors.
 
 #include "demodulation_mapper_test_data.h"
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 #include <random>
 

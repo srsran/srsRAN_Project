@@ -9,9 +9,9 @@
  */
 
 #include "lib/scheduler/support/dmrs_helpers.h"
-#include "srsgnb/ran/pci.h"
-#include "srsgnb/scheduler/config/bwp_configuration.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/ran/pci.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

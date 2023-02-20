@@ -9,13 +9,13 @@
  */
 
 #include "ofdm_demodulator_impl.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/ran/subcarrier_spacing.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/prod.h"
-#include "srsgnb/srsvec/sc_prod.h"
-#include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/phy/constants.h"
+#include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/prod.h"
+#include "srsran/srsvec/sc_prod.h"
+#include "srsran/srsvec/zero.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

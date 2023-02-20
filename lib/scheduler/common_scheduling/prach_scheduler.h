@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../cell/resource_grid.h"
-#include "srsgnb/ran/prach/prach_configuration.h"
-#include "srsgnb/ran/slot_point.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/slot_point.h"
 #include <bitset>
 
 namespace srsran {

@@ -8,14 +8,14 @@
  *
  */
 
-#include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
+#include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
-#include "srsgnb/ran/duplex_mode.h"
-#include "srsgnb/ran/prach/prach_configuration.h"
-#include "srsgnb/ran/prach/prach_frequency_mapping.h"
-#include "srsgnb/ran/prach/prach_preamble_information.h"
-#include "srsgnb/scheduler/sched_consts.h"
+#include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_frequency_mapping.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/scheduler/sched_consts.h"
 
 using namespace srsran;
 using namespace config_validators;

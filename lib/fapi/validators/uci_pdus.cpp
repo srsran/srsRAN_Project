@@ -10,7 +10,7 @@
 
 #include "uci_pdus.h"
 #include "helpers.h"
-#include "srsgnb/fapi/messages.h"
+#include "srsran/fapi/messages.h"
 
 using namespace srsran;
 using namespace fapi;

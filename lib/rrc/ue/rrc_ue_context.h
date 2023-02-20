@@ -11,11 +11,11 @@
 #pragma once
 
 #include "drb_manager_impl.h"
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/rrc/drb_manager.h"
-#include "srsgnb/rrc/rrc_cell_context.h"
-#include "srsgnb/rrc/rrc_ue.h"
-#include "srsgnb/rrc/rrc_ue_config.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/rrc/drb_manager.h"
+#include "srsran/rrc/rrc_cell_context.h"
+#include "srsran/rrc/rrc_ue.h"
+#include "srsran/rrc/rrc_ue_config.h"
 
 namespace srsran {
 

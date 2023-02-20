@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/srslog/detail/support/error_string.h"
-#include "srsgnb/srslog/detail/support/memory_buffer.h"
+#include "srsran/srslog/detail/support/error_string.h"
+#include "srsran/srslog/detail/support/memory_buffer.h"
 #include "fmt/format.h"
 
 namespace srslog {

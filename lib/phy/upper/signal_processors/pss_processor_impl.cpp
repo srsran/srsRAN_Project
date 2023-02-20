@@ -9,7 +9,7 @@
  */
 
 #include "pss_processor_impl.h"
-#include "srsgnb/srsvec/sc_prod.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 

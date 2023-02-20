@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/ran/frame_types.h"
-#include "srsgnb/ran/pucch/pucch_mapping.h"
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/phy/constants.h"
+#include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/frame_types.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 

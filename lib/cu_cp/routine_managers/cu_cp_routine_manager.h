@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/cu_cp_configuration.h"
-#include "srsgnb/cu_cp/cu_up_processor.h"
-#include "srsgnb/ngap/ngap.h"
-#include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/async_task_loop.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_up_processor.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/async_task_loop.h"
 #include <unordered_map>
 
 namespace srsran {

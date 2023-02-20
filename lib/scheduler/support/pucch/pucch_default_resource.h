@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/pucch/pucch_mapping.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
 #include <cstdint>
 
 /// \file

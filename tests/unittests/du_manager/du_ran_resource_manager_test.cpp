@@ -9,8 +9,8 @@
  */
 
 #include "lib/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

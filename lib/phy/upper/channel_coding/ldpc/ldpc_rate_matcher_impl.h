@@ -14,7 +14,7 @@
 #pragma once
 
 #include "ldpc_graph_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 
 namespace srsran {
 

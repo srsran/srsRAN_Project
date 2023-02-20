@@ -10,7 +10,7 @@
 
 #include "lib/rlc/rlc_rx_am_entity.h"
 #include "rlc_test_helpers.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <list>
 #include <queue>

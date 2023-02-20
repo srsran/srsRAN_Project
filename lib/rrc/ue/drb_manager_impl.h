@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/rrc/drb_manager.h"
+#include "srsran/rrc/drb_manager.h"
 #include <map>
 
 namespace srsran {

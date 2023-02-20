@@ -9,10 +9,10 @@
  */
 
 #include "pdcp_entity_tx.h"
-#include "srsgnb/security/ciphering.h"
-#include "srsgnb/security/integrity.h"
-#include "srsgnb/support/bit_encoding.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/security/ciphering.h"
+#include "srsran/security/integrity.h"
+#include "srsran/support/bit_encoding.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

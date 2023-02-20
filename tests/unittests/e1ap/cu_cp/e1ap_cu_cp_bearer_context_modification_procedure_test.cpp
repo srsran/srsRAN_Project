@@ -9,8 +9,8 @@
  */
 
 #include "e1ap_cu_cp_test_helpers.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

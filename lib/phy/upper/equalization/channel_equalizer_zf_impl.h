@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/phy/upper/equalization/channel_equalizer.h"
 
 namespace srsran {
 

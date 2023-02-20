@@ -11,12 +11,12 @@
 #pragma once
 
 #include "lib/rrc/ue/rrc_ue_impl.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/rrc/rrc_du_factory.h"
+#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/test_utils.h"
 #include "test_helpers.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/rrc/rrc_du_factory.h"
-#include "srsgnb/support/async/async_task_loop.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

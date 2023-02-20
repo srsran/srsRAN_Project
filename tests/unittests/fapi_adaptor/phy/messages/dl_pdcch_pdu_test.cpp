@@ -10,11 +10,11 @@
  *
  */
 
-#include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/fapi/message_builders.h"
+#include "srsran/fapi_adaptor/phy/messages/pdcch.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/support/math_utils.h"
+#include "srsran/support/test_utils.h"
 #include <random>
 
 using namespace srsran;

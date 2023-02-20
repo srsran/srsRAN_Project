@@ -9,14 +9,14 @@
  */
 
 #include "prach_detector_simple_impl.h"
-#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
-#include "srsgnb/ran/prach/prach_preamble_information.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/dot_prod.h"
-#include "srsgnb/srsvec/prod.h"
-#include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/error_handling.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/ran/prach/prach_cyclic_shifts.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/dot_prod.h"
+#include "srsran/srsvec/prod.h"
+#include "srsran/srsvec/zero.h"
+#include "srsran/support/error_handling.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

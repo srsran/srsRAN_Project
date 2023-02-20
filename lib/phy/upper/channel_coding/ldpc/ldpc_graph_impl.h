@@ -12,7 +12,7 @@
 ///\brief ldpc_graph: class describing LDPC Tanner graphs.
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <array>
 
 namespace srsran {

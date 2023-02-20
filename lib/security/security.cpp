@@ -10,8 +10,8 @@
  *
  */
 
-#include "srsgnb/security/security.h"
-#include "srsgnb/security/ssl.h"
+#include "srsran/security/security.h"
+#include "srsran/security/ssl.h"
 #include <arpa/inet.h>
 
 using namespace srsran;

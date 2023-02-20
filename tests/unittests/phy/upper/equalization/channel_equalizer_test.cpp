@@ -9,8 +9,8 @@
  */
 
 #include "channel_equalizer_test_data.h"
-#include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/srsvec/zero.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

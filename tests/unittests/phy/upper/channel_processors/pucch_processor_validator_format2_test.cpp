@@ -9,10 +9,10 @@
  */
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
-#include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/ran/pucch/pucch_constants.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/ran/pucch/pucch_constants.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 

@@ -10,7 +10,7 @@
 
 #include "rrc_ue_impl.h"
 #include "../../ran/gnb_format.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

@@ -9,9 +9,9 @@
  */
 
 #include "helpers.h"
-#include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/fapi_adaptor/mac/messages/pdcch.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

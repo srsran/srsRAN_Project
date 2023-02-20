@@ -12,11 +12,11 @@
 
 #include "../policy/scheduler_policy.h"
 #include "../support/slot_event_list.h"
+#include "srsran/adt/unique_function.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/uci/uci_constants.h"
 #include "ue.h"
 #include "ue_srb0_scheduler.h"
-#include "srsgnb/adt/unique_function.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/uci/uci_constants.h"
 
 namespace srsran {
 

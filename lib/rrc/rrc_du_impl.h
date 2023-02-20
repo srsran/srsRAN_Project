@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "srsran/rrc/rrc_config.h"
+#include "srsran/rrc/rrc_du.h"
 #include "ue/rrc_ue_impl.h"
-#include "srsgnb/rrc/rrc_config.h"
-#include "srsgnb/rrc/rrc_du.h"
 #include <unordered_map>
 
 namespace srsran {

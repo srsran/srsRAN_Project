@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/ran/bcd_helpers.h"
-#include "srsgnb/ran/nr_cgi.h"
-#include "srsgnb/ran/up_transport_layer_info.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/up_transport_layer_info.h"
 
 namespace srsran {
 

@@ -13,7 +13,7 @@
 #include "fapi_to_phy_translator.h"
 #include "phy_to_fapi_results_event_translator.h"
 #include "phy_to_fapi_time_event_translator.h"
-#include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
 
 namespace srsran {
 class uplink_request_processor;

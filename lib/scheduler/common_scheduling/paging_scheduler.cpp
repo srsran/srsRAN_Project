@@ -14,8 +14,8 @@
 #include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/prbs_calculator.h"
 #include "../support/ssb_helpers.h"
-#include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsran;
 

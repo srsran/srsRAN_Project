@@ -1,7 +1,7 @@
 #include "dmrs_pusch_estimator_impl.h"
 #include "dmrs_helper.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/sc_prod.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 

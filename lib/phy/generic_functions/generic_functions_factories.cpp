@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "dft_processor_fftw_impl.h"
 #include "dft_processor_generic_impl.h"
 

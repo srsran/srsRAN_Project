@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/expected.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/expected.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 

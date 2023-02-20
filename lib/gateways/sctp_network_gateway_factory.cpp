@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/gateways/sctp_network_gateway_factory.h"
+#include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "sctp_network_gateway_impl.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

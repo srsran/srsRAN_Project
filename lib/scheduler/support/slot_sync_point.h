@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/ran/slot_point.h"
+#include "srsran/ran/slot_point.h"
 #include <condition_variable>
 #include <mutex>
 

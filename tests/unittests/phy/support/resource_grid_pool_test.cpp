@@ -9,8 +9,8 @@
  */
 
 #include "resource_grid_test_doubles.h"
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/support/srsran_test.h"
 #include <vector>
 
 using namespace srsran;

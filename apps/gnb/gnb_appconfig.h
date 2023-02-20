@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/bs_channel_bandwidth.h"
-#include "srsgnb/ran/pci.h"
-#include "srsgnb/ran/pdcch/aggregation_level.h"
-#include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsran/ran/band_helper.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/pci.h"
+#include "srsran/ran/pdcch/aggregation_level.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include <string>
 #include <thread>
 #include <vector>

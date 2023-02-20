@@ -11,10 +11,10 @@
 #pragma once
 
 #include "mac_dl_ue_manager.h"
-#include "srsgnb/mac/lcid_dl_sch.h"
-#include "srsgnb/mac/mac_pdu_format.h"
-#include "srsgnb/scheduler/harq_id.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsran/mac/lcid_dl_sch.h"
+#include "srsran/mac/mac_pdu_format.h"
+#include "srsran/scheduler/harq_id.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

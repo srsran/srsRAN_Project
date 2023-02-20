@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class:
 //   + "srsModulationMapperUnittest.m"
 
-#include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

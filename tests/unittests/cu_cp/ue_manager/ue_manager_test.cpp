@@ -8,8 +8,8 @@
  *
  */
 
+#include "srsran/rrc/rrc_ue.h"
 #include "ue_manager_test_helpers.h"
-#include "srsgnb/rrc/rrc_ue.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

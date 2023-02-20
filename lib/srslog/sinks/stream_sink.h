@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/srslog/sink.h"
+#include "srsran/srslog/sink.h"
 
 namespace srslog {
 

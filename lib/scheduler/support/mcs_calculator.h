@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/ran/pdsch/pdsch_mcs.h"
-#include "srsgnb/ran/sch_mcs.h"
+#include "srsran/adt/optional.h"
+#include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/sch_mcs.h"
 
 namespace srsran {
 

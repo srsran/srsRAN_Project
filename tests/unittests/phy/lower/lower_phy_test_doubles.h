@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/lower/lower_phy_error_notifier.h"
-#include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
-#include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
+#include "srsran/phy/lower/lower_phy_error_notifier.h"
+#include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
+#include "srsran/phy/lower/lower_phy_timing_notifier.h"
 
 namespace srsran {
 

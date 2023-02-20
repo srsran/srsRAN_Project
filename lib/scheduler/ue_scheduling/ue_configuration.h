@@ -11,9 +11,9 @@
 #pragma once
 
 #include "../cell/cell_configuration.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/scheduler/config/bwp_configuration.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
 
 namespace srsran {
 

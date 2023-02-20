@@ -9,7 +9,7 @@
  */
 #pragma once
 
-#include "srsgnb/support/prefixed_logger.h"
+#include "srsran/support/prefixed_logger.h"
 #include "fmt/format.h"
 
 namespace srsran {

@@ -10,9 +10,9 @@
 
 #include "f1ap_configuration_helpers.h"
 #include "asn1_cell_group_config_helpers.h"
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/ran/bcd_helpers.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/ran/bcd_helpers.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

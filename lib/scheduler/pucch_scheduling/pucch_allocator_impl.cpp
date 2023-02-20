@@ -10,7 +10,7 @@
 
 #include "pucch_allocator_impl.h"
 #include "../support/pucch/pucch_default_resource.h"
-#include "srsgnb/ran/pucch/pucch_info.h"
+#include "srsran/ran/pucch/pucch_info.h"
 
 //////////////     Helper functions       //////////////
 

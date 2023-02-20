@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/log_likelihood_ratio.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
 #include <gtest/gtest.h>
 #include <random>
 

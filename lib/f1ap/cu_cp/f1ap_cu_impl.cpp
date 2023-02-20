@@ -12,8 +12,8 @@
 #include "../../ran/gnb_format.h"
 #include "../common/asn1_helpers.h"
 #include "f1ap_asn1_converters.h"
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/ran/nr_cgi_helpers.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;

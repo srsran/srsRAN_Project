@@ -10,7 +10,7 @@
 
 #include "../../../lib/fapi/validators/ul_prach_pdu.h"
 #include "helpers.h"
-#include "srsgnb/fapi/message_validators.h"
+#include "srsran/fapi/message_validators.h"
 
 using namespace srsran;
 using namespace fapi;

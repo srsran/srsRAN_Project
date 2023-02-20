@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/gtpu/gtpu_demux.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/support/executors/task_executor.h"
 #include <memory>
 #include <unordered_map>
 

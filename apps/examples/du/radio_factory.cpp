@@ -9,8 +9,8 @@
  */
 
 #include "radio_factory.h"
-#include "srsgnb/radio/radio_configuration.h"
-#include "srsgnb/radio/radio_factory.h"
+#include "srsran/radio/radio_configuration.h"
+#include "srsran/radio/radio_factory.h"
 
 using namespace srsran;
 

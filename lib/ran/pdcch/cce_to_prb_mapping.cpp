@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
+#include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 
 using namespace srsran;
 

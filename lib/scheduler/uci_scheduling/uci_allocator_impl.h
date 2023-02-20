@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../pucch_scheduling/pucch_allocator.h"
+#include "srsran/adt/circular_array.h"
 #include "uci_allocator.h"
-#include "srsgnb/adt/circular_array.h"
 
 namespace srsran {
 

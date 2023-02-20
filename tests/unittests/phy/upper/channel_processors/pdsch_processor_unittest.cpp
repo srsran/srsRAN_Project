@@ -12,10 +12,10 @@
 #include "../signal_processors/dmrs_pdsch_processor_test_doubles.h"
 #include "pdsch_encoder_test_doubles.h"
 #include "pdsch_modulator_test_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/support/srsran_test.h"
 #include <random>
 
 using namespace srsran;

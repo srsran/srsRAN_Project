@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/lcid.h"
-#include "srsgnb/ran/rnti.h"
-#include "srsgnb/srslog/srslog.h"
-#include "srsgnb/support/format_utils.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/ran/rnti.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/format_utils.h"
 
 namespace srsran {
 

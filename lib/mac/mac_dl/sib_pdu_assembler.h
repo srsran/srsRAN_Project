@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/mac/mac_cell_manager.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsran/mac/mac_cell_manager.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

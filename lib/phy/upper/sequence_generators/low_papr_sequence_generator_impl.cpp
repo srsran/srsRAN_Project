@@ -9,11 +9,11 @@
  */
 
 #include "low_papr_sequence_generator_impl.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/srsvec/sc_prod.h"
-#include "srsgnb/support/error_handling.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/phy/constants.h"
+#include "srsran/srsvec/sc_prod.h"
+#include "srsran/support/error_handling.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

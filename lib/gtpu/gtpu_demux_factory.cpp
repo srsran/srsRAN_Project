@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/gtpu/gtpu_demux_factory.h"
+#include "srsran/gtpu/gtpu_demux_factory.h"
 #include "gtpu_demux_impl.h"
 
 using namespace srsran;

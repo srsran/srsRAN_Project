@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class on 24-Oct-2022:
 //   + "srsChEqualizerUnittest.m"
 
-#include "srsgnb/adt/complex.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/adt/complex.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

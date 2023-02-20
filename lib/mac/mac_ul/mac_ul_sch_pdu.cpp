@@ -9,7 +9,7 @@
  */
 
 #include "mac_ul_sch_pdu.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

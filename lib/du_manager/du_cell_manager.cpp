@@ -9,7 +9,7 @@
  */
 
 #include "du_cell_manager.h"
-#include "srsgnb/du/du_cell_config_validation.h"
+#include "srsran/du/du_cell_config_validation.h"
 
 using namespace srsran;
 using namespace srs_du;

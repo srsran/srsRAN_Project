@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/asn1/f1ap/f1ap.h"
+#include "srsran/asn1/f1ap/f1ap.h"
 #include <sstream>
 
 using namespace asn1;

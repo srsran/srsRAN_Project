@@ -11,13 +11,13 @@
 #pragma once
 
 #include "lib/du_manager/converters/mac_config_helpers.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/mac/config/mac_cell_group_config_factory.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/mac/mac_ue_configurator.h"
-#include "srsgnb/pcap/pcap.h"
-#include "srsgnb/scheduler/mac_scheduler.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/mac/mac_ue_configurator.h"
+#include "srsran/pcap/pcap.h"
+#include "srsran/scheduler/mac_scheduler.h"
+#include "srsran/support/test_utils.h"
 
 namespace srsran {
 

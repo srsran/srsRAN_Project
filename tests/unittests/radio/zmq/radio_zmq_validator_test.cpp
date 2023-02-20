@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/radio/radio_factory.h"
-#include "srsgnb/support/executors/task_worker.h"
+#include "srsran/radio/radio_factory.h"
+#include "srsran/support/executors/task_worker.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 

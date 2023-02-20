@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/ran/cyclic_prefix.h"
+#include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/ran/cyclic_prefix.h"
 
 namespace srsran {
 

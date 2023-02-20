@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/prb_grant.h"
+#include "srsran/scheduler/prb_grant.h"
 
 namespace srsran {
 

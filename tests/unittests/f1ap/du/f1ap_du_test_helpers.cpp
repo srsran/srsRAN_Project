@@ -10,7 +10,7 @@
 
 #include "f1ap_du_test_helpers.h"
 #include "../common/f1ap_cu_test_messages.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace srs_du;

@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/e1ap/common/e1ap_common.h"
-#include "srsgnb/gateways/sctp_network_gateway.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/gateways/sctp_network_gateway.h"
+#include "srsran/srslog/srslog.h"
 #include <cstdio>
 
 namespace srsran {

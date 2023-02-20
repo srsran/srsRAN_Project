@@ -9,10 +9,10 @@
  */
 
 #include "lib/du_manager/converters/asn1_cell_group_config_helpers.h"
-#include "srsgnb/asn1/asn1_utils.h"
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/mac/config/mac_cell_group_config_factory.h"
-#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

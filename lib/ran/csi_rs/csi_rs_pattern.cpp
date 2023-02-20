@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/ran/csi_rs/csi_rs_pattern.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/ran/csi_rs/csi_rs_pattern.h"
+#include "srsran/adt/span.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

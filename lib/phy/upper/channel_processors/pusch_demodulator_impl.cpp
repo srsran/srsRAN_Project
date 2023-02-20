@@ -12,7 +12,7 @@
 /// \brief PUSCH demodulator implementation definition.
 
 #include "pusch_demodulator_impl.h"
-#include "srsgnb/ran/sch_dmrs_power.h"
+#include "srsran/ran/sch_dmrs_power.h"
 
 using namespace srsran;
 

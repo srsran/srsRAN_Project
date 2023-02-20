@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/adt/strong_type.h"
+#include "srsran/adt/strong_type.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

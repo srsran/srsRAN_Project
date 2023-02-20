@@ -14,9 +14,9 @@
 #include "../signal_processors/sss_processor_doubles.h"
 #include "pbch_encoder_doubles.h"
 #include "pbch_modulator_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/srsvec/compare.h"
+#include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/srsvec/compare.h"
 #include <random>
 
 using namespace srsran;

@@ -9,11 +9,11 @@
  */
 
 #pragma once
-#include "srsgnb/phy/support/resource_grid_context.h"
-#include "srsgnb/phy/support/resource_grid_reader_empty.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
-#include "srsgnb/phy/upper/downlink_processor.h"
-#include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
+#include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/support/resource_grid_reader_empty.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/upper_phy_rg_gateway.h"
 
 namespace srsran {
 

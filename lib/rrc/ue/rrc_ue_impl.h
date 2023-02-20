@@ -15,8 +15,8 @@
 #include "procedures/rrc_setup_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
-#include "srsgnb/rrc/rrc_du_factory.h"
-#include "srsgnb/rrc/rrc_ue.h"
+#include "srsran/rrc/rrc_du_factory.h"
+#include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
 

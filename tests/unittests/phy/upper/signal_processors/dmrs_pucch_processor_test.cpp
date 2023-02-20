@@ -11,7 +11,7 @@
 #include "../../../../../lib/phy/upper/signal_processors/pucch/pucch_orthogonal_sequence.h"
 #include "../../support/resource_grid_test_doubles.h"
 #include "dmrs_pucch_processor_test_data.h"
-#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 
 using namespace srsran;
 

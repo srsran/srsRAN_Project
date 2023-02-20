@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/adt/blocking_queue.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/rlc/rlc_tx.h"
+#include "srsran/adt/blocking_queue.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/rlc/rlc_tx.h"
 #include "fmt/format.h"
 #include <cstdint>
 #include <functional>

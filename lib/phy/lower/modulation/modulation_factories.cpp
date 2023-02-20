@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/lower/modulation/modulation_factories.h"
+#include "srsran/phy/lower/modulation/modulation_factories.h"
 #include "ofdm_demodulator_impl.h"
 #include "ofdm_modulator_impl.h"
 #include "ofdm_prach_demodulator_impl.h"

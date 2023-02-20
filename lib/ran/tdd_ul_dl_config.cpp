@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/tdd_ul_dl_config.h"
-#include "srsgnb/ran/frame_types.h"
+#include "srsran/ran/tdd_ul_dl_config.h"
+#include "srsran/ran/frame_types.h"
 
 using namespace srsran;
 

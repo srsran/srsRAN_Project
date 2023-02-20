@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/ran/duplex_mode.h"
-#include "srsgnb/ran/pdcch/pdcch_candidates.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
 
 using namespace srsran;
 using namespace srsran::config_helpers;

@@ -11,9 +11,9 @@
 #include "pdcp_rx_metrics_test.h"
 #include "lib/pdcp/pdcp_entity_impl.h"
 #include "pdcp_test_vectors.h"
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/support/test_utils.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/support/test_utils.h"
+#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 

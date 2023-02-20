@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/async/async_task_loop.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/test_utils.h"
 #include <chrono>
 
 using namespace srsran;

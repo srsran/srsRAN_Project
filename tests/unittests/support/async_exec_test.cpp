@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsgnb/support/async/eager_async_task.h"
-#include "srsgnb/support/async/execute_on.h"
-#include "srsgnb/support/executors/blocking_task_worker.h"
-#include "srsgnb/support/executors/task_worker.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/async/eager_async_task.h"
+#include "srsran/support/async/execute_on.h"
+#include "srsran/support/executors/blocking_task_worker.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 

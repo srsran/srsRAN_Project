@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/pdsch/dlsch_info.h"
-#include "srsgnb/phy/constants.h"
+#include "srsran/ran/pdsch/dlsch_info.h"
+#include "srsran/phy/constants.h"
 
 using namespace srsran;
 

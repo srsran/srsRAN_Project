@@ -12,8 +12,8 @@
 /// \brief PUCCH detector definition for Formats 0 and 1.
 
 #include "pucch_detector_impl.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/mean.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/mean.h"
 
 using namespace srsran;
 

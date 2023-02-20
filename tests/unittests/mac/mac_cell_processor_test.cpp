@@ -10,7 +10,7 @@
 
 #include "lib/mac/mac_dl/mac_cell_processor.h"
 #include "mac_test_helpers.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

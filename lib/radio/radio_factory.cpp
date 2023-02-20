@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/radio/radio_factory.h"
+#include "srsran/radio/radio_factory.h"
 
 #ifdef ENABLE_UHD
 #include "uhd/radio_uhd_impl.h"

@@ -10,7 +10,7 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "nzp_csi_rs_generator_test_data.h"
-#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

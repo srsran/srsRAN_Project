@@ -15,11 +15,11 @@
 #include "pdcp_interconnect.h"
 #include "pdcp_pdu.h"
 #include "pdcp_rx_metrics_impl.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/byte_buffer_slice_chain.h"
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/pdcp/pdcp_rx.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/pdcp/pdcp_rx.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <map>
 

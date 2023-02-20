@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/optional.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
 

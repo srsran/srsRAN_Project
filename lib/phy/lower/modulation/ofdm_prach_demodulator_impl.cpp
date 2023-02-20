@@ -9,10 +9,10 @@
  */
 
 #include "ofdm_prach_demodulator_impl.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/ran/prach/prach_frequency_mapping.h"
-#include "srsgnb/ran/prach/prach_preamble_information.h"
-#include "srsgnb/srsvec/copy.h"
+#include "srsran/phy/constants.h"
+#include "srsran/ran/prach/prach_frequency_mapping.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srsvec/copy.h"
 
 using namespace srsran;
 

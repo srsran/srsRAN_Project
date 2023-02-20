@@ -10,7 +10,7 @@
 
 #include "cu_cp_e1_setup_procedure.h"
 #include "../../common/e1ap_asn1_helpers.h"
-#include "srsgnb/support/async/async_timer.h"
+#include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;

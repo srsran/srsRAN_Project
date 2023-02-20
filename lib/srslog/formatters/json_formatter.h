@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/srslog/formatter.h"
+#include "srsran/srslog/formatter.h"
 
 namespace srslog {
 

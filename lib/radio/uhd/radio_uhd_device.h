@@ -14,7 +14,7 @@
 #include "radio_uhd_exception_handler.h"
 #include "radio_uhd_rx_stream.h"
 #include "radio_uhd_tx_stream.h"
-#include "srsgnb/radio/radio_session.h"
+#include "srsran/radio/radio_session.h"
 
 /// \brief Determines whether a frequency is valid within a range.
 ///

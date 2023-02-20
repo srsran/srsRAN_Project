@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/lower/modulation/modulation_factories.h"
+#include "srsran/phy/lower/modulation/modulation_factories.h"
 
 namespace srsran {
 

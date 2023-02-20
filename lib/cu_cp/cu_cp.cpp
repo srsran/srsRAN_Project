@@ -10,10 +10,10 @@
 
 #include "cu_cp.h"
 #include "routines/initial_cu_cp_setup_routine.h"
-#include "srsgnb/cu_cp/cu_up_processor_factory.h"
-#include "srsgnb/cu_cp/du_processor_factory.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
-#include "srsgnb/ngap/ngap_factory.h"
+#include "srsran/cu_cp/cu_up_processor_factory.h"
+#include "srsran/cu_cp/du_processor_factory.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
+#include "srsran/ngap/ngap_factory.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

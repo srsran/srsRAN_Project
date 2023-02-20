@@ -9,7 +9,7 @@
  */
 
 #include "lib/scheduler/logging/scheduler_metrics_handler.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

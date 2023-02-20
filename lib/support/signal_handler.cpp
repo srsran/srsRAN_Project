@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsgnb/support/signal_handler.h"
+#include "srsran/support/signal_handler.h"
 #include "fmt/format.h"
 #include <atomic>
 #include <csignal>

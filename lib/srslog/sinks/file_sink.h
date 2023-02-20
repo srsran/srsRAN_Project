@@ -11,7 +11,7 @@
 #pragma once
 
 #include "file_utils.h"
-#include "srsgnb/srslog/sink.h"
+#include "srsran/srslog/sink.h"
 
 namespace srslog {
 

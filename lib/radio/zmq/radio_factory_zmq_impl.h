@@ -11,7 +11,7 @@
 #pragma once
 
 #include "radio_config_zmq_validator.h"
-#include "srsgnb/radio/radio_factory.h"
+#include "srsran/radio/radio_factory.h"
 
 namespace srsran {
 

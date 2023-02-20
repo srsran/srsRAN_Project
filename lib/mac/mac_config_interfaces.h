@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/mac/mac.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 

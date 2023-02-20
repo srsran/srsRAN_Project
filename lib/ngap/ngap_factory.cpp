@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ngap/ngap_factory.h"
+#include "srsran/ngap/ngap_factory.h"
 #include "ngap_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.

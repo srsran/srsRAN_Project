@@ -9,8 +9,8 @@
  */
 
 #include "sss_processor_impl.h"
-#include "srsgnb/srsvec/prod.h"
-#include "srsgnb/srsvec/sc_prod.h"
+#include "srsran/srsvec/prod.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 

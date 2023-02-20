@@ -12,8 +12,8 @@
 /// \brief Unit test for the log-likelihood ratio type.
 ///
 /// Tests all the operators and functions defined for the type.
-#include "srsgnb/phy/upper/log_likelihood_ratio.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

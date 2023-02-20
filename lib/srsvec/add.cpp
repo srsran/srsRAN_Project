@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/srsvec/add.h"
+#include "srsran/srsvec/add.h"
 #include "simd.h"
 
 using namespace srsran;

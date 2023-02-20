@@ -1,6 +1,6 @@
 
 #include "dft_processor_generic_impl.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/support/math_utils.h"
 #include <numeric>
 
 #include "../../srsvec/simd.h"

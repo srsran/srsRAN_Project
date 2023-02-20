@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
+#include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
 
 namespace srsran {
 

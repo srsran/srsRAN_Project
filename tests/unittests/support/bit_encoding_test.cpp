@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/bit_encoding.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/bit_encoding.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 

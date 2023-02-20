@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
+#include "srsran/phy/upper/channel_coding/crc_calculator.h"
 #include <array>
 #include <cstdint>
 #include <map>

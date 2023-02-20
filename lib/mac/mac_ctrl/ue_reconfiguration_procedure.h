@@ -13,7 +13,7 @@
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 

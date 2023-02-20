@@ -11,8 +11,8 @@
 #pragma once
 
 #include "f1ap_cu_ue_transaction_manager.h"
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include <unordered_map>
 
 namespace srsran {

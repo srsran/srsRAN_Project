@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/e1ap/common/e1ap_common.h"
-#include "srsgnb/f1u/cu_up/f1u_gateway.h"
-#include "srsgnb/gtpu/gtpu_demux.h"
-#include "srsgnb/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <chrono>
 #include <condition_variable>
 #include <list>

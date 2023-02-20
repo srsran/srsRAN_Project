@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/support/srsran_assert.h"
 #include <array>
 #include <immintrin.h>
 

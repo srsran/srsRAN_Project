@@ -16,10 +16,10 @@
 #include "mac_dl/mac_dl_processor.h"
 #include "mac_ul/mac_ul_processor.h"
 #include "rach_handler.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/mac_config.h"
-#include "srsgnb/scheduler/mac_scheduler.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/mac/mac.h"
+#include "srsran/mac/mac_config.h"
+#include "srsran/scheduler/mac_scheduler.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 

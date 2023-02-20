@@ -13,10 +13,10 @@
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "lib/scheduler/support/config_helpers.h"
 #include "scheduler_output_test_helpers.h"
-#include "srsgnb/ran/prach/prach_configuration.h"
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
-#include "srsgnb/support/error_handling.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/support/error_handling.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

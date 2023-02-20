@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 
 namespace srsran {
 namespace fapi_adaptor {

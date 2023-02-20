@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/ring_buffer.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/ring_buffer.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 // Disable GCC 5's -Wsuggest-override warnings in gtest.

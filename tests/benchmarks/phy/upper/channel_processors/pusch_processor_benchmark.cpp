@@ -10,11 +10,11 @@
 
 #include "../../../lib/phy/upper/rx_softbuffer_pool_impl.h"
 #include "../../../lib/scheduler/support/tbs_calculator.h"
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/support/benchmark_utils.h"
-#include "srsgnb/support/srsgnb_test.h"
-#include "srsgnb/support/unique_thread.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/support/benchmark_utils.h"
+#include "srsran/support/srsran_test.h"
+#include "srsran/support/unique_thread.h"
 #include <condition_variable>
 #include <getopt.h>
 #include <mutex>

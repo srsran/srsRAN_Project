@@ -10,9 +10,9 @@
 
 #include "gnb_appconfig_cli11_schema.h"
 #include "gnb_appconfig.h"
-#include "srsgnb/support/cli11_utils.h"
-#include "srsgnb/support/config_parsers.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/support/cli11_utils.h"
+#include "srsran/support/config_parsers.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

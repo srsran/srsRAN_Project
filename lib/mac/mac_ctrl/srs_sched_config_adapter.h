@@ -11,9 +11,9 @@
 #pragma once
 
 #include "mac_scheduler_configurator.h"
-#include "srsgnb/mac/mac_configuration_helpers.h"
-#include "srsgnb/scheduler/mac_scheduler.h"
-#include "srsgnb/support/async/manual_event.h"
+#include "srsran/mac/mac_configuration_helpers.h"
+#include "srsran/scheduler/mac_scheduler.h"
+#include "srsran/support/async/manual_event.h"
 
 namespace srsran {
 

@@ -9,7 +9,7 @@
  */
 
 #include "lib/scheduler/ue_scheduling/harq_process.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

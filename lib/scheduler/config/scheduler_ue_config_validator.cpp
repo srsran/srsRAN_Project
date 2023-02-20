@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/scheduler/config/scheduler_ue_config_validator.h"
+#include "srsran/scheduler/config/scheduler_ue_config_validator.h"
 
 using namespace srsran;
 using namespace config_validators;

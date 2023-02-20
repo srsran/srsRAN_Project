@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/polar/polar_deallocator.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_deallocator.h"
 
 namespace srsran {
 

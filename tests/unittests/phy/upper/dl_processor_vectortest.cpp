@@ -9,16 +9,16 @@
  */
 
 #include "dl_processor_test_data.h"
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
-#include "srsgnb/srsvec/bit.h"
+#include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdcch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
+#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pdcch_processor.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 

@@ -10,10 +10,10 @@
 
 #include "../../phy_test_utils.h"
 #include "pusch_demodulator_test_data.h"
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/srsvec/compare.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/srsvec/compare.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

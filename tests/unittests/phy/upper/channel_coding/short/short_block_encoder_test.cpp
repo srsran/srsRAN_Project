@@ -15,8 +15,8 @@
 /// modulation scheme). Messages and expected codeblocks (for comparison) are provided by test vectors.
 
 #include "short_block_encoder_test_data.h"
-#include "srsgnb/phy/upper/channel_coding/short/short_block_encoder.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/channel_coding/short/short_block_encoder.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

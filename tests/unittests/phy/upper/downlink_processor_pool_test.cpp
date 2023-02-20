@@ -9,8 +9,8 @@
  */
 
 #include "downlink_processor_test_doubles.h"
-#include "srsgnb/phy/upper/upper_phy_factories.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/upper_phy_factories.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

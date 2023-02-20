@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/ran/band_helper.h"
+#include "srsran/ran/band_helper.h"
 
 namespace srsran {
 

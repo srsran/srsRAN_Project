@@ -9,10 +9,10 @@
  */
 
 #include "amplitude_controller_clipping_impl.h"
-#include "srsgnb/srsvec/clip.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/dot_prod.h"
-#include "srsgnb/srsvec/sc_prod.h"
+#include "srsran/srsvec/clip.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/dot_prod.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 

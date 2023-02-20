@@ -9,7 +9,7 @@
  */
 
 #include "fapi_factory.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

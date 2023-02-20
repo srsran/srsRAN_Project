@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/asn1/rrc_nr/ue_cap.h"
+#include "srsran/asn1/rrc_nr/ue_cap.h"
 #include <sstream>
 
 using namespace asn1;

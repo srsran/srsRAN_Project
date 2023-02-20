@@ -9,7 +9,7 @@
  */
 
 #include "logging_slot_data_notifier_decorator.h"
-#include "srsgnb/fapi/message_loggers.h"
+#include "srsran/fapi/message_loggers.h"
 
 using namespace srsran;
 using namespace fapi;

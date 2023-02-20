@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/byte_buffer_slice_chain.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

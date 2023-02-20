@@ -9,7 +9,7 @@
  */
 
 #include "dmrs_pucch_processor_format2_impl.h"
-#include "srsgnb/srsvec/prod.h"
+#include "srsran/srsvec/prod.h"
 
 using namespace srsran;
 

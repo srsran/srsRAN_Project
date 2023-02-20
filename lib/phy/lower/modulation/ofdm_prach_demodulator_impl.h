@@ -11,10 +11,10 @@
 
 #pragma once
 
-#include "srsgnb/phy/generic_functions/dft_processor.h"
-#include "srsgnb/phy/lower/modulation/ofdm_prach_demodulator.h"
-#include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/phy/generic_functions/dft_processor.h"
+#include "srsran/phy/lower/modulation/ofdm_prach_demodulator.h"
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 

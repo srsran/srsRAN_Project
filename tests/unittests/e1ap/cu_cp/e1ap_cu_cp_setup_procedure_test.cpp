@@ -11,10 +11,10 @@
 #include "../common/test_helpers.h"
 #include "e1ap_cu_cp_test_helpers.h"
 #include "lib/e1ap/common/e1ap_asn1_utils.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_factory.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp_factory.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

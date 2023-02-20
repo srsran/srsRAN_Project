@@ -12,10 +12,10 @@
 
 #include "../common/e1ap_asn1_utils.h"
 #include "e1ap_cu_up_ue_context.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsgnb/support/executors/task_executor.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up.h"
+#include "srsran/support/executors/task_executor.h"
+#include "srsran/support/timers.h"
 #include <unordered_map>
 
 namespace srsran {

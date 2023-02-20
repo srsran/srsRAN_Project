@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/adt/tiny_optional.h"
+#include "srsran/adt/tiny_optional.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

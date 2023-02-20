@@ -11,9 +11,9 @@
 #pragma once
 
 #include "../ue_manager_impl.h"
-#include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/async_task_loop.h"
+#include "srsran/cu_cp/du_processor.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/async_task_loop.h"
 
 namespace srsran {
 namespace srs_cu_cp {

@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include <sstream>
 
 using namespace asn1;

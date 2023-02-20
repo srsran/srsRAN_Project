@@ -9,10 +9,10 @@
  */
 
 #include "phy_to_fapi_results_event_translator.h"
-#include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/fapi/message_builders.h"
+#include "srsran/fapi/message_validators.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

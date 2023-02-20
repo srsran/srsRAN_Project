@@ -12,9 +12,9 @@
 
 #include "gtpu_tunnel_rx_impl.h"
 #include "gtpu_tunnel_tx_impl.h"
-#include "srsgnb/gtpu/gtpu_config.h"
-#include "srsgnb/gtpu/gtpu_tunnel.h"
-#include "srsgnb/srslog/logger.h"
+#include "srsran/gtpu/gtpu_config.h"
+#include "srsran/gtpu/gtpu_tunnel.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

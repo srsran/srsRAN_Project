@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../task_schedulers/cu_up_task_scheduler.h"
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/cu_up_processor.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/cu_up_processor.h"
 
 namespace srsran {
 namespace srs_cu_cp {

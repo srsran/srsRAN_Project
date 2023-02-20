@@ -9,8 +9,8 @@
  */
 
 #include "downlink_processor_single_executor_impl.h"
-#include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/phy/upper/upper_phy_rg_gateway.h"
+#include "srsran/support/executors/task_executor.h"
 
 using namespace srsran;
 

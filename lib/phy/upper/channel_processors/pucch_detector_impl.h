@@ -13,10 +13,10 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pucch_detector.h"
-#include "srsgnb/phy/upper/equalization/channel_equalizer.h"
-#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/phy/upper/channel_processors/pucch_detector.h"
+#include "srsran/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 
 namespace srsran {
 

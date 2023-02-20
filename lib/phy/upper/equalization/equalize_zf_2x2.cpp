@@ -12,7 +12,7 @@
 /// \brief Zero Forcing equalization function implementation for a MIMO 2 X 2 channel.
 
 #include "equalize_zf_2x2.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 

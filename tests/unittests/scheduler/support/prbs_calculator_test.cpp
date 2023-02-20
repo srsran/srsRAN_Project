@@ -10,8 +10,8 @@
 
 #include "lib/scheduler/support/prbs_calculator.h"
 #include "lib/scheduler/support/tbs_calculator.h"
-#include "srsgnb/ran/pdsch/pdsch_mcs.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/support/srsran_test.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

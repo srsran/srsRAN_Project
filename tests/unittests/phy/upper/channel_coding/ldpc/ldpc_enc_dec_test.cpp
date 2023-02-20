@@ -16,9 +16,9 @@
 /// Similarly, the codeblocks are fed to the decoder and the resulting messages are compared to the example ones.
 
 #include "ldpc_encoder_test_data.h"
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/zero.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

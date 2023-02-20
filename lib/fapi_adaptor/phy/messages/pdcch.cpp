@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
-#include "srsgnb/srsvec/bit.h"
+#include "srsran/fapi_adaptor/phy/messages/pdcch.h"
+#include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

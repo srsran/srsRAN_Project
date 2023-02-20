@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include "srsgnb/adt/tensor.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/support/resource_grid.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/error_handling.h"
-#include "srsgnb/support/file_vector.h"
-#include "srsgnb/support/srsgnb_assert.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/adt/tensor.h"
+#include "srsran/phy/constants.h"
+#include "srsran/phy/support/resource_grid.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/support/error_handling.h"
+#include "srsran/support/file_vector.h"
+#include "srsran/support/srsran_assert.h"
+#include "srsran/support/srsran_test.h"
 #include <map>
 #include <random>
 #include <tuple>

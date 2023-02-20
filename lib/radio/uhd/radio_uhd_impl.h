@@ -14,8 +14,8 @@
 #include "radio_uhd_device.h"
 #include "radio_uhd_device_type.h"
 #include "radio_uhd_multi_usrp.h"
-#include "srsgnb/radio/radio_factory.h"
-#include "srsgnb/radio/radio_management_plane.h"
+#include "srsran/radio/radio_factory.h"
+#include "srsran/radio/radio_management_plane.h"
 
 namespace srsran {
 

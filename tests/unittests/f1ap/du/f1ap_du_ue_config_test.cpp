@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_du_test_helpers.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace srs_du;

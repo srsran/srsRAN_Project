@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
+#include "srsran/phy/upper/channel_processors/uci_decoder.h"
 #include <random>
 
 namespace srsran {

@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../../phy_test_utils.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/support/test_utils.h"
 #include <vector>
 
 namespace srsran {

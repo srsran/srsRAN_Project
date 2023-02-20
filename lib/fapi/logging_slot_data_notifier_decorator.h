@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/fapi/slot_data_message_notifier.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/fapi/slot_data_message_notifier.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace fapi {

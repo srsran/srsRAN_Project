@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/cu_cp/cu_cp_configuration.h"
-#include "srsgnb/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

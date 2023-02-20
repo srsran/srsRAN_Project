@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/sch/sch_segmentation.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/ran/sch/sch_segmentation.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 
 using namespace srsran;
 

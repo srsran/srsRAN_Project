@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class:
 //   + "srsPDCCHCandidatesCommonUnittest.m"
 
-#include "srsgnb/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
 
 namespace srsran {
 

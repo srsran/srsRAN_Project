@@ -9,7 +9,7 @@
  */
 
 #include "helpers.h"
-#include "srsgnb/fapi_adaptor/mac/messages/prach.h"
+#include "srsran/fapi_adaptor/mac/messages/prach.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

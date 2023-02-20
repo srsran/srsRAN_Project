@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/blocking_queue.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/adt/blocking_queue.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 

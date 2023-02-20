@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class:
 //   + "srsPDSCHEncoderUnittest.m"
 
-#include "srsgnb/phy/upper/codeblock_metadata.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/codeblock_metadata.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

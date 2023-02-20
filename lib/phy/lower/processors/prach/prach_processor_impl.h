@@ -11,10 +11,10 @@
 #pragma once
 
 #include "prach_processor_worker.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_notifier.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_request_handler.h"
+#include "srsran/phy/lower/processors/prach/prach_processor.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_notifier.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_request_handler.h"
 #include <atomic>
 
 namespace srsran {

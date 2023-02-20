@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/ulsch_demultiplex.h"
+#include "srsran/phy/upper/channel_processors/ulsch_demultiplex.h"
 
 namespace srsran {
 

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
-#include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 
 namespace srsran {
 

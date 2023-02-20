@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class on 08-02-2023:
 //   + "srsULSCHInfoUnittest.m"
 
-#include "srsgnb/ran/pusch/ulsch_info.h"
+#include "srsran/ran/pusch/ulsch_info.h"
 
 namespace srsran {
 

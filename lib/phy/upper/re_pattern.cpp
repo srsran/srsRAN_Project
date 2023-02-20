@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/re_pattern.h"
+#include "srsran/phy/upper/re_pattern.h"
 
 using namespace srsran;
 

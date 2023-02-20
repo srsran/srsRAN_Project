@@ -9,7 +9,7 @@
  */
 
 #include "downlink_processor_pool_impl.h"
-#include "srsgnb/ran/slot_point.h"
+#include "srsran/ran/slot_point.h"
 
 using namespace srsran;
 

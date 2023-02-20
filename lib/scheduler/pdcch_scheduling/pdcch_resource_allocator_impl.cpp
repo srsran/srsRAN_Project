@@ -12,8 +12,8 @@
 #include "../support/config_helpers.h"
 #include "../support/pdcch/pdcch_pdu_parameters.h"
 #include "pdcch_config_helpers.h"
-#include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
-#include "srsgnb/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/pdcch/cce_to_prb_mapping.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
 
 using namespace srsran;
 

@@ -13,9 +13,9 @@
 #include "../e1ap_cu_cp_impl.h"
 #include "../ue_context/e1ap_cu_cp_ue_context.h"
 #include "common/e1ap_asn1_utils.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {

@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/phy/lower/processors/prach/prach_processor_factories.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_factories.h"
 #include "prach_processor_impl.h"
 #include "prach_processor_worker.h"
-#include "srsgnb/phy/lower/modulation/modulation_factories.h"
+#include "srsran/phy/lower/modulation/modulation_factories.h"
 
 using namespace srsran;
 

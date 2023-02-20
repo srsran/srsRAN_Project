@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "low_papr_sequence_collection_impl.h"
 #include "low_papr_sequence_generator_impl.h"
 #include "pseudo_random_generator_impl.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

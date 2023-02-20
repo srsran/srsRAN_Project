@@ -17,8 +17,8 @@
 /// configuration parameters.
 
 #include "ldpc_rate_matcher_test_data.h"
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/support/cpu_features.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/support/cpu_features.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/support/prach_buffer.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/phy/support/prach_buffer.h"
 
 using namespace srsran;
 

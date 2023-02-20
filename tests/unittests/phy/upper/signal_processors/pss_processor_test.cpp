@@ -9,8 +9,8 @@
  */
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/constants.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include <random>
 
 using namespace srsran;

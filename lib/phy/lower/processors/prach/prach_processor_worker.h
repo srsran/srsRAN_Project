@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include "srsgnb/phy/lower/modulation/ofdm_prach_demodulator.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_notifier.h"
-#include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
-#include "srsgnb/ran/phy_time_unit.h"
-#include "srsgnb/ran/prach/prach_constants.h"
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/phy/lower/modulation/ofdm_prach_demodulator.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_notifier.h"
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/ran/phy_time_unit.h"
+#include "srsran/ran/prach/prach_constants.h"
+#include "srsran/srsvec/aligned_vec.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 

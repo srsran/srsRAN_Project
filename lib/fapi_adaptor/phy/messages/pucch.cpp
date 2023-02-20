@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/phy/messages/pucch.h"
+#include "srsran/fapi_adaptor/phy/messages/pucch.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

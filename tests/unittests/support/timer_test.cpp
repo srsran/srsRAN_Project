@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/test_utils.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/support/test_utils.h"
+#include "srsran/support/timers.h"
 #include <condition_variable>
 #include <random>
 #include <thread>

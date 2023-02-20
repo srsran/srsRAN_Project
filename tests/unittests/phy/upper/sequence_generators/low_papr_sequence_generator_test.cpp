@@ -8,12 +8,12 @@
  *
  */
 
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
-#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/constants.h"
+#include "srsran/phy/upper/sequence_generators/low_papr_sequence_collection.h"
+#include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/support/math_utils.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

@@ -9,11 +9,11 @@
  */
 
 #include "prach_scheduler.h"
-#include "srsgnb/ran/frame_types.h"
-#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
-#include "srsgnb/ran/prach/prach_frequency_mapping.h"
-#include "srsgnb/ran/prach/prach_preamble_information.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/ran/frame_types.h"
+#include "srsran/ran/prach/prach_cyclic_shifts.h"
+#include "srsran/ran/prach/prach_frequency_mapping.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

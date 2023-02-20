@@ -9,8 +9,8 @@
  */
 
 #include "udp_network_gateway_impl.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/adt/span.h"
+#include "srsran/srslog/srslog.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <sys/socket.h>

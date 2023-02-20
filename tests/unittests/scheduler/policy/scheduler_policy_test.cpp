@@ -11,9 +11,9 @@
 #include "../test_utils/config_generators.h"
 #include "lib/scheduler/policy/scheduler_time_rr.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/support/error_handling.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/support/error_handling.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

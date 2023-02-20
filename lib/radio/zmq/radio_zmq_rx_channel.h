@@ -11,12 +11,12 @@
 #pragma once
 
 #include "radio_zmq_rx_channel_fsm.h"
-#include "srsgnb/adt/blocking_queue.h"
-#include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
-#include "srsgnb/radio/radio_notification_handler.h"
-#include "srsgnb/srslog/srslog.h"
-#include "srsgnb/support/async/async_queue.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/adt/blocking_queue.h"
+#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/async/async_queue.h"
+#include "srsran/support/executors/task_executor.h"
 #include <atomic>
 #include <set>
 #include <zmq.h>

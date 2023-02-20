@@ -9,7 +9,7 @@
  */
 
 #include "e1ap_asn1_packer.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap.h"
 
 using namespace srsran;
 

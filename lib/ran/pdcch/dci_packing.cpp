@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/pdcch/dci_packing.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/ran/pdcch/dci_packing.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

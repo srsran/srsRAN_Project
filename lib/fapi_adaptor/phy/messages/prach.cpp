@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/phy/messages/prach.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
+#include "srsran/fapi_adaptor/phy/messages/prach.h"
+#include "srsran/phy/support/prach_buffer_context.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

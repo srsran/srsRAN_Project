@@ -9,8 +9,8 @@
  */
 
 #include "crc_calculator_lut_impl.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/support/math_utils.h"
 
 #if HAVE_SSE
 #include <immintrin.h>

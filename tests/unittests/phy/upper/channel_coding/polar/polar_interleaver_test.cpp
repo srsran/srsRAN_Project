@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/support/srsran_test.h"
 #include <numeric>
 
 using namespace srsran;

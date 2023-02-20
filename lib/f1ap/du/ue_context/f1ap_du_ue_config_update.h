@@ -12,7 +12,7 @@
 
 #include "../f1ap_du_context.h"
 #include "f1ap_du_ue_manager.h"
-#include "srsgnb/f1ap/du/f1ap_du_ue_config.h"
+#include "srsran/f1ap/du/f1ap_du_ue_config.h"
 
 namespace srsran {
 namespace srs_du {

@@ -1,6 +1,6 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig.h"
-#include "srsgnb/scheduler/config/scheduler_expert_config_validator.h"
+#include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 #include <map>
 
 using namespace srsran;

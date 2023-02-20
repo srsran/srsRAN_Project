@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/fapi/message_loggers.h"
-#include "srsgnb/fapi/messages.h"
-#include "srsgnb/support/format_utils.h"
+#include "srsran/fapi/message_loggers.h"
+#include "srsran/fapi/messages.h"
+#include "srsran/support/format_utils.h"
 
 using namespace srsran;
 using namespace fapi;

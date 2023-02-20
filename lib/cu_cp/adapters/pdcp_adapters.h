@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
-#include "srsgnb/pdcp/pdcp_rx.h"
-#include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/rrc/rrc.h"
+#include "srsran/cu_cp/du_processor.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/pdcp/pdcp_rx.h"
+#include "srsran/pdcp/pdcp_tx.h"
+#include "srsran/rrc/rrc.h"
 
 namespace srsran {
 namespace srs_cu_cp {

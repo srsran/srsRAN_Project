@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/ngap/ngap.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ngap/ngap.h"
 
 namespace srsran {
 namespace srs_cu_cp {

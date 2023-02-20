@@ -9,8 +9,8 @@
  */
 
 #include "helpers.h"
-#include "srsgnb/fapi_adaptor/mac/messages/pusch.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/fapi_adaptor/mac/messages/pusch.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

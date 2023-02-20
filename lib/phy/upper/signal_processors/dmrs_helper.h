@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/bounded_bitset.h"
-#include "srsgnb/adt/complex.h"
+#include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/complex.h"
 
 namespace srsran {
 

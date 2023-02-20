@@ -16,7 +16,7 @@
 #include "../support/tbs_calculator.h"
 #include "../ue_scheduling/ue_dci_builder.h"
 #include "../ue_scheduling/ue_sch_pdu_builder.h"
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsran;
 

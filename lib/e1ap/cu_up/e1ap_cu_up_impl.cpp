@@ -11,8 +11,8 @@
 #include "e1ap_cu_up_impl.h"
 #include "../../ran/gnb_format.h"
 #include "e1ap_cu_up_asn1_helpers.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/ran/bcd_helpers.h"
+#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/ran/bcd_helpers.h"
 
 using namespace srsran;
 using namespace asn1::e1ap;

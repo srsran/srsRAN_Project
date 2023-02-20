@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/e1ap/common/e1ap_types.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/du_processor.h"
+#include "srsran/e1ap/common/e1ap_types.h"
 
 namespace srsran {
 namespace srs_cu_cp {

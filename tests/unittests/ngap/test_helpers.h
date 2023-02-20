@@ -12,14 +12,14 @@
 
 #include "lib/ngap/ngap_asn1_helpers.h"
 #include "ngap_test_messages.h"
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/ue_manager.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsgnb/gateways/network_gateway.h"
-#include "srsgnb/ngap/ngap.h"
-#include "srsgnb/pcap/pcap.h"
-#include "srsgnb/support/async/async_task_loop.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/ue_manager.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/gateways/network_gateway.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/pcap/pcap.h"
+#include "srsran/support/async/async_task_loop.h"
 #include <unordered_map>
 
 namespace srsran {

@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class:
 //   + "srsOFDMModulatorUnittest.m"
 
-#include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/lower/modulation/ofdm_modulator.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

@@ -11,10 +11,10 @@
 #pragma once
 
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/config/scheduler_expert_config.h"
-#include "srsgnb/scheduler/sched_consts.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
+#include "srsran/scheduler/sched_consts.h"
 
 namespace srsran {
 

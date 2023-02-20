@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/mac/cell_configuration.h"
-#include "srsgnb/ran/pci.h"
-#include "srsgnb/ran/ssb_configuration.h"
-#include "srsgnb/scheduler/config/dmrs.h"
+#include "srsran/mac/cell_configuration.h"
+#include "srsran/ran/pci.h"
+#include "srsran/ran/ssb_configuration.h"
+#include "srsran/scheduler/config/dmrs.h"
 #include <cstddef>
 
 namespace srsran {

@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/support/units.h"
+#include "srsran/support/units.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

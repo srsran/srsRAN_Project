@@ -9,7 +9,7 @@
  */
 
 #include "nlohmann/json.hpp"
-#include "srsgnb/support/config_parsers.h"
+#include "srsran/support/config_parsers.h"
 #include "fmt/format.h"
 
 using namespace srsran;

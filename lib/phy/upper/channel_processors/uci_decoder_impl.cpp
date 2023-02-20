@@ -9,7 +9,7 @@
  */
 
 #include "uci_decoder_impl.h"
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 
 using namespace srsran;
 

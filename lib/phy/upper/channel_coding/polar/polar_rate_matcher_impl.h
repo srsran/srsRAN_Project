@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_rate_matcher.h"
 
 namespace srsran {
 class polar_rate_matcher_impl : public polar_rate_matcher

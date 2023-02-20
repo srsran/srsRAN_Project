@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/cu_up/cu_up_factory.h"
+#include "srsran/cu_up/cu_up_factory.h"
 #include "cu_up_impl.h"
 
 using namespace srsran;

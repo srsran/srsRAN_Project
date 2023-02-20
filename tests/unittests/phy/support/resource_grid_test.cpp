@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/srsvec/aligned_vec.h"
+#include "srsran/srsvec/zero.h"
+#include "srsran/support/srsran_test.h"
 #include <random>
 
 using namespace srsran;

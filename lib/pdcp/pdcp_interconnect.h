@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/byte_buffer_slice_chain.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/byte_buffer_slice_chain.h"
 
 namespace srsran {
 

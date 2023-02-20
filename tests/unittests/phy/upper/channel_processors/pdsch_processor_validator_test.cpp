@@ -10,9 +10,9 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "../rx_softbuffer_test_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
-#include "srsgnb/ran/dmrs.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/ran/dmrs.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 

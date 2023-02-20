@@ -9,8 +9,8 @@
  */
 
 #include "polar_decoder_impl.h"
-#include "srsgnb/srsvec/binary.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/srsvec/binary.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 

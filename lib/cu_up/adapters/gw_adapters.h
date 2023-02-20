@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/gateways/network_gateway.h"
-#include "srsgnb/gtpu/gtpu_demux.h"
+#include "srsran/gateways/network_gateway.h"
+#include "srsran/gtpu/gtpu_demux.h"
 
 namespace srsran {
 namespace srs_cu_up {

@@ -10,7 +10,7 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/ue_manager.h"
-#include "srsgnb/cu_up/cu_up_types.h"
+#include "srsran/cu_up/cu_up_types.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

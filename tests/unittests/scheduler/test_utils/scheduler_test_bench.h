@@ -13,10 +13,10 @@
 #include "dummy_test_components.h"
 #include "lib/scheduler/cell/cell_configuration.h"
 #include "scheduler_test_suite.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/scheduler/scheduler_configurator.h"
-#include "srsgnb/scheduler/scheduler_factory.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/scheduler/scheduler_configurator.h"
+#include "srsran/scheduler/scheduler_factory.h"
+#include "srsran/support/test_utils.h"
 
 namespace srsran {
 

@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/srslog/detail/log_entry.h"
-#include "srsgnb/srslog/detail/support/dyn_arg_store_pool.h"
-#include "srsgnb/srslog/detail/support/work_queue.h"
-#include "srsgnb/srslog/shared_types.h"
+#include "srsran/srslog/detail/log_entry.h"
+#include "srsran/srslog/detail/support/dyn_arg_store_pool.h"
+#include "srsran/srslog/detail/support/work_queue.h"
+#include "srsran/srslog/shared_types.h"
 #include <mutex>
 #include <thread>
 

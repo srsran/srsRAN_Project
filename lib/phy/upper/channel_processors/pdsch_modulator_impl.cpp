@@ -9,9 +9,9 @@
  */
 
 #include "pdsch_modulator_impl.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/sc_prod.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/sc_prod.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

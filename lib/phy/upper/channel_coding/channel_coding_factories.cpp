@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "crc_calculator_lut_impl.h"
 #include "ldpc/ldpc_decoder_impl.h"
 #include "ldpc/ldpc_encoder_impl.h"
@@ -24,7 +24,7 @@
 #include "polar/polar_rate_dematcher_impl.h"
 #include "polar/polar_rate_matcher_impl.h"
 #include "short/short_block_detector_impl.h"
-#include "srsgnb/support/cpu_features.h"
+#include "srsran/support/cpu_features.h"
 
 #ifdef __AVX2__
 #include "ldpc/ldpc_decoder_avx2.h"

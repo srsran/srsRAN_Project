@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/blocking_queue.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/blocking_queue.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

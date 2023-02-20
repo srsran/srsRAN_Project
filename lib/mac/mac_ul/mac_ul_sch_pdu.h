@@ -11,13 +11,13 @@
 #pragma once
 
 #include "lcid_ul_sch.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/expected.h"
+#include "srsran/adt/span.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/ran/rnti.h"
+#include "srsran/support/srsran_assert.h"
 #include "ul_bsr.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/expected.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/rnti.h"
-#include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsran {
 

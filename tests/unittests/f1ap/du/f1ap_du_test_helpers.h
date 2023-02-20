@@ -14,14 +14,14 @@
 #include "../common/test_helpers.h"
 #include "lib/du_manager/converters/f1ap_configuration_helpers.h"
 #include "lib/f1ap/common/f1ap_asn1_utils.h"
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/f1ap/common/f1ap_common.h"
-#include "srsgnb/f1ap/du/f1ap_du.h"
-#include "srsgnb/f1ap/du/f1ap_du_factory.h"
-#include "srsgnb/support/async/async_task_loop.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/f1ap/du/f1ap_du_factory.h"
+#include "srsran/support/async/async_task_loop.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

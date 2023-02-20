@@ -9,11 +9,11 @@
  */
 
 #include "pbch_encoder_impl.h"
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

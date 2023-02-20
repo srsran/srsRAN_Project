@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/downlink_processor.h"
 
 namespace srsran {
 

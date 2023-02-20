@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/mac_scheduler.h"
-#include "srsgnb/srslog/srslog.h"
-#include "srsgnb/support/format_utils.h"
+#include "srsran/scheduler/mac_scheduler.h"
+#include "srsran/srslog/srslog.h"
+#include "srsran/support/format_utils.h"
 
 namespace srsran {
 

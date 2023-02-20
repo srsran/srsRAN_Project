@@ -11,12 +11,12 @@
 #pragma once
 
 #include "pdu_session_manager.h"
-#include "srsgnb/cu_up/cu_up_configuration.h"
-#include "srsgnb/cu_up/cu_up_types.h"
-#include "srsgnb/e1ap/common/e1ap_types.h"
-#include "srsgnb/f1u/cu_up/f1u_gateway.h"
-#include "srsgnb/gtpu/gtpu_demux.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/cu_up/cu_up_configuration.h"
+#include "srsran/cu_up/cu_up_types.h"
+#include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/support/timers.h"
 #include <map>
 
 namespace srsran {

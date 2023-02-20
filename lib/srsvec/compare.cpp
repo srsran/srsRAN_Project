@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/srsvec/compare.h"
+#include "srsran/srsvec/compare.h"
 
 #include "simd.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/support/math_utils.h"
 #include <numeric>
 
 using namespace srsran;

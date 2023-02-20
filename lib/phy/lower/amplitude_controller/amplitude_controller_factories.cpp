@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/lower/amplitude_controller/amplitude_controller_factories.h"
+#include "srsran/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "amplitude_controller_clipping_impl.h"
 
 using namespace srsran;

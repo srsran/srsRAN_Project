@@ -10,9 +10,9 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "dmrs_pusch_estimator_test_data.h"
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/srsvec/zero.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 

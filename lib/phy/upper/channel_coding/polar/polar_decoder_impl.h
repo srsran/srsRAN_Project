@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/polar/polar_decoder.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
-#include "srsgnb/srsvec/aligned_vec.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_decoder.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_encoder.h"
+#include "srsran/srsvec/aligned_vec.h"
 
 namespace srsran {
 

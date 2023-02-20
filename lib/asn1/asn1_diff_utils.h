@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "srsgnb/support/async/detail/function_signature.h"
-#include "srsgnb/support/detail/is_iterable.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/support/async/detail/function_signature.h"
+#include "srsran/support/detail/is_iterable.h"
+#include "srsran/support/srsran_assert.h"
 #include <algorithm>
 
 namespace srsran {

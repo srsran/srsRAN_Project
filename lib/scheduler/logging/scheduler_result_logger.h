@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
-#include "srsgnb/support/format_utils.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/support/format_utils.h"
 
 namespace srsran {
 

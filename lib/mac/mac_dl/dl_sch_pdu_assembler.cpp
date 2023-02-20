@@ -9,10 +9,10 @@
  */
 
 #include "dl_sch_pdu_assembler.h"
-#include "srsgnb/adt/byte_buffer_slice_chain.h"
-#include "srsgnb/ran/pdsch/pdsch_constants.h"
-#include "srsgnb/support/error_handling.h"
-#include "srsgnb/support/format_utils.h"
+#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/support/error_handling.h"
+#include "srsran/support/format_utils.h"
 
 using namespace srsran;
 

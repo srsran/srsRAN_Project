@@ -9,7 +9,7 @@
  */
 
 #include "low_papr_sequence_collection_impl.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

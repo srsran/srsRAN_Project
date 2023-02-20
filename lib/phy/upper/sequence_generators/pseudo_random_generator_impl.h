@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include <cstdint>
 #include <memory>
 

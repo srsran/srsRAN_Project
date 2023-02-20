@@ -9,7 +9,7 @@
  */
 
 #include "polar_rate_matcher_impl.h"
-#include "srsgnb/srsvec/copy.h"
+#include "srsran/srsvec/copy.h"
 
 using namespace srsran;
 

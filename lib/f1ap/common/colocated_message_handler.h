@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/f1ap/du/f1ap_du.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 
 namespace srsran {
 

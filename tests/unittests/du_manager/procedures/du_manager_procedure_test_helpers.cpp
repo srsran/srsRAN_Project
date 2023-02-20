@@ -11,7 +11,7 @@
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du_manager/procedures/ue_configuration_procedure.h"
 #include "lib/du_manager/procedures/ue_creation_procedure.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace srs_du;

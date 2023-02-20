@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/ran/lcid.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/support/srsran_assert.h"
 #include "fmt/format.h"
 
 namespace srsran {

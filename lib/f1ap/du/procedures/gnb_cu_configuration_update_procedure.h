@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/f1ap/common/f1ap_common.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_du {

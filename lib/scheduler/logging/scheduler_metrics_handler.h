@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/scheduler_feedback_handler.h"
-#include "srsgnb/scheduler/scheduler_metrics.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
+#include "srsran/scheduler/scheduler_metrics.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 #include <unordered_map>
 
 namespace srsran {

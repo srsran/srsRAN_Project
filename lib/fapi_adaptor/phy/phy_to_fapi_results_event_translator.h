@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/fapi/slot_data_message_notifier.h"
-#include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
+#include "srsran/fapi/slot_data_message_notifier.h"
+#include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
 #include <functional>
 
 namespace srsran {

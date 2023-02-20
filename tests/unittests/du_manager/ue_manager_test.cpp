@@ -10,9 +10,9 @@
 
 #include "du_manager_test_helpers.h"
 #include "lib/du_manager/du_ue/du_ue_manager.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 /// \file

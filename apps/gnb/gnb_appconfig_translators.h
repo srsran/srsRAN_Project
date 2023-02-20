@@ -10,16 +10,16 @@
 
 #pragma once
 
-#include "srsgnb/adt/span.h"
-#include "srsgnb/cu_cp/cu_cp_configuration.h"
-#include "srsgnb/cu_cp/cu_cp_configuration_helpers.h"
-#include "srsgnb/du/du_cell_config.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/du/du_cell_config_validation.h"
-#include "srsgnb/du/du_qos_config.h"
-#include "srsgnb/phy/lower/lower_phy_configuration.h"
-#include "srsgnb/phy/upper/upper_phy_factories.h"
-#include "srsgnb/radio/radio_configuration.h"
+#include "srsran/adt/span.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
+#include "srsran/cu_cp/cu_cp_configuration_helpers.h"
+#include "srsran/du/du_cell_config.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/du/du_cell_config_validation.h"
+#include "srsran/du/du_qos_config.h"
+#include "srsran/phy/lower/lower_phy_configuration.h"
+#include "srsran/phy/upper/upper_phy_factories.h"
+#include "srsran/radio/radio_configuration.h"
 #include <map>
 #include <vector>
 

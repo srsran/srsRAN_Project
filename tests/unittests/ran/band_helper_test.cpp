@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/bs_channel_bandwidth.h"
-#include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsran/ran/band_helper.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

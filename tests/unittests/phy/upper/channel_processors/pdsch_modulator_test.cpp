@@ -9,10 +9,10 @@
  */
 
 #include "pdsch_modulator_test_data.h"
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
-#include "srsgnb/srsvec/bit.h"
+#include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
+#include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 

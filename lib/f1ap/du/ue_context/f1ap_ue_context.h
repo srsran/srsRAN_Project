@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/f1ap/common/f1ap_types.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/rnti.h"
+#include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/rnti.h"
 
 namespace srsran {
 namespace srs_du {

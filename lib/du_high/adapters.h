@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1ap/du/f1ap_du.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/rlc/rlc_rx.h"
-#include "srsgnb/rlc/rlc_tx.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/du_manager/du_manager.h"
+#include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/mac/mac.h"
+#include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_tx.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_du {

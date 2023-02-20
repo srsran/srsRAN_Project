@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "srsran/adt/slotted_array.h"
+#include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/support/timers.h"
 #include "ue_manager_interfaces.h"
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/f1u/cu_up/f1u_gateway.h"
-#include "srsgnb/support/timers.h"
 
 namespace srsran {
 

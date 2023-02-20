@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_du_test_helpers.h"
-#include "srsgnb/support/async/async_test_utils.h"
+#include "srsran/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

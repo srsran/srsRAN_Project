@@ -14,8 +14,8 @@
 #pragma once
 
 #include "ldpc_graph_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 namespace ldpc {

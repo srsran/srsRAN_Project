@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/ran/nr_cgi.h"
-#include "srsgnb/ran/up_transport_layer_info.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/optional.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/up_transport_layer_info.h"
 #include <string>
 #include <vector>
 

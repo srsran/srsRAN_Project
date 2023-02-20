@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
-#include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
-#include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
-#include "srsgnb/phy/upper/channel_processors/ulsch_demultiplex.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsran/phy/upper/channel_processors/pusch_decoder.h"
+#include "srsran/phy/upper/channel_processors/pusch_demodulator.h"
+#include "srsran/phy/upper/channel_processors/pusch_processor.h"
+#include "srsran/phy/upper/channel_processors/uci_decoder.h"
+#include "srsran/phy/upper/channel_processors/ulsch_demultiplex.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include <memory>
 
 namespace srsran {

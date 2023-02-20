@@ -13,9 +13,9 @@
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_release_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/support/async/event_signal.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/support/async/event_signal.h"
 
 using namespace srsran;
 using namespace asn1::f1ap;

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_interleaver.h"
 
 namespace srsran {
 class polar_interleaver_impl : public polar_interleaver

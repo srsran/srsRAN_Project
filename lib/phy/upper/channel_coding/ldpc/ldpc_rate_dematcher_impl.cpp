@@ -11,9 +11,9 @@
 #include "ldpc_rate_dematcher_impl.h"
 #include "ldpc_graph_impl.h"
 #include "ldpc_luts_impl.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;

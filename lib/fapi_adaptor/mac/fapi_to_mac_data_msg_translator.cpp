@@ -9,7 +9,7 @@
  */
 
 #include "fapi_to_mac_data_msg_translator.h"
-#include "srsgnb/fapi/messages.h"
+#include "srsran/fapi/messages.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

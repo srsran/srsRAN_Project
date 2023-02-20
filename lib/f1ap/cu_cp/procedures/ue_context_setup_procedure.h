@@ -13,9 +13,9 @@
 #include "../f1ap_cu_impl.h"
 #include "common/f1ap_asn1_utils.h"
 #include "cu_cp/ue_context/f1ap_cu_ue_transaction_manager.h"
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {

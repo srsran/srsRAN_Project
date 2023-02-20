@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/f1ap/common/f1ap_packet_procedures.h"
-#include "srsgnb/f1ap/du/f1ap_du.h"
+#include "srsran/f1ap/common/f1ap_packet_procedures.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 #include <cstdio>
 
 namespace srsran {

@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/async/eager_async_task.h"
-#include "srsgnb/support/async/protocol_transaction_manager.h"
+#include "srsran/support/async/eager_async_task.h"
+#include "srsran/support/async/protocol_transaction_manager.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

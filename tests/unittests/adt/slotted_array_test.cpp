@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
 

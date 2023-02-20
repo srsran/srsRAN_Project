@@ -9,7 +9,7 @@
  */
 
 #include "mac_dl_processor.h"
-#include "srsgnb/ran/pdsch/pdsch_constants.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 
 using namespace srsran;
 

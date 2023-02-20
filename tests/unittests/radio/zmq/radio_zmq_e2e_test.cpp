@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/radio/radio_factory.h"
-#include "srsgnb/support/executors/task_worker.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/radio/radio_factory.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/support/srsran_test.h"
 #include <random>
 
 using namespace srsran;

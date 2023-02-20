@@ -11,9 +11,9 @@
 #pragma once
 
 #include "gtpu_pdu.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/gtpu/gtpu_config.h"
-#include "srsgnb/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/gtpu/gtpu_config.h"
+#include "srsran/gtpu/gtpu_tunnel_tx.h"
 #include <arpa/inet.h>
 #include <cstdint>
 #include <netinet/in.h>

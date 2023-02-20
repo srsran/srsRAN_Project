@@ -13,9 +13,9 @@
 // This file was generated using the following MATLAB class:
 //   + "srsShortBlockDetectorUnittest.m"
 
-#include "srsgnb/phy/upper/log_likelihood_ratio.h"
-#include "srsgnb/ran/modulation_scheme.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
+#include "srsran/ran/modulation_scheme.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

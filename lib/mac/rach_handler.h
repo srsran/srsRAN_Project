@@ -11,9 +11,9 @@
 #pragma once
 
 #include "du_rnti_table.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/scheduler_configurator.h"
+#include "srsran/mac/mac.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
 

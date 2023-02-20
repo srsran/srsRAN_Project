@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/generic_functions/dft_processor.h"
-#include "srsgnb/srsvec/aligned_vec.h"
+#include "srsran/phy/generic_functions/dft_processor.h"
+#include "srsran/srsvec/aligned_vec.h"
 #include <cstring>
 #include <fftw3.h>
 #include <memory>

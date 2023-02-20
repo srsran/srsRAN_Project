@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "srsgnb/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_factories.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_notifier.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_request_handler.h"
-#include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_factories.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_notifier.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_request_handler.h"
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/srslog/srslog.h"
 #include <vector>
 
 namespace srsran {

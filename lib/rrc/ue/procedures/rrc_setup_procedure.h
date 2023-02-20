@@ -12,11 +12,11 @@
 
 #include "../rrc_ue_context.h"
 #include "rrc_ue_event_manager.h"
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/rrc/rrc_du.h"
-#include "srsgnb/rrc/rrc_ue.h"
-#include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/eager_async_task.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/rrc/rrc_du.h"
+#include "srsran/rrc/rrc_ue.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/eager_async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {

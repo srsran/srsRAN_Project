@@ -12,8 +12,8 @@
 
 #include "pdu_session_manager.h"
 #include "pdu_session_manager_impl.h"
-#include "srsgnb/cu_up/cu_up_types.h"
-#include "srsgnb/f1u/cu_up/f1u_gateway.h"
+#include "srsran/cu_up/cu_up_types.h"
+#include "srsran/f1u/cu_up/f1u_gateway.h"
 #include <map>
 
 namespace srsran {

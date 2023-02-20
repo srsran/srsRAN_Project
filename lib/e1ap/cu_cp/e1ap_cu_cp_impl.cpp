@@ -12,7 +12,7 @@
 #include "../../ran/gnb_format.h"
 #include "../common/e1ap_asn1_helpers.h"
 #include "e1ap_cu_cp_asn1_helpers.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap.h"
 
 using namespace srsran;
 using namespace asn1::e1ap;

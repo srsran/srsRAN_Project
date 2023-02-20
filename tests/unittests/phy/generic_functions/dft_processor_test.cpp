@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/dot_prod.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/dot_prod.h"
+#include "srsran/support/math_utils.h"
+#include "srsran/support/srsran_test.h"
 #include <cmath>
 #include <complex>
 #include <getopt.h>

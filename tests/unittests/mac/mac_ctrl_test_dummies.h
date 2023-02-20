@@ -12,13 +12,13 @@
 
 #include "lib/mac/mac_config_interfaces.h"
 #include "lib/mac/mac_ctrl/mac_scheduler_configurator.h"
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/du_high/du_high_cell_executor_mapper.h"
-#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/pcap/pcap.h"
-#include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/adt/optional.h"
+#include "srsran/du_high/du_high_cell_executor_mapper.h"
+#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/pcap/pcap.h"
+#include "srsran/support/async/manual_event.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 

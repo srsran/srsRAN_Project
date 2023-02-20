@@ -9,10 +9,10 @@
  */
 
 #include "gnb_console_helper.h"
+#include "srsran/ran/band_helper.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/support/build_info/build_info.h"
 #include "string_helpers.h"
-#include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/bs_channel_bandwidth.h"
-#include "srsgnb/support/build_info/build_info.h"
 #include <fcntl.h>
 #include <list>
 #include <signal.h>

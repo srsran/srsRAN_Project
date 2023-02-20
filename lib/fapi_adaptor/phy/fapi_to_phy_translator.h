@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/fapi/messages.h"
-#include "srsgnb/fapi/slot_message_gateway.h"
-#include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/fapi/messages.h"
+#include "srsran/fapi/slot_message_gateway.h"
+#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
 #include <mutex>
 
 namespace srsran {

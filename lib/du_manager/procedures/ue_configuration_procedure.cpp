@@ -12,9 +12,9 @@
 #include "../../ran/gnb_format.h"
 #include "../converters/asn1_cell_group_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
-#include "srsgnb/mac/mac_ue_configurator.h"
-#include "srsgnb/rlc/rlc_factory.h"
-#include "srsgnb/scheduler/config/logical_channel_config_factory.h"
+#include "srsran/mac/mac_ue_configurator.h"
+#include "srsran/rlc/rlc_factory.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;

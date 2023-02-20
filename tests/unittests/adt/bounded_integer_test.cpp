@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/bounded_integer.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/bounded_integer.h"
+#include "srsran/support/test_utils.h"
 #include <cstdint>
 #include <gtest/gtest.h>
 

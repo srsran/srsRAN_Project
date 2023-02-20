@@ -13,10 +13,10 @@
 #include "radio_uhd_exception_handler.h"
 #include "radio_uhd_multi_usrp.h"
 #include "radio_uhd_tx_stream_fsm.h"
-#include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
-#include "srsgnb/radio/radio_configuration.h"
-#include "srsgnb/radio/radio_notification_handler.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/gateways/baseband/baseband_gateway_buffer.h"
+#include "srsran/radio/radio_configuration.h"
+#include "srsran/radio/radio_notification_handler.h"
+#include "srsran/support/executors/task_executor.h"
 #include <mutex>
 
 namespace srsran {

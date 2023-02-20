@@ -13,9 +13,9 @@
 #pragma once
 
 #include "ldpc_graph_impl.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/adt/span.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
+#include "srsran/support/error_handling.h"
 #include <array>
 
 namespace srsran {

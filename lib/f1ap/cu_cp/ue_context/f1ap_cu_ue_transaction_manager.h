@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/adt/expected.h"
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/support/async/async_event_source.h"
-#include "srsgnb/support/async/event_signal.h"
-#include "srsgnb/support/async/protocol_transaction_manager.h"
+#include "srsran/adt/expected.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/support/async/async_event_source.h"
+#include "srsran/support/async/event_signal.h"
+#include "srsran/support/async/protocol_transaction_manager.h"
 
 namespace srsran {
 namespace srs_cu_cp {

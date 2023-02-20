@@ -8,13 +8,13 @@
  *
  */
 
-#include "srsgnb/phy/support/support_factories.h"
+#include "srsran/phy/support/support_factories.h"
 #include "interpolator/interpolator_linear_impl.h"
 #include "prach_buffer_impl.h"
 #include "prach_buffer_pool_impl.h"
 #include "resource_grid_impl.h"
 #include "resource_grid_pool_impl.h"
-#include "srsgnb/ran/prach/prach_constants.h"
+#include "srsran/ran/prach/prach_constants.h"
 
 using namespace srsran;
 

@@ -9,8 +9,8 @@
  */
 
 #include "nzp_csi_rs_generator_impl.h"
-#include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/ran/csi_rs/csi_rs_pattern.h"
+#include "srsran/phy/upper/re_pattern.h"
+#include "srsran/ran/csi_rs/csi_rs_pattern.h"
 
 using namespace srsran;
 

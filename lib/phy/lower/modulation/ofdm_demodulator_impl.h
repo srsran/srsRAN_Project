@@ -11,9 +11,9 @@
 #pragma once
 
 #include "phase_compensation_lut.h"
-#include "srsgnb/phy/generic_functions/dft_processor.h"
-#include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
-#include "srsgnb/srsvec/aligned_vec.h"
+#include "srsran/phy/generic_functions/dft_processor.h"
+#include "srsran/phy/lower/modulation/ofdm_demodulator.h"
+#include "srsran/srsvec/aligned_vec.h"
 #include <memory>
 
 namespace srsran {

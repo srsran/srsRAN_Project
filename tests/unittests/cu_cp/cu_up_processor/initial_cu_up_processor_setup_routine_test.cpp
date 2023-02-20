@@ -9,8 +9,8 @@
  */
 
 #include "cu_up_processor_routine_manager_test_helpers.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

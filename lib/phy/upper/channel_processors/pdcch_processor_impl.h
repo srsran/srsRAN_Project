@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdcch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
+#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 
 namespace srsran {
 

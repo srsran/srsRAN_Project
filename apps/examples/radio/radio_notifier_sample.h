@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/radio/radio_factory.h"
+#include "srsran/radio/radio_factory.h"
 
 namespace srsran {
 

@@ -13,7 +13,7 @@
 #include "fapi_to_mac_data_msg_translator.h"
 #include "fapi_to_mac_time_msg_translator.h"
 #include "mac_to_fapi_translator.h"
-#include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
 
 namespace srsran {
 namespace fapi_adaptor {

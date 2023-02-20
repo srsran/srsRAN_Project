@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/rrc/rrc_du_factory.h"
+#include "srsran/rrc/rrc_du_factory.h"
 #include "rrc_du_impl.h"
 #include "ue/rrc_ue_impl.h"
 

@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/adt/span.h"
-#include "srsgnb/du_high/du_high_cell_executor_mapper.h"
-#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/pcap/pcap.h"
+#include "srsran/adt/span.h"
+#include "srsran/du_high/du_high_cell_executor_mapper.h"
+#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/mac/mac.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/pcap/pcap.h"
 
 namespace srsran {
 

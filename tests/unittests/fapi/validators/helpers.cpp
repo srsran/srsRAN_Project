@@ -9,7 +9,7 @@
  */
 
 #include "helpers.h"
-#include "srsgnb/adt/bitmap_utils.h"
+#include "srsran/adt/bitmap_utils.h"
 #include <random>
 
 static std::mt19937 gen(0);

@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

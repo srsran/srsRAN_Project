@@ -9,7 +9,7 @@
  */
 
 #include "ue_manager_impl.h"
-#include "srsgnb/rrc/rrc_du_factory.h"
+#include "srsran/rrc/rrc_du_factory.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

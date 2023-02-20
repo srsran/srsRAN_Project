@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "demodulation_mapper_impl.h"
 #include "evm_calculator_generic_impl.h"
 #include "modulation_mapper_impl.h"

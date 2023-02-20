@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/pdcch/dci_packing.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/ran/pdcch/dci_packing.h"
+#include "srsran/support/srsran_test.h"
 #include <random>
 
 using namespace srsran;

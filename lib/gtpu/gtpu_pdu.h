@@ -10,7 +10,7 @@
 #pragma once
 
 #include "gtpu_tunnel_logger.h"
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsran/adt/byte_buffer.h"
 #include "fmt/format.h"
 #include <cstdint>
 

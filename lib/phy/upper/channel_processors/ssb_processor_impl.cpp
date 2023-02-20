@@ -9,8 +9,8 @@
  */
 
 #include "ssb_processor_impl.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class:
 //   + "srsLDPCEncoderUnittest.m"
 
-#include "srsgnb/support/file_vector.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

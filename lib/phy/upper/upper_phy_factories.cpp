@@ -8,12 +8,16 @@
  *
  */
 
-#include "srsgnb/phy/upper/upper_phy_factories.h"
+#include "srsran/phy/upper/upper_phy_factories.h"
 #include "downlink_processor_null_executor.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
 #include "logging_downlink_processor_decorator.h"
 #include "logging_uplink_processor_decorator.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/support/error_handling.h"
 #include "uplink_processor_concurrent.h"
 #include "uplink_processor_impl.h"
 #include "uplink_processor_pool_impl.h"
@@ -21,10 +25,6 @@
 #include "upper_phy_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
-#include "srsgnb/support/error_handling.h"
 
 using namespace srsran;
 

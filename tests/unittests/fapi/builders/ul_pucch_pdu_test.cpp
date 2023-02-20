@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/fapi/message_builders.h"
+#include "srsran/fapi/message_builders.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

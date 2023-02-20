@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/gtpu/gtpu_tunnel_tx.h"
-#include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/sdap/sdap.h"
+#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/pdcp/pdcp_tx.h"
+#include "srsran/sdap/sdap.h"
 
 namespace srsran {
 namespace srs_cu_up {

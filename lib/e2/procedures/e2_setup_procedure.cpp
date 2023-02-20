@@ -9,7 +9,7 @@
  */
 
 #include "e2_setup_procedure.h"
-#include "srsgnb/support/async/async_timer.h"
+#include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
 using namespace asn1::e2ap;

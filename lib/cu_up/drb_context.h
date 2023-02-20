@@ -13,8 +13,8 @@
 #include "adapters/f1u_adapters.h"
 #include "adapters/pdcp_adapters.h"
 #include "qos_flow_context.h"
-#include "srsgnb/pdcp/pdcp_entity.h"
-#include "srsgnb/ran/lcid.h"
+#include "srsran/pdcp/pdcp_entity.h"
+#include "srsran/ran/lcid.h"
 #include <map>
 
 namespace srsran {

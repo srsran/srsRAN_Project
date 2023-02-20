@@ -9,8 +9,8 @@
  */
 
 #include "lib/srslog/formatters/json_formatter.h"
+#include "srsran/srslog/detail/log_entry_metadata.h"
 #include "testing_helpers.h"
-#include "srsgnb/srslog/detail/log_entry_metadata.h"
 #include <numeric>
 
 using namespace srslog;

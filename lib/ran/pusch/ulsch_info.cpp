@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/ran/pusch/ulsch_info.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/ran/sch/sch_segmentation.h"
+#include "srsran/ran/pusch/ulsch_info.h"
+#include "srsran/phy/constants.h"
+#include "srsran/ran/sch/sch_segmentation.h"
 
 using namespace srsran;
 

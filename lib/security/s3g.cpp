@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsgnb/security/s3g.h"
+#include "srsran/security/s3g.h"
 
 using namespace srsran;
 using namespace srsran::security;

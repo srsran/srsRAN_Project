@@ -9,8 +9,8 @@
  */
 
 #include "../../../fapi/validators/helpers.h"
-#include "srsgnb/fapi_adaptor/phy/messages/prach.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
+#include "srsran/fapi_adaptor/phy/messages/prach.h"
+#include "srsran/phy/support/prach_buffer_context.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

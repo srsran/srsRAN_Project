@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/srslog/srslog_c.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/srslog/srslog_c.h"
+#include "srsran/srslog/srslog.h"
 #include <cstdarg>
 
 using namespace srslog;

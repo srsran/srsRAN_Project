@@ -11,8 +11,8 @@
 #pragma once
 
 #include "f1ap_asn1_converters.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
-#include "srsgnb/ran/lcid.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/ran/lcid.h"
 
 namespace srsran {
 namespace srs_cu_cp {

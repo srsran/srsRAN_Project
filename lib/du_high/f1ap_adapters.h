@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1ap/du/f1ap_du.h"
-#include "srsgnb/support/async/execute_on.h"
+#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/du_manager/du_manager.h"
+#include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/support/async/execute_on.h"
 
 namespace srsran {
 namespace srs_du {

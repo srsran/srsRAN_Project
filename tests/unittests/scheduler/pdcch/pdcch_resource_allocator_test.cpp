@@ -11,8 +11,8 @@
 #include "../test_utils/config_generators.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_config_helpers.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
-#include "srsgnb/ran/pdcch/pdcch_candidates.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
 #include <unordered_map>

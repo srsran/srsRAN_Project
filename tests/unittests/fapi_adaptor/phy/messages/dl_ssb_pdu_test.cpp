@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/fapi/message_builders.h"
+#include "srsran/fapi_adaptor/phy/messages/ssb.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/support/test_utils.h"
 #include <chrono>
 #include <random>
 

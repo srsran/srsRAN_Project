@@ -8,8 +8,8 @@
  *
  */
 
+#include "srsran/ran/pusch/ulsch_info.h"
 #include "ulsch_info_test_data.h"
-#include "srsgnb/ran/pusch/ulsch_info.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

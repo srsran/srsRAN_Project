@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/scheduler_configurator.h"
+#include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
 

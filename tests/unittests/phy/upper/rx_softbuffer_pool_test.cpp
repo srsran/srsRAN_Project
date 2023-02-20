@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsgnb/phy/upper/log_likelihood_ratio.h"
-#include "srsgnb/phy/upper/rx_softbuffer_pool.h"
-#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
+#include "srsran/phy/upper/rx_softbuffer_pool.h"
+#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

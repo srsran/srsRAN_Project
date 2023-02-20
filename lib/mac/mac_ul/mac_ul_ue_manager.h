@@ -12,10 +12,10 @@
 
 #include "../../ran/gnb_format.h"
 #include "../du_rnti_table.h"
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/du_ue_list.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/mac/mac.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/du_ue_list.h"
 
 namespace srsran {
 

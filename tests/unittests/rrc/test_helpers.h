@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/rrc/rrc_du.h"
-#include "srsgnb/support/async/async_task_loop.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/rrc/rrc_du.h"
+#include "srsran/support/async/async_task_loop.h"
 
 namespace srsran {
 namespace srs_cu_cp {

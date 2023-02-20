@@ -10,9 +10,9 @@
 
 #include "scheduler_configuration_helpers.h"
 #include "../du_ue/du_ue.h"
-#include "srsgnb/du/du_cell_config.h"
-#include "srsgnb/scheduler/config/logical_channel_config_factory.h"
-#include "srsgnb/scheduler/config/sched_cell_config_helpers.h"
+#include "srsran/du/du_cell_config.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
+#include "srsran/scheduler/config/sched_cell_config_helpers.h"
 
 using namespace srsran;
 using namespace srs_du;

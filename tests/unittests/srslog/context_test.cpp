@@ -8,8 +8,8 @@
  *
  */
 
+#include "srsran/srslog/context.h"
 #include "testing_helpers.h"
-#include "srsgnb/srslog/context.h"
 #include <vector>
 
 using namespace srslog;

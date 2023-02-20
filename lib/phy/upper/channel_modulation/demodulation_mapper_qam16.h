@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/adt/complex.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/log_likelihood_ratio.h"
+#include "srsran/adt/complex.h"
+#include "srsran/adt/span.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
 
 namespace srsran {
 

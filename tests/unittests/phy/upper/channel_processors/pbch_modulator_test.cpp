@@ -9,7 +9,7 @@
  */
 
 #include "pbch_modulator_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 
 using namespace srsran;
 

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/e1ap/common/e1ap_common.h"
+#include "srsran/e1ap/common/e1ap_common.h"
 
 namespace srsran {
 

@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsran/fapi_adaptor/mac/messages/pdsch.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

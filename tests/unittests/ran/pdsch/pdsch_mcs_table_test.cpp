@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

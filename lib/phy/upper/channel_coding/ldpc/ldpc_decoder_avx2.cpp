@@ -13,7 +13,7 @@
 
 #include "ldpc_decoder_avx2.h"
 #include "ldpc_graph_impl.h"
-#include "srsgnb/srsvec/copy.h"
+#include "srsran/srsvec/copy.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;

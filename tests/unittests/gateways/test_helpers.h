@@ -21,9 +21,9 @@
 #include <sys/types.h>
 #include <thread>
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/gateways/sctp_network_gateway_factory.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/gateways/sctp_network_gateway_factory.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

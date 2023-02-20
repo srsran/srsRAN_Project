@@ -12,8 +12,8 @@
 
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
-#include "srsgnb/support/executors/task_executor.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/support/executors/task_executor.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <map>
 

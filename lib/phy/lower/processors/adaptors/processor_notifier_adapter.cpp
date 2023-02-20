@@ -8,7 +8,7 @@
  *
  */
 #include "processor_notifier_adaptor.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

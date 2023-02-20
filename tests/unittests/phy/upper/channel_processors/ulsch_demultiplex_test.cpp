@@ -8,8 +8,8 @@
  *
  */
 
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "ulsch_demultiplex_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

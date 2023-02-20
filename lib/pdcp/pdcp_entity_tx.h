@@ -15,12 +15,12 @@
 #include "pdcp_interconnect.h"
 #include "pdcp_pdu.h"
 #include "pdcp_tx_metrics_impl.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/byte_buffer_slice_chain.h"
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/security/security.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/pdcp/pdcp_tx.h"
+#include "srsran/security/security.h"
+#include "srsran/support/timers.h"
 #include <map>
 
 namespace srsran {

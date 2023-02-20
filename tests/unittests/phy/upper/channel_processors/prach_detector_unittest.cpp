@@ -11,10 +11,10 @@
 #include "../../generic_functions/dft_processor_test_doubles.h"
 #include "../../support/prach_buffer_test_doubles.h"
 #include "prach_generator_test_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
-#include "srsgnb/srsvec/add.h"
-#include "srsgnb/srsvec/prod.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/ran/prach/prach_cyclic_shifts.h"
+#include "srsran/srsvec/add.h"
+#include "srsran/srsvec/prod.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>

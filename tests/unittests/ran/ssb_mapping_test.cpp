@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/ssb_mapping.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/ran/ssb_mapping.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 

@@ -9,7 +9,7 @@
  */
 
 #include "e2ap_pcap.h"
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsran/adt/byte_buffer.h"
 #include <stdint.h>
 
 namespace srsran {

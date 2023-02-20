@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/asn1/rrc_nr/tdd_cfg_helper.h"
-#include "srsgnb/ran/slot_point.h"
+#include "srsran/asn1/rrc_nr/tdd_cfg_helper.h"
+#include "srsran/ran/slot_point.h"
 
 using namespace srsran;
 using namespace asn1::rrc_nr;

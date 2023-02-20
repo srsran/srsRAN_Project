@@ -10,8 +10,8 @@
 
 #include "phy_to_fapi_time_event_translator.h"
 #include "fapi_to_phy_translator.h"
-#include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/fapi/message_validators.h"
+#include "srsran/fapi/message_builders.h"
+#include "srsran/fapi/message_validators.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

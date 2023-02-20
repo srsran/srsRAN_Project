@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/cu_cp/cu_cp_factory.h"
+#include "srsran/cu_cp/cu_cp_factory.h"
 #include "cu_cp.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

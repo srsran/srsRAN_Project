@@ -10,16 +10,16 @@
 
 #include "../../../lib/du_high/du_high.h"
 #include "../../../lib/du_high/du_high_executor_strategies.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/cu_cp_factory.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/du_processor.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/test_utils.h"
 #include "tests/unittests/du_high/test_utils/du_high_worker_manager.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/ngap/test_helpers.h"
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/cu_cp_factory.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
-#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

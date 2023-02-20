@@ -13,7 +13,7 @@
 #include "rlc_bearer_logger.h"
 #include "rlc_rx_entity.h"
 #include "rlc_tx_entity.h"
-#include "srsgnb/rlc/rlc_entity.h"
+#include "srsran/rlc/rlc_entity.h"
 
 namespace srsran {
 

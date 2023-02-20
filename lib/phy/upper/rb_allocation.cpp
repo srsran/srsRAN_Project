@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/rb_allocation.h"
+#include "srsran/phy/upper/rb_allocation.h"
 
 using namespace srsran;
 

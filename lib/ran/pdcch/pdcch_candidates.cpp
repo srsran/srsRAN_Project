@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
 
 using namespace srsran;
 

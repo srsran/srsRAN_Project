@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
+#include "srsran/support/math_utils.h"
+#include "srsran/support/srsran_assert.h"
 
 #ifdef HAVE_SSE
 #include <immintrin.h>

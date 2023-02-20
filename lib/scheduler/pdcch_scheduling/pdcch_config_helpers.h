@@ -11,9 +11,9 @@
 #pragma once
 
 #include "../support/config_helpers.h"
-#include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/config/bwp_configuration.h"
+#include "srsran/ran/pdcch/cce_to_prb_mapping.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
 
 namespace srsran {
 

@@ -12,7 +12,7 @@
 
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/support/executors/task_executor.h"
 #include "fmt/format.h"
 
 namespace srsran {

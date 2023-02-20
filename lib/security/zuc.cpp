@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsgnb/security/zuc.h"
+#include "srsran/security/zuc.h"
 
 using namespace srsran;
 using namespace srsran::security;

@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/srsvec/aligned_vec.h"
+#include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>
 

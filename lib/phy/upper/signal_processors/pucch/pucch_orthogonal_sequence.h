@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/ran/pucch/pucch_constants.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/ran/pucch/pucch_constants.h"
+#include "srsran/support/math_utils.h"
+#include "srsran/support/srsran_assert.h"
 #include <array>
 
 namespace srsran {

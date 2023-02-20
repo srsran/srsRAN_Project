@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_code.h"
 
 namespace srsran {
 

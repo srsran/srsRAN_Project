@@ -14,8 +14,8 @@
 //   + "srsPBCHdmrsUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pbch_processor.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

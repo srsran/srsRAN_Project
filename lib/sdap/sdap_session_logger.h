@@ -9,8 +9,8 @@
  */
 #pragma once
 
-#include "srsgnb/ran/cu_types.h"
-#include "srsgnb/support/prefixed_logger.h"
+#include "srsran/ran/cu_types.h"
+#include "srsran/support/prefixed_logger.h"
 #include "fmt/format.h"
 
 namespace srsran {

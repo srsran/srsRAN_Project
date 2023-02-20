@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/filter_view.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/filter_view.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 

@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
+#include "srsran/fapi_adaptor/mac/messages/pdcch.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

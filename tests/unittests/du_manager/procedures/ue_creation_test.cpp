@@ -10,9 +10,9 @@
 
 #include "du_manager_procedure_test_helpers.h"
 #include "lib/du_manager/procedures/ue_creation_procedure.h"
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

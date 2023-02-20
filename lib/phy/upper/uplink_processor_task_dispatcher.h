@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
-#include "srsgnb/phy/upper/uplink_processor.h"
-#include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/upper/uplink_processor.h"
+#include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
+#include "srsran/support/executors/task_executor.h"
 
 namespace srsran {
 

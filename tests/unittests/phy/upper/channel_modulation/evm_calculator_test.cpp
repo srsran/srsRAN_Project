@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>

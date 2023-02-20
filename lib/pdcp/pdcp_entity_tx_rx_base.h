@@ -12,11 +12,11 @@
 
 #include "pdcp_bearer_logger.h"
 #include "pdcp_sn.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/byte_buffer_slice_chain.h"
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/pdcp/pdcp_rx.h"
-#include "srsgnb/security/security.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/byte_buffer_slice_chain.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/pdcp/pdcp_rx.h"
+#include "srsran/security/security.h"
 
 namespace srsran {
 

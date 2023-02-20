@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/phy/upper/vrb_to_prb_mapper.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/phy/upper/vrb_to_prb_mapper.h"
+#include "srsran/adt/span.h"
+#include "srsran/support/math_utils.h"
 #include <numeric>
 
 using namespace srsran;

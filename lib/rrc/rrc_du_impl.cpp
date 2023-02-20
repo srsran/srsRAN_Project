@@ -10,7 +10,7 @@
 
 #include "rrc_du_impl.h"
 #include "../ran/gnb_format.h"
-#include "srsgnb/ran/nr_cgi_helpers.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

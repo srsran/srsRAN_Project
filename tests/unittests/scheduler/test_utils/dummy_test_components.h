@@ -12,8 +12,8 @@
 
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator.h"
-#include "srsgnb/scheduler/scheduler_metrics.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/scheduler/scheduler_metrics.h"
+#include "srsran/support/test_utils.h"
 
 namespace srsran {
 

@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/phy/upper/equalization/equalization_factories.h"
-#include "srsgnb/support/benchmark_utils.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/equalization/equalization_factories.h"
+#include "srsran/support/benchmark_utils.h"
+#include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>
 

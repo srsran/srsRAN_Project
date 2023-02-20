@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class on 18-Nov-2022:
 //   + "srsDFTprocessorUnittest.m"
 
-#include "srsgnb/phy/generic_functions/dft_processor.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/generic_functions/dft_processor.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

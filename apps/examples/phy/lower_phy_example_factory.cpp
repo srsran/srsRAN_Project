@@ -9,7 +9,7 @@
  */
 
 #include "lower_phy_example_factory.h"
-#include "srsgnb/phy/lower/lower_phy_factory.h"
+#include "srsran/phy/lower/lower_phy_factory.h"
 
 using namespace srsran;
 

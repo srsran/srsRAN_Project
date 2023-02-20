@@ -9,9 +9,9 @@
  */
 
 #include "gtpu_test.h"
-#include "srsgnb/gtpu/gtpu_demux.h"
-#include "srsgnb/gtpu/gtpu_demux_factory.h"
-#include "srsgnb/support/executors/task_worker.h"
+#include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

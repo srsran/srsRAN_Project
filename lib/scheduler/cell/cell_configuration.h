@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/expected.h"
-#include "srsgnb/scheduler/scheduler_configurator.h"
+#include "srsran/adt/expected.h"
+#include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
 

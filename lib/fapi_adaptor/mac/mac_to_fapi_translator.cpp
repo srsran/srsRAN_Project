@@ -9,15 +9,15 @@
  */
 
 #include "mac_to_fapi_translator.h"
-#include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/fapi/slot_last_message_notifier.h"
-#include "srsgnb/fapi/slot_message_gateway.h"
-#include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
-#include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
-#include "srsgnb/fapi_adaptor/mac/messages/prach.h"
-#include "srsgnb/fapi_adaptor/mac/messages/pucch.h"
-#include "srsgnb/fapi_adaptor/mac/messages/pusch.h"
-#include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
+#include "srsran/fapi/message_validators.h"
+#include "srsran/fapi/slot_last_message_notifier.h"
+#include "srsran/fapi/slot_message_gateway.h"
+#include "srsran/fapi_adaptor/mac/messages/pdcch.h"
+#include "srsran/fapi_adaptor/mac/messages/pdsch.h"
+#include "srsran/fapi_adaptor/mac/messages/prach.h"
+#include "srsran/fapi_adaptor/mac/messages/pucch.h"
+#include "srsran/fapi_adaptor/mac/messages/pusch.h"
+#include "srsran/fapi_adaptor/mac/messages/ssb.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

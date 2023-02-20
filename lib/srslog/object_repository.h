@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/srslog/detail/support/thread_utils.h"
+#include "srsran/srslog/detail/support/thread_utils.h"
 #include <unordered_map>
 #include <vector>
 

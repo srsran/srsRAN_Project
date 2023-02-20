@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/adt/span.h"
-#include "srsgnb/ran/prach/prach_configuration.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/adt/span.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/support/srsran_test.h"
 #include <set>
 
 using namespace srsran;

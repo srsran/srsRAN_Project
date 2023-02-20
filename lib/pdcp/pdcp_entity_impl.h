@@ -12,9 +12,9 @@
 
 #include "pdcp_entity_rx.h"
 #include "pdcp_entity_tx.h"
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/pdcp/pdcp_entity.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/pdcp/pdcp_entity.h"
+#include "srsran/support/timers.h"
 #include <cstdio>
 #include <memory>
 

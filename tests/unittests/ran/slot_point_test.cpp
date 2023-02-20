@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 

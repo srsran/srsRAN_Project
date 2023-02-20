@@ -9,8 +9,8 @@
  */
 
 #include "prach_processor_worker.h"
-#include "srsgnb/ran/prach/prach_preamble_information.h"
-#include "srsgnb/srsvec/copy.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srsvec/copy.h"
 
 using namespace srsran;
 

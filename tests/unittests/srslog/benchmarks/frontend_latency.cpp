@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/srslog/srslog.h"
 #include <atomic>
 #include <sys/resource.h>
 #include <thread>

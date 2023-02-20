@@ -9,12 +9,12 @@
  */
 
 #include "cu_up_impl.h"
-#include "srsgnb/e1ap/cu_up/e1ap_config_converters.h"
-#include "srsgnb/e1ap/cu_up/e1ap_cu_up_factory.h"
-#include "srsgnb/gateways/udp_network_gateway_factory.h"
-#include "srsgnb/gtpu/gtpu_demux_factory.h"
-#include "srsgnb/ran/bcd_helpers.h"
-#include "srsgnb/support/io_broker/io_broker_factory.h"
+#include "srsran/e1ap/cu_up/e1ap_config_converters.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
+#include "srsran/gateways/udp_network_gateway_factory.h"
+#include "srsran/gtpu/gtpu_demux_factory.h"
+#include "srsran/ran/bcd_helpers.h"
+#include "srsran/support/io_broker/io_broker_factory.h"
 
 using namespace srsran;
 using namespace srs_cu_up;

@@ -16,9 +16,9 @@
 #include "../mac_ctrl/srs_sched_config_adapter.h"
 #include "mac_cell_processor.h"
 #include "mac_dl_ue_manager.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/support/async/execute_on.h"
+#include "srsran/mac/mac.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/support/async/execute_on.h"
 
 namespace srsran {
 

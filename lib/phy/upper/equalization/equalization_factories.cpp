@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/equalization/equalization_factories.h"
+#include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "channel_equalizer_zf_impl.h"
 
 using namespace srsran;

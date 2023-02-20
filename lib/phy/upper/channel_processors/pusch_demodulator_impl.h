@@ -13,11 +13,11 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
-#include "srsgnb/phy/upper/channel_modulation/evm_calculator.h"
-#include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
-#include "srsgnb/phy/upper/equalization/channel_equalizer.h"
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "srsran/phy/upper/channel_modulation/evm_calculator.h"
+#include "srsran/phy/upper/channel_processors/pusch_demodulator.h"
+#include "srsran/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 
 namespace srsran {
 

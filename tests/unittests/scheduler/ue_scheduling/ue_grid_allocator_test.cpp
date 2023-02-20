@@ -12,7 +12,7 @@
 #include "../test_utils/dummy_test_components.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

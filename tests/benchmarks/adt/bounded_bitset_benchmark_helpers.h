@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/span.h"
+#include "srsran/adt/span.h"
 #include <random>
 
 namespace srsran {

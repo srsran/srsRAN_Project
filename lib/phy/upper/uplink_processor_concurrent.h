@@ -9,8 +9,8 @@
  */
 
 #pragma once
-#include "srsgnb/adt/circular_map.h"
-#include "srsgnb/phy/upper/uplink_processor.h"
+#include "srsran/adt/circular_map.h"
+#include "srsran/phy/upper/uplink_processor.h"
 #include <thread>
 
 namespace srsran {

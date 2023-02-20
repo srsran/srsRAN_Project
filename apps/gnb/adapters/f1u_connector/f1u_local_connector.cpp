@@ -10,10 +10,10 @@
  */
 
 #include "f1u_local_connector.h"
-#include "srsgnb/f1u/cu_up/f1u_bearer_factory.h"
-#include "srsgnb/f1u/du/f1u_bearer_factory.h"
-#include "srsgnb/ran/lcid.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/f1u/cu_up/f1u_bearer_factory.h"
+#include "srsran/f1u/du/f1u_bearer_factory.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 

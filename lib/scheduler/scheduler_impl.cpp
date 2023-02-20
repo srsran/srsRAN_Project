@@ -10,9 +10,9 @@
 
 #include "scheduler_impl.h"
 #include "common_scheduling/ssb_scheduler.h"
+#include "srsran/scheduler/config/scheduler_cell_config_validator.h"
+#include "srsran/scheduler/config/scheduler_ue_config_validator.h"
 #include "ue_scheduling/ue_scheduler_impl.h"
-#include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
-#include "srsgnb/scheduler/config/scheduler_ue_config_validator.h"
 
 using namespace srsran;
 

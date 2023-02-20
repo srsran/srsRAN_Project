@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/du_manager/du_manager_params.h"
-#include "srsgnb/ran/du_types.h"
+#include "srsran/du_manager/du_manager_params.h"
+#include "srsran/ran/du_types.h"
 
 namespace srsran {
 namespace srs_du {

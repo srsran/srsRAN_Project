@@ -9,18 +9,18 @@
  */
 
 #include "upper_phy_ssb_example.h"
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
-#include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
-#include "srsgnb/phy/upper/signal_processors/pss_processor.h"
-#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
-#include "srsgnb/phy/upper/signal_processors/sss_processor.h"
-#include "srsgnb/srsvec/bit.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdcch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
+#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdsch_modulator.h"
+#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "srsran/phy/upper/signal_processors/pss_processor.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/sss_processor.h"
+#include "srsran/srsvec/bit.h"
 #include <condition_variable>
 #include <mutex>
 #include <random>

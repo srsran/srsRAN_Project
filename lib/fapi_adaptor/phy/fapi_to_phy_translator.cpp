@@ -9,18 +9,18 @@
  */
 
 #include "fapi_to_phy_translator.h"
-#include "srsgnb/fapi_adaptor/phy/messages/csi_rs.h"
-#include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
-#include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
-#include "srsgnb/fapi_adaptor/phy/messages/prach.h"
-#include "srsgnb/fapi_adaptor/phy/messages/pucch.h"
-#include "srsgnb/fapi_adaptor/phy/messages/pusch.h"
-#include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
-#include "srsgnb/phy/support/resource_grid_pool.h"
-#include "srsgnb/phy/upper/downlink_processor.h"
-#include "srsgnb/phy/upper/uplink_request_processor.h"
-#include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"
+#include "srsran/fapi_adaptor/phy/messages/csi_rs.h"
+#include "srsran/fapi_adaptor/phy/messages/pdcch.h"
+#include "srsran/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsran/fapi_adaptor/phy/messages/prach.h"
+#include "srsran/fapi_adaptor/phy/messages/pucch.h"
+#include "srsran/fapi_adaptor/phy/messages/pusch.h"
+#include "srsran/fapi_adaptor/phy/messages/ssb.h"
+#include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/support/resource_grid_pool.h"
+#include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/uplink_request_processor.h"
+#include "srsran/phy/upper/uplink_slot_pdu_repository.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

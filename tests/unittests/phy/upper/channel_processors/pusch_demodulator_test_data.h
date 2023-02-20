@@ -14,8 +14,8 @@
 //   + "srsPUSCHDemodulatorUnittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/channel_processors/pusch_demodulator.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

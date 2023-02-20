@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/f1u/cu_up/f1u_rx_delivery_notifier.h"
-#include "srsgnb/f1u/cu_up/f1u_rx_sdu_notifier.h"
-#include "srsgnb/pdcp/pdcp_rx.h"
-#include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/f1u/cu_up/f1u_rx_delivery_notifier.h"
+#include "srsran/f1u/cu_up/f1u_rx_sdu_notifier.h"
+#include "srsran/pdcp/pdcp_rx.h"
+#include "srsran/pdcp/pdcp_tx.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_up {

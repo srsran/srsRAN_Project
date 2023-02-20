@@ -9,9 +9,9 @@
  */
 
 #include "short_block_encoder_impl.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/srsvec/binary.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/srsvec/binary.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

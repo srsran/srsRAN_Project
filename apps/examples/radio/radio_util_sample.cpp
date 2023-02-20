@@ -9,10 +9,10 @@
  */
 
 #include "radio_notifier_sample.h"
-#include "srsgnb/radio/radio_factory.h"
-#include "srsgnb/support/executors/task_worker.h"
-#include "srsgnb/support/file_sink.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/radio/radio_factory.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/support/file_sink.h"
+#include "srsran/support/math_utils.h"
 #include <csignal>
 #include <getopt.h>
 #include <random>

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/generic_functions/dft_processor.h"
-#include "srsgnb/phy/upper/channel_processors/prach_detector.h"
-#include "srsgnb/phy/upper/channel_processors/prach_generator.h"
+#include "srsran/phy/generic_functions/dft_processor.h"
+#include "srsran/phy/upper/channel_processors/prach_detector.h"
+#include "srsran/phy/upper/channel_processors/prach_generator.h"
 
 namespace srsran {
 

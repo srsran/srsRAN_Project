@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/optional.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include <string>
 #include <vector>
 

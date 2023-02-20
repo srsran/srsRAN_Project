@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/phy/messages/pusch.h"
-#include "srsgnb/ran/pusch/pusch_uci_beta_offset.h"
+#include "srsran/fapi_adaptor/phy/messages/pusch.h"
+#include "srsran/ran/pusch/pusch_uci_beta_offset.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

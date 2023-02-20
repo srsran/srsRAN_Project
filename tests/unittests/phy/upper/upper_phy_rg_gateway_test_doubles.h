@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
+#include "srsran/phy/upper/upper_phy_rg_gateway.h"
 
 namespace srsran {
 

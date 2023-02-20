@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/re_pattern.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

@@ -9,7 +9,7 @@
  */
 
 #include "upper_phy_rx_results_notifier_wrapper.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

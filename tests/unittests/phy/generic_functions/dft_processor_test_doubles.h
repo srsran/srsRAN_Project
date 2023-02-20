@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
+#include "srsran/support/error_handling.h"
 #include <random>
 
 namespace srsran {

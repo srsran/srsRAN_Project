@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/prach_detector.h"
+#include "srsran/phy/upper/channel_processors/prach_detector.h"
 
 namespace srsran {
 

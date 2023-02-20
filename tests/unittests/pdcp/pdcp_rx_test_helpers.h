@@ -13,8 +13,8 @@
 #include "lib/pdcp/pdcp_entity_rx.h"
 #include "lib/pdcp/pdcp_interconnect.h"
 #include "pdcp_test_vectors.h"
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 

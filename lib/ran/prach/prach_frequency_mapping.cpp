@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/prach/prach_frequency_mapping.h"
+#include "srsran/ran/prach/prach_frequency_mapping.h"
 
 using namespace srsran;
 

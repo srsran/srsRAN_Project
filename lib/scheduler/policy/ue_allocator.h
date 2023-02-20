@@ -13,7 +13,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../ue_scheduling/ue.h"
 #include "../ue_scheduling/ue_scheduler.h"
-#include "srsgnb/ran/slot_point.h"
+#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 

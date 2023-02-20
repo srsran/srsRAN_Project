@@ -12,9 +12,9 @@
 
 #include "../ngap_asn1_utils.h"
 #include "ngap_transaction_manager.h"
-#include "srsgnb/ngap/ngap.h"
-#include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/async_timer.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/async_timer.h"
 
 namespace srsran {
 namespace srs_cu_cp {

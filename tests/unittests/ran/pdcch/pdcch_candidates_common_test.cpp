@@ -9,7 +9,7 @@
  */
 
 #include "pdcch_candidates_common_test_data.h"
-#include "srsgnb/adt/span.h"
+#include "srsran/adt/span.h"
 #include "gtest/gtest.h"
 
 using namespace srsran;

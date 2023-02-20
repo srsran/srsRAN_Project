@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 

@@ -13,12 +13,12 @@
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/mac_adapters.h"
 #include "../adapters/rlc_adapters.h"
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/ran/lcid.h"
-#include "srsgnb/ran/up_transport_layer_info.h"
-#include "srsgnb/rlc/rlc_config.h"
-#include "srsgnb/rlc/rlc_entity.h"
+#include "srsran/adt/optional.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/ran/up_transport_layer_info.h"
+#include "srsran/rlc/rlc_config.h"
+#include "srsran/rlc/rlc_entity.h"
 
 namespace srsran {
 namespace srs_du {

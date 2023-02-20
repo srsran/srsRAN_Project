@@ -9,9 +9,9 @@
  */
 
 #include "mac_cell_processor.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/ran/pdsch/pdsch_constants.h"
-#include "srsgnb/support/async/execute_on.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/support/async/execute_on.h"
 
 using namespace srsran;
 

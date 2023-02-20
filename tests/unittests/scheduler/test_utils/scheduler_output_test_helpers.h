@@ -11,7 +11,7 @@
 #pragma once
 
 #include "lib/scheduler/cell/resource_grid.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

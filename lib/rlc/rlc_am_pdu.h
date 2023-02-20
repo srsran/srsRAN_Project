@@ -9,9 +9,9 @@
  */
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/rlc/rlc_config.h"
-#include "srsgnb/support/format_utils.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/rlc/rlc_config.h"
+#include "srsran/support/format_utils.h"
 #include "fmt/format.h"
 
 namespace srsran {

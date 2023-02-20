@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsgnb/fapi/logging_decorator_factories.h"
+#include "srsran/fapi/logging_decorator_factories.h"
 #include "logging_slot_data_notifier_decorator.h"
 #include "logging_slot_gateway_decorator.h"
 #include "logging_slot_time_noitifier_decorator.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace fapi;

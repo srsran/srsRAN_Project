@@ -12,8 +12,8 @@
 
 #include "sdap_entity_rx_impl.h"
 #include "sdap_entity_tx_impl.h"
-#include "srsgnb/sdap/sdap.h"
-#include "srsgnb/srslog/logger.h"
+#include "srsran/sdap/sdap.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

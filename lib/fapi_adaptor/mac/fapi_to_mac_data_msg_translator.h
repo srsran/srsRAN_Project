@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/fapi/slot_data_message_notifier.h"
-#include "srsgnb/mac/mac_cell_control_information_handler.h"
-#include "srsgnb/mac/mac_cell_rach_handler.h"
-#include "srsgnb/mac/mac_pdu_handler.h"
+#include "srsran/fapi/slot_data_message_notifier.h"
+#include "srsran/mac/mac_cell_control_information_handler.h"
+#include "srsran/mac/mac_cell_rach_handler.h"
+#include "srsran/mac/mac_pdu_handler.h"
 
 namespace srsran {
 namespace fapi_adaptor {

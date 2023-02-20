@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/adt/circular_array.h"
-#include "srsgnb/phy/upper/rx_softbuffer_pool.h"
-#include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"
-#include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/adt/circular_array.h"
+#include "srsran/phy/upper/rx_softbuffer_pool.h"
+#include "srsran/phy/upper/uplink_slot_pdu_repository.h"
+#include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
+#include "srsran/srslog/srslog.h"
 #include <vector>
 
 namespace srsran {

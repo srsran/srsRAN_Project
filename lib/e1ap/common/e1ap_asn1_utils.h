@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/adt/expected.h"
-#include "srsgnb/asn1/e1ap/e1ap.h"
-#include "srsgnb/e1ap/common/e1ap_types.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/adt/expected.h"
+#include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 

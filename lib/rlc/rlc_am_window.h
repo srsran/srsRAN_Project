@@ -11,8 +11,8 @@
 #pragma once
 
 #include "rlc_bearer_logger.h"
-#include "srsgnb/adt/circular_map.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/adt/circular_map.h"
+#include "srsran/support/srsran_assert.h"
 #include <cstdint>
 
 namespace srsran {

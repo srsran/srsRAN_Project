@@ -11,14 +11,14 @@
 #pragma once
 
 #include "../task_schedulers/ue_task_scheduler.h"
-#include "srsgnb/asn1/ngap/ngap.h"
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsgnb/ngap/ngap.h"
-#include "srsgnb/ran/bcd_helpers.h"
-#include "srsgnb/rrc/rrc_ue.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/asn1/ngap/ngap.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/du_processor.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/ran/bcd_helpers.h"
+#include "srsran/rrc/rrc_ue.h"
+#include "srsran/srslog/srslog.h"
 
 #include "../../ngap/ngap_asn1_utils.h"
 

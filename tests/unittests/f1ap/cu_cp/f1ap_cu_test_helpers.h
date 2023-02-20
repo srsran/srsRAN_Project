@@ -12,11 +12,11 @@
 
 #include "../common/f1ap_cu_test_messages.h"
 #include "../common/test_helpers.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/f1ap/common/f1ap_common.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
-#include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

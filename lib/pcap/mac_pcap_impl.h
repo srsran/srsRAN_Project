@@ -11,9 +11,9 @@
 #pragma once
 
 #include "pcap_file_base.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/pcap/pcap.h"
-#include "srsgnb/support/executors/task_worker.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/pcap/pcap.h"
+#include "srsran/support/executors/task_worker.h"
 
 namespace srsran {
 

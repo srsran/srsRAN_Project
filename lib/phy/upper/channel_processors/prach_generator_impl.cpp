@@ -9,10 +9,10 @@
  */
 
 #include "prach_generator_impl.h"
-#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
-#include "srsgnb/ran/prach/prach_preamble_information.h"
-#include "srsgnb/srsvec/sc_prod.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/ran/prach/prach_cyclic_shifts.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/srsvec/sc_prod.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

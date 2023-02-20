@@ -13,10 +13,10 @@
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
 #include "../../phy/upper/uplink_request_processor_test_doubles.h"
-#include "srsgnb/phy/support/resource_grid_pool.h"
-#include "srsgnb/phy/upper/downlink_processor.h"
-#include "srsgnb/phy/upper/uplink_processor.h"
-#include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"
+#include "srsran/phy/support/resource_grid_pool.h"
+#include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/uplink_processor.h"
+#include "srsran/phy/upper/uplink_slot_pdu_repository.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

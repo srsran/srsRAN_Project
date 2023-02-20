@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/srslog/event_trace.h"
+#include "srsran/srslog/event_trace.h"
 #include "sinks/buffered_file_sink.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/srslog/srslog.h"
 #include <ctime>
 
 #undef trace_duration_begin

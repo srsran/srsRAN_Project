@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/memory_pool/ring_buffer_pool.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/memory_pool/ring_buffer_pool.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

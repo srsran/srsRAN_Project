@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
-#include "srsgnb/ran/sch_dmrs_power.h"
+#include "srsran/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsran/ran/sch_dmrs_power.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

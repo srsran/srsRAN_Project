@@ -11,10 +11,10 @@
 #include "lib/mac/du_rnti_table.h"
 #include "lib/mac/mac_ctrl/mac_controller.h"
 #include "mac_ctrl_test_dummies.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/test_utils.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
-#include "srsgnb/support/test_utils.h"
 
 using namespace srsran;
 

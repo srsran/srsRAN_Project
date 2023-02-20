@@ -14,7 +14,7 @@
 #include "log_backend_impl.h"
 #include "object_repository.h"
 #include "sinks/stream_sink.h"
-#include "srsgnb/srslog/log_channel.h"
+#include "srsran/srslog/log_channel.h"
 
 namespace srslog {
 

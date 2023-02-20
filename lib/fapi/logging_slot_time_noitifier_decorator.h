@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/fapi/message_loggers.h"
-#include "srsgnb/fapi/slot_time_message_notifier.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/fapi/message_loggers.h"
+#include "srsran/fapi/slot_time_message_notifier.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace fapi {

@@ -12,8 +12,8 @@
 
 #include "../../common/e1ap_asn1_utils.h"
 #include "e1ap_transaction_manager.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {

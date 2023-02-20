@@ -13,8 +13,8 @@
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
 #include "mac_scheduler_configurator.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/du_ue_list.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/du_ue_list.h"
 
 namespace srsran {
 

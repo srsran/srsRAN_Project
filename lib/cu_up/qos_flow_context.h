@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/e1ap/common/e1ap_types.h"
-#include "srsgnb/pdcp/pdcp_rx.h"
-#include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/ran/cu_types.h"
+#include "srsran/e1ap/common/e1ap_types.h"
+#include "srsran/pdcp/pdcp_rx.h"
+#include "srsran/pdcp/pdcp_tx.h"
+#include "srsran/ran/cu_types.h"
 
 namespace srsran {
 namespace srs_cu_up {

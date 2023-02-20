@@ -9,9 +9,9 @@
  */
 
 #include "pbch_encoder_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pbch_encoder.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

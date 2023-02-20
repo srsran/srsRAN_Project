@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/security/ciphering.h"
-#include "srsgnb/security/integrity.h"
-#include "srsgnb/security/security.h"
+#include "srsran/security/ciphering.h"
+#include "srsran/security/integrity.h"
+#include "srsran/security/security.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

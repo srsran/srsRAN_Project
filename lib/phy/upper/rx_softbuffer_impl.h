@@ -10,11 +10,11 @@
 
 #pragma once
 #include "rx_softbuffer_codeblock_pool.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/upper/codeblock_metadata.h"
-#include "srsgnb/phy/upper/rx_softbuffer_pool.h"
-#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/phy/upper/codeblock_metadata.h"
+#include "srsran/phy/upper/rx_softbuffer_pool.h"
+#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/support/error_handling.h"
 #include <mutex>
 
 namespace srsran {

@@ -12,8 +12,8 @@
 
 #include "radio_zmq_rx_stream.h"
 #include "radio_zmq_tx_stream.h"
-#include "srsgnb/radio/radio_session.h"
-#include "srsgnb/support/executors/task_executor.h"
+#include "srsran/radio/radio_session.h"
+#include "srsran/support/executors/task_executor.h"
 #include <zmq.h>
 
 namespace srsran {

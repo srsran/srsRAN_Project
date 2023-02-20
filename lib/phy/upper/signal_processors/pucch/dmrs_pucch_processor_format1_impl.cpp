@@ -10,8 +10,8 @@
 
 #include "dmrs_pucch_processor_format1_impl.h"
 #include "pucch_helper.h"
-#include "srsgnb/srsvec/add.h"
-#include "srsgnb/srsvec/sc_prod.h"
+#include "srsran/srsvec/add.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 

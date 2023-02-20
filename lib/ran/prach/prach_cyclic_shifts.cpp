@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
-#include "srsgnb/adt/span.h"
+#include "srsran/ran/prach/prach_cyclic_shifts.h"
+#include "srsran/adt/span.h"
 #include <array>
 
 using namespace srsran;

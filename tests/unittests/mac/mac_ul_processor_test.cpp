@@ -11,10 +11,10 @@
 #include "lib/mac/mac_ul/mac_ul_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
-#include "srsgnb/scheduler/scheduler_feedback_handler.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

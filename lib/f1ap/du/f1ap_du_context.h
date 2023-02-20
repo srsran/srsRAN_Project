@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1ap/du/f1ap_du.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/du_manager/du_manager.h"
+#include "srsran/f1ap/du/f1ap_du.h"
 
 namespace srsran {
 namespace srs_du {

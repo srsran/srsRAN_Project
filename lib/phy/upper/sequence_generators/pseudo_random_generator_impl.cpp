@@ -9,7 +9,7 @@
  */
 
 #include "pseudo_random_generator_impl.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/support/math_utils.h"
 #include <cassert>
 #include <cstring>
 

@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_allocator.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
-#include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/phy/upper/channel_coding/crc_calculator.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_allocator.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_encoder.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_interleaver.h"
+#include "srsran/phy/upper/channel_coding/polar/polar_rate_matcher.h"
+#include "srsran/phy/upper/channel_processors/pbch_encoder.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 

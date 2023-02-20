@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/pdcp/pdcp_factory.h"
+#include "srsran/pdcp/pdcp_factory.h"
 #include "pdcp_entity_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.

@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/asn1/asn1_utils.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/asn1/asn1_utils.h"
+#include "srsran/support/test_utils.h"
 #include <cmath>
 #include <gtest/gtest.h>
 #include <numeric>

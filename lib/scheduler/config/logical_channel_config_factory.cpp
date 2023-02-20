@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/scheduler/config/logical_channel_config_factory.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
 

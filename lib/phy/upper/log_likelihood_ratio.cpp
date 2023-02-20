@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/phy/upper/log_likelihood_ratio.h"
-#include "srsgnb/adt/optional.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
+#include "srsran/adt/optional.h"
 #include <cmath>
 
 #ifdef __AVX2__

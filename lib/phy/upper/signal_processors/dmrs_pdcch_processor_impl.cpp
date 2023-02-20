@@ -10,8 +10,8 @@
 
 #include "dmrs_pdcch_processor_impl.h"
 #include "dmrs_helper.h"
-#include "srsgnb/phy/support/mask_types.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/phy/support/mask_types.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

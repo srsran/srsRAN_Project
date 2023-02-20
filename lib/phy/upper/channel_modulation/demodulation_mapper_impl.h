@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "srsran/phy/upper/channel_modulation/demodulation_mapper.h"
 
 namespace srsran {
 

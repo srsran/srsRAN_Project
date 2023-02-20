@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/adt/complex.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/signal_processors/pss_processor.h"
+#include "srsran/adt/complex.h"
+#include "srsran/phy/constants.h"
+#include "srsran/phy/upper/signal_processors/pss_processor.h"
 
 namespace srsran {
 class pss_processor_impl : public pss_processor

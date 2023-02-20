@@ -15,8 +15,8 @@
 #include "../support/prbs_calculator.h"
 #include "../support/slot_event_list.h"
 #include "../ue_scheduling/harq_process.h"
-#include "srsgnb/ran/prach/prach_configuration.h"
-#include "srsgnb/scheduler/config/scheduler_expert_config.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <deque>
 
 namespace srsran {

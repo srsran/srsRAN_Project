@@ -11,9 +11,9 @@
 #pragma once
 
 #include "e1ap_bearer_transaction_manager.h"
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/e1ap/common/e1ap_types.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/e1ap/common/e1ap_types.h"
 #include <unordered_map>
 
 namespace srsran {

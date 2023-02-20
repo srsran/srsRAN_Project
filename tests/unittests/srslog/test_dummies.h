@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/srslog/detail/log_backend.h"
-#include "srsgnb/srslog/shared_types.h"
-#include "srsgnb/srslog/sink.h"
+#include "srsran/srslog/detail/log_backend.h"
+#include "srsran/srslog/shared_types.h"
+#include "srsran/srslog/sink.h"
 
 namespace test_dummies {
 

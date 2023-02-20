@@ -9,7 +9,7 @@
  */
 
 #include "rlc_rx_am_entity.h"
-#include "srsgnb/adt/scope_exit.h"
+#include "srsran/adt/scope_exit.h"
 
 using namespace srsran;
 

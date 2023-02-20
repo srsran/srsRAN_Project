@@ -9,8 +9,8 @@
  */
 
 #include "lib/pcap/ngap_pcap_impl.h"
-#include "srsgnb/asn1/ngap/ngap.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/asn1/ngap/ngap.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 void write_pcap_ngap_thread_function_byte_buffer(srsran::ngap_pcap* pcap, uint32_t num_pdus);

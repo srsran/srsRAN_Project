@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 
 using namespace srsran;
 

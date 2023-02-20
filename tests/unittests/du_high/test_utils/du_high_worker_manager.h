@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/manual_task_worker.h"
 
 namespace srsran {
 

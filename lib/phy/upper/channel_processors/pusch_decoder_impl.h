@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_rx.h"
-#include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_rx.h"
+#include "srsran/phy/upper/channel_processors/pusch_decoder.h"
 
 namespace srsran {
 

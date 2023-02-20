@@ -9,7 +9,7 @@
  */
 
 #include "helpers.h"
-#include "srsgnb/fapi_adaptor/mac/messages/pucch.h"
+#include "srsran/fapi_adaptor/mac/messages/pucch.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

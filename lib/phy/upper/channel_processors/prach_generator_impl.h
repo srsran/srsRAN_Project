@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/prach_generator.h"
-#include "srsgnb/ran/prach/prach_constants.h"
-#include "srsgnb/srsvec/aligned_vec.h"
+#include "srsran/phy/upper/channel_processors/prach_generator.h"
+#include "srsran/ran/prach/prach_constants.h"
+#include "srsran/srsvec/aligned_vec.h"
 
 namespace srsran {
 

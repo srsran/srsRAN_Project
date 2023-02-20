@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/f1ap/du/f1ap_du.h"
-#include "srsgnb/gateways/network_gateway.h"
+#include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/gateways/network_gateway.h"
 
 namespace srsran {
 

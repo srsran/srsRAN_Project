@@ -9,9 +9,9 @@
  */
 
 #include "pusch_processor_impl.h"
-#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
-#include "srsgnb/ran/pusch/ulsch_info.h"
-#include "srsgnb/ran/sch_dmrs_power.h"
+#include "srsran/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/ran/pusch/ulsch_info.h"
+#include "srsran/ran/sch_dmrs_power.h"
 
 using namespace srsran;
 

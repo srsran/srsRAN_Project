@@ -13,7 +13,7 @@
 #include "../cell/resource_grid.h"
 #include "../ue_scheduling/ue.h"
 #include "../ue_scheduling/ue_configuration.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

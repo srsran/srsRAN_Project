@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/srsvec/conversion.h"
+#include "srsran/srsvec/conversion.h"
 
 #include "simd.h"
 

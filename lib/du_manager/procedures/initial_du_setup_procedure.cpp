@@ -13,8 +13,8 @@
 #include "../converters/mac_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "../du_cell_manager.h"
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 
 using namespace srsran;
 using namespace srs_du;

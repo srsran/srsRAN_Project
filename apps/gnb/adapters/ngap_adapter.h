@@ -11,9 +11,9 @@
 #pragma once
 
 #include "lib/ngap/ngap_asn1_packer.h"
-#include "srsgnb/gateways/sctp_network_gateway_factory.h"
-#include "srsgnb/ngap/ngap.h"
-#include "srsgnb/support/io_broker/io_broker.h"
+#include "srsran/gateways/sctp_network_gateway_factory.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/support/io_broker/io_broker.h"
 
 namespace srsran {
 

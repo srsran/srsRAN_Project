@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/fapi/slot_time_message_notifier.h"
-#include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsran/fapi/slot_time_message_notifier.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include <functional>
 
 namespace srsran {

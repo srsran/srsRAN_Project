@@ -9,9 +9,9 @@
  */
 
 #include "lib/f1ap/common/asn1_helpers.h"
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/ran/nr_cgi.h"
-#include "srsgnb/ran/nr_cgi_helpers.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

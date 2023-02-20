@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/bcd_helpers.h"
+#include "srsran/ran/bcd_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

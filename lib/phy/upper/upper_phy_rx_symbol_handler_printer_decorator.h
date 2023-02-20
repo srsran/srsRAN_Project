@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/error_handling.h"
-#include "srsgnb/support/executors/task_worker.h"
+#include "srsran/srsvec/aligned_vec.h"
+#include "srsran/support/error_handling.h"
+#include "srsran/support/executors/task_worker.h"
 #include <fstream>
 
 namespace srsran {

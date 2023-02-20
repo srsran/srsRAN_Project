@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
-#include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
 
 namespace srsran {
 

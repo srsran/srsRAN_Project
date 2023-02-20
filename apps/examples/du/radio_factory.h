@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/lower/sampling_rate.h"
-#include "srsgnb/radio/radio_session.h"
+#include "srsran/phy/lower/sampling_rate.h"
+#include "srsran/radio/radio_session.h"
 
 namespace srsran {
 

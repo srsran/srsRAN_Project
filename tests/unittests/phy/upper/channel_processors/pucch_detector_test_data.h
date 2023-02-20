@@ -14,10 +14,10 @@
 //   + "srsPUCCHDetectorFormat1Unittest.m"
 
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/pucch_detector.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/ran/pucch/pucch_mapping.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/channel_processors/pucch_detector.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/pucch/pucch_mapping.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

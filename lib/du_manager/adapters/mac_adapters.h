@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/mac/mac_sdu_handler.h"
-#include "srsgnb/rlc/rlc_rx.h"
-#include "srsgnb/rlc/rlc_tx.h"
+#include "srsran/mac/mac_sdu_handler.h"
+#include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_tx.h"
 
 namespace srsran {
 namespace srs_du {

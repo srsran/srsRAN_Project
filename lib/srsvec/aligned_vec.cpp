@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/srsvec/aligned_vec.h"
+#include "srsran/srsvec/aligned_vec.h"
 #include "simd.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/support/error_handling.h"
 #include <cstdlib>
 
 void* srsran::srsvec::detail::mem_alloc(std::size_t size)

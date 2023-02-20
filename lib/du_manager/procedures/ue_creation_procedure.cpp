@@ -11,9 +11,9 @@
 #include "ue_creation_procedure.h"
 #include "../converters/asn1_cell_group_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
-#include "srsgnb/mac/config/mac_cell_group_config_factory.h"
-#include "srsgnb/scheduler/config/logical_channel_config_factory.h"
-#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/mac/config/mac_cell_group_config_factory.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;

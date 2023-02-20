@@ -1,7 +1,7 @@
 #include "gnb_appconfig_validators.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/ran/phy_time_unit.h"
-#include "srsgnb/srslog/logger.h"
+#include "srsran/adt/span.h"
+#include "srsran/ran/phy_time_unit.h"
+#include "srsran/srslog/logger.h"
 
 using namespace srsran;
 

@@ -11,10 +11,10 @@
 #pragma once
 
 #include "f1ap_ue_context.h"
-#include "srsgnb/f1ap/common/f1ap_types.h"
-#include "srsgnb/f1ap/du/f1ap_du.h"
-#include "srsgnb/f1ap/du/f1c_bearer.h"
-#include "srsgnb/ran/rnti.h"
+#include "srsran/f1ap/common/f1ap_types.h"
+#include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/f1ap/du/f1c_bearer.h"
+#include "srsran/ran/rnti.h"
 
 namespace srsran {
 namespace srs_du {

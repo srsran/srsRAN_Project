@@ -11,8 +11,8 @@
 #pragma once
 
 #include "../common/e1ap_asn1_converters.h"
-#include "srsgnb/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
-#include "srsgnb/ran/bcd_helpers.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
+#include "srsran/ran/bcd_helpers.h"
 
 namespace srsran {
 namespace srs_cu_up {

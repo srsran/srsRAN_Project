@@ -8,12 +8,12 @@
  *
  */
 
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/phy/upper/upper_phy_factories.h"
-#include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
-#include "srsgnb/support/benchmark_utils.h"
-#include "srsgnb/support/executors/task_executor.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/phy/upper/upper_phy_factories.h"
+#include "srsran/phy/upper/upper_phy_rg_gateway.h"
+#include "srsran/support/benchmark_utils.h"
+#include "srsran/support/executors/task_executor.h"
+#include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>
 

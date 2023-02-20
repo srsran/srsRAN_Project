@@ -11,7 +11,7 @@
 #pragma once
 
 #include "processor_pool_helpers.h"
-#include "srsgnb/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/downlink_processor.h"
 
 namespace srsran {
 

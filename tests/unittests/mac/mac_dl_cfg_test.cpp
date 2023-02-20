@@ -12,11 +12,11 @@
 #include "lib/mac/mac_dl/mac_dl_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
-#include "srsgnb/support/async/eager_async_task.h"
-#include "srsgnb/support/executors/blocking_task_worker.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
-#include "srsgnb/support/executors/task_worker.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/async/eager_async_task.h"
+#include "srsran/support/executors/blocking_task_worker.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/support/test_utils.h"
 #include <thread>
 
 using namespace srsran;

@@ -10,7 +10,7 @@
 
 #include "pucch_detector_test_doubles.h"
 #include "pucch_processor_format1_test_data.h"
-#include "srsgnb/srsvec/compare.h"
+#include "srsran/srsvec/compare.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

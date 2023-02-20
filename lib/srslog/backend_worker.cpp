@@ -9,7 +9,7 @@
  */
 
 #include "backend_worker.h"
-#include "srsgnb/srslog/sink.h"
+#include "srsran/srslog/sink.h"
 
 using namespace srslog;
 

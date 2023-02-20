@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
+#include "srsran/fapi_adaptor/mac/messages/ssb.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

@@ -10,10 +10,10 @@
 #pragma once
 
 #include "harq_process.h"
-#include "srsgnb/ran/pdcch/search_space.h"
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
-#include "srsgnb/scheduler/config/bwp_configuration.h"
-#include "srsgnb/scheduler/scheduler_dci.h"
+#include "srsran/ran/pdcch/search_space.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
 

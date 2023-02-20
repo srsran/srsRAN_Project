@@ -9,8 +9,8 @@
  */
 
 #pragma once
-#include "srsgnb/phy/support/prach_buffer_context.h"
-#include "srsgnb/phy/upper/uplink_processor.h"
+#include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/phy/upper/uplink_processor.h"
 
 namespace srsran {
 class task_executor;

@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/du_manager/du_manager_factory.h"
+#include "srsran/du_manager/du_manager_factory.h"
 #include "du_manager_impl.h"
 
 using namespace srsran;

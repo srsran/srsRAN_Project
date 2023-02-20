@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class on 05-Aug-2022:
 //   + "srsPRACHGeneratorUnittest.m"
 
-#include "srsgnb/phy/upper/channel_processors/prach_generator.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/channel_processors/prach_generator.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

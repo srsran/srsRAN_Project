@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/mac/mac_ue_configurator.h"
-#include "srsgnb/scheduler/scheduler_configurator.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/mac/mac_ue_configurator.h"
+#include "srsran/scheduler/scheduler_configurator.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 

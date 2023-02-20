@@ -10,11 +10,11 @@
 
 #include "../../generic_functions/dft_processor_test_doubles.h"
 #include "../../support/resource_grid_test_doubles.h"
-#include "srsgnb/phy/lower/modulation/modulation_factories.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/sc_prod.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/phy/lower/modulation/modulation_factories.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/sc_prod.h"
+#include "srsran/support/test_utils.h"
 #include <random>
 
 /// Defines the maximum allowed error at the OFDM modulator output.

@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/ue_manager.h" // for ngap_ue
-#include "srsgnb/ngap/ngap.h"
+#include "srsran/cu_cp/ue_manager.h" // for ngap_ue
+#include "srsran/ngap/ngap.h"
 
 namespace srsran {
 namespace srs_cu_cp {

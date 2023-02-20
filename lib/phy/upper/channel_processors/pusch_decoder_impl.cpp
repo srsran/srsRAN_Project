@@ -9,9 +9,9 @@
  */
 
 #include "pusch_decoder_impl.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 

@@ -9,8 +9,8 @@
  */
 
 #include "lib/mac/mac_ul/mac_ul_sch_pdu.h"
-#include "srsgnb/support/bit_encoding.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/bit_encoding.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

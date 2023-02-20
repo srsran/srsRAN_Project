@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/unique_function.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/unique_function.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 

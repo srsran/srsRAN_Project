@@ -11,12 +11,12 @@
 #pragma once
 
 #include "../du_ue/du_bearer.h"
-#include "srsgnb/du_manager/du_manager_params.h"
-#include "srsgnb/f1ap/du/f1ap_du_ue_config.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/lcid.h"
-#include "srsgnb/rlc/rlc_config.h"
-#include "srsgnb/rlc/rlc_factory.h"
+#include "srsran/du_manager/du_manager_params.h"
+#include "srsran/f1ap/du/f1ap_du_ue_config.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/lcid.h"
+#include "srsran/rlc/rlc_config.h"
+#include "srsran/rlc/rlc_factory.h"
 
 namespace srsran {
 namespace srs_du {

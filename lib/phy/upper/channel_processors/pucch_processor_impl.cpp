@@ -9,8 +9,8 @@
  */
 
 #include "pucch_processor_impl.h"
-#include "srsgnb/ran/pucch/pucch_constants.h"
-#include "srsgnb/ran/pucch/pucch_info.h"
+#include "srsran/ran/pucch/pucch_constants.h"
+#include "srsran/ran/pucch/pucch_info.h"
 
 using namespace srsran;
 

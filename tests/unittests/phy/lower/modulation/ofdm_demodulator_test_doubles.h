@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/lower/modulation/modulation_factories.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/lower/modulation/modulation_factories.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/support/srsran_test.h"
 #include <random>
 
 namespace srsran {

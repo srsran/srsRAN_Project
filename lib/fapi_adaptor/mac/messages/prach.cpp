@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/mac/messages/prach.h"
-#include "srsgnb/mac/mac_cell_result.h"
+#include "srsran/fapi_adaptor/mac/messages/prach.h"
+#include "srsran/mac/mac_cell_result.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

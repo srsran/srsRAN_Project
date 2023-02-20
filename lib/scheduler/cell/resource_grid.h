@@ -14,9 +14,9 @@
 #include "../support/rb_find_algorithm.h"
 #include "cell_configuration.h"
 #include "resource_grid_util.h"
-#include "srsgnb/adt/circular_array.h"
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/mac_scheduler.h"
+#include "srsran/adt/circular_array.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/scheduler/mac_scheduler.h"
 
 namespace srsran {
 

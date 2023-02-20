@@ -11,9 +11,9 @@
 #pragma once
 
 #include "lib/du_manager/du_ue/ue_manager_ctrl_configurator.h"
-#include "srsgnb/du_manager/du_manager_params.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
+#include "srsran/du_manager/du_manager_params.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <map>
 
 namespace srsran {

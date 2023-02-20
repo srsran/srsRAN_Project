@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/adt/complex.h"
+#include "srsran/adt/complex.h"
 
 namespace srsran {
 

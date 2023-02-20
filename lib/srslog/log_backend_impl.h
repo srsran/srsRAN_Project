@@ -11,7 +11,7 @@
 #pragma once
 
 #include "backend_worker.h"
-#include "srsgnb/srslog/detail/log_backend.h"
+#include "srsran/srslog/detail/log_backend.h"
 
 namespace srslog {
 

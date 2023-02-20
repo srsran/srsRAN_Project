@@ -12,13 +12,13 @@
 #include "../../../support/prach_buffer_test_doubles.h"
 #include "../../modulation/ofdm_prach_demodulator_test_doubles.h"
 #include "prach_processor_test_doubles.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_factories.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_request_handler.h"
-#include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
-#include "srsgnb/ran/prach/prach_preamble_information.h"
+#include "srsran/phy/lower/processors/prach/prach_processor.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_factories.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_request_handler.h"
+#include "srsran/phy/support/prach_buffer.h"
+#include "srsran/phy/support/prach_buffer_context.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 #include <gtest/gtest.h>
 #include <numeric>
 

@@ -9,11 +9,11 @@
  */
 
 #include "pdcch_encoder_impl.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/srsvec/binary.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/srsvec/binary.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace pdcch_constants;

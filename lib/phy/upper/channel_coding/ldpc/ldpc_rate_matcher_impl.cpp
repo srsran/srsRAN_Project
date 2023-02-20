@@ -10,9 +10,9 @@
 
 #include "ldpc_rate_matcher_impl.h"
 #include "ldpc_luts_impl.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;

@@ -10,7 +10,7 @@
 
 #include "du_manager_impl.h"
 #include "procedures/initial_du_setup_procedure.h"
-#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include <condition_variable>
 #include <future>
 

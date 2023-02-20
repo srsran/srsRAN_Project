@@ -13,10 +13,10 @@
 #pragma once
 
 #include "../../cell/cell_configuration.h"
-#include "srsgnb/ran/bs_channel_bandwidth.h"
-#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
-#include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
-#include "srsgnb/ran/slot_point.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
+#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 

@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsgnb/adt/expected.h"
-#include "srsgnb/asn1/ngap/ngap.h"
-#include "srsgnb/ngap/ngap_types.h"
-#include "srsgnb/security/security.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/adt/expected.h"
+#include "srsran/asn1/ngap/ngap.h"
+#include "srsran/ngap/ngap_types.h"
+#include "srsran/security/security.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 namespace srs_cu_cp {

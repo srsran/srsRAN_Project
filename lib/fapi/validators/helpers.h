@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/fapi/message_validators.h"
+#include "srsran/fapi/message_validators.h"
 
 namespace srsran {
 namespace fapi {

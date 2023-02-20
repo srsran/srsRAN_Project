@@ -10,17 +10,17 @@
 
 #pragma once
 
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/pdsch/pdsch_mcs.h"
-#include "srsgnb/ran/pusch/pusch_mcs.h"
-#include "srsgnb/ran/rnti.h"
-#include "srsgnb/ran/sch_mcs.h"
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/config/bwp_configuration.h"
-#include "srsgnb/scheduler/harq_id.h"
-#include "srsgnb/scheduler/sched_consts.h"
-#include "srsgnb/scheduler/scheduler_dci.h"
-#include "srsgnb/support/format_utils.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/pusch/pusch_mcs.h"
+#include "srsran/ran/rnti.h"
+#include "srsran/ran/sch_mcs.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/harq_id.h"
+#include "srsran/scheduler/sched_consts.h"
+#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/support/format_utils.h"
 
 namespace srsran {
 

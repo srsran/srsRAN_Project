@@ -11,11 +11,11 @@
 #pragma once
 
 #include "../task_schedulers/ue_task_scheduler.h"
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
-#include "srsgnb/rrc/rrc_du.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/cu_cp/du_processor.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
+#include "srsran/rrc/rrc_du.h"
 
 namespace srsran {
 namespace srs_cu_cp {

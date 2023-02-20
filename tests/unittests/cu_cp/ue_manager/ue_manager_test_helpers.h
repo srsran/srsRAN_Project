@@ -12,8 +12,8 @@
 
 #include "../common/test_helpers.h"
 #include "lib/cu_cp/ue_manager_impl.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "tests/unittests/ngap/test_helpers.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
 
 #include <gtest/gtest.h>
 

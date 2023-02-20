@@ -11,10 +11,10 @@
 #pragma once
 
 #include "ngap_asn1_converters.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/ran/bcd_helpers.h"
-#include "srsgnb/security/security.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/optional.h"
+#include "srsran/ran/bcd_helpers.h"
+#include "srsran/security/security.h"
 #include <string>
 #include <vector>
 

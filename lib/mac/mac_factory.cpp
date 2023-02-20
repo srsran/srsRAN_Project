@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/mac/mac_factory.h"
+#include "srsran/mac/mac_factory.h"
 #include "mac_impl.h"
-#include "srsgnb/du_high/du_high_cell_executor_mapper.h"
-#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/du_high/du_high_cell_executor_mapper.h"
+#include "srsran/du_high/du_high_ue_executor_mapper.h"
 
 using namespace srsran;
 

@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/prach/prach_preamble_information.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 
 using namespace srsran;
 

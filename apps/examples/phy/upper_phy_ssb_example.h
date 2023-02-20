@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
-#include "srsgnb/phy/upper/upper_phy_timing_handler.h"
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/ran/pci.h"
-#include "srsgnb/ran/ssb_mapping.h"
+#include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/phy/upper/upper_phy_rg_gateway.h"
+#include "srsran/phy/upper/upper_phy_timing_handler.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/pci.h"
+#include "srsran/ran/ssb_mapping.h"
 #include <memory>
 #include <string>
 

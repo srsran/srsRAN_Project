@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/radio/radio_notification_handler.h"
+#include "srsran/radio/radio_notification_handler.h"
 #include "fmt/format.h"
 
 namespace srsran {

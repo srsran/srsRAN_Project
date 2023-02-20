@@ -12,8 +12,8 @@
 
 #include "lib/rlc/rlc_bearer_logger.h"
 #include "rlc_stress_test_args.h"
-#include "srsgnb/rlc/rlc_rx.h"
-#include "srsgnb/rlc/rlc_tx.h"
+#include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_tx.h"
 #include <random>
 
 namespace srsran {

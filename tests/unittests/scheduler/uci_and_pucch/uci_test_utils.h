@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "include/srsgnb/du/du_cell_config_helpers.h"
 #include "lib/du_manager/converters/mac_config_helpers.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
+#include "srsran/du/du_cell_config_helpers.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include <gtest/gtest.h>

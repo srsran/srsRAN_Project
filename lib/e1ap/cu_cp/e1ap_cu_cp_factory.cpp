@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_factory.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp_factory.h"
 #include "e1ap_cu_cp_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.

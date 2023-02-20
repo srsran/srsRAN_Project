@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/config_parsers.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/support/config_parsers.h"
+#include "srsran/support/error_handling.h"
 #include <yaml-cpp/yaml.h>
 
 using namespace srsran;

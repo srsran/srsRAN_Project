@@ -10,9 +10,9 @@
 
 #include "../common/test_helpers.h"
 #include "e1ap_cu_up_test_helpers.h"
-#include "srsgnb/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsgnb/e1ap/cu_up/e1ap_cu_up_factory.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

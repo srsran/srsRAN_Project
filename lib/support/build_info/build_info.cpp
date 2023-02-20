@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/support/build_info/build_info.h"
+#include "srsran/support/build_info/build_info.h"
 #include "hashes.h"
 
 namespace srsran {

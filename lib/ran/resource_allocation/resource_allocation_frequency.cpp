@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
-#include "srsgnb/ran/sliv.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/ran/sliv.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

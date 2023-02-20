@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
+#include "srsran/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 
 namespace srsran {
 

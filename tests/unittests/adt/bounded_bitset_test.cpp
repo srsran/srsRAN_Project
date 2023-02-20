@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/adt/bounded_bitset.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/bounded_bitset.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
 

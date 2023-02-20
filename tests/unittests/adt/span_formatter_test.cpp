@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/adt/complex.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/adt/complex.h"
+#include "srsran/adt/span.h"
+#include "srsran/support/math_utils.h"
+#include "srsran/support/srsran_test.h"
 #include <array>
 
 using namespace srsran;

@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/srsvec/clip.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/srsvec/clip.h"
+#include "srsran/support/math_utils.h"
 
 using namespace srsran;
 

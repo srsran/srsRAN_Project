@@ -9,8 +9,8 @@
  */
 
 #include "pbch_modulator_impl.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/srsvec/bit.h"
+#include "srsran/phy/constants.h"
+#include "srsran/srsvec/bit.h"
 
 using namespace srsran;
 

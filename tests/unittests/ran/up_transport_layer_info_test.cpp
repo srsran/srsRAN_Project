@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/ran/up_transport_layer_info.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ran/up_transport_layer_info.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

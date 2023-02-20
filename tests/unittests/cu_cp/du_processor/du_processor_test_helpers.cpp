@@ -9,7 +9,7 @@
  */
 
 #include "du_processor_test_helpers.h"
-#include "srsgnb/support/async/async_test_utils.h"
+#include "srsran/support/async/async_test_utils.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;

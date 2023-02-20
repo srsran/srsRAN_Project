@@ -13,8 +13,8 @@
 #include "du_cell_manager.h"
 #include "du_ue/du_ue_manager.h"
 #include "ran_resource_management/du_ran_resource_manager_impl.h"
-#include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/du_manager/du_manager_params.h"
+#include "srsran/du_manager/du_manager.h"
+#include "srsran/du_manager/du_manager_params.h"
 
 namespace srsran {
 namespace srs_du {

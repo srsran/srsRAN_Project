@@ -2,7 +2,7 @@
 #pragma once
 
 #include "ofdm_modulator_impl.h"
-#include "srsgnb/phy/lower/modulation/ofdm_modulator_factory.h"
+#include "srsran/phy/lower/modulation/ofdm_modulator_factory.h"
 
 namespace srsran {
 

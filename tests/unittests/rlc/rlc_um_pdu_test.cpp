@@ -9,8 +9,8 @@
  */
 
 #include "lib/rlc/rlc_um_pdu.h"
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/support/test_utils.h"
 
 namespace srsran {
 

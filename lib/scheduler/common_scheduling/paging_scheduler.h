@@ -12,7 +12,7 @@
 
 #include "../cell/cell_configuration.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
-#include "srsgnb/scheduler/config/scheduler_expert_config.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <unordered_map>
 
 namespace srsran {

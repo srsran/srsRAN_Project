@@ -15,8 +15,8 @@
 /// graphs. Test vectors provide the transport blocks and the resulting segmented blocks for comparison.
 
 #include "ldpc_segmenter_test_data.h"
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/srsvec/bit.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/srsvec/bit.h"
 
 #include <gtest/gtest.h>
 

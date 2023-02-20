@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/support/timers.h"
+#include "srsran/support/timers.h"
 
 using namespace srsran;
 

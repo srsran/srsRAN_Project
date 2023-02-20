@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/gateways/baseband/baseband_gateway.h"
+#include "srsran/gateways/baseband/baseband_gateway.h"
 #include <random>
 
 namespace srsran {

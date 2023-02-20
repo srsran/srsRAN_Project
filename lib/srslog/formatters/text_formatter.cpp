@@ -9,7 +9,7 @@
  */
 
 #include "text_formatter.h"
-#include "srsgnb/srslog/detail/log_entry_metadata.h"
+#include "srsran/srslog/detail/log_entry_metadata.h"
 #include "fmt/chrono.h"
 
 using namespace srslog;

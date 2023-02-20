@@ -22,7 +22,7 @@
 //    const BG_edge_matrix_t* get_edge_matrix(ldpc_base_graph_type bg)
 #include "ldpc_luts_impl.h"
 #include "ldpc_graph_impl.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/support/srsran_assert.h"
 #include <array>
 #include <cstdint>
 

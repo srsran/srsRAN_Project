@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/scheduler/config/sched_cell_config_helpers.h"
-#include "srsgnb/scheduler/config/serving_cell_config_factory.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/scheduler/config/sched_cell_config_helpers.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 using namespace srsran::config_helpers;

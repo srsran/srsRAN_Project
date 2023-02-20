@@ -14,12 +14,12 @@
 #include "../converters/mac_config_helpers.h"
 #include "../du_ue/du_ue.h"
 #include "../du_ue/ue_manager_ctrl_configurator.h"
-#include "srsgnb/du_manager/du_manager_params.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/rlc/rlc_factory.h"
-#include "srsgnb/rlc/rlc_rx.h"
-#include "srsgnb/rlc/rlc_tx.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/du_manager/du_manager_params.h"
+#include "srsran/mac/mac.h"
+#include "srsran/rlc/rlc_factory.h"
+#include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_tx.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_du {

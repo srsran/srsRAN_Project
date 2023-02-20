@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/asn1/rrc_nr/serving_cell.h"
+#include "srsran/asn1/rrc_nr/serving_cell.h"
 #include <sstream>
 
 using namespace asn1;

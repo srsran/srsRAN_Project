@@ -10,7 +10,7 @@
 
 #include "../../../lib/fapi/validators/dl_csi_pdu.h"
 #include "helpers.h"
-#include "srsgnb/fapi/message_validators.h"
+#include "srsran/fapi/message_validators.h"
 
 using namespace srsran;
 using namespace fapi;

@@ -8,12 +8,12 @@
  *
  */
 
-#include "srsgnb/support/async/async_procedure.h"
-#include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/async/eager_async_task.h"
-#include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/async/async_procedure.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/async/eager_async_task.h"
+#include "srsran/support/async/manual_event.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 

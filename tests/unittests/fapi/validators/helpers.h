@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/expected.h"
-#include "srsgnb/fapi/validator_report.h"
+#include "srsran/adt/expected.h"
+#include "srsran/fapi/validator_report.h"
 #include <gtest/gtest.h>
 
 namespace unittest {

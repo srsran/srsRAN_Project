@@ -14,8 +14,8 @@
 /// The test takes a sample of 100 random real values and compares the statistics provided by the sample_statistics
 /// class with benchmark ones computed off line.
 
-#include "srsgnb/support/srsgnb_test.h"
-#include "srsgnb/support/stats.h"
+#include "srsran/support/srsran_test.h"
+#include "srsran/support/stats.h"
 #include <array>
 
 /// \cond

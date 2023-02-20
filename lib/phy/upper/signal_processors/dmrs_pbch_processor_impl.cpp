@@ -9,7 +9,7 @@
  */
 
 #include "dmrs_pbch_processor_impl.h"
-#include "srsgnb/srsvec/sc_prod.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 

@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "dmrs_pbch_processor_impl.h"
 #include "dmrs_pdcch_processor_impl.h"
 #include "dmrs_pdsch_processor_impl.h"
@@ -18,8 +18,8 @@
 #include "pss_processor_impl.h"
 #include "pucch/dmrs_pucch_processor_format1_impl.h"
 #include "pucch/dmrs_pucch_processor_format2_impl.h"
+#include "srsran/phy/support/support_factories.h"
 #include "sss_processor_impl.h"
-#include "srsgnb/phy/support/support_factories.h"
 
 using namespace srsran;
 

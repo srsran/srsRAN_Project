@@ -11,7 +11,7 @@
 #pragma once
 
 #include "crc_calculator_lut_impl.h"
-#include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
+#include "srsran/phy/upper/channel_coding/crc_calculator.h"
 
 namespace srsran {
 

@@ -8,10 +8,10 @@
  *
  */
 
-#include "srsgnb/ran/ssb_mapping.h"
-#include "srsgnb/ran/band_helper.h"
-#include "srsgnb/scheduler/sched_consts.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/ran/ssb_mapping.h"
+#include "srsran/ran/band_helper.h"
+#include "srsran/scheduler/sched_consts.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

@@ -8,9 +8,9 @@
  *
  */
 
+#include "srsran/srslog/log_channel.h"
 #include "test_dummies.h"
 #include "testing_helpers.h"
-#include "srsgnb/srslog/log_channel.h"
 
 using namespace srslog;
 

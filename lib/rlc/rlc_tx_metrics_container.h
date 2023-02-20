@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/rlc/rlc_tx_metrics.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/rlc/rlc_tx_metrics.h"
+#include "srsran/srslog/srslog.h"
 #include <mutex>
 
 namespace srsran {

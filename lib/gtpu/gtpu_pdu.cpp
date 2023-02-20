@@ -9,7 +9,7 @@
  */
 #include "gtpu_pdu.h"
 #include "gtpu_tunnel_logger.h"
-#include "srsgnb/support/bit_encoding.h"
+#include "srsran/support/bit_encoding.h"
 
 namespace srsran {
 

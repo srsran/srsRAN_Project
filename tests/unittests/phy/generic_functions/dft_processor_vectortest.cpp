@@ -9,8 +9,8 @@
  */
 
 #include "dft_processor_test_data.h"
-#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
-#include "srsgnb/srsvec/copy.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
+#include "srsran/srsvec/copy.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

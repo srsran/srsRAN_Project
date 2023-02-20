@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/support/backtrace.h"
+#include "srsran/support/backtrace.h"
 
 #ifdef HAVE_BACKWARD
 #include "Backward/backward.hpp"

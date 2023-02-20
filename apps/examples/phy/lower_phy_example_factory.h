@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/lower/lower_phy.h"
-#include "srsgnb/phy/lower/lower_phy_configuration.h"
+#include "srsran/phy/lower/lower_phy.h"
+#include "srsran/phy/lower/lower_phy_configuration.h"
 #include <memory>
 
 namespace srsran {

@@ -9,10 +9,10 @@
  */
 
 #include "lower_phy_impl.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsgnb/phy/lower/processors/prach/prach_processor_request_handler.h"
-#include "srsgnb/phy/support/resource_grid_reader_empty.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
+#include "srsran/phy/lower/processors/prach/prach_processor_request_handler.h"
+#include "srsran/phy/support/resource_grid_reader_empty.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 

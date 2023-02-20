@@ -13,7 +13,7 @@
 #include "../cell/resource_grid.h"
 #include "../ue_scheduling/ue_configuration.h"
 #include "pdcch_resource_allocator.h"
-#include "srsgnb/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
 

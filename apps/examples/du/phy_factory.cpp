@@ -9,8 +9,8 @@
  */
 
 #include "phy_factory.h"
-#include "srsgnb/phy/lower/lower_phy_factory.h"
-#include "srsgnb/phy/upper/upper_phy_factories.h"
+#include "srsran/phy/lower/lower_phy_factory.h"
+#include "srsran/phy/upper/upper_phy_factories.h"
 
 using namespace srsran;
 

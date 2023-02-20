@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/scheduler/config/bwp_configuration.h"
-#include "srsgnb/scheduler/scheduler_dci.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
 

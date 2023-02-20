@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/fapi/slot_time_message_notifier.h"
-#include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
+#include "srsran/fapi/slot_time_message_notifier.h"
+#include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include <functional>
 
 namespace srsran {

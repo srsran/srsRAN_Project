@@ -9,7 +9,7 @@
  */
 
 #include "mac_config_helpers.h"
-#include "srsgnb/du/du_cell_config_helpers.h"
+#include "srsran/du/du_cell_config_helpers.h"
 
 using namespace srsran;
 

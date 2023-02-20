@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/adt/optional.h"
-#include "srsgnb/ran/sch_mcs.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsran/adt/optional.h"
+#include "srsran/ran/sch_mcs.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 

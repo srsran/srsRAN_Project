@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/support/executors/task_worker.h"
-#include "srsgnb/support/memory_pool/fixed_size_memory_block_pool.h"
-#include "srsgnb/support/memory_pool/unsync_fixed_size_memory_block_pool.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/support/memory_pool/fixed_size_memory_block_pool.h"
+#include "srsran/support/memory_pool/unsync_fixed_size_memory_block_pool.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

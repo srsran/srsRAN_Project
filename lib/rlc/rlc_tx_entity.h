@@ -12,7 +12,7 @@
 
 #include "rlc_bearer_logger.h"
 #include "rlc_tx_metrics_container.h"
-#include "srsgnb/rlc/rlc_tx.h"
+#include "srsran/rlc/rlc_tx.h"
 
 namespace srsran {
 

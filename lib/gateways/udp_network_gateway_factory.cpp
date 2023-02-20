@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/gateways/udp_network_gateway_factory.h"
+#include "srsran/gateways/udp_network_gateway_factory.h"
+#include "srsran/support/error_handling.h"
 #include "udp_network_gateway_impl.h"
-#include "srsgnb/support/error_handling.h"
 
 using namespace srsran;
 

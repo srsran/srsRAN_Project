@@ -9,7 +9,7 @@
  */
 
 #include "gnb_cu_configuration_update_procedure.h"
-#include "srsgnb/f1ap/common/f1ap_common.h"
+#include "srsran/f1ap/common/f1ap_common.h"
 
 using namespace srsran;
 using namespace srsran::srs_du;

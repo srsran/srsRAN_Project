@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/pcap/pcap.h"
+#include "srsran/mac/mac_cell_result.h"
+#include "srsran/pcap/pcap.h"
 
 namespace srsran {
 

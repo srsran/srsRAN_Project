@@ -10,9 +10,9 @@
 
 #include "../rx_softbuffer_test_doubles.h"
 #include "pusch_processor_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/phy/upper/channel_processors/channel_processor_formatters.h"
-#include "srsgnb/phy/upper/equalization/equalization_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 

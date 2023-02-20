@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class:
 //   + "srsShortBlockEncoderUnittest.m"
 
-#include "srsgnb/ran/modulation_scheme.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/ran/modulation_scheme.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

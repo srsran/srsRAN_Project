@@ -12,8 +12,8 @@
 
 #include "rlc_bearer_logger.h"
 #include "rlc_rx_metrics_container.h"
-#include "srsgnb/rlc/rlc_rx.h"
-#include "srsgnb/rlc/rlc_tx.h"
+#include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_tx.h"
 
 namespace srsran {
 

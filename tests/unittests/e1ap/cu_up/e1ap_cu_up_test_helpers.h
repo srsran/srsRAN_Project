@@ -12,10 +12,10 @@
 
 #include "../common/e1ap_cu_up_test_messages.h"
 #include "../common/test_helpers.h"
-#include "srsgnb/e1ap/common/e1ap_common.h"
-#include "srsgnb/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsgnb/e1ap/cu_up/e1ap_cu_up_factory.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
+#include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

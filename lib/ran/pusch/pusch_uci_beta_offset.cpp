@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/uci/uci_mapping.h"
+#include "srsran/ran/uci/uci_mapping.h"
 #include <array>
 #include <cmath>
 #include <cstdint>

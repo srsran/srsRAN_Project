@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/ran/pusch/pusch_mcs.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/ran/pdsch/pdsch_mcs.h"
+#include "srsran/ran/pusch/pusch_mcs.h"
+#include "srsran/adt/span.h"
+#include "srsran/ran/pdsch/pdsch_mcs.h"
 
 using namespace srsran;
 

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/du_processor.h"
-#include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/eager_async_task.h"
+#include "srsran/cu_cp/du_processor.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/async/eager_async_task.h"
 
 namespace srsran {
 namespace srs_cu_cp {

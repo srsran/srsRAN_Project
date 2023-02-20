@@ -12,11 +12,11 @@
 
 #include "../common/e1ap_cu_cp_test_messages.h"
 #include "../common/test_helpers.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/e1ap/common/e1ap_common.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_factory.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
+#include "srsran/e1ap/cu_cp/e1ap_cu_cp_factory.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

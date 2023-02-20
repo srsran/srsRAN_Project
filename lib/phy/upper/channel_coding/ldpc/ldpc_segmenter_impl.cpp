@@ -9,11 +9,11 @@
  */
 
 #include "ldpc_segmenter_impl.h"
-#include "srsgnb/phy/upper/codeblock_metadata.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/phy/upper/codeblock_metadata.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/support/math_utils.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;

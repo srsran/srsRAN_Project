@@ -15,8 +15,8 @@
 #include "lib/cu_cp/routine_managers/du_processor_routine_manager.h"
 #include "lib/cu_cp/ue_manager_impl.h"
 #include "lib/rrc/ue/drb_manager_impl.h"
+#include "srsran/support/test_utils.h"
 #include "tests/unittests/rrc/rrc_ue_test_messages.h"
-#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

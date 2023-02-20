@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/prach/prach_configuration.h"
+#include "srsran/ran/prach/prach_configuration.h"
 
 using namespace srsran;
 

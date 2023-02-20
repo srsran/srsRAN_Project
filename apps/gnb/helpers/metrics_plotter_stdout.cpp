@@ -9,7 +9,7 @@
  */
 
 #include "metrics_plotter_stdout.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/support/math_utils.h"
 #include <float.h>
 #include <iomanip>
 #include <sstream>

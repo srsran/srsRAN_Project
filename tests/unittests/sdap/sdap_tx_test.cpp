@@ -9,7 +9,7 @@
  */
 
 #include "lib/sdap/sdap_entity_tx_impl.h"
-#include "srsgnb/sdap/sdap.h"
+#include "srsran/sdap/sdap.h"
 #include <gtest/gtest.h>
 #include <queue>
 

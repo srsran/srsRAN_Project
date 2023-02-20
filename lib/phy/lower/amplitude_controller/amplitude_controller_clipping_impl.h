@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/lower/amplitude_controller/amplitude_controller.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/phy/lower/amplitude_controller/amplitude_controller.h"
+#include "srsran/support/math_utils.h"
 
 namespace srsran {
 

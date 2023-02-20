@@ -11,7 +11,7 @@
 #pragma once
 
 #include "sdap_session_logger.h"
-#include "srsgnb/sdap/sdap.h"
+#include "srsran/sdap/sdap.h"
 
 namespace srsran {
 

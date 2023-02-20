@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/gateways/udp_network_gateway.h"
-#include "srsgnb/gtpu/gtpu_tunnel_rx.h"
-#include "srsgnb/gtpu/gtpu_tunnel_tx.h"
-#include "srsgnb/sdap/sdap.h"
+#include "srsran/gateways/udp_network_gateway.h"
+#include "srsran/gtpu/gtpu_tunnel_rx.h"
+#include "srsran/gtpu/gtpu_tunnel_tx.h"
+#include "srsran/sdap/sdap.h"
 
 namespace srsran {
 namespace srs_cu_up {

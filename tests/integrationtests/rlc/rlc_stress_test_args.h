@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/pdcp/pdcp_config.h"
-#include "srsgnb/rlc/rlc_config.h"
-#include "srsgnb/rlc/rlc_rx.h"
-#include "srsgnb/rlc/rlc_tx.h"
-#include "srsgnb/security/security.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/pdcp/pdcp_config.h"
+#include "srsran/rlc/rlc_config.h"
+#include "srsran/rlc/rlc_rx.h"
+#include "srsran/rlc/rlc_tx.h"
+#include "srsran/security/security.h"
+#include "srsran/srslog/srslog.h"
 #include <getopt.h>
 #include <random>
 

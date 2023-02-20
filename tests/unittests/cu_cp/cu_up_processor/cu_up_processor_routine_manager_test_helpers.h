@@ -12,7 +12,7 @@
 
 #include "../common/test_helpers.h"
 #include "lib/cu_cp/routine_managers/cu_up_processor_routine_manager.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

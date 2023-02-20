@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/f1u/cu_up/f1u_bearer.h"
-#include "srsgnb/pdcp/pdcp_rx.h"
-#include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/sdap/sdap.h"
+#include "srsran/f1u/cu_up/f1u_bearer.h"
+#include "srsran/pdcp/pdcp_rx.h"
+#include "srsran/pdcp/pdcp_tx.h"
+#include "srsran/sdap/sdap.h"
 
 namespace srsran {
 namespace srs_cu_up {

@@ -13,8 +13,8 @@
 // This file was generated using the following MATLAB class on 10-02-2023:
 //   + "srsOFDMDemodulatorUnittest.m"
 
-#include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/lower/modulation/ofdm_demodulator.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

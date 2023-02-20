@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/support/io_broker/io_broker_factory.h"
+#include "srsran/support/io_broker/io_broker_factory.h"
 #include "io_broker_epoll.h"
 
 using namespace srsran;

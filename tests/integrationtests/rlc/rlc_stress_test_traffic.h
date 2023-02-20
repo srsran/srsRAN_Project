@@ -12,9 +12,9 @@
 
 #include "lib/rlc/rlc_bearer_logger.h"
 #include "rlc_stress_test_args.h"
-#include "srsgnb/pdcp/pdcp_rx.h"
-#include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/pdcp/pdcp_rx.h"
+#include "srsran/pdcp/pdcp_tx.h"
+#include "srsran/srslog/srslog.h"
 #include <random>
 
 namespace srsran {

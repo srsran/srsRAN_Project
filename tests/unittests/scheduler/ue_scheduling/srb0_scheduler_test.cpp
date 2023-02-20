@@ -13,9 +13,9 @@
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
+#include "srsran/ran/duplex_mode.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsgnb/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 #include <random>
 

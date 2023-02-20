@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/support/executors/task_worker.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/srslog/srslog.h"
 #include <assert.h>
 #include <chrono>
 #include <stdio.h>

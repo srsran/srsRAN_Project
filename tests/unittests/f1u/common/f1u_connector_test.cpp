@@ -9,7 +9,7 @@
  */
 
 #include "apps/gnb/adapters/f1u_connector/f1u_local_connector.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

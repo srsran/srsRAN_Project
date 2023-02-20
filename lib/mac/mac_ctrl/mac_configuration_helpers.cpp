@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/mac/mac_configuration_helpers.h"
+#include "srsran/mac/mac_configuration_helpers.h"
 
 using namespace srsran;
 

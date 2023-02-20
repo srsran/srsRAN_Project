@@ -8,13 +8,13 @@
  *
  */
 
-#include "srsgnb/du/du_cell_config_validation.h"
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
-#include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/bs_channel_bandwidth.h"
-#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
-#include "srsgnb/ran/ssb_mapping.h"
-#include "srsgnb/scheduler/sched_consts.h"
+#include "srsran/du/du_cell_config_validation.h"
+#include "srsran/asn1/rrc_nr/rrc_nr.h"
+#include "srsran/ran/band_helper.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsran/ran/ssb_mapping.h"
+#include "srsran/scheduler/sched_consts.h"
 
 using namespace srsran;
 

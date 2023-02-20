@@ -14,9 +14,9 @@
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
 #include "mac_scheduler_configurator.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/adt/span.h"
+#include "srsran/mac/mac.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 

@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/support/interpolator.h"
+#include "srsran/phy/support/interpolator.h"
 
 namespace srsran {
 

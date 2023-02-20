@@ -12,8 +12,8 @@
 /// \brief Linear interpolator definition.
 
 #include "interpolator_linear_impl.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 

@@ -9,9 +9,9 @@
  */
 
 #include "cell_configuration.h"
-#include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/resource_block.h"
-#include "srsgnb/ran/ssb_mapping.h"
+#include "srsran/ran/band_helper.h"
+#include "srsran/ran/resource_block.h"
+#include "srsran/ran/ssb_mapping.h"
 
 using namespace srsran;
 

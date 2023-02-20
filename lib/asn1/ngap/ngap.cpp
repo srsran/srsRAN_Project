@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/asn1/ngap/ngap.h"
+#include "srsran/asn1/ngap/ngap.h"
 #include <sstream>
 
 using namespace asn1;

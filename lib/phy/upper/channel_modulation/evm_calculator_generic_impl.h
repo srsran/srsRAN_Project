@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_modulation/evm_calculator.h"
-#include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsgnb/srsvec/aligned_vec.h"
+#include "srsran/phy/upper/channel_modulation/evm_calculator.h"
+#include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
+#include "srsran/srsvec/aligned_vec.h"
 
 namespace srsran {
 

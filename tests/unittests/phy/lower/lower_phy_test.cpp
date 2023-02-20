@@ -14,9 +14,9 @@
 #include "modulation/ofdm_demodulator_test_doubles.h"
 #include "modulation/ofdm_modulator_test_doubles.h"
 #include "processors/prach/prach_processor_test_doubles.h"
-#include "srsgnb/phy/lower/lower_phy_factory.h"
-#include "srsgnb/ran/prach/prach_configuration.h"
-#include "srsgnb/srsvec/sc_prod.h"
+#include "srsran/phy/lower/lower_phy_factory.h"
+#include "srsran/ran/prach/prach_configuration.h"
+#include "srsran/srsvec/sc_prod.h"
 
 using namespace srsran;
 

@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/srsvec/conversion.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/srsvec/aligned_vec.h"
+#include "srsran/srsvec/conversion.h"
+#include "srsran/support/srsran_test.h"
 #include <random>
 
 static std::mt19937 rgen(0);

@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class on 01-02-2023:
 //   + "srsPDCCHCandidatesUeUnittest.m"
 
-#include "srsgnb/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
 
 namespace srsran {
 

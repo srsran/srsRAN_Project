@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/adt/detail/byte_buffer_segment.h"
+#include "srsran/adt/detail/byte_buffer_segment.h"
 #include <gtest/gtest.h>
 #include <random>
 

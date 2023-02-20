@@ -13,14 +13,14 @@
 #include "../du_rnti_table.h"
 #include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/du_high/du_high_ue_executor_mapper.h"
+#include "srsran/mac/mac.h"
+#include "srsran/pcap/pcap.h"
+#include "srsran/ran/du_types.h"
+#include "srsran/ran/slot_point.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "ul_bsr.h"
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/pcap/pcap.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
 namespace srsran {
 

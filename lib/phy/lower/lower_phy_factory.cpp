@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/lower/lower_phy_factory.h"
+#include "srsran/phy/lower/lower_phy_factory.h"
 #include "lower_phy_impl.h"
 
 using namespace srsran;

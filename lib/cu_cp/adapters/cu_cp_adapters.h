@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/cu_cp.h"
-#include "srsgnb/ngap/ngap.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/cu_cp/cu_cp.h"
+#include "srsran/ngap/ngap.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 namespace srs_cu_cp {

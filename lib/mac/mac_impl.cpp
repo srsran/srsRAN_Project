@@ -10,7 +10,7 @@
 
 #include "mac_impl.h"
 #include "mac_ctrl/srs_sched_config_adapter.h"
-#include "srsgnb/scheduler/scheduler_factory.h"
+#include "srsran/scheduler/scheduler_factory.h"
 
 namespace srsran {
 

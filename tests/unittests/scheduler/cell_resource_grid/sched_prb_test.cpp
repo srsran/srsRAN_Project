@@ -9,7 +9,7 @@
  */
 
 #include "lib/scheduler/cell/scheduler_prb.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

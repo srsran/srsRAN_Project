@@ -13,9 +13,9 @@
 #include "../../ran/gnb_format.h"
 #include "../du_ue/du_ue.h"
 #include "../du_ue/ue_manager_ctrl_configurator.h"
-#include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/du_manager/du_manager_params.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsran/du_manager/du_manager.h"
+#include "srsran/du_manager/du_manager_params.h"
+#include "srsran/support/async/async_task.h"
 
 namespace srsran {
 namespace srs_du {

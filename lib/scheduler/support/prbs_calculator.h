@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/ran/modulation_scheme.h"
-#include "srsgnb/ran/resource_block.h"
-#include "srsgnb/ran/sch_mcs.h"
-#include "srsgnb/support/math_utils.h"
+#include "srsran/ran/modulation_scheme.h"
+#include "srsran/ran/resource_block.h"
+#include "srsran/ran/sch_mcs.h"
+#include "srsran/support/math_utils.h"
 
 namespace srsran {
 

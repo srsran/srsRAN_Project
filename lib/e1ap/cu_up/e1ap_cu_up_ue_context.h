@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/slotted_array.h"
-#include "srsgnb/cu_up/cu_up_types.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/cu_up/cu_up_types.h"
 #include <unordered_map>
 
 namespace srsran {

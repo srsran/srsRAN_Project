@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/gateways/udp_network_gateway.h"
+#include "srsran/gateways/udp_network_gateway.h"
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>

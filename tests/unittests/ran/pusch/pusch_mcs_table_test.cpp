@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/ran/pusch/pusch_mcs.h"
+#include "srsran/ran/pusch/pusch_mcs.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

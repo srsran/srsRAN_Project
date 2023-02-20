@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/gtpu/gtpu_tunnel_factory.h"
+#include "srsran/gtpu/gtpu_tunnel_factory.h"
 #include "gtpu_tunnel_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.

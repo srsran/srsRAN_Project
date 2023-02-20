@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
+#include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 #include <memory>
 
 namespace srsran {

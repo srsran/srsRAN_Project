@@ -10,8 +10,8 @@
 
 #include "ldpc_decoder_impl.h"
 #include "ldpc_luts_impl.h"
-#include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/srsvec/zero.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;

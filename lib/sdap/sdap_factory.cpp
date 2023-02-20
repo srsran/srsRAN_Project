@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/sdap/sdap_factory.h"
+#include "srsran/sdap/sdap_factory.h"
 #include "sdap_entity_impl.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/mac/cell_configuration.h"
+#include "srsran/mac/cell_configuration.h"
 
 namespace srsran {
 

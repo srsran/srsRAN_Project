@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/support/resource_grid_context.h"
-#include "srsgnb/phy/upper/downlink_processor.h"
+#include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/phy/upper/downlink_processor.h"
 #include <mutex>
 
 namespace srsran {

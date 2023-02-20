@@ -12,12 +12,12 @@
 
 #include "../common/test_helpers.h"
 #include "cu_up_processor_test_helpers.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/cu_cp/cu_up_processor.h"
+#include "srsran/cu_cp/cu_up_processor_factory.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/test_utils.h"
 #include "tests/unittests/e1ap/common/test_helpers.h"
-#include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/cu_up_processor.h"
-#include "srsgnb/cu_cp/cu_up_processor_factory.h"
-#include "srsgnb/support/executors/manual_task_worker.h"
-#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

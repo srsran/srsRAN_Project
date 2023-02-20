@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/span.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/adt/to_array.h"
-#include "srsgnb/mac/bsr_format.h"
-#include "srsgnb/scheduler/scheduler_feedback_handler.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/span.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/adt/to_array.h"
+#include "srsran/mac/bsr_format.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
 
 namespace srsran {
 

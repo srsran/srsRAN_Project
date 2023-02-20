@@ -9,9 +9,9 @@
  */
 
 #include "ofdm_prach_demodulator_test_data.h"
-#include "srsgnb/phy/lower/modulation/modulation_factories.h"
-#include "srsgnb/phy/support/support_factories.h"
-#include "srsgnb/ran/prach/prach_preamble_information.h"
+#include "srsran/phy/lower/modulation/modulation_factories.h"
+#include "srsran/phy/support/support_factories.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

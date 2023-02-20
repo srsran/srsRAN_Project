@@ -11,9 +11,9 @@
 #pragma once
 
 #include "../support/rb_find_algorithm.h"
-#include "srsgnb/adt/bounded_bitset.h"
-#include "srsgnb/adt/interval.h"
-#include "srsgnb/scheduler/prb_grant.h"
+#include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/interval.h"
+#include "srsran/scheduler/prb_grant.h"
 
 namespace srsran {
 

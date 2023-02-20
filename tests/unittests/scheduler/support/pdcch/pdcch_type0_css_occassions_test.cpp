@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

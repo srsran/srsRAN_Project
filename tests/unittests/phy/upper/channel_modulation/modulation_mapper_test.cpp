@@ -9,10 +9,10 @@
  */
 
 #include "modulation_mapper_test_data.h"
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsran/srsvec/aligned_vec.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/support/srsran_test.h"
 
 using namespace srsran;
 

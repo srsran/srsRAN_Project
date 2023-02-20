@@ -9,7 +9,7 @@
  *
  */
 
-#include "srsgnb/f1u/du/f1u_bearer_factory.h"
+#include "srsran/f1u/du/f1u_bearer_factory.h"
 #include "f1u_bearer_impl.h"
 
 using namespace srsran;

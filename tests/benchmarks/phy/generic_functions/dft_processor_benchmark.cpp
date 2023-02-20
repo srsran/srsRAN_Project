@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
-#include "srsgnb/support/benchmark_utils.h"
-#include "srsgnb/support/srsgnb_assert.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
+#include "srsran/support/benchmark_utils.h"
+#include "srsran/support/srsran_assert.h"
 #include <getopt.h>
 #include <random>
 

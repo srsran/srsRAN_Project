@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/asn1/f1ap/f1ap.h"
-#include "srsgnb/ran/bcd_helpers.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ran/bcd_helpers.h"
 
 namespace srsran {
 

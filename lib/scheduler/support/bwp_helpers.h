@@ -11,9 +11,9 @@
 #pragma once
 
 #include "config_helpers.h"
-#include "srsgnb/scheduler/config/bwp_configuration.h"
-#include "srsgnb/scheduler/scheduler_dci.h"
-#include "srsgnb/support/error_handling.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/scheduler_dci.h"
+#include "srsran/support/error_handling.h"
 
 namespace srsran {
 

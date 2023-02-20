@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/tensor.h"
-#include "srsgnb/phy/upper/unique_rx_softbuffer.h"
+#include "srsran/adt/tensor.h"
+#include "srsran/phy/upper/unique_rx_softbuffer.h"
 
 namespace srsran {
 

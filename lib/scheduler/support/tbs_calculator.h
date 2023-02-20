@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "srsgnb/ran/sch_mcs.h"
+#include "srsran/ran/sch_mcs.h"
 
 #include <array>
 

@@ -1,7 +1,7 @@
 
 #include "lib/scheduler/ue_scheduling/ue.h"
+#include "srsran/support/srsran_test.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
-#include "srsgnb/support/srsgnb_test.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

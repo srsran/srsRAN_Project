@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/support/async/detail/function_signature.h"
+#include "srsran/support/async/detail/function_signature.h"
 
 using namespace srsran;
 using namespace detail;

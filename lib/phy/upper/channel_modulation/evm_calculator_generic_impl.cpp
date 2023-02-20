@@ -9,9 +9,9 @@
  */
 
 #include "evm_calculator_generic_impl.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/dot_prod.h"
-#include "srsgnb/srsvec/subtract.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/srsvec/dot_prod.h"
+#include "srsran/srsvec/subtract.h"
 
 using namespace srsran;
 

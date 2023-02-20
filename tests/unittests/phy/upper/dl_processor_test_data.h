@@ -14,9 +14,9 @@
 //   + "srsDLProcessorUnittest.m"
 
 #include "../support/resource_grid_test_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
-#include "srsgnb/support/file_vector.h"
+#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsran/support/file_vector.h"
 
 namespace srsran {
 

@@ -9,7 +9,7 @@
  */
 #include "demodulation_mapper_qam256.h"
 #include "demodulation_mapper_intervals.h"
-#include "srsgnb/phy/upper/log_likelihood_ratio.h"
+#include "srsran/phy/upper/log_likelihood_ratio.h"
 
 #ifdef HAVE_AVX2
 #include "avx2_helpers.h"

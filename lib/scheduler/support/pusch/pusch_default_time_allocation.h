@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/ran/cyclic_prefix.h"
-#include "srsgnb/scheduler/config/bwp_configuration.h"
-#include "srsgnb/scheduler/config/dmrs.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/config/dmrs.h"
 
 namespace srsran {
 

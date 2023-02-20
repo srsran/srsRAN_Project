@@ -11,10 +11,10 @@
 /// \file
 /// \brief LDPC decoder benchmark.
 
-#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/srsvec/bit.h"
-#include "srsgnb/support/benchmark_utils.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsran/srsvec/bit.h"
+#include "srsran/support/benchmark_utils.h"
+#include "srsran/support/srsran_test.h"
 #include <getopt.h>
 #include <random>
 

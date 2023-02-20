@@ -11,9 +11,9 @@
 #pragma once
 
 #include "metrics_plotter_stdout.h"
-#include "srsgnb/du/du_cell_config.h"
-#include "srsgnb/scheduler/scheduler_metrics.h"
-#include "srsgnb/support/io_broker/io_broker.h"
+#include "srsran/du/du_cell_config.h"
+#include "srsran/scheduler/scheduler_metrics.h"
+#include "srsran/support/io_broker/io_broker.h"
 
 namespace srsran {
 

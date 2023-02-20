@@ -9,7 +9,7 @@
  */
 
 #include "du_bearer.h"
-#include "srsgnb/adt/static_vector.h"
+#include "srsran/adt/static_vector.h"
 
 using namespace srsran;
 using namespace srs_du;

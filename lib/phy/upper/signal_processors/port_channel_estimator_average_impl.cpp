@@ -9,14 +9,14 @@
  */
 
 #include "port_channel_estimator_average_impl.h"
-#include "srsgnb/srsvec/add.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/dot_prod.h"
-#include "srsgnb/srsvec/mean.h"
-#include "srsgnb/srsvec/prod.h"
-#include "srsgnb/srsvec/sc_prod.h"
-#include "srsgnb/srsvec/zero.h"
+#include "srsran/srsvec/add.h"
+#include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/dot_prod.h"
+#include "srsran/srsvec/mean.h"
+#include "srsran/srsvec/prod.h"
+#include "srsran/srsvec/sc_prod.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 

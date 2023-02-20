@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/e2/e2_factory.h"
+#include "srsran/e2/e2_factory.h"
 #include "e2_impl.h"
 
 using namespace srsran;

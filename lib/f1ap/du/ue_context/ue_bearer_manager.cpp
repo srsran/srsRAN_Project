@@ -11,7 +11,7 @@
 #include "ue_bearer_manager.h"
 #include "../procedures/f1ap_du_event_manager.h"
 #include "f1c_du_bearer_impl.h"
-#include "srsgnb/f1u/du/f1u_bearer_factory.h"
+#include "srsran/f1u/du/f1u_bearer_factory.h"
 
 using namespace srsran;
 using namespace srs_du;

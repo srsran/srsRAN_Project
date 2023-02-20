@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/scheduler/scheduler_factory.h"
+#include "srsran/scheduler/scheduler_factory.h"
 #include "scheduler_impl.h"
 
 using namespace srsran;

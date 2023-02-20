@@ -10,9 +10,9 @@
  *
  */
 
-#include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
-#include "srsgnb/support/test_utils.h"
+#include "srsran/fapi/message_builders.h"
+#include "srsran/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsran/support/test_utils.h"
 #include <random>
 
 using namespace srsran;

@@ -9,8 +9,8 @@
  */
 
 #include "uplink_request_processor_impl.h"
-#include "srsgnb/phy/support/prach_buffer_pool.h"
-#include "srsgnb/phy/upper/upper_phy_rx_symbol_request_notifier.h"
+#include "srsran/phy/support/prach_buffer_pool.h"
+#include "srsran/phy/upper/upper_phy_rx_symbol_request_notifier.h"
 
 using namespace srsran;
 

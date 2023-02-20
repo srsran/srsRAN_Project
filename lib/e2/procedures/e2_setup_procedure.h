@@ -11,10 +11,10 @@
 
 #include "../common/e2ap_asn1_utils.h"
 #include "e2_event_manager.h"
-#include "srsgnb/asn1/e2ap/e2ap.h"
-#include "srsgnb/e2/e2.h"
-#include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/timers.h"
+#include "srsran/asn1/e2ap/e2ap.h"
+#include "srsran/e2/e2.h"
+#include "srsran/support/async/async_task.h"
+#include "srsran/support/timers.h"
 
 class e2_event_manager;
 

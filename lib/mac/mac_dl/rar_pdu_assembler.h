@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/mac/cell_configuration.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
-#include "srsgnb/support/memory_pool/ring_buffer_pool.h"
+#include "srsran/mac/cell_configuration.h"
+#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {
 

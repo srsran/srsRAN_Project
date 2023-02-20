@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/scheduler/prb_grant.h"
-#include "srsgnb/scheduler/resource_block_group.h"
+#include "srsran/scheduler/prb_grant.h"
+#include "srsran/scheduler/resource_block_group.h"
 
 using namespace srsran;
 

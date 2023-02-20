@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/span.h"
-#include "srsgnb/srslog/srslog.h"
+#include "srsran/adt/span.h"
+#include "srsran/srslog/srslog.h"
 #include <fstream>
 #include <string>
 
