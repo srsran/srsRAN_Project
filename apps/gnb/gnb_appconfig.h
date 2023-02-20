@@ -64,14 +64,6 @@ struct prach_appconfig {
   unsigned max_msg3_harq_retx    = 4;
 };
 
-/// PDCCH application configuration.
-struct pdcch_appconfig {
-  /// Aggregation level for the UE.
-  aggregation_level ue_aggregation_level_index = aggregation_level::n4;
-  /// Aggregation level for the RAR.
-  aggregation_level rar_aggregation_level_index = aggregation_level::n4;
-};
-
 /// PDSCH application configuration.
 struct pdsch_appconfig {
   /// UE modulation and coding scheme index.
@@ -120,8 +112,6 @@ struct base_cell_appconfig {
   std::string plmn = "00101";
   /// TAC.
   unsigned tac = 7;
-  /// PDCCH configuration.
-  pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.
   pdsch_appconfig pdsch_cfg;
   /// CSI-RS configuration.

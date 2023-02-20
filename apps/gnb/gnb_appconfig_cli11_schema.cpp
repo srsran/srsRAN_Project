@@ -122,53 +122,6 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig&
       ->capture_default_str();
 }
 
-static void to_aggregation_level(aggregation_level& aggr_lvl, unsigned value)
-{
-  switch (value) {
-    case 1U:
-      aggr_lvl = srsran::aggregation_level::n1;
-      return;
-    case 2U:
-      aggr_lvl = srsran::aggregation_level::n2;
-      return;
-    case 4U:
-      aggr_lvl = srsran::aggregation_level::n4;
-      return;
-    case 8U:
-      aggr_lvl = srsran::aggregation_level::n8;
-      return;
-    case 16U:
-      aggr_lvl = srsran::aggregation_level::n16;
-      return;
-  }
-}
-
-static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_params)
-{
-  auto agg_validator = [](const std::string& value) -> std::string {
-    std::stringstream ss(value);
-    unsigned          agg_lvl;
-    ss >> agg_lvl;
-    if (agg_lvl == 1U || agg_lvl == 2U || agg_lvl == 4U || agg_lvl == 8U || agg_lvl == 16U) {
-      return {};
-    }
-    return "Aggregation level value is not correct [1,2,4,8,16]";
-  };
-
-  app.add_option_function<unsigned>(
-         "--ue_aggr_lvl_index",
-         [&pdcch_params](unsigned value) { to_aggregation_level(pdcch_params.ue_aggregation_level_index, value); },
-         "UE aggregation level index")
-      ->capture_default_str()
-      ->check(agg_validator);
-  app.add_option_function<unsigned>(
-         "--rar_aggr_lvl_index",
-         [&pdcch_params](unsigned value) { to_aggregation_level(pdcch_params.rar_aggregation_level_index, value); },
-         "RAR aggregation level index")
-      ->capture_default_str()
-      ->check(agg_validator);
-}
-
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)
 {
   app.add_option("--fixed_ue_mcs", pdsch_params.fixed_ue_mcs, "Fixed UE MCS")
@@ -277,10 +230,6 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
 
     return (tac <= 0xffffffU) ? "" : "TAC value out of range";
   });
-
-  // PDCCH configuration.
-  CLI::App* pdcch_subcmd = app.add_subcommand("pdcch", "PDCCH parameters");
-  configure_cli11_pdcch_args(*pdcch_subcmd, cell_params.pdcch_cfg);
 
   // PDSCH configuration.
   CLI::App* pdsch_subcmd = app.add_subcommand("pdsch", "PDSCH parameters");

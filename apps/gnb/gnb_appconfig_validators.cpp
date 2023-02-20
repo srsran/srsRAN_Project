@@ -18,12 +18,6 @@ static bool validate_rf_driver_appconfig(const rf_driver_appconfig& config)
   return true;
 }
 
-/// Validates the given PDCCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pdcch_cell_app_config(const pdcch_appconfig& config)
-{
-  return true;
-}
-
 /// Validates the given PDSCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
 {
@@ -117,10 +111,6 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
       fmt::print("Invalid DL ARFCN={}. Cause: Could not find a valid band.\n", config.dl_arfcn);
       return false;
     }
-  }
-
-  if (!validate_pdcch_cell_app_config(config.pdcch_cfg)) {
-    return false;
   }
 
   if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
