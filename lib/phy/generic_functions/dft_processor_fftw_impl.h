@@ -21,9 +21,11 @@ namespace srsran {
 
 /// Describes the specific FFTW DFT parameters.
 struct dft_processor_fftw_configuration {
-  /// Sets to true to avoid loading the FFTW wisdom from a file.
+  /// FFTW plan optimization flag, used for DFT plan creation.
+  fftw_plan_optimization optimization_flag;
+  /// Set to true to avoid loading the FFTW wisdom from a file.
   bool avoid_wisdom;
-  /// Provides the FFTW wisdom filename. Leave empty for default value and ignore if wisdom is disabled.
+  /// FFTW wisdom filename. Leave empty for default value and ignore if wisdom is disabled.
   std::string wisdom_filename;
 };
 

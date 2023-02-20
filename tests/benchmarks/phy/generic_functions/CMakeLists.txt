@@ -13,5 +13,5 @@ target_link_libraries(dft_processor_benchmark srslog srsran_generic_funcs)
 
 add_test(dft_processor_generic_benchmark dft_processor_benchmark -F generic -R 10 -s)
 if (ENABLE_FFTW AND FFTW3F_FOUND)
-    add_test(dft_processor_fftw_benchmark dft_processor_benchmark -F fftw -R 10 -s)
+    add_test(dft_processor_fftw_benchmark dft_processor_benchmark -F fftw -R 10 -O estimate -s)
 endif (ENABLE_FFTW AND FFTW3F_FOUND)

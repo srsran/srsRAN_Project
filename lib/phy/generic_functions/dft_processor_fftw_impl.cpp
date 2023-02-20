@@ -22,6 +22,11 @@ dft_processor_fftw_impl::fftw_wisdom_filename dft_processor_fftw_impl::wisdom_fi
 
 unsigned dft_processor_fftw_impl::fftw_count = 0;
 
+static unsigned to_fftw_flag(fftw_plan_optimization optimization_flag)
+{
+  return (optimization_flag == fftw_plan_optimization::fftw_measure) ? FFTW_MEASURE : FFTW_ESTIMATE;
+}
+
 static void dft_processor_fftw_import_wisdom(const char* full_path)
 {
   // lockf needs a file descriptor open for writing, so this must be r+.
@@ -136,7 +141,7 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
   int            fftw_size   = static_cast<int>(dft_config.size);
   fftwf_complex* fftw_input  = (fftwf_complex*)input.data();
   fftwf_complex* fftw_output = (fftwf_complex*)output.data();
-  unsigned int   fftw_flags  = 0;
+  unsigned int   fftw_flags  = to_fftw_flag(fftw_config.optimization_flag);
   int            fftw_sign   = (dir == direction::DIRECT) ? FFTW_FORWARD : FFTW_BACKWARD;
 
   // Create plan.

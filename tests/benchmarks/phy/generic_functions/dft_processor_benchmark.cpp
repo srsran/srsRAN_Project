@@ -19,29 +19,35 @@ using namespace srsran;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static std::string dft_factory_str = "generic";
-static unsigned    nof_repetitions = 1000;
-static bool        silent          = false;
+static std::string            dft_factory_str       = "generic";
+static std::string            fftw_optimization_str = "measure";
+static fftw_plan_optimization fftw_optimization_flag;
+static unsigned               nof_repetitions = 1000;
+static bool                   silent          = false;
 
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-F DFT factory] [-R repetitions]\n", prog);
   fmt::print("\t-F Select DFT factory [Default {}]\n", dft_factory_str);
+  fmt::print("\t-O Select FFTW optimization flag (measure, estimate) [Default {}]\n", dft_factory_str);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");
 }
 
-static void parse_args(int argc, char** argv)
+static int parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "F:R:sh")) != -1) {
+  while ((opt = getopt(argc, argv, "F:R:O:sh")) != -1) {
     switch (opt) {
       case 'F':
         dft_factory_str = std::string(optarg);
         break;
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'O':
+        fftw_optimization_str = std::string(optarg);
         break;
       case 's':
         silent = (!silent);
@@ -52,18 +58,34 @@ static void parse_args(int argc, char** argv)
         exit(0);
     }
   }
+
+  if (fftw_optimization_str == "measure") {
+    fftw_optimization_flag = fftw_plan_optimization::fftw_measure;
+    return 0;
+  }
+  if (fftw_optimization_str == "estimate") {
+    fftw_optimization_flag = fftw_plan_optimization::fftw_estimate;
+    return 0;
+  }
+
+  fmt::print(stderr, "Invalid FFTW optimization flag: {}\n", fftw_optimization_str);
+  return -1;
 }
 
 int main(int argc, char** argv)
 {
-  parse_args(argc, argv);
+  int ret = parse_args(argc, argv);
+  if (ret < 0) {
+    return ret;
+  }
+
   std::uniform_real_distribution<float> dist(-1.0, +1.0);
 
   std::shared_ptr<dft_processor_factory> dft_factory = nullptr;
   if (dft_factory_str == "generic") {
     dft_factory = create_dft_processor_factory_generic();
   } else if (dft_factory_str == "fftw") {
-    dft_factory = create_dft_processor_factory_fftw();
+    dft_factory = create_dft_processor_factory_fftw(fftw_optimization_flag);
   } else {
     fmt::print("Invalid DFT factory.");
     return -1;
