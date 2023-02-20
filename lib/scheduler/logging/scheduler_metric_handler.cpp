@@ -40,6 +40,27 @@ void scheduler_metrics_handler::handle_crc_indication(const ul_crc_pdu_indicatio
   if (ues.contains(crc_pdu.ue_index)) {
     ues[crc_pdu.ue_index].data.count_crc_acks += crc_pdu.tb_crc_success ? 1 : 0;
     ues[crc_pdu.ue_index].data.count_crc_pdus++;
+    if (crc_pdu.ul_sinr_metric.has_value()) {
+      ues[crc_pdu.ue_index].data.nof_pusch_snr_reports++;
+      ues[crc_pdu.ue_index].data.sum_pusch_snrs += crc_pdu.ul_sinr_metric.value();
+    }
+  }
+}
+
+void scheduler_metrics_handler::handle_csi_report(
+    du_ue_index_t                                                         ue_index,
+    const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi)
+{
+  if (ues.contains(ue_index)) {
+    auto&               u                = ues[ue_index];
+    static const size_t cqi_payload_size = 4;
+    if (csi.size() != cqi_payload_size) {
+      return;
+    }
+    // Refer to \ref mac_uci_pdu::pucch_f2_or_f3_or_f4_type::uci_payload_or_csi_information for the CSI payload bit
+    // encoding.
+    u.last_cqi = (static_cast<unsigned>(csi.test(0)) << 3) + (static_cast<unsigned>(csi.test(1)) << 2) +
+                 (static_cast<unsigned>(csi.test(2)) << 1) + (static_cast<unsigned>(csi.test(3)));
   }
 }
 

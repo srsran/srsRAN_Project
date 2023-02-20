@@ -35,6 +35,9 @@ public:
 
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu);
 
+  void handle_csi_report(du_ue_index_t                                                         ue_index,
+                         const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi);
+
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack);
 
   /// \brief Handle UL BSR indication.
