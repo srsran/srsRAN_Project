@@ -56,6 +56,7 @@ static bool validate_nof_rb(unsigned value, validator_report& report)
   static constexpr unsigned MAX_VALUE = 276;
 
   if (value % 4 != 0) {
+    report.append(value, std::make_pair(MIN_VALUE, MAX_VALUE), "Number of RBs", msg_type, pdu_type);
     return false;
   }
 

@@ -268,7 +268,7 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   pdu.scs                                                   = subcarrier_spacing::kHz15;
   pdu.cp                                                    = cyclic_prefix::NORMAL;
   pdu.start_rb                                              = 23;
-  pdu.num_rbs                                               = 25;
+  pdu.num_rbs                                               = 28;
   pdu.type                                                  = csi_rs_type::CSI_RS_NZP;
   pdu.row                                                   = 4;
   pdu.freq_domain                                           = {1, 0, 0};

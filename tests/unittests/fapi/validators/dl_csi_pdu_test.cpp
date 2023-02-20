@@ -69,7 +69,9 @@ INSTANTIATE_TEST_SUITE_P(Number_of_RBs,
                                               [](dl_csi_rs_pdu& pdu, int value) { pdu.num_rbs = value; }}),
                                           testing::Values(test_case_data{23, false},
                                                           test_case_data{24, true},
-                                                          test_case_data{150, true},
+                                                          test_case_data{25, false},
+                                                          test_case_data{150, false},
+                                                          test_case_data{152, true},
                                                           test_case_data{276, true},
                                                           test_case_data{277, false})));
 
