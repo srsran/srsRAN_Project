@@ -184,7 +184,7 @@ struct formatter<srsgnb::rlc_um_pdu_header> {
   template <typename FormatContext>
   auto format(const srsgnb::rlc_um_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "si={} sn_size={} sn={} so={}", hdr.si, hdr.sn_size, hdr.sn, hdr.so);
+    return format_to(ctx.out(), "si={} sn={} so={}", hdr.si, hdr.sn, hdr.so);
   }
 };
 } // namespace fmt
