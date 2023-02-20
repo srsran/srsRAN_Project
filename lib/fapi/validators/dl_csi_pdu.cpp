@@ -55,6 +55,10 @@ static bool validate_nof_rb(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 24;
   static constexpr unsigned MAX_VALUE = 276;
 
+  if (value % 4 != 0) {
+    return false;
+  }
+
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of RBs", msg_type, pdu_type, report);
 }
 
