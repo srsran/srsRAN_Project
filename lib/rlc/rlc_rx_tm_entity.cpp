@@ -10,7 +10,7 @@
 
 #include "rlc_rx_tm_entity.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 rlc_rx_tm_entity::rlc_rx_tm_entity(du_ue_index_t du_index, rb_id_t rb_id, rlc_rx_upper_layer_data_notifier& upper_dn_) :
   rlc_rx_entity(du_index, rb_id, upper_dn_)

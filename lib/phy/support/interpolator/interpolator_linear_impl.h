@@ -15,7 +15,7 @@
 
 #include "srsgnb/phy/support/interpolator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Linear interpolator.
 ///
@@ -28,4 +28,4 @@ public:
   void interpolate(span<cf_t> output, span<const cf_t> input, const configuration& cfg) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

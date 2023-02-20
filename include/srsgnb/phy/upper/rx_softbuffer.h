@@ -13,7 +13,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class bit_buffer;
 
@@ -59,4 +59,4 @@ public:
   virtual bit_buffer get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

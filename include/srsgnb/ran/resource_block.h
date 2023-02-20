@@ -13,7 +13,7 @@
 #include "subcarrier_spacing.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of PRBs of a UE carrier, for any SCS.
 /// \remark See TS 38.331 - "maxNrofPhysicalResourceBlocks".
@@ -133,4 +133,4 @@ inline std::size_t get_max_Nprb(unsigned dl_bw_mhz, subcarrier_spacing scs, freq
   return rb_table_fr2[bw_idx][to_numerology_value(scs) - to_numerology_value(subcarrier_spacing::kHz60)];
 }
 
-} // namespace srsgnb
+} // namespace srsran

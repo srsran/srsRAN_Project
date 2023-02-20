@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 struct prach_buffer_context;
 class prach_buffer;
@@ -35,4 +35,4 @@ public:
   virtual void handle_request(prach_buffer& buffer, const prach_buffer_context& context) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

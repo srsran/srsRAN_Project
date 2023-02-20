@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static const float  repetitions = 10;
 static std::mt19937 rgen(0);

@@ -17,7 +17,7 @@
 #include "srsgnb/phy/support/mask_types.h"
 #include "srsgnb/phy/support/resource_grid.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a PDCCH modulator interface.
 ///
@@ -56,4 +56,4 @@ public:
   virtual void modulate(resource_grid_writer& grid, span<const uint8_t> data, const config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

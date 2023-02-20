@@ -21,7 +21,7 @@
 #include <arm_neon.h>
 #endif
 
-using namespace srsgnb;
+using namespace srsran;
 
 const pseudo_random_generator_impl::x1_init_s pseudo_random_generator_impl::x1_init =
     pseudo_random_generator_impl::x1_init_s();

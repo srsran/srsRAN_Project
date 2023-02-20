@@ -12,7 +12,7 @@
 
 #include "ldpc_rate_dematcher_impl.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class ldpc_rate_dematcher_avx512_impl : public ldpc_rate_dematcher_impl
 {
@@ -22,4 +22,4 @@ protected:
                         span<const log_likelihood_ratio> in1) const override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

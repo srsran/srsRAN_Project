@@ -52,8 +52,8 @@ static void parse_args(int argc, char** argv)
   }
 }
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 int main(int argc, char** argv)
 {
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
       unsigned min_cb_length_bg = 24;
       unsigned max_cb_length_bg = 66;
       unsigned msg_length_bg    = 22;
-      if (bg == srsgnb::ldpc_base_graph_type::BG2) {
+      if (bg == srsran::ldpc_base_graph_type::BG2) {
         min_cb_length_bg = 12;
         max_cb_length_bg = 50;
         msg_length_bg    = 10;
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
         // Generate codeblock.
         std::vector<uint8_t> codeblock(cb_length);
 
-        srsgnb::codeblock_metadata::tb_common_metadata cfg_enc = {bg, ls};
+        srsran::codeblock_metadata::tb_common_metadata cfg_enc = {bg, ls};
 
         fmt::memory_buffer descr_buffer;
         fmt::format_to(descr_buffer, "BG={} LS={:<3} cb_len={}", bg, ls, cb_length);

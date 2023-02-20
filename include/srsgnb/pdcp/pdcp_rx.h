@@ -35,7 +35,7 @@
  *    inherit or if a notifier that the PDCP will keep as a member.
  *
  */
-namespace srsgnb {
+namespace srsran {
 
 /// This interface represents the data entry point of the receiving side of a PDCP entity.
 /// The lower-layers will use this class to pass PDUs into the PDCP.
@@ -101,4 +101,4 @@ public:
   /// Handle the incoming security config.
   virtual void enable_security(security::sec_128_as_config sec_cfg) = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

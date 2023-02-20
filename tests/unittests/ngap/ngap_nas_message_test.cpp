@@ -13,7 +13,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 class ngap_nas_message_routine_test : public ngap_test

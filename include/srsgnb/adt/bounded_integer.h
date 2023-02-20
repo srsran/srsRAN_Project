@@ -15,7 +15,7 @@
 #include "fmt/format.h"
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -147,15 +147,15 @@ protected:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// Formatter for bounded_integer<...> types.
 template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
-struct formatter<srsgnb::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>> : public formatter<Integer> {
+struct formatter<srsran::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>> : public formatter<Integer> {
   template <typename FormatContext>
-  auto format(const srsgnb::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& s, FormatContext& ctx)
+  auto format(const srsran::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& s, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (s.valid()) {

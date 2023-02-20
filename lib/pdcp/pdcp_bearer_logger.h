@@ -14,7 +14,7 @@
 #include "fmt/format.h"
 #include <string.h>
 
-namespace srsgnb {
+namespace srsran {
 
 class pdcp_bearer_log_prefix
 {
@@ -23,7 +23,7 @@ public:
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, "ue={} {} {}: ", ue_index, rb_id, dir);
-    prefix = srsgnb::to_c_str(buffer);
+    prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
 
@@ -33,13 +33,13 @@ private:
 
 using pdcp_bearer_logger = prefixed_logger<pdcp_bearer_log_prefix>;
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 // associated formatter
 template <>
-struct formatter<srsgnb::pdcp_bearer_log_prefix> {
+struct formatter<srsran::pdcp_bearer_log_prefix> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -47,7 +47,7 @@ struct formatter<srsgnb::pdcp_bearer_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_bearer_log_prefix o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_bearer_log_prefix o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

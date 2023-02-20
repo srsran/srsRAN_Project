@@ -11,10 +11,10 @@
 #include "srsgnb/fapi_adaptor/mac/messages/prach.h"
 #include "srsgnb/mac/mac_cell_result.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
-void srsgnb::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu& fapi_pdu, const prach_occasion_info& mac_pdu)
+void srsran::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu& fapi_pdu, const prach_occasion_info& mac_pdu)
 {
   fapi::ul_prach_pdu_builder builder(fapi_pdu);
 
@@ -39,7 +39,7 @@ static fapi::prach_format_type convert_to_fapi_prach_format(preamble_format form
   return fapi::prach_format_type::zero;
 }
 
-void srsgnb::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder& builder,
+void srsran::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder& builder,
                                                      const prach_occasion_info&  mac_pdu)
 {
   // NOTE: For long preambles the number of time-domain PRACH occasions parameter does not apply, so set it to 1 to be

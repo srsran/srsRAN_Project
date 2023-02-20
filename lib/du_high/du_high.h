@@ -24,7 +24,7 @@
 #include "srsgnb/support/timers.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class du_high
@@ -65,4 +65,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/ran/pdcch/coreset.h"
 #include <bitset>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \remark See TS 38.331, "SearchSpaceId" - The number of Search Spaces per BWP is limited to 10 including the common
 /// and UE specific Search Spaces.
@@ -96,4 +96,4 @@ struct search_space_configuration {
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

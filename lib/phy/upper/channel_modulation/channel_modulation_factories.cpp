@@ -13,7 +13,7 @@
 #include "evm_calculator_generic_impl.h"
 #include "modulation_mapper_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -36,7 +36,7 @@ public:
 
 } // namespace
 
-std::shared_ptr<channel_modulation_factory> srsgnb::create_channel_modulation_sw_factory()
+std::shared_ptr<channel_modulation_factory> srsran::create_channel_modulation_sw_factory()
 {
   return std::make_shared<channel_modulation_sw_factory>();
 }

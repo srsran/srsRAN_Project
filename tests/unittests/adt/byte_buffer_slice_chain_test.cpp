@@ -12,7 +12,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(byte_buffer_slice_chain_test, empty_chain)
 {

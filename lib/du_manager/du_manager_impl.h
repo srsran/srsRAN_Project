@@ -16,7 +16,7 @@
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/du_manager/du_manager_params.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class du_manager_impl final : public du_manager_interface
@@ -59,4 +59,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

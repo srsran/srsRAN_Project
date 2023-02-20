@@ -11,7 +11,7 @@
 #include "cu_up_processor_routine_manager_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 cu_up_processor_routine_manager_test::cu_up_processor_routine_manager_test()

@@ -12,7 +12,7 @@
 #include "dft_processor_fftw_impl.h"
 #include "dft_processor_generic_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -51,12 +51,12 @@ private:
 
 } // namespace
 
-std::shared_ptr<dft_processor_factory> srsgnb::create_dft_processor_factory_generic()
+std::shared_ptr<dft_processor_factory> srsran::create_dft_processor_factory_generic()
 {
   return std::make_shared<dft_processor_factory_generic>();
 }
 
-std::shared_ptr<dft_processor_factory> srsgnb::create_dft_processor_factory_fftw(bool               avoid_wisdom,
+std::shared_ptr<dft_processor_factory> srsran::create_dft_processor_factory_fftw(bool               avoid_wisdom,
                                                                                  const std::string& wisdom_filename)
 {
 #ifdef ENABLE_FFTW

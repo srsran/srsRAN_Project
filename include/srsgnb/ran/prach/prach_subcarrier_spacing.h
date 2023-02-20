@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_subcarrier_spacing
 {
@@ -57,4 +57,4 @@ private:
   values value;
 };
 
-} // namespace srsgnb
+} // namespace srsran

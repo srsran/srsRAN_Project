@@ -10,7 +10,7 @@
 
 #include "radio_uhd_rx_stream.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 bool radio_uhd_rx_stream::receive_block(unsigned&                nof_rxd_samples,
                                         baseband_gateway_buffer& data,

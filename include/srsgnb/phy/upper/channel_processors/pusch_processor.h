@@ -23,7 +23,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/uci/uci_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes the PUSCH processor interface.
 ///
@@ -158,4 +158,4 @@ public:
   virtual bool is_valid(const pusch_processor::pdu_t& pdu) const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

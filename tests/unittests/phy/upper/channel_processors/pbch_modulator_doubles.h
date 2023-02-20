@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 class pbch_modulator_spy : public pbch_modulator
 {
@@ -42,4 +42,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(pbch_modulator);
 
-} // namespace srsgnb
+} // namespace srsran

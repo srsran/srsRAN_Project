@@ -16,7 +16,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/sr_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \c MAC-CellGroupConfig, TS 38.331.
 struct mac_cell_group_config {
@@ -33,4 +33,4 @@ struct mac_cell_group_config {
   // TODO: add remaining fields.
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "cell_group_config.h"
 #include "srsgnb/f1ap/du/f1ap_du_ue_context_update.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief Outcome report of an DU UE Resource allocation request.
@@ -78,4 +78,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

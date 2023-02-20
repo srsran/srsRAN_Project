@@ -14,7 +14,7 @@
 #include "srsgnb/phy/constants.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Rate matching pattern id used to identify a Rate matching pattern configuration.
 /// \remark See TS 38.331, "RateMatchPatternId" and "maxNrofRateMatchPatterns".
@@ -118,4 +118,4 @@ struct rate_match_pattern {
   bool operator!=(const rate_match_pattern& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

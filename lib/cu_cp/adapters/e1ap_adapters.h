@@ -14,7 +14,7 @@
 #include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between E1AP and CU-UP processor
@@ -37,4 +37,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

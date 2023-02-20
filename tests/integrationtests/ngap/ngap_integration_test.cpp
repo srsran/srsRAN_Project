@@ -22,7 +22,7 @@
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 /// This test is an integration test between:
@@ -123,7 +123,7 @@ ng_setup_request generate_ng_setup_request(ngap_configuration ngap_cfg)
 TEST_F(ngap_integration_test, when_ng_setup_response_received_then_amf_connected)
 {
   // Action 1: Launch NG setup procedure
-  ngap_configuration ngap_cfg = srsgnb::config_helpers::make_default_ngap_config();
+  ngap_configuration ngap_cfg = srsran::config_helpers::make_default_ngap_config();
 
   ng_setup_request request_msg = generate_ng_setup_request(ngap_cfg);
   test_logger.info("Launching NG setup procedure...");

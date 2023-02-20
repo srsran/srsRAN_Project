@@ -3,7 +3,7 @@
 
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Interface used to handle slot indications specific to a cell.
 class mac_cell_slot_handler
@@ -18,4 +18,4 @@ public:
   virtual void handle_slot_indication(slot_point sl_tx) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

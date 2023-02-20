@@ -14,7 +14,7 @@
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/support/timers.h"
 
-namespace srsgnb {
+namespace srsran {
 
 template <typename T>
 class async_single_event_observer;
@@ -151,4 +151,4 @@ private:
   manual_event<T>        event;
 };
 
-} // namespace srsgnb
+} // namespace srsran

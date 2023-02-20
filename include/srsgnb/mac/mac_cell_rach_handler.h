@@ -15,7 +15,7 @@
 #include "srsgnb/ran/prach/prach_constants.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct mac_rach_indication {
   struct rach_preamble {
@@ -45,4 +45,4 @@ public:
   virtual void handle_rach_indication(const mac_rach_indication& rach_ind) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

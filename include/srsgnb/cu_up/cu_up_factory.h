@@ -14,9 +14,9 @@
 #include "srsgnb/cu_up/cu_up_configuration.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Creates an instance of an CU-UP.
 std::unique_ptr<srs_cu_up::cu_up_interface> create_cu_up(const srs_cu_up::cu_up_configuration& cfg_);
 
-} // namespace srsgnb
+} // namespace srsran

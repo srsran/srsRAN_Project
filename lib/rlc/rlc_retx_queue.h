@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <list>
 
-namespace srsgnb {
+namespace srsran {
 
 struct rlc_tx_amd_retx {
   uint32_t sn     = INVALID_RLC_SN; ///< sequence number
@@ -180,11 +180,11 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsgnb::rlc_tx_amd_retx> {
+struct formatter<srsran::rlc_tx_amd_retx> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -192,7 +192,7 @@ struct formatter<srsgnb::rlc_tx_amd_retx> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_tx_amd_retx retx, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_tx_amd_retx retx, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "sn={} so={} len={}", retx.sn, retx.so, retx.length);
   }

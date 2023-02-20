@@ -11,7 +11,7 @@
 #include "ldpc_rate_dematcher_neon_impl.h"
 #include <arm_neon.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 void ldpc_rate_dematcher_neon_impl::combine_softbits(span<log_likelihood_ratio>       out,
                                                      span<const log_likelihood_ratio> in0,

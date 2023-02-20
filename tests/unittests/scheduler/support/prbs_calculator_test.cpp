@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Pair of prbs_calculator_test_entry and corresponding number of prbs.
 struct prbs_calculator_test_entry {
@@ -25,7 +25,7 @@ struct prbs_calculator_test_entry {
 
 prbs_calculator_sch_config get_prb_calc_pdsch_config(unsigned        payload_bytes,
                                                      sch_mcs_index   mcs_index,
-                                                     pdsch_mcs_table mcs_table     = srsgnb::pdsch_mcs_table::qam64,
+                                                     pdsch_mcs_table mcs_table     = srsran::pdsch_mcs_table::qam64,
                                                      unsigned        nof_symbols   = 12,
                                                      unsigned        nof_dmrs_prbs = 36,
                                                      unsigned        nof_oh_prb    = 0,

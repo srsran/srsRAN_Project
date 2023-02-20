@@ -13,7 +13,7 @@
 
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief This interface represents the notification exit point of the receiving side of a F1-U bearer of the CU-UP
@@ -28,4 +28,4 @@ public:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

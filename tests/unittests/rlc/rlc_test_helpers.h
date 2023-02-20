@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 #include <list>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Fixture base class for all RLC {Tx,Rx} {AM,UM,TM} tests which contains commonly uses helper methods
 class rlc_trx_test

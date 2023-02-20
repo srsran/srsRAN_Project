@@ -13,7 +13,7 @@
 #include "../du_manager_test_helpers.h"
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class ue_manager_dummy : public ue_manager_ctrl_configurator
@@ -55,4 +55,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

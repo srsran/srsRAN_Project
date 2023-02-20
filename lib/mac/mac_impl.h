@@ -21,7 +21,7 @@
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_impl : public mac_interface, public mac_ue_control_information_handler
 {
@@ -68,4 +68,4 @@ private:
   mac_controller   ctrl_unit;
 };
 
-} // namespace srsgnb
+} // namespace srsran

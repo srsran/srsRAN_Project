@@ -18,7 +18,7 @@
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rlc/rlc_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 struct rlc_bearer_config {
@@ -52,4 +52,4 @@ rlc_entity_creation_message make_rlc_entity_creation_message(du_ue_index_t      
                                                              const du_manager_params::service_params& du_services);
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

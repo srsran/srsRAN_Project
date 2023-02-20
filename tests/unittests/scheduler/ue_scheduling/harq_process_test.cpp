@@ -12,7 +12,7 @@
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Tester for different combinations of max HARQ retxs, ack wait timeouts, and k1s.
 class dl_harq_process_tester : public ::testing::Test
@@ -66,11 +66,11 @@ TEST_F(dl_harq_process_tester, newtx_set_harq_to_not_empty)
 
   pdsch_information pdsch;
   pdsch.codewords.resize(1);
-  pdsch.codewords[0].mcs_table     = srsgnb::pdsch_mcs_table::qam64;
+  pdsch.codewords[0].mcs_table     = srsran::pdsch_mcs_table::qam64;
   pdsch.codewords[0].mcs_index     = mcs;
   pdsch.codewords[0].tb_size_bytes = tbs_bytes;
   pdsch.prbs                       = prbs;
-  h_dl.save_alloc_params(srsgnb::dci_dl_rnti_config_type::c_rnti_f1_0, pdsch);
+  h_dl.save_alloc_params(srsran::dci_dl_rnti_config_type::c_rnti_f1_0, pdsch);
   ASSERT_EQ(h_dl.last_alloc_params().dci_cfg_type, dci_dl_rnti_config_type::c_rnti_f1_0);
   ASSERT_EQ(h_dl.last_alloc_params().prbs.prbs(), prbs);
   ASSERT_EQ(h_dl.last_alloc_params().tb[0]->mcs, mcs);

@@ -16,7 +16,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Interpolator interface.
 ///
@@ -46,4 +46,4 @@ public:
   virtual void interpolate(span<cf_t> output, span<const cf_t> input, const configuration& cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

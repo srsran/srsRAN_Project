@@ -13,7 +13,7 @@
 #include "srsgnb/phy/lower/lower_phy_rg_handler.h"
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a generic physical layer resource grid gateway adapter.
 class phy_rg_gateway_adapter : public upper_phy_rg_gateway
@@ -33,4 +33,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

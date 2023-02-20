@@ -15,7 +15,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/sch_mcs.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Snapshot of the metrics for a UE.
 struct scheduler_ue_metrics {
@@ -45,4 +45,4 @@ public:
   virtual void report_metrics(span<const scheduler_ue_metrics> ue_metrics) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

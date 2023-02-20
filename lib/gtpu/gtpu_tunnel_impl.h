@@ -16,7 +16,7 @@
 #include "srsgnb/gtpu/gtpu_tunnel.h"
 #include "srsgnb/srslog/logger.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class gtpu_tunnel_impl : public gtpu_tunnel
 {
@@ -41,4 +41,4 @@ private:
   std::unique_ptr<gtpu_tunnel_rx> rx = {};
   std::unique_ptr<gtpu_tunnel_tx> tx = {};
 };
-} // namespace srsgnb
+} // namespace srsran

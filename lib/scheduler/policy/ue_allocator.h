@@ -15,7 +15,7 @@
 #include "../ue_scheduling/ue_scheduler.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Information relative to a UE PDSCH grant.
 struct ue_pdsch_grant {
@@ -61,4 +61,4 @@ public:
   virtual bool allocate_ul_grant(const ue_pusch_grant& grant) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

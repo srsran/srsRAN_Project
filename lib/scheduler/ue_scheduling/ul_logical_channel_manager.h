@@ -16,7 +16,7 @@
 #include "srsgnb/scheduler/config/logical_channel_config.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class ul_logical_channel_manager
 {
@@ -101,4 +101,4 @@ private:
   std::array<channel_group_context, MAX_NOF_LCGS> groups;
 };
 
-} // namespace srsgnb
+} // namespace srsran

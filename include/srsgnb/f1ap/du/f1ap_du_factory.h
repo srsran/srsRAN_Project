@@ -5,7 +5,7 @@
 #include "srsgnb/support/timers.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// Creates an instance of an F1AP DU interface, notifying outgoing packets on the specified listener object.
@@ -15,4 +15,4 @@ std::unique_ptr<f1ap_interface> create_f1ap(f1ap_message_notifier&      event_no
                                             du_high_ue_executor_mapper& ue_exec_mapper);
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

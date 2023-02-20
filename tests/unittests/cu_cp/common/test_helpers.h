@@ -20,7 +20,7 @@
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Generate DU-to-CU RRC Container with CellGroupConfig.
@@ -328,4 +328,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const ulsch_demultiplex::configuration& config)
 {
@@ -50,9 +50,9 @@ std::ostream& operator<<(std::ostream& os, span<const uint16_t> data)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 class UlschDemultiplexFixture : public ::testing::TestWithParam<test_case_t>

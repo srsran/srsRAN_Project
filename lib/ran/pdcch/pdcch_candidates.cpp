@@ -10,7 +10,7 @@
 
 #include "srsgnb/ran/pdcch/pdcch_candidates.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static pdcch_candidate_list pdcch_candidates_get_lowest_cce(unsigned Y_p,
                                                             unsigned n_ci,
@@ -48,7 +48,7 @@ static unsigned pdcch_candidates_ue_ss_get_Y_p(unsigned A_p, unsigned D, unsigne
 }
 
 pdcch_candidate_list
-srsgnb::pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_ss_configuration& config)
+srsran::pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_ss_configuration& config)
 {
   unsigned Y_p  = 0;
   unsigned n_ci = 0;
@@ -57,7 +57,7 @@ srsgnb::pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_
       Y_p, n_ci, to_nof_cces(config.L), config.nof_candidates, config.nof_cce_coreset);
 }
 
-pdcch_candidate_list srsgnb::pdcch_candidates_ue_ss_get_lowest_cce(const pdcch_candidates_ue_ss_configuration& config)
+pdcch_candidate_list srsran::pdcch_candidates_ue_ss_get_lowest_cce(const pdcch_candidates_ue_ss_configuration& config)
 {
   static const std::array<unsigned, 3> A_p_values = {39827, 39829, 39839};
   unsigned                             n_ci       = 0;

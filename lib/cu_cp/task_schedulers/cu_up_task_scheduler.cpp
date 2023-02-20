@@ -10,7 +10,7 @@
 
 #include "cu_up_task_scheduler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 cu_up_task_scheduler::cu_up_task_scheduler(timer_manager& timers_) : timers(timers_)

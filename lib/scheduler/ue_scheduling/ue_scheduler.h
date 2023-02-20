@@ -15,7 +15,7 @@
 #include "ue.h" // TEMP
 #include "srsgnb/scheduler/scheduler_configurator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pdcch_resource_allocator;
 struct cell_resource_allocator;
@@ -48,4 +48,4 @@ public:
   virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

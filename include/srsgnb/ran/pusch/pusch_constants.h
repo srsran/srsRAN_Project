@@ -14,7 +14,7 @@
 
 #include "srsgnb/phy/constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace pusch_constants {
 
@@ -44,4 +44,4 @@ static constexpr unsigned MAX_NOF_PUSCH_TD_RES_ALLOCS = 16;
 
 } // namespace pusch_constants
 
-} // namespace srsgnb
+} // namespace srsran

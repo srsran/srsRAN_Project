@@ -13,7 +13,7 @@
 #include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// CRC cyclic generator polynomials identifiers.
 enum class crc_generator_poly {
@@ -54,4 +54,4 @@ public:
   virtual crc_generator_poly get_generator_poly() const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

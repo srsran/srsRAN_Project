@@ -18,7 +18,7 @@
 #include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Helper function that returns whether slot n0 of Type0-PDCCH CSS is in an even/odd frame.
 /// \param[in] table_13_11_and_13_12_O Parameter \c O provided in Table 13-11 and 13-12 of TS 38 213.
@@ -70,4 +70,4 @@ slot_point precompute_type0_pdcch_css_n0_plus_1(uint8_t                   search
                                                 subcarrier_spacing        scs_common,
                                                 unsigned                  ssb_index);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 

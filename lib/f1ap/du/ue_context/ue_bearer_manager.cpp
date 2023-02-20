@@ -13,7 +13,7 @@
 #include "f1c_du_bearer_impl.h"
 #include "srsgnb/f1u/du/f1u_bearer_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 void ue_bearer_manager::add_srb0_f1c_bearer(f1c_rx_sdu_notifier&        f1c_rx_sdu_notif,

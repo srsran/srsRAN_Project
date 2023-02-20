@@ -12,7 +12,7 @@
 #include "srsgnb/ran/pdcch/search_space.h"
 #include "srsgnb/ran/rnti.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PDCCH transmission context.
 class pdcch_context
@@ -29,4 +29,4 @@ private:
   unsigned        harq_feedback_timing = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

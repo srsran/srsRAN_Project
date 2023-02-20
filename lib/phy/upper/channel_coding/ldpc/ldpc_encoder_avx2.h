@@ -16,7 +16,7 @@
 #include "avx2_support.h"
 #include "ldpc_encoder_impl.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief LDPC encoder implementation based on AVX2 intrinsics.
 /// \warning Instantiating an object of this class entails a heap memory allocation.
@@ -108,4 +108,4 @@ private:
   unsigned node_size_avx2 = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

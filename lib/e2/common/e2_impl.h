@@ -17,7 +17,7 @@
 #include "srsgnb/support/timers.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class e2_event_manager;
 
@@ -58,4 +58,4 @@ private:
   unsigned current_transaction_id = 0; // store current E2AP transaction id
 };
 
-} // namespace srsgnb
+} // namespace srsran

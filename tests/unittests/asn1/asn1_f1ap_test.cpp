@@ -44,7 +44,7 @@ protected:
     pcap_writer.close();
   }
 
-  srsgnb::f1ap_pcap     pcap_writer;
+  srsran::f1ap_pcap     pcap_writer;
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -105,7 +105,7 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
 
   setup_req->gnb_du_served_cells_list.value.push_back(served_cells_item_container);
 
-  srsgnb::byte_buffer tx_buffer;
+  srsran::byte_buffer tx_buffer;
   asn1::bit_ref       bref(tx_buffer);
   ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
@@ -135,7 +135,7 @@ TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
   setup_res->gnb_cu_name.value.from_string("srsCU");
   setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
 
-  srsgnb::byte_buffer tx_pdu;
+  srsran::byte_buffer tx_pdu;
   asn1::bit_ref       bref(tx_pdu);
   ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
@@ -151,7 +151,7 @@ TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
                    tx_buffer.size(),
                    json_writer1.to_string().c_str());
 #endif
-  pcap_writer.write_pdu(srsgnb::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
+  pcap_writer.write_pdu(srsran::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
 }
 
 // unsuccessful outcome F1SetupFailure
@@ -171,7 +171,7 @@ TEST_F(asn1_f1ap_test, when_setup_failure_correct_then_packing_successful)
   setup_fail->time_to_wait.value   = asn1::f1ap::time_to_wait_opts::v10s;
   // add critical diagnostics
 
-  srsgnb::byte_buffer tx_pdu;
+  srsran::byte_buffer tx_pdu;
   asn1::bit_ref       bref(tx_pdu);
   ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
@@ -187,7 +187,7 @@ TEST_F(asn1_f1ap_test, when_setup_failure_correct_then_packing_successful)
                    tx_buffer.size(),
                    json_writer1.to_string().c_str());
 #endif
-  pcap_writer.write_pdu(srsgnb::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
+  pcap_writer.write_pdu(srsran::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
 }
 
 TEST_F(asn1_f1ap_test, when_ue_context_setup_request_correct_then_unpacking_successful)
@@ -227,7 +227,7 @@ TEST_F(asn1_f1ap_test, when_ue_context_setup_request_correct_then_unpacking_succ
       0x22, 0x51, 0x40, 0x08, 0x09, 0x00, 0xfe, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x20, 0x66, 0x00, 0x17, 0x02, 0x00, 0x00, 0x00, 0xa1, 0x40, 0x01, 0x40, 0x00, 0x9e, 0x40,
       0x04, 0x20, 0x20, 0x3a, 0x00};
-  srsgnb::byte_buffer rx_pdu{rx_msg};
+  srsran::byte_buffer rx_pdu{rx_msg};
 
   pcap_writer.write_pdu(rx_msg);
 
@@ -264,7 +264,7 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_correct_then_unpacki
       0x13, 0xb6, 0x4b, 0x18, 0x14, 0x40, 0x0e, 0x46, 0x8a, 0xcf, 0x12, 0x00, 0x00, 0x09, 0x60, 0x70, 0x82, 0x0f, 0x17,
       0x7e, 0x06, 0x08, 0x70, 0x00, 0x00, 0x00, 0xe2, 0x50, 0x38, 0x00, 0x00, 0x40, 0xbd, 0xe8, 0x02, 0x00, 0x04, 0x00,
       0x00, 0x00, 0x00, 0x02, 0x82, 0x01, 0x95, 0x03, 0x00, 0xc4, 0x00, 0x00, 0x4e, 0x40, 0x02, 0x00, 0x00};
-  srsgnb::byte_buffer rx_pdu{rx_msg};
+  srsran::byte_buffer rx_pdu{rx_msg};
 
   pcap_writer.write_pdu(rx_msg);
 
@@ -302,7 +302,7 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_packing_correct_then
       0x13, 0xb6, 0x4b, 0x18, 0x14, 0x40, 0x0e, 0x46, 0x8a, 0xcf, 0x12, 0x00, 0x00, 0x09, 0x60, 0x70, 0x82, 0x0f, 0x17,
       0x7e, 0x06, 0x08, 0x70, 0x00, 0x00, 0x00, 0xe2, 0x50, 0x38, 0x00, 0x00, 0x40, 0xbd, 0xe8, 0x02, 0x00, 0x04, 0x00,
       0x00, 0x00, 0x00, 0x02, 0x82, 0x01, 0x95, 0x03, 0x00, 0xc4, 0x00, 0x00, 0x4e, 0x40, 0x02, 0x00, 0x00};
-  srsgnb::byte_buffer rx_pdu{rx_msg};
+  srsran::byte_buffer rx_pdu{rx_msg};
 
   asn1::f1ap::f1ap_pdu_c tx_pdu;
 
@@ -323,7 +323,7 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_packing_correct_then
       "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
       "c400");
 
-  srsgnb::byte_buffer tx_buffer;
+  srsran::byte_buffer tx_buffer;
   asn1::bit_ref       bref_tx(tx_buffer);
   ASSERT_EQ(tx_pdu.pack(bref_tx), SRSASN_SUCCESS);
 

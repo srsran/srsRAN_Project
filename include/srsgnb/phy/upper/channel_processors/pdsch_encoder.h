@@ -19,7 +19,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PDSCH encoder, as per TS38.212 Section 7.2.
 ///
@@ -42,4 +42,4 @@ public:
   virtual void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

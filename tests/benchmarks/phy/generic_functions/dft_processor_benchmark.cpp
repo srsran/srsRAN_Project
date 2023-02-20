@@ -14,7 +14,7 @@
 #include <getopt.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Random generator.
 static std::mt19937 rgen(0);

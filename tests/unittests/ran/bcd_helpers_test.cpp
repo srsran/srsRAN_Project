@@ -11,7 +11,7 @@
 #include "srsgnb/ran/bcd_helpers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(bcd_helpers_test, plmn_string_to_bcd)
 {

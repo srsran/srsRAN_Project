@@ -24,7 +24,7 @@
 
 // TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.
 
-namespace srsgnb {
+namespace srsran {
 namespace config_helpers {
 
 inline scheduler_expert_config make_default_scheduler_expert_config()
@@ -113,4 +113,4 @@ inline std::map<uint8_t, du_qos_config> make_default_du_qos_config_list()
 }
 
 } // namespace config_helpers
-} // namespace srsgnb
+} // namespace srsran

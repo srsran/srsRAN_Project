@@ -10,10 +10,10 @@
 
 #include "f1ap_du_test_messages.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace asn1::f1ap;
 
-f1ap_message srsgnb::generate_f1_setup_response_message(unsigned transaction_id)
+f1ap_message srsran::generate_f1_setup_response_message(unsigned transaction_id)
 {
   f1ap_message f1_setup_response = {};
 
@@ -29,7 +29,7 @@ f1ap_message srsgnb::generate_f1_setup_response_message(unsigned transaction_id)
   return f1_setup_response;
 }
 
-f1ap_message srsgnb::generate_f1_setup_failure_message(unsigned transaction_id, asn1::f1ap::time_to_wait_e time_to_wait)
+f1ap_message srsran::generate_f1_setup_failure_message(unsigned transaction_id, asn1::f1ap::time_to_wait_e time_to_wait)
 {
   f1ap_message f1_setup_failure = {};
 
@@ -53,7 +53,7 @@ f1ap_message srsgnb::generate_f1_setup_failure_message(unsigned transaction_id, 
   return f1_setup_failure;
 }
 
-f1ap_message srsgnb::generate_f1ap_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container)
+f1ap_message srsran::generate_f1ap_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container)
 {
   f1ap_message msg;
 

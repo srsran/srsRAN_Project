@@ -15,7 +15,7 @@
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class initial_cu_cp_setup_routine
@@ -39,4 +39,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -11,8 +11,8 @@
 #include "rrc_security_mode_command_procedure.h"
 #include "../rrc_asn1_helpers.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 rrc_security_mode_command_procedure::rrc_security_mode_command_procedure(

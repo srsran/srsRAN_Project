@@ -11,8 +11,8 @@
 #include "ldpc_encoder_neon.h"
 #include "neon_support.h"
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 // Recursively selects the proper strategy for the high-rate region by successively decreasing the value of the template
 // parameter.

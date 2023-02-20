@@ -13,7 +13,7 @@
 #include "srsgnb/asn1/ngap/ngap.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief  Convert CU-CP security result to NGAP security result.
@@ -172,4 +172,4 @@ inline nr_cell_id_t cu_cp_nrcgi_to_nr_cell_identity(asn1::ngap::nr_cgi_s& ngap_c
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

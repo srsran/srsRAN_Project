@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_rx.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implementation of the PUSCH decoder.
 class pusch_decoder_impl : public pusch_decoder
@@ -82,4 +82,4 @@ private:
   sch_crc crc_set;
 };
 
-} // namespace srsgnb
+} // namespace srsran

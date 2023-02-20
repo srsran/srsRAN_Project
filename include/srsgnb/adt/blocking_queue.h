@@ -17,7 +17,7 @@
 #include <mutex>
 #include <thread>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -288,7 +288,7 @@ protected:
     }
     return false;
   }
-  srsgnb::error_type<T> push_(T&& t, bool block_mode)
+  srsran::error_type<T> push_(T&& t, bool block_mode)
   {
     std::unique_lock<std::mutex> lock(mutex);
     if (push_is_possible(lock, block_mode)) {
@@ -456,4 +456,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

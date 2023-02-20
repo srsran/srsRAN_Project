@@ -14,7 +14,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/adt/tiny_optional.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Default paging cycle, used to derive 'T' in TS 38.304. Value rf32 corresponds to 32 radio frames and so on.
 /// \remark See TS 38.331, PagingCycle.
@@ -65,4 +65,4 @@ struct pcch_config {
   static_vector<unsigned, MAX_PO_PER_PF>                    first_pdcch_monitoring_occasion_of_po_value;
 };
 
-} // namespace srsgnb
+} // namespace srsran

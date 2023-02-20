@@ -12,7 +12,7 @@
 #include "srsgnb/adt/span.h"
 #include "gtest/gtest.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 class PdcchCandidatesFixture : public ::testing::TestWithParam<test_case_t>
 {};

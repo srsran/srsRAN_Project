@@ -12,7 +12,7 @@
 
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Checks if alignment is power of 2.
 constexpr bool is_alignment_valid(std::size_t alignment)
@@ -40,4 +40,4 @@ inline void* align_next(void* pos, std::size_t alignment)
   return reinterpret_cast<void*>(align_next(reinterpret_cast<std::uintptr_t>(pos), alignment));
 }
 
-} // namespace srsgnb
+} // namespace srsran

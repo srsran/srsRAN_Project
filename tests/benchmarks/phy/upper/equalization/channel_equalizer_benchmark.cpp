@@ -14,7 +14,7 @@
 #include <getopt.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Equalizer data dimensions.
 using re_dims = channel_equalizer::re_list::dims;

@@ -20,7 +20,7 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct f1ap_initial_ul_rrc_message {
@@ -209,4 +209,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -23,7 +23,7 @@
 #include "srsgnb/ran/uci/uci_constants.h"
 #include "srsgnb/scheduler/harq_id.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// UL Buffer Status Report for a single logical channel group.
 struct ul_bsr_lcg_report {
@@ -112,4 +112,4 @@ public:
   virtual void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

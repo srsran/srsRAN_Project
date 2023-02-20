@@ -13,7 +13,7 @@
 #include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/ran/lcid.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Generate dummy F1AP SETUP RESPONSE message (CU -> DU).
 f1ap_message generate_f1_setup_response_message(unsigned transaction_id);
@@ -28,4 +28,4 @@ generate_f1_setup_failure_message(unsigned                   transaction_id,
 /// \brief Generate dummy F1AP DL RRC Message Transfer message (CU -> DU).
 f1ap_message generate_f1ap_dl_rrc_message_transfer(srb_id_t srb_id, const byte_buffer& rrc_container);
 
-} // namespace srsgnb
+} // namespace srsran

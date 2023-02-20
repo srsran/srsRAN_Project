@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -29,7 +29,7 @@ TEST_P(validate_ssb_pdu_field, WithValue)
                std::get<1>(params),
                build_valid_dl_ssb_pdu,
                validate_dl_ssb_pdu,
-               srsgnb::fapi::message_type_id::dl_tti_request,
+               srsran::fapi::message_type_id::dl_tti_request,
                dl_pdu_type::SSB);
 };
 

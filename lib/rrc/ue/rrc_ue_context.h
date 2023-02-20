@@ -17,7 +17,7 @@
 #include "srsgnb/rrc/rrc_ue.h"
 #include "srsgnb/rrc/rrc_ue_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -56,4 +56,4 @@ public:
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

@@ -19,7 +19,7 @@
 #include <getopt.h>
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 const std::array<uint8_t, 16> k_128_int =
     {0x16, 0x17, 0x18, 0x19, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x30, 0x31};
@@ -271,21 +271,21 @@ inline pdcp_config get_pdcp_config_from_args(uint32_t id, const stress_test_args
   cnfg.tx.rb_type  = pdcp_rb_type::drb;
   cnfg.rx.rb_type  = pdcp_rb_type::drb;
   if (args.pdcp_sn_size == 12) {
-    cnfg.tx.sn_size = srsgnb::pdcp_sn_size::size12bits;
-    cnfg.rx.sn_size = srsgnb::pdcp_sn_size::size12bits;
+    cnfg.tx.sn_size = srsran::pdcp_sn_size::size12bits;
+    cnfg.rx.sn_size = srsran::pdcp_sn_size::size12bits;
   } else if (args.pdcp_sn_size == 18) {
-    cnfg.tx.sn_size = srsgnb::pdcp_sn_size::size18bits;
-    cnfg.rx.sn_size = srsgnb::pdcp_sn_size::size18bits;
+    cnfg.tx.sn_size = srsran::pdcp_sn_size::size18bits;
+    cnfg.rx.sn_size = srsran::pdcp_sn_size::size18bits;
   } else {
     fprintf(stderr, "Unsupported PDCP SN %d, exiting.\n", args.pdcp_sn_size);
     exit(-1);
   }
   if (id == 0) {
-    cnfg.tx.direction = srsgnb::pdcp_security_direction::downlink;
-    cnfg.rx.direction = srsgnb::pdcp_security_direction::uplink;
+    cnfg.tx.direction = srsran::pdcp_security_direction::downlink;
+    cnfg.rx.direction = srsran::pdcp_security_direction::uplink;
   } else {
-    cnfg.tx.direction = srsgnb::pdcp_security_direction::uplink;
-    cnfg.rx.direction = srsgnb::pdcp_security_direction::downlink;
+    cnfg.tx.direction = srsran::pdcp_security_direction::uplink;
+    cnfg.rx.direction = srsran::pdcp_security_direction::downlink;
   }
   cnfg.rx.t_reordering = static_cast<pdcp_t_reordering>(args.pdcp_t_reordering);
   return cnfg;
@@ -295,17 +295,17 @@ inline rlc_config get_rlc_config_from_args(const stress_test_args& args)
 {
   rlc_config cnfg = {};
   if (args.mode == "TM") {
-    cnfg.mode = srsgnb::rlc_mode::tm;
+    cnfg.mode = srsran::rlc_mode::tm;
   } else if (args.mode == "UM6") {
-    cnfg.mode                  = srsgnb::rlc_mode::um_bidir;
+    cnfg.mode                  = srsran::rlc_mode::um_bidir;
     cnfg.um.rx.sn_field_length = rlc_um_sn_size::size6bits;
     cnfg.um.tx.sn_field_length = rlc_um_sn_size::size6bits;
   } else if (args.mode == "UM12") {
-    cnfg.mode                  = srsgnb::rlc_mode::um_bidir;
+    cnfg.mode                  = srsran::rlc_mode::um_bidir;
     cnfg.um.rx.sn_field_length = rlc_um_sn_size::size12bits;
     cnfg.um.tx.sn_field_length = rlc_um_sn_size::size12bits;
   } else if (args.mode == "AM12") {
-    cnfg.mode                    = srsgnb::rlc_mode::am;
+    cnfg.mode                    = srsran::rlc_mode::am;
     cnfg.am.rx.sn_field_length   = rlc_am_sn_size::size12bits;
     cnfg.am.tx.sn_field_length   = rlc_am_sn_size::size12bits;
     cnfg.am.tx.t_poll_retx       = 50;
@@ -314,7 +314,7 @@ inline rlc_config get_rlc_config_from_args(const stress_test_args& args)
     cnfg.am.rx.t_reassembly      = 40;
     cnfg.am.rx.t_status_prohibit = 8;
   } else if (args.mode == "AM18") {
-    cnfg.mode                    = srsgnb::rlc_mode::am;
+    cnfg.mode                    = srsran::rlc_mode::am;
     cnfg.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
     cnfg.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
     cnfg.am.tx.t_poll_retx       = 50;
@@ -368,4 +368,4 @@ inline void init_log_from_args(const stress_test_args& args)
   log_mac.set_level(args.log_level_mac);
   log_mac.set_hex_dump_max_size(args.log_hex_limit);
 }
-} // namespace srsgnb
+} // namespace srsran

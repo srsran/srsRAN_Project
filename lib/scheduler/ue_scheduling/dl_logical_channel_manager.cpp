@@ -10,7 +10,7 @@
 
 #include "dl_logical_channel_manager.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -122,7 +122,7 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
   return alloc_bytes;
 }
 
-unsigned srsgnb::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
+unsigned srsran::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
 {
   unsigned rem_tbs = total_tbs;
 
@@ -145,7 +145,7 @@ unsigned srsgnb::allocate_mac_sdus(dl_msg_tb_info& tb_info, dl_logical_channel_m
   return total_tbs - rem_tbs;
 }
 
-unsigned srsgnb::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
+unsigned srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
 {
   unsigned rem_tbs = total_tbs;
 
@@ -193,7 +193,7 @@ unsigned dl_logical_channel_manager::allocate_ue_con_res_id_mac_ce(dl_msg_lc_inf
 }
 
 unsigned
-srsgnb::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
+srsran::allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs)
 {
   unsigned rem_tbs = total_tbs;
 

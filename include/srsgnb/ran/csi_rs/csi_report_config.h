@@ -18,7 +18,7 @@
 #include "srsgnb/ran/pusch/pusch_configuration.h"
 #include "srsgnb/ran/pusch/pusch_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 enum class csi_resource_periodicity;
 
@@ -264,4 +264,4 @@ struct csi_report_config {
   bool operator!=(const csi_report_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

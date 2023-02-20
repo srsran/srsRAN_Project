@@ -12,7 +12,7 @@
 
 #include "lcid_dl_sch.h"
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr unsigned FIXED_SIZED_MAC_CE_SUBHEADER_SIZE = 1;
 constexpr unsigned MAC_SDU_SUBHEADER_LENGTH_THRES    = 256;
@@ -41,4 +41,4 @@ inline unsigned get_mac_sdu_payload_size(unsigned mac_sdu_size)
   return mac_sdu_size - MAX_MAC_SDU_SUBHEADER_SIZE;
 }
 
-} // namespace srsgnb
+} // namespace srsran

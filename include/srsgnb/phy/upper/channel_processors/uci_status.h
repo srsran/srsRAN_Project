@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Labels for the UCI decoding/detection status, common for both PUCCH and PUSCH UCI.
 enum class uci_status {
@@ -42,4 +42,4 @@ inline const char* to_string(uci_status status)
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran

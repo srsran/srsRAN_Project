@@ -11,7 +11,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_slot_type()
 {

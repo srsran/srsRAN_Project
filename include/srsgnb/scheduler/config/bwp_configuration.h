@@ -25,7 +25,7 @@
 #include "srsgnb/scheduler/prb_grant.h"
 #include <bitset>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \remark See TS 38.331, "PDCCH-ConfigCommon"
 struct pdcch_config_common {
@@ -235,4 +235,4 @@ struct ul_config_common {
   bwp_uplink_common init_ul_bwp;
 };
 
-} // namespace srsgnb
+} // namespace srsran

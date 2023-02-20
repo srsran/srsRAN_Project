@@ -13,7 +13,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include "srsgnb/support/units.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// LDPC Base graph types.
 enum class ldpc_base_graph_type : uint8_t { BG1 = 1, BG2 = 2 };
@@ -35,4 +35,4 @@ constexpr ldpc_base_graph_type get_ldpc_base_graph(float R, units::bits A)
   return ldpc_base_graph_type::BG1;
 }
 
-} // namespace srsgnb
+} // namespace srsran

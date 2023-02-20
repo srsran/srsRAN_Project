@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// Maximum number of UEs supported by CU-UP (implementation-defined).
@@ -36,4 +36,4 @@ constexpr inline bool is_ue_index_valid(ue_index_t ue_idx)
 }
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

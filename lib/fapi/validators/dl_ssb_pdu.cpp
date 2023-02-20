@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/validator_report.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 /// This validator checks a DL_TTI,request message.
@@ -153,7 +153,7 @@ static bool validate_L_max(unsigned value, validator_report& report)
   return false;
 }
 
-bool srsgnb::fapi::validate_dl_ssb_pdu(const dl_ssb_pdu& pdu, validator_report& report)
+bool srsran::fapi::validate_dl_ssb_pdu(const dl_ssb_pdu& pdu, validator_report& report)
 {
   bool result = true;
 

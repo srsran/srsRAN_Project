@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_processors/ulsch_demultiplex.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class ulsch_demultiplex_spy : public ulsch_demultiplex
 {
@@ -87,4 +87,4 @@ private:
 
 PHY_SPY_FACTORY_TEMPLATE(ulsch_demultiplex);
 
-} // namespace srsgnb
+} // namespace srsran

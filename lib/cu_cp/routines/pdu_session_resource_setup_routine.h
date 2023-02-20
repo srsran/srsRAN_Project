@@ -14,7 +14,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/eager_async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Handles the setup of PDU session resources from the RRC viewpoint.
@@ -23,7 +23,7 @@ class pdu_session_resource_setup_routine
 {
 public:
   pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_request& setup_msg_,
-                                     const srsgnb::security::sec_as_config&          security_cfg_,
+                                     const srsran::security::sec_as_config&          security_cfg_,
                                      du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
                                      du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
                                      du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
@@ -41,7 +41,7 @@ private:
   cu_cp_pdu_session_resource_setup_response handle_pdu_session_resource_setup_result(bool success);
 
   const cu_cp_pdu_session_resource_setup_request setup_msg;
-  const srsgnb::security::sec_as_config          security_cfg;
+  const srsran::security::sec_as_config          security_cfg;
 
   std::vector<drb_id_t> drb_to_add_list; // list of DRBs to be added
 
@@ -67,4 +67,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

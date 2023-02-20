@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// DRB to QoS flow mapping.
 class sdap_mapper
@@ -23,4 +23,4 @@ public:
   virtual bool drb_release(int drb) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

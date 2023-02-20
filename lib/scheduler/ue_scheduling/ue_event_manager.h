@@ -18,7 +18,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/uci/uci_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class scheduler_metrics_handler;
 class scheduler_event_logger;
@@ -110,4 +110,4 @@ private:
   slot_point                      last_sl;
 };
 
-} // namespace srsgnb
+} // namespace srsran

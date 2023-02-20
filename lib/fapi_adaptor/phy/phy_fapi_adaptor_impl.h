@@ -15,7 +15,7 @@
 #include "phy_to_fapi_time_event_translator.h"
 #include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor.h"
 
-namespace srsgnb {
+namespace srsran {
 class uplink_request_processor;
 
 namespace fapi {
@@ -85,4 +85,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Generic optimized modulator for any modulation order QM > 2 and QM % 2 == 0.
 template <unsigned QM>

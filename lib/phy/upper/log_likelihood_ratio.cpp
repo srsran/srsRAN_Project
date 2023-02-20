@@ -19,7 +19,7 @@
 #include <arm_neon.h>
 #endif // HAVE_NEON
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Computes the sum when at least one of the summands is plus/minus infinity.
 // Note that also the indeterminate case +LLR_INFTY + (-LLR_INFTY) is set to zero.
@@ -210,7 +210,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
 }
 #endif // HAVE_NEON
 
-void srsgnb::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
+void srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
 {
   // Make sure that there is enough space in the output to accommodate the hard bits.
   srsgnb_assert(soft_bits.size() <= hard_bits.size(),

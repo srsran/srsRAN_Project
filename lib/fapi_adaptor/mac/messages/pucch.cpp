@@ -12,10 +12,10 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/scheduler/scheduler_pucch_format.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
-void srsgnb::fapi_adaptor::convert_pucch_mac_to_fapi(fapi::ul_pucch_pdu& fapi_pdu, const pucch_info& mac_pdu)
+void srsran::fapi_adaptor::convert_pucch_mac_to_fapi(fapi::ul_pucch_pdu& fapi_pdu, const pucch_info& mac_pdu)
 {
   fapi::ul_pucch_pdu_builder builder(fapi_pdu);
 
@@ -103,7 +103,7 @@ static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pu
   }
 }
 
-void srsgnb::fapi_adaptor::convert_pucch_mac_to_fapi(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
+void srsran::fapi_adaptor::convert_pucch_mac_to_fapi(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
 {
   // Handle is not supported.
   static const unsigned handle = 0;

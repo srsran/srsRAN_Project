@@ -12,7 +12,7 @@
 
 #include "detail/base_task.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Lazy awaitable coroutine type that outputs a result of type R when completed.
 /// \tparam R Result of the task
@@ -79,4 +79,4 @@ private:
   unique_coroutine<promise_type> handle;
 };
 
-} // namespace srsgnb
+} // namespace srsran

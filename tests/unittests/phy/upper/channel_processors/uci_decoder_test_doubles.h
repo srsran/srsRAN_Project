@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 class uci_decoder_spy : public uci_decoder
 {
@@ -61,4 +61,4 @@ private:
 
 PHY_SPY_FACTORY_TEMPLATE(uci_decoder);
 
-} // namespace srsgnb
+} // namespace srsran

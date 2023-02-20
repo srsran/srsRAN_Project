@@ -16,7 +16,7 @@
 #include <array>
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Memory segment of fixed size specified by SEGMENT_SIZE.
 /// Each segment buffer is divided into three parts [ HEADROOM | PAYLOAD | TAILROOM ]
@@ -541,4 +541,4 @@ struct byte_buffer_segment_pool_tag {};
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

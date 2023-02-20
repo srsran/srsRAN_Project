@@ -10,8 +10,8 @@
 
 #include "ng_setup_procedure.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ng_setup_procedure::ng_setup_procedure(const ng_setup_request&   request_,

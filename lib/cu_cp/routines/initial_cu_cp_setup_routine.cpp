@@ -12,7 +12,7 @@
 #include "../../ngap/ngap_asn1_helpers.h"
 #include "srsgnb/asn1/ngap/ngap.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 initial_cu_cp_setup_routine::initial_cu_cp_setup_routine(const ngap_configuration&       ngap_config_,

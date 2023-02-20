@@ -11,7 +11,7 @@
 #include "rlc_tx_tm_entity.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 rlc_tx_tm_entity::rlc_tx_tm_entity(du_ue_index_t                        du_index,
                                    rb_id_t                              rb_id,

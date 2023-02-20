@@ -21,7 +21,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// DM-RS-based PUSCH channel estimator interface.
 class dmrs_pusch_estimator
@@ -72,4 +72,4 @@ public:
   virtual void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,10 +12,10 @@
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
-using namespace srsgnb::config_helpers;
+using namespace srsran;
+using namespace srsran::config_helpers;
 
-std::vector<sched_grid_resource> srsgnb::config_helpers::build_pucch_guardbands_list(const uplink_config& ul_cfg)
+std::vector<sched_grid_resource> srsran::config_helpers::build_pucch_guardbands_list(const uplink_config& ul_cfg)
 {
   std::vector<sched_grid_resource> pucch_guardbands{};
 

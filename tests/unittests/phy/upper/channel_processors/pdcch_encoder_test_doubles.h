@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 class pdcch_encoder_spy : public pdcch_encoder
 {
@@ -55,4 +55,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(pdcch_encoder);
 
-} // namespace srsgnb
+} // namespace srsran

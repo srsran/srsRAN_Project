@@ -34,7 +34,7 @@
 #include <bitset>
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace fapi {
 
@@ -2210,4 +2210,4 @@ enum class tlv_tags : uint16_t {
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

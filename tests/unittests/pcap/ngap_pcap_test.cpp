@@ -13,8 +13,8 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-void write_pcap_ngap_thread_function_byte_buffer(srsgnb::ngap_pcap* pcap, uint32_t num_pdus);
-void write_pcap_ngap_thread_function_spans(srsgnb::ngap_pcap* pcap, uint32_t num_pdus);
+void write_pcap_ngap_thread_function_byte_buffer(srsran::ngap_pcap* pcap, uint32_t num_pdus);
+void write_pcap_ngap_thread_function_spans(srsran::ngap_pcap* pcap, uint32_t num_pdus);
 
 class pcap_ngap_test : public ::testing::Test
 {
@@ -38,7 +38,7 @@ protected:
     srslog::flush();
   }
 
-  srsgnb::ngap_pcap_impl ngap_pcap_writer;
+  srsran::ngap_pcap_impl ngap_pcap_writer;
   srslog::basic_logger&  test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -103,7 +103,7 @@ TEST_F(pcap_ngap_test, write_many_byte_buffers)
 }
 
 // Write #num_pdus DL MAC NR PDUs using PCAP handle (spans)
-void write_pcap_ngap_thread_function_spans(srsgnb::ngap_pcap* pcap, uint32_t num_pdus)
+void write_pcap_ngap_thread_function_spans(srsran::ngap_pcap* pcap, uint32_t num_pdus)
 {
   std::array<uint8_t, 55> tv = {0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1,
                                 0x10, 0x00, 0x00, 0x06, 0x6c, 0x00, 0x52, 0x40, 0x0a, 0x03, 0x80, 0x73, 0x72, 0x73,
@@ -117,9 +117,9 @@ void write_pcap_ngap_thread_function_spans(srsgnb::ngap_pcap* pcap, uint32_t num
 }
 
 // Write #num_pdus DL MAC NR PDUs using PCAP handle (byte_buffer)
-void write_pcap_ngap_thread_function_byte_buffer(srsgnb::ngap_pcap* pcap, uint32_t num_pdus)
+void write_pcap_ngap_thread_function_byte_buffer(srsran::ngap_pcap* pcap, uint32_t num_pdus)
 {
-  srsgnb::byte_buffer tv = {0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1,
+  srsran::byte_buffer tv = {0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1,
                             0x10, 0x00, 0x00, 0x06, 0x6c, 0x00, 0x52, 0x40, 0x0a, 0x03, 0x80, 0x73, 0x72, 0x73,
                             0x67, 0x6e, 0x62, 0x30, 0x31, 0x00, 0x66, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x07,
                             0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};

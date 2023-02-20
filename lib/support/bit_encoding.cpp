@@ -11,7 +11,7 @@
 #include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void bit_encoder::pack(uint64_t val, uint32_t n_bits)
 {
@@ -38,7 +38,7 @@ void bit_encoder::pack(uint64_t val, uint32_t n_bits)
   }
 }
 
-void bit_encoder::pack_bytes(srsgnb::span<const uint8_t> bytes)
+void bit_encoder::pack_bytes(srsran::span<const uint8_t> bytes)
 {
   if (bytes.empty()) {
     return;
@@ -53,7 +53,7 @@ void bit_encoder::pack_bytes(srsgnb::span<const uint8_t> bytes)
   }
 }
 
-void bit_encoder::pack_bytes(srsgnb::byte_buffer_view bytes)
+void bit_encoder::pack_bytes(srsran::byte_buffer_view bytes)
 {
   if (bytes.empty()) {
     return;
@@ -123,7 +123,7 @@ template bool bit_decoder::unpack<uint32_t>(uint32_t&, uint32_t n_bits);
 template bool bit_decoder::unpack<int64_t>(int64_t&, uint32_t n_bits);
 template bool bit_decoder::unpack<uint64_t>(uint64_t&, uint32_t n_bits);
 
-bool bit_decoder::unpack_bytes(srsgnb::span<uint8_t> bytes)
+bool bit_decoder::unpack_bytes(srsran::span<uint8_t> bytes)
 {
   if (bytes.empty()) {
     return true;

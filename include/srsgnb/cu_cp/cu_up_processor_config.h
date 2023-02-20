@@ -13,7 +13,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct cu_up_processor_config_t {
@@ -23,4 +23,4 @@ struct cu_up_processor_config_t {
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class heap_memory_resource
 {
@@ -33,4 +33,4 @@ private:
   span<uint8_t>              block_view;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Radio Unit timing notifier interface.
 class ru_timing_notifier
@@ -28,4 +28,4 @@ public:
   virtual void on_tti_boundary(slot_point slot) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

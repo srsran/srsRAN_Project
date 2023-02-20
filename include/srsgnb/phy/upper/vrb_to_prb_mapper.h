@@ -14,7 +14,7 @@
 #include "srsgnb/phy/constants.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a VRB-to-PRB mapping.
 ///
@@ -144,4 +144,4 @@ public:
            (other_bundle_size == other.other_bundle_size);
   }
 };
-} // namespace srsgnb
+} // namespace srsran

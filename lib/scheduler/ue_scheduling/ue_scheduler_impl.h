@@ -25,7 +25,7 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot.
 /// The data_scheduler object will be common to all cells and slots.
@@ -89,4 +89,4 @@ private:
   slot_sync_point sync_point;
 };
 
-} // namespace srsgnb
+} // namespace srsran

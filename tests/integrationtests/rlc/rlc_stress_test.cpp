@@ -13,7 +13,7 @@
 #include "rlc_stress_test.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 pthread_barrier_t barrier;
 stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t rb_id) :
   stack_id(id),

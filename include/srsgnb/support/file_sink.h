@@ -14,7 +14,7 @@
 #include <fstream>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 template <typename T>
 class file_sink
@@ -44,4 +44,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

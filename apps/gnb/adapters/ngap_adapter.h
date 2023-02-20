@@ -15,7 +15,7 @@
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/io_broker/io_broker.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -115,4 +115,4 @@ private:
 
 }; // namespace srs_cu_cp
 
-}; // namespace srsgnb
+}; // namespace srsran

@@ -13,7 +13,7 @@
 #include "sdap_session_logger.h"
 #include "srsgnb/sdap/sdap.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_up {
 
@@ -39,4 +39,4 @@ private:
 
 } // namespace srs_cu_up
 
-} // namespace srsgnb
+} // namespace srsran

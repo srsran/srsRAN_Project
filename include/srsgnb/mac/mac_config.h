@@ -16,7 +16,7 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/scheduler_metrics.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct mac_config {
   mac_pcap&                      pcap;
@@ -29,4 +29,4 @@ struct mac_config {
   scheduler_ue_metrics_notifier& metric_notifier;
 };
 
-} // namespace srsgnb
+} // namespace srsran

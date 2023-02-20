@@ -17,7 +17,7 @@
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between F1AP and CU-CP, to handle DU specific procedure outcomes (e.g. F1 Remove)
@@ -99,4 +99,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

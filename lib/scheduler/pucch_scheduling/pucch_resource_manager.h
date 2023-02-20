@@ -13,7 +13,7 @@
 #include "../ue_scheduling/ue_configuration.h"
 #include "pucch_allocator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Containers used to return the output of the PUCCH resource manager.
 struct pucch_harq_resource_alloc_record {
@@ -138,4 +138,4 @@ private:
   slot_point last_sl_ind;
 };
 
-} // namespace srsgnb
+} // namespace srsran

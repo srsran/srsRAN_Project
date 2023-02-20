@@ -14,9 +14,9 @@
 #include "equalize_zf_2x2.h"
 #include "srsgnb/srsvec/zero.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-void srsgnb::equalize_zf_2x2(channel_equalizer::re_list&           eq_symbols,
+void srsran::equalize_zf_2x2(channel_equalizer::re_list&           eq_symbols,
                              channel_equalizer::noise_var_list&    noise_vars,
                              const channel_equalizer::re_list&     ch_symbols,
                              const channel_equalizer::ch_est_list& ch_estimates,

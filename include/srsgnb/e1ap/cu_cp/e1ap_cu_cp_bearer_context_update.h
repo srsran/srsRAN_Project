@@ -13,7 +13,7 @@
 #include "../common/e1ap_types.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct e1ap_bearer_context_setup_request {
@@ -81,4 +81,4 @@ struct e1ap_bearer_context_release_command {
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

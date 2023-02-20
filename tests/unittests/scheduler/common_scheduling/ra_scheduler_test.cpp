@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 #include <ostream>
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -92,12 +92,12 @@ protected:
   {
     cell_config_builder_params builder_params{};
     builder_params.scs_common = params.scs;
-    if (dplx_mode == srsgnb::duplex_mode::TDD) {
+    if (dplx_mode == srsran::duplex_mode::TDD) {
       builder_params.dl_arfcn = 520000;
       builder_params.band     = nr_band::n41;
     }
-    if (params.scs == srsgnb::subcarrier_spacing::kHz30) {
-      builder_params.channel_bw_mhz = srsgnb::bs_channel_bandwidth_fr1::MHz20;
+    if (params.scs == srsran::subcarrier_spacing::kHz30) {
+      builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth_fr1::MHz20;
     }
 
     sched_cell_configuration_request_message req =

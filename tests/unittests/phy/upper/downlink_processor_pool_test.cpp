@@ -12,7 +12,7 @@
 #include "srsgnb/phy/upper/upper_phy_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static constexpr unsigned null_id = 99;
 

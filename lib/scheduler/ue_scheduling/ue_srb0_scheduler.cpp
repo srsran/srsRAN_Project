@@ -16,7 +16,7 @@
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cfg_,
                                      const cell_configuration&         cell_cfg_,

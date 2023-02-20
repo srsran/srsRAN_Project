@@ -11,7 +11,7 @@
 #include "scheduler_prb.h"
 #include "srsgnb/scheduler/resource_block_group.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 bwp_rb_bitmap::bwp_rb_bitmap(uint32_t bwp_nof_prbs, uint32_t bwp_prb_start_, bool config1_or_2) :
   prbs_(bwp_nof_prbs),

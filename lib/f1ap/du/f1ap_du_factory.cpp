@@ -14,10 +14,10 @@
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
-std::unique_ptr<f1ap_interface> srsgnb::srs_du::create_f1ap(f1ap_message_notifier&      message_notifier,
+std::unique_ptr<f1ap_interface> srsran::srs_du::create_f1ap(f1ap_message_notifier&      message_notifier,
                                                             f1ap_du_configurator&       du_mng,
                                                             task_executor&              ctrl_exec,
                                                             du_high_ue_executor_mapper& ue_exec_mapper)

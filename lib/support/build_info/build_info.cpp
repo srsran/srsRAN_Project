@@ -11,7 +11,7 @@
 #include "srsgnb/support/build_info/build_info.h"
 #include "hashes.h"
 
-namespace srsgnb {
+namespace srsran {
 
 const char* get_build_hash()
 {
@@ -28,4 +28,4 @@ const char* get_build_mode()
   return build_mode;
 }
 
-} // namespace srsgnb
+} // namespace srsran

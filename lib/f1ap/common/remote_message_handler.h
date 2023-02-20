@@ -13,7 +13,7 @@
 #include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/gateways/network_gateway.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This implementation forwards all F1AP messages through a network gateway. It is useful for distributed scenarios
 /// where the F1 interfaces reside in different machines.
@@ -37,4 +37,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

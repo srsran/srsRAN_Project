@@ -11,7 +11,7 @@
 #include "srsgnb/ran/pdcch/dci_packing.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Computes the number of information bits before padding for a DCI format 0_0 message.
 static units::bits dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
@@ -60,7 +60,7 @@ static units::bits dci_f1_0_bits_before_padding(unsigned N_rb_dl_bwp)
   return units::bits(nof_bits);
 }
 
-dci_sizes srsgnb::get_dci_sizes(const dci_size_config& config)
+dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
 {
   dci_sizes sizes = {};
 
@@ -147,7 +147,7 @@ dci_sizes srsgnb::get_dci_sizes(const dci_size_config& config)
   return sizes;
 }
 
-dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
+dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
 {
   dci_payload payload;
   units::bits frequency_resource_nof_bits(log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2));
@@ -232,7 +232,7 @@ dci_payload srsgnb::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
   return payload;
 }
 
-dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config)
+dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config)
 {
   units::bits frequency_resource_nof_bits(log2_ceil(config.N_rb_ul_bwp * (config.N_rb_ul_bwp + 1) / 2));
   dci_payload payload;
@@ -306,7 +306,7 @@ dci_payload srsgnb::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
   return payload;
 }
 
-dci_payload srsgnb::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config)
+dci_payload srsran::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config)
 {
   units::bits frequency_resource_nof_bits(log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2));
   dci_payload payload;
@@ -359,7 +359,7 @@ dci_payload srsgnb::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& conf
   return payload;
 }
 
-dci_payload srsgnb::dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& config)
+dci_payload srsran::dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& config)
 {
   units::bits frequency_resource_nof_bits(log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2));
   dci_payload payload;
@@ -411,7 +411,7 @@ dci_payload srsgnb::dci_1_0_p_rnti_pack(const dci_1_0_p_rnti_configuration& conf
   return payload;
 }
 
-dci_payload srsgnb::dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& config)
+dci_payload srsran::dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& config)
 {
   units::bits frequency_resource_nof_bits(log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2));
   dci_payload payload;
@@ -440,7 +440,7 @@ dci_payload srsgnb::dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& co
   return payload;
 }
 
-dci_payload srsgnb::dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& config)
+dci_payload srsran::dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& config)
 {
   units::bits frequency_resource_nof_bits(log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2));
   dci_payload payload;
@@ -466,7 +466,7 @@ dci_payload srsgnb::dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& co
   return payload;
 }
 
-dci_payload srsgnb::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& config)
+dci_payload srsran::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& config)
 {
   units::bits frequency_resource_nof_bits(log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2));
   dci_payload payload;
@@ -510,7 +510,7 @@ dci_payload srsgnb::dci_1_0_tc_rnti_pack(const dci_1_0_tc_rnti_configuration& co
   return payload;
 }
 
-dci_payload srsgnb::dci_rar_pack(const dci_rar_configuration& config)
+dci_payload srsran::dci_rar_pack(const dci_rar_configuration& config)
 {
   dci_payload payload;
 

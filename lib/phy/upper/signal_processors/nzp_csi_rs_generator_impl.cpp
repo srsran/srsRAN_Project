@@ -12,7 +12,7 @@
 #include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/ran/csi_rs/csi_rs_pattern.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 bool nzp_csi_rs_configuration_validator_impl::is_valid(const nzp_csi_rs_generator::config_t& config)
 {
@@ -93,7 +93,7 @@ static unsigned get_nof_skipped_elements(const nzp_csi_rs_generator::config_t& c
   return nof_advance;
 }
 
-void srsgnb::nzp_csi_rs_generator_impl::generate_sequence(span<cf_t>      sequence,
+void srsran::nzp_csi_rs_generator_impl::generate_sequence(span<cf_t>      sequence,
                                                           const unsigned  symbol,
                                                           const config_t& config) const
 {
@@ -157,7 +157,7 @@ static unsigned get_seq_len(const nzp_csi_rs_generator::config_t& config)
   return seq_len;
 }
 
-void srsgnb::nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& config)
+void srsran::nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   unsigned nof_ports = config.ports.size();
 

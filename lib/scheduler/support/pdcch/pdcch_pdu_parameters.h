@@ -14,7 +14,7 @@
 
 #include "../../cell/cell_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Calculates \f$n_ID\f$ as per TS38.211 7.3.2.3.
 /// \return integer within values: {0,1,...,65535}.
@@ -52,4 +52,4 @@ inline unsigned get_N_ID_dmrs(const cell_configuration& cell_cfg, const coreset_
   return cell_cfg.pci;
 }
 
-} // namespace srsgnb
+} // namespace srsran

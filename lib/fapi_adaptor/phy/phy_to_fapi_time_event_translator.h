@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
 #include <functional>
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 class fapi_to_phy_translator;
@@ -48,4 +48,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

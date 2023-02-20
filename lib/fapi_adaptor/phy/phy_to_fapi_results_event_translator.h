@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
 #include <functional>
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// \brief PHY-to-FAPI uplink results events translator.
@@ -57,4 +57,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

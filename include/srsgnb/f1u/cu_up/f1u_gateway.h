@@ -15,7 +15,7 @@
 #include "srsgnb/f1u/cu_up/f1u_rx_sdu_notifier.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This class will be used to provide the interfaces to
 /// the CU-UP to create and manage F1-U bearers.
@@ -38,4 +38,4 @@ public:
   virtual void attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

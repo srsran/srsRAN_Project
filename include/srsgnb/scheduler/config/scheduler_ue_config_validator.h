@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace config_validators {
 
 /// \brief Validates \c sched_ue_creation_request_message used to create a UE.
@@ -38,4 +38,4 @@ error_type<std::string> validate_pdsch_cfg(const sched_ue_creation_request_messa
 error_type<std::string> validate_csi_meas_cfg(const sched_ue_creation_request_message& msg);
 
 } // namespace config_validators
-} // namespace srsgnb
+} // namespace srsran

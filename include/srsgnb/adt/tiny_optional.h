@@ -15,7 +15,7 @@
 
 #include "srsgnb/adt/optional.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Metafunction used to derive the specialization of tiny_optional<T> based on "T" and "T...".
 template <typename T, T...>
@@ -132,4 +132,4 @@ public:
   using base_type::base_type;
 };
 
-} // namespace srsgnb
+} // namespace srsran

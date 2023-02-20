@@ -12,7 +12,7 @@
 
 #include "pcap_file_base.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class f1ap_pcap : pcap_file_base
 {
@@ -30,4 +30,4 @@ public:
   void write_pdu(const_span<uint8_t> pdu);
 };
 
-} // namespace srsgnb
+} // namespace srsran

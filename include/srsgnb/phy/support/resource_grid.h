@@ -15,7 +15,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a resource grid coordinate as symbol index and carrier.
 struct resource_grid_coordinate {
@@ -188,4 +188,4 @@ public:
   virtual void set_all_zero() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

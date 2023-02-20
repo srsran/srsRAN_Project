@@ -15,7 +15,7 @@
 #include "srsgnb/f1ap/du/f1ap_du.h"
 #include "srsgnb/support/async/execute_on.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1ap_ue_task_scheduler_adapter final : public f1ap_ue_task_scheduler
@@ -80,4 +80,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

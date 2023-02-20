@@ -19,7 +19,7 @@
 #include <memory>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Random generator.
 static std::mt19937 rgen(0);
@@ -77,7 +77,7 @@ static void run_expected_dft(span<cf_t> output, dft_processor::direction directi
   ditfft(output, input, exp, N, 1);
 }
 
-namespace srsgnb {
+namespace srsran {
 static bool operator==(span<const cf_t> left, span<const cf_t> right)
 {
   unsigned size = left.size();
@@ -100,7 +100,7 @@ static bool operator==(span<const cf_t> left, span<const cf_t> right)
   return (mse < ASSERT_MAX_MSE) && (max_abs_error.second < ASSERT_MAX_ERROR);
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 static std::string dft_factory_str = "generic";
 static unsigned    nof_repetitions = 10;

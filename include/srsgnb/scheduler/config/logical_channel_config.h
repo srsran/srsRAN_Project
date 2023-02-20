@@ -15,7 +15,7 @@
 #include "srsgnb/ran/sr_configuration.h"
 #include "srsgnb/scheduler/config/logical_channel_group.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \c LogicalChannelConfig, TS 38.331.
 struct logical_channel_config {
@@ -28,4 +28,4 @@ struct logical_channel_config {
   bool                            lc_sr_delay_timer_applied;
 };
 
-} // namespace srsgnb
+} // namespace srsran

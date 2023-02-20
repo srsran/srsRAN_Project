@@ -11,7 +11,7 @@
 #include "helpers.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace unittests;
 
 static std::mt19937 gen(0);
@@ -97,7 +97,7 @@ dl_ssb_pdu unittests::build_valid_dl_ssb_pdu()
   dl_ssb_pdu pdu;
 
   pdu.pci                             = generate_pci();
-  pdu.pss_to_sss_epre                 = static_cast<srsgnb::ssb_pss_to_sss_epre>(generate_binary());
+  pdu.pss_to_sss_epre                 = static_cast<srsran::ssb_pss_to_sss_epre>(generate_binary());
   pdu.ssb_index                       = generate_block_index();
   pdu.subcarrier_offset               = generate_subcarrier_offset();
   pdu.offset_to_pointA                = generate_offset_point_A();
@@ -377,13 +377,13 @@ pucch_info unittests::build_valid_pucch_format_1_pdu()
   pucch.format_1.time_domain_occ      = 3;
   pucch.format_1.initial_cyclic_shift = 9;
   pucch.format_1.n_id_hopping         = 2;
-  pucch.format_1.group_hopping        = srsgnb::pucch_group_hopping::NEITHER;
-  pucch.format_1.slot_repetition      = srsgnb::pucch_repetition_tx_slot::no_multi_slot;
+  pucch.format_1.group_hopping        = srsran::pucch_group_hopping::NEITHER;
+  pucch.format_1.slot_repetition      = srsran::pucch_repetition_tx_slot::no_multi_slot;
 
   return pucch;
 }
 
-pucch_info srsgnb::unittests::build_valid_pucch_format_2_pdu()
+pucch_info srsran::unittests::build_valid_pucch_format_2_pdu()
 {
   pucch_info pucch;
 

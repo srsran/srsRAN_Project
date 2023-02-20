@@ -12,7 +12,7 @@
 
 #include "variant/variant.hpp"
 
-namespace srsgnb {
+namespace srsran {
 
 template <typename... Types>
 using variant = mpark::variant<Types...>;
@@ -44,4 +44,4 @@ inline constexpr bool variant_holds_alternative(const variant<Types...>& v) noex
   return mpark::holds_alternative<T, Types...>(v);
 }
 
-} // namespace srsgnb
+} // namespace srsran

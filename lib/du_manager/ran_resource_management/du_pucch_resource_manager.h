@@ -12,7 +12,7 @@
 
 #include "cell_group_config.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief This class manages the allocation of RAN PUCCH Resources to DU UEs. For instance, this class ensures that
@@ -50,4 +50,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

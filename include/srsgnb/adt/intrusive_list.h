@@ -13,7 +13,7 @@
 #include <iterator>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 struct default_intrusive_tag;
 
@@ -240,4 +240,4 @@ private:
   node_t* node = nullptr;
 };
 
-} // namespace srsgnb
+} // namespace srsran

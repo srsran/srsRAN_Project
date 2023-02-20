@@ -18,7 +18,7 @@
 #include <cstdio>
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class pdcp_entity_impl : public pdcp_entity
 {
@@ -58,4 +58,4 @@ private:
   std::unique_ptr<pdcp_entity_tx> tx = {};
   std::unique_ptr<pdcp_entity_rx> rx = {};
 };
-} // namespace srsgnb
+} // namespace srsran

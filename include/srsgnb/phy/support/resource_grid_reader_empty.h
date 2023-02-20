@@ -12,7 +12,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/srsvec/zero.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines an empty resource grid reader that behaves as it is filled with zeros.
 class resource_grid_reader_empty : public resource_grid_reader
@@ -41,4 +41,4 @@ public:
   void get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/) const override { srsvec::zero(symbols); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

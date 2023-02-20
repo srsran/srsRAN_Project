@@ -17,7 +17,7 @@
 #include <netinet/in.h>
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief GTP Tunnel Identifier.
 struct gtp_teid_tag {};
@@ -171,14 +171,14 @@ up_transport_layer_info asn1_to_up_transport_layer_info(Asn1Type& asn1obj)
   return ret;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::transport_layer_address> : public formatter<std::string> {
+struct formatter<srsran::transport_layer_address> : public formatter<std::string> {
   template <typename FormatContext>
-  auto format(const srsgnb::transport_layer_address& s, FormatContext& ctx)
+  auto format(const srsran::transport_layer_address& s, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     char ip_addr[NI_MAXHOST];

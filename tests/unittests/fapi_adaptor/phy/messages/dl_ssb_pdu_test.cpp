@@ -15,7 +15,7 @@
 #include <chrono>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);

@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Labels for the frequency ranges described in TS38.104 Table 5.1-1.
 enum class frequency_range {
@@ -20,4 +20,4 @@ enum class frequency_range {
   FR2
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/support/math_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collects the parameters to calculate the num. of PRBS given the payload size, for a PDSCH transmission.
 ///
@@ -79,4 +79,4 @@ sch_prbs_tbs get_nof_prbs(const prbs_calculator_sch_config& sch_config);
 /// \return estimate of the number of PRBs.
 unsigned estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config);
 
-} // namespace srsgnb
+} // namespace srsran

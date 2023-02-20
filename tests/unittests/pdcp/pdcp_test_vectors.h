@@ -14,7 +14,7 @@
 #include <array>
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 // Encryption and Integrity Keys (256 and 128 bits)
 const std::array<uint8_t, 32> k_int = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
                                        0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x20, 0x21,
@@ -183,4 +183,4 @@ inline bool get_pdu_test_vector(pdcp_sn_size sn_size, uint32_t count, byte_buffe
   return false;
 }
 
-} // namespace srsgnb
+} // namespace srsran

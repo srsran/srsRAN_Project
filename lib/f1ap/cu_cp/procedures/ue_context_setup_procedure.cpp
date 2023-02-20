@@ -10,8 +10,8 @@
 
 #include "ue_context_setup_procedure.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
 ue_context_setup_procedure::ue_context_setup_procedure(const ue_context_setup_request_s& request_,

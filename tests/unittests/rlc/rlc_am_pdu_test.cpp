@@ -12,7 +12,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 template <std::size_t N>
 byte_buffer make_pdu_and_log(const std::array<uint8_t, N>& tv)
@@ -3073,7 +3073,7 @@ void rlc_am_nr_control_pdu_test_trimming(rlc_am_sn_size sn_size)
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 int main()
 {
@@ -3083,55 +3083,55 @@ int main()
 
   logger.info("Testing AM PDU packing/unpacking");
   srslog::flush();
-  srsgnb::test_rlc_am_12bit_complete_sdu();
-  srsgnb::test_rlc_am_12bit_first_segment();
-  srsgnb::test_rlc_am_12bit_middle_segment();
-  srsgnb::test_rlc_am_12bit_last_segment();
-  srsgnb::test_rlc_am_18bit_complete_sdu();
-  srsgnb::test_rlc_am_18bit_first_segment();
-  srsgnb::test_rlc_am_18bit_middle_segment();
-  srsgnb::test_rlc_am_18bit_last_segment();
-  srsgnb::test_rlc_am_18bit_malformed();
+  srsran::test_rlc_am_12bit_complete_sdu();
+  srsran::test_rlc_am_12bit_first_segment();
+  srsran::test_rlc_am_12bit_middle_segment();
+  srsran::test_rlc_am_12bit_last_segment();
+  srsran::test_rlc_am_18bit_complete_sdu();
+  srsran::test_rlc_am_18bit_first_segment();
+  srsran::test_rlc_am_18bit_middle_segment();
+  srsran::test_rlc_am_18bit_last_segment();
+  srsran::test_rlc_am_18bit_malformed();
 
   logger.info("Testing Control PDU packing/unpacking (12 bit)");
   srslog::flush();
-  srsgnb::test_control_pdu_no_nack_12bit();
-  srsgnb::test_control_pdu_with_nack_12bit();
-  srsgnb::test_control_pdu_nacks_and_so_12bit();
-  srsgnb::test_control_pdu_nacks_and_mixed_so_12bit();
-  srsgnb::test_control_pdu_nacks_and_range_12bit();
-  srsgnb::test_control_pdu_invalid_too_short_12bit();
-  srsgnb::test_control_pdu_invalid_e1_extension_cross_boundary_12bit();
-  srsgnb::test_control_pdu_invalid_e2_extension_cross_boundary_12bit();
-  srsgnb::test_control_pdu_invalid_e3_extension_cross_boundary_12bit();
+  srsran::test_control_pdu_no_nack_12bit();
+  srsran::test_control_pdu_with_nack_12bit();
+  srsran::test_control_pdu_nacks_and_so_12bit();
+  srsran::test_control_pdu_nacks_and_mixed_so_12bit();
+  srsran::test_control_pdu_nacks_and_range_12bit();
+  srsran::test_control_pdu_invalid_too_short_12bit();
+  srsran::test_control_pdu_invalid_e1_extension_cross_boundary_12bit();
+  srsran::test_control_pdu_invalid_e2_extension_cross_boundary_12bit();
+  srsran::test_control_pdu_invalid_e3_extension_cross_boundary_12bit();
 
   logger.info("Testing Control PDU packing/unpacking (18 bit)");
   srslog::flush();
-  srsgnb::test_control_pdu_no_nack_18bit();
-  srsgnb::test_control_pdu_with_nack_18bit();
-  srsgnb::test_control_pdu_nacks_and_so_18bit();
-  srsgnb::test_control_pdu_nacks_and_mixed_so_18bit();
-  srsgnb::test_control_pdu_nacks_and_range_18bit();
-  srsgnb::test_control_pdu_invalid_too_short_18bit();
-  srsgnb::test_control_pdu_invalid_e1_extension_cross_boundary_18bit();
-  srsgnb::test_control_pdu_invalid_e2_extension_cross_boundary_18bit();
-  srsgnb::test_control_pdu_invalid_e3_extension_cross_boundary_18bit();
+  srsran::test_control_pdu_no_nack_18bit();
+  srsran::test_control_pdu_with_nack_18bit();
+  srsran::test_control_pdu_nacks_and_so_18bit();
+  srsran::test_control_pdu_nacks_and_mixed_so_18bit();
+  srsran::test_control_pdu_nacks_and_range_18bit();
+  srsran::test_control_pdu_invalid_too_short_18bit();
+  srsran::test_control_pdu_invalid_e1_extension_cross_boundary_18bit();
+  srsran::test_control_pdu_invalid_e2_extension_cross_boundary_18bit();
+  srsran::test_control_pdu_invalid_e3_extension_cross_boundary_18bit();
 
   logger.info("Testing Status PDU functions (12 bit)");
   srslog::flush();
-  srsgnb::rlc_am_sn_size sn_size = srsgnb::rlc_am_sn_size::size12bits;
-  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(sn_size);
-  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_range_sdu(sn_size);
-  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_sdu_range(sn_size);
-  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_range_range(sn_size);
-  srsgnb::rlc_am_nr_control_pdu_test_trimming(sn_size);
+  srsran::rlc_am_sn_size sn_size = srsran::rlc_am_sn_size::size12bits;
+  srsran::rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(sn_size);
+  srsran::rlc_am_nr_control_pdu_test_nack_merge_range_sdu(sn_size);
+  srsran::rlc_am_nr_control_pdu_test_nack_merge_sdu_range(sn_size);
+  srsran::rlc_am_nr_control_pdu_test_nack_merge_range_range(sn_size);
+  srsran::rlc_am_nr_control_pdu_test_trimming(sn_size);
 
   logger.info("Testing Status PDU functions (18 bit)");
   srslog::flush();
-  sn_size = srsgnb::rlc_am_sn_size::size18bits;
-  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(sn_size);
-  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_range_sdu(sn_size);
-  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_sdu_range(sn_size);
-  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_range_range(sn_size);
-  srsgnb::rlc_am_nr_control_pdu_test_trimming(sn_size);
+  sn_size = srsran::rlc_am_sn_size::size18bits;
+  srsran::rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(sn_size);
+  srsran::rlc_am_nr_control_pdu_test_nack_merge_range_sdu(sn_size);
+  srsran::rlc_am_nr_control_pdu_test_nack_merge_sdu_range(sn_size);
+  srsran::rlc_am_nr_control_pdu_test_nack_merge_range_range(sn_size);
+  srsran::rlc_am_nr_control_pdu_test_trimming(sn_size);
 }

@@ -10,7 +10,7 @@
 
 #include "radio_zmq_rx_stream.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 radio_zmq_rx_stream::radio_zmq_rx_stream(void*                       zmq_context,
                                          const stream_description&   config,

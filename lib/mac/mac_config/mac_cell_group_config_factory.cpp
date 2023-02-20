@@ -15,7 +15,7 @@
 #include "srsgnb/mac/time_alignment_group_config.h"
 #include "srsgnb/ran/sr_configuration.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 mac_cell_group_config config_helpers::make_initial_mac_cell_group_config()
 {

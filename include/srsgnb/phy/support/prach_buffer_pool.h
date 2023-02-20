@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_buffer;
 
@@ -31,4 +31,4 @@ public:
   virtual prach_buffer& get_prach_buffer() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

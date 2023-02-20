@@ -16,7 +16,7 @@
 #include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief Context for a UE within the CU-UP with storage for all active PDU sessions.
@@ -58,4 +58,4 @@ private:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

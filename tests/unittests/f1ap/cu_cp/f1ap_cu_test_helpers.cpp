@@ -11,7 +11,7 @@
 #include "f1ap_cu_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 f1ap_cu_test::f1ap_cu_test()
@@ -63,7 +63,7 @@ void f1ap_cu_test::run_ue_context_setup(ue_index_t ue_index)
 }
 
 f1ap_ue_context_setup_request
-srsgnb::srs_cu_cp::create_ue_context_setup_request(ue_index_t                             ue_index,
+srsran::srs_cu_cp::create_ue_context_setup_request(ue_index_t                             ue_index,
                                                    const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   f1ap_ue_context_setup_request req;

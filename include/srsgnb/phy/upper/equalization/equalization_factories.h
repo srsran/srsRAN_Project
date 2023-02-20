@@ -16,7 +16,7 @@
 
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a channel equalizer factory.
 class channel_equalizer_factory
@@ -33,4 +33,4 @@ public:
 /// Creates a Zero Forcing channel equalizer factory.
 std::shared_ptr<channel_equalizer_factory> create_channel_equalizer_factory_zf();
 
-} // namespace srsgnb
+} // namespace srsran

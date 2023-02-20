@@ -12,7 +12,7 @@
 
 #include "srsgnb/asn1/e1ap/e1ap.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct e1ap_message {
   asn1::e1ap::e1ap_pdu_c pdu;
@@ -46,4 +46,4 @@ public:
   virtual void on_new_message(const e1ap_message& msg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

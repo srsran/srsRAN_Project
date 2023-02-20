@@ -13,7 +13,7 @@
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Lower physical layer interface used to notify miscellaneous types of error events.
 class lower_phy_error_notifier
@@ -61,4 +61,4 @@ public:
   virtual void on_prach_request_overflow(const prach_buffer_context& context) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

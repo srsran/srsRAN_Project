@@ -21,7 +21,7 @@
 #include "srsgnb/phy/upper/channel_processors/pusch_processor_result.h"
 #include "srsgnb/phy/upper/uplink_processor_context.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PRACH results structure.
 struct ul_prach_results {
@@ -98,4 +98,4 @@ public:
   virtual void on_new_pucch_results(const ul_pucch_results& result) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

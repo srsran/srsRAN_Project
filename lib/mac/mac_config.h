@@ -17,7 +17,7 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/pcap/pcap.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct mac_common_config_t {
   srslog::basic_logger&         logger;
@@ -45,4 +45,4 @@ struct mac_common_config_t {
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

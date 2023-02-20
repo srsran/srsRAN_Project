@@ -10,7 +10,7 @@
 
 #include "srsgnb/fapi_adaptor/phy/messages/pucch.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 static void fill_format1_parameters(pucch_processor::format1_configuration& config,
@@ -72,7 +72,7 @@ static void fill_pucch_format_0_1_context(ul_pucch_context& context, const fapi:
   ctx.is_sr_opportunity       = fapi_pdu.sr_bit_len == 1U;
 }
 
-void srsgnb::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu& pdu,
+void srsran::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu& pdu,
                                                      const fapi::ul_pucch_pdu&    fapi_pdu,
                                                      uint16_t                     sfn,
                                                      uint16_t                     slot)

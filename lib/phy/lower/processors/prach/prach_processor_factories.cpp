@@ -13,7 +13,7 @@
 #include "prach_processor_worker.h"
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -53,7 +53,7 @@ public:
 } // namespace
 
 std::shared_ptr<prach_processor_factory>
-srsgnb::create_prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_prach_factory,
+srsran::create_prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_prach_factory,
                                           unsigned                                        dft_size_15kHz,
                                           unsigned                                        max_nof_concurrent_requests)
 {

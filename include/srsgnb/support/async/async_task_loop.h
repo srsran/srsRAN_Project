@@ -15,7 +15,7 @@
 #include "eager_async_task.h"
 #include "srsgnb/adt/unique_function.h"
 
-namespace srsgnb {
+namespace srsran {
 /// Asynchronous task that sequentially runs other enqueued asynchronous tasks
 class async_task_sequencer
 {
@@ -82,4 +82,4 @@ private:
   async_task<void>              next_task;
 };
 
-} // namespace srsgnb
+} // namespace srsran

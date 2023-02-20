@@ -15,7 +15,7 @@
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
 #include "srsgnb/ran/resource_allocation/rb_interval.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Max number of CORESETs per BWP per cell (including UE-specific and common CORESETs).
 /// \remark See TS 38.331, "PDCCH-Config".
@@ -124,4 +124,4 @@ private:
   freq_resource_bitmap other_coreset_freq_resources;
 };
 
-} // namespace srsgnb
+} // namespace srsran

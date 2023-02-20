@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class polar_deallocator
 {
@@ -22,4 +22,4 @@ public:
   virtual void deallocate(span<uint8_t> message, span<const uint8_t> output_decoder, const polar_code& code) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

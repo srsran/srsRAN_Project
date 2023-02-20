@@ -15,7 +15,7 @@
 #include "srsgnb/f1ap/common/f1ap_types.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Get string with F1AP error cause.
 inline const char* get_cause_str(const asn1::f1ap::cause_c& cause)
@@ -184,4 +184,4 @@ inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::f1a
   return {default_error_t{}};
 }
 
-} // namespace srsgnb
+} // namespace srsran

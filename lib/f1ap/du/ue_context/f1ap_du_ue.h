@@ -20,7 +20,7 @@
 #include <mutex>
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1ap_du_ue
@@ -50,4 +50,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

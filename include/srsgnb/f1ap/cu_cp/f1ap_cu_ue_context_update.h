@@ -13,7 +13,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Request from CU to F1AP-CU to start an F1AP "UE Context Setup" procedure, as per TS38.473 8.3.1.
@@ -44,4 +44,4 @@ struct f1ap_ue_context_modification_response {
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

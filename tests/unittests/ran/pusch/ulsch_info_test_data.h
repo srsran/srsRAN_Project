@@ -15,7 +15,7 @@
 
 #include "srsgnb/ran/pusch/ulsch_info.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   ulsch_configuration config;
@@ -891,4 +891,4 @@ static const std::vector<test_case_t> ulsch_info_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

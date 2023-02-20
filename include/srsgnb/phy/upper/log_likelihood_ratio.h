@@ -24,7 +24,7 @@
 
 #include <numeric>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Represents log-likelihood ratio (LLR) values.
 ///
@@ -307,21 +307,21 @@ inline int log_likelihood_ratio::norm_squared(const T& x)
 /// \brief Obtains hard bits from a vector of soft bits.
 ///
 /// Performs hard decision on a vector of soft bits. The resulting bits are packed and stored in an \ref
-/// srsgnb::bit_buffer.
+/// srsran::bit_buffer.
 ///
 /// \param[out] hard_bits Buffer of hard bits.
 /// \param[in] soft_bits Buffer of soft bits.
 void hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits);
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
-/// \brief Custom formatter for srsgnb::log_likelihood_ratio.
+/// \brief Custom formatter for srsran::log_likelihood_ratio.
 ///
 /// See https://fmt.dev/latest/api.html#formatting-user-defined-types.
 template <>
-struct formatter<srsgnb::log_likelihood_ratio> {
+struct formatter<srsran::log_likelihood_ratio> {
   /// Parser.
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
@@ -331,9 +331,9 @@ struct formatter<srsgnb::log_likelihood_ratio> {
 
   /// Formatter.
   template <typename FormatContext>
-  auto format(srsgnb::log_likelihood_ratio llr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::log_likelihood_ratio llr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{}", static_cast<srsgnb::log_likelihood_ratio::value_type>(llr));
+    return format_to(ctx.out(), "{}", static_cast<srsran::log_likelihood_ratio::value_type>(llr));
   }
 };
 

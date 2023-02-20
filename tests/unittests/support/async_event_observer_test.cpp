@@ -12,7 +12,7 @@
 #include "srsgnb/support/async/eager_async_task.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class async_single_event_observer_test : public ::testing::Test
 {

@@ -12,9 +12,9 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/pdsch/pdsch_mcs.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-sch_mcs_description srsgnb::pusch_mcs_get_config(pusch_mcs_table table, sch_mcs_index index, bool tp_pi2bpsk_present)
+sch_mcs_description srsran::pusch_mcs_get_config(pusch_mcs_table table, sch_mcs_index index, bool tp_pi2bpsk_present)
 {
   // TS38.214 Table 6.1.4.1-1.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_1_TP = {

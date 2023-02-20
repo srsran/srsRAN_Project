@@ -17,7 +17,7 @@
 #include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 paging_scheduler::paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
                                    const cell_configuration&                       cell_cfg_,

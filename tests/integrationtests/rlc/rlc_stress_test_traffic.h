@@ -17,7 +17,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 class stress_traffic_sink : public pdcp_rx_upper_data_notifier
 {
@@ -56,4 +56,4 @@ public:
 
   void send_pdu();
 };
-} // namespace srsgnb
+} // namespace srsran

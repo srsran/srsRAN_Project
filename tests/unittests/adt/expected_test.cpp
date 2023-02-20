@@ -11,7 +11,7 @@
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_expected_trivial()
 {

@@ -13,7 +13,7 @@
 #include "srsgnb/ran/pucch/pucch_constants.h"
 #include "srsgnb/ran/resource_block.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Calculates the effective code rate for a PUCCH Format 2 transmission.
 /// \param[in] nof_prb           Transmission bandwidth in PRB.
@@ -85,4 +85,4 @@ inline unsigned get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned no
   return std::min(estimated_payload_bits, MAX_SUPPORTED_PAYLOAD_BITS);
 }
 
-} // namespace srsgnb
+} // namespace srsran

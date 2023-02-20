@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \c ServCellIndex, as per TS 38.331. It concerns a short identity, used to uniquely identify a serving cell (from
 /// a UE's perspective) across cell groups. Value 0 applies to the PCell (Master Cell Group).
@@ -30,4 +30,4 @@ inline serv_cell_index_t to_serv_cell_index(std::underlying_type_t<serv_cell_ind
   return static_cast<serv_cell_index_t>(val);
 }
 
-} // namespace srsgnb
+} // namespace srsran

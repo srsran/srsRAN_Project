@@ -11,7 +11,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
 #include "srsgnb/srsvec/bit.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 /// \brief Adds the PHY timing information to the BCH payload for the given \c fapi_pdu.
@@ -138,7 +138,7 @@ static float convert_to_beta_pss(const fapi::dl_ssb_pdu& fapi_pdu)
   }
 }
 
-void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_pdu,
+void srsran::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_pdu,
                                                    const fapi::dl_ssb_pdu& fapi_pdu,
                                                    uint16_t                sfn,
                                                    uint16_t                slot,

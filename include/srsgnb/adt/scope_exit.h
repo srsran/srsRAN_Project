@@ -13,7 +13,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -56,6 +56,6 @@ detail::scope_exit<typename std::decay<Callable>::type> make_scope_exit(Callable
   return detail::scope_exit<typename std::decay<Callable>::type>{std::forward<Callable>(callable)};
 }
 
-#define DEFER(FUNC) auto on_exit_call##__LINE__ = srsgnb::make_scope_exit([&]() { FUNC })
+#define DEFER(FUNC) auto on_exit_call##__LINE__ = srsran::make_scope_exit([&]() { FUNC })
 
-} // namespace srsgnb
+} // namespace srsran

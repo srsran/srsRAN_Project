@@ -15,7 +15,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the context of the new received symbol.
 struct lower_phy_rx_symbol_context {
@@ -58,4 +58,4 @@ public:
   virtual void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -17,7 +17,7 @@
 /// This factory header file depends on the SDAP interfaces (see above include list). It is kept separate as clients of
 /// the SDAP interfaces dont need to call factory methods.
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_up {
 
@@ -33,4 +33,4 @@ std::unique_ptr<sdap_entity> create_sdap(sdap_entity_creation_message& msg);
 
 } // namespace srs_cu_up
 
-} // namespace srsgnb
+} // namespace srsran

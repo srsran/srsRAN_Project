@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/channel_coding/short/short_block_detector.h"
 #include "srsgnb/phy/upper/channel_processors/uci_decoder.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Currently-supported maximum length.
 static constexpr unsigned MAX_UCI_MSG_LENGTH = 11;
@@ -40,4 +40,4 @@ private:
   std::unique_ptr<short_block_detector> decoder;
 };
 
-} // namespace srsgnb
+} // namespace srsran

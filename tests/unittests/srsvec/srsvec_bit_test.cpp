@@ -15,7 +15,7 @@
 
 static std::mt19937 rgen(0);
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_unpack(unsigned N)
 {

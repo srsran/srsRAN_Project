@@ -12,7 +12,7 @@
 
 #include "srsgnb/radio/radio_base.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines a radio baseband unit management plane interface.
 class radio_management_plane : public radio_base
@@ -33,4 +33,4 @@ public:
   virtual bool set_rx_gain(unsigned port_id, double gain_dB) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

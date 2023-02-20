@@ -16,7 +16,7 @@
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
 #include "srsgnb/support/units.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// DCI payload data type.
 using dci_payload = bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>;
@@ -344,4 +344,4 @@ struct dci_rar_configuration {
 /// Packs a DCI transmitted in a Random Access Response.
 dci_payload dci_rar_pack(const dci_rar_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

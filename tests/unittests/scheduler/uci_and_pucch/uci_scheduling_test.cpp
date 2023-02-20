@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 ////////////    Structs with expected parameters and PUCCH sched INPUT     ////////////
 
@@ -49,7 +49,7 @@ public:
                      .report_slot_period;
 
     // Set expected grant for PUCCH Format 1.
-    pucch_expected.format  = srsgnb::pucch_format::FORMAT_1;
+    pucch_expected.format  = srsran::pucch_format::FORMAT_1;
     pucch_expected.crnti   = to_rnti(0x4601);
     pucch_expected.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
@@ -67,7 +67,7 @@ public:
     pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
     pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
 
-    pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_f2.format                    = srsran::pucch_format::FORMAT_2;
     pucch_expected_f2.crnti                     = to_rnti(0x4601);
     pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
@@ -128,7 +128,7 @@ public:
                      .report_slot_period;
 
     // Set expected grant for PUCCH Format 1.
-    pucch_expected.format  = srsgnb::pucch_format::FORMAT_1;
+    pucch_expected.format  = srsran::pucch_format::FORMAT_1;
     pucch_expected.crnti   = to_rnti(0x4601);
     pucch_expected.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
@@ -146,7 +146,7 @@ public:
     pucch_expected.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
     pucch_expected.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
 
-    pucch_expected_csi.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_csi.format                    = srsran::pucch_format::FORMAT_2;
     pucch_expected_csi.crnti                     = to_rnti(0x4601);
     pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_csi.resources.prbs            = prb_interval{2, 3};
@@ -160,7 +160,7 @@ public:
     pucch_expected_csi.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
     pucch_expected_csi.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
 
-    pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_f2.format                    = srsran::pucch_format::FORMAT_2;
     pucch_expected_f2.crnti                     = to_rnti(0x4601);
     pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
@@ -300,7 +300,7 @@ public:
                     .offset;
 
     // Set expected grant for PUCCH Format 1.
-    pucch_expected_sr.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_sr.format                    = srsran::pucch_format::FORMAT_2;
     pucch_expected_sr.crnti                     = to_rnti(0x4601);
     pucch_expected_sr.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_sr.resources.prbs            = prb_interval{2, 3};
@@ -314,7 +314,7 @@ public:
     pucch_expected_sr.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
     pucch_expected_sr.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
 
-    pucch_expected_no_sr.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_no_sr.format                    = srsran::pucch_format::FORMAT_2;
     pucch_expected_no_sr.crnti                     = to_rnti(0x4601);
     pucch_expected_no_sr.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_no_sr.resources.prbs            = prb_interval{2, 3};

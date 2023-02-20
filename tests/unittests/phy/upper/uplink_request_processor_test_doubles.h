@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/uplink_request_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Dummy implementation of an uplink request processor.
 class uplink_request_processor_dummy : public uplink_request_processor
@@ -22,4 +22,4 @@ public:
   void process_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) override {}
 };
 
-} // namespace srsgnb
+} // namespace srsran

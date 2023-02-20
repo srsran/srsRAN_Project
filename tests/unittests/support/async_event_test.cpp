@@ -12,7 +12,7 @@
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Test manual event flag
 void test_manual_event_flag()

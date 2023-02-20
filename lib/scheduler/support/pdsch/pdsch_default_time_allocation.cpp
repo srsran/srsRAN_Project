@@ -10,7 +10,7 @@
 
 #include "pdsch_default_time_allocation.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static pdsch_default_time_allocation_config
 pdsch_default_time_allocation_default_A_get_normal(unsigned row_index, dmrs_typeA_position dmrs_pos)
@@ -94,7 +94,7 @@ pdsch_default_time_allocation_default_A_get_extended(unsigned row_index, dmrs_ty
 }
 
 pdsch_default_time_allocation_config
-srsgnb::pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, dmrs_typeA_position dmrs_pos)
+srsran::pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, dmrs_typeA_position dmrs_pos)
 {
   switch (cp) {
     case cyclic_prefix::NORMAL:
@@ -106,7 +106,7 @@ srsgnb::pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned r
 }
 
 span<const pdsch_time_domain_resource_allocation>
-srsgnb::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos)
+srsran::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos)
 {
   // TS38.214 Table 5.1.2.1.1-2.
   static constexpr size_t PDSCH_TD_RES_ALLOC_TABLE_SIZE = 16;

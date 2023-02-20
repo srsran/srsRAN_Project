@@ -18,7 +18,7 @@
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/scheduler/config/serving_cell_config.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// This struct stores the accumulated CellGroupConfig.
@@ -30,4 +30,4 @@ struct cell_group_config {
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

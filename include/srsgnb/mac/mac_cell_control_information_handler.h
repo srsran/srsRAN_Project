@@ -21,7 +21,7 @@
 #include "srsgnb/ran/uci/uci_constants.h"
 #include "srsgnb/ran/uci/uci_mapping.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// CRC indication for a given PDU.
 struct mac_crc_pdu {
@@ -183,4 +183,4 @@ public:
   virtual void handle_uci(const mac_uci_indication_message& msg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 /// \brief Unpacks an unsigned integer value into bits.
@@ -86,4 +86,4 @@ void copy_offset(bit_buffer&       output,
                  unsigned          nof_bits);
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

@@ -16,7 +16,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 auto& test_logger = []() -> srslog::basic_logger& {
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);

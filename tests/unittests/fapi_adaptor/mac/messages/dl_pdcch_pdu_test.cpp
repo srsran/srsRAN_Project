@@ -13,7 +13,7 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 

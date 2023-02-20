@@ -14,7 +14,7 @@
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1ap/du/f1ap_du.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// DU Context stored in the F1AP-DU. It includes information about the DU serving cells.
@@ -25,4 +25,4 @@ struct f1ap_du_context {
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/ran/pdsch/pdsch_constants.h"
 #include "srsgnb/support/async/execute_on.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 constexpr size_t MAX_K0_DELAY = 32;
@@ -82,13 +82,13 @@ void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
 static auto convert_mac_harq_bits_to_sched_harq_values(uci_pusch_or_pucch_f2_3_4_detection_status harq_status,
                                                        const bounded_bitset<uci_constants::MAX_NOF_HARQ_BITS>& payload)
 {
-  bool crc_pass = harq_status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
+  bool crc_pass = harq_status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_pass;
   static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> ret(
       payload.size(), crc_pass ? mac_harq_ack_report_status::nack : mac_harq_ack_report_status::dtx);
   if (crc_pass) {
     for (unsigned i = 0; i != ret.size(); ++i) {
       if (payload.test(i)) {
-        ret[i] = srsgnb::mac_harq_ack_report_status::ack;
+        ret[i] = srsran::mac_harq_ack_report_status::ack;
       }
     }
   }
@@ -375,7 +375,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     const mac_dl_data_result::dl_pdu& ue_pdu   = dl_res.ue_pdus[i];
     const dl_msg_alloc&               dl_alloc = sl_res->dl.ue_grants[i];
     if (dl_alloc.pdsch_cfg.codewords[0].new_data) {
-      srsgnb::mac_nr_context_info context = {};
+      srsran::mac_nr_context_info context = {};
       context.radioType = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
       context.direction = PCAP_DIRECTION_DOWNLINK;
       context.rntiType  = PCAP_C_RNTI;

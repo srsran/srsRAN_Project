@@ -21,7 +21,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class f1ap_ue_transaction_manager;
@@ -117,4 +117,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

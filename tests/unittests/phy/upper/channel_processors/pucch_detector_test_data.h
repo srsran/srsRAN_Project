@@ -19,7 +19,7 @@
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   pucch_detector::format1_configuration                   cfg       = {};
@@ -131,4 +131,4 @@ static const std::vector<test_case_t> pucch_detector_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

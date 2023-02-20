@@ -12,7 +12,7 @@
 #include "srsgnb/support/prefixed_logger.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class gtpu_tunnel_log_prefix
 {
@@ -21,7 +21,7 @@ public:
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, "ue={} {} teid={:#x}: ", ue_index, dir, teid);
-    prefix = srsgnb::to_c_str(buffer);
+    prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
 
@@ -31,13 +31,13 @@ private:
 
 using gtpu_tunnel_logger = prefixed_logger<gtpu_tunnel_log_prefix>;
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 // associated formatter
 template <>
-struct formatter<srsgnb::gtpu_tunnel_log_prefix> {
+struct formatter<srsran::gtpu_tunnel_log_prefix> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -45,7 +45,7 @@ struct formatter<srsgnb::gtpu_tunnel_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::gtpu_tunnel_log_prefix o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::gtpu_tunnel_log_prefix o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

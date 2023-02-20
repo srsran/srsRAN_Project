@@ -26,7 +26,7 @@
 #include "srsgnb/phy/upper/channel_coding/short/short_block_detector.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class crc_calculator_factory
 {
@@ -117,4 +117,4 @@ public:
 
 std::shared_ptr<short_block_detector_factory> create_short_block_detector_factory_sw();
 
-} // namespace srsgnb
+} // namespace srsran

@@ -20,7 +20,7 @@
 #include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1ap_event_manager;
@@ -57,4 +57,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

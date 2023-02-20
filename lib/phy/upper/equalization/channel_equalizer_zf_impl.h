@@ -15,7 +15,7 @@
 
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Channel equalizer implementation using the Zero Forcing algorithm.
 class channel_equalizer_zf_impl : public channel_equalizer
@@ -33,4 +33,4 @@ public:
                 float              tx_scaling) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

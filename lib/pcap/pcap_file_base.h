@@ -17,7 +17,7 @@
 
 #define PCAP_CONTEXT_HEADER_MAX 256
 
-namespace srsgnb {
+namespace srsran {
 
 /// This structure gets written to the start of the file
 struct pcap_hdr_t {
@@ -56,7 +56,7 @@ public:
   bool dlt_pcap_open(uint32_t dlt, const char* filename);
   void dlt_pcap_close();
   void write_pcap_header(uint32_t length);
-  void write_pcap_pdu(srsgnb::const_span<uint8_t> pdu);
+  void write_pcap_pdu(srsran::const_span<uint8_t> pdu);
 
 private:
   srslog::basic_logger& logger;
@@ -65,4 +65,4 @@ private:
   std::string           filename;
   uint32_t              dlt = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include <condition_variable>
 #include <future>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 du_manager_impl::du_manager_impl(const du_manager_params& params_) :

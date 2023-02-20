@@ -10,7 +10,7 @@
 
 #include "rx_softbuffer_pool_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 unique_rx_softbuffer rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&               slot,
                                                                  const rx_softbuffer_identifier& id,
@@ -58,7 +58,7 @@ void rx_softbuffer_pool_impl::run_slot(const slot_point& slot)
   }
 }
 
-std::unique_ptr<rx_softbuffer_pool> srsgnb::create_rx_softbuffer_pool(const rx_softbuffer_pool_config& config)
+std::unique_ptr<rx_softbuffer_pool> srsran::create_rx_softbuffer_pool(const rx_softbuffer_pool_config& config)
 {
   return std::make_unique<rx_softbuffer_pool_impl>(config);
 }

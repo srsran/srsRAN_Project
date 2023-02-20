@@ -17,7 +17,7 @@
 #include <thread>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /**
  * Concurrent memory pool of memory blocks of equal size. This pool is thread-safe.
@@ -194,4 +194,4 @@ private:
   std::vector<uint8_t>              allocated_memory;
 };
 
-} // namespace srsgnb
+} // namespace srsran

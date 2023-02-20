@@ -14,7 +14,7 @@
 #include "srsgnb/cu_up/cu_up_types.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 struct e1ap_ue_context {
@@ -99,4 +99,4 @@ private:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

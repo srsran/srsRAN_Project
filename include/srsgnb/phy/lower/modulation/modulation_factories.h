@@ -15,7 +15,7 @@
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_prach_demodulator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes an OFDM modulator factory.
 class ofdm_modulator_factory
@@ -88,4 +88,4 @@ create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& conf
 std::shared_ptr<ofdm_prach_demodulator_factory>
 create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory, unsigned dft_size_15kHz);
 
-} // namespace srsgnb
+} // namespace srsran

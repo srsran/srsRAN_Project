@@ -13,7 +13,7 @@
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/ssb_mapping.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ssb_scheduler::ssb_scheduler(const cell_configuration& cfg_) :
   cell_cfg(cfg_), logger(srslog::fetch_basic_logger("SCHED"))

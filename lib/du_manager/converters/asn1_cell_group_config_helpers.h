@@ -13,7 +13,7 @@
 #include "../ran_resource_management/cell_group_config.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration& cfg);
@@ -51,4 +51,4 @@ void calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
                                       const cell_group_config&        dest);
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

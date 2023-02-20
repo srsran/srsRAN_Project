@@ -15,7 +15,7 @@
 #include "srsgnb/pcap/pcap.h"
 #include "srsgnb/support/executors/task_worker.h"
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr uint16_t MAC_PCAP_MAX_PDU_LEN = 32768;
 
@@ -50,4 +50,4 @@ private:
   task_worker          worker;
   pcap_file_base       writter;
 };
-} // namespace srsgnb
+} // namespace srsran

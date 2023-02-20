@@ -11,8 +11,8 @@
 #include "bearer_context_setup_procedure.h"
 #include "../e1ap_cu_cp_asn1_helpers.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::e1ap;
 
 bearer_context_setup_procedure::bearer_context_setup_procedure(const e1ap_message&    request_,

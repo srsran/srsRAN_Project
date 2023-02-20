@@ -11,7 +11,7 @@
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void upper_phy_rx_results_notifier_wrapper::on_new_prach_results(const ul_prach_results& result)
 {

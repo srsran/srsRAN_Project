@@ -14,7 +14,7 @@
 #include <memory>
 #include <utility>
 
-namespace srsgnb {
+namespace srsran {
 
 struct sctp_network_gateway_creation_message {
   sctp_network_gateway_creation_message(sctp_network_gateway_config            config_,
@@ -31,4 +31,4 @@ struct sctp_network_gateway_creation_message {
 /// Creates an instance of an network gateway
 std::unique_ptr<sctp_network_gateway> create_sctp_network_gateway(sctp_network_gateway_creation_message msg);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/sch_mcs.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Modulation and Code Scheme table identifiers for PUSCH.
 ///
@@ -42,4 +42,4 @@ enum class pusch_mcs_table {
 /// \return Modulation and Coding Scheme parameters.
 sch_mcs_description pusch_mcs_get_config(pusch_mcs_table table, sch_mcs_index index, bool tp_pi2bpsk_present);
 
-} // namespace srsgnb
+} // namespace srsran

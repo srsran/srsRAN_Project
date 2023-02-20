@@ -14,7 +14,7 @@
 #include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief Receive an SDU from the upper layers, apply encryption
 /// and integrity protection and pass the resulting PDU

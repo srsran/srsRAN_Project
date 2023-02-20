@@ -14,7 +14,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Soft-demodulates QPSK modulation.
 /// \param[out] llrs       Resultant log-likelihood ratios.
@@ -22,4 +22,4 @@ namespace srsgnb {
 /// \param[in]  noise_vars Noise variance for each symbol in the constellation.
 void demodulate_soft_QPSK(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, span<const float> noise_vars);
 
-} // namespace srsgnb
+} // namespace srsran

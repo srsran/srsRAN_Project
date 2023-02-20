@@ -12,7 +12,7 @@
 
 #include "../ue_scheduling/ue.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class cell_configuration;
 struct cell_resource_allocator;
@@ -45,4 +45,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

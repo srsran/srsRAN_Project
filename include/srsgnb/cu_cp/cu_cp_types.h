@@ -29,7 +29,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Maximum number of UEs per DU (implementation-defined).
@@ -201,7 +201,7 @@ struct cu_cp_pdu_session_resource_setup_response {
 
 struct cu_cp_drb_setup_message {
   drb_id_t                                                      drb_id = drb_id_t::invalid;
-  srsgnb::rlc_mode                                              rlc;
+  srsran::rlc_mode                                              rlc;
   cu_cp_qos_characteristics                                     qos_info;
   std::vector<up_transport_layer_info>                          gtp_tunnels = {};
   s_nssai_t                                                     s_nssai;
@@ -269,7 +269,7 @@ struct cu_cp_ue_context_modification_response {
   std::vector<cu_cp_scell_failed_to_setup_mod_item>                        scell_failed_to_setup_mod_list = {};
   slotted_id_vector<drb_id_t, cu_cp_drbs_failed_to_be_setup_modified_item> drbs_failed_to_be_modified_list;
   optional<std::string>                                                    inactivity_monitoring_resp;
-  optional<srsgnb::rnti_t>                                                 c_rnti;
+  optional<srsran::rnti_t>                                                 c_rnti;
   std::vector<cu_cp_associated_scell_item>                                 associated_scell_list = {};
   slotted_id_vector<srb_id_t, cu_cp_srbs_setup_modified_item>              srbs_setup_mod_list;
   slotted_id_vector<srb_id_t, cu_cp_srbs_setup_modified_item>              srbs_modified_list;
@@ -419,4 +419,4 @@ struct cu_cp_ue_context_release_complete {
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -13,12 +13,12 @@
 #ifdef HAVE_BACKWARD
 #include "Backward/backward.hpp"
 
-void srsgnb::enable_backtrace()
+void srsran::enable_backtrace()
 {
   static backward::SignalHandling sh;
 }
 #else  // HAVE_BACKWARD
-void srsgnb::enable_backtrace()
+void srsran::enable_backtrace()
 {
   // Ignore.
 }

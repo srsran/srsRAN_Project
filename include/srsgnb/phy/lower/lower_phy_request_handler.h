@@ -15,7 +15,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/support/resource_grid_context.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes the lower physical layer request handler.
 ///
@@ -47,4 +47,4 @@ public:
   virtual void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

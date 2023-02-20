@@ -13,7 +13,7 @@
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr uint32_t pdcp_compute_sn(uint32_t count, pdcp_sn_size sn_size)
 {
@@ -37,4 +37,4 @@ constexpr uint32_t pdcp_sn_cardinality(pdcp_sn_size sn_size)
   return (1 << sn_size_num);
 }
 
-} // namespace srsgnb
+} // namespace srsran

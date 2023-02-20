@@ -4,7 +4,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(ue_configuration, configuration_valid_on_creation)
 {

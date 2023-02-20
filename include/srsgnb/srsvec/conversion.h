@@ -13,7 +13,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 /// Converts from complex float to int16 applying the given scaling
@@ -59,4 +59,4 @@ void convert(span<const float> x, float scale, span<int16_t> z);
 void convert(span<const int16_t> x, float scale, span<float> z);
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

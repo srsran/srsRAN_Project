@@ -12,7 +12,7 @@
 #include <future>
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(task_worker_pool, correct_initialization)
 {

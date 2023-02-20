@@ -13,7 +13,7 @@
 #include "srsgnb/gtpu/gtpu_tunnel_rx.h"
 #include "srsgnb/gtpu/gtpu_tunnel_tx.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Class used to interface with an GTP-U tunnel.
 /// It will contain getters for the TX and RX entities interfaces.
@@ -32,4 +32,4 @@ public:
   virtual gtpu_tunnel_tx_lower_layer_interface* get_tx_lower_layer_interface() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

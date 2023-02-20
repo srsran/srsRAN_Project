@@ -10,7 +10,7 @@
 
 #include "initial_cu_up_processor_setup_routine.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 initial_cu_up_processor_setup_routine::initial_cu_up_processor_setup_routine(

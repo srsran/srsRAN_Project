@@ -13,7 +13,7 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config_validator.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Checks whether the provided scheduler expert configuration is valid.
 ///
@@ -25,4 +25,4 @@ error_type<std::string> is_scheduler_expert_config_valid(const scheduler_expert_
   return {};
 }
 
-} // namespace srsgnb
+} // namespace srsran

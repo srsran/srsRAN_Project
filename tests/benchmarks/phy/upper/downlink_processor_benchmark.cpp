@@ -17,7 +17,7 @@
 #include <getopt.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Random generator.
 static std::mt19937 rgen(0);
@@ -29,8 +29,8 @@ static std::string        crc_calculator_type = "auto";
 static std::string        ldpc_encoder_type   = "auto";
 static std::string        benchmark_profile   = "default";
 static unsigned           rg_nof_ports        = 1;
-static unsigned           rg_nof_symbols      = srsgnb::MAX_NSYMB_PER_SLOT;
-static unsigned           rg_nof_prb          = srsgnb::MAX_RB;
+static unsigned           rg_nof_symbols      = srsran::MAX_NSYMB_PER_SLOT;
+static unsigned           rg_nof_prb          = srsran::MAX_RB;
 static subcarrier_spacing common_scs          = subcarrier_spacing::kHz15;
 static uint16_t           rnti                = 0x1234;
 static unsigned           bwp_size_rb         = MAX_RB;
@@ -193,8 +193,6 @@ static int parse_args(int argc, char** argv)
 
   return 0;
 }
-
-using namespace srsgnb;
 
 class immediate_task_executor : public task_executor
 {

@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsgnb/ran/pucch/pucch_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Generic implementation of a DM-RS channel estimator for PUCCH Format 2.
 class dmrs_pucch_processor_format2_impl : public dmrs_pucch_processor
@@ -66,4 +66,4 @@ private:
   /// \return The DM-RS allocation pattern.
   static layer_dmrs_pattern generate_dmrs_pattern(const config_t& config);
 };
-} // namespace srsgnb
+} // namespace srsran

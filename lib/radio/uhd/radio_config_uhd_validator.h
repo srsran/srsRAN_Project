@@ -14,7 +14,7 @@
 #include "radio_uhd_multi_usrp.h"
 #include "srsgnb/radio/radio_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Radio configuration validator for uhd based radios.
 ///
@@ -31,4 +31,4 @@ public:
   bool is_configuration_valid(const radio_configuration::radio& config) const override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

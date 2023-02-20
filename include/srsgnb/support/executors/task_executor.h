@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/unique_function.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class task_executor
 {
@@ -27,4 +27,4 @@ public:
   virtual bool defer(unique_task task) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -20,7 +20,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -524,4 +524,4 @@ using ring_buffer = detail::ring_buffer_impl<T, std::vector<T>, RoundUpSizeToPow
 template <typename T, size_t N>
 using static_ring_buffer = detail::ring_buffer_impl<T, std::array<T, N>, false>;
 
-} // namespace srsgnb
+} // namespace srsran

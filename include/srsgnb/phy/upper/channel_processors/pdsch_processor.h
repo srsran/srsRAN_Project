@@ -21,7 +21,7 @@
 #include "srsgnb/ran/pdsch/pdsch_context.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the PDSCH processor interface.
 class pdsch_processor
@@ -166,4 +166,4 @@ public:
   virtual bool is_valid(const pdsch_processor::pdu_t& pdu) const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

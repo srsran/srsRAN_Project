@@ -15,7 +15,7 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/srslog.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::unique_ptr<srs_cu_up::f1u_bearer>
 f1u_local_connector::create_cu_bearer(uint32_t                             ue_index,

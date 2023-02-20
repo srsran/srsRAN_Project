@@ -10,10 +10,10 @@
 
 #include "f1ap_du_ue_config_update.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
-f1ap_ue_creation_response srsgnb::srs_du::create_f1ap_ue(const f1ap_ue_creation_request& req,
+f1ap_ue_creation_response srsran::srs_du::create_f1ap_ue(const f1ap_ue_creation_request& req,
                                                          f1ap_du_ue_manager&             ues,
                                                          const f1ap_du_context&          du_ctx,
                                                          f1ap_event_manager&             ev_mng)
@@ -41,7 +41,7 @@ f1ap_ue_creation_response srsgnb::srs_du::create_f1ap_ue(const f1ap_ue_creation_
   return resp;
 }
 
-f1ap_ue_configuration_response srsgnb::srs_du::update_f1ap_ue_config(const f1ap_ue_configuration_request& req,
+f1ap_ue_configuration_response srsran::srs_du::update_f1ap_ue_config(const f1ap_ue_configuration_request& req,
                                                                      f1ap_du_ue_manager&                  ues)
 {
   f1ap_du_ue& u = ues[req.ue_index];

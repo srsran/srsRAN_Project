@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 #include <unordered_map>
 
-using namespace srsgnb;
+using namespace srsran;
 
 using dl_bsr_lc_report_list = static_vector<dl_buffer_state_indication_message, MAX_NOF_RB_LCIDS>;
 
@@ -142,7 +142,7 @@ protected:
     if (params.duplx_mode == duplex_mode::TDD) {
       // Band 40.
       cell_cfg.dl_arfcn       = 474000;
-      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
       cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
       cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
 
@@ -196,7 +196,7 @@ protected:
     if (params.duplx_mode == duplex_mode::TDD) {
       // Band 40.
       cell_cfg.dl_arfcn       = 474000;
-      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
       cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
       cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
 
@@ -319,7 +319,7 @@ protected:
 
     // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
     // PDSCH-to-HARQ-timing-indicator provide the index in {1, 2, 3, 4, 5, 6, 7, 8} starting from 0 .. 7.
-    if (it->dci.type == srsgnb::dci_dl_rnti_config_type::tc_rnti_f1_0) {
+    if (it->dci.type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0) {
       return it == bench->sched_res->dl.dl_pdcchs.end()
                  ? optional<slot_point>{nullopt}
                  : current_slot + it->dci.tc_rnti_f1_0.pdsch_harq_fb_timing_indicator + 1;

@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/srsvec/bit.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

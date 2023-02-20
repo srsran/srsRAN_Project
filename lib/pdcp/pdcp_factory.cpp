@@ -13,9 +13,9 @@
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<pdcp_entity> srsgnb::create_pdcp_entity(pdcp_entity_creation_message& msg)
+std::unique_ptr<pdcp_entity> srsran::create_pdcp_entity(pdcp_entity_creation_message& msg)
 {
   return std::make_unique<pdcp_entity_impl>(msg.ue_index,
                                             msg.rb_id,

@@ -13,7 +13,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/format_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Class used to store common logging parameters for all types RLC entities.
 /// It provides logging helpers, so that the UE index and LCID are always logged.
@@ -209,4 +209,4 @@ private:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

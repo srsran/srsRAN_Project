@@ -13,7 +13,7 @@
 #include "../cell/cell_configuration.h"
 #include "../cell/resource_grid.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class csi_rs_scheduler
 {
@@ -28,4 +28,4 @@ private:
   std::vector<csi_rs_info> cached_csi_rs;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -10,7 +10,7 @@
 
 #include "ul_logical_channel_manager.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ul_logical_channel_manager::ul_logical_channel_manager()
 {

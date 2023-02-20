@@ -16,7 +16,7 @@
 
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// Interface to notify about E1AP connections (from the CU-CP) to the CU-UP
@@ -87,4 +87,4 @@ public:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

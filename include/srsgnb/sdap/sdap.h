@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_up {
 
@@ -74,4 +74,4 @@ public:
 
 } // namespace srs_cu_up
 
-} // namespace srsgnb
+} // namespace srsran

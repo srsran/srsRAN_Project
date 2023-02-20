@@ -12,7 +12,7 @@
 
 #include "srsgnb/scheduler/scheduler_metrics.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Class used to receive metrics reports from scheduler and pretty-print them to the console.
 class metrics_plotter_stdout : public scheduler_ue_metrics_notifier
@@ -34,4 +34,4 @@ private:
   std::atomic<bool> print_metrics = {false};
 };
 
-} // namespace srsgnb
+} // namespace srsran

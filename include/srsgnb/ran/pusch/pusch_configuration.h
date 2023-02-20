@@ -16,7 +16,7 @@
 #include "srsgnb/ran/pusch/pusch_mcs.h"
 #include "srsgnb/ran/uci/uci_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 enum p0_pusch_alphaset_id : uint8_t {
   MIN_P0_PUSCH_ALPHASET_ID   = 0,
@@ -182,4 +182,4 @@ struct pusch_config {
   bool operator!=(const pusch_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

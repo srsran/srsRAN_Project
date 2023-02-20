@@ -19,11 +19,11 @@
 
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \cond
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
@@ -40,7 +40,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
              tc.cfg.scaling);
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 class ChannelEstFixture : public ::testing::TestWithParam<test_case_t>

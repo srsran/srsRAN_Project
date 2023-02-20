@@ -17,7 +17,7 @@
 #include "srsgnb/support/timers.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Interface for an E1AP notifier to communicate with the CU-UP processor.
@@ -99,4 +99,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

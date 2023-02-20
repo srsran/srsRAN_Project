@@ -13,7 +13,7 @@
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// SSB-Index identifies an SS-Block within an SS-Burst.
 /// \remark See TS 38.331, "SSB-Index" and "maxNrofSSBs". See also, TS 38.213, clause 4.1.
@@ -47,4 +47,4 @@ struct ssb_configuration {
   int ssb_block_power;
 };
 
-} // namespace srsgnb
+} // namespace srsran

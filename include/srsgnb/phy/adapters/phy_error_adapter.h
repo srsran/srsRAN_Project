@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/lower/lower_phy_error_notifier.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Implements a generic physical layer error adapter.
 ///
@@ -58,4 +58,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

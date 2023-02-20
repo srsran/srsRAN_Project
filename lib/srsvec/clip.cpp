@@ -11,7 +11,7 @@
 #include "srsgnb/srsvec/clip.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 unsigned srsvec::clip(span<float> y, span<const float> x, const float threshold)
 {

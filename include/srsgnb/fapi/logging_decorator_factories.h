@@ -15,7 +15,7 @@
 #include "srsgnb/fapi/slot_time_message_notifier.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 /// Factory that builds logging slot gateway decorators.
@@ -40,4 +40,4 @@ public:
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

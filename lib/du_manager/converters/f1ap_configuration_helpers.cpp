@@ -14,20 +14,20 @@
 #include "srsgnb/ran/bcd_helpers.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& du_cfg)
+byte_buffer srsran::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& du_cfg)
 {
   using namespace asn1::rrc_nr;
 
   mib_s mib;
   switch (du_cfg.scs_common) {
-    case srsgnb::subcarrier_spacing::kHz15:
-    case srsgnb::subcarrier_spacing::kHz60:
+    case srsran::subcarrier_spacing::kHz15:
+    case srsran::subcarrier_spacing::kHz60:
       mib.sub_carrier_spacing_common.value = mib_s::sub_carrier_spacing_common_opts::scs15or60;
       break;
-    case srsgnb::subcarrier_spacing::kHz30:
-    case srsgnb::subcarrier_spacing::kHz120:
+    case srsran::subcarrier_spacing::kHz30:
+    case srsran::subcarrier_spacing::kHz120:
       mib.sub_carrier_spacing_common.value = mib_s::sub_carrier_spacing_common_opts::scs30or120;
       break;
     default:
@@ -89,12 +89,12 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   pdcch.coreset_zero_present               = false; // Sent by MIB.
   pdcch.common_coreset_present             = cfg.init_dl_bwp.pdcch_common.common_coreset.has_value();
   if (pdcch.common_coreset_present) {
-    pdcch.common_coreset = srsgnb::srs_du::make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
+    pdcch.common_coreset = srsran::srs_du::make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
   }
   pdcch.search_space_zero_present = false; // Sent by MIB.
   for (size_t ss_idx = 1; ss_idx < cfg.init_dl_bwp.pdcch_common.search_spaces.size(); ++ss_idx) {
     const search_space_configuration& ss = cfg.init_dl_bwp.pdcch_common.search_spaces[ss_idx];
-    pdcch.common_search_space_list.push_back(srsgnb::srs_du::make_asn1_rrc_search_space(ss));
+    pdcch.common_search_space_list.push_back(srsran::srs_du::make_asn1_rrc_search_space(ss));
   }
   pdcch.search_space_sib1_present           = true;
   pdcch.search_space_sib1                   = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;
@@ -332,13 +332,13 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   }
   rach.msg1_subcarrier_spacing = get_asn1_scs(rach_cfg.msg1_scs);
   switch (rach_cfg.restricted_set) {
-    case srsgnb::restricted_set_config::UNRESTRICTED:
+    case srsran::restricted_set_config::UNRESTRICTED:
       rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::unrestricted_set;
       break;
-    case srsgnb::restricted_set_config::TYPE_A:
+    case srsran::restricted_set_config::TYPE_A:
       rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::restricted_set_type_a;
       break;
-    case srsgnb::restricted_set_config::TYPE_B:
+    case srsran::restricted_set_config::TYPE_B:
       rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::restricted_set_type_b;
       break;
     default:
@@ -494,7 +494,7 @@ asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
   return sib1;
 }
 
-byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg, std::string* js_str)
+byte_buffer srsran::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg, std::string* js_str)
 {
   byte_buffer          buf;
   asn1::bit_ref        bref{buf};
@@ -510,7 +510,7 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config&
   return buf;
 }
 
-byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_config& du_cfg)
+byte_buffer srsran::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_config& du_cfg)
 {
   byte_buffer                     buf;
   asn1::bit_ref                   bref{buf};
@@ -521,7 +521,7 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_con
   return buf;
 }
 
-void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request,
+void srsran::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request,
                                                 const du_setup_params&          setup_params,
                                                 span<const du_cell_config*>     cells_to_add,
                                                 std::vector<std::string>*       cell_json_strs)
@@ -576,7 +576,7 @@ asn1::rrc_nr::paging_s make_asn1_rrc_cell_cn_paging_msg(const uint64_t five_g_s_
   return rrc_pg;
 }
 
-byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_pcch_pch_msg(uint64_t five_g_s_tmsi)
+byte_buffer srsran::srs_du::make_asn1_rrc_cell_pcch_pch_msg(uint64_t five_g_s_tmsi)
 {
   byte_buffer   buf;
   asn1::bit_ref bref{buf};

@@ -16,7 +16,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 template <typename T>
 struct re_exploded {
@@ -55,4 +55,4 @@ static const std::vector<test_case_t> channel_equalizer_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

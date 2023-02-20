@@ -12,7 +12,7 @@
 #include "lib/cu_up/pdu_session_manager_impl.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
 /// Fixture class for UE manager tests
@@ -76,7 +76,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = "present";
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
-  drb_to_setup_item.pdcp_cfg.rlc_mod            = srsgnb::rlc_mode::am;
+  drb_to_setup_item.pdcp_cfg.rlc_mod            = srsran::rlc_mode::am;
   drb_to_setup_item.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms100;
   drb_to_setup_item.pdcp_cfg.discard_timer      = pdcp_discard_timer::infinity;
 

@@ -16,7 +16,7 @@
 #include <string>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Representation of an interval between two numeric-types with the math representation [start, stop).
 template <typename T>
@@ -160,15 +160,15 @@ interval<T> operator&(const interval<T>& lhs, const interval<T>& rhs)
   return interval<T>{std::max(lhs.start(), rhs.start()), std::min(lhs.stop(), rhs.stop())};
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// Format intervals with the notation [start, stop)
 template <typename T>
-struct formatter<srsgnb::interval<T>> : public formatter<T> {
+struct formatter<srsran::interval<T>> : public formatter<T> {
   template <typename FormatContext>
-  auto format(const srsgnb::interval<T>& interv, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::interval<T>& interv, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "[{}, {})", interv.start(), interv.stop());
   }

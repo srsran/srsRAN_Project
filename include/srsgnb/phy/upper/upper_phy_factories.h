@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/upper_phy.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class task_executor;
 class upper_phy_rg_gateway;
@@ -255,4 +255,4 @@ public:
 std::unique_ptr<upper_phy_factory>
 create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory);
 
-} // namespace srsgnb
+} // namespace srsran

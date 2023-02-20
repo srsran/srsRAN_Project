@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a parameter validator for \ref prach_detector_simple_impl.
 class prach_detector_validator_impl : public prach_detector_validator
@@ -58,4 +58,4 @@ public:
   prach_detection_result detect(const prach_buffer& input, const configuration& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

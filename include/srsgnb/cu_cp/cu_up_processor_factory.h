@@ -16,7 +16,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Creates an instance of an CU-UP processor interface
@@ -28,4 +28,4 @@ create_cu_up_processor(const cu_up_processor_config_t             cu_up_processo
                        task_executor&                             ctrl_exec_);
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

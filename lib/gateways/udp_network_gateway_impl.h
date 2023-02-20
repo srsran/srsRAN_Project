@@ -16,7 +16,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr uint32_t network_gateway_udp_max_len = 9100;
 
@@ -59,4 +59,4 @@ private:
   int              local_ai_protocol = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

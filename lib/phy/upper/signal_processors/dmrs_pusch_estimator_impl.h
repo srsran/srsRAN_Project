@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dmrs_pusch_estimator_impl : public dmrs_pusch_estimator
 {
@@ -82,4 +82,4 @@ private:
   void generate(dmrs_symbol_list& symbols, span<layer_dmrs_pattern> mask, const configuration& cfg);
 };
 
-} // namespace srsgnb
+} // namespace srsran

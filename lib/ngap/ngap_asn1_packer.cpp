@@ -10,7 +10,7 @@
 
 #include "ngap_asn1_packer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 ngap_asn1_packer::ngap_asn1_packer(sctp_network_gateway_data_handler& gw_,
                                    ngap_message_handler&              ngap_handler,
@@ -53,4 +53,4 @@ void ngap_asn1_packer::handle_message(const srs_cu_cp::ngap_message& msg)
   gw.handle_pdu(tx_pdu);
 }
 
-} // namespace srsgnb
+} // namespace srsran

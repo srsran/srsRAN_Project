@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Number of bits in one byte.
 static constexpr unsigned BITS_PER_BYTE = 8;

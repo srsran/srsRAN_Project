@@ -20,27 +20,27 @@
 #include <string>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Converts type \c ciphering_algorithm to an E1AP ASN.1 type.
 /// \param[in] ciph_algo Cyphering Algorithm object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
 inline asn1::e1ap::ciphering_algorithm_e
-ciphering_algorithm_to_e1ap_asn1(const srsgnb::security::ciphering_algorithm& ciph_algo)
+ciphering_algorithm_to_e1ap_asn1(const srsran::security::ciphering_algorithm& ciph_algo)
 {
   asn1::e1ap::ciphering_algorithm_e asn1_ciph_algo;
 
   switch (ciph_algo) {
-    case srsgnb::security::ciphering_algorithm::nea0:
+    case srsran::security::ciphering_algorithm::nea0:
       asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::nea0;
       break;
-    case srsgnb::security::ciphering_algorithm::nea1:
+    case srsran::security::ciphering_algorithm::nea1:
       asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1;
       break;
-    case srsgnb::security::ciphering_algorithm::nea2:
+    case srsran::security::ciphering_algorithm::nea2:
       asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2;
       break;
-    case srsgnb::security::ciphering_algorithm::nea3:
+    case srsran::security::ciphering_algorithm::nea3:
       asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3;
       break;
     default:
@@ -54,23 +54,23 @@ ciphering_algorithm_to_e1ap_asn1(const srsgnb::security::ciphering_algorithm& ci
 /// \brief Converts E1AP ASN.1 type to type and \c ciphering_algorithm type.
 /// \param[in] asn1_ciph_algo ASN.1 Cyphering Algorithm object.
 /// \return The \c ciphering_algorithm object where the result of the conversion is stored.
-inline srsgnb::security::ciphering_algorithm
+inline srsran::security::ciphering_algorithm
 e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_ciph_algo)
 {
-  srsgnb::security::ciphering_algorithm ciph_algo = {};
+  srsran::security::ciphering_algorithm ciph_algo = {};
 
   switch (asn1_ciph_algo) {
     case asn1::e1ap::ciphering_algorithm_opts::nea0:
-      ciph_algo = srsgnb::security::ciphering_algorithm::nea0;
+      ciph_algo = srsran::security::ciphering_algorithm::nea0;
       break;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1:
-      ciph_algo = srsgnb::security::ciphering_algorithm::nea1;
+      ciph_algo = srsran::security::ciphering_algorithm::nea1;
       break;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2:
-      ciph_algo = srsgnb::security::ciphering_algorithm::nea2;
+      ciph_algo = srsran::security::ciphering_algorithm::nea2;
       break;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3:
-      ciph_algo = srsgnb::security::ciphering_algorithm::nea3;
+      ciph_algo = srsran::security::ciphering_algorithm::nea3;
       break;
     default:
       srsgnb_assert(false, "Invalid ciphering algorithm ({})", asn1_ciph_algo);
@@ -83,21 +83,21 @@ e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_c
 /// \param int_algo Integrity Protection Algorithm object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
 inline asn1::e1ap::integrity_protection_algorithm_e
-integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& int_algo)
+integrity_algorithm_to_e1ap_asn1(const srsran::security::integrity_algorithm& int_algo)
 {
   asn1::e1ap::integrity_protection_algorithm_e asn1_int_algo = {};
 
   switch (int_algo) {
-    case srsgnb::security::integrity_algorithm::nia0:
+    case srsran::security::integrity_algorithm::nia0:
       asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::nia0;
       break;
-    case srsgnb::security::integrity_algorithm::nia1:
+    case srsran::security::integrity_algorithm::nia1:
       asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1;
       break;
-    case srsgnb::security::integrity_algorithm::nia2:
+    case srsran::security::integrity_algorithm::nia2:
       asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2;
       break;
-    case srsgnb::security::integrity_algorithm::nia3:
+    case srsran::security::integrity_algorithm::nia3:
       asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3;
       break;
     default:
@@ -110,23 +110,23 @@ integrity_algorithm_to_e1ap_asn1(const srsgnb::security::integrity_algorithm& in
 /// \brief Converts E1AP ASN.1 type to type and \c integrity_algorithm type.
 /// \param[in] asn1_int_algo ASN.1 Integrity Protection Algorithm object.
 /// \return The \c integrity_algorithm object where the result of the conversion is stored.
-inline srsgnb::security::integrity_algorithm
+inline srsran::security::integrity_algorithm
 e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorithm_e& asn1_int_algo)
 {
-  srsgnb::security::integrity_algorithm int_algo = {};
+  srsran::security::integrity_algorithm int_algo = {};
 
   switch (asn1_int_algo) {
     case asn1::e1ap::integrity_protection_algorithm_opts::nia0:
-      int_algo = srsgnb::security::integrity_algorithm::nia0;
+      int_algo = srsran::security::integrity_algorithm::nia0;
       break;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1:
-      int_algo = srsgnb::security::integrity_algorithm::nia1;
+      int_algo = srsran::security::integrity_algorithm::nia1;
       break;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2:
-      int_algo = srsgnb::security::integrity_algorithm::nia2;
+      int_algo = srsran::security::integrity_algorithm::nia2;
       break;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3:
-      int_algo = srsgnb::security::integrity_algorithm::nia3;
+      int_algo = srsran::security::integrity_algorithm::nia3;
       break;
     default:
       srsgnb_assert(false, "Invalid integrity protection algorithm ({})", asn1_int_algo);
@@ -138,7 +138,7 @@ e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorith
 /// \brief Convert \c s_nssai_t type to E1AP ASN1 s-NSSAI.
 /// \param snssai The s-NSSAI type.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(srsgnb::s_nssai_t snssai)
+inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(srsran::s_nssai_t snssai)
 {
   asn1::e1ap::snssai_s asn1_snssai;
   asn1_snssai.sst.from_number(snssai.sst);
@@ -153,9 +153,9 @@ inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(srsgnb::s_nssai_t snssai)
 /// \brief Convert E1AP ASN1 s-NSSAI to \c s_nssai_t type.
 /// \param asn1_snssai The E1AP ASN1 s-NSSAI.
 /// \return The \c s_nssai_t type object where the result of the conversion is stored.
-inline srsgnb::s_nssai_t e1ap_asn1_to_snssai(asn1::e1ap::snssai_s asn1_snssai)
+inline srsran::s_nssai_t e1ap_asn1_to_snssai(asn1::e1ap::snssai_s asn1_snssai)
 {
-  srsgnb::s_nssai_t snssai;
+  srsran::s_nssai_t snssai;
   snssai.sst = asn1_snssai.sst.to_number();
 
   if (asn1_snssai.sd_present) {
@@ -206,24 +206,24 @@ inline sdap_config_t e1ap_asn1_to_sdap_config(asn1::e1ap::sdap_cfg_s asn1_sdap_c
 /// \brief Converts \c rlc_mode type to an E1AP ASN.1 type.
 /// \param rlc_mod rlc_mode type.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsgnb::rlc_mode rlc_mod)
+inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::rlc_mode rlc_mod)
 {
   asn1::e1ap::rlc_mode_e asn1_rlc_mode = {};
 
   switch (rlc_mod) {
-    case srsgnb::rlc_mode::tm:
+    case srsran::rlc_mode::tm:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_tm;
       break;
-    case srsgnb::rlc_mode::um_bidir:
+    case srsran::rlc_mode::um_bidir:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional;
       break;
-    case srsgnb::rlc_mode::um_unidir_ul:
+    case srsran::rlc_mode::um_unidir_ul:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_ul;
       break;
-    case srsgnb::rlc_mode::um_unidir_dl:
+    case srsran::rlc_mode::um_unidir_dl:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_dl;
       break;
-    case srsgnb::rlc_mode::am:
+    case srsran::rlc_mode::am:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_am;
       break;
     default:
@@ -236,25 +236,25 @@ inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsgnb::rlc_mode rlc_mod)
 /// \brief Converts E1AP ASN.1 type to an \c rlc_mode type.
 /// \param asn1_rlc_mod E1AP ASN.1 type.
 /// \return The rlc_mode object where the result of the conversion is stored.
-inline srsgnb::rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
+inline srsran::rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
 {
-  srsgnb::rlc_mode rlc_mode = {};
+  srsran::rlc_mode rlc_mode = {};
 
   switch (asn1_rlc_mod) {
     case asn1::e1ap::rlc_mode_opts::rlc_tm:
-      rlc_mode = srsgnb::rlc_mode::tm;
+      rlc_mode = srsran::rlc_mode::tm;
       break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional:
-      rlc_mode = srsgnb::rlc_mode::um_bidir;
+      rlc_mode = srsran::rlc_mode::um_bidir;
       break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_ul:
-      rlc_mode = srsgnb::rlc_mode::um_unidir_ul;
+      rlc_mode = srsran::rlc_mode::um_unidir_ul;
       break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_dl:
-      rlc_mode = srsgnb::rlc_mode::um_unidir_dl;
+      rlc_mode = srsran::rlc_mode::um_unidir_dl;
       break;
     case asn1::e1ap::rlc_mode_opts::rlc_am:
-      rlc_mode = srsgnb::rlc_mode::am;
+      rlc_mode = srsran::rlc_mode::am;
       break;
     default:
       srsgnb_assert(false, "Invalid RLC mode: {}", asn1_rlc_mod.to_string());
@@ -998,4 +998,4 @@ inline nr_cell_global_id_t cgi_from_e1ap_asn1(const asn1::e1ap::nr_cgi_s& asn1_c
   return cgi;
 }
 
-} // namespace srsgnb
+} // namespace srsran

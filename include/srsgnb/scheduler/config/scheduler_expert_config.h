@@ -19,7 +19,7 @@
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/ran/sib_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief UE scheduling statically configurable expert parameters.
 struct scheduler_ue_expert_config {
@@ -68,4 +68,4 @@ struct scheduler_expert_config {
   std::chrono::milliseconds      metrics_report_period;
 };
 
-} // namespace srsgnb
+} // namespace srsran

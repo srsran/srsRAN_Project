@@ -14,7 +14,7 @@
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 namespace {

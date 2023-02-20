@@ -12,7 +12,7 @@
 
 #include "srsgnb/fapi/messages.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 struct validator_report;
@@ -22,4 +22,4 @@ bool validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcch_pdu& pdu, va
 
 } // namespace fapi
 
-} // namespace srsgnb
+} // namespace srsran

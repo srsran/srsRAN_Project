@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 #include <queue>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Mocking class of the surrounding layers invoked by the PDCP.
 class pdcp_tx_test_frame : public pdcp_rx_status_provider,
@@ -147,4 +147,4 @@ protected:
 
   std::unique_ptr<pdcp_entity_tx> pdcp_tx;
 };
-} // namespace srsgnb
+} // namespace srsran

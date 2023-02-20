@@ -11,7 +11,7 @@
 #include "mac_dl_processor.h"
 #include "srsgnb/ran/pdsch/pdsch_constants.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 mac_dl_processor::mac_dl_processor(mac_common_config_t& cfg_, mac_scheduler& sched_, du_rnti_table& rnti_table_) :
   cfg(cfg_), logger(cfg.logger), ue_mng(rnti_table_), sched_obj(sched_)

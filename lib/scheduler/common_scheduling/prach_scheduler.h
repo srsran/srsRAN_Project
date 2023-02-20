@@ -15,7 +15,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include <bitset>
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_scheduler
 {
@@ -52,4 +52,4 @@ private:
   static_vector<cached_prach_occasion, MAX_PRACH_OCCASIONS_PER_SLOT> cached_prachs;
 };
 
-} // namespace srsgnb
+} // namespace srsran

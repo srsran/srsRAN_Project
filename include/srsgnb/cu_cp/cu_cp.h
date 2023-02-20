@@ -18,7 +18,7 @@
 #include "srsgnb/support/timers.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Interface to handle AMF connections
@@ -149,4 +149,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

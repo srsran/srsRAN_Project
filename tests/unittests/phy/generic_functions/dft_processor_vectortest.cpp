@@ -14,12 +14,12 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Maximum allowed error.
 static constexpr float ASSERT_MAX_ERROR = 4e-3;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
@@ -48,7 +48,7 @@ static bool operator==(span<const cf_t> transform, span<const cf_t> dft_output)
                     });
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 using DFTprocessorParams = std::tuple<std::string, test_case_t>;
 

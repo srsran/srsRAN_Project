@@ -47,7 +47,7 @@
 #include "ldpc/ldpc_rate_dematcher_neon_impl.h"
 #endif // HAVE_NEON
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -245,49 +245,49 @@ public:
 
 } // namespace
 
-std::shared_ptr<ldpc_decoder_factory> srsgnb::create_ldpc_decoder_factory_sw(const std::string& dec_type)
+std::shared_ptr<ldpc_decoder_factory> srsran::create_ldpc_decoder_factory_sw(const std::string& dec_type)
 {
   return std::make_unique<ldpc_decoder_factory_sw>(dec_type);
 }
 
-std::shared_ptr<ldpc_encoder_factory> srsgnb::create_ldpc_encoder_factory_sw(const std::string& enc_type)
+std::shared_ptr<ldpc_encoder_factory> srsran::create_ldpc_encoder_factory_sw(const std::string& enc_type)
 {
   return std::make_unique<ldpc_encoder_factory_sw>(enc_type);
 }
 
 std::shared_ptr<ldpc_rate_dematcher_factory>
-srsgnb::create_ldpc_rate_dematcher_factory_sw(const std::string& dematcher_type)
+srsran::create_ldpc_rate_dematcher_factory_sw(const std::string& dematcher_type)
 {
   return std::make_shared<ldpc_rate_dematcher_factory_sw>(dematcher_type);
 }
 
-std::shared_ptr<ldpc_rate_matcher_factory> srsgnb::create_ldpc_rate_matcher_factory_sw()
+std::shared_ptr<ldpc_rate_matcher_factory> srsran::create_ldpc_rate_matcher_factory_sw()
 {
   return std::make_shared<ldpc_rate_matcher_factory_sw>();
 }
 
 std::shared_ptr<ldpc_segmenter_tx_factory>
-srsgnb::create_ldpc_segmenter_tx_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory)
+srsran::create_ldpc_segmenter_tx_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory)
 {
   return std::make_shared<ldpc_segmenter_tx_factory_sw>(std::move(crc_factory));
 }
 
-std::shared_ptr<ldpc_segmenter_rx_factory> srsgnb::create_ldpc_segmenter_rx_factory_sw()
+std::shared_ptr<ldpc_segmenter_rx_factory> srsran::create_ldpc_segmenter_rx_factory_sw()
 {
   return std::make_shared<ldpc_segmenter_rx_factory_sw>();
 }
 
-std::shared_ptr<crc_calculator_factory> srsgnb::create_crc_calculator_factory_sw(const std::string& type)
+std::shared_ptr<crc_calculator_factory> srsran::create_crc_calculator_factory_sw(const std::string& type)
 {
   return std::make_shared<crc_calculator_factory_sw_impl>(type);
 }
 
-std::shared_ptr<polar_factory> srsgnb::create_polar_factory_sw()
+std::shared_ptr<polar_factory> srsran::create_polar_factory_sw()
 {
   return std::make_shared<polar_factory_sw>();
 }
 
-std::shared_ptr<short_block_detector_factory> srsgnb::create_short_block_detector_factory_sw()
+std::shared_ptr<short_block_detector_factory> srsran::create_short_block_detector_factory_sw()
 {
   return std::make_unique<short_block_detector_factory_sw>();
 }

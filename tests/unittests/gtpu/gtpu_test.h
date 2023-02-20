@@ -16,7 +16,7 @@
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 
 const uint8_t gtpu_ping_vec[] = {
     0x30, 0xff, 0x00, 0x54, 0x00, 0x00, 0x00, 0x01, 0x45, 0x00, 0x00, 0x54, 0xe8, 0x83, 0x40, 0x00, 0x40, 0x01, 0xfa,
@@ -99,4 +99,4 @@ protected:
   gtpu_tunnel_logger    gtpu_rx_logger{"GTPU", {0, 1, "DL"}};
   gtpu_tunnel_logger    gtpu_tx_logger{"GTPU", {0, 1, "UL"}};
 };
-} // namespace srsgnb
+} // namespace srsran

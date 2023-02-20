@@ -15,7 +15,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/modulation_scheme.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Modulation mapper public interface.
 ///
@@ -35,4 +35,4 @@ public:
   virtual void modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

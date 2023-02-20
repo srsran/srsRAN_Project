@@ -13,7 +13,7 @@
 #include "ofdm_modulator_impl.h"
 #include "ofdm_prach_demodulator_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 class ofdm_modulator_factory_generic : public ofdm_modulator_factory
@@ -103,19 +103,19 @@ public:
 } // namespace
 
 std::shared_ptr<ofdm_modulator_factory>
-srsgnb::create_ofdm_modulator_factory_generic(ofdm_factory_generic_configuration& config)
+srsran::create_ofdm_modulator_factory_generic(ofdm_factory_generic_configuration& config)
 {
   return std::make_shared<ofdm_modulator_factory_generic>(config);
 }
 
 std::shared_ptr<ofdm_demodulator_factory>
-srsgnb::create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& config)
+srsran::create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& config)
 {
   return std::make_shared<ofdm_demodulator_factory_generic>(config);
 }
 
 std::shared_ptr<ofdm_prach_demodulator_factory>
-srsgnb::create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
+srsran::create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
                                                  unsigned                               dft_size_15kHz)
 {
   return std::make_shared<ofdm_prach_demodulator_factory_sw>(dft_factory, dft_size_15kHz);

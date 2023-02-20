@@ -12,7 +12,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ue::ue(const scheduler_ue_expert_config&        expert_cfg_,
        const cell_configuration&                cell_cfg_common_,

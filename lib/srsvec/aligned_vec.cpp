@@ -13,7 +13,7 @@
 #include "srsgnb/support/error_handling.h"
 #include <cstdlib>
 
-void* srsgnb::srsvec::detail::mem_alloc(std::size_t size)
+void* srsran::srsvec::detail::mem_alloc(std::size_t size)
 {
   void* ptr = nullptr;
   int   ret = posix_memalign(&ptr, SIMD_BYTE_ALIGN * 8, size);
@@ -21,7 +21,7 @@ void* srsgnb::srsvec::detail::mem_alloc(std::size_t size)
   return ptr;
 }
 
-void srsgnb::srsvec::detail::mem_free(void* ptr)
+void srsran::srsvec::detail::mem_free(void* ptr)
 {
   free(ptr);
 }

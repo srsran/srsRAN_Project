@@ -17,7 +17,7 @@
 #include "srsgnb/support/math_utils.h"
 #include <algorithm>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a cyclic prefix configuration with its helper methods.
 class cyclic_prefix
@@ -108,20 +108,20 @@ inline constexpr unsigned get_nsymb_per_slot(const cyclic_prefix cp)
 static constexpr unsigned MAX_NSYMB_PER_SLOT =
     std::max(get_nsymb_per_slot(cyclic_prefix::NORMAL), get_nsymb_per_slot(cyclic_prefix::EXTENDED));
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// FMT formatter of slot_point type.
 template <>
-struct formatter<srsgnb::cyclic_prefix> {
+struct formatter<srsran::cyclic_prefix> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(srsgnb::cyclic_prefix cp, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::cyclic_prefix cp, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", cp.to_string());
   }

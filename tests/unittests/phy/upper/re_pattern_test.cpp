@@ -12,7 +12,7 @@
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Tests that two patterns with subcarrier mask in common are merged into one.
 void test_merge_even()

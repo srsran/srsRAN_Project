@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/scheduler_metrics.h"
 #include "srsgnb/support/io_broker/io_broker.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Notifier from application to signal current operation state.
 class app_state_notifier
@@ -57,4 +57,4 @@ private:
   span<du_cell_config>   cells;
 };
 
-} // namespace srsgnb
+} // namespace srsran

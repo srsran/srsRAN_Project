@@ -13,7 +13,7 @@
 #include "async_task.h"
 #include "detail/function_signature.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Awaiter that switches to execution context provided by given executor.
 template <typename TaskExecutor>
@@ -186,4 +186,4 @@ dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor&
   });
 }
 
-} // namespace srsgnb
+} // namespace srsran

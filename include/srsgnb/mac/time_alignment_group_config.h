@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \c maxNrofTAGs, TS 38.331.
 const unsigned MAX_NOF_TAGS = 4;
@@ -51,4 +51,4 @@ struct tag {
   bool operator!=(const tag& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -11,7 +11,7 @@ struct f1ap_pdu_c;
 
 } // namespace asn1
 
-namespace srsgnb {
+namespace srsran {
 
 /// Collection of packet related procedures of the F1AP interface.
 /// This class looks similar to F1AP_input_gateway, however clients are not the same. The first is intended for clients
@@ -27,4 +27,4 @@ public:
   virtual void handle_ul_data_packet(const asn1::f1ap::f1ap_pdu_c& pdu) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

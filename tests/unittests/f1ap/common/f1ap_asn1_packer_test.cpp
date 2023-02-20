@@ -14,7 +14,7 @@
 #include "tests/unittests/gateways/test_helpers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 /// Fixture class for F1AP ASN1 packer
@@ -29,7 +29,7 @@ protected:
 
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     f1ap   = std::make_unique<dummy_f1ap_message_handler>();
-    packer = std::make_unique<srsgnb::f1ap_asn1_packer>(*gw, *f1ap);
+    packer = std::make_unique<srsran::f1ap_asn1_packer>(*gw, *f1ap);
   }
 
   void TearDown() override
@@ -40,7 +40,7 @@ protected:
 
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<dummy_f1ap_message_handler>         f1ap;
-  std::unique_ptr<srsgnb::f1ap_asn1_packer>           packer;
+  std::unique_ptr<srsran::f1ap_asn1_packer>           packer;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
 };
 

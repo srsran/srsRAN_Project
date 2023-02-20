@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/interval.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Struct to express a {min,...,max} range of CRBs within a carrier.
 struct crb_interval : public interval<unsigned> {
@@ -24,18 +24,18 @@ struct prb_interval : public interval<unsigned> {
   using interval::interval;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// FMT formatter for prb_intervals.
 template <>
-struct formatter<srsgnb::prb_interval> : public formatter<srsgnb::interval<uint32_t>> {
+struct formatter<srsran::prb_interval> : public formatter<srsran::interval<uint32_t>> {
 };
 
 /// FMT formatter for crb_intervals.
 template <>
-struct formatter<srsgnb::crb_interval> : public formatter<srsgnb::interval<uint32_t>> {
+struct formatter<srsran::crb_interval> : public formatter<srsran::interval<uint32_t>> {
 };
 
 } // namespace fmt

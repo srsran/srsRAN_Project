@@ -22,7 +22,7 @@
 #include "srsgnb/scheduler/scheduler_dci.h"
 #include "srsgnb/support/format_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct pdsch_information;
 struct pusch_information;
@@ -434,4 +434,4 @@ private:
   std::vector<ul_harq_process> ul_harqs;
 };
 
-} // namespace srsgnb
+} // namespace srsran

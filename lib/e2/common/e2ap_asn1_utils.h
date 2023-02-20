@@ -14,7 +14,7 @@
 #include "srsgnb/asn1/e2ap/e2ap.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Extracts transaction id of Initiating message.
 inline expected<uint8_t> get_transaction_id(const asn1::e2ap::init_msg_s& out)
@@ -88,4 +88,4 @@ inline const char* get_message_type_str(const asn1::e2ap::e2_ap_pdu_c& pdu)
   }
   report_fatal_error("Invalid E2AP PDU type \"{}\"", pdu.type().to_string());
 }
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "radio_zmq_tx_channel.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class radio_zmq_tx_stream
 {
@@ -60,4 +60,4 @@ public:
   void wait_stop();
 };
 
-} // namespace srsgnb
+} // namespace srsran

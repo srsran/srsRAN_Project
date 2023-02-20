@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// [Implementation-specific] Maximum Logical channels per TB.
 static constexpr size_t MAX_LC_PER_TB = 4;
@@ -82,4 +82,4 @@ static constexpr size_t MAX_UCI_PDUS_PER_UCI_IND = 8;
 /// [Implementation defined] Maximum number of HARQ VALUES per HARQ PDU.
 static constexpr size_t MAX_HARQ_VALUES_PER_HARQ_PDU = 8;
 
-} // namespace srsgnb
+} // namespace srsran

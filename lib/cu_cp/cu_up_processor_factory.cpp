@@ -13,11 +13,11 @@
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 std::unique_ptr<cu_up_processor_interface>
-srsgnb::srs_cu_cp::create_cu_up_processor(const cu_up_processor_config_t             cu_up_processor_config_,
+srsran::srs_cu_cp::create_cu_up_processor(const cu_up_processor_config_t             cu_up_processor_config_,
                                           cu_up_processor_cu_up_management_notifier& cu_cp_notifier_,
                                           e1ap_message_notifier&                     e1ap_notifier_,
                                           cu_up_processor_task_scheduler&            task_sched_,

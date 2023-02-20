@@ -10,9 +10,9 @@
 
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-prach_preamble_information srsgnb::get_prach_preamble_long_info(preamble_format format)
+prach_preamble_information srsran::get_prach_preamble_long_info(preamble_format format)
 {
   srsgnb_assert(format.is_long_preamble(), "Invalid preamble format. It must be a long preamble.");
   switch (format) {

@@ -22,10 +22,10 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, modulation_scheme mod)
 {
@@ -65,7 +65,7 @@ std::ostream& operator<<(std::ostream& os, const span<const uint8_t>& data)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 

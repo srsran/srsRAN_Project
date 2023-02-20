@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/validator_report.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 /// This validator checks the PDCCH PDU.
@@ -214,7 +214,7 @@ static bool validate_power_control_offset_profile_nr(message_type_id   msg_type,
   return false;
 }
 
-bool srsgnb::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcch_pdu& pdu, validator_report& report)
+bool srsran::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcch_pdu& pdu, validator_report& report)
 {
   bool result = true;
 

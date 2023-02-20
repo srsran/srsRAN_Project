@@ -16,7 +16,7 @@
 #include "srsgnb/f1ap/du/f1c_bearer.h"
 #include "srsgnb/ran/rnti.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1ap_event_manager;
@@ -71,4 +71,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

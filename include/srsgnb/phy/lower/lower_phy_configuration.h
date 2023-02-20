@@ -23,7 +23,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the lower physical layer RF port mapping.
 struct lower_phy_sector_port_mapping {
@@ -124,4 +124,4 @@ inline bool is_valid_lower_phy_config(const lower_phy_configuration& config)
   return true;
 }
 
-} // namespace srsgnb
+} // namespace srsran

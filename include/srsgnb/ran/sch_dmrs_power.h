@@ -13,7 +13,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Calculates the ratio between the Physical Shared Channel EPRE and the DM-RS EPRE.
 ///
@@ -29,4 +29,4 @@ inline float get_sch_to_dmrs_ratio_dB(unsigned nof_cdm_groups_without_data)
   return beta_dmrs_values[nof_cdm_groups_without_data];
 }
 
-} // namespace srsgnb
+} // namespace srsran

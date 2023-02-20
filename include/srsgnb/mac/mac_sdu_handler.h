@@ -4,7 +4,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This interface notifies to upper layers the reception of new SDUs over a logical channel.
 class mac_sdu_rx_notifier
@@ -30,4 +30,4 @@ public:
   virtual unsigned on_buffer_state_update() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

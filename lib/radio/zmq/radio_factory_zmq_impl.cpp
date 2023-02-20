@@ -12,7 +12,7 @@
 #include "radio_config_zmq_validator.h"
 #include "radio_session_zmq_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::unique_ptr<radio_session> radio_factory_zmq_impl::create(const radio_configuration::radio& config,
                                                               task_executor&                    async_task_executor,
@@ -31,7 +31,7 @@ std::unique_ptr<radio_session> radio_factory_zmq_impl::create(const radio_config
   return session;
 }
 
-radio_config_zmq_config_validator srsgnb::radio_factory_zmq_impl::config_validator;
+radio_config_zmq_config_validator srsran::radio_factory_zmq_impl::config_validator;
 
 const radio_configuration::validator& radio_factory_zmq_impl::get_configuration_validator()
 {

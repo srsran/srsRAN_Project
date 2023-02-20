@@ -15,7 +15,7 @@
 #include "srsgnb/support/executors/task_worker.h"
 #include <fstream>
 
-namespace srsgnb {
+namespace srsran {
 
 class upper_phy_rx_symbol_handler_printer_decorator : public upper_phy_rx_symbol_handler
 {
@@ -103,4 +103,4 @@ private:
   unsigned                                     nof_symbols;
 };
 
-} // namespace srsgnb
+} // namespace srsran

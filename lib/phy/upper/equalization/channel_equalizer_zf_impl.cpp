@@ -15,7 +15,7 @@
 #include "equalize_zf_1xn.h"
 #include "equalize_zf_2x2.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Assert that the dimensions of the equalizer input and output data structures match.
 static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols,

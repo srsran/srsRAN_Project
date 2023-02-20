@@ -16,7 +16,7 @@
 #include <string>
 #include <sys/socket.h>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Port specified for Encapsulated T-PDUs,
 /// TS 29.281 Sec. 4.4.2.3
@@ -33,7 +33,7 @@ struct gtpu_config {
     uint16_t    peer_port;
   } tx;
 };
-} // namespace srsgnb
+} // namespace srsran
 
 //
 // Formatters
@@ -42,7 +42,7 @@ namespace fmt {
 
 // RX config
 template <>
-struct formatter<srsgnb::gtpu_config::gtpu_rx_config> {
+struct formatter<srsran::gtpu_config::gtpu_rx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -50,7 +50,7 @@ struct formatter<srsgnb::gtpu_config::gtpu_rx_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_config::gtpu_rx_config& cfg, FormatContext& ctx)
+  auto format(const srsran::gtpu_config::gtpu_rx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "local_teid={:#x}", cfg.local_teid);
@@ -59,7 +59,7 @@ struct formatter<srsgnb::gtpu_config::gtpu_rx_config> {
 
 // TX config
 template <>
-struct formatter<srsgnb::gtpu_config::gtpu_tx_config> {
+struct formatter<srsran::gtpu_config::gtpu_tx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -67,7 +67,7 @@ struct formatter<srsgnb::gtpu_config::gtpu_tx_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_config::gtpu_tx_config& cfg, FormatContext& ctx)
+  auto format(const srsran::gtpu_config::gtpu_tx_config& cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(
@@ -77,7 +77,7 @@ struct formatter<srsgnb::gtpu_config::gtpu_tx_config> {
 
 // GTP-U config
 template <>
-struct formatter<srsgnb::gtpu_config> {
+struct formatter<srsran::gtpu_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -85,7 +85,7 @@ struct formatter<srsgnb::gtpu_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::gtpu_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{} {}", cfg.rx, cfg.tx);
   }

@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This interface represents the data exit point of the receiving side of a F1-U entity.
 /// The F1-U entity will use this class to pass PDCP PDUs into the PDCP.
@@ -29,4 +29,4 @@ public:
   virtual void on_new_pdcp_pdu(byte_buffer_slice_chain pdu) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

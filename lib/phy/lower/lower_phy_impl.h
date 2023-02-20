@@ -30,7 +30,7 @@
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/support/stats.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the factory configuration.
 struct lower_phy_common_configuration {
@@ -248,4 +248,4 @@ public:
   lower_phy_controller& get_controller() override { return *this; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "pseudo_random_generator_impl.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -60,17 +60,17 @@ public:
 } // namespace
 
 std::shared_ptr<low_papr_sequence_collection_factory>
-srsgnb::create_low_papr_sequence_collection_sw_factory(std::shared_ptr<low_papr_sequence_generator_factory> lpg_factory)
+srsran::create_low_papr_sequence_collection_sw_factory(std::shared_ptr<low_papr_sequence_generator_factory> lpg_factory)
 {
   return std::make_shared<low_papr_sequence_collection_sw_factory>(lpg_factory);
 }
 
-std::shared_ptr<low_papr_sequence_generator_factory> srsgnb::create_low_papr_sequence_generator_sw_factory()
+std::shared_ptr<low_papr_sequence_generator_factory> srsran::create_low_papr_sequence_generator_sw_factory()
 {
   return std::make_shared<low_papr_sequence_generator_sw_factory>();
 }
 
-std::shared_ptr<pseudo_random_generator_factory> srsgnb::create_pseudo_random_generator_sw_factory()
+std::shared_ptr<pseudo_random_generator_factory> srsran::create_pseudo_random_generator_sw_factory()
 {
   return std::make_shared<pseudo_random_generator_sw_factory>();
 }

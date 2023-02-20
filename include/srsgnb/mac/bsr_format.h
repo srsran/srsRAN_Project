@@ -17,7 +17,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/scheduler/config/logical_channel_group.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// TS 38.321, 6.1.3.1 - Buffer Status Report MAC CEs
 enum class bsr_format { SHORT_BSR, LONG_BSR, SHORT_TRUNC_BSR, LONG_TRUNC_BSR };
@@ -100,4 +100,4 @@ struct bsr_config {
   optional<logical_channel_sr_delay_timer> lc_sr_delay_timer;
 };
 
-} // namespace srsgnb
+} // namespace srsran

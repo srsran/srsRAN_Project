@@ -13,7 +13,7 @@
 #include <gtest/gtest.h>
 #include <queue>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
 /// Mocking class of the surrounding layers invoked by the SDAP TX entity.

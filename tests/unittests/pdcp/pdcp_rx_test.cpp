@@ -17,12 +17,12 @@
 #include <gtest/gtest.h>
 #include <queue>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Test creation of PDCP RX entities
 TEST_P(pdcp_rx_test, create_new_entity)
 {
-  srsgnb::test_delimit_logger delimiter("Entity creation test. SN_SIZE={} ", sn_size);
+  srsran::test_delimit_logger delimiter("Entity creation test. SN_SIZE={} ", sn_size);
   init(GetParam());
 
   ASSERT_NE(pdcp_rx, nullptr);
@@ -33,7 +33,7 @@ TEST_P(pdcp_rx_test, create_new_entity)
 TEST_P(pdcp_rx_test, sn_unpack)
 {
   auto test_hdr_reader = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter("Header reader test. SN_SIZE={} COUNT={}", sn_size, count);
+    srsran::test_delimit_logger delimiter("Header reader test. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
     // Get PDU to test
     byte_buffer test_pdu;
@@ -62,7 +62,7 @@ TEST_P(pdcp_rx_test, sn_unpack)
 TEST_P(pdcp_rx_test, rx_in_order)
 {
   auto test_rx_in_order = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter("RX in order test. SN_SIZE={} COUNT={}", sn_size, count);
+    srsran::test_delimit_logger delimiter("RX in order test. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
     pdcp_rx->enable_security(sec_cfg);
@@ -101,7 +101,7 @@ TEST_P(pdcp_rx_test, rx_in_order)
 TEST_P(pdcp_rx_test, rx_out_of_order)
 {
   auto test_rx_in_order = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter(
+    srsran::test_delimit_logger delimiter(
         "RX out-of-order test, no t-Reordering. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms10);
 
@@ -141,7 +141,7 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
 TEST_P(pdcp_rx_test, rx_reordering_timer)
 {
   auto test_rx_t_reorder = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter(
+    srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering expires. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms10);
 
@@ -182,7 +182,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
 TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
 {
   auto test_rx_t_reorder = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter(
+    srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering is set to 0. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms0);
 
@@ -222,7 +222,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
 TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
 {
   auto test_rx_t_reorder = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter(
+    srsran::test_delimit_logger delimiter(
         "RX out-of-order test, t-Reordering is set to infinity. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::infinity);
 
@@ -262,7 +262,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
 TEST_P(pdcp_rx_test, rx_integrity_fail)
 {
   auto test_rx_integrity_fail = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
+    srsran::test_delimit_logger delimiter("RX PDU with bad integrity. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
     pdcp_rx->enable_security(sec_cfg);

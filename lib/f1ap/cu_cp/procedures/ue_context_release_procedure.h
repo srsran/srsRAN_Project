@@ -18,7 +18,7 @@
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class ue_context_release_procedure
@@ -48,4 +48,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

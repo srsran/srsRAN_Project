@@ -13,7 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Status report interface of the PDCP RX entity
 /// The PDCP TX entity uses this class to obtain a status report according to received and missing SDUs
@@ -42,4 +42,4 @@ public:
   virtual void on_status_report(byte_buffer_slice_chain status) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

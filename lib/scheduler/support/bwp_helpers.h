@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/scheduler_dci.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Convert PRB within a BWP into a Common RB, which use pointA as reference point.
 /// The CRB and PRB are assumed to have the same numerology of the provided BWP configuration.
@@ -124,4 +124,4 @@ inline bwp_configuration get_resource_alloc_type_1_ul_bwp_size(dci_ul_format    
   report_fatal_error("Unsupported UL DCI format={}", dci_fmt);
 }
 
-} // namespace srsgnb
+} // namespace srsran

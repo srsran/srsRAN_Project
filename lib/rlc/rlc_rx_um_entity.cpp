@@ -10,7 +10,7 @@
 
 #include "rlc_rx_um_entity.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
                                    rb_id_t                           rb_id,

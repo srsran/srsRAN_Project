@@ -14,7 +14,7 @@
 #include "routines/initial_cu_up_processor_setup_routine.h"
 #include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t             cu_up_processor_config_,

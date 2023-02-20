@@ -16,7 +16,7 @@
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include <queue>
 
-namespace srsgnb {
+namespace srsran {
 
 class dl_logical_channel_manager
 {
@@ -169,4 +169,4 @@ unsigned allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_manager& l
 unsigned
 allocate_ue_con_res_id_mac_ce(dl_msg_tb_info& tb_info, dl_logical_channel_manager& lch_mng, unsigned total_tbs);
 
-} // namespace srsgnb
+} // namespace srsran

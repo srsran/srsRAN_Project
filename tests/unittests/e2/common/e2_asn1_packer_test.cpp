@@ -12,7 +12,7 @@
 #include "lib/e2/common/e2ap_asn1_packer.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Fixture class for E2AP ASN1 packer
 class e2_asn1_packer_test : public ::testing::Test
@@ -26,7 +26,7 @@ protected:
 
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     e2     = std::make_unique<dummy_e2_message_handler>();
-    packer = std::make_unique<srsgnb::e2ap_asn1_packer>(*gw, *e2);
+    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
   }
 
   void TearDown() override
@@ -37,7 +37,7 @@ protected:
 
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<dummy_e2_message_handler>           e2;
-  std::unique_ptr<srsgnb::e2ap_asn1_packer>           packer;
+  std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
 };
 

@@ -14,7 +14,7 @@
 #include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class initial_cu_up_processor_setup_routine
@@ -39,4 +39,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

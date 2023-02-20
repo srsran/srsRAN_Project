@@ -13,7 +13,7 @@
 #include "coroutine.h"
 #include "srsgnb/support/timers.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Returns an awaitable object that is only ready when the passed duration_msec has elapsed.
 ///
@@ -51,4 +51,4 @@ auto async_wait_for(UniqueTimer&& timer, unsigned duration_msec)
   return async_timer{std::forward<UniqueTimer>(timer), duration_msec};
 }
 
-} // namespace srsgnb
+} // namespace srsran

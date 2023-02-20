@@ -13,7 +13,7 @@
 #include "srsgnb/adt/tensor.h"
 #include "srsgnb/phy/support/resource_grid.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a generic resource grid implementation
 class resource_grid_impl : public resource_grid
@@ -58,4 +58,4 @@ public:
   void set_all_zero() override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

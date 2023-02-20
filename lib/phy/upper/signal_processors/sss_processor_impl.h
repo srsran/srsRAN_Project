@@ -14,7 +14,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 class sss_processor_impl : public sss_processor
 {
 private:
@@ -52,4 +52,4 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

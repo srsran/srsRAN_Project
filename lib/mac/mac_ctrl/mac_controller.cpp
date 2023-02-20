@@ -14,7 +14,7 @@
 #include "ue_delete_procedure.h"
 #include "ue_reconfiguration_procedure.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 mac_controller::mac_controller(mac_common_config_t&        cfg_,
                                mac_ul_configurator&        ul_unit_,

@@ -26,7 +26,7 @@
 #include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -642,7 +642,7 @@ private:
 } // namespace
 
 std::shared_ptr<downlink_processor_factory>
-srsgnb::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config)
+srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config)
 {
   // Create channel coding factories - CRC
   std::shared_ptr<crc_calculator_factory> crc_calc_factory =
@@ -755,7 +755,7 @@ srsgnb::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
       pdcch_proc_factory, pdsch_proc_factory, ssb_proc_factory, nzp_csi_rs_factory);
 }
 
-std::unique_ptr<uplink_processor_pool> srsgnb::create_uplink_processor_pool(uplink_processor_pool_config config)
+std::unique_ptr<uplink_processor_pool> srsran::create_uplink_processor_pool(uplink_processor_pool_config config)
 {
   // Convert from pool config to pool_impl config.
   uplink_processor_pool_impl_config ul_processors;
@@ -768,7 +768,7 @@ std::unique_ptr<uplink_processor_pool> srsgnb::create_uplink_processor_pool(upli
   return std::make_unique<uplink_processor_pool_impl>(std::move(ul_processors));
 }
 
-std::unique_ptr<downlink_processor_pool> srsgnb::create_dl_processor_pool(downlink_processor_pool_config config)
+std::unique_ptr<downlink_processor_pool> srsran::create_dl_processor_pool(downlink_processor_pool_config config)
 {
   // Convert from pool config to pool_impl config.
   downlink_processor_pool_impl_config dl_processors;
@@ -783,7 +783,7 @@ std::unique_ptr<downlink_processor_pool> srsgnb::create_dl_processor_pool(downli
 }
 
 std::unique_ptr<upper_phy_factory>
-srsgnb::create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory)
+srsran::create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory)
 {
   return std::make_unique<upper_phy_factory_impl>(downlink_proc_factory);
 }

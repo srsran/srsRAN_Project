@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 #include <queue>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief Test correct metrics counting of PDCP data SDUs/PDUs
 TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
@@ -25,7 +25,7 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
   init(GetParam());
 
   auto test_metrics = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter("RX PDU/SDU metrics tests. SN_SIZE={} COUNT={}", sn_size, count);
+    srsran::test_delimit_logger delimiter("RX PDU/SDU metrics tests. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
     pdcp_rx->enable_security(sec_cfg);
@@ -72,7 +72,7 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
   init(GetParam());
 
   auto test_metrics = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter(
+    srsran::test_delimit_logger delimiter(
         "RX PDU with bad integrity metrics test. SN_SIZE={} COUNT={}", sn_size, count);
     init(GetParam());
 
@@ -118,7 +118,7 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
 TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
 {
   auto test_rx_t_reorder = [this](uint32_t count) {
-    srsgnb::test_delimit_logger delimiter(
+    srsran::test_delimit_logger delimiter(
         "t-Reordering expiration metrics test. SN_SIZE={} COUNT=[{}, {}]", sn_size, count + 1, count);
     init(GetParam(), pdcp_t_reordering::ms10);
 

@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/resource_block.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace pucch_constants {
 
@@ -55,4 +55,4 @@ static constexpr unsigned MAX_NOF_LLR = MAX_NOF_RE * 2;
 static constexpr float MAX_CODE_RATE = 0.80F;
 
 } // namespace pucch_constants
-} // namespace srsgnb
+} // namespace srsran

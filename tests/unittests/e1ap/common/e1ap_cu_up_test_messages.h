@@ -12,7 +12,7 @@
 
 #include "srsgnb/e1ap/cu_up/e1ap_cu_up.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief Generate a dummy CU-CP E1 Setup Request.
@@ -35,4 +35,4 @@ e1ap_message generate_invalid_bearer_context_modification_request(unsigned int c
 e1ap_message generate_bearer_context_release_command(unsigned int cu_cp_ue_e1ap_id, unsigned int cu_up_ue_e1ap_id);
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

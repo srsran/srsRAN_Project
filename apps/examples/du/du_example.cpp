@@ -31,7 +31,7 @@
 #include <csignal>
 #include <getopt.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace srs_du;
 
@@ -259,7 +259,7 @@ public:
       setup_res->gnb_cu_name.value.from_string("srsCU");
       setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
     } else {
-      srsgnb::byte_buffer buffer;
+      srsran::byte_buffer buffer;
       asn1::bit_ref       bref(buffer);
       if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
         du_logger.info("The contents of the received Msg5 are invalid");

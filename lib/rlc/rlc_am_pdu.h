@@ -14,7 +14,7 @@
 #include "srsgnb/support/format_utils.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 const uint32_t INVALID_RLC_SN         = 0xffffffff; ///< Reserved number representing an invalid RLC sequence number
 const uint32_t RETX_COUNT_NOT_STARTED = 0xffffffff; ///< Reserved number representing that RETX has not started
@@ -238,11 +238,11 @@ inline void rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_b
   pdu.chain_before(std::move(hdr_buf));
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsgnb::rlc_am_pdu_header> {
+struct formatter<srsran::rlc_am_pdu_header> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -250,14 +250,14 @@ struct formatter<srsgnb::rlc_am_pdu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_am_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_am_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "dc={} p={} si={} sn={} so={}", hdr.dc, hdr.p, hdr.si, hdr.sn, hdr.so);
   }
 };
 
 template <>
-struct formatter<srsgnb::rlc_am_status_nack> {
+struct formatter<srsran::rlc_am_status_nack> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -265,7 +265,7 @@ struct formatter<srsgnb::rlc_am_status_nack> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_am_status_nack& nack, FormatContext& ctx)
+  auto format(const srsran::rlc_am_status_nack& nack, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (nack.has_nack_range) {
@@ -285,7 +285,7 @@ struct formatter<srsgnb::rlc_am_status_nack> {
 };
 
 template <>
-struct formatter<srsgnb::rlc_am_status_pdu> {
+struct formatter<srsran::rlc_am_status_pdu> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -293,7 +293,7 @@ struct formatter<srsgnb::rlc_am_status_pdu> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_am_status_pdu& status, FormatContext& ctx)
+  auto format(const srsran::rlc_am_status_pdu& status, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     memory_buffer buffer;
@@ -305,7 +305,7 @@ struct formatter<srsgnb::rlc_am_status_pdu> {
       }
     }
 
-    return format_to(ctx.out(), "{}", srsgnb::to_c_str(buffer));
+    return format_to(ctx.out(), "{}", srsran::to_c_str(buffer));
   }
 };
 } // namespace fmt

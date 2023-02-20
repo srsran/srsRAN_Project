@@ -20,10 +20,10 @@
 
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, test_case_t tct)
 {
@@ -46,7 +46,7 @@ std::ostream& operator<<(std::ostream& os, span<uint8_t> data)
   return os << fmt::format("{}", data);
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 

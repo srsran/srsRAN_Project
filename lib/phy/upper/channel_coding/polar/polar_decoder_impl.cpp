@@ -12,7 +12,7 @@
 #include "srsgnb/srsvec/binary.h"
 #include "srsgnb/srsvec/zero.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief Polar decoder function \f$f\f$.
 ///

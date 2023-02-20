@@ -16,7 +16,7 @@
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   dft_processor::configuration config;
@@ -65,4 +65,4 @@ static const std::vector<test_case_t> dft_processor_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 /// Number of prime numbers between 2 and 3299 (both included).
 constexpr unsigned NOF_PRIME_NUMBERS = 463;
 
-using namespace srsgnb;
+using namespace srsran;
 
 static constexpr std::array<unsigned, NOF_PRIME_NUMBERS> prime_numbers = {
     2,    3,    5,    7,    11,   13,   17,   19,   23,   29,   31,   37,   41,   43,   47,   53,   59,   61,   67,
@@ -44,7 +44,7 @@ static constexpr std::array<unsigned, NOF_PRIME_NUMBERS> prime_numbers = {
     3061, 3067, 3079, 3083, 3089, 3109, 3119, 3121, 3137, 3163, 3167, 3169, 3181, 3187, 3191, 3203, 3209, 3217, 3221,
     3229, 3251, 3253, 3257, 3259, 3271, 3299};
 
-unsigned srsgnb::prime_greater_than(unsigned n)
+unsigned srsran::prime_greater_than(unsigned n)
 {
   for (unsigned prime : prime_numbers) {
     if (prime > n) {
@@ -55,7 +55,7 @@ unsigned srsgnb::prime_greater_than(unsigned n)
   srsgnb_terminate("n=%d exceeds the maximum prime.", n);
 }
 
-unsigned srsgnb::prime_lower_than(unsigned n)
+unsigned srsran::prime_lower_than(unsigned n)
 {
   srsgnb_assert(n < prime_numbers[NOF_PRIME_NUMBERS - 1], "n=%d exceeds the maximum prime.", n);
 

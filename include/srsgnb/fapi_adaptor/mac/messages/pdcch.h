@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/mac/mac_cell_result.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// Collection of downlink DCIs that share the same BWP, CORESET and starting symbol.
@@ -44,4 +44,4 @@ void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu& fapi_pdu, const mac_pdcch_pdu
 void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

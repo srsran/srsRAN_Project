@@ -21,7 +21,7 @@
 #include "srsgnb/ran/rnti.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief F1-C bearer to Add or Modify in UE F1 context.
@@ -69,4 +69,4 @@ struct f1ap_ue_configuration_response {
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

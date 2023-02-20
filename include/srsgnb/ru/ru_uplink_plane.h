@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_buffer;
 struct prach_buffer_context;
@@ -77,4 +77,4 @@ public:
   virtual void handle_new_uplink_slot(const resource_grid_context& context, resource_grid& grid) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

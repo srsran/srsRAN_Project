@@ -10,7 +10,7 @@
 
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Describes a REG index list of unsigned 16 bit indicating the REG index.
 using reg_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
@@ -137,7 +137,7 @@ static prb_index_list reg_to_prb_mapping_other(unsigned              N_bwp_start
   return result;
 }
 
-prb_index_list srsgnb::cce_to_prb_mapping_coreset0(unsigned N_coreset0_start,
+prb_index_list srsran::cce_to_prb_mapping_coreset0(unsigned N_coreset0_start,
                                                    unsigned N_coreset0_size,
                                                    unsigned N_symb_coreset,
                                                    pci_t    N_id_cell,
@@ -151,7 +151,7 @@ prb_index_list srsgnb::cce_to_prb_mapping_coreset0(unsigned N_coreset0_start,
   return reg_to_prb_mapping_coreset0(N_coreset0_start, N_coreset0_size, N_symb_coreset, reg_indexes);
 }
 
-prb_index_list srsgnb::cce_to_prb_mapping_non_interleaved(unsigned                    N_bwp_start,
+prb_index_list srsran::cce_to_prb_mapping_non_interleaved(unsigned                    N_bwp_start,
                                                           const freq_resource_bitmap& freq_resources,
                                                           unsigned                    N_symb_coreset,
                                                           unsigned                    aggregation_level,
@@ -164,7 +164,7 @@ prb_index_list srsgnb::cce_to_prb_mapping_non_interleaved(unsigned              
   return reg_to_prb_mapping_other(N_bwp_start, freq_resources, N_symb_coreset, reg_indexes);
 }
 
-prb_index_list srsgnb::cce_to_prb_mapping_interleaved(unsigned                    N_bwp_start,
+prb_index_list srsran::cce_to_prb_mapping_interleaved(unsigned                    N_bwp_start,
                                                       const freq_resource_bitmap& freq_resources,
                                                       unsigned                    N_symb_coreset,
                                                       unsigned                    reg_bundle_size,

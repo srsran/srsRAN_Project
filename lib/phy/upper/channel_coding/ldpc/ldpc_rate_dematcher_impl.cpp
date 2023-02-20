@@ -15,8 +15,8 @@
 #include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 void ldpc_rate_dematcher_impl::init(bool new_data, const codeblock_metadata::tb_common_metadata& cfg)
 {

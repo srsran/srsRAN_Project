@@ -12,7 +12,7 @@
 #include "helpers.h"
 #include "srsgnb/fapi/messages.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 /// This validator checks a UCI.indication message.
@@ -125,8 +125,8 @@ static bool validate_harq_payload_size(uci_pdu_type                             
                                        uci_pusch_or_pucch_f2_3_4_detection_status status,
                                        validator_report&                          report)
 {
-  if (status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
-      status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+  if (status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+      status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
     static const unsigned EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE = 0;
 
     return validate_field_eq(EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE,
@@ -173,8 +173,8 @@ static bool validate_csi1_payload_size(uci_pdu_type                             
                                        uci_pusch_or_pucch_f2_3_4_detection_status status,
                                        validator_report&                          report)
 {
-  if (status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
-      status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+  if (status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+      status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
     static const unsigned EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE = 0;
 
     return validate_field_eq(EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE,
@@ -221,8 +221,8 @@ static bool validate_csi2_payload_size(uci_pdu_type                             
                                        uci_pusch_or_pucch_f2_3_4_detection_status status,
                                        validator_report&                          report)
 {
-  if (status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
-      status == srsgnb::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
+  if (status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::crc_failure ||
+      status == srsran::uci_pusch_or_pucch_f2_3_4_detection_status::dtx) {
     static const unsigned EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE = 0;
 
     return validate_field_eq(EXPECTED_BIT_LENGTH_VALUE_ON_FAILURE,
@@ -241,7 +241,7 @@ static bool validate_csi2_payload_size(uci_pdu_type                             
                            report);
 }
 
-bool srsgnb::fapi::validate_uci_pusch_pdu(const uci_pusch_pdu& pdu, validator_report& report)
+bool srsran::fapi::validate_uci_pusch_pdu(const uci_pusch_pdu& pdu, validator_report& report)
 {
   static constexpr uci_pdu_type pdu_type = uci_pdu_type::PUSCH;
   bool                          result   = true;
@@ -376,7 +376,7 @@ static bool validate_harq_format01_value(unsigned value, validator_report& repor
                         report);
 }
 
-bool srsgnb::fapi::validate_uci_pucch_format01_pdu(const uci_pucch_pdu_format_0_1& pdu, validator_report& report)
+bool srsran::fapi::validate_uci_pucch_format01_pdu(const uci_pucch_pdu_format_0_1& pdu, validator_report& report)
 {
   static constexpr uci_pdu_type pdu_type = uci_pdu_type::PUCCH_format_0_1;
   bool                          result   = true;
@@ -440,7 +440,7 @@ static bool validate_sr_format234_bit_length(unsigned value, validator_report& r
                         report);
 }
 
-bool srsgnb::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2_3_4& pdu, validator_report& report)
+bool srsran::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2_3_4& pdu, validator_report& report)
 {
   static constexpr uci_pdu_type pdu_type = uci_pdu_type::PUCCH_format_2_3_4;
   bool                          result   = true;

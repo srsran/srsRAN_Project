@@ -12,7 +12,7 @@
 
 #include "f1ap_du_ue.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief Stores the list of UE contexts currently registered in the F1AP-DU.
@@ -99,4 +99,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

@@ -17,7 +17,7 @@
 #include "srsgnb/support/timers.h"
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Protocol Transaction Awaitable. This awaitable is single-use, after which, the respective
 /// transaction_manager class will reset its underlying event state.
@@ -186,4 +186,4 @@ private:
   observer_type observer;
 };
 
-} // namespace srsgnb
+} // namespace srsran

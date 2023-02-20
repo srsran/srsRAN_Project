@@ -12,7 +12,7 @@
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/srsvec/copy.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void prach_processor_worker::run_state_wait(span<const cf_t>                                samples,
                                             const prach_processor_baseband::symbol_context& context)

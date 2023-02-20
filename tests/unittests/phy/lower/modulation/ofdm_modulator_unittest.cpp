@@ -20,7 +20,7 @@
 /// Defines the maximum allowed error at the OFDM modulator output.
 static constexpr float ASSERT_MAX_ERROR = 1e-6;
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

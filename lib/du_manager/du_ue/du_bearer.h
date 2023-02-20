@@ -20,7 +20,7 @@
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rlc/rlc_entity.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief Connector of the MAC, RLC and F1 for a given DU UE SRB bearer.
@@ -111,4 +111,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

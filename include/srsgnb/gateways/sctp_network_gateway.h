@@ -17,7 +17,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Configuration for SCTP network gateway
 struct sctp_network_gateway_config : common_network_gateway_config {
@@ -70,4 +70,4 @@ public:
 class sctp_network_gateway : public sctp_network_gateway_controller, public sctp_network_gateway_data_handler
 {};
 
-} // namespace srsgnb
+} // namespace srsran

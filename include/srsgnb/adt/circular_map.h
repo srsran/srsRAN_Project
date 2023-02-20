@@ -6,7 +6,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Contiguous array of optional objects indexed circularly via a integer key. Random access, insertion and removal
 /// should have complexity O(1).
@@ -197,11 +197,11 @@ public:
     count++;
     return true;
   }
-  srsgnb::expected<iterator, T> insert(K key, T&& obj)
+  srsran::expected<iterator, T> insert(K key, T&& obj)
   {
     size_t idx = key % N;
     if (present[idx]) {
-      return srsgnb::expected<iterator, T>(std::move(obj));
+      return srsran::expected<iterator, T>(std::move(obj));
     }
     buffer[idx].emplace(key, std::move(obj));
     present[idx] = true;
@@ -304,4 +304,4 @@ private:
   size_t                                     count = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

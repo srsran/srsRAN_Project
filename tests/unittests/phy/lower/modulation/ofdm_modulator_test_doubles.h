@@ -15,7 +15,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 class ofdm_symbol_modulator_spy : public ofdm_symbol_modulator
 {
@@ -99,4 +99,4 @@ public:
   std::vector<ofdm_symbol_modulator_spy*>& get_modulators() { return modulators; };
 };
 
-} // namespace srsgnb
+} // namespace srsran

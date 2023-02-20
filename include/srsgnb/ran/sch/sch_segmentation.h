@@ -13,7 +13,7 @@
 #include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/support/units.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Collects Shared Channel (SCH) parameters derived from the transport block size and the target code rate.
 struct sch_information {
@@ -37,4 +37,4 @@ struct sch_information {
 /// \f$R\f$.
 sch_information get_sch_segmentation_info(units::bits tbs, float target_code_rate);
 
-} // namespace srsgnb
+} // namespace srsran

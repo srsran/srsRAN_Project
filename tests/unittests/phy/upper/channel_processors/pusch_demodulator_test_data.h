@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct context_t {
   float                            noise_var;
@@ -96,4 +96,4 @@ static const std::vector<test_case_t> pusch_demodulator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -20,7 +20,7 @@
 #include "srsgnb/ran/modulation_scheme.h"
 // TODO(david,borja): fix dependency.
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a codeblock.
 ///
@@ -155,4 +155,4 @@ struct segmenter_config {
   unsigned nof_ch_symbols = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

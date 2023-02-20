@@ -25,7 +25,7 @@
 #include <getopt.h>
 
 /// \cond
-using namespace srsgnb;
+using namespace srsran;
 
 static bool     use_early_stop      = false;
 static unsigned nof_ldpc_iterations = 6;

@@ -20,7 +20,7 @@
 #include "srsgnb/adt/variant.h"
 #include "srsgnb/ran/tci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// CSI-RS-ResourceMapping is used to configure the resource element mapping of a CSI-RS resource in time- and frequency
 /// domain
@@ -318,4 +318,4 @@ struct csi_meas_config {
   bool operator!=(const csi_meas_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

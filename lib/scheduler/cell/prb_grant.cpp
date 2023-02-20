@@ -11,9 +11,9 @@
 #include "srsgnb/scheduler/prb_grant.h"
 #include "srsgnb/scheduler/resource_block_group.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-prb_bitmap srsgnb::convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, nominal_rbg_size P)
+prb_bitmap srsran::convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, nominal_rbg_size P)
 {
   int      idx            = 0;
   unsigned first_rbg_size = get_rbg_size(bwp_rbs, P, 0);

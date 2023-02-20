@@ -15,7 +15,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::random_device                      rd;
 std::mt19937                            gen(rd());

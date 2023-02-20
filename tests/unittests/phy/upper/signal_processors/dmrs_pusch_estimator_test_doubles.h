@@ -13,7 +13,7 @@
 #include "../../phy_test_utils.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dmrs_pusch_estimator_spy : public dmrs_pusch_estimator
 {
@@ -43,4 +43,4 @@ private:
 
 PHY_SPY_FACTORY_TEMPLATE(dmrs_pusch_estimator);
 
-} // namespace srsgnb
+} // namespace srsran

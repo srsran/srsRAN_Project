@@ -17,7 +17,7 @@
 
 #include "avx2_support.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace mm512 {
 
 template <size_t N>
@@ -77,4 +77,4 @@ inline __m512i scale_epi8(__m512i a, float sf, uint8_t max)
 }
 
 } // namespace mm512
-} // namespace srsgnb
+} // namespace srsran

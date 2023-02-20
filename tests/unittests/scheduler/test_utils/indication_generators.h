@@ -12,7 +12,7 @@
 
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 rach_indication_message::preamble create_preamble(unsigned preamble_id, rnti_t tc_rnti)
 {
@@ -42,4 +42,4 @@ rach_indication_message create_rach_indication(slot_point                       
   return rach_ind;
 }
 
-} // namespace srsgnb
+} // namespace srsran

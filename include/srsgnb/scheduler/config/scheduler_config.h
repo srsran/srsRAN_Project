@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/scheduler/scheduler_metrics.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Configuration used to create a scheduler instance.
 struct scheduler_config {
@@ -23,4 +23,4 @@ struct scheduler_config {
   scheduler_ue_metrics_notifier& metrics_notifier;
 };
 
-} // namespace srsgnb
+} // namespace srsran

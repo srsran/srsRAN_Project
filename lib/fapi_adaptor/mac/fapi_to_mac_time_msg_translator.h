@@ -14,7 +14,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <functional>
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_cell_slot_handler;
 
@@ -42,4 +42,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

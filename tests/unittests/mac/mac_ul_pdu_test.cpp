@@ -13,7 +13,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Test the unpacking function for MAC subPDU with MAC SDU (UL CCCH 48 bits).
 TEST(mac_ul_subpdu, decode_ul_ccch_48)
@@ -575,7 +575,7 @@ TEST(mac_ul_pdu, handle_the_case_when_a_pdu_has_too_many_subpdus)
   constexpr unsigned nof_subpdus_per_pdu = 1000;
 
   size_t      L    = 1;
-  lcid_t      lcid = srsgnb::LCID_SRB1;
+  lcid_t      lcid = srsran::LCID_SRB1;
   byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
 
   byte_buffer msg;
@@ -597,7 +597,7 @@ TEST(mac_ul_pdu, handle_the_case_when_a_pdu_has_too_many_subpdus)
 TEST(mac_ul_pdu, handle_the_case_when_pdu_length_is_too_short_to_decode_length_prefix)
 {
   size_t      L    = 1;
-  lcid_t      lcid = srsgnb::LCID_SRB1;
+  lcid_t      lcid = srsran::LCID_SRB1;
   byte_buffer payload{test_rgen::random_vector<uint8_t>(L)};
 
   byte_buffer msg;

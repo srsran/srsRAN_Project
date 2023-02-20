@@ -15,7 +15,7 @@
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/sdap/sdap_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                           ue_index_,
@@ -125,7 +125,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     auto& new_drb                          = new_session->drbs[drb_to_setup.drb_id];
 
     // Create PDCP entity
-    srsgnb::pdcp_entity_creation_message pdcp_msg = {};
+    srsran::pdcp_entity_creation_message pdcp_msg = {};
     pdcp_msg.ue_index                             = ue_index;
     pdcp_msg.rb_id                                = drb_to_setup.drb_id;
     pdcp_msg.config                               = make_pdcp_drb_config(drb_to_setup.pdcp_cfg);
@@ -134,7 +134,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
     pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
     pdcp_msg.timers                               = &timers;
-    new_drb->pdcp                                 = srsgnb::create_pdcp_entity(pdcp_msg);
+    new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
 
     // Connect "PDCP-E1AP" adapter to E1AP
     new_drb->pdcp_tx_to_e1ap_adapter.connect_e1ap(); // TODO: pass actual E1AP handler

@@ -14,7 +14,7 @@
 #include "rlc_tx_metrics_container.h"
 #include "srsgnb/rlc/rlc_tx.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Base class used for transmitting RLC bearers.
 /// It provides interfaces for the RLC bearers, for both higher layers and lower layers
@@ -45,4 +45,4 @@ public:
   void           reset_metrics() { return metrics.reset_metrics(); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

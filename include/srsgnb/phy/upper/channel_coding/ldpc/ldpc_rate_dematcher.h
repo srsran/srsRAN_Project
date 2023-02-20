@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/ran/modulation_scheme.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// LDPC rate dematcher interface. It reverts the operations of ldpc_rate_matcher.
 class ldpc_rate_dematcher
@@ -43,4 +43,4 @@ public:
                             const codeblock_metadata&        cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

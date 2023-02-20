@@ -14,7 +14,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/timers.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Parameters passed to MAC concerning a created logical channel.
 struct mac_logical_channel_to_setup {
@@ -87,4 +87,4 @@ public:
   virtual void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)        = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

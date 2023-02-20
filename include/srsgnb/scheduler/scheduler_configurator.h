@@ -31,7 +31,7 @@
 #include "srsgnb/scheduler/config/serving_cell_config.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Basic scheduler resource grid element for resource reservation.
 struct sched_grid_resource {
@@ -159,4 +159,4 @@ public:
   virtual void on_ue_delete_response(du_ue_index_t ue_index) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

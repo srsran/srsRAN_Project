@@ -16,7 +16,7 @@
 #include "lib/scheduler/support/tbs_calculator.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   tbs_calculator_configuration config;
@@ -284,4 +284,4 @@ static const std::vector<test_case_t> tbs_calculator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

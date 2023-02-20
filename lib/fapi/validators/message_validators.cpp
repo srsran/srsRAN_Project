@@ -20,7 +20,7 @@
 #include "ul_pusch_pdu.h"
 #include "srsgnb/support/format_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 /// Validates the SFN property of a message.
@@ -51,7 +51,7 @@ static bool validate_num_groups(unsigned value, message_type_id msg_type, valida
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of PDU groups", msg_type, report);
 }
 
-error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_request_message& msg)
+error_type<validator_report> srsran::fapi::validate_dl_tti_request(const dl_tti_request_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -91,7 +91,7 @@ error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_
   return {};
 }
 
-error_type<validator_report> srsgnb::fapi::validate_ul_dci_request(const ul_dci_request_message& msg)
+error_type<validator_report> srsran::fapi::validate_ul_dci_request(const ul_dci_request_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -142,7 +142,7 @@ static bool validate_tlv_custom_payload(const uint8_t* payload, validator_report
   return false;
 }
 
-error_type<validator_report> srsgnb::fapi::validate_tx_data_request(const tx_data_request_message& msg)
+error_type<validator_report> srsran::fapi::validate_tx_data_request(const tx_data_request_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -257,7 +257,7 @@ static bool validate_rsrp(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "RSRP", message_type_id::crc_indication, report);
 }
 
-error_type<validator_report> srsgnb::fapi::validate_crc_indication(const crc_indication_message& msg)
+error_type<validator_report> srsran::fapi::validate_crc_indication(const crc_indication_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -404,7 +404,7 @@ static bool validate_preamble_power(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Preamble power", message_type_id::rach_indication, report);
 }
 
-error_type<validator_report> srsgnb::fapi::validate_rach_indication(const rach_indication_message& msg)
+error_type<validator_report> srsran::fapi::validate_rach_indication(const rach_indication_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -437,7 +437,7 @@ error_type<validator_report> srsgnb::fapi::validate_rach_indication(const rach_i
   return {};
 }
 
-error_type<validator_report> srsgnb::fapi::validate_uci_indication(const uci_indication_message& msg)
+error_type<validator_report> srsran::fapi::validate_uci_indication(const uci_indication_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -556,7 +556,7 @@ static bool validate_expected_slot(unsigned value, error_code_id error_id, valid
   return false;
 }
 
-error_type<validator_report> srsgnb::fapi::validate_error_indication(const error_indication_message& msg)
+error_type<validator_report> srsran::fapi::validate_error_indication(const error_indication_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -606,7 +606,7 @@ static bool validate_pdu_value(const uint8_t* value, validator_report& report)
   return false;
 }
 
-error_type<validator_report> srsgnb::fapi::validate_rx_data_indication(const rx_data_indication_message& msg)
+error_type<validator_report> srsran::fapi::validate_rx_data_indication(const rx_data_indication_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -639,7 +639,7 @@ error_type<validator_report> srsgnb::fapi::validate_rx_data_indication(const rx_
   return {};
 }
 
-error_type<validator_report> srsgnb::fapi::validate_slot_indication(const slot_indication_message& msg)
+error_type<validator_report> srsran::fapi::validate_slot_indication(const slot_indication_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
 
@@ -658,7 +658,7 @@ error_type<validator_report> srsgnb::fapi::validate_slot_indication(const slot_i
   return {};
 }
 
-error_type<validator_report> srsgnb::fapi::validate_ul_tti_request(const ul_tti_request_message& msg)
+error_type<validator_report> srsran::fapi::validate_ul_tti_request(const ul_tti_request_message& msg)
 {
   validator_report                 report(msg.sfn, msg.slot);
   static constexpr message_type_id msg_type = message_type_id::ul_tti_request;
@@ -869,7 +869,7 @@ static void log_basic_report(fmt::memory_buffer& buffer, const validator_report:
   fmt::format_to(buffer, "\t- Property={}, value={}\n", report.property_name, report.value);
 }
 
-void srsgnb::fapi::log_validator_report(const validator_report& report)
+void srsran::fapi::log_validator_report(const validator_report& report)
 {
   static const std::string log_name = "FAPI";
   srslog::basic_logger&    logger   = srslog::fetch_basic_logger(log_name);

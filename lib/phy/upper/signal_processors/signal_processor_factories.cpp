@@ -21,7 +21,7 @@
 #include "sss_processor_impl.h"
 #include "srsgnb/phy/support/support_factories.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -201,25 +201,25 @@ public:
 } // namespace
 
 std::shared_ptr<dmrs_pbch_processor_factory>
-srsgnb::create_dmrs_pbch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+srsran::create_dmrs_pbch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<dmrs_pbch_processor_sw_factory>(std::move(prg_factory));
 }
 
 std::shared_ptr<dmrs_pdcch_processor_factory>
-srsgnb::create_dmrs_pdcch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+srsran::create_dmrs_pdcch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<dmrs_pdcch_processor_sw_factory>(std::move(prg_factory));
 }
 
 std::shared_ptr<dmrs_pdsch_processor_factory>
-srsgnb::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+srsran::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<dmrs_pdsch_processor_sw_factory>(std::move(prg_factory));
 }
 
 std::shared_ptr<dmrs_pucch_estimator_factory>
-srsgnb::create_dmrs_pucch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory>      prg_factory,
+srsran::create_dmrs_pucch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory>      prg_factory,
                                                std::shared_ptr<low_papr_sequence_collection_factory> lpc_factory,
                                                std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory)
 {
@@ -227,30 +227,30 @@ srsgnb::create_dmrs_pucch_estimator_factory_sw(std::shared_ptr<pseudo_random_gen
 }
 
 std::shared_ptr<dmrs_pusch_estimator_factory>
-srsgnb::create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+srsran::create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                                std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory)
 {
   return std::make_shared<dmrs_pusch_estimator_factory_sw>(std::move(prg_factory), std::move(ch_estimator_factory));
 }
 
 std::shared_ptr<nzp_csi_rs_generator_factory>
-srsgnb::create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
+srsran::create_nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<nzp_csi_rs_generator_factory_sw>(std::move(prg_factory));
 }
 
 std::shared_ptr<port_channel_estimator_factory>
-srsgnb::create_port_channel_estimator_factory_sw(std::shared_ptr<dft_processor_factory> dft_f)
+srsran::create_port_channel_estimator_factory_sw(std::shared_ptr<dft_processor_factory> dft_f)
 {
   return std::make_shared<port_channel_estimator_factory_sw>(std::move(dft_f));
 }
 
-std::shared_ptr<pss_processor_factory> srsgnb::create_pss_processor_factory_sw()
+std::shared_ptr<pss_processor_factory> srsran::create_pss_processor_factory_sw()
 {
   return std::make_shared<pss_processor_factory_sw>();
 }
 
-std::shared_ptr<sss_processor_factory> srsgnb::create_sss_processor_factory_sw()
+std::shared_ptr<sss_processor_factory> srsran::create_sss_processor_factory_sw()
 {
   return std::make_shared<sss_processor_factory_sw>();
 }

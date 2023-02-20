@@ -12,7 +12,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <chrono>
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_async_loop_empty_tasks()
 {

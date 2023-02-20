@@ -14,7 +14,7 @@
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/format_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 unsigned dl_sch_pdu::add_sdu(lcid_t lcid_, byte_buffer_slice_chain&& sdu)
 {

@@ -17,7 +17,7 @@
 #include "srsgnb/radio/radio_factory.h"
 #include "srsgnb/radio/radio_management_plane.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a radio session based on UHD that also implements the management and data plane functions.
 class radio_session_uhd_impl : public radio_session,
@@ -150,4 +150,4 @@ private:
   static radio_config_uhd_config_validator config_validator;
 };
 
-} // namespace srsgnb
+} // namespace srsran

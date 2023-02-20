@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pbch_modulator_impl : public pbch_modulator
 {
@@ -50,4 +50,4 @@ public:
   void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

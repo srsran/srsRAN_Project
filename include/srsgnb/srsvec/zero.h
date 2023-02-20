@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 template <typename T>
@@ -24,4 +24,4 @@ void zero(T&& x)
 }
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

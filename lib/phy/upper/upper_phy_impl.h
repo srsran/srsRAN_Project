@@ -22,7 +22,7 @@
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Upper PHY implementation configuration.
 struct upper_phy_impl_config {
@@ -161,4 +161,4 @@ private:
   upper_phy_timing_handler_impl timing_handler;
 };
 
-} // namespace srsgnb
+} // namespace srsran

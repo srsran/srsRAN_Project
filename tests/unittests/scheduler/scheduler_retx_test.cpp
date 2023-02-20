@@ -18,7 +18,7 @@
 #include "test_utils/scheduler_test_bench.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class base_scheduler_retx_tester
 {

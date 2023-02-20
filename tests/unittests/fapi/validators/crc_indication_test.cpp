@@ -11,7 +11,7 @@
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -28,7 +28,7 @@ TEST_P(validate_crc_message_field, WithValue)
                std::get<1>(params),
                build_valid_crc_indication,
                validate_crc_indication,
-               srsgnb::fapi::message_type_id::crc_indication);
+               srsran::fapi::message_type_id::crc_indication);
 };
 
 INSTANTIATE_TEST_SUITE_P(SFN,

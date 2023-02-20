@@ -16,7 +16,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
@@ -318,4 +318,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

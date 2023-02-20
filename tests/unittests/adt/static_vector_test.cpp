@@ -19,7 +19,7 @@
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif // __clang__
 
-using namespace srsgnb;
+using namespace srsran;
 
 static_assert(std::is_same<static_vector<int, 5>::value_type, int>::value, "Invalid traits");
 static_assert(std::is_trivially_destructible<static_vector<int, 5>>::value, "Invalid traits");

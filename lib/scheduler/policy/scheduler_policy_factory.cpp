@@ -11,9 +11,9 @@
 #include "scheduler_policy_factory.h"
 #include "scheduler_time_rr.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<scheduler_policy> srsgnb::create_scheduler_strategy(const scheduler_strategy_params& params)
+std::unique_ptr<scheduler_policy> srsran::create_scheduler_strategy(const scheduler_strategy_params& params)
 {
   return std::make_unique<scheduler_time_rr>();
 }

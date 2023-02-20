@@ -12,7 +12,7 @@
 #include "mac_ctrl/srs_sched_config_adapter.h"
 #include "srsgnb/scheduler/scheduler_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 
 mac_impl::mac_impl(const mac_config& mac_cfg) :
   cfg(mac_cfg.ul_ccch_notifier,
@@ -41,4 +41,4 @@ void mac_impl::handle_dl_buffer_state_update_required(const mac_dl_buffer_state_
   sched_obj->handle_dl_buffer_state_indication(bs);
 }
 
-} // namespace srsgnb
+} // namespace srsran

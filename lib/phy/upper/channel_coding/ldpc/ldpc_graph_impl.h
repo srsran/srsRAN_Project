@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 namespace ldpc {
 
 /// Placeholder for invalid lifting-size values.
@@ -107,7 +107,7 @@ public:
   ///
   /// If the base graph has an edge between check node \c m and variable node \c n, the returned value is
   /// the shift applied to the lifted node. Conversely, if there is no edge, then the returned value is
-  /// srsgnb::ldpc::NO_EDGE.
+  /// srsran::ldpc::NO_EDGE.
   uint16_t get_lifted_node(unsigned m, unsigned n) const { return parity_check_matrix[m][n]; }
 
   /// Returns the number of check nodes of the underlying base graph.
@@ -157,4 +157,4 @@ std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> create_graph_array();
 static const std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> graph_array = create_graph_array();
 } // namespace ldpc
 
-} // namespace srsgnb
+} // namespace srsran

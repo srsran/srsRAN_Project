@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 namespace fapi {
 class slot_data_message_notifier;
@@ -63,4 +63,4 @@ public:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

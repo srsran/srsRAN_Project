@@ -16,7 +16,7 @@
 #include <mutex>
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 
 struct io_broker_config {
   std::string                 thread_name = "io_broker_epoll";
@@ -48,4 +48,4 @@ private:
   unique_thread     thread;
 };
 
-} // namespace srsgnb
+} // namespace srsran

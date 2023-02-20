@@ -13,7 +13,7 @@
 #include "srsgnb/adt/bounded_integer.h"
 #include "srsgnb/ran/modulation_scheme.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Physical Downlink and Uplink Shared Channel Modulation and Code Scheme Index, parameter \$fI_{MCS}\$f in TS38.214
 /// Section 5.1.3.1.
@@ -40,4 +40,4 @@ struct sch_mcs_description {
   constexpr float get_normalised_target_code_rate() const { return target_code_rate * (1.F / 1024); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

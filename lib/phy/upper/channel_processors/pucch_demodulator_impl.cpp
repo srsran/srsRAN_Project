@@ -13,12 +13,12 @@
 
 #include "pucch_demodulator_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-void pucch_demodulator_impl::demodulate(span<srsgnb::log_likelihood_ratio>                      llr,
-                                        const srsgnb::resource_grid_reader&                     grid,
-                                        const srsgnb::channel_estimate&                         estimates,
-                                        const srsgnb::pucch_demodulator::format2_configuration& config)
+void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>                      llr,
+                                        const srsran::resource_grid_reader&                     grid,
+                                        const srsran::channel_estimate&                         estimates,
+                                        const srsran::pucch_demodulator::format2_configuration& config)
 {
   // Number of receive antenna ports.
   unsigned nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
@@ -74,18 +74,18 @@ void pucch_demodulator_impl::demodulate(span<srsgnb::log_likelihood_ratio>      
   descrambler->apply_xor(llr, llr);
 }
 
-void pucch_demodulator_impl::demodulate(span<srsgnb::log_likelihood_ratio>                      llr,
-                                        const srsgnb::resource_grid_reader&                     grid,
-                                        const srsgnb::channel_estimate&                         estimates,
-                                        const srsgnb::pucch_demodulator::format3_configuration& config)
+void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>                      llr,
+                                        const srsran::resource_grid_reader&                     grid,
+                                        const srsran::channel_estimate&                         estimates,
+                                        const srsran::pucch_demodulator::format3_configuration& config)
 {
   srsgnb_assertion_failure("PUCCH Format 3 not supported.");
 }
 
-void pucch_demodulator_impl::demodulate(span<srsgnb::log_likelihood_ratio>                      llr,
-                                        const srsgnb::resource_grid_reader&                     grid,
-                                        const srsgnb::channel_estimate&                         estimates,
-                                        const srsgnb::pucch_demodulator::format4_configuration& config)
+void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>                      llr,
+                                        const srsran::resource_grid_reader&                     grid,
+                                        const srsran::channel_estimate&                         estimates,
+                                        const srsran::pucch_demodulator::format4_configuration& config)
 {
   srsgnb_assertion_failure("PUCCH Format 4 not supported.");
 }

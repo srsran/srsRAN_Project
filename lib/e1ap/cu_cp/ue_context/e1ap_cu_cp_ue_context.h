@@ -16,7 +16,7 @@
 #include "srsgnb/e1ap/common/e1ap_types.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct e1ap_ue_context {
@@ -104,4 +104,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 
 //////////////     Helper functions       //////////////
 
-using namespace srsgnb;
+using namespace srsran;
 
 struct existing_pucch_grants {
   pucch_info* format1_sr_grant{nullptr};
@@ -30,13 +30,13 @@ static existing_pucch_grants get_existing_pucch_grants(static_vector<pucch_info,
   for (auto& pucch : pucchs) {
     if (pucch.crnti == rnti) {
       // First look for first for Format 2; if present, this is the only PUCCH resource allocated to the UE.
-      if (pucch.format == srsgnb::pucch_format::FORMAT_2) {
+      if (pucch.format == srsran::pucch_format::FORMAT_2) {
         grants.format2_grant = &pucch;
         // If there is a grant for PUCCH format 2, then no PUCCH format-1 grants are expected.
         break;
       }
       // Second, look for first for Format 1.
-      else if (pucch.format == srsgnb::pucch_format::FORMAT_1) {
+      else if (pucch.format == srsran::pucch_format::FORMAT_1) {
         if (pucch.format_1.sr_bits == sr_nof_bits::one) {
           grants.format1_sr_grant = &pucch;
         } else if (pucch.format_1.harq_ack_nof_bits > 0 and pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
@@ -136,7 +136,7 @@ static void update_format2_uci_bits(pucch_info&           existing_f2_grant,
   if (harq_ack_bits > max_payload) {
     // We no additional HARQ can be added, it means that the PUCCH grant had already reached its maximum capacity in
     // terms of bits.
-    existing_f2_grant.format_2.sr_bits        = srsgnb::sr_nof_bits::no_sr;
+    existing_f2_grant.format_2.sr_bits        = srsran::sr_nof_bits::no_sr;
     existing_f2_grant.format_2.csi_part1_bits = 0;
     return;
   }
@@ -147,7 +147,7 @@ static void update_format2_uci_bits(pucch_info&           existing_f2_grant,
   // NOTE: for the time being, there should not be more than 1 SR bit.
   if (candidate_uci_bits + sr_nof_bits_to_uint(existing_f2_grant.format_2.sr_bits) > max_payload) {
     // Log an error message and exit.
-    existing_f2_grant.format_2.sr_bits        = srsgnb::sr_nof_bits::no_sr;
+    existing_f2_grant.format_2.sr_bits        = srsran::sr_nof_bits::no_sr;
     existing_f2_grant.format_2.csi_part1_bits = 0;
     return;
   }

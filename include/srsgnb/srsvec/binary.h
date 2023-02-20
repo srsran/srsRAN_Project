@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 template <typename T, typename U, typename V>
@@ -68,4 +68,4 @@ void binary_or(const T& x, const U& y, V&& z)
 }
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

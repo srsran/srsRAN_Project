@@ -13,9 +13,9 @@
 #include "srsgnb/du_high/du_high_cell_executor_mapper.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<mac_interface> srsgnb::create_mac(const mac_config& mac_cfg)
+std::unique_ptr<mac_interface> srsran::create_mac(const mac_config& mac_cfg)
 {
   std::unique_ptr<mac_interface> macobj = std::make_unique<mac_impl>(mac_cfg);
   return macobj;

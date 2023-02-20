@@ -15,7 +15,7 @@
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/ran/cu_types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 struct qos_flow_context {
@@ -43,4 +43,4 @@ struct qos_flow_context {
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

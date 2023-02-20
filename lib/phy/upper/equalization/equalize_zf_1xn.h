@@ -19,7 +19,7 @@
 #include "../../../srsvec/simd.h"
 #endif // __AVX2__ || HAVE_NEON
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Implementation of a Zero Forcing equalizer for a SIMO 1 X \c RX_PORTS channel.
 /// \tparam RX_PORTS         Number of receive antenna ports.
@@ -146,4 +146,4 @@ void equalize_zf_1xn(channel_equalizer::re_list&           eq_symbols,
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran

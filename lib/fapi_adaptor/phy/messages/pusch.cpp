@@ -11,7 +11,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/pusch.h"
 #include "srsgnb/ran/pusch/pusch_uci_beta_offset.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 /// Fills the optional codeword description parameter of the PUSCH PDU, if present.
@@ -77,7 +77,7 @@ static void fill_uci(pusch_processor::pdu_t& proc_pdu, const fapi::ul_pusch_pdu&
   phy_uci.beta_offset_csi_part2 = beta_csi_to_float(fapi_uci.beta_offset_csi2);
 }
 
-void srsgnb::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu& pdu,
+void srsran::fapi_adaptor::convert_pusch_fapi_to_phy(uplink_processor::pusch_pdu& pdu,
                                                      const fapi::ul_pusch_pdu&    fapi_pdu,
                                                      uint16_t                     sfn,
                                                      uint16_t                     slot)

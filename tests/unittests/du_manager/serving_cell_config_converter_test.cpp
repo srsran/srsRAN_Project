@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 srs_du::cell_group_config make_initial_cell_group_config()
 {
@@ -416,7 +416,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   res_basic.format                    = pucch_format::FORMAT_2;
   res_basic.format_3.nof_symbols      = 1;
   res_basic.format_4.starting_sym_idx = 13;
-  res_basic.format_4.occ_length       = srsgnb::pucch_f4_occ_len::n2;
+  res_basic.format_4.occ_length       = srsran::pucch_f4_occ_len::n2;
   dest_pucch_cfg.pucch_res_list.push_back(res_basic);
 
   // Remove first element.
@@ -622,7 +622,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pusch_cfg_conversion)
       dest_pusch_cfg.pusch_pwr_ctrl.value().sri_pusch_mapping.begin());
 
   dest_pusch_cfg.pusch_td_alloc_list.push_back(pusch_time_domain_resource_allocation{
-      .k2 = 4, .map_type = srsgnb::sch_mapping_type::typeB, .symbols = ofdm_symbol_range{2, 12}});
+      .k2 = 4, .map_type = srsran::sch_mapping_type::typeB, .symbols = ofdm_symbol_range{2, 12}});
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);
@@ -765,7 +765,7 @@ TEST(serving_cell_config_converter_test, test_ue_custom_srs_cfg_conversion)
       .grp_or_seq_hop    = srs_config::srs_resource::group_or_sequence_hopping::groupHopping,
       .res_type          = srs_config::srs_resource::semi_persistent,
       .semi_pers_res_type_periodicity_and_offset =
-          srs_config::srs_periodicity_and_offset{.type  = srsgnb::srs_config::srs_periodicity_and_offset::type_t::sl10,
+          srs_config::srs_periodicity_and_offset{.type  = srsran::srs_config::srs_periodicity_and_offset::type_t::sl10,
                                                  .value = 30},
       .sequence_id           = 41,
       .spatial_relation_info = srs_config::srs_resource::srs_spatial_relation_info{
@@ -857,8 +857,8 @@ TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conv
       .max_cbg_per_tb                   = pdsch_code_block_group_transmission::max_code_block_groups_per_tb::n8,
       .code_block_group_flush_indicator = true});
 
-  dest_pdsch_serving_cell_cfg.x_ov_head     = srsgnb::x_overhead::xoh6;
-  dest_pdsch_serving_cell_cfg.nof_harq_proc = srsgnb::pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n12;
+  dest_pdsch_serving_cell_cfg.x_ov_head     = srsran::x_overhead::xoh6;
+  dest_pdsch_serving_cell_cfg.nof_harq_proc = srsran::pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n12;
   dest_pdsch_serving_cell_cfg.pucch_cell    = to_serv_cell_index(1);
   dest_pdsch_serving_cell_cfg.processing_type_2_enabled = false;
 
@@ -1092,7 +1092,7 @@ TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
   ant_restriction.all();
   codebook_config::type2::typeii sub_type{};
   sub_type.n1_n2_codebook_subset_restriction_type =
-      srsgnb::codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_four;
+      srsran::codebook_config::type2::typeii::n1_n2_codebook_subset_restriction_type_t::four_four;
   sub_type.n1_n2_codebook_subset_restriction_value = ant_restriction;
   sub_type.typeii_ri_restriction                   = bounded_bitset<2>(2);
   // '03'H.
@@ -1109,7 +1109,7 @@ TEST(serving_cell_config_converter_test, test_custom_csi_meas_cfg_conversion)
   dest_csi_meas_cfg.csi_report_cfg_list.back().subband_size = csi_report_config::subband_size_t::value2;
   dest_csi_meas_cfg.csi_report_cfg_list.back().non_pmi_port_indication.push_back(
       csi_report_config::port_index_for_8_ranks{
-          .port_index_type = srsgnb::csi_report_config::port_index_for_8_ranks::port_index_type_t::port_index_4,
+          .port_index_type = srsran::csi_report_config::port_index_for_8_ranks::port_index_type_t::port_index_4,
           .rank1_x         = 1,
           .rank2_x         = {2, 4},
           .rank3_x         = {3},

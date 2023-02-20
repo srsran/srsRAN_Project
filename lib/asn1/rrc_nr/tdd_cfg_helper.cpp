@@ -11,10 +11,10 @@
 #include "srsgnb/asn1/rrc_nr/tdd_cfg_helper.h"
 #include "srsgnb/ran/slot_point.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace asn1::rrc_nr;
 
-float srsgnb::tdd_cfg_helper::get_period_ms(tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_e_ cfg)
+float srsran::tdd_cfg_helper::get_period_ms(tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_e_ cfg)
 {
   using options = asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::options;
 
@@ -41,7 +41,7 @@ float srsgnb::tdd_cfg_helper::get_period_ms(tdd_ul_dl_pattern_s::dl_ul_tx_period
   return -1;
 }
 
-unsigned srsgnb::tdd_cfg_helper::nof_slots_per_period(const asn1::rrc_nr::tdd_ul_dl_cfg_common_s& cfg)
+unsigned srsran::tdd_cfg_helper::nof_slots_per_period(const asn1::rrc_nr::tdd_ul_dl_cfg_common_s& cfg)
 {
   float pattern1_period_ms = get_period_ms(cfg.pattern1.dl_ul_tx_periodicity);
   float total_tdd_period_ms =
@@ -50,7 +50,7 @@ unsigned srsgnb::tdd_cfg_helper::nof_slots_per_period(const asn1::rrc_nr::tdd_ul
                               get_nof_slots_per_subframe((subcarrier_spacing)cfg.ref_subcarrier_spacing.value));
 }
 
-bool srsgnb::tdd_cfg_helper::slot_is_dl(const tdd_ul_dl_cfg_common_s& cfg, slot_point slot)
+bool srsran::tdd_cfg_helper::slot_is_dl(const tdd_ul_dl_cfg_common_s& cfg, slot_point slot)
 {
   float pattern1_period_ms = get_period_ms(cfg.pattern1.dl_ul_tx_periodicity);
   float total_tdd_period_ms =
@@ -73,7 +73,7 @@ bool srsgnb::tdd_cfg_helper::slot_is_dl(const tdd_ul_dl_cfg_common_s& cfg, slot_
           (slot_idx_period == pattern->nrof_dl_slots && pattern->nrof_dl_symbols != 0));
 }
 
-bool srsgnb::tdd_cfg_helper::slot_is_ul(const asn1::rrc_nr::tdd_ul_dl_cfg_common_s& cfg, slot_point slot)
+bool srsran::tdd_cfg_helper::slot_is_ul(const asn1::rrc_nr::tdd_ul_dl_cfg_common_s& cfg, slot_point slot)
 {
   // TODO: Implement it properly
   return not slot_is_dl(cfg, slot);

@@ -11,7 +11,7 @@
 
 #include "f1u_bearer_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 f1u_bearer_impl::f1u_bearer_impl(uint32_t             ue_index,

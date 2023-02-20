@@ -14,7 +14,7 @@
 #include "srsgnb/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsgnb/ran/bcd_helpers.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request&                request,
@@ -479,4 +479,4 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
 }
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

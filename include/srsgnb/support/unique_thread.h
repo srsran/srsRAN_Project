@@ -16,7 +16,7 @@
 #include <string>
 #include <thread>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Computes the number of threads that are usable in the given host.
 size_t compute_host_nof_hardware_threads();
@@ -200,4 +200,4 @@ const char* this_thread_name();
 /// Print caller thread priority.
 void print_this_thread_priority();
 
-} // namespace srsgnb
+} // namespace srsran

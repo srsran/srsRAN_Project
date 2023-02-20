@@ -18,7 +18,7 @@
 #include "zmq/radio_factory_zmq_impl.h"
 #endif // ENABLE_ZMQ
 
-using namespace srsgnb;
+using namespace srsran;
 
 struct radio_factory_entry {
   std::string                                     name;
@@ -34,7 +34,7 @@ static const std::vector<radio_factory_entry> radio_factory_available_factories 
 #endif // ENABLE_UHD
 }};
 
-std::unique_ptr<radio_factory> srsgnb::create_radio_factory(std::string driver_name)
+std::unique_ptr<radio_factory> srsran::create_radio_factory(std::string driver_name)
 {
   if (radio_factory_available_factories.empty()) {
     fmt::print("No available radio factories found.\n");

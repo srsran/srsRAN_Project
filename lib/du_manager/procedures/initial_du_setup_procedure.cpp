@@ -16,7 +16,7 @@
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_params& params_, du_cell_manager& cell_mng_) :

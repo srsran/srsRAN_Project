@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

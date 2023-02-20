@@ -26,7 +26,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 class cu_up final : public cu_up_interface
@@ -89,4 +89,4 @@ private:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

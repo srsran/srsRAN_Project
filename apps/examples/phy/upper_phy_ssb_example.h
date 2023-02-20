@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Upper PHY processor application example interface.
 ///
@@ -84,4 +84,4 @@ public:
   static std::unique_ptr<upper_phy_ssb_example> create(const configuration& config);
 };
 
-} // namespace srsgnb
+} // namespace srsran

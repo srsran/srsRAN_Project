@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 
 struct f1u_cu_bearer {
   std::unique_ptr<f1u_dl_local_adapter> cu_tx      = nullptr;
@@ -66,4 +66,4 @@ private:
   std::map<uint32_t, f1u_cu_bearer> cu_map; // Key is UL-TEID (i.e., the CU's local TEID)
   std::map<uint32_t, f1u_du_bearer> du_map; // Key is DL-TEID (i.e., the DU's local TEID)
 };
-}; // namespace srsgnb
+}; // namespace srsran

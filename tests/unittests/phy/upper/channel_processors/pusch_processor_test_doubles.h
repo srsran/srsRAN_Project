@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pusch_processor_dummy : public pusch_processor
 {
@@ -24,4 +24,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

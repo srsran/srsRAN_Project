@@ -14,7 +14,7 @@
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/e1ap/common/e1ap_types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Generate a valid dummy F1 Setup Request.
@@ -51,4 +51,4 @@ cu_cp_ue_context_modification_response
 generate_cu_cp_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id, gnb_du_ue_f1ap_id_t du_ue_f1ap_id);
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

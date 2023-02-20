@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 using namespace asn1::e1ap;
 

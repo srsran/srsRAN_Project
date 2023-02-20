@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Polar decoder implementation.
 ///
@@ -151,4 +151,4 @@ public:
   void decode(span<uint8_t> data_decoded, span<const log_likelihood_ratio> input_llr, const polar_code& code) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

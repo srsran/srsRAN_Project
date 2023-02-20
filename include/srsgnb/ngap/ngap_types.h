@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief AMF_UE_ID (non ASN1 type of AMF_UE_NGAP_ID) used to identify the UE in the AMF.
@@ -35,4 +35,4 @@ inline amf_ue_id_t uint_to_amf_ue_id(std::underlying_type_t<amf_ue_id_t> id)
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

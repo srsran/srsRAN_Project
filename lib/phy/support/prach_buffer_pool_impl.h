@@ -14,7 +14,7 @@
 #include "srsgnb/phy/support/prach_buffer_pool.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Implementation of the PRACH buffer pool.
 class prach_buffer_pool_impl : public prach_buffer_pool
@@ -31,4 +31,4 @@ public:
   prach_buffer& get_prach_buffer() override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

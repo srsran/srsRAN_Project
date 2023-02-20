@@ -17,11 +17,11 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 using PuschDemodulatorParams = test_case_t;
 
-namespace srsgnb {
+namespace srsran {
 
 // Maximum allowed error.
 constexpr log_likelihood_ratio::value_type LLR_MAX_ERROR = 1;
@@ -59,7 +59,7 @@ bool operator==(span<const log_likelihood_ratio> lhs, span<const log_likelihood_
       });
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 class PuschDemodulatorFixture : public ::testing::TestWithParam<PuschDemodulatorParams>
 {

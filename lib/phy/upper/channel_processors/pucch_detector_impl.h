@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PUCCH detector implementation for Formats 0 and 1.
 class pucch_detector_impl : public pucch_detector
@@ -126,4 +126,4 @@ private:
   unsigned nof_data_symbols_pre_hop = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

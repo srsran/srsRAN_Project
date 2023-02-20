@@ -22,14 +22,14 @@
 #include <gtest/gtest.h>
 #include <numeric>
 
-namespace srsgnb {
+namespace srsran {
 bool operator==(const prach_buffer_context& rhs, const prach_buffer_context& lhs)
 {
   return std::memcmp(&rhs, &lhs, sizeof(prach_buffer_context)) == 0;
 }
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Combined parameters. First the DFT size for 15kHz and second the maximum number of concurrent PRACH requests.
 using prach_processor_param = std::tuple<unsigned, unsigned>;

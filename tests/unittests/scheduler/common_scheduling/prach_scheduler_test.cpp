@@ -13,7 +13,7 @@
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class prach_tester : public ::testing::Test
 {

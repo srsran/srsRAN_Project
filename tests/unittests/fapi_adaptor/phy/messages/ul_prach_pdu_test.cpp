@@ -13,7 +13,7 @@
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittest;
 

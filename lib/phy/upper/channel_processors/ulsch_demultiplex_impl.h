@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_processors/ulsch_demultiplex.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class ulsch_demultiplex_impl : public ulsch_demultiplex
 {
@@ -30,4 +30,4 @@ public:
                                           const configuration&       config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

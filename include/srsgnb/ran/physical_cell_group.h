@@ -12,7 +12,7 @@
 
 #include "rnti.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Options for \c pdsch-HARQ-ACK-Codebook, in \c PhysicalCellGroupConfig, TS 38.331.
 enum class pdsch_harq_ack_codebook { semistatic, dynamic };
@@ -42,4 +42,4 @@ struct physical_cell_group_config {
   optional<unsigned> pdcch_blind_detection;
 };
 
-} // namespace srsgnb
+} // namespace srsran

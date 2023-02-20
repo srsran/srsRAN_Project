@@ -20,7 +20,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 
 /// \cond
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

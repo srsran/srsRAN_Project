@@ -5,7 +5,7 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/srsvec/copy.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pdsch_encoder_spy : public pdsch_encoder
 {
@@ -46,4 +46,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(pdsch_encoder);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Creates an instance of an F1AP interface, notifying outgoing packets on the specified listener object.
@@ -24,4 +24,4 @@ std::unique_ptr<f1ap_cu> create_f1ap(f1ap_message_notifier&       f1ap_pdu_notif
                                      task_executor&               ctrl_exec_);
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

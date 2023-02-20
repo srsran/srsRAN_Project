@@ -15,7 +15,7 @@
 #include "srsgnb/support/async/event_signal.h"
 #include "srsgnb/support/async/protocol_transaction_manager.h"
 
-namespace srsgnb {
+namespace srsran {
 
 using e2ap_outcome     = expected<asn1::e2ap::successful_outcome_s, asn1::e2ap::unsuccessful_outcome_s>;
 using e2ap_transaction = protocol_transaction<e2ap_outcome>;
@@ -32,4 +32,4 @@ public:
   {
   }
 };
-} // namespace srsgnb
+} // namespace srsran

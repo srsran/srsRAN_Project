@@ -14,7 +14,7 @@
 #include "srsgnb/f1ap/du/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 void assert_du_high_configuration_valid(const du_high_configuration& cfg)

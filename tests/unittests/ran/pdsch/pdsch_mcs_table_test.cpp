@@ -12,7 +12,8 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
+
 std::ostream& operator<<(std::ostream& os, const pdsch_mcs_table& mcs_table)
 {
   switch (mcs_table) {
@@ -29,9 +30,9 @@ std::ostream& operator<<(std::ostream& os, const pdsch_mcs_table& mcs_table)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Combined test parameters. MCS table and index.
 using pdsch_mcs_param = std::tuple<pdsch_mcs_table, unsigned>;

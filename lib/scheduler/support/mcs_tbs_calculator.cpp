@@ -19,7 +19,7 @@
 #include "srsgnb/ran/pusch/ulsch_info.h"
 #include "srsgnb/ran/uci/uci_mapping.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 constexpr unsigned NOF_BITS_PER_BYTE = 8U;
 
@@ -148,7 +148,7 @@ static void update_ulsch_info(ulsch_configuration& ulsch_cfg, unsigned tbs_bytes
   ulsch_cfg.mcs_descr = mcs_info;
 }
 
-optional<sch_mcs_tbs> srsgnb::compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
+optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&   pdsch_params,
                                                  const ue_cell_configuration& ue_cell_cfg,
                                                  sch_mcs_index                max_mcs,
                                                  unsigned                     nof_prbs)
@@ -211,7 +211,7 @@ optional<sch_mcs_tbs> srsgnb::compute_dl_mcs_tbs(const pdsch_config_params&   pd
   return output.emplace(sch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes});
 }
 
-optional<sch_mcs_tbs> srsgnb::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
+optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
                                                  const ue_cell_configuration& ue_cell_cfg,
                                                  sch_mcs_index                max_mcs,
                                                  unsigned                     nof_prbs)

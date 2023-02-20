@@ -12,7 +12,7 @@
 #include "uci_test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 const unsigned NOF_RBS = 52;
 
@@ -24,7 +24,7 @@ public:
   test_pucch_harq_allocator_ded_resources()
   {
     // Set expected grant for PUCCH Format 1.
-    pucch_expected_f1.format  = srsgnb::pucch_format::FORMAT_1;
+    pucch_expected_f1.format  = srsran::pucch_format::FORMAT_1;
     pucch_expected_f1.crnti   = to_rnti(0x4601);
     pucch_expected_f1.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
@@ -42,7 +42,7 @@ public:
     pucch_expected_f1.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
     pucch_expected_f1.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
 
-    pucch_expected_f2.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_f2.format                    = srsran::pucch_format::FORMAT_2;
     pucch_expected_f2.crnti                     = to_rnti(0x4601);
     pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_f2.resources.prbs            = prb_interval{2, 3};
@@ -53,7 +53,7 @@ public:
     pucch_expected_f2.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
     pucch_expected_f2.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
 
-    pucch_expected_csi.format                    = srsgnb::pucch_format::FORMAT_2;
+    pucch_expected_csi.format                    = srsran::pucch_format::FORMAT_2;
     pucch_expected_csi.crnti                     = to_rnti(0x4601);
     pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
     pucch_expected_csi.resources.prbs            = prb_interval{2, 3};
@@ -385,7 +385,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_format_2_alloction_pdu_cont
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(test_pdu.pucch_pdu, &slot_grid.result.ul.pucchs.back());
   pucch_expected_f2.format_2.harq_ack_nof_bits = 3;
-  pucch_expected_f2.format_2.sr_bits           = srsgnb::sr_nof_bits::no_sr;
+  pucch_expected_f2.format_2.sr_bits           = srsran::sr_nof_bits::no_sr;
   pucch_expected_f2.format_2.csi_part1_bits    = 0;
   ASSERT_TRUE(assess_ul_pucch_info(pucch_expected_f2, slot_grid.result.ul.pucchs.back()));
 }
@@ -429,7 +429,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_allocation_on_format2)
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_EQ(srsgnb::sr_nof_bits::no_sr, test_pdu.pucch_pdu->format_2.sr_bits);
+  ASSERT_EQ(srsran::sr_nof_bits::no_sr, test_pdu.pucch_pdu->format_2.sr_bits);
   ASSERT_EQ(0, test_pdu.pucch_res_indicator);
 
   t_bench.pucch_alloc.pucch_allocate_sr_opportunity(
@@ -437,7 +437,7 @@ TEST_F(test_pucch_harq_allocator_ded_resources, test_sr_allocation_on_format2)
 
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(pucch_format::FORMAT_2, slot_grid.result.ul.pucchs.back().format);
-  ASSERT_EQ(srsgnb::sr_nof_bits::one, test_pdu.pucch_pdu->format_2.sr_bits);
+  ASSERT_EQ(srsran::sr_nof_bits::one, test_pdu.pucch_pdu->format_2.sr_bits);
   ASSERT_EQ(0, test_pdu.pucch_res_indicator);
 }
 

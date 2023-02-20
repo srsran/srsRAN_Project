@@ -17,7 +17,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/pci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a PBCH modulator interface
 class pbch_modulator
@@ -55,4 +55,4 @@ public:
   virtual void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

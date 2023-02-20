@@ -13,7 +13,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(test_get_band_from_arfcn, mix_bands)
 {

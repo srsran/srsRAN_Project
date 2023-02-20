@@ -12,9 +12,9 @@
 
 #include "gnb_appconfig.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Validates the given GNB application configuration. Returns true on success, false otherwise.
 bool validate_appconfig(const gnb_appconfig& config);
 
-} // namespace srsgnb
+} // namespace srsran

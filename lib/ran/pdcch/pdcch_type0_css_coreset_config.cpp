@@ -12,9 +12,9 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/bs_channel_bandwidth.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-pdcch_type0_css_coreset_description srsgnb::pdcch_type0_css_coreset_get(min_channel_bandwidth minimum_bandwidth_MHz,
+pdcch_type0_css_coreset_description srsran::pdcch_type0_css_coreset_get(min_channel_bandwidth minimum_bandwidth_MHz,
                                                                         subcarrier_spacing    ssb_scs,
                                                                         subcarrier_spacing    pdcch_scs,
                                                                         uint8_t               coreset_zero_index,

@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This interface represents the data entry point of the transmitting side of a F1-U entity.
 /// The upper-layers will use this class to pass PDCP PDUs into the TX entity.
@@ -48,4 +48,4 @@ public:
   virtual void on_delivered_pdcp_pdu(uint32_t count) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

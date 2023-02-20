@@ -17,7 +17,7 @@
 #include "srsgnb/mac/bsr_format.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// UL BSR Report for a single Logical Channel Group
 struct lcg_bsr_report {
@@ -55,4 +55,4 @@ uint32_t buff_size_field_to_bytes(size_t buff_size_index, bsr_format format);
 /// Converts BSR MAC CE (See 38.321, 6.1.3.1) to Scheduler UL BSR event type.
 ul_bsr_lcg_report make_sched_lcg_report(const lcg_bsr_report& ul_bsr_ce, bsr_format bsr_format);
 
-} // namespace srsgnb
+} // namespace srsran

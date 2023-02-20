@@ -13,7 +13,7 @@
 #include <array>
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Container type that associates Id types to container elements.
 /// Pointer/References/Iterators remain valid throughout the object lifetime.
@@ -167,4 +167,4 @@ private:
   std::array<std::unique_ptr<T>, MAX_SIZE> elems;
 };
 
-} // namespace srsgnb
+} // namespace srsran

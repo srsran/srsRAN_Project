@@ -10,10 +10,10 @@
 
 #include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 pdcch_type0_css_occasion_pattern1_description
-srsgnb::pdcch_type0_css_occasions_get_pattern1(const pdcch_type0_css_occasion_pattern1_configuration& config)
+srsran::pdcch_type0_css_occasions_get_pattern1(const pdcch_type0_css_occasion_pattern1_configuration& config)
 {
   srsgnb_assert((!config.is_fr2 && config.ss_zero_index < 16) || (config.is_fr2 && config.ss_zero_index < 14),
                 "SearchSpaceZero ({}) must be (0...{}) for {}.",

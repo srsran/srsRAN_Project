@@ -11,7 +11,7 @@
 #include "srsgnb/adt/filter_view.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_array_filter()
 {

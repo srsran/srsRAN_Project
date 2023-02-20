@@ -13,7 +13,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a bit buffer that contains packed bits.
 class bit_buffer
@@ -315,12 +315,12 @@ private:
   std::vector<bit_buffer::word_t> buffer;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::bit_buffer> {
+struct formatter<srsran::bit_buffer> {
   enum { hexadecimal, binary } mode = binary;
 
   template <typename ParseContext>
@@ -338,7 +338,7 @@ struct formatter<srsgnb::bit_buffer> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::bit_buffer& s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::bit_buffer& s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {
       return s.template to_hex_string(ctx.out());

@@ -9,7 +9,7 @@
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes part of the parameters that are encoded in the MIB payload as per TS38.331 Section 6.2.2 - MIB.
 struct ssb_mib_data_pdu {
@@ -105,4 +105,4 @@ public:
   virtual mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

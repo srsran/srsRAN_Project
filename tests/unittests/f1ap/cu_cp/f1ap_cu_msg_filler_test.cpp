@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 
 using namespace asn1;
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 #define JSON_OUTPUT 1
@@ -51,7 +51,7 @@ protected:
     pdu.init_msg().value.ue_context_mod_request()->gnb_du_ue_f1ap_id->value = 2;
 
     // verify succesful packing
-    srsgnb::byte_buffer tx_buffer;
+    srsran::byte_buffer tx_buffer;
     asn1::bit_ref       bref(tx_buffer);
     ASSERT_EQ(pdu.pack(bref), asn1::SRSASN_SUCCESS);
 

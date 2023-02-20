@@ -15,7 +15,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void interpolator_linear_impl::interpolate(span<cf_t> output, span<const cf_t> input, const configuration& cfg)
 {

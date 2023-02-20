@@ -13,7 +13,7 @@
 #include "../../phy_test_utils.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pusch_demodulator_spy : public pusch_demodulator
 {
@@ -48,4 +48,4 @@ private:
 
 PHY_SPY_FACTORY_TEMPLATE(pusch_demodulator);
 
-} // namespace srsgnb
+} // namespace srsran

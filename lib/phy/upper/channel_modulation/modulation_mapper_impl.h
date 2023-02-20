@@ -14,7 +14,7 @@
 #include "srsgnb/support/math_utils.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 /// Modulation mapper based on look-up tables.
 class modulation_mapper_impl : public modulation_mapper
 {
@@ -23,4 +23,4 @@ public:
   void modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

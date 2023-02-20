@@ -14,7 +14,7 @@
 #include "srsgnb/support/benchmark_utils.h"
 #include <getopt.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
 {

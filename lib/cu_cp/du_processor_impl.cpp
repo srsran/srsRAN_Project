@@ -17,7 +17,7 @@
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/ran/nr_cgi_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 du_processor_impl::du_processor_impl(const du_processor_config_t         du_processor_config_,
@@ -90,7 +90,7 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
 
     du_cell.pci = cell_item.served_cell_info.nr_pci;
     du_cell.cgi = cgi_from_asn1(cell_item.served_cell_info.nr_cgi);
-    if (not srsgnb::config_helpers::is_valid(du_cell.cgi)) {
+    if (not srsran::config_helpers::is_valid(du_cell.cgi)) {
       logger.error("Not handling F1 setup, invalid CGI for cell {}", du_cell.cell_index);
       send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
       return;

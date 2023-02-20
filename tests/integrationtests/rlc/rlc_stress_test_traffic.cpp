@@ -12,7 +12,7 @@
 
 #include "rlc_stress_test_traffic.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void stress_traffic_sink::on_new_sdu(byte_buffer pdu)
 {

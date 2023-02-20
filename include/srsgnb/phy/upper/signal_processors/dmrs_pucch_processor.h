@@ -18,7 +18,7 @@
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a DM-RS for PUCCH processor interface.
 class dmrs_pucch_processor
@@ -81,4 +81,4 @@ public:
   virtual void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "../ue_scheduling/ue_configuration.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Contains the output of the PUCCH allocator for HARQ-ACK grant.
 struct pucch_harq_ack_grant {
@@ -103,4 +103,4 @@ public:
   remove_ue_uci_from_pucch(cell_slot_resource_allocator& slot_alloc, rnti_t crnti, const pucch_config& pucch_cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

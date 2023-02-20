@@ -13,7 +13,7 @@
 #include "cu_cp_configuration.h"
 #include "srsgnb/ngap/ngap_configuration_helpers.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace config_helpers {
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
@@ -37,4 +37,4 @@ inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
 }
 
 } // namespace config_helpers
-} // namespace srsgnb
+} // namespace srsran

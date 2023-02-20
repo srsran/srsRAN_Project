@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Sampling rate.
 ///
@@ -150,20 +150,20 @@ private:
   value_type value = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// FMT formatter of sampling_rate type.
 template <>
-struct formatter<srsgnb::sampling_rate> {
+struct formatter<srsran::sampling_rate> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(srsgnb::sampling_rate srate, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::sampling_rate srate, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{:.2f}MHz", srate.to_MHz());
   }

@@ -17,7 +17,7 @@
 
 static std::mt19937 rgen(0);
 
-namespace srsgnb {
+namespace srsran {
 struct pdcch_processor_config_t {
   std::unique_ptr<pdcch_encoder>        encoder;
   std::unique_ptr<pdcch_modulator>      modulator;
@@ -32,9 +32,9 @@ public:
                                                 const pdcch_processor::dci_description&     dci);
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

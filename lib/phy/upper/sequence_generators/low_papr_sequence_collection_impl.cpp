@@ -11,7 +11,7 @@
 #include "low_papr_sequence_collection_impl.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 low_papr_sequence_collection_impl::low_papr_sequence_collection_impl(const low_papr_sequence_generator& generator,
                                                                      unsigned                           m,

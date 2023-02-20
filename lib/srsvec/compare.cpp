@@ -14,10 +14,10 @@
 #include "srsgnb/support/math_utils.h"
 #include <numeric>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srsvec;
 
-const char* srsgnb::srsvec::detail::find(span<const char> input, char value)
+const char* srsran::srsvec::detail::find(span<const char> input, char value)
 {
   // Input index.
   unsigned index = 0;
@@ -77,7 +77,7 @@ const char* srsgnb::srsvec::detail::find(span<const char> input, char value)
   return input.end();
 }
 
-std::pair<unsigned, float> srsgnb::srsvec::max_abs_element(span<const cf_t> x)
+std::pair<unsigned, float> srsran::srsvec::max_abs_element(span<const cf_t> x)
 {
   unsigned max_index = 0;
   float    max_abs2  = 0.0F;

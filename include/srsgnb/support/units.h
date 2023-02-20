@@ -14,7 +14,7 @@
 #include "fmt/format.h"
 #include <climits>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace units {
 
@@ -119,23 +119,23 @@ constexpr bits operator"" _bits(unsigned long long n)
 
 } // namespace literals
 } // namespace units
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// Formatter for bit units.
 template <>
-struct formatter<srsgnb::units::bits> : public formatter<srsgnb::units::bits::value_type> {
+struct formatter<srsran::units::bits> : public formatter<srsran::units::bits::value_type> {
   template <typename FormatContext>
-  auto format(srsgnb::units::bits s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::units::bits s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return fmt::format_to(ctx.out(), "{}{}", s.value(), srsgnb::units::bits::tag_type::str());
+    return fmt::format_to(ctx.out(), "{}{}", s.value(), srsran::units::bits::tag_type::str());
   }
 };
 
 /// Formatter for byte units.
 template <>
-struct formatter<srsgnb::units::bytes> : public formatter<srsgnb::units::bytes::value_type> {
+struct formatter<srsran::units::bytes> : public formatter<srsran::units::bytes::value_type> {
   bool print_units = false;
 
   template <typename ParseContext>
@@ -152,9 +152,9 @@ struct formatter<srsgnb::units::bytes> : public formatter<srsgnb::units::bytes::
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::units::bytes s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::units::bytes s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return fmt::format_to(ctx.out(), "{}{}", s.value(), print_units ? srsgnb::units::bytes::tag_type::str() : "");
+    return fmt::format_to(ctx.out(), "{}{}", s.value(), print_units ? srsran::units::bytes::tag_type::str() : "");
   }
 };
 

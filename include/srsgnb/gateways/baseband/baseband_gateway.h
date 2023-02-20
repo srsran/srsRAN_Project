@@ -5,7 +5,7 @@
 #include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a baseband gateway timestamp. It is expressed in multiples of the sample time.
 using baseband_gateway_timestamp = uint64_t;
@@ -59,4 +59,4 @@ public:
   virtual baseband_gateway_receiver& get_receiver() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

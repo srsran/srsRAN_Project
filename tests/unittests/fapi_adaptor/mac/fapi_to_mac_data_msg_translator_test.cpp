@@ -13,7 +13,7 @@
 #include "srsgnb/support/math_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 namespace {

@@ -16,7 +16,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/ssb_mapping.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the SSB processor interface.
 class ssb_processor
@@ -80,4 +80,4 @@ public:
   virtual bool is_valid(const ssb_processor::pdu_t& pdu) const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

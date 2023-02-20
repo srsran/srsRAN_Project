@@ -14,7 +14,7 @@
 
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Sets the value of a bit in the bitmap. When enable is true, it sets the bit, otherwise it clears the bit.
 /// \param[in] bitmap Bitmap to modify.
@@ -48,4 +48,4 @@ bool check_bitmap_bit(Integer bitmap, unsigned bit)
   return (bitmap & (1U << bit));
 }
 
-} // namespace srsgnb
+} // namespace srsran

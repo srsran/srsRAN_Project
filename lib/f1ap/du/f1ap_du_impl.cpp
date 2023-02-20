@@ -17,7 +17,7 @@
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace asn1::f1ap;
 using namespace srs_du;
 

@@ -13,7 +13,7 @@
 #include "rrc_cell_context.h"
 #include "rrc_ue.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -72,4 +72,4 @@ public:
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

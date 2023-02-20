@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 class upper_phy_rg_gateway;
 class task_executor;
@@ -100,4 +100,4 @@ private:
   // :TODO: remove me later
   mutable std::mutex mutex;
 };
-} // namespace srsgnb
+} // namespace srsran

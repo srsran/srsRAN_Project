@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines Paging scheduler that is used to allocate resources to send paging information to UE in a given slot.
 class paging_scheduler
@@ -149,4 +149,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

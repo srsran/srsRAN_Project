@@ -15,7 +15,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 ///
 /// \brief TX state variables
@@ -89,11 +89,11 @@ private:
   void log_state(srslog::basic_levels level) { logger.log(level, "TX entity state. {} next_so={}", st, next_so); }
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsgnb::rlc_tx_um_state> {
+struct formatter<srsran::rlc_tx_um_state> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -101,7 +101,7 @@ struct formatter<srsgnb::rlc_tx_um_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_tx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_tx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "tx_next={}", st.tx_next);
   }

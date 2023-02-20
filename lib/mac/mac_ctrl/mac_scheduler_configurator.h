@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Adapter interface between MAC and scheduler that allows the srsGNB MAC to configure different scheduler
 /// implementations.
@@ -39,4 +39,4 @@ public:
   virtual sched_configuration_notifier& get_sched_notifier() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

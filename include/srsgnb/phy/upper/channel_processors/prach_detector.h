@@ -15,7 +15,7 @@
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a PRACH detector interface.
 ///
@@ -69,4 +69,4 @@ public:
   virtual bool is_valid(const prach_detector::configuration& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

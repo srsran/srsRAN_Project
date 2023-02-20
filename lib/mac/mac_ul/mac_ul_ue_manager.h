@@ -17,7 +17,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/du_ue_list.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Stores MAC UL UE context. In particular, the UL PDU notifiers for each logical channel.
 class mac_ul_ue_context
@@ -146,4 +146,4 @@ private:
   du_ue_list<mac_ul_ue_context> ue_db;
 };
 
-} // namespace srsgnb
+} // namespace srsran

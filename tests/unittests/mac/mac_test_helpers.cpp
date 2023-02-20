@@ -10,8 +10,8 @@
 
 #include "mac_test_helpers.h"
 
-using namespace srsgnb;
-using namespace srsgnb::test_helpers;
+using namespace srsran;
+using namespace srsran::test_helpers;
 
 void mac_test_ue::add_bearer(lcid_t lcid)
 {

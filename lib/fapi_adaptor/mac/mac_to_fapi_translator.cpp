@@ -19,7 +19,7 @@
 #include "srsgnb/fapi_adaptor/mac/messages/pusch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 namespace {

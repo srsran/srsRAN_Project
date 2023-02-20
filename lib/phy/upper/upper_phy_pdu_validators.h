@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements the uplink PDU validator for \ref uplink_processor_single_executor_impl.
 class uplink_processor_validator_impl : public uplink_pdu_validator
@@ -75,4 +75,4 @@ private:
   std::unique_ptr<nzp_csi_rs_configuration_validator> csi;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_ul_configurator
 {
@@ -50,4 +50,4 @@ public:
   virtual void remove_cell(du_cell_index_t cell_index) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

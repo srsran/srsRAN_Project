@@ -19,7 +19,7 @@
 /// \brief In this file, we unit test the interaction between DU UE procedures in the DU UE Manager. For unit tests
 /// addressing the specific details of each DU UE manager procedure, please check procedures/ directory.
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 class du_ue_manager_tester : public ::testing::Test

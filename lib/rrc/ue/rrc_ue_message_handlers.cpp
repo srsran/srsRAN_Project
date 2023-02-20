@@ -13,7 +13,7 @@
 #include "rrc_asn1_helpers.h"
 #include "rrc_ue_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 

@@ -13,7 +13,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// DL Buffer state for a given RLC bearer.
 struct mac_dl_buffer_state_indication_message {
@@ -32,4 +32,4 @@ public:
   virtual void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

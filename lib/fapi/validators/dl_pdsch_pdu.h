@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 struct dl_pdsch_pdu;
@@ -20,4 +20,4 @@ struct validator_report;
 bool validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_report& report);
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

@@ -20,7 +20,7 @@
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/rrc/rrc_ue.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between RRC UE and F1AP to pass RRC PDUs
@@ -232,4 +232,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

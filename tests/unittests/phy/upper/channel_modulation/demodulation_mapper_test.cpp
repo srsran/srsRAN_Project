@@ -21,15 +21,15 @@
 #include <gtest/gtest.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
-namespace srsgnb {
+namespace srsran {
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
   return os << fmt::format("{} modulation, {} symbols", to_string(tc.scheme), tc.nsymbols);
 }
 
-} // namespace srsgnb
+} // namespace srsran
 namespace {
 
 class DemodulatorFixture : public ::testing::TestWithParam<test_case_t>

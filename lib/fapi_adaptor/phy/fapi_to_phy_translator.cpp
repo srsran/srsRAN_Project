@@ -22,7 +22,7 @@
 #include "srsgnb/phy/upper/uplink_request_processor.h"
 #include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 namespace {

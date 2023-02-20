@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \remark See TS 38.331 - RNTI-Value and TS 38.321, Table 7.1-1: RNTI Values. Values: (0..65535)
 enum rnti_t : uint16_t {
@@ -40,4 +40,4 @@ constexpr rnti_t to_rnti(std::underlying_type_t<rnti_t> number)
   return static_cast<rnti_t>(number);
 }
 
-} // namespace srsgnb
+} // namespace srsran

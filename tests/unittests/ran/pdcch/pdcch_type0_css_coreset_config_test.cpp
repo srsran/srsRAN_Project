@@ -12,7 +12,7 @@
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void test_table_13_1()
 {

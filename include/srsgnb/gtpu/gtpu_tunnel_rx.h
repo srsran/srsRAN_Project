@@ -29,7 +29,7 @@
  *
  */
 
-namespace srsgnb {
+namespace srsran {
 
 /****************************************
  * Interfaces/notifiers for the gateway
@@ -68,4 +68,4 @@ public:
   virtual void on_new_sdu(byte_buffer sdu) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

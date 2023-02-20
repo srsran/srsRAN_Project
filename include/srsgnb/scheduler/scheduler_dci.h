@@ -17,7 +17,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 struct cce_position {
   /// CCE start index. Values: (0..135).
@@ -101,4 +101,4 @@ struct dci_ul_info {
   dci_ul_info() : type(dci_ul_rnti_config_type::c_rnti_f0_0) { new (&c_rnti_f0_0) dci_0_0_c_rnti_configuration(); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

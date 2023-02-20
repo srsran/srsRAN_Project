@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Generic software implementation of the EVM calculator interface.
 class evm_calculator_generic_impl : public evm_calculator
@@ -45,4 +45,4 @@ private:
   srsvec::aligned_vec<cf_t> temp_modulated;
 };
 
-} // namespace srsgnb
+} // namespace srsran

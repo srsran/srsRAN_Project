@@ -14,7 +14,7 @@
 #include <list>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static_assert(std::is_same<byte_buffer::value_type, uint8_t>::value, "Invalid valid_type");
 static_assert(std::is_same<byte_buffer_view::value_type, uint8_t>::value, "Invalid valid_type");

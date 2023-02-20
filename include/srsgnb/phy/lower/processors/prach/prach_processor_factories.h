@@ -14,7 +14,7 @@
 #include "srsgnb/phy/lower/processors/prach/prach_processor.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class task_executor;
 
@@ -35,4 +35,4 @@ create_prach_processor_factory_sw(std::shared_ptr<ofdm_prach_demodulator_factory
                                   unsigned                                        dft_size_15kHz,
                                   unsigned                                        max_nof_concurrent_requests);
 
-} // namespace srsgnb
+} // namespace srsran

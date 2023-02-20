@@ -13,8 +13,8 @@
 #include "srsgnb/security/security.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
-using namespace srsgnb::security;
+using namespace srsran;
+using namespace srsran::security;
 
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.
 sec_as_key make_sec_as_key(std::string hex_str)

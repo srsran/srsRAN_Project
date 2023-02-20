@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 TEST(UplinkProcessor, calling_process_prach_enqueue_task)

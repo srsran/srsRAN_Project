@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implemetantion of an upper phy resource grid gateway for test only. It provides a bool that will be set to true when
 /// the send method is called.
@@ -24,4 +24,4 @@ public:
   void clear_sent() { sent = false; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

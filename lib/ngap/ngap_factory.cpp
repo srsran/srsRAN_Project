@@ -13,10 +13,10 @@
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
-std::unique_ptr<ngap_interface> srsgnb::srs_cu_cp::create_ngap(ngap_configuration&     ngap_cfg_,
+std::unique_ptr<ngap_interface> srsran::srs_cu_cp::create_ngap(ngap_configuration&     ngap_cfg_,
                                                                ngap_ue_task_scheduler& task_sched_,
                                                                ngap_ue_manager&        ue_manager_,
                                                                ngap_message_notifier&  ngap_notifier_,

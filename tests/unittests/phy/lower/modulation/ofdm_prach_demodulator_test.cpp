@@ -15,7 +15,7 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
@@ -29,9 +29,9 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 class ofdm_prach_demodulator_tester : public ::testing::TestWithParam<test_case_t>
 {

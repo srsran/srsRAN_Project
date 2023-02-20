@@ -10,7 +10,7 @@
 
 #include "rar_pdu_assembler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 

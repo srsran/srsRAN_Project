@@ -13,13 +13,13 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 
 static void test_conversion_ok()
 {
-  srsgnb::dl_ssb_pdu pdu = build_valid_dl_ssb_pdu();
+  srsran::dl_ssb_pdu pdu = build_valid_dl_ssb_pdu();
 
   fapi::dl_ssb_pdu fapi_pdu;
   convert_ssb_mac_to_fapi(fapi_pdu, pdu);

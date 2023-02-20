@@ -11,7 +11,7 @@
 #include "gtpu_demux_impl.h"
 #include "gtpu_pdu.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 gtpu_demux_impl::gtpu_demux_impl(task_executor& cu_up_exec_) :
   cu_up_exec(cu_up_exec_), logger(srslog::fetch_basic_logger("GTPU"))

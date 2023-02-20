@@ -11,10 +11,10 @@
 #include "fapi_factory.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
-std::unique_ptr<phy_fapi_adaptor> srsgnb::build_phy_fapi_adaptor(unsigned                      sector_id,
+std::unique_ptr<phy_fapi_adaptor> srsran::build_phy_fapi_adaptor(unsigned                      sector_id,
                                                                  subcarrier_spacing            scs,
                                                                  subcarrier_spacing            scs_common,
                                                                  downlink_processor_pool&      dl_processor_pool,
@@ -46,7 +46,7 @@ std::unique_ptr<phy_fapi_adaptor> srsgnb::build_phy_fapi_adaptor(unsigned       
   return adaptor_factory->create(phy_fapi_config);
 }
 
-std::unique_ptr<mac_fapi_adaptor> srsgnb::build_mac_fapi_adaptor(unsigned                          sector_id,
+std::unique_ptr<mac_fapi_adaptor> srsran::build_mac_fapi_adaptor(unsigned                          sector_id,
                                                                  subcarrier_spacing                scs,
                                                                  fapi::slot_message_gateway&       gateway,
                                                                  fapi::slot_last_message_notifier& last_msg_notifier)

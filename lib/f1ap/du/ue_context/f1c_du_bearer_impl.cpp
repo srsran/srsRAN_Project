@@ -12,7 +12,7 @@
 #include "../../../ran/gnb_format.h"
 #include "du/procedures/f1ap_du_event_manager.h"
 
-using namespace srsgnb::srs_du;
+using namespace srsran::srs_du;
 
 f1c_srb0_du_bearer::f1c_srb0_du_bearer(f1ap_ue_context&            ue_ctxt_,
                                        const asn1::f1ap::nr_cgi_s& nr_cgi_,
@@ -104,7 +104,7 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
                "UL RRC Message Transfer.");
 }
 
-void f1c_other_srb_du_bearer::handle_pdu(srsgnb::byte_buffer sdu)
+void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer sdu)
 {
   sdu_notifier.on_new_sdu(std::move(sdu));
 

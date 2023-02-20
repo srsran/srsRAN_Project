@@ -14,7 +14,7 @@
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief OFDM PRACH demodulator.
 ///
@@ -49,4 +49,4 @@ public:
   /// \param[in] slot_index Slot index within the subframe to demodulate.
   virtual void demodulate(prach_buffer& buffer, span<const cf_t> input, const configuration& config) = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

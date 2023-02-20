@@ -13,7 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Encoder of bits in a byte buffer.
 class bit_encoder
@@ -22,7 +22,7 @@ public:
   explicit bit_encoder(byte_buffer& bytes) : writer(bytes) {}
 
   /// Get a view to held byte buffer.
-  srsgnb::byte_buffer_view data() const { return writer.view(); }
+  srsran::byte_buffer_view data() const { return writer.view(); }
 
   /// Gets number of written bytes.
   unsigned nof_bytes() const { return writer.length(); }
@@ -46,17 +46,17 @@ public:
 
   /// Append range of bytes into byte_buffer held by bit_encoder.
   /// \param bytes span of bytes.
-  void pack_bytes(srsgnb::span<const uint8_t> bytes);
+  void pack_bytes(srsran::span<const uint8_t> bytes);
 
   /// Append bytes of a byte_buffer into byte_buffer held by bit_encoder.
-  void pack_bytes(srsgnb::byte_buffer_view bytes);
+  void pack_bytes(srsran::byte_buffer_view bytes);
 
   /// Pads held buffer with zeros until the next byte.
   void align_bytes_zero();
 
 private:
   /// Interface to byte buffer where bits are going to be appended.
-  srsgnb::byte_buffer_writer writer;
+  srsran::byte_buffer_writer writer;
   /// Offset of the next bit to be set. Values: (0..7).
   uint8_t offset = 0;
 };
@@ -65,7 +65,7 @@ private:
 class bit_decoder
 {
 public:
-  explicit bit_decoder(srsgnb::byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
+  explicit bit_decoder(srsran::byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
 
   /// Get a view to held byte buffer.
   byte_buffer_view data() const { return buffer; }
@@ -94,24 +94,24 @@ public:
   /// Read bytes from underlying byte_buffer.
   /// \param bytes span of bytes where the result is stored. The span size defines the number of bytes to be read.
   /// \return true if successful. False if the number of bytes to be read exceeds size of the byte_buffer.
-  bool unpack_bytes(srsgnb::span<uint8_t> bytes);
+  bool unpack_bytes(srsran::span<uint8_t> bytes);
 
   /// Skip bits until the beginning of the next byte.
   void align_bytes();
 
 private:
-  srsgnb::byte_buffer_view            buffer;
-  srsgnb::byte_buffer::const_iterator it;
+  srsran::byte_buffer_view            buffer;
+  srsran::byte_buffer::const_iterator it;
   uint8_t                             offset = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// \brief Custom formatter for bit_encoder
 template <>
-struct formatter<srsgnb::bit_encoder> {
+struct formatter<srsran::bit_encoder> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -119,7 +119,7 @@ struct formatter<srsgnb::bit_encoder> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::bit_encoder& s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::bit_encoder& s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (s.next_bit_offset() == 0) {
       fmt::format_to(ctx.out(), "{:b}", s.data());
@@ -135,7 +135,7 @@ struct formatter<srsgnb::bit_encoder> {
 
 /// \brief Custom formatter for bit_encoder
 template <>
-struct formatter<srsgnb::bit_decoder> {
+struct formatter<srsran::bit_decoder> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -143,7 +143,7 @@ struct formatter<srsgnb::bit_decoder> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::bit_decoder& s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::bit_decoder& s, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (s.next_bit_offset() == 0) {
       fmt::format_to(ctx.out(), "{:b}", s.data().view(0, s.nof_bytes()));

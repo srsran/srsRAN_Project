@@ -13,7 +13,7 @@
 #include "srsgnb/mac/mac_cell_manager.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Class that manages the encoding of BCCH-DL-SCH messages to be fit in a Transport Block.
 class sib_pdu_assembler
@@ -44,4 +44,4 @@ private:
   unsigned min_payload_size;
 };
 
-} // namespace srsgnb
+} // namespace srsran

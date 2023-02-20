@@ -14,9 +14,9 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 

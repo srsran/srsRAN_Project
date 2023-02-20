@@ -11,7 +11,7 @@
 #include "du_bearer.h"
 #include "srsgnb/adt/static_vector.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 void du_srb_connector::connect(du_ue_index_t                       ue_index,

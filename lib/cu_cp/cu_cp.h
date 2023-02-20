@@ -32,7 +32,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class cu_cp final : public cu_cp_interface
@@ -167,4 +167,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

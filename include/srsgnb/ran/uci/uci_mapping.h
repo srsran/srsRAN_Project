@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// HARQ values for UCI PUCCH Format 0 or Format 1.
 enum class uci_pucch_f0_or_f1_harq_values { nack, ack, dtx };
@@ -63,4 +63,4 @@ enum class uci_pusch_or_pucch_f2_3_4_detection_status {
   dtx_not_checked
 };
 
-} // namespace srsgnb
+} // namespace srsran

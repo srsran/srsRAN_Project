@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dmrs_pucch_processor_spy : public dmrs_pucch_processor
 {
@@ -67,4 +67,4 @@ private:
   std::vector<dmrs_pucch_processor_spy*> format2_entries;
 };
 
-} // namespace srsgnb
+} // namespace srsran

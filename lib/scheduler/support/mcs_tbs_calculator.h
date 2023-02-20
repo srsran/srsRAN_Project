@@ -14,7 +14,7 @@
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct pusch_config_params;
 struct pdsch_config_params;
@@ -56,4 +56,4 @@ optional<sch_mcs_tbs> compute_ul_mcs_tbs(const pusch_config_params&   pusch_para
                                          sch_mcs_index                max_mcs,
                                          unsigned                     nof_prbs);
 
-} // namespace srsgnb
+} // namespace srsran

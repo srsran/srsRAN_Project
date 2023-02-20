@@ -13,7 +13,7 @@
 
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief This interface represents the notification entry point of the transmitting side of a F1-U bearer of the DU
@@ -28,4 +28,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

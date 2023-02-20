@@ -13,7 +13,7 @@
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class du_ran_resource_manager_impl;
@@ -89,4 +89,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

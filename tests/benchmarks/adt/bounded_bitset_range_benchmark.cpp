@@ -13,7 +13,7 @@
 #include "srsgnb/support/benchmark_utils.h"
 #include <getopt.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 struct bench_params {
   unsigned nof_repetitions = 100000;
@@ -56,7 +56,7 @@ bench_params                 params{};
 std::unique_ptr<benchmarker> bm;
 
 template <unsigned N>
-static void benchmark_bounded_bitset_any(const srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_any(const srsran::bounded_bitset<N>& bitset, std::string description)
 {
   bm->new_measure(description, params.nof_repetitions, [&bitset]() {
     bool value = bitset.any(params.start_offset, params.last_offset);
@@ -65,7 +65,7 @@ static void benchmark_bounded_bitset_any(const srsgnb::bounded_bitset<N>& bitset
 }
 
 template <unsigned N>
-static void benchmark_bounded_bitset_anytest(const srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_anytest(const srsran::bounded_bitset<N>& bitset, std::string description)
 {
   bm->new_measure(description, params.nof_repetitions, [&bitset]() {
     bool value = false;
@@ -80,7 +80,7 @@ static void benchmark_bounded_bitset_anytest(const srsgnb::bounded_bitset<N>& bi
 }
 
 template <unsigned N>
-static void benchmark_bounded_bitset_all(const srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_all(const srsran::bounded_bitset<N>& bitset, std::string description)
 {
   bm->new_measure(description, params.nof_repetitions, [&bitset]() {
     bool value = bitset.all(params.start_offset, params.last_offset);
@@ -89,7 +89,7 @@ static void benchmark_bounded_bitset_all(const srsgnb::bounded_bitset<N>& bitset
 }
 
 template <unsigned N>
-static void benchmark_bounded_bitset_alltest(const srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_alltest(const srsran::bounded_bitset<N>& bitset, std::string description)
 {
   bm->new_measure(description, params.nof_repetitions, [&bitset]() {
     bool value = true;
@@ -104,7 +104,7 @@ static void benchmark_bounded_bitset_alltest(const srsgnb::bounded_bitset<N>& bi
 }
 
 template <unsigned N>
-static void benchmark_bounded_bitset_fill(srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_fill(srsran::bounded_bitset<N>& bitset, std::string description)
 {
   bm->new_measure(description, params.nof_repetitions, [&bitset]() {
     bitset.fill(params.start_offset, params.last_offset);
@@ -113,7 +113,7 @@ static void benchmark_bounded_bitset_fill(srsgnb::bounded_bitset<N>& bitset, std
 }
 
 template <unsigned N>
-static void benchmark_bounded_bitset_fillset(srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_fillset(srsran::bounded_bitset<N>& bitset, std::string description)
 {
   bm->new_measure(description, params.nof_repetitions, [&bitset]() {
     for (unsigned i = params.start_offset; i != params.last_offset; ++i) {
@@ -124,7 +124,7 @@ static void benchmark_bounded_bitset_fillset(srsgnb::bounded_bitset<N>& bitset, 
 }
 
 template <unsigned N>
-static void benchmark_bounded_bitset_slice(srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_slice(srsran::bounded_bitset<N>& bitset, std::string description)
 {
   unsigned slice_start = params.start_offset;
   unsigned slice_end   = slice_start + (params.last_offset - params.start_offset) / 2;
@@ -135,7 +135,7 @@ static void benchmark_bounded_bitset_slice(srsgnb::bounded_bitset<N>& bitset, st
 }
 
 template <unsigned N>
-static void benchmark_bounded_bitset_slicetestset(srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_slicetestset(srsran::bounded_bitset<N>& bitset, std::string description)
 {
   unsigned slice_start = params.start_offset;
   unsigned slice_end   = slice_start + (params.last_offset - params.start_offset) / 2;

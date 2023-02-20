@@ -15,7 +15,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 template <class T>
 class rlc_am_window_base
@@ -74,7 +74,7 @@ public:
 
 private:
   rlc_bearer_logger&                             logger;
-  srsgnb::circular_map<uint32_t, T, WINDOW_SIZE> window;
+  srsran::circular_map<uint32_t, T, WINDOW_SIZE> window;
 };
 
-} // namespace srsgnb
+} // namespace srsran

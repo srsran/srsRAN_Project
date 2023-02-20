@@ -10,7 +10,7 @@
 
 #include "polar_deallocator_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void polar_deallocator_impl::deallocate(span<uint8_t>       message,
                                         span<const uint8_t> output_decoder,

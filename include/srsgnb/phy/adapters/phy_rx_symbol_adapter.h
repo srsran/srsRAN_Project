@@ -13,7 +13,7 @@
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a generic physical layer receive symbol adapter.
 class phy_rx_symbol_adapter : public lower_phy_rx_symbol_notifier
@@ -55,4 +55,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

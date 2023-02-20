@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Maps the integer \c beta_offset value for HARQ-ACK reporting into the corresponding float value.
 ///
@@ -32,4 +32,4 @@ float beta_harq_ack_to_float(unsigned beta_uint_val);
 /// \return The corresponding float value as per Table 9.3-2, TS 38.213.
 float beta_csi_to_float(unsigned beta_uint_val);
 
-} // namespace srsgnb
+} // namespace srsran

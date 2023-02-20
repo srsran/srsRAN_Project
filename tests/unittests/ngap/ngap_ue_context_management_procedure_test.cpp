@@ -13,7 +13,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 class ngap_ue_context_management_procedure_test : public ngap_test

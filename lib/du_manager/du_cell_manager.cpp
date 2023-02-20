@@ -11,7 +11,7 @@
 #include "du_cell_manager.h"
 #include "srsgnb/du/du_cell_config_validation.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 du_cell_manager::du_cell_manager(const du_manager_params& cfg_) : cfg(cfg_)

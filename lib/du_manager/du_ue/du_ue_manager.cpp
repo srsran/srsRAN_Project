@@ -13,7 +13,7 @@
 #include "../procedures/ue_creation_procedure.h"
 #include "../procedures/ue_deletion_procedure.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 du_ue_manager::du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc_) :

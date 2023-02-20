@@ -15,7 +15,7 @@
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   cell_cfg(cfg_),

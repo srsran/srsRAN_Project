@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PUCCH demodulator interface for Formats 2, 3 and 4.
 class pucch_demodulator
@@ -83,4 +83,4 @@ public:
                           const format4_configuration& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

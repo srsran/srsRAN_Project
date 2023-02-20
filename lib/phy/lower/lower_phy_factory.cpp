@@ -11,7 +11,7 @@
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "lower_phy_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 class lower_phy_factory_generic : public lower_phy_factory
 {
@@ -36,7 +36,7 @@ public:
     srsgnb_assert(amplitude_control_factory, "Invalid amplitude controller factory");
   }
 
-  std::unique_ptr<srsgnb::lower_phy> create(lower_phy_configuration& config) override
+  std::unique_ptr<srsran::lower_phy> create(lower_phy_configuration& config) override
   {
     srsgnb_assert((config.dft_window_offset >= 0.0) && (config.dft_window_offset < 1.0F), "");
 
@@ -101,7 +101,7 @@ public:
 };
 
 std::unique_ptr<lower_phy_factory>
-srsgnb::create_lower_phy_factory_sw(std::shared_ptr<ofdm_modulator_factory>       modulator_factory,
+srsran::create_lower_phy_factory_sw(std::shared_ptr<ofdm_modulator_factory>       modulator_factory,
                                     std::shared_ptr<ofdm_demodulator_factory>     demodulator_factory,
                                     std::shared_ptr<prach_processor_factory>      prach_processor_factory,
                                     std::shared_ptr<amplitude_controller_factory> amplitude_control_factory)

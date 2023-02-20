@@ -15,7 +15,7 @@
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/ran/nr_cgi_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace asn1::f1ap;
 using namespace srs_cu_cp;
 
@@ -195,7 +195,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
   }
 
   nr_cell_global_id_t cgi = cgi_from_asn1(msg->nr_cgi.value);
-  if (not srsgnb::config_helpers::is_valid(cgi)) {
+  if (not srsran::config_helpers::is_valid(cgi)) {
     logger.error("CGI isn't valid - dropping InitialUlRrcMessage");
     return;
   }

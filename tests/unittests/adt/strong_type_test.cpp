@@ -11,7 +11,7 @@
 #include "srsgnb/adt/strong_type.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(strong_type_test, construction)
 {

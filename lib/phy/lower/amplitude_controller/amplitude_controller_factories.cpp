@@ -11,7 +11,7 @@
 #include "srsgnb/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "amplitude_controller_clipping_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -42,7 +42,7 @@ private:
 } // namespace
 
 std::shared_ptr<amplitude_controller_factory>
-srsgnb::create_amplitude_controller_clipping_factory(const amplitude_controller_clipping_config& config)
+srsran::create_amplitude_controller_clipping_factory(const amplitude_controller_clipping_config& config)
 {
   return std::make_shared<amplitude_controller_clipping_factory>(config);
 }

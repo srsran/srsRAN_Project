@@ -14,7 +14,7 @@
 #include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 amplitude_controller_metrics amplitude_controller_clipping_impl::process(span<cf_t> output, span<const cf_t> input)
 {

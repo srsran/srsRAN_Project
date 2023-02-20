@@ -19,7 +19,7 @@
 /// the defined classes provide methods to access, remove, add elements by index with O(1) complexity, iterators that
 /// skip absent elements, and track number of present elements.
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -636,4 +636,4 @@ private:
   slotted_vector<T> sl_vec;
 };
 
-} // namespace srsgnb
+} // namespace srsran

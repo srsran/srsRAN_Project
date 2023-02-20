@@ -20,7 +20,7 @@
 #include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PUCCH detector interface for Formats 0 and 1.
 class pucch_detector
@@ -111,4 +111,4 @@ public:
   virtual pucch_detection_result
   detect(const resource_grid_reader& grid, const channel_estimate& estimates, const format1_configuration& config) = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

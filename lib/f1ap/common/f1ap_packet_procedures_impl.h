@@ -14,7 +14,7 @@
 #include "srsgnb/f1ap/du/f1ap_du.h"
 #include <cstdio>
 
-namespace srsgnb {
+namespace srsran {
 
 // class f1ap_dl_packet_procedure : public f1ap_packet_procedures
 //{
@@ -33,4 +33,4 @@ namespace srsgnb {
 //   }
 // };
 
-} // namespace srsgnb
+} // namespace srsran

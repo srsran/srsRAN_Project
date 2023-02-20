@@ -18,7 +18,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 template <typename T>
 class span;
@@ -245,7 +245,7 @@ inline bool operator!=(span<T> lhs, span<T> rhs)
 template <typename T>
 using const_span = span<const T>;
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
@@ -254,7 +254,7 @@ namespace fmt {
 /// By default, the elements within the span are separated by a space character. A comma delimiter is available and can
 /// be selected by formatting with <tt>{:,}</tt>. The delimiter can be disabled by formatting with <tt>{:#}</tt>.
 template <typename T>
-struct formatter<srsgnb::span<T>> {
+struct formatter<srsran::span<T>> {
   // Stores parsed format string.
   memory_buffer format_buffer;
 
@@ -310,7 +310,7 @@ struct formatter<srsgnb::span<T>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::span<T>& buf, FormatContext& ctx)
+  auto format(const srsran::span<T>& buf, FormatContext& ctx)
   {
     string_view format_str    = string_view(format_buffer.data(), format_buffer.size());
     string_view delimiter_str = string_view(delimiter_buffer.data(), delimiter_buffer.size());

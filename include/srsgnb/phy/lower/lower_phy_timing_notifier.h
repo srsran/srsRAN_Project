@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the context of the current timing boundary.
 struct lower_phy_timing_context {
@@ -48,4 +48,4 @@ public:
   virtual void on_ul_full_slot_boundary(const lower_phy_timing_context& context) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

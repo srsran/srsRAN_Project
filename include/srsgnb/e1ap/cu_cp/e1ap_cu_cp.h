@@ -20,7 +20,7 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Handle E1AP interface management procedures as defined in TS 38.463 section 8.2.
@@ -105,4 +105,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

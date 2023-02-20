@@ -19,7 +19,7 @@
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace test_helpers {
 
 inline sched_cell_configuration_request_message
@@ -102,4 +102,4 @@ inline rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, r
 }
 
 } // namespace test_helpers
-} // namespace srsgnb
+} // namespace srsran

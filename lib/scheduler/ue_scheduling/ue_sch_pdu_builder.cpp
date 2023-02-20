@@ -12,7 +12,7 @@
 #include "../support/tbs_calculator.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static prb_interval get_prb_interval(unsigned N_rb_bwp, unsigned frequency_resource)
 {
@@ -34,7 +34,7 @@ static unsigned get_pdsch_n_id(pci_t                              pci,
   return pci;
 }
 
-pdsch_config_params srsgnb::get_pdsch_config_f1_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
+pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
 {
   static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
@@ -59,7 +59,7 @@ pdsch_config_params srsgnb::get_pdsch_config_f1_0_tc_rnti(const cell_configurati
   return pdsch;
 }
 
-pdsch_config_params srsgnb::get_pdsch_config_f1_0_c_rnti(const cell_configuration&    cell_cfg,
+pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuration&    cell_cfg,
                                                          const ue_cell_configuration& ue_cell_cfg,
                                                          unsigned                     time_resource)
 {
@@ -85,7 +85,7 @@ pdsch_config_params srsgnb::get_pdsch_config_f1_0_c_rnti(const cell_configuratio
   return pdsch;
 }
 
-pusch_config_params srsgnb::get_pusch_config_f0_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
+pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
 {
   constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
   constexpr unsigned        nof_layers = 1;
@@ -127,7 +127,7 @@ pusch_config_params srsgnb::get_pusch_config_f0_0_tc_rnti(const cell_configurati
   return pusch;
 }
 
-pusch_config_params srsgnb::get_pusch_config_f0_0_c_rnti(const cell_configuration&    cell_cfg,
+pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuration&    cell_cfg,
                                                          const ue_cell_configuration& ue_cell_cfg,
                                                          const bwp_uplink_common&     ul_bwp,
                                                          unsigned                     time_resource)
@@ -173,7 +173,7 @@ pusch_config_params srsgnb::get_pusch_config_f0_0_c_rnti(const cell_configuratio
   return pusch;
 }
 
-void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
+void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
                                       const pdsch_config_params&           pdsch_cfg,
                                       unsigned                             tbs_bytes,
                                       rnti_t                               rnti,
@@ -217,7 +217,7 @@ void srsgnb::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   cw.tb_size_bytes   = tbs_bytes;
 }
 
-void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
+void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      const pdsch_config_params&          pdsch_cfg,
                                      unsigned                            tbs_bytes,
                                      rnti_t                              rnti,
@@ -259,7 +259,7 @@ void srsgnb::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   cw.tb_size_bytes   = tbs_bytes;
 }
 
-void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
+void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
                                       const pusch_config_params&           pusch_cfg,
                                       unsigned                             tbs_bytes,
                                       rnti_t                               rnti,
@@ -304,7 +304,7 @@ void srsgnb::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   pusch.num_cb = 0;
 }
 
-void srsgnb::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
+void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                                      rnti_t                              rnti,
                                      const pusch_config_params&          pusch_cfg,
                                      unsigned                            tbs_bytes,

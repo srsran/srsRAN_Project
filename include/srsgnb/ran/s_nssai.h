@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/optional.h"
 
-namespace srsgnb {
+namespace srsran {
 
 // Network slice information, see TS 38.413, Sec. 9.3.1.24
 struct s_nssai_t {
@@ -20,4 +20,4 @@ struct s_nssai_t {
   optional<uint32_t> sd;  // Slice Differentiator (max 24bits)
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/ran/slot_pdu_capacity_constants.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines an entry of the uplink slot PDU repository.
 struct uplink_slot_pdu_entry {
@@ -78,4 +78,4 @@ private:
   /// Repository that contains the PDUs.
   std::vector<slot_entry> repository;
 };
-} // namespace srsgnb
+} // namespace srsran

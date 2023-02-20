@@ -24,7 +24,7 @@
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct tdd_configuration {
   // TODO
@@ -55,4 +55,4 @@ struct mac_cell_creation_request {
   // TODO: Fill remaining fields
 };
 
-} // namespace srsgnb
+} // namespace srsran

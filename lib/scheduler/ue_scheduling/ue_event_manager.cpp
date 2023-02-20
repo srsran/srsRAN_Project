@@ -12,7 +12,7 @@
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
                                    ue_list&                          ue_db_,

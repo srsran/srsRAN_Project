@@ -11,7 +11,7 @@
 #include "srsgnb/support/units.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(bit_units, basic)
 {

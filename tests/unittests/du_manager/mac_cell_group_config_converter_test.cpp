@@ -13,7 +13,7 @@
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 srs_du::cell_group_config make_initial_cell_group_config()
 {
@@ -77,9 +77,9 @@ TEST(mac_cell_group_config_converter_test, test_custom_bsr_cfg_conversion)
   srs_du::cell_group_config dest_cell_grp_cfg{src_cell_grp_cfg};
   // Add new configuration to be setup. Assume BSR Config is already set.
   auto& dest_mcg_cfg                             = dest_cell_grp_cfg.mcg_cfg;
-  dest_mcg_cfg.bsr_cfg.value().periodic_timer    = srsgnb::periodic_bsr_timer::sf2560;
+  dest_mcg_cfg.bsr_cfg.value().periodic_timer    = srsran::periodic_bsr_timer::sf2560;
   dest_mcg_cfg.bsr_cfg.value().lc_sr_delay_timer = logical_channel_sr_delay_timer::sf1024;
-  dest_mcg_cfg.bsr_cfg.value().retx_timer        = srsgnb::retx_bsr_timer::sf5120;
+  dest_mcg_cfg.bsr_cfg.value().retx_timer        = srsran::retx_bsr_timer::sf5120;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
   srs_du::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cell_grp_cfg, dest_cell_grp_cfg);

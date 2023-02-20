@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a parameter validator for \ref pdsch_processor_impl.
 class pdsch_processor_validator_impl : public pdsch_pdu_validator
@@ -85,4 +85,4 @@ private:
   std::array<static_bit_buffer<pdsch_modulator::MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> temp_packed_codewords;
 };
 
-} // namespace srsgnb
+} // namespace srsran

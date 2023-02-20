@@ -18,7 +18,7 @@
 #include "srsgnb/support/timers.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Service provided by CU-CP to schedule async tasks for a given UE.
@@ -42,4 +42,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

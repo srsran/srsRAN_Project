@@ -19,7 +19,7 @@
 #include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 #include "srsgnb/phy/upper/uplink_processor_context.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_buffer;
 struct prach_buffer_context;
@@ -159,4 +159,4 @@ public:
   virtual uplink_processor& get_processor(slot_point slot, unsigned sector_id) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

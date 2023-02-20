@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 struct slot_indication_message;
@@ -30,4 +30,4 @@ public:
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

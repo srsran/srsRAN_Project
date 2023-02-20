@@ -11,9 +11,9 @@
 #include "srsgnb/support/io_broker/io_broker_factory.h"
 #include "io_broker_epoll.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<io_broker> srsgnb::create_io_broker(io_broker_type type)
+std::unique_ptr<io_broker> srsran::create_io_broker(io_broker_type type)
 {
   switch (type) {
     case io_broker_type::epoll:

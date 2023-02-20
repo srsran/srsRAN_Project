@@ -19,7 +19,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_ul_sch_subpdu
 {
@@ -81,12 +81,12 @@ inline rnti_t decode_crnti_ce(byte_buffer_view payload)
   return to_rnti(le16toh((uint16_t)payload[0] << 8U | payload[1]));
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::mac_ul_sch_subpdu> {
+struct formatter<srsran::mac_ul_sch_subpdu> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -94,9 +94,9 @@ struct formatter<srsgnb::mac_ul_sch_subpdu> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::mac_ul_sch_subpdu& subpdu, FormatContext& ctx) -> decltype(ctx.out())
+  auto format(const srsran::mac_ul_sch_subpdu& subpdu, FormatContext& ctx) -> decltype(ctx.out())
   {
-    using namespace srsgnb;
+    using namespace srsran;
     if (subpdu.lcid().is_sdu()) {
       format_to(ctx.out(), "lcid={}: len={}", subpdu.lcid(), subpdu.sdu_length());
       return ctx.out();
@@ -147,14 +147,14 @@ struct formatter<srsgnb::mac_ul_sch_subpdu> {
 };
 
 template <>
-struct formatter<srsgnb::mac_ul_sch_pdu> {
+struct formatter<srsran::mac_ul_sch_pdu> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(const srsgnb::mac_ul_sch_pdu& pdu, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::mac_ul_sch_pdu& pdu, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", fmt::join(pdu.begin(), pdu.end(), ", "));
   }

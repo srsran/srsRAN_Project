@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PRACH Restricted set configuration.
 ///
@@ -30,4 +30,4 @@ inline const char* to_string(restricted_set_config config)
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran

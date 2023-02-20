@@ -36,7 +36,7 @@
 #include "srsgnb/scheduler/scheduler_pucch_format.h"
 #include <cstddef>
 
-namespace srsgnb {
+namespace srsran {
 
 struct beamforming_info {
   // TODO
@@ -429,4 +429,4 @@ public:
   virtual const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

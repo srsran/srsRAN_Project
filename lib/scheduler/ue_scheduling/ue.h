@@ -17,7 +17,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class ue
 {
@@ -161,4 +161,4 @@ private:
 /// Container that stores all scheduler UEs.
 using ue_list = stable_id_map<du_ue_index_t, ue, MAX_NOF_DU_UES>;
 
-} // namespace srsgnb
+} // namespace srsran

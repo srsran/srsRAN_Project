@@ -13,7 +13,7 @@
 #include "srsgnb/ran/band_helper.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Define struct to pass parameters from test functions.
 struct cfg_gen_input_params {

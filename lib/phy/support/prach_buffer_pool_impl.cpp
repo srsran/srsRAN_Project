@@ -10,7 +10,7 @@
 
 #include "prach_buffer_pool_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 prach_buffer_pool_impl::prach_buffer_pool_impl(std::vector<std::unique_ptr<prach_buffer>>&& elements) :
   pool(std::move(elements)), current_index(0), size(pool.size())

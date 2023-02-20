@@ -11,8 +11,8 @@
 #include "ngap_pdu_session_resource_setup_procedure.h"
 #include "../ngap/ngap_asn1_helpers.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_pdu_session_resource_setup_procedure::ngap_pdu_session_resource_setup_procedure(

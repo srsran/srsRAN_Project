@@ -12,7 +12,7 @@
 #include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -29,7 +29,7 @@ TEST_P(validate_dl_tti_request_field, with_value)
                std::get<1>(params),
                build_valid_dl_tti_request,
                validate_dl_tti_request,
-               srsgnb::fapi::message_type_id::dl_tti_request);
+               srsran::fapi::message_type_id::dl_tti_request);
 };
 
 INSTANTIATE_TEST_SUITE_P(sfn,

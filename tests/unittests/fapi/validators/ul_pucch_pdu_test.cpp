@@ -12,7 +12,7 @@
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -30,7 +30,7 @@ TEST_P(validate_pucch_pdu_common_field, WithValue)
                std::get<1>(params),
                std::get<2>(params),
                validate_ul_pucch_pdu,
-               srsgnb::fapi::message_type_id::ul_tti_request,
+               srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
 };
 
@@ -215,7 +215,7 @@ TEST_P(validate_pucch_f0_pdu_field, WithValue)
                std::get<1>(params),
                build_valid_ul_pucch_f0_pdu,
                validate_ul_pucch_pdu,
-               srsgnb::fapi::message_type_id::ul_tti_request,
+               srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
 };
 
@@ -290,7 +290,7 @@ TEST_P(validate_pucch_f1_pdu_field, WithValue)
                std::get<1>(params),
                build_valid_ul_pucch_f1_pdu,
                validate_ul_pucch_pdu,
-               srsgnb::fapi::message_type_id::ul_tti_request,
+               srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
 };
 
@@ -374,7 +374,7 @@ TEST_P(validate_pucch_f2_pdu_field, WithValue)
                std::get<1>(params),
                build_valid_ul_pucch_f2_pdu,
                validate_ul_pucch_pdu,
-               srsgnb::fapi::message_type_id::ul_tti_request,
+               srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
 };
 
@@ -452,7 +452,7 @@ TEST_P(validate_pucch_f3_pdu_field, WithValue)
                std::get<1>(params),
                build_valid_ul_pucch_f3_pdu,
                validate_ul_pucch_pdu,
-               srsgnb::fapi::message_type_id::ul_tti_request,
+               srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
 };
 
@@ -573,7 +573,7 @@ TEST_P(validate_pucch_f4_pdu_field, WithValue)
                std::get<1>(params),
                build_valid_ul_pucch_f4_pdu,
                validate_ul_pucch_pdu,
-               srsgnb::fapi::message_type_id::ul_tti_request,
+               srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
 };
 

@@ -13,9 +13,9 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/support/prach_buffer.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-namespace srsgnb {
+namespace srsran {
 
 template <unsigned SEQ_LEN, unsigned MAX_NOF_SYMB>
 class prach_buffer_static : public prach_buffer
@@ -51,4 +51,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include "simd.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srsvec;
 
 static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsigned len)
@@ -84,14 +84,14 @@ static inline void convert_if_simd(const int16_t* x, float* z, float scale, unsi
   }
 }
 
-void srsgnb::srsvec::convert(span<const cf_t> x, float scale, span<int16_t> z)
+void srsran::srsvec::convert(span<const cf_t> x, float scale, span<int16_t> z)
 {
   assert(2 * x.size() == z.size());
 
   convert_fi_simd((const float*)x.data(), z.data(), scale, z.size());
 }
 
-void srsgnb::srsvec::convert_swap(span<const cf_t> x, float scale, span<int16_t> z)
+void srsran::srsvec::convert_swap(span<const cf_t> x, float scale, span<int16_t> z)
 {
   assert(2 * x.size() == z.size());
 
@@ -105,14 +105,14 @@ void srsgnb::srsvec::convert_swap(span<const cf_t> x, float scale, span<int16_t>
   }
 }
 
-void srsgnb::srsvec::convert(span<const int16_t> x, float scale, span<cf_t> z)
+void srsran::srsvec::convert(span<const int16_t> x, float scale, span<cf_t> z)
 {
   assert(x.size() == 2 * z.size());
 
   convert_if_simd(x.data(), (float*)z.data(), scale, x.size());
 }
 
-void srsgnb::srsvec::convert_swap(span<const int16_t> x, float scale, span<cf_t> z)
+void srsran::srsvec::convert_swap(span<const int16_t> x, float scale, span<cf_t> z)
 {
   assert(x.size() == 2 * z.size());
 
@@ -125,14 +125,14 @@ void srsgnb::srsvec::convert_swap(span<const int16_t> x, float scale, span<cf_t>
   }
 }
 
-void srsgnb::srsvec::convert(span<const float> x, float scale, span<int16_t> z)
+void srsran::srsvec::convert(span<const float> x, float scale, span<int16_t> z)
 {
   assert(x.size() == z.size());
 
   convert_fi_simd(x.data(), z.data(), scale, z.size());
 }
 
-void srsgnb::srsvec::convert(span<const int16_t> x, float scale, span<float> z)
+void srsran::srsvec::convert(span<const int16_t> x, float scale, span<float> z)
 {
   assert(x.size() == z.size());
 

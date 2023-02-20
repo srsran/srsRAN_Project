@@ -15,7 +15,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/mean.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 // Container for time-domain spreading sequences of length N.

@@ -10,7 +10,7 @@
 
 #include "srsgnb/scheduler/config/scheduler_ue_config_validator.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace config_validators;
 
 #define VERIFY(cond, ...)                                                                                              \
@@ -29,7 +29,7 @@ using namespace config_validators;
     }                                                                                                                  \
   }
 
-error_type<std::string> srsgnb::config_validators::validate_pucch_cfg(const sched_ue_creation_request_message& msg)
+error_type<std::string> srsran::config_validators::validate_pucch_cfg(const sched_ue_creation_request_message& msg)
 {
   for (const cell_config_dedicated& cell : msg.cfg.cells) {
     if (cell.serv_cell_cfg.ul_config.has_value()) {
@@ -46,7 +46,7 @@ error_type<std::string> srsgnb::config_validators::validate_pucch_cfg(const sche
   return {};
 }
 
-error_type<std::string> srsgnb::config_validators::validate_pdsch_cfg(const sched_ue_creation_request_message& msg)
+error_type<std::string> srsran::config_validators::validate_pdsch_cfg(const sched_ue_creation_request_message& msg)
 {
   for (const cell_config_dedicated& cell : msg.cfg.cells) {
     const auto& init_dl_bwp = cell.serv_cell_cfg.init_dl_bwp;
@@ -61,7 +61,7 @@ error_type<std::string> srsgnb::config_validators::validate_pdsch_cfg(const sche
   return {};
 }
 
-error_type<std::string> srsgnb::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request_message& msg)
+error_type<std::string> srsran::config_validators::validate_csi_meas_cfg(const sched_ue_creation_request_message& msg)
 {
   for (const cell_config_dedicated& cell : msg.cfg.cells) {
     if (cell.serv_cell_cfg.csi_meas_cfg.has_value()) {
@@ -170,7 +170,7 @@ error_type<std::string> srsgnb::config_validators::validate_csi_meas_cfg(const s
 }
 
 error_type<std::string>
-srsgnb::config_validators::validate_sched_ue_creation_request_message(const sched_ue_creation_request_message& msg)
+srsran::config_validators::validate_sched_ue_creation_request_message(const sched_ue_creation_request_message& msg)
 {
   HANDLE_CODE(validate_pdsch_cfg(msg));
 

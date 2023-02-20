@@ -12,7 +12,7 @@
 #include "srsgnb/support/async/protocol_transaction_manager.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class protocol_transaction_test : public ::testing::Test
 {

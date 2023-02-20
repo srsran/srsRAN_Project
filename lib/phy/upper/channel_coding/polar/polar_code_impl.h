@@ -15,7 +15,7 @@
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implementation of the polar code interface based on look-up tables.
 class polar_code_impl : public polar_code
@@ -121,4 +121,4 @@ public:
   void set(unsigned K, unsigned E, uint8_t nMax, polar_code_ibil ibil) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

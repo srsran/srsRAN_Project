@@ -13,7 +13,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a low PAPR sequence collection as per TS38.211 Section 5.2.2.
 ///
@@ -43,4 +43,4 @@ public:
   virtual span<const cf_t> get(unsigned u, unsigned v, unsigned alpha_idx) const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

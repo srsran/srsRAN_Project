@@ -16,7 +16,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_mac_ctrl_ue_procedures()
 {

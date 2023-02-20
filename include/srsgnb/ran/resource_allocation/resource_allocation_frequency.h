@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes the resource allocation in frequency domain for Type1 as per TS38.214 Section 5.1.2.2.2 for
 /// Downlink and Section 6.1.2.2 for Uplink.
@@ -95,4 +95,4 @@ struct ra_frequency_type1_special_configuration {
 /// \f$K \leq \left \lfloor N_{BWP}^{active}/ N_{BWP}^{initial}\right \rfloor\f$; otherwise \f$K=1\f$.
 unsigned ra_frequency_type1_special_get_riv(const ra_frequency_type1_special_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

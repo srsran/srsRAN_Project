@@ -19,7 +19,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Helper class to setup RRC UE for testing specific
@@ -212,4 +212,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -13,11 +13,11 @@
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/gtpu/gtpu_demux.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// Adapter between Network Gateway (Data) and GTP-U demux
-class network_gateway_data_gtpu_demux_adapter : public srsgnb::network_gateway_data_notifier
+class network_gateway_data_gtpu_demux_adapter : public srsran::network_gateway_data_notifier
 {
 public:
   network_gateway_data_gtpu_demux_adapter()  = default;
@@ -36,4 +36,4 @@ private:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

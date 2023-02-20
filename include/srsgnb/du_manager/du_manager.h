@@ -10,7 +10,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 struct ul_ccch_indication_message;
 
@@ -73,4 +73,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

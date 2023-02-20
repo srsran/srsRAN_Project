@@ -12,7 +12,7 @@
 
 #include "srsgnb/scheduler/config/dmrs.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collects the necessary parameters to calculate the DM-RS symbol mask for a TypeA PUSCH mapping and single
 /// duration DMRS.
@@ -43,4 +43,4 @@ struct pusch_dmrs_symbol_mask_mapping_type_A_single_configuration {
 dmrs_symbol_mask pusch_dmrs_symbol_mask_mapping_type_A_single_get(
     const pusch_dmrs_symbol_mask_mapping_type_A_single_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

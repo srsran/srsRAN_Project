@@ -16,7 +16,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of bits per symbol.
 static constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = 8;
@@ -94,4 +94,4 @@ inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
   return static_cast<unsigned>(mod);
 }
 
-} // namespace srsgnb
+} // namespace srsran

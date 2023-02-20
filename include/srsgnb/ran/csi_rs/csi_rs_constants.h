@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of \f$k_i\f$ frequency allocation reference values, according to TS 38.211 Table 7.4.1.5.3-1.
 static constexpr unsigned CSI_RS_MAX_NOF_K_INDEXES = 6;
@@ -50,4 +50,4 @@ static constexpr unsigned MAX_NOF_AP_CSI_RS_RESOURCES_PER_SET = 16;
 /// maxNrOfSemiPersistentPUSCH-Triggers.
 static constexpr unsigned MAX_NOF_SEMI_PERSISTENT_PUSCH_TRIGGERS = 64;
 
-} // namespace srsgnb
+} // namespace srsran

@@ -10,9 +10,9 @@
 
 #include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-logical_channel_config srsgnb::config_helpers::create_default_logical_channel_config(lcid_t lcid)
+logical_channel_config srsran::config_helpers::create_default_logical_channel_config(lcid_t lcid)
 {
   logical_channel_config lc_ch;
   lc_ch.lcid                      = lcid;

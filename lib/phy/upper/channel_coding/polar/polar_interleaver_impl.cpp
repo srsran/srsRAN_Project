@@ -10,7 +10,7 @@
 
 #include "polar_interleaver_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 const std::array<uint8_t, polar_interleaver_impl::K_MAX_IL> polar_interleaver_impl::pattern = {
     0,   2,   4,   7,   9,   14,  19,  20,  24,  25,  26,  28,  31,  34,  42,  45,  49,  50,  51,  53,  54,

@@ -15,7 +15,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class downlink_pdu_validator;
 class downlink_processor_pool;
@@ -61,4 +61,4 @@ create_phy_fapi_adaptor_factory(downlink_processor_pool&      dl_processor_pool,
                                 const uplink_pdu_validator&   ul_pdu_validator);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/ran/pusch/ulsch_info.h"
 #include "srsgnb/ran/sch_dmrs_power.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 bool pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu) const
 {

@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Get redundancy version.
 inline unsigned get_redundancy_version(unsigned nof_retxs)
@@ -68,4 +68,4 @@ void build_dci_f0_0_c_rnti(dci_ul_info&                       dci,
                            sch_mcs_index                      mcs_index,
                            const ul_harq_process&             h_ul);
 
-} // namespace srsgnb
+} // namespace srsran

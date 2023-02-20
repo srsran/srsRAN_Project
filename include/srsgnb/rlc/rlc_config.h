@@ -16,7 +16,7 @@
 #include <memory>
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// RLC NR modes
 enum class rlc_mode { tm, um_bidir, um_unidir_ul, um_unidir_dl, am };
@@ -189,12 +189,12 @@ struct rlc_config {
   rlc_am_config am;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::rlc_mode> {
+struct formatter<srsran::rlc_mode> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -202,7 +202,7 @@ struct formatter<srsgnb::rlc_mode> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_mode mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_mode mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"TM", "UM Bi-dir", "UM Uni-dir-UL", "UM Uni-dir-DL", "AM"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
@@ -210,7 +210,7 @@ struct formatter<srsgnb::rlc_mode> {
 };
 
 template <>
-struct formatter<srsgnb::rlc_um_sn_size> {
+struct formatter<srsran::rlc_um_sn_size> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -218,14 +218,14 @@ struct formatter<srsgnb::rlc_um_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_um_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_um_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", to_number(sn_size));
   }
 };
 
 template <>
-struct formatter<srsgnb::rlc_am_sn_size> {
+struct formatter<srsran::rlc_am_sn_size> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -233,14 +233,14 @@ struct formatter<srsgnb::rlc_am_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_am_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_am_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", to_number(sn_size));
   }
 };
 
 template <>
-struct formatter<srsgnb::rlc_dc_field> {
+struct formatter<srsran::rlc_dc_field> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -248,7 +248,7 @@ struct formatter<srsgnb::rlc_dc_field> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
@@ -256,7 +256,7 @@ struct formatter<srsgnb::rlc_dc_field> {
 };
 
 template <>
-struct formatter<srsgnb::rlc_si_field> {
+struct formatter<srsran::rlc_si_field> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -264,7 +264,7 @@ struct formatter<srsgnb::rlc_si_field> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_si_field si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_si_field si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"full", "first", "last", "mid"};
     return format_to(ctx.out(), "{}", options[to_number(si)]);
@@ -272,7 +272,7 @@ struct formatter<srsgnb::rlc_si_field> {
 };
 
 template <>
-struct formatter<srsgnb::rlc_control_pdu_type> {
+struct formatter<srsran::rlc_control_pdu_type> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -280,7 +280,7 @@ struct formatter<srsgnb::rlc_control_pdu_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", to_number(cpt));
   }
@@ -288,7 +288,7 @@ struct formatter<srsgnb::rlc_control_pdu_type> {
 
 // RLC UM TX config formatter
 template <>
-struct formatter<srsgnb::rlc_tx_um_config> {
+struct formatter<srsran::rlc_tx_um_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -296,7 +296,7 @@ struct formatter<srsgnb::rlc_tx_um_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_tx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_tx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "tx_sn_size={}", cfg.sn_field_length);
   }
@@ -304,7 +304,7 @@ struct formatter<srsgnb::rlc_tx_um_config> {
 
 // RLC UM RX config formatter
 template <>
-struct formatter<srsgnb::rlc_rx_um_config> {
+struct formatter<srsran::rlc_rx_um_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -312,7 +312,7 @@ struct formatter<srsgnb::rlc_rx_um_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_rx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_rx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "rx_sn_size={} t_reassembly={}", cfg.sn_field_length, cfg.t_reassembly);
   }
@@ -320,7 +320,7 @@ struct formatter<srsgnb::rlc_rx_um_config> {
 
 // RLC UM config formatter
 template <>
-struct formatter<srsgnb::rlc_um_config> {
+struct formatter<srsran::rlc_um_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -328,7 +328,7 @@ struct formatter<srsgnb::rlc_um_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
   }
@@ -336,7 +336,7 @@ struct formatter<srsgnb::rlc_um_config> {
 
 // RLC AM TX config formatter
 template <>
-struct formatter<srsgnb::rlc_tx_am_config> {
+struct formatter<srsran::rlc_tx_am_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -344,7 +344,7 @@ struct formatter<srsgnb::rlc_tx_am_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_tx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_tx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "tx_sn_size={} t_poll_retx={} max_retx={} poll_pdu={} poll_byte={}",
@@ -358,7 +358,7 @@ struct formatter<srsgnb::rlc_tx_am_config> {
 
 // RLC AM RX config formatter
 template <>
-struct formatter<srsgnb::rlc_rx_am_config> {
+struct formatter<srsran::rlc_rx_am_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -366,7 +366,7 @@ struct formatter<srsgnb::rlc_rx_am_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_rx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_rx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "rx_sn_size={} t_reassembly={} t_status_prohibit={}",
@@ -378,7 +378,7 @@ struct formatter<srsgnb::rlc_rx_am_config> {
 
 // RLC AM config formatter
 template <>
-struct formatter<srsgnb::rlc_am_config> {
+struct formatter<srsran::rlc_am_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -386,7 +386,7 @@ struct formatter<srsgnb::rlc_am_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
   }
@@ -394,7 +394,7 @@ struct formatter<srsgnb::rlc_am_config> {
 
 // RLC config formatter
 template <>
-struct formatter<srsgnb::rlc_config> {
+struct formatter<srsran::rlc_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -402,12 +402,12 @@ struct formatter<srsgnb::rlc_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    if (cfg.mode == srsgnb::rlc_mode::um_bidir) {
+    if (cfg.mode == srsran::rlc_mode::um_bidir) {
       return format_to(ctx.out(), "{} {}", cfg.mode, cfg.um);
     }
-    if (cfg.mode == srsgnb::rlc_mode::am) {
+    if (cfg.mode == srsran::rlc_mode::am) {
       return format_to(ctx.out(), "{} {}", cfg.mode, cfg.am);
     }
     return format_to(ctx.out(), "unhandled mode={}", cfg.mode);

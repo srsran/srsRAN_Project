@@ -13,7 +13,7 @@
 #include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 #include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 
 std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> build_phy_fapi_adaptor(unsigned                    sector_id,
                                                                        subcarrier_spacing          scs,
@@ -34,4 +34,4 @@ build_mac_fapi_adaptor(unsigned                          sector_id,
                        fapi::slot_message_gateway&       gateway,
                        fapi::slot_last_message_notifier& last_msg_notifier);
 
-} // namespace srsgnb
+} // namespace srsran

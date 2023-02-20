@@ -11,7 +11,7 @@
 #include "dmrs_pbch_processor_impl.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 unsigned dmrs_pbch_processor_impl::c_init(const config_t& config)
 {

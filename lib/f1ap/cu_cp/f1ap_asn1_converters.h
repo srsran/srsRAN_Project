@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Convert F1AP Cause to \c cause_t type.
@@ -97,4 +97,4 @@ inline nr_cell_id_t f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nr_cgi_s& f1ap_cg
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

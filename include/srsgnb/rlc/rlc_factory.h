@@ -18,7 +18,7 @@
 #include "srsgnb/support/timers.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 struct rlc_entity_creation_message {
   du_ue_index_t                        ue_index;
@@ -36,4 +36,4 @@ struct rlc_entity_creation_message {
 /// Creates an instance of a RLC bearer
 std::unique_ptr<rlc_entity> create_rlc_entity(const rlc_entity_creation_message& msg);
 
-} // namespace srsgnb
+} // namespace srsran

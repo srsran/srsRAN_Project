@@ -14,7 +14,7 @@
 #include "srsgnb/ran/du_types.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief UE Transmit Power Control (TPC) command configuration for SRS.
 ///
@@ -41,4 +41,4 @@ struct srs_tpc_command_config {
   bool operator!=(const srs_tpc_command_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

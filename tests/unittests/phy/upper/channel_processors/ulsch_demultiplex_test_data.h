@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_context {
   ulsch_demultiplex::configuration       config;
@@ -189,4 +189,4 @@ static const std::vector<test_case_t> ulsch_demultiplex_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

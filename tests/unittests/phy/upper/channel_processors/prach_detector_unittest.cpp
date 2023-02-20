@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static std::mt19937                            rgen(1234);
 static std::uniform_int_distribution<unsigned> root_sequence_index_dist(0, 837);
@@ -28,7 +28,7 @@ static std::uniform_int_distribution<unsigned> preamble_index_dist(0, 63);
 static std::uniform_int_distribution<unsigned> start_preamble_index_dist(0, 63);
 static std::uniform_int_distribution<unsigned> nof_preamble_indices_dist(1, 64);
 
-namespace srsgnb {
+namespace srsran {
 std::ostream& operator<<(std::ostream& os, preamble_format format)
 {
   fmt::print(os, "{}", static_cast<unsigned>(format));
@@ -39,7 +39,7 @@ std::ostream& operator<<(std::ostream& os, restricted_set_config config)
   fmt::print(os, "{}", static_cast<unsigned>(config));
   return os;
 }
-} // namespace srsgnb
+} // namespace srsran
 
 // Parameters in order dft_size, format, restricted set and extra iterations.
 using prach_detector_params = std::tuple<unsigned, preamble_format, restricted_set_config, unsigned>;

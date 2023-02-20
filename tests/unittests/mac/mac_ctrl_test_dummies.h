@@ -20,7 +20,7 @@
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_ctrl_dummy_configurer final : public mac_ctrl_configurator
 {
@@ -235,4 +235,4 @@ public:
   } notifier;
 };
 
-} // namespace srsgnb
+} // namespace srsran

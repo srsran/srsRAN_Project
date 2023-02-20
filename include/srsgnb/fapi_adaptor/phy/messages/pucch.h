@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// Helper function that converts from a PUCCH FAPI PDU to a PUCCH uplink slot PDU.
@@ -23,4 +23,4 @@ void convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu& pdu,
                                uint16_t                     slot);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -64,4 +64,4 @@ using get_type_from_index_t = typename get_type_from_index<Index, Types...>::typ
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

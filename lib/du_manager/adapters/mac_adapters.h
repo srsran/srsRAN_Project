@@ -14,7 +14,7 @@
 #include "srsgnb/rlc/rlc_rx.h"
 #include "srsgnb/rlc/rlc_tx.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class mac_sdu_rx_adapter : public mac_sdu_rx_notifier
@@ -54,4 +54,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Constexpr checks.
 static_assert(bounded_integer<int, 2, 5>(3) == 3, "Constexpr ctor failed");

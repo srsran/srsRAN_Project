@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/slot_data_message_notifier.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 class logging_slot_data_notifier_decorator : public slot_data_message_notifier
@@ -49,4 +49,4 @@ private:
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

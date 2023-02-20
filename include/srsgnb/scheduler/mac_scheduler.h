@@ -16,7 +16,7 @@
 #include "scheduler_paging_handler.h"
 #include "scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_scheduler : public scheduler_configurator,
                       public scheduler_ue_configurator,
@@ -29,4 +29,4 @@ public:
   virtual ~mac_scheduler() = default;
 };
 
-} // namespace srsgnb
+} // namespace srsran

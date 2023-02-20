@@ -11,7 +11,7 @@
 #include "crc_calculator_clmul_impl.h"
 #include "immintrin.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Register for converting data representation between big endian (BE) to little endian (LE).
 static const __m128i crc_xmm_be_le_swap128 = _mm_setr_epi32(0x0c0d0e0f, 0x08090a0b, 0x04050607, 0x00010203);

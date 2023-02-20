@@ -12,7 +12,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/pucch.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittest;
 

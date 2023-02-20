@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a Type0-PDCCH CSS monitoring occasion configuration parameters for pattern 1.
 struct pdcch_type0_css_occasion_pattern1_configuration {
@@ -62,4 +62,4 @@ struct pdcch_type0_css_occasion_pattern1_description {
 pdcch_type0_css_occasion_pattern1_description
 pdcch_type0_css_occasions_get_pattern1(const pdcch_type0_css_occasion_pattern1_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,8 +15,8 @@
 #include "ldpc_graph_impl.h"
 #include "srsgnb/srsvec/copy.h"
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 // AVX2 vectors filled with useful constants.
 static const __m256i LLR_MAX_epi8          = _mm256_set1_epi8(LLR_MAX.to_value_type());
@@ -249,7 +249,7 @@ void ldpc_decoder_avx2::get_hard_bits(bit_buffer& out)
   span<const log_likelihood_ratio> llr_read_buffer(temp_llr.begin(), llr_write_buffer.begin());
 
   // Convert to hard bits.
-  srsgnb::hard_decision(out, llr_read_buffer);
+  srsran::hard_decision(out, llr_read_buffer);
 }
 
 template <unsigned NODE_SIZE_AVX2_PH>

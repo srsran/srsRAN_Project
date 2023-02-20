@@ -12,7 +12,7 @@
 
 #include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Converts a hex string (e.g. 01FA02) to a sec_as_key.
@@ -25,4 +25,4 @@ security::sec_128_as_key make_sec_128_as_key(std::string hex_str);
 cu_cp_rrc_reconfiguration_procedure_request generate_rrc_reconfiguration_procedure_request();
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

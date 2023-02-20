@@ -14,7 +14,7 @@
 #include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/pusch/pusch_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Abstracts a list of UL-SCH repetition placeholders \f$y\f$.
 ///
@@ -95,4 +95,4 @@ private:
   static_vector<index_type, MAX_NOF_PLACEHOLDERS> re_indexes;
 };
 
-} // namespace srsgnb
+} // namespace srsran

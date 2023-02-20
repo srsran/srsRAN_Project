@@ -13,7 +13,7 @@
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/fapi/validator_report.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 /// Validates the given CRC.indication message and returns a report for the result of the validation. The validation
@@ -59,4 +59,4 @@ error_type<validator_report> validate_ul_tti_request(const ul_tti_request_messag
 void log_validator_report(const validator_report& report);
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

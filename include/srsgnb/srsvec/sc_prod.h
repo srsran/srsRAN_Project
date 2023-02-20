@@ -12,7 +12,7 @@
 
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 void sc_prod(span<const cf_t> x, cf_t h, span<cf_t> z);
@@ -20,4 +20,4 @@ void sc_prod(span<const cf_t> x, float h, span<cf_t> z);
 void sc_prod(span<const float> x, float h, span<float> z);
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

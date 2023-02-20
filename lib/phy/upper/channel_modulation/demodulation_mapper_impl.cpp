@@ -16,7 +16,7 @@
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static log_likelihood_ratio demod_BPSK_symbol(cf_t z, float noise_var, float range_limit)
 {

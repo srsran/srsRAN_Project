@@ -16,7 +16,7 @@
 #include <queue>
 #include <utility>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Mocking class of the surrounding layers invoked by the RLC AM Rx entity.
 class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier,

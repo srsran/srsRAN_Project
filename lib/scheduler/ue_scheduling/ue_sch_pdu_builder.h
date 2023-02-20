@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/harq_id.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct pdsch_config_params {
   pdsch_mcs_table   mcs_table;
@@ -104,4 +104,4 @@ void build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                              const dci_0_0_c_rnti_configuration& dci_cfg,
                              bool                                is_new_data);
 
-} // namespace srsgnb
+} // namespace srsran

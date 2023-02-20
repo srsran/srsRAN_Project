@@ -14,7 +14,7 @@
 #include "f1ap_du_ue_manager.h"
 #include "srsgnb/f1ap/du/f1ap_du_ue_config.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief Creates a new UE in the F1AP, on request by DU management plane.
@@ -28,4 +28,4 @@ f1ap_ue_creation_response create_f1ap_ue(const f1ap_ue_creation_request& req,
 f1ap_ue_configuration_response update_f1ap_ue_config(const f1ap_ue_configuration_request& req, f1ap_du_ue_manager& ues);
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

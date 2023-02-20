@@ -10,7 +10,7 @@
 
 #include "ul_bsr.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// TS 38.321, Table 6.1.3.1-1 Buffer size levels (in bytes) for 5-bit Buffer Size field, all values <= except marked
 constexpr auto buffer_size_levels_5bit = to_array<uint32_t>(
@@ -72,7 +72,7 @@ constexpr auto buffer_size_levels_8bit =
                         49179951,   52372284, 55771835, 59392055, 63247269,
                         67352729,   71724679, 76380419, 81338368, /* > */ 81338368});
 
-long_bsr_report srsgnb::decode_lbsr(bsr_format format, byte_buffer_view payload)
+long_bsr_report srsran::decode_lbsr(bsr_format format, byte_buffer_view payload)
 {
   long_bsr_report lbsr = {};
 
@@ -113,7 +113,7 @@ long_bsr_report srsgnb::decode_lbsr(bsr_format format, byte_buffer_view payload)
 /// \param buff_size_index The buffer size field contained in the MAC PDU.
 /// \param format The BSR format that determines the buffer size field length.
 /// \return The actual buffer size level in Bytes.
-uint32_t srsgnb::buff_size_field_to_bytes(size_t buff_size_index, bsr_format format)
+uint32_t srsran::buff_size_field_to_bytes(size_t buff_size_index, bsr_format format)
 {
   static const uint32_t max_offset = 1; // make the reported value bigger than the 2nd biggest
 
@@ -141,7 +141,7 @@ uint32_t srsgnb::buff_size_field_to_bytes(size_t buff_size_index, bsr_format for
   return 0;
 }
 
-ul_bsr_lcg_report srsgnb::make_sched_lcg_report(const lcg_bsr_report& ul_mac_bsr, bsr_format bsr_format)
+ul_bsr_lcg_report srsran::make_sched_lcg_report(const lcg_bsr_report& ul_mac_bsr, bsr_format bsr_format)
 {
   return ul_bsr_lcg_report{ul_mac_bsr.lcg_id, buff_size_field_to_bytes(ul_mac_bsr.buffer_size, bsr_format)};
 }

@@ -23,7 +23,7 @@
 #include "fmt/format.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 
 /// PDCP RX state variables,
 /// TS 38.323, section 7.1
@@ -158,11 +158,11 @@ public:
 private:
   pdcp_entity_rx* parent;
 };
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsgnb::pdcp_rx_state> {
+struct formatter<srsran::pdcp_rx_state> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -170,7 +170,7 @@ struct formatter<srsgnb::pdcp_rx_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdcp_rx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pdcp_rx_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "rx_next={} rx_deliv={} rx_reord={}", st.rx_next, st.rx_deliv, st.rx_reord);
   }

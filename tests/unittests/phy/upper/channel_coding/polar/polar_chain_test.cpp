@@ -14,7 +14,7 @@
 #include <getopt.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /*!
  * \file polar_chain_test.c

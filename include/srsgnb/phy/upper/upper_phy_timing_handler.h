@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 class slot_point;
 
@@ -43,4 +43,4 @@ public:
   virtual void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

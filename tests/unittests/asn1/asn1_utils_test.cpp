@@ -17,12 +17,12 @@
 
 using namespace std;
 using namespace asn1;
-using srsgnb::byte_buffer;
+using srsran::byte_buffer;
 
 std::random_device rd;
 std::mt19937       g(rd());
 
-srsgnb::log_sink_spy* test_spy = nullptr;
+srsran::log_sink_spy* test_spy = nullptr;
 
 TEST(asn1_bit_ref_test, if_no_pack_is_called_buffer_stays_empty)
 {
@@ -89,7 +89,7 @@ TEST(asn1_array_test, pack_unpack_operators)
 TEST(asn1_bit_ref, pack_unpack_operators)
 {
   for (uint32_t n_bit_stride = 1; n_bit_stride < 32; ++n_bit_stride) {
-    srsgnb::byte_buffer buf;
+    srsran::byte_buffer buf;
     uint32_t            nof_bytes_to_pack = n_bit_stride * 4;
 
     // Pack in batches of n_bit_stride.
@@ -120,7 +120,7 @@ TEST(asn1_bit_ref, pack_unpack_operators)
 
   // pack bytes aligned
   {
-    srsgnb::byte_buffer            buf;
+    srsran::byte_buffer            buf;
     constexpr uint32_t             nof_bytes = 512;
     uint32_t                       start     = 1;
     bit_ref                        bref(buf);
@@ -143,7 +143,7 @@ TEST(asn1_bit_ref, pack_unpack_operators)
   {
     constexpr uint32_t             nof_bytes = 128;
     uint32_t                       start     = 1;
-    srsgnb::byte_buffer            buf;
+    srsran::byte_buffer            buf;
     bit_ref                        bref(buf);
     std::array<uint8_t, nof_bytes> buf2, buf3;
     for (uint32_t i = 0; i < nof_bytes; ++i) {
@@ -170,7 +170,7 @@ TEST(asn1_bit_ref, pack_unpack_operators)
 
   // test advance bits
   {
-    srsgnb::byte_buffer buf{std::vector<uint8_t>(256)};
+    srsran::byte_buffer buf{std::vector<uint8_t>(256)};
     cbit_ref            bref(buf);
     ASSERT_EQ(SRSASN_SUCCESS, bref.advance_bits(4));
     ASSERT_EQ(4, bref.distance());
@@ -211,7 +211,7 @@ TEST(asn1_octet_string_test, pack_unpack_operators)
   statstr.from_string(hexstr);
   dynstr.from_string(hexstr);
 
-  srsgnb::byte_buffer buf;
+  srsran::byte_buffer buf;
   bit_ref             b{buf};
   statstr.pack(b);
   TESTASSERT(std::equal(buf.begin(), buf.end(), statstr.begin(), statstr.end())); // no prefix in static strings.
@@ -337,7 +337,7 @@ TEST(asn1_bit_string_test, pack_unpack_operators)
   TESTASSERT(not dyn_bstr1.get(10));
 
   /* Test Packing/Unpacking */
-  srsgnb::byte_buffer buf;
+  srsran::byte_buffer buf;
   bit_ref             bref(buf);
   // fixed
   ASSERT_EQ(SRSASN_SUCCESS, bstr1.pack(bref));
@@ -400,7 +400,7 @@ TEST(asn1_seq_of_test, pack_unpack_and_operators)
   int      lb = 0, ub = 40;
   uint32_t n_bits = ceil(log2(ub - lb + 1));
 
-  srsgnb::byte_buffer buffer;
+  srsran::byte_buffer buffer;
   bit_ref             b{buffer};
   pack_fixed_seq_of(b, fixed_list.data(), fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
   TESTASSERT(b.distance() == (int)(fixed_list_size * n_bits));
@@ -567,7 +567,7 @@ TEST(asn1_enumerated, pack_unpack)
   TESTASSERT(number_to_enum<EnumTest>(e2, 10));
   TESTASSERT(e2 == e);
 
-  srsgnb::byte_buffer buffer;
+  srsran::byte_buffer buffer;
   bit_ref             bref(buffer);
   TESTASSERT(pack_enum(bref, e) == SRSASN_SUCCESS);
   TESTASSERT(bref.distance() == (int)(floor(log2(e.nof_types)) + 1));
@@ -618,7 +618,7 @@ TEST(asn1_integer_test, large_integer_pack_unpack)
 {
   integer<uint64_t, 0, 4294967295, false, true> big_integer = 3172073535;
 
-  srsgnb::byte_buffer buffer;
+  srsran::byte_buffer buffer;
   bit_ref             bref(buffer);
   TESTASSERT(big_integer.pack(bref) == 0);
 
@@ -633,7 +633,7 @@ TEST(asn1_integer_test, large_integer_pack_unpack)
 
 TEST(asn1_varlength_field_test, pack)
 {
-  srsgnb::byte_buffer buffer;
+  srsran::byte_buffer buffer;
   bit_ref             bref(buffer);
   ASSERT_EQ(SRSASN_SUCCESS, bref.pack(0, 1));
   ASSERT_EQ(1, bref.distance());
@@ -650,11 +650,11 @@ int main(int argc, char** argv)
 {
   // Setup the log spy to intercept error and warning log entries.
   if (!srslog::install_custom_sink(
-          srsgnb::log_sink_spy::name(),
-          std::unique_ptr<srsgnb::log_sink_spy>(new srsgnb::log_sink_spy(srslog::get_default_log_formatter())))) {
+          srsran::log_sink_spy::name(),
+          std::unique_ptr<srsran::log_sink_spy>(new srsran::log_sink_spy(srslog::get_default_log_formatter())))) {
     return SRSASN_ERROR;
   }
-  test_spy = static_cast<srsgnb::log_sink_spy*>(srslog::find_sink(srsgnb::log_sink_spy::name()));
+  test_spy = static_cast<srsran::log_sink_spy*>(srslog::find_sink(srsran::log_sink_spy::name()));
   if (!test_spy) {
     return SRSASN_ERROR;
   }

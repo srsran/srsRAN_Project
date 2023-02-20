@@ -15,7 +15,7 @@
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

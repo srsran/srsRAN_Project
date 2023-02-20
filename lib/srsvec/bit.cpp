@@ -18,7 +18,7 @@
 #include <immintrin.h>
 #endif // HAVE_SSE
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srsvec;
 
 namespace {
@@ -74,7 +74,7 @@ RetType pack_8bit(span<const uint8_t> unpacked)
 
 } // namespace
 
-span<uint8_t> srsgnb::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, unsigned nof_bits)
+span<uint8_t> srsran::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, unsigned nof_bits)
 {
   assert(bits.size() >= nof_bits);
 
@@ -85,7 +85,7 @@ span<uint8_t> srsgnb::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, uns
   return bits.last(bits.size() - nof_bits);
 }
 
-void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed)
+void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed)
 {
   unsigned nbits  = unpacked.size();
   unsigned nbytes = packed.size();
@@ -101,7 +101,7 @@ void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> pack
   }
 }
 
-void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed)
+void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed)
 {
   srsgnb_assert(packed.size() == unpacked.size(),
                 "The packed number of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {}).",
@@ -189,7 +189,7 @@ void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
   }
 }
 
-unsigned srsgnb::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
+unsigned srsran::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
 {
   srsgnb_assert(nof_bits <= 32U, "Number of bits ({}) exceeds maximum (32).", nof_bits);
 
@@ -205,7 +205,7 @@ unsigned srsgnb::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
   return value;
 }
 
-void srsgnb::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked)
+void srsran::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked)
 {
   srsgnb_assert(divide_ceil(unpacked.size(), 8) == packed.size(), "Inconsistent input sizes.");
 
@@ -215,7 +215,7 @@ void srsgnb::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked
   }
 }
 
-void srsgnb::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
+void srsran::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
 {
   srsgnb_assert(packed.size() == unpacked.size(),
                 "The packed number of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {}).",
@@ -239,7 +239,7 @@ void srsgnb::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
   }
 }
 
-void srsgnb::srsvec::copy_offset(srsgnb::bit_buffer& output, span<const uint8_t> input, unsigned startpos)
+void srsran::srsvec::copy_offset(srsran::bit_buffer& output, span<const uint8_t> input, unsigned startpos)
 {
   static constexpr unsigned bits_per_word    = 8;
   unsigned                  input_start_word = startpos / bits_per_word;
@@ -289,9 +289,9 @@ void srsgnb::srsvec::copy_offset(srsgnb::bit_buffer& output, span<const uint8_t>
   }
 }
 
-void srsgnb::srsvec::copy_offset(srsgnb::bit_buffer&       output,
+void srsran::srsvec::copy_offset(srsran::bit_buffer&       output,
                                  unsigned                  out_offset,
-                                 const srsgnb::bit_buffer& input,
+                                 const srsran::bit_buffer& input,
                                  unsigned                  in_offset,
                                  unsigned                  nof_bits)
 {

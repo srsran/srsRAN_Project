@@ -15,7 +15,7 @@
 
 #include "srsgnb/phy/upper/channel_coding/short/short_block_detector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum length of a codeword.
 static constexpr unsigned MAX_BLOCK_LENGTH = 32;
@@ -50,4 +50,4 @@ private:
   static const std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> DETECT_TABLE;
 };
 
-} // namespace srsgnb
+} // namespace srsran

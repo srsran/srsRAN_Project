@@ -16,7 +16,7 @@
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// Adapter between F1-U and PDCP
@@ -50,4 +50,4 @@ private:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "../../phy_test_utils.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pusch_decoder_spy : public pusch_decoder
 {
@@ -53,4 +53,4 @@ private:
 
 PHY_SPY_FACTORY_TEMPLATE(pusch_decoder);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "uci_decoder_test_doubles.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static constexpr unsigned nof_repetitions = 100;
 

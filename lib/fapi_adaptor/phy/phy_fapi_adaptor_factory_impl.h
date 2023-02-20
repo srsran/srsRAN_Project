@@ -12,7 +12,7 @@
 
 #include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class uplink_slot_pdu_repository;
 
@@ -53,4 +53,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

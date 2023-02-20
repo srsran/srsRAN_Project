@@ -13,7 +13,7 @@
 #include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/ran/du_types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class du_cell_manager
@@ -62,4 +62,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

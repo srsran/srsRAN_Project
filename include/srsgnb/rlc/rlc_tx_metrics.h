@@ -14,7 +14,7 @@
 #include "fmt/format.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 struct rlc_tm_tx_metrics {
   uint32_t num_small_allocs; ///< Number of allocations that are too small to TX PDU
@@ -73,14 +73,14 @@ public:
   virtual rlc_tx_metrics get_and_reset_metrics() = 0;
   virtual void           reset_metrics()         = 0;
 };
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 // RLC TX metrics formatter
 // TODO print mode-specific metrics
 template <>
-struct formatter<srsgnb::rlc_tx_metrics> {
+struct formatter<srsran::rlc_tx_metrics> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -88,7 +88,7 @@ struct formatter<srsgnb::rlc_tx_metrics> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_tx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_tx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_dropped_sdus={} num_discarded_sdus={} "

@@ -18,7 +18,7 @@
 #include "srsgnb/scheduler/scheduler_factory.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Helper class to help setup a scheduler unit test.
 class scheduler_test_bench
@@ -94,4 +94,4 @@ public:
   const sched_result* last_sched_res = nullptr;
 };
 
-} // namespace srsgnb
+} // namespace srsran

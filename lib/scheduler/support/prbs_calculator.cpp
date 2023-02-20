@@ -11,7 +11,7 @@
 #include "prbs_calculator.h"
 #include "tbs_calculator.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 constexpr unsigned NOF_BITS_PER_BYTE = 8U;
 
@@ -33,7 +33,7 @@ static float estimate_nof_info_payload_higher_3824_bits(unsigned payload_bits, f
 }
 
 /// \brief Obtain an initial estimate for the minimum number of PRBs needed so that the TBS >= payload size.
-unsigned srsgnb::estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config)
+unsigned srsran::estimate_required_nof_prbs(const prbs_calculator_sch_config& sch_config)
 {
   // Convert size into bits, as per TS procedures for TBS.
   unsigned payload_size = sch_config.payload_size_bytes * NOF_BITS_PER_BYTE;
@@ -111,7 +111,7 @@ static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch
   return {tbs_cfg.n_prb, tbs_bits_ub / NOF_BITS_PER_BYTE};
 }
 
-sch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_sch_config& sch_config)
+sch_prbs_tbs srsran::get_nof_prbs(const prbs_calculator_sch_config& sch_config)
 {
   // Get a first estimate for the number of PRBs.
   unsigned nof_prbs_estimate = estimate_required_nof_prbs(sch_config);

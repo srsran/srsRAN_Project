@@ -17,7 +17,7 @@
 
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collection of parameters required to calculate the TBS for a shared channel transmission.
 ///
@@ -99,4 +99,4 @@ unsigned tbs_calculator_table_find_smallest_not_less_than(unsigned nof_info_prim
 /// \return The TBS in bits.
 unsigned tbs_calculator_calculate(const tbs_calculator_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "promise_data.h"
 #include "unique_coroutine.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -74,4 +74,4 @@ private:
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

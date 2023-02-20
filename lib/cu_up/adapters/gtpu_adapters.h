@@ -15,7 +15,7 @@
 #include "srsgnb/gtpu/gtpu_tunnel_tx.h"
 #include "srsgnb/sdap/sdap.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// Adapter between GTP-U and Network Gateway
@@ -57,4 +57,4 @@ private:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

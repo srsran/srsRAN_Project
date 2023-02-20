@@ -12,7 +12,8 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
+
 std::ostream& operator<<(std::ostream& os, const prach_subcarrier_spacing& prach_scs)
 {
   unsigned prach_scs_Hz = prach_scs.to_Hz();
@@ -38,9 +39,9 @@ std::ostream& operator<<(std::ostream& os, const restricted_set_config& restrict
   }
   return os;
 }
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Combined parameters.
 using prach_cyclic_shift_param = std::tuple<prach_subcarrier_spacing, restricted_set_config, unsigned>;

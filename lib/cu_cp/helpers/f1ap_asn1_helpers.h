@@ -13,7 +13,7 @@
 #include "srsgnb/asn1/f1ap/f1ap.h"
 #include "srsgnb/ran/bcd_helpers.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -46,4 +46,4 @@ void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                   
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

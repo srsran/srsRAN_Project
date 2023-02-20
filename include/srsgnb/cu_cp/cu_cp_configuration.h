@@ -16,7 +16,7 @@
 #include "srsgnb/ngap/ngap_configuration.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Configuration passed to CU CP.
@@ -29,4 +29,4 @@ struct cu_cp_configuration {
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

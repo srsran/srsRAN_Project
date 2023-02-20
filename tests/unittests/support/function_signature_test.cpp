@@ -10,7 +10,7 @@
 
 #include "srsgnb/support/async/detail/function_signature.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace detail;
 
 // Free Function tests

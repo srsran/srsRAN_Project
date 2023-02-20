@@ -12,9 +12,9 @@
 
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// (Implementation-defined) Maximum size in bytes of a PDSCH PDU for a given UE.
 static constexpr size_t MAX_DL_PDU_LENGTH = 32768;
 
-} // namespace srsgnb
+} // namespace srsran

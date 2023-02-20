@@ -3,7 +3,7 @@
 
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Convert SLIV to start S and length L.
 /// \param[in] N Max length.
@@ -38,4 +38,4 @@ constexpr inline unsigned sliv_from_s_and_l(unsigned N, unsigned S, unsigned L)
   return N * (N - L + 1) + (N - 1 - S);
 }
 
-} // namespace srsgnb
+} // namespace srsran

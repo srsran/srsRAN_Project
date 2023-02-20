@@ -11,7 +11,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsgnb/ran/sch_dmrs_power.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 /// Fills the RE patterns parameter of the PDSCH PDU.
@@ -157,7 +157,7 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_
   proc_pdu.freq_alloc = rb_allocation::make_type0(vrb_bitmap, mapper);
 }
 
-void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   proc_pdu,
+void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   proc_pdu,
                                                      const fapi::dl_pdsch_pdu& fapi_pdu,
                                                      uint16_t                  sfn,
                                                      uint16_t                  slot)

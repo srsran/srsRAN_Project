@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   pucch_processor::format1_configuration                  config;
@@ -78,4 +78,4 @@ static const std::vector<test_case_t> pucch_processor_format1_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

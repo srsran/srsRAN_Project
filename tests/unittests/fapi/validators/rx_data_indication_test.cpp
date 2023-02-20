@@ -12,7 +12,7 @@
 #include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -29,7 +29,7 @@ TEST_P(validate_rx_data_indication_field, WithValue)
                std::get<1>(params),
                build_valid_rx_data_indication,
                validate_rx_data_indication,
-               srsgnb::fapi::message_type_id::rx_data_indication);
+               srsran::fapi::message_type_id::rx_data_indication);
 };
 
 INSTANTIATE_TEST_SUITE_P(sfn,

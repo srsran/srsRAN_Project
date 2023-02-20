@@ -17,7 +17,7 @@
 #include <memory>
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the specific FFTW DFT parameters.
 struct dft_processor_fftw_configuration {
@@ -102,4 +102,4 @@ public:
   span<const cf_t> run() override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

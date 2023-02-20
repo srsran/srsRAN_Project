@@ -12,7 +12,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 
 class full_circular_map : public ::testing::Test
 {
@@ -88,4 +88,4 @@ TEST_F(full_circular_map, fails_to_remove_out_of_index)
   assert_map_is_full();
 };
 
-} // namespace srsgnb
+} // namespace srsran

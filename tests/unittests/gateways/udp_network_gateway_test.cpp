@@ -11,7 +11,7 @@
 #include "test_helpers.h"
 #include "srsgnb/gateways/udp_network_gateway_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 class udp_network_gateway_tester : public ::testing::Test
 {

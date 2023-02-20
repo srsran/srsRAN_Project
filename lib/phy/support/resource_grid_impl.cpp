@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cassert>
 
-using namespace srsgnb;
+using namespace srsran;
 
 resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, unsigned nof_subc_) :
   empty(nof_ports_), nof_ports(nof_ports_), nof_symb(nof_symb_), nof_subc(nof_subc_)

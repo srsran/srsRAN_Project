@@ -13,7 +13,7 @@
 #include "processor_pool_helpers.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_impl_config {
@@ -54,4 +54,4 @@ private:
   std::unique_ptr<downlink_processor> null_proc;
 };
 
-} // namespace srsgnb
+} // namespace srsran

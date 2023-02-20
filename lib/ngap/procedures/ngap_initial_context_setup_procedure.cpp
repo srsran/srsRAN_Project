@@ -11,8 +11,8 @@
 #include "ngap_initial_context_setup_procedure.h"
 #include "ngap_procedure_helpers.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::ngap;
 
 ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(

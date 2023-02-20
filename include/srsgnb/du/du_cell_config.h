@@ -17,7 +17,7 @@
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/config/serving_cell_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Cell Configuration, including common and UE-dedicated configs, that the DU will use to generate other configs for
 /// other layers (e.g. scheduler).
@@ -59,4 +59,4 @@ struct du_cell_config {
   serving_cell_config ue_ded_serv_cell_cfg;
 };
 
-} // namespace srsgnb
+} // namespace srsran

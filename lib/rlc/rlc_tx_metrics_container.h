@@ -14,7 +14,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 class rlc_tx_metrics_container
 {
@@ -105,4 +105,4 @@ public:
     metrics.mode                         = tmp_mode;
   }
 };
-} // namespace srsgnb
+} // namespace srsran

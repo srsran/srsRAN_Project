@@ -19,7 +19,7 @@
 
 #include <utility>
 
-using namespace srsgnb;
+using namespace srsran;
 
 udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config     config_,
                                                    network_gateway_data_notifier& data_notifier_) :

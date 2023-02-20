@@ -23,7 +23,7 @@
 #include <limits>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief GNB-CU-CP-UE-E1AP-ID used to identify the UE in the CU-CP E1AP.
 /// \remark See TS 38.463 Section 9.3.1.4: GNB-CU-UE-E1AP-ID valid values: (0..2^32-1)
@@ -167,7 +167,7 @@ struct e1ap_rohc_params {
 struct e1ap_pdcp_config {
   pdcp_sn_size                 pdcp_sn_size_ul;
   pdcp_sn_size                 pdcp_sn_size_dl;
-  srsgnb::rlc_mode             rlc_mod;
+  srsran::rlc_mode             rlc_mod;
   optional<e1ap_rohc_params>   rohc_params;
   optional<pdcp_t_reordering>  t_reordering_timer;
   optional<pdcp_discard_timer> discard_timer;
@@ -206,8 +206,8 @@ struct e1ap_pdu_session_res_to_setup_item {
 };
 
 struct e1ap_security_algorithm {
-  srsgnb::security::ciphering_algorithm           ciphering_algo;
-  optional<srsgnb::security::integrity_algorithm> integrity_protection_algorithm;
+  srsran::security::ciphering_algorithm           ciphering_algo;
+  optional<srsran::security::integrity_algorithm> integrity_protection_algorithm;
 };
 
 struct e1ap_up_security_key {
@@ -359,4 +359,4 @@ struct e1ap_pdu_session_resource_modified_item {
   optional<e1ap_data_forwarding_info>                        pdu_session_data_forwarding_info_resp;
 };
 
-} // namespace srsgnb
+} // namespace srsran

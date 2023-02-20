@@ -13,7 +13,7 @@
 #include <gtest/gtest.h>
 #include <queue>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Mocking class of the surrounding layers invoked by the RLC TM Tx entity.
 class rlc_tx_tm_test_frame : public rlc_tx_upper_layer_data_notifier,

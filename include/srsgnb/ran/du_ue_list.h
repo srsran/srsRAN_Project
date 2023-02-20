@@ -13,10 +13,10 @@
 #include "du_types.h"
 #include "srsgnb/adt/slotted_array.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Representation of a list of UEs indexed by DU UE Index.
 template <typename T>
 using du_ue_list = slotted_array<T, MAX_NOF_DU_UES>;
 
-} // namespace srsgnb
+} // namespace srsran

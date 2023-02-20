@@ -12,7 +12,7 @@
 
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Converts fmt memoryy buffer to c_str() without the need for conversion to intermediate std::string.
 template <size_t N>
@@ -231,7 +231,7 @@ private:
   fmt::memory_buffer format_buffer;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 

@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class channel_modulation_factory
 {
@@ -28,4 +28,4 @@ public:
 
 std::shared_ptr<channel_modulation_factory> create_channel_modulation_sw_factory();
 
-} // namespace srsgnb
+} // namespace srsran

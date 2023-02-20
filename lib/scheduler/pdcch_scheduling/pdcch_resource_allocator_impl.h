@@ -15,7 +15,7 @@
 #include "pdcch_resource_allocator.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pdcch_resource_allocator_impl final : public pdcch_resource_allocator
 {
@@ -83,4 +83,4 @@ private:
   std::array<std::unique_ptr<pdcch_slot_allocator>, SLOT_ALLOCATOR_RING_SIZE> slot_records;
 };
 
-} // namespace srsgnb
+} // namespace srsran

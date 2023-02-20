@@ -14,7 +14,7 @@
 #include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/ran/sch_mcs.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Performs CQI to MCS mapping - for DL.
 ///
@@ -31,4 +31,4 @@ optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table);
 /// TODO: revise this function once the SNR to BLER curves will have been prepared.
 sch_mcs_index map_snr_to_mcs_ul(double snr);
 
-} // namespace srsgnb
+} // namespace srsran

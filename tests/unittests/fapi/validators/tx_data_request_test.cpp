@@ -11,7 +11,7 @@
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -28,7 +28,7 @@ TEST_P(validate_tx_data_request_field, with_value)
                std::get<1>(params),
                build_valid_tx_data_request,
                validate_tx_data_request,
-               srsgnb::fapi::message_type_id::tx_data_request);
+               srsran::fapi::message_type_id::tx_data_request);
 };
 
 INSTANTIATE_TEST_SUITE_P(sfn,

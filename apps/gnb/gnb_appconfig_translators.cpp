@@ -3,13 +3,13 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config_validator.h"
 #include <map>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Static configuration that the gnb supports.
 static constexpr cyclic_prefix cp        = cyclic_prefix::NORMAL;
 static constexpr unsigned      nof_ports = 1U;
 
-srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig& config)
+srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig& config)
 {
   srs_cu_cp::cu_cp_configuration out_cfg = config_helpers::make_default_cu_cp_config();
   out_cfg.ngap_config.gnb_id             = config.gnb_id;
@@ -24,7 +24,7 @@ srs_cu_cp::cu_cp_configuration srsgnb::generate_cu_cp_config(const gnb_appconfig
   return out_cfg;
 }
 
-std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig& config)
+std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig& config)
 {
   std::vector<du_cell_config> out_cfg;
   out_cfg.reserve(config.cells_cfg.size());
@@ -105,7 +105,7 @@ std::vector<du_cell_config> srsgnb::generate_du_cell_config(const gnb_appconfig&
   return out_cfg;
 }
 
-std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appconfig& config)
+std::map<uint8_t, du_qos_config> srsran::generate_du_qos_config(const gnb_appconfig& config)
 {
   std::map<uint8_t, du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
@@ -155,7 +155,7 @@ std::map<uint8_t, du_qos_config> srsgnb::generate_du_qos_config(const gnb_appcon
   return out_cfg;
 }
 
-lower_phy_configuration srsgnb::generate_ru_config(const gnb_appconfig& config)
+lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
 {
   lower_phy_configuration out_cfg;
 
@@ -286,7 +286,7 @@ static std::vector<std::string> extract_zmq_ports(const std::string& driver_args
   return ports;
 }
 
-radio_configuration::radio srsgnb::generate_radio_config(const gnb_appconfig&                  config,
+radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&                  config,
                                                          const radio_configuration::validator& validator)
 {
   radio_configuration::radio out_cfg = {};
@@ -371,7 +371,7 @@ static srslog::basic_levels to_srs_log_level(const std::string& level)
   return srslog::basic_levels::info;
 }
 
-std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig& config)
+std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig& config)
 {
   std::vector<upper_phy_config> out_cfg;
   out_cfg.reserve(config.cells_cfg.size());
@@ -447,7 +447,7 @@ std::vector<upper_phy_config> srsgnb::generate_du_low_config(const gnb_appconfig
   return out_cfg;
 }
 
-scheduler_expert_config srsgnb::generate_scheduler_expert_config(const gnb_appconfig& config)
+scheduler_expert_config srsran::generate_scheduler_expert_config(const gnb_appconfig& config)
 {
   scheduler_expert_config out_cfg = config_helpers::make_default_scheduler_expert_config();
 

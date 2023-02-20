@@ -15,7 +15,7 @@
 
 #include "srsgnb/phy/lower/amplitude_controller/amplitude_controller.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes an amplitude controller configuration for the clipping implementation.
 struct amplitude_controller_clipping_config {
@@ -45,4 +45,4 @@ public:
 std::shared_ptr<amplitude_controller_factory>
 create_amplitude_controller_clipping_factory(const amplitude_controller_clipping_config& config);
 
-} // namespace srsgnb
+} // namespace srsran

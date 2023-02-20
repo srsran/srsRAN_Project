@@ -15,7 +15,7 @@
 
 #include "srsgnb/phy/upper/channel_coding/short/short_block_encoder.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Generic implementation of the short-block encoder.
 class short_block_encoder_impl : public short_block_encoder
@@ -25,4 +25,4 @@ public:
   void encode(span<uint8_t> output, span<const uint8_t> input, modulation_scheme mod) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/scheduler/harq_id.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PDSCH transmission context.
 class pdsch_context
@@ -27,4 +27,4 @@ private:
   harq_id_t h_id = INVALID_HARQ_ID;
 };
 
-} // namespace srsgnb
+} // namespace srsran

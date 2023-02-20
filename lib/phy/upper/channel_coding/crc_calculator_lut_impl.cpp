@@ -16,7 +16,7 @@
 #include <immintrin.h>
 #endif // HAVE_SSE
 
-using namespace srsgnb;
+using namespace srsran;
 
 const std::map<crc_generator_poly, crc_calculator_lut_impl::crc_table_s> crc_calculator_lut_impl::crc_tables = {
     {crc_generator_poly::CRC24A, crc_calculator_lut_impl::crc_table_s(0x1864cfb, 24)},
@@ -52,7 +52,7 @@ crc_calculator_lut_impl::crc_calculator_lut_impl(crc_generator_poly poly_) :
   // Do nothing
 }
 
-crc_calculator_checksum_t srsgnb::crc_calculator_lut_impl::calculate_byte(span<const uint8_t> input)
+crc_calculator_checksum_t srsran::crc_calculator_lut_impl::calculate_byte(span<const uint8_t> input)
 {
   reset();
 
@@ -64,7 +64,7 @@ crc_calculator_checksum_t srsgnb::crc_calculator_lut_impl::calculate_byte(span<c
   return get_checksum();
 }
 
-crc_calculator_checksum_t crc_calculator_lut_impl::calculate_bit(srsgnb::span<const uint8_t> input)
+crc_calculator_checksum_t crc_calculator_lut_impl::calculate_bit(srsran::span<const uint8_t> input)
 {
   reset();
 

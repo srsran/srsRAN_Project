@@ -11,7 +11,7 @@
 #include "polar_rate_dematcher_impl.h"
 #include "srsgnb/srsvec/copy.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Generic deinterleaver.
 static void interleaver_rm_rx_c(span<log_likelihood_ratio>       output,

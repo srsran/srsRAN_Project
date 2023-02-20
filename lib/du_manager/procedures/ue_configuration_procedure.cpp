@@ -16,8 +16,8 @@
 #include "srsgnb/rlc/rlc_factory.h"
 #include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_du;
+using namespace srsran;
+using namespace srsran::srs_du;
 
 ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_update_request& request_,
                                                        ue_manager_ctrl_configurator&         ue_mng_,

@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 namespace detail {
@@ -67,4 +67,4 @@ const T* find(span<const T> input, T value)
 std::pair<unsigned, float> max_abs_element(span<const cf_t> x);
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

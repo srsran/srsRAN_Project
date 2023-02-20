@@ -10,7 +10,7 @@
 
 #include "resource_grid.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static subcarrier_spacing get_max_scs(const dl_config_common& dl_cfg)
 {

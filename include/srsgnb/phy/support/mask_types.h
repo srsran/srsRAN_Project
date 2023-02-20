@@ -14,7 +14,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Represents a symbol mask within a slot.
 ///
@@ -48,13 +48,13 @@ public:
   re_prb_mask(const std::initializer_list<const bool>& list) : bounded_bitset(list) {}
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// \brief Custom formatter for symbol_slot_mask.
 template <>
-struct formatter<srsgnb::symbol_slot_mask> {
+struct formatter<srsran::symbol_slot_mask> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -62,16 +62,16 @@ struct formatter<srsgnb::symbol_slot_mask> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::symbol_slot_mask& mask, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::symbol_slot_mask& mask, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    fmt::format_to(ctx.out(), "{:br}", static_cast<srsgnb::bounded_bitset<srsgnb::MAX_NSYMB_PER_SLOT>>(mask));
+    fmt::format_to(ctx.out(), "{:br}", static_cast<srsran::bounded_bitset<srsran::MAX_NSYMB_PER_SLOT>>(mask));
     return ctx.out();
   }
 };
 
 /// \brief Custom formatter for re_prb_mask.
 template <>
-struct formatter<srsgnb::re_prb_mask> {
+struct formatter<srsran::re_prb_mask> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -79,9 +79,9 @@ struct formatter<srsgnb::re_prb_mask> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::re_prb_mask& mask, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::re_prb_mask& mask, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    fmt::format_to(ctx.out(), "{:br}", static_cast<srsgnb::bounded_bitset<srsgnb::NRE>>(mask));
+    fmt::format_to(ctx.out(), "{:br}", static_cast<srsran::bounded_bitset<srsran::NRE>>(mask));
     return ctx.out();
   }
 };

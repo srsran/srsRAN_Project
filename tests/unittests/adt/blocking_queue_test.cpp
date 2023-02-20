@@ -12,7 +12,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(blocking_queue_test, blocking_push_from_main_thread_and_pop_from_another_thread)
 {

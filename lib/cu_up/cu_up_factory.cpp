@@ -11,9 +11,9 @@
 #include "srsgnb/cu_up/cu_up_factory.h"
 #include "cu_up_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<srs_cu_up::cu_up_interface> srsgnb::create_cu_up(const srs_cu_up::cu_up_configuration& cfg_)
+std::unique_ptr<srs_cu_up::cu_up_interface> srsran::create_cu_up(const srs_cu_up::cu_up_configuration& cfg_)
 {
   return std::make_unique<srs_cu_up::cu_up>(cfg_);
 }

@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/du_types.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct paging_indication_message {
   /// Type of Paging. RAN initiated or CN initiated.
@@ -41,4 +41,4 @@ public:
   virtual void handle_paging_indication(const paging_indication_message& pi) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

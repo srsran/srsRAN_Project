@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// CPU feature list.
 enum class cpu_feature {
@@ -55,4 +55,4 @@ inline bool cpu_supports_feature(cpu_feature feature)
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran

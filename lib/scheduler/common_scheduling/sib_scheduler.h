@@ -16,7 +16,7 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/sched_consts.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct cell_slot_resource_allocator;
 enum class ssb_pattern_case;
@@ -78,4 +78,4 @@ private:
   std::array<slot_point, MAX_NUM_BEAMS> sib1_type0_pdcch_css_slots;
 };
 
-} // end of namespace srsgnb
+} // end of namespace srsran

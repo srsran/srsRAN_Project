@@ -12,7 +12,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Contains the results of the UCI allocation.
 struct uci_allocation {
@@ -76,4 +76,4 @@ public:
                                             const ue_cell_configuration&  ue_cell_cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

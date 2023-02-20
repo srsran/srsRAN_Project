@@ -13,7 +13,7 @@
 #include "srsgnb/adt/span.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 class polar_encoder
 {
@@ -31,4 +31,4 @@ public:
   virtual void encode(span<uint8_t> output, span<const uint8_t> input, unsigned code_size_log) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

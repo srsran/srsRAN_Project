@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/config/dmrs.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collects the PUSCH default time-domain allocation parameters.
 ///
@@ -56,4 +56,4 @@ pusch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index
 span<const pusch_time_domain_resource_allocation>
 pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarrier_spacing scs);
 
-} // namespace srsgnb
+} // namespace srsran

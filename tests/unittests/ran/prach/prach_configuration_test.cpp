@@ -13,7 +13,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <set>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void test_fr1_paired()
 {

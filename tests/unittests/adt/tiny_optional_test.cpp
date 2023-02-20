@@ -11,7 +11,7 @@
 #include "srsgnb/adt/tiny_optional.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static_assert(sizeof(tiny_optional<int, 5>) == sizeof(int), "tiny_optional sizeof is invalid");
 static_assert(alignof(tiny_optional<int, 5>) == alignof(int), "tiny_optional alignof is invalid");

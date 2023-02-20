@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Polar code rate dematching interface. It reverts the operations of polar_rate_matcher.
 class polar_rate_dematcher
@@ -39,4 +39,4 @@ public:
   rate_dematch(span<log_likelihood_ratio> output, span<const log_likelihood_ratio> input, const polar_code& code) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

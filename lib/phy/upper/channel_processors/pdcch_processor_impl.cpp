@@ -12,7 +12,7 @@
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace pdcch_constants;
 
 bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_description& coreset,
@@ -51,7 +51,7 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
   return result;
 }
 
-void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, const pdcch_processor::pdu_t& pdu)
+void pdcch_processor_impl::process(srsran::resource_grid_writer& grid, const pdcch_processor::pdu_t& pdu)
 {
   const coreset_description& coreset = pdu.coreset;
   const dci_description&     dci     = pdu.dci;

@@ -14,7 +14,7 @@
 #include "srsgnb/ran/resource_block.h"
 #include "srsgnb/ran/ssb_properties.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Number of subcarriers within a SSB block, as per TS 38.211, Section 7.4.3.1.
 const unsigned NOF_SSB_SUBCARRIERS = NOF_SSB_PRBS * NOF_SUBCARRIERS_PER_RB;
@@ -96,4 +96,4 @@ private:
   unsigned M_raster;
 };
 
-} // namespace srsgnb
+} // namespace srsran

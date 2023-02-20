@@ -19,7 +19,7 @@
 #include "neon_helpers.h"
 #endif // HAVE_NEON
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Square root of 1/42.
 static const float M_SQRT1_42 = 1.0F / std::sqrt(42.0F);
@@ -270,7 +270,7 @@ static log_likelihood_ratio demod_64QAM_symbol_45(float value, float rcp_noise_v
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-void srsgnb::demodulate_soft_QAM64(span<log_likelihood_ratio> llrs,
+void srsran::demodulate_soft_QAM64(span<log_likelihood_ratio> llrs,
                                    span<const cf_t>           symbols,
                                    span<const float>          noise_vars)
 {

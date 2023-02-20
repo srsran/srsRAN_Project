@@ -11,7 +11,7 @@
 #include "du_processor_test_helpers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 

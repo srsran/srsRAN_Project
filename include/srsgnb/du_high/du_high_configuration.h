@@ -12,7 +12,7 @@
 #include "srsgnb/scheduler/scheduler_metrics.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1u_du_gateway;
@@ -34,4 +34,4 @@ struct du_high_configuration {
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

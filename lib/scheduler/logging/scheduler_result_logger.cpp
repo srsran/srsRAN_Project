@@ -10,7 +10,7 @@
 
 #include "scheduler_result_logger.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void scheduler_result_logger::log_debug(const sched_result& result)
 {

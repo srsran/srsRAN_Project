@@ -13,8 +13,8 @@
 #include "srsgnb/ran/duplex_mode.h"
 #include "srsgnb/ran/pdcch/pdcch_candidates.h"
 
-using namespace srsgnb;
-using namespace srsgnb::config_helpers;
+using namespace srsran;
+using namespace srsran::config_helpers;
 
 static nr_band get_band(const cell_config_builder_params& params)
 {
@@ -54,7 +54,7 @@ static unsigned get_csi_freq_occupation_nof_rbs(const cell_config_builder_params
 }
 
 carrier_configuration
-srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
+srsran::config_helpers::make_default_carrier_configuration(const cell_config_builder_params& params)
 {
   carrier_configuration cfg;
   cfg.carrier_bw_mhz                         = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
@@ -70,7 +70,7 @@ srsgnb::config_helpers::make_default_carrier_configuration(const cell_config_bui
 }
 
 tdd_ul_dl_config_common
-srsgnb::config_helpers::make_default_tdd_ul_dl_config_common(const cell_config_builder_params& params)
+srsran::config_helpers::make_default_tdd_ul_dl_config_common(const cell_config_builder_params& params)
 {
   tdd_ul_dl_config_common cfg{};
   cfg.ref_scs                            = params.scs_common;
@@ -82,7 +82,7 @@ srsgnb::config_helpers::make_default_tdd_ul_dl_config_common(const cell_config_b
   return cfg;
 }
 
-coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const cell_config_builder_params& params)
+coreset_configuration srsran::config_helpers::make_default_coreset_config(const cell_config_builder_params& params)
 {
   coreset_configuration cfg{};
   cfg.id = to_coreset_id(1);
@@ -101,7 +101,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset_config(const 
 
 /// Generates a default CORESET#0 configuration. The default CORESET#0 table index value used is equal to 6.
 /// \remark See TS 38.213, Table 13-1.
-coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
+coreset_configuration srsran::config_helpers::make_default_coreset0_config(const cell_config_builder_params& params)
 {
   coreset_configuration cfg{};
   cfg.id                                   = to_coreset_id(0);
@@ -126,7 +126,7 @@ coreset_configuration srsgnb::config_helpers::make_default_coreset0_config(const
   return cfg;
 }
 
-search_space_configuration srsgnb::config_helpers::make_default_search_space_zero_config()
+search_space_configuration srsran::config_helpers::make_default_search_space_zero_config()
 {
   search_space_configuration cfg{};
   cfg.id                     = to_search_space_id(0);
@@ -141,7 +141,7 @@ search_space_configuration srsgnb::config_helpers::make_default_search_space_zer
   return cfg;
 }
 
-search_space_configuration srsgnb::config_helpers::make_default_common_search_space_config()
+search_space_configuration srsran::config_helpers::make_default_common_search_space_config()
 {
   search_space_configuration cfg = make_default_search_space_zero_config();
   cfg.id                         = to_search_space_id(1);
@@ -151,7 +151,7 @@ search_space_configuration srsgnb::config_helpers::make_default_common_search_sp
   return cfg;
 }
 
-search_space_configuration srsgnb::config_helpers::make_default_ue_search_space_config()
+search_space_configuration srsran::config_helpers::make_default_ue_search_space_config()
 {
   search_space_configuration cfg = make_default_common_search_space_config();
   cfg.cs_id                      = to_coreset_id(1);
@@ -161,7 +161,7 @@ search_space_configuration srsgnb::config_helpers::make_default_ue_search_space_
   return cfg;
 }
 
-bwp_configuration srsgnb::config_helpers::make_default_init_bwp(const cell_config_builder_params& params)
+bwp_configuration srsran::config_helpers::make_default_init_bwp(const cell_config_builder_params& params)
 {
   bwp_configuration cfg{};
   cfg.scs         = params.scs_common;
@@ -170,7 +170,7 @@ bwp_configuration srsgnb::config_helpers::make_default_init_bwp(const cell_confi
   return cfg;
 }
 
-dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cell_config_builder_params& params)
+dl_config_common srsran::config_helpers::make_default_dl_config_common(const cell_config_builder_params& params)
 {
   dl_config_common cfg{};
 
@@ -213,7 +213,7 @@ dl_config_common srsgnb::config_helpers::make_default_dl_config_common(const cel
   return cfg;
 }
 
-ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cell_config_builder_params& params)
+ul_config_common srsran::config_helpers::make_default_ul_config_common(const cell_config_builder_params& params)
 {
   ul_config_common cfg{};
   // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
@@ -270,7 +270,7 @@ ul_config_common srsgnb::config_helpers::make_default_ul_config_common(const cel
   return cfg;
 }
 
-ssb_configuration srsgnb::config_helpers::make_default_ssb_config(const cell_config_builder_params& params)
+ssb_configuration srsran::config_helpers::make_default_ssb_config(const cell_config_builder_params& params)
 {
   ssb_configuration cfg{};
 
@@ -291,7 +291,7 @@ ssb_configuration srsgnb::config_helpers::make_default_ssb_config(const cell_con
   return cfg;
 }
 
-pusch_config srsgnb::config_helpers::make_default_pusch_config()
+pusch_config srsran::config_helpers::make_default_pusch_config()
 {
   pusch_config cfg{};
   cfg.tx_cfg = pusch_config::tx_config::not_set;
@@ -334,7 +334,7 @@ pusch_config srsgnb::config_helpers::make_default_pusch_config()
   return cfg;
 }
 
-uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_config_builder_params& params)
+uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_config_builder_params& params)
 {
   // > UL Config.
   uplink_config ul_config{};
@@ -469,7 +469,7 @@ uplink_config srsgnb::config_helpers::make_default_ue_uplink_config(const cell_c
   return ul_config;
 }
 
-pdsch_serving_cell_config srsgnb::config_helpers::make_default_pdsch_serving_cell_config()
+pdsch_serving_cell_config srsran::config_helpers::make_default_pdsch_serving_cell_config()
 {
   pdsch_serving_cell_config serv_cell;
   serv_cell.nof_harq_proc   = pdsch_serving_cell_config::nof_harq_proc_for_pdsch::n8;
@@ -478,7 +478,7 @@ pdsch_serving_cell_config srsgnb::config_helpers::make_default_pdsch_serving_cel
   return serv_cell;
 }
 
-nzp_csi_rs_resource_set srsgnb::config_helpers::make_default_nzp_csi_rs_resource_set()
+nzp_csi_rs_resource_set srsran::config_helpers::make_default_nzp_csi_rs_resource_set()
 {
   nzp_csi_rs_resource_set res_set{};
   res_set.res_set_id = static_cast<nzp_csi_rs_res_set_id_t>(0);
@@ -487,7 +487,7 @@ nzp_csi_rs_resource_set srsgnb::config_helpers::make_default_nzp_csi_rs_resource
   return res_set;
 }
 
-nzp_csi_rs_resource srsgnb::config_helpers::make_default_nzp_csi_rs_resource(const cell_config_builder_params& params)
+nzp_csi_rs_resource srsran::config_helpers::make_default_nzp_csi_rs_resource(const cell_config_builder_params& params)
 {
   nzp_csi_rs_resource res;
   res.res_id = static_cast<nzp_csi_rs_res_id_t>(0);
@@ -515,7 +515,7 @@ nzp_csi_rs_resource srsgnb::config_helpers::make_default_nzp_csi_rs_resource(con
   return res;
 }
 
-csi_im_resource_set srsgnb::config_helpers::make_default_csi_im_resource_set()
+csi_im_resource_set srsran::config_helpers::make_default_csi_im_resource_set()
 {
   csi_im_resource_set res_set;
   res_set.res_set_id        = static_cast<csi_im_res_set_id_t>(0);
@@ -524,7 +524,7 @@ csi_im_resource_set srsgnb::config_helpers::make_default_csi_im_resource_set()
   return res_set;
 }
 
-csi_im_resource srsgnb::config_helpers::make_default_csi_im_resource(const cell_config_builder_params& params)
+csi_im_resource srsran::config_helpers::make_default_csi_im_resource(const cell_config_builder_params& params)
 {
   csi_im_resource res;
   res.res_id = static_cast<csi_im_res_id_t>(0);
@@ -540,7 +540,7 @@ csi_im_resource srsgnb::config_helpers::make_default_csi_im_resource(const cell_
   return res;
 }
 
-csi_resource_config srsgnb::config_helpers::make_default_csi_resource_config()
+csi_resource_config srsran::config_helpers::make_default_csi_resource_config()
 {
   csi_resource_config cfg;
   cfg.res_cfg_id = static_cast<csi_res_config_id_t>(0);
@@ -554,7 +554,7 @@ csi_resource_config srsgnb::config_helpers::make_default_csi_resource_config()
   return cfg;
 }
 
-csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
+csi_report_config srsran::config_helpers::make_default_csi_report_config()
 {
   csi_report_config cfg;
   cfg.report_cfg_id        = static_cast<csi_report_config_id_t>(0);
@@ -595,7 +595,7 @@ csi_report_config srsgnb::config_helpers::make_default_csi_report_config()
   return cfg;
 }
 
-csi_meas_config srsgnb::config_helpers::make_default_csi_meas_config(const cell_config_builder_params& params)
+csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_config_builder_params& params)
 {
   csi_meas_config meas_cfg{};
 
@@ -618,7 +618,7 @@ csi_meas_config srsgnb::config_helpers::make_default_csi_meas_config(const cell_
 }
 
 serving_cell_config
-srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params)
+srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell_config_builder_params& params)
 {
   serving_cell_config serv_cell;
   serv_cell.cell_index = to_du_cell_index(0);
@@ -672,7 +672,7 @@ srsgnb::config_helpers::create_default_initial_ue_serving_cell_config(const cell
 }
 
 cell_config_dedicated
-srsgnb::config_helpers::create_default_initial_ue_spcell_cell_config(const cell_config_builder_params& params)
+srsran::config_helpers::create_default_initial_ue_spcell_cell_config(const cell_config_builder_params& params)
 {
   cell_config_dedicated cfg;
   cfg.serv_cell_idx = to_serv_cell_index(0);
@@ -680,7 +680,7 @@ srsgnb::config_helpers::create_default_initial_ue_spcell_cell_config(const cell_
   return cfg;
 }
 
-uint8_t srsgnb::config_helpers::compute_max_nof_candidates(aggregation_level            aggr_lvl,
+uint8_t srsran::config_helpers::compute_max_nof_candidates(aggregation_level            aggr_lvl,
                                                            const coreset_configuration& cs_cfg)
 {
   // 1 REG = 1 RB and 1 symbol.

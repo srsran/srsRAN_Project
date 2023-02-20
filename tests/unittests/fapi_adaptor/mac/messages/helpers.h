@@ -12,7 +12,7 @@
 
 #include "srsgnb/mac/mac_cell_result.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace unittests {
 
 /// Builds and returns a valid SIB1 information PDU.
@@ -37,4 +37,4 @@ pucch_info build_valid_pucch_format_1_pdu();
 pucch_info build_valid_pucch_format_2_pdu();
 
 } // namespace unittests
-} // namespace srsgnb
+} // namespace srsran

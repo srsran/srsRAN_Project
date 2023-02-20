@@ -21,7 +21,7 @@
 #include "srsgnb/support/timers.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 struct du_manager_params {
@@ -65,4 +65,4 @@ struct du_manager_params {
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

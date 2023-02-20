@@ -12,7 +12,7 @@
 
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Aggregation Level of PDCCH allocation.
 enum class aggregation_level : uint8_t { n1 = 0, n2, n4, n8, n16 };
@@ -29,4 +29,4 @@ inline unsigned to_aggregation_level_index(aggregation_level lvl)
   return static_cast<unsigned>(lvl);
 }
 
-} // namespace srsgnb
+} // namespace srsran

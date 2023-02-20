@@ -10,10 +10,10 @@
 
 #include "rrc_ue_test_messages.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
-security::sec_as_key srsgnb::srs_cu_cp::make_sec_as_key(std::string hex_str)
+security::sec_as_key srsran::srs_cu_cp::make_sec_as_key(std::string hex_str)
 {
   byte_buffer          key_buf = make_byte_buffer(hex_str);
   security::sec_as_key key     = {};
@@ -21,7 +21,7 @@ security::sec_as_key srsgnb::srs_cu_cp::make_sec_as_key(std::string hex_str)
   return key;
 }
 
-security::sec_128_as_key srsgnb::srs_cu_cp::make_sec_128_as_key(std::string hex_str)
+security::sec_128_as_key srsran::srs_cu_cp::make_sec_128_as_key(std::string hex_str)
 {
   byte_buffer              key_buf = make_byte_buffer(hex_str);
   security::sec_128_as_key key     = {};
@@ -29,7 +29,7 @@ security::sec_128_as_key srsgnb::srs_cu_cp::make_sec_128_as_key(std::string hex_
   return key;
 }
 
-cu_cp_rrc_reconfiguration_procedure_request srsgnb::srs_cu_cp::generate_rrc_reconfiguration_procedure_request()
+cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reconfiguration_procedure_request()
 {
   cu_cp_rrc_reconfiguration_procedure_request args;
 

@@ -13,7 +13,7 @@
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Read-only baseband buffer.
 ///
@@ -187,4 +187,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

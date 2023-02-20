@@ -12,7 +12,7 @@
 
 #include "ue_allocator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This struct provides a view of the current resource grid state to the PDSCH and PUSCH allocators.
 class ue_resource_grid_view
@@ -90,4 +90,4 @@ public:
                         bool                         is_retx) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

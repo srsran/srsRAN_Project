@@ -11,7 +11,7 @@
 #pragma once
 #include "srsgnb/ran/rnti.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PUCCH transmission context.
 class pucch_context
@@ -25,4 +25,4 @@ private:
   rnti_t rnti = INVALID_RNTI;
 };
 
-} // namespace srsgnb
+} // namespace srsran

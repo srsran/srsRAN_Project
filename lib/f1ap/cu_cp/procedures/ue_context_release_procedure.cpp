@@ -11,8 +11,8 @@
 #include "ue_context_release_procedure.h"
 #include "../f1ap_asn1_converters.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
 ue_context_release_procedure::ue_context_release_procedure(f1ap_ue_context_list&                  ue_ctx_list_,

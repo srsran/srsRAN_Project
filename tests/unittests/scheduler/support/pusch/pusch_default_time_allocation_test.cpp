@@ -12,7 +12,7 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, subcarrier_spacing scs)
 {
@@ -42,9 +42,9 @@ std::ostream& operator<<(std::ostream& os, sch_mapping_type mapping)
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Combined parameters.
 using pusch_default_time_allocation_params = std::tuple<unsigned, subcarrier_spacing>;

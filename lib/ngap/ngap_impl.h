@@ -20,7 +20,7 @@
 #include "srsgnb/support/timers.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -97,4 +97,4 @@ private:
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

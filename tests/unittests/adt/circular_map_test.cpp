@@ -11,7 +11,7 @@
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 void test_id_map()
 {
@@ -109,15 +109,15 @@ void test_correct_destruction()
   TESTASSERT(C::count == 0);
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 int main()
 {
   auto& test_log = srslog::fetch_basic_logger("TEST");
   test_log.set_level(srslog::basic_levels::info);
 
-  srsgnb::test_id_map();
-  srsgnb::test_correct_destruction();
+  srsran::test_id_map();
+  srsran::test_correct_destruction();
 
   printf("Success\n");
   return 0;

@@ -25,7 +25,7 @@
 #include "srsgnb/gateways/sctp_network_gateway_factory.h"
 #include "srsgnb/srslog/srslog.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 byte_buffer make_tx_byte_buffer(uint32_t length)
 {

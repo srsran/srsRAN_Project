@@ -14,7 +14,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Repository of processor pools.
 ///
@@ -63,4 +63,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

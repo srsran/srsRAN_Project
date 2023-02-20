@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/add.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // DM-RS symbol allocation pattern for PUCCH Format 1, as defined in TS38.211 Section 6.4.1.3.1.2.
 static const bounded_bitset<MAX_NSYMB_PER_SLOT> pucch_format1_dmrs_symb_mask =
@@ -120,7 +120,7 @@ dmrs_pucch_processor_format1_impl::generate_dmrs_pattern(const config_t& config)
   return mask;
 }
 
-void dmrs_pucch_processor_format1_impl::generate_sequence(span<srsgnb::cf_t>                    sequence,
+void dmrs_pucch_processor_format1_impl::generate_sequence(span<srsran::cf_t>                    sequence,
                                                           const dmrs_pucch_processor::config_t& pucch_config,
                                                           const sequence_generation_config&     cfg,
                                                           unsigned                              symbol) const

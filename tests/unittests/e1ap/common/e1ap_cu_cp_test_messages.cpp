@@ -10,11 +10,11 @@
 
 #include "e1ap_cu_cp_test_messages.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::e1ap;
 
-cu_cp_e1_setup_request srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_request()
+cu_cp_e1_setup_request srsran::srs_cu_cp::generate_cu_cp_e1_setup_request()
 {
   cu_cp_e1_setup_request e1_setup_request = {};
   e1_setup_request.gnb_cu_cp_name         = "srsCU-CP";
@@ -22,7 +22,7 @@ cu_cp_e1_setup_request srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_request()
   return e1_setup_request;
 }
 
-asn1::e1ap::supported_plmns_item_s srsgnb::srs_cu_cp::generate_supported_plmns_item(unsigned nrcell_id)
+asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_item(unsigned nrcell_id)
 {
   asn1::e1ap::supported_plmns_item_s supported_plmns_item = {};
   supported_plmns_item.plmn_id.from_string("208991");
@@ -41,7 +41,7 @@ asn1::e1ap::supported_plmns_item_s srsgnb::srs_cu_cp::generate_supported_plmns_i
   return supported_plmns_item;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_respose(unsigned transaction_id)
+e1ap_message srsran::srs_cu_cp::generate_cu_cp_e1_setup_respose(unsigned transaction_id)
 {
   e1ap_message e1_setup_response = {};
   e1_setup_response.pdu.set_successful_outcome();
@@ -64,7 +64,7 @@ e1ap_message srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_respose(unsigned transac
   return e1_setup_response;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_failure(unsigned transaction_id)
+e1ap_message srsran::srs_cu_cp::generate_cu_cp_e1_setup_failure(unsigned transaction_id)
 {
   e1ap_message e1_setup_failure = {};
 
@@ -83,7 +83,7 @@ e1ap_message srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_failure(unsigned transac
 }
 
 e1ap_message
-srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_failure_with_time_to_wait(unsigned                   transaction_id,
+srsran::srs_cu_cp::generate_cu_cp_e1_setup_failure_with_time_to_wait(unsigned                   transaction_id,
                                                                      asn1::e1ap::time_to_wait_e time_to_wait)
 {
   e1ap_message e1_setup_failure = generate_cu_cp_e1_setup_failure(transaction_id);
@@ -95,7 +95,7 @@ srsgnb::srs_cu_cp::generate_cu_cp_e1_setup_failure_with_time_to_wait(unsigned   
   return e1_setup_failure;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_cu_up_e1_setup_request_base()
+e1ap_message srsran::srs_cu_cp::generate_cu_up_e1_setup_request_base()
 {
   e1ap_message e1_setup_request_base = {};
 
@@ -112,7 +112,7 @@ e1ap_message srsgnb::srs_cu_cp::generate_cu_up_e1_setup_request_base()
   return e1_setup_request_base;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_valid_cu_up_e1_setup_request()
+e1ap_message srsran::srs_cu_cp::generate_valid_cu_up_e1_setup_request()
 {
   e1ap_message e1_setup_request   = generate_cu_up_e1_setup_request_base();
   auto&        setup_req          = e1_setup_request.pdu.init_msg().value.gnb_cu_up_e1_setup_request();
@@ -124,7 +124,7 @@ e1ap_message srsgnb::srs_cu_cp::generate_valid_cu_up_e1_setup_request()
   return e1_setup_request;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_cu_up_e1_setup_respose(unsigned transaction_id)
+e1ap_message srsran::srs_cu_cp::generate_cu_up_e1_setup_respose(unsigned transaction_id)
 {
   e1ap_message e1_setup_response = {};
   e1_setup_response.pdu.set_successful_outcome();
@@ -138,12 +138,12 @@ e1ap_message srsgnb::srs_cu_cp::generate_cu_up_e1_setup_respose(unsigned transac
   return e1_setup_response;
 }
 
-e1ap_bearer_context_setup_request srsgnb::srs_cu_cp::generate_bearer_context_setup_request(ue_index_t ue_index)
+e1ap_bearer_context_setup_request srsran::srs_cu_cp::generate_bearer_context_setup_request(ue_index_t ue_index)
 {
   e1ap_bearer_context_setup_request request = {};
 
   request.ue_index                                        = ue_index;
-  request.security_info.security_algorithm.ciphering_algo = srsgnb::security::ciphering_algorithm::nea0;
+  request.security_info.security_algorithm.ciphering_algo = srsran::security::ciphering_algorithm::nea0;
   request.security_info.up_security_key.encryption_key    = make_byte_buffer("9950ab8083ed034257d900e9a6a06236");
   request.ue_dl_aggregate_maximum_bit_rate                = 300000000;
   request.serving_plmn                                    = "00101";
@@ -166,7 +166,7 @@ e1ap_bearer_context_setup_request srsgnb::srs_cu_cp::generate_bearer_context_set
   drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = "present";
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
-  drb_to_setup_item.pdcp_cfg.rlc_mod            = srsgnb::rlc_mode::am;
+  drb_to_setup_item.pdcp_cfg.rlc_mod            = srsran::rlc_mode::am;
   drb_to_setup_item.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms100;
   drb_to_setup_item.pdcp_cfg.discard_timer      = pdcp_discard_timer::infinity;
 
@@ -191,7 +191,7 @@ e1ap_bearer_context_setup_request srsgnb::srs_cu_cp::generate_bearer_context_set
   return request;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                        gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_response = {};
@@ -242,7 +242,7 @@ e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_setup_response(gnb_cu_cp
   return bearer_context_setup_response;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_setup_failure(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_setup_failure(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                       gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_failure = {};
@@ -261,7 +261,7 @@ e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_setup_failure(gnb_cu_cp_
 }
 
 e1ap_bearer_context_modification_request
-srsgnb::srs_cu_cp::generate_bearer_context_modification_request(ue_index_t ue_index)
+srsran::srs_cu_cp::generate_bearer_context_modification_request(ue_index_t ue_index)
 {
   e1ap_bearer_context_modification_request request;
   request.ue_index = ue_index;
@@ -269,7 +269,7 @@ srsgnb::srs_cu_cp::generate_bearer_context_modification_request(ue_index_t ue_in
   return request;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                               gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_modification_response = {};
@@ -303,7 +303,7 @@ e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_modification_response(gn
   return bearer_context_modification_response;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_modification_failure(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_modification_failure(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                              gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_modification_failure = {};
@@ -321,7 +321,7 @@ e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_modification_failure(gnb
   return bearer_context_modification_failure;
 }
 
-e1ap_bearer_context_release_command srsgnb::srs_cu_cp::generate_bearer_context_release_command(ue_index_t ue_index)
+e1ap_bearer_context_release_command srsran::srs_cu_cp::generate_bearer_context_release_command(ue_index_t ue_index)
 {
   e1ap_bearer_context_release_command command;
   command.ue_index = ue_index;
@@ -330,7 +330,7 @@ e1ap_bearer_context_release_command srsgnb::srs_cu_cp::generate_bearer_context_r
   return command;
 }
 
-e1ap_message srsgnb::srs_cu_cp::generate_bearer_context_release_complete(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+e1ap_message srsran::srs_cu_cp::generate_bearer_context_release_complete(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                          gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_ctxt_rel_complete_msg = {};

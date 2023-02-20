@@ -16,7 +16,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/du_ue_list.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct mac_ue_context {
   du_ue_index_t   du_ue_index = MAX_NOF_DU_UES;
@@ -85,4 +85,4 @@ private:
   du_ue_list<mac_ue_context> ue_db;
 };
 
-} // namespace srsgnb
+} // namespace srsran

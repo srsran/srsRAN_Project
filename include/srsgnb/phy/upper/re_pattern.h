@@ -16,7 +16,7 @@
 #include "srsgnb/phy/support/mask_types.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a resource element pattern within a resource grid.
 struct re_pattern {
@@ -186,4 +186,4 @@ public:
   void get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const;
 };
 
-} // namespace srsgnb
+} // namespace srsran

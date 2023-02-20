@@ -17,7 +17,7 @@
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Service provided by CU-CP to schedule async tasks for a given CU-UP.
@@ -41,4 +41,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

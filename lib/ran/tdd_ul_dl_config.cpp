@@ -11,7 +11,7 @@
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 #include "srsgnb/ran/frame_types.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static unsigned
 nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended, bool is_dl)
@@ -48,25 +48,25 @@ nof_active_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool
   return 0;
 }
 
-bool srsgnb::has_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index)
+bool srsran::has_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index)
 {
   return nof_active_symbols(cfg, slot_index, false, true) > 0;
 }
 
-bool srsgnb::has_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index)
+bool srsran::has_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index)
 {
   return nof_active_symbols(cfg, slot_index, false, false) > 0;
 }
 
 ofdm_symbol_range
-srsgnb::get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended)
+srsran::get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended)
 {
   unsigned nof_symbols = nof_active_symbols(cfg, slot_index, cp_extended, true);
   return {0, nof_symbols};
 }
 
 ofdm_symbol_range
-srsgnb::get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended)
+srsran::get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended)
 {
   unsigned nof_symbols      = nof_active_symbols(cfg, slot_index, cp_extended, false);
   unsigned symbols_per_slot = cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;

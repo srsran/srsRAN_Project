@@ -14,7 +14,7 @@
 #include "uci_allocator.h"
 #include "srsgnb/adt/circular_array.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implementation of \ref uci_allocator interface.
 class uci_allocator_impl final : public uci_allocator
@@ -72,4 +72,4 @@ private:
   circular_array<slot_alloc_list, cell_resource_allocator::RING_ALLOCATOR_SIZE> uci_alloc_grid;
 };
 
-} // namespace srsgnb
+} // namespace srsran

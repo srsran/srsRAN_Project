@@ -15,7 +15,7 @@
 #include "srsgnb/ran/dmrs.h"
 #include "srsgnb/ran/ptrs.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Used to configure downlink demodulation reference signals for PDSCH.
 /// \remark See TS 38.331, DMRS-DownlinkConfig.
@@ -118,4 +118,4 @@ struct dmrs_uplink_config {
 /// Each bit set in the bitset represents a symbol within the slot. The first bit corresponds to the first symbol.
 using dmrs_symbol_mask = bounded_bitset<14>;
 
-} // namespace srsgnb
+} // namespace srsran

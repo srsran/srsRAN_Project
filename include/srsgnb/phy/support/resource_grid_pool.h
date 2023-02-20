@@ -14,7 +14,7 @@
 #include "resource_grid_context.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a resource grid pool interface
 class resource_grid_pool
@@ -28,4 +28,4 @@ public:
   virtual resource_grid& get_resource_grid(const resource_grid_context& context) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

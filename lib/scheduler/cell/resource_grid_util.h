@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Retrieves the resource grid allocator ring size greater than given minimum value.
 /// \remark 1. The implementation of circular ring based resource allocator only works correctly if we set a
@@ -36,4 +36,4 @@ constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned minimum_value)
   return 80;
 }
 
-} // namespace srsgnb
+} // namespace srsran

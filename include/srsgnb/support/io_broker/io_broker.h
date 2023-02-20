@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/unique_thread.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes the base interface for an (async) IO broker.
 /// The IO broker is responsible for handling all IO events, including
@@ -51,4 +51,4 @@ public:
   virtual bool unregister_fd(int fd) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

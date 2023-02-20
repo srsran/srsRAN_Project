@@ -12,7 +12,7 @@
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -103,7 +103,7 @@ uplink_slot_pdu_repository& upper_phy_impl::get_uplink_slot_pdu_repository()
   return pdu_repository;
 }
 
-void upper_phy_impl::set_timing_notifier(srsgnb::upper_phy_timing_notifier& notifier)
+void upper_phy_impl::set_timing_notifier(srsran::upper_phy_timing_notifier& notifier)
 {
   timing_handler.set_upper_phy_notifier(notifier);
 }

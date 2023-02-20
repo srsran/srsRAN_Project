@@ -19,7 +19,7 @@
 #include "srsgnb/srsvec/compare.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static std::mt19937 rgen(0);
 

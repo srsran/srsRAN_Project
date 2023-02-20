@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class rx_softbuffer_pool;
 
@@ -42,4 +42,4 @@ private:
   upper_phy_rx_results_notifier* rx_results_notifier = nullptr;
 };
 
-} // namespace srsgnb
+} // namespace srsran

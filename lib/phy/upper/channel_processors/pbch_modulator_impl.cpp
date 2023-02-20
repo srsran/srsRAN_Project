@@ -12,7 +12,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/srsvec/bit.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, const config_t& config)
 {

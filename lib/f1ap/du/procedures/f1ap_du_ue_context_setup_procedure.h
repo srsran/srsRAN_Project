@@ -13,7 +13,7 @@
 #include "../ue_context/f1ap_du_ue.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1ap_du_ue_context_setup_procedure
@@ -36,4 +36,4 @@ private:
   f1ap_ue_context_update_response du_response;
 };
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

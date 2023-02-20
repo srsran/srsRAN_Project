@@ -15,7 +15,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 
 class pucch_orthogonal_sequence
 {
@@ -60,4 +60,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

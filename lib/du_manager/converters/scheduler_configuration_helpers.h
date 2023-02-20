@@ -12,7 +12,7 @@
 
 #include "srsgnb/scheduler/scheduler_configurator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct du_cell_config;
 
@@ -28,4 +28,4 @@ make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_
 sched_ue_config_request create_scheduler_ue_config_request(const du_ue& u);
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

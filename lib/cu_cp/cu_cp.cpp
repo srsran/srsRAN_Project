@@ -15,7 +15,7 @@
 #include "srsgnb/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsgnb/ngap/ngap_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)

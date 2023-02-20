@@ -12,9 +12,9 @@
 #include "srsgnb/adt/span.h"
 #include <array>
 
-using namespace srsgnb;
+using namespace srsran;
 
-uint16_t srsgnb::prach_cyclic_shifts_get(prach_subcarrier_spacing prach_scs,
+uint16_t srsran::prach_cyclic_shifts_get(prach_subcarrier_spacing prach_scs,
                                          restricted_set_config    restricted_set,
                                          unsigned                 zero_correlation_zone)
 {

@@ -13,7 +13,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a Discrete Fourier Transform (DFT) processor.
 /// \remark The DFT processor allocates the input and output buffers for optimization purposes.
@@ -60,4 +60,4 @@ public:
   virtual span<const cf_t> run() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

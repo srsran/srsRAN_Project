@@ -12,7 +12,7 @@
 
 #include "srsgnb/mac/cell_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct du_cell_config;
 
@@ -22,4 +22,4 @@ mac_cell_creation_request make_mac_cell_config(du_cell_index_t                  
                                                byte_buffer                                     bcch_dl_sch_payload,
                                                const sched_cell_configuration_request_message& sched_cell_cfg);
 
-} // namespace srsgnb
+} // namespace srsran

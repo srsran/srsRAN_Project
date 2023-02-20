@@ -12,7 +12,7 @@
 
 #include "srsgnb/fapi/message_builders.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct dl_msg_alloc;
 struct sib_information;
@@ -51,4 +51,4 @@ void convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const dl_msg_alloc&
 void convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder, const dl_msg_alloc& mac_pdu);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

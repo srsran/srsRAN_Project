@@ -13,9 +13,9 @@
 #include "rlc_tm_entity.h"
 #include "rlc_um_entity.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_creation_message& msg)
+std::unique_ptr<rlc_entity> srsran::create_rlc_entity(const rlc_entity_creation_message& msg)
 {
   switch (msg.config.mode) {
     case rlc_mode::tm:

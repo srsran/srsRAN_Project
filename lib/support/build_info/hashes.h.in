@@ -12,7 +12,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 #ifdef BUILD_TYPE_RELEASE
 static char build_mode[] = "Release";
@@ -32,4 +32,4 @@ static char build_hash[] = "@GIT_COMMIT_HASH@";
 
 static char build_info[] = "commit @GIT_COMMIT_HASH@ on branch @GIT_BRANCH@";
 
-} // namespace srsgnb
+} // namespace srsran

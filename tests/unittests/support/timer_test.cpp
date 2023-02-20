@@ -14,7 +14,7 @@
 #include <random>
 #include <thread>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void timers_test1()
 {

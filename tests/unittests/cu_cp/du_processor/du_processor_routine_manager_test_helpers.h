@@ -19,7 +19,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Fixture class for DU processor creation
@@ -34,7 +34,7 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  srsgnb::security::sec_as_config security_cfg;
+  srsran::security::sec_as_config security_cfg;
 
   dummy_du_processor_e1ap_control_notifier           e1ap_ctrl_notifier;
   dummy_du_processor_f1ap_ue_context_notifier        f1ap_ue_ctxt_notifier;
@@ -46,4 +46,4 @@ protected:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

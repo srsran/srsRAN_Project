@@ -16,7 +16,7 @@
 #include "srsgnb/support/async/event_signal.h"
 #include "srsgnb/support/async/protocol_transaction_manager.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class f1ap_ue_transaction_manager
@@ -40,4 +40,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

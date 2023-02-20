@@ -17,7 +17,7 @@ static std::mt19937 rgen(0);
 static const float  ASSERT_CF_MAX_ERROR    = 1e-3;
 static const float  ASSERT_FLOAT_MAX_ERROR = 1e-3;
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_convert_ci(std::size_t N)
 {

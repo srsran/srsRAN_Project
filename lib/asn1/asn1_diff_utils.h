@@ -22,7 +22,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <algorithm>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Creates an functor that applies operator< comparison between objects based on their id.
 template <typename GetId>
@@ -229,4 +229,4 @@ void calculate_addmodremlist_diff(toAddModList&       add_diff_list,
       add_diff_list, rem_diff_list, prev_list, next_list, [](const elem_type& e) { return e; }, id_func);
 }
 
-} // namespace srsgnb
+} // namespace srsran

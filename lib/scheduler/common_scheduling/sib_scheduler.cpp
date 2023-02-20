@@ -19,7 +19,7 @@
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 //  ------   Public methods   ------ .
 

@@ -17,7 +17,7 @@
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Manages a codeblock buffer pool.
 class rx_softbuffer_codeblock_pool
@@ -104,4 +104,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

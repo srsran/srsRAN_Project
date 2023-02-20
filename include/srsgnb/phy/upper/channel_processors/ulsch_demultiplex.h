@@ -17,7 +17,7 @@
 /// \file
 /// \brief Uplink Shared Channel demultiplexer interface declaration.
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Uplink Shared Channel demultiplexer interface.
 ///
@@ -91,4 +91,4 @@ public:
                                                   const configuration&       config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

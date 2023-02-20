@@ -13,7 +13,7 @@
 #include "../coroutine.h"
 #include <utility>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Handle to coroutine object that ensures safe move ctor, move assignment and destruction.
 template <typename Promise>
@@ -55,4 +55,4 @@ private:
   coro_handle<promise_type> handle;
 };
 
-} // namespace srsgnb
+} // namespace srsran

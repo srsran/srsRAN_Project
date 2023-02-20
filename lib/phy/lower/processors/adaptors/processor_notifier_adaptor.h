@@ -14,7 +14,7 @@
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/processors/prach/prach_processor_notifier.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Lower physical layer processor notification adaptor.
 ///
@@ -65,4 +65,4 @@ private:
   prach_adaptor prach;
 };
 
-} // namespace srsgnb
+} // namespace srsran

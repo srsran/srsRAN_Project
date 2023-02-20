@@ -18,7 +18,7 @@
 #include "zuc.h"
 #include "srsgnb/adt/byte_buffer.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace security {
 
 /******************************************************************************
@@ -246,4 +246,4 @@ byte_buffer security_nea3(const sec_128_as_key& key,
 }
 
 } // namespace security
-} // namespace srsgnb
+} // namespace srsran

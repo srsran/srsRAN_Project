@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   segmenter_config     config;
@@ -197,4 +197,4 @@ static const std::vector<test_case_t> pdsch_encoder_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

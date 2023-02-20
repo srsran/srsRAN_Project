@@ -12,7 +12,7 @@
 
 #include "srsgnb/radio/radio_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Radio configuration validator for ZMQ based radios.
 class radio_config_zmq_config_validator : public radio_configuration::validator
@@ -22,4 +22,4 @@ public:
   bool is_configuration_valid(const radio_configuration::radio& config) const override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

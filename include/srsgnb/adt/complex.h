@@ -13,7 +13,7 @@
 #include "fmt/format.h"
 #include <complex>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Type to store complex samples.
 using cf_t = std::complex<float>;
@@ -31,13 +31,13 @@ template <typename T>
 struct is_complex<const std::complex<T>> : std::true_type {
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// FMT formatter of cf_t type.
 template <>
-struct formatter<srsgnb::cf_t> {
+struct formatter<srsran::cf_t> {
   // Stores parsed format string.
   memory_buffer format_buffer;
 
@@ -77,7 +77,7 @@ struct formatter<srsgnb::cf_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::cf_t value, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::cf_t value, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     const string_view format_str = string_view(format_buffer.data(), format_buffer.size());
     return format_to(ctx.out(), format_str, value.real(), value.imag());

@@ -16,7 +16,7 @@
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/sched_consts.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 #define HANDLE_RETURN(cond)                                                                                            \
   {                                                                                                                    \
@@ -132,8 +132,8 @@ static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
 
 static check_outcome is_search_space_valid(const search_space_configuration& ss_cfg)
 {
-  CHECK_EQ_OR_BELOW(ss_cfg.id, srsgnb::MAX_SEARCH_SPACE_ID, "SearchSpaceId", ss_cfg.id);
-  CHECK_EQ_OR_BELOW(ss_cfg.cs_id, srsgnb::MAX_CORESET_ID, "SearchSpace#{} CORESET ID", ss_cfg.id);
+  CHECK_EQ_OR_BELOW(ss_cfg.id, srsran::MAX_SEARCH_SPACE_ID, "SearchSpaceId", ss_cfg.id);
+  CHECK_EQ_OR_BELOW(ss_cfg.cs_id, srsran::MAX_CORESET_ID, "SearchSpace#{} CORESET ID", ss_cfg.id);
   bool valid_period =
       is_valid_enum_number<asn1::rrc_nr::search_space_s::monitoring_slot_periodicity_and_offset_c_::types>(
           ss_cfg.monitoring_slot_period);
@@ -153,7 +153,7 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   if (bwp.pdcch_common.coreset0.has_value()) {
     HANDLE_RETURN(is_coreset0_params_valid(cell_cfg));
   }
-  if (bwp.pdcch_common.sib1_search_space_id != srsgnb::MAX_NOF_SEARCH_SPACES) {
+  if (bwp.pdcch_common.sib1_search_space_id != srsran::MAX_NOF_SEARCH_SPACES) {
     CHECK_EQ(bwp.pdcch_common.sib1_search_space_id, 0, "SearchSpaceSIB1 must be equal to 0 for initial DL BWP");
   }
   if (bwp.pdcch_common.common_coreset.has_value()) {
@@ -269,7 +269,7 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
   return {};
 }
 
-check_outcome srsgnb::is_du_cell_config_valid(const du_cell_config& cell_cfg)
+check_outcome srsran::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.pci, MAX_PCI, "cell PCI");
   CHECK_EQ_OR_BELOW(cell_cfg.scs_common, subcarrier_spacing::kHz120, "SCS common");

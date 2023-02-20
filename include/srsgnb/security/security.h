@@ -25,7 +25,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace srsgnb {
+namespace srsran {
 namespace security {
 
 /// MAC-I length in bytes
@@ -257,7 +257,7 @@ inline bool select_algorithms(sec_as_config&                 sec_cfg,
 }
 
 } // namespace security
-} // namespace srsgnb
+} // namespace srsran
 
 //
 // Formatters
@@ -266,7 +266,7 @@ namespace fmt {
 
 // Security direction
 template <>
-struct formatter<srsgnb::security::security_direction> {
+struct formatter<srsran::security::security_direction> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -274,7 +274,7 @@ struct formatter<srsgnb::security::security_direction> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::security::security_direction dir, FormatContext& ctx)
+  auto format(srsran::security::security_direction dir, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"UL", "DL"};
@@ -284,7 +284,7 @@ struct formatter<srsgnb::security::security_direction> {
 
 // Integrity enabled
 template <>
-struct formatter<srsgnb::security::integrity_enabled> {
+struct formatter<srsran::security::integrity_enabled> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -292,7 +292,7 @@ struct formatter<srsgnb::security::integrity_enabled> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::security::integrity_enabled integrity_flag, FormatContext& ctx)
+  auto format(srsran::security::integrity_enabled integrity_flag, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"off", "on"};
@@ -302,7 +302,7 @@ struct formatter<srsgnb::security::integrity_enabled> {
 
 // Ciphering enabled
 template <>
-struct formatter<srsgnb::security::ciphering_enabled> {
+struct formatter<srsran::security::ciphering_enabled> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -310,7 +310,7 @@ struct formatter<srsgnb::security::ciphering_enabled> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::security::ciphering_enabled ciphering_flag, FormatContext& ctx)
+  auto format(srsran::security::ciphering_enabled ciphering_flag, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"off", "on"};
@@ -320,7 +320,7 @@ struct formatter<srsgnb::security::ciphering_enabled> {
 
 // Supported algorithms
 template <>
-struct formatter<srsgnb::security::supported_algorithms> {
+struct formatter<srsran::security::supported_algorithms> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -328,7 +328,7 @@ struct formatter<srsgnb::security::supported_algorithms> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::security::supported_algorithms algos, FormatContext& ctx)
+  auto format(srsran::security::supported_algorithms algos, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "N[I|E]A1={}, N[I|E]A2={}, N[I|E]A3={}", algos[0], algos[1], algos[2]);
@@ -337,7 +337,7 @@ struct formatter<srsgnb::security::supported_algorithms> {
 
 // Preferred integrity protection algorithms list
 template <>
-struct formatter<srsgnb::security::preferred_integrity_algorithms> {
+struct formatter<srsran::security::preferred_integrity_algorithms> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -345,7 +345,7 @@ struct formatter<srsgnb::security::preferred_integrity_algorithms> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::security::preferred_integrity_algorithms algos, FormatContext& ctx)
+  auto format(srsran::security::preferred_integrity_algorithms algos, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "NIA{}, NIA{}, NIA{}, NIA{}", algos[0], algos[1], algos[2], algos[3]);
@@ -354,7 +354,7 @@ struct formatter<srsgnb::security::preferred_integrity_algorithms> {
 
 // Preferred ciphering algorithms list
 template <>
-struct formatter<srsgnb::security::preferred_ciphering_algorithms> {
+struct formatter<srsran::security::preferred_ciphering_algorithms> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -362,7 +362,7 @@ struct formatter<srsgnb::security::preferred_ciphering_algorithms> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::security::preferred_ciphering_algorithms algos, FormatContext& ctx)
+  auto format(srsran::security::preferred_ciphering_algorithms algos, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "NEA{}, NEA{}, NEA{}, NEA{}", algos[0], algos[1], algos[2], algos[3]);

@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 enum class test_label { dmrs_creation, ch_estimation };
 
@@ -227,4 +227,4 @@ static const std::vector<test_case_t> dmrs_pusch_estimator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

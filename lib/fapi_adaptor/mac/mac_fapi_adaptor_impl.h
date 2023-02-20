@@ -15,7 +15,7 @@
 #include "mac_to_fapi_translator.h"
 #include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// \brief MAC&ndash;FAPI bidirectional adaptor implementation.
@@ -66,4 +66,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

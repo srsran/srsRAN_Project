@@ -16,7 +16,7 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief Possible modes for an DRB RLC entity.
@@ -63,4 +63,4 @@ struct f1ap_ue_context_update_response {
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

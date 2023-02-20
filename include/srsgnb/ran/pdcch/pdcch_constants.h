@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/constants.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace pdcch_constants {
 
 /// Defines the number if resource blocks per frequency resource in a CORESET as per TS38.331 in ControlResourceSet
@@ -53,4 +53,4 @@ static constexpr unsigned MAX_NOF_RE_PDCCH = MAX_NOF_RB_PDCCH * NOF_RE_PDCCH_PER
 static constexpr unsigned MAX_NOF_BITS = MAX_NOF_RE_PDCCH * 2;
 
 } // namespace pdcch_constants
-} // namespace srsgnb
+} // namespace srsran

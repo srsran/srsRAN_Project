@@ -10,8 +10,8 @@
 
 #include "bearer_context_release_procedure.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::e1ap;
 
 bearer_context_release_procedure::bearer_context_release_procedure(const ue_index_t       ue_index_,

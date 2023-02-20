@@ -14,7 +14,7 @@
 #include "detail/event_impl.h"
 #include <utility>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Awaitable type that can be manually set to one of the states:
 /// - "unset" state - Coroutines that await on an "unset" manual_event get suspended. They are only resumed when the
@@ -77,4 +77,4 @@ public:
 
 using manual_event_flag = manual_event<void>;
 
-} // namespace srsgnb
+} // namespace srsran

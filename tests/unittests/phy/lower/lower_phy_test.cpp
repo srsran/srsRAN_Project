@@ -18,7 +18,7 @@
 #include "srsgnb/ran/prach/prach_configuration.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static sampling_rate       srate                      = sampling_rate::from_MHz(61.44);
 static subcarrier_spacing  scs                        = subcarrier_spacing::kHz15;

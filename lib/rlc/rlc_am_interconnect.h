@@ -12,7 +12,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Provides access to status functions of the RLC RX AM entity.
 /// The RLC TX AM entity uses this class to
@@ -54,4 +54,4 @@ public:
   virtual void on_status_report_changed() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

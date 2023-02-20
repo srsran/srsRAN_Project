@@ -15,7 +15,7 @@
 #include "srsgnb/mac/mac_cell_rach_handler.h"
 #include "srsgnb/mac/mac_pdu_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// \brief FAPI-to-MAC data message translator.
@@ -64,4 +64,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

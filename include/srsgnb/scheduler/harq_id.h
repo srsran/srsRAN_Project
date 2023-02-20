@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Identification of an HARQ process.
 enum harq_id_t : uint8_t { MAX_HARQ_ID = 15, MAX_NOF_HARQS = 16, INVALID_HARQ_ID = 16 };
@@ -23,4 +23,4 @@ constexpr inline harq_id_t to_harq_id(unsigned h_id)
 /// Outcomes of a HARQ-ACK report.
 enum class mac_harq_ack_report_status { nack = 0, ack, dtx };
 
-} // namespace srsgnb
+} // namespace srsran

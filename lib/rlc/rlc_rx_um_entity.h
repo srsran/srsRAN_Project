@@ -17,7 +17,7 @@
 #include "fmt/format.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 
 /// UM SDU segment container
 struct rlc_rx_um_sdu_segment {
@@ -107,11 +107,11 @@ public:
   void handle_pdu(byte_buffer_slice buf) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsgnb::rlc_rx_um_state> {
+struct formatter<srsran::rlc_rx_um_state> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -119,7 +119,7 @@ struct formatter<srsgnb::rlc_rx_um_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_rx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_rx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "rx_next_reassembly={} rx_timer_trigger={} rx_next_highest={}",

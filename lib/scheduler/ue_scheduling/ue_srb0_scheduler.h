@@ -17,7 +17,7 @@
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include <queue>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines SRB0 scheduler that is used to allocate grants for UE's SRB0 DL messages in a given slot.
 class ue_srb0_scheduler
@@ -76,4 +76,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

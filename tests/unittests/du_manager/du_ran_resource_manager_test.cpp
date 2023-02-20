@@ -13,7 +13,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 class du_ran_resource_manager_tester : public ::testing::Test
@@ -78,7 +78,7 @@ TEST_F(du_ran_resource_manager_tester, when_srb1_is_added_then_ue_resource_confi
   ASSERT_FALSE(resp.release_required);
   ASSERT_TRUE(resp.failed_srbs.empty());
   ASSERT_EQ(ue_res->rlc_bearers.size(), 1);
-  ASSERT_EQ(ue_res->rlc_bearers[0].lcid, srsgnb::LCID_SRB1);
+  ASSERT_EQ(ue_res->rlc_bearers[0].lcid, srsran::LCID_SRB1);
   ASSERT_EQ(ue_res->rlc_bearers[0].rlc_cfg.mode, rlc_mode::am);
 }
 

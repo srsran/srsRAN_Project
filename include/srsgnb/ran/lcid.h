@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Logical Channel Identity used to associate one logical channel to the corresponding RLC bearer. Values (0..32)
 enum lcid_t : uint16_t {
@@ -148,13 +148,13 @@ private:
   };
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 // rb_id_t formatter
 template <>
-struct formatter<srsgnb::rb_id_t> {
+struct formatter<srsran::rb_id_t> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -162,7 +162,7 @@ struct formatter<srsgnb::rb_id_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rb_id_t o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (o.is_drb()) {
       return format_to(ctx.out(), "DRB{}", drb_id_to_uint(o.get_drb_id()));

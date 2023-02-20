@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 class downlink_pdu_validator;
 class downlink_processor_pool;
@@ -76,4 +76,4 @@ public:
   virtual void set_rx_results_notifier(upper_phy_rx_results_notifier& notifier) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

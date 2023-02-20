@@ -17,7 +17,7 @@
 #include "srsgnb/ran/lcid.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief DRB context with map to all QoS flows.
@@ -46,4 +46,4 @@ struct drb_context {
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

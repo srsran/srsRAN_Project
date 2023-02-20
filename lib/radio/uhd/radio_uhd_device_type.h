@@ -12,7 +12,7 @@
 
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 class radio_uhd_device_type
 {
@@ -59,4 +59,4 @@ public:
 private:
   types type = types::UNKNOWN;
 };
-} // namespace srsgnb
+} // namespace srsran

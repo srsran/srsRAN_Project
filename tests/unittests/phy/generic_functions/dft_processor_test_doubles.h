@@ -14,7 +14,7 @@
 #include "srsgnb/support/error_handling.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 class dft_processor_spy : public dft_processor
 {
@@ -103,4 +103,4 @@ public:
   const std::vector<entry>& get_entries() const { return entries; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

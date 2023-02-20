@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Carries out the segmentation of a codeword into a number of codeblocks.
 class ldpc_segmenter_rx
@@ -43,4 +43,4 @@ public:
                        const segmenter_config&                                  cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

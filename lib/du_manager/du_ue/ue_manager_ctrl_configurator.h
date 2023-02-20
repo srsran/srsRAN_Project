@@ -12,7 +12,7 @@
 
 #include "du_ue.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief Interface used by DU Manager procedures to add/find/remove UEs from the DU UE Manager.
@@ -27,4 +27,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

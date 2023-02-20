@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 /// \brief Slot-based, last message notifier interface.
@@ -31,4 +31,4 @@ public:
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

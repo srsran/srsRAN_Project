@@ -16,7 +16,7 @@
 
 #include <utility>
 
-using namespace srsgnb;
+using namespace srsran;
 
 sctp_network_gateway_impl::sctp_network_gateway_impl(sctp_network_gateway_config            config_,
                                                      sctp_network_gateway_control_notifier& ctrl_notfier_,

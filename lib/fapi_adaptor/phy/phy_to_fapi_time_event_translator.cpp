@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi/message_validators.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 namespace {

@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 namespace uci_constants {
 
 /// \brief Maximum number of UCI bits that can be multiplexed in a single message.
@@ -32,4 +32,4 @@ static constexpr unsigned MAX_NOF_HARQ_BITS = MAX_NOF_PAYLOAD_BITS;
 static constexpr unsigned MAX_NOF_CSI_PART1_OR_PART2_BITS = MAX_NOF_PAYLOAD_BITS;
 
 } // namespace uci_constants
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include <condition_variable>
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 /// This object creates a barrier for multiple threads when wait() is called. Once the count reaches zero,
 /// a callback is invoked.
@@ -65,4 +65,4 @@ private:
   std::condition_variable cvar;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -19,7 +19,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_processor_notifier_spy : public prach_processor_notifier
 {
@@ -133,4 +133,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

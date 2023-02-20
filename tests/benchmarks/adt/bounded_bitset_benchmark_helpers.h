@@ -13,7 +13,7 @@
 #include "srsgnb/adt/span.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 template <size_t N>
 std::array<bool, N> create_contiguous_array(unsigned number_of_ones)
@@ -32,4 +32,4 @@ std::array<bool, N> shuffle_array(const std::array<bool, N>& ar)
   return ar;
 }
 
-} // namespace srsgnb
+} // namespace srsran

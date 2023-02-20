@@ -12,7 +12,7 @@
 
 #include "srsgnb/fapi/message_validators.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 /// Helper validation function. If the values are within the [min,max] range, returns true, otherwise returns false. If
@@ -77,4 +77,4 @@ inline bool validate_field_eq(Integer           expected_value,
 }
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

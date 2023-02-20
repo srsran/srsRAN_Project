@@ -10,7 +10,7 @@
 
 #include "srsgnb/phy/upper/re_pattern.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Helper macro to assert the RB allocation of the pattern keeping the file and line for code tracing purposes.
 #define re_pattern_assert()                                                                                            \

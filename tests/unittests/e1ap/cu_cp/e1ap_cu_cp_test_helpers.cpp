@@ -11,7 +11,7 @@
 #include "e1ap_cu_cp_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 e1ap_cu_cp_test::e1ap_cu_cp_test()

@@ -17,7 +17,7 @@
 #include "srsgnb/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 using namespace band_helper;
 
@@ -281,7 +281,7 @@ static bool is_valid_raster_param(const nr_raster_params& raster)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nr_band srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
+nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 {
   for (const nr_band_raster& band : nr_band_table_fr1) {
     // Check given ARFCN is between the first and last possible ARFCN.
@@ -292,7 +292,7 @@ nr_band srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
   return nr_band::invalid;
 }
 
-bool srsgnb::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn)
+bool srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn)
 {
   for (const nr_band_raster& raster_band : nr_band_table_fr1) {
     if (raster_band.band == band) {
@@ -302,7 +302,7 @@ bool srsgnb::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t ar
   return false;
 }
 
-uint32_t srsgnb::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
+uint32_t srsran::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
 {
   // NOTE: The procedure implemented in this function is implementation-defined.
 
@@ -322,7 +322,7 @@ uint32_t srsgnb::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
   return 0;
 }
 
-double srsgnb::band_helper::nr_arfcn_to_freq(uint32_t nr_arfcn)
+double srsran::band_helper::nr_arfcn_to_freq(uint32_t nr_arfcn)
 {
   nr_raster_params params = get_raster_params(nr_arfcn);
   if (not is_valid_raster_param(params)) {
@@ -331,7 +331,7 @@ double srsgnb::band_helper::nr_arfcn_to_freq(uint32_t nr_arfcn)
   return (params.F_REF_Offs_MHz * 1e6 + params.delta_F_global_kHz * (nr_arfcn - params.N_REF_Offs) * 1e3);
 }
 
-uint32_t srsgnb::band_helper::freq_to_nr_arfcn(double freq)
+uint32_t srsran::band_helper::freq_to_nr_arfcn(double freq)
 {
   nr_raster_params params = get_raster_params(freq);
   if (not is_valid_raster_param(params)) {
@@ -341,7 +341,7 @@ uint32_t srsgnb::band_helper::freq_to_nr_arfcn(double freq)
                                params.N_REF_Offs);
 }
 
-ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(nr_band band, subcarrier_spacing scs)
+ssb_pattern_case srsran::band_helper::get_ssb_pattern(nr_band band, subcarrier_spacing scs)
 {
   // Look for the given band and SCS.
   for (const nr_band_ssb_scs_case& ssb_scs_case : nr_ssb_band_scs_case_table_fr1) {
@@ -359,7 +359,7 @@ ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(nr_band band, subcarrier_s
   return ssb_pattern_case::invalid;
 }
 
-subcarrier_spacing srsgnb::band_helper::get_most_suitable_ssb_scs(nr_band band, subcarrier_spacing scs_common)
+subcarrier_spacing srsran::band_helper::get_most_suitable_ssb_scs(nr_band band, subcarrier_spacing scs_common)
 {
   subcarrier_spacing lowest_scs = subcarrier_spacing::invalid;
 
@@ -388,7 +388,7 @@ subcarrier_spacing srsgnb::band_helper::get_most_suitable_ssb_scs(nr_band band, 
   return subcarrier_spacing::invalid;
 }
 
-duplex_mode srsgnb::band_helper::get_duplex_mode(nr_band band)
+duplex_mode srsran::band_helper::get_duplex_mode(nr_band band)
 {
   // Look for the given band.
   for (const nr_operating_band& b : nr_operating_bands_fr1) {
@@ -407,20 +407,20 @@ duplex_mode srsgnb::band_helper::get_duplex_mode(nr_band band)
   return duplex_mode::INVALID;
 }
 
-bool srsgnb::band_helper::is_paired_spectrum(nr_band band)
+bool srsran::band_helper::is_paired_spectrum(nr_band band)
 {
   duplex_mode mode = get_duplex_mode(band);
   srsgnb_assert(mode < duplex_mode::INVALID, "Returned invalid duplex MODE");
   return mode == duplex_mode::FDD;
 }
 
-frequency_range srsgnb::band_helper::get_freq_range(nr_band band)
+frequency_range srsran::band_helper::get_freq_range(nr_band band)
 {
   srsgnb_assert(band != nr_band::invalid, "Band must be a valid NR band.");
   return band <= nr_band::n86 ? frequency_range::FR1 : frequency_range::FR2;
 }
 
-double srsgnb::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq)
+double srsran::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq)
 {
   constexpr static unsigned NRE = 12;
 
@@ -429,12 +429,12 @@ double srsgnb::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_p
   return center_freq - (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ * NRE);
 }
 
-uint32_t srsgnb::band_helper::get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn)
+uint32_t srsran::band_helper::get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn)
 {
   return freq_to_nr_arfcn(get_abs_freq_point_a_from_center_freq(nof_prb, nr_arfcn_to_freq(arfcn)));
 }
 
-double srsgnb::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_point_a_arfcn)
+double srsran::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_point_a_arfcn)
 {
   constexpr static unsigned NRE = 12;
   // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
@@ -443,7 +443,7 @@ double srsgnb::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_p
   return abs_freq_point_a_freq + (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ * NRE);
 }
 
-double srsgnb::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrier_spacing scs)
+double srsran::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrier_spacing scs)
 {
   // NOTE (i): It is unclear whether the SCS should always be 15kHz for FR1 (\ref get_abs_freq_point_a_from_center_freq
   // and see note).
@@ -461,7 +461,7 @@ double srsgnb::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32
 }
 
 double
-srsgnb::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs, subcarrier_spacing scs)
+srsran::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs, subcarrier_spacing scs)
 {
   // See notes in \ref get_abs_freq_point_a_from_f_ref.
 
@@ -472,7 +472,7 @@ srsgnb::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, ui
   return abs_freq_point_a + static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * KHZ_TO_HZ);
 }
 
-unsigned srsgnb::band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, frequency_range fr)
+unsigned srsran::band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, frequency_range fr)
 {
   // Return an invalid value in case the input parameters are not valid.
   if (fr != frequency_range::FR1 or scs > subcarrier_spacing::kHz60)
@@ -494,7 +494,7 @@ unsigned srsgnb::band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, sub
   return 0;
 }
 
-min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs)
+min_channel_bandwidth srsran::band_helper::get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs)
 {
   switch (nr_band) {
     case nr_band::n1:
@@ -615,7 +615,7 @@ static interval<unsigned> get_ssb_crbs(subcarrier_spacing    scs_common,
   return interval<unsigned>{ssb_crb_0, ssb_crb_0 + ssb_nof_crbs + additional_crb};
 }
 
-optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
+optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
                                                                                          nr_band            band,
                                                                                          unsigned           n_rbs,
                                                                                          subcarrier_spacing scs_common,
@@ -660,7 +660,7 @@ optional<ssb_coreset0_freq_location> srsgnb::band_helper::get_ssb_coreset0_freq_
   return result;
 }
 
-optional<unsigned> srsgnb::band_helper::get_coreset0_index(nr_band               band,
+optional<unsigned> srsran::band_helper::get_coreset0_index(nr_band               band,
                                                            unsigned              n_rbs,
                                                            subcarrier_spacing    scs_common,
                                                            subcarrier_spacing    scs_ssb,
@@ -722,7 +722,7 @@ optional<unsigned> srsgnb::band_helper::get_coreset0_index(nr_band              
   return chosen_cset0_idx;
 }
 
-unsigned srsgnb::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_idx,
+unsigned srsran::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_idx,
                                                                         nr_band               band,
                                                                         subcarrier_spacing    scs_common,
                                                                         subcarrier_spacing    scs_ssb,

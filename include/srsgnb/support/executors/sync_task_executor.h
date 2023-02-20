@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/executors/task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class sync_task_executor final : public task_executor
 {
@@ -52,4 +52,4 @@ private:
   bool                    done = false;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -10,7 +10,7 @@
 
 #include "e1ap_cu_up_test_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
 e1ap_cu_up_test::e1ap_cu_up_test()

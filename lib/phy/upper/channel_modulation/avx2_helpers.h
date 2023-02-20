@@ -12,7 +12,7 @@
 
 #include <immintrin.h>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace mm256 {
 
@@ -251,4 +251,4 @@ inline __m256 safe_div(__m256 dividend, __m256 divisor)
 }
 
 } // namespace mm256
-} // namespace srsgnb
+} // namespace srsran

@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   pbch_modulator::config_t                                config;
@@ -38,4 +38,4 @@ static const std::vector<test_case_t> pbch_modulator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

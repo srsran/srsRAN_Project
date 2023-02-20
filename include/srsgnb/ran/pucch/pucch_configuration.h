@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of PUCCH Resource Sets.
 /// \remark See TS 38.331, "maxNrofPUCCH-ResourceSets".
@@ -215,4 +215,4 @@ struct pucch_config {
   bool operator!=(const pucch_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

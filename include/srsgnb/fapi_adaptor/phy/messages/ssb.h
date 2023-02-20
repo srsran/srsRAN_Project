@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// \brief Helper function that converts from a SSB FAPI PDU to a SSB processor PDU.
@@ -30,4 +30,4 @@ void convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_pdu,
                              subcarrier_spacing      scs_common);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

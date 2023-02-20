@@ -20,7 +20,7 @@
 /// Helper files for selecting the PUCCH resource before dedicated resources are configured as described in TS38.213
 /// Section 9.2.1.
 ///
-namespace srsgnb {
+namespace srsran {
 
 /// Collects the default PUCCH resource parameters given by TS38.213 Table 9.2.1-1.
 struct pucch_default_resource {
@@ -74,4 +74,4 @@ unsigned get_pucch_default_cyclic_shift(unsigned r_pucch, unsigned nof_cs);
 /// \remark An assertion is triggered if the row index exceeds its boundaries.
 pucch_default_resource get_pucch_default_resource(unsigned row_index, unsigned N_bwp_size);
 
-} // namespace srsgnb
+} // namespace srsran

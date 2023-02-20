@@ -16,7 +16,7 @@
 static std::mt19937 rgen(0);
 static const float  ASSERT_MAX_ERROR = 3e-6;
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void test_dot_prod_ccc(std::size_t N)
 {

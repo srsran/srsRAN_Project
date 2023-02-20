@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Spy implementation of a PDSCH processor.
 class pdsch_processor_spy : public pdsch_processor
@@ -31,4 +31,4 @@ public:
   bool is_process_called() const { return process_method_called; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

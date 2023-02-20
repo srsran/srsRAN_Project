@@ -12,7 +12,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(harq_entity, when_harq_entity_is_created_all_harqs_are_empty)
 {

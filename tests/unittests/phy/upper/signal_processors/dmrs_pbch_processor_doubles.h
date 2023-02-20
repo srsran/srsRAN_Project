@@ -13,7 +13,7 @@
 #include "../../phy_test_utils.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dmrs_pbch_processor_spy : public dmrs_pbch_processor
 {
@@ -39,4 +39,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(dmrs_pbch_processor);
 
-} // namespace srsgnb
+} // namespace srsran

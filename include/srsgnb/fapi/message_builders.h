@@ -20,7 +20,7 @@
 #include "srsgnb/support/math_utils.h"
 #include <algorithm>
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 // :TODO: Review the builders documentation so it matches the UCI builder.
@@ -2489,4 +2489,4 @@ public:
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

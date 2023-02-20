@@ -18,8 +18,8 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 std::unique_ptr<mac_interface> create_mac(const mac_config& mac_cfg);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -22,7 +22,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class cu_up_processor_impl : public cu_up_processor_interface
@@ -81,4 +81,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

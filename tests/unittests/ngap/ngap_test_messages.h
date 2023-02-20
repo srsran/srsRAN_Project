@@ -13,7 +13,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ngap/ngap.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 // NG Application Protocol (NGSetupRequest)
@@ -121,4 +121,4 @@ cu_cp_pdu_session_resource_setup_response
 generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id);
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

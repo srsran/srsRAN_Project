@@ -17,7 +17,7 @@
 #include "srsgnb/gtpu/gtpu_tunnel_rx.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Class used for receiving GTP-U bearers.
 class gtpu_tunnel_rx : public gtpu_tunnel_rx_upper_layer_interface
@@ -54,4 +54,4 @@ private:
   const gtpu_config::gtpu_rx_config    cfg;
   gtpu_tunnel_rx_lower_layer_notifier& lower_dn;
 };
-} // namespace srsgnb
+} // namespace srsran

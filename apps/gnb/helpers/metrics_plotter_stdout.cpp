@@ -14,7 +14,7 @@
 #include <iomanip>
 #include <sstream>
 
-using namespace srsgnb;
+using namespace srsran;
 
 void metrics_plotter_stdout::print_header()
 {

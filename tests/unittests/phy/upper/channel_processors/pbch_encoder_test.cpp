@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

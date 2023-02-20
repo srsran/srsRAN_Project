@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Convert between string and BCD-coded MCC.
 /// Digits are represented by 4-bit nibbles. Unused nibbles are filled with 0xf.
@@ -291,4 +291,4 @@ inline std::string plmn_bcd_to_string(uint32_t plmn)
   return mcc_string + mnc_string;
 }
 
-} // namespace srsgnb
+} // namespace srsran

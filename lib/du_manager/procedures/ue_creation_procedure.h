@@ -21,7 +21,7 @@
 #include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief Handles the creation of a UE and respective bearers in the DU UE manager, MAC, F1.
@@ -90,4 +90,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 #include "srsgnb/fapi_adaptor/mac/messages/prach.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 

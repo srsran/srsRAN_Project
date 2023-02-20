@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/uplink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class uplink_processor_spy : public uplink_processor
 {
@@ -51,4 +51,4 @@ public:
   bool is_process_pucch_method_called() const { return has_process_pucch_method_called; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

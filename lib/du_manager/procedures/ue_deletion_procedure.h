@@ -17,7 +17,7 @@
 #include "srsgnb/du_manager/du_manager_params.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class ue_deletion_procedure
@@ -79,4 +79,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

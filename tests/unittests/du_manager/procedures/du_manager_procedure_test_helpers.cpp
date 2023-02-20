@@ -13,10 +13,10 @@
 #include "lib/du_manager/procedures/ue_creation_procedure.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
-ul_ccch_indication_message srsgnb::srs_du::create_test_ul_ccch_message(rnti_t rnti)
+ul_ccch_indication_message srsran::srs_du::create_test_ul_ccch_message(rnti_t rnti)
 {
   ul_ccch_indication_message ul_ccch_msg;
   ul_ccch_msg.cell_index = to_du_cell_index(0);

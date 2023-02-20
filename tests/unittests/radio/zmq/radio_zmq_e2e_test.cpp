@@ -13,7 +13,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Describes a test parameters.
 struct test_description {

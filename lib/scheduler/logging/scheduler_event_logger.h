@@ -14,7 +14,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/format_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class scheduler_event_logger
 {
@@ -114,4 +114,4 @@ private:
   fmt::memory_buffer fmtbuf;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/ran/modulation_scheme.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Error Vector Magnitude calculator.
 class evm_calculator
@@ -35,4 +35,4 @@ public:
   calculate(span<const log_likelihood_ratio> soft_bits, span<const cf_t> symbols, modulation_scheme modulation) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

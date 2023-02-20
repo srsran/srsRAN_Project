@@ -12,7 +12,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include <stdint.h>
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr uint16_t NGAP_DLT = 152;
 
@@ -49,20 +49,20 @@ void ngap_pcap_impl::close()
   }
 }
 
-void ngap_pcap_impl::push_pdu(srsgnb::byte_buffer pdu)
+void ngap_pcap_impl::push_pdu(srsran::byte_buffer pdu)
 {
   auto fn = [this, pdu]() mutable { write_pdu(std::move(pdu)); };
   worker.push_task(fn);
 }
 
-void ngap_pcap_impl::push_pdu(srsgnb::const_span<uint8_t> pdu)
+void ngap_pcap_impl::push_pdu(srsran::const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, buffer]() mutable { write_pdu(std::move(buffer)); };
   worker.push_task(fn);
 }
 
-void ngap_pcap_impl::write_pdu(srsgnb::byte_buffer buf)
+void ngap_pcap_impl::write_pdu(srsran::byte_buffer buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip
@@ -78,4 +78,4 @@ void ngap_pcap_impl::write_pdu(srsgnb::byte_buffer buf)
   writter.write_pcap_pdu(pdu);
 }
 
-} // namespace srsgnb
+} // namespace srsran

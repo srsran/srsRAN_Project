@@ -14,7 +14,7 @@
 #include "srsgnb/support/async/coroutine.h"
 #include "srsgnb/support/async/manual_event.h"
 
-namespace srsgnb {
+namespace srsran {
 
 template <typename T>
 class async_queue
@@ -97,4 +97,4 @@ private:
   ring_buffer<T> queue;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

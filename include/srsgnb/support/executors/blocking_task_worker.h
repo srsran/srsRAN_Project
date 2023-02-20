@@ -13,7 +13,7 @@
 #include "task_executor.h"
 #include "srsgnb/adt/blocking_queue.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Contrarily to other type of workers, this worker runs in the same thread where run() is called.
 /// run() is blocking.
@@ -59,4 +59,4 @@ private:
   blocking_queue<unique_task> pending_tasks;
 };
 
-} // namespace srsgnb
+} // namespace srsran

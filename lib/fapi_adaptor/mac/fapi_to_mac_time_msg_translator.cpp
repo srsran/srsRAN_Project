@@ -12,7 +12,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/mac/mac_cell_slot_handler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 namespace {

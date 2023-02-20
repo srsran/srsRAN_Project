@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the necessary parameters for creating a PUSCH processor.
 struct pusch_processor_configuration {
@@ -151,4 +151,4 @@ private:
   std::array<log_likelihood_ratio, MAX_NOF_CSI_PART2_LLR> temp_csi_part2_llr;
 };
 
-} // namespace srsgnb
+} // namespace srsran

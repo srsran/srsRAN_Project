@@ -14,7 +14,7 @@
 #include "srsgnb/f1ap/common/f1ap_common.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class gnb_cu_configuration_update_procedure
@@ -43,4 +43,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

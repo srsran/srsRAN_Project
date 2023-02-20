@@ -16,7 +16,7 @@
 #include "srsgnb/ran/nr_cgi.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Basic cell system information provided by DU
@@ -50,4 +50,4 @@ struct du_processor_context {
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

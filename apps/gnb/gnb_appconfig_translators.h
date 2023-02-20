@@ -23,7 +23,7 @@
 #include <map>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 struct gnb_appconfig;
 
@@ -49,4 +49,4 @@ lower_phy_configuration generate_ru_config(const gnb_appconfig& config);
 radio_configuration::radio generate_radio_config(const gnb_appconfig&                  config,
                                                  const radio_configuration::validator& validator);
 
-} // namespace srsgnb
+} // namespace srsran

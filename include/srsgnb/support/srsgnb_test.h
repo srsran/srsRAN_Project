@@ -12,7 +12,7 @@
 
 #include "srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -38,16 +38,16 @@ assert_eq_format_helper(T expected_val, U actual_val, bool eq_cmp, const std::st
 #define TESTASSERT_EQ(EXPECTED, ACTUAL, ...)                                                                           \
   SRSGNB_ALWAYS_ASSERT__(((EXPECTED) == (ACTUAL)),                                                                     \
                          "{}",                                                                                         \
-                         srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, true, fmt::format("" __VA_ARGS__)))
+                         srsran::detail::assert_eq_format_helper(EXPECTED, ACTUAL, true, fmt::format("" __VA_ARGS__)))
 
 #define TESTASSERT_NEQ(EXPECTED, ACTUAL, ...)                                                                          \
   SRSGNB_ALWAYS_ASSERT__(                                                                                              \
       ((EXPECTED) != (ACTUAL)),                                                                                        \
       "{}",                                                                                                            \
-      srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, false, fmt::format("" __VA_ARGS__)))
+      srsran::detail::assert_eq_format_helper(EXPECTED, ACTUAL, false, fmt::format("" __VA_ARGS__)))
 
 #define TESTASSERT(cond, ...)                                                                                          \
   SRSGNB_ALWAYS_ASSERT__(                                                                                              \
-      cond, "{}", srsgnb::detail::assert_eq_format_helper(true, false, true, fmt::format("" __VA_ARGS__)))
+      cond, "{}", srsran::detail::assert_eq_format_helper(true, false, true, fmt::format("" __VA_ARGS__)))
 
-} // namespace srsgnb
+} // namespace srsran

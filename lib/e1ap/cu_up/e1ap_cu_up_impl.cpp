@@ -14,7 +14,7 @@
 #include "srsgnb/asn1/e1ap/e1ap.h"
 #include "srsgnb/ran/bcd_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace asn1::e1ap;
 using namespace srs_cu_up;
 

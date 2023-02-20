@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/nr_cgi.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -24,4 +24,4 @@ struct rrc_cell_context {
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // dummy CU-UP RX bearer interface
 struct dummy_f1u_cu_up_rx_sdu_notifier final : public srs_cu_up::f1u_rx_sdu_notifier {

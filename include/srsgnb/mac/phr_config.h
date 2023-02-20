@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \c phr-PeriodicTimer, in PHR-Config, TS 38.331.
 enum class phr_periodic_timer {
@@ -80,4 +80,4 @@ struct phr_config {
   bool operator!=(const phr_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

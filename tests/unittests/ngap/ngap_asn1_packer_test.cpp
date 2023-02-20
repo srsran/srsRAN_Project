@@ -15,7 +15,7 @@
 #include "tests/unittests/gateways/test_helpers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 security::sec_as_key make_sec_as_key(std::string hex_str)
@@ -40,7 +40,7 @@ protected:
     gw   = std::make_unique<dummy_network_gateway_data_handler>();
     ngap = std::make_unique<dummy_ngap_message_handler>();
 
-    packer = std::make_unique<srsgnb::ngap_asn1_packer>(*gw, *ngap, pcap);
+    packer = std::make_unique<srsran::ngap_asn1_packer>(*gw, *ngap, pcap);
   }
 
   void TearDown() override
@@ -51,7 +51,7 @@ protected:
 
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<dummy_ngap_message_handler>         ngap;
-  std::unique_ptr<srsgnb::ngap_asn1_packer>           packer;
+  std::unique_ptr<srsran::ngap_asn1_packer>           packer;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
   dummy_ngap_pcap                                     pcap;
 };

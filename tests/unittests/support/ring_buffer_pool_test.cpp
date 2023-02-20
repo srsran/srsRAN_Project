@@ -12,7 +12,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(ring_buffer_pool,
      when_pool_is_called_multiple_consecutive_times_then_the_allocated_byte_spans_are_contiguous_in_memory)

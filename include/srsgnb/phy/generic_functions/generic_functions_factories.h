@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a Discrete Fourier Transform (DFT) processor factory.
 class dft_processor_factory
@@ -38,4 +38,4 @@ std::shared_ptr<dft_processor_factory> create_dft_processor_factory_generic();
 std::shared_ptr<dft_processor_factory> create_dft_processor_factory_fftw(bool               avoid_wisdom    = false,
                                                                          const std::string& wisdom_filename = "");
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief Creates a \c srb_id_t from ASN.1 type
@@ -68,4 +68,4 @@ drb_id_t make_drb_id(const Asn1Type& drb_item)
 }
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

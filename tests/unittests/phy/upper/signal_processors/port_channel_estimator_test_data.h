@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   port_channel_estimator::configuration                   cfg;
@@ -52,4 +52,4 @@ static const std::vector<test_case_t> port_channel_estimator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

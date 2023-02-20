@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 class NzpCsiRsGeneratorFixture : public ::testing::TestWithParam<test_case_t>

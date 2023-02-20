@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/uplink_processor.h"
 #include <thread>
 
-namespace srsgnb {
+namespace srsran {
 
 class uplink_processor_concurrent : public uplink_processor
 {
@@ -83,4 +83,4 @@ private:
   std::shared_ptr<processor_pool> pool;
 };
 
-} // namespace srsgnb
+} // namespace srsran

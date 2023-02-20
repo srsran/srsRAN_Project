@@ -48,7 +48,7 @@ static void parse_args(int argc, char** argv)
   }
 }
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main(int argc, char** argv)
 {

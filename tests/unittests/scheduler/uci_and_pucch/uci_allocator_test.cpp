@@ -12,7 +12,7 @@
 #include "uci_test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 ////////////    Structs with expected parameters and PUCCH sched INPUT     ////////////
 
@@ -57,7 +57,7 @@ protected:
     }
   }
 
-  void add_format2_grant_on_pucch(unsigned nof_harq_ack_bits = 3, sr_nof_bits sr_bits = srsgnb::sr_nof_bits::no_sr)
+  void add_format2_grant_on_pucch(unsigned nof_harq_ack_bits = 3, sr_nof_bits sr_bits = srsran::sr_nof_bits::no_sr)
   {
     srsgnb_assert(nof_harq_ack_bits > 2, "At least 3 HARQ bits are required to trigger a Format 2 PUCCH grant.");
     t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
@@ -304,7 +304,7 @@ TEST_F(test_uci_allocator, uci_multiplexing_harq_sr_on_pusch)
 TEST_F(test_uci_allocator, uci_multiplexing_3_bit_harq_sr_on_pusch)
 {
   add_pusch_alloc();
-  add_format2_grant_on_pucch(3, srsgnb::sr_nof_bits::one);
+  add_format2_grant_on_pucch(3, srsran::sr_nof_bits::one);
   auto& slot_grid = t_bench.res_grid[k2];
 
   // 1 PUSCH grant (without UCI) and 2 PUCCH grants expected before multiplexing.
@@ -331,7 +331,7 @@ TEST_F(test_uci_allocator, uci_multiplexing_3_bit_harq_sr_on_pusch)
 TEST_F(test_uci_allocator, uci_multiplexing_3_bit_harq_sr_csi_on_pusch)
 {
   add_pusch_alloc();
-  add_format2_grant_on_pucch(3, srsgnb::sr_nof_bits::one);
+  add_format2_grant_on_pucch(3, srsran::sr_nof_bits::one);
   add_csi_grant();
   auto& slot_grid = t_bench.res_grid[k2];
 

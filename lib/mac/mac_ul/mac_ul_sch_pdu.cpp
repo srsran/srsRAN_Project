@@ -11,7 +11,7 @@
 #include "mac_ul_sch_pdu.h"
 #include "srsgnb/srslog/srslog.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 bool mac_ul_sch_subpdu::unpack(const byte_buffer& subpdu)
 {

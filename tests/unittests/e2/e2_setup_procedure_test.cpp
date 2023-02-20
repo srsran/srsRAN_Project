@@ -15,7 +15,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Test successful cu-cp initiated e2 setup procedure
 TEST_F(e2_test, when_e2_setup_response_received_then_E2_connected)

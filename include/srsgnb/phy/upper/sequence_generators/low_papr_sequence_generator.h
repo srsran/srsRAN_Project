@@ -13,7 +13,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a low PAPR sequence generator interface that implements TS38.211 Section 5.2.2 for any possible length.
 class low_papr_sequence_generator
@@ -30,4 +30,4 @@ public:
   virtual void generate(span<cf_t> sequence, unsigned u, unsigned v, float alpha) const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

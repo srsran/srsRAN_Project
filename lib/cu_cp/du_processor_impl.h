@@ -26,7 +26,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class du_processor_impl : public du_processor_interface
@@ -150,4 +150,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

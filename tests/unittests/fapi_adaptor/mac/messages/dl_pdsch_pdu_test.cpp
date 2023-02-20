@@ -13,7 +13,7 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 
@@ -44,7 +44,7 @@ static void test_conversion_ok()
   // DMRS.
   const dmrs_information& dmrs_cfg = pdu.pdsch_cfg.dmrs;
   TESTASSERT_EQ(dmrs_cfg.dmrs_symb_pos.to_uint64(), fapi_pdu.dl_dmrs_symb_pos);
-  TESTASSERT_EQ((dmrs_cfg.config_type == srsgnb::dmrs_config_type::type1) ? fapi::dmrs_cfg_type::type_1
+  TESTASSERT_EQ((dmrs_cfg.config_type == srsran::dmrs_config_type::type1) ? fapi::dmrs_cfg_type::type_1
                                                                           : fapi::dmrs_cfg_type::type_2,
                 fapi_pdu.dmrs_type);
   TESTASSERT_EQ(dmrs_cfg.dmrs_scrambling_id, fapi_pdu.pdsch_dmrs_scrambling_id);

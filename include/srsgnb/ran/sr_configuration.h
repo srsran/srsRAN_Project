@@ -12,7 +12,7 @@
 
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of SR resources per BWP in a cell.
 /// \remark See TS 38.331, "maxNrofSR-Resources".
@@ -96,4 +96,4 @@ struct scheduling_request_resource_config {
   unsigned pucch_res_id;
 };
 
-} // namespace srsgnb
+} // namespace srsran

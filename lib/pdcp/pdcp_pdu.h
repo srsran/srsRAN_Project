@@ -15,7 +15,7 @@
 #include <memory>
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum supported size of a PDCP SDU
 /// Ref: TS 38.323 Sec. 4.3.1
@@ -76,12 +76,12 @@ struct pdcp_control_pdu_header {
   pdcp_control_pdu_type cpt; ///< Control PDU type (control PDU only, ignored for data PDUs)
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::pdcp_dc_field> {
+struct formatter<srsran::pdcp_dc_field> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -89,7 +89,7 @@ struct formatter<srsgnb::pdcp_dc_field> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"ctrl", "data"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
@@ -97,7 +97,7 @@ struct formatter<srsgnb::pdcp_dc_field> {
 };
 
 template <>
-struct formatter<srsgnb::pdcp_control_pdu_type> {
+struct formatter<srsran::pdcp_control_pdu_type> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -105,7 +105,7 @@ struct formatter<srsgnb::pdcp_control_pdu_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_control_pdu_type cpt, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"status_report", "rohc_feedback", "ehc_feedback"};
     return format_to(ctx.out(), "{}", options[to_number(cpt)]);
@@ -113,7 +113,7 @@ struct formatter<srsgnb::pdcp_control_pdu_type> {
 };
 
 template <>
-struct formatter<srsgnb::pdcp_data_pdu_header> {
+struct formatter<srsran::pdcp_data_pdu_header> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -121,7 +121,7 @@ struct formatter<srsgnb::pdcp_data_pdu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdcp_data_pdu_header& hdr, FormatContext& ctx)
+  auto format(const srsran::pdcp_data_pdu_header& hdr, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "sn={}", hdr.sn);
@@ -129,7 +129,7 @@ struct formatter<srsgnb::pdcp_data_pdu_header> {
 };
 
 template <>
-struct formatter<srsgnb::pdcp_control_pdu_header> {
+struct formatter<srsran::pdcp_control_pdu_header> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -137,7 +137,7 @@ struct formatter<srsgnb::pdcp_control_pdu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdcp_control_pdu_header& hdr, FormatContext& ctx)
+  auto format(const srsran::pdcp_control_pdu_header& hdr, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "cpt={}", hdr.cpt);

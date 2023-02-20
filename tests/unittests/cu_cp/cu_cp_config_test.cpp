@@ -12,11 +12,11 @@
 #include "srsgnb/cu_cp/cu_cp_configuration_helpers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace config_helpers;
 
 TEST(cu_cp_config_test, default_config_is_valid)
 {
-  srsgnb::srs_cu_cp::cu_cp_configuration cfg = make_default_cu_cp_config();
+  srsran::srs_cu_cp::cu_cp_configuration cfg = make_default_cu_cp_config();
   ASSERT_TRUE(is_valid_configuration(cfg));
 }

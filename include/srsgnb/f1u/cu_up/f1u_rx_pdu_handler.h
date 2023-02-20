@@ -13,7 +13,7 @@
 
 #include "srsgnb/f1u/common/nru_message.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief This interface represents the NR-U entry point of a F1-U bearer of the CU-UP.
@@ -27,4 +27,4 @@ public:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

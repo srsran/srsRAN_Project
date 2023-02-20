@@ -16,7 +16,7 @@
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/gateways/network_gateway.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dummy_f1ap_rrc_message_notifier : public srs_cu_cp::f1ap_rrc_message_notifier
 {
@@ -166,4 +166,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

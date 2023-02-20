@@ -14,7 +14,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PUCCH context for Format 0 or Format 1.
 struct ul_pucch_f0_f1_context {
@@ -34,4 +34,4 @@ struct ul_pucch_context {
   optional<ul_pucch_f0_f1_context> context_f0_f1;
 };
 
-} // namespace srsgnb
+} // namespace srsran

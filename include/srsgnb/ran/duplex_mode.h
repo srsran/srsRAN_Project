@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// NR Duplex mode.
 enum class duplex_mode {
@@ -25,4 +25,4 @@ enum class duplex_mode {
   INVALID
 };
 
-} // namespace srsgnb
+} // namespace srsran

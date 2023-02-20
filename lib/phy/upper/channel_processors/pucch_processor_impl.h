@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
 #include "srsgnb/ran/pucch/pucch_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a parameter validator for \ref pucch_processor_impl.
 class pucch_pdu_validator_impl : public pucch_pdu_validator
@@ -132,4 +132,4 @@ private:
   std::array<log_likelihood_ratio, pucch_constants::MAX_NOF_LLR> temp_llr;
 };
 
-} // namespace srsgnb
+} // namespace srsran

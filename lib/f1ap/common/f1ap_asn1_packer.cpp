@@ -11,7 +11,7 @@
 #include "f1ap_asn1_packer.h"
 #include "srsgnb/asn1/f1ap/f1ap.h"
 
-namespace srsgnb {
+namespace srsran {
 
 f1ap_asn1_packer::f1ap_asn1_packer(sctp_network_gateway_data_handler& gw_, f1ap_message_handler& f1ap_handler) :
   logger(srslog::fetch_basic_logger("F1AP-ASN1-PCK")), gw(gw_), f1ap(f1ap_handler)
@@ -48,4 +48,4 @@ void f1ap_asn1_packer::handle_message(const f1ap_message& msg)
   gw.handle_pdu(tx_pdu);
 }
 
-} // namespace srsgnb
+} // namespace srsran

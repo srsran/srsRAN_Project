@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -375,4 +375,4 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

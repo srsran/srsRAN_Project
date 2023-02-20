@@ -13,7 +13,7 @@
 #include "srsgnb/adt/bounded_integer.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 const unsigned NOF_SSB_PRBS = 20;
 
@@ -165,4 +165,4 @@ public:
   bool is_valid(frequency_range fr) const { return to_uint() <= max(fr); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

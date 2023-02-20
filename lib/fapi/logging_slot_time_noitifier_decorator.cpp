@@ -9,7 +9,7 @@
  */
 #include "logging_slot_time_noitifier_decorator.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 void logging_slot_time_notifier_decorator::on_slot_indication(const slot_indication_message& msg)

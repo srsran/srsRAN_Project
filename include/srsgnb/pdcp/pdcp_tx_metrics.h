@@ -17,7 +17,7 @@
  * PDCP TX entity metrics collection. This also includes formatting
  * helpers for printing the metrics.
  */
-namespace srsgnb {
+namespace srsran {
 
 /// This struct will hold relevant metrics for the PDCP TX
 struct pdcp_tx_metrics_container {
@@ -46,12 +46,12 @@ public:
   virtual void                      reset_metrics()         = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 // PDCP RX metrics formatter
 template <>
-struct formatter<srsgnb::pdcp_tx_metrics_container> {
+struct formatter<srsran::pdcp_tx_metrics_container> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -59,7 +59,7 @@ struct formatter<srsgnb::pdcp_tx_metrics_container> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_tx_metrics_container m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_tx_metrics_container m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_pdus={} num_pdu_bytes={} num_discard_timeouts={}",

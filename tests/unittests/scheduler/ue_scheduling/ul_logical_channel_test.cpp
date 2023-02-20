@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 

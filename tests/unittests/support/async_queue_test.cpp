@@ -14,7 +14,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 template <typename T>
 struct read_queue_coroutine {

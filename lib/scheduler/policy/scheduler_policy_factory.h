@@ -12,7 +12,7 @@
 
 #include "scheduler_policy.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct scheduler_strategy_params {
   std::string           strategy = "time_rr";
@@ -21,4 +21,4 @@ struct scheduler_strategy_params {
 
 std::unique_ptr<scheduler_policy> create_scheduler_strategy(const scheduler_strategy_params& params);
 
-} // namespace srsgnb
+} // namespace srsran

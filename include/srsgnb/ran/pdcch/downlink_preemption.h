@@ -17,7 +17,7 @@
 #include "srsgnb/support/units.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief UE configuration to monitor PDCCH for INT_RNTI (interruption).
 ///
@@ -63,4 +63,4 @@ struct downlink_preemption {
   bool operator!=(const downlink_preemption& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

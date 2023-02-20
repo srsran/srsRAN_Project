@@ -15,7 +15,7 @@
 
 static std::mt19937 rgen(0);
 
-using namespace srsgnb;
+using namespace srsran;
 
 template <typename T, unsigned RANGE>
 void test_binary_xor(std::size_t N)

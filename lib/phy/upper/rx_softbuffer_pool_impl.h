@@ -19,7 +19,7 @@
 #include "srsgnb/support/math_utils.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a receiver softbuffer pool.
 class rx_softbuffer_pool_impl : public rx_softbuffer_pool
@@ -55,4 +55,4 @@ public:
   void run_slot(const slot_point& slot) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

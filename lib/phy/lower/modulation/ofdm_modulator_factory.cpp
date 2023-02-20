@@ -4,7 +4,7 @@
 #include "fmt/core.h"
 #include <functional>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Describes an OFDM modulator factory entry.
 struct ofdm_modulator_factory_entry {
@@ -23,7 +23,7 @@ static const std::vector<ofdm_modulator_factory_entry> ofdm_modulator_factory_en
 };
 
 std::unique_ptr<ofdm_modulator_factory>
-srsgnb::create_ofdm_modulator_factory(const ofdm_modulator_factory_configuration& config)
+srsran::create_ofdm_modulator_factory(const ofdm_modulator_factory_configuration& config)
 {
   // Iterate all entries and check if the type matches.
   for (const ofdm_modulator_factory_entry& entry : ofdm_modulator_factory_entries) {

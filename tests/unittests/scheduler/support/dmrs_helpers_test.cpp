@@ -13,7 +13,7 @@
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Test bench to hold DMRS symbol masks, based on Table 7.4.1.1.2-3, TS 38.211.
 struct test_bench {

@@ -14,7 +14,7 @@
 #include <chrono>
 #include <stdio.h>
 
-namespace srsgnb {
+namespace srsran {
 
 task_worker::task_worker(std::string                      thread_name_,
                          uint32_t                         queue_size,
@@ -71,4 +71,4 @@ void task_worker::start(os_thread_realtime_priority prio_, const os_sched_affini
   t_handle = make_thread();
 }
 
-} // namespace srsgnb
+} // namespace srsran

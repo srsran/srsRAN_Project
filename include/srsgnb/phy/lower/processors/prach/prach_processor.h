@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_processor_notifier;
 class prach_processor_request_handler;
@@ -41,4 +41,4 @@ public:
   virtual prach_processor_baseband& get_baseband() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

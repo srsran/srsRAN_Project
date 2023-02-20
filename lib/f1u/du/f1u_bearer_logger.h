@@ -14,7 +14,7 @@
 #include "fmt/format.h"
 #include <string.h>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1u_bearer_log_prefix
@@ -24,7 +24,7 @@ public:
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, "UE={}, {}: ", ue_index, drb_id);
-    prefix = srsgnb::to_c_str(buffer);
+    prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
 
@@ -35,13 +35,13 @@ private:
 using f1u_bearer_logger = prefixed_logger<f1u_bearer_log_prefix>;
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 // associated formatter
 template <>
-struct formatter<srsgnb::srs_du::f1u_bearer_log_prefix> {
+struct formatter<srsran::srs_du::f1u_bearer_log_prefix> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -49,7 +49,7 @@ struct formatter<srsgnb::srs_du::f1u_bearer_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::srs_du::f1u_bearer_log_prefix o, FormatContext& ctx)
+  auto format(srsran::srs_du::f1u_bearer_log_prefix o, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", o.to_c_str());

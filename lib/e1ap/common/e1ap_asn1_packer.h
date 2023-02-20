@@ -16,7 +16,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
 
-namespace srsgnb {
+namespace srsran {
 
 class e1ap_asn1_packer : public e1ap_message_handler
 {
@@ -33,4 +33,4 @@ private:
   e1ap_message_handler&              e1ap;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct f1ap_ue_context {
@@ -93,4 +93,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

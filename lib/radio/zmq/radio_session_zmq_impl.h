@@ -16,7 +16,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <zmq.h>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a ZeroMQ radio based session.
 class radio_session_zmq_impl : public radio_session,
@@ -92,4 +92,4 @@ public:
   bool set_rx_gain(unsigned port_id, double gain_dB) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

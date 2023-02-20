@@ -8,7 +8,7 @@
 #include <inttypes.h>
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Returns an unsigned integer with the N most significant bits (MSB) set to zero, and the remaining bits set
 /// to 1.
@@ -1127,13 +1127,13 @@ inline bounded_bitset<N2, FirstBitIsRightmost> fold_and_accumulate(const bounded
   return fold_and_accumulate<N2, N, FirstBitIsRightmost>(other, fold_length, 0, fold_length);
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// \brief Custom formatter for bounded_bitset<N, FirstBitIsLeftmost>
 template <size_t N, bool FirstBitIsRightmost>
-struct formatter<srsgnb::bounded_bitset<N, FirstBitIsRightmost>> {
+struct formatter<srsran::bounded_bitset<N, FirstBitIsRightmost>> {
   enum { hexadecimal, binary } mode = binary;
   enum { forward, reverse } order   = forward;
 
@@ -1155,7 +1155,7 @@ struct formatter<srsgnb::bounded_bitset<N, FirstBitIsRightmost>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::bounded_bitset<N, FirstBitIsRightmost>& s, FormatContext& ctx)
+  auto format(const srsran::bounded_bitset<N, FirstBitIsRightmost>& s, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {

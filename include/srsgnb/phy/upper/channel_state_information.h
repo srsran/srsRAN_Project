@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/phy_time_unit.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Channel State Information from received DM-RS.
 struct channel_state_information {
@@ -26,4 +26,4 @@ struct channel_state_information {
   float sinr_dB;
 };
 
-} // namespace srsgnb
+} // namespace srsran

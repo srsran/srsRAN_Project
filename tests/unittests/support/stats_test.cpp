@@ -28,7 +28,7 @@ bool is_within_tolerance(float a, float b)
 
 int main()
 {
-  using bias = srsgnb::sample_statistics<float>::bias;
+  using bias = srsran::sample_statistics<float>::bias;
 
   constexpr unsigned                            NOF_OBSERVATIONS = 100;
   constexpr std::array<float, NOF_OBSERVATIONS> SAMPLES          = {
@@ -94,7 +94,7 @@ int main()
                   2.6646109072534867,
                   2.6217413025654213};
 
-  srsgnb::sample_statistics<float> stats    = {};
+  srsran::sample_statistics<float> stats    = {};
   unsigned                         i_sample = 0, stop_sample = NOF_OBSERVATIONS / 2;
   for (; i_sample != stop_sample; ++i_sample) {
     stats.update(SAMPLES[i_sample]);

@@ -10,7 +10,7 @@
 
 #include "du_pucch_resource_manager.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_) :
@@ -34,7 +34,7 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
   // TODO: Handle more than one CSI report period.
   unsigned csi_period = 0;
   if (default_csi_report_cfg.has_value()) {
-    auto& rep = srsgnb::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    auto& rep = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         default_csi_report_cfg->report_cfg_type);
     csi_period = (unsigned)rep.report_slot_period;
   }
@@ -79,7 +79,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   // Allocation of CSI PUCCH offset.
   if (default_csi_report_cfg.has_value()) {
     cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list = {*default_csi_report_cfg};
-    auto& target_csi_cfg = srsgnb::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    auto& target_csi_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type);
     auto& free_csi_list = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].csi_offset_free_list;
     if (free_csi_list.empty()) {
@@ -99,7 +99,7 @@ void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cf
     cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_offset_free_list.push_back(sr.offset);
   }
   if (cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
-    auto& target_csi_cfg = srsgnb::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+    auto& target_csi_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
         cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg->csi_report_cfg_list[0].report_cfg_type);
     cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].csi_offset_free_list.push_back(
         target_csi_cfg.report_slot_offset);

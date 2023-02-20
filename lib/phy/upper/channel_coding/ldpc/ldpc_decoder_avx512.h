@@ -16,7 +16,7 @@
 #include "avx512_support.h"
 #include "ldpc_decoder_impl.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// LDPC decoder implementation based on AVX512 intrinsics.
 class ldpc_decoder_avx512 : public ldpc_decoder_impl
@@ -130,4 +130,4 @@ private:
   unsigned node_size_avx512 = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/math_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Helper function to calculate an interval index from floating point value.
 /// \param[in] value          Input value.
@@ -51,4 +51,4 @@ inline float interval_function(float        value,
   return l_value;
 }
 
-} // namespace srsgnb
+} // namespace srsran

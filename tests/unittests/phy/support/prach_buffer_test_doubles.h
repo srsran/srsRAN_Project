@@ -13,7 +13,7 @@
 #include "srsgnb/phy/support/prach_buffer.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_buffer_spy : public prach_buffer
 {
@@ -69,4 +69,4 @@ private:
   mutable std::vector<unsigned> get_symbol_const_entries;
 };
 
-} // namespace srsgnb
+} // namespace srsran

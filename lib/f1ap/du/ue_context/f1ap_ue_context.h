@@ -14,7 +14,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// UE F1 context that is referenced by both the F1 UE object and its bearers.
@@ -32,4 +32,4 @@ struct f1ap_ue_context {
 
 } // namespace srs_du
 
-} // namespace srsgnb
+} // namespace srsran

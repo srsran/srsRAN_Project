@@ -18,7 +18,7 @@
 #include "srsgnb/ran/pdcch/pdcch_context.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes the PDCCH processor interface.
 ///
@@ -152,4 +152,4 @@ public:
   virtual bool is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

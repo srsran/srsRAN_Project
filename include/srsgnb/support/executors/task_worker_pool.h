@@ -14,7 +14,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/unique_thread.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Simple pool of task workers/threads. The workers share the same queue of task and do not perform
 /// work-stealing.
@@ -89,7 +89,7 @@ private:
   std::vector<worker> workers;
 
   // Queue of tasks.
-  srsgnb::blocking_queue<unique_task> pending_tasks;
+  srsran::blocking_queue<unique_task> pending_tasks;
 };
 
 /// \brief Task executor that pushes tasks to worker pool.
@@ -107,4 +107,4 @@ private:
   task_worker_pool* worker_pool = nullptr;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -17,7 +17,7 @@
 #include "f1u_tx_pdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief Creates an F1-U bearer for the CU-UP.
@@ -30,4 +30,4 @@ std::unique_ptr<f1u_bearer> create_f1u_bearer(uint32_t                  ue_index
                                               uint32_t                  ul_teid);
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

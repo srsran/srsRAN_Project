@@ -14,7 +14,7 @@
 #include "srsgnb/ran/alpha.h"
 #include "srsgnb/ran/csi_rs/csi_rs_id.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Used to configure sounding reference signal transmissions or to configure sounding reference signal
 /// measurements for CLI.
@@ -279,4 +279,4 @@ struct srs_config {
   bool operator!=(const srs_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

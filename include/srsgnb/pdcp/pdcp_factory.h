@@ -22,7 +22,7 @@
 /// This factory header file depends on the PDCP entity interfaces (see above include list). It is kept separate as
 /// clients of the PDCP entity interfaces dont need to call factory methods.
 
-namespace srsgnb {
+namespace srsran {
 
 struct pdcp_entity_creation_message {
   uint32_t                        ue_index;
@@ -38,4 +38,4 @@ struct pdcp_entity_creation_message {
 /// Creates an instance of a PDCP entity.
 std::unique_ptr<pdcp_entity> create_pdcp_entity(pdcp_entity_creation_message& msg);
 
-} // namespace srsgnb
+} // namespace srsran

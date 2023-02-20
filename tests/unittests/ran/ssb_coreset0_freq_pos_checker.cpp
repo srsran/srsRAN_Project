@@ -14,7 +14,7 @@
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Verify that the frequency ss_ssb_hz, or frequency corresponding to the 120th subcarrier of the SSB, is compatible
 // with the synchronization raster defined in Table 5.4.3.1-1, TS 38.104.
@@ -42,7 +42,7 @@ static void test_ssb_belong_to_sync_raster(double ss_ssb_hz)
   }
 }
 
-void srsgnb::test_ssb_coreset0_allocation(unsigned                                       dl_arfcn,
+void srsran::test_ssb_coreset0_allocation(unsigned                                       dl_arfcn,
                                           nr_band                                        nr_band,
                                           unsigned                                       n_rbs,
                                           subcarrier_spacing                             scs_common,

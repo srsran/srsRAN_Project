@@ -20,7 +20,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class uci_sched_tester : public ::testing::Test
 {

@@ -15,8 +15,8 @@
 #include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_du;
+using namespace srsran;
+using namespace srsran::srs_du;
 
 ue_creation_procedure::ue_creation_procedure(du_ue_index_t                                ue_index,
                                              const ul_ccch_indication_message&            ccch_ind_msg,

@@ -16,7 +16,7 @@
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct ofdm_demodulator_test_configuration {
   ofdm_demodulator_configuration config;
@@ -55,4 +55,4 @@ static const std::vector<test_case_t> ofdm_demodulator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

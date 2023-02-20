@@ -21,7 +21,7 @@
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/support/memory_pool/ring_buffer_pool.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_cell_processor final : public mac_cell_slot_handler,
                                  public mac_cell_controller,
@@ -98,4 +98,4 @@ private:
   mac_pcap& pcap;
 };
 
-} // namespace srsgnb
+} // namespace srsran

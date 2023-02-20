@@ -12,7 +12,7 @@
 
 #include "srsgnb/fapi/messages.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct prach_buffer_context;
 
@@ -36,4 +36,4 @@ void convert_prach_fapi_to_phy(prach_buffer_context&       context,
                                unsigned                    sector_id);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

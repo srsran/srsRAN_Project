@@ -13,7 +13,7 @@
 #include "srsgnb/cu_up/cu_up_types.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
 /// Fixture class for UE manager tests

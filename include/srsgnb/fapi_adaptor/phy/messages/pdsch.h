@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// Helper function that converts from a PDSCH FAPI PDU to a PDSCH processor PDU.
@@ -23,4 +23,4 @@ void convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&   proc_pdu,
                                uint16_t                  slot);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

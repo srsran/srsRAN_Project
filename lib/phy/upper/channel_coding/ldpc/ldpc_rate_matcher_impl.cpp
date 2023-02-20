@@ -14,8 +14,8 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 void ldpc_rate_matcher_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
 {

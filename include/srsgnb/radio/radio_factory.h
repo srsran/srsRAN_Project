@@ -14,7 +14,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a radio session factory for a determined radio driver.
 class radio_factory : public radio_base
@@ -39,4 +39,4 @@ public:
 /// \return A valid radio factory if the provided driver name are valid.
 std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name);
 
-} // namespace srsgnb
+} // namespace srsran

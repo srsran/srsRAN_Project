@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittests;
 
@@ -43,7 +43,7 @@ TEST(ULPUSCHPDUTest, ValidPUSCHShouldPass)
   // DMRS.
   const dmrs_information& dmrs_cfg = pusch_cfg.dmrs;
   ASSERT_EQ(dmrs_cfg.dmrs_symb_pos.to_uint64(), fapi_pdu.ul_dmrs_symb_pos);
-  ASSERT_EQ((dmrs_cfg.config_type == srsgnb::dmrs_config_type::type1) ? fapi::dmrs_cfg_type::type_1
+  ASSERT_EQ((dmrs_cfg.config_type == srsran::dmrs_config_type::type1) ? fapi::dmrs_cfg_type::type_1
                                                                       : fapi::dmrs_cfg_type::type_2,
             fapi_pdu.dmrs_type);
   ASSERT_EQ(dmrs_cfg.dmrs_scrambling_id, fapi_pdu.pusch_dmrs_scrambling_id);

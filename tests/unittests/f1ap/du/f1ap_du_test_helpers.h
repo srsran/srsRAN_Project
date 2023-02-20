@@ -24,7 +24,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class dummy_f1ap_du_configurator : public f1ap_du_configurator
@@ -190,4 +190,4 @@ protected:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

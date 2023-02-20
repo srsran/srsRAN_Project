@@ -15,7 +15,7 @@
 #include "srsgnb/ran/pci.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a PSS processor interface
 class pss_processor
@@ -44,4 +44,4 @@ public:
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

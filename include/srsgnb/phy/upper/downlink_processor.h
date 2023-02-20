@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct resource_grid_context;
 
@@ -120,4 +120,4 @@ public:
   virtual downlink_processor& get_processor(slot_point slot, unsigned sector_id) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/phy/lower/lower_phy_request_handler.h"
 #include "srsgnb/phy/lower/lower_phy_rg_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Lower PHY main interface.
 ///
@@ -35,4 +35,4 @@ public:
   virtual lower_phy_controller& get_controller() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

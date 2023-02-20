@@ -15,7 +15,7 @@
 #include "srsgnb/adt/variant.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \c scaling values options, part of \c UCI-OnPUSCH, part of \c PUSCH-Config, as per TS 38.331.
 enum class alpha_scaling_opt { f0p5, f0p65, f0p8, f1 };
@@ -88,4 +88,4 @@ struct uci_on_pusch {
   bool operator!=(const uci_on_pusch& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

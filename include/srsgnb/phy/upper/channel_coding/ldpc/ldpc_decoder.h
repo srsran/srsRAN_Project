@@ -19,7 +19,7 @@
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// LDPC decoder interface.
 class ldpc_decoder
@@ -62,4 +62,4 @@ public:
   decode(bit_buffer& output, span<const log_likelihood_ratio> input, crc_calculator* crc, const configuration& cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

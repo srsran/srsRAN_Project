@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a Resource Grid entry (shorts the type).
 using rg_entry = resource_grid_writer_spy::expected_entry_t;
@@ -61,4 +61,4 @@ static const std::vector<test_case_t> dl_processor_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

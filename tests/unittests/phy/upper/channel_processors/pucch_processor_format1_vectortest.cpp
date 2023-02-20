@@ -13,9 +13,9 @@
 #include "srsgnb/srsvec/compare.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const pucch_processor::format1_configuration& config)
 {
@@ -54,7 +54,7 @@ std::ostream& operator<<(std::ostream& os, const uci_status& status)
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 

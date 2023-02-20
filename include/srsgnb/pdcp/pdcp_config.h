@@ -15,7 +15,7 @@
 #include <memory>
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// PDCP NR SRB or DRB information.
 enum class pdcp_rb_type { srb, drb };
@@ -179,7 +179,7 @@ inline pdcp_config pdcp_make_default_srb_config()
 
   return config;
 }
-} // namespace srsgnb
+} // namespace srsran
 
 //
 // Formatters
@@ -188,7 +188,7 @@ namespace fmt {
 
 // SN size
 template <>
-struct formatter<srsgnb::pdcp_sn_size> {
+struct formatter<srsran::pdcp_sn_size> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -196,7 +196,7 @@ struct formatter<srsgnb::pdcp_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", pdcp_sn_size_to_uint(sn_size));
   }
@@ -204,7 +204,7 @@ struct formatter<srsgnb::pdcp_sn_size> {
 
 // RB type
 template <>
-struct formatter<srsgnb::pdcp_rb_type> {
+struct formatter<srsran::pdcp_rb_type> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -212,7 +212,7 @@ struct formatter<srsgnb::pdcp_rb_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_rb_type type, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_rb_type type, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"SRB", "DRB"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(type)]);
@@ -221,7 +221,7 @@ struct formatter<srsgnb::pdcp_rb_type> {
 
 // RLC mode
 template <>
-struct formatter<srsgnb::pdcp_rlc_mode> {
+struct formatter<srsran::pdcp_rlc_mode> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -229,7 +229,7 @@ struct formatter<srsgnb::pdcp_rlc_mode> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_rlc_mode mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::pdcp_rlc_mode mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"UM", "AM"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
@@ -238,7 +238,7 @@ struct formatter<srsgnb::pdcp_rlc_mode> {
 
 // TX config
 template <>
-struct formatter<srsgnb::pdcp_config::pdcp_tx_config> {
+struct formatter<srsran::pdcp_config::pdcp_tx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -246,7 +246,7 @@ struct formatter<srsgnb::pdcp_config::pdcp_tx_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_config::pdcp_tx_config cfg, FormatContext& ctx)
+  auto format(srsran::pdcp_config::pdcp_tx_config cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
@@ -262,7 +262,7 @@ struct formatter<srsgnb::pdcp_config::pdcp_tx_config> {
 
 // RX config
 template <>
-struct formatter<srsgnb::pdcp_config::pdcp_rx_config> {
+struct formatter<srsran::pdcp_config::pdcp_rx_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -270,7 +270,7 @@ struct formatter<srsgnb::pdcp_config::pdcp_rx_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::pdcp_config::pdcp_rx_config cfg, FormatContext& ctx)
+  auto format(srsran::pdcp_config::pdcp_rx_config cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),

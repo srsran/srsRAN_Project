@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/un.h> // for unix sockets
 
-using namespace srsgnb;
+using namespace srsran;
 
 static const std::string tx_buf = "hello world!";
 

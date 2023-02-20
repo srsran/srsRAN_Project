@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/executors/manual_task_worker.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct du_high_worker_manager {
   static const uint32_t task_worker_queue_size = 10000;
@@ -36,4 +36,4 @@ struct du_high_worker_manager {
   cell_executor_mapper                   cell_exec_mapper{{&cell_execs[0], &cell_execs[1]}, false};
 };
 
-} // namespace srsgnb
+} // namespace srsran

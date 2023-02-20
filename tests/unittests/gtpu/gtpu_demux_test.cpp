@@ -14,7 +14,7 @@
 #include "srsgnb/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Fixture class for GTPU demux tests
 class gtpu_demux_test : public ::testing::Test

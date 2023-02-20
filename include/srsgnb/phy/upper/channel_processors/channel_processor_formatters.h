@@ -27,9 +27,9 @@ namespace fmt {
 
 /// \brief Custom formatter for \c pdcch_processor::coreset_description.
 template <>
-struct formatter<srsgnb::pdcch_processor::coreset_description> {
+struct formatter<srsran::pdcch_processor::coreset_description> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -41,7 +41,7 @@ struct formatter<srsgnb::pdcch_processor::coreset_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdcch_processor::coreset_description& coreset, FormatContext& ctx)
+  auto format(const srsran::pdcch_processor::coreset_description& coreset, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "bwp=[{}, {})", coreset.bwp_start_rb, coreset.bwp_start_rb + coreset.bwp_size_rb);
@@ -50,15 +50,15 @@ struct formatter<srsgnb::pdcch_processor::coreset_description> {
     helper.format_always(ctx, "f_re={}", coreset.frequency_resources);
 
     switch (coreset.cce_to_reg_mapping) {
-      case srsgnb::pdcch_processor::cce_to_reg_mapping_type::CORESET0:
+      case srsran::pdcch_processor::cce_to_reg_mapping_type::CORESET0:
         helper.format_if_verbose(ctx, "mapping=coreset0");
         break;
-      case srsgnb::pdcch_processor::cce_to_reg_mapping_type::INTERLEAVED:
+      case srsran::pdcch_processor::cce_to_reg_mapping_type::INTERLEAVED:
         helper.format_if_verbose(ctx, "mapping=interleaved");
         helper.format_if_verbose(ctx, "reg_bundle_size={}", coreset.reg_bundle_size);
         helper.format_if_verbose(ctx, "interleaver_size={}", coreset.interleaver_size);
         break;
-      case srsgnb::pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED:
+      case srsran::pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED:
         helper.format_if_verbose(ctx, "mapping=non-interleaved");
         break;
     }
@@ -71,9 +71,9 @@ struct formatter<srsgnb::pdcch_processor::coreset_description> {
 
 /// \brief Custom formatter for \c pdcch_processor::dci_description.
 template <>
-struct formatter<srsgnb::pdcch_processor::dci_description> {
+struct formatter<srsran::pdcch_processor::dci_description> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -85,7 +85,7 @@ struct formatter<srsgnb::pdcch_processor::dci_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdcch_processor::dci_description& dci, FormatContext& ctx)
+  auto format(const srsran::pdcch_processor::dci_description& dci, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "cce={}", dci.cce_index);
@@ -97,7 +97,7 @@ struct formatter<srsgnb::pdcch_processor::dci_description> {
     helper.format_if_verbose(ctx, "n_rnti={}", dci.n_rnti);
     helper.format_if_verbose(ctx, "power_dmrs={:+.1f}dB", dci.dmrs_power_offset_dB);
     helper.format_if_verbose(ctx, "power_data={:+.1f}dB", dci.data_power_offset_dB);
-    helper.format_if_verbose(ctx, "ports={}", srsgnb::span<const uint8_t>(dci.ports));
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(dci.ports));
 
     return ctx.out();
   }
@@ -105,9 +105,9 @@ struct formatter<srsgnb::pdcch_processor::dci_description> {
 
 /// \brief Custom formatter for \c pdcch_processor::pdu_t.
 template <>
-struct formatter<srsgnb::pdcch_processor::pdu_t> {
+struct formatter<srsran::pdcch_processor::pdu_t> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -119,7 +119,7 @@ struct formatter<srsgnb::pdcch_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdcch_processor::pdu_t& pdu, FormatContext& ctx)
+  auto format(const srsran::pdcch_processor::pdu_t& pdu, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (pdu.context.has_value()) {
@@ -135,9 +135,9 @@ struct formatter<srsgnb::pdcch_processor::pdu_t> {
 
 /// \brief Custom formatter for \c pdsch_processor::codeword_description.
 template <>
-struct formatter<srsgnb::pdsch_processor::codeword_description> {
+struct formatter<srsran::pdsch_processor::codeword_description> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -149,7 +149,7 @@ struct formatter<srsgnb::pdsch_processor::codeword_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdsch_processor::codeword_description& codeword_descr, FormatContext& ctx)
+  auto format(const srsran::pdsch_processor::codeword_description& codeword_descr, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "mod={}", to_string(codeword_descr.modulation));
@@ -161,9 +161,9 @@ struct formatter<srsgnb::pdsch_processor::codeword_description> {
 
 /// \brief Custom formatter for \c pdsch_processor::pdu_t.
 template <>
-struct formatter<srsgnb::pdsch_processor::pdu_t> {
+struct formatter<srsran::pdsch_processor::pdu_t> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -175,7 +175,7 @@ struct formatter<srsgnb::pdsch_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdsch_processor::pdu_t& pdu, FormatContext& ctx)
+  auto format(const srsran::pdsch_processor::pdu_t& pdu, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (pdu.context.has_value()) {
@@ -186,23 +186,23 @@ struct formatter<srsgnb::pdsch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "bwp=[{}, {})", pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb);
     helper.format_always(ctx, "prb={}", pdu.freq_alloc);
     helper.format_always(ctx, "symb=[{}, {})", pdu.start_symbol_index, pdu.start_symbol_index + pdu.nof_symbols);
-    helper.format_always(ctx, srsgnb::span<const srsgnb::pdsch_processor::codeword_description>(pdu.codewords));
+    helper.format_always(ctx, srsran::span<const srsran::pdsch_processor::codeword_description>(pdu.codewords));
 
     helper.format_if_verbose(ctx, "n_id={}", pdu.n_id);
     helper.format_if_verbose(
-        ctx, "ref_point={}", (pdu.ref_point == srsgnb::pdsch_processor::pdu_t::CRB0) ? "CRB0" : "PRB0");
-    helper.format_if_verbose(ctx, "dmrs_type={}", (pdu.dmrs == srsgnb::dmrs_type::TYPE1) ? 1 : 2);
+        ctx, "ref_point={}", (pdu.ref_point == srsran::pdsch_processor::pdu_t::CRB0) ? "CRB0" : "PRB0");
+    helper.format_if_verbose(ctx, "dmrs_type={}", (pdu.dmrs == srsran::dmrs_type::TYPE1) ? 1 : 2);
     helper.format_if_verbose(ctx, "dmrs_mask={}", pdu.dmrs_symbol_mask);
     helper.format_if_verbose(ctx, "n_scidid={}", pdu.scrambling_id);
     helper.format_if_verbose(ctx, "n_scid={}", pdu.n_scid);
     helper.format_if_verbose(ctx, "ncgwd={}", pdu.nof_cdm_groups_without_data);
-    helper.format_if_verbose(ctx, "bg={}", (pdu.ldpc_base_graph == srsgnb::ldpc_base_graph_type::BG1) ? "BG1" : "BG2");
+    helper.format_if_verbose(ctx, "bg={}", (pdu.ldpc_base_graph == srsran::ldpc_base_graph_type::BG1) ? "BG1" : "BG2");
     helper.format_if_verbose(ctx, "lbrm={}bytes", pdu.tbs_lbrm_bytes);
     helper.format_if_verbose(ctx, "power_dmrs={:+.1f}dB", pdu.ratio_pdsch_dmrs_to_sss_dB);
     helper.format_if_verbose(ctx, "power_data={:+.1f}dB", pdu.ratio_pdsch_data_to_sss_dB);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
-    helper.format_if_verbose(ctx, "ports={}", srsgnb::span<const uint8_t>(pdu.ports));
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.ports));
 
     return ctx.out();
   }
@@ -210,9 +210,9 @@ struct formatter<srsgnb::pdsch_processor::pdu_t> {
 
 /// \brief Custom formatter for \c prach_detector::configuration.
 template <>
-struct formatter<srsgnb::prach_detector::configuration> {
+struct formatter<srsran::prach_detector::configuration> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -224,7 +224,7 @@ struct formatter<srsgnb::prach_detector::configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::prach_detector::configuration& config, FormatContext& ctx)
+  auto format(const srsran::prach_detector::configuration& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_if_verbose(ctx, "rsi={}", config.root_sequence_index);
@@ -242,7 +242,7 @@ struct formatter<srsgnb::prach_detector::configuration> {
 
 /// \brief Custom formatter for \c prach_detection_result::preamble_indication.
 template <>
-struct formatter<srsgnb::prach_detection_result::preamble_indication> {
+struct formatter<srsran::prach_detection_result::preamble_indication> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -250,7 +250,7 @@ struct formatter<srsgnb::prach_detection_result::preamble_indication> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::prach_detection_result::preamble_indication& preamble, FormatContext& ctx)
+  auto format(const srsran::prach_detection_result::preamble_indication& preamble, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     format_to(ctx.out(),
@@ -265,9 +265,9 @@ struct formatter<srsgnb::prach_detection_result::preamble_indication> {
 
 /// \brief Custom formatter for \c prach_detection_result.
 template <>
-struct formatter<srsgnb::prach_detection_result> {
+struct formatter<srsran::prach_detection_result> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -279,7 +279,7 @@ struct formatter<srsgnb::prach_detection_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::prach_detection_result& result, FormatContext& ctx)
+  auto format(const srsran::prach_detection_result& result, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rssi={:+.1f}dB", result.rssi_dB);
@@ -287,7 +287,7 @@ struct formatter<srsgnb::prach_detection_result> {
     helper.format_if_verbose(ctx, "max_ta={:.2f}us", result.time_advance_max.to_seconds() * 1e6);
     helper.format_always(ctx,
                          "detected_preambles=[{:,}]",
-                         srsgnb::span<const srsgnb::prach_detection_result::preamble_indication>(result.preambles));
+                         srsran::span<const srsran::prach_detection_result::preamble_indication>(result.preambles));
 
     return ctx.out();
   }
@@ -295,7 +295,7 @@ struct formatter<srsgnb::prach_detection_result> {
 
 /// \brief Custom formatter for \c pucch_processor::format0_configuration.
 template <>
-struct formatter<srsgnb::pucch_processor::format0_configuration> {
+struct formatter<srsran::pucch_processor::format0_configuration> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -303,7 +303,7 @@ struct formatter<srsgnb::pucch_processor::format0_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pucch_processor::format0_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format0_configuration& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "format0_configuration");
@@ -312,9 +312,9 @@ struct formatter<srsgnb::pucch_processor::format0_configuration> {
 
 /// \brief Custom formatter for \c pucch_processor::format1_configuration.
 template <>
-struct formatter<srsgnb::pucch_processor::format1_configuration> {
+struct formatter<srsran::pucch_processor::format1_configuration> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -326,7 +326,7 @@ struct formatter<srsgnb::pucch_processor::format1_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pucch_processor::format1_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format1_configuration& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (config.context.has_value()) {
@@ -344,7 +344,7 @@ struct formatter<srsgnb::pucch_processor::format1_configuration> {
     helper.format_always(ctx, "occ={}", config.time_domain_occ);
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_if_verbose(ctx, "cp={}", config.cp.to_string());
-    helper.format_if_verbose(ctx, "ports={}", srsgnb::span<const uint8_t>(config.ports));
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(config.ports));
 
     return ctx.out();
   }
@@ -352,9 +352,9 @@ struct formatter<srsgnb::pucch_processor::format1_configuration> {
 
 /// \brief Custom formatter for \c pucch_processor::format2_configuration.
 template <>
-struct formatter<srsgnb::pucch_processor::format2_configuration> {
+struct formatter<srsran::pucch_processor::format2_configuration> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -366,7 +366,7 @@ struct formatter<srsgnb::pucch_processor::format2_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pucch_processor::format2_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format2_configuration& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (config.context.has_value()) {
@@ -386,7 +386,7 @@ struct formatter<srsgnb::pucch_processor::format2_configuration> {
     helper.format_if_verbose(ctx, "n_id0={}", config.n_id_0);
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_if_verbose(ctx, "cp={}", config.cp.to_string());
-    helper.format_if_verbose(ctx, "ports={}", srsgnb::span<const uint8_t>(config.ports));
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(config.ports));
 
     return ctx.out();
   }
@@ -394,7 +394,7 @@ struct formatter<srsgnb::pucch_processor::format2_configuration> {
 
 /// \brief Custom formatter for \c pucch_processor::format3_configuration.
 template <>
-struct formatter<srsgnb::pucch_processor::format3_configuration> {
+struct formatter<srsran::pucch_processor::format3_configuration> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -402,7 +402,7 @@ struct formatter<srsgnb::pucch_processor::format3_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pucch_processor::format3_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format3_configuration& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "format3_configuration");
@@ -411,7 +411,7 @@ struct formatter<srsgnb::pucch_processor::format3_configuration> {
 
 /// \brief Custom formatter for \c pucch_processor::format4_configuration.
 template <>
-struct formatter<srsgnb::pucch_processor::format4_configuration> {
+struct formatter<srsran::pucch_processor::format4_configuration> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -419,7 +419,7 @@ struct formatter<srsgnb::pucch_processor::format4_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pucch_processor::format4_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format4_configuration& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "format4_configuration");
@@ -428,9 +428,9 @@ struct formatter<srsgnb::pucch_processor::format4_configuration> {
 
 /// \brief Custom formatter for \c pucch_processor_result.
 template <>
-struct formatter<srsgnb::pucch_processor_result> {
+struct formatter<srsran::pucch_processor_result> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -442,7 +442,7 @@ struct formatter<srsgnb::pucch_processor_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pucch_processor_result& result, FormatContext& ctx)
+  auto format(const srsran::pucch_processor_result& result, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     unsigned nof_sr        = result.message.get_expected_nof_sr_bits();
@@ -450,36 +450,36 @@ struct formatter<srsgnb::pucch_processor_result> {
     unsigned nof_csi_part1 = result.message.get_expected_nof_csi_part1_bits();
     unsigned nof_csi_part2 = result.message.get_expected_nof_csi_part2_bits();
 
-    if (result.message.get_status() == srsgnb::uci_status::valid) {
+    if (result.message.get_status() == srsran::uci_status::valid) {
       // Valid UCI payload.
       if (nof_harq_ack) {
-        helper.format_always(ctx, "ack={:#}", srsgnb::span<const uint8_t>(result.message.get_harq_ack_bits()));
+        helper.format_always(ctx, "ack={:#}", srsran::span<const uint8_t>(result.message.get_harq_ack_bits()));
       }
       if (nof_sr) {
-        helper.format_always(ctx, "sr={:#}", srsgnb::span<const uint8_t>(result.message.get_sr_bits()));
+        helper.format_always(ctx, "sr={:#}", srsran::span<const uint8_t>(result.message.get_sr_bits()));
       }
       if (nof_csi_part1) {
-        helper.format_always(ctx, "csi1={:#}", srsgnb::span<const uint8_t>(result.message.get_csi_part1_bits()));
+        helper.format_always(ctx, "csi1={:#}", srsran::span<const uint8_t>(result.message.get_csi_part1_bits()));
       }
       if (nof_csi_part2) {
-        helper.format_always(ctx, "csi2={:#}", srsgnb::span<const uint8_t>(result.message.get_csi_part2_bits()));
+        helper.format_always(ctx, "csi2={:#}", srsran::span<const uint8_t>(result.message.get_csi_part2_bits()));
       }
     } else {
       // Bad UCI payload.
-      std::array<uint8_t, srsgnb::uci_constants::MAX_NOF_PAYLOAD_BITS> bad_payload;
+      std::array<uint8_t, srsran::uci_constants::MAX_NOF_PAYLOAD_BITS> bad_payload;
       std::fill(bad_payload.begin(), bad_payload.end(), 2U);
 
       if (nof_harq_ack) {
-        helper.format_always(ctx, "ack={:#}", srsgnb::span<const uint8_t>(bad_payload).first(nof_harq_ack));
+        helper.format_always(ctx, "ack={:#}", srsran::span<const uint8_t>(bad_payload).first(nof_harq_ack));
       }
       if (nof_sr) {
-        helper.format_always(ctx, "sr={:#}", srsgnb::span<const uint8_t>(bad_payload).first(nof_sr));
+        helper.format_always(ctx, "sr={:#}", srsran::span<const uint8_t>(bad_payload).first(nof_sr));
       }
       if (nof_csi_part1) {
-        helper.format_always(ctx, "csi1={:#}", srsgnb::span<const uint8_t>(bad_payload).first(nof_csi_part1));
+        helper.format_always(ctx, "csi1={:#}", srsran::span<const uint8_t>(bad_payload).first(nof_csi_part1));
       }
       if (nof_csi_part2) {
-        helper.format_always(ctx, "csi2={:#}", srsgnb::span<const uint8_t>(bad_payload).first(nof_csi_part2));
+        helper.format_always(ctx, "csi2={:#}", srsran::span<const uint8_t>(bad_payload).first(nof_csi_part2));
       }
     }
 
@@ -499,9 +499,9 @@ struct formatter<srsgnb::pucch_processor_result> {
 
 /// \brief Custom formatter for \c pusch_processor::codeword_description.
 template <>
-struct formatter<srsgnb::pusch_processor::codeword_description> {
+struct formatter<srsran::pusch_processor::codeword_description> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -513,7 +513,7 @@ struct formatter<srsgnb::pusch_processor::codeword_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::optional<srsgnb::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
+  auto format(const srsran::optional<srsran::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rv={}", codeword.value().rv);
@@ -526,9 +526,9 @@ struct formatter<srsgnb::pusch_processor::codeword_description> {
 
 /// \brief Custom formatter for \c pusch_processor::uci_description.
 template <>
-struct formatter<srsgnb::pusch_processor::uci_description> {
+struct formatter<srsran::pusch_processor::uci_description> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -540,7 +540,7 @@ struct formatter<srsgnb::pusch_processor::uci_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pusch_processor::uci_description& uci_desc, FormatContext& ctx)
+  auto format(const srsran::pusch_processor::uci_description& uci_desc, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     // Number of ACK, CSI Part 1 and CSI Part 2 bits.
@@ -563,9 +563,9 @@ struct formatter<srsgnb::pusch_processor::uci_description> {
 
 /// \brief Custom formatter for \c pusch_processor::pdu_t.
 template <>
-struct formatter<srsgnb::pusch_processor::pdu_t> {
+struct formatter<srsran::pusch_processor::pdu_t> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -577,7 +577,7 @@ struct formatter<srsgnb::pusch_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pusch_processor::pdu_t& pdu, FormatContext& ctx)
+  auto format(const srsran::pusch_processor::pdu_t& pdu, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (pdu.context.has_value()) {
@@ -606,12 +606,12 @@ struct formatter<srsgnb::pusch_processor::pdu_t> {
     helper.format_if_verbose(ctx, "n_scr_id={}", pdu.scrambling_id);
     helper.format_if_verbose(ctx, "n_scid={}", pdu.n_scid);
     helper.format_if_verbose(ctx, "n_cdm_g_wd={}", pdu.nof_cdm_groups_without_data);
-    helper.format_if_verbose(ctx, "dmrs_type={}", (pdu.dmrs == srsgnb::dmrs_type::TYPE1) ? 1 : 2);
+    helper.format_if_verbose(ctx, "dmrs_type={}", (pdu.dmrs == srsran::dmrs_type::TYPE1) ? 1 : 2);
     helper.format_if_verbose(ctx, "lbrm={}bytes", pdu.tbs_lbrm_bytes);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());
     helper.format_if_verbose(ctx, "nof_layers={}", pdu.nof_tx_layers);
-    helper.format_if_verbose(ctx, "ports={}", srsgnb::span<const uint8_t>(pdu.rx_ports));
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.rx_ports));
 
     return ctx.out();
   }
@@ -619,9 +619,9 @@ struct formatter<srsgnb::pusch_processor::pdu_t> {
 
 /// \brief Custom formatter for \c pusch_decoder_result.
 template <>
-struct formatter<srsgnb::pusch_decoder_result> {
+struct formatter<srsran::pusch_decoder_result> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -633,7 +633,7 @@ struct formatter<srsgnb::pusch_decoder_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pusch_decoder_result& result, FormatContext& ctx)
+  auto format(const srsran::pusch_decoder_result& result, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "crc={}", result.tb_crc_ok ? "OK" : "KO");
@@ -649,9 +649,9 @@ struct formatter<srsgnb::pusch_decoder_result> {
 
 /// \brief Custom formatter for \c pusch_processor_result.
 template <>
-struct formatter<srsgnb::pusch_processor_result> {
+struct formatter<srsran::pusch_processor_result> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -663,11 +663,11 @@ struct formatter<srsgnb::pusch_processor_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pusch_processor_result& result, FormatContext& ctx)
+  auto format(const srsran::pusch_processor_result& result, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     // Generate bad payload, to use in case of invalid or unknown UCI status.
-    std::array<uint8_t, srsgnb::uci_constants::MAX_NOF_PAYLOAD_BITS> bad_payload;
+    std::array<uint8_t, srsran::uci_constants::MAX_NOF_PAYLOAD_BITS> bad_payload;
     std::fill(bad_payload.begin(), bad_payload.end(), 2U);
 
     // PUSCH decoder result.
@@ -678,27 +678,27 @@ struct formatter<srsgnb::pusch_processor_result> {
       helper.format_if_verbose(ctx, "evm={:.1f}%", result.evm.value() * 100.0F);
     }
     if ((!result.harq_ack.payload.empty())) {
-      if (result.harq_ack.status == srsgnb::uci_status::valid) {
-        helper.format_always(ctx, "ack={:#}", srsgnb::span<const uint8_t>(result.harq_ack.payload));
+      if (result.harq_ack.status == srsran::uci_status::valid) {
+        helper.format_always(ctx, "ack={:#}", srsran::span<const uint8_t>(result.harq_ack.payload));
       } else {
         helper.format_always(
-            ctx, "ack={:#}", srsgnb::span<const uint8_t>(bad_payload).first(result.harq_ack.payload.size()));
+            ctx, "ack={:#}", srsran::span<const uint8_t>(bad_payload).first(result.harq_ack.payload.size()));
       }
     }
     if ((!result.csi_part1.payload.empty())) {
-      if (result.csi_part1.status == srsgnb::uci_status::valid) {
-        helper.format_always(ctx, "csi1={:#}", srsgnb::span<const uint8_t>(result.csi_part1.payload));
+      if (result.csi_part1.status == srsran::uci_status::valid) {
+        helper.format_always(ctx, "csi1={:#}", srsran::span<const uint8_t>(result.csi_part1.payload));
       } else {
         helper.format_always(
-            ctx, "csi1={:#}", srsgnb::span<const uint8_t>(bad_payload).first(result.csi_part1.payload.size()));
+            ctx, "csi1={:#}", srsran::span<const uint8_t>(bad_payload).first(result.csi_part1.payload.size()));
       }
     }
     if ((!result.csi_part2.payload.empty())) {
-      if (result.csi_part2.status == srsgnb::uci_status::valid) {
-        helper.format_always(ctx, "csi2={:#}", srsgnb::span<const uint8_t>(result.csi_part2.payload));
+      if (result.csi_part2.status == srsran::uci_status::valid) {
+        helper.format_always(ctx, "csi2={:#}", srsran::span<const uint8_t>(result.csi_part2.payload));
       } else {
         helper.format_always(
-            ctx, "csi2={:#}", srsgnb::span<const uint8_t>(bad_payload).first(result.csi_part2.payload.size()));
+            ctx, "csi2={:#}", srsran::span<const uint8_t>(bad_payload).first(result.csi_part2.payload.size()));
       }
     }
 
@@ -714,9 +714,9 @@ struct formatter<srsgnb::pusch_processor_result> {
 
 /// \brief Custom formatter for \c ssb_processor::pdu_t.
 template <>
-struct formatter<srsgnb::ssb_processor::pdu_t> {
+struct formatter<srsran::ssb_processor::pdu_t> {
   /// Helper used to parse formatting options and format fields.
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 
   /// Default constructor.
   formatter() = default;
@@ -728,7 +728,7 @@ struct formatter<srsgnb::ssb_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::ssb_processor::pdu_t& pdu, FormatContext& ctx)
+  auto format(const srsran::ssb_processor::pdu_t& pdu, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "pci={}", pdu.phys_cell_id);
@@ -741,7 +741,7 @@ struct formatter<srsgnb::ssb_processor::pdu_t> {
 
     helper.format_if_verbose(ctx, "beta_pss={:+.1f}dB", pdu.beta_pss);
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
-    helper.format_if_verbose(ctx, "ports={}", srsgnb::span<const uint8_t>(pdu.ports));
+    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.ports));
 
     return ctx.out();
   }

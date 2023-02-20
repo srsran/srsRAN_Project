@@ -15,7 +15,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/async_task_loop.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Service provided by DU Processor to handle routines.
@@ -31,7 +31,7 @@ public:
 
   async_task<cu_cp_pdu_session_resource_setup_response>
   start_pdu_session_resource_setup_routine(const cu_cp_pdu_session_resource_setup_request& setup_msg,
-                                           const srsgnb::security::sec_as_config&          security_cfg,
+                                           const srsran::security::sec_as_config&          security_cfg,
                                            du_processor_rrc_ue_control_message_notifier&   rrc_ue_ctrl_notifier,
                                            drb_manager&                                    rrc_ue_drb_manager);
 
@@ -46,4 +46,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

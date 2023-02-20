@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Calculates the number of RE used for DMRS per RB in PDSCH and PUSCH transmissions.
 inline unsigned calculate_nof_dmrs_per_rb(const dmrs_information& dmrs)
@@ -122,4 +122,4 @@ inline dmrs_information make_dmrs_info_common(const pusch_config_common& pusch_c
   return dmrs;
 }
 
-} // namespace srsgnb
+} // namespace srsran

@@ -16,12 +16,12 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 enum class ssb_pattern_case;
 struct cell_slot_resource_allocator;
 
-using ssb_information_list = srsgnb::static_vector<ssb_information, MAX_SSB_PER_SLOT>;
+using ssb_information_list = srsran::static_vector<ssb_information, MAX_SSB_PER_SLOT>;
 
 class ssb_scheduler
 {
@@ -79,4 +79,4 @@ private:
   srslog::basic_logger&     logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

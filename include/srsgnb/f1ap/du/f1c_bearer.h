@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief This interface represents the data entry point of the transmitting side of a F1-C bearer of the DU.
@@ -41,4 +41,4 @@ class f1c_bearer : public f1c_tx_sdu_handler, public f1c_rx_pdu_handler
 {};
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

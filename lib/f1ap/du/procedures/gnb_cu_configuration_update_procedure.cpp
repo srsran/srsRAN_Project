@@ -11,8 +11,8 @@
 #include "gnb_cu_configuration_update_procedure.h"
 #include "srsgnb/f1ap/common/f1ap_common.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_du;
+using namespace srsran;
+using namespace srsran::srs_du;
 
 void gnb_cu_configuration_update_procedure::send_gnb_cu_configuration_update_acknowledge()
 {

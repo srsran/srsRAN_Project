@@ -10,7 +10,7 @@
 
 #include "mac_fapi_adaptor_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(fapi::slot_message_gateway&       msg_gw,

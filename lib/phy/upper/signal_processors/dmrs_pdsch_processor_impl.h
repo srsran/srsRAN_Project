@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsgnb/support/math_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines a DMRS for PDSCH generic implementation.
 class dmrs_pdsch_processor_impl : public dmrs_pdsch_processor
@@ -86,4 +86,4 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

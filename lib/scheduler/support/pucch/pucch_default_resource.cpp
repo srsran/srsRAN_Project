@@ -10,15 +10,15 @@
 
 #include "pucch_default_resource.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-unsigned srsgnb::get_pucch_default_resource_index(unsigned int n_cce, unsigned int nof_cce, unsigned int delta_pri)
+unsigned srsran::get_pucch_default_resource_index(unsigned int n_cce, unsigned int nof_cce, unsigned int delta_pri)
 {
   return (2 * n_cce) / nof_cce + 2 * delta_pri;
 }
 
 std::pair<unsigned, unsigned>
-srsgnb::get_pucch_default_prb_index(unsigned r_pucch, unsigned rb_bwp_offset, unsigned nof_cs, unsigned N_bwp_size)
+srsran::get_pucch_default_prb_index(unsigned r_pucch, unsigned rb_bwp_offset, unsigned nof_cs, unsigned N_bwp_size)
 {
   srsgnb_assert(r_pucch < 16, "The PUCCH resource index {} exceeds the maximum allowed {}.", r_pucch, 16);
 
@@ -32,7 +32,7 @@ srsgnb::get_pucch_default_prb_index(unsigned r_pucch, unsigned rb_bwp_offset, un
   return {prb_index_first, prb_index_second};
 }
 
-unsigned srsgnb::get_pucch_default_cyclic_shift(unsigned r_pucch, unsigned nof_cs)
+unsigned srsran::get_pucch_default_cyclic_shift(unsigned r_pucch, unsigned nof_cs)
 {
   srsgnb_assert(r_pucch < 16, "The PUCCH resource index {} exceeds the maximum allowed {}.", r_pucch, 16);
   srsgnb_assert(nof_cs > 0, "The number of cyclic shift must be greater than zero.");
@@ -43,7 +43,7 @@ unsigned srsgnb::get_pucch_default_cyclic_shift(unsigned r_pucch, unsigned nof_c
   return result;
 }
 
-pucch_default_resource srsgnb::get_pucch_default_resource(unsigned index, unsigned N_bwp_size)
+pucch_default_resource srsran::get_pucch_default_resource(unsigned index, unsigned N_bwp_size)
 {
   // TS38.213 Table 9.2.1-1.
   static const std::array<pucch_default_resource, 16> table = {{{pucch_format::FORMAT_0, 12, 2, 0, {0, 3}},

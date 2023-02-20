@@ -13,8 +13,8 @@
 #include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 void ldpc_decoder_impl::init(const configuration& cfg)
 {
@@ -271,5 +271,5 @@ void ldpc_decoder_generic::get_hard_bits(bit_buffer& out)
   unsigned out_length = out.size();
 
   span<log_likelihood_ratio> llrs(soft_bits.begin(), out_length);
-  srsgnb::hard_decision(out, llrs);
+  srsran::hard_decision(out, llrs);
 }

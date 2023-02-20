@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -209,4 +209,4 @@ private:
   mutable std::mutex     mutex;
 };
 
-} // namespace srsgnb
+} // namespace srsran

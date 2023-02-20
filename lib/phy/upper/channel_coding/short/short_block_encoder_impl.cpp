@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/binary.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Maximum message length.
 static constexpr unsigned MAX_IN_BITS = 11;
@@ -136,7 +136,7 @@ void short_block_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> 
   rate_match(output, tmp);
 }
 
-std::unique_ptr<short_block_encoder> srsgnb::create_short_block_encoder()
+std::unique_ptr<short_block_encoder> srsran::create_short_block_encoder()
 {
   return std::make_unique<short_block_encoder_impl>();
 }

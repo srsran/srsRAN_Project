@@ -13,7 +13,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/support/math_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Physical layer time unit.
 ///
@@ -181,4 +181,4 @@ inline constexpr U to_sampling_rate_Hz(subcarrier_spacing scs, unsigned dft_size
   return static_cast<U>(scs_to_khz(scs) * 1000 * dft_size);
 }
 
-} // namespace srsgnb
+} // namespace srsran

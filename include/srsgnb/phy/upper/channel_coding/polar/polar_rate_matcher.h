@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 class polar_rate_matcher
 {
@@ -34,4 +34,4 @@ public:
   virtual void rate_match(span<uint8_t> output, span<const uint8_t> input, const polar_code& code) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -18,7 +18,7 @@
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
 
-namespace srsgnb {
+namespace srsran {
 class f1u_dl_local_adapter : public srs_cu_up::f1u_tx_pdu_notifier
 {
 public:
@@ -59,4 +59,4 @@ private:
   srs_cu_up::f1u_rx_pdu_handler* handler = nullptr;
 };
 
-} // namespace srsgnb
+} // namespace srsran

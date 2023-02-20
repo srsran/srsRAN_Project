@@ -58,7 +58,7 @@
 #include <csignal>
 #include <unordered_map>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \file
 /// \brief Application of a co-located gNB with combined distributed unit (DU) and centralized unit (CU).
@@ -75,7 +75,7 @@ static std::string config_file;
 
 static std::atomic<bool> is_running = {true};
 // NGAP configuration.
-static srsgnb::sctp_network_gateway_config ngap_nw_config;
+static srsran::sctp_network_gateway_config ngap_nw_config;
 const std::string                          srsgnb_version = "0.1";
 
 static void populate_cli11_generic_args(CLI::App& app)
@@ -448,8 +448,8 @@ int main(int argc, char** argv)
   gnb_console_helper console(*epoll_broker);
 
   // Create NGAP adapter.
-  std::unique_ptr<srsgnb::srs_cu_cp::ngap_network_adapter> ngap_adapter =
-      std::make_unique<srsgnb::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
+  std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
+      std::make_unique<srsran::srs_cu_cp::ngap_network_adapter>(*epoll_broker, *ngap_p);
 
   // Create SCTP network adapter.
   gnb_logger.info("Connecting to AMF ({})..", ngap_nw_config.connect_address, ngap_nw_config.connect_port);
@@ -462,7 +462,7 @@ int main(int argc, char** argv)
   gnb_logger.info("AMF connection established");
 
   // Create CU-UP config.
-  srsgnb::srs_cu_up::cu_up_configuration cu_up_cfg;
+  srsran::srs_cu_up::cu_up_configuration cu_up_cfg;
   cu_up_cfg.cu_up_executor       = workers.cu_up_exec.get();
   cu_up_cfg.gtpu_pdu_executor    = workers.gtpu_pdu_exec.get();
   cu_up_cfg.e1ap_notifier        = &e1ap_up_to_cp_adapter;
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
       gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
-  std::unique_ptr<srsgnb::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));
+  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));
 
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
@@ -483,7 +483,7 @@ int main(int argc, char** argv)
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
 
   // create CU-CP.
-  std::unique_ptr<srsgnb::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cp_cfg));
+  std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cp_cfg));
   cu_cp_obj->handle_new_du_connection();    // trigger DU addition
   cu_cp_obj->handle_new_cu_up_connection(); // trigger CU-UP addition
 
@@ -491,7 +491,7 @@ int main(int argc, char** argv)
   ngap_adapter->connect_ngap(&cu_cp_obj->get_ngap_message_handler(), &cu_cp_obj->get_ngap_event_handler());
 
   // attach E1AP adapters to CU-UP and CU-CP
-  e1ap_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1ap_message_handler(srsgnb::srs_cu_cp::uint_to_cu_up_index(0)));
+  e1ap_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1ap_message_handler(srsran::srs_cu_cp::uint_to_cu_up_index(0)));
   e1ap_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1ap_message_handler());
 
   console.on_app_starting();
@@ -628,7 +628,7 @@ int main(int argc, char** argv)
   gnb_logger.info("DU-High created successfully");
 
   // attach F1AP adapter to DU and CU-CP
-  f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsgnb::srs_cu_cp::uint_to_du_index(0)));
+  f1ap_du_to_cu_adapter.attach_handler(&cu_cp_obj->get_f1ap_message_handler(srsran::srs_cu_cp::uint_to_du_index(0)));
   f1ap_cu_to_du_adapter.attach_handler(&du_obj.get_f1ap_message_handler());
 
   // Start execution.

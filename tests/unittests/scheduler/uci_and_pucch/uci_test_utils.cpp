@@ -10,9 +10,9 @@
 
 #include "uci_test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-pucch_info srsgnb::build_pucch_info(const bwp_configuration* bwp_cfg,
+pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
                                     unsigned                 pci,
                                     pucch_format             format,
                                     prb_interval             prbs,
@@ -59,7 +59,7 @@ pucch_info srsgnb::build_pucch_info(const bwp_configuration* bwp_cfg,
 }
 
 // Verify if the PUCCH scheduler output (or PUCCH PDU) is correct.
-bool srsgnb::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& test)
+bool srsran::assess_ul_pucch_info(const pucch_info& expected, const pucch_info& test)
 {
   bool is_equal = expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.format == test.format;
   is_equal      = is_equal && expected.resources.prbs == test.resources.prbs &&

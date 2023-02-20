@@ -10,7 +10,7 @@
 
 #include "srsgnb/phy/upper/rb_allocation.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 bounded_bitset<MAX_RB> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
@@ -59,7 +59,7 @@ bounded_bitset<MAX_RB> rb_allocation::get_other_prb_mask(unsigned bwp_start_rb, 
   return result;
 }
 
-rb_allocation srsgnb::rb_allocation::make_type0(const bounded_bitset<MAX_RB>&      vrb_bitmap,
+rb_allocation srsran::rb_allocation::make_type0(const bounded_bitset<MAX_RB>&      vrb_bitmap,
                                                 const optional<vrb_to_prb_mapper>& vrb_to_prb_map_)
 {
   rb_allocation result;
@@ -73,7 +73,7 @@ rb_allocation srsgnb::rb_allocation::make_type0(const bounded_bitset<MAX_RB>&   
   return result;
 }
 
-rb_allocation srsgnb::rb_allocation::make_type1(unsigned                           rb_start,
+rb_allocation srsran::rb_allocation::make_type1(unsigned                           rb_start,
                                                 unsigned                           rb_count,
                                                 const optional<vrb_to_prb_mapper>& vrb_to_prb_map_)
 {
@@ -89,7 +89,7 @@ rb_allocation srsgnb::rb_allocation::make_type1(unsigned                        
   return result;
 }
 
-rb_allocation srsgnb::rb_allocation::make_custom(std::initializer_list<const unsigned> vrb_indexes,
+rb_allocation srsran::rb_allocation::make_custom(std::initializer_list<const unsigned> vrb_indexes,
                                                  const optional<vrb_to_prb_mapper>&    vrb_to_prb_map_)
 {
   rb_allocation result;

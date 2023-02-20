@@ -17,7 +17,7 @@
 #include "srsgnb/ran/cu_types.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_up {
 
@@ -69,4 +69,4 @@ public:
 
 } // namespace srs_cu_up
 
-} // namespace srsgnb
+} // namespace srsran

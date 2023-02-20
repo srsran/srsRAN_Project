@@ -13,7 +13,7 @@
 #include "srsgnb/adt/span.h"
 #include <fstream>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Writes the given span into a file in binary format.
 ///
@@ -51,4 +51,4 @@ inline bool print(const char*             filename,
   return true;
 }
 
-} // namespace srsgnb
+} // namespace srsran

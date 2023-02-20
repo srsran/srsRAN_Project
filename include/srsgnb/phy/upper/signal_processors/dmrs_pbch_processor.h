@@ -14,7 +14,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/pci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a DMRS for PBCH processor interface.
 class dmrs_pbch_processor
@@ -49,4 +49,4 @@ public:
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

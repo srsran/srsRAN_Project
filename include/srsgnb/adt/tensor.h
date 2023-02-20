@@ -20,7 +20,7 @@
 #include <numeric>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Base tensor interface.
 /// \tparam NDIMS Number of dimensions.
@@ -268,4 +268,4 @@ private:
   std::vector<Type> elements = {};
 };
 
-} // namespace srsgnb
+} // namespace srsran

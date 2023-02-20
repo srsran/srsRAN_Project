@@ -12,7 +12,7 @@
 
 #include "srsgnb/rrc/rrc_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -26,4 +26,4 @@ struct du_processor_config_t {
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

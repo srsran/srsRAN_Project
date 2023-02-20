@@ -16,7 +16,7 @@
 #include "srsgnb/rlc/rlc_tx.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 class mac_dummy : public rlc_tx_lower_layer_notifier
 {
   const stress_test_args& args;
@@ -48,4 +48,4 @@ public:
   void set_rlc_rx_lower(rlc_rx_lower_layer_interface* rlc_rx_lower_) { this->rlc_rx_lower = rlc_rx_lower_; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

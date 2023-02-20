@@ -11,7 +11,7 @@
 #include "polar_rate_matcher_impl.h"
 #include "srsgnb/srsvec/copy.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /*!
  * generic interleaver

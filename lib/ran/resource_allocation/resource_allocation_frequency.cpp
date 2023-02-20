@@ -12,9 +12,9 @@
 #include "srsgnb/ran/sliv.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-unsigned int srsgnb::ra_frequency_type1_get_riv(const ra_frequency_type1_configuration& config)
+unsigned int srsran::ra_frequency_type1_get_riv(const ra_frequency_type1_configuration& config)
 {
   srsgnb_assert(config.length_vrb >= 1,
                 "The number of contiguous allocated blocks must be greater than or equal to 1.");
@@ -25,7 +25,7 @@ unsigned int srsgnb::ra_frequency_type1_get_riv(const ra_frequency_type1_configu
   return sliv_from_s_and_l(config.N_bwp_size, config.start_vrb, config.length_vrb);
 }
 
-ra_frequency_type1_configuration srsgnb::ra_frequency_type1_from_riv(unsigned N_bwp_size, unsigned riv)
+ra_frequency_type1_configuration srsran::ra_frequency_type1_from_riv(unsigned N_bwp_size, unsigned riv)
 {
   ra_frequency_type1_configuration out;
   out.N_bwp_size = N_bwp_size;
@@ -33,7 +33,7 @@ ra_frequency_type1_configuration srsgnb::ra_frequency_type1_from_riv(unsigned N_
   return out;
 }
 
-unsigned srsgnb::ra_frequency_type1_special_get_riv(const ra_frequency_type1_special_configuration& config)
+unsigned srsran::ra_frequency_type1_special_get_riv(const ra_frequency_type1_special_configuration& config)
 {
   // Determine K.
   unsigned K = 8;

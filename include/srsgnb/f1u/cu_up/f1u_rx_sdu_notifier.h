@@ -13,7 +13,7 @@
 
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief This interface represents the data exit point of the receiving side of a F1-U bearer of the CU-UP.
@@ -27,4 +27,4 @@ public:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

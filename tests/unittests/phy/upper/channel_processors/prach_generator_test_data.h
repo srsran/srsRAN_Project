@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   prach_generator::configuration config;
@@ -172,4 +172,4 @@ static const std::vector<test_case_t> prach_generator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/support/prefixed_logger.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class sdap_session_log_prefix
 {
@@ -22,7 +22,7 @@ public:
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, "ue={} sid={} {}: ", ue_index, sid, dir);
-    prefix = srsgnb::to_c_str(buffer);
+    prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
 
@@ -32,13 +32,13 @@ private:
 
 using sdap_session_logger = prefixed_logger<sdap_session_log_prefix>;
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 // associated formatter
 template <>
-struct formatter<srsgnb::sdap_session_log_prefix> {
+struct formatter<srsran::sdap_session_log_prefix> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -46,7 +46,7 @@ struct formatter<srsgnb::sdap_session_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::sdap_session_log_prefix o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::sdap_session_log_prefix o, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

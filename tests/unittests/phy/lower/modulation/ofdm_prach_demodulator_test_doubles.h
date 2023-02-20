@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class ofdm_prach_demodulator_spy : public ofdm_prach_demodulator
 {
@@ -84,4 +84,4 @@ private:
   std::vector<ofdm_prach_demodulator_spy*> entries;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 struct cell_resource_allocator;
 
@@ -26,4 +26,4 @@ public:
   virtual void run_slot(cell_resource_allocator& res_alloc, slot_point sl_tx) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

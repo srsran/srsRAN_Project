@@ -17,7 +17,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr uint32_t network_gateway_sctp_max_len = 9100;
 
@@ -94,4 +94,4 @@ private:
   unsigned stream_no = 0; /// the stream number to use for sending
 };
 
-} // namespace srsgnb
+} // namespace srsran

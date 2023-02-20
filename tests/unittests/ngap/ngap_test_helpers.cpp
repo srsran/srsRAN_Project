@@ -12,7 +12,7 @@
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 ngap_test::ngap_test() : ngap_ue_task_scheduler(timers)

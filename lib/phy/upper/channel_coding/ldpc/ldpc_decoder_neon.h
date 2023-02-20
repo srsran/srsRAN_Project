@@ -16,7 +16,7 @@
 #include "ldpc_decoder_impl.h"
 #include "neon_support.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// LDPC decoder implementation based on NEON intrinsics.
 class ldpc_decoder_neon : public ldpc_decoder_impl
@@ -128,4 +128,4 @@ private:
   /// Number of NEON vectors needed to cover a lifted node.
   unsigned node_size_neon = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

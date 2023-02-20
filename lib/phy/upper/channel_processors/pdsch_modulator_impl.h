@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a generic implementation of a PDSCH modulator, defined by TS 38.211 section 7.3.1
 class pdsch_modulator_impl : public pdsch_modulator
@@ -85,7 +85,7 @@ public:
   }
 
   // See interface for the documentation.
-  void modulate(resource_grid_writer& grid, srsgnb::span<const bit_buffer> codewords, const config_t& config) override;
+  void modulate(resource_grid_writer& grid, srsran::span<const bit_buffer> codewords, const config_t& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

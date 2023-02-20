@@ -13,7 +13,7 @@
 
 #include "srsgnb/pdcp/pdcp_tx_pdu.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief This interface represents the data entry point of the transmitting side of a F1-U bearer of the CU-UP.
@@ -29,4 +29,4 @@ public:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

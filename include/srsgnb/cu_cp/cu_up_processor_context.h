@@ -13,7 +13,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct cu_up_processor_context {
@@ -24,4 +24,4 @@ struct cu_up_processor_context {
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

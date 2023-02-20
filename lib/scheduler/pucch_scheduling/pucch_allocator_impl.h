@@ -16,7 +16,7 @@
 #include "pucch_resource_manager.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implementation of the PUCCH allocator interface.
 class pucch_allocator_impl final : public pucch_allocator
@@ -155,4 +155,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

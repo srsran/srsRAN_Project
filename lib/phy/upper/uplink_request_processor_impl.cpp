@@ -12,7 +12,7 @@
 #include "srsgnb/phy/support/prach_buffer_pool.h"
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_request_notifier.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 uplink_request_processor_impl::uplink_request_processor_impl(
     upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier_,

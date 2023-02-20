@@ -10,7 +10,7 @@
 
 #include "radio_session_zmq_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio& config,
                                                task_executor&                    async_task_executor,

@@ -11,7 +11,7 @@
 #include "pcap_file_base.h"
 #include <sys/time.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
 {
@@ -80,7 +80,7 @@ void pcap_file_base::write_pcap_header(uint32_t length)
   }
 }
 
-void pcap_file_base::write_pcap_pdu(srsgnb::const_span<uint8_t> pdu)
+void pcap_file_base::write_pcap_pdu(srsran::const_span<uint8_t> pdu)
 {
   if (write_enabled) {
     pcap_fstream.write((char*)pdu.data(), pdu.size_bytes());

@@ -14,7 +14,7 @@
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \remark See TS 38.331, "TDD-UL-DL-Pattern".
 struct tdd_ul_dl_pattern {
@@ -58,4 +58,4 @@ ofdm_symbol_range get_active_tdd_dl_symbols(const tdd_ul_dl_config_common& cfg, 
 /// \brief Calculates the number of active UL symbols in the current slot_index.
 ofdm_symbol_range get_active_tdd_ul_symbols(const tdd_ul_dl_config_common& cfg, unsigned slot_index, bool cp_extended);
 
-} // namespace srsgnb
+} // namespace srsran

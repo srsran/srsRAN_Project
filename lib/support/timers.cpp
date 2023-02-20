@@ -10,7 +10,7 @@
 
 #include "srsgnb/support/timers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 timer_manager::timer_manager(size_t capacity) : time_wheel(WHEEL_SIZE)
 {

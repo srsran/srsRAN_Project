@@ -13,7 +13,7 @@
 #include "e1ap_asn1_converters.h"
 #include "srsgnb/ran/bcd_helpers.h"
 
-namespace srsgnb {
+namespace srsran {
 
 inline void fill_e1ap_cu_cp_e1_setup_response(cu_cp_e1_setup_response&                     res,
                                               const asn1::e1ap::gnb_cu_cp_e1_setup_resp_s& asn1_res)
@@ -157,4 +157,4 @@ inline void fill_e1ap_cu_up_e1_setup_request(cu_up_e1_setup_request&            
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran

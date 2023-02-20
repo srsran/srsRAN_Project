@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/executors/task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Lower physical layer control interface.
 class lower_phy_controller
@@ -31,4 +31,4 @@ public:
   virtual void stop() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

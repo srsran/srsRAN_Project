@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief LCID representation for PDSCH.
 class lcid_dl_sch_t
@@ -110,15 +110,15 @@ private:
   underlying_type lcid_val;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// FMT formatter of slot_point type.
 template <>
-struct formatter<srsgnb::lcid_dl_sch_t> : public formatter<uint16_t> {
+struct formatter<srsran::lcid_dl_sch_t> : public formatter<uint16_t> {
   template <typename FormatContext>
-  auto format(srsgnb::lcid_dl_sch_t lcid, FormatContext& ctx)
+  auto format(srsran::lcid_dl_sch_t lcid, FormatContext& ctx)
   {
     return format_to(ctx.out(), "{}", (uint16_t)lcid);
   }

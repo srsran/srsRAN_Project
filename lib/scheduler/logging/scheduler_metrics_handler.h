@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 
 ///\brief Handler of scheduler slot metrics.
 class scheduler_metrics_handler
@@ -94,4 +94,4 @@ private:
   unsigned slot_counter = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

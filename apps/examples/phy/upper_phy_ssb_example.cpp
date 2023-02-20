@@ -25,7 +25,7 @@
 #include <mutex>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -214,7 +214,7 @@ public:
     }                                                                                                                  \
   } while (false)
 
-std::unique_ptr<upper_phy_ssb_example> srsgnb::upper_phy_ssb_example::create(const configuration& config)
+std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(const configuration& config)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("UpperPHY", false);
   logger.set_level(srslog::str_to_basic_level(config.log_level));

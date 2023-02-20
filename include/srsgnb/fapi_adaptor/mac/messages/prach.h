@@ -12,7 +12,7 @@
 
 #include "srsgnb/fapi/message_builders.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct prach_occasion_info;
 
@@ -31,4 +31,4 @@ void convert_prach_mac_to_fapi(fapi::ul_prach_pdu& fapi_pdu, const prach_occasio
 void convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder& builder, const prach_occasion_info& mac_pdu);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

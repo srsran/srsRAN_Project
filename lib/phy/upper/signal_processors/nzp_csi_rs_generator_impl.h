@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a parameter validator for \ref nzp_csi_rs_generator_impl.
 class nzp_csi_rs_configuration_validator_impl : public nzp_csi_rs_configuration_validator
@@ -102,4 +102,4 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

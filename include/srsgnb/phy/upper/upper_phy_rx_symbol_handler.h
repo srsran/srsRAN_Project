@@ -15,7 +15,7 @@
 
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_buffer;
 struct prach_buffer_context;
@@ -53,4 +53,4 @@ public:
   virtual void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -25,7 +25,7 @@
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/tci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \c xOverhead options, as per TS 38.331. Used in \c PDSCH-ServingCellConfig and \c PUSCH-ServingCellConfig.
 enum class x_overhead {
@@ -248,4 +248,4 @@ struct cell_config_dedicated {
   serving_cell_config serv_cell_cfg;
 };
 
-} // namespace srsgnb
+} // namespace srsran

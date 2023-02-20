@@ -14,7 +14,7 @@
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the PDCCH encoder interface.
 class pdcch_encoder
@@ -41,4 +41,4 @@ public:
   virtual void encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

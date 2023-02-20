@@ -20,7 +20,7 @@
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
 #include "srsgnb/support/async/execute_on.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_ul_processor final : public mac_ul_configurator, public mac_pdu_handler
 {
@@ -91,4 +91,4 @@ private:
   pdu_rx_handler pdu_handler;
 };
 
-} // namespace srsgnb
+} // namespace srsran

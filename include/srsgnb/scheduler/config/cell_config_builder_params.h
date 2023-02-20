@@ -17,7 +17,7 @@
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Main cell parameters from which other cell parameters (e.g. coreset0, BWP RBs) will be derived.
 /// \remark Only fields that may affect many different fields in du_cell_config (e.g. number of PRBs) should be added
@@ -44,4 +44,4 @@ struct cell_config_builder_params {
   bool csi_rs_enabled = false;
 };
 
-} // namespace srsgnb
+} // namespace srsran

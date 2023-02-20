@@ -15,7 +15,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 using namespace asn1::rrc_nr;
 

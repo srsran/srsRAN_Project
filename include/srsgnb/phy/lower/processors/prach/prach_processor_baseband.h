@@ -14,7 +14,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Lower physical layer PRACH processor - Baseband interface.
 ///
@@ -44,4 +44,4 @@ public:
   virtual void process_symbol(span<const cf_t> samples, const symbol_context& context) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

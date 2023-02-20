@@ -12,7 +12,7 @@
 
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// 36-bit identifying an NR Cell Id as specified in subclause 9.3.1.7 of 3GPP TS 38.413
 struct nr_cell_id_t {
@@ -30,4 +30,4 @@ struct nr_cell_global_id_t {
   nr_cell_id_t nci;      /// NR cell id
 };
 
-} // namespace srsgnb
+} // namespace srsran

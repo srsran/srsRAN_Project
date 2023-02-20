@@ -24,7 +24,7 @@
 #include "srsgnb/support/timers.h"
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Forward declared messages.
@@ -290,4 +290,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/detail/type_list.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -52,4 +52,4 @@ auto callable_arguments() -> typename function_signature<decltype(&std::decay_t<
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

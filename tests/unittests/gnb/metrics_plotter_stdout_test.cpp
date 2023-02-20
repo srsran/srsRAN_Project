@@ -10,7 +10,7 @@
 
 #include "metrics_plotter_stdout.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \file
 /// \brief Unit test metrics plotter writing to stdout.
@@ -42,7 +42,7 @@ void fill_metrics_single_ue()
 
 int main()
 {
-  srsgnb::metrics_plotter_stdout plotter;
+  srsran::metrics_plotter_stdout plotter;
 
   fill_metrics_single_ue();
 

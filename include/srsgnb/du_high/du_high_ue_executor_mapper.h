@@ -4,7 +4,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This interface is used to allow the DU to choose between different UL task scheduling strategies.
 class du_high_ue_executor_mapper
@@ -29,4 +29,4 @@ public:
   task_executor& executor() { return executor(MAX_NOF_DU_UES); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

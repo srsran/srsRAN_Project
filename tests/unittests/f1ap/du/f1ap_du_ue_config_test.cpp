@@ -11,7 +11,7 @@
 #include "f1ap_du_test_helpers.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 class f1ap_du_ue_management_tester : public f1ap_du_test

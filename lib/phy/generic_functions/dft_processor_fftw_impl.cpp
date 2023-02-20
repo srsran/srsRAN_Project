@@ -13,7 +13,7 @@
 #include <pwd.h>
 #include <unistd.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::mutex dft_processor_fftw_impl::mutex_init = {};
 

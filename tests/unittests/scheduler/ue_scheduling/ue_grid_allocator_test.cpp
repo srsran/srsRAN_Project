@@ -15,7 +15,7 @@
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class ue_grid_allocator_tester : public ::testing::Test
 {

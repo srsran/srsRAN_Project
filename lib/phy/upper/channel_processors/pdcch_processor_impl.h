@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the PDCCH processor generic implementation constructor configuration.
 struct pdcch_processor_config_t {
@@ -78,4 +78,4 @@ public:
   void process(resource_grid_writer& grid, const pdu_t& pdu) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 template <typename T>
 void test_resize(std::size_t N)

@@ -14,7 +14,7 @@
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/rlc/rlc_tx.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1c_rx_sdu_rlc_adapter final : public f1c_rx_sdu_notifier
@@ -53,4 +53,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

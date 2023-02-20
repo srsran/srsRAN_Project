@@ -12,7 +12,7 @@
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void pdcch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, const pdcch_modulator::config_t& config)
 {
@@ -64,9 +64,9 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pd
   }
 }
 
-void pdcch_modulator_impl::modulate(srsgnb::resource_grid_writer&            grid,
-                                    srsgnb::span<const uint8_t>              data,
-                                    const srsgnb::pdcch_modulator::config_t& config)
+void pdcch_modulator_impl::modulate(srsran::resource_grid_writer&            grid,
+                                    srsran::span<const uint8_t>              data,
+                                    const srsran::pdcch_modulator::config_t& config)
 {
   // Apply scrambling.
   span<uint8_t> b_hat = span<uint8_t>(temp_b_hat).first(data.size());

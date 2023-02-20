@@ -18,7 +18,7 @@
 #include <limits>
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 class unique_timer;
 
@@ -241,11 +241,11 @@ private:
   std::deque<timer_handle> timer_list;
 
   /// Free list of timer_impl objects in timer_list.
-  srsgnb::intrusive_forward_list<timer_handle> free_list;
+  srsran::intrusive_forward_list<timer_handle> free_list;
 
   /// Timer wheel, which is circularly indexed via a running timer timeout. Collisions are resolved via an intrusive
   /// list in timer_impl.
-  std::vector<srsgnb::intrusive_double_linked_list<timer_handle>> time_wheel;
+  std::vector<srsran::intrusive_double_linked_list<timer_handle>> time_wheel;
 
   /// Protects the addition/modification/removal of timers in timer_manager.
   mutable std::mutex mutex;
@@ -334,4 +334,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

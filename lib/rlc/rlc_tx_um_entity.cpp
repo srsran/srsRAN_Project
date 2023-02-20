@@ -11,7 +11,7 @@
 #include "rlc_tx_um_entity.h"
 #include "rlc_um_pdu.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index,
                                    rb_id_t                              rb_id,

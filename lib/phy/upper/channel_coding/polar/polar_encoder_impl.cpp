@@ -12,7 +12,7 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 

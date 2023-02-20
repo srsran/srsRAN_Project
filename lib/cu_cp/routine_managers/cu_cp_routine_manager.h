@@ -18,7 +18,7 @@
 #include "srsgnb/support/async/async_task_loop.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Service provided by CU-CP to handle routines.
@@ -44,4 +44,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

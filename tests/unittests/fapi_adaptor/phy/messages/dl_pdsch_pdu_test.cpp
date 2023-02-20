@@ -15,7 +15,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);

@@ -19,7 +19,7 @@
 #include <thread>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// RF cell driver configuration.
 struct rf_driver_appconfig {
@@ -279,4 +279,4 @@ struct gnb_appconfig {
   expert_phy_appconfig expert_phy_cfg;
 };
 
-} // namespace srsgnb
+} // namespace srsran

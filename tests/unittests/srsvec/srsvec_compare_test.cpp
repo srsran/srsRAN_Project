@@ -16,7 +16,7 @@
 
 static std::mt19937 rgen(0);
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void test_max_abs_ccc(std::size_t N)
 {

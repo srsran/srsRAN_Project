@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace ldpc {
 /// Maximum number of information bits in a codeblock (before shortening).
 static constexpr unsigned MAX_BG_K = 22;
@@ -64,7 +64,7 @@ private:
 protected:
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
   const ldpc_graph_impl* current_graph = nullptr;
-  /// Lifting size as a natural number (as opposed to an element from srsgnb::ldpc::lifting_size_t).
+  /// Lifting size as a natural number (as opposed to an element from srsran::ldpc::lifting_size_t).
   uint16_t lifting_size = 2;
   /// Total number of base graph variable nodes in the current graph.
   uint16_t bg_N_full = 68;
@@ -152,4 +152,4 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   ///@}
 };
 
-} // namespace srsgnb
+} // namespace srsran

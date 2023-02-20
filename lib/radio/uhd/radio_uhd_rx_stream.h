@@ -17,7 +17,7 @@
 #include "srsgnb/radio/radio_notification_handler.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 class radio_uhd_rx_stream : public uhd_exception_handler
 {
 private:
@@ -90,4 +90,4 @@ public:
   /// \return True if no exception is caught. Otherwise false.
   bool stop();
 };
-} // namespace srsgnb
+} // namespace srsran

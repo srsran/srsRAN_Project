@@ -14,7 +14,7 @@
 #include "srsgnb/adt/span.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 // Radio Type
 constexpr uint8_t PCAP_FDD_RADIO = 1;
@@ -78,4 +78,4 @@ public:
   virtual void push_pdu(const_span<uint8_t> pdu) = 0;
   virtual void push_pdu(byte_buffer pdu)         = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

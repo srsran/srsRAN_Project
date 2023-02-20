@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// \brief Helper function that converts from a CSI-RS FAPI PDU to a NZP-CSI-RS processor PDU.
@@ -28,4 +28,4 @@ void convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::config_t& proc_pdu,
                                 uint16_t                        slot);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

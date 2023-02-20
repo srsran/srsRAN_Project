@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/channel_state_information.h"
 #include "srsgnb/ran/uci/uci_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Collects the results of UCI field decoding.
 struct pusch_uci_field {
@@ -44,4 +44,4 @@ struct pusch_processor_result {
   pusch_uci_field csi_part2;
 };
 
-} // namespace srsgnb
+} // namespace srsran

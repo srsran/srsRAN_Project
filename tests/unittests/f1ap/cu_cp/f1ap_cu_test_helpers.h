@@ -19,7 +19,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Reusable notifier class that a) stores the received du_index for test inspection and b)
@@ -83,4 +83,4 @@ protected:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

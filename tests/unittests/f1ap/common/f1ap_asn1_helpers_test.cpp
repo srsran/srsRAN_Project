@@ -14,7 +14,7 @@
 #include "srsgnb/ran/nr_cgi_helpers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Test PLMN decoding
 TEST(f1ap_asn1_helpers_test, test_ngi_converter)
@@ -27,7 +27,7 @@ TEST(f1ap_asn1_helpers_test, test_ngi_converter)
   // convert to internal NGI representation
   nr_cell_global_identity ngi = cgi_from_asn1(asn1_cgi);
 
-  ASSERT_TRUE(srsgnb::config_helpers::is_valid(ngi));
+  ASSERT_TRUE(srsran::config_helpers::is_valid(ngi));
   ASSERT_EQ(0xf208, ngi.mcc);        // BCD-encoded MCC
   ASSERT_EQ(0xff99, ngi.mnc);        // BCD-encoded MNC
   ASSERT_EQ("20899", ngi.plmn);      // human-readable PLMN

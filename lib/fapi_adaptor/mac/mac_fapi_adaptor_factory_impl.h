@@ -12,7 +12,7 @@
 
 #include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// Implementation of the MAC&ndash;FAPI adaptor factory.
@@ -24,4 +24,4 @@ public:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

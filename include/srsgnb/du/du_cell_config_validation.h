@@ -13,7 +13,7 @@
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/du/du_cell_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Checks whether the provided DU cell configuration is valid.
 ///
@@ -21,4 +21,4 @@ namespace srsgnb {
 /// \return in case an invalid parameter is detected, returns a string containing an error message.
 error_type<std::string> is_du_cell_config_valid(const du_cell_config& cell_cfg);
 
-} // namespace srsgnb
+} // namespace srsran

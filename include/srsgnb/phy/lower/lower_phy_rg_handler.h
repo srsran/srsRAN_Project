@@ -13,7 +13,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/support/resource_grid_context.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Lower physical layer resource grid handler interface.
 ///
@@ -32,4 +32,4 @@ public:
   virtual void handle_resource_grid(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

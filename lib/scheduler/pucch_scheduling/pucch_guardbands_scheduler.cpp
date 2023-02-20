@@ -11,7 +11,7 @@
 #include "pucch_guardbands_scheduler.h"
 #include "../cell/resource_grid.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 pucch_guardbands_scheduler::pucch_guardbands_scheduler(const cell_configuration& cell_cfg_) :
   cell_cfg{cell_cfg_}, logger(srslog::fetch_basic_logger("SCHED")){};

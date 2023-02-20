@@ -4,7 +4,7 @@
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Generic interface of an N-point DFT calculator.
 class generic_dft_N
@@ -48,4 +48,4 @@ public:
   span<const cf_t> run() override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

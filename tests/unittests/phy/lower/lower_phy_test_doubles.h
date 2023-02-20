@@ -14,7 +14,7 @@
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Lower PHY error notification spy class.
 ///
@@ -264,4 +264,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

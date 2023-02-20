@@ -15,7 +15,7 @@
 #include <fstream>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \c file_vector open modes.
 enum class openmode {
@@ -87,4 +87,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

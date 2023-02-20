@@ -16,7 +16,7 @@
 #include "ldpc_encoder_impl.h"
 #include "neon_support.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief LDPC encoder implementation based on NEON intrinsics.
 /// \warning Instantiating an object of this class entails a heap memory allocation.
@@ -108,4 +108,4 @@ private:
   unsigned node_size_neon = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

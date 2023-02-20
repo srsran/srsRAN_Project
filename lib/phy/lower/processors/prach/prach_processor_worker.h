@@ -20,7 +20,7 @@
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Lower PHY PRACH processor worker subcomponent.
 ///
@@ -116,4 +116,4 @@ public:
   bool is_available() const { return state == states::idle; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

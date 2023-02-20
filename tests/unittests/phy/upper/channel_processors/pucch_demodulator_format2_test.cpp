@@ -15,11 +15,11 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 using PucchDemodulatorParams = test_case_t;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
@@ -42,7 +42,7 @@ static bool operator==(const std::vector<log_likelihood_ratio>& a, const std::ve
   });
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 class PucchDemodulatorFixture : public ::testing::TestWithParam<PucchDemodulatorParams>
 {

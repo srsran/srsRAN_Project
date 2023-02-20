@@ -19,7 +19,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Polar decoder interface.
 class polar_decoder
@@ -36,4 +36,4 @@ public:
   decode(span<uint8_t> data_decoded, span<const log_likelihood_ratio> input_llr, const polar_code& code) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

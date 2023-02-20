@@ -14,7 +14,7 @@
 #include "srsgnb/f1u/f1u_cu_up_transport.h"
 #include "srsgnb/f1u/f1u_cu_up_tx.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class f1u_cu_up_entity
 {
@@ -30,4 +30,4 @@ public:
   virtual f1u_cu_up_lower_transport_interface& get_lower_transport_interface() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

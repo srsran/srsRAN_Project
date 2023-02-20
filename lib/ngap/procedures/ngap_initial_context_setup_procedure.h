@@ -15,7 +15,7 @@
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct initial_context_failure_message {
@@ -62,4 +62,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

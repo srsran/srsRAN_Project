@@ -14,7 +14,7 @@
 #include "fmt/format.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 struct rlc_tm_rx_metrics {};
 
@@ -69,14 +69,14 @@ public:
   virtual rlc_rx_metrics get_and_reset_metrics() = 0;
   virtual void           reset_metrics()         = 0;
 };
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 // RLC RX metrics formatter
 // TODO print mode-specific metrics
 template <>
-struct formatter<srsgnb::rlc_rx_metrics> {
+struct formatter<srsran::rlc_rx_metrics> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -84,7 +84,7 @@ struct formatter<srsgnb::rlc_rx_metrics> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::rlc_rx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::rlc_rx_metrics m, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "num_pdus={} num_pdu_bytes={} num_lost_pdus={} num_malformed_pdus={} num_sdus={} num_sdu_bytes={}",

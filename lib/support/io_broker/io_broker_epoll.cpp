@@ -12,7 +12,7 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 io_broker_epoll::io_broker_epoll(io_broker_config config) : logger(srslog::fetch_basic_logger("IO-EPOLL"))
 {

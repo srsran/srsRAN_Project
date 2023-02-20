@@ -13,7 +13,7 @@
 #include "srsgnb/adt/span.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 enum class polar_interleaver_direction { tx, rx };
 
@@ -34,4 +34,4 @@ public:
   virtual void interleave(span<uint8_t> out, span<const uint8_t> in, polar_interleaver_direction direction) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

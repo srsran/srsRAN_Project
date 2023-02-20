@@ -20,7 +20,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsgnb/srsvec/bit.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void process_test_case_pdsch(const test_case_t& test_case, pdsch_processor& pdsch)
 {

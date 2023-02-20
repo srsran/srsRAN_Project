@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   ssb_processor::pdu_t                                    config;
@@ -269,4 +269,4 @@ static const std::vector<test_case_t> ssb_processor_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

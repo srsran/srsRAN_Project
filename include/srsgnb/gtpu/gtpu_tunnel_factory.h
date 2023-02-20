@@ -16,7 +16,7 @@
 
 /// This factory header file depends on the GTP-U tunnel interfaces (see above include list). It is kept separate as
 /// clients of the GTP-U tunnel interfaces do not need to call factory methods.
-namespace srsgnb {
+namespace srsran {
 
 struct gtpu_tunnel_creation_message {
   uint32_t                             ue_index;
@@ -28,4 +28,4 @@ struct gtpu_tunnel_creation_message {
 /// Creates an instance of a GTP-U entity.
 std::unique_ptr<gtpu_tunnel> create_gtpu_tunnel(gtpu_tunnel_creation_message& msg);
 
-} // namespace srsgnb
+} // namespace srsran

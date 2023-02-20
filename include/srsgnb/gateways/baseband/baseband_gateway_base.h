@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the base interface for baseband gateway interfaces.
 class baseband_gateway_base
@@ -36,4 +36,4 @@ public:
   baseband_gateway_base& operator=(baseband_gateway_base&&) = delete;
 };
 
-} // namespace srsgnb
+} // namespace srsran

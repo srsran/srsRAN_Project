@@ -15,7 +15,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Phase compensation as per TS38.211 Section 5.4.
 ///
@@ -84,4 +84,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

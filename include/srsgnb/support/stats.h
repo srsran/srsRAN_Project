@@ -18,7 +18,7 @@
 #include <limits>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Keeps track of sample statistics.
 ///
@@ -247,4 +247,4 @@ private:
   float centered_power_sum_ord4 = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

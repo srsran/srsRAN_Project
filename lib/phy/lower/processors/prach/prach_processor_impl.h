@@ -17,7 +17,7 @@
 #include "srsgnb/phy/lower/processors/prach/prach_processor_request_handler.h"
 #include <atomic>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PRACH processor implementation.
 ///
@@ -94,4 +94,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

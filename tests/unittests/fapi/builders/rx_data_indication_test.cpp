@@ -11,7 +11,7 @@
 #include "srsgnb/fapi/message_builders.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 TEST(rx_data_indication_builder, valid_basic_parameters_passes)

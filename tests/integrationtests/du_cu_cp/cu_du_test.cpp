@@ -22,7 +22,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Dummy classes required by DU
 struct phy_cell_dummy : public mac_cell_result_notifier {
@@ -63,7 +63,7 @@ protected:
     // create and start DU
     phy_dummy phy;
 
-    srsgnb::srs_du::du_high_configuration du_cfg{};
+    srsran::srs_du::du_high_configuration du_cfg{};
     du_cfg.du_mng_executor = &workers.ctrl_worker;
     du_cfg.cell_executors  = &workers.cell_exec_mapper;
     du_cfg.ue_executors    = &workers.ue_exec_mapper;

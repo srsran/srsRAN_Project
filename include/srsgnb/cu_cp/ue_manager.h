@@ -14,7 +14,7 @@
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/rrc/rrc_ue.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Common UE interface.
@@ -174,4 +174,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -14,12 +14,12 @@
 #include <gtest/gtest.h>
 #include <queue>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief Test correct read TEID helper function
 TEST_F(gtpu_test, read_teid)
 {
-  srsgnb::test_delimit_logger delimiter("GTP-U read TEID test");
+  srsran::test_delimit_logger delimiter("GTP-U read TEID test");
   byte_buffer                 orig_vec{gtpu_ping_vec};
   byte_buffer                 test_vec{gtpu_ping_vec};
   uint32_t                    teid = {};
@@ -37,7 +37,7 @@ TEST_F(gtpu_test, read_teid)
 /// \brief Test correct packing/unpacking of GTPU PDU
 TEST_F(gtpu_test, pack_unpack)
 {
-  srsgnb::test_delimit_logger delimiter("GTP-U unpack/pack test");
+  srsran::test_delimit_logger delimiter("GTP-U unpack/pack test");
   byte_buffer                 orig_vec{gtpu_ping_vec};
   byte_buffer                 tst_vec{gtpu_ping_vec};
   byte_buffer                 tst_vec_no_header{tst_vec.begin() + 8, tst_vec.end()};
@@ -83,7 +83,7 @@ TEST_F(gtpu_test, pack_unpack)
 /// with header extension.
 TEST_F(gtpu_test, pack_unpack_ext_hdr)
 {
-  srsgnb::test_delimit_logger delimiter("GTP-U header extension unpack/pack test");
+  srsran::test_delimit_logger delimiter("GTP-U header extension unpack/pack test");
   byte_buffer                 orig_vec{gtpu_ping_two_ext_vec};
   byte_buffer                 tst_vec{gtpu_ping_two_ext_vec};
   uint16_t                    ext_size = 4;
@@ -145,7 +145,7 @@ TEST_F(gtpu_test, pack_unpack_ext_hdr)
 /// \brief Test correct creation of GTP-U entity
 TEST_F(gtpu_test, entity_creation)
 {
-  srsgnb::test_delimit_logger  delimiter("GTP-U entity creation test");
+  srsran::test_delimit_logger  delimiter("GTP-U entity creation test");
   gtpu_tunnel_creation_message msg  = {};
   msg.cfg.tx.peer_addr              = "127.0.0.1";
   std::unique_ptr<gtpu_tunnel> gtpu = create_gtpu_tunnel(msg);
@@ -156,7 +156,7 @@ TEST_F(gtpu_test, entity_creation)
 /// \brief Test correct reception of GTP-U packet
 TEST_F(gtpu_test, rx_sdu)
 {
-  srsgnb::test_delimit_logger delimiter("GTP-U entity creation test");
+  srsran::test_delimit_logger delimiter("GTP-U entity creation test");
 
   gtpu_test_rx_lower           gtpu_rx = {};
   gtpu_test_tx_upper           gtpu_tx = {};
@@ -181,7 +181,7 @@ TEST_F(gtpu_test, rx_sdu)
 /// \brief Test correct transmission of GTP-U packet
 TEST_F(gtpu_test, tx_pdu)
 {
-  srsgnb::test_delimit_logger delimiter("GTP-U entity creation test");
+  srsran::test_delimit_logger delimiter("GTP-U entity creation test");
 
   gtpu_test_tx_upper           gtpu_tx = {};
   gtpu_test_rx_lower           gtpu_rx = {};

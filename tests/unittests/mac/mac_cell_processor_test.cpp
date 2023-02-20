@@ -13,7 +13,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 struct test_params {
   unsigned nof_sib_allocated;

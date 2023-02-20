@@ -13,9 +13,9 @@
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::vector<grant_info> srsgnb::get_pdcch_grant_info(pci_t pci, const pdcch_dl_information& pdcch)
+std::vector<grant_info> srsran::get_pdcch_grant_info(pci_t pci, const pdcch_dl_information& pdcch)
 {
   std::vector<grant_info> grants;
 
@@ -29,7 +29,7 @@ std::vector<grant_info> srsgnb::get_pdcch_grant_info(pci_t pci, const pdcch_dl_i
   return grants;
 }
 
-std::vector<grant_info> srsgnb::get_pdcch_grant_info(const pdcch_ul_information& pdcch)
+std::vector<grant_info> srsran::get_pdcch_grant_info(const pdcch_ul_information& pdcch)
 {
   std::vector<grant_info> grants;
 
@@ -44,7 +44,7 @@ std::vector<grant_info> srsgnb::get_pdcch_grant_info(const pdcch_ul_information&
   return grants;
 }
 
-grant_info srsgnb::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const sib_information& sib)
+grant_info srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const sib_information& sib)
 {
   bwp_configuration coreset0_bwp_cfg = bwp_cfg.generic_params;
   coreset0_bwp_cfg.crbs              = bwp_cfg.pdcch_common.coreset0->coreset0_crbs();
@@ -53,7 +53,7 @@ grant_info srsgnb::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, cons
   return grant_info{sib.pdsch_cfg.bwp_cfg->scs, sib.pdsch_cfg.symbols, crbs};
 }
 
-grant_info srsgnb::get_pdsch_grant_info(const rar_information& rar)
+grant_info srsran::get_pdsch_grant_info(const rar_information& rar)
 {
   bwp_configuration bwp_cfg = *rar.pdsch_cfg.bwp_cfg;
   bwp_cfg.crbs              = rar.pdsch_cfg.coreset_cfg->coreset0_crbs();
@@ -61,7 +61,7 @@ grant_info srsgnb::get_pdsch_grant_info(const rar_information& rar)
   return grant_info{rar.pdsch_cfg.bwp_cfg->scs, rar.pdsch_cfg.symbols, crbs};
 }
 
-grant_info srsgnb::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const dl_paging_allocation& pg)
+grant_info srsran::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, const dl_paging_allocation& pg)
 {
   // See TS 38.212, section 7.3.1.2.1. DCI Format 1_0.
   bwp_configuration coreset0_bwp_cfg = bwp_cfg.generic_params;
@@ -70,13 +70,13 @@ grant_info srsgnb::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, cons
   return grant_info{pg.pdsch_cfg.bwp_cfg->scs, pg.pdsch_cfg.symbols, crbs};
 }
 
-grant_info srsgnb::get_pdsch_grant_info(const dl_msg_alloc& ue_grant)
+grant_info srsran::get_pdsch_grant_info(const dl_msg_alloc& ue_grant)
 {
   crb_interval crbs = prb_to_crb(*ue_grant.pdsch_cfg.bwp_cfg, ue_grant.pdsch_cfg.prbs.prbs());
   return grant_info{ue_grant.pdsch_cfg.bwp_cfg->scs, ue_grant.pdsch_cfg.symbols, crbs};
 }
 
-std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cell_cfg, const dl_sched_result& dl_res)
+std::vector<test_grant_info> srsran::get_dl_grants(const cell_configuration& cell_cfg, const dl_sched_result& dl_res)
 {
   std::vector<test_grant_info> grants;
 
@@ -144,7 +144,7 @@ std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cel
   return grants;
 }
 
-std::vector<test_grant_info> srsgnb::get_ul_grants(const cell_configuration& cell_cfg, const ul_sched_result& ul_res)
+std::vector<test_grant_info> srsran::get_ul_grants(const cell_configuration& cell_cfg, const ul_sched_result& ul_res)
 {
   std::vector<test_grant_info> grants;
 

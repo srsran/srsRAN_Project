@@ -18,7 +18,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/eager_async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Handles the creation of SRBs in the RRC UE.
@@ -103,4 +103,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

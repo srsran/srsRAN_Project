@@ -11,7 +11,7 @@
 #include "gtpu_tunnel_logger.h"
 #include "srsgnb/support/bit_encoding.h"
 
-namespace srsgnb {
+namespace srsran {
 
 bool gtpu_read_ext_header(bit_decoder&                decoder,
                           gtpu_extension_header&      ext,
@@ -316,4 +316,4 @@ bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type&
   }
   return comp_not_needed;
 }
-} // namespace srsgnb
+} // namespace srsran

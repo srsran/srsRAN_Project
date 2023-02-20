@@ -13,7 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include <deque>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief This class represents the concatenation of several individual data packets, in which one of the packets
 /// represents a header.
@@ -231,15 +231,15 @@ private:
   fragment_container_t fragments;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// \brief Custom formatter for byte_buffer_slice_chain.
 template <>
-struct formatter<srsgnb::byte_buffer_slice_chain> : public formatter<srsgnb::byte_buffer_view> {
+struct formatter<srsran::byte_buffer_slice_chain> : public formatter<srsran::byte_buffer_view> {
   template <typename FormatContext>
-  auto format(const srsgnb::byte_buffer_slice_chain& buf, FormatContext& ctx)
+  auto format(const srsran::byte_buffer_slice_chain& buf, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {

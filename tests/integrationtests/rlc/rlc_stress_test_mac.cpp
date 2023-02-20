@@ -12,7 +12,7 @@
 
 #include "rlc_stress_test_mac.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::vector<byte_buffer_slice_chain> mac_dummy::run_tx_tti(uint32_t tti)
 {

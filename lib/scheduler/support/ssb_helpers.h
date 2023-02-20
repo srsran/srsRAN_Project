@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Helper function that determines from SSB bitmap whether n-th beam is used.
 /// \param[in] ssb_bitmap SSB bitmap.
@@ -24,4 +24,4 @@ inline bool is_nth_ssb_beam_active(uint64_t ssb_bitmap, unsigned ssb_index)
   return (ssb_bitmap & (static_cast<uint64_t>(0b1U) << static_cast<uint64_t>(63U - ssb_index))) > 0;
 }
 
-} // namespace srsgnb
+} // namespace srsran

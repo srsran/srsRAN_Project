@@ -16,7 +16,7 @@
 #include <array>
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the PBCH encoder interface
 class pbch_encoder
@@ -67,4 +67,4 @@ public:
   virtual void encode(span<uint8_t> encoded, const pbch_msg_t& pbch_msg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

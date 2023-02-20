@@ -13,7 +13,8 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
+
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
   fmt::print(os,
@@ -27,9 +28,9 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 class UlschInfoFixture : public ::testing::TestWithParam<test_case_t>
 {};

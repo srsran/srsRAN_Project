@@ -13,7 +13,7 @@
 #include "lib/scheduler/cell/resource_grid.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Parameters of a grant allocation in the cell resource grid.
 
@@ -69,4 +69,4 @@ std::vector<test_grant_info> get_dl_grants(const cell_configuration& cell_cfg, c
 /// PDUs.
 std::vector<test_grant_info> get_ul_grants(const cell_configuration& cell_cfg, const ul_sched_result& ul_res);
 
-} // namespace srsgnb
+} // namespace srsran

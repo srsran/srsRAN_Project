@@ -4,7 +4,7 @@
 #include "ofdm_modulator_impl.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a generic OFDM modulator factory.
 class ofdm_modulator_factory_impl : public ofdm_modulator_factory
@@ -35,4 +35,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -34,7 +34,7 @@ int function1(std::string param)
 int main(int argc, char** argv)
 {
   // Enable backtrace.
-  srsgnb::enable_backtrace();
+  srsran::enable_backtrace();
 
   return function1("segfault");
 }

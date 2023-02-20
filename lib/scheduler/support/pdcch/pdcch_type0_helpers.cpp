@@ -10,9 +10,9 @@
 
 #include "pdcch_type0_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-unsigned srsgnb::type0_pdcch_css_n0_is_even_frame(double   table_13_11_and_13_12_O,
+unsigned srsran::type0_pdcch_css_n0_is_even_frame(double   table_13_11_and_13_12_O,
                                                   double   table_13_11_and_13_12_M,
                                                   uint8_t  numerology_mu,
                                                   unsigned ssb_index)
@@ -28,7 +28,7 @@ unsigned srsgnb::type0_pdcch_css_n0_is_even_frame(double   table_13_11_and_13_12
   return is_even;
 }
 
-slot_point srsgnb::get_type0_pdcch_css_n0(double             table_13_11_and_13_12_O,
+slot_point srsran::get_type0_pdcch_css_n0(double             table_13_11_and_13_12_O,
                                           double             table_13_11_and_13_12_M,
                                           subcarrier_spacing scs_common,
                                           unsigned           ssb_index)
@@ -51,7 +51,7 @@ slot_point srsgnb::get_type0_pdcch_css_n0(double             table_13_11_and_13_
   return type0_pdcch_css_n0;
 }
 
-slot_point srsgnb::precompute_type0_pdcch_css_n0(uint8_t                   searchspace0,
+slot_point srsran::precompute_type0_pdcch_css_n0(uint8_t                   searchspace0,
                                                  uint8_t                   coreset0,
                                                  const cell_configuration& cell_cfg,
                                                  subcarrier_spacing        scs_common,
@@ -88,7 +88,7 @@ slot_point srsgnb::precompute_type0_pdcch_css_n0(uint8_t                   searc
   return pdcch_slot;
 }
 
-slot_point srsgnb::precompute_type0_pdcch_css_n0_plus_1(uint8_t                   searchspace0,
+slot_point srsran::precompute_type0_pdcch_css_n0_plus_1(uint8_t                   searchspace0,
                                                         uint8_t                   coreset0,
                                                         const cell_configuration& cell_cfg,
                                                         subcarrier_spacing        scs_common,

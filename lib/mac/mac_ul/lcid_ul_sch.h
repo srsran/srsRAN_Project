@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class lcid_ul_sch_t
 {
@@ -128,15 +128,15 @@ private:
   underlying_type lcid_val;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// FMT formatter of slot_point type.
 template <>
-struct formatter<srsgnb::lcid_ul_sch_t> : public formatter<uint32_t> {
+struct formatter<srsran::lcid_ul_sch_t> : public formatter<uint32_t> {
   template <typename FormatContext>
-  auto format(srsgnb::lcid_ul_sch_t lcid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::lcid_ul_sch_t lcid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", (uint16_t)lcid);
   }

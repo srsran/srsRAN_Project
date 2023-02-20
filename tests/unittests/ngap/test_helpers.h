@@ -22,7 +22,7 @@
 #include "srsgnb/support/async/async_task_loop.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct dummy_ngap_ue_task_scheduler : public ngap_ue_task_scheduler {
@@ -340,4 +340,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

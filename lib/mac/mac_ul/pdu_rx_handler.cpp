@@ -10,7 +10,7 @@
 
 #include "pdu_rx_handler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -40,7 +40,7 @@ struct fmt::formatter<pdu_log_prefix> : public basic_fmt_parser {
   auto format(const pdu_log_prefix& p, FormatContext& ctx)
   {
     fmt::format_to(ctx.out(), "{} rnti={:#x}", p.type, p.rnti);
-    if (p.ue_index != srsgnb::INVALID_DU_UE_INDEX) {
+    if (p.ue_index != srsran::INVALID_DU_UE_INDEX) {
       fmt::format_to(ctx.out(), " ue={}", p.ue_index);
     }
     if (p.lcid.has_value()) {
@@ -295,7 +295,7 @@ void pdu_rx_handler::write_pcap_rx_pdu(const slot_point& sl_rx, const mac_rx_pdu
     return;
   }
 
-  srsgnb::mac_nr_context_info context;
+  srsran::mac_nr_context_info context;
   context.radioType           = PCAP_FDD_RADIO;
   context.direction           = PCAP_DIRECTION_UPLINK;
   context.rntiType            = PCAP_C_RNTI;

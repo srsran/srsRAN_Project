@@ -14,7 +14,7 @@
 #include "srsgnb/ran/crit_diagnostics.h"
 #include "srsgnb/ran/cu_types.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief CU-CP initiated E1 setup request.
 struct cu_cp_e1_setup_request {
@@ -61,4 +61,4 @@ struct cu_up_e1_setup_response {
   optional<crit_diagnostics_t> crit_diagnostics;
 };
 
-} // namespace srsgnb
+} // namespace srsran

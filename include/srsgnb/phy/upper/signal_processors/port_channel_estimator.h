@@ -21,7 +21,7 @@
 #include "srsgnb/phy/upper/re_measurement.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Container for DM-RS symbols.
 using dmrs_symbol_list = static_re_measurement<cf_t,
@@ -94,4 +94,4 @@ public:
                        const configuration&        cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

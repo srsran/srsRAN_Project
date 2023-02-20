@@ -16,7 +16,7 @@
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/rrc/rrc.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between PDCP Rx data and RRC in UL direction (Rx)
@@ -112,4 +112,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

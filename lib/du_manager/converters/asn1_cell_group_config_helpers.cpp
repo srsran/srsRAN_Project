@@ -13,11 +13,11 @@
 #include "asn1_csi_meas_config_helpers.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_du;
+using namespace srsran;
+using namespace srsran::srs_du;
 using namespace asn1::rrc_nr;
 
-asn1::rrc_nr::coreset_s srsgnb::srs_du::make_asn1_rrc_coreset(const coreset_configuration& cfg)
+asn1::rrc_nr::coreset_s srsran::srs_du::make_asn1_rrc_coreset(const coreset_configuration& cfg)
 {
   coreset_s cs;
   cs.coreset_id = cfg.id;
@@ -43,7 +43,7 @@ asn1::rrc_nr::coreset_s srsgnb::srs_du::make_asn1_rrc_coreset(const coreset_conf
   return cs;
 }
 
-asn1::rrc_nr::search_space_s srsgnb::srs_du::make_asn1_rrc_search_space(const search_space_configuration& cfg)
+asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const search_space_configuration& cfg)
 {
   search_space_s ss;
   ss.search_space_id                                = cfg.id;
@@ -127,7 +127,7 @@ asn1::rrc_nr::search_space_s srsgnb::srs_du::make_asn1_rrc_search_space(const se
   } else {
     ss.search_space_type.set_ue_specific();
     ss.search_space_type.ue_specific().dci_formats.value =
-        cfg.ue_specific == srsgnb::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
+        cfg.ue_specific == srsran::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
             ? search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_neg0_and_neg1_neg0
             : search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_neg1_and_neg1_neg1;
   }
@@ -273,10 +273,10 @@ void make_asn1_rrc_qcl_info(asn1::rrc_nr::qcl_info_s& out, const qcl_info& cfg)
     out.bwp_id_present = true;
     out.bwp_id         = cfg.bwp_id.value();
   }
-  if (cfg.ref_sig.type == srsgnb::qcl_info::reference_signal::reference_signal_type::ssb) {
+  if (cfg.ref_sig.type == srsran::qcl_info::reference_signal::reference_signal_type::ssb) {
     auto& ssb = out.ref_sig.set_ssb();
     ssb       = cfg.ref_sig.ssb;
-  } else if (cfg.ref_sig.type == srsgnb::qcl_info::reference_signal::reference_signal_type::csi_rs) {
+  } else if (cfg.ref_sig.type == srsran::qcl_info::reference_signal::reference_signal_type::csi_rs) {
     auto& csi_rs = out.ref_sig.set_csi_rs();
     csi_rs       = cfg.ref_sig.csi_rs;
   }
@@ -320,7 +320,7 @@ make_asn1_rrc_pdsch_time_domain_alloc_list(const pdsch_time_domain_resource_allo
   return out;
 }
 
-asn1::rrc_nr::tci_state_s srsgnb::srs_du::make_asn1_rrc_tci_state(const tci_state& cfg)
+asn1::rrc_nr::tci_state_s srsran::srs_du::make_asn1_rrc_tci_state(const tci_state& cfg)
 {
   tci_state_s tci_st;
   tci_st.tci_state_id = cfg.state_id;
@@ -527,7 +527,7 @@ void calculate_bwp_dl_dedicated_diff(asn1::rrc_nr::bwp_dl_ded_s&   out,
   // TODO: sps-Config and radioLinkMonitoringConfig.
 }
 
-asn1::rrc_nr::pucch_res_set_s srsgnb::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
+asn1::rrc_nr::pucch_res_set_s srsran::srs_du::make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg)
 {
   pucch_res_set_s pucch_res_set;
   pucch_res_set.pucch_res_set_id = cfg.pucch_res_set_id;
@@ -597,7 +597,7 @@ void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& 
   }
 }
 
-asn1::rrc_nr::pucch_res_s srsgnb::srs_du::make_asn1_rrc_pucch_resource(const pucch_resource& cfg)
+asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const pucch_resource& cfg)
 {
   pucch_res_s pucch_res;
   pucch_res.pucch_res_id                = cfg.res_id;
@@ -669,7 +669,7 @@ asn1::rrc_nr::pucch_res_s srsgnb::srs_du::make_asn1_rrc_pucch_resource(const puc
 }
 
 asn1::rrc_nr::sched_request_res_cfg_s
-srsgnb::srs_du::make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg)
+srsran::srs_du::make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg)
 {
   sched_request_res_cfg_s sr_res_cfg;
   sr_res_cfg.sched_request_res_id           = cfg.sr_res_id;
@@ -841,7 +841,7 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
     }
 
     if (cfg_trans_preco_dis.res_elem_offset !=
-        srsgnb::ptrs_uplink_config::transform_precoder_disabled::resource_element_offset::not_set) {
+        srsran::ptrs_uplink_config::transform_precoder_disabled::resource_element_offset::not_set) {
       switch (cfg_trans_preco_dis.res_elem_offset) {
         case ptrs_uplink_config::transform_precoder_disabled::resource_element_offset::offset01:
           out_trans_preco_dis.res_elem_offset =
@@ -901,7 +901,7 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
     out.dmrs_type_present = true;
   }
 
-  if (dest.additional_positions != srsgnb::dmrs_additional_positions::not_set) {
+  if (dest.additional_positions != srsran::dmrs_additional_positions::not_set) {
     out.dmrs_add_position_present = true;
     switch (dest.additional_positions) {
       case dmrs_additional_positions::pos0:
@@ -964,7 +964,7 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
 }
 
 asn1::rrc_nr::pusch_pathloss_ref_rs_s
-srsgnb::srs_du::make_asn1_rrc_pusch_pathloss_ref_rs(const pusch_config::pusch_power_control::pusch_pathloss_ref_rs& cfg)
+srsran::srs_du::make_asn1_rrc_pusch_pathloss_ref_rs(const pusch_config::pusch_power_control::pusch_pathloss_ref_rs& cfg)
 {
   pusch_pathloss_ref_rs_s ploss_ref_rs;
   ploss_ref_rs.pusch_pathloss_ref_rs_id = cfg.id;
@@ -979,7 +979,7 @@ srsgnb::srs_du::make_asn1_rrc_pusch_pathloss_ref_rs(const pusch_config::pusch_po
 }
 
 asn1::rrc_nr::sri_pusch_pwr_ctrl_s
-srsgnb::srs_du::make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& cfg)
+srsran::srs_du::make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power_control::sri_pusch_pwr_ctrl& cfg)
 {
   sri_pusch_pwr_ctrl_s sri_pwr_ctl;
   sri_pwr_ctl.sri_pusch_pwr_ctrl_id        = cfg.id;
@@ -1038,7 +1038,7 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
     out.tpc_accumulation_present = true;
   }
 
-  if (dest.msg3_alpha != srsgnb::alpha::not_set) {
+  if (dest.msg3_alpha != srsran::alpha::not_set) {
     out.msg3_alpha_present = true;
     make_asn1_rrc_alpha(out.msg3_alpha, dest.msg3_alpha);
   }
@@ -1055,7 +1055,7 @@ void make_asn1_rrc_pusch_pwr_ctrl(asn1::rrc_nr::pusch_pwr_ctrl_s&          out,
       p0_alphaset.p0_present = true;
       p0_alphaset.p0         = dest.p0_alphasets[idx].p0.value();
     }
-    if (dest.p0_alphasets[idx].p0_pusch_alpha != srsgnb::alpha::not_set) {
+    if (dest.p0_alphasets[idx].p0_pusch_alpha != srsran::alpha::not_set) {
       p0_alphaset.alpha_present = true;
       make_asn1_rrc_alpha(p0_alphaset.alpha, dest.p0_alphasets[idx].p0_pusch_alpha);
     }
@@ -1204,7 +1204,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
     out.data_scrambling_id_pusch_present = true;
     out.data_scrambling_id_pusch         = dest.data_scrambling_id_pusch.value();
   }
-  if (dest.tx_cfg != srsgnb::pusch_config::tx_config::not_set) {
+  if (dest.tx_cfg != srsran::pusch_config::tx_config::not_set) {
     out.tx_cfg_present = true;
     switch (dest.tx_cfg) {
       case pusch_config::tx_config::codebook:
@@ -1280,7 +1280,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
     out.pusch_time_domain_alloc_list.set_release();
   }
 
-  if (dest.mcs_table != srsgnb::pusch_mcs_table::qam64) {
+  if (dest.mcs_table != srsran::pusch_mcs_table::qam64) {
     out.mcs_table_present = true;
     switch (dest.mcs_table) {
       case pusch_mcs_table::qam64LowSe:
@@ -1294,7 +1294,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
     }
   }
 
-  if (dest.trans_precoder != srsgnb::pusch_config::transform_precoder::not_set) {
+  if (dest.trans_precoder != srsran::pusch_config::transform_precoder::not_set) {
     out.transform_precoder_present = true;
     switch (dest.trans_precoder) {
       case pusch_config::transform_precoder::enabled:
@@ -1308,7 +1308,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
     }
   }
 
-  if (dest.cb_subset != srsgnb::pusch_config::codebook_subset::not_set) {
+  if (dest.cb_subset != srsran::pusch_config::codebook_subset::not_set) {
     out.codebook_subset_present = true;
     switch (dest.cb_subset) {
       case pusch_config::codebook_subset::fully_and_partial_and_non_coherent:
@@ -1341,7 +1341,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
   }
 }
 
-asn1::rrc_nr::srs_res_set_s srsgnb::srs_du::make_asn1_rrc_srs_res_set(const srs_config::srs_resource_set& cfg)
+asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_config::srs_resource_set& cfg)
 {
   srs_res_set_s srs_res_set;
   srs_res_set.srs_res_set_id = cfg.id;
@@ -1516,7 +1516,7 @@ void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_periodic
   }
 }
 
-asn1::rrc_nr::srs_res_s srsgnb::srs_du::make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg)
+asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::srs_resource& cfg)
 {
   srs_res_s res;
   res.srs_res_id = cfg.id;
@@ -1858,7 +1858,7 @@ void calculate_serving_cell_config_diff(asn1::rrc_nr::serving_cell_cfg_s& out,
 }
 
 asn1::rrc_nr::sched_request_to_add_mod_s
-srsgnb::srs_du::make_asn1_rrc_scheduling_request(const scheduling_request_to_addmod& cfg)
+srsran::srs_du::make_asn1_rrc_scheduling_request(const scheduling_request_to_addmod& cfg)
 {
   sched_request_to_add_mod_s req{};
   req.sched_request_id = cfg.sr_id;
@@ -2040,7 +2040,7 @@ void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_config& cf
   }
 }
 
-asn1::rrc_nr::tag_s srsgnb::srs_du::make_asn1_rrc_tag_config(const tag& cfg)
+asn1::rrc_nr::tag_s srsran::srs_du::make_asn1_rrc_tag_config(const tag& cfg)
 {
   tag_s tag_cfg{};
 
@@ -2214,7 +2214,7 @@ void calculate_mac_cell_group_config_diff(asn1::rrc_nr::mac_cell_group_cfg_s& ou
   out.skip_ul_tx_dyn = dest.skip_uplink_tx_dynamic;
 }
 
-void srsgnb::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
+void srsran::srs_du::calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
                                                       const cell_group_config&        src,
                                                       const cell_group_config&        dest)
 {

@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "srsgnb/support/memory_pool/ring_buffer_pool.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Encodes RAR PDUs based on RAR information provided by the scheduler.
 class rar_pdu_assembler
@@ -28,4 +28,4 @@ private:
   ticking_ring_buffer_pool& pdu_pool;
 };
 
-} // namespace srsgnb
+} // namespace srsran

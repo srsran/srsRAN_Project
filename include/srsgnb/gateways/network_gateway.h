@@ -2,7 +2,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Generic network gateway interfaces to connect components to the outside world.
 
@@ -51,4 +51,4 @@ public:
   /// this function can be used to get the actual port number.
   virtual int get_bind_port() = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

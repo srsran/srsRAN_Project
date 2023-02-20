@@ -12,7 +12,7 @@
 #include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -29,7 +29,7 @@ TEST_P(validate_slot_indication_field, WithValue)
                std::get<1>(params),
                build_valid_slot_indication,
                validate_slot_indication,
-               srsgnb::fapi::message_type_id::slot_indication);
+               srsran::fapi::message_type_id::slot_indication);
 };
 
 INSTANTIATE_TEST_SUITE_P(SFN,

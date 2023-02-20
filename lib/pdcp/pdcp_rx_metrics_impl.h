@@ -13,7 +13,7 @@
 #include <mutex>
 #include <srsgnb/pdcp/pdcp_rx_metrics.h>
 
-namespace srsgnb {
+namespace srsran {
 
 class pdcp_rx_metrics : pdcp_rx_metrics_interface
 {
@@ -86,4 +86,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

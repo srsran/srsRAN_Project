@@ -20,7 +20,7 @@
 #include <mutex>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // A test case consists of a PUSCH PDU configuration and a Transport Block Size.
 using test_case_type = std::tuple<pusch_processor::pdu_t, unsigned>;

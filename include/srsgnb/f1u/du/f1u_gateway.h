@@ -15,7 +15,7 @@
 #include "srsgnb/f1u/du/f1u_rx_sdu_notifier.h"
 #include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// This class will be used to provide the interfaces to
@@ -36,4 +36,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

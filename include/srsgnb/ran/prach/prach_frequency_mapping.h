@@ -13,7 +13,7 @@
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Collects PRACH frequency mapping information as per TS38.211 Section 5.3.2 and Section 6.3.3.2.
 struct prach_frequency_mapping_information {
@@ -35,4 +35,4 @@ static constexpr prach_frequency_mapping_information PRACH_FREQUENCY_MAPPING_INF
 prach_frequency_mapping_information prach_frequency_mapping_get(prach_subcarrier_spacing prach_scs,
                                                                 subcarrier_spacing       pusch_scs);
 
-} // namespace srsgnb
+} // namespace srsran

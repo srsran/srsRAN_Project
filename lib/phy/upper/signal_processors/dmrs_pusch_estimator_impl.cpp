@@ -3,7 +3,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 const bounded_bitset<NRE> RE_PATTERN_TYPE1_DELTA0 =

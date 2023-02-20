@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/downlink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Spy implementation of a downlink processor
 class downlink_processor_spy : public downlink_processor
@@ -55,4 +55,4 @@ public:
   bool is_reserved() const override { return reserved; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

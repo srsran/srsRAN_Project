@@ -11,10 +11,10 @@
 #include "mac_config_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Derives MAC Cell Configuration from DU Cell Configuration.
-mac_cell_creation_request srsgnb::make_mac_cell_config(du_cell_index_t       cell_index,
+mac_cell_creation_request srsran::make_mac_cell_config(du_cell_index_t       cell_index,
                                                        const du_cell_config& du_cfg,
                                                        byte_buffer           bcch_dl_sch_payload,
                                                        const sched_cell_configuration_request_message& sched_cell_cfg)

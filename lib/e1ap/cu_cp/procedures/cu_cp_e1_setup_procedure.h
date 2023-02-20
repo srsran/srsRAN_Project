@@ -15,7 +15,7 @@
 #include "srsgnb/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 struct f1ap_du_context;
@@ -55,4 +55,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -12,13 +12,13 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 /// CORESET0 is configured for the cell.
 static constexpr bool is_coreset0_configured_for_cell = true;
 
-void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const sib_information& mac_pdu)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const sib_information& mac_pdu)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
@@ -136,9 +136,9 @@ static void fill_coreset(fapi::dl_pdsch_pdu_builder&  builder,
   unsigned initial_dl_bwp_size = 0;
 
   switch (trans_type) {
-    case srsgnb::fapi::pdsch_trans_type::non_interleaved_common_ss:
-    case srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
-    case srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
+    case srsran::fapi::pdsch_trans_type::non_interleaved_common_ss:
+    case srsran::fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
+    case srsran::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
       coreset_start_point = coreset_cfg.get_coreset_start_crb();
       break;
     default:
@@ -146,8 +146,8 @@ static void fill_coreset(fapi::dl_pdsch_pdu_builder&  builder,
   }
 
   switch (trans_type) {
-    case srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
-    case srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
+    case srsran::fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
+    case srsran::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
       initial_dl_bwp_size =
           (is_coreset0_config_for_cell) ? coreset_cfg.coreset0_crbs().length() : bwp_cfg.crbs.length();
       break;
@@ -174,7 +174,7 @@ static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id            id,
 
   // Interleaved cases for DCI 1_0, CORESET0 and in Common Search Space.
   if (id == to_coreset_id(0) && is_common_search_space(ss) && is_dci_1_0) {
-    if (ss == srsgnb::search_space_set_type::type0) {
+    if (ss == srsran::search_space_set_type::type0) {
       return fapi::pdsch_trans_type::interleaved_common_type0_coreset0;
     }
 
@@ -185,7 +185,7 @@ static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id            id,
   return fapi::pdsch_trans_type::interleaved_other;
 }
 
-void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
                                                      const sib_information&      mac_pdu)
 {
   srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
@@ -227,14 +227,14 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // :TODO Rate-Matching related parameters, not used now.
 }
 
-void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const rar_information& mac_pdu)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const rar_information& mac_pdu)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
   convert_pdsch_mac_to_fapi(builder, mac_pdu);
 }
 
-void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
                                                      const rar_information&      mac_pdu)
 {
   srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
@@ -276,14 +276,14 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // :TODO Rate-Matching related parameters, not used now.
 }
 
-void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const dl_msg_alloc& mac_pdu)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pdu, const dl_msg_alloc& mac_pdu)
 {
   fapi::dl_pdsch_pdu_builder builder(fapi_pdu);
 
   convert_pdsch_mac_to_fapi(builder, mac_pdu);
 }
 
-void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder, const dl_msg_alloc& mac_pdu)
+void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder, const dl_msg_alloc& mac_pdu)
 {
   srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   srsgnb_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");

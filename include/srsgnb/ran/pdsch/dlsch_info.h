@@ -18,7 +18,7 @@
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/support/units.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Collects the necessary parameters to calculate the Downlink Shared Channel (DL-SCH) information.
 struct dlsch_configuration {
@@ -66,4 +66,4 @@ struct dlsch_information {
 /// Gets the DL-SCH information for a given PDSCH configuration.
 dlsch_information get_dlsch_information(const dlsch_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

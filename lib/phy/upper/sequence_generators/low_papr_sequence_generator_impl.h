@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a generic low PAPR sequence generation implementation.
 ///
@@ -85,4 +85,4 @@ public:
   void generate(span<cf_t> sequence, unsigned u, unsigned v, float alpha) const override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -11,7 +11,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/prach.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 static preamble_format convert_fapi_format_to_phy(fapi::prach_format_type format)
@@ -33,7 +33,7 @@ static preamble_format convert_fapi_format_to_phy(fapi::prach_format_type format
   return preamble_format::values::FORMAT1;
 }
 
-void srsgnb::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&       context,
+void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&       context,
                                                      const fapi::ul_prach_pdu&   fapi_pdu,
                                                      const fapi::prach_config&   prach_cfg,
                                                      const fapi::carrier_config& carrier_cfg,

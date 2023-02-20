@@ -12,11 +12,11 @@
 
 #include "logical_channel_config.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace config_helpers {
 
 /// \brief Creates a default logical channel configuration to be used by the scheduler.
 logical_channel_config create_default_logical_channel_config(lcid_t lcid);
 
 } // namespace config_helpers
-} // namespace srsgnb
+} // namespace srsran

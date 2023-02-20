@@ -13,7 +13,7 @@
 
 #include "simd.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srsvec;
 
 static void prod_fff_simd(const float* x, const float* y, float* z, std::size_t len)
@@ -109,7 +109,7 @@ static void prod_conj_ccc_simd(const cf_t* x, const cf_t* y, cf_t* z, std::size_
   }
 }
 
-void srsgnb::srsvec::prod(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
+void srsran::srsvec::prod(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
 {
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
@@ -117,7 +117,7 @@ void srsgnb::srsvec::prod(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
   prod_ccc_simd(x.data(), y.data(), z.data(), x.size());
 }
 
-void srsgnb::srsvec::prod(span<const float> x, span<const float> y, span<float> z)
+void srsran::srsvec::prod(span<const float> x, span<const float> y, span<float> z)
 {
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
@@ -125,7 +125,7 @@ void srsgnb::srsvec::prod(span<const float> x, span<const float> y, span<float> 
   prod_fff_simd(x.data(), y.data(), z.data(), x.size());
 }
 
-void srsgnb::srsvec::prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
+void srsran::srsvec::prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
 {
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);

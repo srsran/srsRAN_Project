@@ -20,7 +20,7 @@
 #include <functional>
 #include <stdint.h>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Size of the small buffer embedded in "unique_function<R(Args...)>", used to store functors without calling "new"
 constexpr size_t default_unique_function_buffer_size = 32;
@@ -189,4 +189,4 @@ constexpr size_t default_unique_task_buffer_size = 64;
 /// Generic moveable task
 using unique_task = unique_function<void(), default_unique_task_buffer_size>;
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Power measurements and runtime metrics reported by the amplitude controller.
 struct amplitude_controller_metrics {
@@ -55,4 +55,4 @@ public:
   virtual amplitude_controller_metrics process(span<cf_t> output, span<const cf_t> input) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

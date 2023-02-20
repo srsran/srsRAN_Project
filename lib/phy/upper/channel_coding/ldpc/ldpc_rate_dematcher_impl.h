@@ -16,7 +16,7 @@
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief LDPC rate dematching implementation.
 ///
@@ -68,4 +68,4 @@ private:
   bool is_new_data = true;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,9 +14,9 @@
 #include <gtest/gtest.h>
 #include <map>
 
-using namespace srsgnb;
+using namespace srsran;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, dmrs_typeA_position dmrs_pos)
 {
@@ -50,7 +50,7 @@ std::ostream& operator<<(std::ostream& os, dmrs_symbol_mask mask)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 #define L0 (UINT8_MAX)

@@ -17,7 +17,7 @@
 #include "srsgnb/support/error_handling.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a receiver softbuffer interface.
 class rx_softbuffer_impl : public unique_rx_softbuffer::softbuffer
@@ -246,4 +246,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

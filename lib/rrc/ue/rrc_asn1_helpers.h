@@ -15,7 +15,7 @@
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -239,4 +239,4 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

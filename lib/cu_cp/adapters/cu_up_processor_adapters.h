@@ -14,7 +14,7 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_up_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class cu_up_processor_to_cu_cp_task_scheduler : public cu_up_processor_task_scheduler
@@ -84,4 +84,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

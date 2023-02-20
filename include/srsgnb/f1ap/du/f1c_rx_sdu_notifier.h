@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief This interface represents the data exit point of the receiving side of a F1-C bearer of the DU.
@@ -26,4 +26,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

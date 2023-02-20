@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Pre-generates and collects low PAPR sequences.
 class low_papr_sequence_collection_impl : public low_papr_sequence_collection
@@ -46,4 +46,4 @@ private:
   dynamic_tensor<4, cf_t> pregen_signals;
 };
 
-} // namespace srsgnb
+} // namespace srsran

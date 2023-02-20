@@ -10,13 +10,13 @@
 
 #include "pdu_session_resource_setup_routine.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
     const cu_cp_pdu_session_resource_setup_request& setup_msg_,
-    const srsgnb::security::sec_as_config&          security_cfg_,
+    const srsran::security::sec_as_config&          security_cfg_,
     du_processor_e1ap_control_notifier&             e1ap_ctrl_notif_,
     du_processor_f1ap_ue_context_notifier&          f1ap_ue_ctxt_notif_,
     du_processor_rrc_ue_control_message_notifier&   rrc_ue_notifier_,
@@ -289,7 +289,7 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
 
       e1ap_drb_setup_item.pdcp_cfg.pdcp_sn_size_ul = cu_cp_pdcp_cfg.drb.value().pdcp_sn_size_ul.value();
       e1ap_drb_setup_item.pdcp_cfg.pdcp_sn_size_dl = cu_cp_pdcp_cfg.drb.value().pdcp_sn_size_dl.value();
-      e1ap_drb_setup_item.pdcp_cfg.rlc_mod         = srsgnb::rlc_mode::am; // TODO: Remove hardcoded value
+      e1ap_drb_setup_item.pdcp_cfg.rlc_mod         = srsran::rlc_mode::am; // TODO: Remove hardcoded value
       if (cu_cp_pdcp_cfg.drb.value().discard_timer.has_value()) {
         e1ap_drb_setup_item.pdcp_cfg.discard_timer =
             static_cast<pdcp_discard_timer>(cu_cp_pdcp_cfg.drb.value().discard_timer.value());

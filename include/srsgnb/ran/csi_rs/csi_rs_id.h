@@ -12,7 +12,7 @@
 
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief NZP-CSI-RS-ResourceId is used to identify one NZP-CSI-RS-Resource.
 /// \remark See TS 38.331, \c NZP-CSI-RS-ResourceId and \c maxNrofNZP-CSI-RS-Resources.
@@ -57,4 +57,4 @@ enum csi_ssb_res_set_id_t {
   MAX_NOF_CSI_SSB_RESOURCES_PER_SET = 64,
 };
 
-} // namespace srsgnb
+} // namespace srsran

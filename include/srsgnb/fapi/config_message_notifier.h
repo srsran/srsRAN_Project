@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 struct config_response;
@@ -42,4 +42,4 @@ public:
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

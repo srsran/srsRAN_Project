@@ -19,7 +19,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void test_works_in_order()
 {

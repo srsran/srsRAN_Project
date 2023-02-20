@@ -14,7 +14,7 @@
 #include <memory>
 #include <utility>
 
-namespace srsgnb {
+namespace srsran {
 
 struct udp_network_gateway_creation_message {
   udp_network_gateway_creation_message(udp_network_gateway_config     config_,
@@ -29,4 +29,4 @@ struct udp_network_gateway_creation_message {
 /// Creates an instance of an network gateway
 std::unique_ptr<udp_network_gateway> create_udp_network_gateway(udp_network_gateway_creation_message msg);
 
-} // namespace srsgnb
+} // namespace srsran

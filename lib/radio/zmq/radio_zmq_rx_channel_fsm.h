@@ -13,7 +13,7 @@
 #include <condition_variable>
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 class radio_zmq_rx_channel_fsm
 {
 private:
@@ -115,4 +115,4 @@ public:
     return state == states::RECEIVE_DATA;
   }
 };
-} // namespace srsgnb
+} // namespace srsran

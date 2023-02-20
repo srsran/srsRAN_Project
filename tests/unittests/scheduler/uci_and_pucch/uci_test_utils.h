@@ -19,7 +19,7 @@
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 
 // Helper function to create a sched_cell_configuration_request_message that allows a configuration with either 15kHz or
 // 30kHz SCS. By default, it creates a bandwidth of 20MHz.
@@ -153,4 +153,4 @@ public:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-} // namespace srsgnb
+} // namespace srsran

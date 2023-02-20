@@ -12,7 +12,7 @@
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -28,7 +28,7 @@ TEST_P(validate_prach_pdu_field, WithValue)
                std::get<1>(params),
                build_valid_ul_prach_pdu,
                validate_ul_prach_pdu,
-               srsgnb::fapi::message_type_id::ul_tti_request,
+               srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PRACH);
 };
 

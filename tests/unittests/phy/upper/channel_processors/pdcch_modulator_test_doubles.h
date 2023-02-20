@@ -13,7 +13,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 class pdcch_modulator_spy : public pdcch_modulator
 {
@@ -42,4 +42,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(pdcch_modulator);
 
-} // namespace srsgnb
+} // namespace srsran

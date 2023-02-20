@@ -14,7 +14,7 @@
 #include "srsgnb/phy/support/interpolator.h"
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Port channel estimator that averages all OFDM symbols containing DM-RS.
 ///
@@ -93,4 +93,4 @@ private:
   unsigned window_size = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

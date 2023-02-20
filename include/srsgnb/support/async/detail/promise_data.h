@@ -13,7 +13,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -66,4 +66,4 @@ struct promise_data<void, Base> : public Base {
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

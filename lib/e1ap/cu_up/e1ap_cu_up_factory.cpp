@@ -13,10 +13,10 @@
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
-std::unique_ptr<e1ap_interface> srsgnb::srs_cu_up::create_e1ap(e1ap_message_notifier& e1ap_pdu_notifier_,
+std::unique_ptr<e1ap_interface> srsran::srs_cu_up::create_e1ap(e1ap_message_notifier& e1ap_pdu_notifier_,
                                                                e1ap_cu_up_notifier&   cu_up_notifier_,
                                                                task_executor&         cu_up_exec_)
 {

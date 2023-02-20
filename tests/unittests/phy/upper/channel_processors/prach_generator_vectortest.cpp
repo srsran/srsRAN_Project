@@ -16,7 +16,7 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 
 static std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
@@ -43,9 +43,9 @@ static bool operator==(span<const cf_t> in0, span<const cf_t> in1)
   });
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 class prach_generator_test : public ::testing::TestWithParam<test_case_t>
 {

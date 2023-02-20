@@ -17,7 +17,7 @@
 #include "srsgnb/scheduler/harq_id.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr static size_t UE_CON_RES_ID_LEN = 6;
 using ue_con_res_id_t                     = std::array<uint8_t, UE_CON_RES_ID_LEN>;
@@ -196,4 +196,4 @@ private:
   du_ue_list<ue_item> ue_db;
 };
 
-} // namespace srsgnb
+} // namespace srsran

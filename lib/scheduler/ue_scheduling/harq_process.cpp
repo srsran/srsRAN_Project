@@ -12,7 +12,7 @@
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)

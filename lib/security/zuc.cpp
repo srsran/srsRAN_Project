@@ -12,8 +12,8 @@
 
 #include "srsgnb/security/zuc.h"
 
-using namespace srsgnb;
-using namespace srsgnb::security;
+using namespace srsran;
+using namespace srsran::security;
 
 /// Adapted from ETSI/SAGE specifications:
 /// "Specification of the 3GPP Confidentiality
@@ -193,7 +193,7 @@ u32 F(zuc_state_t* state)
 
 /* initialize */
 
-void srsgnb::security::zuc_initialize(zuc_state_t* state, const u8* k, u8* iv)
+void srsran::security::zuc_initialize(zuc_state_t* state, const u8* k, u8* iv)
 {
   u32 w, nCount;
 
@@ -227,7 +227,7 @@ void srsgnb::security::zuc_initialize(zuc_state_t* state, const u8* k, u8* iv)
   }
 }
 
-void srsgnb::security::zuc_generate_keystream(zuc_state_t* state, int key_stream_len, u32* p_keystream)
+void srsran::security::zuc_generate_keystream(zuc_state_t* state, int key_stream_len, u32* p_keystream)
 {
   int i;
   {

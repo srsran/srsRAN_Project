@@ -15,7 +15,7 @@
 #include "srsgnb/pcap/pcap.h"
 #include "srsgnb/support/executors/task_worker.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class ngap_pcap_impl : public ngap_pcap
 {
@@ -30,14 +30,14 @@ public:
   void open(const char* filename_) override;
   void close() override;
   bool is_write_enabled() override;
-  void push_pdu(srsgnb::byte_buffer pdu) override;
-  void push_pdu(srsgnb::const_span<uint8_t> pdu) override;
+  void push_pdu(srsran::byte_buffer pdu) override;
+  void push_pdu(srsran::const_span<uint8_t> pdu) override;
 
 private:
-  void                 write_pdu(srsgnb::byte_buffer buf);
+  void                 write_pdu(srsran::byte_buffer buf);
   task_worker          worker;
   std::vector<uint8_t> tmp_mem;
   pcap_file_base       writter;
 };
 
-} // namespace srsgnb
+} // namespace srsran

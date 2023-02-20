@@ -15,7 +15,7 @@
 #include "srsgnb/rrc/rrc_du.h"
 #include "srsgnb/support/async/async_task_loop.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
@@ -128,4 +128,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/support/format_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 /// Converts the given FAPI CRC SINR to dBs as per SCF-222 v4.0 section 3.4.8.
@@ -27,7 +27,7 @@ static float to_crc_ul_rsrp(unsigned rsrp)
   return static_cast<float>(rsrp - 1400) * 0.1F;
 }
 
-void srsgnb::fapi::log_crc_indication(const crc_indication_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_crc_indication(const crc_indication_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "CRC.indication slot={}.{}", msg.sfn, msg.slot);
@@ -84,7 +84,7 @@ static void log_pdsch_pdu(const dl_pdsch_pdu& pdu, fmt::memory_buffer& buffer)
                  pdu.cws.front().tb_size);
 }
 
-void srsgnb::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "DL_TTI.request slot={}.{}", msg.sfn, msg.slot);
@@ -128,7 +128,7 @@ static float to_rach_preamble_snr_dB(int fapi_snr)
   return (fapi_snr - 128) * 0.5F;
 }
 
-void srsgnb::fapi::log_rach_indication(const rach_indication_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_rach_indication(const rach_indication_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "RACH.indication slot={}.{}", msg.sfn, msg.slot);
@@ -162,7 +162,7 @@ void srsgnb::fapi::log_rach_indication(const rach_indication_message& msg, srslo
   logger.debug("{}", to_c_str(buffer));
 }
 
-void srsgnb::fapi::log_rx_data_indication(const rx_data_indication_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_rx_data_indication(const rx_data_indication_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "Rx_Data.indication slot={}.{}", msg.sfn, msg.slot);
@@ -174,7 +174,7 @@ void srsgnb::fapi::log_rx_data_indication(const rx_data_indication_message& msg,
   logger.debug("{}", to_c_str(buffer));
 }
 
-void srsgnb::fapi::log_tx_data_request(const tx_data_request_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_tx_data_request(const tx_data_request_message& msg, srslog::basic_logger& logger)
 {
   logger.debug("Tx_Data.request slot={}.{} nof_pdu={}", msg.sfn, msg.slot, msg.pdus.size());
 }
@@ -222,7 +222,7 @@ static void log_uci_pucch_f0_f1_pdu(const uci_pucch_pdu_format_0_1& pdu, fmt::me
   }
 }
 
-void srsgnb::fapi::log_uci_indication(const uci_indication_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_uci_indication(const uci_indication_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "UCI.indication slot={}.{}", msg.sfn, msg.slot);
@@ -280,7 +280,7 @@ static void log_pucch_pdu(const ul_pucch_pdu& pdu, fmt::memory_buffer& buffer)
                  pdu.sr_bit_len);
 }
 
-void srsgnb::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "UL_TTI.request slot={}.{}", msg.sfn, msg.slot);
@@ -305,13 +305,13 @@ void srsgnb::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog:
   logger.debug("{}", to_c_str(buffer));
 }
 
-void srsgnb::fapi::log_slot_indication(const slot_indication_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_slot_indication(const slot_indication_message& msg, srslog::basic_logger& logger)
 {
   logger.set_context(msg.sfn, msg.slot);
   logger.debug("Slot.indication");
 }
 
-void srsgnb::fapi::log_ul_dci_request(const ul_dci_request_message& msg, srslog::basic_logger& logger)
+void srsran::fapi::log_ul_dci_request(const ul_dci_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "UL_DCI.request slot={}.{}", msg.sfn, msg.slot);

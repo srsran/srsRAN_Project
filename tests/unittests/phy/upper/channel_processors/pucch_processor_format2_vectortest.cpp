@@ -16,11 +16,11 @@
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 using PucchProcessorF2Params = test_case_t;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
@@ -32,7 +32,7 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 class PucchProcessorF2Fixture : public ::testing::TestWithParam<PucchProcessorF2Params>
 {

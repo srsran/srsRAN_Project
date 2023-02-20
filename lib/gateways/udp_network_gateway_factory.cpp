@@ -12,9 +12,9 @@
 #include "udp_network_gateway_impl.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<udp_network_gateway> srsgnb::create_udp_network_gateway(udp_network_gateway_creation_message msg)
+std::unique_ptr<udp_network_gateway> srsran::create_udp_network_gateway(udp_network_gateway_creation_message msg)
 {
   return std::make_unique<udp_network_gateway_impl>(msg.config, msg.data_notifier);
 }

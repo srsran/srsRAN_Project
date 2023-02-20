@@ -14,7 +14,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 class rlc_rx_metrics_container
 {
@@ -70,4 +70,4 @@ public:
     metrics = {};
   }
 };
-} // namespace srsgnb
+} // namespace srsran

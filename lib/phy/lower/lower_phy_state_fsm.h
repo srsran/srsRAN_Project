@@ -13,7 +13,7 @@
 #include <condition_variable>
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes lower physical layer state FSM.
 class lower_phy_state_fsm
@@ -80,4 +80,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

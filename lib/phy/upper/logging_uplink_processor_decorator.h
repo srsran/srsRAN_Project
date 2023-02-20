@@ -12,7 +12,7 @@
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 class task_executor;
 
 /// \brief Uplink processor implementation with a single executor.
@@ -61,4 +61,4 @@ private:
   std::unique_ptr<uplink_processor> uplink_proc;
   srslog::basic_logger&             logger;
 };
-} // namespace srsgnb
+} // namespace srsran

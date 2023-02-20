@@ -20,7 +20,7 @@
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif // __clang__
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::random_device rd;
 std::mt19937       g(rd());

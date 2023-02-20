@@ -13,7 +13,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ran/lcid.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -53,4 +53,4 @@ public:
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

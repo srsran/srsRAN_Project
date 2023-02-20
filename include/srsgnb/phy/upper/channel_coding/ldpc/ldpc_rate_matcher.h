@@ -15,7 +15,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// LDPC rate matching (i.e., bit selection and bit interleaving) interface.
 class ldpc_rate_matcher
@@ -35,4 +35,4 @@ public:
   rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

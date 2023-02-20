@@ -11,7 +11,7 @@
 #include "downlink_processor_pool_impl.h"
 #include "srsgnb/ran/slot_point.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 downlink_processor_pool_impl::downlink_processor_pool_impl(downlink_processor_pool_impl_config dl_processors) :
   processors(dl_processors.num_sectors), null_proc(std::move(dl_processors.null_proc))

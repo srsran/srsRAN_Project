@@ -14,7 +14,7 @@
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/f1ap/du/f1ap_du.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_du {
 
@@ -53,4 +53,4 @@ byte_buffer make_asn1_rrc_cell_pcch_pch_msg(uint64_t five_g_s_tmsi);
 
 } // namespace srs_du
 
-} // namespace srsgnb
+} // namespace srsran

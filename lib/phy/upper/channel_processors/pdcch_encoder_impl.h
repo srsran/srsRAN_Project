@@ -20,7 +20,7 @@
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PDCCH encoder, as per TS38.212 Section 7.3.
 ///
@@ -102,4 +102,4 @@ public:
   void encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

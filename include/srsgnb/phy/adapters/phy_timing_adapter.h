@@ -13,7 +13,7 @@
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a generic physical layer timing adapter.
 class phy_timing_adapter : public lower_phy_timing_notifier
@@ -53,4 +53,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

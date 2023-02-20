@@ -20,7 +20,7 @@
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/ran/pucch/pucch_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PUCCH demodulator implementation.
 class pucch_demodulator_impl : public pucch_demodulator
@@ -124,4 +124,4 @@ private:
   bounded_bitset<MAX_RB> prb_mask = {};
 };
 
-} // namespace srsgnb
+} // namespace srsran

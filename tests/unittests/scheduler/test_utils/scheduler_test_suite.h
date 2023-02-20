@@ -19,7 +19,7 @@
 #include "lib/scheduler/cell/resource_grid.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class cell_configuration;
 struct cell_resource_allocator;
@@ -90,4 +90,4 @@ bool assert_ul_resource_grid_filled(const cell_configuration&      cell_cfg,
 
 bool test_res_grid_has_re_set(const cell_resource_allocator& cell_res_grid, grant_info grant, unsigned tx_delay);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -10,4 +10,4 @@
 
 #include "pdcp_pdu.h"
 
-using namespace srsgnb;
+using namespace srsran;

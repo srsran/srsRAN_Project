@@ -12,7 +12,7 @@
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 downlink_processor_single_executor_impl::downlink_processor_single_executor_impl(
     upper_phy_rg_gateway&                 gateway_,
@@ -119,7 +119,7 @@ void downlink_processor_single_executor_impl::configure_resource_grid(const reso
   });
 }
 
-void srsgnb::downlink_processor_single_executor_impl::finish_processing_pdus()
+void srsran::downlink_processor_single_executor_impl::finish_processing_pdus()
 {
   {
     std::lock_guard<std::mutex> lock(mutex);

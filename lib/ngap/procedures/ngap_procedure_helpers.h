@@ -13,7 +13,7 @@
 #include "srsgnb/cu_cp/ue_manager.h" // for ngap_ue
 #include "srsgnb/ngap/ngap.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 inline void handle_nas_pdu(srslog::basic_logger& logger, const asn1::unbounded_octstring<true>& nas_pdu, ngap_ue& ue)
@@ -26,4 +26,4 @@ inline void handle_nas_pdu(srslog::basic_logger& logger, const asn1::unbounded_o
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

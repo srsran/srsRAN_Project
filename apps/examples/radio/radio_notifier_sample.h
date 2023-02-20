@@ -12,7 +12,7 @@
 
 #include "srsgnb/radio/radio_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class radio_notifier_spy : public radio_notification_handler
 {
@@ -95,4 +95,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

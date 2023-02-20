@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 enum class cause_t : uint8_t {
   radio_network = 0,
@@ -22,4 +22,4 @@ enum class cause_t : uint8_t {
   nulltype      = 6
 };
 
-} // namespace srsgnb
+} // namespace srsran

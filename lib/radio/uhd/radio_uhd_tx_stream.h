@@ -19,7 +19,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 class radio_uhd_tx_stream : public uhd_exception_handler
 {
 private:
@@ -96,4 +96,4 @@ public:
   /// Stop the transmission.
   void stop();
 };
-} // namespace srsgnb
+} // namespace srsran

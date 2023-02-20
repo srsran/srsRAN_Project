@@ -13,8 +13,8 @@
 #include "du/procedures/f1ap_du_ue_context_setup_procedure.h"
 #include "srsgnb/f1ap/du/f1ap_du_ue_config.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_du;
+using namespace srsran;
+using namespace srsran::srs_du;
 
 void f1ap_du_ue::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
 {

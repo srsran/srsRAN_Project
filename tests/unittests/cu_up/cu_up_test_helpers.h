@@ -21,7 +21,7 @@
 
 constexpr auto default_wait_timeout = std::chrono::seconds(3);
 
-namespace srsgnb {
+namespace srsran {
 
 /// Dummy GTP-U Rx Demux
 class dummy_gtpu_demux_ctrl : public gtpu_demux_ctrl
@@ -260,4 +260,4 @@ e1ap_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1a
   return bearer_context_setup_request;
 }
 
-} // namespace srsgnb
+} // namespace srsran

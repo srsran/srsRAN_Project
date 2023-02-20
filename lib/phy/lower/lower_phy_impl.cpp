@@ -14,7 +14,7 @@
 #include "srsgnb/phy/support/resource_grid_reader_empty.h"
 #include "srsgnb/srsvec/zero.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static const resource_grid_reader_empty rg_reader_empty;
 

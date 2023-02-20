@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/ran/modulation_scheme.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Uplink Control Information decoder.
 ///
@@ -46,4 +46,4 @@ public:
   decode(span<uint8_t> message, span<const log_likelihood_ratio> llr, const configuration& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

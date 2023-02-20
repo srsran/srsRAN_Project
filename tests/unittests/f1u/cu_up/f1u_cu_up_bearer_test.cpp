@@ -13,7 +13,7 @@
 #include <gtest/gtest.h>
 #include <list>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
 /// Mocking class of the surrounding layers invoked by the F1-U bearer

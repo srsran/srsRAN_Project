@@ -14,7 +14,7 @@
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collects PRACH preamble information parameters.
 ///
@@ -40,4 +40,4 @@ struct prach_preamble_information {
 /// \return PRACH preamble information.
 prach_preamble_information get_prach_preamble_long_info(preamble_format format);
 
-} // namespace srsgnb
+} // namespace srsran

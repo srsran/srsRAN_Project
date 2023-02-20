@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_request_notifier.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Implements a generic physical layer adapter for symbol capture event requests.
 class phy_rx_symbol_request_adapter : public upper_phy_rx_symbol_request_notifier
@@ -41,4 +41,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

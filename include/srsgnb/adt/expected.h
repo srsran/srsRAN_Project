@@ -14,7 +14,7 @@
 #include <memory>
 #include <system_error>
 
-namespace srsgnb {
+namespace srsran {
 
 struct default_error_t {};
 struct default_success_t {};
@@ -243,4 +243,4 @@ private:
 template <typename E>
 using error_type = expected<default_success_t, E>;
 
-} // namespace srsgnb
+} // namespace srsran

@@ -17,7 +17,7 @@
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PRACH generator interface.
 ///
@@ -51,4 +51,4 @@ public:
   /// \return A read-only view of the generated sequence.
   virtual span<const cf_t> generate(const configuration& config) = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

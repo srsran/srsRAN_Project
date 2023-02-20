@@ -11,7 +11,7 @@
 #include "../support/pucch/pucch_default_resource.h"
 #include "pucch_allocator_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /////////////    RESOURCE MANAGER     /////////////
 
@@ -23,7 +23,7 @@ int get_pucch_res_idx_for_csi(const ue_cell_configuration& ue_cell_cfg)
   const unsigned csi_report_cfg_idx = 0;
   // We assume we use the First BWP.
   // TODO: extend by passing the BWP id.
-  const bwp_id_t bwp_id      = srsgnb::MIN_BWP_ID;
+  const bwp_id_t bwp_id      = srsran::MIN_BWP_ID;
   const auto& csi_report_cfg = ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
   auto&       csi_pucch_res_list =
       variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)

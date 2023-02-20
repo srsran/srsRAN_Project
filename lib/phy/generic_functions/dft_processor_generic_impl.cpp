@@ -5,7 +5,7 @@
 
 #include "../../srsvec/simd.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Implements a DFT of size N.
 //

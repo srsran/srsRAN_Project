@@ -25,7 +25,7 @@
  * This is useful for circular data structures, like TTIs or SNs.
  */
 
-namespace srsgnb {
+namespace srsran {
 
 template <typename T, std::size_t N>
 class circular_array
@@ -48,4 +48,4 @@ public:
   size_t size() const { return N; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Command to terminate application with an error message, ensuring first that the log is flushed.
 /// Attribute noinline is used to signal to the compiler that this path should rarely occur and therefore doesn't need
@@ -47,4 +47,4 @@ template <typename... Args>
 #define report_fatal_error_if_not(condition, fmtstr, ...)                                                              \
   (void)((condition) || (report_fatal_error(fmtstr, ##__VA_ARGS__), 0))
 
-} // namespace srsgnb
+} // namespace srsran

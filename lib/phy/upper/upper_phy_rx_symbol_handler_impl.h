@@ -17,7 +17,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 class uplink_processor;
 class uplink_processor_pool;
@@ -91,4 +91,4 @@ private:
   rx_payload_buffer_pool rx_payload_pool;
 };
 
-} // namespace srsgnb
+} // namespace srsran

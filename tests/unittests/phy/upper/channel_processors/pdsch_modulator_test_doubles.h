@@ -4,7 +4,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 class pdsch_modulator_spy : public pdsch_modulator
 {
@@ -34,4 +34,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(pdsch_modulator);
 
-} // namespace srsgnb
+} // namespace srsran

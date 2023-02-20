@@ -13,19 +13,19 @@
 #include <gtest/gtest.h>
 #include <random>
 
-using EvmCalculatorTestParams = std::tuple<srsgnb::modulation_scheme, float, unsigned>;
+using EvmCalculatorTestParams = std::tuple<srsran::modulation_scheme, float, unsigned>;
 
-namespace srsgnb {
+namespace srsran {
 
 static std::ostream& operator<<(std::ostream& os, const modulation_scheme& modulation)
 {
-  fmt::print(os, "{}", srsgnb::to_string(modulation));
+  fmt::print(os, "{}", srsran::to_string(modulation));
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::mt19937 rgen(0);
 

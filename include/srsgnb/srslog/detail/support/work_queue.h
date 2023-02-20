@@ -24,7 +24,7 @@ namespace detail {
 template <typename T, size_t capacity = SRSLOG_QUEUE_CAPACITY>
 class work_queue
 {
-  srsgnb::ring_buffer<T>  queue;
+  srsran::ring_buffer<T>  queue;
   mutable mutex           m;
   static constexpr size_t threshold = capacity * 0.98;
 

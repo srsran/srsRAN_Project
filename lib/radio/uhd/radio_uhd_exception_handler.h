@@ -24,7 +24,7 @@
 #include <uhd/exception.hpp>
 #pragma GCC diagnostic pop
 
-namespace srsgnb {
+namespace srsran {
 
 class uhd_exception_handler
 {
@@ -71,4 +71,4 @@ private:
   std::string error_message;
 };
 
-} // namespace srsgnb
+} // namespace srsran

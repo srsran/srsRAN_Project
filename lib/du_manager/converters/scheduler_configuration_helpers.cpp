@@ -14,11 +14,11 @@
 #include "srsgnb/scheduler/config/logical_channel_config_factory.h"
 #include "srsgnb/scheduler/config/sched_cell_config_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
-sched_cell_configuration_request_message srsgnb::srs_du::make_sched_cell_config_req(du_cell_index_t       cell_index,
+sched_cell_configuration_request_message srsran::srs_du::make_sched_cell_config_req(du_cell_index_t       cell_index,
                                                                                     const du_cell_config& du_cfg,
                                                                                     unsigned sib1_payload_size)
 {
@@ -50,7 +50,7 @@ sched_cell_configuration_request_message srsgnb::srs_du::make_sched_cell_config_
   return sched_req;
 }
 
-sched_ue_config_request srsgnb::srs_du::create_scheduler_ue_config_request(const du_ue& ue_ctx)
+sched_ue_config_request srsran::srs_du::create_scheduler_ue_config_request(const du_ue& ue_ctx)
 {
   sched_ue_config_request sched_cfg;
 

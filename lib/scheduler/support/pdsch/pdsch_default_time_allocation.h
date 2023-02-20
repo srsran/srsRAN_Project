@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/config/dmrs.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collects the PDSCH default time-domain allocation parameters.
 ///
@@ -56,4 +56,4 @@ pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index
 span<const pdsch_time_domain_resource_allocation>
 pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos);
 
-} // namespace srsgnb
+} // namespace srsran

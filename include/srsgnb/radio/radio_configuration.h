@@ -13,7 +13,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/radio/radio_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace radio_configuration {
 
@@ -151,4 +151,4 @@ public:
 };
 
 } // namespace radio_configuration
-} // namespace srsgnb
+} // namespace srsran

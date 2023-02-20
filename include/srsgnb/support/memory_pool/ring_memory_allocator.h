@@ -13,7 +13,7 @@
 #include "heap_memory_resource.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief This memory allocator allocates chunks of a contiguous memory region in a circular fashion.
 class ring_memory_allocator
@@ -47,4 +47,4 @@ private:
   span<uint8_t> mem_block;
 };
 
-} // namespace srsgnb
+} // namespace srsran

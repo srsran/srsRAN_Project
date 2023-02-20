@@ -7,7 +7,7 @@
 #include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   nzp_csi_rs_generator::config_t                          config;
@@ -205,4 +205,4 @@ static const std::vector<test_case_t> nzp_csi_rs_generator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

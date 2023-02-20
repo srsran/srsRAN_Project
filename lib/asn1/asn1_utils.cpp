@@ -10,8 +10,8 @@
 
 #include "srsgnb/asn1/asn1_utils.h"
 
-using srsgnb::byte_buffer;
-using srsgnb::span;
+using srsran::byte_buffer;
+using srsran::span;
 
 namespace asn1 {
 
@@ -141,7 +141,7 @@ SRSASN_CODE bit_ref::pack(uint64_t val, uint32_t n_bits)
   return SRSASN_SUCCESS;
 }
 
-SRSASN_CODE bit_ref::pack_bytes(srsgnb::span<const uint8_t> bytes)
+SRSASN_CODE bit_ref::pack_bytes(srsran::span<const uint8_t> bytes)
 {
   if (bytes.empty()) {
     return SRSASN_SUCCESS;
@@ -157,7 +157,7 @@ SRSASN_CODE bit_ref::pack_bytes(srsgnb::span<const uint8_t> bytes)
   return SRSASN_SUCCESS;
 }
 
-SRSASN_CODE bit_ref::pack_bytes(srsgnb::byte_buffer_view bytes)
+SRSASN_CODE bit_ref::pack_bytes(srsran::byte_buffer_view bytes)
 {
   if (bytes.empty()) {
     return SRSASN_SUCCESS;
@@ -225,7 +225,7 @@ template SRSASN_CODE cbit_ref::unpack<uint16_t>(uint16_t&, uint32_t n_bits);
 template SRSASN_CODE cbit_ref::unpack<uint32_t>(uint32_t&, uint32_t n_bits);
 template SRSASN_CODE cbit_ref::unpack<uint64_t>(uint64_t&, uint32_t n_bits);
 
-SRSASN_CODE cbit_ref::unpack_bytes(srsgnb::span<uint8_t> bytes)
+SRSASN_CODE cbit_ref::unpack_bytes(srsran::span<uint8_t> bytes)
 {
   if (bytes.empty()) {
     return SRSASN_SUCCESS;
@@ -890,7 +890,7 @@ template struct integer_packer<uint64_t>;
     common octstring
 ************************/
 
-uint64_t octet_string_helper::to_uint(srsgnb::span<const uint8_t> buf)
+uint64_t octet_string_helper::to_uint(srsran::span<const uint8_t> buf)
 {
   size_t nbytes = buf.size();
   if (nbytes > 8U) {
@@ -920,7 +920,7 @@ uint64_t octet_string_helper::to_uint(const byte_buffer& buf)
   return val;
 }
 
-void octet_string_helper::to_octet_string(srsgnb::span<uint8_t> buf, uint64_t number)
+void octet_string_helper::to_octet_string(srsran::span<uint8_t> buf, uint64_t number)
 {
   uint64_t nbytes = buf.size();
   if ((static_cast<uint64_t>(1U) << (8U * nbytes)) <= number) {
@@ -932,7 +932,7 @@ void octet_string_helper::to_octet_string(srsgnb::span<uint8_t> buf, uint64_t nu
   }
 }
 
-void octet_string_helper::to_octet_string(srsgnb::byte_buffer& buf, uint64_t number)
+void octet_string_helper::to_octet_string(srsran::byte_buffer& buf, uint64_t number)
 {
   buf.clear();
   size_t nbytes = sizeof(number);
@@ -946,7 +946,7 @@ static void to_hex(char* cstr, uint8_t val)
   sprintf(cstr, "%02x", val);
 }
 
-std::string octet_string_helper::to_hex_string(srsgnb::span<const uint8_t> buf)
+std::string octet_string_helper::to_hex_string(srsran::span<const uint8_t> buf)
 {
   std::string s;
   s.resize(buf.size() * 2);
@@ -972,7 +972,7 @@ std::string octet_string_helper::to_hex_string(const byte_buffer& buf)
   return s;
 }
 
-unsigned octet_string_helper::hex_string_to_octets(srsgnb::span<uint8_t> buf, const std::string& str)
+unsigned octet_string_helper::hex_string_to_octets(srsran::span<uint8_t> buf, const std::string& str)
 {
   srsgnb_assert(buf.size() >= ceil_frac(str.size(), (size_t)2U), "out-of-bounds access");
   if (str.size() % 2 != 0) {

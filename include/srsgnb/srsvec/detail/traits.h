@@ -13,7 +13,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 namespace detail {
 
@@ -101,4 +101,4 @@ struct is_span_compatible<T, std::enable_if_t<std::is_convertible<T, span<value_
 
 } // namespace detail
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsgnb/ran/pdcch/pdcch_candidates.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 class pdcch_resource_allocator_impl::pdcch_slot_allocator
 {

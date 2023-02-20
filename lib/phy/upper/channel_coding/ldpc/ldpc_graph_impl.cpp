@@ -11,8 +11,8 @@
 #include "ldpc_graph_impl.h"
 #include "ldpc_luts_impl.h"
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 ldpc_graph_impl::ldpc_graph_impl(ldpc_base_graph_type _bg, ldpc::lifting_size_t _ls) :
   base_graph(_bg),
@@ -32,7 +32,7 @@ ldpc_graph_impl::ldpc_graph_impl(ldpc_base_graph_type _bg, ldpc::lifting_size_t 
   }
 }
 
-std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> srsgnb::ldpc::create_graph_array()
+std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> srsran::ldpc::create_graph_array()
 {
   std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> tmp{};
 

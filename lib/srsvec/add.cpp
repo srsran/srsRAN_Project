@@ -11,7 +11,7 @@
 #include "srsgnb/srsvec/add.h"
 #include "simd.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srsvec;
 
 static void add_fff_simd(const float* x, const float* y, float* z, std::size_t len)
@@ -107,7 +107,7 @@ static void add_bbb_simd(const int8_t* x, const int8_t* y, int8_t* z, std::size_
   }
 }
 
-void srsgnb::srsvec::add(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
+void srsran::srsvec::add(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
 {
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
@@ -115,7 +115,7 @@ void srsgnb::srsvec::add(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
   add_fff_simd((float*)x.data(), (float*)y.data(), (float*)z.data(), 2 * z.size());
 }
 
-void srsgnb::srsvec::add(span<const float> x, span<const float> y, span<float> z)
+void srsran::srsvec::add(span<const float> x, span<const float> y, span<float> z)
 {
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
@@ -123,7 +123,7 @@ void srsgnb::srsvec::add(span<const float> x, span<const float> y, span<float> z
   add_fff_simd(x.data(), y.data(), z.data(), z.size());
 }
 
-void srsgnb::srsvec::add(span<const int16_t> x, span<const int16_t> y, span<int16_t> z)
+void srsran::srsvec::add(span<const int16_t> x, span<const int16_t> y, span<int16_t> z)
 {
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
@@ -131,7 +131,7 @@ void srsgnb::srsvec::add(span<const int16_t> x, span<const int16_t> y, span<int1
   add_sss_simd(x.data(), y.data(), z.data(), z.size());
 }
 
-void srsgnb::srsvec::add(span<const int8_t> x, span<const int8_t> y, span<int8_t> z)
+void srsran::srsvec::add(span<const int8_t> x, span<const int8_t> y, span<int8_t> z)
 {
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);

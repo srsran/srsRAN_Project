@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <netinet/in.h>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Class used for transmitting GTP-U bearers.
 class gtpu_tunnel_tx : public gtpu_tunnel_tx_lower_layer_interface
@@ -67,4 +67,4 @@ private:
   gtpu_tunnel_tx_upper_layer_notifier& upper_dn;
   sockaddr_storage                     peer_sockaddr;
 };
-} // namespace srsgnb
+} // namespace srsran

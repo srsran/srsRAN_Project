@@ -11,10 +11,10 @@
 #include "srsgnb/du_manager/du_manager_factory.h"
 #include "du_manager_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
-std::unique_ptr<du_manager_interface> srsgnb::srs_du::create_du_manager(const du_manager_params& params)
+std::unique_ptr<du_manager_interface> srsran::srs_du::create_du_manager(const du_manager_params& params)
 {
   auto du_manager = std::make_unique<du_manager_impl>(params);
   return du_manager;

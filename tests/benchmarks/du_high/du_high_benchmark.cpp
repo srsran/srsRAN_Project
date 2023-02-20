@@ -21,7 +21,7 @@
 #include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 /// \brief Parameters of the benchmark.
@@ -201,10 +201,10 @@ public:
     for (const dl_msg_alloc& ue_grant : dl_res.dl_res->ue_grants) {
       mac_uci_pdu& uci_pdu = uci.ucis.emplace_back();
       uci_pdu.rnti         = ue_grant.pdsch_cfg.rnti;
-      srsgnb::mac_uci_pdu::pucch_f0_or_f1_type pucch{};
+      srsran::mac_uci_pdu::pucch_f0_or_f1_type pucch{};
       pucch.harq_info.emplace();
       pucch.harq_info->harqs.resize(1);
-      pucch.harq_info->harqs[0] = srsgnb::uci_pucch_f0_or_f1_harq_values::ack;
+      pucch.harq_info->harqs[0] = srsran::uci_pucch_f0_or_f1_harq_values::ack;
       uci_pdu.pdu               = pucch;
     }
     ctrl_info_handler->handle_uci(uci);

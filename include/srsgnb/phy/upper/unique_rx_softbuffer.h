@@ -11,7 +11,7 @@
 #pragma once
 #include "srsgnb/phy/upper/rx_softbuffer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Wraps a softbuffer instance and locks it inside a block scope.
 ///
@@ -88,4 +88,4 @@ private:
   softbuffer* ptr = nullptr;
 };
 
-} // namespace srsgnb
+} // namespace srsran

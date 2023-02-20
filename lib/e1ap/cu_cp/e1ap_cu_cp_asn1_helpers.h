@@ -13,7 +13,7 @@
 #include "../common/e1ap_asn1_converters.h"
 #include "srsgnb/ran/bcd_helpers.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_setup_request_s& asn1_request,
@@ -859,4 +859,4 @@ inline void fill_asn1_bearer_context_release_command(asn1::e1ap::bearer_context_
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

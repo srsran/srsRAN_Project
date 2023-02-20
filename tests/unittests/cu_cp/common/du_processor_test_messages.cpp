@@ -15,10 +15,10 @@
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
-f1_setup_request_message srsgnb::srs_cu_cp::generate_valid_f1_setup_request()
+f1_setup_request_message srsran::srs_cu_cp::generate_valid_f1_setup_request()
 {
   f1ap_message             f1setup_msg          = generate_f1_setup_request();
   f1_setup_request_message f1_setup_request_msg = {};
@@ -26,7 +26,7 @@ f1_setup_request_message srsgnb::srs_cu_cp::generate_valid_f1_setup_request()
   return f1_setup_request_msg;
 }
 
-f1_setup_request_message srsgnb::srs_cu_cp::generate_f1_setup_request_base()
+f1_setup_request_message srsran::srs_cu_cp::generate_f1_setup_request_base()
 {
   f1ap_message f1setup_msg                                                              = generate_f1_setup_request();
   f1setup_msg.pdu.init_msg().value.f1_setup_request()->gnb_du_served_cells_list_present = false;
@@ -36,7 +36,7 @@ f1_setup_request_message srsgnb::srs_cu_cp::generate_f1_setup_request_base()
   return f1_setup_request_msg;
 }
 
-ue_creation_message srsgnb::srs_cu_cp::generate_ue_creation_message(rnti_t c_rnti, unsigned nrcell_id)
+ue_creation_message srsran::srs_cu_cp::generate_ue_creation_message(rnti_t c_rnti, unsigned nrcell_id)
 {
   ue_creation_message ue_creation_msg = {};
   ue_creation_msg.c_rnti              = c_rnti;
@@ -52,7 +52,7 @@ ue_creation_message srsgnb::srs_cu_cp::generate_ue_creation_message(rnti_t c_rnt
   return ue_creation_msg;
 }
 
-cu_cp_ue_context_release_command srsgnb::srs_cu_cp::generate_ue_context_release_command(ue_index_t ue_index)
+cu_cp_ue_context_release_command srsran::srs_cu_cp::generate_ue_context_release_command(ue_index_t ue_index)
 {
   cu_cp_ue_context_release_command ue_context_release_command = {};
   ue_context_release_command.ue_index                         = ue_index;
@@ -60,7 +60,7 @@ cu_cp_ue_context_release_command srsgnb::srs_cu_cp::generate_ue_context_release_
   return ue_context_release_command;
 }
 
-cu_cp_pdu_session_resource_setup_request srsgnb::srs_cu_cp::generate_pdu_session_resource_setup()
+cu_cp_pdu_session_resource_setup_request srsran::srs_cu_cp::generate_pdu_session_resource_setup()
 {
   cu_cp_pdu_session_resource_setup_request req;
   pdu_session_id_t                         pdu_session_id = uint_to_pdu_session_id(1);
@@ -95,7 +95,7 @@ cu_cp_pdu_session_resource_setup_request srsgnb::srs_cu_cp::generate_pdu_session
 };
 
 e1ap_bearer_context_setup_response
-srsgnb::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+srsran::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
   e1ap_bearer_context_setup_response resp;
@@ -108,7 +108,7 @@ srsgnb::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap
 };
 
 e1ap_bearer_context_modification_response
-srsgnb::srs_cu_cp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
+srsran::srs_cu_cp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                       gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
   e1ap_bearer_context_modification_response resp;
@@ -122,7 +122,7 @@ srsgnb::srs_cu_cp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_
 };
 
 cu_cp_ue_context_modification_response
-srsgnb::srs_cu_cp::generate_cu_cp_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
+srsran::srs_cu_cp::generate_cu_cp_ue_context_modification_response(gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id,
                                                                    gnb_du_ue_f1ap_id_t du_ue_f1ap_id)
 {
   cu_cp_ue_context_modification_response resp;

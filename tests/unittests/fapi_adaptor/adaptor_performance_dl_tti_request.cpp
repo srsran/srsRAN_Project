@@ -17,7 +17,7 @@
 #include <chrono>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);
@@ -42,7 +42,7 @@ static void ssb_conversion_benchmark()
   std::uniform_real_distribution<>        power_dist(-30.8, 30.5);
 
   for (unsigned i = 0; i != iterations; ++i) {
-    srsgnb::dl_ssb_pdu mac_pdu;
+    srsran::dl_ssb_pdu mac_pdu;
     mac_pdu.pci                        = pci_dist(gen);
     mac_pdu.pss_to_sss_epre            = static_cast<ssb_pss_to_sss_epre>(binary_dist(gen));
     mac_pdu.ssb_index                  = block_index_dist(gen);

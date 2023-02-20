@@ -298,7 +298,7 @@ endif (BUILD_TESTS)
 # Export (selected) libraries
 ########################################################################
 if(ENABLE_EXPORT)
-  export(EXPORT srsgnb_export NAMESPACE srsgnb:: FILE "${CMAKE_BINARY_DIR}/srsgnb.cmake")
+  export(EXPORT srsgnb_export NAMESPACE srsran:: FILE "${CMAKE_BINARY_DIR}/srsgnb.cmake")
 else(ENABLE_EXPORT)
   # Remove any previous export file (if it exists), since it will become outdated.
   file(REMOVE "${CMAKE_BINARY_DIR}/srsgnb.cmake")

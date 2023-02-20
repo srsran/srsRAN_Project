@@ -16,9 +16,9 @@
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, dmrs_pusch_estimator::configuration config)
 {
@@ -56,7 +56,7 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
   return os;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 

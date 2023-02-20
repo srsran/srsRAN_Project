@@ -13,7 +13,7 @@
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class rlc_tx_tm_entity : public rlc_tx_entity
 {
@@ -39,4 +39,4 @@ public:
   void handle_buffer_state_update();
 };
 
-} // namespace srsgnb
+} // namespace srsran

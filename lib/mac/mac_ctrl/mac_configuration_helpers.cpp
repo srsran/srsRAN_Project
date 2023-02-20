@@ -10,10 +10,10 @@
 
 #include "srsgnb/mac/mac_configuration_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 sched_ue_creation_request_message
-srsgnb::make_scheduler_ue_creation_request(const mac_ue_create_request_message& request)
+srsran::make_scheduler_ue_creation_request(const mac_ue_create_request_message& request)
 {
   sched_ue_creation_request_message ret{};
   ret.ue_index = request.ue_index;
@@ -23,7 +23,7 @@ srsgnb::make_scheduler_ue_creation_request(const mac_ue_create_request_message& 
 }
 
 sched_ue_reconfiguration_message
-srsgnb::make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& request)
+srsran::make_scheduler_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& request)
 {
   sched_ue_reconfiguration_message ret{};
   ret.ue_index = request.ue_index;

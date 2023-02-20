@@ -14,9 +14,9 @@
 #include <pthread.h>
 #include <sys/types.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
-size_t srsgnb::compute_host_nof_hardware_threads()
+size_t srsran::compute_host_nof_hardware_threads()
 {
   cpu_set_t cpuset;
   if (sched_getaffinity(0, sizeof(cpuset), &cpuset) == 0) {
@@ -162,14 +162,14 @@ std::thread unique_thread::make_thread(const std::string&               name,
   });
 }
 
-const char* srsgnb::this_thread_name()
+const char* srsran::this_thread_name()
 {
   /// Storage of current thread name, set via unique_thread.
   thread_local std::string this_thread_name_val = compute_this_thread_name();
   return this_thread_name_val.c_str();
 }
 
-void srsgnb::print_this_thread_priority()
+void srsran::print_this_thread_priority()
 {
   return print_thread_priority(pthread_self(), this_thread_name(), std::this_thread::get_id());
 }

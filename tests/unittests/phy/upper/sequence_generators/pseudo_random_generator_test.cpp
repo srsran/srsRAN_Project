@@ -16,7 +16,7 @@
 
 static std::mt19937 rgen(0);
 
-using namespace srsgnb;
+using namespace srsran;
 
 #define Nc 1600
 #define MAX_SEQ_LEN (256 * 1024)

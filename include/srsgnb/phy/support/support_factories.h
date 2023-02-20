@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Creates a generic resource grid instance for a number of ports, symbols and subcarriers.
 /// \param[in] nof_ports   Number of ports.
@@ -49,6 +49,6 @@ std::unique_ptr<prach_buffer> create_prach_buffer_short();
 std::unique_ptr<prach_buffer_pool> create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& elements);
 
 /// \brief Returns an interpolator.
-std::unique_ptr<srsgnb::interpolator> create_interpolator();
+std::unique_ptr<srsran::interpolator> create_interpolator();
 
-} // namespace srsgnb
+} // namespace srsran

@@ -17,7 +17,7 @@
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a Non-Zero-Power CSI Reference Signal (NZP-CSI-RS) processor interface, in compliance with TS 38.211
 /// Section 7.4.1.5.
@@ -87,4 +87,4 @@ public:
   virtual bool is_valid(const nzp_csi_rs_generator::config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

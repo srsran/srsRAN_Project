@@ -17,7 +17,7 @@
 #include "srsgnb/adt/span.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Labels for the internal bit interleaver.
 enum class polar_code_ibil {
@@ -98,4 +98,4 @@ public:
   virtual void set(unsigned K, unsigned E, uint8_t nMax, polar_code_ibil ibil) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

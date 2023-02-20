@@ -13,7 +13,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <vector>
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test(unsigned nof_slots, unsigned nof_sectors)
 {

@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This interface represents the NR-U entry point of a F1-U entity.
 /// The lower-layer transport (GTP-U) will use this class to pass NR-U PDUs into F1-U.
@@ -44,4 +44,4 @@ public:
   virtual void on_new_nr_u_pdu(byte_buffer pdu) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

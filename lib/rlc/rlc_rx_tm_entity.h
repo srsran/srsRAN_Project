@@ -12,7 +12,7 @@
 
 #include "rlc_rx_entity.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class rlc_rx_tm_entity : public rlc_rx_entity
 {
@@ -23,4 +23,4 @@ public:
   void handle_pdu(byte_buffer_slice buf) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

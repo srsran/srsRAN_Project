@@ -18,7 +18,7 @@
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/security/security.h"
 
-namespace srsgnb {
+namespace srsran {
 
 // Header length
 constexpr size_t pdcp_data_pdu_header_size_12bit = 2;
@@ -106,4 +106,4 @@ protected:
   uint32_t           COUNT(uint32_t hfn, uint32_t sn) const { return pdcp_compute_count(hfn, sn, sn_size); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

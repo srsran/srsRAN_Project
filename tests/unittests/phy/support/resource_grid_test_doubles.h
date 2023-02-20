@@ -23,7 +23,7 @@
 #include <random>
 #include <tuple>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a resource grid writer spy for testing classes that write in the resource grid.
 class resource_grid_writer_spy : public resource_grid_writer
@@ -481,4 +481,4 @@ public:
   void clear_set_all_zero_count() { set_all_zero_count = 0; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

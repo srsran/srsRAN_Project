@@ -11,7 +11,7 @@
 #include "pss_processor_impl.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 pss_processor_impl::pregen_signal_s::pregen_signal_s()
 {
@@ -38,7 +38,7 @@ pss_processor_impl::pregen_signal_s::pregen_signal_s()
 
 const pss_processor_impl::pregen_signal_s pss_processor_impl::signal = pss_processor_impl::pregen_signal_s();
 
-void srsgnb::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& config) const
+void srsran::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& config) const
 {
   // Calculate generation parameters
   unsigned m = M(phys_cell_id::NID_2(config.phys_cell_id));
@@ -54,7 +54,7 @@ void srsgnb::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequ
   srsvec::sc_prod(pregen.first(m), config.amplitude, tmp.last(m));
 }
 
-void srsgnb::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence,
+void srsran::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence,
                                          resource_grid_writer&                 grid,
                                          const config_t&                       args) const
 {
@@ -69,7 +69,7 @@ void srsgnb::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& s
   }
 }
 
-void srsgnb::pss_processor_impl::map(resource_grid_writer& grid, const config_t& config)
+void srsran::pss_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Generate sequence
   std::array<cf_t, SEQUENCE_LEN> sequence;

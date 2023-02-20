@@ -15,7 +15,7 @@
 #include "srsgnb/support/async/event_signal.h"
 #include "srsgnb/support/async/protocol_transaction_manager.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 #define RRC_PROC_TIMEOUT (-1)
@@ -35,4 +35,4 @@ public:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

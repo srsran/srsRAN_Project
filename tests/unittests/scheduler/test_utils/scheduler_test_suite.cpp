@@ -19,9 +19,9 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
-void srsgnb::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
+void srsran::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
                                             slot_point                sl_tx,
                                             const sched_result&       result)
 {
@@ -70,7 +70,7 @@ void srsgnb::assert_tdd_pattern_consistency(const cell_configuration& cell_cfg,
   }
 }
 
-void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
+void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
                                                    const pdcch_dl_information& pdcch,
                                                    const pdsch_information&    pdsch)
 {
@@ -127,7 +127,7 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
   TESTASSERT_EQ(pdsch_freq_resource, freq_assignment, "DCI frequency resource does not match PDSCH PRBs");
 }
 
-void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&      cell_cfg,
+void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&      cell_cfg,
                                                    const cell_resource_allocator& cell_res_grid)
 {
   span<const pdcch_dl_information> pdcchs = cell_res_grid[0].result.dl.dl_pdcchs;
@@ -177,7 +177,7 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
   }
 }
 
-void srsgnb::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span<const sib_information> sibs)
+void srsran::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span<const sib_information> sibs)
 {
   bool has_coreset0 = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value();
   if (not has_coreset0) {
@@ -202,7 +202,7 @@ void srsgnb::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
   }
 }
 
-void srsgnb::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<const rar_information> rars)
+void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<const rar_information> rars)
 {
   std::set<rnti_t>                  ra_rntis;
   const search_space_configuration& ss_cfg =
@@ -293,7 +293,7 @@ void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&      cell
   }
 }
 
-void srsgnb::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg, const dl_sched_result& result)
+void srsran::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg, const dl_sched_result& result)
 {
   cell_slot_resource_grid grid(cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list);
 
@@ -305,7 +305,7 @@ void srsgnb::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg
   }
 }
 
-void srsgnb::test_prach_opportunity_validity(const cell_configuration& cell_cfg, span<const prach_occasion_info> prachs)
+void srsran::test_prach_opportunity_validity(const cell_configuration& cell_cfg, span<const prach_occasion_info> prachs)
 {
   if (prachs.empty()) {
     return;
@@ -328,7 +328,7 @@ void srsgnb::test_prach_opportunity_validity(const cell_configuration& cell_cfg,
   }
 }
 
-void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg, const ul_sched_result& result)
+void srsran::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg, const ul_sched_result& result)
 {
   cell_slot_resource_grid grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list);
 
@@ -340,7 +340,7 @@ void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
   }
 }
 
-void srsgnb::test_scheduler_result_consistency(const cell_configuration& cell_cfg,
+void srsran::test_scheduler_result_consistency(const cell_configuration& cell_cfg,
                                                slot_point                sl_tx,
                                                const sched_result&       result)
 {
@@ -357,7 +357,7 @@ void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const ce
 {
   std::vector<test_grant_info> dl_grants = get_dl_grants(cell_cfg, cell_res_grid[0].result.dl);
   for (const test_grant_info& test_grant : dl_grants) {
-    if (test_grant.type != srsgnb::test_grant_info::DL_PDCCH) {
+    if (test_grant.type != srsran::test_grant_info::DL_PDCCH) {
       TESTASSERT(cell_res_grid[0].dl_res_grid.all_set(test_grant.grant),
                  "The allocation with rnti={:#x}, type={}, crbs={} was not registered in the cell resource grid",
                  test_grant.rnti,
@@ -368,7 +368,7 @@ void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const ce
 }
 
 /// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PUCCHs.
-bool srsgnb::assert_ul_resource_grid_filled(const cell_configuration&      cell_cfg,
+bool srsran::assert_ul_resource_grid_filled(const cell_configuration&      cell_cfg,
                                             const cell_resource_allocator& cell_res_grid,
                                             unsigned                       tx_delay,
                                             bool                           expect_grants)
@@ -379,7 +379,7 @@ bool srsgnb::assert_ul_resource_grid_filled(const cell_configuration&      cell_
     return false;
   }
   for (const test_grant_info& test_grant : ul_grants) {
-    if (test_grant.type == srsgnb::test_grant_info::UE_UL || test_grant.type == srsgnb::test_grant_info::PUCCH) {
+    if (test_grant.type == srsran::test_grant_info::UE_UL || test_grant.type == srsran::test_grant_info::PUCCH) {
       if (not cell_res_grid[tx_delay].ul_res_grid.all_set(test_grant.grant)) {
         return false;
       }
@@ -388,12 +388,12 @@ bool srsgnb::assert_ul_resource_grid_filled(const cell_configuration&      cell_
   return true;
 }
 
-bool srsgnb::test_res_grid_has_re_set(const cell_resource_allocator& cell_res_grid, grant_info grant, unsigned tx_delay)
+bool srsran::test_res_grid_has_re_set(const cell_resource_allocator& cell_res_grid, grant_info grant, unsigned tx_delay)
 {
   return cell_res_grid[tx_delay].ul_res_grid.all_set(grant);
 }
 
-void srsgnb::test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
+void srsran::test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
                                                const cell_resource_allocator& cell_res_grid)
 {
   ASSERT_NO_FATAL_FAILURE(test_scheduler_result_consistency(cell_cfg, cell_res_grid[0].slot, cell_res_grid[0].result));

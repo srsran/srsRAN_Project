@@ -18,7 +18,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/eager_async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Handles the setup of AS security keys in the RRC UE.
@@ -115,4 +115,4 @@ inline void fill_asn1_rrc_smc_msg(asn1::rrc_nr::security_mode_cmd_s&   rrc_smc,
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

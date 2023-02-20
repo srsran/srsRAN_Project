@@ -36,7 +36,7 @@
  *    inherit or a notifier that the RLC will keep as a member.
  *
  */
-namespace srsgnb {
+namespace srsran {
 
 /****************************************
  * Interfaces/notifiers for upper layers
@@ -155,4 +155,4 @@ public:
   /// needs to be forwarded to lower layers.
   virtual void on_buffer_state_update(unsigned bsr) = 0;
 };
-} // namespace srsgnb
+} // namespace srsran

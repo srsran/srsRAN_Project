@@ -15,7 +15,7 @@
 #include "srsgnb/asn1/e2ap/e2ap.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/async/async_task.h"
-namespace srsgnb {
+namespace srsran {
 
 struct e2_message {
   asn1::e2ap::e2_ap_pdu_c pdu;
@@ -87,4 +87,4 @@ class e2_interface : public e2_message_handler, public e2_event_handler, public 
 public:
   virtual ~e2_interface() = default;
 };
-} // namespace srsgnb
+} // namespace srsran

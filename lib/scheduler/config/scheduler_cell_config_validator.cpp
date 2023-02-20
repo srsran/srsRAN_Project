@@ -17,7 +17,7 @@
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/scheduler/sched_consts.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace config_validators;
 
 #define VERIFY(cond, ...)                                                                                              \
@@ -98,7 +98,7 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
                                                  const scheduler_expert_config&                  expert_cfg)
 {
   static const unsigned          nof_layers = 1;
-  static pdsch_mcs_table         mcs_table  = srsgnb::pdsch_mcs_table::qam64;
+  static pdsch_mcs_table         mcs_table  = srsran::pdsch_mcs_table::qam64;
   static const unsigned          nof_oh_prb = 0;
   static const ofdm_symbol_range sib1_symbols{2, 14};
 
@@ -126,7 +126,7 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
 /// \brief Validates \c sched_cell_configuration_request_message used to add a cell.
 /// \param[in] msg scheduler cell configuration message to be validated.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
-error_type<std::string> srsgnb::config_validators::validate_sched_cell_configuration_request_message(
+error_type<std::string> srsran::config_validators::validate_sched_cell_configuration_request_message(
     const sched_cell_configuration_request_message& msg,
     const scheduler_expert_config&                  expert_cfg)
 {

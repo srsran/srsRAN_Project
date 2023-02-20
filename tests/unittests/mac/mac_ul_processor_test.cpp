@@ -17,7 +17,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace test_helpers;
 
 // Implement dummy scheduler feedback handler, only used for this test.

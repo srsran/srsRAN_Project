@@ -19,7 +19,7 @@
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace test_helpers {
 
@@ -153,4 +153,4 @@ public:
 
 } // namespace test_helpers
 
-} // namespace srsgnb
+} // namespace srsran

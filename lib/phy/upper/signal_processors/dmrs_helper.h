@@ -13,7 +13,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/complex.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Helper function to generate DMRS sequences.
 ///
@@ -81,4 +81,4 @@ inline void dmrs_sequence_generate(span<cf_t>                    sequence,
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran

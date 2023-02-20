@@ -13,7 +13,7 @@
 
 #include <uhd/utils/thread_priority.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 bool radio_session_uhd_impl::set_time_to_gps_time()
 {

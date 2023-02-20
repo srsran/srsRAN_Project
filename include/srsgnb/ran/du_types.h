@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of UEs supported by DU (implementation-defined).
 enum du_ue_index_t : uint16_t {
@@ -62,4 +62,4 @@ inline ue_cell_index_t to_ue_cell_index(std::underlying_type_t<ue_cell_index_t> 
   return static_cast<ue_cell_index_t>(idx);
 }
 
-} // namespace srsgnb
+} // namespace srsran

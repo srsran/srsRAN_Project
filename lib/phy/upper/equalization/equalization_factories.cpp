@@ -11,7 +11,7 @@
 #include "srsgnb/phy/upper/equalization/equalization_factories.h"
 #include "channel_equalizer_zf_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -24,7 +24,7 @@ public:
 };
 } // namespace
 
-std::shared_ptr<channel_equalizer_factory> srsgnb::create_channel_equalizer_factory_zf()
+std::shared_ptr<channel_equalizer_factory> srsran::create_channel_equalizer_factory_zf()
 {
   return std::make_shared<channel_equalizer_factory_zf>();
 }

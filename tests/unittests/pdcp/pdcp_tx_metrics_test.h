@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 #include <queue>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Fixture class for PDCP tests
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
@@ -44,4 +44,4 @@ protected:
     srslog::flush();
   }
 };
-} // namespace srsgnb
+} // namespace srsran

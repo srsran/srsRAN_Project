@@ -16,7 +16,7 @@
 #include "srsgnb/phy/lower/processors/prach/prach_processor_factories.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Lower physical layer factory.
 class lower_phy_factory
@@ -36,4 +36,4 @@ create_lower_phy_factory_sw(std::shared_ptr<ofdm_modulator_factory>       modula
                             std::shared_ptr<prach_processor_factory>      prach_processor_factory,
                             std::shared_ptr<amplitude_controller_factory> amplitude_control_factory);
 
-} // namespace srsgnb
+} // namespace srsran

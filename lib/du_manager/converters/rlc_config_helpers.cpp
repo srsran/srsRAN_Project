@@ -10,10 +10,10 @@
 
 #include "rlc_config_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
-rlc_mode srsgnb::srs_du::convert_asn1_f1ap_to_rlc_mode(asn1::f1ap::rlc_mode_e mode)
+rlc_mode srsran::srs_du::convert_asn1_f1ap_to_rlc_mode(asn1::f1ap::rlc_mode_e mode)
 {
   switch (mode.value) {
     case asn1::f1ap::rlc_mode_opts::rlc_am:
@@ -35,7 +35,7 @@ rlc_mode srsgnb::srs_du::convert_asn1_f1ap_to_rlc_mode(asn1::f1ap::rlc_mode_e mo
   return {};
 }
 
-rlc_mode srsgnb::srs_du::convert_asn1_f1ap_to_rlc_mode(drb_rlc_mode mode)
+rlc_mode srsran::srs_du::convert_asn1_f1ap_to_rlc_mode(drb_rlc_mode mode)
 {
   switch (mode) {
     case drb_rlc_mode::am:
@@ -53,7 +53,7 @@ rlc_mode srsgnb::srs_du::convert_asn1_f1ap_to_rlc_mode(drb_rlc_mode mode)
   return {};
 }
 
-rlc_config srsgnb::srs_du::make_default_srb_rlc_config()
+rlc_config srsran::srs_du::make_default_srb_rlc_config()
 {
   rlc_config cfg;
   cfg.mode                    = rlc_mode::am;
@@ -88,7 +88,7 @@ static void fill_rlc_entity_creation_message_common(rlc_entity_creation_message&
 
 // for SRBs
 rlc_entity_creation_message
-srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
+srsran::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
                                                  du_cell_index_t                          pcell_index,
                                                  du_ue_srb&                               bearer,
                                                  const du_manager_params::service_params& du_services)
@@ -101,7 +101,7 @@ srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                  
 
 // for DRBs
 rlc_entity_creation_message
-srsgnb::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
+srsran::srs_du::make_rlc_entity_creation_message(du_ue_index_t                            ue_index,
                                                  du_cell_index_t                          pcell_index,
                                                  du_ue_drb&                               bearer,
                                                  const du_manager_params::service_params& du_services)

@@ -19,7 +19,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Pseudo-random sequence generator interface compliant to TS38.211 Section 5.2.1.
 class pseudo_random_generator
@@ -114,4 +114,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

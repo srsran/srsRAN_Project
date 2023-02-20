@@ -12,7 +12,7 @@
 
 #include <arm_neon.h>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace neon {
 
@@ -253,4 +253,4 @@ inline float32x4_t safe_div(float32x4_t dividend, float32x4_t divisor)
 
 } // namespace neon
 
-} // namespace srsgnb
+} // namespace srsran

@@ -16,7 +16,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/format_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct ue_event_prefix {
   const char*     direction;
@@ -178,35 +178,35 @@ void log_ul_pdu(srslog::basic_logger& logger, rnti_t rnti, du_cell_index_t cc, c
   log_ue_event(logger, ue_event_prefix{"UL", MAX_NOF_DU_UES, rnti, cc}, cause_fmt, std::forward<Args>(args)...);
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// FMT formatter of slot_point type.
 template <>
-struct formatter<srsgnb::ue_event_prefix> {
+struct formatter<srsran::ue_event_prefix> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(const srsgnb::ue_event_prefix& ue_prefix, FormatContext& ctx)
+  auto format(const srsran::ue_event_prefix& ue_prefix, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    using namespace srsgnb;
+    using namespace srsran;
     auto ret = format_to(ctx.out(), "{:<4}", ue_prefix.direction);
-    if (ue_prefix.ue_index != srsgnb::MAX_NOF_DU_UES) {
+    if (ue_prefix.ue_index != srsran::MAX_NOF_DU_UES) {
       ret = format_to(ctx.out(), " ueId={}", ue_prefix.ue_index);
     } else {
       ret = format_to(ctx.out(), "{: <7}", "");
     }
-    if (ue_prefix.rnti != srsgnb::INVALID_RNTI) {
+    if (ue_prefix.rnti != srsran::INVALID_RNTI) {
       ret = format_to(ctx.out(), " {:#x}", ue_prefix.rnti);
     } else {
       ret = format_to(ctx.out(), " {: <6}", "");
     }
-    if (ue_prefix.cell_index != srsgnb::MAX_NOF_DU_CELLS) {
+    if (ue_prefix.cell_index != srsran::MAX_NOF_DU_CELLS) {
       ret = format_to(ctx.out(), " cell={}", ue_prefix.cell_index);
     }
     if (ue_prefix.channel != nullptr) {

@@ -13,9 +13,9 @@
 #include "srsgnb/scheduler/config/scheduler_config.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Create L2 scheduler object.
 std::unique_ptr<mac_scheduler> create_scheduler(const scheduler_config& sched_cfg);
 
-} // namespace srsgnb
+} // namespace srsran

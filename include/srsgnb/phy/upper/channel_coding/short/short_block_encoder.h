@@ -18,7 +18,7 @@
 
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 // TODO(david,borja): These will probably need to be moved somewhere else since they must be accessible by the
 // scrambler.
@@ -56,4 +56,4 @@ public:
 };
 
 std::unique_ptr<short_block_encoder> create_short_block_encoder();
-} // namespace srsgnb
+} // namespace srsran

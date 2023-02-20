@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/sch_mcs.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Modulation and Code Scheme table identifiers for PDSCH.
 ///
@@ -36,4 +36,4 @@ enum class pdsch_mcs_table {
 /// \return Modulation and Coding Scheme parameters.
 sch_mcs_description pdsch_mcs_get_config(pdsch_mcs_table table, sch_mcs_index index);
 
-} // namespace srsgnb
+} // namespace srsran

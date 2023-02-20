@@ -15,7 +15,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <numeric>
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 /// \brief Computes the mean of the values in the given sequence.
@@ -42,4 +42,4 @@ auto mean(const T& x)
 }
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

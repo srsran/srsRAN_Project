@@ -10,7 +10,7 @@
 
 #include "resource_grid_pool_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 resource_grid_pool_impl::resource_grid_pool_impl(unsigned                                      nof_sectors_,
                                                  unsigned                                      nof_slots_,

@@ -15,8 +15,8 @@
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 /// Length of the CRC checksum added to the segments.
 static constexpr units::bits SEG_CRC_LENGTH{24};

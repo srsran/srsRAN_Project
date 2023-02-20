@@ -15,7 +15,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// UE-dedicated configuration for a given cell.
 class ue_cell_configuration
@@ -127,4 +127,4 @@ private:
   std::array<bwp_id_t, MAX_NOF_BWPS> coreset_id_to_bwp_id;
 };
 
-} // namespace srsgnb
+} // namespace srsran

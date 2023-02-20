@@ -10,7 +10,7 @@
 
 #include "srsgnb/ran/prach/prach_configuration.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static prach_configuration prach_configuration_get_fr1_paired(uint8_t prach_config_index)
 {
@@ -192,7 +192,7 @@ static prach_configuration prach_configuration_get_fr1_unpaired(uint8_t prach_co
   return PRACH_CONFIG_RESERVED;
 }
 
-prach_configuration srsgnb::prach_configuration_get(frequency_range fr, duplex_mode dm, uint8_t prach_config_index)
+prach_configuration srsran::prach_configuration_get(frequency_range fr, duplex_mode dm, uint8_t prach_config_index)
 {
   if ((fr == frequency_range::FR1) && (dm == duplex_mode::FDD || dm == duplex_mode::SUL)) {
     return prach_configuration_get_fr1_paired(prach_config_index);

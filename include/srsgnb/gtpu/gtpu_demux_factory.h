@@ -14,7 +14,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 struct gtpu_demux_creation_request {
   task_executor* cu_up_exec = nullptr;
@@ -23,4 +23,4 @@ struct gtpu_demux_creation_request {
 /// Creates an instance of an GTP-U demux object.
 std::unique_ptr<gtpu_demux> create_gtpu_demux(const gtpu_demux_creation_request& msg);
 
-} // namespace srsgnb
+} // namespace srsran

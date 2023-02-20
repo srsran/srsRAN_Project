@@ -13,7 +13,7 @@
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ssb_assembler::ssb_assembler(const mac_cell_creation_request& cell_cfg) :
   pci(cell_cfg.pci),

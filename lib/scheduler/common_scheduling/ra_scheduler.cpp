@@ -18,9 +18,9 @@
 #include "../ue_scheduling/ue_sch_pdu_builder.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-unsigned srsgnb::get_msg3_delay(const pusch_time_domain_resource_allocation& pusch_td_res_alloc,
+unsigned srsran::get_msg3_delay(const pusch_time_domain_resource_allocation& pusch_td_res_alloc,
                                 subcarrier_spacing                           pusch_scs)
 {
   // In TS 38.214, Table 6.1.2.1.1-5, Delta is only defined for PUSCH SCS within [kHz15, kHz120kHz].
@@ -36,7 +36,7 @@ unsigned srsgnb::get_msg3_delay(const pusch_time_domain_resource_allocation& pus
   return static_cast<int>(pusch_td_res_alloc.k2 + DELTAS[to_numerology_value(pusch_scs)]);
 }
 
-uint16_t srsgnb::get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned frequency_index, bool is_sul)
+uint16_t srsran::get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned frequency_index, bool is_sul)
 {
   // See 38.321, 5.1.3 - Random Access Preamble transmission
   // RA-RNTI = 1 + s_id + 14 × t_id + 14 × 80 × f_id + 14 × 80 × 8 × ul_carrier_id

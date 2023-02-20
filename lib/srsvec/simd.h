@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/complex.h"
 
-namespace srsgnb {
+namespace srsran {
 
 #ifdef HAVE_SSE /* AVX, AVX2, FMA, AVX512  are in this group */
 #ifndef __OPTIMIZE__
@@ -2079,4 +2079,4 @@ static inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
 
 #endif /*SRSRAN_SIMD_B_SIZE */
 
-} // namespace srsgnb
+} // namespace srsran

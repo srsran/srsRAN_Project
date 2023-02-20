@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/phy_time_unit.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace prach_constants {
 
@@ -43,4 +43,4 @@ static constexpr size_t MAX_NOF_PRACH_OCCASIONS_PER_SLOT = 56;
 
 } // namespace prach_constants
 
-} // namespace srsgnb
+} // namespace srsran

@@ -30,7 +30,7 @@
  *
  */
 
-namespace srsgnb {
+namespace srsran {
 
 /****************************************
  * Interfaces/notifiers for the gateway
@@ -69,4 +69,4 @@ public:
   virtual void on_new_pdu(byte_buffer buf, const ::sockaddr_storage& addr) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

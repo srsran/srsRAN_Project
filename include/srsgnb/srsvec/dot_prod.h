@@ -20,7 +20,7 @@
 
 #include <numeric>
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 /// \brief Dot product of two spans.
@@ -80,4 +80,4 @@ inline float average_power(span<const cf_t> x)
 }
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

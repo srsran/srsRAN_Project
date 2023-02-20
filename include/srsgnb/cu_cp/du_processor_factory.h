@@ -18,7 +18,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Creates an instance of an DU processor interface
@@ -35,4 +35,4 @@ create_du_processor(const du_processor_config_t         du_processor_config_,
                     task_executor&                      ctrl_exec_);
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

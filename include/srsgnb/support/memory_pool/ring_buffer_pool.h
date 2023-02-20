@@ -13,7 +13,7 @@
 #include "ring_memory_allocator.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief This pool returns spans of bytes, which have been allocated using a ring memory allocator. It assumes
 /// that the underlying memory resource of size \c mem_size_bytes is large enough so that no overflows ever happen.
@@ -138,4 +138,4 @@ private:
   overflow_detector_t overflow_detector;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "srsgnb/ran/prach/prach_constants.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief On-demand PRACH time-domain signal generator.
 ///
@@ -56,4 +56,4 @@ public:
   span<const cf_t> generate(const configuration& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

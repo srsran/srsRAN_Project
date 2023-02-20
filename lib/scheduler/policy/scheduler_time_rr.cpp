@@ -10,7 +10,7 @@
 #include "scheduler_time_rr.h"
 #include "../support/config_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief Algorithm to select next UE to allocate in a time-domain RR fashion
 /// \param[in] ue_db map of "slot_ue"
@@ -93,7 +93,7 @@ static bool alloc_dl_ue(const ue&                    u,
     return false;
   }
   // TODO: Set aggregation level based on link quality.
-  const aggregation_level agg_lvl    = srsgnb::aggregation_level::n4;
+  const aggregation_level agg_lvl    = srsran::aggregation_level::n4;
   slot_point              pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.
@@ -121,7 +121,7 @@ static bool alloc_dl_ue(const ue&                    u,
     // A UE monitors PDCCH candidates in one or more of the following search spaces sets
     //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
     //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
-    if (is_retx && h->last_alloc_params().dci_cfg_type == srsgnb::dci_dl_rnti_config_type::tc_rnti_f1_0) {
+    if (is_retx && h->last_alloc_params().dci_cfg_type == srsran::dci_dl_rnti_config_type::tc_rnti_f1_0) {
       search_spaces = get_type1_pdcch_css(ue_cc);
     } else {
       search_spaces = get_ue_cell_prioritized_ss_for_agg_lvl(ue_cc, agg_lvl);
@@ -200,7 +200,7 @@ static bool alloc_ul_ue(const ue&                    u,
     }
   }
   // TODO: Set aggregation level based on link quality.
-  const aggregation_level agg_lvl    = srsgnb::aggregation_level::n4;
+  const aggregation_level agg_lvl    = srsran::aggregation_level::n4;
   slot_point              pdcch_slot = res_grid.get_pdcch_slot();
 
   // Prioritize PCell over SCells.

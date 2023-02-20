@@ -16,7 +16,7 @@
 #include <map>
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -38,4 +38,4 @@ struct rrc_cfg_t {
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

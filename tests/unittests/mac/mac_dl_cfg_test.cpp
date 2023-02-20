@@ -19,7 +19,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <thread>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class dummy_sched : public mac_scheduler
 {

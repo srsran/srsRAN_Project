@@ -16,7 +16,7 @@
 #include <gtest/gtest.h>
 #include <queue>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief Test correct creation of PDCP TX  entity
 TEST_P(pdcp_tx_test, create_new_entity)
@@ -65,7 +65,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
   init(GetParam());
 
   auto test_pdu_gen = [this](uint32_t tx_next) {
-    srsgnb::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
+    srsran::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next};
     pdcp_tx->set_state(st);

@@ -11,7 +11,7 @@
 #include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_bit_encoder()
 {

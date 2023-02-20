@@ -13,11 +13,11 @@
 #include "external/CLI/CLI11.hpp"
 #include "srsgnb/adt/optional.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Parse string into optional type.
 template <typename T>
-bool lexical_cast(const std::string& in, srsgnb::optional<T>& output)
+bool lexical_cast(const std::string& in, srsran::optional<T>& output)
 {
   using CLI::detail::lexical_cast;
 
@@ -59,4 +59,4 @@ void add_auto_enum_option(CLI::App&          app,
       ->default_str("auto");
 }
 
-} // namespace srsgnb
+} // namespace srsran

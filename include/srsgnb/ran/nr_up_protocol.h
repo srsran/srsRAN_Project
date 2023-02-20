@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// NR user plane protocol uplink message as described in TS 38.425.
 struct nr_up_ul_message {
@@ -26,4 +26,4 @@ struct nr_up_dl_message {
   byte_buffer pdu;
 };
 
-} // namespace srsgnb
+} // namespace srsran

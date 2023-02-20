@@ -12,7 +12,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Returns a formatted string containing the current commit hash.
 const char* get_build_hash();
@@ -23,4 +23,4 @@ const char* get_build_info();
 /// \brief Returns the selected (CMake) build mode as string.
 const char* get_build_mode();
 
-} // namespace srsgnb
+} // namespace srsran

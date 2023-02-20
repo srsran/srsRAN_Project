@@ -21,7 +21,7 @@
 #include <set>
 #include <zmq.h>
 
-namespace srsgnb {
+namespace srsran {
 
 class radio_zmq_tx_channel
 {
@@ -112,4 +112,4 @@ public:
   void wait_stop();
 };
 
-} // namespace srsgnb
+} // namespace srsran

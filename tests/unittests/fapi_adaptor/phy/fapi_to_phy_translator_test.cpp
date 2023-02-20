@@ -19,7 +19,7 @@
 #include "srsgnb/phy/upper/uplink_slot_pdu_repository.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 using namespace unittest;
 
@@ -55,7 +55,7 @@ class resource_grid_pool_dummy : public resource_grid_pool
 public:
   explicit resource_grid_pool_dummy(resource_grid& grid_) : grid(grid_) {}
 
-  resource_grid& get_resource_grid(const srsgnb::resource_grid_context& context) override { return grid; }
+  resource_grid& get_resource_grid(const srsran::resource_grid_context& context) override { return grid; }
 };
 
 class downlink_processor_pool_dummy : public downlink_processor_pool

@@ -13,7 +13,7 @@
 #include "ue_context.h"
 #include <cstddef>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_up {
 
@@ -30,4 +30,4 @@ public:
 
 } // namespace srs_cu_up
 
-} // namespace srsgnb
+} // namespace srsran

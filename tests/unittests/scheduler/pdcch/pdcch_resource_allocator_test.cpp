@@ -17,7 +17,7 @@
 #include <random>
 #include <unordered_map>
 
-using namespace srsgnb;
+using namespace srsran;
 
 enum class alloc_type { si_rnti, ra_rnti, dl_crnti, ul_crnti };
 const char* to_string(alloc_type a)

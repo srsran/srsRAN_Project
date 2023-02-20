@@ -17,7 +17,7 @@
 #include "srsgnb/rlc/rlc_tx.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 class f1ap_dummy : public pdcp_tx_lower_notifier,
                    public rlc_tx_upper_layer_data_notifier,
                    public rlc_tx_upper_layer_control_notifier,
@@ -83,4 +83,4 @@ public:
   void set_pdcp_rx_lower(pdcp_rx_lower_interface* pdcp_rx_lower_) { this->pdcp_rx_lower = pdcp_rx_lower_; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

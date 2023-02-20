@@ -15,7 +15,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(InterpolatorTest, FloatAlternate)
 {

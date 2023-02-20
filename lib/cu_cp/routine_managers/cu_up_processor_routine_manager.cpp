@@ -11,7 +11,7 @@
 #include "cu_up_processor_routine_manager.h"
 #include "../routines/initial_cu_up_processor_setup_routine.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 cu_up_processor_routine_manager::cu_up_processor_routine_manager(

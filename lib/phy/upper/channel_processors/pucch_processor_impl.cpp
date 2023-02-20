@@ -12,7 +12,7 @@
 #include "srsgnb/ran/pucch/pucch_constants.h"
 #include "srsgnb/ran/pucch/pucch_info.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&  grid,
                                                      const format1_configuration& config)

@@ -17,7 +17,7 @@
 #include <getopt.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Describes the benchmark configuration.
 static std::string                               rx_filename             = "";

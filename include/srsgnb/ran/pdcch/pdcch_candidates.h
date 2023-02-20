@@ -13,7 +13,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pdcch/aggregation_level.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of candidates per aggregation level in a SS as per TS38.331 SearchSpace.
 static constexpr unsigned PDCCH_MAX_NOF_CANDIDATES_SS = 8;
@@ -96,4 +96,4 @@ pdcch_candidate_list pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candi
 /// The resultant list contains the lowest CCE index of the \c config.nof_candidates.
 pdcch_candidate_list pdcch_candidates_ue_ss_get_lowest_cce(const pdcch_candidates_ue_ss_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

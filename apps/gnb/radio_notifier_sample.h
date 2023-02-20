@@ -13,7 +13,7 @@
 #include "srsgnb/radio/radio_notification_handler.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class radio_notification_handler_logger : public radio_notification_handler
 {
@@ -100,4 +100,4 @@ private:
   std::unique_ptr<radio_notification_handler> handler;
 };
 
-} // namespace srsgnb
+} // namespace srsran

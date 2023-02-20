@@ -12,7 +12,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static constexpr unsigned NRE = 12;
 
@@ -437,7 +437,7 @@ static csi_rs_pattern build_re_patterns(span<const unsigned>                k_ba
   return pattern;
 }
 
-csi_rs_pattern srsgnb::get_csi_rs_pattern(const csi_rs_pattern_configuration& config)
+csi_rs_pattern srsran::get_csi_rs_pattern(const csi_rs_pattern_configuration& config)
 {
   const unsigned nof_ports = config.nof_ports;
   const unsigned row       = config.csi_rs_mapping_table_row;

@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 struct prach_buffer_context;
 class resource_grid;
@@ -41,4 +41,4 @@ public:
   virtual void process_uplink_slot_request(const resource_grid_context& context, resource_grid& grid) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

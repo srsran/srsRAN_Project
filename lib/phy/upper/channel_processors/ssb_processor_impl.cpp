@@ -12,7 +12,7 @@
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void ssb_processor_impl::process(resource_grid_writer& grid, const pdu_t& pdu)
 {

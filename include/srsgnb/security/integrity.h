@@ -17,7 +17,7 @@
 #include "ssl.h"
 #include "zuc.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace security {
 
 /******************************************************************************
@@ -264,4 +264,4 @@ void security_nia3(sec_mac&              mac,
 }
 
 } // namespace security
-} // namespace srsgnb
+} // namespace srsran

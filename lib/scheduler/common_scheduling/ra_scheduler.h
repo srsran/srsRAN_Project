@@ -19,7 +19,7 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include <deque>
 
-namespace srsgnb {
+namespace srsran {
 
 class scheduler_event_logger;
 
@@ -151,4 +151,4 @@ private:
   std::vector<pending_msg3_t>              pending_msg3s;
 };
 
-} // namespace srsgnb
+} // namespace srsran

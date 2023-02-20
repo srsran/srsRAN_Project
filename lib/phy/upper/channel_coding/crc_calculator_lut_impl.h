@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 
 /// CRC calculator based on look-up tables.
 class crc_calculator_lut_impl : public crc_calculator
@@ -106,4 +106,4 @@ public:
   crc_generator_poly get_generator_poly() const override { return poly; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

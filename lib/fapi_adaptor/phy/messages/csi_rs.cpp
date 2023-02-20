@@ -11,7 +11,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/csi_rs.h"
 #include "srsgnb/srsvec/bit.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 /// Returns the scaling value applied to the bit position in the frequency allocation bitmap as per TS38.211
@@ -77,7 +77,7 @@ static float translate_amplitude(fapi::nzp_csi_rs_epre_to_ssb power)
   }
 }
 
-void srsgnb::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::config_t& proc_pdu,
+void srsran::fapi_adaptor::convert_csi_rs_fapi_to_phy(nzp_csi_rs_generator::config_t& proc_pdu,
                                                       const fapi::dl_csi_rs_pdu&      fapi_pdu,
                                                       uint16_t                        sfn,
                                                       uint16_t                        slot)

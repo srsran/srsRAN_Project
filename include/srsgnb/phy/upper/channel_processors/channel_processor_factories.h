@@ -37,7 +37,7 @@
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_generator_factory;
 class ulsch_demultiplex_factory;
@@ -300,4 +300,4 @@ public:
 
 std::shared_ptr<ulsch_demultiplex_factory> create_ulsch_demultiplex_factory_sw();
 
-} // namespace srsgnb
+} // namespace srsran

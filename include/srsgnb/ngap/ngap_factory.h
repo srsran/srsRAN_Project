@@ -17,7 +17,7 @@
 #include "srsgnb/support/timers.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -30,4 +30,4 @@ std::unique_ptr<ngap_interface> create_ngap(ngap_configuration&     ngap_cfg_,
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

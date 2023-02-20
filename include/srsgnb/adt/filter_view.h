@@ -14,7 +14,7 @@
 #include <memory>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace views {
 
@@ -92,4 +92,4 @@ filter_view<Range, Pred> filter(Range&& r, Pred&& p)
 
 } // namespace views
 
-} // namespace srsgnb
+} // namespace srsran

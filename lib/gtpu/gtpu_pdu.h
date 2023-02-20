@@ -14,7 +14,7 @@
 #include "fmt/format.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /****************************************************************************
  * GTPU Header
@@ -149,14 +149,14 @@ bool gtpu_supported_flags_check(const gtpu_header& header, gtpu_tunnel_logger& l
 bool gtpu_supported_msg_type_check(const gtpu_header& header, gtpu_tunnel_logger& logger);
 bool gtpu_extension_header_comprehension_check(const gtpu_extension_header_type& type, gtpu_tunnel_logger& logger);
 
-} // namespace srsgnb
+} // namespace srsran
 
 // Formatters
 namespace fmt {
 
 // GTP-U flags
 template <>
-struct formatter<srsgnb::gtpu_header::gtpu_flags> {
+struct formatter<srsran::gtpu_header::gtpu_flags> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -164,7 +164,7 @@ struct formatter<srsgnb::gtpu_header::gtpu_flags> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_header::gtpu_flags& flags, FormatContext& ctx)
+  auto format(const srsran::gtpu_header::gtpu_flags& flags, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
@@ -178,7 +178,7 @@ struct formatter<srsgnb::gtpu_header::gtpu_flags> {
 };
 
 template <>
-struct formatter<srsgnb::gtpu_header> {
+struct formatter<srsran::gtpu_header> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -186,14 +186,14 @@ struct formatter<srsgnb::gtpu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::gtpu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{} len={} teid={:#x}", hdr.flags, hdr.length, hdr.teid);
   }
 };
 
 template <>
-struct formatter<srsgnb::gtpu_extension_header_type> {
+struct formatter<srsran::gtpu_extension_header_type> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -201,7 +201,7 @@ struct formatter<srsgnb::gtpu_extension_header_type> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::gtpu_extension_header_type& ext_type, FormatContext& ctx)
+  auto format(const srsran::gtpu_extension_header_type& ext_type, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", to_string(ext_type));

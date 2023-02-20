@@ -13,16 +13,16 @@
 #include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-ssb_pattern_case srsgnb::ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
+ssb_pattern_case srsran::ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
 {
   nr_band dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
   srsgnb_assert(dl_idx_nr_band != nr_band::invalid, "Invalid NR band index");
   return band_helper::get_ssb_pattern(dl_idx_nr_band, ssb_scs);
 }
 
-uint8_t srsgnb::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
+uint8_t srsran::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
 {
   uint8_t L_max = 0;
 
@@ -50,7 +50,7 @@ uint8_t srsgnb::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
   return L_max;
 }
 
-crb_interval srsgnb::get_ssb_crbs(subcarrier_spacing    ssb_scs,
+crb_interval srsran::get_ssb_crbs(subcarrier_spacing    ssb_scs,
                                   subcarrier_spacing    scs_common,
                                   ssb_offset_to_pointA  offset_to_pA,
                                   ssb_subcarrier_offset k_ssb)

@@ -12,8 +12,8 @@
 #include "../../common/asn1_helpers.h"
 #include "../f1ap_asn1_helpers.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::f1ap;
 
 ue_context_modification_procedure::ue_context_modification_procedure(

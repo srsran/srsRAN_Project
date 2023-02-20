@@ -17,104 +17,104 @@
 namespace unittest {
 /// Builds and returns a valid CRC.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.8.
-srsgnb::fapi::crc_indication_message build_valid_crc_indication();
+srsran::fapi::crc_indication_message build_valid_crc_indication();
 
 /// Builds and returns a valid DL CSI-RS pdu. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.3.
-srsgnb::fapi::dl_csi_rs_pdu build_valid_dl_csi_pdu();
+srsran::fapi::dl_csi_rs_pdu build_valid_dl_csi_pdu();
 
 /// Builds and returns a valid DL PDCCH PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.1.
-srsgnb::fapi::dl_pdcch_pdu build_valid_dl_pdcch_pdu();
+srsran::fapi::dl_pdcch_pdu build_valid_dl_pdcch_pdu();
 
 /// Builds and returns a valid DL PDSCH PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.2.
-srsgnb::fapi::dl_pdsch_pdu build_valid_dl_pdsch_pdu();
+srsran::fapi::dl_pdsch_pdu build_valid_dl_pdsch_pdu();
 
 /// Builds and returns a valid DL SSB pdu. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.4.
-srsgnb::fapi::dl_ssb_pdu build_valid_dl_ssb_pdu();
+srsran::fapi::dl_ssb_pdu build_valid_dl_ssb_pdu();
 
 /// Builds and returns a valid DL TTI request message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.
-srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request();
+srsran::fapi::dl_tti_request_message build_valid_dl_tti_request();
 
 /// Builds and returns a valid ERROR.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.3.6.1.
-srsgnb::fapi::error_indication_message build_valid_error_indication();
+srsran::fapi::error_indication_message build_valid_error_indication();
 
 /// Builds and returns a valid OUT_OF_SYNC ERROR.indication message. Every parameter is within the range defined in
 /// SCF-222 v4.0 Section 3.3.6.1.
-srsgnb::fapi::error_indication_message build_valid_out_of_sync_error_indication();
+srsran::fapi::error_indication_message build_valid_out_of_sync_error_indication();
 
 /// Builds and returns a RACH.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.11.
-srsgnb::fapi::rach_indication_message build_valid_rach_indication();
+srsran::fapi::rach_indication_message build_valid_rach_indication();
 
 /// Builds and returns a valid Rx_Data.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.7.
-srsgnb::fapi::rx_data_indication_message build_valid_rx_data_indication();
+srsran::fapi::rx_data_indication_message build_valid_rx_data_indication();
 
 /// Builds and returns a valid SLOT.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.1.
-srsgnb::fapi::slot_indication_message build_valid_slot_indication();
+srsran::fapi::slot_indication_message build_valid_slot_indication();
 
 /// Builds and returns a valid Tx_Data.request message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.6.
 /// \note Payload pointer is set to \c nullptr.
-srsgnb::fapi::tx_data_request_message build_valid_tx_data_request();
+srsran::fapi::tx_data_request_message build_valid_tx_data_request();
 
 /// Builds and returns a valid UCI.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.9.
-srsgnb::fapi::uci_indication_message build_valid_uci_indication();
+srsran::fapi::uci_indication_message build_valid_uci_indication();
 
 /// Builds and returns a valid UCI PUSCH PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.9.1.
-srsgnb::fapi::uci_pusch_pdu build_valid_uci_pusch_pdu();
+srsran::fapi::uci_pusch_pdu build_valid_uci_pusch_pdu();
 
 /// Builds and returns a valid UCI PUCCH format 0/1 PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.9.2.
-srsgnb::fapi::uci_pucch_pdu_format_0_1 build_valid_uci_pucch_format01_pdu();
+srsran::fapi::uci_pucch_pdu_format_0_1 build_valid_uci_pucch_format01_pdu();
 
 /// Builds and returns a valid UCI PUCCH format 2/3/4 PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.9.3.
-srsgnb::fapi::uci_pucch_pdu_format_2_3_4 build_valid_uci_pucch_format234_pdu();
+srsran::fapi::uci_pucch_pdu_format_2_3_4 build_valid_uci_pucch_format234_pdu();
 
 /// Builds and returns a valid UL_DCI.request message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.4.
-srsgnb::fapi::ul_dci_request_message build_valid_ul_dci_request();
+srsran::fapi::ul_dci_request_message build_valid_ul_dci_request();
 
 /// Builds and returns a valid UL PRACH PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.1.
-srsgnb::fapi::ul_prach_pdu build_valid_ul_prach_pdu();
+srsran::fapi::ul_prach_pdu build_valid_ul_prach_pdu();
 
 /// Builds and returns a valid UL PUCCH format 0 PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.3.
-srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f0_pdu();
+srsran::fapi::ul_pucch_pdu build_valid_ul_pucch_f0_pdu();
 
 /// Builds and returns a valid UL PUCCH format 1 PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.3.
-srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f1_pdu();
+srsran::fapi::ul_pucch_pdu build_valid_ul_pucch_f1_pdu();
 
 /// Builds and returns a valid UL PUCCH format 2 PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.3.
-srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f2_pdu();
+srsran::fapi::ul_pucch_pdu build_valid_ul_pucch_f2_pdu();
 
 /// Builds and returns a valid UL PUCCH format 3 PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.3.
-srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f3_pdu();
+srsran::fapi::ul_pucch_pdu build_valid_ul_pucch_f3_pdu();
 
 /// Builds and returns a valid UL PUCCH format 4 PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.3.
-srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f4_pdu();
+srsran::fapi::ul_pucch_pdu build_valid_ul_pucch_f4_pdu();
 
 /// Builds and returns a valid UL PUSCH PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.2.
-srsgnb::fapi::ul_pusch_pdu build_valid_ul_pusch_pdu();
+srsran::fapi::ul_pusch_pdu build_valid_ul_pusch_pdu();
 
 /// Builds and returns a valid UL_TTI.request. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.
-srsgnb::fapi::ul_tti_request_message build_valid_ul_tti_request();
+srsran::fapi::ul_tti_request_message build_valid_ul_tti_request();
 
 /// Google test helpers.
 template <typename T>
@@ -135,9 +135,9 @@ struct test_case_data {
   bool     result;
 };
 
-using validator_report = srsgnb::fapi::validator_report;
-using message_type_id  = srsgnb::fapi::message_type_id;
-using error_report     = srsgnb::fapi::validator_report::error_report;
+using validator_report = srsran::fapi::validator_report;
+using message_type_id  = srsran::fapi::message_type_id;
+using error_report     = srsran::fapi::validator_report::error_report;
 
 inline std::ostream& operator<<(std::ostream& os, const test_case_data& arg)
 {
@@ -185,7 +185,7 @@ protected:
   validator_report report = {0, 0};
 };
 
-using fapi_error = srsgnb::error_type<validator_report>;
+using fapi_error = srsran::error_type<validator_report>;
 
 template <typename T>
 class validate_fapi_message : public validate_fapi_field<T, std::function<fapi_error(T& pdu)>>
@@ -229,15 +229,15 @@ private:
 
 template <typename T, typename U>
 class validate_fapi_pdu
-  : public validate_fapi_field<T, std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)>>
+  : public validate_fapi_field<T, std::function<bool(T& pdu, srsran::fapi::validator_report& report)>>
 {
-  using base = validate_fapi_field<T, std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)>>;
+  using base = validate_fapi_field<T, std::function<bool(T& pdu, srsran::fapi::validator_report& report)>>;
 
 public:
   void execute_test(pdu_field_data<T>                                                   property,
                     test_case_data                                                      params,
                     std::function<T()>                                                  builder,
-                    std::function<bool(T& pdu, srsgnb::fapi::validator_report& report)> validator,
+                    std::function<bool(T& pdu, srsran::fapi::validator_report& report)> validator,
                     message_type_id                                                     msg_type_id,
                     U                                                                   pdu_type)
   {

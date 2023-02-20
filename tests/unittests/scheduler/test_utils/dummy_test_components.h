@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/scheduler_metrics.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dummy_pdcch_resource_allocator : public pdcch_resource_allocator
 {
@@ -35,7 +35,7 @@ public:
     slot_alloc.result.dl.dl_pdcchs.back().ctx.bwp_cfg = &slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params;
     slot_alloc.result.dl.dl_pdcchs.back().ctx.coreset_cfg =
         &*slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
-    slot_alloc.result.dl.dl_pdcchs.back().ctx.cces = {get_ncce(slot_alloc.slot), srsgnb::aggregation_level::n4};
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.cces = {get_ncce(slot_alloc.slot), srsran::aggregation_level::n4};
     return &slot_alloc.result.dl.dl_pdcchs[0];
   }
 
@@ -79,12 +79,12 @@ private:
   unsigned get_ncce(slot_point pdcch_sl)
   {
     if (not last_sl.valid() or pdcch_sl != last_sl) {
-      next_ncce = to_nof_cces(srsgnb::aggregation_level::n4);
+      next_ncce = to_nof_cces(srsran::aggregation_level::n4);
       last_sl   = pdcch_sl;
       return 0;
     }
     unsigned ret = next_ncce;
-    next_ncce += to_nof_cces(srsgnb::aggregation_level::n4);
+    next_ncce += to_nof_cces(srsran::aggregation_level::n4);
     return ret;
   }
 
@@ -144,4 +144,4 @@ public:
   void report_metrics(span<const scheduler_ue_metrics> ue_metrics) override {}
 };
 
-} // namespace srsgnb
+} // namespace srsran

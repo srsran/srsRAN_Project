@@ -16,7 +16,7 @@
 #include "srsgnb/ran/resource_block.h"
 #include "srsgnb/ran/sliv.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Bitset of PRBs with size up to 275.
 using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
@@ -151,4 +151,4 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bits, const prb_interval& grant)
 /// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.
 prb_bitmap convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, nominal_rbg_size P);
 
-} // namespace srsgnb
+} // namespace srsran

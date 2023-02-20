@@ -15,7 +15,7 @@
 #include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class ngap_pdu_session_resource_setup_procedure
@@ -42,4 +42,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

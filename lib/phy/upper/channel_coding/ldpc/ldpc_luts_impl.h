@@ -9,13 +9,13 @@
  */
 
 /// \file
-/// \brief Lookup tables for srsgnb::ldpc_impl -- access function declarations.
+/// \brief Lookup tables for srsran::ldpc_impl -- access function declarations.
 #pragma once
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace ldpc {
 /// \brief Get the LDPC Tanner graph corresponding to the given base graph and lifting size.
 ///
@@ -35,4 +35,4 @@ uint8_t get_lifting_size_position(lifting_size_t ls);
 /// Get the adjacency matrix of base graph \c bg (sparse representation).
 const BG_adjacency_matrix_t* get_adjacency_matrix(ldpc_base_graph_type bg);
 } // namespace ldpc
-} // namespace srsgnb
+} // namespace srsran

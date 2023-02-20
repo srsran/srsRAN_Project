@@ -15,7 +15,7 @@
 
 #include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Approximate-LLR demodulator.
 ///
@@ -37,4 +37,4 @@ public:
                        modulation_scheme          mod) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

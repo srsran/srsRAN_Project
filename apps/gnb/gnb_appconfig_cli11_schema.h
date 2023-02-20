@@ -12,11 +12,11 @@
 
 #include "CLI/CLI11.hpp"
 
-namespace srsgnb {
+namespace srsran {
 
 struct gnb_appconfig;
 
 /// Configures the given CLI11 application with the gNB application configuration schema.
 void configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg);
 
-} // namespace srsgnb
+} // namespace srsran

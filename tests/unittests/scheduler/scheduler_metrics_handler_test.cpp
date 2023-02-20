@@ -12,7 +12,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class test_scheduler_ue_metrics_notifier : public scheduler_ue_metrics_notifier
 {

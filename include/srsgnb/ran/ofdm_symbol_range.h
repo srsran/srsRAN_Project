@@ -14,7 +14,7 @@
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/sliv.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Range [start,stop) of OFDM symbols.
 struct ofdm_symbol_range : public interval<uint8_t> {
@@ -39,17 +39,17 @@ inline uint32_t ofdm_symbol_range_to_sliv(ofdm_symbol_range symb_range)
   return sliv_from_s_and_l(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, symb_range.start(), symb_range.length());
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// Format intervals with the notation [start, stop)
 template <>
-struct formatter<srsgnb::ofdm_symbol_range> : public formatter<srsgnb::interval<uint8_t>> {
+struct formatter<srsran::ofdm_symbol_range> : public formatter<srsran::interval<uint8_t>> {
   template <typename FormatContext>
-  auto format(const srsgnb::ofdm_symbol_range& symbols, FormatContext& ctx)
+  auto format(const srsran::ofdm_symbol_range& symbols, FormatContext& ctx)
   {
-    return formatter<srsgnb::interval<uint8_t>>::format(symbols, ctx);
+    return formatter<srsran::interval<uint8_t>>::format(symbols, ctx);
   }
 };
 

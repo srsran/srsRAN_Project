@@ -11,7 +11,7 @@
 #include "ue_manager_impl.h"
 #include "srsgnb/rrc/rrc_du_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 ue_manager::ue_manager() {}

@@ -14,7 +14,7 @@
 #include "e1ap_cu_cp_asn1_helpers.h"
 #include "srsgnb/asn1/e1ap/e1ap.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace asn1::e1ap;
 using namespace srs_cu_cp;
 

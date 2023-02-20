@@ -17,7 +17,7 @@
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief TCI-State id used to identify a TCI-State configuration.
 /// \remark See TS 38.331, "TCI-StateId" and "maxNrofTCI".
@@ -85,4 +85,4 @@ struct tci_state {
   bool operator!=(const tci_state& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "processor_pool_helpers.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines the structure to configure the uplink processor pool.
 struct uplink_processor_pool_impl_config {
@@ -48,4 +48,4 @@ private:
   std::vector<processor_pool_repository<uplink_processor>> processors;
 };
 
-} // namespace srsgnb
+} // namespace srsran

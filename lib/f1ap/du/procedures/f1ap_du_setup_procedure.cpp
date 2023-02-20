@@ -12,8 +12,8 @@
 #include "../f1ap_du_context.h"
 #include "srsgnb/support/async/async_timer.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_du;
+using namespace srsran;
+using namespace srsran::srs_du;
 using namespace asn1::f1ap;
 
 f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message& request_,

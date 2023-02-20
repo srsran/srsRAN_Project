@@ -63,8 +63,8 @@ static void parse_args(int argc, char** argv)
   }
 }
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
 int main(int argc, char** argv)
 {
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
       unsigned min_cb_length_bg = 24;
       unsigned max_cb_length_bg = 66;
       unsigned msg_length_bg    = 22;
-      if (bg == srsgnb::ldpc_base_graph_type::BG2) {
+      if (bg == srsran::ldpc_base_graph_type::BG2) {
         min_cb_length_bg = 12;
         max_cb_length_bg = 50;
         msg_length_bg    = 10;
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
           unsigned checksum = crc16->calculate_bit(msg_span);
           srsvec::bit_unpack(span<uint8_t>(to_encode.data(), msg_length).last(16), checksum, 16);
           // Encode entire message.
-          srsgnb::codeblock_metadata::tb_common_metadata cfg_enc;
+          srsran::codeblock_metadata::tb_common_metadata cfg_enc;
           cfg_enc = {bg, ls};
           encoder->encode(encoded, to_encode, cfg_enc);
 
@@ -141,7 +141,7 @@ int main(int argc, char** argv)
         // Prepare message storage.
         dynamic_bit_buffer message(msg_length);
 
-        srsgnb::codeblock_metadata cfg_dec  = {};
+        srsran::codeblock_metadata cfg_dec  = {};
         cfg_dec.tb_common.lifting_size      = ls;
         cfg_dec.tb_common.base_graph        = bg;
         cfg_dec.cb_specific.nof_crc_bits    = 16;

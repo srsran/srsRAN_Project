@@ -13,7 +13,7 @@
 #include "srsgnb/support/math_utils.h"
 #include <numeric>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void vrb_to_prb_mapper_get_non_interleaved_prb(span<uint16_t> prb_indices, unsigned offset)
 {

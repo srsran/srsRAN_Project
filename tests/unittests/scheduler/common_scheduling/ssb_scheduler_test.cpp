@@ -21,7 +21,7 @@
 #define TEST_HARQ_ASSERT_MSG(SLOT, PERIODICITY, CASE)                                                                  \
   "Failed at slot: '{}', periodicity '{}', case '{}'", SLOT, PERIODICITY, ssb_case_to_str(CASE)
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Helper function to print the SSB CASE.
 const char* ssb_case_to_str(ssb_pattern_case ssb_case)
@@ -29,9 +29,9 @@ const char* ssb_case_to_str(ssb_pattern_case ssb_case)
   switch (ssb_case) {
     case ssb_pattern_case::A:
       return "SSB case A";
-    case srsgnb::ssb_pattern_case::B:
+    case srsran::ssb_pattern_case::B:
       return "SSB case B";
-    case srsgnb::ssb_pattern_case::C:
+    case srsran::ssb_pattern_case::C:
       return "SSB case C - paired spectrum";
     default:
       return "SSB case invalid";

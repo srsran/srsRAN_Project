@@ -14,7 +14,7 @@
 #include "fmt/format.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Non-owning view to a byte sequence.
 /// The underlying byte sequence is not contiguous in memory. Instead, it is represented as an intrusive linked list of
@@ -850,13 +850,13 @@ inline span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem
   return result;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// \brief Custom formatter for byte_buffer_view.
 template <>
-struct formatter<srsgnb::byte_buffer_view> {
+struct formatter<srsran::byte_buffer_view> {
   enum { hexadecimal, binary } mode = hexadecimal;
 
   template <typename ParseContext>
@@ -873,7 +873,7 @@ struct formatter<srsgnb::byte_buffer_view> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::byte_buffer_view& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer_view& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
@@ -884,7 +884,7 @@ struct formatter<srsgnb::byte_buffer_view> {
 
 /// \brief Custom formatter for byte_buffer.
 template <>
-struct formatter<srsgnb::byte_buffer> {
+struct formatter<srsran::byte_buffer> {
   enum { hexadecimal, binary } mode = hexadecimal;
 
   template <typename ParseContext>
@@ -901,7 +901,7 @@ struct formatter<srsgnb::byte_buffer> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::byte_buffer& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (mode == hexadecimal) {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
@@ -912,11 +912,11 @@ struct formatter<srsgnb::byte_buffer> {
 
 /// \brief Custom formatter for byte_buffer_slice.
 template <>
-struct formatter<srsgnb::byte_buffer_slice> : public formatter<srsgnb::byte_buffer_view> {
+struct formatter<srsran::byte_buffer_slice> : public formatter<srsran::byte_buffer_view> {
   template <typename FormatContext>
-  auto format(const srsgnb::byte_buffer_slice& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::byte_buffer_slice& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return formatter<srsgnb::byte_buffer_view>::format(buf.view(), ctx);
+    return formatter<srsran::byte_buffer_view>::format(buf.view(), ctx);
   }
 };
 

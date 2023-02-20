@@ -11,9 +11,9 @@
 #include "srsgnb/ran/pdsch/dlsch_info.h"
 #include "srsgnb/phy/constants.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-dlsch_information srsgnb::get_dlsch_information(const dlsch_configuration& config)
+dlsch_information srsran::get_dlsch_information(const dlsch_configuration& config)
 {
   dlsch_information result = {};
 

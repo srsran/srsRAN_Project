@@ -12,7 +12,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static std::mt19937       rgen(1234);
 static constexpr unsigned nof_repetitions = 100;

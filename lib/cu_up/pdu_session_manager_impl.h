@@ -19,7 +19,7 @@
 #include "srsgnb/support/timers.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_up {
 
@@ -57,4 +57,4 @@ private:
 
 } // namespace srs_cu_up
 
-} // namespace srsgnb
+} // namespace srsran

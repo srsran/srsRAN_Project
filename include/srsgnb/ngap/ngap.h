@@ -16,7 +16,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/timers.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -214,4 +214,4 @@ public:
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

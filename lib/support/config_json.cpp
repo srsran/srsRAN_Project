@@ -12,7 +12,7 @@
 #include "srsgnb/support/config_parsers.h"
 #include "fmt/format.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -135,7 +135,7 @@ std::vector<CLI::ConfigItem> json_config_parser::from_config_impl(const nlohmann
   throw CLI::ConversionError("You must make all top level values objects in json!");
 }
 
-std::unique_ptr<CLI::Config> srsgnb::create_json_config_parser()
+std::unique_ptr<CLI::Config> srsran::create_json_config_parser()
 {
   return std::make_unique<json_config_parser>();
 }

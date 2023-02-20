@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 // To allow ADL with custom begin/end
@@ -35,4 +35,4 @@ std::false_type is_iterable_impl(...);
 template <typename T>
 using is_iterable = decltype(detail::is_iterable_impl<T>(0));
 
-} // namespace srsgnb
+} // namespace srsran

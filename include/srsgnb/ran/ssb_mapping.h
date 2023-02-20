@@ -20,7 +20,7 @@
 #include <array>
 #include <cassert>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Calculates the first OFDM symbol in a 5ms SS/PBCH block burst
 /// \param [in] pattern_case Provides the pattern
@@ -178,4 +178,4 @@ crb_interval get_ssb_crbs(subcarrier_spacing    ssb_scs,
                           ssb_offset_to_pointA  offset_to_pA,
                           ssb_subcarrier_offset k_ssb);
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include "srsgnb/scheduler/prb_grant.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Finds the next contiguous range of PRBs whose respective bit in provided RB bitmap is set to zero.
 ///
@@ -61,4 +61,4 @@ find_empty_interval_of_length(const prb_bitmap& used_rb_bitmap, size_t nof_rbs, 
   return max_interv;
 }
 
-} // namespace srsgnb
+} // namespace srsran

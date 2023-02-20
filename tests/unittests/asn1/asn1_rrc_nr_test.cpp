@@ -136,7 +136,7 @@ TEST_F(asn1_rrc_nr_test, when_eutra_nr_capabilities_correct_then_packing_success
   mrdc_cap.feature_set_combinations.push_back(feature_set_combination);
 
   // Pack mrdc_cap
-  srsgnb::byte_buffer buffer;
+  srsran::byte_buffer buffer;
   asn1::bit_ref       bref(buffer);
   mrdc_cap.pack(bref);
 
@@ -148,7 +148,7 @@ TEST_F(asn1_rrc_nr_test, when_eutra_nr_capabilities_correct_then_packing_success
 
 TEST_F(asn1_rrc_nr_test, when_ue_mrdc_capabilities_correct_then_unpacking_successful)
 {
-  srsgnb::byte_buffer pdu{0x01, 0x1c, 0x04, 0x81, 0x60, 0x00, 0x1c, 0x4d, 0x00, 0x00, 0x00, 0x04,
+  srsran::byte_buffer pdu{0x01, 0x1c, 0x04, 0x81, 0x60, 0x00, 0x1c, 0x4d, 0x00, 0x00, 0x00, 0x04,
                           0x00, 0x40, 0x04, 0x04, 0xd0, 0x10, 0x74, 0x06, 0x14, 0xe8, 0x1b, 0x10,
                           0x78, 0x00, 0x00, 0x20, 0x00, 0x10, 0x08, 0x08, 0x01, 0x00, 0x20};
   // 011c048160001c4d0000000400400404d010740614e81b107800002000100808010020
@@ -187,7 +187,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_succ
                                   "\x08\x82\x00\x07\x10\x80\x0e\x60\x00\x40\x00\x00\x04\x10\xc0\x40"
                                   "\x80\xc1\x00\xe0\xd0\x00\x0e\x48\x10\x00\x00\x02\x00\x40\x00\x80"
                                   "\x60\x00\x80\x90\x02\x20\x0a\x40\x00\x02\x38\x90\x11\x31\xc8";
-  srsgnb::byte_buffer pdu{rrc_msg};
+  srsran::byte_buffer pdu{rrc_msg};
 
   cbit_ref    bref(pdu);
   rrc_recfg_s rrc_recfg;
@@ -223,7 +223,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_succ
 TEST_F(asn1_rrc_nr_test, when_radio_bearer_config_correct_then_unpacking_successful)
 {
   uint8_t             rrc_msg[] = "\x14\x09\x28\x17\x87\xc0\x0c\x28";
-  srsgnb::byte_buffer pdu{rrc_msg};
+  srsran::byte_buffer pdu{rrc_msg};
 
   cbit_ref           bref(pdu);
   radio_bearer_cfg_s radio_bearer_cfg;
@@ -267,7 +267,7 @@ TEST_F(asn1_rrc_nr_test, when_cell_group_config_correct_then_unpacking_successfu
                                                 "\x60\x00\x40\x00\x00\x04\x10\xc0\x40\x80\xc1\x00\xe0\xd0\x00\x0e"
                                                 "\x48\x10\x00\x00\x02\x00\x40\x00\x80\x60\x00\x80\x90\x02\x20\x0a"
                                                 "\x40\x00\x02\x38\x90\x11\x31\xc8";
-  srsgnb::byte_buffer pdu{cell_group_config_raw};
+  srsran::byte_buffer pdu{cell_group_config_raw};
 
   cbit_ref         bref(pdu);
   cell_group_cfg_s cell_group_cfg;

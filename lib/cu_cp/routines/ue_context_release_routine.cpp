@@ -10,8 +10,8 @@
 
 #include "ue_context_release_routine.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 ue_context_release_routine::ue_context_release_routine(const cu_cp_ue_context_release_command& command_,

@@ -12,7 +12,7 @@
 #include "srsgnb/phy/support/resource_grid_context.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 class task_executor;
 
 /// \brief Downlink processor implementation with a single executor.
@@ -66,4 +66,4 @@ private:
   std::unique_ptr<downlink_processor> downlink_proc;
   srslog::basic_logger&               logger;
 };
-} // namespace srsgnb
+} // namespace srsran

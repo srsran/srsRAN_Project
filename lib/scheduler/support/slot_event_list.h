@@ -14,7 +14,7 @@
 #include <mutex>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// This class stores incoming events in a thread-safe queue, and pops all enqueued events in a single batch, when
 /// a new slot indication is notified.
@@ -60,4 +60,4 @@ private:
   std::mutex mutex;
 };
 
-} // namespace srsgnb
+} // namespace srsran

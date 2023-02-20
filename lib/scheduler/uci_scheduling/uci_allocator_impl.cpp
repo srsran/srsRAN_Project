@@ -11,7 +11,7 @@
 #include "uci_allocator_impl.h"
 #include "../support/pucch/pucch_default_resource.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Number of possible Downlink Assignment Indexes {0, ..., 3} as per TS38.213 Section 9.1.3.
 constexpr static size_t DAI_MOD = 4;

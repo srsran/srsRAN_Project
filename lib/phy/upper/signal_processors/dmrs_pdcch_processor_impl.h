@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a generic implementation of a DMRS for PDCCH processor.
 class dmrs_pdcch_processor_impl : public dmrs_pdcch_processor
@@ -75,4 +75,4 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

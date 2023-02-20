@@ -12,7 +12,7 @@
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 dummy_ue_resource_configurator_factory::dummy_ue_resource_configurator_factory()
@@ -66,7 +66,7 @@ dummy_ue_resource_configurator_factory::create_ue_resource_configurator(du_ue_in
 }
 
 f1ap_ue_context_update_request
-srsgnb::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
+srsran::srs_du::create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,
                                                       std::initializer_list<srb_id_t> srbs_to_addmod,
                                                       std::initializer_list<drb_id_t> drbs_to_addmod)
 {

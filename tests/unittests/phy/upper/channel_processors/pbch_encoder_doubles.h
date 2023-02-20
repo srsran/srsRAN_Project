@@ -15,7 +15,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 class pbch_encoder_spy : public pbch_encoder
 {
@@ -51,4 +51,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(pbch_encoder);
 
-} // namespace srsgnb
+} // namespace srsran

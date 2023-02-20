@@ -42,7 +42,7 @@ static double to_MHz(double value_Hz)
   return value_Hz * 1e-6;
 }
 
-namespace srsgnb {
+namespace srsran {
 
 class radio_uhd_device : public uhd_exception_handler
 {
@@ -383,4 +383,4 @@ private:
   srslog::basic_logger&       logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 
 #include <string>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Splits a given string into multiple elements given a delimiter. The elements are casted to the specified type.
 /// Insertable It is the list data-type. It needs to implement insert(iterator, element)
@@ -37,4 +37,4 @@ inline void string_parse_list(const std::string& input, char delimiter, Insertab
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran

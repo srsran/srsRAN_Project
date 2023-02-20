@@ -22,7 +22,7 @@
 #include <uhd/types/time_spec.hpp>
 #pragma GCC diagnostic pop
 
-namespace srsgnb {
+namespace srsran {
 
 class radio_uhd_tx_stream_fsm
 {
@@ -150,4 +150,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

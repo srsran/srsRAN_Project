@@ -20,7 +20,7 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/execute_on.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_dl_processor final : public mac_dl_configurator
 {
@@ -66,4 +66,4 @@ private:
   mac_scheduler& sched_obj;
 };
 
-} // namespace srsgnb
+} // namespace srsran

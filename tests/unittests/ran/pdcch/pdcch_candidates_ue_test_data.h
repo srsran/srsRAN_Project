@@ -15,7 +15,7 @@
 
 #include "srsgnb/ran/pdcch/pdcch_candidates.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   pdcch_candidates_ue_ss_configuration config;
@@ -245,4 +245,4 @@ static const std::vector<test_case_t> pdcch_candidates_ue_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

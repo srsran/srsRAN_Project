@@ -17,7 +17,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 class mac_ue_create_procedure_test : public testing::Test
 {

@@ -18,7 +18,7 @@
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/srsvec/zero.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop and
 /// for the selected port.
@@ -133,8 +133,8 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
   }
 }
 
-void port_channel_estimator_average_impl::compute_layer_hop(srsgnb::channel_estimate&           estimate,
-                                                            const srsgnb::resource_grid_reader& grid,
+void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_estimate&           estimate,
+                                                            const srsran::resource_grid_reader& grid,
                                                             unsigned                            port,
                                                             const dmrs_symbol_list&             pilots,
                                                             const configuration&                cfg,

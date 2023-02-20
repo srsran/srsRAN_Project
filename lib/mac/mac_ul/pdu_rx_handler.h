@@ -22,7 +22,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Stores MAC RX PDU, as well as any contextual or temporary information related to the PDU decoding.
 struct decoded_mac_rx_pdu {
@@ -130,4 +130,4 @@ private:
   mac_pcap&                   pcap;
 };
 
-} // namespace srsgnb
+} // namespace srsran

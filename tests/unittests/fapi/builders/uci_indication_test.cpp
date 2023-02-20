@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/message_builders.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 TEST(uci_indication_builder, valid_pusch_pdu_metrics_passes)
@@ -371,7 +371,7 @@ TEST(uci_indication_builder, add_pucch_f01_passes)
   const auto& pdu = msg.pdus.back().pucch_pdu_f01;
   ASSERT_EQ(rnti, pdu.rnti);
   ASSERT_EQ(handle, pdu.handle);
-  ASSERT_EQ((format == srsgnb::pucch_format::FORMAT_0) ? uci_pucch_pdu_format_0_1::format_type::format_0
+  ASSERT_EQ((format == srsran::pucch_format::FORMAT_0) ? uci_pucch_pdu_format_0_1::format_type::format_0
                                                        : uci_pucch_pdu_format_0_1::format_type::format_1,
             pdu.pucch_format);
 }

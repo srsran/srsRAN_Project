@@ -23,7 +23,7 @@
 #include "cell_configuration.h"
 #include "resource_grid.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief This class holds all the resources that are specific to a cell.
 /// This includes the SIB and RA scheduler objects, PDCCH scheduler object, the cell resource grid, etc.
@@ -118,4 +118,4 @@ private:
   std::array<std::unique_ptr<scheduler_cell>, MAX_NOF_DU_CELLS> cells;
 };
 
-} // namespace srsgnb
+} // namespace srsran

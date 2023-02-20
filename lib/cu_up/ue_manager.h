@@ -15,7 +15,7 @@
 #include "srsgnb/f1u/cu_up/f1u_gateway.h"
 #include "srsgnb/support/timers.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_up {
 
@@ -53,4 +53,4 @@ private:
 
 } // namespace srs_cu_up
 
-} // namespace srsgnb
+} // namespace srsran

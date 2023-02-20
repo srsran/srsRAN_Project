@@ -14,7 +14,7 @@
 #include "tests/unittests/scheduler/uci_and_pucch/uci_test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Test bench with all that is needed for the PUCCH guardbands scheduler.
 class test_bench_guardbands

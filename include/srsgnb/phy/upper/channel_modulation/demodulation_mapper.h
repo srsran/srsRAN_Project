@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/ran/modulation_scheme.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Demodulator interface.
 ///
@@ -57,4 +57,4 @@ public:
                                modulation_scheme          mod) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

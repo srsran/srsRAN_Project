@@ -16,7 +16,7 @@
 #include "srsgnb/phy/lower/modulation/ofdm_prach_demodulator.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct prach_context {
   unsigned                              dft_size_15kHz;
@@ -106,4 +106,4 @@ static const std::vector<test_case_t> ofdm_prach_demodulator_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

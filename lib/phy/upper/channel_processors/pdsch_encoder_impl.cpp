@@ -11,7 +11,7 @@
 #include "pdsch_encoder_impl.h"
 #include "srsgnb/srsvec/bit.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
                                 span<const uint8_t>     transport_block,

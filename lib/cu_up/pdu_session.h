@@ -17,7 +17,7 @@
 #include "srsgnb/gtpu/gtpu_tunnel_factory.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 #define MAX_NUM_PDU_SESSIONS_PER_UE (8) /// Todo: find 3GPP spec reference
@@ -62,4 +62,4 @@ struct pdu_session {
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

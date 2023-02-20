@@ -11,8 +11,8 @@
 #include "asn1_csi_meas_config_helpers.h"
 #include "../../asn1/asn1_diff_utils.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_du;
+using namespace srsran;
+using namespace srsran::srs_du;
 using namespace asn1::rrc_nr;
 
 asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(const csi_rs_resource_mapping& cfg)
@@ -1198,7 +1198,7 @@ make_asn1_semi_persistent_on_pusch_trigger_state(const csi_semi_persistent_on_pu
   return out;
 }
 
-void srsgnb::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s& out,
+void srsran::srs_du::calculate_csi_meas_config_diff(asn1::rrc_nr::csi_meas_cfg_s& out,
                                                     const csi_meas_config&        src,
                                                     const csi_meas_config&        dest)
 {

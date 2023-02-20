@@ -12,7 +12,7 @@
 #include "srsgnb/mac/config/mac_cell_group_config_factory.h"
 #include "srsgnb/scheduler/config/serving_cell_config_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 /// \brief Finds an unused LCID for DRBs given a list of UE configured RLC bearers.

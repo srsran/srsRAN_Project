@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief Returns a PRACH detector slot configuration using the given PRACH buffer context.
 static prach_detector::configuration get_prach_dectector_config_from_prach_context(const prach_buffer_context& context)

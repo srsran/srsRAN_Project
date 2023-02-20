@@ -16,7 +16,7 @@
 #include "srsgnb/scheduler/config/dmrs.h"
 #include <cstddef>
 
-namespace srsgnb {
+namespace srsran {
 
 struct dl_ssb_pdu;
 struct ssb_information;
@@ -50,4 +50,4 @@ private:
   uint8_t          L_max;
 };
 
-} // namespace srsgnb
+} // namespace srsran

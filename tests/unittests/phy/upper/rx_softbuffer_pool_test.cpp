@@ -14,7 +14,7 @@
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Tests that the pool returns nullptr when the limit of softbuffers is reached.
 static void test_softbuffer_limit()

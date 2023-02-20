@@ -14,7 +14,7 @@
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/rnti.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Generate a dummy F1AP Served Cell Item.
@@ -62,4 +62,4 @@ f1ap_message generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t      
 f1ap_message generate_ue_context_modification_failure(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

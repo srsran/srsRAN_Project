@@ -13,7 +13,7 @@
 #include "../ue_scheduling/ue.h"
 #include "uci_scheduler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class cell_configuration;
 class uci_allocator;
@@ -38,4 +38,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

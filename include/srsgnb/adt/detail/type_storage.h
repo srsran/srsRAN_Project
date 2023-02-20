@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -105,4 +105,4 @@ void move_if_present_helper(
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

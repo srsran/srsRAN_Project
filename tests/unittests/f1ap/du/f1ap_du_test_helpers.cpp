@@ -12,10 +12,10 @@
 #include "../common/f1ap_cu_test_messages.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
-f1_setup_request_message srsgnb::srs_du::generate_f1_setup_request_message()
+f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
 {
   f1_setup_request_message           request_msg  = {};
   du_setup_params                    setup_params = {};
@@ -26,7 +26,7 @@ f1_setup_request_message srsgnb::srs_du::generate_f1_setup_request_message()
   return request_msg;
 }
 
-asn1::f1ap::drbs_to_be_setup_item_s srsgnb::srs_du::generate_drb_am_setup_item(drb_id_t drbid)
+asn1::f1ap::drbs_to_be_setup_item_s srsran::srs_du::generate_drb_am_setup_item(drb_id_t drbid)
 {
   using namespace asn1::f1ap;
 
@@ -50,7 +50,7 @@ asn1::f1ap::drbs_to_be_setup_item_s srsgnb::srs_du::generate_drb_am_setup_item(d
   return drb;
 }
 
-f1ap_message srsgnb::srs_du::generate_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add)
+f1ap_message srsran::srs_du::generate_ue_context_setup_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   using namespace asn1::f1ap;
   f1ap_message msg;
@@ -80,7 +80,7 @@ f1ap_message srsgnb::srs_du::generate_ue_context_setup_request(const std::initia
   return msg;
 }
 
-asn1::f1ap::drbs_to_be_setup_mod_item_s srsgnb::srs_du::generate_drb_am_mod_item(drb_id_t drbid)
+asn1::f1ap::drbs_to_be_setup_mod_item_s srsran::srs_du::generate_drb_am_mod_item(drb_id_t drbid)
 {
   using namespace asn1::f1ap;
   drbs_to_be_setup_mod_item_s drb;
@@ -108,7 +108,7 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s srsgnb::srs_du::generate_drb_am_mod_item
 }
 
 f1ap_message
-srsgnb::srs_du::generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add)
+srsran::srs_du::generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   using namespace asn1::f1ap;
   f1ap_message msg;

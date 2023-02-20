@@ -10,10 +10,10 @@
 
 #include "test_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
-byte_buffer srsgnb::srs_cu_cp::generate_container_with_cell_group_config()
+byte_buffer srsran::srs_cu_cp::generate_container_with_cell_group_config()
 {
   asn1::unbounded_octstring<true> octet_str;
   octet_str.from_string(
@@ -23,7 +23,7 @@ byte_buffer srsgnb::srs_cu_cp::generate_container_with_cell_group_config()
   return octet_str.to_byte_buffer();
 }
 
-byte_buffer srsgnb::srs_cu_cp::generate_rrc_setup_complete()
+byte_buffer srsran::srs_cu_cp::generate_rrc_setup_complete()
 {
   asn1::unbounded_octstring<true> octet_str;
   octet_str.from_string(
@@ -33,27 +33,27 @@ byte_buffer srsgnb::srs_cu_cp::generate_rrc_setup_complete()
   return octet_str.to_byte_buffer();
 }
 
-gnb_cu_cp_ue_e1ap_id_t srsgnb::srs_cu_cp::generate_random_gnb_cu_cp_ue_e1ap_id()
+gnb_cu_cp_ue_e1ap_id_t srsran::srs_cu_cp::generate_random_gnb_cu_cp_ue_e1ap_id()
 {
   return int_to_gnb_cu_cp_ue_e1ap_id(
       test_rgen::uniform_int<uint64_t>(gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::min),
                                        gnb_cu_cp_ue_e1ap_id_to_uint(gnb_cu_cp_ue_e1ap_id_t::max) - 1));
 }
 
-gnb_cu_up_ue_e1ap_id_t srsgnb::srs_cu_cp::generate_random_gnb_cu_up_ue_e1ap_id()
+gnb_cu_up_ue_e1ap_id_t srsran::srs_cu_cp::generate_random_gnb_cu_up_ue_e1ap_id()
 {
   return int_to_gnb_cu_up_ue_e1ap_id(
       test_rgen::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
                                        gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1));
 }
 
-gnb_cu_ue_f1ap_id_t srsgnb::srs_cu_cp::generate_random_gnb_cu_ue_f1ap_id()
+gnb_cu_ue_f1ap_id_t srsran::srs_cu_cp::generate_random_gnb_cu_ue_f1ap_id()
 {
   return int_to_gnb_cu_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
       gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::min), gnb_cu_ue_f1ap_id_to_uint(gnb_cu_ue_f1ap_id_t::max) - 1));
 }
 
-gnb_du_ue_f1ap_id_t srsgnb::srs_cu_cp::generate_random_gnb_du_ue_f1ap_id()
+gnb_du_ue_f1ap_id_t srsran::srs_cu_cp::generate_random_gnb_du_ue_f1ap_id()
 {
   return int_to_gnb_du_ue_f1ap_id(test_rgen::uniform_int<uint64_t>(
       gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::min), gnb_du_ue_f1ap_id_to_uint(gnb_du_ue_f1ap_id_t::max) - 1));

@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PRACH preamble formats.
 ///
@@ -71,4 +71,4 @@ inline const char* to_string(preamble_format format)
   }
 }
 
-} // namespace srsgnb
+} // namespace srsran

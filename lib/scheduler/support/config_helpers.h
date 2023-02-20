@@ -13,7 +13,7 @@
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Retrieves the time resource allocation table for PUSCH.
 /// \remark See TS 38.214, Section 6.1.2.1.1 - Determination of the resource allocation table to be used for PUSCH.
@@ -85,4 +85,4 @@ inline bool search_space_supports_dl_dci_format(const search_space_configuration
   return false;
 }
 
-} // namespace srsgnb
+} // namespace srsran

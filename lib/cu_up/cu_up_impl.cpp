@@ -16,7 +16,7 @@
 #include "srsgnb/ran/bcd_helpers.h"
 #include "srsgnb/support/io_broker/io_broker_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
 void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)

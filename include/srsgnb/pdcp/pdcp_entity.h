@@ -17,7 +17,7 @@
 #include "srsgnb/pdcp/pdcp_tx_metrics.h"
 #include "srsgnb/security/security.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct pdcp_metrics_container {
   pdcp_tx_metrics_container tx;
@@ -40,4 +40,4 @@ public:
   virtual pdcp_metrics_container           get_metrics()                    = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

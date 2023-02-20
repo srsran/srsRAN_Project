@@ -21,7 +21,7 @@
 #include "srsgnb/ran/pucch/pucch_context.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PUCCH processor interface for all formats.
 ///
@@ -208,4 +208,4 @@ public:
   virtual bool is_valid(const pucch_processor::format4_configuration& config) const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

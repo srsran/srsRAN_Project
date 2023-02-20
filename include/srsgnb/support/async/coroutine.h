@@ -14,7 +14,7 @@
 #include "srsgnb/support/async/detail/function_signature.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -397,4 +397,4 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   coro_context__.promise().return_value(__VA_ARGS__);                                                                  \
   _CORO_ENTER_FINAL_SUSPEND();
 
-} // namespace srsgnb
+} // namespace srsran

@@ -17,7 +17,7 @@
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// OFDM modulator factory configuration. Provides the necessary dependency instances.
 struct ofdm_modulator_common_configuration {
@@ -93,4 +93,4 @@ public:
   void modulate(span<cf_t> output, const resource_grid_reader& grid, unsigned port_index, unsigned slot_index) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

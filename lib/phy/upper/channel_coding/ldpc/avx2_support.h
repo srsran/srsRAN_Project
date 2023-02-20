@@ -20,7 +20,7 @@
 #include <array>
 #include <immintrin.h>
 
-namespace srsgnb {
+namespace srsran {
 /// Number of bytes in an AVX2 register.
 constexpr unsigned AVX2_SIZE_BYTE = 32;
 /// Number of bytes in an AVX512 register.
@@ -335,4 +335,4 @@ inline void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, uns
   std::memcpy(out + ls - steps, in, steps);
 }
 
-} // namespace srsgnb
+} // namespace srsran

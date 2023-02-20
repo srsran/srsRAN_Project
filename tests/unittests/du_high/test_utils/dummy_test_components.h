@@ -13,7 +13,7 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/pcap/pcap.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct phy_cell_test_dummy : public mac_cell_result_notifier {
   optional<mac_dl_sched_result> last_dl_res;
@@ -41,4 +41,4 @@ public:
   void push_pdu(mac_nr_context_info context, byte_buffer pdu) override {}
 };
 
-} // namespace srsgnb
+} // namespace srsran

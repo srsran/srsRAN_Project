@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dmrs_pbch_processor_impl : public dmrs_pbch_processor
 {
@@ -52,4 +52,4 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

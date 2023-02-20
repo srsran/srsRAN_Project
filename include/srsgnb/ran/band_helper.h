@@ -17,7 +17,7 @@
 #include "srsgnb/ran/ssb_properties.h"
 #include <stdint.h>
 
-namespace srsgnb {
+namespace srsran {
 
 enum class duplex_mode;
 enum class subcarrier_spacing;
@@ -287,4 +287,4 @@ unsigned get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_i
 
 } // namespace band_helper
 
-} // namespace srsgnb
+} // namespace srsran

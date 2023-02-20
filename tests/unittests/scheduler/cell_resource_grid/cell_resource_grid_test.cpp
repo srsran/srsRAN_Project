@@ -13,7 +13,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::vector<scs_specific_carrier> test_carriers()
 {
@@ -98,7 +98,7 @@ TEST(cell_resource_grid_test, test_all)
   {
     cell_slot_resource_grid cell_grid{carrier_cfgs};
     bwp_configuration       bwp_cfg{};
-    bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz15;
+    bwp_cfg.scs  = srsran::subcarrier_spacing::kHz15;
     bwp_cfg.crbs = {0, 52};
 
     TESTASSERT(not cell_grid.collides(bwp_sch_grant_info(bwp_cfg, {0, 14}, {0, 52})));
@@ -118,7 +118,7 @@ TEST(cell_resource_grid_test, test_all)
   {
     cell_slot_resource_grid cell_grid{carrier_cfgs};
     bwp_configuration       bwp_cfg{};
-    bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz15;
+    bwp_cfg.scs  = srsran::subcarrier_spacing::kHz15;
     bwp_cfg.crbs = {10, 30};
 
     TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, {0, 52}));
@@ -138,7 +138,7 @@ TEST(cell_resource_grid_test, test_all)
   {
     cell_slot_resource_grid cell_grid{carrier_cfgs};
     bwp_configuration       bwp_cfg{};
-    bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz120;
+    bwp_cfg.scs  = srsran::subcarrier_spacing::kHz120;
     bwp_cfg.crbs = {10, 275};
 
     TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz120, {0, 14}, {0, 265}));

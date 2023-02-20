@@ -14,7 +14,7 @@
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// In this test, we keep hopping between workers. In each worker we increment an unprotected integer, and print
 /// Given that the access to the integer is sequential, we dont need mutexes.

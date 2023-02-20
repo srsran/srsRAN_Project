@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 const std::array<dmrs_pdsch_processor_impl::params_t, dmrs_type::DMRS_MAX_PORTS_TYPE1>
     dmrs_pdsch_processor_impl::params_type1 = {{
@@ -43,7 +43,7 @@ const std::array<dmrs_pdsch_processor_impl::params_t, dmrs_type::DMRS_MAX_PORTS_
         /* Port 1011 */ {4, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
     }};
 
-void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequence,
+void srsran::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequence,
                                                             unsigned int    symbol,
                                                             const config_t& config) const
 {
@@ -67,7 +67,7 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
       sequence, *prg, amplitude, config.reference_point_k_rb, config.type.nof_dmrs_per_rb(), config.rb_mask);
 }
 
-void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&               grid,
+void srsran::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&               grid,
                                                 span<const cf_t>                    sequence,
                                                 const bounded_bitset<MAX_RB * NRE>& rg_subc_mask,
                                                 unsigned                            symbol,
@@ -125,7 +125,7 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer&           
   }
 }
 
-void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
+void srsran::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
   static const re_prb_mask re_mask_type1 = {

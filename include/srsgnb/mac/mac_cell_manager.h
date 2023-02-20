@@ -6,7 +6,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Start configured cell.
 struct mac_cell_start {
@@ -38,4 +38,4 @@ public:
   virtual mac_cell_controller& get_cell_controller(du_cell_index_t cell_index)     = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "srsgnb/support/timers.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// Creates an instance of an E1AP interface, notifying outgoing packets on the specified listener object.
@@ -24,4 +24,4 @@ std::unique_ptr<e1ap_interface> create_e1ap(e1ap_message_notifier& e1ap_pdu_noti
                                             task_executor&         cu_up_exec_);
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

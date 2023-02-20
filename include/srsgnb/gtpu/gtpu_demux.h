@@ -13,7 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/gtpu/gtpu_tunnel_rx.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// The GTP-U demux component will only be relevant for the reception and de-multiplexing
 /// of GTP-U packets. It does not require Tx capabilities as the corresponding GTP-U entities
@@ -49,4 +49,4 @@ public:
   virtual ~gtpu_demux() = default;
 };
 
-} // namespace srsgnb
+} // namespace srsran

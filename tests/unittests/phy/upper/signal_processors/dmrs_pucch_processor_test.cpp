@@ -13,7 +13,7 @@
 #include "dmrs_pucch_processor_test_data.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

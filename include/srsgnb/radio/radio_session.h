@@ -15,7 +15,7 @@
 #include "srsgnb/radio/radio_management_plane.h"
 #include "srsgnb/radio/radio_notification_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a radio baseband unit session interface.
 class radio_session : radio_base
@@ -35,4 +35,4 @@ public:
   virtual void stop() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

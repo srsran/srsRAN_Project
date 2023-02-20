@@ -18,7 +18,7 @@
 #include "srsgnb/e1ap/common/e1_setup_messages.h"
 #include "srsgnb/e1ap/common/e1ap_common.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief Request to modify a bearer context.
@@ -88,4 +88,4 @@ public:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

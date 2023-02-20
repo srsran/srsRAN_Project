@@ -13,7 +13,7 @@
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Holds the configuration of a cell.
 /// Additionally, this class pre-caches the computation of some const values related to the cell configuration
@@ -86,4 +86,4 @@ private:
   std::vector<uint8_t> ul_enabled_slot_lst;
 };
 
-} // namespace srsgnb
+} // namespace srsran

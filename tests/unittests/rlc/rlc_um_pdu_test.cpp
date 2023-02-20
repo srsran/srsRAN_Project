@@ -12,7 +12,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 template <std::size_t N>
 byte_buffer make_pdu_and_log(const std::array<uint8_t, N>& tv)
@@ -299,7 +299,7 @@ void test_rlc_um_12bit_malformed_pdu()
   TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size12bits, &hdr) == false);
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 int main()
 {
@@ -309,16 +309,16 @@ int main()
 
   logger.info("Testing UM PDU packing/unpacking");
   srslog::flush();
-  srsgnb::test_rlc_um_6bit_complete_sdu();
-  srsgnb::test_rlc_um_6bit_first_segment();
-  srsgnb::test_rlc_um_6bit_middle_segment();
-  srsgnb::test_rlc_um_6bit_last_segment();
+  srsran::test_rlc_um_6bit_complete_sdu();
+  srsran::test_rlc_um_6bit_first_segment();
+  srsran::test_rlc_um_6bit_middle_segment();
+  srsran::test_rlc_um_6bit_last_segment();
 
-  srsgnb::test_rlc_um_12bit_complete_sdu();
-  srsgnb::test_rlc_um_12bit_first_segment();
-  srsgnb::test_rlc_um_12bit_middle_segment();
-  srsgnb::test_rlc_um_12bit_last_segment();
+  srsran::test_rlc_um_12bit_complete_sdu();
+  srsran::test_rlc_um_12bit_first_segment();
+  srsran::test_rlc_um_12bit_middle_segment();
+  srsran::test_rlc_um_12bit_last_segment();
 
-  srsgnb::test_rlc_um_6bit_malformed_pdu();
-  srsgnb::test_rlc_um_12bit_malformed_pdu();
+  srsran::test_rlc_um_6bit_malformed_pdu();
+  srsran::test_rlc_um_12bit_malformed_pdu();
 }

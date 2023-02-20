@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace config_validators {
 
 /// \brief Validates \c sched_cell_configuration_request_message used to add a cell.
@@ -26,4 +26,4 @@ validate_sched_cell_configuration_request_message(const sched_cell_configuration
                                                   const scheduler_expert_config&                  expert_cfg);
 
 } // namespace config_validators
-} // namespace srsgnb
+} // namespace srsran

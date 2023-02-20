@@ -18,7 +18,7 @@
 #include "srsgnb/ran/sch_mcs.h"
 #include "srsgnb/support/units.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collects the necessary parameters to calculate the Uplink Shared Channel (UL-SCH) information.
 ///
@@ -100,4 +100,4 @@ struct ulsch_information {
 /// Gets the UL-SCH information for a given PUSCH configuration.
 ulsch_information get_ulsch_information(const ulsch_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

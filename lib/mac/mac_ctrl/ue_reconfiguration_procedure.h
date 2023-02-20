@@ -15,7 +15,7 @@
 #include "../mac_config_interfaces.h"
 #include "srsgnb/support/async/async_task.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_ue_reconfiguration_procedure
 {
@@ -81,4 +81,4 @@ private:
   bool add_ue_result = false;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "srsgnb/ran/lcid.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /********************************
  * 9.2.5.3 - UE Reconfiguration
@@ -79,4 +79,4 @@ struct rlc_ue_reestablishment_response_message {
   bool            result;
 };
 
-} // namespace srsgnb
+} // namespace srsran

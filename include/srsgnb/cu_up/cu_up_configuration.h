@@ -16,7 +16,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/io_broker/io_broker.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 struct network_interface_config {
@@ -52,13 +52,13 @@ struct cu_up_configuration {
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 // Network config formatter
 template <>
-struct formatter<srsgnb::srs_cu_up::network_interface_config> {
+struct formatter<srsran::srs_cu_up::network_interface_config> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -66,7 +66,7 @@ struct formatter<srsgnb::srs_cu_up::network_interface_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsgnb::srs_cu_up::network_interface_config cfg, FormatContext& ctx)
+  auto format(srsran::srs_cu_up::network_interface_config cfg, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),

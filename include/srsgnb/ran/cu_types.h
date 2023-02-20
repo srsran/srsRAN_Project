@@ -16,7 +16,7 @@
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 // See TS 38.463 Section 9.3.1.21: PDU Session ID valid values: (0..255)
 constexpr static uint16_t MAX_NOF_PDU_SESSIONS = 256;
@@ -174,12 +174,12 @@ struct security_result_t {
   std::string integrity_protection_result;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 // Formatters
 namespace fmt {
 template <>
-struct formatter<srsgnb::pdu_session_id_t> {
+struct formatter<srsran::pdu_session_id_t> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -187,9 +187,10 @@ struct formatter<srsgnb::pdu_session_id_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdu_session_id_t& sid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pdu_session_id_t& sid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{:#x}", pdu_session_id_to_uint(sid));
   }
 };
+
 } // namespace fmt

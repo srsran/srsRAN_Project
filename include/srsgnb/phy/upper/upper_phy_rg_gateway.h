@@ -13,7 +13,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/support/resource_grid_context.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Interface of the upper physical layer resource grid gateway.
 class upper_phy_rg_gateway
@@ -29,4 +29,4 @@ public:
   virtual void send(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

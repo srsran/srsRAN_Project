@@ -10,7 +10,7 @@
 #include "processor_notifier_adaptor.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void processor_notifier_adaptor::prach_adaptor::on_prach_request_late(const prach_buffer_context& context)
 {

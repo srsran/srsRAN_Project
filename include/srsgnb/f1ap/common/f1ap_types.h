@@ -14,7 +14,7 @@
 #include <limits>
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief GNB-CU-UE-F1AP-ID used to identify the UE in the F1AP-CU.
 /// \remark See TS 38.473 Section 9.3.1.4: GNB-CU-UE-F1AP-ID valid values: (0..2^32-1)
@@ -48,4 +48,4 @@ constexpr inline gnb_du_ue_f1ap_id_t int_to_gnb_du_ue_f1ap_id(uint64_t idx)
   return static_cast<gnb_du_ue_f1ap_id_t>(idx);
 }
 
-} // namespace srsgnb
+} // namespace srsran

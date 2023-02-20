@@ -19,7 +19,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pucch_helper
 {
@@ -101,4 +101,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -12,8 +12,8 @@
 #include "../../common/e1ap_asn1_helpers.h"
 #include "srsgnb/support/async/async_timer.h"
 
-using namespace srsgnb;
-using namespace srsgnb::srs_cu_cp;
+using namespace srsran;
+using namespace srsran::srs_cu_cp;
 using namespace asn1::e1ap;
 
 cu_cp_e1_setup_procedure::cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,

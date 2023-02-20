@@ -13,7 +13,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/csi_rs/csi_rs_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// CSI-RS types.
 enum class csi_rs_type : uint8_t {
@@ -64,4 +64,4 @@ static constexpr unsigned get_cdm_group_size(csi_rs_cdm_type cdm)
   return cdm_group_size;
 }
 
-} // namespace srsgnb
+} // namespace srsran

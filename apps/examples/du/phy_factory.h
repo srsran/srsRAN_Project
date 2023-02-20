@@ -13,7 +13,7 @@
 #include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/upper/upper_phy.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct lower_phy_configuration;
 class task_executor;
@@ -39,4 +39,4 @@ std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_params&             
                                             task_executor*                        ul_executor,
                                             upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier);
 
-} // namespace srsgnb
+} // namespace srsran

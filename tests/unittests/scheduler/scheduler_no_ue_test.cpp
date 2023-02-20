@@ -21,7 +21,7 @@
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void test_no_ues()
 {

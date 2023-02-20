@@ -13,7 +13,7 @@
 #include "resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the transmission and reception context.
 struct resource_grid_context {
@@ -23,4 +23,4 @@ struct resource_grid_context {
   unsigned sector;
 };
 
-} // namespace srsgnb
+} // namespace srsran

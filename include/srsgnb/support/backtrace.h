@@ -10,9 +10,9 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Enables the backtrace.
 void enable_backtrace();
 
-} // namespace srsgnb
+} // namespace srsran

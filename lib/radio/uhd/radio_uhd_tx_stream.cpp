@@ -10,7 +10,7 @@
 
 #include "radio_uhd_tx_stream.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void radio_uhd_tx_stream::recv_async_msg()
 {

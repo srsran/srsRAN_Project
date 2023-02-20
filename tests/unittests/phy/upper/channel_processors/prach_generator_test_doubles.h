@@ -15,7 +15,7 @@
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_generator_spy : public prach_generator
 {
@@ -55,4 +55,4 @@ private:
 
 PHY_SPY_FACTORY_TEMPLATE(prach_generator);
 
-} // namespace srsgnb
+} // namespace srsran

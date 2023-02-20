@@ -16,7 +16,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/async_timer.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class ng_setup_procedure
@@ -54,4 +54,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

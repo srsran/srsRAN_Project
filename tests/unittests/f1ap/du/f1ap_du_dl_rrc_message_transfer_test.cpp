@@ -12,8 +12,8 @@
 #include "srsgnb/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
-using namespace srsgnb::srs_du;
+using namespace srsran;
+using namespace srsran::srs_du;
 
 TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_is_received_lower_layer_srb_notifier_receives_rrc_pdu)
 {

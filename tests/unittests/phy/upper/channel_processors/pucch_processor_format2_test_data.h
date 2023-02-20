@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct context_t {
   unsigned                               grid_nof_prb;
@@ -135,4 +135,4 @@ static const std::vector<test_case_t> pucch_processor_format2_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

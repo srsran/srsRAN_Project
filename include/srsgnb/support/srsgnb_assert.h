@@ -20,7 +20,7 @@
 #define SRSGNB_IS_DEFINED(x) SRSGNB_IS_DEFINED2(x)
 #define SRSGNB_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -59,11 +59,11 @@ namespace detail {
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran
 
 /// Helper macro to log assertion message and terminate program.
 #define SRSGNB_ASSERT_FAILURE__(condmessage, fmtstr, ...)                                                              \
-  srsgnb::detail::print_and_abort(                                                                                     \
+  srsran::detail::print_and_abort(                                                                                     \
       __FILE__, __LINE__, __PRETTY_FUNCTION__, condmessage, fmt::format(FMT_STRING(fmtstr), ##__VA_ARGS__))
 
 /// \brief Helper macro that asserts condition is true. If false, it logs the remaining macro args, flushes the log,

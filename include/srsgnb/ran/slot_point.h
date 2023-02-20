@@ -14,7 +14,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Number of subframers per frame. This constant doesn't depend on the numerology used
 constexpr uint32_t NOF_SUBFRAMES_PER_FRAME = 10;
@@ -281,20 +281,20 @@ inline slot_point set_slot_numerology(slot_point sl, unsigned new_numerology)
   return sl;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// FMT formatter of slot_point type.
 template <>
-struct formatter<srsgnb::slot_point> {
+struct formatter<srsran::slot_point> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(srsgnb::slot_point slot, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsran::slot_point slot, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}.{}", slot.sfn(), slot.slot_index());
   }

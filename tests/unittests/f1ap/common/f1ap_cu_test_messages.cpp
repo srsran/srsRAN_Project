@@ -10,11 +10,11 @@
 
 #include "f1ap_cu_test_messages.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
-asn1::f1ap::gnb_du_served_cells_item_s srsgnb::srs_cu_cp::generate_served_cells_item(unsigned nrcell_id, unsigned nrpci)
+asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_item(unsigned nrcell_id, unsigned nrpci)
 {
   asn1::f1ap::gnb_du_served_cells_item_s served_cells_item;
   served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("208991");
@@ -52,7 +52,7 @@ asn1::f1ap::gnb_du_served_cells_item_s srsgnb::srs_cu_cp::generate_served_cells_
   return served_cells_item;
 }
 
-f1ap_message srsgnb::srs_cu_cp::generate_f1_setup_request()
+f1ap_message srsran::srs_cu_cp::generate_f1_setup_request()
 {
   f1ap_message msg;
   msg.pdu.set_init_msg();
@@ -73,7 +73,7 @@ f1ap_message srsgnb::srs_cu_cp::generate_f1_setup_request()
   return msg;
 }
 
-f1ap_message srsgnb::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
+f1ap_message srsran::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_f1ap_id_t du_ue_id,
                                                                       rnti_t              crnti,
                                                                       byte_buffer         cell_group_cfg)
 {
@@ -107,7 +107,7 @@ f1ap_message srsgnb::srs_cu_cp::generate_init_ul_rrc_message_transfer(gnb_du_ue_
   return init_ul_rrc_msg;
 }
 
-f1ap_message srsgnb::srs_cu_cp::generate_ul_rrc_message_transfer(gnb_cu_ue_f1ap_id_t cu_ue_id,
+f1ap_message srsran::srs_cu_cp::generate_ul_rrc_message_transfer(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                  gnb_du_ue_f1ap_id_t du_ue_id,
                                                                  srb_id_t            srb_id,
                                                                  byte_buffer         rrc_container)
@@ -126,7 +126,7 @@ f1ap_message srsgnb::srs_cu_cp::generate_ul_rrc_message_transfer(gnb_cu_ue_f1ap_
   return ul_rrc_msg;
 }
 
-f1ap_message srsgnb::srs_cu_cp::generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id,
+f1ap_message srsran::srs_cu_cp::generate_ue_context_release_complete(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                      gnb_du_ue_f1ap_id_t du_ue_id)
 {
   f1ap_message ue_ctxt_rel_complete_msg = {};
@@ -140,7 +140,7 @@ f1ap_message srsgnb::srs_cu_cp::generate_ue_context_release_complete(gnb_cu_ue_f
   return ue_ctxt_rel_complete_msg;
 }
 
-f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
+f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                   gnb_du_ue_f1ap_id_t du_ue_id)
 {
   f1ap_message msg;
@@ -162,7 +162,7 @@ f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_request(gnb_cu_ue_f1ap
   return msg;
 }
 
-f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
+f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                    gnb_du_ue_f1ap_id_t du_ue_id,
                                                                    rnti_t              crnti)
 {
@@ -180,7 +180,7 @@ f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_response(gnb_cu_ue_f1a
   return ue_context_setup_response;
 }
 
-f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap_id_t cu_ue_id,
+f1ap_message srsran::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                   gnb_du_ue_f1ap_id_t du_ue_id)
 {
   f1ap_message ue_context_setup_failure = {};
@@ -199,7 +199,7 @@ f1ap_message srsgnb::srs_cu_cp::generate_ue_context_setup_failure(gnb_cu_ue_f1ap
 }
 
 cu_cp_ue_context_modification_request
-srsgnb::srs_cu_cp::generate_ue_context_modification_request(ue_index_t                             ue_index,
+srsran::srs_cu_cp::generate_ue_context_modification_request(ue_index_t                             ue_index,
                                                             const std::initializer_list<drb_id_t>& drbs_to_add)
 {
   cu_cp_ue_context_modification_request msg;
@@ -210,7 +210,7 @@ srsgnb::srs_cu_cp::generate_ue_context_modification_request(ue_index_t          
   for (drb_id_t drb_id : drbs_to_add) {
     cu_cp_drb_setup_message drb_setup_msg{};
     drb_setup_msg.drb_id                  = drb_id;
-    drb_setup_msg.rlc                     = srsgnb::rlc_mode::am;
+    drb_setup_msg.rlc                     = srsran::rlc_mode::am;
     drb_setup_msg.qos_info.is_dynamic_5qi = true;
     drb_setup_msg.qos_info.five_qi        = 8;
     drb_setup_msg.qos_info.prio_level_arp = 1;
@@ -222,7 +222,7 @@ srsgnb::srs_cu_cp::generate_ue_context_modification_request(ue_index_t          
 }
 
 f1ap_message
-srsgnb::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
+srsran::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t                    cu_ue_id,
                                                              gnb_du_ue_f1ap_id_t                    du_ue_id,
                                                              rnti_t                                 crnti,
                                                              const std::initializer_list<drb_id_t>& drbs_added)
@@ -247,7 +247,7 @@ srsgnb::srs_cu_cp::generate_ue_context_modification_response(gnb_cu_ue_f1ap_id_t
   return ue_context_modification_response;
 }
 
-f1ap_message srsgnb::srs_cu_cp::generate_ue_context_modification_failure(gnb_cu_ue_f1ap_id_t cu_ue_id,
+f1ap_message srsran::srs_cu_cp::generate_ue_context_modification_failure(gnb_cu_ue_f1ap_id_t cu_ue_id,
                                                                          gnb_du_ue_f1ap_id_t du_ue_id)
 {
   f1ap_message ue_context_modification_failure = {};

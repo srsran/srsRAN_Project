@@ -10,11 +10,11 @@
 
 #include "ngap_test_messages.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::ngap;
 
-ng_setup_request srsgnb::srs_cu_cp::generate_ng_setup_request()
+ng_setup_request srsran::srs_cu_cp::generate_ng_setup_request()
 {
   ng_setup_request request_msg = {};
   request_msg.msg              = {};
@@ -45,7 +45,7 @@ ng_setup_request srsgnb::srs_cu_cp::generate_ng_setup_request()
   return request_msg;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_ng_setup_response()
+ngap_message srsran::srs_cu_cp::generate_ng_setup_response()
 {
   ngap_message ng_setup_response = {};
 
@@ -76,7 +76,7 @@ ngap_message srsgnb::srs_cu_cp::generate_ng_setup_response()
   return ng_setup_response;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_ng_setup_failure()
+ngap_message srsran::srs_cu_cp::generate_ng_setup_failure()
 {
   ngap_message ng_setup_failure = {};
 
@@ -93,7 +93,7 @@ ngap_message srsgnb::srs_cu_cp::generate_ng_setup_failure()
   return ng_setup_failure;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time_to_wait_e time_to_wait)
+ngap_message srsran::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time_to_wait_e time_to_wait)
 {
   ngap_message ng_setup_failure = generate_ng_setup_failure();
 
@@ -104,7 +104,7 @@ ngap_message srsgnb::srs_cu_cp::generate_ng_setup_failure_with_time_to_wait(time
   return ng_setup_failure;
 }
 
-ngap_initial_ue_message srsgnb::srs_cu_cp::generate_initial_ue_message(ue_index_t ue_index)
+ngap_initial_ue_message srsran::srs_cu_cp::generate_initial_ue_message(ue_index_t ue_index)
 {
   ngap_initial_ue_message msg;
   msg.ue_index = ue_index;
@@ -115,7 +115,7 @@ ngap_initial_ue_message srsgnb::srs_cu_cp::generate_initial_ue_message(ue_index_
   return msg;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+ngap_message srsran::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
 {
   ngap_message dl_nas_transport = {};
 
@@ -130,7 +130,7 @@ ngap_message srsgnb::srs_cu_cp::generate_downlink_nas_transport_message(amf_ue_i
   return dl_nas_transport;
 }
 
-ngap_ul_nas_transport_message srsgnb::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
+ngap_ul_nas_transport_message srsran::srs_cu_cp::generate_ul_nas_transport_message(ue_index_t ue_index)
 {
   ngap_ul_nas_transport_message ul_nas_transport;
   ul_nas_transport.ue_index = ue_index;
@@ -140,7 +140,7 @@ ngap_ul_nas_transport_message srsgnb::srs_cu_cp::generate_ul_nas_transport_messa
   return ul_nas_transport;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id,
+ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id,
                                                                             ran_ue_id_t ran_ue_id)
 {
   ngap_message ngap_msg = {};
@@ -173,7 +173,7 @@ ngap_message srsgnb::srs_cu_cp::generate_initial_context_setup_request_base(amf_
   return ngap_msg;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_valid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
+ngap_message srsran::srs_cu_cp::generate_valid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
                                                                                      ran_ue_id_t ran_ue_id)
 {
   ngap_message ngap_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
@@ -187,7 +187,7 @@ ngap_message srsgnb::srs_cu_cp::generate_valid_initial_context_setup_request_mes
   return ngap_msg;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
+ngap_message srsran::srs_cu_cp::generate_invalid_initial_context_setup_request_message(amf_ue_id_t amf_ue_id,
                                                                                        ran_ue_id_t ran_ue_id)
 {
   ngap_message ngap_msg = generate_initial_context_setup_request_base(amf_ue_id, ran_ue_id);
@@ -202,7 +202,7 @@ ngap_message srsgnb::srs_cu_cp::generate_invalid_initial_context_setup_request_m
   return ngap_msg;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id,
+ngap_message srsran::srs_cu_cp::generate_pdu_session_resource_setup_request_base(amf_ue_id_t amf_ue_id,
                                                                                  ran_ue_id_t ran_ue_id)
 {
   ngap_message ngap_msg;
@@ -222,7 +222,7 @@ ngap_message srsgnb::srs_cu_cp::generate_pdu_session_resource_setup_request_base
 }
 
 ngap_message
-srsgnb::srs_cu_cp::generate_valid_pdu_session_resource_setup_request_message(amf_ue_id_t      amf_ue_id,
+srsran::srs_cu_cp::generate_valid_pdu_session_resource_setup_request_message(amf_ue_id_t      amf_ue_id,
                                                                              ran_ue_id_t      ran_ue_id,
                                                                              pdu_session_id_t pdu_session_id)
 {
@@ -255,7 +255,7 @@ srsgnb::srs_cu_cp::generate_valid_pdu_session_resource_setup_request_message(amf
   return ngap_msg;
 }
 
-ngap_message srsgnb::srs_cu_cp::generate_invalid_pdu_session_resource_setup_request_message(amf_ue_id_t amf_ue_id,
+ngap_message srsran::srs_cu_cp::generate_invalid_pdu_session_resource_setup_request_message(amf_ue_id_t amf_ue_id,
                                                                                             ran_ue_id_t ran_ue_id)
 {
   ngap_message ngap_msg = generate_pdu_session_resource_setup_request_base(amf_ue_id, ran_ue_id);
@@ -264,7 +264,7 @@ ngap_message srsgnb::srs_cu_cp::generate_invalid_pdu_session_resource_setup_requ
 }
 
 cu_cp_pdu_session_resource_setup_response
-srsgnb::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id)
+srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id)
 {
   cu_cp_pdu_session_resource_setup_response pdu_session_res_setup_resp;
 

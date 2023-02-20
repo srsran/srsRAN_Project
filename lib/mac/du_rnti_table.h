@@ -17,7 +17,7 @@
 #include <limits>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Table used by MAC to convert from RNTI to DU UE index.
 /// This class is thread-safe.
@@ -84,4 +84,4 @@ private:
   std::atomic<size_t> nof_ues_{0};
 };
 
-} // namespace srsgnb
+} // namespace srsran

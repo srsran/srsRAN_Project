@@ -19,7 +19,7 @@
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 /// Test F1 setup over "local" connection to DU.

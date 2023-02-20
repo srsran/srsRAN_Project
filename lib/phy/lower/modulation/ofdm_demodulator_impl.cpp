@@ -17,7 +17,7 @@
 #include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_common_configuration& common_config,
                                                            const ofdm_demodulator_configuration&  ofdm_config) :

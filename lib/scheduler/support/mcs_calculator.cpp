@@ -10,7 +10,7 @@
 
 #include "mcs_calculator.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 const unsigned CQI_TABLE_SIZE = 16;
 
@@ -58,7 +58,7 @@ static const std::array<double, 29> ul_snr_mcs_table = {
     // clang-format on
 };
 
-optional<sch_mcs_index> srsgnb::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table)
+optional<sch_mcs_index> srsran::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table)
 {
   optional<sch_mcs_index> mcs;
   if (cqi == 0 or cqi >= CQI_TABLE_SIZE) {
@@ -80,7 +80,7 @@ optional<sch_mcs_index> srsgnb::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs
   return mcs;
 }
 
-sch_mcs_index srsgnb::map_snr_to_mcs_ul(double snr)
+sch_mcs_index srsran::map_snr_to_mcs_ul(double snr)
 {
   // The objective of this function is to find the maximum MCS that can be used for a given SNR. A possible approach to
   // this problem would be to get the iterator to the biggest element of the SNR vector not greater than the target SNR.

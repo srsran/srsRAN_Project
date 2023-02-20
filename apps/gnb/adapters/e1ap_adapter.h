@@ -12,7 +12,7 @@
 
 #include "srsgnb/e1ap/common/e1ap_common.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief E1AP bridge between CU-CP and CU-UP using fast-path message passing.
 class e1ap_local_adapter : public e1ap_message_notifier
@@ -33,4 +33,4 @@ private:
   e1ap_message_handler* handler = nullptr;
 };
 
-}; // namespace srsgnb
+}; // namespace srsran

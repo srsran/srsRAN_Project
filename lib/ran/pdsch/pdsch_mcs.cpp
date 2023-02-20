@@ -11,9 +11,9 @@
 #include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/adt/span.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-sch_mcs_description srsgnb::pdsch_mcs_get_config(pdsch_mcs_table table_, sch_mcs_index index)
+sch_mcs_description srsran::pdsch_mcs_get_config(pdsch_mcs_table table_, sch_mcs_index index)
 {
   // TS38.214 Table 5.1.3.1-1.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_1 = {

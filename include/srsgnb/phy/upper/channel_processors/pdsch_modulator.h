@@ -19,7 +19,7 @@
 #include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a PDSCH modulator interface.
 ///
@@ -86,4 +86,4 @@ public:
   virtual void modulate(resource_grid_writer& grid, span<const bit_buffer> codewords, const config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

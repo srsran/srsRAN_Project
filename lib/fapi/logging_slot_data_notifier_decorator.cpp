@@ -11,7 +11,7 @@
 #include "logging_slot_data_notifier_decorator.h"
 #include "srsgnb/fapi/message_loggers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 void logging_slot_data_notifier_decorator::on_dl_tti_response(const dl_tti_response_message& msg)

@@ -20,7 +20,7 @@
 #include "srsgnb/support/units.h"
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 
 /// LDPC constants and helper functions.
 namespace ldpc {
@@ -196,4 +196,4 @@ inline units::bits compute_codeblock_size(ldpc_base_graph_type base_graph, unsig
 
 } // namespace ldpc
 
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 class unique_rx_softbuffer;
 
@@ -87,4 +87,4 @@ struct rx_softbuffer_pool_config {
 
 std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffer_pool_config& config);
 
-} // namespace srsgnb
+} // namespace srsran

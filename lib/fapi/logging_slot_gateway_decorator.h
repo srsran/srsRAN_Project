@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 class logging_slot_gateway_decorator : public slot_message_gateway
@@ -43,4 +43,4 @@ private:
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

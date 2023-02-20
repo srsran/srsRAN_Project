@@ -17,7 +17,7 @@
 #include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   unsigned                          nof_messages     = 0;
@@ -52,4 +52,4 @@ static const std::vector<test_case_t> short_block_detector_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

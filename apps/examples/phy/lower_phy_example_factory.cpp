@@ -11,9 +11,9 @@
 #include "lower_phy_example_factory.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& config)
+std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a generic
   // DFT factory.

@@ -13,7 +13,7 @@
 #include "../du_ue/ue_manager_ctrl_configurator.h"
 #include "srsgnb/du_manager/du_manager_params.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class ue_configuration_procedure
@@ -49,4 +49,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

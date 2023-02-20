@@ -13,7 +13,7 @@
 #include "task_executor.h"
 #include "srsgnb/adt/blocking_queue.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Task worker that implements the executor interface and requires manual calls to run pending deferred tasks.
 /// Useful for unit testing.
@@ -110,4 +110,4 @@ private:
   blocking_queue<unique_task> pending_tasks;
 };
 
-} // namespace srsgnb
+} // namespace srsran

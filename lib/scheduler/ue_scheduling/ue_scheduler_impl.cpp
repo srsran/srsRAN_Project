@@ -11,7 +11,7 @@
 #include "ue_scheduler_impl.h"
 #include "../policy/scheduler_policy_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_,
                                      sched_configuration_notifier&     mac_notif,

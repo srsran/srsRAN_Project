@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Class used to create a single worker with an input task queue with a single reader
 class task_worker
@@ -99,7 +99,7 @@ private:
   srslog::basic_logger&       logger;
 
   // Queue of tasks.
-  srsgnb::blocking_queue<task_t> pending_tasks;
+  srsran::blocking_queue<task_t> pending_tasks;
 
   unique_thread t_handle;
 };
@@ -137,4 +137,4 @@ inline std::unique_ptr<task_executor> make_task_executor(task_worker& w)
   return std::make_unique<task_worker_executor>(task_worker_executor{w});
 }
 
-} // namespace srsgnb
+} // namespace srsran

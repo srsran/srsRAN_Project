@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/variant.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Indicates the PRB bundle type and bundle size(s).
 /// \remark See TS 38.214, clause 5.1.2.3.
@@ -43,4 +43,4 @@ struct prb_bundling {
   bool operator!=(const prb_bundling& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class rnti_allocator
 {
@@ -132,4 +132,4 @@ private:
   slotted_array<cell_rach_handler, MAX_NOF_DU_CELLS> cells;
 };
 
-} // namespace srsgnb
+} // namespace srsran

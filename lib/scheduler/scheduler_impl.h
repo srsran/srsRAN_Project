@@ -19,7 +19,7 @@
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/scheduler/scheduler_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class scheduler_impl final : public mac_scheduler
 {
@@ -86,4 +86,4 @@ private:
   scheduler_cell_manager cells;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -18,7 +18,7 @@
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& input, const configuration& config)
 {

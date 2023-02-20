@@ -13,7 +13,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <numeric>
 
-using namespace srsgnb;
+using namespace srsran;
 
 struct polar_interleaver_gold_t {
   int                         K;

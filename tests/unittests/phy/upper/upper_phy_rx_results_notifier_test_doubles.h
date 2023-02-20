@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class upper_phy_rx_results_notifier_spy : public upper_phy_rx_results_notifier
 {
@@ -28,4 +28,4 @@ public:
   bool has_prach_result_been_notified() const { return prach_results_notified; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

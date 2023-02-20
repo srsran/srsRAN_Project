@@ -12,7 +12,7 @@
 #include "srsgnb/support/error_handling.h"
 #include <yaml-cpp/yaml.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -154,7 +154,7 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
   return results;
 }
 
-std::unique_ptr<CLI::Config> srsgnb::create_yaml_config_parser()
+std::unique_ptr<CLI::Config> srsran::create_yaml_config_parser()
 {
   return std::make_unique<yaml_config_parser>();
 }

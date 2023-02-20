@@ -1,7 +1,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -16,4 +16,4 @@ struct noop_operation {
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

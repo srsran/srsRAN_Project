@@ -18,7 +18,7 @@
 #include <functional>
 #include <list>
 
-namespace srsgnb {
+namespace srsran {
 
 /// This class will hold RLC SDUs from upper layers.
 /// It provides methods for thread-safe read/writing of SDUs
@@ -119,11 +119,11 @@ private:
   blocking_queue<rlc_sdu, push_callback, pop_callback> queue;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsgnb::rlc_sdu_queue> {
+struct formatter<srsran::rlc_sdu_queue> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -131,7 +131,7 @@ struct formatter<srsgnb::rlc_sdu_queue> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_sdu_queue& q, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_sdu_queue& q, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "queued_sdus={} queued_bytes={}", q.size_sdus(), q.size_bytes());
   }

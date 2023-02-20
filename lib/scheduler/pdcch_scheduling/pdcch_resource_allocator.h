@@ -5,7 +5,7 @@
 #include "../ue_scheduling/ue_configuration.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PDCCH resource allocation algorithm for a single cell and for both common and UE-dedicated CORESETs.
 class pdcch_resource_allocator
@@ -66,4 +66,4 @@ public:
   virtual bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

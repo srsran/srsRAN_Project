@@ -14,7 +14,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 

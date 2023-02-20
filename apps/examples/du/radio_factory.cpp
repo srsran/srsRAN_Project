@@ -12,7 +12,7 @@
 #include "srsgnb/radio/radio_configuration.h"
 #include "srsgnb/radio/radio_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static radio_configuration::radio create_radio_configuration(const radio_params& params)
 {
@@ -51,7 +51,7 @@ static radio_configuration::radio create_radio_configuration(const radio_params&
   return radio_config;
 }
 
-std::unique_ptr<radio_session> srsgnb::create_radio(const std::string&          radio_driver,
+std::unique_ptr<radio_session> srsran::create_radio(const std::string&          radio_driver,
                                                     const radio_params&         params,
                                                     task_executor&              executor,
                                                     radio_notification_handler& radio_handler)

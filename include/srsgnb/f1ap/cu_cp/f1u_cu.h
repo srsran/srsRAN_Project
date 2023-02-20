@@ -2,7 +2,7 @@
 
 #include "srsgnb/ran/nr_up_protocol.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This interface represents a single F1-U bearer in the CU used to transmit NR user plane messages.
 class f1u_cu_message_handler
@@ -24,4 +24,4 @@ public:
   virtual void on_new_message(nr_up_ul_message msg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

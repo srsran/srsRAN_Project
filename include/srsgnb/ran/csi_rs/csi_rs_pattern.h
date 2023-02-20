@@ -13,7 +13,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/ran/csi_rs/csi_rs_types.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Collects the parameters that describe a CSI-RS allocation pattern in a resource grid.
 struct csi_rs_pattern_configuration {
@@ -78,4 +78,4 @@ struct csi_rs_pattern {
 /// Generates the CSI-RS pattern.
 csi_rs_pattern get_csi_rs_pattern(const csi_rs_pattern_configuration& config);
 
-} // namespace srsgnb
+} // namespace srsran

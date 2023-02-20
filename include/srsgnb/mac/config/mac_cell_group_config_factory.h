@@ -12,10 +12,10 @@
 
 #include "srsgnb/mac/mac_cell_group_config.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace config_helpers {
 
 mac_cell_group_config make_initial_mac_cell_group_config();
 
 } // namespace config_helpers
-} // namespace srsgnb
+} // namespace srsran

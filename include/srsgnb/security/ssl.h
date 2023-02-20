@@ -13,7 +13,7 @@
 #include "mbedtls/aes.h"
 #include "mbedtls/md.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace security {
 
 typedef mbedtls_aes_context aes_context;
@@ -53,4 +53,4 @@ inline void sha256(const unsigned char* key,
 }
 
 } // namespace security
-} // namespace srsgnb
+} // namespace srsran

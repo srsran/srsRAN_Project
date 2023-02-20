@@ -12,7 +12,7 @@
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -28,7 +28,7 @@ TEST_P(validate_csi_pdu_field, WithValue)
                std::get<1>(params),
                build_valid_dl_csi_pdu,
                validate_dl_csi_pdu,
-               srsgnb::fapi::message_type_id::dl_tti_request,
+               srsran::fapi::message_type_id::dl_tti_request,
                dl_pdu_type::CSI_RS);
 };
 

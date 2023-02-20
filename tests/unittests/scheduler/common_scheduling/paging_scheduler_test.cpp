@@ -23,7 +23,7 @@
 #include <random>
 #include <unordered_map>
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::random_device rd;
 std::mt19937       g(rd());
@@ -146,8 +146,8 @@ protected:
   }
 
   sched_cell_configuration_request_message
-  create_custom_cell_config_request(subcarrier_spacing       scs        = srsgnb::subcarrier_spacing::kHz30,
-                                    bs_channel_bandwidth_fr1 carrier_bw = srsgnb::bs_channel_bandwidth_fr1::MHz20) const
+  create_custom_cell_config_request(subcarrier_spacing       scs        = srsran::subcarrier_spacing::kHz30,
+                                    bs_channel_bandwidth_fr1 carrier_bw = srsran::bs_channel_bandwidth_fr1::MHz20) const
   {
     cell_config_builder_params cell_cfg{};
     if (params.duplx_mode == duplex_mode::TDD) {
@@ -209,7 +209,7 @@ TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_gt_0)
 {
   auto cell_cfg_request = create_custom_cell_config_request();
   // Modify to have more than one Paging occasion per PF.
-  cell_cfg_request.dl_cfg_common.pcch_cfg.ns = srsgnb::pcch_config::nof_po_per_pf::four;
+  cell_cfg_request.dl_cfg_common.pcch_cfg.ns = srsran::pcch_config::nof_po_per_pf::four;
   // >> PDCCH-Config.
   cell_cfg_request.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.emplace();
   // >> Add CORESET#1.
@@ -249,7 +249,7 @@ TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_eq_0)
   sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id = to_search_space_id(0);
   // Since we support CORESET multiplexing pattern 1. The value of N (Number of Paging Frames per DRX Cycle) can be 2,
   // 4, 8, 16).
-  sched_cell_cfg.dl_cfg_common.pcch_cfg.nof_pf = srsgnb::pcch_config::nof_pf_per_drx_cycle::halfT;
+  sched_cell_cfg.dl_cfg_common.pcch_cfg.nof_pf = srsran::pcch_config::nof_pf_per_drx_cycle::halfT;
 
   setup_sched(create_expert_config(params.max_paging_mcs, params.max_paging_retries), sched_cell_cfg);
 
@@ -277,7 +277,7 @@ TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_eq_0_5mhz_car
   sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id = to_search_space_id(0);
   // Since we support CORESET multiplexing pattern 1. The value of N (Number of Paging Frames per DRX Cycle) can be 2,
   // 4, 8, 16).
-  sched_cell_cfg.dl_cfg_common.pcch_cfg.nof_pf = srsgnb::pcch_config::nof_pf_per_drx_cycle::halfT;
+  sched_cell_cfg.dl_cfg_common.pcch_cfg.nof_pf = srsran::pcch_config::nof_pf_per_drx_cycle::halfT;
 
   setup_sched(create_expert_config(params.max_paging_mcs, params.max_paging_retries), sched_cell_cfg);
 

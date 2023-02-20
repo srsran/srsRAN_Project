@@ -19,7 +19,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Generic implementation of the PDSCH encoder.
 class pdsch_encoder_impl : public pdsch_encoder
@@ -62,4 +62,4 @@ private:
   std::array<uint8_t, MAX_CB_LENGTH.value()> buffer_cb = {};
 };
 
-} // namespace srsgnb
+} // namespace srsran

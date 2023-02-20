@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Position of first DM-RS for Downlink (see TS 38.211, clause 7.4.1.1.1) and Uplink (see TS 38.211,
 /// clause 6.4.1.1.3).
@@ -46,4 +46,4 @@ static constexpr unsigned get_max_nof_cdm_groups_without_data(dmrs_config_type t
   return type == dmrs_config_type::type1 ? 2 : 3;
 }
 
-} // namespace srsgnb
+} // namespace srsran

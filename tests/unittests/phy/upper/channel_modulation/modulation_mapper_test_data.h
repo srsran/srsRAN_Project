@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   std::size_t          nsymbols;
@@ -40,4 +40,4 @@ static const std::vector<test_case_t> modulation_mapper_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

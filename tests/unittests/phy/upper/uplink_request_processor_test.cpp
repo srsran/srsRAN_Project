@@ -15,7 +15,7 @@
 #include "srsgnb/phy/support/support_factories.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 

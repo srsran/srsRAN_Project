@@ -11,7 +11,7 @@
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void get_ssb_crbs()
 {

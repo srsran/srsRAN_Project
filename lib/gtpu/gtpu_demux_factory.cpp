@@ -11,9 +11,9 @@
 #include "srsgnb/gtpu/gtpu_demux_factory.h"
 #include "gtpu_demux_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<gtpu_demux> srsgnb::create_gtpu_demux(const gtpu_demux_creation_request& msg)
+std::unique_ptr<gtpu_demux> srsran::create_gtpu_demux(const gtpu_demux_creation_request& msg)
 {
   report_fatal_error_if_not(msg.cu_up_exec, "CU-UP exec is uninitialized");
   return std::make_unique<gtpu_demux_impl>(*msg.cu_up_exec);

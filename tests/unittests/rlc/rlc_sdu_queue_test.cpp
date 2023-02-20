@@ -13,7 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 void queue_unqueue_test()
 {
@@ -156,7 +156,7 @@ void discard_all_test()
   TESTASSERT_EQ(0, tx_queue.size_sdus());
   TESTASSERT_EQ(0, tx_queue.size_bytes());
 }
-} // namespace srsgnb
+} // namespace srsran
 
 int main()
 {
@@ -165,8 +165,8 @@ int main()
   srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
   fprintf(stdout, "Testing RLC SDU queue\n");
 
-  srsgnb::queue_unqueue_test();
-  srsgnb::full_capacity_test();
-  srsgnb::discard_test();
-  srsgnb::discard_all_test();
+  srsran::queue_unqueue_test();
+  srsran::full_capacity_test();
+  srsran::discard_test();
+  srsran::discard_all_test();
 }

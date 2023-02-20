@@ -12,9 +12,9 @@
 
 #include "simd.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-cf_t srsgnb::srsvec::dot_prod(span<const cf_t> x, span<const cf_t> y)
+cf_t srsran::srsvec::dot_prod(span<const cf_t> x, span<const cf_t> y)
 {
   cf_t result = 0;
   srsgnb_srsvec_assert_size(x, y);

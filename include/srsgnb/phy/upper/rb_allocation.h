@@ -16,7 +16,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/vrb_to_prb_mapper.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes the frequency allocation for PDSCH and PUSCH  transmissions.
 ///
@@ -196,13 +196,13 @@ public:
   static_vector<uint16_t, MAX_RB> get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// \brief Custom formatter for pusch_processor::rb_allocation.
 template <>
-struct formatter<srsgnb::rb_allocation> {
+struct formatter<srsran::rb_allocation> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -210,7 +210,7 @@ struct formatter<srsgnb::rb_allocation> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rb_allocation& rb_alloc, FormatContext& ctx)
+  auto format(const srsran::rb_allocation& rb_alloc, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     if (rb_alloc.is_contiguous()) {

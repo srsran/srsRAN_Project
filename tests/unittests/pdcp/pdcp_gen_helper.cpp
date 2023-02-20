@@ -15,7 +15,7 @@
 #include <getopt.h>
 #include <queue>
 
-using namespace srsgnb;
+using namespace srsran;
 
 struct pdcp_gen_helper_args {
   std::string sn_size = {};

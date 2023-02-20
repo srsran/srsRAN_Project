@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/uplink_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class task_executor;
 
@@ -53,4 +53,4 @@ private:
   std::unique_ptr<pucch_processor> pucch_proc;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 
 #include "channel_equalizer_zf_impl.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Implementation of a Zero Forcing equalizer algorithm for a MIMO 2 X 2 channel.
 /// \param[out] eq_symbols   Resultant equalized symbols.
@@ -30,4 +30,4 @@ void equalize_zf_2x2(channel_equalizer::re_list&           eq_symbols,
                      const channel_equalizer::ch_est_list& ch_estimates,
                      float                                 noise_var_est,
                      float                                 tx_scaling);
-} // namespace srsgnb
+} // namespace srsran

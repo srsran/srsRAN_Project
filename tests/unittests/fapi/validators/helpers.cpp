@@ -14,7 +14,7 @@
 
 static std::mt19937 gen(0);
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 static unsigned generate_sfn()
@@ -241,10 +241,10 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   pdu.is_inline_tb_crc                   = fapi::inline_tb_crc_type::control_message;
 
   // Maintenance v3.
-  pdu.pdsch_maintenance_v3.trans_type = srsgnb::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;
+  pdu.pdsch_maintenance_v3.trans_type = srsran::fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present;
   pdu.pdsch_maintenance_v3.coreset_start_point                  = 2;
   pdu.pdsch_maintenance_v3.initial_dl_bwp_size                  = 3;
-  pdu.pdsch_maintenance_v3.ldpc_base_graph                      = srsgnb::ldpc_base_graph_type::BG1;
+  pdu.pdsch_maintenance_v3.ldpc_base_graph                      = srsran::ldpc_base_graph_type::BG1;
   pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes                   = units::bytes{12};
   pdu.pdsch_maintenance_v3.prb_sym_rm_pattern_bitmap_size_byref = 0;
   pdu.pdsch_maintenance_v3.num_prb_sym_rm_patts_by_value        = 0;
@@ -1128,7 +1128,7 @@ tx_data_request_message unittest::build_valid_tx_data_request()
   return msg;
 }
 
-srsgnb::fapi::crc_indication_message unittest::build_valid_crc_indication()
+srsran::fapi::crc_indication_message unittest::build_valid_crc_indication()
 {
   crc_indication_message msg;
   msg.message_type = message_type_id::crc_indication;

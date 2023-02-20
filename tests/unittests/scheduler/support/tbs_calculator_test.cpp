@@ -11,7 +11,7 @@
 #include "tbs_calculator_test_data.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static unsigned expected_tbs_calculator_table_find_smallest_not_less_than(unsigned nof_info_prime)
 {

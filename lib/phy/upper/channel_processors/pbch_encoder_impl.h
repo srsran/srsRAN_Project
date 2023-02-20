@@ -20,7 +20,7 @@
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pbch_encoder_impl : public pbch_encoder
 {
@@ -36,13 +36,13 @@ private:
   /// \brief Implements TS 38.312 section 7.1.1 PBCH payload generation.
   /// \param[out] a Generated payload.
   /// \param[in] msg PBCH message.
-  void payload_generate(span<uint8_t> a, const srsgnb::pbch_encoder::pbch_msg_t& msg);
+  void payload_generate(span<uint8_t> a, const srsran::pbch_encoder::pbch_msg_t& msg);
 
   /// \brief Implements TS 38.312 section 7.1.2 Scrambling.
   /// \param[out] a_prime Scrambled payload.
   /// \param[in] msg PBCH message.
   /// \param[in] a Payload.
-  void scramble(span<uint8_t> a_prime, const srsgnb::pbch_encoder::pbch_msg_t& msg, span<const uint8_t> a);
+  void scramble(span<uint8_t> a_prime, const srsran::pbch_encoder::pbch_msg_t& msg, span<const uint8_t> a);
 
   /// \brief Implements TS 38.312 section 7.1.3 Transport block CRC attachment.
   /// \param[in] b Data with CRC attached.
@@ -90,4 +90,4 @@ public:
   void encode(span<uint8_t> encoded, const pbch_msg_t& pbch_msg) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

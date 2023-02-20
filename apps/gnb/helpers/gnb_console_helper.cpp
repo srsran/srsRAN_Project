@@ -18,7 +18,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 gnb_console_helper::gnb_console_helper(io_broker& io_broker_) :
   logger(srslog::fetch_basic_logger("GNB")), io_broker_handle(io_broker_)
@@ -73,7 +73,7 @@ void gnb_console_helper::stdin_handler(int fd)
   std::string input_line(buffer.begin(), buffer.begin() + total_bytes_read);
 
   std::list<std::string> cmd_list;
-  srsgnb::string_parse_list(input_line, ';', cmd_list);
+  srsran::string_parse_list(input_line, ';', cmd_list);
   for (auto& cmd : cmd_list) {
     cmd.erase(std::remove(cmd.begin(), cmd.end(), '\n'), cmd.cend());
     handle_command(cmd);
@@ -116,10 +116,10 @@ void gnb_console_helper::on_app_running()
                cell.pci,
                cell.dl_carrier.carrier_bw_mhz,
                cell.dl_carrier.arfcn,
-               srsgnb::nr_band_to_uint(cell.dl_carrier.band),
-               srsgnb::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn) / 1e6,
+               srsran::nr_band_to_uint(cell.dl_carrier.band),
+               srsran::band_helper::nr_arfcn_to_freq(cell.dl_carrier.arfcn) / 1e6,
                derive_ssb_arfcn(cell),
-               srsgnb::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn) / 1e6);
+               srsran::band_helper::nr_arfcn_to_freq(cell.ul_carrier.arfcn) / 1e6);
   }
   fmt::print("\n");
 

@@ -97,7 +97,7 @@ class OptionalPrinter(object):
 
 def make_optional(val):
     s = str(val.type.strip_typedefs())
-    if s.startswith('srsgnb::optional<') and s.endswith('>'):
+    if s.startswith('srsran::optional<') and s.endswith('>'):
         return OptionalPrinter(val)
 
 gdb.pretty_printers.append(make_optional)
@@ -127,7 +127,7 @@ class TinyOptionalPrinter(object):
         fields = gdb_val.type.strip_typedefs().fields()
         assert len(fields) > 0
         f_type_str = str(fields[0].type.strip_typedefs())
-        if f_type_str.startswith('srsgnb::optional<'):
+        if f_type_str.startswith('srsran::optional<'):
             return bool(gdb_val['storage']['has_val'])
         if 'std::unique_ptr<' in str(gdb_val['val'].type):
             val_str = str(gdb_val['val'])
@@ -141,14 +141,14 @@ class TinyOptionalPrinter(object):
     def get_value(gdb_val):
         fields = gdb_val.type.strip_typedefs().fields()
         f_type_str = str(fields[0].type.strip_typedefs())
-        if f_type_str.startswith('srsgnb::optional<'):
+        if f_type_str.startswith('srsran::optional<'):
             return gdb_val['storage']['payload']['val']
         return gdb_val['val']
 
 
 def make_tiny_optional(val):
     s = str(val.type.strip_typedefs())
-    if s.startswith('srsgnb::tiny_optional<') and s.endswith('>'):
+    if s.startswith('srsran::tiny_optional<') and s.endswith('>'):
         return TinyOptionalPrinter(val)
 
 gdb.pretty_printers.append(make_tiny_optional)
@@ -176,7 +176,7 @@ class SlotArrayPrinter(object):
 
 def make_slotted_array(val):
     s = str(val.type.strip_typedefs())
-    if s.startswith('srsgnb::slotted_array<') and s.endswith('>'):
+    if s.startswith('srsran::slotted_array<') and s.endswith('>'):
         return SlotArrayPrinter(val)
 
 gdb.pretty_printers.append(make_slotted_array)
@@ -208,7 +208,7 @@ class SlotVectorPrinter(object):
 
 def make_slotted_vector(val):
     s = str(val.type.strip_typedefs())
-    if s.startswith('srsgnb::slotted_vector<') and s.endswith('>'):
+    if s.startswith('srsran::slotted_vector<') and s.endswith('>'):
         return SlotVectorPrinter(val)
 
 gdb.pretty_printers.append(make_slotted_vector)

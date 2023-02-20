@@ -11,7 +11,7 @@
 #include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 using namespace unittest;
 
@@ -28,7 +28,7 @@ TEST_P(validate_rach_indication_field, with_value)
                std::get<1>(params),
                build_valid_rach_indication,
                validate_rach_indication,
-               srsgnb::fapi::message_type_id::rach_indication);
+               srsran::fapi::message_type_id::rach_indication);
 };
 
 INSTANTIATE_TEST_SUITE_P(sfn,

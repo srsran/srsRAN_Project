@@ -18,7 +18,7 @@
 
 class e2_event_manager;
 
-namespace srsgnb {
+namespace srsran {
 
 class e2_setup_procedure
 {
@@ -53,4 +53,4 @@ private:
   unsigned         time_to_wait      = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

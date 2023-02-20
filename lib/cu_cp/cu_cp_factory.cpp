@@ -12,9 +12,9 @@
 #include "cu_cp.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<srs_cu_cp::cu_cp_interface> srsgnb::create_cu_cp(const srs_cu_cp::cu_cp_configuration& cfg_)
+std::unique_ptr<srs_cu_cp::cu_cp_interface> srsran::create_cu_cp(const srs_cu_cp::cu_cp_configuration& cfg_)
 {
   return std::make_unique<srs_cu_cp::cu_cp>(cfg_);
 }

@@ -17,7 +17,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
 
-namespace srsgnb {
+namespace srsran {
 
 class ngap_asn1_packer : public srs_cu_cp::ngap_message_handler
 {
@@ -35,4 +35,4 @@ private:
   ngap_pcap&                         pcap;
 };
 
-} // namespace srsgnb
+} // namespace srsran

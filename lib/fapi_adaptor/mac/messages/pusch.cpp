@@ -12,10 +12,10 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
-void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu& fapi_pdu, const ul_sched_info& mac_pdu)
+void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu& fapi_pdu, const ul_sched_info& mac_pdu)
 {
   fapi::ul_pusch_pdu_builder builder(fapi_pdu);
 
@@ -38,7 +38,7 @@ static void fill_optional_uci_parameters(fapi::ul_pusch_pdu_builder& builder, co
                                  uci->beta_offset_csi_2);
 }
 
-void srsgnb::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& builder, const ul_sched_info& mac_pdu)
+void srsran::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& builder, const ul_sched_info& mac_pdu)
 {
   const pusch_information& pusch_pdu = mac_pdu.pusch_cfg;
   // :TODO: check this handle. It will be better to pass it from the translator, as the adaptor doesn't know how many

@@ -13,7 +13,7 @@
 #include "srsgnb/rlc/rlc_config.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// QoS Configuration, i.e. 5QI and the associated RLC
 /// configuration for DRBs
@@ -21,4 +21,4 @@ struct du_qos_config {
   rlc_config rlc;
 };
 
-} // namespace srsgnb
+} // namespace srsran

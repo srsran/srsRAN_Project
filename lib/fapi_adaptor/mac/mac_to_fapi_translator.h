@@ -12,7 +12,7 @@
 
 #include "srsgnb/mac/mac_cell_result.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace fapi {
 class slot_last_message_notifier;
@@ -58,4 +58,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

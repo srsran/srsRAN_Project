@@ -14,7 +14,7 @@
 #include "detail/event_impl.h"
 #include <utility>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -107,4 +107,4 @@ private:
   Data data;
 };
 
-} // namespace srsgnb
+} // namespace srsran

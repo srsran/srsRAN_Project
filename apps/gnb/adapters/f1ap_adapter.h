@@ -12,7 +12,7 @@
 
 #include "srsgnb/f1ap/common/f1ap_common.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief F1AP bridge between DU and CU-CP using fast-path message passing.
 class f1ap_local_adapter : public f1ap_message_notifier
@@ -33,4 +33,4 @@ private:
   f1ap_message_handler* handler = nullptr;
 };
 
-}; // namespace srsgnb
+}; // namespace srsran

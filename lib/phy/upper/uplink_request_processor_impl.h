@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/uplink_request_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class prach_buffer_pool;
 class upper_phy_rx_symbol_request_notifier;
@@ -42,4 +42,4 @@ private:
   prach_buffer_pool& prach_pool;
 };
 
-} // namespace srsgnb
+} // namespace srsran

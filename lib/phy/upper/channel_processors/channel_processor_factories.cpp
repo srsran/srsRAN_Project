@@ -36,7 +36,7 @@
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/zero.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 
@@ -598,7 +598,7 @@ private:
 } // namespace
 
 std::shared_ptr<pbch_encoder_factory>
-srsgnb::create_pbch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory>          crc_factory,
+srsran::create_pbch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory>          crc_factory,
                                        std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                        std::shared_ptr<polar_factory>                   polar_factory)
 {
@@ -607,28 +607,28 @@ srsgnb::create_pbch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory>  
 }
 
 std::shared_ptr<pbch_modulator_factory>
-srsgnb::create_pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
+srsran::create_pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                          std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<pbch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));
 }
 
 std::shared_ptr<pdcch_encoder_factory>
-srsgnb::create_pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory,
+srsran::create_pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory,
                                         std::shared_ptr<polar_factory>          encoder_factory)
 {
   return std::make_shared<pdcch_encoder_factory_sw>(std::move(crc_factory), std::move(encoder_factory));
 }
 
 std::shared_ptr<pdcch_modulator_factory>
-srsgnb::create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
+srsran::create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<pdcch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));
 }
 
 std::shared_ptr<pdcch_processor_factory>
-srsgnb::create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>        encoder_factory,
+srsran::create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>        encoder_factory,
                                           std::shared_ptr<pdcch_modulator_factory>      modulator_factory,
                                           std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_factory)
 {
@@ -637,20 +637,20 @@ srsgnb::create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>
 }
 
 std::shared_ptr<pdsch_encoder_factory>
-srsgnb::create_pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config)
+srsran::create_pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config)
 {
   return std::make_shared<pdsch_encoder_factory_sw>(config);
 }
 
 std::shared_ptr<pdsch_modulator_factory>
-srsgnb::create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
+srsran::create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<pdsch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));
 }
 
 std::shared_ptr<pdsch_processor_factory>
-srsgnb::create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>        encoder_factory,
+srsran::create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>        encoder_factory,
                                           std::shared_ptr<pdsch_modulator_factory>      modulator_factory,
                                           std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory)
 {
@@ -659,7 +659,7 @@ srsgnb::create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>
 }
 
 std::shared_ptr<prach_detector_factory>
-srsgnb::create_prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory,
+srsran::create_prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory,
                                              std::shared_ptr<prach_generator_factory> prach_gen_factory,
                                              unsigned                                 dft_size_detector)
 {
@@ -667,7 +667,7 @@ srsgnb::create_prach_detector_factory_simple(std::shared_ptr<dft_processor_facto
       std::move(dft_factory), std::move(prach_gen_factory), dft_size_detector);
 }
 
-std::shared_ptr<pucch_processor_factory> srsgnb::create_pucch_processor_factory_sw(
+std::shared_ptr<pucch_processor_factory> srsran::create_pucch_processor_factory_sw(
     std::shared_ptr<dmrs_pucch_estimator_factory>        dmrs_factory,
     std::shared_ptr<pucch_detector_factory>              detector_factory,
     std::shared_ptr<pucch_demodulator_factory>           demodulator_factory,
@@ -678,13 +678,13 @@ std::shared_ptr<pucch_processor_factory> srsgnb::create_pucch_processor_factory_
       dmrs_factory, detector_factory, demodulator_factory, decoder_factory, channel_estimate_dimensions);
 }
 
-std::shared_ptr<prach_generator_factory> srsgnb::create_prach_generator_factory_sw()
+std::shared_ptr<prach_generator_factory> srsran::create_prach_generator_factory_sw()
 {
   return std::make_shared<prach_generator_factory_sw>();
 }
 
 std::shared_ptr<pucch_demodulator_factory>
-srsgnb::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+srsran::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
                                             std::shared_ptr<channel_modulation_factory>      demodulation_factory,
                                             std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
@@ -693,7 +693,7 @@ srsgnb::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_fa
 }
 
 std::shared_ptr<pucch_detector_factory>
-srsgnb::create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
+srsran::create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
                                          std::shared_ptr<pseudo_random_generator_factory>      prgf,
                                          std::shared_ptr<channel_equalizer_factory>            eqzrf)
 {
@@ -701,13 +701,13 @@ srsgnb::create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_colle
 }
 
 std::shared_ptr<pusch_decoder_factory>
-srsgnb::create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config)
+srsran::create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config)
 {
   return std::make_shared<pusch_decoder_factory_sw>(config);
 }
 
 std::shared_ptr<pusch_demodulator_factory>
-srsgnb::create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
+srsran::create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
                                             std::shared_ptr<channel_modulation_factory>      demodulation_factory,
                                             std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                             bool                                             enable_evm)
@@ -717,23 +717,23 @@ srsgnb::create_pusch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_fa
 }
 
 std::shared_ptr<pusch_processor_factory>
-srsgnb::create_pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config)
+srsran::create_pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config)
 {
   return std::make_shared<pusch_processor_factory_sw>(config);
 }
 
 std::shared_ptr<ssb_processor_factory>
-srsgnb::create_ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& config)
+srsran::create_ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& config)
 {
   return std::make_shared<ssb_processor_factory_sw>(config);
 }
 
-std::shared_ptr<uci_decoder_factory> srsgnb::create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config)
+std::shared_ptr<uci_decoder_factory> srsran::create_uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config)
 {
   return std::make_shared<uci_decoder_factory_sw>(config);
 }
 
-std::shared_ptr<ulsch_demultiplex_factory> srsgnb::create_ulsch_demultiplex_factory_sw()
+std::shared_ptr<ulsch_demultiplex_factory> srsran::create_ulsch_demultiplex_factory_sw()
 {
   return std::make_shared<ulsch_demultiplex_factory_sw>();
 }

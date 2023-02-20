@@ -12,7 +12,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/sch/sch_segmentation.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static constexpr units::bits get_crc_size_uci(units::bits nof_bits)
 {
@@ -107,7 +107,7 @@ calculate_nof_re_csi_part1_without_sch(units::bits nof_csi_part1_bits, unsigned 
   return nof_re_uci - nof_re_harq_ack;
 }
 
-ulsch_information srsgnb::get_ulsch_information(const ulsch_configuration& config)
+ulsch_information srsran::get_ulsch_information(const ulsch_configuration& config)
 {
   ulsch_information result = {};
 

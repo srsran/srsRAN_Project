@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Carries out the segmentation of a transport block into a number of codeblocks.
 class ldpc_segmenter_tx
@@ -42,4 +42,4 @@ public:
                        const segmenter_config&                             cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

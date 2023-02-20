@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Generic implementation of a DM-RS channel estimator for PUCCH Format 1.
 class dmrs_pucch_processor_format1_impl : public dmrs_pucch_processor
@@ -67,7 +67,7 @@ private:
   /// \param[in]  pucch_config PUCCH configuration.
   /// \param[in]  gen_config   Additional parameters required to calculate the sequences.
   /// \param[in]  symbol       OFDM symbol index.
-  void generate_sequence(span<srsgnb::cf_t>                sequence,
+  void generate_sequence(span<srsran::cf_t>                sequence,
                          const config_t&                   pucch_config,
                          const sequence_generation_config& gen_config,
                          unsigned                          symbol) const;
@@ -79,4 +79,4 @@ private:
   /// \return The DM-RS allocation pattern.
   static layer_dmrs_pattern generate_dmrs_pattern(const config_t& config);
 };
-} // namespace srsgnb
+} // namespace srsran

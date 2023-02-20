@@ -16,7 +16,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-namespace srsgnb {
+namespace srsran {
 
 struct udp_network_gateway_config : common_network_gateway_config {};
 
@@ -62,4 +62,4 @@ public:
 class udp_network_gateway : public udp_network_gateway_data_handler, public udp_network_gateway_controller
 {};
 
-} // namespace srsgnb
+} // namespace srsran

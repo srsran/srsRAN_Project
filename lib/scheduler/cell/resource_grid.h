@@ -18,7 +18,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Bitset of CRBs with size up to 275.
 using crb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
@@ -288,12 +288,12 @@ private:
   std::vector<std::unique_ptr<cell_slot_resource_allocator>> slots;
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::carrier_subslot_resource_grid> {
+struct formatter<srsran::carrier_subslot_resource_grid> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -301,9 +301,9 @@ struct formatter<srsgnb::carrier_subslot_resource_grid> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::carrier_subslot_resource_grid& grid, FormatContext& ctx)
+  auto format(const srsran::carrier_subslot_resource_grid& grid, FormatContext& ctx)
   {
-    for (unsigned i = 0; i != srsgnb::NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++i) {
+    for (unsigned i = 0; i != srsran::NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++i) {
       format_to(ctx.out(), "\n{}", grid.used_crbs({0, grid.nof_rbs()}, {i, i + 1}));
     }
     return ctx.out();
@@ -311,7 +311,7 @@ struct formatter<srsgnb::carrier_subslot_resource_grid> {
 };
 
 template <>
-struct formatter<srsgnb::cell_slot_resource_grid> {
+struct formatter<srsran::cell_slot_resource_grid> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -319,10 +319,10 @@ struct formatter<srsgnb::cell_slot_resource_grid> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::cell_slot_resource_grid& grid, FormatContext& ctx)
+  auto format(const srsran::cell_slot_resource_grid& grid, FormatContext& ctx)
   {
     auto scs_list = grid.active_scs();
-    for (srsgnb::subcarrier_spacing scs : scs_list) {
+    for (srsran::subcarrier_spacing scs : scs_list) {
       const auto& carrier_grid = grid.get_carrier_res_grid(scs);
       format_to(ctx.out(), "{}kHz: {}\n", scs_to_khz(scs), carrier_grid);
     }

@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Spy implementation of a CSI-RS processor.
 class csi_rs_processor_spy : public nzp_csi_rs_generator
@@ -26,4 +26,4 @@ public:
   bool is_map_called() const { return map_method_called; }
 };
 
-} // namespace srsgnb
+} // namespace srsran

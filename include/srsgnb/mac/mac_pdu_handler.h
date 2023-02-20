@@ -8,7 +8,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// HARQ process ID value.
 using harq_pid_value = uint8_t;
@@ -55,4 +55,4 @@ public:
   virtual void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

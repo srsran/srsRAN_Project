@@ -13,9 +13,9 @@
 
 /// Notice this would be the only place were we include concrete class implementation files.
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<gtpu_tunnel> srsgnb::create_gtpu_tunnel(gtpu_tunnel_creation_message& msg)
+std::unique_ptr<gtpu_tunnel> srsran::create_gtpu_tunnel(gtpu_tunnel_creation_message& msg)
 {
   return std::make_unique<gtpu_tunnel_impl>(msg.ue_index, msg.cfg, *msg.rx_lower, *msg.tx_upper);
 }

@@ -14,7 +14,7 @@
 #include "rlc_rx_um_entity.h"
 #include "rlc_tx_um_entity.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class rlc_um_entity : public rlc_base_entity
 {
@@ -35,4 +35,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

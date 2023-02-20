@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/srsvec/subtract.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 float evm_calculator_generic_impl::calculate(span<const log_likelihood_ratio> soft_bits,
                                              span<const cf_t>                 symbols,

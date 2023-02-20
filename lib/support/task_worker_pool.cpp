@@ -11,7 +11,7 @@
 #include "srsgnb/support/executors/task_worker_pool.h"
 #include <future>
 
-using namespace srsgnb;
+using namespace srsran;
 
 task_worker_pool::task_worker_pool(unsigned                    nof_workers_,
                                    unsigned                    queue_size,

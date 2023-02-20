@@ -15,7 +15,7 @@
 #include "manual_event.h"
 #include "srsgnb/adt/optional.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Factory of async tasks that await on an external event.
 template <typename Result>
@@ -87,4 +87,4 @@ private:
   async_task<void>& t;
 };
 
-} // namespace srsgnb
+} // namespace srsran

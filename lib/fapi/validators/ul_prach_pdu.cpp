@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/validator_report.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 /// This validator checks a DL_TTI,request message.
@@ -135,7 +135,7 @@ static bool validate_num_preambles_indices(unsigned value, validator_report& rep
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of preambles logical indices", msg_type, pdu_type, report);
 }
 
-bool srsgnb::fapi::validate_ul_prach_pdu(const ul_prach_pdu& pdu, validator_report& report)
+bool srsran::fapi::validate_ul_prach_pdu(const ul_prach_pdu& pdu, validator_report& report)
 {
   bool result = true;
 

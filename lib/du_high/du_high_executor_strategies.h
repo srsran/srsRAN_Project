@@ -16,7 +16,7 @@
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/support/executors/sync_task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// L2 UL executor mapper that maps UEs based on their RNTI.
 class ue_index_based_ul_executor_mapper final : public du_high_ue_executor_mapper
@@ -121,4 +121,4 @@ private:
   std::vector<std::unique_ptr<sync_task_executor>> blocking_slot_execs;
 };
 
-} // namespace srsgnb
+} // namespace srsran

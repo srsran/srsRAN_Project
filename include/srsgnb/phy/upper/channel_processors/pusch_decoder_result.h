@@ -12,7 +12,7 @@
 
 #include "srsgnb/support/stats.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PUSCH decoding statistics.
 struct pusch_decoder_result {
@@ -28,4 +28,4 @@ struct pusch_decoder_result {
   sample_statistics<unsigned> ldpc_decoder_stats = {};
 };
 
-} // namespace srsgnb
+} // namespace srsran

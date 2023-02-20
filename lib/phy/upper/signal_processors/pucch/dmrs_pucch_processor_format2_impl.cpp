@@ -11,7 +11,7 @@
 #include "dmrs_pucch_processor_format2_impl.h"
 #include "srsgnb/srsvec/prod.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \brief DM-RS RE allocation pattern for PUCCH Format 2.
 ///

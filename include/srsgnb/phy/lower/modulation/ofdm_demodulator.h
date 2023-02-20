@@ -15,7 +15,7 @@
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Setup configuration parameters.
 struct ofdm_demodulator_configuration {
@@ -89,4 +89,4 @@ public:
   demodulate(resource_grid_writer& grid, span<const cf_t> input, unsigned port_index, unsigned slot_index) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

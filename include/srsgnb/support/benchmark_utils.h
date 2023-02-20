@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// This function forbids the compiler from optimizing away expressions without side-effects.
 template <typename T>
@@ -256,4 +256,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

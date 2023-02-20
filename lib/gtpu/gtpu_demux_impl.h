@@ -15,7 +15,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 
 class gtpu_demux_impl final : public gtpu_demux
 {
@@ -42,4 +42,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

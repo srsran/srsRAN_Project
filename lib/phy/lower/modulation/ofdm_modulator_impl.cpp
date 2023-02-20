@@ -15,7 +15,7 @@
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/srsvec/zero.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_common_configuration& common_config,
                                                        const ofdm_modulator_configuration&  ofdm_config) :

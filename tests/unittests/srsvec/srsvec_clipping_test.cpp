@@ -19,7 +19,7 @@
 static std::mt19937 rgen(0);
 static const float  ASSERT_MAX_ERROR = 1e-6;
 
-using namespace srsgnb;
+using namespace srsran;
 
 static srsvec::aligned_vec<cf_t> input;
 static srsvec::aligned_vec<cf_t> output;

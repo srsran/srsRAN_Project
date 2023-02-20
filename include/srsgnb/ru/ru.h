@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 class ru_downlink_plane_handler;
 class ru_uplink_plane_handler;
@@ -31,4 +31,4 @@ public:
   virtual ru_uplink_plane_handler& get_uplink_plane_handler() = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

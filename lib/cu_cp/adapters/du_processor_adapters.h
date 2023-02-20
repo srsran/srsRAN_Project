@@ -17,7 +17,7 @@
 #include "srsgnb/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"
 #include "srsgnb/rrc/rrc_du.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between DU processor and CU-CP task scheduler
@@ -201,4 +201,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

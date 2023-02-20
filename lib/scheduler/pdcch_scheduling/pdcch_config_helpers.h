@@ -15,7 +15,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Helper function to check whether a SearchSpace PDCCH is monitored by the UE for a given slot.
 ///
@@ -63,4 +63,4 @@ inline prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
       bwp_cfg.crbs.start(), cs_cfg.freq_domain_resources(), cs_cfg.duration, to_nof_cces(aggr_lvl), ncce);
 }
 
-} // namespace srsgnb
+} // namespace srsran

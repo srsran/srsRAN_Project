@@ -15,7 +15,7 @@
 #include "srsgnb/ran/csi_rs/csi_meas_config.h"
 #include "srsgnb/ran/pdcch/aggregation_level.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace config_helpers {
 
 carrier_configuration make_default_carrier_configuration(const cell_config_builder_params& params = {});
@@ -71,4 +71,4 @@ cell_config_dedicated create_default_initial_ue_spcell_cell_config(const cell_co
 uint8_t compute_max_nof_candidates(aggregation_level aggr_lvl, const coreset_configuration& cs_cfg);
 
 } // namespace config_helpers
-} // namespace srsgnb
+} // namespace srsran

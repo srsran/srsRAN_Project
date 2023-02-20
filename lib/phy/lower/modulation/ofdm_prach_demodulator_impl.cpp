@@ -14,7 +14,7 @@
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/srsvec/copy.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                                buffer,
                                              span<const cf_t>                             input,

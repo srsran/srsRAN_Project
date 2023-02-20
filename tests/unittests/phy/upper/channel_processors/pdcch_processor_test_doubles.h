@@ -13,7 +13,7 @@
 #include "../../phy_test_utils.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Spy implementation of a PDCCH processor.
 class pdcch_processor_spy : public pdcch_processor
@@ -29,4 +29,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(pdcch_processor);
 
-} // namespace srsgnb
+} // namespace srsran

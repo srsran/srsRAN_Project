@@ -75,7 +75,7 @@ TEST_F(asn1_ngap_test, when_setup_message_correct_then_packing_successful)
 
   setup_req->default_paging_drx.value.value = asn1::ngap::paging_drx_opts::v256;
 
-  srsgnb::byte_buffer tx_buffer;
+  srsran::byte_buffer tx_buffer;
   asn1::bit_ref       bref(tx_buffer);
   ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
@@ -119,7 +119,7 @@ TEST_F(asn1_ngap_test, when_setup_response_correct_then_packing_successful)
 
   setup_res->plmn_support_list.value.push_back(plmn_support_item);
 
-  srsgnb::byte_buffer tx_pdu;
+  srsran::byte_buffer tx_pdu;
   asn1::bit_ref       bref(tx_pdu);
   ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
@@ -152,7 +152,7 @@ TEST_F(asn1_ngap_test, when_setup_failure_correct_then_packing_successful)
   setup_fail->time_to_wait.value          = asn1::ngap::time_to_wait_opts::v10s;
   // add critical diagnostics
 
-  srsgnb::byte_buffer tx_pdu;
+  srsran::byte_buffer tx_pdu;
   asn1::bit_ref       bref(tx_pdu);
   ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 

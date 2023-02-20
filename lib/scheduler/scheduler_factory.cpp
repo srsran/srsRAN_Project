@@ -11,9 +11,9 @@
 #include "srsgnb/scheduler/scheduler_factory.h"
 #include "scheduler_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<mac_scheduler> srsgnb::create_scheduler(const scheduler_config& sched_cfg)
+std::unique_ptr<mac_scheduler> srsran::create_scheduler(const scheduler_config& sched_cfg)
 {
   return std::make_unique<scheduler_impl>(sched_cfg);
 }

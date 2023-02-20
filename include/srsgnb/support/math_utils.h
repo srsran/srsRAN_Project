@@ -18,7 +18,7 @@
 #include <cassert>
 #include <cmath>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines the complex imaginary unit.
 static constexpr cf_t COMPLEX_J(0, 1);
@@ -191,4 +191,4 @@ constexpr const T& clamp(const T& value, const T& lower_bound, const T& upper_bo
   return clamp(value, lower_bound, upper_bound, std::less<T>());
 }
 
-} // namespace srsgnb
+} // namespace srsran

@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   pbch_encoder::pbch_msg_t pbch_msg;
@@ -68,4 +68,4 @@ static const std::vector<test_case_t> pbch_encoder_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 
 using namespace asn1;
-using namespace srsgnb;
+using namespace srsran;
 
 #define JSON_OUTPUT 1
 
@@ -45,7 +45,7 @@ protected:
     pcap_writer.close();
   }
 
-  srsgnb::e2ap_pcap     pcap_writer;
+  srsran::e2ap_pcap     pcap_writer;
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -98,7 +98,7 @@ TEST_F(asn1_e2ap_test, when_e2_setup_correct_then_packing_successful)
   e2node_cfg_item.e2node_component_cfg.e2node_component_request_part.from_string("72657170617274");
   e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.from_string("72657370617274");
 
-  srsgnb::byte_buffer buffer;
+  srsran::byte_buffer buffer;
   asn1::bit_ref       bref(buffer);
   ASSERT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 

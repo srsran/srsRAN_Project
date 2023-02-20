@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/uplink_processor.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
                                                                    uplink_slot_pdu_repository&    ul_pdu_repository_,

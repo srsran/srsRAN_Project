@@ -15,7 +15,7 @@
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 const std::array<std::array<float, 6>, low_papr_sequence_generator_impl::NOF_ZC_SEQ>
     low_papr_sequence_generator_impl::phi_M_sc_6 = {

@@ -16,7 +16,7 @@
 #include "srsgnb/security/security.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Get string with NGAP error cause.
@@ -111,4 +111,4 @@ inline void fill_supported_algorithms(security::supported_algorithms&           
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/radio/radio_base.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes a baseband unit event notifier interface.
 ///
@@ -140,4 +140,4 @@ public:
   virtual void on_radio_rt_event(const event_description& description) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

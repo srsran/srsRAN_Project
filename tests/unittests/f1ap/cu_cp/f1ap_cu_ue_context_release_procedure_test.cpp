@@ -12,7 +12,7 @@
 #include "srsgnb/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 /// Test the f1 UE context release procedure (gNB-CU initiated)

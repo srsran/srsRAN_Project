@@ -15,7 +15,7 @@
 #include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/rlc/rlc_tx_metrics.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Container to hold TX/RX metrics
 struct rlc_metrics {
@@ -41,4 +41,4 @@ public:
   virtual rlc_metrics                        get_metrics()                       = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

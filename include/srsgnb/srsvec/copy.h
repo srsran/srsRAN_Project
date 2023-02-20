@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 template <typename T, typename U>
@@ -27,4 +27,4 @@ void copy(T&& dst, const U& src)
 }
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

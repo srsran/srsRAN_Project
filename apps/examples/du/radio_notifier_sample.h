@@ -13,7 +13,7 @@
 #include "srsgnb/radio/radio_notification_handler.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class radio_notification_handler_printer : public radio_notification_handler
 {
@@ -26,4 +26,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

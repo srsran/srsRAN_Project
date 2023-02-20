@@ -21,7 +21,7 @@
 #include "fmt/format.h"
 #include <set>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Container to hold a SDU for transmission, the progress in case of segmentation, and associated meta data
 struct rlc_tx_am_sdu_info {
@@ -284,11 +284,11 @@ private:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsgnb::rlc_tx_am_state> {
+struct formatter<srsran::rlc_tx_am_state> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -296,7 +296,7 @@ struct formatter<srsgnb::rlc_tx_am_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_tx_am_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_tx_am_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "tx_next_ack={} tx_next={} poll_sn={} pdu_without_poll={} byte_without_poll={}",

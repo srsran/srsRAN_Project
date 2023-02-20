@@ -15,7 +15,7 @@
 #include "srsgnb/gateways/sctp_network_gateway.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class e2ap_asn1_packer : public e2_message_handler
 {
@@ -34,4 +34,4 @@ private:
   e2_message_handler&                e2;
 };
 
-} // namespace srsgnb
+} // namespace srsran

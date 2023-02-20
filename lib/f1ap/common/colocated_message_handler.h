@@ -12,7 +12,7 @@
 
 #include "srsgnb/f1ap/du/f1ap_du.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This implementation forwards F1AP messages through a function call to the peer F1 interface. It is useful for
 /// co-located scenarios where both F1 interfaces reside in the same process.
@@ -26,4 +26,4 @@ public:
   void handle_message(const asn1::f1ap::f1ap_pdu_c& msg) override { peer_handler.handle_message(msg); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

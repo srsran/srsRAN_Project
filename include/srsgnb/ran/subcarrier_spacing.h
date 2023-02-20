@@ -13,7 +13,7 @@
 #include "srsgnb/ran/frequency_range.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Number of possible numerology values.
 const size_t NOF_NUMEROLOGIES = 5;
@@ -96,4 +96,4 @@ constexpr inline unsigned get_nof_slots_per_subframe(subcarrier_spacing scs)
   return 1U << to_numerology_value(scs);
 }
 
-} // namespace srsgnb
+} // namespace srsran

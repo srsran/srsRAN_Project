@@ -15,7 +15,7 @@
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/support/async/manual_event.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief This class adapts SRS scheduler interface to operate with srs MAC.
 /// The configuration completion notification handling (e.g. ue creation complete) is deferred for later processing
@@ -128,4 +128,4 @@ private:
   std::array<ue_notification_context, MAX_NOF_DU_UES> sched_cfg_notif_map;
 };
 
-} // namespace srsgnb
+} // namespace srsran

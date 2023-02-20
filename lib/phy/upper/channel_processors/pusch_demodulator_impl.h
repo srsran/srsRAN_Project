@@ -19,7 +19,7 @@
 #include "srsgnb/phy/upper/equalization/channel_equalizer.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// PUSCH demodulator implementation.
 // todo(david): Evaluate whether it is worth delegating the private methods to specialized subcomponent classes.
@@ -191,4 +191,4 @@ private:
   std::array<float, MAX_PORTS> noise_var_estimates;
 };
 
-} // namespace srsgnb
+} // namespace srsran

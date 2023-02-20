@@ -13,7 +13,7 @@
 #include "async_task.h"
 #include "coroutine.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Base class for resumable tasks that are not coroutines
 template <typename FutureType>
@@ -126,4 +126,4 @@ private:
 template <typename R>
 using async_procedure = base_resumable_procedure<async_task<R>>;
 
-} // namespace srsgnb
+} // namespace srsran

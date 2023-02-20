@@ -16,7 +16,7 @@
 #include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   unsigned             rm_length  = 0;
@@ -59,4 +59,4 @@ static const std::vector<test_case_t> ldpc_rate_matcher_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

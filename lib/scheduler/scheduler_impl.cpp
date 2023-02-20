@@ -14,7 +14,7 @@
 #include "srsgnb/scheduler/config/scheduler_cell_config_validator.h"
 #include "srsgnb/scheduler/config/scheduler_ue_config_validator.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
   sched_cfg(sched_cfg_.expert_params),

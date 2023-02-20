@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static std::mt19937       rgen(1234);
 static constexpr unsigned nof_repetitions = 100;
@@ -52,7 +52,7 @@ TEST(HardDecision, valid_results)
     build_random_softbits(soft_bits);
 
     // Compute hard bit sequence;
-    srsgnb::hard_decision(hard_bits_actual, soft_bits);
+    srsran::hard_decision(hard_bits_actual, soft_bits);
 
     // Compute expected hard bit sequence.
     hard_decision_golden(hard_bits_expected, soft_bits);

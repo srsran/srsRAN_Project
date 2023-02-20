@@ -17,7 +17,7 @@
 #include "srsgnb/adt/tensor.h"
 #include "srsgnb/srsvec/copy.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the data structure containing the RE measurements.
 struct re_measurement_dimensions {
@@ -288,4 +288,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

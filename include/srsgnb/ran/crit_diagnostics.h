@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/optional.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct crit_diagnostics_item {
   std::string iecrit;
@@ -28,4 +28,4 @@ struct crit_diagnostics_t {
   optional<uint16_t>                 transaction_id;
 };
 
-} // namespace srsgnb
+} // namespace srsran

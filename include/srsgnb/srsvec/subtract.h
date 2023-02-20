@@ -12,7 +12,7 @@
 
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 void subtract(span<cf_t> z, span<const cf_t> x, span<const cf_t> y);
@@ -21,4 +21,4 @@ void subtract(span<int16_t> z, span<const int16_t> x, span<const int16_t> y);
 void subtract(span<int8_t> z, span<const int8_t> x, span<const int8_t> y);
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

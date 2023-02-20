@@ -11,7 +11,7 @@
 #include "srsgnb/fapi/message_builders.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 TEST(ul_pucch_pdu_builder, valid_basic_parameters_passes)
@@ -31,7 +31,7 @@ TEST(ul_pucch_pdu_builder, valid_basic_parameters_passes)
 TEST(ul_pucch_pdu_builder, valid_format_common_parameters_passes)
 {
   pucch_format             format_type = pucch_format::FORMAT_1;
-  pucch_repetition_tx_slot multi_slot  = srsgnb::pucch_repetition_tx_slot::no_multi_slot;
+  pucch_repetition_tx_slot multi_slot  = srsran::pucch_repetition_tx_slot::no_multi_slot;
   bool                     pi2         = false;
 
   ul_pucch_pdu         pdu;

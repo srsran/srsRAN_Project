@@ -15,11 +15,11 @@
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/ran/up_transport_layer_info.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Converts ASN.1 CGI typo into internal struct. It also performs the byte to MCC/MNC conversion.
 /// \param[in] asn1_cgi The ASN.1 encoded NR-CGI.
 /// \return The CGI converted to flat internal struct.
 nr_cell_global_id_t cgi_from_asn1(const asn1::f1ap::nr_cgi_s& asn1_cgi);
 
-} // namespace srsgnb
+} // namespace srsran

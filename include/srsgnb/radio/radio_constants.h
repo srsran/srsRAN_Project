@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of channels per stream in a radio baseband unit.
 static constexpr unsigned RADIO_MAX_NOF_CHANNELS = 4;
@@ -21,4 +21,4 @@ static constexpr unsigned RADIO_MAX_NOF_STREAMS = 8;
 /// Total maximum number of ports that a radio baseband unit can support.
 static constexpr unsigned RADIO_MAX_NOF_PORTS = RADIO_MAX_NOF_CHANNELS * RADIO_MAX_NOF_STREAMS;
 
-} // namespace srsgnb
+} // namespace srsran

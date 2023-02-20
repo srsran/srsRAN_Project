@@ -3,7 +3,7 @@
 
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -33,4 +33,4 @@ constexpr std::array<std::remove_cv_t<T>, N> to_array(T (&&a)[N])
   return detail::to_array_impl(std::move(a), std::make_index_sequence<N>{});
 }
 
-} // namespace srsgnb
+} // namespace srsran

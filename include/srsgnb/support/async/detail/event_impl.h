@@ -13,7 +13,7 @@
 #include "../coroutine.h"
 #include <utility>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -87,4 +87,4 @@ protected:
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

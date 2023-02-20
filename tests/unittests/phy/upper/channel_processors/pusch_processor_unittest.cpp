@@ -21,7 +21,7 @@
 #include "gtest/gtest.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static std::mt19937                            rgen(5678);
 static std::uniform_int_distribution<unsigned> slot_count_dist(0, 10240 * 8);

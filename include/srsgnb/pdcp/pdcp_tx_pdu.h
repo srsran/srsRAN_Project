@@ -13,7 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Structure used to represent a PDCP PDU in Tx direction.
 /// Depending on the bearer type (SRB/DRB) and PDU type (control/data) the PDU is accompanied with
@@ -31,4 +31,4 @@ struct pdcp_tx_pdu {
   optional<uint32_t> pdcp_sn;
 };
 
-} // namespace srsgnb
+} // namespace srsran

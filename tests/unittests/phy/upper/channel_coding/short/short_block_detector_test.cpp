@@ -19,7 +19,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 
 /// \cond
-using namespace srsgnb;
+using namespace srsran;
 int main()
 {
   std::shared_ptr<short_block_detector_factory> short_block_detector_factory = create_short_block_detector_factory_sw();

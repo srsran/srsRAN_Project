@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class low_papr_sequence_generator_factory;
 
@@ -48,4 +48,4 @@ public:
 
 std::shared_ptr<pseudo_random_generator_factory> create_pseudo_random_generator_sw_factory();
 
-} // namespace srsgnb
+} // namespace srsran

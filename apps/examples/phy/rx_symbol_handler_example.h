@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 class rx_symbol_handler_example : public upper_phy_rx_symbol_handler
 {
@@ -50,4 +50,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

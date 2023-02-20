@@ -18,7 +18,7 @@
 #include "srsgnb/support/timers.h"
 #include <unordered_map>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 class e1ap_event_manager;
@@ -88,4 +88,4 @@ private:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

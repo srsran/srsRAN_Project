@@ -41,7 +41,7 @@ struct configuration_profile {
   std::function<void()> function;
 };
 
-using namespace srsgnb;
+using namespace srsran;
 
 // List of allowed data modulations.
 static std::vector<std::string> modulations = {to_string(modulation_scheme::PI_2_BPSK),

@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
 #include "srsgnb/support/executors/task_executor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class task_executor;
 
@@ -79,4 +79,4 @@ private:
   task_executor& prach_executor;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "srsgnb/support/format_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class scheduler_result_logger
 {
@@ -31,4 +31,4 @@ private:
   fmt::memory_buffer    fmtbuf;
 };
 
-} // namespace srsgnb
+} // namespace srsran

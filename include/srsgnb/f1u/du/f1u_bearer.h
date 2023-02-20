@@ -15,7 +15,7 @@
 #include "f1u_tx_delivery_handler.h"
 #include "f1u_tx_sdu_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1u_bearer
@@ -29,4 +29,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

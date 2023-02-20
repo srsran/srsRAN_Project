@@ -20,7 +20,7 @@
 #include <sys/timerfd.h>
 #include <unistd.h>
 
-namespace srsgnb {
+namespace srsran {
 
 ///< A virtual interface to handle epoll events (used by timer and socket handler)
 class epoll_handler
@@ -103,4 +103,4 @@ private:
   std::atomic<bool>& running; /// TODO: we might want to use a different mechanism to inform the main thread
 };
 
-} // namespace srsgnb
+} // namespace srsran

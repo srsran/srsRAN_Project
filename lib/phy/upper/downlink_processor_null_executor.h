@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class downlink_processor_null_executor : public downlink_processor
 {
@@ -68,4 +68,4 @@ private:
   srslog::basic_logger&            logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

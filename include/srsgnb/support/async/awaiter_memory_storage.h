@@ -15,7 +15,7 @@
 #include <memory>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -129,4 +129,4 @@ private:
 
 } // namespace detail
 
-} // namespace srsgnb
+} // namespace srsran

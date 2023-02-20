@@ -15,7 +15,7 @@
 #include "srsgnb/srsvec/aligned_vec.h"
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 class resource_grid_pool_impl : public resource_grid_pool
 {
@@ -31,4 +31,4 @@ public:
                           std::vector<std::unique_ptr<resource_grid>>&& grids_);
   resource_grid& get_resource_grid(const resource_grid_context& context) override;
 };
-} // namespace srsgnb
+} // namespace srsran

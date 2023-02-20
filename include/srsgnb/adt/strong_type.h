@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -454,4 +454,4 @@ struct strong_conversion_to {
   };
 };
 
-} // namespace srsgnb
+} // namespace srsran

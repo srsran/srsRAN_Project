@@ -17,7 +17,7 @@
 #include <arm_neon.h>
 #include <array>
 
-namespace srsgnb {
+namespace srsran {
 /// Number of bytes in a NEON register.
 constexpr unsigned NEON_SIZE_BYTE = 16;
 
@@ -235,4 +235,4 @@ inline void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, uns
   std::memcpy(out + ls - steps, in, steps);
 }
 
-} // namespace srsgnb
+} // namespace srsran

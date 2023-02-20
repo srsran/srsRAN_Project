@@ -10,7 +10,7 @@
 
 #include "radio_zmq_tx_channel.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 const std::set<int> radio_zmq_tx_channel::VALID_SOCKET_TYPES = {ZMQ_REP};
 

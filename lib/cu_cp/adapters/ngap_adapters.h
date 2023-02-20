@@ -22,7 +22,7 @@
 
 #include "../../ngap/ngap_asn1_utils.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between NGAP and Task Scheduler
@@ -157,4 +157,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

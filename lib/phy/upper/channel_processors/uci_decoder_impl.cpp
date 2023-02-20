@@ -11,7 +11,7 @@
 #include "uci_decoder_impl.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static uci_status detect_short_block(span<uint8_t>                     output,
                                      span<const log_likelihood_ratio>  input,

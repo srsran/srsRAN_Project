@@ -11,7 +11,7 @@
 #include "srsgnb/fapi/message_builders.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 TEST(dl_pdcch_pdu_builder, valid_bwp_parameters_passes)

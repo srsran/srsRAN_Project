@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_rx.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Generic implementation of LDPC segmentation.
 ///
@@ -121,4 +121,4 @@ private:
   sch_crc crc_set;
 };
 
-} // namespace srsgnb
+} // namespace srsran

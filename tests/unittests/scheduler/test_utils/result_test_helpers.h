@@ -12,7 +12,7 @@
 
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 inline const ul_sched_info* find_ue_pusch(rnti_t rnti, span<const ul_sched_info> ulgrants)
 {
@@ -26,4 +26,4 @@ inline const ul_sched_info* find_ue_pusch(rnti_t rnti, const sched_result& res)
   return find_ue_pusch(rnti, res.ul.puschs);
 }
 
-} // namespace srsgnb
+} // namespace srsran

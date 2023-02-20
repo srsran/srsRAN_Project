@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/validator_report.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 /// This validator checks a DL_TTI,request message.
@@ -472,7 +472,7 @@ static bool validate_ldpc_base_graph(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "LDPC base graph", msg_type, pdu_type, report);
 }
 
-bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_report& report)
+bool srsran::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_report& report)
 {
   bool result = true;
 

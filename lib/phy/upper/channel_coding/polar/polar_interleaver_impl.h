@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
 
-namespace srsgnb {
+namespace srsran {
 class polar_interleaver_impl : public polar_interleaver
 {
 private:
@@ -23,4 +23,4 @@ public:
   ~polar_interleaver_impl() override = default;
   void interleave(span<uint8_t> out, span<const uint8_t> in, polar_interleaver_direction direction) override;
 };
-} // namespace srsgnb
+} // namespace srsran

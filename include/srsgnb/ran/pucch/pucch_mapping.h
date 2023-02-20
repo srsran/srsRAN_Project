@@ -12,7 +12,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Configuration of group and sequence hopping as described in TS38.331 PUCCH-ConfigCommon IE.
 enum class pucch_group_hopping {
@@ -31,4 +31,4 @@ enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_
 /// TS38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PRACH buffer interface.
 ///
@@ -44,4 +44,4 @@ public:
   virtual span<const cf_t> get_symbol(unsigned symbol_index) const = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

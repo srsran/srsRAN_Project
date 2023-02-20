@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes the base interface for radio classes.
 class radio_base
@@ -35,4 +35,4 @@ public:
   /// Forbid move assigment operator.
   radio_base& operator=(radio_base&&) = delete;
 };
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "pusch_demodulator_impl.h"
 #include "srsgnb/ran/sch_dmrs_power.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
                                                                           const resource_grid_reader& grid,
@@ -80,9 +80,9 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<l
   return status;
 }
 
-void pusch_demodulator_impl::descramble(span<srsgnb::log_likelihood_ratio>              out,
-                                        span<const srsgnb::log_likelihood_ratio>        in,
-                                        const srsgnb::pusch_demodulator::configuration& config)
+void pusch_demodulator_impl::descramble(span<srsran::log_likelihood_ratio>              out,
+                                        span<const srsran::log_likelihood_ratio>        in,
+                                        const srsran::pusch_demodulator::configuration& config)
 {
   // Initialise sequence.
   unsigned c_init = config.rnti * pow2(15) + config.n_id;

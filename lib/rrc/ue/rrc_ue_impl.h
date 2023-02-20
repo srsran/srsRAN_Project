@@ -18,7 +18,7 @@
 #include "srsgnb/rrc/rrc_du_factory.h"
 #include "srsgnb/rrc/rrc_ue.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -139,4 +139,4 @@ private:
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

@@ -26,7 +26,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Fixture class for DU processor creation
@@ -56,4 +56,4 @@ protected:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

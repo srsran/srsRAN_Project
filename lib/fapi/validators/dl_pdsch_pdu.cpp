@@ -13,7 +13,7 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/validator_report.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 /// This validator checks a DL_TTI,request message.
@@ -353,7 +353,7 @@ static bool validate_parameters_v4_lte_crs_mbsfn_derivation_method(unsigned valu
   return validate_field(MIN_VALUE, MAX_VALUE, value, "LTE CRS MBSFN derivation method", msg_type, pdu_type, report);
 }
 
-bool srsgnb::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_report& report)
+bool srsran::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_report& report)
 {
   bool result = true;
 

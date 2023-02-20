@@ -16,7 +16,7 @@
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a PRB index list of unsigned 16 bit indicating the PRB index.
 using prb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
@@ -71,4 +71,4 @@ prb_index_list cce_to_prb_mapping_interleaved(unsigned                    N_bwp_
                                               unsigned                    aggregation_level,
                                               unsigned                    cce_index);
 
-} // namespace srsgnb
+} // namespace srsran

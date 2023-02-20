@@ -16,7 +16,7 @@
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_procedure_helpers.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 

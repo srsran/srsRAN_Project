@@ -14,7 +14,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/fapi/messages.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 /// A validator report holds the context of the fields and values that caused a FAPI message validation to fail.
@@ -108,4 +108,4 @@ struct validator_report {
 };
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

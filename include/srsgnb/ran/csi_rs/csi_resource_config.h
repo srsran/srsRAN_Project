@@ -16,7 +16,7 @@
 #include "srsgnb/adt/variant.h"
 #include "srsgnb/scheduler/config/bwp_configuration.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief CSI-ResourceConfigId is used to identify a CSI-ResourceConfig.
 /// \remark See TS 38.331, \c CSI-ResourceConfigId.
@@ -70,4 +70,4 @@ struct csi_resource_config {
   bool operator!=(const csi_resource_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

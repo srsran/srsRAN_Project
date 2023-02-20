@@ -14,7 +14,7 @@
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Reserved number of cyclic shifts. It indicates the number of cyclic shifts is invalid.
 static constexpr uint16_t PRACH_CYCLIC_SHIFTS_RESERVED = 430;
@@ -38,4 +38,4 @@ uint16_t prach_cyclic_shifts_get(prach_subcarrier_spacing prach_scs,
                                  restricted_set_config    restricted_set,
                                  unsigned                 zero_correlation_zone);
 
-} // namespace srsgnb
+} // namespace srsran

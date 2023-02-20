@@ -21,7 +21,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PUSCH demodulator interface.
 ///
@@ -96,4 +96,4 @@ public:
                                          const configuration&        config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

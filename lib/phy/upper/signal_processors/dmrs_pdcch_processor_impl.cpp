@@ -13,7 +13,7 @@
 #include "srsgnb/phy/support/mask_types.h"
 #include "srsgnb/support/math_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 unsigned dmrs_pdcch_processor_impl::c_init(unsigned symbol, const dmrs_pdcch_processor::config_t& config)
 {
@@ -47,8 +47,8 @@ void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&                   
   }
 }
 
-void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&                 grid,
-                                    const srsgnb::dmrs_pdcch_processor::config_t& config)
+void dmrs_pdcch_processor_impl::map(srsran::resource_grid_writer&                 grid,
+                                    const srsran::dmrs_pdcch_processor::config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
   static const re_prb_mask re_mask = {false, true, false, false, false, true, false, false, false, true, false, false};

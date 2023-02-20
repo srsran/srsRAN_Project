@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 enum class min_channel_bandwidth;
 
@@ -55,4 +55,4 @@ pdcch_type0_css_coreset_description pdcch_type0_css_coreset_get(min_channel_band
                                                                 uint8_t               coreset_zero_index,
                                                                 uint8_t               subcarrier_offset);
 
-} // namespace srsgnb
+} // namespace srsran

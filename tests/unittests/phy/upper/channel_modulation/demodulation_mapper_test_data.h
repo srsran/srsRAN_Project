@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   std::size_t                       nsymbols;
@@ -45,4 +45,4 @@ static const std::vector<test_case_t> demodulation_mapper_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

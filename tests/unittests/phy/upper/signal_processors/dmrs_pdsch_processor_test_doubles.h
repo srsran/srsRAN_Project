@@ -5,7 +5,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dmrs_pdsch_processor_spy : public dmrs_pdsch_processor
 {
@@ -31,4 +31,4 @@ public:
 
 PHY_SPY_FACTORY_TEMPLATE(dmrs_pdsch_processor);
 
-} // namespace srsgnb
+} // namespace srsran

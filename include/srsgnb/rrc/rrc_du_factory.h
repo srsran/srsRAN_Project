@@ -20,7 +20,7 @@
 #include <map>
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
@@ -48,4 +48,4 @@ std::unique_ptr<rrc_du_interface> create_rrc_du(const rrc_du_creation_message& m
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

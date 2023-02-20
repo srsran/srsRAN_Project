@@ -20,7 +20,7 @@
 #include "srsgnb/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsgnb/gateways/network_gateway.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class dummy_e1ap_cu_up_processor_notifier : public srs_cu_cp::e1ap_cu_up_processor_notifier
 {
@@ -216,4 +216,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

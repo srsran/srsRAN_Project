@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_processors/pucch_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pucch_processor_dummy : public pucch_processor
 {
@@ -43,4 +43,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

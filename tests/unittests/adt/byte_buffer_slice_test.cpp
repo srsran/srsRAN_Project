@@ -13,7 +13,7 @@
 #include <gtest/gtest.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Creates a vector of specified size.
 static std::vector<uint8_t> make_vec(unsigned size)

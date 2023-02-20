@@ -13,7 +13,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <type_traits>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Tag to disambiguate optional ctor overloads. Introduced only in C++17.
 struct in_place_t {};
@@ -376,13 +376,13 @@ bool operator<(const optional<T>& lhs, const optional<T>& rhs) noexcept
   return rhs.has_value() and ((lhs.has_value() and lhs.value() < rhs.value()) or (not lhs.has_value()));
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// Default formatter for optional<T>
 template <typename T>
-struct formatter<srsgnb::optional<T>> {
+struct formatter<srsran::optional<T>> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -390,7 +390,7 @@ struct formatter<srsgnb::optional<T>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::optional<T>& optval, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::optional<T>& optval, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (!optval.has_value()) {
       return format_to(ctx.out(), "{{na}}");

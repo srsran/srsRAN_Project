@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <array>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void test_int_comma()
 {

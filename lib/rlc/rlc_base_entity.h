@@ -15,7 +15,7 @@
 #include "rlc_tx_entity.h"
 #include "srsgnb/rlc/rlc_entity.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Class used to store common members to all RLC entites.
 /// It will contain the base class for TX and RX entities and getters
@@ -56,4 +56,4 @@ protected:
   std::unique_ptr<rlc_rx_entity> rx = {};
 };
 
-} // namespace srsgnb
+} // namespace srsran

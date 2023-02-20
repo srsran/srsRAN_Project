@@ -13,7 +13,7 @@
 #include "radio_config_zmq_validator.h"
 #include "srsgnb/radio/radio_factory.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a ZeroMQ Radio based factory.
 class radio_factory_zmq_impl : public radio_factory
@@ -34,4 +34,4 @@ private:
   static radio_config_zmq_config_validator config_validator;
 };
 
-} // namespace srsgnb
+} // namespace srsran

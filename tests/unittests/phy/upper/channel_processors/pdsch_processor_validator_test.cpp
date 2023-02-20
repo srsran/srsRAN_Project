@@ -16,7 +16,7 @@
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 

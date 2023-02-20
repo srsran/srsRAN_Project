@@ -10,7 +10,7 @@
 
 #include "ue_manager.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 
 ue_manager::ue_manager(network_interface_config&            net_config_,

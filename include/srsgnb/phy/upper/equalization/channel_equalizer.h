@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/re_measurement.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Channel equalizer interface.
 class channel_equalizer
@@ -88,4 +88,4 @@ public:
                         float              tx_scaling) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

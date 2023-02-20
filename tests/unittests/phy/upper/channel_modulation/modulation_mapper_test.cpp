@@ -14,7 +14,7 @@
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static constexpr float assert_max_err = 1e-6;
 
@@ -44,7 +44,7 @@ int main()
     srsvec::bit_pack(packed_data, testvector_data);
 
     // Modulate
-    srsgnb::srsvec::aligned_vec<cf_t> symbols(test_case.nsymbols);
+    srsran::srsvec::aligned_vec<cf_t> symbols(test_case.nsymbols);
     modulator->modulate(symbols, packed_data, test_case.scheme);
 
     // Load expected symbols and verify the result

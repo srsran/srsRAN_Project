@@ -15,7 +15,7 @@
 #include "../uci_scheduling/uci_scheduler.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// This class implements the ue_pdsch_allocator and ue_pusch_allocator interfaces, namely the methods to allocate
 /// PDSCH and PUSCH grants in different cells, and the methods to fetch the current gNB resource grid DL and UL states.
@@ -64,4 +64,4 @@ private:
   slotted_array<cell_t, MAX_NOF_DU_CELLS> cells;
 };
 
-} // namespace srsgnb
+} // namespace srsran

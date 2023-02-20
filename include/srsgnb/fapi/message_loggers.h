@@ -12,7 +12,7 @@
 
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi {
 
 struct crc_indication_message;
@@ -53,4 +53,4 @@ void log_ul_dci_request(const ul_dci_request_message& msg, srslog::basic_logger&
 void log_ul_tti_request(const ul_tti_request_message& msg, srslog::basic_logger& logger);
 
 } // namespace fapi
-} // namespace srsgnb
+} // namespace srsran

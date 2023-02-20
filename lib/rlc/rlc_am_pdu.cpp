@@ -10,7 +10,7 @@
 
 #include "rlc_am_pdu.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /****************************************************************************
  * Container implementation for pack/unpack functions

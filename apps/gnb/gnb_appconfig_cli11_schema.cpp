@@ -14,7 +14,7 @@
 #include "srsgnb/support/config_parsers.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
 {
@@ -125,19 +125,19 @@ static void to_aggregation_level(aggregation_level& aggr_lvl, unsigned value)
 {
   switch (value) {
     case 1U:
-      aggr_lvl = srsgnb::aggregation_level::n1;
+      aggr_lvl = srsran::aggregation_level::n1;
       return;
     case 2U:
-      aggr_lvl = srsgnb::aggregation_level::n2;
+      aggr_lvl = srsran::aggregation_level::n2;
       return;
     case 4U:
-      aggr_lvl = srsgnb::aggregation_level::n4;
+      aggr_lvl = srsran::aggregation_level::n4;
       return;
     case 8U:
-      aggr_lvl = srsgnb::aggregation_level::n8;
+      aggr_lvl = srsran::aggregation_level::n8;
       return;
     case 16U:
-      aggr_lvl = srsgnb::aggregation_level::n16;
+      aggr_lvl = srsran::aggregation_level::n16;
       return;
   }
 }
@@ -361,7 +361,7 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
   configure_cli11_rlc_args(*rlc_subcmd, qos_params.rlc);
 }
 
-void srsgnb::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
+void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
   app.add_option("--ran_node_name", gnb_cfg.ran_node_name, "RAN node name")->capture_default_str();

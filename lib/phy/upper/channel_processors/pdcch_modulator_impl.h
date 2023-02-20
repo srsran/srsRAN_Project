@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class pdcch_modulator_impl : public pdcch_modulator
 {
@@ -80,4 +80,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

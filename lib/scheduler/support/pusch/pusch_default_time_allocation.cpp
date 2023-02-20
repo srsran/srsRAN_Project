@@ -10,7 +10,7 @@
 
 #include "pusch_default_time_allocation.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 unsigned pusch_default_time_allocation_default_A_get_j(subcarrier_spacing scs)
@@ -94,7 +94,7 @@ pusch_default_time_allocation_config pusch_default_time_allocation_default_A_get
 } // namespace
 
 pusch_default_time_allocation_config
-srsgnb::pusch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, subcarrier_spacing scs)
+srsran::pusch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, subcarrier_spacing scs)
 {
   switch (cp) {
     case cyclic_prefix::NORMAL:
@@ -106,7 +106,7 @@ srsgnb::pusch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned r
 }
 
 span<const pusch_time_domain_resource_allocation>
-srsgnb::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarrier_spacing scs)
+srsran::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarrier_spacing scs)
 {
   // TS38.214 Table 5.1.2.1.1-2.
   static constexpr size_t PUSCH_TD_RES_ALLOC_TABLE_SIZE = 16;

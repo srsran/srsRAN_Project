@@ -16,7 +16,7 @@
 #include "srsgnb/ran/uci/uci_constants.h"
 #include "srsgnb/scheduler/config/scheduler_expert_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct ul_crc_pdu_indication;
 
@@ -103,4 +103,4 @@ private:
   metrics ue_metrics;
 };
 
-} // namespace srsgnb
+} // namespace srsran

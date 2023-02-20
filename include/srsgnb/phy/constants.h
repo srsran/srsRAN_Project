@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines the maximum number of Resource Blocks (RB) that a resource grid can carry
 static constexpr unsigned MAX_RB = 275;
@@ -68,4 +68,4 @@ static inline unsigned NID_2(unsigned NID)
 }
 
 } // namespace phys_cell_id
-} // namespace srsgnb
+} // namespace srsran

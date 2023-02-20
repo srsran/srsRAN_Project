@@ -6,7 +6,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 namespace tdd_cfg_helper {
 
@@ -27,4 +27,4 @@ bool slot_is_ul(const asn1::rrc_nr::tdd_ul_dl_cfg_common_s& cfg, slot_point sl);
 
 } // namespace tdd_cfg_helper
 
-} // namespace srsgnb
+} // namespace srsran

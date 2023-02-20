@@ -11,27 +11,25 @@
 #include "lib/scheduler/support/mcs_calculator.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
-
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(test_manual_values, test)
 {
-  ASSERT_EQ(0, map_cqi_to_mcs(1, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(0, map_cqi_to_mcs(2, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(2, map_cqi_to_mcs(3, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(4, map_cqi_to_mcs(4, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(6, map_cqi_to_mcs(5, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(8, map_cqi_to_mcs(6, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(11, map_cqi_to_mcs(7, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(13, map_cqi_to_mcs(8, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(15, map_cqi_to_mcs(9, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(18, map_cqi_to_mcs(10, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(20, map_cqi_to_mcs(11, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(22, map_cqi_to_mcs(12, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(24, map_cqi_to_mcs(13, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(26, map_cqi_to_mcs(14, srsgnb::pdsch_mcs_table::qam64).value());
-  ASSERT_EQ(28, map_cqi_to_mcs(15, srsgnb::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(0, map_cqi_to_mcs(1, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(0, map_cqi_to_mcs(2, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(2, map_cqi_to_mcs(3, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(4, map_cqi_to_mcs(4, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(6, map_cqi_to_mcs(5, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(8, map_cqi_to_mcs(6, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(11, map_cqi_to_mcs(7, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(13, map_cqi_to_mcs(8, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(15, map_cqi_to_mcs(9, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(18, map_cqi_to_mcs(10, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(20, map_cqi_to_mcs(11, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(22, map_cqi_to_mcs(12, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(24, map_cqi_to_mcs(13, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(26, map_cqi_to_mcs(14, srsran::pdsch_mcs_table::qam64).value());
+  ASSERT_EQ(28, map_cqi_to_mcs(15, srsran::pdsch_mcs_table::qam64).value());
 }
 
 // Duplicate of the SNR vs MCS table in \ref lib/scheduler/support/mcs_calculator.cpp, for test purposes.

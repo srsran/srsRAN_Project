@@ -14,7 +14,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/variant.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief CodebookConfig is used to configure codebooks of Type-I and Type-II.
 /// \remark TS 38.331, \c CodebookConfig and TS 38.214, clause 5.2.2.2.
@@ -183,4 +183,4 @@ struct codebook_config {
   bool operator!=(const codebook_config& rhs) const { return !(rhs == *this); }
 };
 
-} // namespace srsgnb
+} // namespace srsran

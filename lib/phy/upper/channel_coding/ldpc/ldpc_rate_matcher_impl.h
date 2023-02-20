@@ -16,7 +16,7 @@
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// LDPC rate matching implementation, as per TS38.212 Section 5.4.2.
 class ldpc_rate_matcher_impl : public ldpc_rate_matcher
@@ -59,4 +59,4 @@ private:
   unsigned shift_k0 = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

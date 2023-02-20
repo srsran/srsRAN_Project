@@ -14,7 +14,7 @@
 #include <iterator>
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace detail {
 
@@ -425,4 +425,4 @@ private:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

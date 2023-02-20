@@ -136,29 +136,29 @@ struct ValOrError {
 
 // write+read bit_ref version
 struct bit_ref {
-  bit_ref(srsgnb::byte_buffer_writer byte_writer) : writer(byte_writer) {}
+  bit_ref(srsran::byte_buffer_writer byte_writer) : writer(byte_writer) {}
 
-  srsgnb::byte_buffer_view data() const { return writer.view(); }
+  srsran::byte_buffer_view data() const { return writer.view(); }
 
   int distance_bytes() const;
   int distance() const;
 
   SRSASN_CODE pack(uint64_t val, uint32_t n_bits);
-  SRSASN_CODE pack_bytes(srsgnb::span<const uint8_t> bytes);
-  SRSASN_CODE pack_bytes(srsgnb::byte_buffer_view bytes);
+  SRSASN_CODE pack_bytes(srsran::span<const uint8_t> bytes);
+  SRSASN_CODE pack_bytes(srsran::byte_buffer_view bytes);
   SRSASN_CODE align_bytes_zero();
 
 private:
-  srsgnb::byte_buffer_writer writer;
+  srsran::byte_buffer_writer writer;
   uint8_t                    offset = 0;
 };
 
 // read-only bit_ref
 struct cbit_ref {
-  cbit_ref(srsgnb::byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
+  cbit_ref(srsran::byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
   cbit_ref(const bit_ref& bref) : buffer(bref.data()), it(bref.data().begin()) {}
 
-  srsgnb::byte_buffer_view data() const { return buffer; }
+  srsran::byte_buffer_view data() const { return buffer; }
 
   int         distance_bytes() const;
   int         distance() const;
@@ -167,12 +167,12 @@ struct cbit_ref {
 
   template <class T>
   SRSASN_CODE unpack(T& val, uint32_t n_bits);
-  SRSASN_CODE unpack_bytes(srsgnb::span<uint8_t> bytes);
+  SRSASN_CODE unpack_bytes(srsran::span<uint8_t> bytes);
   SRSASN_CODE align_bytes();
 
 private:
-  srsgnb::byte_buffer_view            buffer;
-  srsgnb::byte_buffer::const_iterator it;
+  srsran::byte_buffer_view            buffer;
+  srsran::byte_buffer::const_iterator it;
   uint8_t                             offset = 0;
 };
 
@@ -644,22 +644,22 @@ struct Packer {
 namespace octet_string_helper {
 
 /// Convert octet string to an integer.
-uint64_t to_uint(srsgnb::span<const uint8_t> buf);
-uint64_t to_uint(const srsgnb::byte_buffer& buf);
+uint64_t to_uint(srsran::span<const uint8_t> buf);
+uint64_t to_uint(const srsran::byte_buffer& buf);
 
 /// Convert unsigned integer to span of octets.
-void to_octet_string(srsgnb::span<uint8_t> buf, uint64_t number);
-void to_octet_string(srsgnb::byte_buffer& buf, uint64_t number);
+void to_octet_string(srsran::span<uint8_t> buf, uint64_t number);
+void to_octet_string(srsran::byte_buffer& buf, uint64_t number);
 
 /// Convert octets into hex string.
-std::string to_hex_string(srsgnb::span<const uint8_t> buf);
-std::string to_hex_string(const srsgnb::byte_buffer& buf);
+std::string to_hex_string(srsran::span<const uint8_t> buf);
+std::string to_hex_string(const srsran::byte_buffer& buf);
 
 /// Convert std::string of hexadecimal numbers to span of bytes.
-unsigned hex_string_to_octets(srsgnb::span<uint8_t> buf, const std::string& str);
+unsigned hex_string_to_octets(srsran::span<uint8_t> buf, const std::string& str);
 
 /// Append std::string of hexadecimal numbers to byte_buffer.
-void append_hex_string(srsgnb::byte_buffer& buf, const std::string& str);
+void append_hex_string(srsran::byte_buffer& buf, const std::string& str);
 
 } // namespace octet_string_helper
 
@@ -751,7 +751,7 @@ public:
   uint32_t    size() const { return octets_.size(); }
   std::string to_string() const
   {
-    return octet_string_helper::to_hex_string(srsgnb::span<const uint8_t>{data(), size()});
+    return octet_string_helper::to_hex_string(srsran::span<const uint8_t>{data(), size()});
   }
   bounded_octstring<LB, UB, aligned>& from_string(const std::string& hexstr)
   {
@@ -759,13 +759,13 @@ public:
       log_error("The provided hex string size is not valid ({}>2*{}).", hexstr.size(), (size_t)UB);
     } else {
       resize(hexstr.size() / 2);
-      octet_string_helper::hex_string_to_octets(srsgnb::span<uint8_t>{octets_.data(), octets_.size()}, hexstr);
+      octet_string_helper::hex_string_to_octets(srsran::span<uint8_t>{octets_.data(), octets_.size()}, hexstr);
     }
     return *this;
   }
   uint64_t to_number() const
   {
-    return octet_string_helper::to_uint(srsgnb::span<const uint8_t>{octets_.data(), size()});
+    return octet_string_helper::to_uint(srsran::span<const uint8_t>{octets_.data(), size()});
   }
 
   SRSASN_CODE pack(bit_ref& bref) const
@@ -802,7 +802,7 @@ private:
 ************************/
 
 template <bool Al = false>
-class unbounded_octstring : public srsgnb::byte_buffer
+class unbounded_octstring : public srsran::byte_buffer
 {
 public:
   static const bool aligned = Al;
@@ -810,14 +810,14 @@ public:
   using iterator            = byte_buffer::iterator;
   using const_iterator      = byte_buffer::const_iterator;
 
-  using srsgnb::byte_buffer::byte_buffer;
-  unbounded_octstring(byte_buffer other) noexcept : srsgnb::byte_buffer(std::move(other)) {}
-  unbounded_octstring(const unbounded_octstring& other) noexcept : srsgnb::byte_buffer(other.deep_copy()) {}
-  unbounded_octstring(unbounded_octstring&& other) noexcept : srsgnb::byte_buffer(std::move(other)) {}
+  using srsran::byte_buffer::byte_buffer;
+  unbounded_octstring(byte_buffer other) noexcept : srsran::byte_buffer(std::move(other)) {}
+  unbounded_octstring(const unbounded_octstring& other) noexcept : srsran::byte_buffer(other.deep_copy()) {}
+  unbounded_octstring(unbounded_octstring&& other) noexcept : srsran::byte_buffer(std::move(other)) {}
 
   unbounded_octstring& operator=(byte_buffer other) noexcept
   {
-    *static_cast<srsgnb::byte_buffer*>(this) = std::move(other);
+    *static_cast<srsran::byte_buffer*>(this) = std::move(other);
     return *this;
   }
   unbounded_octstring& operator=(const unbounded_octstring& other) noexcept;
@@ -831,7 +831,7 @@ public:
   uint64_t                 to_number() const;
   unbounded_octstring<Al>& from_number(uint64_t val);
 
-  srsgnb::byte_buffer to_byte_buffer() { return std::move(*static_cast<srsgnb::byte_buffer*>(this)); }
+  srsran::byte_buffer to_byte_buffer() { return std::move(*static_cast<srsran::byte_buffer*>(this)); }
 
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
@@ -1343,7 +1343,7 @@ public:
 private:
   bit_ref             brefstart;
   bit_ref*            bref_tracker;
-  srsgnb::byte_buffer varlen_buffer;
+  srsran::byte_buffer varlen_buffer;
   bool                align;
 };
 
@@ -1425,7 +1425,7 @@ inline void to_json(json_writer& j, int64_t number)
 template <class Msg>
 int test_pack_unpack_consistency(const Msg& msg)
 {
-  srsgnb::byte_buffer buf, buf2;
+  srsran::byte_buffer buf, buf2;
   Msg                 msg2;
   asn1::bit_ref       bref(buf), bref3(buf2);
 

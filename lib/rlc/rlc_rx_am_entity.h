@@ -19,7 +19,7 @@
 #include "fmt/format.h"
 #include <set>
 
-namespace srsgnb {
+namespace srsran {
 
 /// AM SDU segment container
 struct rlc_rx_am_sdu_segment {
@@ -264,12 +264,12 @@ private:
   void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::rlc_rx_am_sdu_info> {
+struct formatter<srsran::rlc_rx_am_sdu_info> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -277,7 +277,7 @@ struct formatter<srsgnb::rlc_rx_am_sdu_info> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_rx_am_sdu_info& info, FormatContext& ctx)
+  auto format(const srsran::rlc_rx_am_sdu_info& info, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
@@ -290,7 +290,7 @@ struct formatter<srsgnb::rlc_rx_am_sdu_info> {
 };
 
 template <>
-struct formatter<srsgnb::rlc_rx_am_state> {
+struct formatter<srsran::rlc_rx_am_state> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -298,7 +298,7 @@ struct formatter<srsgnb::rlc_rx_am_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_rx_am_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_rx_am_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(),
                      "rx_next={} rx_next_status_trigger={} rx_highest_status={} rx_next_highest={}",

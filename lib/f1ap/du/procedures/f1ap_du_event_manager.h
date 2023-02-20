@@ -15,7 +15,7 @@
 #include "srsgnb/support/async/event_signal.h"
 #include "srsgnb/support/async/protocol_transaction_manager.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 using f1ap_outcome     = expected<asn1::f1ap::successful_outcome_s, asn1::f1ap::unsuccessful_outcome_s>;
@@ -40,4 +40,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

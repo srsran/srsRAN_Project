@@ -12,7 +12,7 @@
 #include "srsgnb/phy/upper/signal_processors/pss_processor.h"
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class port_channel_estimator_factory;
 
@@ -109,4 +109,4 @@ public:
 
 std::shared_ptr<sss_processor_factory> create_sss_processor_factory_sw();
 
-} // namespace srsgnb
+} // namespace srsran

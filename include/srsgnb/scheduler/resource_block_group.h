@@ -13,7 +13,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/ran/resource_allocation/rb_interval.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Maximum number of resource block groups per BWP.
 /// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.
@@ -48,4 +48,4 @@ unsigned get_nof_rbgs(crb_interval bwp_rb_dims, bool config1_or_2);
 /// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.
 uint32_t get_rbg_size(crb_interval bwp_rbs, nominal_rbg_size P, uint32_t rbg_idx);
 
-} // namespace srsgnb
+} // namespace srsran

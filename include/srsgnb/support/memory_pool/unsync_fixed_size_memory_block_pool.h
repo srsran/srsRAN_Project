@@ -12,7 +12,7 @@
 
 #include "memory_block_list.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Unsynchronized (not thread-safe) memory pool of memory blocks of equal size.
 class unsync_fixed_size_memory_block_pool
@@ -80,4 +80,4 @@ private:
   free_memory_block_list block_free_list;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder_result.h"
 #include "srsgnb/phy/upper/channel_state_information.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Collects PUCCH processor results.
 struct pucch_processor_result {
@@ -27,4 +27,4 @@ struct pucch_processor_result {
   optional<float> detection_metric;
 };
 
-} // namespace srsgnb
+} // namespace srsran

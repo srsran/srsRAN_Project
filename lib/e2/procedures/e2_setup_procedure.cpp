@@ -11,7 +11,7 @@
 #include "e2_setup_procedure.h"
 #include "srsgnb/support/async/async_timer.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace asn1::e2ap;
 
 e2_setup_procedure::e2_setup_procedure(const e2_setup_request_message& request_,

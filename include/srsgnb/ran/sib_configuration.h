@@ -10,7 +10,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief SIB retransmission periodicity in milliseconds as per TS38.331 Section 5.2.1.
 /// \remark This is used for retransmission periodicity only; SIB1 periodicity is given as 160ms.
@@ -22,4 +22,4 @@ inline unsigned sib1_rtx_periodicity_to_value(sib1_rtx_periodicity periodicity)
   return static_cast<unsigned>(periodicity);
 }
 
-} // namespace srsgnb
+} // namespace srsran

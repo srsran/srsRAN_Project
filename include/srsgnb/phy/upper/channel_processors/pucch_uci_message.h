@@ -14,7 +14,7 @@
 #include "srsgnb/phy/upper/channel_processors/uci_status.h"
 #include "srsgnb/ran/uci/uci_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collects the uplink control information message.
 ///
@@ -141,4 +141,4 @@ private:
   uci_status status = uci_status::invalid;
 };
 
-} // namespace srsgnb
+} // namespace srsran

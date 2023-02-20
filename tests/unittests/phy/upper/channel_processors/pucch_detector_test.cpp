@@ -19,10 +19,10 @@
 
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// \cond
-namespace srsgnb {
+namespace srsran {
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
@@ -36,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
                            tc.sr_bit.size());
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 

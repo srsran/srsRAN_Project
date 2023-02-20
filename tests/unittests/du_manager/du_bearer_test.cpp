@@ -13,7 +13,7 @@
 #include <gtest/gtest.h>
 #include <numeric>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 TEST(du_ue_bearer_manager_test, when_no_drbs_allocated_lcid_is_min)

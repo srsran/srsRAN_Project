@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Converts type \c pdcp_config_t to an RRC NR ASN.1 type.
@@ -181,4 +181,4 @@ inline asn1::rrc_nr::sdap_cfg_s sdap_config_to_rrc_asn1(sdap_config_t sdap_cfg)
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

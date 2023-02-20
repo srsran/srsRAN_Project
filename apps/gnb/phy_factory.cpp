@@ -14,9 +14,9 @@
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/phy/upper/upper_phy_factories.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& config,
+std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config,
                                                     unsigned                 max_nof_prach_concurrent_requests)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a FFTX
@@ -60,7 +60,7 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& con
   return lphy_factory->create(config);
 }
 
-std::unique_ptr<upper_phy> srsgnb::create_upper_phy(const gnb_appconfig&                  params,
+std::unique_ptr<upper_phy> srsran::create_upper_phy(const gnb_appconfig&                  params,
                                                     upper_phy_rg_gateway*                 rg_gateway,
                                                     task_executor*                        dl_executor,
                                                     task_executor*                        pucch_executor,

@@ -16,7 +16,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Collects PRACH time and frequency mapping parameters.
 ///
@@ -67,4 +67,4 @@ struct prach_buffer_context {
   unsigned nof_preamble_indices;
 };
 
-} // namespace srsgnb
+} // namespace srsran

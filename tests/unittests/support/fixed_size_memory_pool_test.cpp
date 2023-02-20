@@ -13,7 +13,7 @@
 #include "srsgnb/support/memory_pool/unsync_fixed_size_memory_block_pool.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 TEST(fixed_memory_block_pool_test, correct_instantiation)
 {

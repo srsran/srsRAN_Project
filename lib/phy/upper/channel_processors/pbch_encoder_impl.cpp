@@ -15,7 +15,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/error_handling.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Implements TS 38.212 Table 7.1.1-1: Value of PBCH payload interleaver pattern G (j).
 static const std::array<uint32_t, pbch_encoder::A> G = {16, 23, 18, 17, 8,  30, 10, 6,  24, 7,  0,  5,  3,  2,  1,  4,
@@ -26,7 +26,7 @@ static const std::array<uint32_t, pbch_encoder::A> G = {16, 23, 18, 17, 8,  30, 
 #define PBCH_SFN_2ND_LSB_G (G[PBCH_SFN_PAYLOAD_LENGTH + 2])
 #define PBCH_SFN_3RD_LSB_G (G[PBCH_SFN_PAYLOAD_LENGTH + 1])
 
-void pbch_encoder_impl::payload_generate(span<uint8_t> a, const srsgnb::pbch_encoder::pbch_msg_t& msg)
+void pbch_encoder_impl::payload_generate(span<uint8_t> a, const srsran::pbch_encoder::pbch_msg_t& msg)
 {
   assert(a.size() == A);
 
@@ -66,7 +66,7 @@ void pbch_encoder_impl::payload_generate(span<uint8_t> a, const srsgnb::pbch_enc
 }
 
 void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime,
-                                 const srsgnb::pbch_encoder::pbch_msg_t& msg,
+                                 const srsran::pbch_encoder::pbch_msg_t& msg,
                                  span<const uint8_t>                     a)
 {
   uint32_t i = 0;
@@ -152,7 +152,7 @@ void pbch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
   rm->rate_match(f, d, *code);
 }
 
-void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg)
+void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsran::pbch_encoder::pbch_msg_t& pbch_msg)
 {
   report_fatal_error_if_not(
       encoded.size() == E, "Invalid encoded size ({}), expected {}.", encoded.size(), static_cast<unsigned>(E));

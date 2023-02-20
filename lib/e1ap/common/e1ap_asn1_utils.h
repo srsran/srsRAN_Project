@@ -15,7 +15,7 @@
 #include "srsgnb/e1ap/common/e1ap_types.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Get string with E1AP error cause.
 inline const char* get_cause_str(const asn1::e1ap::cause_c& cause)
@@ -225,4 +225,4 @@ inline expected<gnb_cu_up_ue_e1ap_id_t> get_gnb_cu_up_ue_e1ap_id(const asn1::e1a
   return {default_error_t{}};
 }
 
-} // namespace srsgnb
+} // namespace srsran

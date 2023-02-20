@@ -14,7 +14,7 @@
 #include "srsgnb/support/srsgnb_assert.h"
 #include <algorithm>
 
-using namespace srsgnb;
+using namespace srsran;
 
 static unsigned tbs_calculator_step3(float nof_info)
 {
@@ -62,13 +62,13 @@ tbs_calculator_step2(float scaling, unsigned nof_re, float tcr, unsigned modulat
   return tbs_calculator_step4(nof_info, tcr);
 }
 
-float srsgnb::tbs_calculator_pdsch_get_scaling_factor(unsigned scaling)
+float srsran::tbs_calculator_pdsch_get_scaling_factor(unsigned scaling)
 {
   srsgnb_assert(scaling < 3, "Invalid scaling value ({}, max 2).", scaling);
   return 1.0F / static_cast<float>(pow2(scaling));
 }
 
-unsigned srsgnb::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_info_prime)
+unsigned srsran::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_info_prime)
 {
   // LUT indexed by nof_info_prime in bytes based on TS38.214 Table 5.1.3.2-1 where the contents are the smallest not
   // less than nof_info_prime.
@@ -109,7 +109,7 @@ unsigned srsgnb::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_i
   return table_valid_tbs[index];
 }
 
-unsigned srsgnb::tbs_calculator_calculate(const tbs_calculator_configuration& config)
+unsigned srsran::tbs_calculator_calculate(const tbs_calculator_configuration& config)
 {
   static constexpr unsigned NOF_SC_RB = NOF_SUBCARRIERS_PER_RB;
 

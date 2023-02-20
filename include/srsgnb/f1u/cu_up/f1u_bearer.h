@@ -14,7 +14,7 @@
 #include "f1u_rx_pdu_handler.h"
 #include "f1u_tx_sdu_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 class f1u_bearer_disconnector;
@@ -43,4 +43,4 @@ public:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

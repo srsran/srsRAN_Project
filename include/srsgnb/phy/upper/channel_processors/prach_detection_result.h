@@ -14,7 +14,7 @@
 #include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/prach/prach_constants.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a PRACH detection result.
 struct prach_detection_result {
@@ -45,4 +45,4 @@ struct prach_detection_result {
   static_vector<preamble_indication, prach_constants::MAX_NUM_PREAMBLES> preambles;
 };
 
-} // namespace srsgnb
+} // namespace srsran

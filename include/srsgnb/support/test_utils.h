@@ -16,7 +16,7 @@
 #include <cstdio>
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 /// This custom sink intercepts log messages to count error and warning log entries.
 class log_sink_spy : public srslog::sink
@@ -300,20 +300,20 @@ private:
     return dummy;                                                                                                      \
   }();
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 /// \brief Formatter for moveonly_test_object.
 template <>
-struct formatter<srsgnb::moveonly_test_object> {
+struct formatter<srsran::moveonly_test_object> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(const srsgnb::moveonly_test_object& obj, FormatContext& ctx)
+  auto format(const srsran::moveonly_test_object& obj, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{}", obj.value());

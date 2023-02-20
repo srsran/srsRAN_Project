@@ -16,7 +16,7 @@
 #include "srsgnb/scheduler/harq_id.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class byte_buffer_slice_chain;
 
@@ -93,4 +93,4 @@ private:
   srslog::basic_logger& logger;
 };
 
-} // namespace srsgnb
+} // namespace srsran

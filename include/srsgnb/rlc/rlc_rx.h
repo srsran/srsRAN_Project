@@ -35,7 +35,7 @@
  *    inherit or a notifier that the RLC will keep as a member.
  *
  */
-namespace srsgnb {
+namespace srsran {
 
 /***************************************
  * Interfaces/notifiers for upper layers
@@ -70,4 +70,4 @@ public:
   virtual void on_new_sdu(byte_buffer_slice_chain pdu) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

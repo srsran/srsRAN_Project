@@ -16,7 +16,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace fapi_adaptor {
 
 /// Configuration parameters for the MAC&ndash;FAPI adaptor factory.
@@ -53,4 +53,4 @@ public:
 std::unique_ptr<mac_fapi_adaptor_factory> create_mac_fapi_adaptor_factory();
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

@@ -12,7 +12,7 @@
 #include "srsgnb/adt/scope_exit.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index,
                                    rb_id_t                              rb_id,

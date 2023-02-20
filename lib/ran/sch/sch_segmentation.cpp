@@ -11,11 +11,11 @@
 #include "srsgnb/ran/sch/sch_segmentation.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 constexpr units::bits sch_information::CB_CRC_SIZE;
 
-sch_information srsgnb::get_sch_segmentation_info(units::bits tbs, float target_code_rate)
+sch_information srsran::get_sch_segmentation_info(units::bits tbs, float target_code_rate)
 {
   srsgnb_assert(target_code_rate > 0.F && target_code_rate < 1.F,
                 "Invalid target code rate {}, expected a value between 0 and 1",

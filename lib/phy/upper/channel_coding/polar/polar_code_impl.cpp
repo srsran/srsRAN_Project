@@ -12,18 +12,18 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
-const std::array<uint16_t, 32> srsgnb::polar_code_impl::mother_code_5 = {0,  1,  2,  4,  8,  16, 3,  5,  9,  6,  17,
+const std::array<uint16_t, 32> srsran::polar_code_impl::mother_code_5 = {0,  1,  2,  4,  8,  16, 3,  5,  9,  6,  17,
                                                                          10, 18, 12, 20, 24, 7,  11, 19, 13, 14, 21,
                                                                          26, 25, 22, 28, 15, 23, 27, 29, 30, 31};
 
-const std::array<uint16_t, 64> srsgnb::polar_code_impl::mother_code_6 = {
+const std::array<uint16_t, 64> srsran::polar_code_impl::mother_code_6 = {
     0,  1,  2,  4,  8,  16, 32, 3,  5,  9,  6,  17, 10, 18, 12, 33, 20, 34, 24, 36, 7,  11,
     40, 19, 13, 48, 14, 21, 35, 26, 37, 25, 22, 38, 41, 28, 42, 49, 44, 50, 15, 52, 23, 56,
     27, 39, 29, 43, 30, 45, 51, 46, 53, 54, 57, 58, 60, 31, 47, 55, 59, 61, 62, 63};
 
-const std::array<uint16_t, 128> srsgnb::polar_code_impl::mother_code_7 = {
+const std::array<uint16_t, 128> srsran::polar_code_impl::mother_code_7 = {
     0,   1,  2,   4,   8,   16,  32,  3,   5,   64,  9,   6,   17,  10,  18,  12,  33,  65, 20,  34, 24,  36,
     7,   66, 11,  40,  68,  19,  13,  48,  14,  72,  21,  35,  26,  80,  37,  25,  22,  38, 96,  67, 41,  28,
     69,  42, 49,  74,  70,  44,  81,  50,  73,  15,  52,  23,  76,  82,  56,  27,  97,  39, 84,  29, 43,  98,
@@ -31,7 +31,7 @@ const std::array<uint16_t, 128> srsgnb::polar_code_impl::mother_code_7 = {
     101, 31, 90,  102, 105, 92,  47,  106, 55,  113, 79,  108, 59,  114, 87,  116, 61,  91, 120, 62, 103, 93,
     107, 94, 109, 115, 110, 117, 118, 121, 122, 63,  124, 95,  111, 119, 123, 125, 126, 127};
 
-const std::array<uint16_t, 256> srsgnb::polar_code_impl::mother_code_8 = {
+const std::array<uint16_t, 256> srsran::polar_code_impl::mother_code_8 = {
     0,   1,   2,   4,   8,   16,  32,  3,   5,   64,  9,   6,   17,  10,  18,  128, 12,  33,  65,  20,  34,  24,
     36,  7,   129, 66,  11,  40,  68,  130, 19,  13,  48,  14,  72,  21,  132, 35,  26,  80,  37,  25,  22,  136,
     38,  96,  67,  41,  144, 28,  69,  42,  49,  74,  160, 192, 70,  44,  131, 81,  50,  73,  15,  133, 52,  23,
@@ -45,7 +45,7 @@ const std::array<uint16_t, 256> srsgnb::polar_code_impl::mother_code_8 = {
     183, 234, 125, 241, 207, 187, 236, 126, 242, 244, 189, 215, 219, 231, 248, 190, 221, 235, 222, 237, 243, 238,
     245, 127, 191, 246, 249, 250, 252, 223, 239, 251, 247, 253, 254, 255};
 
-const std::array<uint16_t, 512> srsgnb::polar_code_impl::mother_code_9 = {
+const std::array<uint16_t, 512> srsran::polar_code_impl::mother_code_9 = {
     0,   1,   2,   4,   8,   16,  32,  3,   5,   64,  9,   6,   17,  10,  18,  128, 12,  33,  65,  20,  256, 34,  24,
     36,  7,   129, 66,  11,  40,  68,  130, 19,  13,  48,  14,  72,  257, 21,  132, 35,  258, 26,  80,  37,  25,  22,
     136, 260, 264, 38,  96,  67,  41,  144, 28,  69,  42,  49,  74,  272, 160, 288, 192, 70,  44,  131, 81,  50,  73,
@@ -70,7 +70,7 @@ const std::array<uint16_t, 512> srsgnb::polar_code_impl::mother_code_9 = {
     498, 445, 471, 500, 446, 475, 487, 504, 255, 477, 491, 478, 383, 493, 499, 502, 494, 501, 447, 505, 506, 479, 508,
     495, 503, 507, 509, 510, 511};
 
-const std::array<uint16_t, 1024> srsgnb::polar_code_impl::mother_code_10 = {
+const std::array<uint16_t, 1024> srsran::polar_code_impl::mother_code_10 = {
     0,    1,    2,    4,   8,   16,   32,   3,    5,    64,   9,    6,   17,   10,   18,   128,  12,  33,   65,   20,
     256,  34,   24,   36,  7,   129,  66,   512,  11,   40,   68,   130, 19,   13,   48,   14,   72,  257,  21,   132,
     35,   258,  26,   513, 80,  37,   25,   22,   136,  260,  264,  38,  514,  96,   67,   41,   144, 28,   69,   42,
@@ -124,16 +124,16 @@ const std::array<uint16_t, 1024> srsgnb::polar_code_impl::mother_code_10 = {
     1012, 999,  1016, 767, 989, 1003, 990,  1005, 959,  1011, 1013, 895, 1006, 1014, 1017, 1018, 991, 1020, 1007, 1015,
     1019, 1021, 1022, 1023};
 
-const std::array<uint16_t, 32> srsgnb::polar_code_impl::blk_interleaver_5 = {0,  1,  2,  4,  3,  5,  6,  7,  8,  16, 9,
+const std::array<uint16_t, 32> srsran::polar_code_impl::blk_interleaver_5 = {0,  1,  2,  4,  3,  5,  6,  7,  8,  16, 9,
                                                                              17, 10, 18, 11, 19, 12, 20, 13, 21, 14, 22,
                                                                              15, 23, 24, 25, 26, 28, 27, 29, 30, 31};
 
-const std::array<uint16_t, 64> srsgnb::polar_code_impl::blk_interleaver_6 = {
+const std::array<uint16_t, 64> srsran::polar_code_impl::blk_interleaver_6 = {
     0,  1,  2,  3,  4,  5,  8,  9,  6,  7,  10, 11, 12, 13, 14, 15, 16, 17, 32, 33, 18, 19,
     34, 35, 20, 21, 36, 37, 22, 23, 38, 39, 24, 25, 40, 41, 26, 27, 42, 43, 28, 29, 44, 45,
     30, 31, 46, 47, 48, 49, 50, 51, 52, 53, 56, 57, 54, 55, 58, 59, 60, 61, 62, 63};
 
-const std::array<uint16_t, 128> srsgnb::polar_code_impl::blk_interleaver_7 = {
+const std::array<uint16_t, 128> srsran::polar_code_impl::blk_interleaver_7 = {
     0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  16,  17,  18,  19,  12,  13,  14,  15,  20,  21,
     22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  64,  65,  66,  67,  36,  37,  38,  39,
     68,  69,  70,  71,  40,  41,  42,  43,  72,  73,  74,  75,  44,  45,  46,  47,  76,  77,  78,  79,  48,  49,
@@ -141,7 +141,7 @@ const std::array<uint16_t, 128> srsgnb::polar_code_impl::blk_interleaver_7 = {
     60,  61,  62,  63,  92,  93,  94,  95,  96,  97,  98,  99,  100, 101, 102, 103, 104, 105, 106, 107, 112, 113,
     114, 115, 108, 109, 110, 111, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
 
-const std::array<uint16_t, 256> srsgnb::polar_code_impl::blk_interleaver_8 = {
+const std::array<uint16_t, 256> srsran::polar_code_impl::blk_interleaver_8 = {
     0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,
     22,  23,  32,  33,  34,  35,  36,  37,  38,  39,  24,  25,  26,  27,  28,  29,  30,  31,  40,  41,  42,  43,
     44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,
@@ -155,7 +155,7 @@ const std::array<uint16_t, 256> srsgnb::polar_code_impl::blk_interleaver_8 = {
     228, 229, 230, 231, 216, 217, 218, 219, 220, 221, 222, 223, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241,
     242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
 
-const std::array<uint16_t, 512> srsgnb::polar_code_impl::blk_interleaver_9 = {
+const std::array<uint16_t, 512> srsran::polar_code_impl::blk_interleaver_9 = {
     0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,
     23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,
     46,  47,  64,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  48,  49,  50,  51,  52,
@@ -180,7 +180,7 @@ const std::array<uint16_t, 512> srsgnb::polar_code_impl::blk_interleaver_9 = {
     483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505,
     506, 507, 508, 509, 510, 511};
 
-const std::array<uint16_t, 1024> srsgnb::polar_code_impl::blk_interleaver_10 = {
+const std::array<uint16_t, 1024> srsran::polar_code_impl::blk_interleaver_10 = {
     0,    1,    2,    3,    4,    5,    6,    7,    8,    9,    10,   11,   12,   13,   14,   15,   16,   17,   18,
     19,   20,   21,   22,   23,   24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,   37,
     38,   39,   40,   41,   42,   43,   44,   45,   46,   47,   48,   49,   50,   51,   52,   53,   54,   55,   56,
@@ -236,7 +236,7 @@ const std::array<uint16_t, 1024> srsgnb::polar_code_impl::blk_interleaver_10 = {
     988,  989,  990,  991,  992,  993,  994,  995,  996,  997,  998,  999,  1000, 1001, 1002, 1003, 1004, 1005, 1006,
     1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023};
 
-span<const uint16_t> srsgnb::polar_code_impl::get_mother_code(uint8_t n_)
+span<const uint16_t> srsran::polar_code_impl::get_mother_code(uint8_t n_)
 {
   switch (n_) {
     case 5:
@@ -258,7 +258,7 @@ span<const uint16_t> srsgnb::polar_code_impl::get_mother_code(uint8_t n_)
   return {};
 }
 
-span<const uint16_t> srsgnb::polar_code_impl::get_blk_interleaver(uint8_t n_)
+span<const uint16_t> srsran::polar_code_impl::get_blk_interleaver(uint8_t n_)
 {
   switch (n_) {
     case 5:
@@ -280,7 +280,7 @@ span<const uint16_t> srsgnb::polar_code_impl::get_blk_interleaver(uint8_t n_)
   return {};
 }
 
-unsigned srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
+unsigned srsran::polar_code_impl::setdiff_stable(const uint16_t* x,
                                                  const uint16_t* y,
                                                  uint16_t*       z,
                                                  uint16_t        T,
@@ -310,7 +310,7 @@ unsigned srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
   return o;
 }
 
-void srsgnb::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t nMax)
+void srsran::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t nMax)
 {
   // Set internal K
   K = K_;
@@ -395,7 +395,7 @@ void srsgnb::polar_code_impl::set_code_params(unsigned K_, unsigned E_, uint8_t 
   assert(K < N);
 }
 
-srsgnb::polar_code_impl::polar_code_impl()
+srsran::polar_code_impl::polar_code_impl()
 {
   // Do nothing
 }
@@ -406,7 +406,7 @@ bool cmpfunc(unsigned ai, unsigned bi)
   return (ai < bi);
 }
 
-void srsgnb::polar_code_impl::set(unsigned K_, unsigned E_, uint8_t nMax, polar_code_ibil ibil_)
+void srsran::polar_code_impl::set(unsigned K_, unsigned E_, uint8_t nMax, polar_code_ibil ibil_)
 {
   // Check polar code parameters.
   set_code_params(K_, E_, nMax);

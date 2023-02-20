@@ -20,7 +20,7 @@
 #include "srsgnb/phy/upper/rx_softbuffer.h"
 #include "srsgnb/support/stats.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief PUSCH decoder interface.
 ///
@@ -66,4 +66,4 @@ public:
                       const configuration&             cfg) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

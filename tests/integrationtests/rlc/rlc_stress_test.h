@@ -23,7 +23,7 @@
 #include <random>
 #include <unistd.h>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Stack emulator used to stress test the RLC TX/RX entities.
 /// This emulator will try to mimic a real gNB stack as closely as possible.
@@ -102,6 +102,6 @@ private:
   std::unique_ptr<stress_traffic_source> traffic_source = nullptr;
 
   // Logging
-  srsgnb::rlc_bearer_logger logger;
+  srsran::rlc_bearer_logger logger;
 };
-} // namespace srsgnb
+} // namespace srsran

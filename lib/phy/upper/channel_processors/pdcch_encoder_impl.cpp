@@ -15,7 +15,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace pdcch_constants;
 
 void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, unsigned rnti)

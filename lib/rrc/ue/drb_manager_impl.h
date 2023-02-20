@@ -13,12 +13,12 @@
 #include "srsgnb/rrc/drb_manager.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 
 namespace srs_cu_cp {
 
 struct drb_context {
-  srsgnb::drb_id_t           drb_id         = drb_id_t::invalid;
+  srsran::drb_id_t           drb_id         = drb_id_t::invalid;
   pdu_session_id_t           pdu_session_id = pdu_session_id_t::min;
   s_nssai_t                  s_nssai        = {};
   bool                       default_drb    = false;
@@ -61,4 +61,4 @@ private:
 
 } // namespace srs_cu_cp
 
-} // namespace srsgnb
+} // namespace srsran

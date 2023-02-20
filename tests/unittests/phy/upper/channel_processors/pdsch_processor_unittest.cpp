@@ -18,7 +18,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

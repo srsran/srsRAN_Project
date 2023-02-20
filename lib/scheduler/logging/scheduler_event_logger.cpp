@@ -10,7 +10,7 @@
 
 #include "scheduler_event_logger.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 void scheduler_event_logger::log_impl()
 {

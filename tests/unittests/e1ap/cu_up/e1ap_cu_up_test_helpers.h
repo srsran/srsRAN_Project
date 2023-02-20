@@ -18,7 +18,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// Fixture class for E1AP
@@ -41,4 +41,4 @@ protected:
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

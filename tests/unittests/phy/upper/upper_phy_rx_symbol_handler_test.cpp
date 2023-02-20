@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/upper_phy_factories.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace {
 

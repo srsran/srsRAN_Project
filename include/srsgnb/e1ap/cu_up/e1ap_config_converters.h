@@ -13,7 +13,7 @@
 #include "srsgnb/e1ap/common/e1ap_types.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 
-namespace srsgnb {
+namespace srsran {
 
 inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
 {
@@ -80,4 +80,4 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
 
   return cfg;
 }
-} // namespace srsgnb
+} // namespace srsran

@@ -16,7 +16,7 @@
 #include "srsgnb/ran/resource_allocation/rb_interval.h"
 #include "srsgnb/ran/rnti.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Labels that code how many bits are used for SR.
 /// For PUCCH Format 0-1, valid values: no_sr = no SR occasion; one = SR occasion.
@@ -140,4 +140,4 @@ struct pucch_format_4 {
   uint16_t m_0_cyclic_shift;
 };
 
-} // namespace srsgnb
+} // namespace srsran

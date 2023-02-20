@@ -14,7 +14,7 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr uint16_t UDP_DLT = 149;
 
@@ -53,20 +53,20 @@ bool mac_pcap_impl::is_write_enabled()
   return writter.is_write_enabled();
 }
 
-void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsgnb::const_span<uint8_t> pdu)
+void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, std::move(buffer)); };
   worker.push_task(fn);
 }
 
-void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsgnb::byte_buffer pdu)
+void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::byte_buffer pdu)
 {
   auto fn = [this, context, pdu = std::move(pdu)]() mutable { write_pdu(context, std::move(pdu)); };
   worker.push_task(fn);
 }
 
-void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsgnb::byte_buffer buf)
+void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsran::byte_buffer buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip
@@ -165,4 +165,4 @@ int nr_pcap_pack_mac_context_to_buffer(const mac_nr_context_info& context, uint8
   buffer[offset++] = MAC_NR_PAYLOAD_TAG;
   return offset;
 }
-} // namespace srsgnb
+} // namespace srsran

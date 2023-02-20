@@ -13,11 +13,11 @@
 #include "du_manager.h"
 #include "du_manager_params.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// Creates an instance of a DU manager.
 std::unique_ptr<du_manager_interface> create_du_manager(const du_manager_params& params);
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

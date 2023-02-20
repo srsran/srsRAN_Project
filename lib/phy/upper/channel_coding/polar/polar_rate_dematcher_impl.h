@@ -16,7 +16,7 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_dematcher.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Polar code rate dematching implementation.
 ///
@@ -40,4 +40,4 @@ public:
                     span<const log_likelihood_ratio> input,
                     const polar_code&                code) override;
 };
-} // namespace srsgnb
+} // namespace srsran

@@ -13,7 +13,7 @@
 #include "crc_calculator_lut_impl.h"
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief CRC calculator implementation based on the \e PCLMULQDQ instruction.
 ///
@@ -47,4 +47,4 @@ private:
   crc_calculator_lut_impl crc_calc_lut;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -10,7 +10,7 @@
 
 #include "phy_fapi_adaptor_impl.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi_adaptor;
 
 /// Generates and returns a FAPI-to-PHY translator configuration from the given PHY adaptor configuration.

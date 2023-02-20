@@ -18,7 +18,7 @@
 #include <complex>
 #include <vector>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Defines the radio sample type.
 using radio_sample_type = std::complex<float>;
@@ -118,4 +118,4 @@ public:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

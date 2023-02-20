@@ -15,7 +15,7 @@
 #include "../ue_scheduling/ue_sch_pdu_builder.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Number of UL HARQs reserved per UE (Implementation-defined)
 constexpr unsigned NOF_UL_HARQS = 16;

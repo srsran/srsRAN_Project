@@ -10,7 +10,7 @@
 
 #include "scheduler_metrics_handler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 scheduler_metrics_handler::scheduler_metrics_handler(msecs                          metrics_report_period,
                                                      scheduler_ue_metrics_notifier& notifier_) :

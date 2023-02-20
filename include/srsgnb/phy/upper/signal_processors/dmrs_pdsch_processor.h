@@ -16,7 +16,7 @@
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a DMRS for PDSCH processor interface.
 class dmrs_pdsch_processor
@@ -53,4 +53,4 @@ public:
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

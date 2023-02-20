@@ -19,7 +19,7 @@
 #include "srsgnb/mac/mac_ue_control_information_handler.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_interface
 {
@@ -49,4 +49,4 @@ public:
   virtual mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

@@ -16,7 +16,7 @@
 #include "srsgnb/srsvec/aligned_vec.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// OFDM demodulator factory configuration. Provides the necessary dependency instances.
 struct ofdm_demodulator_common_configuration {
@@ -107,4 +107,4 @@ public:
   demodulate(resource_grid_writer& grid, span<const cf_t> input, unsigned port_index, unsigned slot_index) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

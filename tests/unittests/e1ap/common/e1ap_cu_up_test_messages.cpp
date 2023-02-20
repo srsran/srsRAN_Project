@@ -10,11 +10,11 @@
 
 #include "e1ap_cu_up_test_messages.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_up;
 using namespace asn1::e1ap;
 
-e1ap_message srsgnb::srs_cu_up::generate_cu_cp_e1_setup_request()
+e1ap_message srsran::srs_cu_up::generate_cu_cp_e1_setup_request()
 {
   e1ap_message e1_setup_request = {};
   e1_setup_request.pdu.set_init_msg();
@@ -28,7 +28,7 @@ e1ap_message srsgnb::srs_cu_up::generate_cu_cp_e1_setup_request()
   return e1_setup_request;
 }
 
-e1ap_message srsgnb::srs_cu_up::generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
+e1ap_message srsran::srs_cu_up::generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_request = {};
 
@@ -111,7 +111,7 @@ e1ap_message srsgnb::srs_cu_up::generate_bearer_context_setup_request(unsigned i
   return bearer_context_setup_request;
 }
 
-e1ap_message srsgnb::srs_cu_up::generate_invalid_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
+e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_request = {};
 
@@ -135,21 +135,16 @@ e1ap_message srsgnb::srs_cu_up::generate_invalid_bearer_context_setup_request(un
   return bearer_context_setup_request;
 }
 
-e1ap_message srsgnb::srs_cu_up::generate_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
+e1ap_message srsran::srs_cu_up::generate_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
                                                                              unsigned int cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_modification_request = {};
 
   bearer_context_modification_request.pdu.set_init_msg();
   bearer_context_modification_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
-
   auto& bearer_context_mod_req = bearer_context_modification_request.pdu.init_msg().value.bearer_context_mod_request();
-  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value = cu_cp_ue_e1ap_id;
-  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id.value = cu_up_ue_e1ap_id;
-
-  bearer_context_mod_req->sys_bearer_context_mod_request_present = true;
-  bearer_context_mod_req->sys_bearer_context_mod_request.id      = ASN1_E1AP_ID_SYS_BEARER_CONTEXT_MOD_REQUEST;
-  bearer_context_mod_req->sys_bearer_context_mod_request.crit    = asn1::crit_opts::reject;
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id.value          = cu_cp_ue_e1ap_id;
+  bearer_context_mod_req->sys_bearer_context_mod_request.crit = asn1::crit_opts::reject;
   bearer_context_mod_req->sys_bearer_context_mod_request.value.set_ng_ran_bearer_context_mod_request();
 
   auto& ng_ran_bearer_context_mod_req =
@@ -179,7 +174,7 @@ e1ap_message srsgnb::srs_cu_up::generate_bearer_context_modification_request(uns
   return bearer_context_modification_request;
 }
 
-e1ap_message srsgnb::srs_cu_up::generate_invalid_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
+e1ap_message srsran::srs_cu_up::generate_invalid_bearer_context_modification_request(unsigned int cu_cp_ue_e1ap_id,
                                                                                      unsigned int cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_modification_request = {};
@@ -199,7 +194,7 @@ e1ap_message srsgnb::srs_cu_up::generate_invalid_bearer_context_modification_req
   return bearer_context_modification_request;
 }
 
-e1ap_message srsgnb::srs_cu_up::generate_bearer_context_release_command(unsigned int cu_cp_ue_e1ap_id,
+e1ap_message srsran::srs_cu_up::generate_bearer_context_release_command(unsigned int cu_cp_ue_e1ap_id,
                                                                         unsigned int cu_up_ue_e1ap_id)
 {
   e1ap_message bearer_context_release_command = {};

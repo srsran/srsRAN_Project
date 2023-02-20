@@ -15,7 +15,7 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 
 class ue_config_tester : public du_manager_proc_tester, public ::testing::Test

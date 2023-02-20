@@ -10,7 +10,7 @@
 
 #include "ue_task_scheduler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 ue_task_scheduler::ue_task_scheduler(timer_manager& timers_) : timers(timers_)

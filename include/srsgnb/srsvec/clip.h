@@ -15,7 +15,7 @@
 
 #include "srsgnb/srsvec/types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 /// \brief Clips a span of floats.
@@ -76,4 +76,4 @@ unsigned clip_iq(span<cf_t> y, span<const cf_t> x, const float threshold);
 unsigned clip_magnitude(span<cf_t> y, span<const cf_t> x, const float threshold);
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

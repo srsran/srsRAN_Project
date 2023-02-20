@@ -29,7 +29,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace srsgnb {
+namespace srsran {
 namespace security {
 
 typedef struct {
@@ -102,4 +102,4 @@ void s3g_f9(sec_mac&       mac,
             uint64_t       length);
 
 } // namespace security
-} // namespace srsgnb
+} // namespace srsran

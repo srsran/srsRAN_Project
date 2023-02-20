@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/span.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srsvec {
 
 namespace detail {
@@ -51,4 +51,4 @@ public:
 };
 
 } // namespace srsvec
-} // namespace srsgnb
+} // namespace srsran

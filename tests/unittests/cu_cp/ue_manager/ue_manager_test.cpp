@@ -12,7 +12,7 @@
 #include "srsgnb/rrc/rrc_ue.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 //////////////////////////////////////////////////////////////////////////////////////

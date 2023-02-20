@@ -13,7 +13,7 @@
 #include "srsgnb/phy/lower/sampling_rate.h"
 #include "srsgnb/radio/radio_session.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class task_executor;
 
@@ -41,4 +41,4 @@ std::unique_ptr<radio_session> create_radio(const std::string&          radio_dr
                                             task_executor&              executor,
                                             radio_notification_handler& radio_handler);
 
-} // namespace srsgnb
+} // namespace srsran

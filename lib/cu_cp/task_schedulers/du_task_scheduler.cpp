@@ -10,7 +10,7 @@
 
 #include "du_task_scheduler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 du_task_scheduler::du_task_scheduler(timer_manager& timers_) : timers(timers_)

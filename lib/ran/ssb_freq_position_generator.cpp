@@ -1,6 +1,6 @@
 #include "ssb_freq_position_generator.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 // Compute the frequency (in Hz) corresponding to the first subcarrier of the SSB.
 static double get_f_ssb_0_hz(double ss_ref, subcarrier_spacing scs_ssb)

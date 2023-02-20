@@ -13,8 +13,8 @@
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
-void write_pcap_nr_thread_function_byte_buffer(srsgnb::mac_pcap* pcap, uint32_t num_pdus);
-void write_pcap_nr_thread_function_spans(srsgnb::mac_pcap* pcap, uint32_t num_pdus);
+void write_pcap_nr_thread_function_byte_buffer(srsran::mac_pcap* pcap, uint32_t num_pdus);
+void write_pcap_nr_thread_function_spans(srsran::mac_pcap* pcap, uint32_t num_pdus);
 
 class pcap_mac_test : public ::testing::Test
 {
@@ -38,7 +38,7 @@ protected:
     srslog::flush();
   }
 
-  srsgnb::mac_pcap_impl mac_pcap_writer;
+  srsran::mac_pcap_impl mac_pcap_writer;
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -51,10 +51,10 @@ TEST_F(pcap_mac_test, write_pdu)
   int                         ue_id  = 2;
   int                         harqid = 0;
   int                         tti    = 10;
-  srsgnb::mac_nr_context_info context;
-  context.radioType           = srsgnb::PCAP_FDD_RADIO;
-  context.direction           = srsgnb::PCAP_DIRECTION_DOWNLINK;
-  context.rntiType            = srsgnb::PCAP_C_RNTI;
+  srsran::mac_nr_context_info context;
+  context.radioType           = srsran::PCAP_FDD_RADIO;
+  context.direction           = srsran::PCAP_DIRECTION_DOWNLINK;
+  context.rntiType            = srsran::PCAP_C_RNTI;
   context.rnti                = crnti;
   context.ueid                = ue_id;
   context.harqid              = harqid;
@@ -113,7 +113,7 @@ TEST_F(pcap_mac_test, write_many_byte_buffers)
 }
 
 // Write #num_pdus DL MAC NR PDUs using PCAP handle (spans)
-void write_pcap_nr_thread_function_spans(srsgnb::mac_pcap* pcap, uint32_t num_pdus)
+void write_pcap_nr_thread_function_spans(srsran::mac_pcap* pcap, uint32_t num_pdus)
 {
   std::array<uint8_t, 17> tv = {
       0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
@@ -121,10 +121,10 @@ void write_pcap_nr_thread_function_spans(srsgnb::mac_pcap* pcap, uint32_t num_pd
   int                         ue_id  = 2;
   int                         harqid = 0;
   int                         tti    = 10;
-  srsgnb::mac_nr_context_info context;
-  context.radioType           = srsgnb::PCAP_FDD_RADIO;
-  context.direction           = srsgnb::PCAP_DIRECTION_DOWNLINK;
-  context.rntiType            = srsgnb::PCAP_C_RNTI;
+  srsran::mac_nr_context_info context;
+  context.radioType           = srsran::PCAP_FDD_RADIO;
+  context.direction           = srsran::PCAP_DIRECTION_DOWNLINK;
+  context.rntiType            = srsran::PCAP_C_RNTI;
   context.rnti                = crnti;
   context.ueid                = ue_id;
   context.harqid              = harqid;
@@ -138,18 +138,18 @@ void write_pcap_nr_thread_function_spans(srsgnb::mac_pcap* pcap, uint32_t num_pd
 }
 
 // Write #num_pdus DL MAC NR PDUs using PCAP handle (byte_buffer)
-void write_pcap_nr_thread_function_byte_buffer(srsgnb::mac_pcap* pcap, uint32_t num_pdus)
+void write_pcap_nr_thread_function_byte_buffer(srsran::mac_pcap* pcap, uint32_t num_pdus)
 {
-  srsgnb::byte_buffer tv = {
+  srsran::byte_buffer tv = {
       0x04, 0x0a, 0x0d, 0x72, 0x80, 0xd3, 0x96, 0x02, 0x7b, 0x01, 0xbd, 0x26, 0x3f, 0x00, 0x00, 0x00, 0x00};
   int                         crnti  = 0x01011;
   int                         ue_id  = 2;
   int                         harqid = 0;
   int                         tti    = 10;
-  srsgnb::mac_nr_context_info context;
-  context.radioType           = srsgnb::PCAP_FDD_RADIO;
-  context.direction           = srsgnb::PCAP_DIRECTION_DOWNLINK;
-  context.rntiType            = srsgnb::PCAP_C_RNTI;
+  srsran::mac_nr_context_info context;
+  context.radioType           = srsran::PCAP_FDD_RADIO;
+  context.direction           = srsran::PCAP_DIRECTION_DOWNLINK;
+  context.rntiType            = srsran::PCAP_C_RNTI;
   context.rnti                = crnti;
   context.ueid                = ue_id;
   context.harqid              = harqid;

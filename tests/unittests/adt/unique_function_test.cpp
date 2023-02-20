@@ -11,7 +11,7 @@
 #include "srsgnb/adt/unique_function.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 struct C {
   std::unique_ptr<int> val{new int{5}};

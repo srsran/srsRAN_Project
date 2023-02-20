@@ -12,7 +12,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include <stdint.h>
 
-namespace srsgnb {
+namespace srsran {
 
 #define E1AP_DLT 153
 
@@ -37,7 +37,7 @@ void e1ap_pcap::close()
   dlt_pcap_close();
 }
 
-void e1ap_pcap::write_pdu(srsgnb::const_span<uint8_t> pdu)
+void e1ap_pcap::write_pdu(srsran::const_span<uint8_t> pdu)
 {
   if (!is_write_enabled() || pdu.empty()) {
     // skip
@@ -55,4 +55,4 @@ void e1ap_pcap::write_pdu(srsgnb::const_span<uint8_t> pdu)
   write_pcap_pdu(pdu);
 }
 
-} // namespace srsgnb
+} // namespace srsran

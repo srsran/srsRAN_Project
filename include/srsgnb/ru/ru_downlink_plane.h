@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/slot_point.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct resource_grid_context;
 class resource_grid_reader;
@@ -32,4 +32,4 @@ public:
   virtual void handle_dl_data(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
 };
 
-} // namespace srsgnb
+} // namespace srsran

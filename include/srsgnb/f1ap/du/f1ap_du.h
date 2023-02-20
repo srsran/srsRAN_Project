@@ -24,7 +24,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/timers.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 struct f1ap_rx_pdu {
@@ -204,4 +204,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

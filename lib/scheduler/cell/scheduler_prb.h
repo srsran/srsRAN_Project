@@ -15,7 +15,7 @@
 #include "srsgnb/adt/interval.h"
 #include "srsgnb/scheduler/prb_grant.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct bwp_rb_bitmap {
 public:
@@ -114,19 +114,19 @@ bwp_rb_bitmap operator|(const bwp_rb_bitmap& lhs, const Other& rhs)
   return bwp_rb_bitmap(lhs) |= rhs;
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::prb_grant> : public formatter<srsgnb::rbg_bitmap> {
+struct formatter<srsran::prb_grant> : public formatter<srsran::rbg_bitmap> {
   template <typename FormatContext>
-  auto format(const srsgnb::prb_grant& grant, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::prb_grant& grant, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (grant.is_alloc_type1()) {
-      return formatter<srsgnb::interval<uint32_t>>{}.format(grant.prbs(), ctx);
+      return formatter<srsran::interval<uint32_t>>{}.format(grant.prbs(), ctx);
     }
-    return formatter<srsgnb::rbg_bitmap>::format(grant.rbgs(), ctx);
+    return formatter<srsran::rbg_bitmap>::format(grant.rbgs(), ctx);
   }
 };
 

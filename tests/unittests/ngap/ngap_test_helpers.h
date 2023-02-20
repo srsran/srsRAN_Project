@@ -20,7 +20,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// Fixture class for NGAP
@@ -69,4 +69,4 @@ protected:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

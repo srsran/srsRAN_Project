@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 /// SSE-optimized implementation of the pseudo-random generator.
 class pseudo_random_generator_impl : public pseudo_random_generator
@@ -198,4 +198,4 @@ public:
   // See interface for the documentation.
   void generate(span<float> buffer, float value) override;
 };
-} // namespace srsgnb
+} // namespace srsran

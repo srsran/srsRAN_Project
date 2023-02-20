@@ -14,7 +14,7 @@
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
 
-namespace srsgnb {
+namespace srsran {
 class rrc_dummy : public pdcp_rx_upper_control_notifier, public pdcp_tx_upper_control_notifier
 {
   rlc_bearer_logger logger;
@@ -28,4 +28,4 @@ public:
   void on_max_count_reached() final {}
 };
 
-} // namespace srsgnb
+} // namespace srsran

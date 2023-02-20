@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include <mutex>
 
-namespace srsgnb {
+namespace srsran {
 
 class downlink_pdu_validator;
 class downlink_processor;
@@ -197,4 +197,4 @@ private:
 };
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

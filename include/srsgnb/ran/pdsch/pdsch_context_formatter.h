@@ -16,7 +16,7 @@ namespace fmt {
 
 /// \brief Custom formatter for \c pdsch_context.
 template <>
-struct formatter<srsgnb::pdsch_context> {
+struct formatter<srsran::pdsch_context> {
 public:
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
@@ -25,7 +25,7 @@ public:
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::pdsch_context& context, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::pdsch_context& context, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     helper.format_always(ctx, "rnti=0x{:04x}", context.rnti);
     helper.format_always(ctx, "h_id={}", context.h_id);
@@ -33,7 +33,7 @@ public:
   }
 
 private:
-  srsgnb::delimited_formatter helper;
+  srsran::delimited_formatter helper;
 };
 
 } // namespace fmt

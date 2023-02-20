@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsgnb/support/file_vector.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct test_case_t {
   dmrs_pdsch_processor::config_t                          config;
@@ -221,4 +221,4 @@ static const std::vector<test_case_t> dmrs_pdsch_processor_test_data = {
     // clang-format on
 };
 
-} // namespace srsgnb
+} // namespace srsran

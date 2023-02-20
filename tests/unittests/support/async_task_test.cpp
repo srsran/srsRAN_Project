@@ -15,7 +15,7 @@
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/test_utils.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 /// Tester coroutine that just awaits an event to complete.
 struct wait_event_coroutine {

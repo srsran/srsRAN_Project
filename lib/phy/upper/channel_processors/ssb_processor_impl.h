@@ -17,7 +17,7 @@
 #include "srsgnb/phy/upper/signal_processors/pss_processor.h"
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct ssb_processor_config {
   std::unique_ptr<pbch_encoder>        encoder;
@@ -58,4 +58,4 @@ public:
   void process(resource_grid_writer& grid, const pdu_t& pdu) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

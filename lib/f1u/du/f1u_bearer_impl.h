@@ -16,7 +16,7 @@
 #include "srsgnb/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsgnb/ran/lcid.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class f1u_bearer_impl final : public f1u_bearer,
@@ -46,4 +46,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

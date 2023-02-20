@@ -15,7 +15,7 @@
 #include "srsgnb/phy/upper/channel_processors/pucch_detector.h"
 #include <random>
 
-namespace srsgnb {
+namespace srsran {
 
 class pucch_detector_spy : public pucch_detector
 {
@@ -59,4 +59,4 @@ private:
 
 PHY_SPY_FACTORY_TEMPLATE(pucch_detector);
 
-} // namespace srsgnb
+} // namespace srsran

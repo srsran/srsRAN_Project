@@ -17,7 +17,7 @@
 
 #pragma once
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Contains the PRACH configuration parameters.
 ///
@@ -62,4 +62,4 @@ static const prach_configuration PRACH_CONFIG_RESERVED =
 /// \return A valid PRACH configuration if the provided arguments are valid. Otherwise, \ref PRACH_CONFIG_RESERVED.
 prach_configuration prach_configuration_get(frequency_range fr, duplex_mode dm, uint8_t prach_config_index);
 
-} // namespace srsgnb
+} // namespace srsran

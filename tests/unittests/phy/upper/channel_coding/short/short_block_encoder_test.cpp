@@ -18,7 +18,7 @@
 #include "srsgnb/phy/upper/channel_coding/short/short_block_encoder.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 int main()
 {

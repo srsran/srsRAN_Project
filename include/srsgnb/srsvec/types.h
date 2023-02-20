@@ -16,13 +16,13 @@
 #include <cstdint>
 
 // The supported vector data types are:
-// - srsgnb::span<cf_t>: For complex float vectors
-// - srsgnb::span<float>: For float vectors
-// - srsgnb::span<int16_t>: For signed 16 bit integer vectors
-// - srsgnb::span<int8_t>: For signed 8 bit integer vectors
-// - srsgnb::span<uint8_t>: For unsigned 8 bit integer vectors
+// - srsran::span<cf_t>: For complex float vectors
+// - srsran::span<float>: For float vectors
+// - srsran::span<int16_t>: For signed 16 bit integer vectors
+// - srsran::span<int8_t>: For signed 8 bit integer vectors
+// - srsran::span<uint8_t>: For unsigned 8 bit integer vectors
 //
-// To make the span constant use srsgnb::span<const T>.
+// To make the span constant use srsran::span<const T>.
 
 #define srsgnb_srsvec_assert_size(X, Y)                                                                                \
   srsgnb_assert(                                                                                                       \

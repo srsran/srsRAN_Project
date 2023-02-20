@@ -15,7 +15,7 @@
 #include "srsgnb/mac/mac_ue_control_information_handler.h"
 #include "srsgnb/rlc/rlc_entity.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_layer_data_notifier
@@ -103,4 +103,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

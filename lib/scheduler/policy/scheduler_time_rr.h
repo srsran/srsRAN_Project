@@ -11,7 +11,7 @@
 
 #include "scheduler_policy.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class scheduler_time_rr : public scheduler_policy
 {
@@ -33,4 +33,4 @@ private:
   du_ue_index_t         next_dl_ue_index, next_ul_ue_index;
 };
 
-} // namespace srsgnb
+} // namespace srsran

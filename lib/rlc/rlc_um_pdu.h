@@ -14,7 +14,7 @@
 #include "srsgnb/srslog/srslog.h"
 #include "fmt/format.h"
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr size_t rlc_um_pdu_header_size_complete_sdu = 1;
 
@@ -170,11 +170,11 @@ inline void rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_b
   pdu.chain_before(std::move(hdr_buf));
 }
 
-} // namespace srsgnb
+} // namespace srsran
 
 namespace fmt {
 template <>
-struct formatter<srsgnb::rlc_um_pdu_header> {
+struct formatter<srsran::rlc_um_pdu_header> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -182,7 +182,7 @@ struct formatter<srsgnb::rlc_um_pdu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_um_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(const srsran::rlc_um_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "si={} sn={} so={}", hdr.si, hdr.sn, hdr.so);
   }

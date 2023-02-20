@@ -17,7 +17,7 @@
 #include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/srslog/srslog.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 // class du_ccch_pdu_handler : public ul_ccch_pdu_notifier
@@ -49,4 +49,4 @@ private:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

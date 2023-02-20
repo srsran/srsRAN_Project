@@ -21,15 +21,15 @@
 #include "srsgnb/srsvec/zero.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+using namespace srsran;
+using namespace srsran::ldpc;
 
-namespace srsgnb {
+namespace srsran {
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
   return os << fmt::format("BG{}, LS{}", tc.bg, tc.ls);
 }
-} // namespace srsgnb
+} // namespace srsran
 
 namespace {
 
@@ -94,7 +94,7 @@ protected:
     unsigned min_cb_length_bg = 24;
     unsigned max_cb_length_bg = 66;
     unsigned msg_length_bg    = 22;
-    if (bg == srsgnb::ldpc_base_graph_type::BG2) {
+    if (bg == srsran::ldpc_base_graph_type::BG2) {
       min_cb_length_bg = 12;
       max_cb_length_bg = 50;
       msg_length_bg    = 10;
@@ -171,7 +171,7 @@ protected:
   static std::shared_ptr<ldpc_decoder_factory> dec_factory_neon;
 
   std::unique_ptr<ldpc_encoder>         encoder_test;
-  std::unique_ptr<srsgnb::ldpc_decoder> decoder_test;
+  std::unique_ptr<srsran::ldpc_decoder> decoder_test;
 
   std::vector<uint8_t> messages;
   unsigned             nof_messages;
@@ -181,8 +181,8 @@ protected:
   unsigned             min_cb_length;
   unsigned             max_cb_length;
 
-  srsgnb::codeblock_metadata::tb_common_metadata cfg_enc;
-  srsgnb::ldpc_decoder::configuration            cfg_dec;
+  srsran::codeblock_metadata::tb_common_metadata cfg_enc;
+  srsran::ldpc_decoder::configuration            cfg_dec;
 };
 
 std::shared_ptr<ldpc_encoder_factory> LDPCEncDecFixture::enc_factory_generic = nullptr;

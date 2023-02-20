@@ -13,12 +13,12 @@
 #include "fmt/ostream.h"
 #include "gtest/gtest.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 namespace fmt {
 
 template <>
-struct formatter<srsgnb::radio_configuration::clock_sources::source> {
+struct formatter<srsran::radio_configuration::clock_sources::source> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -26,17 +26,17 @@ struct formatter<srsgnb::radio_configuration::clock_sources::source> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::radio_configuration::clock_sources::source& source, FormatContext& ctx)
+  auto format(const srsran::radio_configuration::clock_sources::source& source, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     switch (source) {
-      case srsgnb::radio_configuration::clock_sources::source::DEFAULT:
+      case srsran::radio_configuration::clock_sources::source::DEFAULT:
         return fmt::format_to(ctx.out(), "default");
-      case srsgnb::radio_configuration::clock_sources::source::INTERNAL:
+      case srsran::radio_configuration::clock_sources::source::INTERNAL:
         return fmt::format_to(ctx.out(), "internal");
-      case srsgnb::radio_configuration::clock_sources::source::EXTERNAL:
+      case srsran::radio_configuration::clock_sources::source::EXTERNAL:
         return fmt::format_to(ctx.out(), "external");
-      case srsgnb::radio_configuration::clock_sources::source::GPSDO:
+      case srsran::radio_configuration::clock_sources::source::GPSDO:
       default:
         return fmt::format_to(ctx.out(), "gpsdo");
     }
@@ -44,7 +44,7 @@ struct formatter<srsgnb::radio_configuration::clock_sources::source> {
 };
 
 template <>
-struct formatter<srsgnb::radio_configuration::radio> {
+struct formatter<srsran::radio_configuration::radio> {
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
@@ -52,7 +52,7 @@ struct formatter<srsgnb::radio_configuration::radio> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::radio_configuration::radio& config, FormatContext& ctx)
+  auto format(const srsran::radio_configuration::radio& config, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
     return fmt::format_to(ctx.out(), "clock_src={} sync_src={}", config.clock.clock, config.clock.sync);

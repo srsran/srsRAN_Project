@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 #include <random>
 
-using namespace srsgnb;
+using namespace srsran;
 
 std::random_device rd;
 std::mt19937       g(rd());
@@ -145,7 +145,7 @@ protected:
     if (params.duplx_mode == duplex_mode::TDD) {
       // Band 40.
       cell_cfg.dl_arfcn       = 474000;
-      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
       cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
       cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
 
@@ -213,7 +213,7 @@ protected:
     if (params.duplx_mode == duplex_mode::TDD) {
       // Band 40.
       cell_cfg.dl_arfcn       = 474000;
-      cell_cfg.scs_common     = srsgnb::subcarrier_spacing::kHz30;
+      cell_cfg.scs_common     = srsran::subcarrier_spacing::kHz30;
       cell_cfg.band           = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_arfcn);
       cell_cfg.channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
 

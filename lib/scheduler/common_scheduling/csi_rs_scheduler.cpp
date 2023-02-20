@@ -10,7 +10,7 @@
 
 #include "csi_rs_scheduler.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp_csi_rs_resource& nzp_csi_rs_res)
 {
@@ -19,7 +19,7 @@ static csi_rs_info build_csi_rs_info(const bwp_configuration& bwp_cfg, const nzp
   csi_rs.bwp_cfg = &bwp_cfg;
   csi_rs.crbs    = {nzp_csi_rs_res.res_mapping.freq_band_start_rb,
                     nzp_csi_rs_res.res_mapping.freq_band_start_rb + nzp_csi_rs_res.res_mapping.freq_band_nof_rb};
-  csi_rs.type    = srsgnb::csi_rs_type::CSI_RS_NZP;
+  csi_rs.type    = srsran::csi_rs_type::CSI_RS_NZP;
 
   csi_rs.freq_domain = nzp_csi_rs_res.res_mapping.fd_alloc;
   switch (csi_rs.freq_domain.size()) {

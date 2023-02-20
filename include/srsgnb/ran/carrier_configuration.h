@@ -13,7 +13,7 @@
 #include "band_helper.h"
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Configuration of each transmission point associated to the corresponding cell(s). This includes
 /// different physical antennas, different frequencies, bandwidths.
@@ -28,4 +28,4 @@ struct carrier_configuration {
   uint16_t nof_ant;
 };
 
-} // namespace srsgnb
+} // namespace srsran

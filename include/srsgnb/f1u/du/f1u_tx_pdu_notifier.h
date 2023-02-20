@@ -13,7 +13,7 @@
 
 #include "srsgnb/f1u/common/nru_message.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_du {
 
 /// \brief This interface represents the NR-U exit point of a F1-U bearer of the DU.
@@ -27,4 +27,4 @@ public:
 };
 
 } // namespace srs_du
-} // namespace srsgnb
+} // namespace srsran

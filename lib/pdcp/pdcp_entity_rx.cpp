@@ -13,7 +13,7 @@
 #include "srsgnb/security/integrity.h"
 #include "srsgnb/support/bit_encoding.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                rb_id_t                         rb_id_,

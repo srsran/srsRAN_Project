@@ -18,7 +18,7 @@
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
 
-namespace srsgnb {
+namespace srsran {
 
 /// Reusable notifier class that a) stores the received PDU for test inspection and b)
 /// calls the registered PDU handler (if any). The handler can be added upon construction
@@ -163,7 +163,7 @@ private:
 };
 
 /// Dummy PDU handler
-class dummy_network_gateway_data_handler : public srsgnb::sctp_network_gateway_data_handler
+class dummy_network_gateway_data_handler : public srsran::sctp_network_gateway_data_handler
 {
 public:
   dummy_network_gateway_data_handler(){};
@@ -171,4 +171,4 @@ public:
 
   byte_buffer last_pdu;
 };
-} // namespace srsgnb
+} // namespace srsran

@@ -14,7 +14,7 @@
 #include "logging_slot_time_noitifier_decorator.h"
 #include "srsgnb/srslog/srslog.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace fapi;
 
 std::unique_ptr<slot_message_gateway> logging_slot_gateway_decorator_factory::create(slot_message_gateway& gateway)

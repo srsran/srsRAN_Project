@@ -14,7 +14,7 @@
 #include "srsgnb/f1ap/cu_cp/f1ap_cu.h"
 #include "srsgnb/ran/lcid.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Convert the UE Context Modification Request from common type to ASN.1.
@@ -279,4 +279,4 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
 }
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

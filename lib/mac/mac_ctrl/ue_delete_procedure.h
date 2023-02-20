@@ -13,7 +13,7 @@
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class mac_ue_delete_procedure
 {
@@ -72,4 +72,4 @@ private:
   mac_scheduler_configurator&   sched_configurator;
 };
 
-} // namespace srsgnb
+} // namespace srsran

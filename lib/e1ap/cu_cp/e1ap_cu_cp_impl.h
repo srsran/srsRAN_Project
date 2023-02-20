@@ -22,7 +22,7 @@
 #include "srsgnb/support/timers.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 class e1ap_event_manager;
@@ -30,7 +30,7 @@ class e1ap_event_manager;
 class e1ap_cu_cp_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_cp_impl(srsgnb::timer_manager&         timers_,
+  e1ap_cu_cp_impl(srsran::timer_manager&         timers_,
                   e1ap_message_notifier&         e1ap_pdu_notifier_,
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                   task_executor&                 ctrl_exec_);
@@ -89,4 +89,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

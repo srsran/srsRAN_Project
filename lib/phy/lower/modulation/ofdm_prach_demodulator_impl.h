@@ -16,7 +16,7 @@
 #include "srsgnb/phy/support/prach_buffer.h"
 #include "srsgnb/support/error_handling.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// Describes a generic OFDM PRACH demodulator.
 class ofdm_prach_demodulator_impl : public ofdm_prach_demodulator
@@ -42,4 +42,4 @@ public:
   void demodulate(prach_buffer& buffer, span<const cf_t> input, const configuration& config) override;
 };
 
-} // namespace srsgnb
+} // namespace srsran

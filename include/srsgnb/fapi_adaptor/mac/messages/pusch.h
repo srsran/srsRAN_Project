@@ -12,7 +12,7 @@
 
 #include "srsgnb/fapi/message_builders.h"
 
-namespace srsgnb {
+namespace srsran {
 
 struct ul_sched_info;
 
@@ -31,4 +31,4 @@ void convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu& fapi_pdu, const ul_sched_info
 void convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& builder, const ul_sched_info& mac_pdu);
 
 } // namespace fapi_adaptor
-} // namespace srsgnb
+} // namespace srsran

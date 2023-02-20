@@ -17,7 +17,7 @@
 
 #include <cstdint>
 
-namespace srsgnb {
+namespace srsran {
 
 constexpr uint8_t nru_max_nof_pdcp_sn_discard_blocks = 1;
 constexpr uint8_t nru_max_nof_lost_nru_sn_ranges     = 1;
@@ -140,4 +140,4 @@ struct nru_ul_message {
   optional<nru_assistance_information> assistance_information;
 };
 
-} // namespace srsgnb
+} // namespace srsran

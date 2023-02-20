@@ -13,7 +13,7 @@
 #include "srsgnb/adt/tensor.h"
 #include "srsgnb/phy/upper/unique_rx_softbuffer.h"
 
-namespace srsgnb {
+namespace srsran {
 
 class rx_softbuffer_spy : public unique_rx_softbuffer::softbuffer
 {
@@ -79,4 +79,4 @@ private:
   std::vector<uint8_t>                    crc;
 };
 
-} // namespace srsgnb
+} // namespace srsran

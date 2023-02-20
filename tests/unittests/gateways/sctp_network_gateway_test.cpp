@@ -11,7 +11,7 @@
 #include "test_helpers.h"
 #include "srsgnb/gateways/sctp_network_gateway_factory.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 class sctp_network_gateway_tester : public ::testing::Test
 {

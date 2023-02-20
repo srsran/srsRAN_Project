@@ -23,7 +23,7 @@
 #include "srsgnb/support/timers.h"
 #include <map>
 
-namespace srsgnb {
+namespace srsran {
 
 /// PDCP TX state variables,
 /// TS 38.323, section 7.1
@@ -210,4 +210,4 @@ private:
   pdcp_entity_tx* parent;
   uint32_t        discard_count;
 };
-} // namespace srsgnb
+} // namespace srsran

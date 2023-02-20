@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 bool pdsch_processor_validator_impl::is_valid(const pdsch_processor::pdu_t& pdu) const
 {

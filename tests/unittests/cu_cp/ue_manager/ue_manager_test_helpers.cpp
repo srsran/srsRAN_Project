@@ -11,7 +11,7 @@
 #include "ue_manager_test_helpers.h"
 #include <gtest/gtest.h>
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_cu_cp;
 
 ue_manager_test::ue_manager_test()

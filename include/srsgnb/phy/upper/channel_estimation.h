@@ -23,7 +23,7 @@
 #include "srsgnb/ran/pusch/pusch_constants.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-namespace srsgnb {
+namespace srsran {
 
 /// \brief Describes channel estimation results.
 /// \warning Instantiating an object of this class entails a heap memory allocation.
@@ -351,4 +351,4 @@ private:
   }
 };
 
-} // namespace srsgnb
+} // namespace srsran

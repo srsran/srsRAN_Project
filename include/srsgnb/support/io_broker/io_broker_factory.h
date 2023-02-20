@@ -13,11 +13,11 @@
 #include "srsgnb/support/io_broker/io_broker.h"
 #include <memory>
 
-namespace srsgnb {
+namespace srsran {
 
 enum class io_broker_type { epoll, io_uring };
 
 /// Creates an instance of an IO broker
 std::unique_ptr<io_broker> create_io_broker(io_broker_type type);
 
-} // namespace srsgnb
+} // namespace srsran

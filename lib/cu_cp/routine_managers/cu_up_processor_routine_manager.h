@@ -14,7 +14,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/async_task_loop.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief Service provided by CU-UP Processor to handle routines.
@@ -37,4 +37,4 @@ private:
 };
 
 } // namespace srs_cu_cp
-} // namespace srsgnb
+} // namespace srsran

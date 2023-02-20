@@ -11,7 +11,7 @@
 #include "uplink_processor_pool_impl.h"
 #include "srsgnb/ran/slot_point.h"
 
-using namespace srsgnb;
+using namespace srsran;
 
 uplink_processor_pool_impl::uplink_processor_pool_impl(uplink_processor_pool_impl_config dl_processors) :
   processors(dl_processors.num_sectors)

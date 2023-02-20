@@ -13,7 +13,7 @@
 #include "../common/e1ap_types.h"
 #include "srsgnb/cu_up/cu_up_types.h"
 
-namespace srsgnb {
+namespace srsran {
 namespace srs_cu_up {
 
 /// \brief Request to create a new UE and bearer context.
@@ -47,4 +47,4 @@ struct e1ap_bearer_context_setup_response {
 };
 
 } // namespace srs_cu_up
-} // namespace srsgnb
+} // namespace srsran

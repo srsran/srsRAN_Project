@@ -11,7 +11,7 @@
 #include "f1ap_du_ue_context_setup_procedure.h"
 #include "f1ap_du_ue_context_common.h"
 
-using namespace srsgnb;
+using namespace srsran;
 using namespace srs_du;
 using namespace asn1::f1ap;
 
