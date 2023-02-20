@@ -285,7 +285,8 @@ nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 {
   for (const nr_band_raster& band : nr_band_table_fr1) {
     // Check given ARFCN is between the first and last possible ARFCN.
-    if (arfcn >= band.dl_nref_first and arfcn <= band.dl_nref_last and (arfcn % band.dl_nref_step) == 0) {
+    if (arfcn >= band.dl_nref_first and arfcn <= band.dl_nref_last and
+        ((arfcn - band.dl_nref_first) % band.dl_nref_step) == 0) {
       return band.band;
     }
   }
@@ -297,7 +298,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
   for (const nr_band_raster& raster_band : nr_band_table_fr1) {
     if (raster_band.band == band) {
       if (arfcn >= raster_band.dl_nref_first and arfcn <= raster_band.dl_nref_last and
-          (arfcn % raster_band.dl_nref_step) == 0) {
+          ((arfcn - raster_band.dl_nref_first) % raster_band.dl_nref_step) == 0) {
         return {};
       }
       return {fmt::format("DL ARFCN must be within the interval [{},{}], step {}, for the chosen band",
