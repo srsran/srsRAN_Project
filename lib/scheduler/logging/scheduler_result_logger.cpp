@@ -123,7 +123,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
   for (const dl_msg_alloc& ue_dl_grant : result.dl.ue_grants) {
     fmt::format_to(fmtbuf,
-                   "\n- UE PDSCH: ue={} c-rnti={:#x} h_id={} prb={} symb={} tbs={} mcs={} rv={} k1={} grants:",
+                   "\n- UE PDSCH: ue={} c-rnti={:#x} h_id={} prb={} symb={} tbs={} mcs={} rv={} k1={}",
                    ue_dl_grant.context.ue_index,
                    ue_dl_grant.pdsch_cfg.rnti,
                    ue_dl_grant.pdsch_cfg.harq_id,
@@ -136,7 +136,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     for (const dl_msg_lc_info& lc : ue_dl_grant.tb_list[0].lc_chs_to_sched) {
       fmt::format_to(fmtbuf,
                      "{}lcid={}: size={}",
-                     (&lc == &ue_dl_grant.tb_list[0].lc_chs_to_sched.front()) ? "" : ", ",
+                     (&lc == &ue_dl_grant.tb_list[0].lc_chs_to_sched.front()) ? " grants: " : ", ",
                      lc.lcid,
                      lc.sched_bytes);
     }
