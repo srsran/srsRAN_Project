@@ -25,7 +25,7 @@
     LOG_LEVEL: ""
     MARKERS: ""
     ARGS: ""
-    FORCE_DOWNLOAD: ""
+    FORCE_DOWNLOAD: "true"
   tags:
     - on-prem-amd64
   extends:
@@ -36,6 +36,7 @@
     paths:
       - $CI_JOB_NAME/*
     when: always
+    expire_in: 1 week
     reports:
       junit: tests/e2e/out.xml
   script:
@@ -44,80 +45,85 @@
       export LOGNAME=$GITLAB_USER_LOGIN
       export RETINA_LOGLEVEL="$LOG_LEVEL"
       export FORCE_DOWNLOAD="$FORCE_DOWNLOAD"
-
     - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
   after_script:
     - |
-      echo "**************************************************************************************"
+      echo "*******************************************************************************************************************************"
       echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/$CI_JOB_NAME/report.html"
-      echo "**************************************************************************************"
+      echo "*******************************************************************************************************************************"
     - mv tests/e2e/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
     - echo "$CI_JOB_ID" >> ${CI_PROJECT_DIR}/$CI_JOB_NAME/job.env
 
 ################################################################################
-## e2e build
+## Build
 ################################################################################
-e2e-build:
-  extends: .build_and_unit_big
-  stage: e2e
-  tags:
-    - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: none
-    PLATFORM: "amd64"
-    AUTO_DETECT_ISA: "False"
-    ENABLE_TSAN: "False"
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    ASSERT_LEVEL: PARANOID
-  needs: []
+smoke-zmq-tsan:
+  extends: .e2e-run
   rules:
     - if: $ON_MR
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  after_script:
-    - echo "Empty after script"
-  artifacts:
-    name: "srsgnb_bin"
-    paths:
-      - build/apps/gnb/gnb
-  cache: []
-
-################################################################################
-## e2e tests
-################################################################################
-zmq:
-  extends: .e2e-run
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "smoke and not tcp"
+    MARKERS: "smoke and not tcp and not multiue"
     LOG_LEVEL: "debug"
     ARGS: "-x"
     FORCE_DOWNLOAD: "false"
-  rules:
-    - if: $ON_MR
-      # when: manual
-      # allow_failure: false
-    # - if: $ON_MR == "true" && $GITLAB_USER_NAME == $CODEBOT_USERNAME
-    - if: $CI_DESCRIPTION =~ /Nightly/
-      variables:
-        MARKERS: "zmq"
-        LOG_LEVEL: "warning"
-        ARGS: ""
-        FORCE_DOWNLOAD: "true"
   needs:
-    - job: "e2e-build"
+    - job: "avx2 [tsan, cached]"
       artifacts: true
+      optional: true
+    - job: "avx2 [tsan, update cache]"
+      artifacts: true
+      optional: true
+    - job: "avx2 [tsan, clean]"
+      artifacts: true
+      optional: true
+
+zmq:
+  extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
+    MARKERS: "zmq and not multiue"
+    LOG_LEVEL: "warning"
+    FORCE_DOWNLOAD: "false"
+  needs:
+    - job: "avx2 [basic]"
+      artifacts: true
+
+zmq-tsan:
+  extends: zmq
+  needs:
+    - job: "avx2 [tsan, cached]"
+      artifacts: true
+      optional: true
+    - job: "avx2 [tsan, update cache]"
+      artifacts: true
+      optional: true
+    - job: "avx2 [tsan, clean]"
+      artifacts: true
+      optional: true
+
+zmq-asan:
+  extends: zmq
+  needs:
+    - job: "avx2 [asan]"
+      artifacts: true
+
+zmq-multiue:
+  extends: zmq
+  variables:
+    MARKERS: "zmq and multiue"
 
 rf:
   extends: .e2e-run
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  allow_failure: true
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     LOG_LEVEL: "warning"
-    MARKERS: "rf and not tcp"
-    FORCE_DOWNLOAD: "true"
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
+    MARKERS: "rf and not tcp and not multiue"
   needs:
-    - job: "e2e-build"
+    - job: "avx2 [basic]"
       artifacts: true

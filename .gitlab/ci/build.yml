@@ -199,11 +199,6 @@ stages:
         TEST_MODE: default
         COMPILER: gcc
         BUILD_TYPE: Release
-      - OS: ubuntu-22.04
-        TEST_MODE: tsan
-        COMPILER: clang
-        BUILD_TYPE: Debug
-        ENABLE_TSAN: "True"
 
 build cached:
   extends: .build_and_unit_main
@@ -462,6 +457,19 @@ sanitizers [asan]:
     ASSERT_LEVEL: PARANOID
   cache: []
 
+sanitizers [tsan]:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: tsan
+    COMPILER: clang
+    BUILD_TYPE: Debug
+    ENABLE_TSAN: "True"
+    ASSERT_LEVEL: PARANOID
+  cache: []
+
 sanitizers [valgrind]:
   extends: .build_and_unit
   rules:
@@ -477,36 +485,94 @@ sanitizers [valgrind]:
 
 # AVX
 
-.avx_compability:
+.avx:
   extends: .build_and_unit
   tags:
     - aws-demand-amd64-$CPU_FLAG
   variables:
     OS: ubuntu-22.04
-    TEST_MODE: coverage
+    TEST_MODE: default
     COMPILER: gcc
     BUILD_TYPE: Release
+    AUTO_DETECT_ISA: "True"
 
-avx compatibility:
-  extends: .avx_compability
+avx2 [basic]:
+  extends: .avx
   rules:
     - if: $ON_MR
       when: manual
       allow_failure: true
     - if: $CI_DESCRIPTION =~ /Nightly/
-  parallel:
-    matrix:
-      - CPU_FLAG: "avx2"
-        AUTO_DETECT_ISA: "True"
-        ENABLE_AVX512: "False"
-        ENABLE_AVX2: "True"
-      - CPU_FLAG: "avx2-avx512"
-        AUTO_DETECT_ISA: "True"
-        ENABLE_AVX512: "True"
-        ENABLE_AVX2: "True"
+  variables:
+    CPU_FLAG: "avx2"
+    ENABLE_AVX2: "True"
+    ENABLE_AVX512: "False"
 
-avx compatibility extended:
-  extends: .avx_compability
+avx2 [tsan, cached]:
+  extends: .avx
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $ON_MR
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: tsan
+    COMPILER: clang
+    BUILD_TYPE: Debug
+    ENABLE_TSAN: "True"
+    ASSERT_LEVEL: PARANOID
+    CPU_FLAG: "avx2"
+    ENABLE_AVX512: "False"
+    ENABLE_AVX2: "True"
+  cache:
+    <<: *build_cache
+    policy: pull
+
+avx2 [tsan, update cache]:
+  extends: "avx2 [tsan, cached]"
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  cache:
+    <<: *build_cache
+    policy: push
+
+avx2 [tsan, clean]:
+  extends: "avx2 [tsan, cached]"
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+  cache: []
+
+avx2 [asan]:
+  extends: .avx
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: ubuntu-22.04
+    TEST_MODE: asan
+    COMPILER: gcc
+    BUILD_TYPE: Debug
+    ENABLE_ASAN: "True"
+    ASSERT_LEVEL: PARANOID
+    CPU_FLAG: "avx2"
+    ENABLE_AVX512: "False"
+    ENABLE_AVX2: "True"
+
+avx512:
+  extends: .avx
+  rules:
+    - if: $ON_MR
+      when: manual
+      allow_failure: true
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    CPU_FLAG: "avx2-avx512"
+    ENABLE_AVX2: "True"
+    ENABLE_AVX512: "True"
+
+avx extended:
+  extends: .avx
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   parallel:

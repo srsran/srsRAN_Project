@@ -14,6 +14,7 @@ from pprint import pformat
 
 import grpc
 from pytest_html import extras
+from retina.launcher.utils import get_retina_force_report
 from retina.protocol.base_pb2 import Empty
 
 ATTACH_TIMEOUT = 120
@@ -91,10 +92,9 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
 
         if test_successful:
             self.disable_download_report()
-        else:
+        elif test_successful is False or get_retina_force_report():
             with suppress(UnboundLocalError, NameError):
                 extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
-
         assert teardown_ok is True
 
 
