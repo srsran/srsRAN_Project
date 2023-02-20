@@ -410,6 +410,10 @@ int main(int argc, char** argv)
   rrc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rrc_level));
   rrc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
+  auto& sdap_logger = srslog::fetch_basic_logger("SDAP", false);
+  sdap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.sdap_level));
+  sdap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+
   auto& gtpu_logger = srslog::fetch_basic_logger("GTPU", false);
   gtpu_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.gtpu_level));
   gtpu_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
