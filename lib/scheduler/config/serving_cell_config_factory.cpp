@@ -488,6 +488,14 @@ nzp_csi_rs_resource_set srsran::config_helpers::make_default_nzp_csi_rs_resource
   return res_set;
 }
 
+/// \brief Compute default CSI-RS signalling period to use, while constrained by TS38.214, 5.1.6.1.1.
+static csi_resource_periodicity get_max_csi_rs_period(const cell_config_builder_params& params)
+{
+  csi_resource_periodicity max_csi_period =
+      static_cast<csi_resource_periodicity>(std::min(80U * get_nof_slots_per_subframe(params.scs_common), 640U));
+  return max_csi_period;
+}
+
 nzp_csi_rs_resource srsran::config_helpers::make_default_nzp_csi_rs_resource(const cell_config_builder_params& params)
 {
   nzp_csi_rs_resource res;
@@ -506,7 +514,7 @@ nzp_csi_rs_resource srsran::config_helpers::make_default_nzp_csi_rs_resource(con
   res.pwr_ctrl_offset_ss_db = 0;
   res.scrambling_id         = 1;
 
-  res.csi_res_period = csi_resource_periodicity::slots320;
+  res.csi_res_period = get_max_csi_rs_period(params);
   // Note: Avoid slots with SSB and SIB1.
   res.csi_res_offset = 12;
 
@@ -534,7 +542,7 @@ csi_im_resource srsran::config_helpers::make_default_csi_im_resource(const cell_
       .symbol_location     = 8});
   res.freq_band_start_rb.emplace(0);
   res.freq_band_nof_rb.emplace(get_csi_freq_occupation_nof_rbs(params));
-  res.csi_res_period.emplace(csi_resource_periodicity::slots320);
+  res.csi_res_period.emplace(get_max_csi_rs_period(params));
   res.csi_res_offset.emplace(2);
 
   return res;
@@ -554,7 +562,7 @@ csi_resource_config srsran::config_helpers::make_default_csi_resource_config()
   return cfg;
 }
 
-csi_report_config srsran::config_helpers::make_default_csi_report_config()
+csi_report_config srsran::config_helpers::make_default_csi_report_config(const cell_config_builder_params& params)
 {
   csi_report_config cfg;
   cfg.report_cfg_id               = static_cast<csi_report_config_id_t>(0);
@@ -563,8 +571,9 @@ csi_report_config srsran::config_helpers::make_default_csi_report_config()
 
   csi_report_config::periodic_or_semi_persistent_report_on_pucch report_cfg_type{};
   report_cfg_type.report_type = csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic;
-  report_cfg_type.report_slot_period = csi_report_periodicity::slots80;
-  report_cfg_type.report_slot_offset = 9;
+  csi_resource_periodicity csi_rs_period = get_max_csi_rs_period(params);
+  report_cfg_type.report_slot_period     = static_cast<csi_report_periodicity>(std::min((unsigned)csi_rs_period, 320U));
+  report_cfg_type.report_slot_offset     = 9;
   report_cfg_type.pucch_csi_res_list.push_back(
       csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9});
   cfg.report_cfg_type = report_cfg_type;
@@ -608,7 +617,6 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.resize(12);
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.fd_alloc.set(0, true);
   meas_cfg.nzp_csi_rs_res_list.back().res_mapping.freq_density = csi_rs_freq_density_type::one;
-  meas_cfg.nzp_csi_rs_res_list.back().csi_res_period           = csi_resource_periodicity::slots640;
   meas_cfg.nzp_csi_rs_res_list.back().csi_res_offset           = 2;
   // Resource 1.
   meas_cfg.nzp_csi_rs_res_list.push_back(make_default_nzp_csi_rs_resource(params));
@@ -641,8 +649,7 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
 
   // csi-IM-Resource.
   meas_cfg.csi_im_res_list.push_back(make_default_csi_im_resource(params));
-  meas_cfg.csi_im_res_list.back().res_id         = static_cast<csi_im_res_id_t>(0);
-  meas_cfg.csi_im_res_list.back().csi_res_period = csi_resource_periodicity::slots640;
+  meas_cfg.csi_im_res_list.back().res_id = static_cast<csi_im_res_id_t>(0);
 
   // csi-IM-ResourceSet.
   meas_cfg.csi_im_res_set_list.push_back(make_default_csi_im_resource_set());
@@ -662,7 +669,7 @@ csi_meas_config srsran::config_helpers::make_default_csi_meas_config(const cell_
       csi_resource_config::nzp_csi_rs_ssb{.nzp_csi_rs_res_set_list = {static_cast<nzp_csi_rs_res_set_id_t>(1)}};
 
   // CSI-ReportConfig.
-  meas_cfg.csi_report_cfg_list.push_back(make_default_csi_report_config());
+  meas_cfg.csi_report_cfg_list.push_back(make_default_csi_report_config(params));
 
   return meas_cfg;
 }
