@@ -628,10 +628,10 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   pucch_harq_resource_alloc_record pucch_harq_res_info = resource_manager.reserve_next_harq_res_available(
       pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
   if (pucch_harq_res_info.pucch_res == nullptr) {
-    logger.warning("PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} skipped due to PUCCH ded. resources "
-                   "not available.",
-                   crnti,
-                   pucch_slot_alloc.slot);
+    logger.info("PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} skipped due to PUCCH ded. resources "
+                "not available.",
+                crnti,
+                pucch_slot_alloc.slot);
     return pucch_harq_ack_output;
   }
 

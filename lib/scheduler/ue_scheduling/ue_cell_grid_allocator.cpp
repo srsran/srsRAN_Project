@@ -154,7 +154,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     }
   }
   if (not uci.alloc_successful) {
-    logger.warning("Failed to allocate PDSCH. Cause: No space in PUCCH.");
+    logger.info("Failed to allocate PDSCH. Cause: No space in PUCCH.");
     get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
     return false;
   }
