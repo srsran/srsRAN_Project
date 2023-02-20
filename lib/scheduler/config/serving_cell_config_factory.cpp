@@ -508,7 +508,7 @@ nzp_csi_rs_resource srsran::config_helpers::make_default_nzp_csi_rs_resource(con
 
   res.csi_res_period = csi_resource_periodicity::slots40;
   // Note: Avoid slots with SSB and SIB1.
-  res.csi_res_offset = 11;
+  res.csi_res_offset = 12;
 
   res.qcl_info_periodic_csi_rs = static_cast<tci_state_id_t>(0);
 
