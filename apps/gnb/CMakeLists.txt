@@ -19,6 +19,10 @@ add_executable(gnb
         helpers/gnb_console_helper.cpp
         )
 
+install(TARGETS gnb
+        CONFIGURATIONS Release
+        RUNTIME)
+
 target_link_libraries(gnb
         srsgnb_app_f1u_connector
         srsran_cu_up
