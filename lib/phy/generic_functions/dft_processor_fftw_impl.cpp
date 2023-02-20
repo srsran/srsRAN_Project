@@ -22,6 +22,55 @@ dft_processor_fftw_impl::fftw_wisdom_filename dft_processor_fftw_impl::wisdom_fi
 
 unsigned dft_processor_fftw_impl::fftw_count = 0;
 
+static void dft_processor_fftw_import_wisdom(const char* full_path)
+{
+  // lockf needs a file descriptor open for writing, so this must be r+.
+  std::FILE* fd = std::fopen(full_path, "r+");
+
+  // Check that wisdom file exists.
+  if (fd == nullptr) {
+    return;
+  }
+
+  // Lock and import wisdom file.
+  if (lockf(fileno(fd), F_LOCK, 0) == -1) {
+    fmt::print(stderr, "Error locking FFTW wisdom file.\n");
+    std::fclose(fd);
+    return;
+  }
+  fftwf_import_wisdom_from_file(fd);
+  if (lockf(fileno(fd), F_ULOCK, 0) == -1) {
+    fmt::print(stderr, "Error unlocking FFTW wisdom file.\n");
+    std::fclose(fd);
+    return;
+  }
+  std::fclose(fd);
+}
+
+static void dft_processor_fftw_export_wisdom(const char* full_path)
+{
+  // Open wisdom file for writing. If it does not exist, create a new file.
+  std::FILE* fd = std::fopen(full_path, "w");
+
+  if (fd == nullptr) {
+    return;
+  }
+
+  // Lock and export wisdom file.
+  if (lockf(fileno(fd), F_LOCK, 0) == -1) {
+    fmt::print(stderr, "Error locking FFTW wisdom file.\n");
+    std::fclose(fd);
+    return;
+  }
+  fftwf_export_wisdom_to_file(fd);
+  if (lockf(fileno(fd), F_ULOCK, 0) == -1) {
+    fmt::print(stderr, "Error unlocking FFTW wisdom file.\n");
+    std::fclose(fd);
+    return;
+  }
+  std::fclose(fd);
+}
+
 dft_processor_fftw_impl::fftw_wisdom_filename::fftw_wisdom_filename()
 {
   // Make sure data does not contain any text.
@@ -79,7 +128,7 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
 
     // Load FFTW wisdom from file name if it is available.
     if (!wisdom_filename.empty()) {
-      fftwf_import_wisdom_from_filename(wisdom_filename.get());
+      dft_processor_fftw_import_wisdom(wisdom_filename.get());
     }
   }
 
@@ -111,7 +160,7 @@ dft_processor_fftw_impl::~dft_processor_fftw_impl()
   // Save wisdom if it was loaded.
   if (!wisdom_filename.empty()) {
     // Save the FFT wisdom file with the same name it was loaded.
-    fftwf_export_wisdom_to_filename(wisdom_filename.get());
+    dft_processor_fftw_export_wisdom(wisdom_filename.get());
 
     // Make sure other instances do not save the FFTW wisdom file.
     wisdom_filename.clear();
