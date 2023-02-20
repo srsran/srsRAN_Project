@@ -252,8 +252,7 @@ struct formatter<srsgnb::rlc_am_pdu_header> {
   template <typename FormatContext>
   auto format(const srsgnb::rlc_am_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(
-        ctx.out(), "dc={} p={} si={} sn_size={} sn={} so={}", hdr.dc, hdr.p, hdr.si, hdr.sn_size, hdr.sn, hdr.so);
+    return format_to(ctx.out(), "dc={} p={} si={} sn={} so={}", hdr.dc, hdr.p, hdr.si, hdr.sn, hdr.so);
   }
 };
 
