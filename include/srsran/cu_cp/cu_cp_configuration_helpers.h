@@ -16,6 +16,9 @@
 namespace srsran {
 namespace config_helpers {
 
+/// Generates a map of 5QI to default QoS configurations.
+std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list();
+
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
 inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
 {

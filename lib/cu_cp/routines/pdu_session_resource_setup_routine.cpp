@@ -50,6 +50,27 @@ void pdu_session_resource_setup_routine::operator()(
     CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
   }
 
+  // initial sanity check, making sure we only allow one QoS flow
+  if (setup_msg.pdu_session_res_setup_items.begin()->qos_flow_setup_request_items.size() != 1) {
+    logger.error("ue={}: \"{}\" supports only one QoS flow setup request ({} requested).",
+                 setup_msg.ue_index,
+                 name(),
+                 setup_msg.pdu_session_res_setup_items.begin()->qos_flow_setup_request_items.size());
+    CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+  }
+
+  // initial sanity check, making sure we only allow flows with a configured 5QI
+  for (const qos_flow_setup_request_item& flow_item :
+       setup_msg.pdu_session_res_setup_items.begin()->qos_flow_setup_request_items) {
+    if (not valid_5qi(flow_item)) {
+      logger.error("ue={}: \"{}\" QoS flow 5QI is not configured. id {} 5QI {}",
+                   setup_msg.ue_index,
+                   name(),
+                   flow_item.qos_flow_id,
+                   flow_item.qos_characteristics.five_qi);
+      CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
+    }
+  }
   {
     // prepare BearerContextSetupRequest
     fill_e1ap_bearer_context_setup_request(bearer_context_setup_request);
@@ -367,4 +388,14 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_r
   }
 
   e1ap_request.ng_ran_bearer_context_mod_request = e1ap_bearer_context_mod;
+}
+
+bool pdu_session_resource_setup_routine::valid_5qi(const qos_flow_setup_request_item& flow)
+{
+  if (setup_msg.qos_config.find(flow.qos_characteristics.five_qi) == setup_msg.qos_config.end()) {
+    logger.warning(
+        "Could not find valid 5QI {}. QoS map size {}", flow.qos_characteristics.five_qi, setup_msg.qos_config.size());
+    return false;
+  }
+  return true;
 }

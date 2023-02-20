@@ -25,6 +25,7 @@
 #include "srsran/rlc/rlc_config.h"
 #include "srsran/security/security.h"
 #include <cstdint>
+#include <map>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -119,6 +120,11 @@ constexpr inline std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(d
   return static_cast<std::underlying_type_t<du_cell_index_t>>(du_cell_index);
 }
 
+/// QoS Configuration, i.e. 5QI and the associated PDCP
+/// and SDAP configuration for DRBs
+struct cu_cp_qos_config {
+  pdcp_config pdcp;
+};
 // ASN1 types converted to common types
 
 struct cu_cp_qos_characteristics {
@@ -153,6 +159,7 @@ struct cu_cp_pdu_session_resource_setup_request {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                                              ue_aggregate_maximum_bit_rate_dl;
   std::string                                                           serving_plmn;
+  std::map<uint8_t, cu_cp_qos_config>                                   qos_config;
 };
 
 struct cu_cp_associated_qos_flow {

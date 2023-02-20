@@ -15,6 +15,7 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/support/executors/task_executor.h"
+#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {
