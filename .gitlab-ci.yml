@@ -77,7 +77,7 @@ include-guards:
       mkdir -p build
       cd build || exit
       cmake -DASSERT_LEVEL=PARANOID -DAUTO_DETECT_ISA=False -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False ..
-      make srsgnb_build_info # needed to generate hashes.h
+      make srsran_build_info # needed to generate hashes.h
   script:
     - static-analyzer.sh -i /tmp/codechecker_skip --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
   after_script:
