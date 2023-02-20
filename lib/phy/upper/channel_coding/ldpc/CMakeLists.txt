@@ -45,5 +45,3 @@ endif(HAVE_NEON)
 add_library(srsran_ldpc STATIC ${ldpc_sources})
 
 target_link_libraries(srsran_ldpc log_likelihood_ratio)
-
-install(TARGETS srsran_ldpc EXPORT srsran_export)

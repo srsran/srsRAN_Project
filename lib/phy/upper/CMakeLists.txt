@@ -33,7 +33,3 @@ add_library(srsran_upper_phy_support
         rx_softbuffer_pool_impl.cpp
         vrb_to_prb_mapper.cpp
         )
-
-install(TARGETS log_likelihood_ratio
-        srsran_upper_phy_support
-        EXPORT srsran_export)

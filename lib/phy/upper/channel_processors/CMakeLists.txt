@@ -82,24 +82,3 @@ target_link_libraries(srsran_channel_processors
         srsran_ssb_processor
         srsran_uci_decoder
         srsran_ulsch_demux)
-
-install(TARGETS srsran_channel_processors
-        srsran_pbch_encoder
-        srsran_pbch_modulator
-        srsran_pdcch_encoder
-        srsran_pdcch_modulator
-        srsran_pdcch_processor
-        srsran_pdsch_encoder
-        srsran_pdsch_modulator
-        srsran_pdsch_processor
-        srsran_prach_detector
-        srsran_pucch_demodulator
-        srsran_pucch_detector
-        srsran_pucch_processor
-        srsran_pusch_decoder
-        srsran_pusch_demodulator
-        srsran_pusch_processor
-        srsran_ssb_processor
-        srsran_uci_decoder
-        srsran_ulsch_demux
-        EXPORT srsran_export)

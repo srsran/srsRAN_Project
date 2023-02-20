@@ -19,5 +19,3 @@ add_library(srsran_polar STATIC
         polar_rate_matcher_impl.cpp
 )
 target_link_libraries(srsran_polar log_likelihood_ratio srslog)
-
-install(TARGETS srsran_polar EXPORT srsran_export)

@@ -23,6 +23,3 @@ include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srsvec)
 
 add_library(srsvec STATIC ${SOURCES})
 target_link_libraries(srsvec srslog)
-INSTALL(TARGETS srsvec DESTINATION ${LIBRARY_DIR})
-
-install(TARGETS srsvec EXPORT srsran_export)

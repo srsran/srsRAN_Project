@@ -1,5 +1,3 @@
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding/short)
 add_library(srsran_short_block STATIC short_block_encoder_impl.cpp short_block_detector_impl.cpp)
 target_link_libraries(srsran_short_block srsran_support log_likelihood_ratio srsvec)
-
-install(TARGETS srsran_short_block EXPORT srsran_export)

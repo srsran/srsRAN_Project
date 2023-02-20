@@ -28,7 +28,3 @@ target_link_libraries(srsran_channel_coding
         srsran_polar
         srsran_ldpc
         srsran_short_block)
-
-install(TARGETS srsran_crc_calculator
-        srsran_channel_coding
-        EXPORT srsran_export)

@@ -17,5 +17,3 @@ include_directories(../../../../include/srsgnb/phy/upper/sequence_generators)
 
 add_library(srsran_sequence_generators STATIC ${SOURCES})
 target_link_libraries(srsran_sequence_generators srsran_support srsvec)
-
-install(TARGETS srsran_sequence_generators EXPORT srsran_export)
