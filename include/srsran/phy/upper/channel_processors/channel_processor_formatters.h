@@ -424,7 +424,16 @@ struct formatter<srsran::pucch_processor_result> {
     unsigned nof_csi_part1 = result.message.get_expected_nof_csi_part1_bits();
     unsigned nof_csi_part2 = result.message.get_expected_nof_csi_part2_bits();
 
-    helper.format_always(ctx, "status={}", to_string(result.message.get_status()));
+    helper.format_if_verbose(ctx, "status={}", to_string(result.message.get_status()));
+
+    // PUCCH can carry a scheduling request without HARQ-ACK. In that case, the UE only transmits for positive SR.
+    if ((nof_sr == 0) && (nof_harq_ack == 0) && (nof_csi_part1 == 0) && (nof_csi_part2 == 0)) {
+      if (result.message.get_status() == srsran::uci_status::valid) {
+        helper.format_always(ctx, "sr=yes");
+      } else {
+        helper.format_always(ctx, "sr=no");
+      }
+    }
 
     if (result.message.get_status() == srsran::uci_status::valid) {
       // Valid UCI payload.
