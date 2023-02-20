@@ -38,7 +38,7 @@ include-guards:
   extends: .include-guards
   parallel:
     matrix:
-      - INPUT_PATH: "include/srsgnb"
+      - INPUT_PATH: "include/srsran"
         INPUT_IGNORE: "/bundled/"
       - INPUT_PATH: "."
         INPUT_IGNORE: "^\\(include\\|docs\\|external\\)/.*"
