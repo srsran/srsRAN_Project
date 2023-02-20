@@ -195,6 +195,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
           ev_logger.enqueue(scheduler_event_logger::sr_event{ue_index, u.crnti});
         });
       }
+      // Report the PUCCH metric to the scheduler.
+      metrics_handler.handle_pucch_sinr(ind.ucis[i].ue_index, pdu.ul_sinr);
     } else if (variant_holds_alternative<uci_indication::uci_pdu::uci_pusch_pdu>(ind.ucis[i].pdu)) {
       const auto& pdu = variant_get<uci_indication::uci_pdu::uci_pusch_pdu>(ind.ucis[i].pdu);
       // Process DL HARQ ACKs.
@@ -245,6 +247,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 
         metrics_handler.handle_csi_report(ind.ucis[i].ue_index, pdu.csi_part1);
       }
+      // Report the PUCCH metric to the scheduler.
+      metrics_handler.handle_pucch_sinr(ind.ucis[i].ue_index, pdu.ul_sinr);
     }
   }
 }

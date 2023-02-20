@@ -67,6 +67,8 @@ struct uci_indication {
       constexpr static size_t                                      NOF_HARQS_PER_UCI = 2;
       bool                                                         sr_detected;
       static_vector<mac_harq_ack_report_status, NOF_HARQS_PER_UCI> harqs;
+      /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
+      optional<float> ul_sinr;
     };
     struct uci_pusch_pdu {
       static_vector<mac_harq_ack_report_status, uci_constants::MAX_NOF_HARQ_BITS> harqs;
@@ -82,6 +84,8 @@ struct uci_indication {
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>              csi_part1;
       /// CSI Part 2 is for PUCCH format 3 and 4.
       bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS> csi_part2;
+      /// \brief Metric of channel quality that ranges from -65.534 to 65.534 dBs.
+      optional<float> ul_sinr;
     };
 
     du_ue_index_t                                                                ue_index;

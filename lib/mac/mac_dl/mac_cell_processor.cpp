@@ -109,6 +109,9 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
       const auto& pucch = variant_get<mac_uci_pdu::pucch_f0_or_f1_type>(msg.ucis[i].pdu);
 
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pdu{};
+      if (pucch.ul_sinr.has_value()) {
+        pdu.ul_sinr.emplace(pucch.ul_sinr.value());
+      }
       pdu.sr_detected = false;
       if (pucch.sr_info.has_value()) {
         pdu.sr_detected = pucch.sr_info.value().sr_detected;
@@ -165,6 +168,9 @@ void mac_cell_processor::handle_uci(const mac_uci_indication_message& msg)
     } else if (variant_holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu)) {
       const auto& pucch = variant_get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(msg.ucis[i].pdu);
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pdu{};
+      if (pucch.ul_sinr.has_value()) {
+        pdu.ul_sinr.emplace(pucch.ul_sinr.value());
+      }
       if (pucch.sr_info.has_value()) {
         pdu.sr_info = pucch.sr_info.value();
       }

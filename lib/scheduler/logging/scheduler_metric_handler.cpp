@@ -73,6 +73,17 @@ void scheduler_metrics_handler::handle_dl_harq_ack(du_ue_index_t ue_index, bool 
   }
 }
 
+void scheduler_metrics_handler::handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr)
+{
+  if (ues.contains(ue_index)) {
+    auto& u = ues[ue_index];
+    if (pucch_sinr.has_value()) {
+      u.data.nof_pucch_snr_reports++;
+      u.data.sum_pucch_snrs += pucch_sinr.value();
+    }
+  }
+}
+
 void scheduler_metrics_handler::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
 {
   if (ues.contains(bsr.ue_index)) {

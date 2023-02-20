@@ -35,10 +35,14 @@ public:
 
   void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu);
 
+  /// \brief Register CSI report (CQI) metric.
   void handle_csi_report(du_ue_index_t                                                         ue_index,
                          const bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& csi);
 
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack);
+
+  /// \brief Register PUCCH SINR.
+  void handle_pucch_sinr(du_ue_index_t ue_index, optional<float> pucch_sinr);
 
   /// \brief Handle UL BSR indication.
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr);
