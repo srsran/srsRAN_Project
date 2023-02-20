@@ -24,7 +24,10 @@ namespace srsran {
 class nzp_csi_rs_generator
 {
 public:
-  /// Describes the required parameters to generate the NZP-CSI-RS signal, as described in TS 38.211 Section 7.4.1.5.
+  /// \brief Describes the required parameters to generate the NZP-CSI-RS signal, as described in TS 38.211
+  /// Section 7.4.1.5.
+  ///
+  /// \remark The start resource block plus the number of RB shall not exceed the resource grid bandwidth.
   struct config_t {
     /// \brief Slot context for sequence initialization.
     /// \remark This indicates the numerology, SFN and slot index within the frame.

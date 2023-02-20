@@ -291,14 +291,20 @@ static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_co
 
 static fapi::carrier_config generate_carrier_config_tlv(const gnb_appconfig& config)
 {
-  fapi::carrier_config fapi_config = {};
-
-  // NOTE; for now we only need to fill the nof_prb_ul_grid for the common SCS.
-  fapi_config.ul_grid_size                                                         = {};
-  fapi_config.ul_grid_size[to_numerology_value(config.common_cell_cfg.common_scs)] = band_helper::get_n_rbs_from_bw(
+  // Deduce common numerology and grid size for DL and UL.
+  unsigned numerology       = to_numerology_value(config.common_cell_cfg.common_scs);
+  unsigned grid_size_bw_prb = band_helper::get_n_rbs_from_bw(
       config.common_cell_cfg.channel_bw_mhz,
       config.common_cell_cfg.common_scs,
       band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn)));
+
+  fapi::carrier_config fapi_config = {};
+
+  // NOTE; for now we only need to fill the nof_prb_ul_grid and nof_prb_dl_grid for the common SCS.
+  fapi_config.dl_grid_size             = {};
+  fapi_config.dl_grid_size[numerology] = grid_size_bw_prb;
+  fapi_config.ul_grid_size             = {};
+  fapi_config.ul_grid_size[numerology] = grid_size_bw_prb;
 
   return fapi_config;
 }

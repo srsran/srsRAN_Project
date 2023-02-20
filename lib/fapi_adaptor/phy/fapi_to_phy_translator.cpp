@@ -107,7 +107,8 @@ struct uplink_pdus {
 static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_request_message& msg,
                                                        const downlink_pdu_validator&       dl_pdu_validator,
                                                        srslog::basic_logger&               logger,
-                                                       subcarrier_spacing                  scs_common)
+                                                       subcarrier_spacing                  scs_common,
+                                                       uint16_t                            cell_bandwidth_prb)
 {
   downlink_pdus pdus;
   for (const auto& pdu : msg.pdus) {
@@ -120,7 +121,7 @@ static downlink_pdus translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_tti_reques
           return {};
         }
         nzp_csi_rs_generator::config_t& csi_pdu = pdus.csi_rs.emplace_back();
-        convert_csi_rs_fapi_to_phy(csi_pdu, pdu.csi_rs_pdu, msg.sfn, msg.slot);
+        convert_csi_rs_fapi_to_phy(csi_pdu, pdu.csi_rs_pdu, msg.sfn, msg.slot, cell_bandwidth_prb);
         if (!dl_pdu_validator.is_valid(csi_pdu)) {
           logger.warning(
               "Unsupported CSI-RS PDU detected. Skipping DL_TTI.request message in {}.{}.", msg.sfn, msg.slot);
@@ -189,7 +190,8 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
     return;
   }
 
-  const downlink_pdus& pdus = translate_dl_tti_pdus_to_phy_pdus(msg, dl_pdu_validator, logger, scs_common);
+  const downlink_pdus& pdus = translate_dl_tti_pdus_to_phy_pdus(
+      msg, dl_pdu_validator, logger, scs_common, carrier_cfg.dl_grid_size[to_numerology_value(scs_common)]);
 
   // Process the PDUs
   for (const auto& ssb : pdus.ssb) {
