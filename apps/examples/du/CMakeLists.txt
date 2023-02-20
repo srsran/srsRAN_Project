@@ -13,17 +13,17 @@ add_executable(du_example
         radio_factory.cpp)
 
 target_link_libraries(du_example
-        srsgnb_du_high
-        srsgnb_gateway
+        srsran_du_high
+        srsran_gateway
         mac_fapi_adaptor_factory
         phy_fapi_adaptor_factory
-        srsgnb_fapi_message_loggers
-        srsgnb_phy_support
-        srsgnb_upper_phy
-        srsgnb_signal_processors
-        srsgnb_channel_processors
-        srsgnb_channel_equalizer
-        srsgnb_lower_phy
-        srsgnb_radio)
+        srsran_fapi_message_loggers
+        srsran_phy_support
+        srsran_upper_phy
+        srsran_signal_processors
+        srsran_channel_processors
+        srsran_channel_equalizer
+        srsran_lower_phy
+        srsran_radio)
 
 target_include_directories(du_example PRIVATE ${CMAKE_SOURCE_DIR})

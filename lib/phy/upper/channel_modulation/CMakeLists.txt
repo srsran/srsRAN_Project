@@ -18,7 +18,7 @@ set(SOURCES
 
 include_directories(../../../../include/srsgnb/phy/upper/channel_modulation)
 
-add_library(srsgnb_channel_modulation STATIC ${SOURCES})
-target_link_libraries(srsgnb_channel_modulation srsgnb_support log_likelihood_ratio)
+add_library(srsran_channel_modulation STATIC ${SOURCES})
+target_link_libraries(srsran_channel_modulation srsran_support log_likelihood_ratio)
 
-install(TARGETS srsgnb_channel_modulation EXPORT srsgnb_export)
+install(TARGETS srsran_channel_modulation EXPORT srsran_export)

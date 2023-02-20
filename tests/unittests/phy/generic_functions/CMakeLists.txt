@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(dft_processor_test dft_processor_test.cpp)
-target_link_libraries(dft_processor_test srslog srsgnb_generic_funcs)
+target_link_libraries(dft_processor_test srslog srsran_generic_funcs)
 
 add_test(dft_processor_generic_test dft_processor_test -F generic -R 10)
 if (ENABLE_FFTW AND FFTW3F_FOUND)
@@ -21,5 +21,5 @@ if (ENABLE_FFTW AND FFTW3F_FOUND)
 endif (ENABLE_FFTW AND FFTW3F_FOUND)
 
 add_executable(dft_processor_vectortest dft_processor_vectortest.cpp)
-target_link_libraries(dft_processor_vectortest srslog srsgnb_generic_funcs gtest gtest_main)
+target_link_libraries(dft_processor_vectortest srslog srsran_generic_funcs gtest gtest_main)
 add_test_vector(dft_processor_vectortest dft_processor_test_data.tar.gz "")

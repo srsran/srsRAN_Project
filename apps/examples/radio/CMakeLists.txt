@@ -7,4 +7,4 @@
 #
 
 add_executable(radio_util_sample radio_util_sample.cpp)
-target_link_libraries(radio_util_sample srsgnb_radio srslog srsgnb_support)
+target_link_libraries(radio_util_sample srsran_radio srslog srsran_support)

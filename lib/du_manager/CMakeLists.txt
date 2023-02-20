@@ -16,13 +16,13 @@ set(SOURCES du_manager_factory.cpp
         du_ue/du_ue_manager.cpp
         du_cell_manager.cpp)
 
-add_library(srsgnb_du_manager STATIC ${SOURCES})
-target_link_libraries(srsgnb_du_manager
+add_library(srsran_du_manager STATIC ${SOURCES})
+target_link_libraries(srsran_du_manager
                       du_resource_manager
                       du_ue
-                      srsgnb_du_manager_procedures
+                      srsran_du_manager_procedures
                       du_manager_converters
-                      srsgnb_du_config_validators
-                      srsgnb_rlc)
+                      srsran_du_config_validators
+                      srsran_rlc)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

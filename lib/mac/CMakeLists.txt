@@ -8,7 +8,7 @@
 
 set(SOURCES mac_ctrl/mac_configuration_helpers.cpp mac_config/mac_cell_group_config_factory.cpp)
 add_library(mac_configuration_helpers STATIC ${SOURCES})
-target_link_libraries(mac_configuration_helpers srsgnb_support srsgnb_ran)
+target_link_libraries(mac_configuration_helpers srsran_support srsran_ran)
 set(SOURCES mac_factory.cpp
             mac_impl.cpp
             mac_ctrl/mac_controller.cpp
@@ -21,5 +21,5 @@ set(SOURCES mac_factory.cpp
             mac_ul/pdu_rx_handler.cpp
             mac_dl/ssb_assembler.cpp)
 
-add_library(srsgnb_mac STATIC ${SOURCES})
-target_link_libraries(srsgnb_mac srsgnb_sched mac_configuration_helpers srsgnb_ran srsgnb_pcap)
+add_library(srsran_mac STATIC ${SOURCES})
+target_link_libraries(srsran_mac srsran_sched mac_configuration_helpers srsran_ran srsran_pcap)

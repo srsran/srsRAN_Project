@@ -9,7 +9,7 @@
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(dft_processor_benchmark dft_processor_benchmark.cpp)
-target_link_libraries(dft_processor_benchmark srslog srsgnb_generic_funcs)
+target_link_libraries(dft_processor_benchmark srslog srsran_generic_funcs)
 
 add_test(dft_processor_generic_benchmark dft_processor_benchmark -F generic -R 10 -s)
 if (ENABLE_FFTW AND FFTW3F_FOUND)

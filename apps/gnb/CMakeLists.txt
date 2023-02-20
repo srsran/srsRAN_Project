@@ -20,27 +20,27 @@ add_executable(gnb
         )
 
 target_link_libraries(gnb
-        srsgnbapp_f1u_connector
-        srsgnb_cu_up
-        srsgnb_cu_cp
-        srsgnb_io_broker
-        srsgnb_ngap
+        srsgnb_app_f1u_connector
+        srsran_cu_up
+        srsran_cu_cp
+        srsran_io_broker
+        srsran_ngap
         ngap_asn1
-        srsgnb_du_high
-        srsgnb_gateway
+        srsran_du_high
+        srsran_gateway
         mac_fapi_adaptor_factory
         phy_fapi_adaptor_factory
-        srsgnb_fapi_message_loggers
-        srsgnb_phy_support
-        srsgnb_upper_phy
-        srsgnb_signal_processors
-        srsgnb_channel_processors
-        srsgnb_channel_equalizer
-        srsgnb_lower_phy
-        srsgnb_radio
-        srsgnb_pcap
-        srsgnb_support
-        srsgnb_build_info
+        srsran_fapi_message_loggers
+        srsran_phy_support
+        srsran_upper_phy
+        srsran_signal_processors
+        srsran_channel_processors
+        srsran_channel_equalizer
+        srsran_lower_phy
+        srsran_radio
+        srsran_pcap
+        srsran_support
+        srsran_build_info
         )
 add_backward(gnb)
 

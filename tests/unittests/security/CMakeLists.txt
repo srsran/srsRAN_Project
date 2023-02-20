@@ -9,5 +9,5 @@
 set_directory_properties(PROPERTIES LABELS "security")
 
 add_executable(security_test security_test.cpp)
-target_link_libraries(security_test srsgnb_security srsgnb_support srslog gtest gtest_main)
+target_link_libraries(security_test srsran_security srsran_support srslog gtest gtest_main)
 gtest_discover_tests(security_test)

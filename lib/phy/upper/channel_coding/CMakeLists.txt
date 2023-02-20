@@ -15,20 +15,20 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
 
-add_library(srsgnb_crc_calculator STATIC ${CRC_CALCULATOR_SOURCES})
+add_library(srsran_crc_calculator STATIC ${CRC_CALCULATOR_SOURCES})
 
 add_subdirectory(polar)
 add_subdirectory(ldpc)
 add_subdirectory(short)
 
-add_library(srsgnb_channel_coding STATIC channel_coding_factories.cpp)
+add_library(srsran_channel_coding STATIC channel_coding_factories.cpp)
 
-target_link_libraries(srsgnb_channel_coding
-        srsgnb_crc_calculator
-        srsgnb_polar
-        srsgnb_ldpc
-        srsgnb_short_block)
+target_link_libraries(srsran_channel_coding
+        srsran_crc_calculator
+        srsran_polar
+        srsran_ldpc
+        srsran_short_block)
 
-install(TARGETS srsgnb_crc_calculator
-        srsgnb_channel_coding
-        EXPORT srsgnb_export)
+install(TARGETS srsran_crc_calculator
+        srsran_channel_coding
+        EXPORT srsran_export)

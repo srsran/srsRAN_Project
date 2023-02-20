@@ -17,5 +17,5 @@ set(SOURCES
   rlc_rx_um_entity.cpp
 )
 
-add_library(srsgnb_rlc STATIC ${SOURCES})
-target_link_libraries(srsgnb_rlc srsgnb_support)
+add_library(srsran_rlc STATIC ${SOURCES})
+target_link_libraries(srsran_rlc srsran_support)

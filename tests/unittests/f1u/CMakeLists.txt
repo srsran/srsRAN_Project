@@ -11,10 +11,10 @@ add_subdirectory(du)
 
 add_executable(f1u_local_connector_test common/f1u_connector_test.cpp)
 target_link_libraries(f1u_local_connector_test
-                      srsgnbapp_f1u_connector
-                      srsgnb_f1u_du
-                      srsgnb_f1u_cu_up
-                      srsgnb_support
+                      srsgnb_app_f1u_connector
+                      srsran_f1u_du
+                      srsran_f1u_cu_up
+                      srsran_support
                       srslog
                       gtest
                       gtest_main)

@@ -11,9 +11,9 @@ set_directory_properties(PROPERTIES LABELS "gtpu")
 include_directories(../../..)
 
 add_executable(gtpu_test gtpu_test.cpp)
-target_link_libraries(gtpu_test srsgnb_gtpu srsgnb_support srslog gtest gtest_main)
+target_link_libraries(gtpu_test srsran_gtpu srsran_support srslog gtest gtest_main)
 gtest_discover_tests(gtpu_test)
 
 add_executable(gtpu_demux_test gtpu_demux_test.cpp)
-target_link_libraries(gtpu_demux_test srsgnb_gtpu srsgnb_support srslog gtest gtest_main)
+target_link_libraries(gtpu_demux_test srsran_gtpu srsran_support srslog gtest gtest_main)
 gtest_discover_tests(gtpu_demux_test)

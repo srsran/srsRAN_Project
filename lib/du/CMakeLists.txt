@@ -7,4 +7,4 @@
 #
 
 set(SOURCES du_cell_config_validation.cpp)
-add_library(srsgnb_du_config_validators STATIC ${SOURCES})
+add_library(srsran_du_config_validators STATIC ${SOURCES})

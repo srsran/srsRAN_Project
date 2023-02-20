@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_library(srsgnb_du_high du_high.cpp)
-target_link_libraries(srsgnb_du_high srslog srsgnb_support srsgnb_du_manager srsgnb_mac srsgnb_f1ap_du)
+add_library(srsran_du_high du_high.cpp)
+target_link_libraries(srsran_du_high srslog srsran_support srsran_du_manager srsran_mac srsran_f1ap_du)

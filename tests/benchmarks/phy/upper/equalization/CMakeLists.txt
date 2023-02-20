@@ -7,5 +7,5 @@
 #
 
 add_executable(channel_equalizer_benchmark channel_equalizer_benchmark.cpp)
-target_link_libraries(channel_equalizer_benchmark srsvec srslog srsgnb_channel_equalizer)
+target_link_libraries(channel_equalizer_benchmark srsvec srslog srsran_channel_equalizer)
 add_test(channel_equalizer_benchmark channel_equalizer_benchmark -s -R 1)

@@ -15,5 +15,5 @@ set(SOURCES
         logging_slot_gateway_decorator.cpp
         logging_slot_time_noitifier_decorator.cpp)
 
-add_library(srsgnb_fapi_message_loggers STATIC ${SOURCES})
-target_link_libraries(srsgnb_fapi_message_loggers srslog)
+add_library(srsran_fapi_message_loggers STATIC ${SOURCES})
+target_link_libraries(srsran_fapi_message_loggers srslog)

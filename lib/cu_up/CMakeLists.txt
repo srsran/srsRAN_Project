@@ -13,6 +13,6 @@ set(SOURCES
       pdu_session_manager_impl.cpp
 )
 
-add_library(srsgnb_cu_up STATIC ${SOURCES})
+add_library(srsran_cu_up STATIC ${SOURCES})
 
-target_link_libraries(srsgnb_cu_up srsgnb_e1ap srsgnb_gtpu srsgnb_pdcp  srsgnb_gateway e1ap_asn1 srsran_sdap srsgnb_security  srsgnb_support srslog )
+target_link_libraries(srsran_cu_up srsran_e1ap srsran_gtpu srsran_pdcp  srsran_gateway e1ap_asn1 srsran_sdap srsran_security  srsran_support srslog )

@@ -27,13 +27,13 @@ link_directories(${SRSGNB_DFT_LIBRARY_DIRS})
 
 message(STATUS "FFT_LIBRARIES: " ${SRSGNB_DFT_LIBRARIES})
 
-add_library(srsgnb_generic_funcs_dft STATIC ${SRSGNB_DFT_SOURCES})
-target_link_libraries(srsgnb_generic_funcs_dft ${SRSGNB_DFT_LIBRARIES} srsvec srslog)
+add_library(srsran_generic_funcs_dft STATIC ${SRSGNB_DFT_SOURCES})
+target_link_libraries(srsran_generic_funcs_dft ${SRSGNB_DFT_LIBRARIES} srsvec srslog)
 
-add_library(srsgnb_generic_funcs STATIC generic_functions_factories.cpp)
+add_library(srsran_generic_funcs STATIC generic_functions_factories.cpp)
 set_source_files_properties(generic_functions_factories.cpp PROPERTIES COMPILE_DEFINITIONS "${SRSGNB_DFT_DEFINITIONS}")
-target_link_libraries(srsgnb_generic_funcs srsgnb_generic_funcs_dft srslog)
+target_link_libraries(srsran_generic_funcs srsran_generic_funcs_dft srslog)
 
-install(TARGETS srsgnb_generic_funcs
-        srsgnb_generic_funcs_dft
-        EXPORT srsgnb_export)
+install(TARGETS srsran_generic_funcs
+        srsran_generic_funcs_dft
+        EXPORT srsran_export)

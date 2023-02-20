@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_library(srsgnb_f1u_cu_up cu_up/f1u_bearer_impl.cpp cu_up/f1u_bearer_factory.cpp)
-add_library(srsgnb_f1u_du du/f1u_bearer_impl.cpp du/f1u_bearer_factory.cpp)
+add_library(srsran_f1u_cu_up cu_up/f1u_bearer_impl.cpp cu_up/f1u_bearer_factory.cpp)
+add_library(srsran_f1u_du du/f1u_bearer_impl.cpp du/f1u_bearer_factory.cpp)

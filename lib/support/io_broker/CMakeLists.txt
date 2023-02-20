@@ -6,6 +6,6 @@
 # the distribution.
 #
 
-add_library(srsgnb_io_broker io_broker_factory.cpp io_broker_epoll.cpp)
-target_link_libraries(srsgnb_io_broker srslog)
-install(TARGETS srsgnb_io_broker EXPORT srsgnb_export)
+add_library(srsran_io_broker io_broker_factory.cpp io_broker_epoll.cpp)
+target_link_libraries(srsran_io_broker srslog)
+install(TARGETS srsran_io_broker EXPORT srsran_export)

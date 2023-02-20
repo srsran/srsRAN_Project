@@ -7,11 +7,11 @@
 #
 
 
-add_library(srsgnb_f1ap_cu
+add_library(srsran_f1ap_cu
         f1ap_cu_impl.cpp
         f1ap_cu_factory.cpp
         procedures/ue_context_setup_procedure.cpp
         procedures/ue_context_modification_procedure.cpp
         procedures/ue_context_release_procedure.cpp)
-target_include_directories(srsgnb_f1ap_cu PRIVATE ..)
-target_link_libraries(srsgnb_f1ap_cu srsgnb_f1ap_common f1ap_asn1)
+target_include_directories(srsran_f1ap_cu PRIVATE ..)
+target_link_libraries(srsran_f1ap_cu srsran_f1ap_common f1ap_asn1)

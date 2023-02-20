@@ -14,32 +14,32 @@ set(SCHED_TEST_LIBS
         gtest)
 
 add_executable(pucch_allocator_test pucch_allocator_test.cpp)
-target_link_libraries(pucch_allocator_test srsgnb_sched ${SCHED_TEST_LIBS})
+target_link_libraries(pucch_allocator_test srsran_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(pucch_allocator_test)
 
 add_executable(pucch_alloc_multi_ue_test pucch_alloc_multi_ue_test.cpp)
-target_link_libraries(pucch_alloc_multi_ue_test srsgnb_sched ${SCHED_TEST_LIBS})
+target_link_libraries(pucch_alloc_multi_ue_test srsran_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(pucch_alloc_multi_ue_test)
 
 add_executable(pucch_res_manager_test pucch_res_manager_test.cpp)
-target_link_libraries(pucch_res_manager_test srsgnb_sched ${SCHED_TEST_LIBS})
+target_link_libraries(pucch_res_manager_test srsran_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(pucch_res_manager_test)
 
 add_executable(uci_allocator_test uci_allocator_test.cpp)
-target_link_libraries(uci_allocator_test srsgnb_sched ${SCHED_TEST_LIBS})
+target_link_libraries(uci_allocator_test srsran_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(uci_allocator_test)
 
 add_executable(test_pucch_guardbands_sched pucch_guardbands_sched_test.cpp)
-target_link_libraries(test_pucch_guardbands_sched srsgnb_sched ${SCHED_TEST_LIBS})
+target_link_libraries(test_pucch_guardbands_sched srsran_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(test_pucch_guardbands_sched)
 
 add_executable(uci_scheduling_test uci_scheduling_test.cpp)
-target_link_libraries(uci_scheduling_test srsgnb_sched ${SCHED_TEST_LIBS})
+target_link_libraries(uci_scheduling_test srsran_sched ${SCHED_TEST_LIBS})
 gtest_discover_tests(uci_scheduling_test)
 
 add_executable(scheduler_uci_indication_test scheduler_uci_indication_test.cpp)
 target_link_libraries(scheduler_uci_indication_test
-        srsgnb_sched
+        srsran_sched
         scheduler_test_suite
         sched_config
         gtest)

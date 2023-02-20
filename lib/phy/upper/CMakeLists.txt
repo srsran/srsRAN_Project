@@ -13,21 +13,21 @@ add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 add_subdirectory(equalization)
 
-add_library(srsgnb_downlink_processor downlink_processor_single_executor_impl.cpp downlink_processor_pool_impl.cpp)
-target_link_libraries(srsgnb_downlink_processor srsgnb_channel_processors)
+add_library(srsran_downlink_processor downlink_processor_single_executor_impl.cpp downlink_processor_pool_impl.cpp)
+target_link_libraries(srsran_downlink_processor srsran_channel_processors)
 
-add_library(srsgnb_uplink_processor
+add_library(srsran_uplink_processor
         uplink_processor_impl.cpp
         uplink_processor_pool_impl.cpp
         uplink_request_processor_impl.cpp)
-target_link_libraries(srsgnb_uplink_processor srsgnb_channel_processors)
+target_link_libraries(srsran_uplink_processor srsran_channel_processors)
 
-add_library(srsgnb_upper_phy upper_phy_factories.cpp upper_phy_impl.cpp upper_phy_factories.cpp upper_phy_rx_symbol_handler_impl.cpp upper_phy_rx_results_notifier_wrapper.cpp)
-target_link_libraries(srsgnb_upper_phy srsgnb_downlink_processor srsgnb_uplink_processor srsgnb_phy_support srsgnb_generic_funcs srsgnb_channel_equalizer)
+add_library(srsran_upper_phy upper_phy_factories.cpp upper_phy_impl.cpp upper_phy_factories.cpp upper_phy_rx_symbol_handler_impl.cpp upper_phy_rx_results_notifier_wrapper.cpp)
+target_link_libraries(srsran_upper_phy srsran_downlink_processor srsran_uplink_processor srsran_phy_support srsran_generic_funcs srsran_channel_equalizer)
 
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 
-add_library(srsgnb_upper_phy_support
+add_library(srsran_upper_phy_support
         re_pattern.cpp
         rb_allocation.cpp
         rx_softbuffer_pool_impl.cpp
@@ -35,5 +35,5 @@ add_library(srsgnb_upper_phy_support
         )
 
 install(TARGETS log_likelihood_ratio
-        srsgnb_upper_phy_support
-        EXPORT srsgnb_export)
+        srsran_upper_phy_support
+        EXPORT srsran_export)

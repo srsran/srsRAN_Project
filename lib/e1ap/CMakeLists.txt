@@ -19,7 +19,7 @@ set(SOURCES
         cu_up/e1ap_cu_up_impl.cpp
     )
 
-add_library(srsgnb_e1ap STATIC ${SOURCES})
-target_link_libraries(srsgnb_e1ap e1ap_asn1)
+add_library(srsran_e1ap STATIC ${SOURCES})
+target_link_libraries(srsran_e1ap e1ap_asn1)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

@@ -8,7 +8,7 @@
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding/polar)
 
-add_library(srsgnb_polar STATIC
+add_library(srsran_polar STATIC
         polar_allocator_impl.cpp
         polar_code_impl.cpp
         polar_deallocator_impl.cpp
@@ -18,6 +18,6 @@ add_library(srsgnb_polar STATIC
         polar_rate_dematcher_impl.cpp
         polar_rate_matcher_impl.cpp
 )
-target_link_libraries(srsgnb_polar log_likelihood_ratio srslog)
+target_link_libraries(srsran_polar log_likelihood_ratio srslog)
 
-install(TARGETS srsgnb_polar EXPORT srsgnb_export)
+install(TARGETS srsran_polar EXPORT srsran_export)

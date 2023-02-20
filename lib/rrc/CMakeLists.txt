@@ -19,7 +19,7 @@ set(SOURCES
   ue/procedures/rrc_reconfiguration_procedure.cpp
 )
 
-add_library(srsgnb_rrc STATIC ${SOURCES})
-target_link_libraries(srsgnb_rrc srsgnb_security rrc_nr_asn1)
+add_library(srsran_rrc STATIC ${SOURCES})
+target_link_libraries(srsran_rrc srsran_security rrc_nr_asn1)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

@@ -8,16 +8,16 @@
 
 add_library(f1ap_test_helpers f1ap_cu_test_messages.cpp f1ap_du_test_messages.cpp)
 target_include_directories(f1ap_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(f1ap_test_helpers srsgnb_support f1ap_asn1 srslog)
+target_link_libraries(f1ap_test_helpers srsran_support f1ap_asn1 srslog)
 
 add_executable(f1ap_asn1_packer_test f1ap_asn1_packer_test.cpp)
 target_link_libraries(f1ap_asn1_packer_test
         f1ap_test_helpers
-        srsgnb_f1ap_common
-        srsgnb_support
+        srsran_f1ap_common
+        srsran_support
         srslog
         f1ap_asn1
-        srsgnb_ran
+        srsran_ran
         gtest
         gtest_main)
 target_include_directories(f1ap_asn1_packer_test PRIVATE ${CMAKE_SOURCE_DIR})

@@ -19,7 +19,7 @@ add_subdirectory(uci_and_pucch)
 add_subdirectory(policy)
 
 add_executable(sched_no_ue_test scheduler_no_ue_test.cpp)
-target_link_libraries(sched_no_ue_test srsgnb_sched
+target_link_libraries(sched_no_ue_test srsran_sched
         scheduler_test_suite
         srslog
         mac_configuration_helpers
@@ -28,18 +28,18 @@ target_link_libraries(sched_no_ue_test srsgnb_sched
 add_test(sched_no_ue_test sched_no_ue_test)
 
 add_executable(pdcch_resource_allocator_test pdcch/pdcch_resource_allocator_test.cpp)
-target_link_libraries(pdcch_resource_allocator_test srsgnb_sched srslog mac_configuration_helpers sched_config gtest gtest_main)
+target_link_libraries(pdcch_resource_allocator_test srsran_sched srslog mac_configuration_helpers sched_config gtest gtest_main)
 add_test(pdcch_resource_allocator_test pdcch_resource_allocator_test)
 
 add_executable(scheduler_retx_test scheduler_retx_test.cpp)
-target_link_libraries(scheduler_retx_test srsgnb_sched sched_config
+target_link_libraries(scheduler_retx_test srsran_sched sched_config
         scheduler_test_suite
         gtest gtest_main)
 add_test(scheduler_retx_test scheduler_retx_test)
 
 add_executable(multiple_ue_sched_test multiple_ue_sched_test.cpp)
 target_link_libraries(multiple_ue_sched_test
-        srsgnb_sched
+        srsran_sched
         sched_config
         scheduler_test_suite
         mac_configuration_helpers
@@ -49,7 +49,7 @@ gtest_discover_tests(multiple_ue_sched_test)
 
 add_executable(scheduler_metrics_handler_test scheduler_metrics_handler_test.cpp)
 target_link_libraries(scheduler_metrics_handler_test
-        srsgnb_sched
+        srsran_sched
         sched_config
         gtest
         gtest_main)

@@ -8,7 +8,7 @@
 
 add_executable(cell_resource_grid_test sched_prb_test.cpp cell_resource_grid_test.cpp)
 target_link_libraries(cell_resource_grid_test
-        srsgnb_sched
+        srsran_sched
         srslog
         mac_configuration_helpers
         sched_config

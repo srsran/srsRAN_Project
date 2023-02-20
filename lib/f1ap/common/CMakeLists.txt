@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_library(srsgnb_f1ap_common asn1_helpers.cpp f1ap_asn1_packer.cpp)
-target_link_libraries(srsgnb_f1ap_common f1ap_asn1)
+add_library(srsran_f1ap_common asn1_helpers.cpp f1ap_asn1_packer.cpp)
+target_link_libraries(srsran_f1ap_common f1ap_asn1)

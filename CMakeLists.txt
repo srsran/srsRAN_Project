@@ -277,7 +277,7 @@ foreach(TMP_DIR ${ALL_HEADER_DIRS})
   file(GLOB_RECURSE TMP_HEADERS "${TMP_DIR}/*.h")
   list(APPEND ALL_HEADER_FILES ${TMP_HEADERS})
 endforeach()
-add_custom_target(all_srsgnb_headers SOURCES ${ALL_HEADER_FILES})
+add_custom_target(all_srsran_headers SOURCES ${ALL_HEADER_FILES})
 
 ########################################################################
 # Add the subdirectories
@@ -298,7 +298,7 @@ endif (BUILD_TESTS)
 # Export (selected) libraries
 ########################################################################
 if(ENABLE_EXPORT)
-  export(EXPORT srsgnb_export NAMESPACE srsran:: FILE "${CMAKE_BINARY_DIR}/srsgnb.cmake")
+  export(EXPORT srsran_export NAMESPACE srsran:: FILE "${CMAKE_BINARY_DIR}/srsgnb.cmake")
 else(ENABLE_EXPORT)
   # Remove any previous export file (if it exists), since it will become outdated.
   file(REMOVE "${CMAKE_BINARY_DIR}/srsgnb.cmake")

@@ -11,11 +11,11 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
 add_executable(pusch_processor_benchmark pusch_processor_benchmark.cpp)
 target_link_libraries(pusch_processor_benchmark
-        srsgnb_phy_support
-        srsgnb_pusch_processor
-        srsgnb_channel_equalizer
-        srsgnb_channel_processors
-        srsgnb_sched
+        srsran_phy_support
+        srsran_pusch_processor
+        srsran_channel_equalizer
+        srsran_channel_processors
+        srsran_sched
         srslog
         srsvec)
 add_test(pusch_processor_benchmark pusch_processor_benchmark -s -R 1 -B 1 -T 2 -P pusch_scs15_5MHz_qpsk_min)

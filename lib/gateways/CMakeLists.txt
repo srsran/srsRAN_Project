@@ -7,10 +7,10 @@
 #
 find_package(SCTP REQUIRED)
 
-add_library(srsgnb_gateway
+add_library(srsran_gateway
               sctp_network_gateway_impl.cpp
               udp_network_gateway_impl.cpp
               sctp_network_gateway_factory.cpp
               udp_network_gateway_factory.cpp
             )
-target_link_libraries(srsgnb_gateway srslog ${SCTP_LIBRARIES})
+target_link_libraries(srsran_gateway srslog ${SCTP_LIBRARIES})

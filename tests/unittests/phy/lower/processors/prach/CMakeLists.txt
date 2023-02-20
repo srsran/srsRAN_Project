@@ -7,5 +7,5 @@
 #
 
 add_executable(prach_processor_test prach_processor_test.cpp)
-target_link_libraries(prach_processor_test srsgnb_lower_phy_prach_processor srslog gtest gtest_main)
+target_link_libraries(prach_processor_test srsran_lower_phy_prach_processor srslog gtest gtest_main)
 add_test(prach_processor_test prach_processor_test)

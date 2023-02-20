@@ -15,7 +15,7 @@ set(SOURCES
 
 include_directories(../../../../include/srsgnb/phy/upper/sequence_generators)
 
-add_library(srsgnb_sequence_generators STATIC ${SOURCES})
-target_link_libraries(srsgnb_sequence_generators srsgnb_support srsvec)
+add_library(srsran_sequence_generators STATIC ${SOURCES})
+target_link_libraries(srsran_sequence_generators srsran_support srsvec)
 
-install(TARGETS srsgnb_sequence_generators EXPORT srsgnb_export)
+install(TARGETS srsran_sequence_generators EXPORT srsran_export)

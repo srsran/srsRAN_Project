@@ -15,7 +15,7 @@ add_executable(ue_scheduler_test
         ue_grid_allocator_test.cpp
         ul_logical_channel_test.cpp)
 target_link_libraries(ue_scheduler_test
-        srsgnb_sched
+        srsran_sched
         srslog
         mac_configuration_helpers
         scheduler_test_suite

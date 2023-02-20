@@ -7,6 +7,6 @@
 #
 
 set(SOURCES initial_du_setup_procedure.cpp ue_creation_procedure.cpp ue_configuration_procedure.cpp)
-add_library(srsgnb_du_manager_procedures STATIC ${SOURCES})
-target_link_libraries(srsgnb_du_manager_procedures sched_config srsgnb_ran mac_configuration_helpers du_ue)
+add_library(srsran_du_manager_procedures STATIC ${SOURCES})
+target_link_libraries(srsran_du_manager_procedures sched_config srsran_ran mac_configuration_helpers du_ue)
 

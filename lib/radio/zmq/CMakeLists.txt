@@ -14,8 +14,8 @@ set(SOURCES_ZMQ
         radio_zmq_rx_stream.cpp
         radio_zmq_tx_channel.cpp
         radio_zmq_tx_stream.cpp)
-add_library(srsgnb_radio_zmq STATIC ${SOURCES_ZMQ})
+add_library(srsran_radio_zmq STATIC ${SOURCES_ZMQ})
 
-target_link_libraries(srsgnb_radio_zmq ${ZEROMQ_LIBRARIES})
+target_link_libraries(srsran_radio_zmq ${ZEROMQ_LIBRARIES})
 
-install(TARGETS srsgnb_radio_zmq EXPORT srsgnb_export)
+install(TARGETS srsran_radio_zmq EXPORT srsran_export)

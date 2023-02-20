@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_library(srsgnb_lower_phy_adaptors STATIC
+add_library(srsran_lower_phy_adaptors STATIC
         processor_notifier_adapter.cpp)

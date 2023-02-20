@@ -13,4 +13,4 @@ set(SOURCES
 add_library(fmt STATIC ${SOURCES})
 target_link_libraries(fmt ${CMAKE_THREAD_LIBS_INIT})
 
-install(TARGETS fmt EXPORT srsgnb_export)
+install(TARGETS fmt EXPORT srsran_export)

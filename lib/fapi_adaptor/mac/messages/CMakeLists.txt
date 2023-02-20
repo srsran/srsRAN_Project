@@ -14,5 +14,5 @@ set(SOURCES
         pusch.cpp
         ssb.cpp)
 
-add_library(srsgnb_mac_fapi_adaptors STATIC ${SOURCES})
-target_link_libraries(srsgnb_mac_fapi_adaptors srslog)
+add_library(srsran_mac_fapi_adaptors STATIC ${SOURCES})
+target_link_libraries(srsran_mac_fapi_adaptors srslog)

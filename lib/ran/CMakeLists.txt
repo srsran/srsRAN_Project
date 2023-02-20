@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_library(srsgnb_ran
+add_library(srsran_ran
         csi_rs/csi_rs_pattern.cpp
         pdcch/cce_to_prb_mapping.cpp
         pdcch/dci_packing.cpp
@@ -28,6 +28,6 @@ add_library(srsgnb_ran
         ssb_freq_position_generator.cpp
         ssb_mapping.cpp
         tdd_ul_dl_config.cpp)
-target_link_libraries(srsgnb_ran)
+target_link_libraries(srsran_ran)
 
-install(TARGETS srsgnb_ran EXPORT srsgnb_export)
+install(TARGETS srsran_ran EXPORT srsran_export)

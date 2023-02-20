@@ -11,5 +11,5 @@ set(SOURCES gtpu_tunnel_factory.cpp
             gtpu_demux_factory.cpp
             gtpu_demux_impl.cpp)
 
-add_library(srsgnb_gtpu STATIC ${SOURCES})
-target_link_libraries(srsgnb_gtpu srsgnb_support)
+add_library(srsran_gtpu STATIC ${SOURCES})
+target_link_libraries(srsran_gtpu srsran_support)

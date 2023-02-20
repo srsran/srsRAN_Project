@@ -8,12 +8,12 @@
 
 add_library(e1ap_cu_up_test_helpers e1ap_cu_up_test_helpers.cpp)
 target_include_directories(e1ap_cu_up_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(e1ap_cu_up_test_helpers e1ap_test_helpers srsgnb_e1ap srsgnb_support e1ap_asn1 srslog)
+target_link_libraries(e1ap_cu_up_test_helpers e1ap_test_helpers srsran_e1ap srsran_support e1ap_asn1 srslog)
 
 set(SOURCES
         e1ap_cu_up_test.cpp)
 
 add_executable(e1ap_cu_up_test ${SOURCES})
 target_include_directories(e1ap_cu_up_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(e1ap_cu_up_test e1ap_cu_up_test_helpers srsgnb_e1ap srsgnb_support srslog e1ap_asn1 gtest gtest_main)
+target_link_libraries(e1ap_cu_up_test e1ap_cu_up_test_helpers srsran_e1ap srsran_support srslog e1ap_asn1 gtest gtest_main)
 gtest_discover_tests(e1ap_cu_up_test PROPERTIES "LABELS;e1ap_cu_up")

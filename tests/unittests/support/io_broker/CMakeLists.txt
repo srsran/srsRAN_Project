@@ -9,5 +9,5 @@
 set_directory_properties(PROPERTIES LABELS "io_broker")
 
 add_executable(io_broker_epoll_test io_broker_epoll_test.cpp)
-target_link_libraries(io_broker_epoll_test srsgnb_io_broker srsgnb_support srslog gtest gtest_main)
+target_link_libraries(io_broker_epoll_test srsran_io_broker srsran_support srslog gtest gtest_main)
 gtest_discover_tests(io_broker_epoll_test)

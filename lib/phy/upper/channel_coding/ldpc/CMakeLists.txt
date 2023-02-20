@@ -42,8 +42,8 @@ if(HAVE_NEON)
   list(APPEND ldpc_sources ldpc_rate_dematcher_neon_impl.cpp)
 endif(HAVE_NEON)
 
-add_library(srsgnb_ldpc STATIC ${ldpc_sources})
+add_library(srsran_ldpc STATIC ${ldpc_sources})
 
-target_link_libraries(srsgnb_ldpc log_likelihood_ratio)
+target_link_libraries(srsran_ldpc log_likelihood_ratio)
 
-install(TARGETS srsgnb_ldpc EXPORT srsgnb_export)
+install(TARGETS srsran_ldpc EXPORT srsran_export)

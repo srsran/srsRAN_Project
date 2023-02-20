@@ -13,7 +13,7 @@ add_executable(common_scheduler_test
         ra_scheduler_test.cpp
         paging_scheduler_test.cpp)
 target_link_libraries(common_scheduler_test
-        srsgnb_sched
+        srsran_sched
         srslog
         sched_config
         mac_configuration_helpers
