@@ -323,7 +323,10 @@ const dl_harq_process* harq_entity::dl_ack_info(slot_point uci_slot, mac_harq_ac
       harq_candidate = &h_dl;
     }
   }
-  if (harq_candidate == nullptr) {
+  if (harq_candidate == nullptr and ack != mac_harq_ack_report_status::dtx) {
+    // Note: In the situations when two PUCCH PDUs are scheduled for the same slot, it can happen that the first PDU
+    // empties the HARQ with an ACK and the HARQ cannot be found anymore by the second HARQ PDU. In such situation,
+    // avoid this warning.
     logger.warning("DL HARQ for rnti={:#x}, uci slot={} not found.", rnti, uci_slot);
   }
   return harq_candidate;

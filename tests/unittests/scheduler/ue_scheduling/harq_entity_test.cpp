@@ -63,6 +63,54 @@ TEST(harq_entity, after_max_ack_wait_timeout_dl_harqs_are_available_for_retx)
   ASSERT_TRUE(harq_ent.find_pending_dl_retx()->has_pending_retx());
 }
 
+class harq_entity_harq_1bit_tester : public ::testing::Test
+{
+protected:
+  harq_entity_harq_1bit_tester()
+  {
+    logger.set_level(srslog::basic_levels::debug);
+    srslog::init();
+  }
+
+  void run_slot()
+  {
+    logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    harq_ent.slot_indication(next_slot);
+    ++next_slot;
+  }
+
+  const unsigned nof_harqs = 8, max_harq_retxs = 4, pucch_process_delay = 4;
+  harq_entity    harq_ent{to_rnti(0x4601), nof_harqs};
+
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
+
+  slot_point next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
+
+  dl_harq_process& h_dl{*harq_ent.find_empty_dl_harq()};
+};
+
+TEST_F(harq_entity_harq_1bit_tester, when_dtx_received_after_ack_then_dtx_is_ignored)
+{
+  unsigned k1 = 4, dai = 0;
+
+  this->h_dl.new_tx(next_slot, k1, max_harq_retxs, dai);
+  slot_point pucch_slot = next_slot + k1;
+
+  while (next_slot != pucch_slot) {
+    run_slot();
+  }
+
+  // ACK received.
+  ASSERT_NE(this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::ack, dai), nullptr);
+
+  // Reassignment of the HARQ.
+  run_slot();
+  this->h_dl.new_tx(next_slot, k1, max_harq_retxs, dai);
+
+  // DTX received one slot late.
+  this->harq_ent.dl_ack_info(pucch_slot, srsran::mac_harq_ack_report_status::dtx, dai);
+}
+
 enum harq_state_outcome { ACKed, NACKed, DTX_timeout };
 
 struct test_2_harq_bits_params {
