@@ -592,6 +592,10 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
       logger.log_info("Reassembly timer has been already restarted. Skipping outdated event. {}", st);
       return;
     }
+    if (not valid_ack_sn(st.rx_next_status_trigger)) {
+      logger.log_info("rx_next_status_trigger is outside RX window. Skipping outdated event. {}", st);
+      return;
+    }
     /*
      * 5.2.3.2.4 Actions when t-Reassembly expires:
      * - update RX_Highest_Status to the SN of the first RLC SDU with SN >= RX_Next_Status_Trigger for which not
