@@ -125,10 +125,7 @@ class TestPing(BaseTest):
 
             ping_result_dict = {key: ping_task.result() for key, ping_task in ping_task_dict.items()}
 
-            tuple(
-                map(
-                    lambda key_and_value: logging.info("Ping %s: %s", *key_and_value),
-                    ping_result_dict.items(),
-                )
-            )
+            for key, value in ping_result_dict.items():
+                logging.info("Ping %s: %s", key, value)
+
             assert all(map(lambda r: r.status, ping_result_dict.values())) is True

@@ -54,9 +54,6 @@
     - mv tests/e2e/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
     - echo "$CI_JOB_ID" >> ${CI_PROJECT_DIR}/$CI_JOB_NAME/job.env
 
-################################################################################
-## Build
-################################################################################
 smoke-zmq-tsan:
   extends: .e2e-run
   rules:
@@ -86,7 +83,6 @@ zmq:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "zmq and not multiue"
     LOG_LEVEL: "warning"
-    FORCE_DOWNLOAD: "false"
   needs:
     - job: "avx2 [basic]"
       artifacts: true

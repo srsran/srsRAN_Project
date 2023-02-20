@@ -148,6 +148,7 @@ stages:
     - mv ${CI_PROJECT_DIR}/build/xunit.xml         ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml               || true
     - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
     - mv ${CI_PROJECT_DIR}/build/Testing/Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary_${CI_JOB_ID} || true
+  timeout: 2h
   artifacts:
     when: always
     reports:
