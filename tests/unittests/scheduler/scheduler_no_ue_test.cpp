@@ -35,7 +35,7 @@ void test_no_ues()
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch.handle_cell_configuration_request(cell_cfg_msg);
 
-  slot_point sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10240)};
+  slot_point sl_tx{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 
   // Action 2: Run slot.
   const sched_result* res = sch.slot_indication(sl_tx, to_du_cell_index(0));
