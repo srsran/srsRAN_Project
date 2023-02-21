@@ -259,7 +259,7 @@ pdcch_resource_allocator_impl::~pdcch_resource_allocator_impl() = default;
 
 void pdcch_resource_allocator_impl::slot_indication(slot_point sl_tx)
 {
-  srsgnb_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected skipped slot");
+  srsran_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected skipped slot");
 
   // Update Slot.
   last_sl_ind = sl_tx;
@@ -430,6 +430,6 @@ bool pdcch_resource_allocator_impl::cancel_last_pdcch(cell_slot_resource_allocat
 
 pdcch_resource_allocator_impl::pdcch_slot_allocator& pdcch_resource_allocator_impl::get_pdcch_slot_alloc(slot_point sl)
 {
-  srsgnb_sanity_check(sl < last_sl_ind + SLOT_ALLOCATOR_RING_SIZE, "PDCCH being allocated to far into the future");
+  srsran_sanity_check(sl < last_sl_ind + SLOT_ALLOCATOR_RING_SIZE, "PDCCH being allocated to far into the future");
   return *slot_records[sl.to_uint() % slot_records.size()];
 }

@@ -23,7 +23,7 @@ public:
 
   void* allocate(size_t sz) noexcept
   {
-    srsgnb_assert(sz <= mem_block.size(), "Invalid allocation size ({} > {})", sz, mem_block.size());
+    srsran_assert(sz <= mem_block.size(), "Invalid allocation size ({} > {})", sz, mem_block.size());
 
     if (next_offset + sz > mem_block.size()) {
       // Wrap-around.
@@ -38,7 +38,7 @@ public:
 
   void deallocate(void* p) noexcept
   {
-    srsgnb_assert(static_cast<uint8_t*>(p) - mem_block.data() < (ssize_t)mem_block.size(),
+    srsran_assert(static_cast<uint8_t*>(p) - mem_block.data() < (ssize_t)mem_block.size(),
                   "Deallocating invalid memory pointer");
   }
 

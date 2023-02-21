@@ -304,7 +304,7 @@ private:
     entry_key_t key{port, symbol, subcarrier};
 
     // Ensure the resource element exist.
-    srsgnb_assert(entries.count(key) == 1,
+    srsran_assert(entries.count(key) == 1,
                   "Resource grid for port={}, symbol={} and subcarrier={} does not exist.",
                   port,
                   symbol,
@@ -425,7 +425,7 @@ private:
   /// Throws a assertion failure due to an overridden method call.
   void failure() const
   {
-    srsgnb_assertion_failure(
+    srsran_assertion_failure(
         "Components using resource grid dummy are not allowed to call any method from the interface.");
   }
 

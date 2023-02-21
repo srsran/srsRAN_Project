@@ -49,7 +49,7 @@ public:
   std::pair<pucch_uci_message, channel_state_information> detect(const resource_grid_reader& /*grid*/,
                                                                  const format0_configuration& /*config*/) override
   {
-    srsgnb_assert(false, "PUCCH Format 0 not implemented yet.");
+    srsran_assert(false, "PUCCH Format 0 not implemented yet.");
     return {};
   }
 

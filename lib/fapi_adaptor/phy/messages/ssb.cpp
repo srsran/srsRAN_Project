@@ -115,7 +115,7 @@ static void fill_bch_payload(span<uint8_t>           dest,
       payload = generate_bch_payload(fapi_pdu, sfn, hrf, scs_common);
       break;
     default:
-      srsgnb_assert(0, "Invalid BCH payload flag");
+      srsran_assert(0, "Invalid BCH payload flag");
       break;
   }
   srsvec::bit_unpack(dest, payload, dest.size());
@@ -133,7 +133,7 @@ static float convert_to_beta_pss(const fapi::dl_ssb_pdu& fapi_pdu)
       return fapi_pdu.ssb_maintenance_v3.beta_pss_profile_sss * 0.001F;
     default:
       // NOTE: Unreachable code as the FAPI message should have been validated.
-      srsgnb_assert(0, "Invalid beta PSS profile");
+      srsran_assert(0, "Invalid beta PSS profile");
       return 0;
   }
 }
@@ -144,8 +144,8 @@ void srsran::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_
                                                    uint16_t                slot,
                                                    subcarrier_spacing      scs_common)
 {
-  srsgnb_assert(scs_common != subcarrier_spacing::kHz240, "Invalid value for common subcarrier spacing");
-  srsgnb_assert(fapi_pdu.ssb_maintenance_v3.scs != subcarrier_spacing::kHz60,
+  srsran_assert(scs_common != subcarrier_spacing::kHz240, "Invalid value for common subcarrier spacing");
+  srsran_assert(fapi_pdu.ssb_maintenance_v3.scs != subcarrier_spacing::kHz60,
                 "Invalid value for SSB subcarrier spacing");
 
   proc_pdu.slot              = slot_point(fapi_pdu.ssb_maintenance_v3.scs, sfn, slot);

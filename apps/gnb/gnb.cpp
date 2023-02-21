@@ -170,7 +170,7 @@ private:
                      os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime())
   {
     auto ret = workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, queue_size, false, prio)));
-    srsgnb_assert(ret.second, "Unable to create worker {}.", name);
+    srsran_assert(ret.second, "Unable to create worker {}.", name);
   }
   // helper method to create worker pool
   void create_worker_pool(const std::string&          name,
@@ -180,7 +180,7 @@ private:
   {
     auto ret = worker_pools.insert(
         std::make_pair(name, std::make_unique<task_worker_pool>(nof_workers, queue_size, name, prio)));
-    srsgnb_assert(ret.second, "Unable to create worker pool {}.", name);
+    srsran_assert(ret.second, "Unable to create worker pool {}.", name);
   }
 
   void create_executors(bool blocking_mode_active, unsigned nof_ul_workers)
@@ -260,7 +260,7 @@ static void local_signal_handler()
 
 static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_config>& cell_cfg)
 {
-  srsgnb_assert(cell_cfg.size() == 1, "Currently supporting one cell");
+  srsran_assert(cell_cfg.size() == 1, "Currently supporting one cell");
 
   const du_cell_config& cell = cell_cfg.front();
 

@@ -25,7 +25,7 @@ public:
   logging_uplink_processor_decorator(std::unique_ptr<uplink_processor> uplink_proc_, srslog::basic_logger& logger_) :
     uplink_proc(std::move(uplink_proc_)), logger(logger_)
   {
-    srsgnb_assert(uplink_proc, "Invalid uplink processor.");
+    srsran_assert(uplink_proc, "Invalid uplink processor.");
   }
 
   // See interface for documentation.

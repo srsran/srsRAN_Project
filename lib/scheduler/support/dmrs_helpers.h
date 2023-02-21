@@ -25,7 +25,7 @@ inline unsigned calculate_nof_dmrs_per_rb(const dmrs_information& dmrs)
 
   // Calculate the maximum number of CDM groups without data and make sure the number does not exceed the maximum.
   unsigned max_nof_cdm_groups_without_data = get_max_nof_cdm_groups_without_data(dmrs.config_type);
-  srsgnb_assert(dmrs.num_dmrs_cdm_grps_no_data >= 1 &&
+  srsran_assert(dmrs.num_dmrs_cdm_grps_no_data >= 1 &&
                     dmrs.num_dmrs_cdm_grps_no_data <= max_nof_cdm_groups_without_data,
                 "Invalid number of CDM groups without data {}.",
                 dmrs.num_dmrs_cdm_grps_no_data);
@@ -43,7 +43,7 @@ inline dmrs_information make_dmrs_info_common(const pdsch_config_common& pdsch_c
                                               pci_t                      pci,
                                               dmrs_typeA_position        dmrs_typeA_pos)
 {
-  srsgnb_assert(pdsch_cfg.pdsch_td_alloc_list.size() > time_resource, "Invalid time resource");
+  srsran_assert(pdsch_cfg.pdsch_td_alloc_list.size() > time_resource, "Invalid time resource");
   const pdsch_time_domain_resource_allocation& pdsch_time_res = pdsch_cfg.pdsch_td_alloc_list[time_resource];
 
   dmrs_information dmrs{};
@@ -87,7 +87,7 @@ inline dmrs_information make_dmrs_info_common(const pusch_config_common& pusch_c
                                               pci_t                      pci,
                                               dmrs_typeA_position        dmrs_typeA_pos)
 {
-  srsgnb_assert(pusch_cfg.pusch_td_alloc_list.size() > time_resource, "Invalid time resource");
+  srsran_assert(pusch_cfg.pusch_td_alloc_list.size() > time_resource, "Invalid time resource");
   const pusch_time_domain_resource_allocation& pusch_time_res = pusch_cfg.pusch_td_alloc_list[time_resource];
 
   dmrs_information dmrs{};

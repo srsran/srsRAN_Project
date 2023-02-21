@@ -172,7 +172,7 @@ struct moveonly_test_object {
   bool has_value() const { return val_ptr != nullptr; }
   int  value() const
   {
-    srsgnb_assert(has_value(), "Invalid access");
+    srsran_assert(has_value(), "Invalid access");
     return *val_ptr;
   }
   bool operator==(const moveonly_test_object& other) const

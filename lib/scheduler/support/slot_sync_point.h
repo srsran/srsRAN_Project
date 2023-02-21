@@ -39,7 +39,7 @@ public:
   void wait(slot_point sl, size_t nof_workers, const CompletionFunction& func)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    srsgnb_sanity_check(nof_workers > 0, "Invalid count");
+    srsran_sanity_check(nof_workers > 0, "Invalid count");
     if (sl != last_sl) {
       // Initialize barrier.
       count   = nof_workers;

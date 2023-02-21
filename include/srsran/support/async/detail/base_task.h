@@ -43,13 +43,13 @@ public:
   template <typename Res = std::decay_t<result_type>, std::enable_if_t<not std::is_same<Res, void>::value, bool> = true>
   const Res& get() const&
   {
-    srsgnb_assert(not empty() and derived().handle.promise().ready(), "Called task::get() for task that is not ready");
+    srsran_assert(not empty() and derived().handle.promise().ready(), "Called task::get() for task that is not ready");
     return derived().handle.promise().get();
   }
   template <typename Res = std::decay_t<result_type>, std::enable_if_t<not std::is_same<Res, void>::value, bool> = true>
   Res get() &&
   {
-    srsgnb_assert(not empty() and derived().handle.promise().ready(), "Called task::get() for task that is not ready");
+    srsran_assert(not empty() and derived().handle.promise().ready(), "Called task::get() for task that is not ready");
     return std::move(derived().handle.promise()).get();
   }
 
@@ -58,13 +58,13 @@ public:
   template <typename Res = result_type>
   detail::enable_if_nonvoid<Res> await_resume()
   {
-    srsgnb_sanity_check(not empty(), "Resuming an empty base_task");
+    srsran_sanity_check(not empty(), "Resuming an empty base_task");
     return derived().handle.promise().get();
   }
   template <typename Res = result_type>
   detail::enable_if_void<Res> await_resume()
   {
-    srsgnb_sanity_check(not empty(), "Resuming an empty base_task");
+    srsran_sanity_check(not empty(), "Resuming an empty base_task");
   }
 
 private:

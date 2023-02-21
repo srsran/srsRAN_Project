@@ -36,7 +36,7 @@ public:
     pusch_executor(pusch_executor_),
     prach_executor(prach_executor_)
   {
-    srsgnb_assert(processor, "A valid uplink processor must be provided");
+    srsran_assert(processor, "A valid uplink processor must be provided");
   }
 
   // See interface for documentation.

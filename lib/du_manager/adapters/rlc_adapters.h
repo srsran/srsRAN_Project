@@ -25,7 +25,7 @@ public:
 
   void on_new_sdu(byte_buffer_slice_chain pdu) override
   {
-    srsgnb_assert(f1bearer != nullptr, "RLC Rx Bearer notifier is disconnected");
+    srsran_assert(f1bearer != nullptr, "RLC Rx Bearer notifier is disconnected");
     f1bearer->handle_sdu(std::move(pdu));
   }
 
@@ -40,7 +40,7 @@ public:
 
   void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
-    srsgnb_assert(f1bearer != nullptr, "RLC Rx bearer notifier is disconnected");
+    srsran_assert(f1bearer != nullptr, "RLC Rx bearer notifier is disconnected");
     f1bearer->handle_sdu(std::move(sdu));
   }
 
@@ -88,7 +88,7 @@ public:
 
   void on_buffer_state_update(unsigned bsr) override
   {
-    srsgnb_assert(mac != nullptr, "RLC Tx Buffer State notifier is disconnected");
+    srsran_assert(mac != nullptr, "RLC Tx Buffer State notifier is disconnected");
     mac_dl_buffer_state_indication_message bs{};
     bs.ue_index = ue_index;
     bs.lcid     = lcid;

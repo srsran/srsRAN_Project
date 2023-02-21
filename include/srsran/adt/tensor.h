@@ -119,7 +119,7 @@ private:
     unsigned offset = 0;
     // For each dimension, add its offset.
     for (unsigned dimension_index = 0; dimension_index != NDIMS - N; ++dimension_index) {
-      srsgnb_assert(indices[dimension_index] < dimensions_size[dimension_index + N],
+      srsran_assert(indices[dimension_index] < dimensions_size[dimension_index + N],
                     "Dimension {} index {} exceeds the maximum index {}.",
                     dimension_index + N,
                     indices[dimension_index],
@@ -169,7 +169,7 @@ public:
   {
     dimensions_size     = dimensions;
     unsigned total_size = std::accumulate(begin(dimensions_size), end(dimensions_size), 1, std::multiplies<>());
-    srsgnb_assert(total_size <= MAX_ELEMENTS,
+    srsran_assert(total_size <= MAX_ELEMENTS,
                   "The total number of elements {} (dimensions: {}) exceeds the maximum number of elements {}.",
                   total_size,
                   span<const unsigned>(dimensions),

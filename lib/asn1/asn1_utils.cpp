@@ -33,7 +33,7 @@ void invalid_enum_number(int value, const char* name)
 
 void assert_choice_type(uint32_t val, uint32_t choice_id)
 {
-  if (srsgnb_unlikely(val != choice_id)) {
+  if (srsran_unlikely(val != choice_id)) {
     log_invalid_access_choice_id(val, choice_id);
   }
 }
@@ -117,7 +117,7 @@ int bit_ref::distance() const
 
 SRSASN_CODE bit_ref::pack(uint64_t val, uint32_t n_bits)
 {
-  srsgnb_assert(n_bits < 64, "Invalid number of bits passed to pack()");
+  srsran_assert(n_bits < 64, "Invalid number of bits passed to pack()");
   while (n_bits > 0) {
     if (offset == 0) {
       writer.append(0);
@@ -197,7 +197,7 @@ int cbit_ref::distance(const cbit_ref& other) const
 template <class T>
 SRSASN_CODE cbit_ref::unpack(T& val, uint32_t n_bits)
 {
-  srsgnb_assert(n_bits <= sizeof(T) * 8, "unpack_bits() only supports up to {} bits", sizeof(T) * 8);
+  srsran_assert(n_bits <= sizeof(T) * 8, "unpack_bits() only supports up to {} bits", sizeof(T) * 8);
   val = 0;
   while (n_bits > 0) {
     if ((uint32_t)(8 - offset) > n_bits) {
@@ -974,7 +974,7 @@ std::string octet_string_helper::to_hex_string(const byte_buffer& buf)
 
 unsigned octet_string_helper::hex_string_to_octets(srsran::span<uint8_t> buf, const std::string& str)
 {
-  srsgnb_assert(buf.size() >= ceil_frac(str.size(), (size_t)2U), "out-of-bounds access");
+  srsran_assert(buf.size() >= ceil_frac(str.size(), (size_t)2U), "out-of-bounds access");
   if (str.size() % 2 != 0) {
     log_warning("The provided hex string size={} is not a multiple of 2.", str.size());
   }

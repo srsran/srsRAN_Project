@@ -101,11 +101,11 @@ public:
     estimates(estimates_dimensions),
     max_sizes(estimates_dimensions)
   {
-    srsgnb_assert(channel_estimator_format_1, "Invalid channel estimator for PUCCH Format 1.");
-    srsgnb_assert(channel_estimator_format_2, "Invalid channel estimator for PUCCH Format 2.");
-    srsgnb_assert(detector, "Invalid detector.");
-    srsgnb_assert(demodulator, "Invalid PUCCH demodulator.");
-    srsgnb_assert(decoder, "Invalid UCI decoder.");
+    srsran_assert(channel_estimator_format_1, "Invalid channel estimator for PUCCH Format 1.");
+    srsran_assert(channel_estimator_format_2, "Invalid channel estimator for PUCCH Format 2.");
+    srsran_assert(detector, "Invalid detector.");
+    srsran_assert(demodulator, "Invalid PUCCH demodulator.");
+    srsran_assert(decoder, "Invalid UCI decoder.");
   }
 
 private:

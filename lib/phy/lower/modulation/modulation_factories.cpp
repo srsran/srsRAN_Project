@@ -24,7 +24,7 @@ private:
 public:
   ofdm_modulator_factory_generic(const ofdm_factory_generic_configuration& config) : dft_factory(config.dft_factory)
   {
-    srsgnb_assert(config.dft_factory, "Invalid DFT factory.");
+    srsran_assert(config.dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<ofdm_symbol_modulator>
@@ -51,7 +51,7 @@ private:
 public:
   ofdm_demodulator_factory_generic(const ofdm_factory_generic_configuration& config) : dft_factory(config.dft_factory)
   {
-    srsgnb_assert(config.dft_factory, "Invalid DFT factory.");
+    srsran_assert(config.dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<ofdm_symbol_demodulator>
@@ -81,8 +81,8 @@ public:
   ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_, unsigned dft_size_15kHz_) :
     dft_factory(dft_factory_), dft_size_15kHz(dft_size_15kHz_)
   {
-    srsgnb_assert(dft_factory, "Invalid DFT factory.");
-    srsgnb_assert(dft_size_15kHz, "Invalid DFT size for 15kHz.");
+    srsran_assert(dft_factory, "Invalid DFT factory.");
+    srsran_assert(dft_size_15kHz, "Invalid DFT size for 15kHz.");
   }
 
   std::unique_ptr<ofdm_prach_demodulator> create() override

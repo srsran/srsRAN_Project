@@ -61,7 +61,7 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
 
 du_ue_srb& du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_cfg)
 {
-  srsgnb_assert(not srbs().contains(srb_id), "SRB-Id={} already exists", srb_id);
+  srsran_assert(not srbs().contains(srb_id), "SRB-Id={} already exists", srb_id);
   srbs_.emplace(srb_id);
   srbs_[srb_id].srb_id  = srb_id;
   srbs_[srb_id].rlc_cfg = rlc_cfg;
@@ -70,7 +70,7 @@ du_ue_srb& du_ue_bearer_manager::add_srb(srb_id_t srb_id, const rlc_config& rlc_
 
 du_ue_drb& du_ue_bearer_manager::add_drb(drb_id_t drb_id, lcid_t lcid, const rlc_config& rlc_cfg)
 {
-  srsgnb_assert(not drbs().contains(drb_id), "DRB-Id={} already exists", drb_id);
+  srsran_assert(not drbs().contains(drb_id), "DRB-Id={} already exists", drb_id);
   drbs_.emplace(drb_id);
   drbs_[drb_id].drb_id  = drb_id;
   drbs_[drb_id].lcid    = lcid;
@@ -80,7 +80,7 @@ du_ue_drb& du_ue_bearer_manager::add_drb(drb_id_t drb_id, lcid_t lcid, const rlc
 
 void du_ue_bearer_manager::remove_drb(drb_id_t drb_id)
 {
-  srsgnb_assert(drbs().contains(drb_id), "DRB-Id={} does not exist", drb_id);
+  srsran_assert(drbs().contains(drb_id), "DRB-Id={} does not exist", drb_id);
   drbs_.erase(drb_id);
 }
 

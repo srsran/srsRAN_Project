@@ -27,8 +27,8 @@ public:
                                     std::unique_ptr<port_channel_estimator>  ch_est_) :
     prg(std::move(prg_)), ch_estimator(std::move(ch_est_))
   {
-    srsgnb_assert(prg, "Invalid pseudo random generator.");
-    srsgnb_assert(ch_estimator, "Invalid port channel estimator.");
+    srsran_assert(prg, "Invalid pseudo random generator.");
+    srsran_assert(ch_estimator, "Invalid port channel estimator.");
   }
 
   void estimate(channel_estimate& ce_, const resource_grid_reader& grid, const config_t& config) override;

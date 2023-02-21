@@ -94,7 +94,7 @@ private:
     explicit sched_config_notif_adapter(srs_sched_config_adapter& parent_) : parent(parent_) {}
     void on_ue_config_complete(du_ue_index_t ue_index) override
     {
-      srsgnb_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+      srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
 
       // Remove continuation of task in ctrl executor.
       parent.cfg.ctrl_exec.defer(
@@ -102,7 +102,7 @@ private:
     }
     void on_ue_delete_response(du_ue_index_t ue_index) override
     {
-      srsgnb_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+      srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
 
       // Remove continuation of task in ctrl executor.
       parent.cfg.ctrl_exec.defer(

@@ -64,9 +64,9 @@ public:
   explicit prach_processor_impl(std::vector<std::unique_ptr<prach_processor_worker>>&& workers_) :
     workers(std::move(workers_))
   {
-    srsgnb_assert(!workers.empty(), "No workers are available.");
+    srsran_assert(!workers.empty(), "No workers are available.");
     for (const std::unique_ptr<prach_processor_worker>& worker : workers) {
-      srsgnb_assert(worker, "Invalid worker.");
+      srsran_assert(worker, "Invalid worker.");
     }
   }
 
@@ -82,14 +82,14 @@ public:
   // See prach_processor for documentation.
   prach_processor_request_handler& get_request_handler() override
   {
-    srsgnb_assert(notifier != nullptr, "Notifier has not been connected.");
+    srsran_assert(notifier != nullptr, "Notifier has not been connected.");
     return *this;
   }
 
   // See prach_processor for documentation.
   prach_processor_baseband& get_baseband() override
   {
-    srsgnb_assert(notifier, "Notifier has not been connected.");
+    srsran_assert(notifier, "Notifier has not been connected.");
     return *this;
   }
 };

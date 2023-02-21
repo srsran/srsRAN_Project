@@ -79,8 +79,8 @@ struct test_bench {
   // Add a UE to the RNTI table.
   void add_ue(rnti_t rnti, du_ue_index_t du_ue_idx, unsigned activity_timeout = DEFAULT_ACTIVITY_TIMEOUT)
   {
-    srsgnb_assert(not rnti_table.has_rnti(rnti), "RNTI={:#x} already exists", rnti);
-    srsgnb_assert(not test_ues.contains(du_ue_idx), "ueId={:#x} already exists", rnti);
+    srsran_assert(not rnti_table.has_rnti(rnti), "RNTI={:#x} already exists", rnti);
+    srsran_assert(not test_ues.contains(du_ue_idx), "ueId={:#x} already exists", rnti);
     rnti_table.add_ue(rnti, du_ue_idx);
     test_ues.emplace(du_ue_idx);
     test_ues[du_ue_idx].rnti     = rnti;
@@ -91,7 +91,7 @@ struct test_bench {
     test_ues[du_ue_idx].activity_timer.run();
     async_task<bool>         t = mac_ul.add_ue(test_ues[du_ue_idx].make_ue_create_request());
     lazy_task_launcher<bool> launcher(t);
-    srsgnb_assert(t.ready(), "UE addition should have completed");
+    srsran_assert(t.ready(), "UE addition should have completed");
   }
 
   // Add a PDU to the list of PDUs that will be included in the RX indication message.

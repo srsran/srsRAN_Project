@@ -51,7 +51,7 @@ public:
     nof_csi_part1_bits(config.nof_csi_part1),
     nof_csi_part2_bits(config.nof_csi_part2)
   {
-    srsgnb_assert(config.nof_sr + config.nof_harq_ack + config.nof_csi_part1 + config.nof_csi_part2 <=
+    srsran_assert(config.nof_sr + config.nof_harq_ack + config.nof_csi_part1 + config.nof_csi_part2 <=
                       uci_constants::MAX_NOF_PAYLOAD_BITS,
                   "The total number of payload bits (i.e. {}) shall not exceed {}.",
                   config.nof_sr + config.nof_harq_ack + config.nof_csi_part1 + config.nof_csi_part2,

@@ -77,7 +77,7 @@ error_type<validator_report> srsran::fapi::validate_dl_tti_request(const dl_tti_
         success &= validate_dl_csi_pdu(pdu.csi_rs_pdu, report);
         break;
       default:
-        srsgnb_assert(0, "Invalid pdu_type");
+        srsran_assert(0, "Invalid pdu_type");
         report.append(static_cast<int>(pdu.pdu_type), "DL_TTI.request PDU type", message_type_id::dl_tti_request);
         break;
     }
@@ -108,7 +108,7 @@ error_type<validator_report> srsran::fapi::validate_ul_dci_request(const ul_dci_
         break;
         // :TODO: Implement the rest of the PDUs when their validators exist.
       default:
-        srsgnb_assert(0, "Invalid pdu_type");
+        srsran_assert(0, "Invalid pdu_type");
         report.append(static_cast<int>(pdu.pdu_type), "UL_DCI.request PDU type", message_type_id::ul_dci_request);
         break;
     }
@@ -459,7 +459,7 @@ error_type<validator_report> srsran::fapi::validate_uci_indication(const uci_ind
         success &= validate_uci_pucch_format234_pdu(pdu.pucch_pdu_f234, report);
         break;
       default:
-        srsgnb_assert(0, "Invalid pdu_type");
+        srsran_assert(0, "Invalid pdu_type");
         report.append(static_cast<int>(pdu.pdu_type), "UCI.indication PDU type", message_type_id::uci_indication);
         break;
     }
@@ -682,7 +682,7 @@ error_type<validator_report> srsran::fapi::validate_ul_tti_request(const ul_tti_
         success &= validate_ul_pusch_pdu(pdu.pusch_pdu, report);
         break;
       default:
-        srsgnb_assert(0, "Invalid pdu_type");
+        srsran_assert(0, "Invalid pdu_type");
         report.append(static_cast<int>(pdu.pdu_type), "UL_TTI.request PDU type", msg_type);
         break;
     }
@@ -707,7 +707,7 @@ static const char* get_uci_pdu_type_string(uci_pdu_type pdu_id)
     case uci_pdu_type::PUCCH_format_2_3_4:
       return "PUCCH Format 2/3/4";
     default:
-      srsgnb_assert(0, "Invalid UCI.indication PDU={}", pdu_id);
+      srsran_assert(0, "Invalid UCI.indication PDU={}", pdu_id);
       break;
   }
   return "";
@@ -726,7 +726,7 @@ static const char* get_ul_tti_pdu_type_string(ul_pdu_type pdu_id)
     case ul_pdu_type::SRS:
       return "SRS";
     default:
-      srsgnb_assert(0, "Invalid UL_TTI.request PDU={}", pdu_id);
+      srsran_assert(0, "Invalid UL_TTI.request PDU={}", pdu_id);
       break;
   }
   return "";
@@ -745,7 +745,7 @@ static const char* get_dl_tti_pdu_type_string(dl_pdu_type pdu_id)
     case dl_pdu_type::SSB:
       return "SSB";
     default:
-      srsgnb_assert(0, "Invalid DL_TTI.request PDU={}", pdu_id);
+      srsran_assert(0, "Invalid DL_TTI.request PDU={}", pdu_id);
       break;
   }
   return "";
@@ -779,7 +779,7 @@ static const char* get_pdu_type_string(message_type_id msg_id, unsigned pdu_id)
     case message_type_id::ul_tti_request:
       return get_ul_tti_pdu_type_string(static_cast<ul_pdu_type>(pdu_id));
     default:
-      srsgnb_assert(0, "Invalid FAPI message type={}", msg_id);
+      srsran_assert(0, "Invalid FAPI message type={}", msg_id);
       break;
   }
   return "";
@@ -828,7 +828,7 @@ static const char* get_message_type_string(message_type_id msg_id)
     case message_type_id::ul_tti_request:
       return "UL_TTI.request";
     default:
-      srsgnb_assert(0, "Invalid FAPI message type={}", msg_id);
+      srsran_assert(0, "Invalid FAPI message type={}", msg_id);
       break;
   }
   return "";

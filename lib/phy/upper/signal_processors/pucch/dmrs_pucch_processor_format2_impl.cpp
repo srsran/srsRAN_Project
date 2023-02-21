@@ -75,7 +75,7 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
                                                  const resource_grid_reader&           grid,
                                                  const dmrs_pucch_processor::config_t& config)
 {
-  srsgnb_assert((!config.intra_slot_hopping || (config.nof_symbols > pucch_constants::FORMAT2_MIN_NSYMB)),
+  srsran_assert((!config.intra_slot_hopping || (config.nof_symbols > pucch_constants::FORMAT2_MIN_NSYMB)),
                 "Frequency hopping requires {} OFDM symbols.",
                 pucch_constants::FORMAT2_MAX_NSYMB);
 

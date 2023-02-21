@@ -41,7 +41,7 @@ public:
     struct addrinfo* results;
 
     int err = getaddrinfo(ip_str.c_str(), nullptr, nullptr, &results);
-    srsgnb_assert(err == 0, "Getaddrinfo error: {} - {}", ip_str, gai_strerror(err));
+    srsran_assert(err == 0, "Getaddrinfo error: {} - {}", ip_str, gai_strerror(err));
 
     // store address
     memcpy(&addr, results->ai_addr, results->ai_addrlen);
@@ -55,7 +55,7 @@ public:
 
   transport_layer_address& from_bitstring(std::string bit_str)
   {
-    srsgnb_assert(bit_str.length() < 160, "Combined IPv4 and IPv6 addresses are currently not supported");
+    srsran_assert(bit_str.length() < 160, "Combined IPv4 and IPv6 addresses are currently not supported");
 
     std::string ip_str;
 

@@ -107,7 +107,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     return pdu_session_result;
   }
 
-  srsgnb_assert(session.drb_to_setup_list_ng_ran.size() <= 1,
+  srsran_assert(session.drb_to_setup_list_ng_ran.size() <= 1,
                 "PDU Session {} cannot be created: Current implementation assumes one DRB per PDU session!",
                 session.pdu_session_id);
 
@@ -151,7 +151,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     f1u_ul_tunnel_addr.gtp_teid = int_to_gtp_teid(f1u_ul_teid);
     drb_result.gtp_tunnel       = f1u_ul_tunnel_addr;
 
-    srsgnb_assert(drb_to_setup.qos_flow_info_to_be_setup.size() <= 1,
+    srsran_assert(drb_to_setup.qos_flow_info_to_be_setup.size() <= 1,
                   "DRB with drbid={} of PDU Session {} cannot be created: Current implementation assumes one QoS "
                   "flow per DRB!",
                   drb_to_setup.drb_id,
@@ -238,7 +238,7 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
       pdu_session_result.drb_setup_results.push_back(drb_result);
       continue;
     }
-    srsgnb_assert(drb_to_mod.drb_id == drb_id_to_uint(drb_iter->second->drb_id),
+    srsran_assert(drb_to_mod.drb_id == drb_id_to_uint(drb_iter->second->drb_id),
                   "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
                   drb_to_mod.drb_id,
                   session.pdu_session_id,
@@ -267,7 +267,7 @@ pdu_session_manager_impl::modify_pdu_session(const asn1::e1ap::pdu_session_res_t
           "Cannot remove DRB: drb_id={} not found in pdu_session_id={}", drb_to_rem.drb_id, session.pdu_session_id);
       continue;
     }
-    srsgnb_assert(drb_to_rem.drb_id == drb_id_to_uint(drb_iter->second->drb_id),
+    srsran_assert(drb_to_rem.drb_id == drb_id_to_uint(drb_iter->second->drb_id),
                   "Query for drb_id={} in pdu_session_id={} provided different drb_id={}",
                   drb_to_rem.drb_id,
                   session.pdu_session_id,

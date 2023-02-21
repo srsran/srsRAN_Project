@@ -481,7 +481,7 @@ inline constexpr const char* to_string(prach_format_type format)
     case prach_format_type::C2:
       return "C2";
     default:
-      srsgnb_assert(0, "Invalid PRACH format={}", format);
+      srsran_assert(0, "Invalid PRACH format={}", format);
       break;
   }
   return "";

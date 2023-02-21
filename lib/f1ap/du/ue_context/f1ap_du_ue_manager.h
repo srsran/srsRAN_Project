@@ -26,7 +26,7 @@ public:
 
   f1ap_du_ue& add_ue(du_ue_index_t ue_index)
   {
-    srsgnb_assert(not ues.contains(ue_index), "Duplicate ueId={} detected", ue_index);
+    srsran_assert(not ues.contains(ue_index), "Duplicate ueId={} detected", ue_index);
 
     gnb_du_ue_f1ap_id_t f1ap_id = static_cast<gnb_du_ue_f1ap_id_t>(next_gnb_f1ap_du_ue_id++);
     ues.emplace(ue_index, ue_index, f1ap_id, du_handler, f1ap_msg_notifier);
@@ -41,7 +41,7 @@ public:
 
   void remove_ue(du_ue_index_t ue_index)
   {
-    srsgnb_assert(ues.contains(ue_index), "ueId={} does not exist", ue_index);
+    srsran_assert(ues.contains(ue_index), "ueId={} does not exist", ue_index);
     {
       std::lock_guard<std::mutex> lock(map_mutex);
       f1ap_ue_id_to_du_ue_id_map.erase(ues[ue_index].context.gnb_du_ue_f1ap_id);

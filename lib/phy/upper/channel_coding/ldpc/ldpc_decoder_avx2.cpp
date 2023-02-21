@@ -32,7 +32,7 @@ void ldpc_decoder_avx2::select_strategy()
   if (bg_N_high_rate == 26) {
     compute_var_to_check_msgs_hr = select_var_to_check_strategy_hr_bg1<MAX_NODE_SIZE_AVX2>();
   } else {
-    srsgnb_assert(bg_N_high_rate == 14,
+    srsran_assert(bg_N_high_rate == 14,
                   "The number of nodes including the high-rate region should be 14 or 26, provided {}.",
                   bg_N_high_rate);
     compute_var_to_check_msgs_hr = select_var_to_check_strategy_hr_bg2<MAX_NODE_SIZE_AVX2>();
@@ -106,7 +106,7 @@ void ldpc_decoder_avx2::compute_var_to_check_msgs(mm256::avx2_span        v2c,
                                                   const mm256::avx2_span& c2v)
 {
   constexpr unsigned LENGTH = NOF_NODES * NODE_SIZE_AVX2;
-  srsgnb_assert((soft.size() == LENGTH) && (c2v.size() == LENGTH) && (v2c.size() == LENGTH),
+  srsran_assert((soft.size() == LENGTH) && (c2v.size() == LENGTH) && (v2c.size() == LENGTH),
                 "Number of soft bits, variable-to-check messages and check-to-variable messages must coincide.");
 
   // By definition, the difference between two LLRs saturates at +/- LLR_MAX. Moreover, if either term is infinite, so

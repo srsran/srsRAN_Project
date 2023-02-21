@@ -27,7 +27,7 @@ inline constexpr const char* to_string(uci_pucch_f0_or_f1_harq_values value)
     case uci_pucch_f0_or_f1_harq_values::dtx:
       return "dtx";
     default:
-      srsgnb_assert(0, "invalid UCI PUCCH Format 0/1 HARQ value={}", value);
+      srsran_assert(0, "invalid UCI PUCCH Format 0/1 HARQ value={}", value);
       break;
   }
   return "";

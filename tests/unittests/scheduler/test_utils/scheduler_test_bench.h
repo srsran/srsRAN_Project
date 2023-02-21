@@ -54,10 +54,10 @@ public:
 
   void run_slot(du_cell_index_t cell_idx = to_du_cell_index(0))
   {
-    srsgnb_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", cell_idx);
+    srsran_assert(cell_cfg_list.size() > cell_idx, "Invalid cellId={}", cell_idx);
     logger.set_context(next_slot.sfn(), next_slot.slot_index());
     last_sched_res = sched->slot_indication(next_slot, cell_idx);
-    srsgnb_assert(last_sched_res != nullptr, "No scheduler output was provided");
+    srsran_assert(last_sched_res != nullptr, "No scheduler output was provided");
     test_scheduler_result_consistency(cell_cfg_list[cell_idx], next_slot, *last_sched_res);
     ++next_slot;
   }

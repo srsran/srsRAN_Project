@@ -73,7 +73,7 @@ byte_buffer_slice_chain rlc_tx_tm_entity::pull_pdu(uint32_t grant_len)
   }
 
   size_t sdu_len = sdu.buf.length();
-  srsgnb_sanity_check(sdu_len == front_len, "Length mismatch. sdu_len={} front_len={}", sdu_len, front_len);
+  srsran_sanity_check(sdu_len == front_len, "Length mismatch. sdu_len={} front_len={}", sdu_len, front_len);
 
   // In TM there is no header, just pass the plain SDU
   byte_buffer_slice_chain pdu = {};

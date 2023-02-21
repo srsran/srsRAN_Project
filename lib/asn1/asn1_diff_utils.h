@@ -75,9 +75,9 @@ void apply_addmodremlist_diff(const AddModList& prev_list,
     return;
   }
   auto id_cmp_op = make_id_comparator(id_func);
-  srsgnb_sanity_check(std::is_sorted(prev_list.begin(), prev_list.end(), id_cmp_op), "Expected sorted list");
-  srsgnb_sanity_check(std::is_sorted(add_diff_list.begin(), add_diff_list.end(), id_cmp_op), "Expected sorted list");
-  srsgnb_sanity_check(std::is_sorted(rm_diff_list.begin(), rm_diff_list.end()), "Expected sorted list");
+  srsran_sanity_check(std::is_sorted(prev_list.begin(), prev_list.end(), id_cmp_op), "Expected sorted list");
+  srsran_sanity_check(std::is_sorted(add_diff_list.begin(), add_diff_list.end(), id_cmp_op), "Expected sorted list");
+  srsran_sanity_check(std::is_sorted(rm_diff_list.begin(), rm_diff_list.end()), "Expected sorted list");
 
   AddModList tmp_lst;
   // apply remove list
@@ -129,8 +129,8 @@ std::enable_if_t<not is_iterable<AddFunctor>::value> calculate_addmodremlist_dif
                                                                                   const GetId&      id_func)
 {
   auto id_cmp_op = make_id_comparator(id_func);
-  srsgnb_sanity_check(std::is_sorted(prev_list.begin(), prev_list.end(), id_cmp_op), "Expected sorted list");
-  srsgnb_sanity_check(std::is_sorted(next_list.begin(), next_list.end(), id_cmp_op), "Expected sorted list");
+  srsran_sanity_check(std::is_sorted(prev_list.begin(), prev_list.end(), id_cmp_op), "Expected sorted list");
+  srsran_sanity_check(std::is_sorted(next_list.begin(), next_list.end(), id_cmp_op), "Expected sorted list");
 
   auto src_it    = prev_list.begin();
   auto target_it = next_list.begin();

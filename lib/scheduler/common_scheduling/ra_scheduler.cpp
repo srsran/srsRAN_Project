@@ -24,7 +24,7 @@ unsigned srsran::get_msg3_delay(const pusch_time_domain_resource_allocation& pus
                                 subcarrier_spacing                           pusch_scs)
 {
   // In TS 38.214, Table 6.1.2.1.1-5, Delta is only defined for PUSCH SCS within [kHz15, kHz120kHz].
-  srsgnb_sanity_check(to_numerology_value(pusch_scs) <= to_numerology_value(subcarrier_spacing::kHz120),
+  srsran_sanity_check(to_numerology_value(pusch_scs) <= to_numerology_value(subcarrier_spacing::kHz120),
                       "PUSCH subcarrier spacing not supported for MSG3 delay");
 
   // The array represents Table 6.1.2.1.1-5, in TS 38.214.
@@ -196,7 +196,7 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
           break;
         }
       }
-      srsgnb_sanity_check(rar_req->rar_window.length() != 0, "Invalid configuration");
+      srsran_sanity_check(rar_req->rar_window.length() != 0, "Invalid configuration");
     } else {
       // FDD case.
       rar_req->rar_window = {rar_req->prach_slot_rx + prach_duration,
@@ -241,7 +241,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
 
   for (const ul_crc_indication& crc_ind : new_crc_inds) {
     for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
-      srsgnb_assert(crc.ue_index == INVALID_DU_UE_INDEX, "Msg3 HARQ CRCs cannot have a ueId assigned yet");
+      srsran_assert(crc.ue_index == INVALID_DU_UE_INDEX, "Msg3 HARQ CRCs cannot have a ueId assigned yet");
       auto& pending_msg3 = pending_msg3s[crc.rnti % MAX_NOF_MSG3];
       if (pending_msg3.preamble.tc_rnti != crc.rnti) {
         logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: Inexistent rnti.",
@@ -351,7 +351,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
     // Try to schedule DCIs + RBGs for RAR Grants
     size_t nof_allocs = schedule_rar(rar_req, res_alloc);
-    srsgnb_sanity_check(nof_allocs <= rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
+    srsran_sanity_check(nof_allocs <= rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
 
     if (nof_allocs > 0) {
       // If RAR allocation was successful:
@@ -527,7 +527,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     prb_interval                  prbs       = crb_to_prb(get_ul_bwp_cfg(), msg3_candidate.crbs);
 
     auto& pending_msg3 = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
-    srsgnb_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
+    srsran_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
 
     // Allocate Msg3 UL HARQ
     pending_msg3.harq.new_tx(msg3_alloc.slot, sched_cfg.max_nof_msg3_harq_retxs);

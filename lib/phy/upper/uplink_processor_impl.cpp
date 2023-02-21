@@ -36,9 +36,9 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
                                              std::unique_ptr<pucch_processor> pucch_proc_) :
   prach(std::move(prach_)), pusch_proc(std::move(pusch_proc_)), pucch_proc(std::move(pucch_proc_))
 {
-  srsgnb_assert(prach, "A valid PRACH detector must be provided");
-  srsgnb_assert(pusch_proc, "A valid PUSCH processor must be provided");
-  srsgnb_assert(pucch_proc, "A valid PUCCH processor must be provided");
+  srsran_assert(prach, "A valid PRACH detector must be provided");
+  srsran_assert(pusch_proc, "A valid PUSCH processor must be provided");
+  srsran_assert(pucch_proc, "A valid PUCCH processor must be provided");
 }
 
 void uplink_processor_impl::process_prach(upper_phy_rx_results_notifier& notifier,
@@ -108,7 +108,7 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
                                           const resource_grid_reader&        grid,
                                           const uplink_processor::pucch_pdu& pdu)
 {
-  srsgnb_assert(pdu.context.format == pucch_format::FORMAT_1 || pdu.context.format == pucch_format::FORMAT_2,
+  srsran_assert(pdu.context.format == pucch_format::FORMAT_1 || pdu.context.format == pucch_format::FORMAT_2,
                 "Currently supporting PUCCH Format 1 and 2 only.");
 
   pucch_processor_result proc_result;
@@ -130,7 +130,7 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
       proc_result = pucch_proc->process(grid, pdu.format4);
       break;
     default:
-      srsgnb_assert(0, "Invalid PUCCH format={}", pdu.context.format);
+      srsran_assert(0, "Invalid PUCCH format={}", pdu.context.format);
   }
 
   // Write the results.

@@ -116,7 +116,7 @@ class timer_manager
     /// Configures the duration of the timer.
     void set(timer_tick_difference_t duration)
     {
-      srsgnb_assert(duration <= MAX_TIMER_DURATION,
+      srsran_assert(duration <= MAX_TIMER_DURATION,
                     "Invalid timer duration={}>{}",
                     duration,
                     (timer_tick_difference_t)MAX_TIMER_DURATION);
@@ -127,7 +127,7 @@ class timer_manager
     /// Configures the duration of the timer calling the provided callback upon timer expiration.
     void set(timer_tick_difference_t duration, unique_function<void(timer_id_t)> cb)
     {
-      srsgnb_assert(duration <= MAX_TIMER_DURATION,
+      srsran_assert(duration <= MAX_TIMER_DURATION,
                     "Invalid timer duration={}>{}",
                     duration,
                     (timer_tick_difference_t)MAX_TIMER_DURATION);
@@ -307,21 +307,21 @@ public:
   /// Configures the duration of the timer calling the provided callback upon timer expiration.
   void set(timer_tick_difference_t duration, unique_function<void(timer_id_t)> callback)
   {
-    srsgnb_assert(is_valid(), "Trying to setup empty timer pimpl");
+    srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
     handle->set(duration, std::move(callback));
   }
 
   /// Configures the duration of the timer.
   void set(timer_tick_difference_t duration)
   {
-    srsgnb_assert(is_valid(), "Trying to setup empty timer pimpl");
+    srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
     handle->set(duration);
   }
 
   /// Activates the timer to start ticking.
   void run()
   {
-    srsgnb_assert(is_valid(), "Starting invalid timer");
+    srsran_assert(is_valid(), "Starting invalid timer");
     handle->run();
   }
 

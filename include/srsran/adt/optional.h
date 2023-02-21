@@ -287,22 +287,22 @@ public:
 
   constexpr T& value() & noexcept
   {
-    srsgnb_assert(has_value(), "Invalid optional<T> access");
+    srsran_assert(has_value(), "Invalid optional<T> access");
     return storage.payload.val;
   }
   constexpr T&& value() && noexcept
   {
-    srsgnb_assert(has_value(), "Invalid optional<T> access");
+    srsran_assert(has_value(), "Invalid optional<T> access");
     return std::move(storage.payload.val);
   }
   constexpr const T& value() const& noexcept
   {
-    srsgnb_assert(has_value(), "Invalid optional<T> access");
+    srsran_assert(has_value(), "Invalid optional<T> access");
     return storage.payload.val;
   }
   constexpr const T&& value() const&& noexcept
   {
-    srsgnb_assert(has_value(), "Invalid optional<T> access");
+    srsran_assert(has_value(), "Invalid optional<T> access");
     return std::move(storage.payload.val);
   }
   constexpr T*        operator->() noexcept { return &value(); }

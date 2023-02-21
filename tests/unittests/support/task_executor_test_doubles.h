@@ -96,7 +96,7 @@ private:
 
   void assert_thread_id()
   {
-    srsgnb_assert(t_id == std::this_thread::get_id(), "run() caller thread should not change.");
+    srsran_assert(t_id == std::this_thread::get_id(), "run() caller thread should not change.");
   }
 
   std::thread::id             t_id;

@@ -15,7 +15,7 @@ using namespace srsran;
 static unsigned get_dci_1_0_pdsch_to_harq_timing_indicator(unsigned k1)
 {
   // PDSCH-to-HARQ-timing-indicator maps to {1,2,3,4,5,6,7,8} for DCI 1_0.
-  srsgnb_assert(k1 <= 8, "Invalid k1 value");
+  srsran_assert(k1 <= 8, "Invalid k1 value");
   return k1 - 1;
 }
 
@@ -120,7 +120,7 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
                                     const ul_harq_process&     h_ul)
 {
   // See TS38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used."
-  srsgnb_assert(h_ul.id == 0, "UL HARQ process used for Msg3 must have id=0");
+  srsran_assert(h_ul.id == 0, "UL HARQ process used for Msg3 must have id=0");
 
   dci.type                            = srsran::dci_ul_rnti_config_type::tc_rnti_f0_0;
   dci.tc_rnti_f0_0                    = {};

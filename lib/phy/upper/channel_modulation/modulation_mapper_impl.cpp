@@ -42,7 +42,7 @@ struct modulator_table_s {
 
     // Calculate average power to calculate scaling for having a power average of one.
     float avg_power = srsvec::average_power(table);
-    srsgnb_assert(std::isnormal(avg_power), "Corrupted modulation average power.");
+    srsran_assert(std::isnormal(avg_power), "Corrupted modulation average power.");
 
     // Perform scaling.
     float scaling = std::sqrt(1 / avg_power);
@@ -103,7 +103,7 @@ static const modulator_table_s<8>      qam256_modulator;
 
 void modulation_mapper_impl::modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme)
 {
-  srsgnb_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
+  srsran_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
                 "The number of bits {} is not consistent with the number of symbols {} for modulation scheme {}.",
                 input.size(),
                 symbols.size(),
@@ -129,6 +129,6 @@ void modulation_mapper_impl::modulate(span<cf_t> symbols, const bit_buffer& inpu
       qam256_modulator.modulate(symbols, input);
       break;
     default:
-      srsgnb_assertion_failure("Invalid modulation scheme.");
+      srsran_assertion_failure("Invalid modulation scheme.");
   }
 }

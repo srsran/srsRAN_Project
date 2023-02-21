@@ -46,9 +46,9 @@ public:
   prach_detector_simple_impl(std::unique_ptr<dft_processor> idft_, std::unique_ptr<prach_generator> generator_) :
     idft(std::move(idft_)), generator(std::move(generator_))
   {
-    srsgnb_assert(idft, "Invalid IDFT processor.");
-    srsgnb_assert(idft->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    srsgnb_assert(idft->get_size() % ASSERT_DFT_SIZE_MULTIPLE == 0,
+    srsran_assert(idft, "Invalid IDFT processor.");
+    srsran_assert(idft->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
+    srsran_assert(idft->get_size() % ASSERT_DFT_SIZE_MULTIPLE == 0,
                   "IDFT size {} must be multiple of {}.",
                   idft->get_size(),
                   static_cast<unsigned>(ASSERT_DFT_SIZE_MULTIPLE));

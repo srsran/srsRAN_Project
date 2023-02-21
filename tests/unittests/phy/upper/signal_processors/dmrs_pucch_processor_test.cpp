@@ -86,6 +86,6 @@ int main()
     // Estimate channel
     dmrs_pucch->estimate(estimate, grid, test_case.config);
 
-    srsgnb_assert(estimate.get_noise_variance(0) < 1e-2, "Expected an ideal channel!");
+    srsran_assert(estimate.get_noise_variance(0) < 1e-2, "Expected an ideal channel!");
   }
 }

@@ -316,7 +316,7 @@ static void timers_test5()
     std::string string = "test string";
     timers.defer_callback(2, [&vals, string]() {
       vals.push_back(2);
-      srsgnb_assert(string == "test string", "string was not captured correctly");
+      srsran_assert(string == "test string", "string was not captured correctly");
     });
   }
   timers.defer_callback(6, [&vals]() { vals.push_back(3); });

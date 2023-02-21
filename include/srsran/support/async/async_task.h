@@ -63,8 +63,8 @@ public:
   /// \return Coroutine handle to tail-resume.
   coro_handle<> await_suspend(coro_handle<> h) noexcept
   {
-    srsgnb_sanity_check(not this->empty(), "Awaiting an empty task");
-    srsgnb_sanity_check(handle.promise().continuation.empty(), "Lazy task can only be awaited once.");
+    srsran_sanity_check(not this->empty(), "Awaiting an empty task");
+    srsran_sanity_check(handle.promise().continuation.empty(), "Lazy task can only be awaited once.");
 
     // Store continuation in promise, so that it gets called at "this" coroutine final suspension point.
     handle.promise().continuation = h;

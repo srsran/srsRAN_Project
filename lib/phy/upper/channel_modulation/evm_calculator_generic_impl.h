@@ -24,7 +24,7 @@ public:
   evm_calculator_generic_impl(std::unique_ptr<modulation_mapper> modulator_) :
     modulator(std::move(modulator_)), temp_hard_bits(MAX_NOF_BITS), temp_modulated(MAX_NOF_SYMBOLS)
   {
-    srsgnb_assert(modulator, "Invalid modulator.");
+    srsran_assert(modulator, "Invalid modulator.");
   }
 
   // See interface for documentation.

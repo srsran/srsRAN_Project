@@ -74,7 +74,7 @@ log_likelihood_ratio log_likelihood_ratio::promotion_sum(log_likelihood_ratio a,
 
 log_likelihood_ratio log_likelihood_ratio::quantize(float value, float range_limit)
 {
-  srsgnb_assert(range_limit > 0, "Second input must be positive.");
+  srsran_assert(range_limit > 0, "Second input must be positive.");
 
   float clipped = value;
   if (std::abs(value) > range_limit) {
@@ -213,7 +213,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
 void srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
 {
   // Make sure that there is enough space in the output to accommodate the hard bits.
-  srsgnb_assert(soft_bits.size() <= hard_bits.size(),
+  srsran_assert(soft_bits.size() <= hard_bits.size(),
                 "Input size (i.e., {}) does not fit into the output buffer with size {}",
                 soft_bits.size(),
                 hard_bits.size());

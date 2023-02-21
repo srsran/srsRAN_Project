@@ -76,7 +76,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   }
 
   // Impossible!
-  srsgnb_assert(false, "Invalid SSB pattern case");
+  srsran_assert(false, "Invalid SSB pattern case");
   return {};
 }
 
@@ -107,21 +107,21 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
                                 ssb_subcarrier_offset subcarrier_offset)
 {
   // Verify the SCS are valid for the frequency range.
-  srsgnb_assert(is_scs_valid(ssb_scs, fr),
+  srsran_assert(is_scs_valid(ssb_scs, fr),
                 "Unsupported combination of FR{} and SSB SCS {}kHz.",
                 fr == frequency_range::FR1 ? 1 : 2,
                 scs_to_khz(ssb_scs));
-  srsgnb_assert(is_scs_valid(common_scs, fr),
+  srsran_assert(is_scs_valid(common_scs, fr),
                 "Unsupported combination of FR{} and  Common SCS {}kHz.",
                 fr == frequency_range::FR1 ? 1 : 2,
                 scs_to_khz(common_scs));
 
   // Verify the offset to Point A and the subcarrier offset are valid.
-  srsgnb_assert(offset_to_pointA.valid(),
+  srsran_assert(offset_to_pointA.valid(),
                 "Invalid offset to Point A {} (max {})",
                 offset_to_pointA.to_uint(),
                 ssb_offset_to_pointA::max());
-  srsgnb_assert(subcarrier_offset.is_valid(fr),
+  srsran_assert(subcarrier_offset.is_valid(fr),
                 "Invalid subcarrier offset {} for FR{} (max {})",
                 subcarrier_offset.to_uint(),
                 fr == frequency_range::FR1 ? 1 : 2,
@@ -144,7 +144,7 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
                            15;
 
   // Make sure the above conversion is exact and has no remainder.
-  srsgnb_assert((k_first_15kHz * 15) % ssb_scs_kHz == 0,
+  srsran_assert((k_first_15kHz * 15) % ssb_scs_kHz == 0,
                 "Unsupported combination of FR{}, SSB SCS {}kHz, Common SCS {}kHz, offsetToPointA {} and "
                 "ssb-SubcarrierOffset {}.",
                 fr == frequency_range::FR1 ? 1 : 2,

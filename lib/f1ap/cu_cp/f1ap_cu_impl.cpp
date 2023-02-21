@@ -129,7 +129,7 @@ async_task<ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(const f1a
 async_task<cu_cp_ue_context_modification_response>
 f1ap_cu_impl::handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request)
 {
-  srsgnb_assert(
+  srsran_assert(
       ue_ctx_list.contains(request.ue_index) == true, "UE with index {} is not a valid F1AP UE", request.ue_index);
   return launch_async<ue_context_modification_procedure>(request, ue_ctx_list[request.ue_index], pdu_notifier, logger);
 }

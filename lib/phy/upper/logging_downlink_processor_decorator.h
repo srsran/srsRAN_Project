@@ -26,7 +26,7 @@ public:
                                        srslog::basic_logger&               logger_) :
     downlink_proc(std::move(downlink_proc_)), logger(logger_)
   {
-    srsgnb_assert(downlink_proc, "Invalid uplink processor.");
+    srsran_assert(downlink_proc, "Invalid uplink processor.");
   }
 
   // See interface for documentation.

@@ -26,7 +26,7 @@ static preamble_format convert_fapi_format_to_phy(fapi::prach_format_type format
     case fapi::prach_format_type::three:
       return preamble_format::values::FORMAT3;
     default:
-      srsgnb_assert(0, "Invalid PRACH format type ({})", static_cast<unsigned>(format));
+      srsran_assert(0, "Invalid PRACH format type ({})", static_cast<unsigned>(format));
       break;
   }
 
@@ -41,12 +41,12 @@ void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
                                                      unsigned                    slot,
                                                      unsigned                    sector_id)
 {
-  srsgnb_assert(fapi_pdu.maintenance_v3.prach_config_scope == fapi::prach_config_scope_type::phy_context,
+  srsran_assert(fapi_pdu.maintenance_v3.prach_config_scope == fapi::prach_config_scope_type::phy_context,
                 "Common context not supported.");
-  srsgnb_assert(fapi_pdu.maintenance_v3.prach_res_config_index == 0,
+  srsran_assert(fapi_pdu.maintenance_v3.prach_res_config_index == 0,
                 "Only PRACH resource configuration index 0 supported.");
-  srsgnb_assert(fapi_pdu.index_fd_ra == 0, "Only one FD occasion supported.");
-  srsgnb_assert(fapi_pdu.num_prach_ocas == 1, "Only one PRACH occasion supported.");
+  srsran_assert(fapi_pdu.index_fd_ra == 0, "Only one FD occasion supported.");
+  srsran_assert(fapi_pdu.num_prach_ocas == 1, "Only one PRACH occasion supported.");
 
   context.slot                 = slot_point(prach_cfg.prach_ul_bwp_pusch_scs, sfn, slot);
   context.sector               = sector_id;
@@ -59,7 +59,7 @@ void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
   context.restricted_set  = prach_cfg.restricted_set;
   context.nof_prb_ul_grid = carrier_cfg.ul_grid_size[to_numerology_value(context.pusch_scs)];
 
-  srsgnb_assert(fapi_pdu.index_fd_ra < prach_cfg.fd_occasions.size(), "Index FD RA out of bounds");
+  srsran_assert(fapi_pdu.index_fd_ra < prach_cfg.fd_occasions.size(), "Index FD RA out of bounds");
   const fapi::prach_fd_occasion_config& fd_occas = prach_cfg.fd_occasions[fapi_pdu.index_fd_ra];
   context.rb_offset                              = fd_occas.prach_freq_offset;
   context.root_sequence_index                    = fd_occas.prach_root_sequence_index;

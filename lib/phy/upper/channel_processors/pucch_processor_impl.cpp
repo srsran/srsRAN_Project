@@ -159,7 +159,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   unsigned expected_nof_uci_bits = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
 
   // Assert that the decoded UCI payload has the expected number of bits.
-  srsgnb_assert(result.message.get_full_payload().size() == expected_nof_uci_bits,
+  srsran_assert(result.message.get_full_payload().size() == expected_nof_uci_bits,
                 "Decoded UCI payload length, i.e., {}, does not match expected number of UCI bits, i.e., {}.",
                 result.message.get_full_payload().size(),
                 expected_nof_uci_bits);
@@ -170,26 +170,26 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 void pucch_processor_impl::assert_format1_config(const pucch_processor::format1_configuration& config)
 {
   // Assert BWP allocation.
-  srsgnb_assert(config.bwp_start_rb + config.bwp_size_rb <= max_sizes.nof_prb,
+  srsran_assert(config.bwp_start_rb + config.bwp_size_rb <= max_sizes.nof_prb,
                 "BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
                 config.bwp_start_rb + config.bwp_size_rb,
                 max_sizes.nof_prb);
 
   // Assert that the PRB allocation is constrained to the BWP. Recall that PUCCH Format 1 occupies a single PRB.
-  srsgnb_assert(config.starting_prb < config.bwp_size_rb,
+  srsran_assert(config.starting_prb < config.bwp_size_rb,
                 "PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
                 config.starting_prb + 1,
                 config.bwp_size_rb);
 
   if (config.second_hop_prb.has_value()) {
-    srsgnb_assert(config.second_hop_prb.value() < config.bwp_size_rb,
+    srsran_assert(config.second_hop_prb.value() < config.bwp_size_rb,
                   "Second hop PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
                   config.second_hop_prb.value() + 1,
                   config.bwp_size_rb);
   }
 
   // Assert that the OFDM symbols are constrained to the slot dimensions given by the CP.
-  srsgnb_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
+  srsran_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
                 "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
                 "{} CP, i.e., {}.",
                 config.start_symbol_index + config.nof_symbols,
@@ -197,16 +197,16 @@ void pucch_processor_impl::assert_format1_config(const pucch_processor::format1_
                 get_nsymb_per_slot(config.cp));
 
   // Assert that the OFDM symbols are within the configured maximum slot dimensions.
-  srsgnb_assert(
+  srsran_assert(
       config.start_symbol_index + config.nof_symbols <= max_sizes.nof_symbols,
       "OFDM symbol allocation goes up to symbol {}, exceeding the configured maximum number of slot symbols, i.e., {}.",
       config.start_symbol_index + config.nof_symbols,
       max_sizes.nof_symbols);
 
   // Assert the number of receive ports.
-  srsgnb_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
+  srsran_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
 
-  srsgnb_assert(
+  srsran_assert(
       config.ports.size() <= max_sizes.nof_rx_ports,
       "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
       config.ports.size(),
@@ -216,19 +216,19 @@ void pucch_processor_impl::assert_format1_config(const pucch_processor::format1_
 void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_configuration& config)
 {
   // Assert BWP allocation.
-  srsgnb_assert(config.bwp_start_rb + config.bwp_size_rb <= max_sizes.nof_prb,
+  srsran_assert(config.bwp_start_rb + config.bwp_size_rb <= max_sizes.nof_prb,
                 "BWP allocation goes up to PRB {}, exceeding the configured maximum grid RB size, i.e., {}.",
                 config.bwp_start_rb + config.bwp_size_rb,
                 max_sizes.nof_prb);
 
   // Assert that the PRB set is constrained to the BWP.
-  srsgnb_assert(config.starting_prb + config.nof_prb <= config.bwp_size_rb,
+  srsran_assert(config.starting_prb + config.nof_prb <= config.bwp_size_rb,
                 "PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
                 config.starting_prb + config.nof_prb,
                 config.bwp_size_rb);
 
   // Assert that the OFDM symbols are constrained to the slot dimensions given by the CP.
-  srsgnb_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
+  srsran_assert(config.start_symbol_index + config.nof_symbols <= get_nsymb_per_slot(config.cp),
                 "OFDM symbol allocation goes up to symbol {}, exceeding the number of symbols in the given slot with "
                 "{} CP, i.e., {}.",
                 config.start_symbol_index + config.nof_symbols,
@@ -236,38 +236,38 @@ void pucch_processor_impl::assert_format2_config(const pucch_processor::format2_
                 get_nsymb_per_slot(config.cp));
 
   // Assert that the OFDM symbols are within the configured maximum slot dimensions.
-  srsgnb_assert(
+  srsran_assert(
       config.start_symbol_index + config.nof_symbols <= max_sizes.nof_symbols,
       "OFDM symbol allocation goes up to symbol {}, exceeding the configured maximum number of slot symbols, i.e., {}.",
       config.start_symbol_index + config.nof_symbols,
       max_sizes.nof_symbols);
 
   // Assert the number of receive ports.
-  srsgnb_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
+  srsran_assert(!config.ports.empty(), "The number of receive ports cannot be zero.");
 
-  srsgnb_assert(
+  srsran_assert(
       config.ports.size() <= max_sizes.nof_rx_ports,
       "The number of receive ports, i.e. {}, exceeds the configured maximum number of receive ports, i.e., {}.",
       config.ports.size(),
       max_sizes.nof_rx_ports);
 
   // CSI is not currently supported.
-  srsgnb_assert(config.nof_csi_part2 == 0, "CSI Part 2 is not currently supported.");
+  srsran_assert(config.nof_csi_part2 == 0, "CSI Part 2 is not currently supported.");
 
   // PUCCH Format 2 frequency hopping is not currently supported.
-  srsgnb_assert(!config.second_hop_prb.has_value(), "PUCCH Format 2 frequency hopping not supported.");
+  srsran_assert(!config.second_hop_prb.has_value(), "PUCCH Format 2 frequency hopping not supported.");
 
   // Expected UCI payload length.
   unsigned uci_payload_len = config.nof_harq_ack + config.nof_sr + config.nof_csi_part1 + config.nof_csi_part2;
 
   // Calculate effective code rate.
   float effective_code_rate = pucch_format2_code_rate(config.nof_prb, config.nof_symbols, uci_payload_len);
-  srsgnb_assert(effective_code_rate <= pucch_constants::MAX_CODE_RATE,
+  srsran_assert(effective_code_rate <= pucch_constants::MAX_CODE_RATE,
                 "The effective code rate (i.e., {}) exceeds the maximum allowed {}.",
                 effective_code_rate,
                 static_cast<float>(pucch_constants::MAX_CODE_RATE));
 
-  srsgnb_assert((uci_payload_len >= pucch_constants::FORMAT2_MIN_UCI_NBITS) &&
+  srsran_assert((uci_payload_len >= pucch_constants::FORMAT2_MIN_UCI_NBITS) &&
                     (uci_payload_len <= FORMAT2_MAX_UCI_NBITS),
                 "UCI Payload length, i.e., {} is not supported. Payload length must be {} to {} bits.",
                 uci_payload_len,

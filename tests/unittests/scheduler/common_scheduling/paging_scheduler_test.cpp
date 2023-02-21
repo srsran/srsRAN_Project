@@ -30,7 +30,7 @@ std::mt19937       g(rd());
 
 uint64_t get_random_uint(uint64_t min, uint64_t max)
 {
-  srsgnb_assert(min <= max, "Minimum value is greater than maximum value");
+  srsran_assert(min <= max, "Minimum value is greater than maximum value");
   return std::uniform_int_distribution<uint64_t>{min, max}(g);
 }
 
@@ -164,7 +164,7 @@ protected:
 
       optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
           cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
-      srsgnb_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
+      srsran_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
       cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
       cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
       cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;

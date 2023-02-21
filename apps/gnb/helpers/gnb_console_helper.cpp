@@ -141,6 +141,6 @@ unsigned gnb_console_helper::derive_ssb_arfcn(const du_cell_config& cell)
   optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
       cell.dl_carrier.arfcn, cell.dl_carrier.band, nof_crbs, cell.scs_common, cell.scs_common, ss0_idx);
 
-  srsgnb_assert(ssb_freq_loc.has_value(), "Unable to derive SSB location correctly");
+  srsran_assert(ssb_freq_loc.has_value(), "Unable to derive SSB location correctly");
   return ssb_freq_loc->ssb_arfcn;
 }

@@ -23,7 +23,7 @@ namespace srsran {
 /// \return Parameter \f$\beta_{\textup{DMRS}}\f$ in decibels.
 inline float get_sch_to_dmrs_ratio_dB(unsigned nof_cdm_groups_without_data)
 {
-  srsgnb_assert(nof_cdm_groups_without_data > 0 && nof_cdm_groups_without_data < 4,
+  srsran_assert(nof_cdm_groups_without_data > 0 && nof_cdm_groups_without_data < 4,
                 "Invalid number of DMRS CDM groups without data.");
   static constexpr std::array<float, 4> beta_dmrs_values = {NAN, 0, -3, -4.77};
   return beta_dmrs_values[nof_cdm_groups_without_data];

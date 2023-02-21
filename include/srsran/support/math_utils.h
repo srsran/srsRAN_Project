@@ -33,7 +33,7 @@ static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
 /// \return The result of the operation.
 inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
 {
-  srsgnb_sanity_check(den != 0, "Denominator cannot be zero.");
+  srsran_sanity_check(den != 0, "Denominator cannot be zero.");
   return (num + (den - 1)) / den;
 }
 
@@ -44,7 +44,7 @@ inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
 /// \return The result of the operation.
 inline constexpr unsigned divide_round(unsigned num, unsigned den)
 {
-  srsgnb_sanity_check(den != 0, "Denominator cannot be zero.");
+  srsran_sanity_check(den != 0, "Denominator cannot be zero.");
   return static_cast<unsigned>(std::round(static_cast<float>(num) / static_cast<float>(den)));
 }
 

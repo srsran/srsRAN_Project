@@ -24,7 +24,7 @@ ngap_initial_context_setup_procedure::ngap_initial_context_setup_procedure(
   ue_index(ue_index_), request(request_), ue_manager(ue_manager_), amf_notifier(amf_notif_), logger(logger_)
 {
   ue = ue_manager.find_ngap_ue(ue_index);
-  srsgnb_assert(ue != nullptr, "ue={} Couldn't find UE", ue_index);
+  srsran_assert(ue != nullptr, "ue={} Couldn't find UE", ue_index);
 }
 
 void ngap_initial_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)

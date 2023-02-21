@@ -45,7 +45,7 @@ public:
   dmrs_pbch_processor_impl(std::unique_ptr<pseudo_random_generator> pseudo_random_generator) :
     prg(std::move(pseudo_random_generator))
   {
-    srsgnb_assert(prg, "Invalid PRG.");
+    srsran_assert(prg, "Invalid PRG.");
   }
 
   // See interface for documentation.

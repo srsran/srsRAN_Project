@@ -34,7 +34,7 @@ public:
       thread_local unsigned thread_index = global_count++;
 
       // Make sure the processor index does not exceed the number of processors.
-      srsgnb_assert(thread_index < processors.size(), "Insufficient number of processors.");
+      srsran_assert(thread_index < processors.size(), "Insufficient number of processors.");
 
       // Return the instance.
       return *processors[thread_index];
@@ -46,7 +46,7 @@ public:
 
   uplink_processor_concurrent(std::shared_ptr<processor_pool> pool_) : pool(std::move(pool_))
   {
-    srsgnb_assert(pool, "Invalid pool.");
+    srsran_assert(pool, "Invalid pool.");
   }
 
   // See interface for documentation.

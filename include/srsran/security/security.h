@@ -49,7 +49,7 @@ inline unsigned to_number(ciphering_algorithm ciph_algo)
 }
 inline ciphering_algorithm ciphering_algorithm_from_number(unsigned ciph_algo)
 {
-  srsgnb_assert(ciph_algo < 4, "Error converting ciphering algorithm");
+  srsran_assert(ciph_algo < 4, "Error converting ciphering algorithm");
   return static_cast<ciphering_algorithm>(ciph_algo);
 }
 
@@ -65,7 +65,7 @@ inline unsigned to_number(integrity_algorithm int_algo)
 }
 inline integrity_algorithm integrity_algorithm_from_number(unsigned int_algo)
 {
-  srsgnb_assert(int_algo < 4, "Error converting integrity algorithm");
+  srsran_assert(int_algo < 4, "Error converting integrity algorithm");
   return static_cast<integrity_algorithm>(int_algo);
 }
 

@@ -161,7 +161,7 @@ void srsran::nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const co
 {
   unsigned nof_ports = config.ports.size();
 
-  srsgnb_assert(config.symbol_l0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 1: l_0 outside the valid range.");
+  srsran_assert(config.symbol_l0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 1: l_0 outside the valid range.");
 
   // Generate the grid allocations patterns for each port.
   csi_rs_pattern_configuration mapping_config;
@@ -187,7 +187,7 @@ void srsran::nzp_csi_rs_generator_impl::map(resource_grid_writer& grid, const co
 
   // Precoding not currently supported.
   if (config.pmi != 0) {
-    srsgnb_assertion_failure("Precoding is not currently supported\n");
+    srsran_assertion_failure("Precoding is not currently supported\n");
   }
 
   for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
@@ -252,14 +252,14 @@ void nzp_csi_rs_generator_impl::apply_cdm(span<cf_t>            seq_out,
   // Apply CDM4-FD2-TD2 or CDM8-FD2-TD4.
   else if (cdm == csi_rs_cdm_type::cdm4_FD2_TD2 || cdm == csi_rs_cdm_type::cdm8_FD2_TD4) {
     if (cdm == csi_rs_cdm_type::cdm4_FD2_TD2) {
-      srsgnb_assert(
+      srsran_assert(
           l_idx <= L_PRIME_MAX_TD2, "l_idx value: {} outside of range: 0..{} for CDM4-FD2-TD2", l_idx, L_PRIME_MAX_TD2);
 
       // Get the CDM table.
       table = span<const cdm_sequence>(cdm4_fd2_td2_table);
 
     } else {
-      srsgnb_assert(
+      srsran_assert(
           l_idx <= L_PRIME_MAX_TD4, "l_idx value: {} outside of range: 0..{} for CDM8-FD2-TD4", l_idx, L_PRIME_MAX_TD4);
 
       // Get the CDM table.

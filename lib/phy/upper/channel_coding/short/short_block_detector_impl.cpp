@@ -47,11 +47,11 @@ static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio
 {
   unsigned in_size  = input.size();
   unsigned out_size = output.size();
-  srsgnb_assert((out_size > 0) && (out_size <= MAX_MSG_LENGTH),
+  srsran_assert((out_size > 0) && (out_size <= MAX_MSG_LENGTH),
                 "The output length should be between 1 and {} bits.",
                 MAX_MSG_LENGTH);
   if (out_size > 2) {
-    srsgnb_assert(
+    srsran_assert(
         in_size > out_size,
         "The number of input soft bits (i.e., {}) must be larger than the number of bits to decode (i.e., {}).",
         in_size,
@@ -65,7 +65,7 @@ static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio
       // Input length must be no less than three times the number of bits per symbol of the block modulation.
       min_in_length = 3 * bits_per_symbol;
     }
-    srsgnb_assert(in_size >= min_in_length, "Invalid input length.");
+    srsran_assert(in_size >= min_in_length, "Invalid input length.");
   }
 }
 

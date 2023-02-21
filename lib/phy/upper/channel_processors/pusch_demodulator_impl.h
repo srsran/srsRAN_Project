@@ -39,9 +39,9 @@ public:
     eq_re({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS}),
     eq_noise_vars({MAX_RB * NRE * MAX_NSYMB_PER_SLOT, pusch_constants::MAX_NOF_LAYERS})
   {
-    srsgnb_assert(equalizer, "Invalid pointer to channel_equalizer object.");
-    srsgnb_assert(demapper, "Invalid pointer to demodulation_mapper object.");
-    srsgnb_assert(descrambler, "Invalid pointer to pseudo_random_generator object.");
+    srsran_assert(equalizer, "Invalid pointer to channel_equalizer object.");
+    srsran_assert(demapper, "Invalid pointer to demodulation_mapper object.");
+    srsran_assert(descrambler, "Invalid pointer to pseudo_random_generator object.");
   }
 
   // See interface for the documentation.
@@ -62,7 +62,7 @@ private:
   static void
   get_ch_data_re(channel_equalizer::re_list& data_re, const resource_grid_reader& grid, const configuration& config)
   {
-    srsgnb_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
+    srsran_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
                   "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
 
     // Prepare RE mask.
@@ -83,7 +83,7 @@ private:
         re_port_buffer = grid.get(re_port_buffer, i_port, i_symbol + config.start_symbol_index, 0, re_mask);
       }
 
-      srsgnb_assert(
+      srsran_assert(
           re_port_buffer.empty(), "Invalid number of RE read from the grid. {} RE are missing.", re_port_buffer.size());
     }
   }
@@ -101,7 +101,7 @@ private:
                                     const channel_estimate&         channel_estimate,
                                     const configuration&            config)
   {
-    srsgnb_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
+    srsran_assert(config.dmrs_config_type == dmrs_type::TYPE1 && config.nof_cdm_groups_without_data == 2,
                   "Only DM-RS type 1 with a number of CDM groups equal to 2 is implemented.");
 
     // Number of subcarriers.
@@ -125,7 +125,7 @@ private:
           // View of the channel estimation for an OFDM symbol.
           span<const cf_t> symbol_estimates = channel_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
 
-          srsgnb_assert(symbol_estimates.size() == nof_subcs,
+          srsran_assert(symbol_estimates.size() == nof_subcs,
                         "Channel estimate symbol size (i.e. {}) does not match expected symbol size (i.e. {})",
                         symbol_estimates.size(),
                         nof_subcs);
@@ -142,7 +142,7 @@ private:
         }
 
         // Assert that the expected number of channel coefficients are read.
-        srsgnb_assert(ch_port_buffer.size() == 0, "Incorrect number of extracted channel estimation coefficients.");
+        srsran_assert(ch_port_buffer.size() == 0, "Incorrect number of extracted channel estimation coefficients.");
       }
     }
   }

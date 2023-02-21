@@ -38,7 +38,7 @@ public:
   const bwp_downlink_common& dl_bwp_common(bwp_id_t bwp_id) const
   {
     const bwp_downlink_common* ret = find_dl_bwp_common(bwp_id);
-    srsgnb_assert(ret != nullptr, "Inexistent BWP-Id={}", bwp_id);
+    srsran_assert(ret != nullptr, "Inexistent BWP-Id={}", bwp_id);
     return *ret;
   }
 
@@ -50,7 +50,7 @@ public:
   const coreset_configuration& coreset(coreset_id cs_id) const
   {
     const coreset_configuration* ret = find_coreset(cs_id);
-    srsgnb_assert(ret != nullptr, "Inexistent CORESET-Id={}", cs_id);
+    srsran_assert(ret != nullptr, "Inexistent CORESET-Id={}", cs_id);
     return *ret;
   }
 
@@ -59,7 +59,7 @@ public:
   const search_space_configuration& search_space(search_space_id ss_id) const
   {
     const search_space_configuration* ret = find_search_space(ss_id);
-    srsgnb_assert(ret != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
+    srsran_assert(ret != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
     return *ret;
   }
 
@@ -80,7 +80,7 @@ public:
   const bwp_uplink_common& ul_bwp_common(bwp_id_t bwp_id) const
   {
     const bwp_uplink_common* ret = find_ul_bwp_common(bwp_id);
-    srsgnb_assert(ret != nullptr, "Inexistent BWP-Id={}", bwp_id);
+    srsran_assert(ret != nullptr, "Inexistent BWP-Id={}", bwp_id);
     return *ret;
   }
 

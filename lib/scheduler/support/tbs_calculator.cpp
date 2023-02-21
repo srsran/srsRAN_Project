@@ -64,7 +64,7 @@ tbs_calculator_step2(float scaling, unsigned nof_re, float tcr, unsigned modulat
 
 float srsran::tbs_calculator_pdsch_get_scaling_factor(unsigned scaling)
 {
-  srsgnb_assert(scaling < 3, "Invalid scaling value ({}, max 2).", scaling);
+  srsran_assert(scaling < 3, "Invalid scaling value ({}, max 2).", scaling);
   return 1.0F / static_cast<float>(pow2(scaling));
 }
 
@@ -101,7 +101,7 @@ unsigned srsran::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_i
       3824, 3824, 3824, 3824};
 
   unsigned index = divide_ceil(nof_info_prime, 8);
-  srsgnb_assert(index < table_valid_tbs.size(),
+  srsran_assert(index < table_valid_tbs.size(),
                 "The number of information bits exceeds {} the maximum {}.",
                 nof_info_prime,
                 3824);
@@ -119,7 +119,7 @@ unsigned srsran::tbs_calculator_calculate(const tbs_calculator_configuration& co
 
   float scaling = tbs_calculator_pdsch_get_scaling_factor(config.tb_scaling_field);
 
-  srsgnb_assert(config.mcs_descr.modulation > modulation_scheme::BPSK,
+  srsran_assert(config.mcs_descr.modulation > modulation_scheme::BPSK,
                 "Modulation scheme should be QPSK or higher, provided {}.",
                 config.mcs_descr.modulation);
 

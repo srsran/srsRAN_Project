@@ -53,5 +53,5 @@ void e1ap_cu_cp_test::run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue
   test_logger.info("Injecting BearerContextSetupResponse");
   e1ap->handle_message(bearer_context_setup_response);
 
-  srsgnb_assert(t.ready(), "The procedure should have completed by now");
+  srsran_assert(t.ready(), "The procedure should have completed by now");
 }

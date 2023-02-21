@@ -79,7 +79,7 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
                                                                                          rnti_t              crnti,
                                                                                          const pucch_config& pucch_cfg)
 {
-  srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+  srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated to far into the future");
 
   // Get resource list of wanted slot.
@@ -112,7 +112,7 @@ pucch_resource_manager::reserve_next_format2_res_available(slot_point          s
                                                            rnti_t              crnti,
                                                            const pucch_config& pucch_cfg)
 {
-  srsgnb_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+  srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated to far into the future");
 
   // Get resource list of wanted slot.
@@ -145,7 +145,7 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
                                                                    rnti_t                       crnti,
                                                                    const ue_cell_configuration& ue_cell_cfg)
 {
-  srsgnb_sanity_check(slot_csi < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+  srsran_sanity_check(slot_csi < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated to far into the future");
 
   auto& slot_record = get_slot_resource_counter(slot_csi);
@@ -179,9 +179,9 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
 const pucch_resource*
 pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
 {
-  srsgnb_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+  srsran_sanity_check(slot_sr < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated to far into the future");
-  srsgnb_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
+  srsran_sanity_check(pucch_cfg.sr_res_list.size() == 1, "UE SR resource list must have size 1.");
 
   auto& slot_record = get_slot_resource_counter(slot_sr);
 
@@ -293,7 +293,7 @@ const pucch_resource* pucch_resource_manager::fetch_csi_pucch_res_config(slot_po
                                                                          rnti_t                       crnti,
                                                                          const ue_cell_configuration& ue_cell_cfg)
 {
-  srsgnb_sanity_check(slot_tx < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+  srsran_sanity_check(slot_tx < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH being allocated to far into the future");
 
   rnti_pucch_res_id_slot_record& slot_record = get_slot_resource_counter(slot_tx);
@@ -321,7 +321,7 @@ const pucch_resource* pucch_resource_manager::fetch_csi_pucch_res_config(slot_po
 
 pucch_resource_manager::rnti_pucch_res_id_slot_record& pucch_resource_manager::get_slot_resource_counter(slot_point sl)
 {
-  srsgnb_sanity_check(sl < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+  srsran_sanity_check(sl < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
                       "PUCCH resource ring-buffer accessed too far into the future");
   return resource_slots[sl.to_uint() % RES_MANAGER_RING_BUFFER_SIZE];
 }

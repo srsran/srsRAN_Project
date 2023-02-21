@@ -122,7 +122,7 @@ test_bench::test_bench(const test_bench_params& params) :
 {
   sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request();
 
-  srsgnb_assert(not ue_req.cfg.cells.empty() and ue_req.cfg.cells.back().serv_cell_cfg.ul_config.has_value() and
+  srsran_assert(not ue_req.cfg.cells.empty() and ue_req.cfg.cells.back().serv_cell_cfg.ul_config.has_value() and
                     ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
                     ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list.size() ==
                         1,
@@ -155,7 +155,7 @@ const ue& test_bench::get_main_ue() const
 const ue& test_bench::get_ue(du_ue_index_t ue_idx) const
 {
   auto user = ues.find(ue_idx);
-  srsgnb_assert(user != ues.end(), "User not found");
+  srsran_assert(user != ues.end(), "User not found");
   return *user;
 }
 

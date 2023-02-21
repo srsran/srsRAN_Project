@@ -69,9 +69,9 @@ public:
                        std::unique_ptr<dmrs_pdcch_processor> dmrs_) :
     encoder(std::move(encoder_)), modulator(std::move(modulator_)), dmrs(std::move(dmrs_))
   {
-    srsgnb_assert(encoder, "Invalid encoder.");
-    srsgnb_assert(modulator, "Invalid modulator.");
-    srsgnb_assert(dmrs, "Invalid DMRS generator.");
+    srsran_assert(encoder, "Invalid encoder.");
+    srsran_assert(modulator, "Invalid modulator.");
+    srsran_assert(dmrs, "Invalid DMRS generator.");
   }
 
   // See interface for documentation.

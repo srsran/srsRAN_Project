@@ -39,24 +39,24 @@ struct trivial_storage {
   constexpr const T* data() const noexcept { return array.data(); }
   constexpr T&       operator[](size_t i) noexcept
   {
-    srsgnb_assert(i < sz, "out-of-bounds access ({} >= {})", i, sz);
+    srsran_assert(i < sz, "out-of-bounds access ({} >= {})", i, sz);
     return array[i];
   }
   constexpr const T& operator[](size_t i) const noexcept
   {
-    srsgnb_assert(i < sz, "out-of-bounds access ({} >= {})", i, sz);
+    srsran_assert(i < sz, "out-of-bounds access ({} >= {})", i, sz);
     return array[i];
   }
   constexpr T&       front() noexcept { return (*this)[0]; }
   constexpr const T& front() const noexcept { return (*this)[0]; }
   constexpr T&       back() noexcept
   {
-    srsgnb_assert(sz != 0, "back() called for empty vector");
+    srsran_assert(sz != 0, "back() called for empty vector");
     return array[sz - 1];
   }
   constexpr const T& back() const noexcept
   {
-    srsgnb_assert(sz != 0, "back() called for empty vector");
+    srsran_assert(sz != 0, "back() called for empty vector");
     return array[sz - 1];
   }
 
@@ -118,24 +118,24 @@ struct non_trivial_storage {
   const T* data() const noexcept { return reinterpret_cast<const T*>(array.data()); }
   T&       operator[](size_t i) noexcept
   {
-    srsgnb_assert(i < sz, "out-of-bounds access ({} >= {})", i, sz);
+    srsran_assert(i < sz, "out-of-bounds access ({} >= {})", i, sz);
     return *(data() + i);
   }
   const T& operator[](size_t i) const noexcept
   {
-    srsgnb_assert(i < Capacity, "out-of-bounds access ({} >= {})", i, sz);
+    srsran_assert(i < Capacity, "out-of-bounds access ({} >= {})", i, sz);
     return *(data() + i);
   }
   T&       front() noexcept { return (*this)[0]; }
   const T& front() const noexcept { return (*this)[0]; }
   T&       back() noexcept
   {
-    srsgnb_assert(sz != 0, "back() called for empty vector");
+    srsran_assert(sz != 0, "back() called for empty vector");
     return *(data() + sz - 1);
   }
   const T& back() const noexcept
   {
-    srsgnb_assert(sz != 0, "back() called for empty vector");
+    srsran_assert(sz != 0, "back() called for empty vector");
     return *(data() + sz - 1);
   }
 
@@ -195,9 +195,9 @@ public:
   explicit constexpr static_vector(size_type count) noexcept(std::is_nothrow_default_constructible<T>::value)
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default-constructible");
-    srsgnb_assert(count <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsran_assert(count <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
-    srsgnb_assume(count <= MAX_N);
+    srsran_assume(count <= MAX_N);
     for (size_type i = this->sz; i != count; ++i) {
       this->construct_(i);
     }
@@ -263,7 +263,7 @@ public:
   template <typename... Args>
   constexpr T& emplace_back(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value)
   {
-    srsgnb_assert(size() < MAX_N, "Cannot emplace back in full vector");
+    srsran_assert(size() < MAX_N, "Cannot emplace back in full vector");
     this->construct_(size(), std::forward<Args>(args)...);
     this->sz++;
     return this->back();
@@ -283,7 +283,7 @@ public:
 
   constexpr void pop_back() noexcept
   {
-    srsgnb_assert(not empty(), "Trying to erase element from empty vector");
+    srsran_assert(not empty(), "Trying to erase element from empty vector");
     this->destroy_(&back());
     this->sz--;
   }
@@ -297,7 +297,7 @@ public:
   constexpr void resize(size_t new_size) noexcept
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default constructible");
-    srsgnb_assert(new_size <= capacity(), "out-of-bounds construction in static_vector<T,N>");
+    srsran_assert(new_size <= capacity(), "out-of-bounds construction in static_vector<T,N>");
     if (new_size <= size()) {
       // vector is shrinking.
       destroy_range_(begin() + new_size, end());
@@ -313,7 +313,7 @@ public:
   constexpr void resize(size_t new_size, const T& value) noexcept
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
-    srsgnb_assert(new_size <= capacity(), "out-of-bounds construction in static_vector<T,N>");
+    srsran_assert(new_size <= capacity(), "out-of-bounds construction in static_vector<T,N>");
     if (new_size <= size()) {
       // vector is shrinking.
       destroy_range_(begin() + new_size, end());
@@ -328,7 +328,7 @@ public:
 
   constexpr iterator erase(iterator pos) noexcept(std::is_move_assignable<T>::value)
   {
-    srsgnb_assert(pos >= this->begin() and pos < this->end(), "Iterator to erase is out-of-bounds");
+    srsran_assert(pos >= this->begin() and pos < this->end(), "Iterator to erase is out-of-bounds");
     iterator ret = pos;
     std::move(pos + 1, end(), pos);
     pop_back();
@@ -337,8 +337,8 @@ public:
 
   constexpr iterator erase(iterator it_start, iterator it_end) noexcept(std::is_move_assignable<T>::value)
   {
-    srsgnb_assert(it_start <= it_end, "Trying to erase invalid range");
-    srsgnb_assert(it_start >= begin() and it_end <= end(), "Range to erase is out-of-bounds");
+    srsran_assert(it_start <= it_end, "Trying to erase invalid range");
+    srsran_assert(it_start >= begin() and it_end <= end(), "Range to erase is out-of-bounds");
 
     iterator ret = it_start;
     // Shift all elements down.
@@ -401,9 +401,9 @@ private:
   }
   constexpr void assign_unsafe_(size_t N, const T& val) noexcept(std::is_nothrow_copy_constructible<T>::value)
   {
-    srsgnb_assert(N <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsran_assert(N <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
-    srsgnb_assume(N <= MAX_N);
+    srsran_assume(N <= MAX_N);
     for (size_t i = 0; i != N; ++i) {
       this->construct_(i, val);
     }
@@ -414,9 +414,9 @@ private:
                                 Iterator it_end) noexcept(std::is_nothrow_copy_constructible<T>::value)
   {
     size_type N = std::distance(it_begin, it_end);
-    srsgnb_assert(N <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsran_assert(N <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     // Note: Gcc 11 fails compilation without this hint. Potentially a bug.
-    srsgnb_assume(N <= MAX_N);
+    srsran_assume(N <= MAX_N);
     for (size_t i = 0; i != N; ++i) {
       this->construct_(i, *it_begin);
       ++it_begin;

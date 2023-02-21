@@ -33,7 +33,7 @@ struct decoded_mac_rx_pdu {
                      du_ue_index_t   ue_index_ = MAX_NOF_DU_UES) :
     slot_rx(slot_rx_), cell_index_rx(cell_idx_), ue_index(ue_index_), pdu_rx(std::move(pdu_rx_))
   {
-    srsgnb_sanity_check(not pdu_rx.pdu.empty(), "Received empty PDU");
+    srsran_sanity_check(not pdu_rx.pdu.empty(), "Received empty PDU");
   }
 
   /// Clear PDU context.

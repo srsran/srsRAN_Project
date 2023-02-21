@@ -47,14 +47,14 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
                                                                        logger)),
   timing_handler(notifier_dummy, *softbuffer_pool)
 {
-  srsgnb_assert(dl_processor_pool, "Invalid downlink processor pool");
-  srsgnb_assert(dl_rg_pool, "Invalid downlink resource grid pool");
-  srsgnb_assert(ul_rg_pool, "Invalid uplink resource grid pool");
-  srsgnb_assert(ul_processor_pool, "Invalid uplink processor pool");
-  srsgnb_assert(prach_pool, "Invalid PRACH buffer pool");
-  srsgnb_assert(softbuffer_pool, "Invalid softbuffer pool");
-  srsgnb_assert(dl_pdu_validator, "Invalid downlink PDU validator");
-  srsgnb_assert(ul_pdu_validator, "Invalid uplink PDU validator");
+  srsran_assert(dl_processor_pool, "Invalid downlink processor pool");
+  srsran_assert(dl_rg_pool, "Invalid downlink resource grid pool");
+  srsran_assert(ul_rg_pool, "Invalid uplink resource grid pool");
+  srsran_assert(ul_processor_pool, "Invalid uplink processor pool");
+  srsran_assert(prach_pool, "Invalid PRACH buffer pool");
+  srsran_assert(softbuffer_pool, "Invalid softbuffer pool");
+  srsran_assert(dl_pdu_validator, "Invalid downlink PDU validator");
+  srsran_assert(ul_pdu_validator, "Invalid uplink PDU validator");
 
   logger.set_level(config.log_level);
 

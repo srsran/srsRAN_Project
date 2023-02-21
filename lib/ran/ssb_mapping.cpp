@@ -18,7 +18,7 @@ using namespace srsran;
 ssb_pattern_case srsran::ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
 {
   nr_band dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
-  srsgnb_assert(dl_idx_nr_band != nr_band::invalid, "Invalid NR band index");
+  srsran_assert(dl_idx_nr_band != nr_band::invalid, "Invalid NR band index");
   return band_helper::get_ssb_pattern(dl_idx_nr_band, ssb_scs);
 }
 
@@ -29,7 +29,7 @@ uint8_t srsran::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
   // Derive the SSB-specific parameters (SSB pattern case, SSB L_max and SSB paired_spectrum flag) from those in the
   // MAC Cell config.
   nr_band dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
-  srsgnb_assert(dl_idx_nr_band != nr_band::invalid, "Invalid NR band index");
+  srsran_assert(dl_idx_nr_band != nr_band::invalid, "Invalid NR band index");
   ssb_pattern_case ssb_case = band_helper::get_ssb_pattern(dl_idx_nr_band, ssb_scs);
   // Flag indicating whether cell is on paired spectrum (FDD) or unpaired (TDD, SDL, SUL).
   bool paired_spectrum = band_helper::is_paired_spectrum(dl_idx_nr_band);
@@ -44,7 +44,7 @@ uint8_t srsran::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
     uint32_t ssb_cutoff_freq = paired_spectrum ? CUTOFF_FREQ_ARFCN_CASE_A_B_C : CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED;
     L_max                    = f_arfcn < ssb_cutoff_freq ? 4 : 8;
   } else {
-    srsgnb_assert(ssb_case < ssb_pattern_case::invalid, "Invalid SSB case");
+    srsran_assert(ssb_case < ssb_pattern_case::invalid, "Invalid SSB case");
   }
 
   return L_max;
@@ -61,7 +61,7 @@ crb_interval srsran::get_ssb_crbs(subcarrier_spacing    ssb_scs,
   // With SCScommon kHz30, offset_to_pointA must be a multiple of 2. This is because it is measured in 15kHz RB, while
   // it points at a CRB which is based on 30kHz.
   if (scs_common == subcarrier_spacing::kHz30) {
-    srsgnb_sanity_check(offset_to_pA.to_uint() % 2 == 0,
+    srsran_sanity_check(offset_to_pA.to_uint() % 2 == 0,
                         "With SCScommon with 30kHz OffsetToPointA must be an even number");
   }
   unsigned ssb_crbs_start =

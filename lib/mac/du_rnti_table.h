@@ -37,8 +37,8 @@ public:
 
   void add_ue(rnti_t crnti, du_ue_index_t ue_index)
   {
-    srsgnb_sanity_check(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
-    srsgnb_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+    srsran_sanity_check(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
     std::atomic<du_ue_index_t>& ue_pos      = get(crnti);
     du_ue_index_t               prev_ue_idx = ue_pos.exchange(ue_index, std::memory_order_relaxed);
     if (not is_du_ue_index_valid(prev_ue_idx)) {
@@ -48,7 +48,7 @@ public:
 
   void rem_ue(rnti_t crnti)
   {
-    srsgnb_sanity_check(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
+    srsran_sanity_check(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
     std::atomic<du_ue_index_t>& ue_pos      = get(crnti);
     du_ue_index_t               prev_ue_idx = ue_pos.exchange(INVALID_DU_UE_INDEX, std::memory_order_relaxed);
     if (is_du_ue_index_valid(prev_ue_idx)) {
@@ -64,7 +64,7 @@ public:
 
   du_ue_index_t operator[](rnti_t crnti) const
   {
-    srsgnb_sanity_check(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
+    srsran_sanity_check(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
     const std::atomic<du_ue_index_t>& ue_pos = get(crnti);
     return ue_pos.load(std::memory_order_relaxed);
   }

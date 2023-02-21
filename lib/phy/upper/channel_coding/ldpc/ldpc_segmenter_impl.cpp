@@ -27,12 +27,12 @@ static_assert(MAX_TBS.is_byte_exact(), "Value is not a multiple of 8");
 
 std::unique_ptr<ldpc_segmenter_tx> ldpc_segmenter_impl::create_ldpc_segmenter_impl_tx(ldpc_segmenter_impl::sch_crc& c)
 {
-  srsgnb_assert(c.crc16, "Invalid CRC16 calculator.");
-  srsgnb_assert(c.crc24A, "Invalid CRC24A calculator.");
-  srsgnb_assert(c.crc24B, "Invalid CRC24B calculator.");
-  srsgnb_assert(c.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Not a CRC generator of type CRC16.");
-  srsgnb_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
-  srsgnb_assert(c.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Not a CRC generator of type CRC24B.");
+  srsran_assert(c.crc16, "Invalid CRC16 calculator.");
+  srsran_assert(c.crc24A, "Invalid CRC24A calculator.");
+  srsran_assert(c.crc24B, "Invalid CRC24B calculator.");
+  srsran_assert(c.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Not a CRC generator of type CRC16.");
+  srsran_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
+  srsran_assert(c.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Not a CRC generator of type CRC24B.");
 
   return std::unique_ptr<ldpc_segmenter_impl>(new ldpc_segmenter_impl(std::move(c)));
 }
@@ -59,17 +59,17 @@ static void check_inputs_tx(const static_vector<described_segment, MAX_NOF_SEGME
                             const segmenter_config&                                   cfg)
 {
   using namespace units::literals;
-  srsgnb_assert(segments.empty(), "Argument segments should be empty.");
-  srsgnb_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
-  srsgnb_assert(units::bytes(transport_block.size()).to_bits() + 24_bits <= MAX_TBS,
+  srsran_assert(segments.empty(), "Argument segments should be empty.");
+  srsran_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
+  srsran_assert(units::bytes(transport_block.size()).to_bits() + 24_bits <= MAX_TBS,
                 "Transport block too long. The admissible size, including CRC, is {}.",
                 MAX_TBS.truncate_to_bytes());
 
-  srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
+  srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
 
-  srsgnb_assert((cfg.nof_layers >= 1) && (cfg.nof_layers <= 4), "Invalid number of layers.");
+  srsran_assert((cfg.nof_layers >= 1) && (cfg.nof_layers <= 4), "Invalid number of layers.");
 
-  srsgnb_assert(cfg.nof_ch_symbols % (cfg.nof_layers) == 0,
+  srsran_assert(cfg.nof_ch_symbols % (cfg.nof_layers) == 0,
                 "The number of channel symbols should be a multiple of the product between the number of layers.");
 }
 
@@ -210,12 +210,12 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   }
 
   // After segmenting no bits should be left in the buffer.
-  srsgnb_assert(nof_tb_bits_in.value() == tb_offset,
+  srsran_assert(nof_tb_bits_in.value() == tb_offset,
                 "Transport block offset ({}) must be equal to the transport block size including CRC ({}).",
                 tb_offset,
                 nof_tb_bits_in);
   // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
-  srsgnb_assert(cw_length.value() == cw_offset,
+  srsran_assert(cw_length.value() == cw_offset,
                 "Codeblock offset ({}) must be equal to the codeword size ({}).",
                 cw_offset,
                 cw_length.value());
@@ -223,17 +223,17 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 
 static void check_inputs_rx(span<const log_likelihood_ratio> codeword_llrs, const segmenter_config& cfg)
 {
-  srsgnb_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
-  srsgnb_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod),
+  srsran_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
+  srsran_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod),
                 "Wrong number of LLRs {} (expected {}).",
                 codeword_llrs.size(),
                 cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod));
 
-  srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
+  srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
 
-  srsgnb_assert((cfg.nof_layers >= 1) && (cfg.nof_layers <= 4), "Invalid number of layers.");
+  srsran_assert((cfg.nof_layers >= 1) && (cfg.nof_layers <= 4), "Invalid number of layers.");
 
-  srsgnb_assert(cfg.nof_ch_symbols % (cfg.nof_layers) == 0,
+  srsran_assert(cfg.nof_ch_symbols % (cfg.nof_layers) == 0,
                 "The number of channel symbols should be a multiple of the product between the number of layers.");
 }
 

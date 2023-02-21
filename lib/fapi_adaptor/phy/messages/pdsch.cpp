@@ -55,7 +55,7 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_p
   // Depending on the profile to use.
   if (use_profileNR) {
     // Load Data to SSS ratio from NR profile.
-    srsgnb_assert(fapi_pdu.power_control_offset_profile_nr != std::numeric_limits<uint8_t>::max(),
+    srsran_assert(fapi_pdu.power_control_offset_profile_nr != std::numeric_limits<uint8_t>::max(),
                   "Expected SSS profile.");
 
     // Calculate the power offset between NZP-CSI-RS to PDSCH data.
@@ -67,11 +67,11 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_p
     proc_pdu.ratio_pdsch_data_to_sss_dB = power_control_offset_dB + power_control_offset_ss_dB;
   } else {
     // Load Data to SSS ratio from SSS profile.
-    srsgnb_assert(fapi_pdu.power_control_offset_profile_nr == std::numeric_limits<uint8_t>::max(),
+    srsran_assert(fapi_pdu.power_control_offset_profile_nr == std::numeric_limits<uint8_t>::max(),
                   "Expected SSS profile.");
-    srsgnb_assert(fapi_pdu.power_control_offset_ss_profile_nr == fapi::nzp_csi_rs_epre_to_ssb::L1_use_profile_sss,
+    srsran_assert(fapi_pdu.power_control_offset_ss_profile_nr == fapi::nzp_csi_rs_epre_to_ssb::L1_use_profile_sss,
                   "Expected SSS profile.");
-    srsgnb_assert(fapi_pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss !=
+    srsran_assert(fapi_pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss !=
                       std::numeric_limits<int16_t>::min(),
                   "Expected SSS profile.");
     proc_pdu.ratio_pdsch_data_to_sss_dB =

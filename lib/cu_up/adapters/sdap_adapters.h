@@ -28,7 +28,7 @@ public:
 
   void on_new_sdu(byte_buffer sdu) override
   {
-    srsgnb_assert(gtpu_handler != nullptr, "GTPU handler must not be nullptr");
+    srsran_assert(gtpu_handler != nullptr, "GTPU handler must not be nullptr");
     gtpu_handler->handle_sdu(std::move(sdu));
   }
 
@@ -47,7 +47,7 @@ public:
 
   void on_new_pdu(byte_buffer pdu) override
   {
-    srsgnb_assert(pdcp_handler != nullptr, "PDCP handler must not be nullptr");
+    srsran_assert(pdcp_handler != nullptr, "PDCP handler must not be nullptr");
     pdcp_handler->handle_sdu(std::move(pdu));
   }
 

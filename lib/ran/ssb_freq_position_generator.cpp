@@ -29,7 +29,7 @@ compute_offset_to_pointA(double f_ssb_0_hz, double point_A_hz, subcarrier_spacin
     offset_to_pA = 2 * (static_cast<unsigned>((f_ssb_0_hz - point_A_hz) * HZ_TO_KHZ) /
                         (2 * NOF_SUBCARRIERS_PER_RB * scs_to_khz(subcarrier_spacing::kHz15)));
   } else {
-    srsgnb_assert(scs_common <= subcarrier_spacing::kHz30, "FR2 not supported");
+    srsran_assert(scs_common <= subcarrier_spacing::kHz30, "FR2 not supported");
   }
   return offset_to_pA;
 }
@@ -80,7 +80,7 @@ ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_a
     N_raster =
         static_cast<unsigned>(std::floor((ss_ref_l_bound_hz - N_REF_OFFSET_3_GHZ_24_5_GHZ) / N_SIZE_SYNC_RASTER_2_HZ));
   } else {
-    srsgnb_assert(dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ, "FR2 frequencies not supported");
+    srsran_assert(dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ, "FR2 frequencies not supported");
   }
 
   // This constraint comes from the scheduler, which cannot allocate PDCCH starting at symbols different from 0;

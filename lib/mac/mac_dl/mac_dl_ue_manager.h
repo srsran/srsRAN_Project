@@ -169,7 +169,7 @@ private:
     u.harq_buffers = std::move(dl_harq_buffers);
     if (ul_ccch_msg != nullptr) {
       // Store Msg3.
-      srsgnb_assert(
+      srsran_assert(
           ul_ccch_msg->length() >= UE_CON_RES_ID_LEN, "Invalid UL-CCCH message length ({} < 6)", ul_ccch_msg->length());
       std::copy(ul_ccch_msg->begin(), ul_ccch_msg->begin() + UE_CON_RES_ID_LEN, u.msg3_subpdu.begin());
     }

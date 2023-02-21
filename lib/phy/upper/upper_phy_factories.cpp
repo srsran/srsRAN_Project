@@ -595,7 +595,7 @@ public:
   upper_phy_factory_impl(std::shared_ptr<downlink_processor_factory> downlink_proc_factory_) :
     downlink_proc_factory(downlink_proc_factory_)
   {
-    srsgnb_assert(downlink_proc_factory, "Invalid downlink processor factory.");
+    srsran_assert(downlink_proc_factory, "Invalid downlink processor factory.");
   }
 
   std::unique_ptr<upper_phy> create(const upper_phy_config& config) override

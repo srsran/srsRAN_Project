@@ -65,7 +65,7 @@ static void fill_coreset_parameters(fapi::dl_pdcch_pdu_builder&  builder,
 void srsran::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu)
 {
   const static_vector<mac_pdcch_pdu::dci_info, fapi::MAX_NUM_DCIS_PER_PDCCH_PDU>& dcis = mac_pdu.dcis;
-  srsgnb_assert(!dcis.empty(), "No DCIs to add into the PDCCH PDU");
+  srsran_assert(!dcis.empty(), "No DCIs to add into the PDCCH PDU");
 
   const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;
 

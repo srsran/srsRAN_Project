@@ -97,14 +97,14 @@ public:
     static_assert(
         std::is_same<typename std::iterator_traits<It>::iterator_category, std::random_access_iterator_tag>::value,
         "Only random access iterators allowed.");
-    srsgnb_sanity_check((size_t)(it_end - it_begin) <= tailroom(), "There is not enough tailroom for append.");
+    srsran_sanity_check((size_t)(it_end - it_begin) <= tailroom(), "There is not enough tailroom for append.");
     payload_data_end_ = std::copy(it_begin, it_end, end());
   }
 
   /// Appends single byte at the tail of the segment.
   void append(uint8_t byte)
   {
-    srsgnb_assert(tailroom() >= 1, "There is not enough tailroom space.");
+    srsran_assert(tailroom() >= 1, "There is not enough tailroom space.");
     buffer[tailroom_start()] = byte;
     payload_data_end_++;
   }
@@ -112,7 +112,7 @@ public:
   /// Prepends segment with provided span of bytes.
   void prepend(span<const uint8_t> bytes)
   {
-    srsgnb_assert(headroom() >= bytes.size(), "There is not enough headroom space.");
+    srsran_assert(headroom() >= bytes.size(), "There is not enough headroom space.");
     payload_data_ -= bytes.size();
     std::copy(bytes.begin(), bytes.end(), begin());
   }
@@ -121,39 +121,39 @@ public:
   /// \param nof_bytes Number of bytes to reserve.
   void reserve_prepend(size_t nof_bytes)
   {
-    srsgnb_assert(headroom() >= nof_bytes, "There is not enough headroom space.");
+    srsran_assert(headroom() >= nof_bytes, "There is not enough headroom space.");
     payload_data_ -= nof_bytes;
   }
 
   /// Removes "nof_bytes" from the head of the segment.
   void trim_head(size_t nof_bytes)
   {
-    srsgnb_assert(nof_bytes <= length(), "There is not enough headroom space.");
+    srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
     payload_data_ += nof_bytes;
   }
 
   /// Removes "nof_bytes" from the tail of the segment.
   void trim_tail(size_t nof_bytes)
   {
-    srsgnb_assert(nof_bytes <= length(), "There is not enough headroom space.");
+    srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
     payload_data_end_ -= nof_bytes;
   }
 
   /// Resizes payload of segment.
   void resize(size_t nof_bytes)
   {
-    srsgnb_assert(nof_bytes <= capacity() - headroom(), "There is not enough space for provided size");
+    srsran_assert(nof_bytes <= capacity() - headroom(), "There is not enough space for provided size");
     payload_data_end_ = payload_data_ + nof_bytes;
   }
 
   uint8_t& operator[](size_t idx)
   {
-    srsgnb_assert(idx < length(), "Out-of-bound access");
+    srsran_assert(idx < length(), "Out-of-bound access");
     return *(begin() + idx);
   }
   const uint8_t& operator[](size_t idx) const
   {
-    srsgnb_assert(idx < length(), "Out-of-bound access");
+    srsran_assert(idx < length(), "Out-of-bound access");
     return *(begin() + idx);
   }
 
@@ -162,12 +162,12 @@ public:
 
   uint8_t& back()
   {
-    srsgnb_assert(not empty(), "back() called for empty segment.");
+    srsran_assert(not empty(), "back() called for empty segment.");
     return *(payload_data_end_ - 1);
   }
   const uint8_t& back() const
   {
-    srsgnb_assert(not empty(), "back() called for empty segment.");
+    srsran_assert(not empty(), "back() called for empty segment.");
     return *(payload_data_end_ - 1);
   }
 
@@ -215,7 +215,7 @@ using byte_buffer_segment_pool = fixed_size_memory_block_pool<byte_buffer_pool_t
 inline void init_byte_buffer_segment_pool(std::size_t nof_segments)
 {
   auto& pool = byte_buffer_segment_pool::get_instance(nof_segments, sizeof(byte_buffer_segment));
-  srsgnb_assert(nof_segments == pool.nof_memory_blocks(),
+  srsran_assert(nof_segments == pool.nof_memory_blocks(),
                 "The pool was already initialized with a different number of segments ({} != {})",
                 nof_segments,
                 pool.nof_memory_blocks());
@@ -295,7 +295,7 @@ public:
       offset -= current_segment->length();
       current_segment = current_segment->next().get();
     }
-    srsgnb_assert(current_segment != nullptr or offset == 0, "Out-of-bounds Access");
+    srsran_assert(current_segment != nullptr or offset == 0, "Out-of-bounds Access");
     return *this;
   }
 
@@ -351,9 +351,9 @@ public:
   byte_buffer_segment_list_iterator_impl(SegmentType* seg, size_t offset_, size_t size_) :
     current_segment(seg), offset(offset_), rem_bytes(size_)
   {
-    srsgnb_assert(current_segment != nullptr or (offset == 0 and rem_bytes == 0),
+    srsran_assert(current_segment != nullptr or (offset == 0 and rem_bytes == 0),
                   "Positive offset or length for empty segment");
-    srsgnb_assert(current_segment == nullptr or offset < current_segment->length(), "Invalid offset");
+    srsran_assert(current_segment == nullptr or offset < current_segment->length(), "Invalid offset");
   }
   template <typename U>
   byte_buffer_segment_list_iterator_impl(const byte_buffer_iterator_impl<U>& it, size_t size_) :
@@ -381,7 +381,7 @@ public:
 
   iterator_type& operator++()
   {
-    srsgnb_assert(current_segment != nullptr, "operator++ called after end()");
+    srsran_assert(current_segment != nullptr, "operator++ called after end()");
     rem_bytes -= std::min(rem_bytes, (unsigned)current_segment->length() - offset);
     offset = 0;
     if (rem_bytes == 0) {
@@ -491,7 +491,7 @@ bool compare_byte_buffer_range(const ByteBufferType& buffer, const U& container)
     }
     other_it += seg.size();
   }
-  srsgnb_sanity_check(other_it == container.end(), "segment list is in invalid state");
+  srsran_sanity_check(other_it == container.end(), "segment list is in invalid state");
   return true;
 }
 
@@ -533,7 +533,7 @@ bool compare_byte_buffer_range(const ByteBufferType1& lhs, const ByteBufferType2
       offset2 = 0;
     }
   }
-  srsgnb_sanity_check(seg_it1 == segments1.end() and seg_it2 == segments2.end(), "byte buffers are in invalid state");
+  srsran_sanity_check(seg_it1 == segments1.end() and seg_it2 == segments2.end(), "byte buffers are in invalid state");
   return true;
 }
 

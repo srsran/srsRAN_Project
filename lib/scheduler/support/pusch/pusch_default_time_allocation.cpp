@@ -19,7 +19,7 @@ unsigned pusch_default_time_allocation_default_A_get_j(subcarrier_spacing scs)
   static std::array<unsigned, 4> values = {1, 1, 2, 3};
 
   unsigned numerology = to_numerology_value(scs);
-  srsgnb_assert(numerology < values.size(), "Invalid numerology.");
+  srsran_assert(numerology < values.size(), "Invalid numerology.");
   return values[numerology];
 }
 

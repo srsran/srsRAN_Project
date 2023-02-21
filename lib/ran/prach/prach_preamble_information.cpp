@@ -14,7 +14,7 @@ using namespace srsran;
 
 prach_preamble_information srsran::get_prach_preamble_long_info(preamble_format format)
 {
-  srsgnb_assert(format.is_long_preamble(), "Invalid preamble format. It must be a long preamble.");
+  srsran_assert(format.is_long_preamble(), "Invalid preamble format. It must be a long preamble.");
   switch (format) {
     case preamble_format::FORMAT0:
       return {839U,

@@ -20,14 +20,14 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
                                              span<const cf_t>                             input,
                                              const ofdm_prach_demodulator::configuration& config)
 {
-  srsgnb_assert(config.format.is_long_preamble(), "Only PRACH long preamble formats are implemented.");
+  srsran_assert(config.format.is_long_preamble(), "Only PRACH long preamble formats are implemented.");
 
   prach_preamble_information          preamble_info = get_prach_preamble_long_info(config.format);
   prach_frequency_mapping_information freq_mapping_info =
       prach_frequency_mapping_get(preamble_info.scs, config.pusch_scs);
-  srsgnb_assert(freq_mapping_info.nof_rb_ra != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.nof_rb_ra,
+  srsran_assert(freq_mapping_info.nof_rb_ra != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.nof_rb_ra,
                 "The PRACH and PUSCH subcarrier spacing combination resulted in a reserved configuration.");
-  srsgnb_assert(freq_mapping_info.k_bar != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.k_bar,
+  srsran_assert(freq_mapping_info.k_bar != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.k_bar,
                 "The PRACH and PUSCH subcarrier spacing combination resulted in a reserved configuration.");
 
   dft_processor& dft              = (preamble_info.scs == prach_subcarrier_spacing::kHz1_25) ? *dft_1_25kHz : *dft_5kHz;
@@ -40,7 +40,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
   unsigned       nof_symbols          = time_sequence_length / ofdm_symbol_len;
 
   // Make sure the input size matches the PRACH receive window.
-  srsgnb_assert(input.size() >= time_sequence_length + cyclic_prefix_length,
+  srsran_assert(input.size() >= time_sequence_length + cyclic_prefix_length,
                 "The number of input samples {} is lesser than the PRACH receive window length {}.",
                 input.size(),
                 time_sequence_length + cyclic_prefix_length);
@@ -48,7 +48,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
   // Prepare PRACH resource grid.
   unsigned K               = pusch_scs_Hz / prach_scs_Hz;
   unsigned prach_grid_size = config.nof_prb_ul_grid * K * NRE;
-  srsgnb_assert(
+  srsran_assert(
       dft.get_size() > prach_grid_size,
       "DFT size {} for PRACH SCS {} is not sufficient for K={}, N_RB={}. The minimum expected DFT size is {}.",
       dft.get_size(),
@@ -59,7 +59,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
 
   // Calculate initial subcarrier.
   unsigned k_start = K * NRE * config.rb_offset + freq_mapping_info.k_bar;
-  srsgnb_assert(k_start + preamble_info.sequence_length < prach_grid_size,
+  srsran_assert(k_start + preamble_info.sequence_length < prach_grid_size,
                 "Start subcarrier {} plus sequence length {} exceeds PRACH grid size {}.",
                 k_start,
                 preamble_info.sequence_length,

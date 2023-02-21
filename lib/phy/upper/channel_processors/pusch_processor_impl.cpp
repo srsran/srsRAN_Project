@@ -102,12 +102,12 @@ pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config
   dec_nof_iterations(config.dec_nof_iterations),
   dec_enable_early_stop(config.dec_enable_early_stop)
 {
-  srsgnb_assert(estimator, "Invalid estimator.");
-  srsgnb_assert(demodulator, "Invalid demodulator.");
-  srsgnb_assert(demultiplex, "Invalid demultiplex.");
-  srsgnb_assert(decoder, "Invalid decoder.");
-  srsgnb_assert(uci_dec, "Invalid UCI decoder.");
-  srsgnb_assert(dec_nof_iterations != 0, "The decoder number of iterations must be non-zero.");
+  srsran_assert(estimator, "Invalid estimator.");
+  srsran_assert(demodulator, "Invalid demodulator.");
+  srsran_assert(demultiplex, "Invalid demultiplex.");
+  srsran_assert(decoder, "Invalid decoder.");
+  srsran_assert(uci_dec, "Invalid UCI decoder.");
+  srsran_assert(dec_nof_iterations != 0, "The decoder number of iterations must be non-zero.");
 }
 
 pusch_processor_result pusch_processor_impl::process(span<uint8_t>                 data,
@@ -287,30 +287,30 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
 void pusch_processor_impl::assert_pdu(const pusch_processor::pdu_t& pdu) const
 {
   // Make sure the configuration is supported.
-  srsgnb_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.size().nof_prb,
+  srsran_assert((pdu.bwp_start_rb + pdu.bwp_size_rb) <= ch_estimate.size().nof_prb,
                 "The sum of the BWP start (i.e., {}) and size (i.e., {}) exceeds the maximum grid size (i.e., {} PRB).",
                 pdu.bwp_start_rb,
                 pdu.bwp_size_rb,
                 ch_estimate.size().nof_prb);
-  srsgnb_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
-  srsgnb_assert(pdu.nof_cdm_groups_without_data == 2, "Only two CDM groups without data are currently supported.");
-  srsgnb_assert(
+  srsran_assert(pdu.dmrs == dmrs_type::TYPE1, "Only DM-RS Type 1 is currently supported.");
+  srsran_assert(pdu.nof_cdm_groups_without_data == 2, "Only two CDM groups without data are currently supported.");
+  srsran_assert(
       pdu.nof_tx_layers <= ch_estimate.size().nof_tx_layers,
       "The number of transmit layers (i.e., {}) exceeds the maximum number of transmission layers (i.e., {}).",
       pdu.nof_tx_layers,
       ch_estimate.size().nof_tx_layers);
-  srsgnb_assert(pdu.rx_ports.size() <= ch_estimate.size().nof_rx_ports,
+  srsran_assert(pdu.rx_ports.size() <= ch_estimate.size().nof_rx_ports,
                 "The number of receive ports (i.e., {}) exceeds the maximum number of receive ports (i.e., {}).",
                 pdu.rx_ports.size(),
                 ch_estimate.size().nof_rx_ports);
 
   static constexpr unsigned max_uci_field_len = 11;
-  srsgnb_assert(pdu.uci.nof_harq_ack <= max_uci_field_len,
+  srsran_assert(pdu.uci.nof_harq_ack <= max_uci_field_len,
                 "HARQ-ACK UCI field length (i.e., {}) exceeds the maximum supported length (i.e., {})",
                 pdu.uci.nof_harq_ack,
                 max_uci_field_len);
 
-  srsgnb_assert(pdu.uci.nof_csi_part1 <= max_uci_field_len,
+  srsran_assert(pdu.uci.nof_csi_part1 <= max_uci_field_len,
                 "CSI Part 1 UCI field length (i.e., {}) exceeds the maximum supported length (i.e., {})",
                 pdu.uci.nof_csi_part1,
                 max_uci_field_len);

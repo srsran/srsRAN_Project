@@ -36,7 +36,7 @@ auto mean(const T& x)
   using MeanType1 = typename std::conditional<is_complex<typename T::value_type>::value, DataType, float>::type;
   using MeanType  = typename std::conditional<std::is_floating_point<DataType>::value, DataType, MeanType1>::type;
 
-  srsgnb_assert(!x.empty(), "The input span cannot be empty.");
+  srsran_assert(!x.empty(), "The input span cannot be empty.");
 
   return std::accumulate(x.begin(), x.end(), static_cast<MeanType>(0)) / static_cast<MeanType>(x.size());
 }

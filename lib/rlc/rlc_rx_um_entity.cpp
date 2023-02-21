@@ -27,7 +27,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   metrics.metrics_set_mode(rlc_mode::um_bidir);
 
   // check reassembly_timer
-  srsgnb_assert(reassembly_timer.is_valid(), "Cannot create RLC RX UM: reassembly_timer not configured.");
+  srsran_assert(reassembly_timer.is_valid(), "Cannot create RLC RX UM: reassembly_timer not configured.");
 
   // configure reassembly_timer
   if (cfg.t_reassembly > 0) {

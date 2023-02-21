@@ -101,6 +101,6 @@ void srsran::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu
       fill_format2_parameters(pdu.format2, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot));
       break;
     default:
-      srsgnb_assert(0, "Unsupported PUCCH format {}", context.format);
+      srsran_assert(0, "Unsupported PUCCH format {}", context.format);
   }
 }

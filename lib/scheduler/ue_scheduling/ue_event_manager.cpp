@@ -93,7 +93,7 @@ void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
 
 void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
-  srsgnb_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
+  srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
   common_events.emplace(bsr_ind.ue_index, [this, bsr_ind]() {
     if (not ue_db.contains(bsr_ind.ue_index)) {
@@ -122,7 +122,7 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 
 void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  srsgnb_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");
+  srsran_assert(cell_exists(crc_ind.cell_index), "Invalid cell index");
 
   for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
     cell_specific_events[crc_ind.cell_index].emplace(
@@ -170,7 +170,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
 
 void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 {
-  srsgnb_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
+  srsran_sanity_check(cell_exists(ind.cell_index), "Invalid cell index");
 
   for (unsigned i = 0; i != ind.ucis.size(); ++i) {
     if (variant_holds_alternative<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(ind.ucis[i].pdu)) {
@@ -336,7 +336,7 @@ void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)
 
 void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 {
-  srsgnb_sanity_check(cell_exists(cell_index), "Invalid cell index {}", cell_index);
+  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index {}", cell_index);
 
   // Process common events.
   process_common(sl, cell_index);
@@ -347,7 +347,7 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 
 void ue_event_manager::add_cell(const cell_configuration& cell_cfg_, ue_srb0_scheduler& srb0_sched)
 {
-  srsgnb_assert(not cell_exists(cell_cfg_.cell_index), "Overwriting cell configurations not supported");
+  srsran_assert(not cell_exists(cell_cfg_.cell_index), "Overwriting cell configurations not supported");
 
   du_cells[cell_cfg_.cell_index].cfg        = &cell_cfg_;
   du_cells[cell_cfg_.cell_index].srb0_sched = &srb0_sched;

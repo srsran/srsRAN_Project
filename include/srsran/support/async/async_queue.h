@@ -50,7 +50,7 @@ public:
     bool await_ready() { return not parent->queue.empty(); }
     void await_suspend(coro_handle<> ch)
     {
-      srsgnb_assert(this->next == nullptr, "Trying to suspend already suspended coroutine");
+      srsran_assert(this->next == nullptr, "Trying to suspend already suspended coroutine");
       suspended_handle = ch;
       // enqueue awaiter
       if (parent->last == nullptr) {
@@ -64,7 +64,7 @@ public:
     }
     T await_resume()
     {
-      srsgnb_sanity_check(not parent->queue.empty(), "Callback being resumed but queue is still empty");
+      srsran_sanity_check(not parent->queue.empty(), "Callback being resumed but queue is still empty");
       T ret = std::move(parent->queue.top());
       parent->queue.pop();
       return ret;

@@ -36,7 +36,7 @@ struct promise_data : public Base {
   template <typename U>
   void return_value(U&& u)
   {
-    srsgnb_sanity_check(not Base::has_value, "Return called more than once.");
+    srsran_sanity_check(not Base::has_value, "Return called more than once.");
     new (&mem) R(std::forward<U>(u));
     Base::has_value = true;
   }
@@ -44,12 +44,12 @@ struct promise_data : public Base {
   /// Get Return value
   const R& get() const&
   {
-    srsgnb_assert(Base::has_value, "Trying to extract result from unset Promise");
+    srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
     return *reinterpret_cast<const R*>(&mem);
   }
   R get() &&
   {
-    srsgnb_assert(Base::has_value, "Trying to extract result from unset Promise");
+    srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
     return std::move(*reinterpret_cast<R*>(&mem));
   }
 

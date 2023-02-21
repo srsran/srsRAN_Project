@@ -47,7 +47,7 @@ public:
   {
     if (has_sn(sn)) {
       logger.log_error("sn={} already present in window, overwriting.", sn);
-      srsgnb_assertion_failure("sn={} already present in window.", sn);
+      srsran_assertion_failure("sn={} already present in window.", sn);
     } else {
       logger.log_debug("Adding sn={} to window.", sn);
     }
@@ -58,7 +58,7 @@ public:
   {
     if (not has_sn(sn)) {
       logger.log_error("Cannot remove sn={} because not contained in the window.", sn);
-      srsgnb_assertion_failure("Cannot remove sn={} because not contained in the window.", sn);
+      srsran_assertion_failure("Cannot remove sn={} because not contained in the window.", sn);
       return;
     }
     logger.log_debug("Removing sn={} from window", sn);

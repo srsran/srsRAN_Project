@@ -34,7 +34,7 @@ protected:
 
   bool check_pusch_out_param(const ul_sched_info& pusch_pdu) const
   {
-    srsgnb_assert(pusch_pdu.uci.has_value(), "Expected UCI on PUSCH PDU not found.");
+    srsran_assert(pusch_pdu.uci.has_value(), "Expected UCI on PUSCH PDU not found.");
     return pusch_pdu.uci.value().alpha == output_params.alpha &&
            pusch_pdu.uci.value().beta_offset_harq_ack == output_params.beta_offset_harq_ack;
   }
@@ -59,7 +59,7 @@ protected:
 
   void add_format2_grant_on_pucch(unsigned nof_harq_ack_bits = 3, sr_nof_bits sr_bits = srsran::sr_nof_bits::no_sr)
   {
-    srsgnb_assert(nof_harq_ack_bits > 2, "At least 3 HARQ bits are required to trigger a Format 2 PUCCH grant.");
+    srsran_assert(nof_harq_ack_bits > 2, "At least 3 HARQ bits are required to trigger a Format 2 PUCCH grant.");
     t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
     t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(

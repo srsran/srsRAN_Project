@@ -105,7 +105,7 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
 
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-  srsgnb_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
+  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
                 "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
@@ -150,7 +150,7 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
     }
 
     // Verify all the resource elements for the layer have been mapped.
-    srsgnb_assert(x_buffer.empty(), "{} elements are not mapped in layer {}.", x_buffer.size(), layer_idx);
+    srsran_assert(x_buffer.empty(), "{} elements are not mapped in layer {}.", x_buffer.size(), layer_idx);
   }
 }
 
@@ -170,7 +170,7 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
 
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-  srsgnb_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
+  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
                 "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
@@ -229,11 +229,11 @@ void pdsch_modulator_impl::modulate(resource_grid_writer&            grid,
 {
   // Deduce the number of layers from the number of ports
   unsigned nof_layers = config.ports.size();
-  srsgnb_assert(nof_layers > 0, "Number of layers is zero.");
+  srsran_assert(nof_layers > 0, "Number of layers is zero.");
 
   // Deduce the number of codewords and assert it is coherent with the number of layers.
   unsigned nof_codewords = (nof_layers >= 4 ? 2 : 1);
-  srsgnb_assert(
+  srsran_assert(
       codewords.size() == nof_codewords, "For {} layers, {} codewords are required", nof_layers, codewords.size());
 
   // Process codewords.

@@ -4549,6 +4549,6 @@ const BG_adjacency_matrix_t* srsran::ldpc::get_adjacency_matrix(ldpc_base_graph_
   if (bg == ldpc_base_graph_type::BG2) {
     return &BG2_adjacency_matrix;
   }
-  srsgnb_assert(false, "Invalid base graph");
+  srsran_assert(false, "Invalid base graph");
   return {};
 }

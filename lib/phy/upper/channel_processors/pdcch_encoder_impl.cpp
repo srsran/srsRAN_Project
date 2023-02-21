@@ -67,7 +67,7 @@ void pdcch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
 
 void pdcch_encoder_impl::encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config)
 {
-  srsgnb_assert(encoded.size() >= config.E, "Output data vector is too small to store encoded bits");
+  srsran_assert(encoded.size() >= config.E, "Output data vector is too small to store encoded bits");
 
   // Configure Polar encoder
   uint16_t K = data.size() + CRC_LEN;

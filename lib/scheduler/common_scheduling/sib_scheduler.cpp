@@ -157,7 +157,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   static const unsigned sib1_si_indicator = 0;
 
   // Add DCI to list to dl_pdcch.
-  srsgnb_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
+  srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
   auto&        sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
   prb_interval sib1_prbs  = crb_to_prb(coreset0_bwp_cfg, sib1_crbs_grant);
 

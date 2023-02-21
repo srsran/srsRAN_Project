@@ -17,7 +17,7 @@ constexpr units::bits sch_information::CB_CRC_SIZE;
 
 sch_information srsran::get_sch_segmentation_info(units::bits tbs, float target_code_rate)
 {
-  srsgnb_assert(target_code_rate > 0.F && target_code_rate < 1.F,
+  srsran_assert(target_code_rate > 0.F && target_code_rate < 1.F,
                 "Invalid target code rate {}, expected a value between 0 and 1",
                 target_code_rate);
 

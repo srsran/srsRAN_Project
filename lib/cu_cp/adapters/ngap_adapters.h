@@ -35,18 +35,18 @@ public:
 
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
-    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
   }
 
   unique_timer make_unique_timer() override
   {
-    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     return cu_cp_task_sched->make_unique_timer();
   }
   timer_manager& get_timer_manager() override
   {
-    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     return cu_cp_task_sched->get_timer_manager();
   }
 
@@ -64,13 +64,13 @@ public:
 
   void on_amf_connection() override
   {
-    srsgnb_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     cu_cp_handler->handle_amf_connection();
   }
 
   void on_amf_connection_drop() override
   {
-    srsgnb_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     cu_cp_handler->handle_amf_connection_drop();
   }
 
@@ -95,7 +95,7 @@ public:
 
   void on_new_pdu(byte_buffer nas_pdu) override
   {
-    srsgnb_assert(rrc_ue_msg_handler != nullptr, "RRC UE message handler must not be nullptr");
+    srsran_assert(rrc_ue_msg_handler != nullptr, "RRC UE message handler must not be nullptr");
 
     dl_nas_transport_message dl_nas_msg = {};
     dl_nas_msg.nas_pdu                  = std::move(nas_pdu);
@@ -106,7 +106,7 @@ public:
   async_task<bool> on_new_security_context(const asn1::ngap::ue_security_cap_s&           caps,
                                            const asn1::fixed_bitstring<256, false, true>& key) override
   {
-    srsgnb_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
+    srsran_assert(rrc_ue_security_handler != nullptr, "RRC UE security handler must not be nullptr");
 
     rrc_init_security_context sec_ctxt;
     copy_asn1_key(sec_ctxt.k, key);
@@ -140,14 +140,14 @@ public:
   async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) override
   {
-    srsgnb_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
+    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
 
     return du_processor_ngap_handler->handle_new_pdu_session_resource_setup_request(request);
   }
 
   void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
   {
-    srsgnb_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
+    srsran_assert(du_processor_ngap_handler != nullptr, "DU Processor handler must not be nullptr");
 
     du_processor_ngap_handler->handle_new_ue_context_release_command(command);
   }

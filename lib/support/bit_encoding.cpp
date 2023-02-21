@@ -15,7 +15,7 @@ using namespace srsran;
 
 void bit_encoder::pack(uint64_t val, uint32_t n_bits)
 {
-  srsgnb_assert(n_bits < 64U, "Invalid number of bits={} passed to pack()", n_bits);
+  srsran_assert(n_bits < 64U, "Invalid number of bits={} passed to pack()", n_bits);
   while (n_bits > 0U) {
     if (offset == 0U) {
       writer.append(0U);
@@ -92,7 +92,7 @@ bool bit_decoder::advance_bits(uint32_t n_bits)
 template <class T>
 bool bit_decoder::unpack(T& val, uint32_t n_bits)
 {
-  srsgnb_assert(n_bits <= sizeof(T) * 8U, "unpack_bits() only supports up to {} bits", sizeof(T) * 8U);
+  srsran_assert(n_bits <= sizeof(T) * 8U, "unpack_bits() only supports up to {} bits", sizeof(T) * 8U);
   val = 0;
   while (n_bits > 0U) {
     if (it == buffer.end()) {
@@ -149,7 +149,7 @@ bool bit_decoder::unpack_bytes(srsran::span<uint8_t> bytes)
 void bit_decoder::align_bytes()
 {
   if (offset != 0) {
-    srsgnb_sanity_check(it != buffer.end(), "Invalid bit_decoder state");
+    srsran_sanity_check(it != buffer.end(), "Invalid bit_decoder state");
     ++it;
     offset = 0;
   }

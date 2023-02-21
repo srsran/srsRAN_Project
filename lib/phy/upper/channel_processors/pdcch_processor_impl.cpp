@@ -57,7 +57,7 @@ void pdcch_processor_impl::process(srsran::resource_grid_writer& grid, const pdc
   const dci_description&     dci     = pdu.dci;
 
   // Verify CORESET.
-  srsgnb_assert(coreset.duration > 0 && coreset.duration <= MAX_CORESET_DURATION,
+  srsran_assert(coreset.duration > 0 && coreset.duration <= MAX_CORESET_DURATION,
                 "Invalid CORESET duration ({})",
                 coreset.duration);
 

@@ -28,12 +28,12 @@ void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>      
       static_cast<unsigned>(pucch_constants::FORMAT2_NOF_DATA_SC * config.nof_prb * config.nof_symbols);
 
   // Assert that allocations are valid.
-  srsgnb_assert(config.nof_prb && config.nof_prb <= pucch_constants::FORMAT2_MAX_NPRB,
+  srsran_assert(config.nof_prb && config.nof_prb <= pucch_constants::FORMAT2_MAX_NPRB,
                 "Invalid Number of PRB allocated to PUCCH Format 2, i.e., {}. Valid range is 1 to {}.",
                 config.nof_prb,
                 pucch_constants::FORMAT2_MAX_NPRB);
 
-  srsgnb_assert(config.nof_symbols && config.nof_symbols <= pucch_constants::FORMAT2_MAX_NSYMB,
+  srsran_assert(config.nof_symbols && config.nof_symbols <= pucch_constants::FORMAT2_MAX_NSYMB,
                 "Invalid Number of OFDM symbols allocated to PUCCH Format 2, i.e., {}. Valid range is 1 to {}.",
                 config.nof_symbols,
                 pucch_constants::FORMAT2_MAX_NSYMB);
@@ -59,7 +59,7 @@ void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>      
       eq_re, eq_noise_vars, ch_re, ch_estimates, span<float>(noise_var_estimates).first(nof_rx_ports), 1.0F);
 
   // Assert that the number of RE returned by the channel equalizer matches the expected number of LLR.
-  srsgnb_assert(eq_re.get_dimension_size(channel_equalizer::re_list::dims::re) ==
+  srsran_assert(eq_re.get_dimension_size(channel_equalizer::re_list::dims::re) ==
                     llr.size() / get_bits_per_symbol(modulation_scheme::QPSK),
                 "Number of equalized RE (i.e. {}) does not match the expected LLR data length (i.e. {})",
                 eq_re.get_dimension_size(channel_equalizer::re_list::dims::re),
@@ -79,7 +79,7 @@ void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>      
                                         const srsran::channel_estimate&                         estimates,
                                         const srsran::pucch_demodulator::format3_configuration& config)
 {
-  srsgnb_assertion_failure("PUCCH Format 3 not supported.");
+  srsran_assertion_failure("PUCCH Format 3 not supported.");
 }
 
 void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>                      llr,
@@ -87,7 +87,7 @@ void pucch_demodulator_impl::demodulate(span<srsran::log_likelihood_ratio>      
                                         const srsran::channel_estimate&                         estimates,
                                         const srsran::pucch_demodulator::format4_configuration& config)
 {
-  srsgnb_assertion_failure("PUCCH Format 4 not supported.");
+  srsran_assertion_failure("PUCCH Format 4 not supported.");
 }
 
 void pucch_demodulator_impl::get_data_re_ests(const resource_grid_reader&                     resource_grid,
@@ -128,13 +128,13 @@ void pucch_demodulator_impl::get_data_re_ests(const resource_grid_reader&       
     }
 
     // Assert that all port data RE buffer elements have been filled.
-    srsgnb_assert(re_port_buffer.empty(),
+    srsran_assert(re_port_buffer.empty(),
                   "Number of extracted port data RE does not match destination buffer dimensions: "
                   "{} unused elements.",
                   re_port_buffer.size());
 
     // Assert that all port channel estimates buffer elements have been filled.
-    srsgnb_assert(
+    srsran_assert(
         ests_port_buffer.empty(),
         "Number of extracted port channel estimation coefficients does not match destination buffer dimensions: "
         "{} unused elements.",

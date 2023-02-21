@@ -33,7 +33,7 @@ public:
   // See interface for documentation.
   span<cf_t> get_symbol(unsigned symbol_index) override
   {
-    srsgnb_assert(symbol_index < MAX_NOF_SYMB,
+    srsran_assert(symbol_index < MAX_NOF_SYMB,
                   "The symbol index {} exceeds the number of symbols {}.",
                   symbol_index,
                   MAX_NOF_SYMB);
@@ -43,7 +43,7 @@ public:
   // See interface for documentation.
   span<const cf_t> get_symbol(unsigned symbol_index) const override
   {
-    srsgnb_assert(symbol_index < MAX_NOF_SYMB,
+    srsran_assert(symbol_index < MAX_NOF_SYMB,
                   "The symbol index {} exceeds the number of symbols {}.",
                   symbol_index,
                   MAX_NOF_SYMB);

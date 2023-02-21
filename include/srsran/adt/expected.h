@@ -160,27 +160,27 @@ public:
   bool     is_error() const noexcept { return not has_value(); }
   const T& value() const& noexcept
   {
-    srsgnb_assert(has_value(), "Bad expected<T> value access");
+    srsran_assert(has_value(), "Bad expected<T> value access");
     return val;
   }
   T& value() & noexcept
   {
-    srsgnb_assert(has_value(), "Bad expected<T> value access");
+    srsran_assert(has_value(), "Bad expected<T> value access");
     return val;
   }
   T value() && noexcept
   {
-    srsgnb_assert(has_value(), "Bad expected<T> value access");
+    srsran_assert(has_value(), "Bad expected<T> value access");
     return std::move(val);
   }
   const E& error() const noexcept
   {
-    srsgnb_assert(not has_value(), "Bad expected<T> error access");
+    srsran_assert(not has_value(), "Bad expected<T> error access");
     return unexpected;
   }
   E& error() noexcept
   {
-    srsgnb_assert(not has_value(), "Bad expected<T> error access");
+    srsran_assert(not has_value(), "Bad expected<T> error access");
     return unexpected;
   }
 

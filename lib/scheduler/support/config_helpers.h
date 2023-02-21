@@ -70,7 +70,7 @@ inline bool search_space_supports_dl_dci_format(const search_space_configuration
       case dci_dl_format::f2_0:
         return ss_cfg.common.f2_0;
       default:
-        srsgnb_assertion_failure("DCI format {} not supported for common SearchSpace", dci_fmt);
+        srsran_assertion_failure("DCI format {} not supported for common SearchSpace", dci_fmt);
     }
   } else {
     switch (dci_fmt) {
@@ -79,7 +79,7 @@ inline bool search_space_supports_dl_dci_format(const search_space_configuration
       case dci_dl_format::f1_1:
         return ss_cfg.ue_specific == search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
       default:
-        srsgnb_assertion_failure("DCI format {} not supported for UE-dedicated SearchSpace", dci_fmt);
+        srsran_assertion_failure("DCI format {} not supported for UE-dedicated SearchSpace", dci_fmt);
     }
   }
   return false;

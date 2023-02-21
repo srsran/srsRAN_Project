@@ -17,8 +17,8 @@ void ldpc_rate_dematcher_avx512_impl::combine_softbits(span<log_likelihood_ratio
                                                        span<const log_likelihood_ratio> in0,
                                                        span<const log_likelihood_ratio> in1) const
 {
-  srsgnb_assert(out.size() == in0.size(), "All sizes must be equal.");
-  srsgnb_assert(out.size() == in1.size(), "All sizes must be equal.");
+  srsran_assert(out.size() == in0.size(), "All sizes must be equal.");
+  srsran_assert(out.size() == in1.size(), "All sizes must be equal.");
 
   unsigned index = 0;
 

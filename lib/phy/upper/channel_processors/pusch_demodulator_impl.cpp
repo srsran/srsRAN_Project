@@ -54,13 +54,13 @@ pusch_demodulator::demodulation_status pusch_demodulator_impl::demodulate(span<l
       eq_re, eq_noise_vars, ch_re, ch_estimates, span<float>(noise_var_estimates).first(nof_rx_ports), 1.0F);
 
   // Assert that the number of RE returned by the channel equalizer matches the expected number of LLR.
-  srsgnb_assert(nof_re_port * config.nof_tx_layers == data.size() / get_bits_per_symbol(config.modulation),
+  srsran_assert(nof_re_port * config.nof_tx_layers == data.size() / get_bits_per_symbol(config.modulation),
                 "Number of equalized RE (i.e. {}) does not match the expected LLR data length (i.e. {})",
                 nof_re_port * config.nof_tx_layers,
                 data.size() / get_bits_per_symbol(config.modulation));
 
   // For now, layer demapping is not implemented.
-  srsgnb_assert(config.nof_tx_layers == 1, "Only a single transmit layer is supported.");
+  srsran_assert(config.nof_tx_layers == 1, "Only a single transmit layer is supported.");
 
   // Get the equalized resource elements and noise variances for a single transmit layer.
   span<const cf_t>  eq_re_flat   = eq_re.get_view({0});
@@ -95,7 +95,7 @@ void pusch_demodulator_impl::descramble(span<srsran::log_likelihood_ratio>      
   config.placeholders.for_each(
       config.modulation, config.nof_tx_layers, [&](unsigned y_placeholder, unsigned nof_x_placeholders) {
         // The distance between two repetition placeholders must be larger than 1.
-        srsgnb_assert(y_placeholder > last_placeholder,
+        srsran_assert(y_placeholder > last_placeholder,
                       "Placeholder must be in ascending order with steps greater than 1.");
 
         // Calculate the number of elements to process, exclude the element before the placeholder.

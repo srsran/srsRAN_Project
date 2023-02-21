@@ -36,7 +36,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   metrics.metrics_set_mode(rlc_mode::am);
 
   // check timer t_poll_retransmission timer
-  srsgnb_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC TX AM, timers not configured.");
+  srsran_assert(poll_retransmit_timer.is_valid(), "Cannot create RLC TX AM, timers not configured.");
 
   //  configure t_poll_retransmission timer
   if (cfg.t_poll_retx > 0) {
@@ -441,7 +441,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t grant_len)
   // Pack header
   byte_buffer header_buf = {};
   rlc_am_write_data_pdu_header(hdr, header_buf);
-  srsgnb_assert(header_buf.length() == expected_hdr_len,
+  srsran_assert(header_buf.length() == expected_hdr_len,
                 "RETX hdr_len={} differs from expected_hdr_len={}",
                 header_buf.length(),
                 expected_hdr_len);
@@ -885,7 +885,7 @@ std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create
               logger);
       break;
     default:
-      srsgnb_assertion_failure("Cannot create tx_window for unsupported sn_size={}.", to_number(sn_size));
+      srsran_assertion_failure("Cannot create tx_window for unsupported sn_size={}.", to_number(sn_size));
   }
   return tx_window_;
 }

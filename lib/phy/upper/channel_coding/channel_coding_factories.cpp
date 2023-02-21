@@ -187,7 +187,7 @@ public:
   explicit ldpc_segmenter_tx_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory_) :
     crc_factory(std::move(crc_factory_))
   {
-    srsgnb_assert(crc_factory, "Invalid CRC calculator factory.");
+    srsran_assert(crc_factory, "Invalid CRC calculator factory.");
   }
 
   std::unique_ptr<ldpc_segmenter_tx> create() override

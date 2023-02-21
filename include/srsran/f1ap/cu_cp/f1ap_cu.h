@@ -120,7 +120,7 @@ public:
   f1ap_rrc_null_notifier() = default;
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
-    srsgnb_assertion_failure("Received RRC message on unconnected notifier. Discarding.");
+    srsran_assertion_failure("Received RRC message on unconnected notifier. Discarding.");
     logger.error("Received RRC message on unconnected notifier. Discarding.");
   };
 

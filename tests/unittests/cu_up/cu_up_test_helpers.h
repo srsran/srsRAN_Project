@@ -83,7 +83,7 @@ public:
   void handle_pdu(nru_ul_message msg) final
   {
     // Forward T-PDU to PDCP
-    srsgnb_assert(rx_sdu_notifier != nullptr, "The rx_sdu_notifier must not be a nullptr!");
+    srsran_assert(rx_sdu_notifier != nullptr, "The rx_sdu_notifier must not be a nullptr!");
     rx_sdu_notifier->on_new_sdu(std::move(msg.t_pdu));
   }
 

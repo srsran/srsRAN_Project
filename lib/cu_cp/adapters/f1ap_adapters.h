@@ -28,7 +28,7 @@ public:
 
   void on_du_remove_request_received(const du_index_t du_index) override
   {
-    srsgnb_assert(du_handler != nullptr, "DU handler must not be nullptr");
+    srsran_assert(du_handler != nullptr, "DU handler must not be nullptr");
     du_handler->handle_du_remove_request(du_index);
   }
 
@@ -46,13 +46,13 @@ public:
 
   void on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
-    srsgnb_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
+    srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
     du_f1ap_handler->handle_f1_setup_request(msg);
   }
 
   ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) override
   {
-    srsgnb_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
+    srsran_assert(du_f1ap_handler != nullptr, "F1AP handler must not be nullptr");
 
     ue_creation_message ue_creation_msg    = {};
     ue_creation_msg.c_rnti                 = to_rnti(msg.msg->c_rnti.value);

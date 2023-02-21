@@ -31,7 +31,7 @@ using lcg_bsr_report_list = static_vector<lcg_bsr_report, MAX_NOF_LCGS>;
 /// Decode Short BSR
 inline lcg_bsr_report decode_sbsr(byte_buffer_view payload)
 {
-  srsgnb_sanity_check(not payload.empty(), "Trying to decode SBSR but payload is empty.");
+  srsran_sanity_check(not payload.empty(), "Trying to decode SBSR but payload is empty.");
   lcg_bsr_report sbsr = {};
   sbsr.lcg_id         = uint_to_lcg_id((payload[0] & 0xe0U) >> 5U);
   sbsr.buffer_size    = payload[0] & 0x1fU;

@@ -50,9 +50,9 @@ public:
     prg_factory(std::move(prg_factory_)),
     polar_fec_factory(std::move(polar_fec_factory_))
   {
-    srsgnb_assert(crc_calc_factory, "Invalid CRC factory.");
-    srsgnb_assert(prg_factory, "Invalid CRC factory.");
-    srsgnb_assert(polar_fec_factory, "Invalid polar factory.");
+    srsran_assert(crc_calc_factory, "Invalid CRC factory.");
+    srsran_assert(prg_factory, "Invalid CRC factory.");
+    srsran_assert(polar_fec_factory, "Invalid polar factory.");
   }
 
   std::unique_ptr<pbch_encoder> create() override
@@ -84,8 +84,8 @@ public:
                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(modulator_factory, "Invalid modulator factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<pbch_modulator> create() override
@@ -105,8 +105,8 @@ public:
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(modulator_factory, "Invalid modulator factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<pdcch_modulator> create() override
@@ -126,8 +126,8 @@ public:
                            std::shared_ptr<polar_factory>          polar_code_factory_) :
     crc_factory(std::move(crc_factory_)), polar_code_factory(std::move(polar_code_factory_))
   {
-    srsgnb_assert(crc_factory, "Invalid CRC calculator factory.");
-    srsgnb_assert(polar_code_factory, "Invalid Polar code factory.");
+    srsran_assert(crc_factory, "Invalid CRC calculator factory.");
+    srsran_assert(polar_code_factory, "Invalid Polar code factory.");
   }
 
   std::unique_ptr<pdcch_encoder> create() override
@@ -156,9 +156,9 @@ public:
     modulator_factory(std::move(modulator_factory_)),
     dmrs_factory(std::move(dmrs_factory_))
   {
-    srsgnb_assert(encoder_factory, "Invalid encoder factory.");
-    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
-    srsgnb_assert(dmrs_factory, "Invalid DMRS factory.");
+    srsran_assert(encoder_factory, "Invalid encoder factory.");
+    srsran_assert(modulator_factory, "Invalid modulator factory.");
+    srsran_assert(dmrs_factory, "Invalid DMRS factory.");
   }
 
   std::unique_ptr<pdcch_processor> create() override
@@ -186,9 +186,9 @@ public:
     rate_matcher_factory(std::move(config.rate_matcher_factory)),
     segmenter_factory(std::move(config.segmenter_factory))
   {
-    srsgnb_assert(encoder_factory, "Invalid LDPC encoder factory.");
-    srsgnb_assert(rate_matcher_factory, "Invalid LDPC RM factory.");
-    srsgnb_assert(segmenter_factory, "Invalid LDPC segmenter factory.");
+    srsran_assert(encoder_factory, "Invalid LDPC encoder factory.");
+    srsran_assert(rate_matcher_factory, "Invalid LDPC RM factory.");
+    srsran_assert(segmenter_factory, "Invalid LDPC segmenter factory.");
   }
 
   std::unique_ptr<pdsch_encoder> create() override
@@ -209,8 +209,8 @@ public:
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(modulator_factory, "Invalid modulator factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<pdsch_modulator> create() override
@@ -234,9 +234,9 @@ public:
     modulator_factory(std::move(modulator_factory_)),
     dmrs_factory(std::move(dmrs_factory_))
   {
-    srsgnb_assert(encoder_factory, "Invalid encoder factory.");
-    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
-    srsgnb_assert(dmrs_factory, "Invalid DMRS factory.");
+    srsran_assert(encoder_factory, "Invalid encoder factory.");
+    srsran_assert(modulator_factory, "Invalid modulator factory.");
+    srsran_assert(dmrs_factory, "Invalid DMRS factory.");
   }
 
   std::unique_ptr<pdsch_processor> create() override
@@ -266,9 +266,9 @@ public:
     prach_gen_factory(std::move(prach_gen_factory_)),
     dft_size_detector(dft_size_detector_)
   {
-    srsgnb_assert(dft_factory, "Invalid DFT factory.");
-    srsgnb_assert(prach_gen_factory, "Invalid PRACH generator factory.");
-    srsgnb_assert(dft_size_detector, "Invalid DFT size.");
+    srsran_assert(dft_factory, "Invalid DFT factory.");
+    srsran_assert(prach_gen_factory, "Invalid PRACH generator factory.");
+    srsran_assert(dft_size_detector, "Invalid DFT size.");
   }
 
   std::unique_ptr<prach_detector> create() override
@@ -304,9 +304,9 @@ public:
                             std::shared_ptr<channel_equalizer_factory>            eqzrf) :
     low_papr_factory(std::move(lpcf)), prg_factory(std::move(prgf)), eqzr_factory(std::move(eqzrf))
   {
-    srsgnb_assert(low_papr_factory, "Invalid low-PAPR sequence collection factory.");
-    srsgnb_assert(prg_factory, "Invalid pseudorandom generator factory.");
-    srsgnb_assert(eqzr_factory, "Invalid channel equalizer factory.");
+    srsran_assert(low_papr_factory, "Invalid low-PAPR sequence collection factory.");
+    srsran_assert(prg_factory, "Invalid pseudorandom generator factory.");
+    srsran_assert(eqzr_factory, "Invalid channel equalizer factory.");
   }
 
   std::unique_ptr<pucch_detector> create() override
@@ -334,27 +334,27 @@ public:
     decoder_factory(std::move(decoder_factory_)),
     channel_estimate_dimensions(channel_estimate_dimensions_)
   {
-    srsgnb_assert(dmrs_factory, "Invalid DM-RS estimator factory.");
-    srsgnb_assert(detector_factory, "Invalid detector factory.");
-    srsgnb_assert(demodulator_factory, "Invalid PUCCH demodulator factory.");
-    srsgnb_assert(decoder_factory, "Invalid UCI decoder factory.");
-    srsgnb_assert((channel_estimate_dimensions.nof_symbols != 0) && (channel_estimate_dimensions.nof_prb != 0) &&
+    srsran_assert(dmrs_factory, "Invalid DM-RS estimator factory.");
+    srsran_assert(detector_factory, "Invalid detector factory.");
+    srsran_assert(demodulator_factory, "Invalid PUCCH demodulator factory.");
+    srsran_assert(decoder_factory, "Invalid UCI decoder factory.");
+    srsran_assert((channel_estimate_dimensions.nof_symbols != 0) && (channel_estimate_dimensions.nof_prb != 0) &&
                       (channel_estimate_dimensions.nof_rx_ports != 0) &&
                       (channel_estimate_dimensions.nof_tx_layers != 0),
                   "Channel estimate dimensions cannot be zero.");
-    srsgnb_assert(channel_estimate_dimensions.nof_prb <= MAX_RB,
+    srsran_assert(channel_estimate_dimensions.nof_prb <= MAX_RB,
                   "Number of RB, i.e., {}, exceeds maximum bandwidth, i.e., {}.",
                   channel_estimate_dimensions.nof_prb,
                   MAX_RB);
-    srsgnb_assert(channel_estimate_dimensions.nof_symbols <= MAX_NSYMB_PER_SLOT,
+    srsran_assert(channel_estimate_dimensions.nof_symbols <= MAX_NSYMB_PER_SLOT,
                   "Number of OFDM symbols, i.e., {}, exceeds maximum slot symbols, i.e., {}.",
                   channel_estimate_dimensions.nof_symbols,
                   MAX_NSYMB_PER_SLOT);
-    srsgnb_assert(channel_estimate_dimensions.nof_rx_ports <= static_cast<unsigned>(MAX_PUCCH_RX_PORTS),
+    srsran_assert(channel_estimate_dimensions.nof_rx_ports <= static_cast<unsigned>(MAX_PUCCH_RX_PORTS),
                   "Number of receive ports, i.e., {}, exceeds maximum supported receive ports, i.e., {}.",
                   channel_estimate_dimensions.nof_rx_ports,
                   static_cast<unsigned>(MAX_PUCCH_RX_PORTS));
-    srsgnb_assert(channel_estimate_dimensions.nof_tx_layers <= pucch_constants::MAX_LAYERS,
+    srsran_assert(channel_estimate_dimensions.nof_tx_layers <= pucch_constants::MAX_LAYERS,
                   "Number of transmit layers, i.e., {}, exceeds maximum PUCCH transmit layers, i.e., {}.",
                   channel_estimate_dimensions.nof_tx_layers,
                   pucch_constants::MAX_LAYERS);
@@ -399,10 +399,10 @@ public:
     dematcher_factory(std::move(config.dematcher_factory)),
     segmenter_factory(std::move(config.segmenter_factory))
   {
-    srsgnb_assert(crc_factory, "Invalid CRC calculator factory.");
-    srsgnb_assert(decoder_factory, "Invalid LDPC decoder factory.");
-    srsgnb_assert(dematcher_factory, "Invalid LDPC dematcher factory.");
-    srsgnb_assert(segmenter_factory, "Invalid LDPC segmenter factory.");
+    srsran_assert(crc_factory, "Invalid CRC calculator factory.");
+    srsran_assert(decoder_factory, "Invalid LDPC decoder factory.");
+    srsran_assert(dematcher_factory, "Invalid LDPC dematcher factory.");
+    srsran_assert(segmenter_factory, "Invalid LDPC segmenter factory.");
   }
 
   std::unique_ptr<pusch_decoder> create() override
@@ -440,9 +440,9 @@ public:
     prg_factory(std::move(prg_factory_)),
     enable_evm(enable_evm_)
   {
-    srsgnb_assert(equalizer_factory, "Invalid equalizer factory.");
-    srsgnb_assert(demodulation_factory, "Invalid demodulation factory.");
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(equalizer_factory, "Invalid equalizer factory.");
+    srsran_assert(demodulation_factory, "Invalid demodulation factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
 private:
@@ -465,11 +465,11 @@ public:
     dec_nof_iterations(config.dec_nof_iterations),
     dec_enable_early_stop(config.dec_enable_early_stop)
   {
-    srsgnb_assert(estimator_factory, "Invalid channel estimation factory.");
-    srsgnb_assert(demodulator_factory, "Invalid demodulation factory.");
-    srsgnb_assert(demux_factory, "Invalid demux factory.");
-    srsgnb_assert(decoder_factory, "Invalid decoder factory.");
-    srsgnb_assert(uci_dec_factory, "Invalid UCI decoder factory.");
+    srsran_assert(estimator_factory, "Invalid channel estimation factory.");
+    srsran_assert(demodulator_factory, "Invalid demodulation factory.");
+    srsran_assert(demux_factory, "Invalid demux factory.");
+    srsran_assert(decoder_factory, "Invalid decoder factory.");
+    srsran_assert(uci_dec_factory, "Invalid UCI decoder factory.");
   }
 
   std::unique_ptr<pusch_processor> create() override
@@ -512,11 +512,11 @@ public:
     pss_factory(std::move(config.pss_factory)),
     sss_factory(std::move(config.sss_factory))
   {
-    srsgnb_assert(encoder_factory, "Invalid encoder factory");
-    srsgnb_assert(modulator_factory, "Invalid modulator factory");
-    srsgnb_assert(dmrs_factory, "Invalid DMRS factory");
-    srsgnb_assert(pss_factory, "Invalid PSS factory");
-    srsgnb_assert(sss_factory, "Invalid SSS factory");
+    srsran_assert(encoder_factory, "Invalid encoder factory");
+    srsran_assert(modulator_factory, "Invalid modulator factory");
+    srsran_assert(dmrs_factory, "Invalid DMRS factory");
+    srsran_assert(pss_factory, "Invalid PSS factory");
+    srsran_assert(sss_factory, "Invalid SSS factory");
   }
 
   std::unique_ptr<ssb_processor> create() override
@@ -550,7 +550,7 @@ public:
   explicit uci_decoder_factory_sw(uci_decoder_factory_sw_configuration& config) :
     decoder_factory(std::move(config.decoder_factory))
   {
-    srsgnb_assert(decoder_factory, "Invalid UCI decoder factory.");
+    srsran_assert(decoder_factory, "Invalid UCI decoder factory.");
   }
 
   std::unique_ptr<uci_decoder> create() override
@@ -584,9 +584,9 @@ public:
     demodulation_factory(std::move(demodulation_factory_)),
     prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(equalizer_factory, "Invalid equalizer factory.");
-    srsgnb_assert(demodulation_factory, "Invalid demodulation factory.");
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(equalizer_factory, "Invalid equalizer factory.");
+    srsran_assert(demodulation_factory, "Invalid demodulation factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
 private:
@@ -781,7 +781,7 @@ public:
                                     std::unique_ptr<pdcch_processor> processor_) :
     logger(logger_), enable_logging_broadcast(enable_logging_broadcast_), processor(std::move(processor_))
   {
-    srsgnb_assert(processor, "Invalid processor.");
+    srsran_assert(processor, "Invalid processor.");
   }
 
   void process(resource_grid_writer& grid, const pdu_t& pdu) override
@@ -828,7 +828,7 @@ public:
                                     std::unique_ptr<pdsch_processor> processor_) :
     logger(logger_), enable_logging_broadcast(enable_logging_broadcast_), processor(std::move(processor_))
   {
-    srsgnb_assert(processor, "Invalid processor.");
+    srsran_assert(processor, "Invalid processor.");
   }
 
   void process(resource_grid_writer&                                        grid,
@@ -873,7 +873,7 @@ public:
                                    std::unique_ptr<prach_detector> detector_) :
     logger(logger_), log_all_opportunities(log_all_opportunities_), detector(std::move(detector_))
   {
-    srsgnb_assert(detector, "Invalid detector.");
+    srsran_assert(detector, "Invalid detector.");
   }
 
   prach_detection_result detect(const prach_buffer& input, const configuration& config) override
@@ -908,7 +908,7 @@ public:
   logging_pusch_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<pusch_processor> processor_) :
     logger(logger_), processor(std::move(processor_))
   {
-    srsgnb_assert(processor, "Invalid processor.");
+    srsran_assert(processor, "Invalid processor.");
   }
 
   pusch_processor_result
@@ -972,7 +972,7 @@ public:
   logging_pucch_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<pucch_processor> processor_) :
     logger(logger_), processor(std::move(processor_))
   {
-    srsgnb_assert(processor, "Invalid processor.");
+    srsran_assert(processor, "Invalid processor.");
   }
 
   pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override
@@ -1007,7 +1007,7 @@ public:
   logging_ssb_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<ssb_processor> processor_) :
     logger(logger_), processor(std::move(processor_))
   {
-    srsgnb_assert(processor, "Invalid processor.");
+    srsran_assert(processor, "Invalid processor.");
   }
 
   void process(resource_grid_writer& grid, const pdu_t& pdu) override

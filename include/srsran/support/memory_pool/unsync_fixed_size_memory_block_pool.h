@@ -22,7 +22,7 @@ public:
   explicit unsync_fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :
     mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))), nof_blocks(nof_blocks_)
   {
-    srsgnb_assert(mblock_size > free_memory_block_list::min_memory_block_align(),
+    srsran_assert(mblock_size > free_memory_block_list::min_memory_block_align(),
                   "Segment size is too small ({} <= {})",
                   mblock_size,
                   free_memory_block_list::min_memory_block_align());
@@ -56,7 +56,7 @@ public:
   /// Allocate a node from the memory pool with the provided size.
   void* allocate_node(size_t sz) noexcept
   {
-    srsgnb_assert(sz <= mblock_size, "Allocated node size={} exceeds max object size={}", sz, mblock_size);
+    srsran_assert(sz <= mblock_size, "Allocated node size={} exceeds max object size={}", sz, mblock_size);
 
     // pop from free memory block list. If the free list is empty, null is returned.
     void* node = block_free_list.try_pop();
@@ -66,7 +66,7 @@ public:
   /// Deallocate node by returning it back to the memory pool.
   void deallocate_node(void* p)
   {
-    srsgnb_assert(p != nullptr, "Deallocated nodes must have valid address");
+    srsran_assert(p != nullptr, "Deallocated nodes must have valid address");
 
     // push to free memory block list.
     block_free_list.push(p);

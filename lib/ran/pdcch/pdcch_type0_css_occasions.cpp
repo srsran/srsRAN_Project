@@ -15,7 +15,7 @@ using namespace srsran;
 pdcch_type0_css_occasion_pattern1_description
 srsran::pdcch_type0_css_occasions_get_pattern1(const pdcch_type0_css_occasion_pattern1_configuration& config)
 {
-  srsgnb_assert((!config.is_fr2 && config.ss_zero_index < 16) || (config.is_fr2 && config.ss_zero_index < 14),
+  srsran_assert((!config.is_fr2 && config.ss_zero_index < 16) || (config.is_fr2 && config.ss_zero_index < 14),
                 "SearchSpaceZero ({}) must be (0...{}) for {}.",
                 config.ss_zero_index,
                 config.is_fr2 ? 13 : 15,

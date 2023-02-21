@@ -34,10 +34,10 @@ public:
   port_channel_estimator_average_impl(std::unique_ptr<interpolator> interp, std::unique_ptr<dft_processor> idft_proc) :
     freq_interpolator(std::move(interp)), idft(std::move(idft_proc))
   {
-    srsgnb_assert(freq_interpolator, "Invalid interpolator.");
-    srsgnb_assert(idft->get_direction() == dft_processor::direction::INVERSE,
+    srsran_assert(freq_interpolator, "Invalid interpolator.");
+    srsran_assert(idft->get_direction() == dft_processor::direction::INVERSE,
                   "The port channel estimator requires an inverse (not direct) DFT processor.");
-    srsgnb_assert(idft->get_size() == DFT_SIZE,
+    srsran_assert(idft->get_size() == DFT_SIZE,
                   "The port channel estimator requires an iDFT of size {}, provided {}.",
                   static_cast<unsigned>(DFT_SIZE),
                   idft->get_size());

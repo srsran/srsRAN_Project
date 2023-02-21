@@ -45,7 +45,7 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
   unsigned ch_ests_nof_tx_layers = ch_estimates.get_dimension_size(channel_equalizer::ch_est_list::dims::tx_layer);
 
   // Assert that the number of Resource Elements per port matches for all inputs and outputs.
-  srsgnb_assert((ch_symb_nof_re == ch_ests_nof_re) && (ch_symb_nof_re == eq_symb_nof_re) &&
+  srsran_assert((ch_symb_nof_re == ch_ests_nof_re) && (ch_symb_nof_re == eq_symb_nof_re) &&
                     (ch_symb_nof_re == eq_nvars_nof_re),
                 "Number of single port Resource Elements does not match: \n"
                 "Received symbols RE:\t {}\n"
@@ -58,7 +58,7 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
                 ch_ests_nof_re);
 
   // Assert that the number of receive ports matches.
-  srsgnb_assert((ch_ests_nof_rx_ports == ch_symb_nof_rx_ports) && (ch_ests_nof_rx_ports == nvar_ests_nof_rx_ports),
+  srsran_assert((ch_ests_nof_rx_ports == ch_symb_nof_rx_ports) && (ch_ests_nof_rx_ports == nvar_ests_nof_rx_ports),
                 "Number of Rx ports does not match: \n"
                 "Received symbols Rx ports:\t {}\n"
                 "Noise variance estimates Rx ports: \t {}\n"
@@ -68,7 +68,7 @@ static inline void assert_sizes(channel_equalizer::re_list&           eq_symbols
                 ch_ests_nof_rx_ports);
 
   // Assert that the number of transmit layers matches.
-  srsgnb_assert((ch_ests_nof_tx_layers == eq_symb_nof_tx_layers) && (ch_ests_nof_tx_layers == eq_nvars_nof_tx_layers),
+  srsran_assert((ch_ests_nof_tx_layers == eq_symb_nof_tx_layers) && (ch_ests_nof_tx_layers == eq_nvars_nof_tx_layers),
                 "Number of Tx layers does not match: \n"
                 "Output symbols Tx layers:\t {}\n"
                 "Output noise variances Tx layers: \t {}\n"
@@ -122,7 +122,7 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
   // Make sure that the input and output symbol lists and channel estimate dimensions are valid.
   assert_sizes(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates);
 
-  srsgnb_assert(tx_scaling > 0, "Tx scaling factor must be positive.");
+  srsran_assert(tx_scaling > 0, "Tx scaling factor must be positive.");
 
   // Channel dimensions.
   unsigned nof_rx_ports  = ch_estimates.get_dimension_size(ch_est_list::dims::rx_port);
@@ -144,7 +144,7 @@ void channel_equalizer_zf_impl::equalize(re_list&           eq_symbols,
     return;
   }
 
-  srsgnb_assertion_failure("Invalid channel spatial topology: {} Rx ports, {} Tx layers.",
+  srsran_assertion_failure("Invalid channel spatial topology: {} Rx ports, {} Tx layers.",
                            ch_estimates.get_dimension_size(ch_est_list::dims::rx_port),
                            ch_estimates.get_dimension_size(ch_est_list::dims::tx_layer));
 }

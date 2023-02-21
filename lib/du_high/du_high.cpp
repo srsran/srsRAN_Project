@@ -19,9 +19,9 @@ using namespace srs_du;
 
 void assert_du_high_configuration_valid(const du_high_configuration& cfg)
 {
-  srsgnb_assert(cfg.du_mng_executor != nullptr, "Invalid DU manager executor");
-  srsgnb_assert(cfg.cell_executors != nullptr, "Invalid CELL executor mapper");
-  srsgnb_assert(cfg.ue_executors != nullptr, "Invalid UE executor mapper");
+  srsran_assert(cfg.du_mng_executor != nullptr, "Invalid DU manager executor");
+  srsran_assert(cfg.cell_executors != nullptr, "Invalid CELL executor mapper");
+  srsran_assert(cfg.ue_executors != nullptr, "Invalid UE executor mapper");
 }
 
 /// Cell slot handler that additionally increments the DU high timers.

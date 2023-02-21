@@ -29,7 +29,7 @@ public:
 
   void on_new_sdu(byte_buffer sdu) override
   {
-    srsgnb_assert(sdap_handler != nullptr, "SDAP handler must not be nullptr");
+    srsran_assert(sdap_handler != nullptr, "SDAP handler must not be nullptr");
     sdap_handler->handle_pdu(std::move(sdu));
   }
 
@@ -77,13 +77,13 @@ public:
 
   void on_new_pdu(pdcp_tx_pdu pdu) override
   {
-    srsgnb_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
+    srsran_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
     f1u_handler->handle_sdu(std::move(pdu));
   }
 
   void on_discard_pdu(uint32_t pdcp_sn) override
   {
-    srsgnb_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
+    srsran_assert(f1u_handler != nullptr, "F1-U handler must not be nullptr");
     f1u_handler->discard_sdu(pdcp_sn);
   }
 

@@ -78,7 +78,7 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
 
 bool mac_controller::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
 {
-  srsgnb_assert(is_du_ue_index_valid(ue_index), "Invalid ue_index={}", ue_index);
+  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue_index={}", ue_index);
 
   if (ue_db.contains(ue_index)) {
     // UE already existed with same rnti.

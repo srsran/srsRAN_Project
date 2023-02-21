@@ -37,24 +37,24 @@ public:
 
   ue_cell* find_cell(du_cell_index_t cell_index)
   {
-    srsgnb_assert(cell_index < MAX_NOF_DU_CELLS, "Invalid cell_index={}", cell_index);
+    srsran_assert(cell_index < MAX_NOF_DU_CELLS, "Invalid cell_index={}", cell_index);
     return ue_du_cells[cell_index].get();
   }
   const ue_cell* find_cell(du_cell_index_t cell_index) const
   {
-    srsgnb_assert(cell_index < MAX_NOF_DU_CELLS, "Invalid cell_index={}", cell_index);
+    srsran_assert(cell_index < MAX_NOF_DU_CELLS, "Invalid cell_index={}", cell_index);
     return ue_du_cells[cell_index].get();
   }
 
   /// \brief Fetch UE cell based on UE-specific cell identifier. E.g. PCell corresponds to ue_cell_index==0.
   ue_cell& get_cell(ue_cell_index_t ue_cell_index)
   {
-    srsgnb_assert(ue_cell_index < ue_cells.size(), "Invalid cell_index={}", ue_cell_index);
+    srsran_assert(ue_cell_index < ue_cells.size(), "Invalid cell_index={}", ue_cell_index);
     return *ue_cells[ue_cell_index];
   }
   const ue_cell& get_cell(ue_cell_index_t ue_cell_index) const
   {
-    srsgnb_assert(ue_cell_index < ue_cells.size(), "Invalid cell_index={}", ue_cell_index);
+    srsran_assert(ue_cell_index < ue_cells.size(), "Invalid cell_index={}", ue_cell_index);
     return *ue_cells[ue_cell_index];
   }
 

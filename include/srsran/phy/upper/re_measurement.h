@@ -112,7 +112,7 @@ public:
   // See interface for documentation.
   span<measure_type> get_slice(unsigned i_slice) override
   {
-    srsgnb_assert(i_slice < dimensions.nof_slices,
+    srsran_assert(i_slice < dimensions.nof_slices,
                   "Requested slice {}, but only {} slices are supported.",
                   i_slice,
                   dimensions.nof_slices);
@@ -122,7 +122,7 @@ public:
   // See interface for documentation.
   span<const measure_type> get_slice(unsigned i_slice) const override
   {
-    srsgnb_assert(i_slice < dimensions.nof_slices,
+    srsran_assert(i_slice < dimensions.nof_slices,
                   "Requested slice {}, but only {} slices are supported.",
                   i_slice,
                   dimensions.nof_slices);
@@ -132,11 +132,11 @@ public:
   // See interface for documentation.
   void set_slice(span<const measure_type> data, unsigned i_slice) override
   {
-    srsgnb_assert(i_slice < dimensions.nof_slices,
+    srsran_assert(i_slice < dimensions.nof_slices,
                   "Requested slice {}, but only {} slices are supported.",
                   i_slice,
                   dimensions.nof_slices);
-    srsgnb_assert(data.size() == dimensions.nof_subc * dimensions.nof_symbols,
+    srsran_assert(data.size() == dimensions.nof_subc * dimensions.nof_symbols,
                   "Slice size mismatch: given {}, current {}.",
                   data.size(),
                   dimensions.nof_subc * dimensions.nof_symbols);
@@ -148,11 +148,11 @@ public:
   // See interface for documentation.
   span<measure_type> get_symbol(unsigned i_symbol, unsigned i_slice) override
   {
-    srsgnb_assert(i_symbol < dimensions.nof_symbols,
+    srsran_assert(i_symbol < dimensions.nof_symbols,
                   "Requested symbol {}, but only {} symbols are supported.",
                   i_slice,
                   dimensions.nof_symbols);
-    srsgnb_assert(i_slice < dimensions.nof_slices,
+    srsran_assert(i_slice < dimensions.nof_slices,
                   "Requested slice {}, but only {} slices are supported.",
                   i_slice,
                   dimensions.nof_slices);
@@ -162,11 +162,11 @@ public:
   // See interface for documentation.
   span<const measure_type> get_symbol(unsigned i_symbol, unsigned i_slice) const override
   {
-    srsgnb_assert(i_symbol < dimensions.nof_symbols,
+    srsran_assert(i_symbol < dimensions.nof_symbols,
                   "Requested symbol {}, but only {} symbols are supported.",
                   i_slice,
                   dimensions.nof_symbols);
-    srsgnb_assert(i_slice < dimensions.nof_slices,
+    srsran_assert(i_slice < dimensions.nof_slices,
                   "Requested slice {}, but only {} slices are supported.",
                   i_slice,
                   dimensions.nof_slices);
@@ -176,15 +176,15 @@ public:
   // See interface for documentation.
   void resize(const re_measurement_dimensions& dims) override
   {
-    srsgnb_assert(dims.nof_subc <= reserved_dims.nof_subc,
+    srsran_assert(dims.nof_subc <= reserved_dims.nof_subc,
                   "Requested {} subcarriers, but at most {} are allowed.",
                   dims.nof_subc,
                   reserved_dims.nof_subc);
-    srsgnb_assert(dims.nof_symbols <= reserved_dims.nof_symbols,
+    srsran_assert(dims.nof_symbols <= reserved_dims.nof_symbols,
                   "Requested {} OFDM symbols, but at most {} are allowed.",
                   dims.nof_symbols,
                   reserved_dims.nof_symbols);
-    srsgnb_assert(dims.nof_slices <= reserved_dims.nof_slices,
+    srsran_assert(dims.nof_slices <= reserved_dims.nof_slices,
                   "Requested {} slices, but at most {} are supported.",
                   dims.nof_slices,
                   reserved_dims.nof_slices);

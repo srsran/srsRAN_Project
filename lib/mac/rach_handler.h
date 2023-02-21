@@ -110,19 +110,19 @@ public:
 
   void add_cell(du_cell_index_t cell_index) override
   {
-    srsgnb_assert(not cells.contains(cell_index), "Cell {} already exists", cell_index);
+    srsran_assert(not cells.contains(cell_index), "Cell {} already exists", cell_index);
     cells.emplace(cell_index, cell_index, sched, rnti_alloc);
   }
 
   void remove_cell(du_cell_index_t cell_index) override
   {
-    srsgnb_assert(cells.contains(cell_index), "Cell {} already exists", cell_index);
+    srsran_assert(cells.contains(cell_index), "Cell {} already exists", cell_index);
     cells.erase(cell_index);
   }
 
   mac_cell_rach_handler& get_cell(du_cell_index_t cell_index)
   {
-    srsgnb_assert(cells.contains(cell_index), "Cell index does not exist.");
+    srsran_assert(cells.contains(cell_index), "Cell index does not exist.");
     return cells[cell_index];
   }
 

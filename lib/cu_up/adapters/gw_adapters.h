@@ -27,7 +27,7 @@ public:
 
   void on_new_pdu(byte_buffer pdu) override
   {
-    srsgnb_assert(gtpu_demux != nullptr, "GTP-U handler must not be nullptr");
+    srsran_assert(gtpu_demux != nullptr, "GTP-U handler must not be nullptr");
     gtpu_demux->handle_pdu(std::move(pdu));
   }
 

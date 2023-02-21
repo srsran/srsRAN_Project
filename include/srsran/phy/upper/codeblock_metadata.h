@@ -98,7 +98,7 @@ public:
   described_segment(const codeblock_metadata& metadata_, units::bits cb_size_) : metadata(metadata_)
   {
     using namespace units::literals;
-    srsgnb_assert((cb_size_ > 0_bits) && (cb_size_ <= MAX_SEG_LENGTH),
+    srsran_assert((cb_size_ > 0_bits) && (cb_size_ <= MAX_SEG_LENGTH),
                   "The codeblock size (i.e., {}) is invalid (max. {}).",
                   cb_size_,
                   MAX_SEG_LENGTH);
@@ -109,7 +109,7 @@ public:
   /// \remark An assertion is triggered if the segment has not been created with parameter.
   bit_buffer& get_data()
   {
-    srsgnb_assert(!data.is_empty(), "The segment has not been constructed.");
+    srsran_assert(!data.is_empty(), "The segment has not been constructed.");
     return data;
   }
 
@@ -117,7 +117,7 @@ public:
   /// \remark An assertion is triggered if the segment has not been created with parameter.
   const bit_buffer& get_data() const
   {
-    srsgnb_assert(!data.is_empty(), "The segment has not been constructed.");
+    srsran_assert(!data.is_empty(), "The segment has not been constructed.");
     return data;
   }
 

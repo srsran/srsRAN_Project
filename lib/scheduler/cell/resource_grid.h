@@ -33,10 +33,10 @@ struct bwp_sch_grant_info {
   bwp_sch_grant_info(const bwp_configuration& bwp_, ofdm_symbol_range symbols_, prb_interval prbs_) :
     bwp_cfg(&bwp_), symbols(symbols_), prbs(prbs_)
   {
-    srsgnb_sanity_check(
+    srsran_sanity_check(
         symbols.stop() <= (bwp_cfg->cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP),
         "OFDM symbols do not fit slot");
-    srsgnb_sanity_check(prbs.stop() <= bwp_cfg->crbs.length(), "PRBs={} do not fit BWP={}", prbs, bwp_cfg->crbs);
+    srsran_sanity_check(prbs.stop() <= bwp_cfg->crbs.length(), "PRBs={} do not fit BWP={}", prbs, bwp_cfg->crbs);
   }
 };
 
@@ -254,7 +254,7 @@ struct cell_resource_allocator {
     assert_valid_sl(slot_delay);
     slot_point                          sl_tx = last_slot_ind + slot_delay;
     const cell_slot_resource_allocator& r     = *slots[sl_tx.to_uint() % slots.size()];
-    srsgnb_assert(r.slot == sl_tx, "Bad access to uninitialized cell_resource_grid");
+    srsran_assert(r.slot == sl_tx, "Bad access to uninitialized cell_resource_grid");
     return r;
   }
   cell_slot_resource_allocator& operator[](unsigned slot_delay)
@@ -262,7 +262,7 @@ struct cell_resource_allocator {
     assert_valid_sl(slot_delay);
     slot_point                    sl_tx = last_slot_ind + slot_delay;
     cell_slot_resource_allocator& r     = *slots[sl_tx.to_uint() % slots.size()];
-    srsgnb_assert(r.slot == sl_tx, "Bad access to uninitialized cell_resource_grid");
+    srsran_assert(r.slot == sl_tx, "Bad access to uninitialized cell_resource_grid");
     return r;
   }
 
@@ -276,7 +276,7 @@ private:
   /// Ensure we are not overflowing the ring.
   void assert_valid_sl(unsigned slot_delay) const
   {
-    srsgnb_sanity_check(slot_delay < RING_ALLOCATOR_SIZE,
+    srsran_sanity_check(slot_delay < RING_ALLOCATOR_SIZE,
                         "The cell resource pool is too small for accessing a slot with delay: {}",
                         slot_delay);
   }

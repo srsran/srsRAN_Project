@@ -268,7 +268,7 @@ int main(int argc, char** argv)
   ::testing::InitGoogleTest(&argc, argv);
 
   int ret = RUN_ALL_TESTS();
-  srsgnb_assert(moveonly_test_object::object_count() == 0,
+  srsran_assert(moveonly_test_object::object_count() == 0,
                 "number of ctor calls matches number of dtor calls for test object");
 
   return ret;

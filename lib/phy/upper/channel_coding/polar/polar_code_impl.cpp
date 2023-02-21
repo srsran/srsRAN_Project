@@ -252,7 +252,7 @@ span<const uint16_t> srsran::polar_code_impl::get_mother_code(uint8_t n_)
     case 10:
       return mother_code_10;
     default:
-      srsgnb_assertion_failure("Invalid n={}", n_);
+      srsran_assertion_failure("Invalid n={}", n_);
   }
   // Unreachable
   return {};
@@ -274,7 +274,7 @@ span<const uint16_t> srsran::polar_code_impl::get_blk_interleaver(uint8_t n_)
     case 10:
       return blk_interleaver_10;
     default:
-      srsgnb_assertion_failure("Invalid n={}", n_);
+      srsran_assertion_failure("Invalid n={}", n_);
   }
   // Unreachable
   return {};

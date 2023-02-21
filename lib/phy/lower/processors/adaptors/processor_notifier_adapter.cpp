@@ -14,19 +14,19 @@ using namespace srsran;
 
 void processor_notifier_adaptor::prach_adaptor::on_prach_request_late(const prach_buffer_context& context)
 {
-  srsgnb_assert(error_notifier, "The adaptor is not connected to an error notifier.");
+  srsran_assert(error_notifier, "The adaptor is not connected to an error notifier.");
   error_notifier->on_prach_request_late(context);
 }
 
 void processor_notifier_adaptor::prach_adaptor::on_prach_request_overflow(const prach_buffer_context& context)
 {
-  srsgnb_assert(error_notifier, "The adaptor is not connected to an error notifier.");
+  srsran_assert(error_notifier, "The adaptor is not connected to an error notifier.");
   error_notifier->on_prach_request_overflow(context);
 }
 
 void processor_notifier_adaptor::prach_adaptor::on_rx_prach_window(const prach_buffer&         buffer,
                                                                    const prach_buffer_context& context)
 {
-  srsgnb_assert(rx_notifier, "The adaptor is not connected to receiver notifier.");
+  srsran_assert(rx_notifier, "The adaptor is not connected to receiver notifier.");
   rx_notifier->on_rx_prach_window(context, buffer);
 }

@@ -24,7 +24,7 @@ public:
 
   void on_new_sdu(byte_buffer pdu) override
   {
-    srsgnb_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
+    srsran_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
     rlc_tx->handle_sdu(rlc_sdu{std::move(pdu), {}});
   }
 
@@ -39,7 +39,7 @@ public:
 
   void on_new_sdu(pdcp_tx_pdu sdu) override
   {
-    srsgnb_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
+    srsran_assert(rlc_tx != nullptr, "RLC Tx SDU notifier is disconnected");
     rlc_tx->handle_sdu(rlc_sdu{std::move(sdu.buf), sdu.pdcp_sn});
   }
 

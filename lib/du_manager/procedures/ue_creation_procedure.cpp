@@ -229,7 +229,7 @@ void ue_creation_procedure::create_f1ap_ue()
   {
     asn1::bit_ref     bref{f1ap_msg.du_cu_rrc_container};
     asn1::SRSASN_CODE result = cell_group.pack(bref);
-    srsgnb_assert(result == asn1::SRSASN_SUCCESS, "Failed to generate CellConfigGroup");
+    srsran_assert(result == asn1::SRSASN_SUCCESS, "Failed to generate CellConfigGroup");
   }
 
   f1ap_resp = f1ap_mng.ue_mng.handle_ue_creation_request(f1ap_msg);

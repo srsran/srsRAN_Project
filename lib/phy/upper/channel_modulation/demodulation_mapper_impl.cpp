@@ -66,8 +66,8 @@ void demodulation_mapper_impl::demodulate_soft(span<log_likelihood_ratio> llrs,
                                                span<const float>          noise_vars,
                                                modulation_scheme          mod)
 {
-  srsgnb_assert(symbols.size() == noise_vars.size(), "Inputs symbols and noise_vars must have the same length.");
-  srsgnb_assert(symbols.size() * get_bits_per_symbol(mod) == llrs.size(), "Input and output lengths are incompatible.");
+  srsran_assert(symbols.size() == noise_vars.size(), "Inputs symbols and noise_vars must have the same length.");
+  srsran_assert(symbols.size() * get_bits_per_symbol(mod) == llrs.size(), "Input and output lengths are incompatible.");
 
   switch (mod) {
     case modulation_scheme::BPSK:
@@ -89,6 +89,6 @@ void demodulation_mapper_impl::demodulate_soft(span<log_likelihood_ratio> llrs,
       demodulate_soft_QAM256(llrs, symbols, noise_vars);
       break;
     default:
-      srsgnb_assertion_failure("Invalid modulation scheme.");
+      srsran_assertion_failure("Invalid modulation scheme.");
   }
 }

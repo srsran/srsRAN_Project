@@ -63,22 +63,22 @@ public:
 
   constexpr T& value() & noexcept
   {
-    srsgnb_assert(has_value(), "Invalid tiny_optional<T> access");
+    srsran_assert(has_value(), "Invalid tiny_optional<T> access");
     return this->val;
   }
   constexpr T&& value() && noexcept
   {
-    srsgnb_assert(has_value(), "Invalid tiny_optional<T> access");
+    srsran_assert(has_value(), "Invalid tiny_optional<T> access");
     return std::move(this->val);
   }
   constexpr const T& value() const& noexcept
   {
-    srsgnb_assert(has_value(), "Invalid tiny_optional<T> access");
+    srsran_assert(has_value(), "Invalid tiny_optional<T> access");
     return this->val;
   }
   constexpr const T&& value() const&& noexcept
   {
-    srsgnb_assert(has_value(), "Invalid optional<T> access");
+    srsran_assert(has_value(), "Invalid optional<T> access");
     return std::move(this->val);
   }
   constexpr T*        operator->() noexcept { return &value(); }

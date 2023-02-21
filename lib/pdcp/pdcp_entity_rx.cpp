@@ -241,7 +241,7 @@ void pdcp_entity_rx::handle_control_pdu(byte_buffer_slice_chain pdu)
 
   // Assert control PDU
   pdcp_dc_field dc = pdcp_pdu_get_dc(hdr_byte);
-  srsgnb_assert(dc == pdcp_dc_field::control, "Invalid D/C field in control PDU. dc={}", dc);
+  srsran_assert(dc == pdcp_dc_field::control, "Invalid D/C field in control PDU. dc={}", dc);
 
   // Switch control PDU type (CPT)
   pdcp_control_pdu_header control_hdr = {};

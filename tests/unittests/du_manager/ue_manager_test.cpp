@@ -78,7 +78,7 @@ protected:
 
   du_ue_index_t get_last_ue_index() const
   {
-    srsgnb_assert(f1ap_dummy.last_ue_create.has_value(), "No UE creation request was provided");
+    srsran_assert(f1ap_dummy.last_ue_create.has_value(), "No UE creation request was provided");
     return f1ap_dummy.last_ue_create.value().ue_index;
   }
 

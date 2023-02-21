@@ -47,7 +47,7 @@ public:
   /// Called to object stored value when event is set
   const Data& get() const
   {
-    srsgnb_sanity_check(is_set(), "trying to get manual_event<Data> data for non-set event");
+    srsran_sanity_check(is_set(), "trying to get manual_event<Data> data for non-set event");
     return data;
   }
 

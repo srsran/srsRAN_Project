@@ -66,17 +66,17 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
       }
 
       if (not ss_cfg_set) {
-        srsgnb_assertion_failure("Paging Search Space not configured in DL BWP.");
+        srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
       }
 
       if (ss_cfg.cs_id != to_coreset_id(0) &&
           ((not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()) ||
            (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id != ss_cfg.cs_id))) {
-        srsgnb_assertion_failure("CORESET configuration for Paging Search Space not configured in DL BWP.");
+        srsran_assertion_failure("CORESET configuration for Paging Search Space not configured in DL BWP.");
       }
       if (ss_cfg.cs_id == to_coreset_id(0) &&
           (not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value())) {
-        srsgnb_assertion_failure("CORESET0 configuration for Paging Search Space not configured in DL BWP.");
+        srsran_assertion_failure("CORESET0 configuration for Paging Search Space not configured in DL BWP.");
       }
       precompute_type2_pdcch_slots(msg.scs_common);
     }
@@ -90,7 +90,7 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
       }
     }
   } else {
-    srsgnb_assertion_failure("Paging Search Space not configured in DL BWP.");
+    srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
   }
 }
 
@@ -490,7 +490,7 @@ void paging_scheduler::precompute_type2_pdcch_slots(subcarrier_spacing scs_commo
           first_pmo_of_po.empty()
               ? (po_idx * nof_ssb_transmitted * pcch_config::NR_OF_PDCCH_MONITORING_OCCASION_PER_SSB_IN_PO)
               : first_pmo_of_po[po_idx];
-      srsgnb_assert(pmo_idx < pdcch_monitoring_occasions.size(),
+      srsran_assert(pmo_idx < pdcch_monitoring_occasions.size(),
                     "Not enough PDCCH Monitoring Occasions for Paging Occasion");
       type2_pdcch_css_slots[i_ssb].push_back(pdcch_monitoring_occasions[pmo_idx]);
     }

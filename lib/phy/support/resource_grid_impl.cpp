@@ -25,18 +25,18 @@ resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, 
 
 void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols)
 {
-  srsgnb_assert(coordinates.size() == symbols.size(),
+  srsran_assert(coordinates.size() == symbols.size(),
                 "The number of coordinates {} is not equal to the number of symbols {}.",
                 coordinates.size(),
                 symbols.size());
 
-  srsgnb_assert(port < nof_ports, "The port index {} is out of range (max {}).", port, nof_ports - 1);
+  srsran_assert(port < nof_ports, "The port index {} is out of range (max {}).", port, nof_ports - 1);
 
   unsigned count = 0;
   for (const resource_grid_coordinate& coordinate : coordinates) {
-    srsgnb_assert(
+    srsran_assert(
         coordinate.symbol < nof_symb, "Symbol index {} is out of range (max {}).", coordinate.symbol, nof_symb);
-    srsgnb_assert(coordinate.subcarrier < nof_subc,
+    srsran_assert(coordinate.subcarrier < nof_subc,
                   "Subcarrier index {} is out of range (max {}).",
                   coordinate.subcarrier,
                   nof_subc);
@@ -92,7 +92,7 @@ span<const cf_t> resource_grid_impl::put(unsigned                            por
   empty[port] = false;
 
   unsigned mask_count = mask.count();
-  srsgnb_assert(mask_count <= symbols.size(),
+  srsran_assert(mask_count <= symbols.size(),
                 "The number of active subcarriers (i.e., {}) exceeds the number of symbols (i.e., {}).",
                 mask_count,
                 symbols.size());
@@ -113,15 +113,15 @@ span<const cf_t> resource_grid_impl::put(unsigned                            por
 
 void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
-  srsgnb_assert(
+  srsran_assert(
       k_init + symbols.size() <= nof_subc,
       "The initial subcarrier index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the maximum number of "
       "subcarriers (i.e., {})",
       k_init,
       symbols.size(),
       nof_subc);
-  srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
-  srsgnb_assert(
+  srsran_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
+  srsran_assert(
       port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
 
   // Select destination OFDM symbol from the resource grid.
@@ -167,14 +167,14 @@ resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned 
 {
   unsigned mask_size = mask.size();
 
-  srsgnb_assert(k_init + mask_size <= nof_subc,
+  srsran_assert(k_init + mask_size <= nof_subc,
                 "The initial subcarrier index (i.e., {}) plus the mask size (i.e., {}) exceeds the maximum number of "
                 "subcarriers (i.e., {})",
                 k_init,
                 mask.size(),
                 nof_subc);
-  srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
-  srsgnb_assert(
+  srsran_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
+  srsran_assert(
       port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
 
   // Access the OFDM symbol from the resource grid.
@@ -199,20 +199,20 @@ span<cf_t> resource_grid_impl::get(span<cf_t>                          symbols,
                                    unsigned                            k_init,
                                    const bounded_bitset<MAX_RB * NRE>& mask) const
 {
-  srsgnb_assert(k_init + mask.size() <= nof_subc,
+  srsran_assert(k_init + mask.size() <= nof_subc,
                 "The initial subcarrier index (i.e., {}) plus the mask size (i.e., {}) exceeds the maximum number of "
                 "subcarriers (i.e., {})",
                 k_init,
                 mask.size(),
                 nof_subc);
-  srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
-  srsgnb_assert(
+  srsran_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
+  srsran_assert(
       port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
 
   // Get view of the OFDM symbol subcarriers.
   span<const cf_t> symb = rg_buffer.get_view<dim_symbol>({l, port});
 
-  srsgnb_assert(mask.count() <= symbols.size(),
+  srsran_assert(mask.count() <= symbols.size(),
                 "The number ones in mask {} exceeds the number of symbols {}.",
                 mask.count(),
                 symbols.size());
@@ -227,15 +227,15 @@ span<cf_t> resource_grid_impl::get(span<cf_t>                          symbols,
 
 void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const
 {
-  srsgnb_assert(
+  srsran_assert(
       k_init + symbols.size() <= nof_subc,
       "The initial subcarrier index (i.e., {}) plus the number of symbols (i.e., {}) exceeds the maximum number of "
       "subcarriers (i.e., {})",
       k_init,
       symbols.size(),
       nof_subc);
-  srsgnb_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
-  srsgnb_assert(
+  srsran_assert(l < nof_symb, "Symbol index (i.e., {}) exceeds the maximum number of symbols (i.e., {})", l, nof_symb);
+  srsran_assert(
       port < nof_ports, "Port index (i.e., {}) exceeds the maximum number of ports (i.e., {})", port, nof_ports);
 
   // Access the OFDM symbol from the resource grid.
@@ -247,6 +247,6 @@ void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsi
 
 bool resource_grid_impl::is_empty(unsigned port) const
 {
-  srsgnb_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
+  srsran_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
   return empty[port];
 }

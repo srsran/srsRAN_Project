@@ -20,9 +20,9 @@ using namespace srs_cu_cp;
 
 void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
-  srsgnb_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsgnb_assert(cfg.f1ap_notifier != nullptr, "Invalid F1AP notifier");
-  srsgnb_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
+  srsran_assert(cfg.cu_cp_executor != nullptr, "Invalid CU-CP executor");
+  srsran_assert(cfg.f1ap_notifier != nullptr, "Invalid F1AP notifier");
+  srsran_assert(cfg.ngap_notifier != nullptr, "Invalid NGAP notifier");
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
@@ -218,7 +218,7 @@ du_index_t cu_cp::add_du()
 
   du->get_context().du_index = du_index;
 
-  srsgnb_assert(du->get_context().du_index != du_index_t::invalid, "Invalid du_index={}", du->get_context().du_index);
+  srsran_assert(du->get_context().du_index != du_index_t::invalid, "Invalid du_index={}", du->get_context().du_index);
 
   // Create DU object
   du_db.emplace(du_index, std::move(du));
@@ -231,14 +231,14 @@ void cu_cp::remove_du(du_index_t du_index)
   // Note: The caller of this function can be a DU procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the DU. This is achieved via a scheduled async task
 
-  srsgnb_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
+  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
   logger.debug("Scheduling du_index={} deletion", du_index);
 
   // Schedule DU removal task
   du_task_sched.handle_du_async_task(
       du_index, launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
-        srsgnb_assert(du_db.find(du_index) != du_db.end(), "Remove DU called for inexistent du_index={}", du_index);
+        srsran_assert(du_db.find(du_index) != du_db.end(), "Remove DU called for inexistent du_index={}", du_index);
         du_db.erase(du_index);
         logger.info("Removed du_index={}", du_index);
         CORO_RETURN();
@@ -247,8 +247,8 @@ void cu_cp::remove_du(du_index_t du_index)
 
 du_processor_interface& cu_cp::find_du(du_index_t du_index)
 {
-  srsgnb_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
-  srsgnb_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
+  srsran_assert(du_index != du_index_t::invalid, "Invalid du_index={}", du_index);
+  srsran_assert(du_db.find(du_index) != du_db.end(), "DU not found du_index={}", du_index);
   return *du_db.at(du_index);
 }
 
@@ -287,7 +287,7 @@ cu_up_index_t cu_cp::add_cu_up()
   // Connect e1ap to DU processor
   du_processor_e1ap_notifier.connect_e1ap(cu_up->get_e1ap_bearer_context_manager());
 
-  srsgnb_assert(cu_up->get_context().cu_up_index != cu_up_index_t::invalid,
+  srsran_assert(cu_up->get_context().cu_up_index != cu_up_index_t::invalid,
                 "Invalid cu_up_index={}",
                 cu_up->get_context().cu_up_index);
 
@@ -302,14 +302,14 @@ void cu_cp::remove_cu_up(cu_up_index_t cu_up_index)
   // Note: The caller of this function can be a CU-UP procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the CU-UP. This is achieved via a scheduled async task
 
-  srsgnb_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
+  srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
   logger.debug("Scheduling cu_up_index={} deletion", cu_up_index);
 
   // Schedule CU-UP removal task
   cu_up_task_sched.handle_cu_up_async_task(cu_up_index,
                                            launch_async([this, cu_up_index](coro_context<async_task<void>>& ctx) {
                                              CORO_BEGIN(ctx);
-                                             srsgnb_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(),
+                                             srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(),
                                                            "Remove CU-UP called for inexistent cu_up_index={}",
                                                            cu_up_index);
                                              cu_up_db.erase(cu_up_index);
@@ -320,8 +320,8 @@ void cu_cp::remove_cu_up(cu_up_index_t cu_up_index)
 
 cu_up_processor_interface& cu_cp::find_cu_up(cu_up_index_t cu_up_index)
 {
-  srsgnb_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
-  srsgnb_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
+  srsran_assert(cu_up_index != cu_up_index_t::invalid, "Invalid cu_up_index={}", cu_up_index);
+  srsran_assert(cu_up_db.find(cu_up_index) != cu_up_db.end(), "CU-UP not found cu_up_index={}", cu_up_index);
   return *cu_up_db.at(cu_up_index);
 }
 

@@ -58,14 +58,14 @@ public:
   /// Returns a pointer to the \c pos AVX register inside the array.
   avxType* data_at(unsigned pos)
   {
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     return reinterpret_cast<avxType*>(inner_array.data()) + pos;
   }
 
   /// Returns a read-only pointer to the \c pos AVX register inside the array.
   const avxType* data_at(unsigned pos) const
   {
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     return reinterpret_cast<const avxType*>(inner_array.data()) + pos;
   }
 
@@ -73,7 +73,7 @@ public:
   int8_t* data_at(unsigned pos, unsigned byte)
   {
     unsigned index = pos * AVX_SIZE_BYTE + byte;
-    srsgnb_assert(index < nof_elements * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
+    srsran_assert(index < nof_elements * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (inner_array.data() + index);
   }
 
@@ -81,7 +81,7 @@ public:
   const int8_t* data_at(unsigned pos, unsigned byte) const
   {
     unsigned index = pos * AVX_SIZE_BYTE + byte;
-    srsgnb_assert(index < nof_elements * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
+    srsran_assert(index < nof_elements * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (inner_array.data() + index);
   }
 
@@ -92,7 +92,7 @@ public:
   void set_at(unsigned pos, __m256i val)
   {
     static_assert(AVX_SIZE_BYTE == AVX2_SIZE_BYTE, "Cannot set an AVX512 vector with an AVX2 vector.");
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     _mm256_storeu_si256(reinterpret_cast<__m256i*>(inner_array.data()) + pos, val);
   }
 
@@ -100,7 +100,7 @@ public:
   void set_at(unsigned pos, __m512i val)
   {
     static_assert(AVX_SIZE_BYTE == AVX512_SIZE_BYTE, "Cannot set an AVX2 vector with an AVX512 vector.");
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     _mm512_storeu_si512(reinterpret_cast<__m512i*>(inner_array.data()) + pos, val);
   }
 
@@ -120,14 +120,14 @@ private:
   /// Specialization of the get method for AVX2.
   __m256i get_at(help_type<m256_wrapper> /**/, unsigned pos) const
   {
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(inner_array.data()) + pos);
   }
 
   /// Specialization of the get method for AVX512.
   __m512i get_at(help_type<m512_wrapper> /**/, unsigned pos) const
   {
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     return _mm512_loadu_si512(reinterpret_cast<const __m512i*>(inner_array.data()) + pos);
   }
 };
@@ -157,7 +157,7 @@ public:
   avx_span(avx_array<avxWrapper, N>& arr, unsigned offset, unsigned length) :
     array_ptr(arr.data_at(offset, 0)), view_length(length)
   {
-    srsgnb_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
+    srsran_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
   }
 
   /// \brief Implicitly constructs a span that is a view over an entire \ref avx_array.
@@ -169,14 +169,14 @@ public:
   /// Returns a pointer to the \c pos AVX register inside the array.
   avxType* data_at(unsigned pos)
   {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return reinterpret_cast<avxType*>(array_ptr) + pos;
   }
 
   /// Returns a read-only pointer to the \c pos AVX register inside the array.
   const avxType* data_at(unsigned pos) const
   {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return reinterpret_cast<const avxType*>(array_ptr) + pos;
   }
 
@@ -184,7 +184,7 @@ public:
   int8_t* data_at(unsigned pos, unsigned byte)
   {
     unsigned index = pos * AVX_SIZE_BYTE + byte;
-    srsgnb_assert(index < view_length * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
+    srsran_assert(index < view_length * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (array_ptr + index);
   }
 
@@ -192,7 +192,7 @@ public:
   const int8_t* data_at(unsigned pos, unsigned byte) const
   {
     unsigned index = pos * AVX_SIZE_BYTE + byte;
-    srsgnb_assert(index < view_length * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
+    srsran_assert(index < view_length * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (array_ptr + index);
   }
 
@@ -203,7 +203,7 @@ public:
   void set_at(unsigned pos, __m256i val)
   {
     static_assert(AVX_SIZE_BYTE == AVX2_SIZE_BYTE, "Cannot set an AVX512 vector with an AVX2 vector.");
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     _mm256_storeu_si256(reinterpret_cast<__m256i*>(array_ptr) + pos, val);
   }
 
@@ -211,7 +211,7 @@ public:
   void set_at(unsigned pos, __m512i val)
   {
     static_assert(AVX_SIZE_BYTE == AVX512_SIZE_BYTE, "Cannot set an AVX2 vector with an AVX512 vector.");
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     _mm512_storeu_si512(reinterpret_cast<__m512i*>(array_ptr) + pos, val);
   }
 
@@ -236,14 +236,14 @@ private:
   /// Specialization of the get method for AVX2.
   __m256i get_at(help_type<m256_wrapper> /**/, unsigned pos) const
   {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(array_ptr) + pos);
   }
 
   /// Specialization of the get method for AVX512.
   __m512i get_at(help_type<m512_wrapper> /**/, unsigned pos) const
   {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return _mm512_loadu_si512(reinterpret_cast<const __m512i*>(array_ptr) + pos);
   }
 };
@@ -265,8 +265,8 @@ using avx2_span = detail::avx_span<detail::m256_wrapper>;
 /// \return    Vector of packed 8-bit integers with the scaling result.
 inline __m256i scale_epi8(__m256i a, float sf, uint8_t max)
 {
-  srsgnb_assert((sf > 0) && (sf <= 1), "Scaling factor out of range.");
-  srsgnb_assert(max < 127, "Parameter max out of range.");
+  srsran_assert((sf > 0) && (sf <= 1), "Scaling factor out of range.");
+  srsran_assert(max < 127, "Parameter max out of range.");
 
   if (sf >= .9999) {
     return a;
@@ -316,7 +316,7 @@ inline __m256i scale_epi8(__m256i a, float sf, uint8_t max)
 /// \remark Cannot be used to override memory.
 inline void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
 {
-  srsgnb_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
+  srsran_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
   std::memcpy(out, in + ls - steps, steps);
   std::memcpy(out + steps, in, ls - steps);
 }
@@ -330,7 +330,7 @@ inline void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsi
 /// \remark Cannot be used to override memory.
 inline void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
 {
-  srsgnb_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
+  srsran_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
   std::memcpy(out, in + steps, ls - steps);
   std::memcpy(out + ls - steps, in, steps);
 }

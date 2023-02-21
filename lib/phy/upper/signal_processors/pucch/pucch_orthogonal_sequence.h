@@ -52,9 +52,9 @@ public:
 
   cf_t get_sequence_value(unsigned n_pucch, unsigned i, unsigned m) const
   {
-    srsgnb_assert(n_pucch >= 1 && n_pucch <= pucch_constants::FORMAT1_N_MAX, "Invalid n_pucch");
-    srsgnb_assert(i < pucch_constants::FORMAT1_N_MAX, "Invalid i");
-    srsgnb_assert(m < pucch_constants::FORMAT1_N_MAX, "Invalid m");
+    srsran_assert(n_pucch >= 1 && n_pucch <= pucch_constants::FORMAT1_N_MAX, "Invalid n_pucch");
+    srsran_assert(i < pucch_constants::FORMAT1_N_MAX, "Invalid i");
+    srsran_assert(m < pucch_constants::FORMAT1_N_MAX, "Invalid m");
     // Get value
     return orthogonal_sequence[i][n_pucch - 1][m];
   }

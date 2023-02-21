@@ -100,7 +100,7 @@ void pdu_session_resource_setup_routine::operator()(
     for (const auto& drb_to_add : drb_to_add_list) {
       // verify sanity of received resposne
       const pdu_session_id_t session = rrc_ue_drb_manager.get_pdu_session_id(drb_to_add);
-      srsgnb_assert(session != pdu_session_id_t::invalid, "Invalid PDU session ID for DRB {}", drb_to_add);
+      srsran_assert(session != pdu_session_id_t::invalid, "Invalid PDU session ID for DRB {}", drb_to_add);
 
       // verify correct PDU session is acked
       if (not bearer_context_setup_response.pdu_session_resource_setup_list.contains(session)) {

@@ -84,8 +84,8 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
 
 void stress_stack::start()
 {
-  srsgnb_assert(peer_stack != nullptr, "Peer stack was not set when starting the stack.");
-  srsgnb_assert(peer_stack != this, "Peer cannot be itself.");
+  srsran_assert(peer_stack != nullptr, "Peer stack was not set when starting the stack.");
+  srsran_assert(peer_stack != this, "Peer cannot be itself.");
 
   for (uint32_t i = 0; i < 20; i++) {
     traffic_source->send_pdu();

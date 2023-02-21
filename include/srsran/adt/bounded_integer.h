@@ -143,7 +143,7 @@ public:
 protected:
   constexpr void assert_bounds(Integer v) const
   {
-    srsgnb_assert(v >= MIN_VALUE && v <= MAX_VALUE, "Value={} out-of-bounds [{}, {}]", v, MIN_VALUE, MAX_VALUE);
+    srsran_assert(v >= MIN_VALUE && v <= MAX_VALUE, "Value={} out-of-bounds [{}, {}]", v, MIN_VALUE, MAX_VALUE);
   }
 };
 

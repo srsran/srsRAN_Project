@@ -27,7 +27,7 @@ public:
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
     // Static lookup
-    srsgnb_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
     return executor(ue_index);
   }
 
@@ -58,7 +58,7 @@ public:
 
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
-    srsgnb_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
     ue_idx_to_exec[ue_index] = execs[pcell_index % execs.size()];
     return *ue_idx_to_exec[ue_index];
   }
@@ -85,7 +85,7 @@ public:
   explicit cell_executor_mapper(const std::initializer_list<task_executor*>& cell_execs_, bool blocking_slot_ind) :
     cell_execs(cell_execs_.begin(), cell_execs_.end())
   {
-    srsgnb_assert(not cell_execs.empty(), "The number of DL executors must be higher than 1");
+    srsran_assert(not cell_execs.empty(), "The number of DL executors must be higher than 1");
     if (blocking_slot_ind) {
       // synchronours slot indication mode.
       srslog::fetch_basic_logger("MAC").debug("Synchronous slot indication processing selected for L2");

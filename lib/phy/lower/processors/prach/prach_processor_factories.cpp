@@ -32,9 +32,9 @@ public:
     dft_size_15kHz(dft_size_15kHz_),
     max_nof_concurrent_requests(max_nof_concurrent_requests_)
   {
-    srsgnb_assert(ofdm_prach_factory, "Invalid OFDM PRACH factory.");
-    srsgnb_assert(dft_size_15kHz, "Zero is an invalid DFT size of 15kHz.");
-    srsgnb_assert(max_nof_concurrent_requests, "Zero is an invalid maximum number of concurrent reqs.");
+    srsran_assert(ofdm_prach_factory, "Invalid OFDM PRACH factory.");
+    srsran_assert(dft_size_15kHz, "Zero is an invalid DFT size of 15kHz.");
+    srsran_assert(max_nof_concurrent_requests, "Zero is an invalid maximum number of concurrent reqs.");
   }
 
   std::unique_ptr<prach_processor> create(task_executor& async_task_executor) override

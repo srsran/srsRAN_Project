@@ -44,7 +44,7 @@ ciphering_algorithm_to_e1ap_asn1(const srsran::security::ciphering_algorithm& ci
       asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3;
       break;
     default:
-      srsgnb_assert(false, "Invalid ciphering algorithm ({})", ciph_algo);
+      srsran_assert(false, "Invalid ciphering algorithm ({})", ciph_algo);
       break;
   }
 
@@ -73,7 +73,7 @@ e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_c
       ciph_algo = srsran::security::ciphering_algorithm::nea3;
       break;
     default:
-      srsgnb_assert(false, "Invalid ciphering algorithm ({})", asn1_ciph_algo);
+      srsran_assert(false, "Invalid ciphering algorithm ({})", asn1_ciph_algo);
   }
 
   return ciph_algo;
@@ -101,7 +101,7 @@ integrity_algorithm_to_e1ap_asn1(const srsran::security::integrity_algorithm& in
       asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3;
       break;
     default:
-      srsgnb_assert(false, "Invalid integrity protection algorithm ({})", int_algo);
+      srsran_assert(false, "Invalid integrity protection algorithm ({})", int_algo);
   }
 
   return asn1_int_algo;
@@ -129,7 +129,7 @@ e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorith
       int_algo = srsran::security::integrity_algorithm::nia3;
       break;
     default:
-      srsgnb_assert(false, "Invalid integrity protection algorithm ({})", asn1_int_algo);
+      srsran_assert(false, "Invalid integrity protection algorithm ({})", asn1_int_algo);
   }
 
   return int_algo;
@@ -227,7 +227,7 @@ inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::rlc_mode rlc_mod)
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_am;
       break;
     default:
-      srsgnb_assert(false, "Invalid RLC mode ({})", rlc_mod);
+      srsran_assert(false, "Invalid RLC mode ({})", rlc_mod);
   }
 
   return asn1_rlc_mode;
@@ -257,7 +257,7 @@ inline srsran::rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
       rlc_mode = srsran::rlc_mode::am;
       break;
     default:
-      srsgnb_assert(false, "Invalid RLC mode: {}", asn1_rlc_mod.to_string());
+      srsran_assert(false, "Invalid RLC mode: {}", asn1_rlc_mod.to_string());
       break;
   }
 
@@ -277,7 +277,7 @@ inline asn1::e1ap::pdcp_sn_size_e pdcp_sn_size_to_asn1(pdcp_sn_size sn_size)
       asn1_sn_size = asn1::e1ap::pdcp_sn_size_e::s_neg18;
       break;
     default:
-      srsgnb_assert(false, "Unsupported PDCP SN size. PDCP SN size={}", sn_size);
+      srsran_assert(false, "Unsupported PDCP SN size. PDCP SN size={}", sn_size);
   }
 
   return asn1_sn_size;
@@ -296,7 +296,7 @@ inline pdcp_sn_size asn1_to_pdcp_sn_size(asn1::e1ap::pdcp_sn_size_e asn1_sn_size
       sn_size = pdcp_sn_size::size18bits;
       break;
     default:
-      srsgnb_assert(false, "Unsupported PDCP SN size. PDCP SN size={}", asn1_sn_size);
+      srsran_assert(false, "Unsupported PDCP SN size. PDCP SN size={}", asn1_sn_size);
   }
 
   return sn_size;
@@ -357,7 +357,7 @@ inline pdcp_discard_timer asn1_to_pdcp_discard_timer(asn1::e1ap::discard_timer_e
       discard_timer = pdcp_discard_timer::infinity;
       break;
     default:
-      srsgnb_assert(false, "Unsupported PDCP discard timer. PDCP discard timer={}", asn1_discard_timer);
+      srsran_assert(false, "Unsupported PDCP discard timer. PDCP discard timer={}", asn1_discard_timer);
   }
   return discard_timer;
 }
@@ -417,7 +417,7 @@ inline asn1::e1ap::discard_timer_e pdcp_discard_timer_to_asn1(pdcp_discard_timer
       asn1_discard_timer = asn1::e1ap::discard_timer_opts::infinity;
       break;
     default:
-      srsgnb_assert(false, "Unsupported PDCP discard timer. PDCP discard timer={}", discard_timer);
+      srsran_assert(false, "Unsupported PDCP discard timer. PDCP discard timer={}", discard_timer);
   }
 
   return asn1_discard_timer;
@@ -539,7 +539,7 @@ inline pdcp_t_reordering asn1_to_pdcp_t_reordering(asn1::e1ap::t_reordering_e as
       t_reordering = pdcp_t_reordering::ms3000;
       break;
     default:
-      srsgnb_assert(false, "Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", asn1_t_reordering);
+      srsran_assert(false, "Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", asn1_t_reordering);
   }
 
   return t_reordering;
@@ -662,7 +662,7 @@ inline asn1::e1ap::t_reordering_e pdcp_t_reordering_to_asn1(pdcp_t_reordering t_
       asn1_t_reordering = asn1::e1ap::t_reordering_e::nulltype;
       break;
     default:
-      srsgnb_assert(false, "Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", t_reordering);
+      srsran_assert(false, "Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", t_reordering);
   }
 
   return asn1_t_reordering;

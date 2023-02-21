@@ -101,7 +101,7 @@ public:
   void set(unsigned transaction_id, U&& u)
   {
     running_timers[transaction_id].stop();
-    srsgnb_assert(not transactions[transaction_id].is_set(), "Transaction result cannot be overwritten.");
+    srsran_assert(not transactions[transaction_id].is_set(), "Transaction result cannot be overwritten.");
     transactions[transaction_id].set(std::forward<U>(u));
   }
 
@@ -170,12 +170,12 @@ public:
   /// \brief Result set by event source.
   const success_response_type& response() const
   {
-    srsgnb_assert(successful(), "Trying to fetch incorrect transaction result");
+    srsran_assert(successful(), "Trying to fetch incorrect transaction result");
     return variant_get<success_response_type>(observer.result());
   }
   const failure_response_type& failure() const
   {
-    srsgnb_assert(failed(), "Trying to fetch incorrect transaction result");
+    srsran_assert(failed(), "Trying to fetch incorrect transaction result");
     return variant_get<failure_response_type>(observer.result());
   }
 

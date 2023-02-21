@@ -38,10 +38,10 @@ public:
   T& get_processor(slot_point slot)
   {
     unsigned numerology = slot.numerology();
-    srsgnb_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology ({}).", numerology);
+    srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology ({}).", numerology);
 
     processor_pool& pool = numerologies[numerology];
-    srsgnb_assert(!pool.empty(), "Numerology ({}) has no processors.", numerology);
+    srsran_assert(!pool.empty(), "Numerology ({}) has no processors.", numerology);
 
     unsigned index = slot.system_slot() % pool.size();
     return *pool[index];
@@ -54,10 +54,10 @@ public:
   void insert(subcarrier_spacing scs, processor_pool&& obj)
   {
     unsigned numerology = to_numerology_value(scs);
-    srsgnb_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology ({}).", numerology);
+    srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology ({}).", numerology);
 
     processor_pool& pool = numerologies[numerology];
-    srsgnb_assert(pool.empty(), "Numerology ({}) already has processors.", numerology);
+    srsran_assert(pool.empty(), "Numerology ({}) already has processors.", numerology);
 
     numerologies[numerology] = std::move(obj);
   }

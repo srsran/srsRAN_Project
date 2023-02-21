@@ -32,9 +32,9 @@ public:
                          std::unique_ptr<pseudo_random_generator> descrambler_) :
     equalizer(std::move(equalizer_)), demapper(std::move(demapper_)), descrambler(std::move(descrambler_))
   {
-    srsgnb_assert(equalizer, "Invalid pointer to channel_equalizer object.");
-    srsgnb_assert(demapper, "Invalid pointer to demodulation_mapper object.");
-    srsgnb_assert(descrambler, "Invalid pointer to pseudo_random_generator object.");
+    srsran_assert(equalizer, "Invalid pointer to channel_equalizer object.");
+    srsran_assert(demapper, "Invalid pointer to demodulation_mapper object.");
+    srsran_assert(descrambler, "Invalid pointer to pseudo_random_generator object.");
   }
 
   // See interface for the documentation.

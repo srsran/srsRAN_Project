@@ -29,8 +29,8 @@ public:
                                      std::unique_ptr<port_channel_estimator>  ch_est) :
     prg(std::move(prg_)), ch_estimator(std::move(ch_est))
   {
-    srsgnb_assert(prg, "Invalid PRG.");
-    srsgnb_assert(ch_estimator, "Invalid port channel estimator.");
+    srsran_assert(prg, "Invalid PRG.");
+    srsran_assert(ch_estimator, "Invalid port channel estimator.");
   }
 
   // See interface for the documentation.

@@ -418,13 +418,13 @@ duplex_mode srsran::band_helper::get_duplex_mode(nr_band band)
 bool srsran::band_helper::is_paired_spectrum(nr_band band)
 {
   duplex_mode mode = get_duplex_mode(band);
-  srsgnb_assert(mode < duplex_mode::INVALID, "Returned invalid duplex MODE");
+  srsran_assert(mode < duplex_mode::INVALID, "Returned invalid duplex MODE");
   return mode == duplex_mode::FDD;
 }
 
 frequency_range srsran::band_helper::get_freq_range(nr_band band)
 {
-  srsgnb_assert(band != nr_band::invalid, "Band must be a valid NR band.");
+  srsran_assert(band != nr_band::invalid, "Band must be a valid NR band.");
   return band <= nr_band::n86 ? frequency_range::FR1 : frequency_range::FR2;
 }
 
@@ -630,7 +630,7 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
                                                                                          subcarrier_spacing scs_ssb,
                                                                                          uint8_t            ss0_idx)
 {
-  srsgnb_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n79,
+  srsran_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n79,
                 "Bands n34, n38, n39 and n79 not currently supported");
   optional<ssb_coreset0_freq_location> result;
 

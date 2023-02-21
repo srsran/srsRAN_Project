@@ -58,7 +58,7 @@ async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_re
 
 du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index)
 {
-  srsgnb_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+  srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
   return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 
@@ -88,7 +88,7 @@ du_ue* du_ue_manager::add_ue(std::unique_ptr<du_ue> ue_ctx)
   auto& u = ue_db[ue_index];
 
   // Update RNTI -> UE index map
-  srsgnb_sanity_check(rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] == INVALID_DU_UE_INDEX, "Invalid RNTI={:#x}", u.rnti);
+  srsran_sanity_check(rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] == INVALID_DU_UE_INDEX, "Invalid RNTI={:#x}", u.rnti);
   rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] = ue_index;
 
   return &u;
@@ -99,13 +99,13 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
   // Note: The caller of this function can be a UE procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the UE. This achieved via a scheduled async task
 
-  srsgnb_assert(ue_index < MAX_NOF_DU_UES, "Invalid ueId={}", ue_index);
+  srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ueId={}", ue_index);
   logger.debug("Scheduling ueId={} deletion", ue_index);
 
   // Schedule UE removal task
   ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
-    srsgnb_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
+    srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
     rnti_to_ue_index[ue_db[ue_index].rnti % MAX_NOF_DU_UES] = INVALID_DU_UE_INDEX;
     ue_db.erase(ue_index);
     logger.debug("Removed ueId={}", ue_index);

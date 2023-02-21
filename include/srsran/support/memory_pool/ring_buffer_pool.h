@@ -81,13 +81,13 @@ private:
 
     void tick(tick_t tic_index) noexcept
     {
-      srsgnb_assert(first_tick or tic_index != last_tick_index,
+      srsran_assert(first_tick or tic_index != last_tick_index,
                     "This function cannot be called multiple times for the same tick");
-      if (srsgnb_unlikely(first_tick)) {
+      if (srsran_unlikely(first_tick)) {
         // first tick call.
         last_tick_index = tic_index - 1;
         first_tick      = false;
-      } else if (srsgnb_unlikely(last_tick_index > tic_index)) {
+      } else if (srsran_unlikely(last_tick_index > tic_index)) {
         // wrap-around case.
         last_tick_index = -(tic_wraparound - last_tick_index);
       }
@@ -132,7 +132,7 @@ public:
 
 private:
   using overflow_detector_t =
-      std::conditional_t<SRSGNB_IS_DEFINED(ASSERTS_ENABLED), overflow_checker, no_overflow_checker>;
+      std::conditional_t<SRSRAN_IS_DEFINED(ASSERTS_ENABLED), overflow_checker, no_overflow_checker>;
 
   ring_buffer_pool    pool;
   overflow_detector_t overflow_detector;

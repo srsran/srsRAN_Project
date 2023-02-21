@@ -194,13 +194,13 @@ public:
   // See interface for documentation.
   span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) override
   {
-    srsgnb_assert(codeblock_id < codeblock_ids.size(),
+    srsran_assert(codeblock_id < codeblock_ids.size(),
                   "Codeblock index ({}) is out of range ({}).",
                   codeblock_id,
                   codeblock_ids.size());
     unsigned cb_id       = codeblock_ids[codeblock_id];
     unsigned cb_max_size = codeblock_pool.get_soft_bits(cb_id).size();
-    srsgnb_assert(
+    srsran_assert(
         codeblock_size <= cb_max_size, "Codeblock size {} exceeds maximum size {}.", codeblock_size, cb_max_size);
     return codeblock_pool.get_soft_bits(cb_id).first(codeblock_size);
   }
@@ -208,13 +208,13 @@ public:
   // See interface for documentation.
   bit_buffer get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
   {
-    srsgnb_assert(codeblock_id < codeblock_ids.size(),
+    srsran_assert(codeblock_id < codeblock_ids.size(),
                   "Codeblock index ({}) is out of range ({}).",
                   codeblock_id,
                   codeblock_ids.size());
     unsigned cb_id         = codeblock_ids[codeblock_id];
     unsigned data_max_size = codeblock_pool.get_data_bits(cb_id).size();
-    srsgnb_assert(
+    srsran_assert(
         data_size <= data_max_size, "Codeblock data size {} exceeds maximum size {}.", data_size, data_max_size);
     return codeblock_pool.get_data_bits(cb_id).first(data_size);
   }
@@ -223,7 +223,7 @@ public:
   void lock() override
   {
     std::unique_lock<std::mutex> lock(fsm_mutex);
-    srsgnb_assert(current_state == state::reserved, "It is only possible to reserve in reserved state.");
+    srsran_assert(current_state == state::reserved, "It is only possible to reserve in reserved state.");
     current_state = state::locked;
   }
 
@@ -240,7 +240,7 @@ public:
   void release() override
   {
     std::unique_lock<std::mutex> lock(fsm_mutex);
-    srsgnb_assert((current_state == state::reserved) || (current_state == state::locked),
+    srsran_assert((current_state == state::reserved) || (current_state == state::locked),
                   "It is only possible to reserve in reserved state.");
     current_state = state::released;
   }

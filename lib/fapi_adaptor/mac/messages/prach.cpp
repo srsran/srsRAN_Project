@@ -33,7 +33,7 @@ static fapi::prach_format_type convert_to_fapi_prach_format(preamble_format form
     case preamble_format::values::FORMAT3:
       return fapi::prach_format_type::three;
     default:
-      srsgnb_assert(0, "Invalid preamble format {{}}", static_cast<unsigned>(format));
+      srsran_assert(0, "Invalid preamble format {{}}", static_cast<unsigned>(format));
       break;
   }
   return fapi::prach_format_type::zero;

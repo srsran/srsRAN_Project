@@ -199,12 +199,12 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
 
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)
 {
-  srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
-  srsgnb_assert(config.restricted_set == restricted_set_config::UNRESTRICTED, "Unrestricted sets are not implemented.");
+  srsran_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
+  srsran_assert(config.restricted_set == restricted_set_config::UNRESTRICTED, "Unrestricted sets are not implemented.");
   prach_preamble_information info = get_prach_preamble_long_info(config.format);
 
   unsigned N_cs = prach_cyclic_shifts_get(info.scs, config.restricted_set, config.zero_correlation_zone);
-  srsgnb_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Configuration leads to a reserved number of cyclic shifts.");
+  srsran_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Configuration leads to a reserved number of cyclic shifts.");
 
   unsigned root_sequence_index = config.root_sequence_index + config.preamble_index;
   unsigned cyclic_shift        = 0;

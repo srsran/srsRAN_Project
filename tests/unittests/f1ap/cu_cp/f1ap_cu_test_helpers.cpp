@@ -59,7 +59,7 @@ void f1ap_cu_test::run_ue_context_setup(ue_index_t ue_index)
   f1ap_message response = generate_ue_context_setup_response(*u.cu_ue_id, *u.du_ue_id);
   f1ap->handle_message(response);
 
-  srsgnb_assert(t.ready(), "The procedure should have completed by now");
+  srsran_assert(t.ready(), "The procedure should have completed by now");
 }
 
 f1ap_ue_context_setup_request

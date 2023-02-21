@@ -17,7 +17,7 @@ bounded_bitset<MAX_RB> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start
   unsigned offset = vrb_to_prb_map.get_coreset_start();
 
   // Make sure the VRB-to-PRB allocation does not exceed the BWP region.
-  srsgnb_assert(offset + vrb_mask.count() <= bwp_size_rb,
+  srsran_assert(offset + vrb_mask.count() <= bwp_size_rb,
                 "The contiguous VRB allocation {}:{} with CORESET start {} does not fit in BWP of size {}.",
                 vrb_mask.find_lowest(0, vrb_mask.size()),
                 vrb_mask.find_highest(0, vrb_mask.size()),
@@ -112,7 +112,7 @@ rb_allocation srsran::rb_allocation::make_custom(std::initializer_list<const uns
 
 bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  srsgnb_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
+  srsran_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
                 "Invalid BWP configuration {}:{} for a VRB mask of size {}.",
                 bwp_start_rb,
                 bwp_size_rb,
@@ -127,7 +127,7 @@ bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsign
 
 static_vector<uint16_t, MAX_RB> rb_allocation::get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  srsgnb_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
+  srsran_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
                 "Invalid BWP configuration {}:{} for a VRB mask of size {}.",
                 bwp_start_rb,
                 bwp_size_rb,

@@ -24,7 +24,7 @@ cell_group_cfg_s unpack_cell_group_config(const byte_buffer& container)
   cell_group_cfg_s cell_group;
   asn1::cbit_ref   bref(container);
   auto             err = cell_group.unpack(bref);
-  srsgnb_assert(err == asn1::SRSASN_SUCCESS, "Failed to unpack container");
+  srsran_assert(err == asn1::SRSASN_SUCCESS, "Failed to unpack container");
   return cell_group;
 }
 

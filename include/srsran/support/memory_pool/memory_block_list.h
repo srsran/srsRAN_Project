@@ -36,7 +36,7 @@ public:
   /// Pushes a new memory block to the linked list.
   void push(void* block) noexcept
   {
-    srsgnb_assert(is_aligned(block, min_memory_block_align()), "The provided memory block is not aligned");
+    srsran_assert(is_aligned(block, min_memory_block_align()), "The provided memory block is not aligned");
     node* ptr = ::new (block) node(head);
     head      = ptr;
     count++;
@@ -45,7 +45,7 @@ public:
   /// Pops a memory block from the linked list.
   void* pop() noexcept
   {
-    srsgnb_assert(not empty(), "pop() called on empty list");
+    srsran_assert(not empty(), "pop() called on empty list");
     node* last_head = head;
     head            = head->next;
     last_head->~node();
@@ -58,7 +58,7 @@ public:
   /// Steals the top pointer from another memory block list.
   void steal_top(intrusive_memory_block_list& other) noexcept
   {
-    srsgnb_assert(not other.empty(), "Trying to steal from empty memory_block list");
+    srsran_assert(not other.empty(), "Trying to steal from empty memory_block list");
     node* other_head = other.head;
     other.head       = other.head->next;
     other_head->next = head;
@@ -116,7 +116,7 @@ public:
     payload_size(align_next(node_size_, memory_block_alignment)),
     memory_block_size(header_size + payload_size)
   {
-    srsgnb_assert(node_size_ > 0 and is_alignment_valid(node_alignment_),
+    srsran_assert(node_size_ > 0 and is_alignment_valid(node_alignment_),
                   "Invalid arguments node size={}, alignment={}",
                   node_size_,
                   node_alignment_);
@@ -124,7 +124,7 @@ public:
 
   void* get_node_header(void* payload_addr)
   {
-    srsgnb_assert(is_aligned(payload_addr, memory_block_alignment), "Provided address is not valid");
+    srsran_assert(is_aligned(payload_addr, memory_block_alignment), "Provided address is not valid");
     return static_cast<void*>(static_cast<uint8_t*>(payload_addr) - header_size);
   }
 

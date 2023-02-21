@@ -91,7 +91,7 @@ public:
     sampling_rate_Hz(dft_size_15kHz * 15000),
     temp_baseband(prach_constants::MAX_LENGTH_TIME_DOMAIN.to_samples(sampling_rate_Hz))
   {
-    srsgnb_assert(sampling_rate_Hz && prach_constants::MAX_LENGTH_TIME_DOMAIN.is_sample_accurate(sampling_rate_Hz),
+    srsran_assert(sampling_rate_Hz && prach_constants::MAX_LENGTH_TIME_DOMAIN.is_sample_accurate(sampling_rate_Hz),
                   "Invalid sampling rate of {} Hz.",
                   sampling_rate_Hz);
   }

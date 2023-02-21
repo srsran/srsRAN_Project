@@ -102,7 +102,7 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
     sizes.format0_0_common_size -= nof_truncated_bits;
   }
 
-  srsgnb_assert(sizes.format1_0_common_size == sizes.format0_0_common_size, "DCI format 0_0 and 1_0 sizes must match");
+  srsran_assert(sizes.format1_0_common_size == sizes.format0_0_common_size, "DCI format 0_0 and 1_0 sizes must match");
 
   // Step 1
   // - Determine DCI format 0_0 monitored in a UE-specific search space according to clause 7.3.1.1.1 where N_UL_BWP_RB
@@ -142,7 +142,7 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
     sizes.format1_0_ue_size += nof_padding_bits;
   }
 
-  srsgnb_assert(sizes.format1_0_ue_size == sizes.format0_0_ue_size, "DCI format 0_0 and 1_0 sizes must match");
+  srsran_assert(sizes.format1_0_ue_size == sizes.format0_0_ue_size, "DCI format 0_0 and 1_0 sizes must match");
 
   return sizes;
 }
@@ -169,15 +169,15 @@ dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
 
   if (config.frequency_hopping_flag) {
     // Assert that the number of bits used to pack the frequency hopping offset is valid.
-    srsgnb_assert((config.N_ul_hop == 1) || (config.N_ul_hop == 2),
+    srsran_assert((config.N_ul_hop == 1) || (config.N_ul_hop == 2),
                   "DCI frequency offset number of bits must be either 1 or 2");
 
     // Assert that the frequency resource field has enough bits to include the frequency hopping offset.
-    srsgnb_assert(config.N_ul_hop < frequency_resource_nof_bits.value(),
+    srsran_assert(config.N_ul_hop < frequency_resource_nof_bits.value(),
                   "The frequency resource field must have enough bits to hold the frequency hopping offset");
 
     // Assert that the frequency hopping offset can be packed with the allocated bits.
-    srsgnb_assert(config.hopping_offset < (1U << config.N_ul_hop),
+    srsran_assert(config.hopping_offset < (1U << config.N_ul_hop),
                   "DCI frequency offset value ({}) cannot be packed with the allocated number of bits ({})",
                   config.hopping_offset,
                   config.N_ul_hop);
@@ -254,15 +254,15 @@ dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
 
   if (config.frequency_hopping_flag) {
     // Assert that the number of bits used to pack the frequency hopping offset is valid.
-    srsgnb_assert((config.N_ul_hop == 1) || (config.N_ul_hop == 2),
+    srsran_assert((config.N_ul_hop == 1) || (config.N_ul_hop == 2),
                   "DCI frequency offset number of bits must be either 1 or 2");
 
     // Assert that the frequency resource field has enough bits to include the frequency hopping offset.
-    srsgnb_assert(config.N_ul_hop < frequency_resource_nof_bits.value(),
+    srsran_assert(config.N_ul_hop < frequency_resource_nof_bits.value(),
                   "The frequency resource field must have enough bits to hold the frequency hopping offset");
 
     // Assert that the frequency hopping offset can be packed with the allocated bits.
-    srsgnb_assert(config.hopping_offset < (1U << config.N_ul_hop),
+    srsran_assert(config.hopping_offset < (1U << config.N_ul_hop),
                   "DCI frequency offset value ({}) cannot be packed with the allocated number of bits ({})",
                   config.hopping_offset,
                   config.N_ul_hop);
@@ -351,7 +351,7 @@ dci_payload srsran::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& conf
                          static_cast<int>(dci_f1_0_bits_before_padding(config.N_rb_dl_bwp).value());
 
   // Truncation is not allowed for DCI format 1_0.
-  srsgnb_assert(nof_padding_bits >= 0, "Truncation is not allowed for DCI format 1_0");
+  srsran_assert(nof_padding_bits >= 0, "Truncation is not allowed for DCI format 1_0");
 
   // Padding - nof_padding_bits bits.
   payload.push_back(0x00U, nof_padding_bits);

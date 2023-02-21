@@ -35,14 +35,14 @@ public:
   /// Returns a pointer to the \c pos NEON register inside the array.
   int8x16_t* data_at(unsigned pos)
   {
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     return reinterpret_cast<int8x16_t*>(inner_array.data() + pos * NEON_SIZE_BYTE);
   }
 
   /// Returns a read-only pointer to the \c pos NEON register inside the array.
   const int8x16_t* data_at(unsigned pos) const
   {
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     return reinterpret_cast<int8x16_t*>(inner_array.data() + pos * NEON_SIZE_BYTE);
   }
 
@@ -50,7 +50,7 @@ public:
   int8_t* data_at(unsigned pos, unsigned byte)
   {
     unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsgnb_assert(index < nof_elements * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
+    srsran_assert(index < nof_elements * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (inner_array.data() + index);
   }
 
@@ -58,21 +58,21 @@ public:
   const int8_t* data_at(unsigned pos, unsigned byte) const
   {
     unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsgnb_assert(index < nof_elements * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
+    srsran_assert(index < nof_elements * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (inner_array.data() + index);
   }
 
   /// Sets the \c pos NEON register to \c val.
   void set_at(unsigned pos, int8x16_t val)
   {
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     vst1q_s8(inner_array.data() + pos * NEON_SIZE_BYTE, val);
   }
 
   /// Gets the value stored in the \c pos NEON register.
   int8x16_t get_at(unsigned pos) const
   {
-    srsgnb_assert(pos < nof_elements, "Index {} out of bound.", pos);
+    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
     return vld1q_s8(inner_array.data() + pos * NEON_SIZE_BYTE);
   }
 
@@ -95,7 +95,7 @@ public:
   neon_span(neon_array<N>& arr, unsigned offset, unsigned length) :
     array_ptr(arr.data_at(offset, 0)), view_length(length)
   {
-    srsgnb_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
+    srsran_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
   }
 
   /// \brief Implicitly constructs a span that is a view over an entire \ref neon_array.
@@ -107,14 +107,14 @@ public:
   /// Returns a pointer to the \c pos NEON register inside the array.
   int8x16_t* data_at(unsigned pos)
   {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return reinterpret_cast<int8x16_t*>(array_ptr) + pos;
   }
 
   /// Returns a read-only pointer to the \c pos NEON register inside the array.
   const int8x16_t* data_at(unsigned pos) const
   {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return reinterpret_cast<const int8x16_t*>(array_ptr) + pos;
   }
 
@@ -122,7 +122,7 @@ public:
   int8_t* data_at(unsigned pos, unsigned byte)
   {
     unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsgnb_assert(index < view_length * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
+    srsran_assert(index < view_length * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (array_ptr + index);
   }
 
@@ -130,7 +130,7 @@ public:
   const int8_t* data_at(unsigned pos, unsigned byte) const
   {
     unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsgnb_assert(index < view_length * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
+    srsran_assert(index < view_length * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
     return (array_ptr + index);
   }
 
@@ -140,14 +140,14 @@ public:
   /// Sets the \c pos NEON register to \c val.
   void set_at(unsigned pos, int8x16_t val)
   {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     vst1q_s8(array_ptr + pos * NEON_SIZE_BYTE, val);
   }
 
   /// Gets the value stored in the \c pos NEON register.
   int8x16_t get_at(unsigned pos) const
   {
-    srsgnb_assert(pos < view_length, "Index {} out of bound.", pos);
+    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return vld1q_s8(array_ptr + pos * NEON_SIZE_BYTE);
   }
 
@@ -170,8 +170,8 @@ private:
 /// \return    Vector of packed 8-bit integers with the scaling result.
 inline int8x16_t scale_s8(int8x16_t a, float sf, uint8_t max)
 {
-  srsgnb_assert((sf > 0) && (sf <= 1), "Scaling factor out of range.");
-  srsgnb_assert(max < 127, "Parameter max out of range.");
+  srsran_assert((sf > 0) && (sf <= 1), "Scaling factor out of range.");
+  srsran_assert(max < 127, "Parameter max out of range.");
 
   if (sf >= .9999) {
     return a;
@@ -216,7 +216,7 @@ inline int8x16_t scale_s8(int8x16_t a, float sf, uint8_t max)
 /// \remark Cannot be used to override memory.
 inline void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
 {
-  srsgnb_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
+  srsran_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
   std::memcpy(out, in + ls - steps, steps);
   std::memcpy(out + steps, in, ls - steps);
 }
@@ -230,7 +230,7 @@ inline void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsi
 /// \remark Cannot be used to override memory.
 inline void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
 {
-  srsgnb_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
+  srsran_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
   std::memcpy(out, in + steps, ls - steps);
   std::memcpy(out + ls - steps, in, steps);
 }

@@ -26,18 +26,18 @@ public:
 
   void schedule_async_task(cu_up_index_t cu_up_index, async_task<void>&& task) override
   {
-    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     cu_cp_task_sched->handle_cu_up_async_task(cu_up_index, std::move(task));
   }
 
   unique_timer make_unique_timer() override
   {
-    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     return cu_cp_task_sched->make_unique_timer();
   }
   timer_manager& get_timer_manager() override
   {
-    srsgnb_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
+    srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     return cu_cp_task_sched->get_timer_manager();
   }
 
@@ -53,13 +53,13 @@ public:
 
   void on_new_cu_up_connection() override
   {
-    srsgnb_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     cu_cp_handler->handle_new_cu_up_connection();
   }
 
   void on_cu_up_remove_request_received(const cu_up_index_t cu_up_index) override
   {
-    srsgnb_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
     cu_cp_handler->handle_cu_up_remove_request(cu_up_index);
   }
 
@@ -75,7 +75,7 @@ public:
 
   async_task<cu_cp_e1_setup_response> on_cu_cp_e1_setup_request(const cu_cp_e1_setup_request& request) override
   {
-    srsgnb_assert(e1ap_conn_mng != nullptr, "E1AP handler must not be nullptr");
+    srsran_assert(e1ap_conn_mng != nullptr, "E1AP handler must not be nullptr");
     return e1ap_conn_mng->handle_cu_cp_e1_setup_request(request);
   }
 

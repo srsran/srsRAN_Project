@@ -53,12 +53,12 @@ public:
   explicit pusch_processor_validator_impl(const channel_estimate::channel_estimate_dimensions& ce_dims_) :
     ce_dims(ce_dims_)
   {
-    srsgnb_assert(
+    srsran_assert(
         (ce_dims.nof_prb > 0) && (ce_dims.nof_prb <= MAX_RB), "Invalid number of PRB (i.e. {}).", ce_dims.nof_prb);
-    srsgnb_assert((ce_dims.nof_symbols > 0) && (ce_dims.nof_symbols <= MAX_NSYMB_PER_SLOT),
+    srsran_assert((ce_dims.nof_symbols > 0) && (ce_dims.nof_symbols <= MAX_NSYMB_PER_SLOT),
                   "Invalid number of OFDM symbols.");
-    srsgnb_assert(ce_dims.nof_rx_ports == 1, "Only one receive port is currently supported.");
-    srsgnb_assert(ce_dims.nof_tx_layers == 1, "Only one transmit layer is currently supported.");
+    srsran_assert(ce_dims.nof_rx_ports == 1, "Only one receive port is currently supported.");
+    srsran_assert(ce_dims.nof_tx_layers == 1, "Only one transmit layer is currently supported.");
   }
 
   // See interface for documentation.

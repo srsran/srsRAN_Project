@@ -60,7 +60,7 @@ asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(const csi_r
       out.nrof_ports = csi_rs_res_map_s::nrof_ports_opts::p32;
       break;
     default:
-      srsgnb_assertion_failure("Invalid nof. NZP CSI-RS ports={}", cfg.nof_ports);
+      srsran_assertion_failure("Invalid nof. NZP CSI-RS ports={}", cfg.nof_ports);
   }
 
   out.first_ofdm_symbol_in_time_domain = cfg.first_ofdm_symbol_in_td;
@@ -83,7 +83,7 @@ asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(const csi_r
       out.cdm_type = csi_rs_res_map_s::cdm_type_opts::cdm8_fd2_td4;
       break;
     default:
-      srsgnb_assertion_failure("Invalid CDM={}", cfg.cdm);
+      srsran_assertion_failure("Invalid CDM={}", cfg.cdm);
   }
 
   switch (cfg.freq_density) {
@@ -104,7 +104,7 @@ asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(const csi_r
       out.density.set_three();
       break;
     default:
-      srsgnb_assertion_failure("Invalid freq. density={}", cfg.freq_density);
+      srsran_assertion_failure("Invalid freq. density={}", cfg.freq_density);
   }
 
   out.freq_band.start_rb = cfg.freq_band_start_rb;
@@ -184,7 +184,7 @@ void make_asn1_csi_resource_periodicity_and_offset(csi_res_periodicity_and_offse
       break;
     }
     default:
-      srsgnb_assertion_failure("Invalid CSI-RS periodicity={}", periodicity);
+      srsran_assertion_failure("Invalid CSI-RS periodicity={}", periodicity);
   }
 }
 
@@ -210,7 +210,7 @@ asn1::rrc_nr::nzp_csi_rs_res_s make_asn1_nzp_csi_rs_resource(const nzp_csi_rs_re
         out.pwr_ctrl_offset_ss = nzp_csi_rs_res_s::pwr_ctrl_offset_ss_opts::db6;
         break;
       default:
-        srsgnb_assertion_failure("Invalid power control offset SS={}", cfg.pwr_ctrl_offset_ss_db.value());
+        srsran_assertion_failure("Invalid power control offset SS={}", cfg.pwr_ctrl_offset_ss_db.value());
     }
   }
   out.scrambling_id = cfg.scrambling_id;
@@ -289,7 +289,7 @@ asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
                 csi_im_res_s::csi_im_res_elem_pattern_c_::pattern0_s_::subcarrier_location_p0_opts::s10;
             break;
           default:
-            srsgnb_assertion_failure("Invalid CSI IM resource subcarrier location={}",
+            srsran_assertion_failure("Invalid CSI IM resource subcarrier location={}",
                                      cfg.csi_im_res_element_pattern.value().subcarrier_location);
         }
         pattern.symbol_location_p0 = cfg.csi_im_res_element_pattern.value().symbol_location;
@@ -311,14 +311,14 @@ asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
                 csi_im_res_s::csi_im_res_elem_pattern_c_::pattern1_s_::subcarrier_location_p1_opts::s8;
             break;
           default:
-            srsgnb_assertion_failure("Invalid CSI IM resource subcarrier location={}",
+            srsran_assertion_failure("Invalid CSI IM resource subcarrier location={}",
                                      cfg.csi_im_res_element_pattern.value().subcarrier_location);
         }
         pattern.symbol_location_p1 = cfg.csi_im_res_element_pattern.value().symbol_location;
         break;
       }
       default:
-        srsgnb_assertion_failure("Invalid CSI IM resource element pattern={}",
+        srsran_assertion_failure("Invalid CSI IM resource element pattern={}",
                                  cfg.csi_im_res_element_pattern.value().pattern_type);
     }
   }
@@ -393,7 +393,7 @@ asn1::rrc_nr::csi_res_cfg_s make_asn1_csi_resource_config(const csi_resource_con
       out.res_type = csi_res_cfg_s::res_type_opts::periodic;
       break;
     default:
-      srsgnb_assertion_failure("Invalid CSI resource type={}", cfg.res_type);
+      srsran_assertion_failure("Invalid CSI resource type={}", cfg.res_type);
   }
 
   return out;
@@ -455,7 +455,7 @@ void make_asn1_csi_report_periodicity_and_offset(csi_report_periodicity_and_offs
       break;
     }
     default:
-      srsgnb_assertion_failure("Invalid CSI report periodicity={}", periodicity);
+      srsran_assertion_failure("Invalid CSI report periodicity={}", periodicity);
   }
 }
 
@@ -554,7 +554,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
             break;
           }
           default:
-            srsgnb_assertion_failure("Invalid n1-n2 type={}", ant_restriction.n1_n2_restriction_type);
+            srsran_assertion_failure("Invalid n1-n2 type={}", ant_restriction.n1_n2_restriction_type);
         }
         if (ant_restriction.typei_single_panel_codebook_subset_restriction_i2.has_value()) {
           out_ant_restriction.type_i_single_panel_codebook_subset_restrict_i2_present = true;
@@ -608,7 +608,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
           break;
         }
         default:
-          srsgnb_assertion_failure("Invalid ng-n1-n2 type={}", mp_cfg_val.ng_n1_n2_restriction_type);
+          srsran_assertion_failure("Invalid ng-n1-n2 type={}", mp_cfg_val.ng_n1_n2_restriction_type);
       }
       out_mp_cfg.ri_restrict.from_number(mp_cfg_val.ri_restriction.to_uint64());
     }
@@ -686,7 +686,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
           break;
         }
         default:
-          srsgnb_assertion_failure("Invalid n1-n2 codebook subset restriction type={}",
+          srsran_assertion_failure("Invalid n1-n2 codebook subset restriction type={}",
                                    typeii.n1_n2_codebook_subset_restriction_type);
       }
       out_typeii.type_ii_ri_restrict.from_number(typeii.typeii_ri_restriction.to_uint64());
@@ -713,7 +713,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
                 type_ii_port_sel_s_::port_sel_sampling_size_opts::n4;
             break;
           default:
-            srsgnb_assertion_failure("Invalid port selection sampling size={}",
+            srsran_assertion_failure("Invalid port selection sampling size={}",
                                      typeii_ps.port_selection_sampling_size.value());
         }
       }
@@ -730,7 +730,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
         out_tp2_cfg.phase_alphabet_size = codebook_cfg_s::codebook_type_c_::type2_s_::phase_alphabet_size_opts::n8;
         break;
       default:
-        srsgnb_assertion_failure("Invalid phase alphabet size={}", tp2_cfg_val.phase_alphabet_size);
+        srsran_assertion_failure("Invalid phase alphabet size={}", tp2_cfg_val.phase_alphabet_size);
     }
 
     switch (tp2_cfg_val.nof_beams) {
@@ -744,7 +744,7 @@ void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config& cfg)
         out_tp2_cfg.nof_beams = codebook_cfg_s::codebook_type_c_::type2_s_::nof_beams_opts::four;
         break;
       default:
-        srsgnb_assertion_failure("Invalid nof. beams={}", tp2_cfg_val.nof_beams);
+        srsran_assertion_failure("Invalid nof. beams={}", tp2_cfg_val.nof_beams);
     }
   }
 }
@@ -834,7 +834,7 @@ make_asn1_port_index_for_8_ranks(const csi_report_config::port_index_for_8_ranks
       break;
     }
     default:
-      srsgnb_assertion_failure("Invalid port index type={}", cfg.port_index_type);
+      srsran_assertion_failure("Invalid port index type={}", cfg.port_index_type);
   }
   return out;
 }
@@ -912,7 +912,7 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
             csi_report_cfg_s::report_cfg_type_c_::semi_persistent_on_pusch_s_::report_slot_cfg_opts::sl320;
         break;
       default:
-        srsgnb_assertion_failure("Invalid CSI report periodicity={}", rep_cfg_val.slot_cfg);
+        srsran_assertion_failure("Invalid CSI report periodicity={}", rep_cfg_val.slot_cfg);
     }
     for (const auto& offset : rep_cfg_val.report_slot_offset_list) {
       rep_cfg.report_slot_offset_list.push_back(offset);
@@ -959,7 +959,7 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
       out.report_quant.set_cri_ri_li_pmi_cqi();
       break;
     default:
-      srsgnb_assertion_failure("Invalid CSI report quantity={}", cfg.report_qty_type);
+      srsran_assertion_failure("Invalid CSI report quantity={}", cfg.report_qty_type);
   }
 
   if (cfg.report_freq_cfg.has_value()) {
@@ -1108,7 +1108,7 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
               csi_report_cfg_s::group_based_beam_report_c_::disabled_s_::nrof_reported_rs_opts::n4;
           break;
         default:
-          srsgnb_assertion_failure("Invalid nof. reported RS={}", cfg.nof_reported_rs.value());
+          srsran_assertion_failure("Invalid nof. reported RS={}", cfg.nof_reported_rs.value());
       }
     }
   }
@@ -1129,7 +1129,7 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
         out.cqi_table = csi_report_cfg_s::cqi_table_opts::spare1;
         break;
       default:
-        srsgnb_assertion_failure("Invalid CQI table={}", cfg.cqi_table.value());
+        srsran_assertion_failure("Invalid CQI table={}", cfg.cqi_table.value());
     }
   }
 
@@ -1141,7 +1141,7 @@ asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_report_conf
       out.subband_size = csi_report_cfg_s::subband_size_opts::value2;
       break;
     default:
-      srsgnb_assertion_failure("Invalid subband size={}", cfg.subband_size);
+      srsran_assertion_failure("Invalid subband size={}", cfg.subband_size);
   }
 
   for (const auto& port_idx : cfg.non_pmi_port_indication) {

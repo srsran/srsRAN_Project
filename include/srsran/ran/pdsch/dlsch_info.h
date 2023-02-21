@@ -55,8 +55,8 @@ struct dlsch_information {
   /// number of channel bits.
   float get_effective_code_rate() const
   {
-    srsgnb_assert(nof_dl_sch_bits.value() != 0, "DL-SCH number of bits must not be zero.");
-    srsgnb_assert(sch.nof_bits_per_cb.value() > sch.nof_filler_bits_per_cb.value(),
+    srsran_assert(nof_dl_sch_bits.value() != 0, "DL-SCH number of bits must not be zero.");
+    srsran_assert(sch.nof_bits_per_cb.value() > sch.nof_filler_bits_per_cb.value(),
                   "The number of bits per CB must be greater than the number of filler bits.");
     return static_cast<float>((sch.nof_bits_per_cb.value() - sch.nof_filler_bits_per_cb.value()) * sch.nof_cb) /
            static_cast<float>(nof_dl_sch_bits.value());

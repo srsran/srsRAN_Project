@@ -46,7 +46,7 @@ static cyclic_prefix get_cp(const uplink_processor::pucch_pdu& pdu)
     case pucch_format::FORMAT_4:
       return pdu.format4.cp;
     default:
-      srsgnb_assert(0, "Invalid PUCCH format={}", pdu.context.format);
+      srsran_assert(0, "Invalid PUCCH format={}", pdu.context.format);
       break;
   }
 
@@ -59,7 +59,7 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   // Check if all the symbols are present in the grid.
   span<const uplink_slot_pdu_entry> pdus = ul_pdu_repository.get_pdus(context.slot);
 
-  srsgnb_assert(!pdus.empty(),
+  srsran_assert(!pdus.empty(),
                 "Received notification for processing an uplink slot, but no PUSCH/PUCCH PDUs are expected to be "
                 "processed in the slot={}",
                 context.slot);
@@ -114,7 +114,7 @@ void upper_phy_rx_symbol_handler_impl::process_pusch(const uplink_processor::pus
   const pusch_processor::pdu_t& proc_pdu = pdu.pdu;
 
   // Temporal sanity check as PUSCH is only supported for data. Remove the check when the UCI is supported for PUSCH.
-  srsgnb_assert(proc_pdu.codeword.has_value(), "PUSCH PDU doesn't contain data. Currently, that mode is not supported");
+  srsran_assert(proc_pdu.codeword.has_value(), "PUSCH PDU doesn't contain data. Currently, that mode is not supported");
 
   rx_softbuffer_identifier id;
   id.rnti        = static_cast<unsigned>(proc_pdu.rnti);

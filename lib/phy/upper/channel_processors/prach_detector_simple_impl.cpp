@@ -22,7 +22,7 @@ using namespace srsran;
 
 prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& input, const configuration& config)
 {
-  srsgnb_assert(config.start_preamble_index + config.nof_preamble_indices <= prach_constants::MAX_NUM_PREAMBLES,
+  srsran_assert(config.start_preamble_index + config.nof_preamble_indices <= prach_constants::MAX_NUM_PREAMBLES,
                 "The start preamble index {} and the number of preambles to detect {}, exceed the maximum of 64.",
                 config.start_preamble_index,
                 config.nof_preamble_indices);
@@ -31,7 +31,7 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
   prach_preamble_information preamble_info = get_prach_preamble_long_info(config.format);
 
   // Verify sequence lengths match.
-  srsgnb_assert(input.get_sequence_length() == preamble_info.sequence_length,
+  srsran_assert(input.get_sequence_length() == preamble_info.sequence_length,
                 "The input buffer sequence length {} is not equal to the expected preamble sequence length {}.",
                 input.get_sequence_length(),
                 preamble_info.sequence_length);
@@ -43,7 +43,7 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
 
   // Get cyclic shift.
   unsigned N_cs = prach_cyclic_shifts_get(preamble_info.scs, config.restricted_set, config.zero_correlation_zone);
-  srsgnb_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Reserved cyclic shift.");
+  srsran_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Reserved cyclic shift.");
 
   // Calculate maximum delay due to the cyclic prefix.
   phy_time_unit time_advance_max = preamble_info.cp_length;

@@ -49,7 +49,7 @@ template <typename builder_type, typename pdu_type>
 static void
 add_pdcch_pdus_to_builder(builder_type& builder, span<const pdu_type> pdcch_info, span<const dci_payload> payloads)
 {
-  srsgnb_assert(pdcch_info.size() == payloads.size(), "Size mismatch");
+  srsran_assert(pdcch_info.size() == payloads.size(), "Size mismatch");
 
   if (pdcch_info.empty()) {
     return;
@@ -194,7 +194,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
 {
-  srsgnb_assert(!dl_data.sib1_pdus.empty() || !dl_data.rar_pdus.empty() || !dl_data.ue_pdus.empty(),
+  srsran_assert(!dl_data.sib1_pdus.empty() || !dl_data.rar_pdus.empty() || !dl_data.ue_pdus.empty(),
                 "Received a mac_dl_data_result object with zero payloads");
 
   fapi::tx_data_request_message msg;

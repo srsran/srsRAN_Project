@@ -29,8 +29,8 @@ public:
                                     std::unique_ptr<port_channel_estimator>             ch_est_) :
     helper(std::move(prg_)), sequence_collection(std::move(sequence_collection_)), ch_estimator(std::move(ch_est_))
   {
-    srsgnb_assert(sequence_collection, "Invalid sequence collection.");
-    srsgnb_assert(ch_estimator, "Invalid port channel estimator.");
+    srsran_assert(sequence_collection, "Invalid sequence collection.");
+    srsran_assert(ch_estimator, "Invalid port channel estimator.");
   }
 
   // See interface for documentation.

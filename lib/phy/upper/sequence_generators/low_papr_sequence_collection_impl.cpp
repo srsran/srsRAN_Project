@@ -49,7 +49,7 @@ span<const cf_t> low_papr_sequence_collection_impl::get(unsigned u, unsigned v, 
   std::array<unsigned, 3> indexes    = {u, v, alpha_idx};
 
   // Make sure the indexes are valid.
-  srsgnb_assert(u < dimensions[1] && v < dimensions[2] && alpha_idx < dimensions[3],
+  srsran_assert(u < dimensions[1] && v < dimensions[2] && alpha_idx < dimensions[3],
                 "The sequence collection was initialized with dimension sizes {} and it is trying to access {}",
                 span<const unsigned>(dimensions),
                 span<const unsigned>(indexes));

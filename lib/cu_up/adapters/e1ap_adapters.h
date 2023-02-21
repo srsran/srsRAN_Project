@@ -25,27 +25,27 @@ public:
 
   cu_cp_e1_setup_response on_cu_cp_e1_setup_request_received(const srsran::cu_cp_e1_setup_request& msg) override
   {
-    srsgnb_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
+    srsran_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
     return cu_up_handler->handle_cu_cp_e1_setup_request(msg);
   }
 
   e1ap_bearer_context_setup_response
   on_bearer_context_setup_request_received(const e1ap_bearer_context_setup_request& msg) override
   {
-    srsgnb_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
+    srsran_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
     return cu_up_handler->handle_bearer_context_setup_request(msg);
   }
 
   e1ap_bearer_context_modification_response
   on_bearer_context_modification_request_received(const e1ap_bearer_context_modification_request& msg) override
   {
-    srsgnb_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
+    srsran_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
     return cu_up_handler->handle_bearer_context_modification_request(msg);
   }
 
   void on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) override
   {
-    srsgnb_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
+    srsran_assert(cu_up_handler != nullptr, "CU-UP handler must not be nullptr");
     return cu_up_handler->handle_bearer_context_release_command(msg);
   }
 

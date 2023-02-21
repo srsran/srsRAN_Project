@@ -61,7 +61,7 @@ public:
   template <typename T>
   constexpr unsigned get_dft_size(T scs_Hz) const
   {
-    srsgnb_assert(is_valid(scs_Hz), "Subcarrier spacing must be valid.");
+    srsran_assert(is_valid(scs_Hz), "Subcarrier spacing must be valid.");
     return value / static_cast<value_type>(scs_Hz);
   }
 
@@ -143,7 +143,7 @@ private:
   /// Private constructor.
   constexpr explicit sampling_rate(value_type value_) : value(value_)
   {
-    srsgnb_assert(is_valid(15000), "The sampling rate must be multiple of 15kHz.");
+    srsran_assert(is_valid(15000), "The sampling rate must be multiple of 15kHz.");
   }
 
   /// Actual value in hertz.

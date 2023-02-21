@@ -52,7 +52,7 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
   ss.monitoring_slot_periodicity_and_offset_present = true;
   search_space_s::monitoring_slot_periodicity_and_offset_c_::types period;
   bool success = asn1::number_to_enum(period, cfg.monitoring_slot_period);
-  srsgnb_assert(success, "Invalid slot period");
+  srsran_assert(success, "Invalid slot period");
   ss.monitoring_slot_periodicity_and_offset.set(period);
   switch (ss.monitoring_slot_periodicity_and_offset.type().value) {
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1:
@@ -100,7 +100,7 @@ asn1::rrc_nr::search_space_s srsran::srs_du::make_asn1_rrc_search_space(const se
       ss.monitoring_slot_periodicity_and_offset.sl2560() = cfg.monitoring_slot_offset;
       break;
     default:
-      srsgnb_assertion_failure("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset);
+      srsran_assertion_failure("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset);
   }
   if (cfg.duration != 1) {
     ss.dur_present = true;
@@ -243,13 +243,13 @@ void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmr
         out.dmrs_add_position = dmrs_dl_cfg_s::dmrs_add_position_opts::pos3;
         break;
       default:
-        srsgnb_assertion_failure("Invalid DMRS DL Add. Position={}", cfg.additional_positions.value());
+        srsran_assertion_failure("Invalid DMRS DL Add. Position={}", cfg.additional_positions.value());
     }
   }
 
   if (cfg.max_length.has_value() && cfg.max_length.value() != dmrs_max_length::len2) {
     // Note: Strange ASN1 generated code where there is no max length field.
-    srsgnb_assertion_failure("Invalid DMRS DL max. length={}", cfg.max_length.value());
+    srsran_assertion_failure("Invalid DMRS DL max. length={}", cfg.max_length.value());
   }
 
   if (cfg.scrambling_id0.has_value()) {
@@ -294,7 +294,7 @@ void make_asn1_rrc_qcl_info(asn1::rrc_nr::qcl_info_s& out, const qcl_info& cfg)
       out.qcl_type = qcl_info_s::qcl_type_opts::type_d;
       break;
     default:
-      srsgnb_assertion_failure("Invalid QCL Type={}", cfg.qcl_type);
+      srsran_assertion_failure("Invalid QCL Type={}", cfg.qcl_type);
   }
 }
 
@@ -312,7 +312,7 @@ make_asn1_rrc_pdsch_time_domain_alloc_list(const pdsch_time_domain_resource_allo
       out.map_type = pdsch_time_domain_res_alloc_s::map_type_opts::type_b;
       break;
     default:
-      srsgnb_assertion_failure("Invalid SCH mapping Type={}", cfg.map_type);
+      srsran_assertion_failure("Invalid SCH mapping Type={}", cfg.map_type);
   }
 
   out.start_symbol_and_len = ofdm_symbol_range_to_sliv(cfg.symbols);
@@ -384,7 +384,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
         out.vrb_to_prb_interleaver = pdsch_cfg_s::vrb_to_prb_interleaver_opts::n4;
         break;
       default:
-        srsgnb_assertion_failure("Invalid VRB-to-PRB Interleaver={}", dest.vrb_to_prb_itlvr.value());
+        srsran_assertion_failure("Invalid VRB-to-PRB Interleaver={}", dest.vrb_to_prb_itlvr.value());
     }
   }
 
@@ -400,7 +400,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
       out.res_alloc = pdsch_cfg_s::res_alloc_opts::dyn_switch;
       break;
     default:
-      srsgnb_assertion_failure("Invalid resource allocation type={}", dest.res_alloc);
+      srsran_assertion_failure("Invalid resource allocation type={}", dest.res_alloc);
   }
 
   // PDSCH Time Domain Allocation.
@@ -426,7 +426,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
       out.rbg_size = pdsch_cfg_s::rbg_size_opts::cfg2;
       break;
     default:
-      srsgnb_assertion_failure("Invalid RBG size={}", dest.rbg_sz);
+      srsran_assertion_failure("Invalid RBG size={}", dest.rbg_sz);
   }
 
   // PRB Bundling.
@@ -442,7 +442,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
         st_bundling.bundle_size = pdsch_cfg_s::prb_bundling_type_c_::static_bundling_s_::bundle_size_opts::wideband;
         break;
       default:
-        srsgnb_assertion_failure("Invalid static PRB bundling size={}", bdlng.sz.value());
+        srsran_assertion_failure("Invalid static PRB bundling size={}", bdlng.sz.value());
     }
   } else {
     // Dynamic bundling.
@@ -466,7 +466,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
             pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set1_opts::n4_wideband;
         break;
       default:
-        srsgnb_assertion_failure("Invalid dynamic PRB bundling set 1 size={}", bdlng.sz_set1.value());
+        srsran_assertion_failure("Invalid dynamic PRB bundling set 1 size={}", bdlng.sz_set1.value());
     }
     dy_bundling.bundle_size_set2_present = true;
     switch (bdlng.sz_set2.value()) {
@@ -478,7 +478,7 @@ void calculate_pdsch_config_diff(asn1::rrc_nr::pdsch_cfg_s& out, const pdsch_con
             pdsch_cfg_s::prb_bundling_type_c_::dyn_bundling_s_::bundle_size_set2_opts::wideband;
         break;
       default:
-        srsgnb_assertion_failure("Invalid dynamic PRB bundling set 2 size={}", bdlng.sz_set2.value());
+        srsran_assertion_failure("Invalid dynamic PRB bundling set 2 size={}", bdlng.sz_set2.value());
     }
   }
 
@@ -574,7 +574,7 @@ void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& 
         out.max_code_rate = pucch_max_code_rate_opts::zero_dot80;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PUCCH Common Format 1 Max. Code Rate={}", cfg.max_c_rate);
+        srsran_assertion_failure("Invalid PUCCH Common Format 1 Max. Code Rate={}", cfg.max_c_rate);
     }
   }
   if (cfg.nof_slots == pucch_common_all_formats::num_of_slots::not_set) {
@@ -592,7 +592,7 @@ void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_cfg_s& 
         out.nrof_slots = pucch_format_cfg_s::nrof_slots_opts::n8;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PUCCH Common Format 1 No. of slots={}", cfg.nof_slots);
+        srsran_assertion_failure("Invalid PUCCH Common Format 1 No. of slots={}", cfg.nof_slots);
     }
   }
 }
@@ -649,7 +649,7 @@ asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const puc
           format4.occ_idx = pucch_format4_s::occ_idx_opts::n3;
           break;
         default:
-          srsgnb_assertion_failure("Invalid PUCCH Format 4 index={}", cfg.format_4.occ_index);
+          srsran_assertion_failure("Invalid PUCCH Format 4 index={}", cfg.format_4.occ_index);
       }
       switch (cfg.format_4.occ_length) {
         case pucch_f4_occ_len::n2:
@@ -659,11 +659,11 @@ asn1::rrc_nr::pucch_res_s srsran::srs_du::make_asn1_rrc_pucch_resource(const puc
           format4.occ_len = pucch_format4_s::occ_len_opts::n4;
           break;
         default:
-          srsgnb_assertion_failure("Invalid PUCCH Format 4 length={}", cfg.format_4.occ_length);
+          srsran_assertion_failure("Invalid PUCCH Format 4 length={}", cfg.format_4.occ_length);
       }
     } break;
     default:
-      srsgnb_assertion_failure("Invalid PDCCH resource format={}", cfg.format);
+      srsran_assertion_failure("Invalid PDCCH resource format={}", cfg.format);
   }
   return pucch_res;
 }
@@ -736,7 +736,7 @@ srsran::srs_du::make_asn1_rrc_sr_resource(const scheduling_request_resource_conf
       period_and_offset       = cfg.offset;
     } break;
     default:
-      srsgnb_assertion_failure("Invalid SR periodicity={}", cfg.period);
+      srsran_assertion_failure("Invalid SR periodicity={}", cfg.period);
   }
   return sr_res_cfg;
 }
@@ -837,7 +837,7 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
         out_trans_preco_dis.max_nrof_ports = ptrs_ul_cfg_s::transform_precoder_disabled_s_::max_nrof_ports_opts::n2;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PTRS UL Cfg Max. Ports={}", cfg_trans_preco_dis.max_ports);
+        srsran_assertion_failure("Invalid PTRS UL Cfg Max. Ports={}", cfg_trans_preco_dis.max_ports);
     }
 
     if (cfg_trans_preco_dis.res_elem_offset !=
@@ -856,7 +856,7 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
               ptrs_ul_cfg_s::transform_precoder_disabled_s_::res_elem_offset_opts::offset11;
           break;
         default:
-          srsgnb_assertion_failure("Invalid Resource Element Offset={}", cfg_trans_preco_dis.res_elem_offset);
+          srsran_assertion_failure("Invalid Resource Element Offset={}", cfg_trans_preco_dis.res_elem_offset);
       }
     }
 
@@ -874,7 +874,7 @@ void make_asn1_rrc_ptrs_ul_cfg(asn1::rrc_nr::ptrs_ul_cfg_s& out, const ptrs_upli
         out_trans_preco_dis.ptrs_pwr = ptrs_ul_cfg_s::transform_precoder_disabled_s_::ptrs_pwr_opts::p11;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PTRS UL Cfg Power={}", cfg_trans_preco_dis.power);
+        srsran_assertion_failure("Invalid PTRS UL Cfg Power={}", cfg_trans_preco_dis.power);
     }
   }
 
@@ -914,7 +914,7 @@ void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
         out.dmrs_add_position = dmrs_ul_cfg_s::dmrs_add_position_opts::pos3;
         break;
       default:
-        srsgnb_assertion_failure("Invalid UL DMRS Add. pos={}", dest.additional_positions);
+        srsran_assertion_failure("Invalid UL DMRS Add. pos={}", dest.additional_positions);
     }
   }
 
@@ -993,7 +993,7 @@ srsran::srs_du::make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power
       sri_pwr_ctl.sri_pusch_closed_loop_idx = sri_pusch_pwr_ctrl_s::sri_pusch_closed_loop_idx_opts::i1;
       break;
     default:
-      srsgnb_assertion_failure("Invalid SRI Closed loop idx={}", cfg.closed_loop_idx);
+      srsran_assertion_failure("Invalid SRI Closed loop idx={}", cfg.closed_loop_idx);
   }
   return sri_pwr_ctl;
 }
@@ -1026,7 +1026,7 @@ void make_asn1_rrc_alpha(asn1::rrc_nr::alpha_e& out, const alpha& cfg)
       out = alpha_opts::alpha1;
       break;
     default:
-      srsgnb_assertion_failure("Invalid alpha={}", cfg);
+      srsran_assertion_failure("Invalid alpha={}", cfg);
   }
 }
 
@@ -1151,7 +1151,7 @@ void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_on_pusc
       uci_asn1.scaling.value = uci_on_pusch_s::scaling_opts::f1;
       break;
     default:
-      srsgnb_assertion_failure("Invalid Alpha Value Scaling={}", uci_in.scaling);
+      srsran_assertion_failure("Invalid Alpha Value Scaling={}", uci_in.scaling);
   }
 
   if (uci_in.beta_offsets_cfg.has_value()) {
@@ -1165,7 +1165,7 @@ void fill_uci_on_pusch(asn1::rrc_nr::uci_on_pusch_s& uci_asn1, const uci_on_pusc
       auto& input_dynamic = variant_get<uci_on_pusch::beta_offsets_dynamic>(uci_in.beta_offsets_cfg.value());
       auto& out_dynamic   = uci_asn1.beta_offsets.set_dyn();
 
-      srsgnb_assert(input_dynamic.size() == out_dynamic.max_size(), "Mismatch between input and output vectors");
+      srsran_assert(input_dynamic.size() == out_dynamic.max_size(), "Mismatch between input and output vectors");
 
       for (size_t n = 0; n != input_dynamic.size(); ++n) {
         fill_uci_beta_offset(out_dynamic[n], input_dynamic[n]);
@@ -1190,7 +1190,7 @@ make_asn1_rrc_pusch_time_domain_alloc_list(const pusch_time_domain_resource_allo
       out.map_type = pusch_time_domain_res_alloc_s::map_type_opts::type_b;
       break;
     default:
-      srsgnb_assertion_failure("Invalid SCH mapping Type={}", cfg.map_type);
+      srsran_assertion_failure("Invalid SCH mapping Type={}", cfg.map_type);
   }
 
   out.start_symbol_and_len = ofdm_symbol_range_to_sliv(cfg.symbols);
@@ -1214,7 +1214,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
         out.tx_cfg = pusch_cfg_s::tx_cfg_opts::non_codebook;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PUSCH Tx cfg={}", dest.tx_cfg);
+        srsran_assertion_failure("Invalid PUSCH Tx cfg={}", dest.tx_cfg);
     }
   }
 
@@ -1263,7 +1263,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
       out.res_alloc = pusch_cfg_s::res_alloc_opts::dyn_switch;
       break;
     default:
-      srsgnb_assertion_failure("Invalid PUSCH Resource Allocation={}", dest.res_alloc);
+      srsran_assertion_failure("Invalid PUSCH Resource Allocation={}", dest.res_alloc);
   }
 
   // PUSCH Time Domain Allocation.
@@ -1304,7 +1304,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
         out.transform_precoder = pusch_cfg_s::transform_precoder_opts::disabled;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PUSCH Transform Precoder={}", dest.trans_precoder);
+        srsran_assertion_failure("Invalid PUSCH Transform Precoder={}", dest.trans_precoder);
     }
   }
 
@@ -1321,7 +1321,7 @@ void calculate_pusch_config_diff(asn1::rrc_nr::pusch_cfg_s& out, const pusch_con
         out.codebook_subset = pusch_cfg_s::codebook_subset_opts::non_coherent;
         break;
       default:
-        srsgnb_assertion_failure("Invalid Codebook subset={}", dest.cb_subset);
+        srsran_assertion_failure("Invalid Codebook subset={}", dest.cb_subset);
     }
   }
 
@@ -1398,7 +1398,7 @@ asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_
       srs_res_set.usage = srs_res_set_s::usage_opts::ant_switching;
       break;
     default:
-      srsgnb_assertion_failure("Invalid SRS resource set usage={}", cfg.srs_res_set_usage);
+      srsran_assertion_failure("Invalid SRS resource set usage={}", cfg.srs_res_set_usage);
   }
 
   if (cfg.srs_pwr_ctrl_alpha != alpha::not_set) {
@@ -1422,7 +1422,7 @@ asn1::rrc_nr::srs_res_set_s srsran::srs_du::make_asn1_rrc_srs_res_set(const srs_
             srs_res_set_s::srs_pwr_ctrl_adjustment_states_opts::separate_closed_loop;
         break;
       default:
-        srsgnb_assertion_failure("Invalid Power Control Adj. state={}", cfg.pwr_ctrl_adj_states);
+        srsran_assertion_failure("Invalid Power Control Adj. state={}", cfg.pwr_ctrl_adj_states);
     }
   }
 
@@ -1512,7 +1512,7 @@ void make_asn1_rrc_srs_config_perioidicity_and_offset(asn1::rrc_nr::srs_periodic
       p_and_o       = cfg.value;
     } break;
     default:
-      srsgnb_assertion_failure("Invalid periodicity and offset={}", cfg.type);
+      srsran_assertion_failure("Invalid periodicity and offset={}", cfg.type);
   }
 }
 
@@ -1532,7 +1532,7 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
       res.nrof_srs_ports = srs_res_s::nrof_srs_ports_opts::ports4;
       break;
     default:
-      srsgnb_assertion_failure("Invalid number of SRS ports={}", cfg.nof_ports);
+      srsran_assertion_failure("Invalid number of SRS ports={}", cfg.nof_ports);
   }
 
   if (cfg.ptrs_port != srs_config::srs_resource::ptrs_port_index::not_set) {
@@ -1545,7 +1545,7 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
         res.ptrs_port_idx = srs_res_s::ptrs_port_idx_opts::n1;
         break;
       default:
-        srsgnb_assertion_failure("Invalid PTRS port={}", cfg.ptrs_port);
+        srsran_assertion_failure("Invalid PTRS port={}", cfg.ptrs_port);
     }
   }
 
@@ -1571,7 +1571,7 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
       res.res_map.nrof_symbols = srs_res_s::res_map_s_::nrof_symbols_opts::n4;
       break;
     default:
-      srsgnb_assertion_failure("Invalid number of OFDM symb={}", cfg.res_mapping.nof_symb);
+      srsran_assertion_failure("Invalid number of OFDM symb={}", cfg.res_mapping.nof_symb);
   }
   switch (cfg.res_mapping.re_factor) {
     case srs_config::srs_resource::resource_mapping::repetition_factor::n1:
@@ -1584,7 +1584,7 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
       res.res_map.repeat_factor = srs_res_s::res_map_s_::repeat_factor_opts::n4;
       break;
     default:
-      srsgnb_assertion_failure("Invalid repetition factor={}", cfg.res_mapping.re_factor);
+      srsran_assertion_failure("Invalid repetition factor={}", cfg.res_mapping.re_factor);
   }
 
   res.freq_domain_position = cfg.freq_domain_pos;
@@ -1605,7 +1605,7 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
       res.group_or_seq_hop = srs_res_s::group_or_seq_hop_opts::seq_hop;
       break;
     default:
-      srsgnb_assertion_failure("Invalid grp or seq hop={}", cfg.grp_or_seq_hop);
+      srsran_assertion_failure("Invalid grp or seq hop={}", cfg.grp_or_seq_hop);
   }
 
   switch (cfg.res_type) {
@@ -1623,7 +1623,7 @@ asn1::rrc_nr::srs_res_s srsran::srs_du::make_asn1_rrc_srs_res(const srs_config::
                                                        cfg.semi_pers_res_type_periodicity_and_offset);
     } break;
     default:
-      srsgnb_assertion_failure("Invalid resource type={}", cfg.res_type);
+      srsran_assertion_failure("Invalid resource type={}", cfg.res_type);
   }
 
   res.seq_id = cfg.sequence_id;
@@ -1750,7 +1750,7 @@ void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_
             pdsch_code_block_group_tx_s::max_code_block_groups_per_transport_block_opts::n8;
         break;
       default:
-        srsgnb_assertion_failure("Invalid xOverhead={}", dest.x_ov_head);
+        srsran_assertion_failure("Invalid xOverhead={}", dest.x_ov_head);
     }
   } else if (src.code_block_group_tx.has_value() && not dest.code_block_group_tx.has_value()) {
     out.code_block_group_tx_present = true;
@@ -1770,7 +1770,7 @@ void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_
         out.xoverhead = pdsch_serving_cell_cfg_s::xoverhead_opts::xoh18;
         break;
       default:
-        srsgnb_assertion_failure("Invalid xOverhead={}", dest.x_ov_head);
+        srsran_assertion_failure("Invalid xOverhead={}", dest.x_ov_head);
     }
   }
 
@@ -1796,7 +1796,7 @@ void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_cell_cfg_
         out.nrof_harq_processes_for_pdsch = pdsch_serving_cell_cfg_s::nrof_harq_processes_for_pdsch_opts::n16;
         break;
       default:
-        srsgnb_assertion_failure("Invalid max. nof.HARQ process for PDSCH={}", dest.nof_harq_proc);
+        srsran_assertion_failure("Invalid max. nof.HARQ process for PDSCH={}", dest.nof_harq_proc);
     }
   }
 
@@ -1890,7 +1890,7 @@ srsran::srs_du::make_asn1_rrc_scheduling_request(const scheduling_request_to_add
         req.sr_prohibit_timer = sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms128;
         break;
       default:
-        srsgnb_assertion_failure("Invalid SR prohibit timer={}", cfg.prohibit_timer.value());
+        srsran_assertion_failure("Invalid SR prohibit timer={}", cfg.prohibit_timer.value());
     }
   }
 
@@ -1911,7 +1911,7 @@ srsran::srs_du::make_asn1_rrc_scheduling_request(const scheduling_request_to_add
       req.sr_trans_max = sched_request_to_add_mod_s::sr_trans_max_opts::n64;
       break;
     default:
-      srsgnb_assertion_failure("Invalid SR trans. max={}", cfg.max_tx);
+      srsran_assertion_failure("Invalid SR trans. max={}", cfg.max_tx);
   }
 
   return req;
@@ -1954,7 +1954,7 @@ void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_config& cf
       out.retx_bsr_timer = bsr_cfg_s::retx_bsr_timer_opts::sf10240;
       break;
     default:
-      srsgnb_assertion_failure("Invalid BSR Retx. Timer={}", cfg.retx_timer);
+      srsran_assertion_failure("Invalid BSR Retx. Timer={}", cfg.retx_timer);
   }
 
   switch (cfg.periodic_timer) {
@@ -2007,7 +2007,7 @@ void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_config& cf
       out.periodic_bsr_timer = bsr_cfg_s::periodic_bsr_timer_opts::infinity;
       break;
     default:
-      srsgnb_assertion_failure("Invalid Periodic BSR Timer={}", cfg.periodic_timer);
+      srsran_assertion_failure("Invalid Periodic BSR Timer={}", cfg.periodic_timer);
   }
 
   if (cfg.lc_sr_delay_timer.has_value()) {
@@ -2035,7 +2035,7 @@ void make_asn1_rrc_bsr_config(asn1::rrc_nr::bsr_cfg_s& out, const bsr_config& cf
         out.lc_ch_sr_delay_timer = bsr_cfg_s::lc_ch_sr_delay_timer_opts::sf2560;
         break;
       default:
-        srsgnb_assertion_failure("Invalid BSR LC SR Delay Timer={}", cfg.lc_sr_delay_timer.value());
+        srsran_assertion_failure("Invalid BSR LC SR Delay Timer={}", cfg.lc_sr_delay_timer.value());
     }
   }
 }
@@ -2071,7 +2071,7 @@ asn1::rrc_nr::tag_s srsran::srs_du::make_asn1_rrc_tag_config(const tag& cfg)
       tag_cfg.time_align_timer = time_align_timer_opts::infinity;
       break;
     default:
-      srsgnb_assertion_failure("Invalid Time Align. Timer={}", cfg.ta_timer);
+      srsran_assertion_failure("Invalid Time Align. Timer={}", cfg.ta_timer);
   }
 
   return tag_cfg;
@@ -2105,7 +2105,7 @@ void make_asn1_rrc_phr_config(asn1::rrc_nr::phr_cfg_s& out, const phr_config& cf
       out.phr_periodic_timer = phr_cfg_s::phr_periodic_timer_opts::infinity;
       break;
     default:
-      srsgnb_assertion_failure("Invalid PHR Periodic Timer={}", cfg.periodic_timer);
+      srsran_assertion_failure("Invalid PHR Periodic Timer={}", cfg.periodic_timer);
   }
 
   switch (cfg.prohibit_timer) {
@@ -2134,7 +2134,7 @@ void make_asn1_rrc_phr_config(asn1::rrc_nr::phr_cfg_s& out, const phr_config& cf
       out.phr_prohibit_timer = phr_cfg_s::phr_prohibit_timer_opts::sf1000;
       break;
     default:
-      srsgnb_assertion_failure("Invalid PHR Prohibit Timer={}", cfg.prohibit_timer);
+      srsran_assertion_failure("Invalid PHR Prohibit Timer={}", cfg.prohibit_timer);
   }
 
   switch (cfg.power_factor_change) {
@@ -2151,7 +2151,7 @@ void make_asn1_rrc_phr_config(asn1::rrc_nr::phr_cfg_s& out, const phr_config& cf
       out.phr_tx_pwr_factor_change = phr_cfg_s::phr_tx_pwr_factor_change_opts::infinity;
       break;
     default:
-      srsgnb_assertion_failure("Invalid PHR Prohibit Timer={}", cfg.power_factor_change);
+      srsran_assertion_failure("Invalid PHR Prohibit Timer={}", cfg.power_factor_change);
   }
 
   out.multiple_phr         = cfg.multiple_phr;
@@ -2166,7 +2166,7 @@ void make_asn1_rrc_phr_config(asn1::rrc_nr::phr_cfg_s& out, const phr_config& cf
       out.phr_mode_other_cg = phr_cfg_s::phr_mode_other_cg_opts::virtual_value;
       break;
     default:
-      srsgnb_assertion_failure("Invalid PHR Mode={}", cfg.phr_mode);
+      srsran_assertion_failure("Invalid PHR Mode={}", cfg.phr_mode);
   }
 }
 

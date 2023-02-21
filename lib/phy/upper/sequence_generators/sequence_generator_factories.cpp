@@ -24,13 +24,13 @@ public:
   low_papr_sequence_collection_sw_factory(std::shared_ptr<low_papr_sequence_generator_factory>& lpg_factory_) :
     lpg_factory(std::move(lpg_factory_))
   {
-    srsgnb_assert(lpg_factory, "Invalid generator factory.");
+    srsran_assert(lpg_factory, "Invalid generator factory.");
   }
 
   std::unique_ptr<low_papr_sequence_collection> create(unsigned m, unsigned delta, span<const float> alphas) override
   {
     std::unique_ptr<low_papr_sequence_generator> generator = lpg_factory->create();
-    srsgnb_assert(generator, "Invalid generator.");
+    srsran_assert(generator, "Invalid generator.");
 
     return std::make_unique<low_papr_sequence_collection_impl>(*generator, m, delta, alphas);
   }

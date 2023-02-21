@@ -15,16 +15,16 @@ using namespace srsran;
 // Helper macro to assert the RB allocation of the pattern keeping the file and line for code tracing purposes.
 #define re_pattern_assert()                                                                                            \
   do {                                                                                                                 \
-    srsgnb_assert(rb_begin < MAX_RB, "RB begin ({}) is out-of-range", rb_begin);                                       \
-    srsgnb_assert(rb_end > 0 && rb_end <= MAX_RB, "RB end ({}) is out-of-range", rb_end);                              \
-    srsgnb_assert(rb_stride > 0, "RB stride ({}) is out-of-range", rb_stride);                                         \
+    srsran_assert(rb_begin < MAX_RB, "RB begin ({}) is out-of-range", rb_begin);                                       \
+    srsran_assert(rb_end > 0 && rb_end <= MAX_RB, "RB end ({}) is out-of-range", rb_end);                              \
+    srsran_assert(rb_stride > 0, "RB stride ({}) is out-of-range", rb_stride);                                         \
   } while (false)
 
 void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned symbol) const
 {
   // Verify attributes and inputs.
   re_pattern_assert();
-  srsgnb_assert(
+  srsran_assert(
       mask.size() >= rb_end, "Provided mask size ({}) is too small. The minimum is {}.", (unsigned)mask.size(), rb_end);
 
   // Skip if the symbol is not set to true.
@@ -57,7 +57,7 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
 {
   // Verify attributes and inputs.
   re_pattern_assert();
-  srsgnb_assert(
+  srsran_assert(
       mask.size() >= rb_end, "Provided mask size ({}) is too small. The minimum is {}.", (unsigned)mask.size(), rb_end);
 
   // Skip if the symbol is not used.
@@ -115,7 +115,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
   }
 
   // If reached here, no pattern was matched. Check if there is free space.
-  srsgnb_assert(
+  srsran_assert(
       !list.full(), "RE pattern list is full. It seems {} maximum entries are not enough.", (unsigned)MAX_RE_PATTERN);
 
   // Append pattern.

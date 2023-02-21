@@ -42,7 +42,7 @@ template <>
 span<const cf_t> get_w_star<1>(unsigned /*length*/, unsigned i)
 {
   static constexpr std::array<cf_t, 1> w = {{{1.0F, 0.0F}}};
-  srsgnb_assert(i == 0, "Invalid sequence index {} for sequences of length {}.", i, 1);
+  srsran_assert(i == 0, "Invalid sequence index {} for sequences of length {}.", i, 1);
   return {w};
 }
 
@@ -55,7 +55,7 @@ span<const cf_t> get_w_star<2>(unsigned length, unsigned i)
   if (length != N) {
     return get_w_star<N - 1>(length, i);
   }
-  srsgnb_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
+  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
   return {w.sequences[i]};
 }
 
@@ -68,7 +68,7 @@ span<const cf_t> get_w_star<3>(unsigned length, unsigned i)
   if (length != N) {
     return get_w_star<N - 1>(length, i);
   }
-  srsgnb_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
+  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
   return {w.sequences[i]};
 }
 
@@ -81,7 +81,7 @@ span<const cf_t> get_w_star<4>(unsigned length, unsigned i)
   if (length != N) {
     return get_w_star<N - 1>(length, i);
   }
-  srsgnb_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
+  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
   return {w.sequences[i]};
 }
 
@@ -95,7 +95,7 @@ span<const cf_t> get_w_star<5>(unsigned length, unsigned i)
   if (length != N) {
     return get_w_star<N - 1>(length, i);
   }
-  srsgnb_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
+  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
   return {w.sequences[i]};
 }
 
@@ -113,7 +113,7 @@ span<const cf_t> get_w_star<6>(unsigned length, unsigned i)
   if (length != N) {
     return get_w_star<N - 1>(length, i);
   }
-  srsgnb_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
+  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
   return {w.sequences[i]};
 }
 
@@ -135,40 +135,40 @@ span<const cf_t> get_w_star<7>(unsigned length, unsigned i)
   if (length != N) {
     return get_w_star<N - 1>(length, i);
   }
-  srsgnb_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
+  srsran_assert(i < N, "Invalid sequence index {} for sequences of length {}.", i, N);
   return {w.sequences[i]};
 }
 } // namespace
 
 static void validate_config(const pucch_detector::format1_configuration& config)
 {
-  srsgnb_assert(config.start_symbol_index <= 10,
+  srsran_assert(config.start_symbol_index <= 10,
                 "Setting {} as the first PUCCH symbol index, but only values between 0 and 10 are valid.",
                 config.start_symbol_index);
-  srsgnb_assert((config.nof_symbols >= 4) && (config.nof_symbols <= 14),
+  srsran_assert((config.nof_symbols >= 4) && (config.nof_symbols <= 14),
                 "Requiring {} OFDM symbols for PUCCH, but only values between 4 and 14 are valid.",
                 config.nof_symbols);
-  srsgnb_assert(
+  srsran_assert(
       config.nof_symbols + config.start_symbol_index <= 14,
       "The sum of the starting OFDM symbol (i.e., {}) and the number of allocated symbols (i.e., {}) cannot exceed 14.",
       config.start_symbol_index,
       config.nof_symbols);
-  srsgnb_assert(config.starting_prb <= 274,
+  srsran_assert(config.starting_prb <= 274,
                 "Setting {} as the PRB allocated to PUCCH, but only values between 0 and 274 are valid.",
                 config.starting_prb);
   if (config.second_hop_prb.has_value()) {
-    srsgnb_assert(config.second_hop_prb.value() <= 274,
+    srsran_assert(config.second_hop_prb.value() <= 274,
                   "Setting {} as the PRB allocated to PUCCH after frequency hopping, but only values between 0 and 274 "
                   "are valid.",
                   config.second_hop_prb.value());
   }
-  srsgnb_assert(config.time_domain_occ <= 6,
+  srsran_assert(config.time_domain_occ <= 6,
                 "Setting {} as the time-domain OCC index, but only values between 0 and 6 are valid.",
                 config.time_domain_occ);
-  srsgnb_assert(config.n_id <= 1023,
+  srsran_assert(config.n_id <= 1023,
                 "Initializing the pseudorandom generator with {}, but only values between 0 and 1023 are valid.",
                 config.n_id);
-  srsgnb_assert(config.nof_harq_ack <= 2, "At most two ACK bits - requested {}.", config.nof_harq_ack);
+  srsran_assert(config.nof_harq_ack <= 2, "At most two ACK bits - requested {}.", config.nof_harq_ack);
 }
 
 // Given the detected symbol and the corresponding equivalent noise variance, demodulates the symbol into nof_bits bits.
@@ -323,7 +323,7 @@ static void compute_alpha_indices(span<unsigned>           indices,
                                   unsigned                 nof_symbols_per_slot,
                                   pseudo_random_generator& prg)
 {
-  srsgnb_assert(indices.size() == nof_symbols / 2,
+  srsran_assert(indices.size() == nof_symbols / 2,
                 "The number of alpha indices {} does not match with the number of allocated symbols {}.",
                 indices.size(),
                 nof_symbols);
@@ -355,7 +355,7 @@ void pucch_detector_impl::marginalize_w_and_r_out(const format1_configuration& c
 {
   unsigned time_domain_occ = config.time_domain_occ;
 
-  srsgnb_assert(config.group_hopping == pucch_group_hopping::NEITHER,
+  srsran_assert(config.group_hopping == pucch_group_hopping::NEITHER,
                 "At the moment, only group the hopping type 'neither' is implemented, requesting {}",
                 ((config.group_hopping == pucch_group_hopping::ENABLE) ? "enable" : "disable"));
   unsigned group_index     = config.n_id % 30;

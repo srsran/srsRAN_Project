@@ -31,7 +31,7 @@ public:
 
   void on_new_sdu(byte_buffer_slice_chain sdu) override
   {
-    srsgnb_assert(pdcp_rx_handler != nullptr, "PDCP handler must not be nullptr");
+    srsran_assert(pdcp_rx_handler != nullptr, "PDCP handler must not be nullptr");
     pdcp_rx_handler->handle_pdu(std::move(sdu));
   }
 

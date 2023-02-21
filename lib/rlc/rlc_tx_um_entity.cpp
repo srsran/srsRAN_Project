@@ -79,7 +79,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
 
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
-    srsgnb_sanity_check(next_so == 0, "New TX SDU, but next_so={} > 0.", next_so);
+    srsran_sanity_check(next_so == 0, "New TX SDU, but next_so={} > 0.", next_so);
     logger.log_debug("Reading SDU from sdu_queue. {}", sdu_queue);
     if (not sdu_queue.read(sdu)) {
       logger.log_debug("SDU queue empty. grant_len={}", grant_len);
@@ -108,7 +108,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
   // Pack header
   byte_buffer header_buf = {};
   rlc_um_write_data_pdu_header(header, header_buf);
-  srsgnb_sanity_check(head_len == header_buf.length(),
+  srsran_sanity_check(head_len == header_buf.length(),
                       "Header length and expected header length do not match ({} != {})",
                       header_buf.length(),
                       head_len);
@@ -138,7 +138,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
   pdu_buf.push_back(byte_buffer_slice{sdu.buf, next_so, payload_len});
 
   // Assert number of bytes
-  srsgnb_assert(
+  srsran_assert(
       pdu_buf.length() <= grant_len, "Resulting pdu_len={} exceeds grant_len={}.", pdu_buf.length(), grant_len);
   logger.log_info(
       pdu_buf.begin(), pdu_buf.end(), "TX PDU. {} pdu_len={} grant_len={}", header, pdu_buf.length(), grant_len);

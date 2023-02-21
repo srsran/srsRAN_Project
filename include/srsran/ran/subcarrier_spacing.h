@@ -43,7 +43,7 @@ constexpr inline unsigned to_numerology_value(subcarrier_spacing scs)
 /// Converts SCS into integer in kHz.
 constexpr inline unsigned scs_to_khz(subcarrier_spacing scs)
 {
-  srsgnb_assert(is_scs_valid(scs), "Invalid SCS.");
+  srsran_assert(is_scs_valid(scs), "Invalid SCS.");
   return 15U << to_numerology_value(scs);
 }
 

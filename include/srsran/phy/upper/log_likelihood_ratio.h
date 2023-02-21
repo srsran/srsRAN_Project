@@ -51,7 +51,7 @@ public:
   constexpr log_likelihood_ratio(T val)
   {
     static_assert(std::is_integral<T>::value, "LLRs must be initialized with integer values.");
-    srsgnb_assert(((val <= LLR_MAX) && (val >= -LLR_MAX)) || (val == LLR_INFTY) || (val == -LLR_INFTY),
+    srsran_assert(((val <= LLR_MAX) && (val >= -LLR_MAX)) || (val == LLR_INFTY) || (val == -LLR_INFTY),
                   "Invalid LLR value.");
     value = static_cast<value_type>(val);
   }

@@ -50,7 +50,7 @@ public:
 
   mac_cell_control_information_handler& get_cell_control_information_handler(du_cell_index_t cell_index)
   {
-    srsgnb_assert(cells[cell_index], "Cell index does not exist");
+    srsran_assert(cells[cell_index], "Cell index does not exist");
 
     return *cells[cell_index];
   }

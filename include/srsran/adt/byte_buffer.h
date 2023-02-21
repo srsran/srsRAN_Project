@@ -63,7 +63,7 @@ public:
   /// Returns another sub-view with dimensions specified in arguments.
   byte_buffer_view view(size_t offset, size_t size) const
   {
-    srsgnb_assert(offset + size <= length(), "Invalid view dimensions.");
+    srsran_assert(offset + size <= length(), "Invalid view dimensions.");
     return {it + offset, it + offset + size};
   }
 
@@ -213,7 +213,7 @@ public:
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
   bool append(const byte_buffer& other)
   {
-    srsgnb_sanity_check(&other != this, "Self-append not supported");
+    srsran_sanity_check(&other != this, "Self-append not supported");
     if (empty() and not other.empty()) {
       if (not append_segment()) {
         return false;
@@ -324,7 +324,7 @@ public:
   /// Removes "nof_bytes" from the head of the byte_buffer.
   void trim_head(size_t nof_bytes)
   {
-    srsgnb_sanity_check(length() >= nof_bytes, "Trying to trim more bytes than those available");
+    srsran_sanity_check(length() >= nof_bytes, "Trying to trim more bytes than those available");
     for (size_t trimmed = 0; trimmed != nof_bytes;) {
       size_t to_trim = std::min(nof_bytes - trimmed, ctrl_blk_ptr->head->length());
       ctrl_blk_ptr->head->trim_head(to_trim);
@@ -342,7 +342,7 @@ public:
   /// modifying the byte_buffer.
   void trim_tail(size_t nof_bytes)
   {
-    srsgnb_assert(length() >= nof_bytes, "Trimming too many bytes from byte_buffer");
+    srsran_assert(length() >= nof_bytes, "Trimming too many bytes from byte_buffer");
     if (nof_bytes == 0) {
       return;
     }
@@ -587,7 +587,7 @@ public:
   }
   byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : buf(buf_.copy()), sliced_view(view)
   {
-    srsgnb_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
+    srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
                         "byte_buffer_view is not part of the owned byte_buffer");
   }
 
@@ -613,7 +613,7 @@ public:
   /// Returns another owning sub-view with dimensions specified in arguments.
   byte_buffer_slice make_slice(size_t offset, size_t size) const
   {
-    srsgnb_assert(offset + size <= length(), "Invalid view dimensions.");
+    srsran_assert(offset + size <= length(), "Invalid view dimensions.");
     return {buf, sliced_view.view(offset, size)};
   }
 
@@ -771,7 +771,7 @@ inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
 /// Converts a hex string (e.g. 01FA02) to a byte buffer.
 inline byte_buffer make_byte_buffer(const std::string& hex_str)
 {
-  srsgnb_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
+  srsran_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
   byte_buffer ret;
   for (size_t i = 0; i < hex_str.size(); i += 2) {
     uint8_t val;
@@ -841,7 +841,7 @@ inline span<const uint8_t> to_span(const byte_buffer& src, span<uint8_t> tmp_mem
     return *src.segments().begin();
   }
   // non-contiguous: copy required
-  srsgnb_assert(src.length() <= tmp_mem.size_bytes(),
+  srsran_assert(src.length() <= tmp_mem.size_bytes(),
                 "Insufficient temporary memory to fit the byte_buffer. buffer_size={}, tmp_size={}",
                 src.length(),
                 tmp_mem.size());

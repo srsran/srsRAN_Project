@@ -79,7 +79,7 @@ public:
   rrc_pdu_null_notifier() = default;
   void on_new_pdu(const rrc_pdu_message& msg) override
   {
-    srsgnb_assertion_failure("Received PDU on unconnected notifier. Discarding.");
+    srsran_assertion_failure("Received PDU on unconnected notifier. Discarding.");
     logger.error("Received PDU on unconnected notifier. Discarding.");
   };
 

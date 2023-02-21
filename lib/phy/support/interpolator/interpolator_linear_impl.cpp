@@ -19,7 +19,7 @@ using namespace srsran;
 
 void interpolator_linear_impl::interpolate(span<cf_t> output, span<const cf_t> input, const configuration& cfg)
 {
-  srsgnb_assert(output.size() >= (input.size() - 1) * cfg.stride + 1 + cfg.offset,
+  srsran_assert(output.size() >= (input.size() - 1) * cfg.stride + 1 + cfg.offset,
                 "The output length is {}. With input length {}, offset {} and stride {} it should be at least {}.",
                 output.size(),
                 input.size(),
@@ -27,9 +27,9 @@ void interpolator_linear_impl::interpolate(span<cf_t> output, span<const cf_t> i
                 cfg.stride,
                 (input.size() - 1) * cfg.stride + 1 + cfg.offset);
 
-  srsgnb_assert(!input.empty(), "At least one known value should be provided.");
+  srsran_assert(!input.empty(), "At least one known value should be provided.");
 
-  srsgnb_assert(cfg.stride > 0, "The pattern stride {} cannot be less than 1.", cfg.stride);
+  srsran_assert(cfg.stride > 0, "The pattern stride {} cannot be less than 1.", cfg.stride);
 
   // Trivial case - no missing values, nothing to do but copying.
   if (output.size() == input.size()) {

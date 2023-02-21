@@ -420,7 +420,7 @@ int main(int argc, char** argv)
 
   // Create radio.
   radio = factory->create(radio_config, *async_task_executor, notification_handler);
-  srsgnb_assert(radio, "Failed to create radio.");
+  srsran_assert(radio, "Failed to create radio.");
 
   // Create symbol handler.
   rx_symbol_handler_example rx_symbol_handler(log_level);
@@ -438,7 +438,7 @@ int main(int argc, char** argv)
     lower_phy_configuration phy_config =
         create_lower_phy_configuration(ofdm_tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
     lower_phy_instance = create_lower_phy(phy_config);
-    srsgnb_assert(lower_phy_instance, "Failed to create lower physical layer.");
+    srsran_assert(lower_phy_instance, "Failed to create lower physical layer.");
   }
 
   double scs_Hz = static_cast<double>(1000U * scs_to_khz(scs));
@@ -454,7 +454,7 @@ int main(int argc, char** argv)
   // Frequency offset from Point A to the lowest SS/PBCH block subcarrier in 15kHz subcarriers (only valid for FR1).
   unsigned ssb_offset_pointA_subc_15kHz = static_cast<unsigned>(ssb_offset_pointA_Hz / 15e3);
   // Make sure it is possible to map the SS/PBCH block in the grid.
-  srsgnb_assert(ssb_offset_pointA_subc_15kHz % ratio_scs_over_15kHz == 0,
+  srsran_assert(ssb_offset_pointA_subc_15kHz % ratio_scs_over_15kHz == 0,
                 "The combination of DL center frequency {} MHz and SSB center frequency {} MHz results in a fractional "
                 "offset of {}kHz SCS between Point A and the lowest SS/PBCH block lowest subcarrier.",
                 dl_center_freq,
@@ -486,7 +486,7 @@ int main(int argc, char** argv)
   upper_phy_sample_config.enable_random_data           = enable_random_data;
   upper_phy_sample_config.data_modulation              = data_mod_scheme;
   upper_phy                                            = upper_phy_ssb_example::create(upper_phy_sample_config);
-  srsgnb_assert(upper_phy, "Failed to create upper physical layer.");
+  srsran_assert(upper_phy, "Failed to create upper physical layer.");
 
   // Connect adapters.
   rx_symbol_adapter.connect(&rx_symbol_handler);

@@ -89,7 +89,7 @@ void assert_choice_type(uint32_t val, uint32_t choice_id);
 template <typename Enumerated>
 void assert_choice_type(typename Enumerated::options access_type, Enumerated& current_type, const char* choice_type)
 {
-  if (srsgnb_unlikely(current_type.value != access_type)) {
+  if (srsran_unlikely(current_type.value != access_type)) {
     log_error("Invalid field access for choice type \"{}\" (\"{}\"!=\"{}\")",
               choice_type,
               Enumerated(access_type).to_string(),
@@ -231,7 +231,7 @@ public:
     if (cap_ > 0) {
       data_ = new T[cap_];
       if (old_data != NULL) {
-        srsgnb_assert(cap_ > size_, "Old size larger than new capacity in dyn_array\n");
+        srsran_assert(cap_ > size_, "Old size larger than new capacity in dyn_array\n");
         std::copy(&old_data[0], &old_data[size_], data_);
       }
     } else {

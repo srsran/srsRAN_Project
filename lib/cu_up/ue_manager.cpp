@@ -30,7 +30,7 @@ ue_manager::ue_manager(network_interface_config&            net_config_,
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {
-  srsgnb_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", ue_index);
+  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", ue_index);
   return ue_db.contains(ue_index) ? ue_db[ue_index].get() : nullptr;
 }
 
@@ -59,7 +59,7 @@ ue_context* ue_manager::add_ue()
 void ue_manager::remove_ue(ue_index_t ue_index)
 {
   logger.debug("Scheduling ue_index={} deletion", ue_index);
-  srsgnb_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ue_index={}", ue_index);
+  srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ue_index={}", ue_index);
 
   // TODO: remove lookup maps
 

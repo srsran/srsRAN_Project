@@ -230,12 +230,12 @@ public:
   /// \brief Index-based element lookup. This operation has O(1) complexity in the worst-case scenario.
   T& operator[](size_t idx) noexcept
   {
-    srsgnb_assert(contains(idx), "Bad access for element with index={}", idx);
+    srsran_assert(contains(idx), "Bad access for element with index={}", idx);
     return *vec[idx];
   }
   const T& operator[](size_t idx) const noexcept
   {
-    srsgnb_assert(contains(idx), "Bad access for element with index={}", idx);
+    srsran_assert(contains(idx), "Bad access for element with index={}", idx);
     return *vec[idx];
   }
 
@@ -258,7 +258,7 @@ public:
   bool insert(size_t idx, U&& u)
   {
     static_assert(std::is_convertible<U, value_type>::value, "Ctor T(U&&) does not exist.");
-    srsgnb_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     if (contains(idx)) {
       return false;
     }
@@ -274,17 +274,17 @@ public:
   void emplace(size_t idx, Args&&... args)
   {
     static_assert(std::is_constructible<value_type, Args&&...>::value, "Ctor T(Args...) does not exist.");
-    srsgnb_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     this->nof_elems += this->contains(idx) ? 0 : 1;
     this->vec[idx].emplace(std::forward<Args>(args)...);
-    srsgnb_assert(this->vec[idx].has_value(), "Inserted object must be represent an optional with value");
+    srsran_assert(this->vec[idx].has_value(), "Inserted object must be represent an optional with value");
   }
 
   /// Erase object pointed by the given index
   /// \param idx Position of the erased element in the array
   bool erase(size_t idx) noexcept
   {
-    srsgnb_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     if (this->contains(idx)) {
       this->nof_elems--;
       this->vec[idx].reset();
@@ -309,7 +309,7 @@ public:
   /// Find first position that is empty
   size_t find_first_empty(size_t start_guess = 0) const
   {
-    srsgnb_assert(start_guess < vec.size(), "invalid first guess array index");
+    srsran_assert(start_guess < vec.size(), "invalid first guess array index");
     if (nof_elems == vec.size()) {
       return vec.size();
     }
@@ -387,13 +387,13 @@ public:
 
   T& operator[](size_t idx) noexcept
   {
-    srsgnb_assert(contains(idx), "Bad access for element with index={}", idx);
+    srsran_assert(contains(idx), "Bad access for element with index={}", idx);
     return objects[index_mapper[idx]];
   }
 
   const T& operator[](size_t idx) const noexcept
   {
-    srsgnb_assert(contains(idx), "Bad access for element with index={}", idx);
+    srsran_assert(contains(idx), "Bad access for element with index={}", idx);
     return objects[index_mapper[idx]];
   }
 
@@ -443,7 +443,7 @@ public:
     if (index_mapper[idx] < objects.size() - 1) {
       std::swap(objects[index_mapper[idx]], objects.back());
       auto it = std::find(index_mapper.begin(), index_mapper.end(), objects.size() - 1U);
-      srsgnb_assert(it != index_mapper.end(), "Container in invalid state");
+      srsran_assert(it != index_mapper.end(), "Container in invalid state");
       *it = index_mapper[idx];
     }
     objects.pop_back();

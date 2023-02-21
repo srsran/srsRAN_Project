@@ -39,7 +39,7 @@ constexpr size_t rlc_am_pdu_header_min_size(rlc_am_sn_size sn_size)
     case rlc_am_sn_size::size18bits:
       return rlc_am_pdu_header_min_size_18bit;
   }
-  srsgnb_assertion_failure("Cannot determine RLC AM PDU header minimum size: unsupported sn_size={}.",
+  srsran_assertion_failure("Cannot determine RLC AM PDU header minimum size: unsupported sn_size={}.",
                            to_number(sn_size));
   return rlc_am_pdu_header_min_size_12bit;
 }
@@ -50,7 +50,7 @@ constexpr size_t rlc_am_pdu_header_max_size(rlc_am_sn_size sn_size)
     case rlc_am_sn_size::size18bits:
       return rlc_am_pdu_header_min_size(sn_size) + rlc_am_pdu_header_so_size;
   }
-  srsgnb_assertion_failure("Cannot determine RLC AM PDU header maximum size: unsupported sn_size={}.",
+  srsran_assertion_failure("Cannot determine RLC AM PDU header maximum size: unsupported sn_size={}.",
                            to_number(sn_size));
   return rlc_am_pdu_header_min_size_12bit + rlc_am_pdu_header_so_size;
 }

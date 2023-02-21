@@ -21,10 +21,10 @@ using namespace srs_cu_up;
 
 void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
 {
-  srsgnb_assert(cfg.cu_up_executor != nullptr, "Invalid CU-UP executor");
-  srsgnb_assert(cfg.e1ap_notifier != nullptr, "Invalid E1AP notifier");
-  srsgnb_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
-  srsgnb_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
+  srsran_assert(cfg.cu_up_executor != nullptr, "Invalid CU-UP executor");
+  srsran_assert(cfg.e1ap_notifier != nullptr, "Invalid E1AP notifier");
+  srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
+  srsran_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
 }
 
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)

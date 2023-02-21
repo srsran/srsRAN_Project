@@ -43,7 +43,7 @@ class filter_view
 
     iter_impl<Data>& operator++()
     {
-      srsgnb_sanity_check(it != parent->r.end(), "Iterator incremented past end() point");
+      srsran_sanity_check(it != parent->r.end(), "Iterator incremented past end() point");
       ++it;
       next_valid_it();
       return *this;

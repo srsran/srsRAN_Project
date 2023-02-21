@@ -34,7 +34,7 @@ public:
   explicit dmrs_pbch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<dmrs_pbch_processor> create() override
@@ -52,7 +52,7 @@ public:
   explicit dmrs_pdcch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<dmrs_pdcch_processor> create() override
@@ -70,7 +70,7 @@ public:
   explicit dmrs_pdsch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<dmrs_pdsch_processor> create() override
@@ -89,9 +89,9 @@ public:
     lpc_factory(std::move(lpc_factory_)),
     ch_estimator_factory(std::move(ch_estimator_factory_))
   {
-    srsgnb_assert(prg_factory, "Invalid sequence generator factory.");
-    srsgnb_assert(lpc_factory, "Invalid sequence collection factory.");
-    srsgnb_assert(ch_estimator_factory, "Invalid channel estimator factory.");
+    srsran_assert(prg_factory, "Invalid sequence generator factory.");
+    srsran_assert(lpc_factory, "Invalid sequence collection factory.");
+    srsran_assert(ch_estimator_factory, "Invalid channel estimator factory.");
   }
 
   std::unique_ptr<dmrs_pucch_processor> create_format1() override
@@ -126,8 +126,8 @@ public:
                                   std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory_) :
     prg_factory(std::move(prg_factory_)), ch_estimator_factory(std::move(ch_estimator_factory_))
   {
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
-    srsgnb_assert(ch_estimator_factory, "Invalid channel estimator factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(ch_estimator_factory, "Invalid channel estimator factory.");
   }
 
   std::unique_ptr<dmrs_pusch_estimator> create() override
@@ -146,7 +146,7 @@ public:
   nzp_csi_rs_generator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     prg_factory(std::move(prg_factory_))
   {
-    srsgnb_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
   }
   std::unique_ptr<nzp_csi_rs_generator> create() override
   {
@@ -167,7 +167,7 @@ public:
   explicit port_channel_estimator_factory_sw(std::shared_ptr<dft_processor_factory> dft_f) :
     dft_factory(std::move(dft_f))
   {
-    srsgnb_assert(dft_factory, "Invalid DFT factory.");
+    srsran_assert(dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<port_channel_estimator> create() override

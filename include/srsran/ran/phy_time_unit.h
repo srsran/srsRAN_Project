@@ -87,7 +87,7 @@ public:
   {
     static_assert(std::is_convertible<U, uint64_t>::value, "Invalid type.");
     value_type sampling_rate_Hz = static_cast<value_type>(sampling_rate_Hz_);
-    srsgnb_assert(is_sample_accurate(sampling_rate_Hz),
+    srsran_assert(is_sample_accurate(sampling_rate_Hz),
                   "Incompatible sampling rate {}.{:02} MHz with time {}.",
                   sampling_rate_Hz / 1000000,
                   (sampling_rate_Hz % 1000000) / 10000,

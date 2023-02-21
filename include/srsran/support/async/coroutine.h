@@ -81,7 +81,7 @@ struct base_coro_frame<void> {
   template <typename Awaitable, typename EventType = detail::awaitable_result_t<Awaitable>>
   detail::enable_if_nonvoid<EventType> on_await_resume()
   {
-    srsgnb_assert(is_suspended(), "Trying to resume non-suspended coroutine");
+    srsran_assert(is_suspended(), "Trying to resume non-suspended coroutine");
 
     // Extract result from awaiter and clear awaiter from memory buffer
     auto&     awaiter = mem_buffer.get_awaiter<Awaitable>();
@@ -94,7 +94,7 @@ struct base_coro_frame<void> {
   template <typename Awaitable, typename EventType = detail::awaitable_result_t<Awaitable>>
   detail::enable_if_void<EventType> on_await_resume()
   {
-    srsgnb_assert(is_suspended(), "Trying to resume non-suspended coroutine");
+    srsran_assert(is_suspended(), "Trying to resume non-suspended coroutine");
 
     // Clear awaiter from memory buffer
     auto& a = mem_buffer.get_awaiter<Awaitable>();
@@ -105,7 +105,7 @@ struct base_coro_frame<void> {
   template <typename Awaitable>
   void on_await_cancel()
   {
-    srsgnb_assert(is_suspended(), "Trying to cancel non-suspended coroutine");
+    srsran_assert(is_suspended(), "Trying to cancel non-suspended coroutine");
     mem_buffer.clear<Awaitable>();
   }
 };
@@ -129,7 +129,7 @@ struct base_coro_frame : public base_coro_frame<void>, private Promise {
   template <typename Awaitable>
   bool on_await_call(Awaitable&& awaitable_obj)
   {
-    srsgnb_assert(not is_suspended(), "Trying to suspend already suspended coroutine");
+    srsran_assert(not is_suspended(), "Trying to suspend already suspended coroutine");
 
     // store awaitable/awaiter in memory buffer
     mem_buffer.emplace(std::forward<Awaitable>(awaitable_obj));
@@ -184,11 +184,11 @@ struct coro_frame : public base_coro_frame<detail::promise_of<FunT>> {
   /// This function can only be called when coroutine is suspended
   void destroy() noexcept final
   {
-    srsgnb_sanity_check(not this->mem_buffer.empty(), "coroutine that is not suspended should not be destroyed");
+    srsran_sanity_check(not this->mem_buffer.empty(), "coroutine that is not suspended should not be destroyed");
 
     // resume via cancel path until final suspension point
     cancel();
-    srsgnb_sanity_check(this->state_index == coro_state_tag_t::tag_cancelled, "Invalid coroutine state");
+    srsran_sanity_check(this->state_index == coro_state_tag_t::tag_cancelled, "Invalid coroutine state");
 
     // called after final suspension in order to destroy & deallocate coroutine frame
     delete this;

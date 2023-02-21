@@ -114,7 +114,7 @@ void ue_cell_configuration::configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_upli
 span<const pdsch_time_domain_resource_allocation>
 ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
 {
-  srsgnb_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
+  srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
   const search_space_configuration& ss_cfg  = *search_spaces[ss_id];
   const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
 
@@ -139,7 +139,7 @@ ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
 span<const pusch_time_domain_resource_allocation>
 ue_cell_configuration::get_pusch_time_domain_list(search_space_id ss_id) const
 {
-  srsgnb_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
+  srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
   const search_space_configuration& ss_cfg  = *search_spaces[ss_id];
   const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
 

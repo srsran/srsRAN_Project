@@ -29,7 +29,7 @@ struct base_resumable_procedure {
   void operator()(detail::base_coro_frame<promise_type>& ctx)
   {
     if (frame_ptr == nullptr) {
-      srsgnb_sanity_check(ctx.state_index == detail::tag_init, "Invalid coro state");
+      srsran_sanity_check(ctx.state_index == detail::tag_init, "Invalid coro state");
       ctx.state_index = 10;
       frame_ptr       = &ctx;
       async_await(suspend_always{}, &base_resumable_procedure<FutureType>::start);
@@ -47,9 +47,9 @@ protected:
       if (this->frame_ptr->state_index > 0) {
         await_resume_helper<Awaitable>(action);
       } else {
-        srsgnb_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_cancelled,
+        srsran_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_cancelled,
                             "Calling resume on cancelled task");
-        srsgnb_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_final_suspend,
+        srsran_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_final_suspend,
                             "Calling on task on suspended point");
         // cancelled
         frame_ptr->template on_await_cancel<Awaitable>();

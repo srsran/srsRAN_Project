@@ -244,7 +244,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 void du_processor_impl::create_srb(const srb_creation_message& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsgnb_assert(ue != nullptr, "Could not find UE");
+  srsran_assert(ue != nullptr, "Could not find UE");
 
   // create entry for SRB
   ue->get_srbs()[msg.srb_id] = {};
@@ -324,7 +324,7 @@ async_task<cu_cp_pdu_session_resource_setup_response>
 du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg)
 {
   du_ue* ue = ue_manager.find_du_ue(msg.ue_index);
-  srsgnb_assert(ue != nullptr, "Could not find DU UE");
+  srsran_assert(ue != nullptr, "Could not find DU UE");
 
   return routine_mng->start_pdu_session_resource_setup_routine(msg,
                                                                rrc->find_ue(msg.ue_index)->get_rrc_ue_secutity_config(),
@@ -335,7 +335,7 @@ du_processor_impl::handle_new_pdu_session_resource_setup_request(const cu_cp_pdu
 void du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd)
 {
   du_ue* ue = ue_manager.find_du_ue(cmd.ue_index);
-  srsgnb_assert(ue != nullptr, "Could not find DU UE");
+  srsran_assert(ue != nullptr, "Could not find DU UE");
 
   // Call RRC UE notifier to release the UE
   ue->get_rrc_ue_notifier().on_rrc_ue_release();

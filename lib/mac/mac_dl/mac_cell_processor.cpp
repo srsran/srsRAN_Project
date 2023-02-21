@@ -313,7 +313,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   data_res.slot = sl_tx;
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
-    srsgnb_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
+    srsran_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
     span<const uint8_t> payload = sib_assembler.encode_sib_pdu(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
     data_res.sib1_pdus.emplace_back(0, payload);
   }
@@ -353,7 +353,7 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
 
         // Fetch RLC Bearer.
         mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, lc_info.lcid.to_lcid());
-        srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
+        srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Update DL buffer state for the allocated logical channel.
         dl_buffer_state_indication_message bs{};

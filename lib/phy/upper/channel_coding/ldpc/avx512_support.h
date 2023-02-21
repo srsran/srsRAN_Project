@@ -34,8 +34,8 @@ using avx512_span = detail::avx_span<detail::m512_wrapper>;
 /// \return    Vector of packed 8-bit integers with the scaling result.
 inline __m512i scale_epi8(__m512i a, float sf, uint8_t max)
 {
-  srsgnb_assert((sf > 0) && (sf <= 1), "Scaling factor out of range.");
-  srsgnb_assert(max < 127, "Parameter max out of range.");
+  srsran_assert((sf > 0) && (sf <= 1), "Scaling factor out of range.");
+  srsran_assert(max < 127, "Parameter max out of range.");
 
   if (sf >= .9999) {
     return a;

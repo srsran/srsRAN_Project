@@ -140,27 +140,27 @@ public:
   /// \brief Checks whether a specified TB is empty.
   bool empty(unsigned tb_idx) const
   {
-    srsgnb_assert(tb_idx < tb_array.size(), "Invalid TB index={}", tb_idx);
+    srsran_assert(tb_idx < tb_array.size(), "Invalid TB index={}", tb_idx);
     return tb_array[tb_idx].empty();
   }
 
   /// \brief Checks whether specified TB has pending new_retx.
   bool has_pending_retx(unsigned tb_idx) const
   {
-    srsgnb_assert(tb_idx < tb_array.size(), "Invalid TB index ({} >= {})", tb_idx, tb_array.size());
+    srsran_assert(tb_idx < tb_array.size(), "Invalid TB index ({} >= {})", tb_idx, tb_array.size());
     return tb_array[tb_idx].state == transport_block::state_t::pending_retx;
   }
 
   unsigned max_nof_harq_retxs(unsigned tb_idx) const
   {
-    srsgnb_assert(tb_idx < tb_array.size(), "Invalid TB index ({} >= {})", tb_idx, tb_array.size());
+    srsran_assert(tb_idx < tb_array.size(), "Invalid TB index ({} >= {})", tb_idx, tb_array.size());
     return tb_array[tb_idx].max_nof_harq_retxs;
   }
 
   /// \brief Getter for TB parameters.
   const transport_block& tb(unsigned tb_idx) const
   {
-    srsgnb_assert(not empty(tb_idx), "TB {} is not active", tb_idx);
+    srsran_assert(not empty(tb_idx), "TB {} is not active", tb_idx);
     return tb_array[tb_idx];
   }
 

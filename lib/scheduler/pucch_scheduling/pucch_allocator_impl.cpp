@@ -306,7 +306,7 @@ pucch_harq_ack_grant pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_reso
   // Case 2) An HARQ Format 1 is already scheduled. Update the existing HARQ grant and the SR grant, if present.
   if (existing_grants.format1_harq_grant != nullptr) {
     if (existing_grants.format1_sr_grant != nullptr) {
-      srsgnb_sanity_check(existing_grants.format1_harq_grant->format_1.harq_ack_nof_bits ==
+      srsran_sanity_check(existing_grants.format1_harq_grant->format_1.harq_ack_nof_bits ==
                               existing_grants.format1_sr_grant->format_1.harq_ack_nof_bits,
                           "Mismatch HARQ bits mismatch between SR and HARQ grants");
     }
@@ -485,7 +485,7 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
 void pucch_allocator_impl::slot_indication(slot_point sl_tx)
 {
   // If last_sl_ind is not valid (not initialized), then the check sl_tx == last_sl_ind + 1 does not matter.
-  srsgnb_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected a skipped slot");
+  srsran_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected a skipped slot");
 
   // Update Slot.
   last_sl_ind = sl_tx;
@@ -542,7 +542,7 @@ pucch_allocator_impl::alloc_pucch_common_res_harq(unsigned&                     
     // Compute CS index as per Section 9.2.1, TS 38.213.
     size_t cs_idx = r_pucch < 8 ? static_cast<size_t>(r_pucch) % pucch_res.cs_indexes.size()
                                 : static_cast<size_t>(r_pucch - 8) % pucch_res.cs_indexes.size();
-    srsgnb_assert(cs_idx < pucch_res.cs_indexes.size(), "CS index exceeds static vector size");
+    srsran_assert(cs_idx < pucch_res.cs_indexes.size(), "CS index exceeds static vector size");
     uint8_t cyclic_shift = pucch_res.cs_indexes[cs_idx];
 
     // If both 1st and 2nd hop grants do not collide with any UL grants, then allocate PUCCH in the grid.
@@ -606,7 +606,7 @@ void pucch_allocator_impl::fill_pucch_harq_common_grant(pucch_info&             
       break;
     }
     default:
-      srsgnb_assert(false, "PUCCH Format must from 0 to 4, but only 0 and 1 are currently supported.");
+      srsran_assert(false, "PUCCH Format must from 0 to 4, but only 0 and 1 are currently supported.");
   }
 }
 
@@ -636,7 +636,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   }
 
   if (existing_sr_grant != nullptr) {
-    srsgnb_sanity_check(existing_sr_grant->format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for SR.");
+    srsran_sanity_check(existing_sr_grant->format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for SR.");
     existing_sr_grant->format_1.harq_ack_nof_bits++;
   }
 
@@ -660,7 +660,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
                                                               unsigned                      harq_ack_nof_bits,
                                                               unsigned                      csi_part1_nof_bits)
 {
-  srsgnb_assert(existing_harq_grant != nullptr or existing_sr_grant != nullptr,
+  srsran_assert(existing_harq_grant != nullptr or existing_sr_grant != nullptr,
                 "Pointers for existing resources are null.");
   pucch_harq_ack_grant output;
 
@@ -819,13 +819,13 @@ pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucc
 
   int pucch_res_idx = resource_manager.fetch_f1_pucch_res_indic(sl_tx, rnti);
   if (pucch_res_idx < 0) {
-    srsgnb_assert(pucch_res_idx >= 0, "PUCCH resource index should not be negative.");
+    srsran_assert(pucch_res_idx >= 0, "PUCCH resource index should not be negative.");
     return output;
   }
-  srsgnb_sanity_check(existing_harq_grant.format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for HARQ.");
+  srsran_sanity_check(existing_harq_grant.format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for HARQ.");
   // Update the SR, if present.
   if (existing_sr_grant != nullptr) {
-    srsgnb_sanity_check(existing_sr_grant->format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for SR.");
+    srsran_sanity_check(existing_sr_grant->format == pucch_format::FORMAT_1, "Only PUCCH format 1 expected for SR.");
     existing_sr_grant->format_1.harq_ack_nof_bits++;
   }
   // Update the HARQ, if present.
@@ -975,13 +975,13 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
   const unsigned current_harq_ack_bits  = existing_f2_grant.format_2.harq_ack_nof_bits;
 
   // This function cannot be called if the resource of for CSI and needs to be converted into HARQ-ACK.
-  srsgnb_sanity_check(not(current_csi_part1_bits > 0 and current_harq_ack_bits == 0 and harq_ack_bits_increment > 0),
+  srsran_sanity_check(not(current_csi_part1_bits > 0 and current_harq_ack_bits == 0 and harq_ack_bits_increment > 0),
                       "PUCCH resource CSI cannot be converted into HARQ-ACK through this function.");
 
   int res_indicator = current_csi_part1_bits > 0 and current_harq_ack_bits == 0
                           ? 0
                           : resource_manager.fetch_f2_pucch_res_indic(sl_tx, existing_f2_grant.crnti);
-  srsgnb_sanity_check(res_indicator >= 0,
+  srsran_sanity_check(res_indicator >= 0,
                       "The resource indicator for the allocated PUCCH Format 2 grant is expected to be non-negative");
 
   const pucch_resource* res_cfg =
@@ -996,7 +996,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
                                      .pucch_res_set[PUCCH_FORMAT2_RES_SET_IDX]
                                      .pucch_res_id_list[static_cast<unsigned>(res_indicator)]];
 
-  srsgnb_sanity_check(res_cfg != nullptr,
+  srsran_sanity_check(res_cfg != nullptr,
                       "PUCCH resource previously allocated for UCI not found in the PUCCH resource manager.");
 
   // Check if the number of PRBs is sufficient for the number of bits to be acked.

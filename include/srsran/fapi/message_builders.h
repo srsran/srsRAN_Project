@@ -75,7 +75,7 @@ public:
   {
     static constexpr unsigned MAX_SIZE = (1U << 24U);
 
-    srsgnb_assert(bch_payload < MAX_SIZE, "BCH payload value out of bounds");
+    srsran_assert(bch_payload < MAX_SIZE, "BCH payload value out of bounds");
 
     pdu.bch_payload_flag = bch_payload_type::phy_timing_info;
     // Clear unused bits in the high part of the payload.
@@ -122,11 +122,11 @@ public:
   {
     // Power scaling in SS-PBCH in hundredths of dBs.
     int ss_block_power = (power_scaling_ss_pbch_dB) ? static_cast<int>(power_scaling_ss_pbch_dB.value() * 100) : -32768;
-    srsgnb_assert(ss_block_power <= std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::max(),
+    srsran_assert(ss_block_power <= std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::max(),
                   "SS PBCH block power scaling ({}) exceeds the maximum ({}).",
                   ss_block_power,
                   std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::max());
-    srsgnb_assert(ss_block_power >= std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min(),
+    srsran_assert(ss_block_power >= std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min(),
                   "SS PBCH block power scaling ({}) does not reach the minimum ({}).",
                   ss_block_power,
                   std::numeric_limits<decltype(v3.ss_pbch_block_power_scaling)>::min());
@@ -134,11 +134,11 @@ public:
 
     // SSS to PSS ratio in thousandths of dBs.
     int beta_pss = (pss_to_sss_ratio_dB) ? static_cast<int>(pss_to_sss_ratio_dB.value() * 1000) : -32768;
-    srsgnb_assert(beta_pss <= std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::max(),
+    srsran_assert(beta_pss <= std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::max(),
                   "PSS to SSS ratio ({}) exceeds the maximum ({}).",
                   beta_pss,
                   std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::max());
-    srsgnb_assert(beta_pss >= std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min(),
+    srsran_assert(beta_pss >= std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min(),
                   "PSS to SSS ratio ({}) does not reach the minimum ({}).",
                   beta_pss,
                   std::numeric_limits<decltype(v3.beta_pss_profile_sss)>::min());
@@ -194,11 +194,11 @@ public:
                     ? static_cast<int>(power_control_offset_ss_profile_nr_dB.value())
                     : -127;
 
-    srsgnb_assert(value <= std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::max(),
+    srsran_assert(value <= std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::max(),
                   "SS profile NR ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::max());
-    srsgnb_assert(value >= std::numeric_limits<int8_t>::min(),
+    srsran_assert(value >= std::numeric_limits<int8_t>::min(),
                   "SS profile NR ({}) does not reach the minimum ({}).",
                   value,
                   std::numeric_limits<decltype(pdu.power_control_offset_ss_profile_nr)>::min());
@@ -232,11 +232,11 @@ public:
                     ? static_cast<int>(pdcch_dmrs_power_offset_profile_sss_dB.value() * 1000)
                     : USE_OTHER_FIELDS;
 
-    srsgnb_assert(value <= std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::max(),
+    srsran_assert(value <= std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::max(),
                   "PDCCH DMRS power offset profile SSS ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::max());
-    srsgnb_assert(value >= std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min(),
+    srsran_assert(value >= std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min(),
                   "PDCCH DMRS power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<decltype(pdu_v3.pdcch_dmrs_power_offset_profile_sss)>::min());
@@ -248,11 +248,11 @@ public:
                 ? static_cast<int>(pdcch_data_power_offset_profile_sss_dB.value() * 1000)
                 : USE_OTHER_FIELDS;
 
-    srsgnb_assert(value <= std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::max(),
+    srsran_assert(value <= std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::max(),
                   "PDCCH data power offset profile SSS ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::max());
-    srsgnb_assert(value >= std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min(),
+    srsran_assert(value >= std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min(),
                   "PDCCH data power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<decltype(pdu_v3.pdcch_data_power_offset_profile_sss)>::min());
@@ -487,7 +487,7 @@ public:
     pdu.resource_alloc     = resource_allocation_type::type_0;
     pdu.vrb_to_prb_mapping = vrb_to_prb_mapping;
 
-    srsgnb_assert(rb_map.size() <= dl_pdsch_pdu::MAX_SIZE_RB_BITMAP,
+    srsran_assert(rb_map.size() <= dl_pdsch_pdu::MAX_SIZE_RB_BITMAP,
                   "[PDSCH Builder] - Incoming RB bitmap size {} exceeds FAPI bitmap field {}",
                   rb_map.size(),
                   int(dl_pdsch_pdu::MAX_SIZE_RB_BITMAP));
@@ -543,7 +543,7 @@ public:
     unsigned power_profile_nr =
         power_control_offset_profile_nr ? static_cast<unsigned>(power_control_offset_profile_nr.value() + 8U) : 255U;
 
-    srsgnb_assert(power_profile_nr <= std::numeric_limits<uint8_t>::max(),
+    srsran_assert(power_profile_nr <= std::numeric_limits<uint8_t>::max(),
                   "Power control offset Profile NR value exceeds the maximum ({}).",
                   power_profile_nr);
 
@@ -570,7 +570,7 @@ public:
 
     pdu.is_inline_tb_crc = tb_crc;
 
-    srsgnb_assert(dl_tb_crc_cw.size() <= dl_pdsch_pdu::MAX_SIZE_DL_TB_CRC,
+    srsran_assert(dl_tb_crc_cw.size() <= dl_pdsch_pdu::MAX_SIZE_DL_TB_CRC,
                   "[PDSCH Builder] - Incoming DL TB CRC size ({}) out of bounds ({})",
                   dl_tb_crc_cw.size(),
                   int(dl_pdsch_pdu::MAX_SIZE_DL_TB_CRC));
@@ -626,7 +626,7 @@ public:
                                               span<const uint8_t>  lte_crs_rm_pattern,
                                               span<const uint16_t> csi_rs_for_rm)
   {
-    srsgnb_assert(ssb_pdus_for_rm.size() <= dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM,
+    srsran_assert(ssb_pdus_for_rm.size() <= dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM,
                   "[PDSCH Builder] - Incoming SSB PDUs for RM matching size ({}) doesn't fit the field ({})",
                   ssb_pdus_for_rm.size(),
                   int(dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM));
@@ -662,11 +662,11 @@ public:
     int value = (dmrs_power_offset_profile_sss) ? static_cast<int>(dmrs_power_offset_profile_sss.value() * 1000)
                                                 : USE_OTHER_FIELDS;
 
-    srsgnb_assert(value <= std::numeric_limits<int16_t>::max(),
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
                   "PDSCH DMRS power offset profile SSS ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<int16_t>::max());
-    srsgnb_assert(value >= std::numeric_limits<int16_t>::min(),
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
                   "PDSCH DMRS power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
@@ -676,11 +676,11 @@ public:
     value = (data_power_offset_profile_sss) ? static_cast<int>(data_power_offset_profile_sss.value() * 1000)
                                             : USE_OTHER_FIELDS;
 
-    srsgnb_assert(value <= std::numeric_limits<int16_t>::max(),
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
                   "PDSCH data power offset profile SSS ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<int16_t>::max());
-    srsgnb_assert(value >= std::numeric_limits<int16_t>::min(),
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
                   "PDSCH data power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
@@ -709,12 +709,12 @@ public:
     int value = ptrs_power_offset_profile_sss ? static_cast<int>(ptrs_power_offset_profile_sss.value() * 1000)
                                               : USE_OTHER_FIELDS;
 
-    srsgnb_assert(value <= std::numeric_limits<int16_t>::max(),
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
                   "PDSCH PTRS power offset profile SSS ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<int16_t>::max());
 
-    srsgnb_assert(value >= std::numeric_limits<int16_t>::min(),
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
                   "PDSCH PTRS power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
@@ -811,7 +811,7 @@ public:
                          ? static_cast<unsigned>(power_control_offset_profile_nr.value() + 8U)
                          : std::numeric_limits<uint8_t>::max();
 
-    srsgnb_assert(value <= std::numeric_limits<uint8_t>::max(),
+    srsran_assert(value <= std::numeric_limits<uint8_t>::max(),
                   "Ratio of PDSCH EPRE to NZP CSI-RS EPRE ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<uint8_t>::max());
@@ -828,12 +828,12 @@ public:
     int value =
         (profile_sss_dB) ? static_cast<int>(profile_sss_dB.value() * 1000.F) : std::numeric_limits<int16_t>::min();
 
-    srsgnb_assert(value <= std::numeric_limits<int16_t>::max(),
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
                   "Ratio of CSI-RS EPRE to SSS EPRE ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<int16_t>::max());
 
-    srsgnb_assert(value >= std::numeric_limits<int16_t>::min(),
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
                   "Ratio of CSI-RS EPRE to SSS EPRE ({}) exceeds the maximum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
@@ -1128,7 +1128,7 @@ public:
     unsigned rssi =
         (rssi_dB) ? static_cast<unsigned>((rssi_dB.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rssi <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rssi <= std::numeric_limits<uint16_t>::max(),
                   "RSSI ({}) exceeds the maximum ({}).",
                   rssi,
                   std::numeric_limits<uint16_t>::max());
@@ -1138,7 +1138,7 @@ public:
     unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
                                  : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
                   "RSRP ({}) exceeds the maximum ({}).",
                   rsrp_value,
                   std::numeric_limits<uint16_t>::max());
@@ -1147,12 +1147,12 @@ public:
 
     int ul_sinr = (ul_sinr_dB) ? static_cast<int>(ul_sinr_dB.value() * 500.F) : std::numeric_limits<int16_t>::min();
 
-    srsgnb_assert(ul_sinr <= std::numeric_limits<int16_t>::max(),
+    srsran_assert(ul_sinr <= std::numeric_limits<int16_t>::max(),
                   "UL SINR metric ({}) exceeds the maximum ({}).",
                   ul_sinr,
                   std::numeric_limits<int16_t>::max());
 
-    srsgnb_assert(ul_sinr >= std::numeric_limits<int16_t>::min(),
+    srsran_assert(ul_sinr >= std::numeric_limits<int16_t>::min(),
                   "UL SINR metric ({}) is under the minimum ({}).",
                   ul_sinr,
                   std::numeric_limits<int16_t>::min());
@@ -1193,7 +1193,7 @@ public:
     unsigned avg_snr =
         (avg_snr_dB) ? static_cast<unsigned>((avg_snr_dB.value() + 64.F) * 2) : std::numeric_limits<uint8_t>::max();
 
-    srsgnb_assert(avg_snr <= std::numeric_limits<uint8_t>::max(),
+    srsran_assert(avg_snr <= std::numeric_limits<uint8_t>::max(),
                   "Average SNR ({}) exceeds the maximum ({}).",
                   avg_snr,
                   std::numeric_limits<uint8_t>::max());
@@ -1202,7 +1202,7 @@ public:
     unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
                                  : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
                   "RSRP ({}) exceeds the maximum ({}).",
                   rsrp_value,
                   std::numeric_limits<uint16_t>::max());
@@ -1239,7 +1239,7 @@ public:
     unsigned snr = (preamble_snr) ? static_cast<unsigned>((preamble_snr.value() + 64.F) * 2.F)
                                   : std::numeric_limits<uint8_t>::max();
 
-    srsgnb_assert(snr <= std::numeric_limits<uint8_t>::max(),
+    srsran_assert(snr <= std::numeric_limits<uint8_t>::max(),
                   "Preamble SNR ({}) exceeds the maximum ({}).",
                   snr,
                   std::numeric_limits<uint8_t>::max());
@@ -1325,12 +1325,12 @@ public:
     int sinr =
         (ul_sinr_metric) ? static_cast<int>(ul_sinr_metric.value() * 500.F) : std::numeric_limits<int16_t>::min();
 
-    srsgnb_assert(sinr <= std::numeric_limits<int16_t>::max(),
+    srsran_assert(sinr <= std::numeric_limits<int16_t>::max(),
                   "UL SINR metric ({}) exceeds the maximum ({}).",
                   sinr,
                   std::numeric_limits<int16_t>::max());
 
-    srsgnb_assert(sinr >= std::numeric_limits<int16_t>::min(),
+    srsran_assert(sinr >= std::numeric_limits<int16_t>::min(),
                   "UL SINR metric ({}) is under the minimum ({}).",
                   sinr,
                   std::numeric_limits<int16_t>::min());
@@ -1341,7 +1341,7 @@ public:
     unsigned rssi_value =
         (rssi) ? static_cast<unsigned>((rssi.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
                   "RSSI metric ({}) exceeds the maximum ({}).",
                   rssi_value,
                   std::numeric_limits<uint16_t>::max());
@@ -1352,7 +1352,7 @@ public:
     unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
                                  : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
                   "RSRP metric ({}) exceeds the maximum ({}).",
                   rsrp_value,
                   std::numeric_limits<uint16_t>::max());
@@ -1437,7 +1437,7 @@ public:
         pdu.pucch_format = uci_pucch_pdu_format_0_1::format_type::format_1;
         break;
       default:
-        srsgnb_assert(0, "PUCCH format={} is not supported by this PDU", type);
+        srsran_assert(0, "PUCCH format={} is not supported by this PDU", type);
         break;
     }
 
@@ -1462,12 +1462,12 @@ public:
     int sinr =
         (ul_sinr_metric) ? static_cast<int>(ul_sinr_metric.value() * 500.F) : std::numeric_limits<int16_t>::min();
 
-    srsgnb_assert(sinr <= std::numeric_limits<int16_t>::max(),
+    srsran_assert(sinr <= std::numeric_limits<int16_t>::max(),
                   "UL SINR metric ({}) exceeds the maximum ({}).",
                   sinr,
                   std::numeric_limits<int16_t>::max());
 
-    srsgnb_assert(sinr >= std::numeric_limits<int16_t>::min(),
+    srsran_assert(sinr >= std::numeric_limits<int16_t>::min(),
                   "UL SINR metric ({}) is under the minimum ({}).",
                   sinr,
                   std::numeric_limits<int16_t>::min());
@@ -1478,7 +1478,7 @@ public:
     unsigned rssi_value =
         (rssi) ? static_cast<unsigned>((rssi.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
                   "RSSI metric ({}) exceeds the maximum ({}).",
                   rssi_value,
                   std::numeric_limits<uint16_t>::max());
@@ -1489,7 +1489,7 @@ public:
     unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
                                  : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
                   "RSRP metric ({}) exceeds the maximum ({}).",
                   rsrp_value,
                   std::numeric_limits<uint16_t>::max());
@@ -1557,7 +1557,7 @@ public:
         pdu.pucch_format = uci_pucch_pdu_format_2_3_4::format_type::format_4;
         break;
       default:
-        srsgnb_assert(0, "PUCCH format={} is not supported by this PDU", type);
+        srsran_assert(0, "PUCCH format={} is not supported by this PDU", type);
         break;
     }
 
@@ -1584,12 +1584,12 @@ public:
     int sinr =
         (ul_sinr_metric) ? static_cast<int>(ul_sinr_metric.value() * 500.F) : std::numeric_limits<int16_t>::min();
 
-    srsgnb_assert(sinr <= std::numeric_limits<int16_t>::max(),
+    srsran_assert(sinr <= std::numeric_limits<int16_t>::max(),
                   "UL SINR metric ({}) exceeds the maximum ({}).",
                   sinr,
                   std::numeric_limits<int16_t>::max());
 
-    srsgnb_assert(sinr >= std::numeric_limits<int16_t>::min(),
+    srsran_assert(sinr >= std::numeric_limits<int16_t>::min(),
                   "UL SINR metric ({}) is under the minimum ({}).",
                   sinr,
                   std::numeric_limits<int16_t>::min());
@@ -1600,7 +1600,7 @@ public:
     unsigned rssi_value =
         (rssi) ? static_cast<unsigned>((rssi.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
                   "RSSI metric ({}) exceeds the maximum ({}).",
                   rssi_value,
                   std::numeric_limits<uint16_t>::max());
@@ -1611,7 +1611,7 @@ public:
     unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
                                  : std::numeric_limits<uint16_t>::max();
 
-    srsgnb_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
                   "RSRP metric ({}) exceeds the maximum ({}).",
                   rsrp_value,
                   std::numeric_limits<uint16_t>::max());
@@ -1770,7 +1770,7 @@ inline slot_indication_message build_slot_indication_message(unsigned sfn, unsig
 inline error_indication_message
 build_error_indication(uint16_t sfn, uint16_t slot, message_type_id msg_id, error_code_id error_id)
 {
-  srsgnb_assert(error_id != error_code_id::out_of_sync, "OUT OF SYNC error is not allowed in this builder");
+  srsran_assert(error_id != error_code_id::out_of_sync, "OUT OF SYNC error is not allowed in this builder");
 
   error_indication_message msg;
 
@@ -2074,7 +2074,7 @@ public:
                                          uint16_t                                             part2_size_map_index,
                                          uci_part1_to_part2_correspondence_v3::map_scope_type part2_size_map_scope)
   {
-    srsgnb_assert(param_offset.size() == param_sizes.size(),
+    srsran_assert(param_offset.size() == param_sizes.size(),
                   "Mismatching span sizes for param offset ({}) and param sizes ({})",
                   param_offset.size(),
                   param_sizes.size());
@@ -2189,7 +2189,7 @@ public:
                                                                       bool                uplink_frequency_shift_7p5hHz)
   {
     pdu.resource_alloc = resource_allocation_type::type_0;
-    srsgnb_assert(pdu.rb_bitmap.size() == rb_bitmap.size(), "RB bitmap size doesn't match");
+    srsran_assert(pdu.rb_bitmap.size() == rb_bitmap.size(), "RB bitmap size doesn't match");
     std::copy(rb_bitmap.begin(), rb_bitmap.end(), pdu.rb_bitmap.begin());
     pdu.vrb_to_prb_mapping            = vrb_to_prb_mapping_type::non_interleaved;
     pdu.tx_direct_current_location    = tx_direct_current_location;
@@ -2288,7 +2288,7 @@ public:
                                          uint16_t                                             part2_size_map_index,
                                          uci_part1_to_part2_correspondence_v3::map_scope_type part2_size_map_scope)
   {
-    srsgnb_assert(param_offset.size() == param_sizes.size(),
+    srsran_assert(param_offset.size() == param_sizes.size(),
                   "Mismatching span sizes for param offset ({}) and param sizes ({})",
                   param_offset.size(),
                   param_sizes.size());

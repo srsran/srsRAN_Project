@@ -21,7 +21,7 @@ class heap_memory_resource
 public:
   heap_memory_resource(size_t sz) : block(std::make_unique<uint8_t[]>(sz)), block_view(block.get(), sz)
   {
-    srsgnb_assert(block != nullptr, "Failed to allocate memory pool");
+    srsran_assert(block != nullptr, "Failed to allocate memory pool");
   }
 
   span<uint8_t> memory_block() const { return block_view; }

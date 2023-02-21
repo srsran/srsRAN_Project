@@ -247,7 +247,7 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
 /// Fills the SR parameters for PUCCH Format 0 or Format 1 using the given builder and result.
 static void fill_format_0_1_sr(fapi::uci_pucch_pdu_format_0_1_builder& builder, const ul_pucch_results& result)
 {
-  srsgnb_assert(result.context.context_f0_f1.has_value(), "Context for PUCCH Format 0 or Format 1 is empty");
+  srsran_assert(result.context.context_f0_f1.has_value(), "Context for PUCCH Format 0 or Format 1 is empty");
 
   const ul_pucch_f0_f1_context& context = result.context.context_f0_f1.value();
   // Do nothing when there is no SR opportunity.
@@ -418,7 +418,7 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
       add_format_2_pucch_pdu(builder, result);
       break;
     default:
-      srsgnb_assert(0, "Unexpected PUCCH format {}", context.format);
+      srsran_assert(0, "Unexpected PUCCH format {}", context.format);
   }
 
   error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);

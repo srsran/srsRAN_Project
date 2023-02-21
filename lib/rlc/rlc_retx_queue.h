@@ -97,13 +97,13 @@ public:
 
   const rlc_tx_amd_retx& front() const
   {
-    srsgnb_assert(not queue.empty(), "Cannot return front element of empty queue.");
+    srsran_assert(not queue.empty(), "Cannot return front element of empty queue.");
     return queue.front();
   }
 
   void replace_front(const rlc_tx_amd_retx& elem)
   {
-    srsgnb_assert(not queue.empty(), "Cannot replace front of empty queue.");
+    srsran_assert(not queue.empty(), "Cannot replace front of empty queue.");
     st.subtract(queue.front());
     st.add(elem);
     queue.front() = elem;

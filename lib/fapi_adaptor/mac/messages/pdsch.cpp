@@ -35,7 +35,7 @@ static crb_interval get_crb_interval(const pdsch_information& pdsch_cfg)
 
 static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch_codeword> codewords)
 {
-  srsgnb_assert(codewords.size() == 1, "Current FAPI implementation only supports 1 transport block per PDU");
+  srsran_assert(codewords.size() == 1, "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : codewords) {
     fapi::dl_pdsch_codeword_builder cw_builder = builder.add_codeword();
     cw_builder.set_basic_parameters(cw.mcs_descr.target_code_rate,
@@ -188,8 +188,8 @@ static fapi::pdsch_trans_type get_pdsch_trans_type(coreset_id            id,
 void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
                                                      const sib_information&      mac_pdu)
 {
-  srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
-  srsgnb_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
+  srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
+  srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
@@ -237,8 +237,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pd
 void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
                                                      const rar_information&      mac_pdu)
 {
-  srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
-  srsgnb_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
+  srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
+  srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);
@@ -285,8 +285,8 @@ void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pd
 
 void srsran::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder, const dl_msg_alloc& mac_pdu)
 {
-  srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
-  srsgnb_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
+  srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
+  srsran_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
 
   // Fill all the parameters contained in the MAC PDSCH information struct.
   fill_pdsch_information(builder, mac_pdu.pdsch_cfg);

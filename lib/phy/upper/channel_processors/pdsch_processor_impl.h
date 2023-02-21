@@ -35,9 +35,9 @@ public:
                        std::unique_ptr<dmrs_pdsch_processor> dmrs_) :
     encoder(std::move(encoder_)), modulator(std::move(modulator_)), dmrs(std::move(dmrs_))
   {
-    srsgnb_assert(encoder != nullptr, "Invalid encoder pointer.");
-    srsgnb_assert(modulator != nullptr, "Invalid modulator pointer.");
-    srsgnb_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+    srsran_assert(encoder != nullptr, "Invalid encoder pointer.");
+    srsran_assert(modulator != nullptr, "Invalid modulator pointer.");
+    srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
   }
 
   // See interface for documentation.

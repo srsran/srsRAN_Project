@@ -31,10 +31,10 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   pending_pdus(0),
   is_send_allowed(false)
 {
-  srsgnb_assert(pdcch_proc, "Invalid PDCCH processor received.");
-  srsgnb_assert(pdsch_proc, "Invalid PDSCH processor received.");
-  srsgnb_assert(ssb_proc, "Invalid SSB processor received.");
-  srsgnb_assert(csi_rs_proc, "Invalid CSI-RS processor received.");
+  srsran_assert(pdcch_proc, "Invalid PDCCH processor received.");
+  srsran_assert(pdsch_proc, "Invalid PDSCH processor received.");
+  srsran_assert(ssb_proc, "Invalid SSB processor received.");
+  srsran_assert(csi_rs_proc, "Invalid CSI-RS processor received.");
 }
 
 void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processor::pdu_t& pdu)
@@ -105,7 +105,7 @@ void downlink_processor_single_executor_impl::configure_resource_grid(const reso
   {
     std::lock_guard<std::mutex> lock(mutex);
     is_send_allowed = false;
-    srsgnb_assert(pending_pdus == 0, "Reusing downlink processor that it is still processing PDUs.");
+    srsran_assert(pending_pdus == 0, "Reusing downlink processor that it is still processing PDUs.");
   }
 
   rg_context   = context;

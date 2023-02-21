@@ -20,8 +20,8 @@ using namespace srsran;
 static void
 vec_function_f(span<log_likelihood_ratio> z, span<const log_likelihood_ratio> x, span<const log_likelihood_ratio> y)
 {
-  srsgnb_assert(y.size() == x.size(), "Input spans must have the same size.");
-  srsgnb_assert(z.size() == x.size(), "Input and output spans must have the same size.");
+  srsran_assert(y.size() == x.size(), "Input spans must have the same size.");
+  srsran_assert(z.size() == x.size(), "Input and output spans must have the same size.");
 
   std::transform(x.begin(), x.end(), y.begin(), z.begin(), log_likelihood_ratio::soft_xor);
 }
@@ -40,8 +40,8 @@ static void vec_function_g(span<log_likelihood_ratio>       z,
                            span<const log_likelihood_ratio> y,
                            span<const uint8_t>              b)
 {
-  srsgnb_assert((y.size() == x.size()) && (b.size() == x.size()), "Input spans must have the same size.");
-  srsgnb_assert(z.size() == x.size(), "Input and output spans must have the same size.");
+  srsran_assert((y.size() == x.size()) && (b.size() == x.size()), "Input spans must have the same size.");
+  srsran_assert(z.size() == x.size(), "Input and output spans must have the same size.");
 
   for (unsigned i = 0, len = x.size(); i != len; ++i) {
     z[i] = switch_combine(y[i], x[i], b[i]);
@@ -222,7 +222,7 @@ void polar_decoder_impl::rate_1_node(span<uint8_t> message)
   uint16_t code_stage_size = param.code_stage_size[stage];
 
   span<uint8_t> codeword = est_bit.subspan(bit_pos, code_stage_size);
-  srsgnb_assert(llr0[stage].size() == code_stage_size, "Invalid size ({} != {})", llr0[stage].size(), code_stage_size);
+  srsran_assert(llr0[stage].size() == code_stage_size, "Invalid size ({} != {})", llr0[stage].size(), code_stage_size);
 
   vec_hard_bit(llr0[stage], codeword);
 
@@ -314,7 +314,7 @@ void polar_decoder_impl::simplified_node(span<uint8_t> message)
       rate_r_node(message);
       break;
     default:
-      srsgnb_assertion_failure("ERROR: wrong node type {}.", param.node_type[stage][bit_pos]);
+      srsran_assertion_failure("ERROR: wrong node type {}.", param.node_type[stage][bit_pos]);
   }
   // Go back to the parent node.
   ++state.stage;

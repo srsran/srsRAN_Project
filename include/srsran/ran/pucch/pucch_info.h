@@ -49,7 +49,7 @@ get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, uns
 
   // The maximum value is the maximum payload that does not require addition of CRC, for which this function would need
   // to be reviewed.
-  srsgnb_assert(nof_payload_bits < 12, "Maximum number of payload bits supported is 11.");
+  srsran_assert(nof_payload_bits < 12, "Maximum number of payload bits supported is 11.");
   // TODO: Review this max payload.
 
   const unsigned NOF_BITS_QPSK_SYMBOL = 2;

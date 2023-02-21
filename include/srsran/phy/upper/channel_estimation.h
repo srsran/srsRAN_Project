@@ -73,16 +73,16 @@ public:
     nof_rx_ports(dims.nof_rx_ports),
     nof_tx_layers(dims.nof_tx_layers)
   {
-    srsgnb_assert(dims.nof_prb <= MAX_RB, "Requested {} RBs, but at most {} are allowed.", dims.nof_prb, MAX_RB);
-    srsgnb_assert(dims.nof_symbols <= MAX_NSYMB_PER_SLOT,
+    srsran_assert(dims.nof_prb <= MAX_RB, "Requested {} RBs, but at most {} are allowed.", dims.nof_prb, MAX_RB);
+    srsran_assert(dims.nof_symbols <= MAX_NSYMB_PER_SLOT,
                   "Requested {} OFDM symbols, but at most {} are allowed.",
                   dims.nof_symbols,
                   MAX_NSYMB_PER_SLOT);
-    srsgnb_assert(dims.nof_rx_ports <= MAX_RX_PORTS,
+    srsran_assert(dims.nof_rx_ports <= MAX_RX_PORTS,
                   "Requested {} receive ports, but at most {} are supported.",
                   dims.nof_rx_ports,
                   static_cast<unsigned>(MAX_RX_PORTS));
-    srsgnb_assert(dims.nof_tx_layers <= MAX_TX_LAYERS,
+    srsran_assert(dims.nof_tx_layers <= MAX_TX_LAYERS,
                   "Requested {} transmission layers, but at most {} are supported.",
                   dims.nof_tx_layers,
                   static_cast<unsigned>(MAX_TX_LAYERS));
@@ -200,8 +200,8 @@ public:
   {
     channel_state_information csi = {};
 
-    srsgnb_assert(nof_rx_ports == 1, "For now, only one Rx port is supported.");
-    srsgnb_assert(nof_tx_layers == 1, "For now, only one Tx layer is supported.");
+    srsran_assert(nof_rx_ports == 1, "For now, only one Rx port is supported.");
+    srsran_assert(nof_tx_layers == 1, "For now, only one Tx layer is supported.");
     csi.epre_dB        = get_epre_dB(0, 0);
     csi.rsrp_dB        = get_rsrp_dB(0, 0);
     csi.sinr_dB        = get_snr_dB(0, 0);
@@ -259,7 +259,7 @@ public:
     nof_tx_layers   = dims.nof_tx_layers;
 
     unsigned nof_paths = nof_rx_ports * nof_tx_layers;
-    srsgnb_assert(nof_paths <= MAX_TX_RX_PATHS,
+    srsran_assert(nof_paths <= MAX_TX_RX_PATHS,
                   "Total requested paths ({}) exceed maximum available ({}).",
                   nof_paths,
                   static_cast<unsigned>(MAX_TX_RX_PATHS));
@@ -269,7 +269,7 @@ public:
     snr.resize(nof_paths);
 
     unsigned nof_res = nof_paths * nof_subcarriers * nof_symbols;
-    srsgnb_assert(nof_res <= MAX_BUFFER_SIZE,
+    srsran_assert(nof_res <= MAX_BUFFER_SIZE,
                   "Total requested REs ({}) exceed maximum available ({}).",
                   nof_res,
                   static_cast<unsigned>(MAX_BUFFER_SIZE));
@@ -331,9 +331,9 @@ private:
   /// Transforms a port-layer pair into a linear index.
   unsigned path_to_index(unsigned rx_port, unsigned tx_layer = 0) const
   {
-    srsgnb_assert(
+    srsran_assert(
         rx_port < nof_rx_ports, "Requested Rx antenna port {} is out of bound (max. {})", rx_port, nof_rx_ports);
-    srsgnb_assert(
+    srsran_assert(
         tx_layer < nof_tx_layers, "Requested Rx antenna port {} is out of bound (max. {})", rx_port, nof_tx_layers);
     return rx_port + nof_rx_ports * tx_layer;
   }
@@ -341,12 +341,12 @@ private:
   /// Transforms a four-dimensional coordinate into a linear index.
   unsigned coords_to_index(unsigned subcarrier, unsigned symbol, unsigned rx_port = 0, unsigned tx_layer = 0) const
   {
-    srsgnb_assert(
+    srsran_assert(
         subcarrier < nof_subcarriers, "Requested subcarrier {} is out of bound (max. {})", subcarrier, nof_subcarriers);
-    srsgnb_assert(symbol < nof_symbols, "Requested OFDM symbol {} is out of bound (max. {})", symbol, nof_symbols);
-    srsgnb_assert(
+    srsran_assert(symbol < nof_symbols, "Requested OFDM symbol {} is out of bound (max. {})", symbol, nof_symbols);
+    srsran_assert(
         rx_port < nof_rx_ports, "Requested Rx antenna port {} is out of bound (max. {})", rx_port, nof_rx_ports);
-    srsgnb_assert(tx_layer < nof_tx_layers, "Requested Tx layer {} is out of bound (max. {})", tx_layer, nof_tx_layers);
+    srsran_assert(tx_layer < nof_tx_layers, "Requested Tx layer {} is out of bound (max. {})", tx_layer, nof_tx_layers);
     return subcarrier + nof_subcarriers * (symbol + nof_symbols * (rx_port + nof_rx_ports * tx_layer));
   }
 };

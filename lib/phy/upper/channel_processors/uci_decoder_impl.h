@@ -29,7 +29,7 @@ public:
   /// \param[in] dec   Pointer to a short block detector object.
   uci_decoder_impl(std::unique_ptr<short_block_detector> dec) : decoder(std::move(dec))
   {
-    srsgnb_assert(decoder, "Wrong short block detector.");
+    srsran_assert(decoder, "Wrong short block detector.");
   };
 
   // See interface for the documentation.

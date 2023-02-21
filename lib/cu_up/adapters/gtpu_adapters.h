@@ -29,7 +29,7 @@ public:
 
   void on_new_pdu(byte_buffer pdu, const sockaddr_storage& addr) override
   {
-    srsgnb_assert(gw_handler != nullptr, "Network Gateway handler must not be nullptr");
+    srsran_assert(gw_handler != nullptr, "Network Gateway handler must not be nullptr");
     gw_handler->handle_pdu(std::move(pdu), (sockaddr*)&addr, sizeof(sockaddr_storage));
   }
 
@@ -48,7 +48,7 @@ public:
 
   void on_new_sdu(byte_buffer sdu) override
   {
-    srsgnb_assert(sdap_handler != nullptr, "SDAP handler must not be nullptr");
+    srsran_assert(sdap_handler != nullptr, "SDAP handler must not be nullptr");
     sdap_handler->handle_sdu(std::move(sdu));
   }
 

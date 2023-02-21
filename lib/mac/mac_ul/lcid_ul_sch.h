@@ -49,10 +49,10 @@ public:
     PADDING         = 0b111111
   };
 
-  lcid_ul_sch_t(underlying_type lcid_ = PADDING) : lcid_val(lcid_) { srsgnb_assert(lcid_ <= PADDING, "Invalid LCID"); }
+  lcid_ul_sch_t(underlying_type lcid_ = PADDING) : lcid_val(lcid_) { srsran_assert(lcid_ <= PADDING, "Invalid LCID"); }
   lcid_ul_sch_t& operator=(underlying_type lcid)
   {
-    srsgnb_assert(lcid <= PADDING, "Invalid LCID");
+    srsran_assert(lcid <= PADDING, "Invalid LCID");
     lcid_val = lcid;
     return *this;
   }

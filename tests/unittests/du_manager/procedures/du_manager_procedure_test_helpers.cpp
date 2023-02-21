@@ -48,7 +48,7 @@ du_ue& du_manager_proc_tester::create_ue(du_ue_index_t ue_index)
 
   lazy_task_launcher<void> launcher{t};
 
-  srsgnb_assert(launcher.ready(), "The UE creation procedure should have completed by now");
+  srsran_assert(launcher.ready(), "The UE creation procedure should have completed by now");
 
   return *ue_mng.ues[ue_index];
 }
@@ -86,7 +86,7 @@ f1ap_ue_context_update_response du_manager_proc_tester::configure_ue(const f1ap_
   // Run Procedure.
   async_task<f1ap_ue_context_update_response>         t = launch_async<ue_configuration_procedure>(req, ue_mng, params);
   lazy_task_launcher<f1ap_ue_context_update_response> launcher{t};
-  srsgnb_assert(launcher.ready(), "The UE creation procedure should have completed by now");
+  srsran_assert(launcher.ready(), "The UE creation procedure should have completed by now");
 
   return t.get();
 }

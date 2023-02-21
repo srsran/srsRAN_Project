@@ -80,18 +80,18 @@ public:
 
   void schedule_async_task(async_task<void>&& task) override
   {
-    srsgnb_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
+    srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
     du_processor_task_handler->handle_ue_async_task(ue_index, std::move(task));
   }
 
   unique_timer make_unique_timer() override
   {
-    srsgnb_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
+    srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
     return du_processor_task_handler->make_unique_timer();
   }
   timer_manager& get_timer_manager() override
   {
-    srsgnb_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
+    srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
     return du_processor_task_handler->get_timer_manager();
   }
 
@@ -150,7 +150,7 @@ public:
 
   void on_initial_ue_message(const initial_ue_message& msg) override
   {
-    srsgnb_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
+    srsran_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
 
     ngap_initial_ue_message ngap_init_ue_msg;
     ngap_init_ue_msg.ue_index = msg.ue_index;
@@ -168,7 +168,7 @@ public:
 
   void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
   {
-    srsgnb_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
+    srsran_assert(ngap_nas_msg_handler != nullptr, "NGAP handler must not be nullptr");
 
     ngap_ul_nas_transport_message ngap_ul_nas_msg;
     ngap_ul_nas_msg.ue_index = msg.ue_index;

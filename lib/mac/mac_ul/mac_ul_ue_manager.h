@@ -52,7 +52,7 @@ public:
   /// Adds UE in MAC UL UE repository
   bool add_ue(const mac_ue_create_request_message& request)
   {
-    srsgnb_sanity_check(is_crnti(request.crnti), "Invalid C-RNTI={:#x}", request.crnti);
+    srsran_sanity_check(is_crnti(request.crnti), "Invalid C-RNTI={:#x}", request.crnti);
 
     // 1. Insert UE
     if (ue_db.contains(request.ue_index)) {

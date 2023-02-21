@@ -78,11 +78,11 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
         unsigned nof_symbols                 = ceil(length_msecs / symbol_duration_msec);
         cached_prach.grant_resources.symbols = {prach_cfg.starting_symbol, prach_cfg.starting_symbol + nof_symbols};
       } else {
-        srsgnb_sanity_check(prach_cfg.duration > 0, "Invalid duration for short preamble");
+        srsran_sanity_check(prach_cfg.duration > 0, "Invalid duration for short preamble");
         unsigned start                       = prach_cfg.starting_symbol + i * prach_cfg.duration;
         cached_prach.grant_resources.symbols = {start, start + prach_cfg.duration};
       }
-      srsgnb_sanity_check(cached_prach.grant_resources.symbols.stop() <= nof_symbols_per_slot,
+      srsran_sanity_check(cached_prach.grant_resources.symbols.stop() <= nof_symbols_per_slot,
                           "Invalid PRACH preamble position");
       unsigned prach_nof_prbs =
           prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
@@ -110,7 +110,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
 
 void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
 {
-  if (srsgnb_unlikely(first_slot_ind)) {
+  if (srsran_unlikely(first_slot_ind)) {
     // If called for the first time, pre-allocates the PRACH PDUs over the entire grid, until the last
     // (farthest in the future) usable slot.
     first_slot_ind = false;

@@ -90,21 +90,21 @@ public:
   /// \param msg configuration parameters of the new cell.
   void add_cell(du_cell_index_t cell_index, const sched_cell_configuration_request_message& msg)
   {
-    srsgnb_assert(cell_index < MAX_NOF_DU_CELLS, "Cell index={} is not valid", cell_index);
-    srsgnb_assert(not cell_exists(cell_index), "Cell={} already exists", cell_index);
+    srsran_assert(cell_index < MAX_NOF_DU_CELLS, "Cell index={} is not valid", cell_index);
+    srsran_assert(not cell_exists(cell_index), "Cell={} already exists", cell_index);
     cells[cell_index] = std::make_unique<scheduler_cell>(sched_cfg, msg, ev_logger);
     nof_cells_++;
   }
 
   scheduler_cell& operator[](du_cell_index_t cell_index)
   {
-    srsgnb_assert(cell_exists(cell_index), "Cell={} does not exist", cell_index);
+    srsran_assert(cell_exists(cell_index), "Cell={} does not exist", cell_index);
     return *cells[cell_index];
   }
 
   const scheduler_cell& operator[](du_cell_index_t cell_index) const
   {
-    srsgnb_assert(cell_exists(cell_index), "Cell={} does not exist", cell_index);
+    srsran_assert(cell_exists(cell_index), "Cell={} does not exist", cell_index);
     return *cells[cell_index];
   }
 

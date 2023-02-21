@@ -24,7 +24,7 @@ public:
 
   void on_new_sdu(byte_buffer_slice sdu) override
   {
-    srsgnb_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
     rlc_handler->handle_pdu(std::move(sdu));
   }
 
@@ -39,13 +39,13 @@ public:
 
   byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override
   {
-    srsgnb_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
     return rlc_handler->pull_pdu(nof_bytes);
   }
 
   unsigned on_buffer_state_update() override
   {
-    srsgnb_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
+    srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
     return rlc_handler->get_buffer_state();
   }
 

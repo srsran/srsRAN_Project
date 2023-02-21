@@ -99,12 +99,12 @@ void prach_processor_worker::accumulate_samples(span<const cf_t> samples)
 
 void prach_processor_worker::handle_request(prach_buffer& buffer_, const prach_buffer_context& context_)
 {
-  srsgnb_assert(state == states::idle, "Invalid state.");
+  srsran_assert(state == states::idle, "Invalid state.");
 
   prach_context = context_;
   buffer        = &buffer_;
 
-  srsgnb_assert(prach_context.format.is_long_preamble(), "Only long preamble formats are currently supported.");
+  srsran_assert(prach_context.format.is_long_preamble(), "Only long preamble formats are currently supported.");
 
   // Get preamble format information.
   prach_preamble_information preamble_info = get_prach_preamble_long_info(prach_context.format);

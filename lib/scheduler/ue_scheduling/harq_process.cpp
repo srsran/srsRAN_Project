@@ -107,8 +107,8 @@ void detail::harq_process<IsDownlink>::tx_common(slot_point slot_tx_, slot_point
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigned max_nof_harq_retxs, uint8_t dai)
 {
-  srsgnb_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
-  srsgnb_assert(empty(tb_idx), "Cannot allocate newTx non-empty HARQ TB");
+  srsran_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
+  srsran_assert(empty(tb_idx), "Cannot allocate newTx non-empty HARQ TB");
   tb_array[tb_idx].state              = transport_block::state_t::waiting_ack;
   tb_array[tb_idx].ndi                = !tb_array[tb_idx].ndi;
   tb_array[tb_idx].max_nof_harq_retxs = max_nof_harq_retxs;
@@ -120,8 +120,8 @@ void detail::harq_process<IsDownlink>::new_tx_tb_common(unsigned tb_idx, unsigne
 template <bool IsDownlink>
 void detail::harq_process<IsDownlink>::new_retx_tb_common(unsigned tb_idx, uint8_t dai)
 {
-  srsgnb_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
-  srsgnb_assert(tb_array[tb_idx].state == transport_block::state_t::pending_retx,
+  srsran_assert(tb_idx < tb_array.size(), "TB index is out-of-bounds");
+  srsran_assert(tb_array[tb_idx].state == transport_block::state_t::pending_retx,
                 "Cannot allocate reTx in HARQ without a pending reTx");
   tb_array[tb_idx].state     = transport_block::state_t::waiting_ack;
   tb_array[tb_idx].ack_state = false;
@@ -154,8 +154,8 @@ void dl_harq_process::tx_2_tb(slot_point                pdsch_slot,
                               unsigned                  max_harq_nof_retxs,
                               uint8_t                   dai)
 {
-  srsgnb_assert(tb_tx_req.size() == 2, "This function should only be called when 2 TBs are active");
-  srsgnb_assert(
+  srsran_assert(tb_tx_req.size() == 2, "This function should only be called when 2 TBs are active");
+  srsran_assert(
       std::any_of(tb_tx_req.begin(), tb_tx_req.end(), [](const auto& tb) { return tb != tb_tx_request::disabled; }),
       "At least one TB must be enabled in a HARQ allocation");
   base_type::tx_common(pdsch_slot, pdsch_slot + k1);
@@ -207,10 +207,10 @@ void dl_harq_process::save_alloc_params(dci_dl_rnti_config_type dci_cfg_type, co
 {
   unsigned tb_idx = empty(0) ? 1 : 0;
   for (const pdsch_codeword& cw : pdsch.codewords) {
-    srsgnb_assert(not empty(tb_idx), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
-    srsgnb_assert(tb(tb_idx).nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
+    srsran_assert(not empty(tb_idx), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
+    srsran_assert(tb(tb_idx).nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during DL HARQ retxs");
-    srsgnb_assert(tb(tb_idx).nof_retxs == 0 or prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
+    srsran_assert(tb(tb_idx).nof_retxs == 0 or prev_tx_params.tb[tb_idx]->tbs_bytes == cw.tb_size_bytes,
                   "TBS cannot change during DL HARQ retxs ({}!={}). Previous MCS={}, PRBs={}. New MCS={}, PRBs={}",
                   prev_tx_params.tb[tb_idx]->tbs_bytes,
                   cw.tb_size_bytes,
@@ -260,10 +260,10 @@ int ul_harq_process::crc_info(bool ack)
 
 void ul_harq_process::save_alloc_params(dci_ul_rnti_config_type dci_cfg_type, const pusch_information& pusch)
 {
-  srsgnb_assert(not empty(), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
-  srsgnb_assert(tb().nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
+  srsran_assert(not empty(), "Setting allocation parameters for empty DL HARQ process id={} TB", id);
+  srsran_assert(tb().nof_retxs == 0 or dci_cfg_type == prev_tx_params.dci_cfg_type,
                 "DCI format and RNTI type cannot change during DL HARQ retxs");
-  srsgnb_assert(tb().nof_retxs == 0 or prev_tx_params.tbs_bytes == pusch.tb_size_bytes,
+  srsran_assert(tb().nof_retxs == 0 or prev_tx_params.tbs_bytes == pusch.tb_size_bytes,
                 "TBS cannot change during DL HARQ retxs");
 
   prev_tx_params.mcs_table    = pusch.mcs_table;

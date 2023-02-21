@@ -34,7 +34,7 @@ inline float alpha_scaling_to_float(alpha_scaling_opt val)
     default:
       // NOTE: This is not in the specs, but it is to prevent the compiler from flagging a warning for reaching the end
       // of a non-void function without return statement.
-      srsgnb_assert(val > alpha_scaling_opt::f1, "Invalid Alpha scaling option");
+      srsran_assert(val > alpha_scaling_opt::f1, "Invalid Alpha scaling option");
       return 1.0f;
   }
 }

@@ -74,10 +74,10 @@ static float estimate_time_alignment(span<const cf_t>                           
 static interpolator::configuration configure_interpolator(const bounded_bitset<NRE>& re_mask)
 {
   int offset = re_mask.find_lowest();
-  srsgnb_assert(offset != -1, "re_mask seems to have no active entries.");
+  srsran_assert(offset != -1, "re_mask seems to have no active entries.");
 
   int stride = re_mask.find_lowest(offset + 1, re_mask.size());
-  srsgnb_assert(stride != -1, "re_mask seems to have only one active entry.");
+  srsran_assert(stride != -1, "re_mask seems to have only one active entry.");
 
   return {static_cast<unsigned>(offset), static_cast<unsigned>(stride - offset)};
 }
@@ -126,7 +126,7 @@ void port_channel_estimator_average_impl::compute(channel_estimate&           es
     }
     estimate.set_noise_variance(noise_var, port, i_layer);
 
-    srsgnb_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");
+    srsran_assert(cfg.scaling > 0, "The DM-RS to data scaling factor should be a positive number.");
     // Compute the estimated data received power by scaling the RSRP.
     float datarp = rsrp / cfg.scaling / cfg.scaling;
     estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port, i_layer);
@@ -141,7 +141,7 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
                                                             unsigned                            hop,
                                                             unsigned                            i_layer)
 {
-  srsgnb_assert((hop == 0) || cfg.dmrs_pattern[i_layer].hopping_symbol_index.has_value(),
+  srsran_assert((hop == 0) || cfg.dmrs_pattern[i_layer].hopping_symbol_index.has_value(),
                 "Frequency hopping requested but not configured.");
 
   // Auxiliary buffers for pilot computations.
@@ -158,7 +158,7 @@ void port_channel_estimator_average_impl::compute_layer_hop(srsran::channel_esti
 
   // Extract symbols from resource grid.
   unsigned nof_dmrs_symbols = extract_layer_hop_rx_pilots(rx_pilots, grid, port, cfg, hop, i_layer);
-  srsgnb_assert(nof_dmrs_symbols != 0, "No DM-RS symbols were found for layer {}.", i_layer);
+  srsran_assert(nof_dmrs_symbols != 0, "No DM-RS symbols were found for layer {}.", i_layer);
 
   unsigned hop_offset = 0;
   if (hop == 1) {
@@ -248,7 +248,7 @@ static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                   
     layer_dmrs_symbols = grid.get(layer_dmrs_symbols, cfg.rx_ports[port], symbol_index, 0, re_mask);
 
     // The DM-RS symbol buffer must be complete.
-    srsgnb_assert(layer_dmrs_symbols.empty(),
+    srsran_assert(layer_dmrs_symbols.empty(),
                   "The DM-RS buffer is not completed. {} samples have not been read.",
                   layer_dmrs_symbols.size());
   }
@@ -268,7 +268,7 @@ static float estimate_noise(const dmrs_symbol_list& pilots,
   std::array<cf_t, MAX_RB * NRE> avg_estimates_buffer;
   std::array<cf_t, MAX_RB * NRE> predicted_obs_buffer;
 
-  srsgnb_assert((window_size > 0) && (estimates.size() % window_size == 0), "Incompatible window size.");
+  srsran_assert((window_size > 0) && (estimates.size() % window_size == 0), "Incompatible window size.");
 
   span<cf_t> avg_estimates = span<cf_t>(avg_estimates_buffer).first(estimates.size());
 
@@ -308,11 +308,11 @@ static float estimate_time_alignment(span<const cf_t>                           
   bounded_bitset<MAX_RB* NRE> re_mask = hop_rb_mask.kronecker_product<NRE>(pattern.re_pattern);
 
   static constexpr unsigned DFT_SIZE = port_channel_estimator_average_impl::DFT_SIZE;
-  srsgnb_assert(re_mask.size() < DFT_SIZE,
+  srsran_assert(re_mask.size() < DFT_SIZE,
                 "The resource grid size {} is larger than the port channel estimator DFT size {}.",
                 re_mask.size(),
                 DFT_SIZE);
-  srsgnb_assert(pilots_lse.size() == re_mask.count(),
+  srsran_assert(pilots_lse.size() == re_mask.count(),
                 "Expected {} channel estimates, provided {}.",
                 re_mask.size(),
                 pilots_lse.size());

@@ -166,7 +166,7 @@ struct sib_test_bench {
 
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
         cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
-    srsgnb_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
+    srsran_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
     cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
     cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
     cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
@@ -211,7 +211,7 @@ struct sib_test_bench {
 
     optional<band_helper::ssb_coreset0_freq_location> ssb_freq_loc = band_helper::get_ssb_coreset0_freq_location(
         cell_cfg.dl_arfcn, *cell_cfg.band, nof_crbs, cell_cfg.scs_common, cell_cfg.scs_common, 0);
-    srsgnb_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
+    srsran_assert(ssb_freq_loc.has_value(), "Invalid cell config parameters");
     cell_cfg.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
     cell_cfg.k_ssb             = ssb_freq_loc->k_ssb;
     cell_cfg.coreset0_index    = ssb_freq_loc->coreset0_idx;
@@ -448,7 +448,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
 void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs, uint16_t carrier_bw_mhz)
 {
   const auto min_ch_bw = band_helper::get_min_channel_bw(band_helper::get_band_from_dl_arfcn(freq_arfcn), scs);
-  srsgnb_assert(carrier_bw_mhz >= min_channel_bandwidth_to_MHz(min_ch_bw), "Invalid carrier BW");
+  srsran_assert(carrier_bw_mhz >= min_channel_bandwidth_to_MHz(min_ch_bw), "Invalid carrier BW");
 
   const auto nof_rbs_bpw =
       band_helper::get_n_rbs_from_bw(static_cast<bs_channel_bandwidth_fr1>(carrier_bw_mhz),

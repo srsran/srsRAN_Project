@@ -45,7 +45,7 @@ protected:
   /// Creates a bit buffer from a buffer and a size.
   bit_buffer(span<word_t> buffer_, unsigned current_size_ = 0) : buffer(buffer_), current_size(current_size_)
   {
-    srsgnb_assert(nof_words() <= buffer.size(),
+    srsran_assert(nof_words() <= buffer.size(),
                   "The current size (i.e., {}) requires {} words which exceeds the maximum number of words (i.e., {}).",
                   current_size,
                   nof_words(),
@@ -82,15 +82,15 @@ public:
   template <typename Integer>
   void insert(Integer value_, unsigned startpos, unsigned count)
   {
-    srsgnb_assert(count <= bits_per_word,
+    srsran_assert(count <= bits_per_word,
                   "The number of bits to insert (i.e., {}) exceeds the number of bits per word (i.e., {}).",
                   count,
                   static_cast<unsigned>(bits_per_word));
-    srsgnb_assert(value_ < (1U << count),
+    srsran_assert(value_ < (1U << count),
                   "The value (i.e., {}) number of bits exceeds the number of bits to insert (i.e., {}).",
                   value_,
                   count);
-    srsgnb_assert(startpos + count <= size(),
+    srsran_assert(startpos + count <= size(),
                   "The bit range starting at {} for {} bits exceed the buffer size (i.e., {}).",
                   startpos,
                   count,
@@ -140,11 +140,11 @@ public:
   template <typename Integer = uint8_t>
   Integer extract(unsigned startpos, unsigned count) const
   {
-    srsgnb_assert(count <= bits_per_word,
+    srsran_assert(count <= bits_per_word,
                   "The number of bits to insert (i.e., {}) exceeds the number of bits per word (i.e., {}).",
                   count,
                   static_cast<unsigned>(bits_per_word));
-    srsgnb_assert(startpos + count <= size(),
+    srsran_assert(startpos + count <= size(),
                   "The bit range starting at {} for {} bits exceed the buffer size (i.e., {}).",
                   startpos,
                   count,
@@ -176,7 +176,7 @@ public:
   /// \remark The byte index must not point to a word that is not fully occupied by bits.
   const uint8_t get_byte(unsigned i_byte) const
   {
-    srsgnb_assert(i_byte < nof_full_words(),
+    srsran_assert(i_byte < nof_full_words(),
                   "The byte index {} exceeds the number of full words (i.e., {}).",
                   i_byte,
                   nof_full_words());
@@ -187,7 +187,7 @@ public:
   /// \remark The byte index must not point to a word that is not fully occupied by bits.
   void set_byte(uint8_t byte, unsigned i_byte)
   {
-    srsgnb_assert(i_byte < nof_full_words(),
+    srsran_assert(i_byte < nof_full_words(),
                   "The byte index {} exceeds the number of full words (i.e., {}).",
                   i_byte,
                   nof_full_words());
@@ -197,7 +197,7 @@ public:
   /// Creates another bit buffer pointing at the first \c count bits.
   bit_buffer first(unsigned count)
   {
-    srsgnb_assert(size() >= count,
+    srsran_assert(size() >= count,
                   "The buffer size (i.e., {}) must be greater than or equal to the number of bits (i.e., {}).",
                   size(),
                   count);
@@ -208,7 +208,7 @@ public:
   /// \remark An assertion is triggered if the bits are not aligned with a bit word boundary.
   bit_buffer last(unsigned count)
   {
-    srsgnb_assert((size() - count) % bits_per_word == 0, "Only bit word boundaries are supported.");
+    srsran_assert((size() - count) % bits_per_word == 0, "Only bit word boundaries are supported.");
 
     unsigned buffer_start = (size() - count) / bits_per_word;
     unsigned buffer_len   = divide_ceil(count, bits_per_word);

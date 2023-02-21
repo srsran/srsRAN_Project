@@ -84,7 +84,7 @@ static unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config,
       default:; // Do nothing.
     }
   }
-  srsgnb_assert(false, "Invalid case nof_symbols={} and m_prime={}", config.nof_symbols, m_prime);
+  srsran_assert(false, "Invalid case nof_symbols={} and m_prime={}", config.nof_symbols, m_prime);
   return 0;
 }
 
@@ -131,7 +131,7 @@ void dmrs_pucch_processor_format1_impl::generate_sequence(span<srsran::cf_t>    
 
   // Get r_uv sequence from the sequence collection.
   span<const cf_t> r_uv = sequence_collection->get(cfg.u, cfg.v, alpha_idx);
-  srsgnb_assert(!r_uv.empty(), "low PAPR sequence not implemented for the specified u, v and alpha");
+  srsran_assert(!r_uv.empty(), "low PAPR sequence not implemented for the specified u, v and alpha");
 
   // Get orthogonal sequence.
   cf_t w_i_m = occ.get_sequence_value(cfg.n_pucch, pucch_config.time_domain_occ, cfg.m);
@@ -144,7 +144,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
                                                  const resource_grid_reader&           grid,
                                                  const dmrs_pucch_processor::config_t& config)
 {
-  srsgnb_assert(config.nof_prb <= 1, "PUCCH Format 1 occupies a single PRB.");
+  srsran_assert(config.nof_prb <= 1, "PUCCH Format 1 occupies a single PRB.");
 
   unsigned nof_rx_ports = config.ports.size();
 
@@ -175,7 +175,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
     // Get number of symbols carrying DM-RS in the current hop.
     unsigned nof_dmrs_symb_hop = dmrs_pucch_symbols(config, i_hop);
 
-    srsgnb_assert(nof_dmrs_symb_hop > 0, "Error getting number of DM-RS symbols");
+    srsran_assert(nof_dmrs_symb_hop > 0, "Error getting number of DM-RS symbols");
 
     // For each symbol in the current hop carrying DM-RS.
     for (unsigned i_dmrs_symb_hop = 0; i_dmrs_symb_hop != nof_dmrs_symb_hop; ++i_dmrs_symb_hop, i_symb += 2) {
@@ -185,7 +185,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
     }
   }
 
-  srsgnb_assert(temp_symbols.size().nof_symbols == i_dmrs_symb,
+  srsran_assert(temp_symbols.size().nof_symbols == i_dmrs_symb,
                 "DM-RS buffer has {} OFDM symbols, but only {} symbols have been filled.",
                 temp_symbols.size().nof_symbols,
                 i_dmrs_symb);

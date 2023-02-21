@@ -14,7 +14,7 @@ using namespace srsran;
 
 nominal_rbg_size srsran::get_nominal_rbg_size(unsigned bwp_nof_prb, bool config_1_or_2)
 {
-  srsgnb_assert(bwp_nof_prb > 0 and bwp_nof_prb <= 275, "Invalid BWP size");
+  srsran_assert(bwp_nof_prb > 0 and bwp_nof_prb <= 275, "Invalid BWP size");
   if (bwp_nof_prb <= 36) {
     return config_1_or_2 ? nominal_rbg_size::P2 : nominal_rbg_size::P4;
   }
@@ -42,7 +42,7 @@ unsigned srsran::get_nof_rbgs(crb_interval bwp_rbs, bool config1_or_2)
 unsigned srsran::get_rbg_size(crb_interval bwp_rbs, nominal_rbg_size P, uint32_t rbg_idx)
 {
   uint32_t nof_rbgs = get_nof_rbgs(bwp_rbs, P);
-  srsgnb_sanity_check(rbg_idx < nof_rbgs, "RBG index out-of-bounds ({} >= {})", rbg_idx, nof_rbgs);
+  srsran_sanity_check(rbg_idx < nof_rbgs, "RBG index out-of-bounds ({} >= {})", rbg_idx, nof_rbgs);
   if (rbg_idx == 0) {
     return to_nominal_rbg_size_value(P) - (bwp_rbs.start() % to_nominal_rbg_size_value(P));
   }

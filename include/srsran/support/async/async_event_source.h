@@ -30,7 +30,7 @@ public:
   async_event_source(async_event_source&&)                 = delete;
   async_event_source& operator=(const async_event_source&) = delete;
   async_event_source& operator=(async_event_source&&)      = delete;
-  ~async_event_source() { srsgnb_assert(not has_subscriber(), "Observers must not outlive event sources"); }
+  ~async_event_source() { srsran_assert(not has_subscriber(), "Observers must not outlive event sources"); }
 
   /// \brief Checks if there is any listener registered.
   bool has_subscriber() const { return sub != nullptr; }
@@ -55,8 +55,8 @@ private:
 
   void set_observer(async_single_event_observer<T>& sub_)
   {
-    srsgnb_assert(not has_subscriber(), "This class only allows one observer/sink/listener per transaction");
-    srsgnb_assert(not sub_.connected(), "The observer cannot be already registered");
+    srsran_assert(not has_subscriber(), "This class only allows one observer/sink/listener per transaction");
+    srsran_assert(not sub_.connected(), "The observer cannot be already registered");
     if (sub_.complete()) {
       // observer finished the previous transaction. Its last result can be reset.
       sub_.reset();
@@ -77,7 +77,7 @@ private:
 
   void remove_observer()
   {
-    srsgnb_assert(has_subscriber(), "Unsubscribe called but no subscriber is registered");
+    srsran_assert(has_subscriber(), "Unsubscribe called but no subscriber is registered");
     sub->parent = nullptr;
     sub         = nullptr;
   }
@@ -132,12 +132,12 @@ public:
   /// \brief Result set by event source.
   const T& result() const&
   {
-    srsgnb_assert(complete(), "Trying to fetch result of incomplete transaction");
+    srsran_assert(complete(), "Trying to fetch result of incomplete transaction");
     return event.get();
   }
   T result() &&
   {
-    srsgnb_assert(complete(), "Trying to fetch result of incomplete transaction");
+    srsran_assert(complete(), "Trying to fetch result of incomplete transaction");
     return std::move(event).get();
   }
 

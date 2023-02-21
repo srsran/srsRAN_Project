@@ -58,11 +58,11 @@ class fixed_size_memory_block_pool
   explicit fixed_size_memory_block_pool(size_t nof_blocks_, size_t memory_block_size_) :
     mblock_size(align_next(memory_block_size_, alignof(std::max_align_t))), nof_blocks(nof_blocks_)
   {
-    srsgnb_assert(nof_blocks > batch_steal_size,
+    srsran_assert(nof_blocks > batch_steal_size,
                   "The number of segments in the pool must be larger than the thread cache size ({} <= {})",
                   nof_blocks,
                   (size_t)batch_steal_size);
-    srsgnb_assert(mblock_size > free_memory_block_list::min_memory_block_align(),
+    srsran_assert(mblock_size > free_memory_block_list::min_memory_block_align(),
                   "Segment size is too small ({} <= {})",
                   mblock_size,
                   free_memory_block_list::min_memory_block_align());
@@ -109,7 +109,7 @@ public:
   /// Allocate a node from the memory pool with the provided size.
   void* allocate_node(size_t sz) noexcept
   {
-    srsgnb_assert(sz <= mblock_size, "Allocated node size={} exceeds max object size={}", sz, mblock_size);
+    srsran_assert(sz <= mblock_size, "Allocated node size={} exceeds max object size={}", sz, mblock_size);
     worker_ctxt* w_ctx = get_worker_cache();
 
     void* node = w_ctx->local_cache.try_pop();
@@ -129,7 +129,7 @@ public:
   /// Deallocate node by returning it back to the memory pool.
   void deallocate_node(void* p)
   {
-    srsgnb_assert(p != nullptr, "Deallocated nodes must have valid address");
+    srsran_assert(p != nullptr, "Deallocated nodes must have valid address");
 
     worker_ctxt* w_ctx = get_worker_cache();
 

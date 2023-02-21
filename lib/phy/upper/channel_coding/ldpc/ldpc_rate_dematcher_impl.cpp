@@ -20,7 +20,7 @@ using namespace srsran::ldpc;
 
 void ldpc_rate_dematcher_impl::init(bool new_data, const codeblock_metadata::tb_common_metadata& cfg)
 {
-  srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
+  srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
   rv = cfg.rv;
 
   modulation_order = get_bits_per_symbol(cfg.mod);
@@ -38,7 +38,7 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
   unsigned block_length = output.size();
 
   // Make sure N_ref is valid.
-  srsgnb_assert(cfg.tb_common.Nref <= MAX_CODEBLOCK_SIZE,
+  srsran_assert(cfg.tb_common.Nref <= MAX_CODEBLOCK_SIZE,
                 "N_ref {} must be smaller or equal to {}.",
                 cfg.tb_common.Nref,
                 MAX_CODEBLOCK_SIZE);
@@ -51,13 +51,13 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
   }
 
   // The input size cannot be larger than the maximum rate-matched codeblock length.
-  srsgnb_assert(input.size() <= MAX_CODEBLOCK_RM_SIZE,
+  srsran_assert(input.size() <= MAX_CODEBLOCK_RM_SIZE,
                 "The length of the rate-matched codeblock is {} but it shouldn't be more than {}.",
                 input.size(),
                 MAX_CODEBLOCK_RM_SIZE);
 
   // The input size must be a multiple of the modulation order.
-  srsgnb_assert(input.size() % modulation_order == 0, "The input length should be a multiple of the modulation order.");
+  srsran_assert(input.size() % modulation_order == 0, "The input length should be a multiple of the modulation order.");
 
   // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2.
   std::array<double, 4> shift_factor = {};
@@ -74,15 +74,15 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
     BG_N_short   = BG2_N_SHORT;
     BG_K         = BG2_N_FULL - BG2_M;
   } else {
-    srsgnb_assert(false, "LDPC rate dematching: invalid input length.");
+    srsran_assert(false, "LDPC rate dematching: invalid input length.");
   }
   uint16_t lifting_size = block_length / BG_N_short;
-  srsgnb_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
+  srsran_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
                 "LDPC rate dematching: invalid input length.");
 
   // Recall that 2 * lifting_size systematic bits are shortened out of the codeblock.
   nof_systematic_bits = (BG_K - 2) * lifting_size;
-  srsgnb_assert(cfg.cb_specific.nof_filler_bits < nof_systematic_bits,
+  srsran_assert(cfg.cb_specific.nof_filler_bits < nof_systematic_bits,
                 "LDPC rate dematching: invalid number of filler bits.");
   nof_filler_bits = cfg.cb_specific.nof_filler_bits;
 
@@ -102,8 +102,8 @@ void ldpc_rate_dematcher_impl::combine_softbits(span<log_likelihood_ratio>      
                                                 span<const log_likelihood_ratio> in0,
                                                 span<const log_likelihood_ratio> in1) const
 {
-  srsgnb_assert(out.size() == in0.size(), "All sizes must be equal.");
-  srsgnb_assert(out.size() == in1.size(), "All sizes must be equal.");
+  srsran_assert(out.size() == in0.size(), "All sizes must be equal.");
+  srsran_assert(out.size() == in1.size(), "All sizes must be equal.");
 
   for (unsigned index = 0, index_end = out.size(); index != index_end; ++index) {
     out[index] = in0[index] + in1[index];

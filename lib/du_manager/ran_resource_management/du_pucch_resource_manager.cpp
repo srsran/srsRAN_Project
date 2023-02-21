@@ -24,7 +24,7 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
   }()),
   cells(cell_cfg_list_.size())
 {
-  srsgnb_assert(not default_pucch_cfg.sr_res_list.empty(), "There must be at least one SR Resource");
+  srsran_assert(not default_pucch_cfg.sr_res_list.empty(), "There must be at least one SR Resource");
 
   // Compute fundamental SR period.
   // TODO: Handle more than one SR period.

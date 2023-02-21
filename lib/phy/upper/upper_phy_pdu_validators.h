@@ -25,9 +25,9 @@ public:
                                   std::unique_ptr<pusch_pdu_validator>      pusch_) :
     prach(std::move(prach_)), pucch(std::move(pucch_)), pusch(std::move(pusch_))
   {
-    srsgnb_assert(prach, "Invalid PRACH detector validator.");
-    srsgnb_assert(pucch, "Invalid PUCCH processor validator.");
-    srsgnb_assert(pusch, "Invalid PUSCH processor validator.");
+    srsran_assert(prach, "Invalid PRACH detector validator.");
+    srsran_assert(pucch, "Invalid PUCCH processor validator.");
+    srsran_assert(pusch, "Invalid PUSCH processor validator.");
   }
 
   // See interface for documentation.
@@ -56,10 +56,10 @@ public:
                                     std::unique_ptr<nzp_csi_rs_configuration_validator> csi_) :
     ssb(std::move(ssb_)), pdcch(std::move(pdcch_)), pdsch(std::move(pdsch_)), csi(std::move(csi_))
   {
-    srsgnb_assert(ssb, "Invalid SSB processor validator.");
-    srsgnb_assert(pdcch, "Invalid PDCCH processor validator.");
-    srsgnb_assert(pdsch, "Invalid PDSCH processor validator.");
-    srsgnb_assert(csi, "Invalid NZP-CSI-RS processor validator.");
+    srsran_assert(ssb, "Invalid SSB processor validator.");
+    srsran_assert(pdcch, "Invalid PDCCH processor validator.");
+    srsran_assert(pdsch, "Invalid PDSCH processor validator.");
+    srsran_assert(csi, "Invalid NZP-CSI-RS processor validator.");
   }
 
   // See interface for documentation.

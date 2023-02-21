@@ -25,7 +25,7 @@ namespace srsran {
 /// \return Calculated CRB.
 inline unsigned prb_to_crb(const bwp_configuration& bwp_cfg, unsigned prb)
 {
-  srsgnb_sanity_check(prb <= bwp_cfg.crbs.length(), "PRB={} falls outside BWP limits={}", prb, bwp_cfg.crbs);
+  srsran_sanity_check(prb <= bwp_cfg.crbs.length(), "PRB={} falls outside BWP limits={}", prb, bwp_cfg.crbs);
   return prb + bwp_cfg.crbs.start();
 }
 
@@ -46,7 +46,7 @@ inline crb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval pr
 /// \return Calculated PRB.
 inline unsigned crb_to_prb(crb_interval crb_lims, unsigned crb)
 {
-  srsgnb_sanity_check(
+  srsran_sanity_check(
       crb_lims.contains(crb) or crb == crb_lims.stop(), "CRB={} falls outside BWP limits={}", crb, crb_lims);
   return crb - crb_lims.start();
 }

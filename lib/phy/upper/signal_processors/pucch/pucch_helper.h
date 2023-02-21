@@ -30,7 +30,7 @@ private:
 public:
   pucch_helper(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
   {
-    srsgnb_assert(prg, "Invalid PRG.");
+    srsran_assert(prg, "Invalid PRG.");
   }
 
   /// Computes the NR-PUCCH group sequence (TS 38.211 clause 6.3.2.2.1 Group and sequence hopping).

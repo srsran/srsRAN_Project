@@ -26,7 +26,7 @@ namespace {
 template <typename InType = uint8_t>
 void unpack_8bit(span<uint8_t> unpacked, InType value)
 {
-  srsgnb_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
+  srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
 #if HAVE_SSE
   // Broadcast 8 bit value in all 8-bit registers.
   __m64 mask = _mm_set1_pi8(static_cast<uint8_t>(value));
@@ -52,7 +52,7 @@ void unpack_8bit(span<uint8_t> unpacked, InType value)
 template <typename RetType = uint8_t>
 RetType pack_8bit(span<const uint8_t> unpacked)
 {
-  srsgnb_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
+  srsran_assert(unpacked.size() == 8, "The amount of data to pack (i.e., {}) must be eight.", unpacked.size());
 #if HAVE_SSE
   __m64 mask = _mm_cmpgt_pi8(*(reinterpret_cast<const __m64*>(unpacked.data())), _mm_set1_pi8(0));
 
@@ -91,7 +91,7 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> pack
   unsigned nbytes = packed.size();
   unsigned i;
 
-  srsgnb_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
+  srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
 
   for (i = 0; i < nbytes; i++) {
     unpacked = bit_unpack(unpacked, packed[i], 8);
@@ -103,7 +103,7 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> pack
 
 void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed)
 {
-  srsgnb_assert(packed.size() == unpacked.size(),
+  srsran_assert(packed.size() == unpacked.size(),
                 "The packed number of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {}).",
                 packed.size(),
                 unpacked.size());
@@ -191,7 +191,7 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
 
 unsigned srsran::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
 {
-  srsgnb_assert(nof_bits <= 32U, "Number of bits ({}) exceeds maximum (32).", nof_bits);
+  srsran_assert(nof_bits <= 32U, "Number of bits ({}) exceeds maximum (32).", nof_bits);
 
   unsigned value = 0;
 
@@ -207,7 +207,7 @@ unsigned srsran::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
 
 void srsran::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked)
 {
-  srsgnb_assert(divide_ceil(unpacked.size(), 8) == packed.size(), "Inconsistent input sizes.");
+  srsran_assert(divide_ceil(unpacked.size(), 8) == packed.size(), "Inconsistent input sizes.");
 
   for (uint8_t& byte : packed) {
     byte     = pack_8bit(unpacked.first(8));
@@ -217,7 +217,7 @@ void srsran::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked
 
 void srsran::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
 {
-  srsgnb_assert(packed.size() == unpacked.size(),
+  srsran_assert(packed.size() == unpacked.size(),
                 "The packed number of bits (i.e.{}) must be equal to the number of unpacked bits (i.e., {}).",
                 packed.size(),
                 unpacked.size());
@@ -295,13 +295,13 @@ void srsran::srsvec::copy_offset(srsran::bit_buffer&       output,
                                  unsigned                  in_offset,
                                  unsigned                  nof_bits)
 {
-  srsgnb_assert(input.size() - in_offset >= nof_bits,
+  srsran_assert(input.size() - in_offset >= nof_bits,
                 "Input buffer size (i.e., {}) and reading offset (i.e., {}) cannot accomodate copy size of {} bits.",
                 input.size(),
                 in_offset,
                 nof_bits);
 
-  srsgnb_assert(input.size() - in_offset >= nof_bits,
+  srsran_assert(input.size() - in_offset >= nof_bits,
                 "Output buffer size (i.e., {}) and writing offset (i.e., {}) cannot accomodate copy size of {} bits.",
                 output.size(),
                 out_offset,

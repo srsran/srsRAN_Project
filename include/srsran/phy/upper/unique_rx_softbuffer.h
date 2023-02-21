@@ -67,7 +67,7 @@ public:
   /// Gets the softbuffer.
   rx_softbuffer& get()
   {
-    srsgnb_assert(is_valid(), "Invalid softbuffer.");
+    srsran_assert(is_valid(), "Invalid softbuffer.");
     return *ptr;
   }
   rx_softbuffer& operator*() { return get(); }

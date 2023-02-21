@@ -77,7 +77,7 @@ inline modulation_scheme modulation_scheme_from_string(const std::string& mod_sc
   } else if (mod_scheme_string == "256QAM") {
     mod_scheme = modulation_scheme::QAM256;
   } else {
-    srsgnb_assertion_failure("Invalid modulation scheme: {}", mod_scheme_string);
+    srsran_assertion_failure("Invalid modulation scheme: {}", mod_scheme_string);
   }
   return mod_scheme;
 }

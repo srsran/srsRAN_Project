@@ -31,9 +31,9 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
   metrics.metrics_set_mode(rlc_mode::am);
 
   // check status_prohibit_timer
-  srsgnb_assert(status_prohibit_timer.is_valid(), "Cannot create RLC RX AM, status_prohibit_timer not configured.");
+  srsran_assert(status_prohibit_timer.is_valid(), "Cannot create RLC RX AM, status_prohibit_timer not configured.");
   // check reassembly_timer
-  srsgnb_assert(reassembly_timer.is_valid(), "Cannot create RLC RX AM, reassembly_timer not configured.");
+  srsran_assert(reassembly_timer.is_valid(), "Cannot create RLC RX AM, reassembly_timer not configured.");
 
   // configure status_prohibit_timer
   if (cfg.t_status_prohibit > 0) {
@@ -484,7 +484,7 @@ void rlc_rx_am_entity::refresh_status_report()
                 logger.log_error("Segment: so={} len={}", segm_it->so, segm_it->payload.length());
               }
               logger.log_error("Invalid segment offsets in nack={} for segment so={}.", nack, segm->so);
-              srsgnb_assert(nack.so_start <= nack.so_end,
+              srsran_assert(nack.so_start <= nack.so_end,
                             "Invalid segment offsets in nack={} for segment so={}.",
                             nack,
                             segm->so);
@@ -506,7 +506,7 @@ void rlc_rx_am_entity::refresh_status_report()
           logger.log_debug("Adding nack={}.", nack);
           status_report.push_nack(nack);
           // Sanity check
-          srsgnb_assert(nack.so_start <= nack.so_end, "Invalid segment offsets in nack={}.", nack);
+          srsran_assert(nack.so_start <= nack.so_end, "Invalid segment offsets in nack={}.", nack);
         }
       }
     }
@@ -564,7 +564,7 @@ std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create
               logger);
       break;
     default:
-      srsgnb_assertion_failure("Cannot create rx_window for unsupported sn_size={}.", to_number(sn_size));
+      srsran_assertion_failure("Cannot create rx_window for unsupported sn_size={}.", to_number(sn_size));
   }
   return rx_window_;
 }
@@ -615,7 +615,7 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
     if (not valid_ack_sn(sn_upd)) {
       logger.log_error("Invalid rx_highest_status={} outside RX window. {}", sn_upd, st);
     }
-    srsgnb_assert(valid_ack_sn(sn_upd), "Error: rx_highest_status={} outside RX window. {}", sn_upd, st);
+    srsran_assert(valid_ack_sn(sn_upd), "Error: rx_highest_status={} outside RX window. {}", sn_upd, st);
     st.rx_highest_status = sn_upd;
 
     bool restart_reassembly_timer = false;

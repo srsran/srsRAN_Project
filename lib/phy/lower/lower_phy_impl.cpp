@@ -301,7 +301,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   logger.set_level(srslog::str_to_basic_level(config.log_level));
 
   // Assert parameters.
-  srsgnb_assert(config.ul_to_dl_subframe_offset > 0, "The UL to DL slot offset must be greater than 0.");
+  srsran_assert(config.ul_to_dl_subframe_offset > 0, "The UL to DL slot offset must be greater than 0.");
 
   logger.info("Initialized with time_alignment_calibration={} ({:.4f} us), ul_to_dl_subframe_offset={}, "
               "max_processing_delay_slots={}.",
@@ -311,30 +311,30 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
               config.max_processing_delay_slots);
 
   // Make sure dependencies are valid.
-  srsgnb_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
-  srsgnb_assert(config.error_notifier != nullptr, "Invalid error notifier.");
-  srsgnb_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
-  srsgnb_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
-  srsgnb_assert(modulators.size() == config.sectors.size(),
+  srsran_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
+  srsran_assert(config.error_notifier != nullptr, "Invalid error notifier.");
+  srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
+  srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
+  srsran_assert(modulators.size() == config.sectors.size(),
                 "The number of sectors ({}) and modulators ({}) do not match.",
                 config.sectors.size(),
                 modulators.size());
-  srsgnb_assert(demodulators.size() == config.sectors.size(),
+  srsran_assert(demodulators.size() == config.sectors.size(),
                 "The number of sectors ({}) and demodulators ({}) do not match.",
                 config.sectors.size(),
                 demodulators.size());
-  srsgnb_assert(amplitude_controllers.size() == config.sectors.size(),
+  srsran_assert(amplitude_controllers.size() == config.sectors.size(),
                 "The number of sectors ({}) and amplitude controllers ({}) do not match.",
                 config.sectors.size(),
                 amplitude_controllers.size());
   for (auto& modulator : modulators) {
-    srsgnb_assert(modulator, "Invalid modulator.");
+    srsran_assert(modulator, "Invalid modulator.");
   }
   for (auto& demodulator : demodulators) {
-    srsgnb_assert(demodulator, "Invalid demodulator.");
+    srsran_assert(demodulator, "Invalid demodulator.");
   }
   for (auto& amplitude_controller : amplitude_controllers) {
-    srsgnb_assert(amplitude_controller, "Invalid amplitude controller.");
+    srsran_assert(amplitude_controller, "Invalid amplitude controller.");
   }
 
   // Create radio buffers and receive metadata.

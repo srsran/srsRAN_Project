@@ -199,13 +199,13 @@ class immediate_task_executor : public task_executor
 public:
   bool execute(unique_task task) override
   {
-    srsgnb_assert(!task.is_empty(), "Invalid task.");
+    srsran_assert(!task.is_empty(), "Invalid task.");
     task();
     return true;
   }
   bool defer(unique_task task) override
   {
-    srsgnb_assert(!task.is_empty(), "Invalid task.");
+    srsran_assert(!task.is_empty(), "Invalid task.");
     task();
     return true;
   }

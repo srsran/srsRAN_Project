@@ -20,7 +20,7 @@ unsigned srsran::get_pucch_default_resource_index(unsigned int n_cce, unsigned i
 std::pair<unsigned, unsigned>
 srsran::get_pucch_default_prb_index(unsigned r_pucch, unsigned rb_bwp_offset, unsigned nof_cs, unsigned N_bwp_size)
 {
-  srsgnb_assert(r_pucch < 16, "The PUCCH resource index {} exceeds the maximum allowed {}.", r_pucch, 16);
+  srsran_assert(r_pucch < 16, "The PUCCH resource index {} exceeds the maximum allowed {}.", r_pucch, 16);
 
   unsigned prb_index_first  = rb_bwp_offset + (r_pucch / nof_cs);
   unsigned prb_index_second = N_bwp_size - 1 - prb_index_first;
@@ -34,8 +34,8 @@ srsran::get_pucch_default_prb_index(unsigned r_pucch, unsigned rb_bwp_offset, un
 
 unsigned srsran::get_pucch_default_cyclic_shift(unsigned r_pucch, unsigned nof_cs)
 {
-  srsgnb_assert(r_pucch < 16, "The PUCCH resource index {} exceeds the maximum allowed {}.", r_pucch, 16);
-  srsgnb_assert(nof_cs > 0, "The number of cyclic shift must be greater than zero.");
+  srsran_assert(r_pucch < 16, "The PUCCH resource index {} exceeds the maximum allowed {}.", r_pucch, 16);
+  srsran_assert(nof_cs > 0, "The number of cyclic shift must be greater than zero.");
   unsigned result = r_pucch % nof_cs;
   if (r_pucch > 8) {
     result = (r_pucch - 8) % nof_cs;
@@ -63,7 +63,7 @@ pucch_default_resource srsran::get_pucch_default_resource(unsigned index, unsign
                                                                 {pucch_format::FORMAT_1, 0, 14, 4, {0, 3, 6, 9}},
                                                                 {pucch_format::FORMAT_1, 0, 14, 0, {0, 3, 6, 9}}}};
 
-  srsgnb_assert(
+  srsran_assert(
       index < table.size(), "PUCCH resource index {} exceeds the number of elements {}.", index, table.size());
   pucch_default_resource result = table[index];
 

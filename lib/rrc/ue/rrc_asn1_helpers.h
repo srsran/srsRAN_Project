@@ -84,7 +84,7 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
 
     // srb to add mod list
     for (const auto& srb_to_add : cu_cp_radio_bearer_cfg.srb_to_add_mod_list) {
-      srsgnb_assert(srb_to_add.srb_id != srb_id_t::nulltype, "Invalid SRB ID");
+      srsran_assert(srb_to_add.srb_id != srb_id_t::nulltype, "Invalid SRB ID");
 
       asn1::rrc_nr::srb_to_add_mod_s asn1_srb_to_add;
       asn1_srb_to_add.srb_id = srb_id_to_uint(srb_to_add.srb_id);
@@ -104,7 +104,7 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
 
     // drb to add mod list
     for (const auto& drb_to_add : cu_cp_radio_bearer_cfg.drb_to_add_mod_list) {
-      srsgnb_assert(drb_to_add.drb_id != drb_id_t::invalid, "Invalid DRB ID");
+      srsran_assert(drb_to_add.drb_id != drb_id_t::invalid, "Invalid DRB ID");
 
       asn1::rrc_nr::drb_to_add_mod_s asn1_drb_to_add;
       asn1_drb_to_add.drb_id = drb_id_to_uint(drb_to_add.drb_id);
@@ -132,7 +132,7 @@ inline void fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s&        
 
     // drb to release list
     for (const auto& drb_to_release : cu_cp_radio_bearer_cfg.drb_to_release_list) {
-      srsgnb_assert(drb_to_release != drb_id_t::invalid, "Invalid DRB ID");
+      srsran_assert(drb_to_release != drb_id_t::invalid, "Invalid DRB ID");
       asn1_radio_bearer_cfg.drb_to_release_list.push_back(drb_id_to_uint(drb_to_release));
     }
 

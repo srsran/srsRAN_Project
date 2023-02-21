@@ -81,14 +81,14 @@ public:
   bool contains(IdType id) const
   {
     size_t idx = static_cast<size_t>(id);
-    srsgnb_assert(idx < MAX_SIZE, "Invalid Id={}", id);
+    srsran_assert(idx < MAX_SIZE, "Invalid Id={}", id);
     return elems[idx] != nullptr;
   }
 
   void insert(IdType id_value, std::unique_ptr<T> u)
   {
-    srsgnb_assert(u, "Inserting a null element in Id={}", id_value);
-    srsgnb_assert(not contains(id_value), "Id={} already exists", id_value);
+    srsran_assert(u, "Inserting a null element in Id={}", id_value);
+    srsran_assert(not contains(id_value), "Id={} already exists", id_value);
     size_t idx = static_cast<size_t>(id_value);
     elems[idx] = std::move(u);
     ++nof_elems;
@@ -97,7 +97,7 @@ public:
   template <typename... Args>
   void emplace(IdType id_value, Args&&... args)
   {
-    srsgnb_assert(not contains(id_value), "Id={} already exists", id_value);
+    srsran_assert(not contains(id_value), "Id={} already exists", id_value);
     size_t idx = static_cast<size_t>(id_value);
     elems[idx] = std::make_unique<T>(std::forward<Args>(args)...);
     ++nof_elems;
@@ -124,13 +124,13 @@ public:
 
   T& operator[](IdType id_value)
   {
-    srsgnb_assert(contains(id_value), "Id={} does not exist", id_value);
+    srsran_assert(contains(id_value), "Id={} does not exist", id_value);
     return *elems[static_cast<size_t>(id_value)];
   }
 
   const T& operator[](IdType id_value) const
   {
-    srsgnb_assert(contains(id_value), "Id={} does not exist", id_value);
+    srsran_assert(contains(id_value), "Id={} does not exist", id_value);
     return *elems[static_cast<size_t>(id_value)];
   }
 

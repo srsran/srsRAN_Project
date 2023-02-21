@@ -47,7 +47,7 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
 
   if (ofdm_config.nof_samples_window_offset != 0) {
     // Verify the window is valid.
-    srsgnb_assert(ofdm_config.nof_samples_window_offset < (144 * ofdm_config.dft_size) / 2048,
+    srsran_assert(ofdm_config.nof_samples_window_offset < (144 * ofdm_config.dft_size) / 2048,
                   "The DFT window offset (i.e., {}) must be lower than {}.",
                   ofdm_config.nof_samples_window_offset,
                   (144 * ofdm_config.dft_size) / 2048);
@@ -90,7 +90,7 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
   unsigned cp_len = cp.get_length(symbol_index, scs).to_samples(sampling_rate_Hz);
 
   // Make sure output buffer matches the symbol size.
-  srsgnb_assert(input.size() == (cp_len + dft_size),
+  srsran_assert(input.size() == (cp_len + dft_size),
                 "The input buffer size ({}) does not match the symbol index {} size ({}+{}={}). SCS={}kHz.",
                 input.size(),
                 symbol_index,

@@ -80,8 +80,8 @@ public:
                        std::unique_ptr<pseudo_random_generator> scrambler_) :
     modulator(std::move(modulator_)), scrambler(std::move(scrambler_))
   {
-    srsgnb_assert(modulator, "Invalid modulator");
-    srsgnb_assert(scrambler, "Invalid scrambler");
+    srsran_assert(modulator, "Invalid modulator");
+    srsran_assert(scrambler, "Invalid scrambler");
   }
 
   // See interface for the documentation.

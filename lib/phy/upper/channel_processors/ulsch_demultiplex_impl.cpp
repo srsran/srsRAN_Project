@@ -22,12 +22,12 @@ unsigned get_ulsch_demultiplex_l1(const symbol_slot_mask& dmrs_symbol_mask)
 {
   // Find first OFDM symbol that contains DM-RS.
   int first_symbol_dmrs = dmrs_symbol_mask.find_lowest(true);
-  srsgnb_assert(first_symbol_dmrs >= 0, "No DM-RS symbol found.");
+  srsran_assert(first_symbol_dmrs >= 0, "No DM-RS symbol found.");
 
   // Find first OFDM symbol that does not contain DM-RS after the first OFDM symbol that contains DM-RS.
   int first_symbol_without_dmrs =
       dmrs_symbol_mask.find_lowest(static_cast<size_t>(first_symbol_dmrs), dmrs_symbol_mask.size(), false);
-  srsgnb_assert(first_symbol_without_dmrs >= 0, "No DM-RS symbol found.");
+  srsran_assert(first_symbol_without_dmrs >= 0, "No DM-RS symbol found.");
 
   return static_cast<unsigned>(first_symbol_without_dmrs);
 }
@@ -36,7 +36,7 @@ unsigned get_ulsch_demultiplex_l1_csi(const symbol_slot_mask& dmrs_symbol_mask)
 {
   // Find first OFDM symbol that does not contain DM-RS.
   int first_symbol_without_dmrs = dmrs_symbol_mask.find_lowest(false);
-  srsgnb_assert(first_symbol_without_dmrs >= 0, "No DM-RS symbol found.");
+  srsran_assert(first_symbol_without_dmrs >= 0, "No DM-RS symbol found.");
 
   return static_cast<unsigned>(first_symbol_without_dmrs);
 }
@@ -46,7 +46,7 @@ unsigned get_ulsch_demultiplex_nof_re_prb_dmrs(dmrs_type dmrs_, unsigned nof_cdm
   dmrs_config_type dmrs = (dmrs_ == dmrs_type::TYPE1) ? dmrs_config_type::type1 : dmrs_config_type::type2;
 
   // Check whether the number of CDM groups without data is valid.
-  srsgnb_assert(nof_cdm_groups_without_data >= 1 &&
+  srsran_assert(nof_cdm_groups_without_data >= 1 &&
                     nof_cdm_groups_without_data <= get_max_nof_cdm_groups_without_data(dmrs),
                 "The number of CDM groups without data (i.e., {}) exceeds the maximum (i.e., {}).",
                 nof_cdm_groups_without_data,
@@ -278,24 +278,24 @@ void ulsch_demultiplex_generic(FuncSchData&                            func_sch_
       func_sch_data(is_zero);
 
       // Decrement number of pending SCH data RE for the symbol.
-      srsgnb_assert(ulsch_m_re_count > 0, "UL-SCH RE are exhausted.");
+      srsran_assert(ulsch_m_re_count > 0, "UL-SCH RE are exhausted.");
       --ulsch_m_re_count;
     }
 
     // Assert that all RE have been allocated.
-    srsgnb_assert(ack_m_re_count == 0, "{} RE for HARQ-ACK are not processed.", ack_m_re_count);
-    srsgnb_assert(csi1_m_re_count == 0, "{} RE for CSI Part 1 are not processed.", csi1_m_re_count);
-    srsgnb_assert(csi2_m_re_count == 0, "{} RE for CSI Part 2 are not processed.", csi2_m_re_count);
-    srsgnb_assert(ulsch_m_re_count == 0, "{} RE for SCH data are not processed.", ulsch_m_re_count);
+    srsran_assert(ack_m_re_count == 0, "{} RE for HARQ-ACK are not processed.", ack_m_re_count);
+    srsran_assert(csi1_m_re_count == 0, "{} RE for CSI Part 1 are not processed.", csi1_m_re_count);
+    srsran_assert(csi2_m_re_count == 0, "{} RE for CSI Part 2 are not processed.", csi2_m_re_count);
+    srsran_assert(ulsch_m_re_count == 0, "{} RE for SCH data are not processed.", ulsch_m_re_count);
   }
 
   // Assert all bits have been processed.
-  srsgnb_assert(m_rvd_count == G_ack_rvd, "Only {} of {} reserved elements processed.", m_rvd_count, G_ack_rvd);
-  srsgnb_assert(
+  srsran_assert(m_rvd_count == G_ack_rvd, "Only {} of {} reserved elements processed.", m_rvd_count, G_ack_rvd);
+  srsran_assert(
       m_harq_ack_count == G_harq_ack, "Only {} of {} HARQ-ACK elements processed.", m_harq_ack_count, G_harq_ack);
-  srsgnb_assert(
+  srsran_assert(
       m_csi_part1_count == G_csi_part1, "Only {} of {} CSI Part 1 elements processed.", m_csi_part1_count, G_csi_part1);
-  srsgnb_assert(
+  srsran_assert(
       m_csi_part2_count == G_csi_part2, "Only {} of {} CSI Part 2 elements processed.", m_csi_part2_count, G_csi_part2);
 }
 
@@ -310,7 +310,7 @@ void ulsch_demultiplex_impl::demultiplex(span<log_likelihood_ratio>             
 {
   // Skip demultiplexing if no UCI is multiplexed.
   if (harq_ack.empty() && csi_part1.empty() && csi_part2.empty()) {
-    srsgnb_assert(sch_data.size() == input.size(),
+    srsran_assert(sch_data.size() == input.size(),
                   "SCH data number of soft bits (i.e. {}) must be equal to the number of input soft bits (i.e., {}).",
                   sch_data.size(),
                   input.size());
@@ -370,11 +370,11 @@ void ulsch_demultiplex_impl::demultiplex(span<log_likelihood_ratio>             
                             config);
 
   // Assert that input buffers have been consumed.
-  srsgnb_assert(harq_ack.empty(), "{} soft bits have not been multiplexed for HARQ-ACK.", harq_ack.size());
-  srsgnb_assert(csi_part1.empty(), "{} soft bits have not been multiplexed for CSI Part 1.", csi_part1.size());
-  srsgnb_assert(csi_part2.empty(), "{} soft bits have not been multiplexed for CSI Part 2.", csi_part2.size());
-  srsgnb_assert(sch_data.empty(), "{} soft bits have not been multiplexed for SCH data.", sch_data.size());
-  srsgnb_assert(input.empty(), "{} input soft bits have not been multiplexed.", input.size());
+  srsran_assert(harq_ack.empty(), "{} soft bits have not been multiplexed for HARQ-ACK.", harq_ack.size());
+  srsran_assert(csi_part1.empty(), "{} soft bits have not been multiplexed for CSI Part 1.", csi_part1.size());
+  srsran_assert(csi_part2.empty(), "{} soft bits have not been multiplexed for CSI Part 2.", csi_part2.size());
+  srsran_assert(sch_data.empty(), "{} soft bits have not been multiplexed for SCH data.", sch_data.size());
+  srsran_assert(input.empty(), "{} input soft bits have not been multiplexed.", input.size());
 }
 
 ulsch_placeholder_list ulsch_demultiplex_impl::get_placeholders(const message_information& message_info,

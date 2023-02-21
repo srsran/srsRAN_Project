@@ -25,7 +25,7 @@ enum class ldpc_base_graph_type : uint8_t { BG1 = 1, BG2 = 2 };
 /// \param A Size in bits of the payload \f$A\f$.
 constexpr ldpc_base_graph_type get_ldpc_base_graph(float R, units::bits A)
 {
-  srsgnb_assert(R > 0.F && R < 1.F, "Invalid target code rate {}, expected a value between 0 and 1", R);
+  srsran_assert(R > 0.F && R < 1.F, "Invalid target code rate {}, expected a value between 0 and 1", R);
 
   using namespace units::literals;
   if (A <= 292_bits || R <= 0.25F || (A <= 3824_bits && R <= 0.67F)) {

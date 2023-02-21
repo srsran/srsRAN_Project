@@ -290,7 +290,7 @@ void pdcp_entity_tx::send_status_report()
 
 void pdcp_entity_tx::data_recovery()
 {
-  srsgnb_assert(is_drb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
+  srsran_assert(is_drb() && cfg.rlc_mode == pdcp_rlc_mode::am, "Invalid bearer type for data recovery.");
   logger.log_info("Data recovery requested.");
 
   /*
@@ -311,7 +311,7 @@ void pdcp_entity_tx::data_recovery()
 void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu_header& hdr) const
 {
   // Sanity check: 18-bit SN not allowed for SRBs
-  srsgnb_assert(
+  srsran_assert(
       !(is_srb() && cfg.sn_size == pdcp_sn_size::size18bits), "Invalid SN size for SRB. sn_size={}", cfg.sn_size);
 
   byte_buffer_writer hdr_writer = buf;

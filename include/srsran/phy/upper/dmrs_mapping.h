@@ -76,7 +76,7 @@ public:
     re_pattern dmrs_pattern;
 
     // Validate symbol mask size.
-    srsgnb_assert(symbol_mask.size() <= dmrs_pattern.symbols.size(),
+    srsran_assert(symbol_mask.size() <= dmrs_pattern.symbols.size(),
                   "The symbol mask size {} exceeds the maximum size {}.",
                   symbol_mask.size(),
                   dmrs_pattern.symbols.size());

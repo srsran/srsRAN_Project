@@ -24,7 +24,7 @@ ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_upd
                                                        const du_manager_params&              du_params_) :
   request(request_), ue_mng(ue_mng_), du_params(du_params_), ue(ue_mng.find_ue(request.ue_index))
 {
-  srsgnb_assert(ue != nullptr, "ueId={} not found", request.ue_index);
+  srsran_assert(ue != nullptr, "ueId={} not found", request.ue_index);
 }
 
 void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_context_update_response>>& ctx)
@@ -60,7 +60,7 @@ void ue_configuration_procedure::add_srbs_to_du_ue_context()
     auto   it   = std::find_if(ue->resources->rlc_bearers.begin(),
                            ue->resources->rlc_bearers.end(),
                            [lcid](const rlc_bearer_config& e) { return e.lcid == lcid; });
-    srsgnb_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
+    srsran_assert(it != ue->resources->rlc_bearers.end(), "SRB should have been allocated at this point");
     du_ue_srb& srb = ue->bearers.add_srb(srbid, it->rlc_cfg);
 
     // >> Create RLC SRB entity.
@@ -99,7 +99,7 @@ void ue_configuration_procedure::add_drbs_to_du_ue_context()
     auto it = std::find_if(ue->resources->rlc_bearers.begin(),
                            ue->resources->rlc_bearers.end(),
                            [&drbtoadd](const rlc_bearer_config& e) { return e.drb_id == drbtoadd.drb_id; });
-    srsgnb_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
+    srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
     du_ue_drb& drb = ue->bearers.add_drb(drbtoadd.drb_id, it->lcid, it->rlc_cfg);
 
     // >> Create F1-U bearer.
@@ -135,10 +135,10 @@ void ue_configuration_procedure::remove_drbs_from_du_ue_context()
     auto it = std::find_if(ue->resources->rlc_bearers.begin(),
                            ue->resources->rlc_bearers.end(),
                            [&drb_to_rem](const rlc_bearer_config& e) { return e.drb_id == drb_to_rem; });
-    srsgnb_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
+    srsran_assert(it != ue->resources->rlc_bearers.end(), "The bearer config should be created at this point");
 
     // >> Get the DRB that is to be removed
-    srsgnb_assert(ue->bearers.drbs().contains(drb_to_rem), "DRB-Id={} does not exist", drb_to_rem);
+    srsran_assert(ue->bearers.drbs().contains(drb_to_rem), "DRB-Id={} does not exist", drb_to_rem);
     du_ue_drb& ue_drb  = ue->bearers.drbs()[drb_to_rem];
     uint32_t   dl_teid = ue_drb.dluptnl_info_list[0].gtp_teid.value();
 
@@ -214,7 +214,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   {
     asn1::bit_ref     bref{resp.du_to_cu_rrc_container};
     asn1::SRSASN_CODE code = asn1_cell_group.pack(bref);
-    srsgnb_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
+    srsran_assert(code == asn1::SRSASN_SUCCESS, "Invalid cellGroupConfig");
   }
 
   return resp;

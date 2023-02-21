@@ -34,9 +34,9 @@ public:
                      std::unique_ptr<ldpc_rate_matcher> rm) :
     segmenter(std::move(seg)), encoder(std::move(enc)), rate_matcher(std::move(rm))
   {
-    srsgnb_assert(segmenter, "Invalid LDPC segmenter.");
-    srsgnb_assert(encoder, "Invalid LDPC encoder.");
-    srsgnb_assert(rate_matcher, "Invalid LDPC rate matcher.");
+    srsran_assert(segmenter, "Invalid LDPC segmenter.");
+    srsran_assert(encoder, "Invalid LDPC encoder.");
+    srsran_assert(rate_matcher, "Invalid LDPC rate matcher.");
   }
 
   // See interface for the documentation.

@@ -30,15 +30,15 @@ public:
     prach_factory(prach_processor_factory_),
     amplitude_control_factory(amplitude_control_factory_)
   {
-    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
-    srsgnb_assert(demodulator_factory, "Invalid demodulator factory.");
-    srsgnb_assert(prach_factory, "Invalid PRACH processor factory.");
-    srsgnb_assert(amplitude_control_factory, "Invalid amplitude controller factory");
+    srsran_assert(modulator_factory, "Invalid modulator factory.");
+    srsran_assert(demodulator_factory, "Invalid demodulator factory.");
+    srsran_assert(prach_factory, "Invalid PRACH processor factory.");
+    srsran_assert(amplitude_control_factory, "Invalid amplitude controller factory");
   }
 
   std::unique_ptr<srsran::lower_phy> create(lower_phy_configuration& config) override
   {
-    srsgnb_assert((config.dft_window_offset >= 0.0) && (config.dft_window_offset < 1.0F), "");
+    srsran_assert((config.dft_window_offset >= 0.0) && (config.dft_window_offset < 1.0F), "");
 
     lower_phy_common_configuration common_config;
     common_config.modulators.reserve(config.sectors.size());
@@ -60,7 +60,7 @@ public:
       common_config.modulators.emplace_back(modulator_factory->create_ofdm_symbol_modulator(configuration));
 
       // Make sure the modulator creation is successful.
-      srsgnb_assert(common_config.modulators.back(), "Failed to create OFDM modulator.");
+      srsran_assert(common_config.modulators.back(), "Failed to create OFDM modulator.");
     }
 
     // For each sector, create a demodulator.
@@ -80,7 +80,7 @@ public:
       common_config.demodulators.emplace_back(demodulator_factory->create_ofdm_symbol_demodulator(configuration));
 
       // Make sure the demodulator creation is successful.
-      srsgnb_assert(common_config.demodulators.back(), "Error: failed to create OFDM demodulator.");
+      srsran_assert(common_config.demodulators.back(), "Error: failed to create OFDM demodulator.");
     }
 
     // For each sector, create an amplitude controller.
@@ -89,12 +89,12 @@ public:
       common_config.amplitude_controllers.emplace_back(amplitude_control_factory->create_amplitude_controller());
 
       // Make sure the amplitude controller creation is successful.
-      srsgnb_assert(common_config.amplitude_controllers.back() != nullptr,
+      srsran_assert(common_config.amplitude_controllers.back() != nullptr,
                     "Error: failed to create amplitude controller.");
     }
 
     common_config.prach_proc = prach_factory->create(*config.prach_async_executor);
-    srsgnb_assert(common_config.prach_proc, "Failed to create PRACH processor.");
+    srsran_assert(common_config.prach_proc, "Failed to create PRACH processor.");
 
     return std::make_unique<lower_phy_impl>(std::move(common_config), config);
   }

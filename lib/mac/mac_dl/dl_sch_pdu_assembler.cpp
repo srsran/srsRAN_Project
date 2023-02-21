@@ -192,7 +192,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
 
   // Fetch RLC Bearer.
   mac_sdu_tx_builder* bearer = ue_mng.get_bearer(rnti, lc_grant_info.lcid.to_lcid());
-  srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
+  srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
   unsigned rem_bytes = std::min(get_mac_sdu_required_bytes(lc_grant_info.sched_bytes), ue_pdu.nof_empty_bytes());
   while (rem_bytes >= MIN_MAC_SDU_SIZE) {
@@ -206,7 +206,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
                    get_mac_sdu_payload_size(rem_bytes));
       break;
     }
-    srsgnb_assert(sdu.length() <= get_mac_sdu_payload_size(rem_bytes),
+    srsran_assert(sdu.length() <= get_mac_sdu_payload_size(rem_bytes),
                   "RLC Tx SDU exceeded MAC opportunity size ({} > {})",
                   sdu.length(),
                   get_mac_sdu_payload_size(rem_bytes));
@@ -221,7 +221,7 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
                    lc_grant_info.sched_bytes);
       break;
     }
-    srsgnb_assert(rem_bytes >= nwritten, "Too many bytes were packed in MAC SDU");
+    srsran_assert(rem_bytes >= nwritten, "Too many bytes were packed in MAC SDU");
 
     // Log SDU.
     pdu_logger.add_sdu(lc_grant_info.lcid.to_lcid(), nwritten);

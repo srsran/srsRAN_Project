@@ -26,7 +26,7 @@ public:
     pucch_guard_sched{cell_cfg},
     sl_tx{to_numerology_value(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs), 0}
   {
-    srsgnb_assert(not cell_cfg.pucch_guardbands.empty(), "PUCCH guardbands list is empty.");
+    srsran_assert(not cell_cfg.pucch_guardbands.empty(), "PUCCH guardbands list is empty.");
 
     slot_indication(sl_tx);
   }

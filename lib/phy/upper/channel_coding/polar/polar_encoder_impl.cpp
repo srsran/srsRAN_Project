@@ -64,7 +64,7 @@ void polar_encode<1>(uint8_t* output, const uint8_t* input, unsigned /**/)
 
 void polar_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input, unsigned code_size_log)
 {
-  srsgnb_assert(code_size_log > 0 && code_size_log <= polar_code::eMAX,
+  srsran_assert(code_size_log > 0 && code_size_log <= polar_code::eMAX,
                 "The logarithmic code size {} is invalid. It must be greater than zero and less than or equal to {}.",
                 code_size_log,
                 static_cast<unsigned>(polar_code::eMAX));

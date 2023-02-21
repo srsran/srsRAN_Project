@@ -68,8 +68,8 @@ public:
   /// \param h suspending coroutine that is calling await_suspend.
   void await_suspend(coro_handle<> h) noexcept
   {
-    srsgnb_sanity_check(not this->empty(), "Awaiting an empty async_task");
-    srsgnb_sanity_check(handle.promise().continuation.empty(), "Async task can only be awaited once.");
+    srsran_sanity_check(not this->empty(), "Awaiting an empty async_task");
+    srsran_sanity_check(handle.promise().continuation.empty(), "Async task can only be awaited once.");
     handle.promise().continuation = h;
   }
 

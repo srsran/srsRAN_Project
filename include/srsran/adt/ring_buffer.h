@@ -127,7 +127,7 @@ public:
 
   void set_size(unsigned sz)
   {
-    srsgnb_assert(count == 0 or sz == data.size(), "Dynamic resizes not supported when ring buffer is not empty");
+    srsran_assert(count == 0 or sz == data.size(), "Dynamic resizes not supported when ring buffer is not empty");
     data.resize(sz);
   }
 
@@ -201,7 +201,7 @@ class ring_buffer_impl
 
     iterator_impl(parent_type& parent_, unsigned ring_idx_) : parent(&parent_), ring_idx(ring_idx_)
     {
-      srsgnb_assert(ring_idx <= parent->size(), "Invalid iterator position");
+      srsran_assert(ring_idx <= parent->size(), "Invalid iterator position");
     }
 
   public:
@@ -254,7 +254,7 @@ class ring_buffer_impl
 
     void assert_idx_within_bounds()
     {
-      srsgnb_assert(ring_idx < parent->size(),
+      srsran_assert(ring_idx < parent->size(),
                     "index={} is out-of-bounds [{}, {})",
                     ring_idx,
                     parent->buffer.rpos,
@@ -263,16 +263,16 @@ class ring_buffer_impl
 
     void inc_()
     {
-      srsgnb_assert(*this != parent->end(), "Incrementing iterator beyond end()");
+      srsran_assert(*this != parent->end(), "Incrementing iterator beyond end()");
       ring_idx++;
     }
 
     void inc_(difference_type n)
     {
       if (n > 0) {
-        srsgnb_assert(ring_idx + n <= parent->size(), "Incrementing iterator beyond end()");
+        srsran_assert(ring_idx + n <= parent->size(), "Incrementing iterator beyond end()");
       } else if (n < 0) {
-        srsgnb_assert(ring_idx + n <= parent->size(), "Decrementing iterator beyond begin()");
+        srsran_assert(ring_idx + n <= parent->size(), "Decrementing iterator beyond begin()");
       }
       ring_idx += n;
     }
@@ -360,7 +360,7 @@ public:
   template <typename U, std::enable_if_t<std::is_convertible<U, T>::value, int> = 0>
   void push(U&& u) noexcept
   {
-    srsgnb_assert(not full(), "Circular buffer is full.");
+    srsran_assert(not full(), "Circular buffer is full.");
     buffer.data[get_wpos()].emplace(std::forward<U>(u));
     buffer.count++;
   }
@@ -413,7 +413,7 @@ public:
   /// \brief Pops element from ring_buffer. If ring_buffer is empty, asserts.
   void pop()
   {
-    srsgnb_assert(not empty(), "Cannot call pop() in empty circular buffer");
+    srsran_assert(not empty(), "Cannot call pop() in empty circular buffer");
     buffer.data[buffer.rpos].destroy();
     buffer.rpos = buffer.advance_pos(buffer.rpos, 1);
     buffer.count--;
@@ -442,12 +442,12 @@ public:
   /// \brief Fetches the top position of ring_buffer. The function asserts if empty.
   T& top()
   {
-    srsgnb_assert(not empty(), "Cannot call top() in empty circular buffer");
+    srsran_assert(not empty(), "Cannot call top() in empty circular buffer");
     return buffer.data[buffer.rpos].get();
   }
   const T& top() const
   {
-    srsgnb_assert(not empty(), "Cannot call top() in empty circular buffer");
+    srsran_assert(not empty(), "Cannot call top() in empty circular buffer");
     return buffer.data[buffer.rpos].get();
   }
 
@@ -464,12 +464,12 @@ public:
   /// \brief Random access to position of the ring_buffer.
   T& operator[](index_type i)
   {
-    srsgnb_assert(i < size(), "Out-of-bounds access to circular buffer ({} >= {})", i, buffer.count);
+    srsran_assert(i < size(), "Out-of-bounds access to circular buffer ({} >= {})", i, buffer.count);
     return buffer.data[buffer.advance_pos(buffer.rpos, i)].get();
   }
   const T& operator[](index_type i) const
   {
-    srsgnb_assert(i < size(), "Out-of-bounds access to circular buffer ({} >= {})", i, buffer.count);
+    srsran_assert(i < size(), "Out-of-bounds access to circular buffer ({} >= {})", i, buffer.count);
     return buffer.data[buffer.advance_pos(buffer.rpos, i)].get();
   }
 

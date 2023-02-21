@@ -29,9 +29,9 @@ public:
   explicit amplitude_controller_clipping_factory(const amplitude_controller_clipping_config& config) :
     amplitude_controller_config(config)
   {
-    srsgnb_assert(
+    srsran_assert(
         config.ceiling_dBFS <= 0.0F, "The amplitude ceiling ({} dBFS) cannot be above Full Scale", config.ceiling_dBFS);
-    srsgnb_assert(
+    srsran_assert(
         config.full_scale_lin > 0.0F, "The Full Scale amplitude ({}) must be positive", config.full_scale_lin);
   }
 

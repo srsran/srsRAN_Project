@@ -103,7 +103,7 @@ void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog:
         log_ssb_pdu(pdu.ssb_pdu, buffer);
         break;
       default:
-        srsgnb_assert(0, "DL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+        srsran_assert(0, "DL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 
@@ -298,7 +298,7 @@ void srsran::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog:
         break;
       case fapi::ul_pdu_type::SRS:
       default:
-        srsgnb_assert(0, "UL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+        srsran_assert(0, "UL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 
@@ -322,7 +322,7 @@ void srsran::fapi::log_ul_dci_request(const ul_dci_request_message& msg, srslog:
         log_pdcch_pdu(pdu.pdu, buffer);
         break;
       default:
-        srsgnb_assert(0, "UL_DCI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+        srsran_assert(0, "UL_DCI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 
