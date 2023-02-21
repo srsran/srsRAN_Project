@@ -45,9 +45,9 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--hex_max_size", log_params.hex_max_size, "Number of bytes to print in hex")
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
-  app.add_option("--phy_broadcast",
-                 log_params.phy_broadcast,
-                 "Enable logging in the physical layer of broadcast messages and all PRACH opportunities")
+  app.add_option("--broadcast_enabled",
+                 log_params.broadcast_enabled,
+                 "Enable logging in the physical and MAC layer of broadcast messages and all PRACH opportunities")
       ->always_capture_default();
   app.add_option("--phy_rx_symbols_filename",
                  log_params.phy_rx_symbols_filename,

@@ -186,23 +186,23 @@ struct amf_appconfig {
 };
 
 struct log_appconfig {
-  std::string filename      = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
-  std::string all_level     = "info";         // Generic log level assigned to all layers without layer-specific level.
-  std::string app_level     = "info";         // Generic log level assigned to all layers without layer-specific level.
-  std::string du_level      = "info";
-  std::string cu_level      = "info";
-  std::string phy_level     = "info";
-  std::string radio_level   = "info";
-  std::string mac_level     = "info";
-  std::string rlc_level     = "info";
-  std::string f1u_level     = "info";
-  std::string pdcp_level    = "info";
-  std::string rrc_level     = "info";
-  std::string sdap_level    = "info";
-  std::string gtpu_level    = "info";
-  std::string fapi_level    = "info";
-  uint32_t    hex_max_size  = 32;           // Maximum number of bytes to write when dumping hex arrays.
-  bool        phy_broadcast = false;        // Set to true to log broadcasting messages and all PRACH opportunities.
+  std::string filename          = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
+  std::string all_level         = "info"; // Generic log level assigned to all layers without layer-specific level.
+  std::string app_level         = "info"; // Generic log level assigned to all layers without layer-specific level.
+  std::string du_level          = "info";
+  std::string cu_level          = "info";
+  std::string phy_level         = "info";
+  std::string radio_level       = "info";
+  std::string mac_level         = "info";
+  std::string rlc_level         = "info";
+  std::string f1u_level         = "info";
+  std::string pdcp_level        = "info";
+  std::string rrc_level         = "info";
+  std::string sdap_level        = "info";
+  std::string gtpu_level        = "info";
+  std::string fapi_level        = "info";
+  uint32_t    hex_max_size      = 32;       // Maximum number of bytes to write when dumping hex arrays.
+  bool        broadcast_enabled = false;    // Set to true to log broadcasting messages and all PRACH opportunities.
   std::string phy_rx_symbols_filename = ""; // Set to a valid file path to print the received symbols.
 };
 

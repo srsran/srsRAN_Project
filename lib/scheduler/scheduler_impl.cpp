@@ -19,6 +19,7 @@ using namespace srsran;
 scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
   sched_cfg(sched_cfg_.expert_params),
   logger(srslog::fetch_basic_logger("SCHED")),
+  sched_result_logger(sched_cfg.log_broadcast_messages),
   metrics(sched_cfg.metrics_report_period, sched_cfg_.metrics_notifier),
   ue_sched(std::make_unique<ue_scheduler_impl>(sched_cfg.ue, sched_cfg_.config_notifier, metrics, sched_ev_logger)),
   ue_cfg_handler(ue_sched->get_ue_configurator()),

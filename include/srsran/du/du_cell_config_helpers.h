@@ -51,7 +51,8 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ue.max_consecutive_pusch_kos = 128;
   cfg.ue.initial_ul_sinr           = 5;
 
-  cfg.metrics_report_period = std::chrono::milliseconds{1000};
+  cfg.log_broadcast_messages = true;
+  cfg.metrics_report_period  = std::chrono::milliseconds{1000};
 
   return cfg;
 }

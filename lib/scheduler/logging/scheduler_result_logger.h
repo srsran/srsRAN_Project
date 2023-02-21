@@ -18,7 +18,10 @@ namespace srsran {
 class scheduler_result_logger
 {
 public:
-  scheduler_result_logger() : logger(srslog::fetch_basic_logger("SCHED")), enabled(logger.info.enabled()) {}
+  explicit scheduler_result_logger(bool log_broadcast_ = true) :
+    logger(srslog::fetch_basic_logger("SCHED")), log_broadcast(log_broadcast_)
+  {
+  }
 
   void on_slot_start()
   {
@@ -35,6 +38,7 @@ private:
   void log_info(const sched_result& result);
 
   srslog::basic_logger& logger;
+  bool                  log_broadcast;
   bool                  enabled;
 
   std::chrono::time_point<std::chrono::high_resolution_clock> slot_start_tp;

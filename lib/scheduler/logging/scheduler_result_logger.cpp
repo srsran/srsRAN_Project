@@ -16,10 +16,16 @@ void scheduler_result_logger::log_debug(const sched_result& result)
 {
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();
 
-  for (const ssb_information& ssb_info : result.dl.bc.ssb_info) {
-    fmt::format_to(fmtbuf, "\n- SSB: ssbIdx={}, crbs={}, symb={}", ssb_info.ssb_index, ssb_info.crbs, ssb_info.symbols);
+  if (log_broadcast) {
+    for (const ssb_information& ssb_info : result.dl.bc.ssb_info) {
+      fmt::format_to(
+          fmtbuf, "\n- SSB: ssbIdx={}, crbs={}, symb={}", ssb_info.ssb_index, ssb_info.crbs, ssb_info.symbols);
+    }
   }
   for (const pdcch_dl_information& pdcch : result.dl.dl_pdcchs) {
+    if (not log_broadcast and pdcch.ctx.rnti == SI_RNTI) {
+      continue;
+    }
     fmt::format_to(fmtbuf,
                    "\n- DL PDCCH: rnti={:#x} type={} cs_id={} ss_id={} format={} cce={} al={} ",
                    pdcch.ctx.rnti,
@@ -81,29 +87,32 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
   }
 
-  for (const csi_rs_info& csi_rs : result.dl.csi_rs) {
-    fmt::format_to(fmtbuf,
-                   "\n- CSI-RS: type={} crbs={} row={} freq={} symb0={} cdm_type={} freq_density={} scramb_id={}",
-                   csi_rs.type == csi_rs_type::CSI_RS_NZP ? "nzp" : "zp",
-                   csi_rs.crbs,
-                   csi_rs.row,
-                   csi_rs.freq_domain,
-                   csi_rs.symbol0,
-                   csi_rs.cdm_type == csi_rs_cdm_type::no_CDM ? "no_cdm" : "other",
-                   (unsigned)csi_rs.freq_density,
-                   csi_rs.scrambling_id);
+  if (log_broadcast) {
+    for (const csi_rs_info& csi_rs : result.dl.csi_rs) {
+      fmt::format_to(fmtbuf,
+                     "\n- CSI-RS: type={} crbs={} row={} freq={} symb0={} cdm_type={} freq_density={} scramb_id={}",
+                     csi_rs.type == csi_rs_type::CSI_RS_NZP ? "nzp" : "zp",
+                     csi_rs.crbs,
+                     csi_rs.row,
+                     csi_rs.freq_domain,
+                     csi_rs.symbol0,
+                     csi_rs.cdm_type == csi_rs_cdm_type::no_CDM ? "no_cdm" : "other",
+                     (unsigned)csi_rs.freq_density,
+                     csi_rs.scrambling_id);
+    }
+
+    for (const sib_information& sib : result.dl.bc.sibs) {
+      fmt::format_to(fmtbuf,
+                     "\n- SI{} PDSCH: prb={} symb={} tbs={} mcs={} rv={}",
+                     sib.si_indicator == sib_information::sib1 ? "B1" : "",
+                     sib.pdsch_cfg.prbs.prbs(),
+                     sib.pdsch_cfg.symbols,
+                     sib.pdsch_cfg.codewords[0].tb_size_bytes,
+                     sib.pdsch_cfg.codewords[0].mcs_index,
+                     sib.pdsch_cfg.codewords[0].rv_index);
+    }
   }
 
-  for (const sib_information& sib : result.dl.bc.sibs) {
-    fmt::format_to(fmtbuf,
-                   "\n- SI{} PDSCH: prb={} symb={} tbs={} mcs={} rv={}",
-                   sib.si_indicator == sib_information::sib1 ? "B1" : "",
-                   sib.pdsch_cfg.prbs.prbs(),
-                   sib.pdsch_cfg.symbols,
-                   sib.pdsch_cfg.codewords[0].tb_size_bytes,
-                   sib.pdsch_cfg.codewords[0].mcs_index,
-                   sib.pdsch_cfg.codewords[0].rv_index);
-  }
   for (const rar_information& rar : result.dl.rar_grants) {
     fmt::format_to(fmtbuf,
                    "\n- RAR PDSCH: ra-rnti={:#x} prb={} symb={} tbs={} mcs={} rv={} grants ({}): ",
@@ -227,13 +236,15 @@ void scheduler_result_logger::log_info(const sched_result& result)
 {
   auto slot_stop_tp = std::chrono::high_resolution_clock::now();
 
-  for (const sib_information& sib_info : result.dl.bc.sibs) {
-    fmt::format_to(fmtbuf,
-                   "{}SI{}: prb={} tbs={}",
-                   fmtbuf.size() == 0 ? "" : ", ",
-                   sib_info.si_indicator == sib_information::sib1 ? "B1" : "",
-                   sib_info.pdsch_cfg.prbs.prbs(),
-                   sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
+  if (log_broadcast) {
+    for (const sib_information& sib_info : result.dl.bc.sibs) {
+      fmt::format_to(fmtbuf,
+                     "{}SI{}: prb={} tbs={}",
+                     fmtbuf.size() == 0 ? "" : ", ",
+                     sib_info.si_indicator == sib_information::sib1 ? "B1" : "",
+                     sib_info.pdsch_cfg.prbs.prbs(),
+                     sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
+    }
   }
   for (const rar_information& rar_info : result.dl.rar_grants) {
     fmt::format_to(fmtbuf,
