@@ -146,7 +146,7 @@ static void update_format2_uci_bits(pucch_info&           existing_f2_grant,
   // Attempt to allocate old SR bits.
   // NOTE: for the time being, there should not be more than 1 SR bit.
   if (candidate_uci_bits + sr_nof_bits_to_uint(existing_f2_grant.format_2.sr_bits) > max_payload) {
-    // Log an error message and exit.
+    // TODO: Log an error message and exit.
     existing_f2_grant.format_2.sr_bits        = srsran::sr_nof_bits::no_sr;
     existing_f2_grant.format_2.csi_part1_bits = 0;
     return;
@@ -155,7 +155,7 @@ static void update_format2_uci_bits(pucch_info&           existing_f2_grant,
 
   // Attempt to allocate new SR bits.
   if (candidate_uci_bits + sr_nof_bits_to_uint(nof_sr_bits) > max_payload) {
-    // Log an error message and exit without updating the bits.
+    // TODO: Log an error message and exit.
     existing_f2_grant.format_2.csi_part1_bits = 0;
     return;
   }
@@ -164,7 +164,7 @@ static void update_format2_uci_bits(pucch_info&           existing_f2_grant,
 
   // Attempt to allocate old CSI bits.
   if (candidate_uci_bits + existing_f2_grant.format_2.csi_part1_bits > max_payload) {
-    // Log an error message and exit.
+    // TODO: Log an error message and exit.
     existing_f2_grant.format_2.csi_part1_bits = 0;
     return;
   }
@@ -197,7 +197,7 @@ static pucch_uci_bits compute_format2_uci_bits(const pucch_resource& res_cfg,
 
   // Attempt to allocate SR bits.
   if (nof_harq_ack_bits + sr_nof_bits_to_uint(nof_sr_bits) > max_payload) {
-    // Log an error message and exit.
+    // TODO: Log an error message and exit.
     return pucch_uci_bits{.harq_ack_nof_bits = nof_harq_ack_bits};
   }
 
@@ -689,7 +689,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
   }
 
   if (format2_res.pucch_res == nullptr) {
-    logger.error(
+    logger.debug(
         "No available PUCCH Format2 resources to allocate UCI for RNTI {:#x} on slot={}.", rnti, pucch_slot_alloc.slot);
     return output;
   }
@@ -721,7 +721,7 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.error(
+    logger.warning(
         "List still full after removing PUCCH f1 grant for RNTI {:#x} for slot={}.", rnti, pucch_slot_alloc.slot);
     return output;
   }
@@ -763,7 +763,7 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
   if (format2_res.pucch_res == nullptr) {
     remove_format2_csi_from_grants(
         pucch_slot_alloc, rnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    logger.error(
+    logger.debug(
         "No available PUCCH Format2 resources to allocate UCI for RNTI {:#x} on slot={}.", rnti, pucch_slot_alloc.slot);
     return output;
   }
@@ -795,7 +795,7 @@ pucch_harq_ack_grant pucch_allocator_impl::change_format2_resource(cell_slot_res
 
   // Allocate PUCCH SR grant only.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
-    logger.error(
+    logger.warning(
         "List still full after removing PUCCH f1 grant for RNTI {:#x} for slot={}.", rnti, pucch_slot_alloc.slot);
     return output;
   }
@@ -923,7 +923,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_format2_grant(cell_slot_
   }
 
   if (format2_res.pucch_res == nullptr) {
-    logger.error("No available PUCCH Format2 resources to allocate CSI for RNTI {:#x} on slot={}.",
+    logger.debug("No available PUCCH Format2 resources to allocate CSI for RNTI {:#x} on slot={}.",
                  crnti,
                  pucch_slot_alloc.slot);
     return output;
@@ -1038,7 +1038,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_format2_grant(pucch_info&     
     existing_f2_grant.resources.second_hop_prbs.set(res_cfg->second_hop_prb, res_cfg->second_hop_prb + nof_prbs);
   }
 
-  logger.debug("ue={:#x}'s UCI mltplxd on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx.to_uint());
+  logger.debug("ue={:#x}'s UCI mltplxd on existing PUCCH F2 for slot={}", existing_f2_grant.crnti, sl_tx);
   return pucch_harq_ack_grant{.pucch_res_indicator = static_cast<unsigned>(res_indicator),
                               .pucch_pdu           = &existing_f2_grant};
 }
