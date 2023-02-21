@@ -141,7 +141,7 @@ int main(int argc, char** argv)
   if (dft_factory_str == "generic") {
     dft_factory = create_dft_processor_factory_generic();
   } else if (dft_factory_str == "fftw") {
-    dft_factory = create_dft_processor_factory_fftw(fftw_plan_optimization::fftw_estimate);
+    dft_factory = create_dft_processor_factory_fftw();
   } else {
     fmt::print("Invalid DFT factory.");
     return -1;

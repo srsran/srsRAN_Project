@@ -11,6 +11,7 @@
 #include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "dft_processor_fftw_impl.h"
 #include "dft_processor_generic_impl.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 
@@ -35,11 +36,20 @@ class dft_processor_factory_fftw : public dft_processor_factory
   dft_processor_fftw_configuration fftw_config;
 
 public:
-  dft_processor_factory_fftw(fftw_plan_optimization optimization_flag, bool avoid_wisdom, std::string wisdom_filename)
+  dft_processor_factory_fftw(const std::string& optimization_flag,
+                             bool               avoid_wisdom,
+                             const std::string& wisdom_filename)
   {
-    fftw_config.optimization_flag = optimization_flag;
-    fftw_config.avoid_wisdom      = avoid_wisdom;
-    fftw_config.wisdom_filename   = wisdom_filename;
+    fftw_config.avoid_wisdom    = avoid_wisdom;
+    fftw_config.wisdom_filename = wisdom_filename;
+
+    if ((optimization_flag == "") || (optimization_flag == "fftw_estimate")) {
+      fftw_config.optimization_flag = fftw_plan_optimization::fftw_estimate;
+    } else if (optimization_flag == "fftw_measure") {
+      fftw_config.optimization_flag = fftw_plan_optimization::fftw_measure;
+    } else {
+      report_error("Invalid FFTW optimization flag: {}", optimization_flag);
+    }
   }
 
 private:
@@ -57,10 +67,9 @@ std::shared_ptr<dft_processor_factory> srsran::create_dft_processor_factory_gene
   return std::make_shared<dft_processor_factory_generic>();
 }
 
-std::shared_ptr<dft_processor_factory>
-srsran::create_dft_processor_factory_fftw(fftw_plan_optimization optimization_flag,
-                                          bool                   avoid_wisdom,
-                                          const std::string&     wisdom_filename)
+std::shared_ptr<dft_processor_factory> srsran::create_dft_processor_factory_fftw(const std::string& optimization_flag,
+                                                                                 bool               avoid_wisdom,
+                                                                                 const std::string& wisdom_filename)
 {
 #ifdef ENABLE_FFTW
   return std::make_shared<dft_processor_factory_fftw>(optimization_flag, avoid_wisdom, wisdom_filename);

@@ -15,17 +15,6 @@
 
 namespace srsran {
 
-/// \brief FFTW optimization flags.
-///
-/// FFTW planning rigor flags, arranged from fastest to slowest in terms of plan creation time, and from least to most
-/// optimized FFT algorithm selection.
-enum class fftw_plan_optimization {
-  /// Picks a sub-optimal plan quickly using heuristics.
-  fftw_estimate,
-  /// Finds an optimized FFT plan by computing several FFTs and measuring their execution time.
-  fftw_measure
-};
-
 /// \brief Describes a Discrete Fourier Transform (DFT) processor.
 /// \remark The DFT processor allocates the input and output buffers for optimization purposes.
 /// \remark The input buffer is available using get_input().

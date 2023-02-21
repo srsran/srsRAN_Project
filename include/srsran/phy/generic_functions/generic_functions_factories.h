@@ -31,14 +31,13 @@ public:
 std::shared_ptr<dft_processor_factory> create_dft_processor_factory_generic();
 
 /// \brief Creates a DFT processor factory based on FFTW library.
-/// \param[in] optimization_flag FFTW planning optimization mode.
+/// \param[in] optimization_flag FFTW planning optimization mode. Leave empty for default value (\c fftw_estimate).
 /// \param[in] avoid_wisdom Set to true to avoid loading FFTW wisdom from a file.
 /// \param[in] wisdom_filename Indicates the FFTW wisdom filename. Leave empty for default value. It is ignored if the
 /// option \c avoid_wisdom is true.
 /// \return A valid pointer to a DFT processor factory if FFTW is available. Otherwise, nullptr.
-std::shared_ptr<dft_processor_factory>
-create_dft_processor_factory_fftw(fftw_plan_optimization optimization_flag = fftw_plan_optimization::fftw_measure,
-                                  bool                   avoid_wisdom      = false,
-                                  const std::string&     wisdom_filename   = "");
+std::shared_ptr<dft_processor_factory> create_dft_processor_factory_fftw(const std::string& optimization_flag = "",
+                                                                         bool               avoid_wisdom      = false,
+                                                                         const std::string& wisdom_filename   = "");
 
 } // namespace srsran

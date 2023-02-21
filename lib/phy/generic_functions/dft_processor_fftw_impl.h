@@ -19,6 +19,17 @@
 
 namespace srsran {
 
+/// \brief FFTW optimization flags.
+///
+/// FFTW planning rigor flags, arranged from fastest to slowest in terms of plan creation time, and from least to most
+/// optimized FFT algorithm selection.
+enum class fftw_plan_optimization {
+  /// Picks a sub-optimal plan quickly, using heuristics.
+  fftw_estimate,
+  /// Finds an optimized FFT plan by computing several FFTs and measuring their execution time.
+  fftw_measure
+};
+
 /// Describes the specific FFTW DFT parameters.
 struct dft_processor_fftw_configuration {
   /// FFTW plan optimization flag, used for DFT plan creation.
