@@ -111,6 +111,9 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
     logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
   }
 
+  // > Mark slot start for logging purposes.
+  sched_result_logger.on_slot_start();
+
   auto& cell = cells[cell_index];
 
   // > Reset cell resource grid state.
@@ -144,7 +147,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   sched_ev_logger.log();
 
   // > Log the scheduler results.
-  sched_result_logger.log(cell.res_grid[0].result);
+  sched_result_logger.on_scheduler_result(cell.res_grid[0].result);
 
   // > Push the scheduler results to the metrics handler.
   metrics.push_result(sl_tx, cell.res_grid[0].result);

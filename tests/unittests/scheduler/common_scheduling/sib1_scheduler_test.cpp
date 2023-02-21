@@ -305,6 +305,8 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
   // Run the test for 10000 slots.
   size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
+    t_bench.sched_res_logger.on_slot_start();
+
     // Run SIB1 scheduler.
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
 
@@ -326,7 +328,7 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
     }
 
     // Log results.
-    t_bench.sched_res_logger.log(t_bench.get_slot_res_grid().result);
+    t_bench.sched_res_logger.on_scheduler_result(t_bench.get_slot_res_grid().result);
 
     // Update SLOT.
     t_bench.slot_indication();
@@ -368,6 +370,8 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
   // Run the test for 10000 slots.
   size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
+    t_bench.sched_res_logger.on_slot_start();
+
     // Run SIB1 scheduler.
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
 
@@ -385,7 +389,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
     }
 
     // Log results.
-    t_bench.sched_res_logger.log(t_bench.get_slot_res_grid().result);
+    t_bench.sched_res_logger.on_scheduler_result(t_bench.get_slot_res_grid().result);
 
     // Update SLOT.
     t_bench.slot_indication();
@@ -418,6 +422,8 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
   // Run the test for 10000 slots.
   const size_t test_length_slots = 100;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
+    t_bench.sched_res_logger.on_slot_start();
+
     // Clear the SSB list of it is not empty.
     auto& ssb_list = t_bench.get_slot_res_grid().result.dl.bc.ssb_info;
     if (ssb_list.size() > 0) {
@@ -437,7 +443,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
     test_dl_resource_grid_collisions(t_bench.cfg, res_slot_grid.result.dl);
 
     // Log results.
-    t_bench.sched_res_logger.log(t_bench.get_slot_res_grid().result);
+    t_bench.sched_res_logger.on_scheduler_result(t_bench.get_slot_res_grid().result);
 
     // Update SLOT.
     t_bench.slot_indication();

@@ -76,13 +76,14 @@ protected:
   {
     mac_logger.set_context(next_slot.sfn(), next_slot.slot_index());
     test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
+    result_logger.on_slot_start();
 
     res_grid.slot_indication(next_slot);
     next_slot++;
 
     ra_sch.run_slot(res_grid);
 
-    result_logger.log(res_grid[0].result);
+    result_logger.on_scheduler_result(res_grid[0].result);
 
     // Check sched result consistency.
     ASSERT_NO_FATAL_FAILURE(test_result_consistency());

@@ -14,6 +14,8 @@ using namespace srsran;
 
 void scheduler_result_logger::log_debug(const sched_result& result)
 {
+  auto slot_stop_tp = std::chrono::high_resolution_clock::now();
+
   for (const ssb_information& ssb_info : result.dl.bc.ssb_info) {
     fmt::format_to(fmtbuf, "\n- SSB: ssbIdx={}, crbs={}, symb={}", ssb_info.ssb_index, ssb_info.crbs, ssb_info.symbols);
   }
@@ -215,13 +217,16 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   if (fmtbuf.size() > 0) {
-    logger.debug("Slot decisions:{}", to_c_str(fmtbuf));
+    auto decision_latency = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
+    logger.debug("Slot decisions cell=0 t={}us:{}", decision_latency.count(), to_c_str(fmtbuf));
     fmtbuf.clear();
   }
 }
 
 void scheduler_result_logger::log_info(const sched_result& result)
 {
+  auto slot_stop_tp = std::chrono::high_resolution_clock::now();
+
   for (const sib_information& sib_info : result.dl.bc.sibs) {
     fmt::format_to(fmtbuf,
                    "{}SI{}: prb={} tbs={}",
@@ -276,12 +281,13 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
 
   if (fmtbuf.size() > 0) {
-    logger.info("Slot decisions: {}", to_c_str(fmtbuf));
+    auto decision_latency = std::chrono::duration_cast<std::chrono::microseconds>(slot_stop_tp - slot_start_tp);
+    logger.info("Slot decisions cell=0 t={}us: {}", decision_latency.count(), to_c_str(fmtbuf));
     fmtbuf.clear();
   }
 }
 
-void scheduler_result_logger::log(const sched_result& result)
+void scheduler_result_logger::on_scheduler_result(const sched_result& result)
 {
   if (logger.debug.enabled()) {
     log_debug(result);

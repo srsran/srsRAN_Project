@@ -125,13 +125,14 @@ protected:
 
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
+    sched_res_logger.on_slot_start();
 
     bench->res_grid.slot_indication(current_slot);
     bench->pdcch_sch.slot_indication(current_slot);
     bench->pg_sch.schedule_paging(bench->res_grid);
 
     // Log scheduling results.
-    sched_res_logger.log(bench->res_grid[0].result);
+    sched_res_logger.on_scheduler_result(bench->res_grid[0].result);
 
     // Check sched result consistency.
     test_scheduler_result_consistency(bench->cell_cfg, bench->res_grid);

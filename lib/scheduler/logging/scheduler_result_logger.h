@@ -18,9 +18,16 @@ namespace srsran {
 class scheduler_result_logger
 {
 public:
-  scheduler_result_logger() : logger(srslog::fetch_basic_logger("SCHED")) {}
+  scheduler_result_logger() : logger(srslog::fetch_basic_logger("SCHED")), enabled(logger.info.enabled()) {}
 
-  void log(const sched_result& result);
+  void on_slot_start()
+  {
+    if (enabled) {
+      slot_start_tp = std::chrono::high_resolution_clock::now();
+    }
+  }
+
+  void on_scheduler_result(const sched_result& result);
 
 private:
   void log_debug(const sched_result& result);
@@ -28,7 +35,10 @@ private:
   void log_info(const sched_result& result);
 
   srslog::basic_logger& logger;
-  fmt::memory_buffer    fmtbuf;
+  bool                  enabled;
+
+  std::chrono::time_point<std::chrono::high_resolution_clock> slot_start_tp;
+  fmt::memory_buffer                                          fmtbuf;
 };
 
 } // namespace srsran
