@@ -41,14 +41,28 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
 
   // Setup RAN resources per cell.
   for (auto& cell : cells) {
-    cell.sr_offset_free_list.resize(sr_period);
     for (unsigned offset = 0; offset != sr_period; ++offset) {
-      cell.sr_offset_free_list[offset] = offset;
+      if (cell_cfg_list_[0].tdd_ul_dl_cfg_common.has_value()) {
+        const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg_list_[0].tdd_ul_dl_cfg_common;
+        unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+        if (not has_active_tdd_ul_symbols(tdd_cfg, slot_index)) {
+          // UL disabled for this slot.
+          continue;
+        }
+      }
+      cell.sr_offset_free_list.push_back(offset);
     }
 
-    cell.csi_offset_free_list.resize(csi_period);
     for (unsigned offset = 0; offset != csi_period; ++offset) {
-      cell.csi_offset_free_list[offset] = offset;
+      if (cell_cfg_list_[0].tdd_ul_dl_cfg_common.has_value()) {
+        const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg_list_[0].tdd_ul_dl_cfg_common;
+        unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+        if (not has_active_tdd_ul_symbols(tdd_cfg, slot_index)) {
+          // UL disabled for this slot.
+          continue;
+        }
+      }
+      cell.csi_offset_free_list.push_back(offset);
     }
   }
 }
