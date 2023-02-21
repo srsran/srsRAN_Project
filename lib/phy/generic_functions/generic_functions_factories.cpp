@@ -43,9 +43,9 @@ public:
     fftw_config.avoid_wisdom    = avoid_wisdom;
     fftw_config.wisdom_filename = wisdom_filename;
 
-    if ((optimization_flag == "") || (optimization_flag == "fftw_estimate")) {
+    if ((optimization_flag == "") || (optimization_flag == "estimate")) {
       fftw_config.optimization_flag = fftw_plan_optimization::fftw_estimate;
-    } else if (optimization_flag == "fftw_measure") {
+    } else if (optimization_flag == "measure") {
       fftw_config.optimization_flag = fftw_plan_optimization::fftw_measure;
     } else {
       report_error("Invalid FFTW optimization flag: {}", optimization_flag);

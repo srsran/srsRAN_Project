@@ -20,7 +20,7 @@ using namespace srsran;
 static std::mt19937 rgen(0);
 
 static std::string dft_factory_str       = "generic";
-static std::string fftw_optimization_str = "fftw_estimate";
+static std::string fftw_optimization_str = "estimate";
 static unsigned    nof_repetitions       = 1000;
 static bool        silent                = false;
 
@@ -28,7 +28,7 @@ static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-F DFT factory] [-R repetitions]\n", prog);
   fmt::print("\t-F Select DFT factory [Default {}]\n", dft_factory_str);
-  fmt::print("\t-O Select FFTW optimization flag (fftw_estimate, fftw_measure) [Default {}]\n", dft_factory_str);
+  fmt::print("\t-O Select FFTW optimization flag (estimate, measure) [Default {}]\n", dft_factory_str);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");
