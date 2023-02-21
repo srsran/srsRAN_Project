@@ -12,6 +12,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/optional.h"
+#include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
@@ -21,7 +22,6 @@
 #include <vector>
 
 namespace srsran {
-
 /// \brief Converts type \c ciphering_algorithm to an E1AP ASN.1 type.
 /// \param[in] ciph_algo Cyphering Algorithm object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
@@ -928,10 +928,10 @@ inline cause_t e1ap_cause_to_cause(asn1::e1ap::cause_c e1ap_cause)
   return cause;
 }
 
-/// \brief Convert \c cause_t type to E1AP cause.
+/// \brief Convert \c cause_t type to E1AP ASN.1 cause.
 /// \param cause The cause_t type.
-/// \return The E1AP cause.
-inline asn1::e1ap::cause_c cause_to_e1ap_cause(cause_t cause)
+/// \return The E1AP ASN.1 cause.
+inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
 {
   asn1::e1ap::cause_c e1ap_cause;
 
@@ -1186,7 +1186,7 @@ e1ap_asn1_to_pdcp_sn_status_info(const asn1::e1ap::pdcp_sn_status_info_s& asn1_p
       asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn;
 
   if (asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu_present) {
-    pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcpsdu =
+    pdcp_sn_status_info.pdcp_status_transfer_ul.receive_status_of_pdcp_sdu =
         asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu.to_number();
   }
 
@@ -1194,6 +1194,74 @@ e1ap_asn1_to_pdcp_sn_status_info(const asn1::e1ap::pdcp_sn_status_info_s& asn1_p
   pdcp_sn_status_info.pdcp_status_transfer_dl.hfn     = asn1_pdcp_sn_status_info.pdcp_status_transfer_dl.hfn;
 
   return pdcp_sn_status_info;
+}
+
+template <typename template_asn1_item>
+inline void
+e1ap_drb_item_list_to_asn1(asn1::dyn_array<template_asn1_item>&                           asn1_drb_item_list,
+                           const slotted_id_vector<drb_id_t, e1ap_drb_setup_item_ng_ran>& drb_setup_list_ng_ran)
+{
+  for (const auto& drb_setup_item_ng_ran : drb_setup_list_ng_ran) {
+    template_asn1_item asn1_drb_setup_item;
+
+    // Add DRB ID
+    asn1_drb_setup_item.drb_id = drb_id_to_uint(drb_setup_item_ng_ran.drb_id);
+
+    // Add UL UP Transport Params
+    for (const auto& ul_up_transport_param : drb_setup_item_ng_ran.ul_up_transport_params) {
+      asn1::e1ap::up_params_item_s asn1_up_transport_param;
+      up_transport_layer_info_to_asn1(asn1_up_transport_param.up_tnl_info, ul_up_transport_param.up_tnl_info);
+      asn1_drb_setup_item.ul_up_transport_params.push_back(asn1_up_transport_param);
+    }
+
+    // Add Flow setup List
+    for (const auto& qos_flow_item : drb_setup_item_ng_ran.flow_setup_list) {
+      asn1::e1ap::qos_flow_item_s asn1_flow_item;
+      asn1_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
+      asn1_drb_setup_item.flow_setup_list.push_back(asn1_flow_item);
+    }
+
+    // Add Flow Failed List
+    for (const auto& flow_failed_item : drb_setup_item_ng_ran.flow_failed_list) {
+      asn1::e1ap::qos_flow_failed_item_s asn1_flow_failed_item;
+      asn1_flow_failed_item.qos_flow_id = qos_flow_id_to_uint(flow_failed_item.qos_flow_id);
+      asn1_drb_setup_item.flow_failed_list.push_back(asn1_flow_failed_item);
+    }
+
+    // Add DRB Data Forwarding Info Response
+    if (drb_setup_item_ng_ran.drb_data_forwarding_info_resp.has_value()) {
+      asn1_drb_setup_item.drb_data_forwarding_info_resp_present = true;
+      if (drb_setup_item_ng_ran.drb_data_forwarding_info_resp.value().ul_data_forwarding.has_value()) {
+        asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present = true;
+        up_transport_layer_info_to_asn1(
+            asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding,
+            drb_setup_item_ng_ran.drb_data_forwarding_info_resp.value().ul_data_forwarding.value());
+      }
+      if (drb_setup_item_ng_ran.drb_data_forwarding_info_resp.value().dl_data_forwarding.has_value()) {
+        asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present = true;
+        up_transport_layer_info_to_asn1(
+            asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding,
+            drb_setup_item_ng_ran.drb_data_forwarding_info_resp.value().dl_data_forwarding.value());
+      }
+    }
+
+    asn1_drb_item_list.push_back(asn1_drb_setup_item);
+  }
+}
+
+template <typename template_asn1_item>
+inline void e1ap_drb_failed_item_list_to_asn1(
+    asn1::dyn_array<template_asn1_item>&                            asn1_drb_item_list,
+    const slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran>& drb_failed_list_ng_ran)
+{
+  for (const auto& drb_failed_item : drb_failed_list_ng_ran) {
+    template_asn1_item asn1_drb_failed_item;
+    // Add DRB ID
+    asn1_drb_failed_item.drb_id = drb_id_to_uint(drb_failed_item.drb_id);
+    // Add Cause
+    asn1_drb_failed_item.cause = cause_to_asn1_cause(drb_failed_item.cause);
+    asn1_drb_item_list.push_back(asn1_drb_failed_item);
+  }
 }
 
 } // namespace srsran

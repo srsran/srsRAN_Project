@@ -196,62 +196,11 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     up_transport_layer_info_to_asn1(asn1_res_setup_item.ng_dl_up_tnl_info, res_setup_item.ng_dl_up_tnl_info);
 
     // Add DRB Setup List NG RAN
-    for (const auto& drb_setup_item : res_setup_item.drb_setup_list_ng_ran) {
-      asn1::e1ap::drb_setup_item_ng_ran_s asn1_drb_setup_item;
-
-      // Add DRB ID
-      asn1_drb_setup_item.drb_id = drb_id_to_uint(drb_setup_item.drb_id);
-
-      // Add UL UP Transport Params
-      for (const auto& ul_up_transport_param : drb_setup_item.ul_up_transport_params) {
-        asn1::e1ap::up_params_item_s asn1_up_transport_param;
-        up_transport_layer_info_to_asn1(asn1_up_transport_param.up_tnl_info, ul_up_transport_param.up_tnl_info);
-        asn1_drb_setup_item.ul_up_transport_params.push_back(asn1_up_transport_param);
-      }
-
-      // Add Flow setup List
-      for (const auto& qos_flow_item : drb_setup_item.flow_setup_list) {
-        asn1::e1ap::qos_flow_item_s asn1_flow_item;
-        asn1_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
-        asn1_drb_setup_item.flow_setup_list.push_back(asn1_flow_item);
-      }
-
-      // Add Flow Failed List
-      for (const auto& flow_failed_item : drb_setup_item.flow_failed_list) {
-        asn1::e1ap::qos_flow_failed_item_s asn1_flow_failed_item;
-        asn1_flow_failed_item.qos_flow_id = qos_flow_id_to_uint(flow_failed_item.qos_flow_id);
-        asn1_drb_setup_item.flow_failed_list.push_back(asn1_flow_failed_item);
-      }
-
-      // Add DRB Data Forwarding Info Response
-      if (drb_setup_item.drb_data_forwarding_info_resp.has_value()) {
-        asn1_drb_setup_item.drb_data_forwarding_info_resp_present = true;
-        if (drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding.has_value()) {
-          asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding_present = true;
-          up_transport_layer_info_to_asn1(
-              asn1_drb_setup_item.drb_data_forwarding_info_resp.ul_data_forwarding,
-              drb_setup_item.drb_data_forwarding_info_resp.value().ul_data_forwarding.value());
-        }
-        if (drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding.has_value()) {
-          asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding_present = true;
-          up_transport_layer_info_to_asn1(
-              asn1_drb_setup_item.drb_data_forwarding_info_resp.dl_data_forwarding,
-              drb_setup_item.drb_data_forwarding_info_resp.value().dl_data_forwarding.value());
-        }
-      }
-
-      asn1_res_setup_item.drb_setup_list_ng_ran.push_back(asn1_drb_setup_item);
-    }
+    e1ap_drb_item_list_to_asn1(asn1_res_setup_item.drb_setup_list_ng_ran, res_setup_item.drb_setup_list_ng_ran);
 
     // Add DRB Failed List NG RAN
-    for (const auto& drb_failed_item : res_setup_item.drb_failed_list_ng_ran) {
-      asn1::e1ap::drb_failed_item_ng_ran_s asn1_drb_failed_item;
-      // Add DRB ID
-      asn1_drb_failed_item.drb_id = drb_id_to_uint(drb_failed_item.drb_id);
-      // Add Cause
-      asn1_drb_failed_item.cause = cause_to_e1ap_cause(drb_failed_item.cause);
-      asn1_res_setup_item.drb_failed_list_ng_ran.push_back(asn1_drb_failed_item);
-    }
+    e1ap_drb_failed_item_list_to_asn1(asn1_res_setup_item.drb_failed_list_ng_ran,
+                                      res_setup_item.drb_failed_list_ng_ran);
 
     // Add Security Result
     if (res_setup_item.security_result.has_value()) {
@@ -300,7 +249,7 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     for (const auto& failed_item : response.pdu_session_resource_failed_list) {
       asn1::e1ap::pdu_session_res_failed_item_s asn1_failed_item;
       asn1_failed_item.pdu_session_id = pdu_session_id_to_uint(failed_item.pdu_session_id);
-      asn1_failed_item.cause          = cause_to_e1ap_cause(failed_item.cause);
+      asn1_failed_item.cause          = cause_to_asn1_cause(failed_item.cause);
 
       asn1_bearer_context_setup_response.pdu_session_res_failed_list.value.push_back(asn1_failed_item);
     }
@@ -596,6 +545,204 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
   // activity notif level
   if (asn1_request->activity_notif_level_present) {
     request.activity_notif_level = asn1_request->activity_notif_level.value.to_string();
+  }
+}
+
+inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_bearer_context_mod_resp_c& asn1_response,
+                                                           const e1ap_bearer_context_modification_response& response)
+{
+  auto& asn1_bearer_context_modification_response = asn1_response.set_ng_ran_bearer_context_mod_resp();
+
+  // Add PDU Session Resource Setup Mod list
+  if (!response.pdu_session_resource_setup_list.empty()) {
+    asn1_bearer_context_modification_response.pdu_session_res_setup_mod_list_present = true;
+
+    for (const auto& res_setup_mod_item : response.pdu_session_resource_setup_list) {
+      asn1::e1ap::pdu_session_res_setup_mod_item_s asn1_res_setup_mod_item;
+
+      // Add PDU Session ID
+      asn1_res_setup_mod_item.pdu_session_id = pdu_session_id_to_uint(res_setup_mod_item.pdu_session_id);
+
+      // Add Security Result
+      if (res_setup_mod_item.security_result.has_value()) {
+        asn1_res_setup_mod_item.security_result_present = true;
+        asn1::string_to_enum(asn1_res_setup_mod_item.security_result.confidentiality_protection_result,
+                             res_setup_mod_item.security_result.value().confidentiality_protection_result);
+        asn1::string_to_enum(asn1_res_setup_mod_item.security_result.integrity_protection_result,
+                             res_setup_mod_item.security_result.value().integrity_protection_result);
+      }
+
+      // Add NG DL UP TNL Info
+      up_transport_layer_info_to_asn1(asn1_res_setup_mod_item.ng_dl_up_tnl_info, res_setup_mod_item.ng_dl_up_tnl_info);
+
+      // Add PDU Session Data Forwarding Info Response
+      if (res_setup_mod_item.pdu_session_data_forwarding_info_resp.has_value()) {
+        asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp_present = true;
+        if (res_setup_mod_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.has_value()) {
+          asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present = true;
+          up_transport_layer_info_to_asn1(
+              asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding,
+              res_setup_mod_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.value());
+        }
+        if (res_setup_mod_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.has_value()) {
+          asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present = true;
+          up_transport_layer_info_to_asn1(
+              asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding,
+              res_setup_mod_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.value());
+        }
+      }
+
+      // Add DRB Setup Mod List NG RAN
+      e1ap_drb_item_list_to_asn1(asn1_res_setup_mod_item.drb_setup_mod_list_ng_ran,
+                                 res_setup_mod_item.drb_setup_list_ng_ran);
+
+      // Add DRB Failed Mod List NG RAN
+      e1ap_drb_failed_item_list_to_asn1(asn1_res_setup_mod_item.drb_failed_mod_list_ng_ran,
+                                        res_setup_mod_item.drb_failed_list_ng_ran);
+
+      asn1_bearer_context_modification_response.pdu_session_res_setup_mod_list.value.push_back(asn1_res_setup_mod_item);
+    }
+  }
+
+  // Add PDU Session Resource Failed Mod List
+  if (!response.pdu_session_resource_failed_list.empty()) {
+    asn1_bearer_context_modification_response.pdu_session_res_failed_mod_list_present = true;
+
+    for (const auto& res_failed_mod_item : response.pdu_session_resource_failed_list) {
+      asn1::e1ap::pdu_session_res_failed_mod_item_s asn1_res_failed_mod_item;
+      asn1_res_failed_mod_item.pdu_session_id = pdu_session_id_to_uint(res_failed_mod_item.pdu_session_id);
+      asn1_res_failed_mod_item.cause          = cause_to_asn1_cause(res_failed_mod_item.cause);
+
+      asn1_bearer_context_modification_response.pdu_session_res_failed_mod_list.value.push_back(
+          asn1_res_failed_mod_item);
+    }
+  }
+
+  // Add PDU Session Resource Modified List
+  if (!response.pdu_session_resource_modified_list.empty()) {
+    asn1_bearer_context_modification_response.pdu_session_res_modified_list_present = true;
+
+    for (const auto& res_modified_item : response.pdu_session_resource_modified_list) {
+      asn1::e1ap::pdu_session_res_modified_item_s asn1_res_modified_item;
+
+      // Add PDU Session ID
+      asn1_res_modified_item.pdu_session_id = pdu_session_id_to_uint(res_modified_item.pdu_session_id);
+
+      // Add NG DL UP TNL Info
+      if (res_modified_item.ng_dl_up_tnl_info.has_value()) {
+        asn1_res_modified_item.ng_dl_up_tnl_info_present = true;
+        up_transport_layer_info_to_asn1(asn1_res_modified_item.ng_dl_up_tnl_info,
+                                        res_modified_item.ng_dl_up_tnl_info.value());
+      }
+
+      // Add Security Result
+      if (res_modified_item.security_result.has_value()) {
+        asn1_res_modified_item.security_result_present = true;
+        asn1::string_to_enum(asn1_res_modified_item.security_result.confidentiality_protection_result,
+                             res_modified_item.security_result.value().confidentiality_protection_result);
+        asn1::string_to_enum(asn1_res_modified_item.security_result.integrity_protection_result,
+                             res_modified_item.security_result.value().integrity_protection_result);
+      }
+
+      // Add PDU Session Data Forwarding Info Response
+      if (res_modified_item.pdu_session_data_forwarding_info_resp.has_value()) {
+        asn1_res_modified_item.pdu_session_data_forwarding_info_resp_present = true;
+        if (res_modified_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.has_value()) {
+          asn1_res_modified_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding_present = true;
+          up_transport_layer_info_to_asn1(
+              asn1_res_modified_item.pdu_session_data_forwarding_info_resp.ul_data_forwarding,
+              res_modified_item.pdu_session_data_forwarding_info_resp.value().ul_data_forwarding.value());
+        }
+        if (res_modified_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.has_value()) {
+          asn1_res_modified_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding_present = true;
+          up_transport_layer_info_to_asn1(
+              asn1_res_modified_item.pdu_session_data_forwarding_info_resp.dl_data_forwarding,
+              res_modified_item.pdu_session_data_forwarding_info_resp.value().dl_data_forwarding.value());
+        }
+      }
+
+      // Add DRB Setup List NG RAN
+      e1ap_drb_item_list_to_asn1(asn1_res_modified_item.drb_setup_list_ng_ran, res_modified_item.drb_setup_list_ng_ran);
+
+      // Add DRB Failed List NG RAN
+      e1ap_drb_failed_item_list_to_asn1(asn1_res_modified_item.drb_failed_list_ng_ran,
+                                        res_modified_item.drb_failed_list_ng_ran);
+
+      // Add DRB Modified List NG RAN
+      for (const auto& drb_modified_item : res_modified_item.drb_modified_list_ng_ran) {
+        asn1::e1ap::drb_modified_item_ng_ran_s asn1_drb_modified_item;
+
+        // Add DRB ID
+        asn1_drb_modified_item.drb_id = drb_id_to_uint(drb_modified_item.drb_id);
+
+        // Add UL UP Transport Params
+        for (const auto& ul_up_transport_param : drb_modified_item.ul_up_transport_params) {
+          asn1::e1ap::up_params_item_s asn1_up_transport_param;
+          up_transport_layer_info_to_asn1(asn1_up_transport_param.up_tnl_info, ul_up_transport_param.up_tnl_info);
+          asn1_drb_modified_item.ul_up_transport_params.push_back(asn1_up_transport_param);
+        }
+
+        // Add PDCP SN Status Info
+        if (drb_modified_item.pdcp_sn_status_info.has_value()) {
+          asn1_drb_modified_item.pdcp_sn_status_info_present = true;
+
+          // Add PDCP Status Transfer UL
+          if (drb_modified_item.pdcp_sn_status_info.value()
+                  .pdcp_status_transfer_ul.receive_status_of_pdcp_sdu.has_value()) {
+            asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu_present = true;
+            asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu.from_number(
+                drb_modified_item.pdcp_sn_status_info.value()
+                    .pdcp_status_transfer_ul.receive_status_of_pdcp_sdu.value());
+          }
+          asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.pdcp_sn =
+              drb_modified_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.pdcp_sn;
+          asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn =
+              drb_modified_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.hfn;
+
+          // Add PDCP Status Transfer DL
+          asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn =
+              drb_modified_item.pdcp_sn_status_info.value().pdcp_status_transfer_dl.pdcp_sn;
+          asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_dl.hfn =
+              drb_modified_item.pdcp_sn_status_info.value().pdcp_status_transfer_dl.hfn;
+        }
+
+        // Add Flow Setup List
+        for (const auto& qos_flow_item : drb_modified_item.flow_setup_list) {
+          asn1::e1ap::qos_flow_item_s asn1_flow_item;
+          asn1_flow_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_item.qos_flow_id);
+          asn1_drb_modified_item.flow_setup_list.push_back(asn1_flow_item);
+        }
+
+        // Add Flow Failed List
+        for (const auto& flow_failed_item : drb_modified_item.flow_failed_list) {
+          asn1::e1ap::qos_flow_failed_item_s asn1_flow_failed_item;
+          asn1_flow_failed_item.qos_flow_id = qos_flow_id_to_uint(flow_failed_item.qos_flow_id);
+          asn1_drb_modified_item.flow_failed_list.push_back(asn1_flow_failed_item);
+        }
+
+        asn1_res_modified_item.drb_modified_list_ng_ran.push_back(asn1_drb_modified_item);
+      }
+
+      // Add DRB Failed to Modify List NG RAN
+      e1ap_drb_failed_item_list_to_asn1(asn1_res_modified_item.drb_failed_to_modify_list_ng_ran,
+                                        res_modified_item.drb_failed_to_modify_list_ng_ran);
+
+      asn1_bearer_context_modification_response.pdu_session_res_modified_list.value.push_back(asn1_res_modified_item);
+    }
+  }
+
+  // Add PDU Session Resource Failed to Modify List
+  if (!response.pdu_session_resource_failed_to_modify_list.empty()) {
+    asn1_bearer_context_modification_response.pdu_session_res_failed_to_modify_list_present = true;
+
+    for (const auto& res_failed_to_modify_item : response.pdu_session_resource_failed_to_modify_list) {
+      asn1::e1ap::pdu_session_res_failed_to_modify_item_s asn1_res_failed_to_modify_item;
+      asn1_res_failed_to_modify_item.pdu_session_id = pdu_session_id_to_uint(res_failed_to_modify_item.pdu_session_id);
+      asn1_res_failed_to_modify_item.cause          = cause_to_asn1_cause(res_failed_to_modify_item.cause);
+
+      asn1_bearer_context_modification_response.pdu_session_res_failed_to_modify_list.value.push_back(
+          asn1_res_failed_to_modify_item);
+    }
   }
 }
 

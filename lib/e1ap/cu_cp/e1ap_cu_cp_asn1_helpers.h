@@ -274,10 +274,10 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
         asn1_drb_to_setup_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn =
             drb_to_setup_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.hfn;
         if (drb_to_setup_item.pdcp_sn_status_info.value()
-                .pdcp_status_transfer_ul.receive_statusof_pdcpsdu.has_value()) {
+                .pdcp_status_transfer_ul.receive_status_of_pdcp_sdu.has_value()) {
           asn1_drb_to_setup_item.pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu_present = true;
           asn1_drb_to_setup_item.pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu.from_number(
-              drb_to_setup_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.receive_statusof_pdcpsdu.value());
+              drb_to_setup_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.receive_status_of_pdcp_sdu.value());
         }
 
         asn1_drb_to_setup_item.pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn =
@@ -779,7 +779,7 @@ inline void fill_e1ap_bearer_context_modification_response(
                   e1ap_asn1_pdcp_count_to_pdcp_count(asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.count_value);
 
               if (asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu_present) {
-                drb_mod_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.receive_statusof_pdcpsdu =
+                drb_mod_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.receive_status_of_pdcp_sdu =
                     asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu.to_number();
               }
 
@@ -855,7 +855,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 inline void fill_asn1_bearer_context_release_command(asn1::e1ap::bearer_context_release_cmd_s&  asn1_command,
                                                      const e1ap_bearer_context_release_command& command)
 {
-  asn1_command->cause.value = cause_to_e1ap_cause(command.cause);
+  asn1_command->cause.value = cause_to_asn1_cause(command.cause);
 }
 
 } // namespace srs_cu_cp

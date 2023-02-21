@@ -62,5 +62,24 @@ struct e1ap_bearer_context_modification_request {
   optional<std::string>                            activity_notif_level;
 };
 
+/// \brief Response to a bearer context modification request including UE index for E1AP map.
+struct e1ap_bearer_context_modification_response {
+  bool       success;
+  ue_index_t ue_index = INVALID_UE_INDEX; // Valid UE index if modification was successful.
+
+  // Bearer Context Modification Response
+  slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>
+                                                                               pdu_session_resource_setup_list;
+  slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>   pdu_session_resource_failed_list;
+  slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item> pdu_session_resource_modified_list;
+  slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item> pdu_session_resource_failed_to_modify_list;
+
+  // Bearer Context Modification Failure
+  optional<cause_t> cause;
+
+  // Common
+  optional<e1ap_crit_diagnostics> crit_diagnostics;
+};
+
 } // namespace srs_cu_up
 } // namespace srsran
