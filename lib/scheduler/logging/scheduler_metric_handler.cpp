@@ -144,7 +144,7 @@ void scheduler_metrics_handler::push_result(slot_point sl_tx, const sched_result
 {
   if (report_period_slots == 0) {
     // The SCS common is now known.
-    usecs slot_dur      = std::chrono::duration_cast<usecs>(msecs{1U << sl_tx.numerology()});
+    usecs slot_dur      = usecs{1000U >> sl_tx.numerology()};
     report_period_slots = usecs{report_period} / slot_dur;
   }
 
