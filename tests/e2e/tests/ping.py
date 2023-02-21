@@ -35,27 +35,17 @@ class TestPing(BaseTest):
     @mark.parametrize(
         "band, common_scs, bandwidth",
         (
-            # Test
-            param(3, 15, 20, marks=mark.test, id="band:%s-scs:%s-bandwidth:%s"),
-            # Smoke
-            param(3, 15, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 20, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s"),
-            # ZMQ intensive
             param(3, 15, 5, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 10, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 20, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 20, marks=(mark.zmq, mark.smoke, mark.test), id="band:%s-scs:%s-bandwidth:%s"),
             param(3, 15, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
             param(7, 15, 5, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 10, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
+            param(7, 15, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
             param(7, 15, 20, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
             param(7, 15, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 10, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 20, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
+            param(41, 30, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
+            param(41, 30, 20, marks=(mark.zmq, mark.smoke), id="band:%s-scs:%s-bandwidth:%s"),
             param(41, 30, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            # RF intensive
-            param(3, 15, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 10, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s"),
         ),
     )
     def test(

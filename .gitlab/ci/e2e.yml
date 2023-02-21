@@ -15,14 +15,14 @@
 
 .e2e-run:
   stage: e2e
-  timeout: 8h
+  timeout: 10h
   interruptible: false
   image:
     name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.16
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
-    LOG_LEVEL: ""
+    LOG_LEVEL: "debug"
     MARKERS: ""
     ARGS: ""
     FORCE_DOWNLOAD: "true"
@@ -44,7 +44,7 @@
       cd tests/e2e
       export LOGNAME=$GITLAB_USER_LOGIN
       export RETINA_LOGLEVEL="$LOG_LEVEL"
-      export FORCE_DOWNLOAD="$FORCE_DOWNLOAD"
+      export RETINA_FORCE_DOWNLOAD_REPORT="$FORCE_DOWNLOAD"
     - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
   after_script:
     - |
@@ -61,7 +61,6 @@ smoke-zmq-tsan:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "smoke and not tcp and not multiue"
-    LOG_LEVEL: "debug"
     ARGS: "-x"
     FORCE_DOWNLOAD: "false"
   needs:
@@ -82,7 +81,6 @@ zmq:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "zmq and not multiue"
-    LOG_LEVEL: "warning"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
@@ -118,7 +116,6 @@ rf:
   allow_failure: true
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
-    LOG_LEVEL: "warning"
     MARKERS: "rf and not tcp and not multiue"
   needs:
     - job: "avx2 [basic]"

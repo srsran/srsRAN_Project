@@ -79,6 +79,12 @@ stages:
         if [ -n "${ENABLE_GCOV}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DENABLE_GCOV=${ENABLE_GCOV}"
         fi
+        if [ -n "${ENABLE_AVX2}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_AVX2=${ENABLE_AVX2}"
+        fi
+        if [ -n "${ENABLE_AVX512}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_AVX512=${ENABLE_AVX512}"
+        fi
         if [[ $TEST_MODE = "none" ]]; then
           BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
         fi

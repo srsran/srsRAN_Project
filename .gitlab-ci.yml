@@ -338,7 +338,6 @@ pages:
     paths:
       - public
     expire_in: 10 minutes
-  allow_failure: true
 
 ################################################################################
 # Git workflow graduation
