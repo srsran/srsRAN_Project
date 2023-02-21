@@ -26,6 +26,9 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   };
 
   app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
+  app.add_option("--all_level", log_params.all_level, "Log level of all loggers")
+      ->capture_default_str()
+      ->check(level_check);
   app.add_option("--app_level", log_params.app_level, "Generic log level")->capture_default_str()->check(level_check);
   app.add_option("--du_level", log_params.du_level, "Log level for the DU")->capture_default_str()->check(level_check);
   app.add_option("--cu_level", log_params.cu_level, "Log level for the CU")->capture_default_str()->check(level_check);
@@ -50,6 +53,51 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
                  log_params.phy_rx_symbols_filename,
                  "Set to a valid file path to print the received symbols.")
       ->always_capture_default();
+
+  /// Post-parsing callback. This allows us to
+  /// set the log level to "all" level, if no level
+  /// is provided.
+  app.callback([&]() {
+    if (app.count("--app_level") == 0) {
+      log_params.app_level = log_params.all_level;
+    }
+    if (app.count("--du_level") == 0) {
+      log_params.du_level = log_params.all_level;
+    }
+    if (app.count("--cu_level") == 0) {
+      log_params.cu_level = log_params.all_level;
+    }
+    if (app.count("--phy_level") == 0) {
+      log_params.phy_level = log_params.all_level;
+    }
+    if (app.count("--radio_level") == 0) {
+      log_params.radio_level = log_params.all_level;
+    }
+    if (app.count("--mac_level") == 0) {
+      log_params.mac_level = log_params.all_level;
+    }
+    if (app.count("--rlc_level") == 0) {
+      log_params.rlc_level = log_params.all_level;
+    }
+    if (app.count("--f1u_level") == 0) {
+      log_params.f1u_level = log_params.all_level;
+    }
+    if (app.count("--pdcp_level") == 0) {
+      log_params.pdcp_level = log_params.all_level;
+    }
+    if (app.count("--rrc_level") == 0) {
+      log_params.rrc_level = log_params.all_level;
+    }
+    if (app.count("--sdap_level") == 0) {
+      log_params.sdap_level = log_params.all_level;
+    }
+    if (app.count("--gtpu_level") == 0) {
+      log_params.gtpu_level = log_params.all_level;
+    }
+    if (app.count("--fapi_level") == 0) {
+      log_params.gtpu_level = log_params.all_level;
+    }
+  });
 }
 
 static void configure_cli11_pcap_args(CLI::App& app, pcap_appconfig& pcap_params)
