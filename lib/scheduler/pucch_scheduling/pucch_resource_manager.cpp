@@ -141,6 +141,32 @@ pucch_resource_manager::reserve_next_format2_res_available(slot_point          s
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
 };
 
+const pucch_resource* pucch_resource_manager::reserve_specific_format2_res(slot_point          slot_harq,
+                                                                           rnti_t              crnti,
+                                                                           unsigned            res_indicator,
+                                                                           const pucch_config& pucch_cfg)
+{
+  srsran_sanity_check(slot_harq < last_sl_ind + RES_MANAGER_RING_BUFFER_SIZE,
+                      "PUCCH being allocated to far into the future");
+
+  // Get resource list of wanted slot.
+  rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
+
+  const unsigned PUCCH_RESOURCE_SET_FORMAT2_IDX = 1;
+  srsran_sanity_check(res_indicator < pucch_cfg.pucch_res_set[PUCCH_RESOURCE_SET_FORMAT2_IDX].pucch_res_id_list.size(),
+                      "PUCCH resource indicator exceeds the PUCCH resource set list.");
+
+  const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+
+  if (res_counter.ues_using_format2_res[res_indicator] == INVALID_RNTI) {
+    res_counter.ues_using_format2_res[res_indicator] = crnti;
+    unsigned pucch_res_idx_from_list =
+        pucch_cfg.pucch_res_set[PUCCH_RESOURCE_SET_FORMAT2_IDX].pucch_res_id_list[res_indicator];
+    return &pucch_res_list[pucch_res_idx_from_list];
+  }
+  return nullptr;
+}
+
 const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point                   slot_csi,
                                                                    rnti_t                       crnti,
                                                                    const ue_cell_configuration& ue_cell_cfg)
