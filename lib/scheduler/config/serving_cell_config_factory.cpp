@@ -572,8 +572,9 @@ csi_report_config srsran::config_helpers::make_default_csi_report_config(const c
   csi_report_config::periodic_or_semi_persistent_report_on_pucch report_cfg_type{};
   report_cfg_type.report_type = csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic;
   csi_resource_periodicity csi_rs_period = get_max_csi_rs_period(params);
-  report_cfg_type.report_slot_period     = static_cast<csi_report_periodicity>(std::min((unsigned)csi_rs_period, 320U));
-  report_cfg_type.report_slot_offset     = 9;
+  // Set CSI report period equal to the CSI-RS period. No point in reporting more often than we get CSI-RS.
+  report_cfg_type.report_slot_period = static_cast<csi_report_periodicity>(std::min((unsigned)csi_rs_period, 320U));
+  report_cfg_type.report_slot_offset = 9;
   report_cfg_type.pucch_csi_res_list.push_back(
       csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9});
   cfg.report_cfg_type = report_cfg_type;
