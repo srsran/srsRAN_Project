@@ -99,7 +99,7 @@ public:
     if (not logger.info.enabled()) {
       return;
     }
-    fmt::format_to(fmtbuf, "{}SDU: lcid={} al={}", separator(), lcid, len);
+    fmt::format_to(fmtbuf, "{}SDU: lcid={} size={}", separator(), lcid, len);
   }
 
   void add_conres_id(const ue_con_res_id_t& conres)
@@ -115,7 +115,7 @@ public:
     if (not logger.info.enabled()) {
       return;
     }
-    logger.info("DL PDU, ue={} rnti={:#x} size={}: {}", ue_index, rnti, tbs, to_c_str(fmtbuf));
+    logger.info("DL PDU: ue={} rnti={:#x} size={}: {}", ue_index, rnti, tbs, to_c_str(fmtbuf));
   }
 
 private:

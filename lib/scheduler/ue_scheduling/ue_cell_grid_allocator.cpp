@@ -271,9 +271,6 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
   }
 
-  logger.debug(
-      "ue={}'s PDSCH allocation on slot={} at cell_id={} completed.", u.ue_index, pdsch_alloc.slot, grant.cell_index);
-
   return true;
 }
 
@@ -464,7 +461,5 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   // In case there is a SR pending. Reset it.
   u.reset_sr_indication();
 
-  logger.debug(
-      "ue={}'s PUSCH allocation on slot={} at cell_id={} completed.", u.ue_index, pusch_alloc.slot, grant.cell_index);
   return true;
 }

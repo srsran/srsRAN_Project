@@ -387,7 +387,6 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
   // Allocate PUCCH SR grant only, as HARQ-ACK grant has been allocated earlier.
   fill_pucch_ded_format1_grant(
       pucch_slot_alloc.result.ul.pucchs.emplace_back(), crnti, *pucch_sr_res, nof_harq_ack_bits, sr_nof_bits::one);
-  logger.debug("SR occasion for RNTI {:#x} for slot={} scheduling completed.", crnti, pucch_slot_alloc.slot);
 }
 
 void pucch_allocator_impl::pucch_allocate_csi_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -619,7 +618,7 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   // Check if there is space for one more additional PUCCH HARQ grant.
   if (pucch_slot_alloc.result.ul.pucchs.full()) {
     logger.warning(
-        "PUCCH HARQ-ACK grant for RNTI {:#x} for slot={} not allocated. CAUSE: no more PUCCH grants available.",
+        "PUCCH HARQ-ACK grant for RNTI {:#x} for slot={} not allocated. Cause: no more PUCCH grants available.",
         crnti,
         pucch_slot_alloc.slot);
     return pucch_harq_ack_output;
@@ -645,7 +644,6 @@ pucch_harq_ack_grant pucch_allocator_impl::allocate_new_pucch_harq_grant(cell_sl
   const unsigned HARQ_BITS_IN_NEW_PUCCH_GRANT = 1;
   fill_pucch_ded_format1_grant(
       pucch_pdu, crnti, *pucch_harq_res_info.pucch_res, HARQ_BITS_IN_NEW_PUCCH_GRANT, sr_nof_bits::no_sr);
-  logger.debug("PUCCH HARQ-ACK allocation for RNTI {:#x} for slot={} completed.", crnti, pucch_slot_alloc.slot);
   pucch_harq_ack_output.pucch_pdu           = &pucch_pdu;
   pucch_harq_ack_output.pucch_res_indicator = static_cast<unsigned>(pucch_harq_res_info.pucch_res_indicator);
 
@@ -833,7 +831,7 @@ pucch_harq_ack_grant pucch_allocator_impl::update_existing_pucch_harq_grant(pucc
   output.pucch_pdu           = &existing_harq_grant;
   output.pucch_res_indicator = pucch_res_idx;
 
-  logger.debug("ue={:#x}'s HARQ-ACK mltplxd on existing PUCCH for slot={}", rnti, sl_tx.to_uint());
+  logger.debug("ue={:#x}'s HARQ-ACK mltplxd on existing PUCCH for slot={}", rnti, sl_tx);
   return output;
 }
 

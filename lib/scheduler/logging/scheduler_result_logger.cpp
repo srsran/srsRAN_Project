@@ -215,7 +215,7 @@ void scheduler_result_logger::log_debug(const sched_result& result)
   }
 
   if (fmtbuf.size() > 0) {
-    logger.debug("SCHED output:{}", to_c_str(fmtbuf));
+    logger.debug("Slot decisions:{}", to_c_str(fmtbuf));
     fmtbuf.clear();
   }
 }
@@ -276,7 +276,7 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
 
   if (fmtbuf.size() > 0) {
-    logger.info("SCHED output: {}", to_c_str(fmtbuf));
+    logger.info("Slot decisions: {}", to_c_str(fmtbuf));
     fmtbuf.clear();
   }
 }
