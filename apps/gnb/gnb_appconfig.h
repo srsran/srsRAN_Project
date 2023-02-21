@@ -80,12 +80,6 @@ struct pusch_appconfig {
   optional<uint8_t> fixed_ue_mcs;
 };
 
-/// PUCCH application configuration.
-struct pucch_appconfig {};
-
-/// CSI-RS application configuration.
-struct csi_appconfig {};
-
 /// Amplitude control application configuration.
 struct amplitude_control_appconfig {
   /// Baseband gain back-off. This accounts for the signal PAPR and is applied regardless of clipping settings.
@@ -114,12 +108,8 @@ struct base_cell_appconfig {
   unsigned tac = 7;
   /// PDSCH configuration.
   pdsch_appconfig pdsch_cfg;
-  /// CSI-RS configuration.
-  csi_appconfig csi_cfg;
   /// PRACH configuration.
   prach_appconfig prach_cfg;
-  /// PUCCH configuration.
-  pucch_appconfig pucch_cfg;
   /// PUSCH configuration.
   pusch_appconfig pusch_cfg;
   /// Common subcarrier spacing for the entire resource grid. It must be supported by the band SS raster.

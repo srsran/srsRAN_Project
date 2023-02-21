@@ -183,10 +183,6 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
       ->check(CLI::Range(0, 28));
 }
 
-static void configure_cli11_csi_args(CLI::App& app, csi_appconfig& csi_params) {}
-
-static void configure_cli11_pucch_args(CLI::App& app, pucch_appconfig& pucch_params) {}
-
 static void configure_cli11_pusch_args(CLI::App& app, pusch_appconfig& pusch_params)
 {
   app.add_option("--fixed_ue_mcs", pusch_params.fixed_ue_mcs, "Fixed UE MCS")
@@ -282,14 +278,6 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // PDSCH configuration.
   CLI::App* pdsch_subcmd = app.add_subcommand("pdsch", "PDSCH parameters");
   configure_cli11_pdsch_args(*pdsch_subcmd, cell_params.pdsch_cfg);
-
-  // CSI configuration.
-  CLI::App* csi_subcmd = app.add_subcommand("CSI", "CSI parameters");
-  configure_cli11_csi_args(*csi_subcmd, cell_params.csi_cfg);
-
-  // PUCCH configuration.
-  CLI::App* pucch_subcmd = app.add_subcommand("pucch", "PUCCH parameters");
-  configure_cli11_pucch_args(*pucch_subcmd, cell_params.pucch_cfg);
 
   // PUSCH configuration.
   CLI::App* pusch_subcmd = app.add_subcommand("pusch", "PUSCH parameters");

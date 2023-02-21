@@ -24,18 +24,6 @@ static bool validate_pdsch_cell_app_config(const pdsch_appconfig& config)
   return true;
 }
 
-/// Validates the given CSI cell application configuration. Returns true on success, otherwise false.
-static bool validate_csi_cell_app_config(const csi_appconfig& config)
-{
-  return true;
-}
-
-/// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pucch_cell_app_config(const pucch_appconfig& config)
-{
-  return true;
-}
-
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 {
@@ -124,14 +112,6 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
-    return false;
-  }
-
-  if (!validate_csi_cell_app_config(config.csi_cfg)) {
-    return false;
-  }
-
-  if (!validate_pucch_cell_app_config(config.pucch_cfg)) {
     return false;
   }
 
