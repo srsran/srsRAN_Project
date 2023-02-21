@@ -34,6 +34,23 @@ static const std::vector<radio_factory_entry> radio_factory_available_factories 
 #endif // ENABLE_UHD
 }};
 
+void srsran::print_available_radio_factories()
+{
+  // Print available factories.
+  fmt::print("Available radio types: ");
+  for (unsigned i = 0; i != radio_factory_available_factories.size(); ++i) {
+    if (i > 0) {
+      if (i == radio_factory_available_factories.size() - 1) {
+        fmt::print(" and ");
+      } else {
+        fmt::print(", ");
+      }
+    }
+    fmt::print("{}", radio_factory_available_factories[i].name);
+  }
+  fmt::print(".\n");
+}
+
 std::unique_ptr<radio_factory> srsran::create_radio_factory(std::string driver_name)
 {
   if (radio_factory_available_factories.empty()) {
@@ -54,17 +71,7 @@ std::unique_ptr<radio_factory> srsran::create_radio_factory(std::string driver_n
   }
 
   // No match, print available factories.
-  fmt::print("Factory for radio type {} not found. Available types are ", driver_name);
-  for (unsigned i = 0; i != radio_factory_available_factories.size(); ++i) {
-    if (i > 0) {
-      if (i == radio_factory_available_factories.size() - 1) {
-        fmt::print(" and ");
-      } else {
-        fmt::print(", ");
-      }
-    }
-    fmt::print("{}", radio_factory_available_factories[i].name);
-  }
-  fmt::print(".\n");
+  fmt::print("Factory for radio type {} not found. Make sure to select a valid type.\n", driver_name);
+
   return nullptr;
 }

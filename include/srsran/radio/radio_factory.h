@@ -39,4 +39,7 @@ public:
 /// \return A valid radio factory if the provided driver name are valid.
 std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name);
 
+/// \brief Helper function to print all available radio factories to stdout.
+void print_available_radio_factories();
+
 } // namespace srsran
