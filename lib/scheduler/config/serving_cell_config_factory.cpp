@@ -682,7 +682,7 @@ srsran::config_helpers::create_default_initial_ue_serving_cell_config(const cell
   // >> Add SearchSpace#2.
   pdcch_cfg.search_spaces.push_back(make_default_ue_search_space_config());
   pdcch_cfg.search_spaces[0].nof_candidates = {
-      0, 0, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0]), 0, 0};
+      0, 0, std::max((uint8_t)4U, compute_max_nof_candidates(aggregation_level::n4, pdcch_cfg.coresets[0])), 0, 0};
 
   // > PDSCH-Config.
   serv_cell.init_dl_bwp.pdsch_cfg.emplace();
@@ -732,8 +732,11 @@ uint8_t srsran::config_helpers::compute_max_nof_candidates(aggregation_level    
   // 1 CCE = 6 {PRB, symbol}. e.g. 3 PRBs over 2 symbols or 6 PRBs over 1 symbol, etc.
   // Example: 3 Frequency domain resources, 2 symbol duration contains 6 CCEs.
   const unsigned max_coreset_cces   = cs_cfg.freq_domain_resources().count() * cs_cfg.duration;
-  const unsigned max_nof_candidates = max_coreset_cces / to_nof_cces(aggr_lvl);
+  unsigned       max_nof_candidates = max_coreset_cces / to_nof_cces(aggr_lvl);
   // See TS 38.331, SearchSpace IE.
   // aggregationLevelX - ENUMERATED {n0, n1, n2, n3, n4, n5, n6, n8}.
+  if (max_nof_candidates == 7) {
+    max_nof_candidates = 6;
+  }
   return max_nof_candidates > PDCCH_MAX_NOF_CANDIDATES_SS ? PDCCH_MAX_NOF_CANDIDATES_SS : max_nof_candidates;
 }
