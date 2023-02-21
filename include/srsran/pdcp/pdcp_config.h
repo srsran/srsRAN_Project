@@ -81,6 +81,12 @@ enum class pdcp_t_reordering {
   infinity = -1
 };
 
+/// \brief Convert PDCP NR t-Reordering from enum to integer.
+constexpr uint8_t pdcp_t_reordering_to_int(pdcp_t_reordering t_reordering)
+{
+  return static_cast<int16_t>(t_reordering);
+}
+
 /// PDCP NR discard timer values.
 /// This timer is configured only for DRBs. In the transmitter,
 /// a new timer is started upon reception of an SDU from upper layer.
@@ -104,6 +110,12 @@ enum class pdcp_discard_timer {
   ms1500         = 1500,
   infinity       = -1
 };
+
+/// \brief Convert PDCP NR discard timer from enum to integer.
+constexpr uint8_t pdcp_discard_timer_to_int(pdcp_discard_timer discard_timer)
+{
+  return static_cast<int16_t>(discard_timer);
+}
 
 /// The PDCP cannot re-use COUNTs, see TS 38.331, section 5.3.1.2.
 /// To avoid this, we define two thresholds, one where we accept messages

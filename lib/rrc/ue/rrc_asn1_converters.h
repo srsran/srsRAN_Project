@@ -20,8 +20,32 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// \brief Converts type \c pdcp_discard_timer to an RRC NR ASN.1 type.
+/// \param[in] discard_timer discard timer object.
+/// \return The RRC NR ASN.1 object where the result of the conversion is stored.
+inline asn1::rrc_nr::pdcp_cfg_s::drb_s_::discard_timer_e_ discard_timer_to_asn1(pdcp_discard_timer discard_timer)
+{
+  asn1::rrc_nr::pdcp_cfg_s::drb_s_::discard_timer_e_ asn1_discard_timer;
+
+  asn1::number_to_enum(asn1_discard_timer, pdcp_discard_timer_to_int(discard_timer));
+
+  return asn1_discard_timer;
+}
+
+/// \brief Converts type \c pdcp_t_reordering to an RRC NR ASN.1 type.
+/// \param[in] t_reordering t-reordering object.
+/// \return The RRC NR ASN.1 object where the result of the conversion is stored.
+inline asn1::rrc_nr::pdcp_cfg_s::t_reordering_e_ t_reordering_to_asn1(pdcp_t_reordering t_reordering)
+{
+  asn1::rrc_nr::pdcp_cfg_s::t_reordering_e_ asn1_t_reordering;
+
+  asn1::number_to_enum(asn1_t_reordering, pdcp_t_reordering_to_int(t_reordering));
+
+  return asn1_t_reordering;
+}
+
 /// \brief Converts type \c pdcp_config_t to an RRC NR ASN.1 type.
-/// \param pdcp_cfg pdcp config object.
+/// \param[in] pdcp_cfg pdcp config object.
 /// \return The RRC NR ASN.1 object where the result of the conversion is stored.
 inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config_t pdcp_cfg)
 {
@@ -80,7 +104,7 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config_t pdcp_cf
     // discard timer
     if (pdcp_cfg.drb.value().discard_timer.has_value()) {
       rrc_pdcp_cfg.drb.discard_timer_present = true;
-      asn1::number_to_enum(rrc_pdcp_cfg.drb.discard_timer, pdcp_cfg.drb.value().discard_timer.value());
+      rrc_pdcp_cfg.drb.discard_timer         = discard_timer_to_asn1(pdcp_cfg.drb.value().discard_timer.value());
     }
 
     // pdcp sn size ul
@@ -139,7 +163,7 @@ inline asn1::rrc_nr::pdcp_cfg_s pdcp_config_to_rrc_nr_asn1(pdcp_config_t pdcp_cf
   // t reordering
   if (pdcp_cfg.t_reordering.has_value()) {
     rrc_pdcp_cfg.t_reordering_present = true;
-    asn1::number_to_enum(rrc_pdcp_cfg.t_reordering, pdcp_cfg.t_reordering.value());
+    rrc_pdcp_cfg.t_reordering         = t_reordering_to_asn1(pdcp_cfg.t_reordering.value());
   }
 
   // ciphering disabled present

@@ -50,10 +50,10 @@ cu_cp_rrc_reconfiguration_procedure_request srsran::srs_cu_cp::generate_rrc_reco
   drb_t drb;
   drb.pdcp_sn_size_dl = pdcp_sn_size::size18bits;
   drb.pdcp_sn_size_ul = pdcp_sn_size::size18bits;
-  drb.discard_timer   = 100;
+  drb.discard_timer   = pdcp_discard_timer::ms100;
   pdcp_config.drb     = drb;
 
-  pdcp_config.t_reordering = 0;
+  pdcp_config.t_reordering = pdcp_t_reordering::ms0;
   drb_item.pdcp_cfg        = pdcp_config;
 
   cu_cp_security_config security_config;

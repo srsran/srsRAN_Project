@@ -106,11 +106,11 @@ pdcp_config_t drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
   drb_t drb;
   drb.pdcp_sn_size_dl = pdcp_sn_size::size18bits;
   drb.pdcp_sn_size_ul = pdcp_sn_size::size18bits;
-  drb.discard_timer   = 0;
+  drb.discard_timer   = pdcp_discard_timer::not_configured;
 
   pdcp_cfg.drb = drb;
 
-  pdcp_cfg.t_reordering = 0;
+  pdcp_cfg.t_reordering = pdcp_t_reordering::ms0;
   return pdcp_cfg;
 }
 
