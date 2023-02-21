@@ -136,8 +136,6 @@ protected:
                                              cs_cfg.id,
                                              rnti,
                                              slot_index});
-    return pdcch_candidates_common_ss_get_lowest_cce(pdcch_candidates_common_ss_configuration{
-        aggr_lvl, ss_cfg.nof_candidates[to_aggregation_level_index(aggr_lvl)], cs_cfg.get_nof_cces()});
   }
 
   bool pdcchs_collide(const dci_context_information& pdcch_ctx1, const dci_context_information& pdcch_ctx2) const
