@@ -29,3 +29,6 @@ if (Backward_FOUND AND BACKWARD_HAS_EXTERNAL_LIBRARIES)
     set_source_files_properties(backtrace.cpp APPEND PROPERTIES COMPILE_DEFINITIONS "HAVE_BACKWARD")
     set_source_files_properties(backtrace.cpp APPEND PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/external)
 endif (Backward_FOUND AND BACKWARD_HAS_EXTERNAL_LIBRARIES)
+
+install(TARGETS srsran_support
+        EXPORT srsran_export)

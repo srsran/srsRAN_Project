@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-include_directories(../../../../include/srsgnb/phy/upper/channel_processors)
+include_directories(../../../../include/srsran/phy/upper/channel_processors)
 
 add_library(srsran_pbch_encoder STATIC pbch_encoder_impl.cpp)
 target_link_libraries(srsran_pbch_encoder srsran_channel_coding srsran_sequence_generators srsvec)
@@ -40,9 +40,6 @@ target_link_libraries(srsran_prach_detector srsran_ran srsvec)
 add_library(srsran_pucch_processor STATIC pucch_processor_impl.cpp)
 
 add_library(srsran_pucch_detector STATIC pucch_detector_impl.cpp)
-target_include_directories(srsran_pucch_detector
-        PUBLIC ${CMAKE_SOURCE_DIR}/include/srsgnb/phy/upper/channel_processors
-        )
 
 add_library(srsran_pusch_decoder STATIC pusch_decoder_impl.cpp)
 target_link_libraries(srsran_pusch_decoder srsran_channel_coding srsvec)
@@ -82,3 +79,24 @@ target_link_libraries(srsran_channel_processors
         srsran_ssb_processor
         srsran_uci_decoder
         srsran_ulsch_demux)
+
+install(TARGETS srsran_channel_processors
+        srsran_pbch_encoder
+        srsran_pbch_modulator
+        srsran_pdcch_encoder
+        srsran_pdcch_modulator
+        srsran_pdcch_processor
+        srsran_pdsch_encoder
+        srsran_pdsch_modulator
+        srsran_pdsch_processor
+        srsran_prach_detector
+        srsran_pucch_demodulator
+        srsran_pucch_detector
+        srsran_pucch_processor
+        srsran_pusch_decoder
+        srsran_pusch_demodulator
+        srsran_pusch_processor
+        srsran_ssb_processor
+        srsran_uci_decoder
+        srsran_ulsch_demux
+        EXPORT srsran_export)

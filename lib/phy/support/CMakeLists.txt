@@ -13,3 +13,6 @@ add_library(srsran_phy_support STATIC
         resource_grid_impl.cpp
         support_factories.cpp)
 target_link_libraries(srsran_phy_support srsvec)
+
+install(TARGETS srsran_phy_support
+        EXPORT srsran_export)

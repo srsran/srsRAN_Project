@@ -17,7 +17,7 @@ endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 # Project setup
 ########################################################################
 cmake_minimum_required(VERSION 3.14)
-project(srsgnb)
+project(srsran)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -298,8 +298,8 @@ endif (BUILD_TESTS)
 # Export (selected) libraries
 ########################################################################
 if(ENABLE_EXPORT)
-  export(EXPORT srsran_export NAMESPACE srsran:: FILE "${CMAKE_BINARY_DIR}/srsgnb.cmake")
+  export(EXPORT srsran_export NAMESPACE srsran:: FILE "${CMAKE_BINARY_DIR}/srsran.cmake")
 else(ENABLE_EXPORT)
   # Remove any previous export file (if it exists), since it will become outdated.
-  file(REMOVE "${CMAKE_BINARY_DIR}/srsgnb.cmake")
+  file(REMOVE "${CMAKE_BINARY_DIR}/srsran.cmake")
 endif(ENABLE_EXPORT)
