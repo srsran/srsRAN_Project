@@ -43,10 +43,10 @@ if (DOXYGEN_FOUND)
 
   # directories and files to process for all the docs
   set(docs_inputs ${CMAKE_CURRENT_SOURCE_DIR}
-                  ${CMAKE_HOME_DIRECTORY}/include/srsgnb
+                  ${CMAKE_HOME_DIRECTORY}/include/srsran
                   ${CMAKE_HOME_DIRECTORY}/lib
   )
-  set(DOXYGEN_EXCLUDE ${CMAKE_HOME_DIRECTORY}/include/srsgnb/asn1)
+  set(DOXYGEN_EXCLUDE ${CMAKE_HOME_DIRECTORY}/include/srsran/asn1)
 
   doxygen_add_docs(doxygen
     ${docs_inputs}
@@ -55,8 +55,8 @@ if (DOXYGEN_FOUND)
 
   # directories and files to process for FAPI related docs
   set(docs_inputs_fapi ${CMAKE_CURRENT_SOURCE_DIR}
-                       ${CMAKE_HOME_DIRECTORY}/include/srsgnb/fapi
-                       ${CMAKE_HOME_DIRECTORY}/include/srsgnb/fapi_adaptor
+                       ${CMAKE_HOME_DIRECTORY}/include/srsran/fapi
+                       ${CMAKE_HOME_DIRECTORY}/include/srsran/fapi_adaptor
                        ${CMAKE_HOME_DIRECTORY}/lib/fapi
                        ${CMAKE_HOME_DIRECTORY}/lib/fapi_adaptor
   )
@@ -68,8 +68,8 @@ if (DOXYGEN_FOUND)
 
   # directories and files to process for MAC+RLC docs
   set(docs_inputs_mac ${CMAKE_CURRENT_SOURCE_DIR}
-                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/mac
-                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/rlc
+                      ${CMAKE_HOME_DIRECTORY}/include/srsran/mac
+                      ${CMAKE_HOME_DIRECTORY}/include/srsran/rlc
                       ${CMAKE_HOME_DIRECTORY}/lib/mac
                       ${CMAKE_HOME_DIRECTORY}/lib/rlc
   )
@@ -81,9 +81,9 @@ if (DOXYGEN_FOUND)
 
   # directories and files to process for PHY+RAN docs
   set(docs_inputs_phy ${CMAKE_CURRENT_SOURCE_DIR}
-                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/phy
-                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/ran
-                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/radio
+                      ${CMAKE_HOME_DIRECTORY}/include/srsran/phy
+                      ${CMAKE_HOME_DIRECTORY}/include/srsran/ran
+                      ${CMAKE_HOME_DIRECTORY}/include/srsran/radio
                       ${CMAKE_HOME_DIRECTORY}/lib/phy
                       ${CMAKE_HOME_DIRECTORY}/lib/ran
                       ${CMAKE_HOME_DIRECTORY}/lib/radio
@@ -96,10 +96,10 @@ if (DOXYGEN_FOUND)
 
   # directories and files to process for support-related docs
   set(docs_inputs_support ${CMAKE_CURRENT_SOURCE_DIR}
-                          ${CMAKE_HOME_DIRECTORY}/include/srsgnb/adt
-                          ${CMAKE_HOME_DIRECTORY}/include/srsgnb/srslog
-                          ${CMAKE_HOME_DIRECTORY}/include/srsgnb/srsvec
-                          ${CMAKE_HOME_DIRECTORY}/include/srsgnb/support
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/adt
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/srslog
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/srsvec
+                          ${CMAKE_HOME_DIRECTORY}/include/srsran/support
                           ${CMAKE_HOME_DIRECTORY}/lib/srslog
                           ${CMAKE_HOME_DIRECTORY}/lib/srsvec
                           ${CMAKE_HOME_DIRECTORY}/lib/support
