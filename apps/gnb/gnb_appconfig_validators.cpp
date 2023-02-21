@@ -112,6 +112,16 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
       return false;
     }
   }
+  if (config.common_scs == srsran::subcarrier_spacing::kHz15 and
+      config.channel_bw_mhz > srsran::bs_channel_bandwidth_fr1::MHz50) {
+    fmt::print("Maximum Channel BW with SCS common 15kHz is 50MHz.\n");
+    return false;
+  }
+  if (config.common_scs == srsran::subcarrier_spacing::kHz30 and
+      config.channel_bw_mhz < srsran::bs_channel_bandwidth_fr1::MHz10) {
+    fmt::print("Minimum supported Channel BW with SCS common 30kHz is 10MHz.\n");
+    return false;
+  }
 
   if (!validate_pdsch_cell_app_config(config.pdsch_cfg)) {
     return false;
