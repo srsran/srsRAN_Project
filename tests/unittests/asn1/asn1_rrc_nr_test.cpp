@@ -317,6 +317,6 @@ TEST_F(asn1_rrc_nr_test, when_cell_group_config_correct_then_unpacking_successfu
 #if JSON_OUTPUT
   asn1::json_writer json_writer;
   cell_group_cfg.to_json(json_writer);
-  test_logger.info("RRC Secondary Cell Group: Content: %s\n", json_writer.to_string().c_str());
+  test_logger.info("RRC Secondary Cell Group: Content: {}\n", json_writer.to_string().c_str());
 #endif
 }

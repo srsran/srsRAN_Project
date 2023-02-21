@@ -58,7 +58,7 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   // Verify attributes and inputs.
   re_pattern_assert();
   srsgnb_assert(
-      mask.size() >= rb_end, "Provided mask size (%d) is too small. The minimum is %d.", (unsigned)mask.size(), rb_end);
+      mask.size() >= rb_end, "Provided mask size ({}) is too small. The minimum is {}.", (unsigned)mask.size(), rb_end);
 
   // Skip if the symbol is not used.
   if (!symbols.test(symbol)) {

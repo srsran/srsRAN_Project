@@ -95,7 +95,7 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
 
   // Make sure plan is valid.
   srsgnb_assert(plan != nullptr,
-                "FFTW Plan creation for size=%d dir=%s failed.",
+                "FFTW Plan creation for size={} dir={} failed.",
                 fftw_size,
                 dft_processor::direction_to_string(dir).c_str());
 

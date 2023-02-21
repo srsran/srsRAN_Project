@@ -104,7 +104,7 @@ private:
     byte_buffer   pdu{};
     asn1::bit_ref bref{pdu};
     if (msg.pack(bref) == asn1::SRSASN_ERROR_ENCODE_FAIL) {
-      logger.error("Failed to pack message in %s. Discarding it.", context_name);
+      logger.error("Failed to pack message in {}. Discarding it.", context_name);
     }
     return pdu;
   }

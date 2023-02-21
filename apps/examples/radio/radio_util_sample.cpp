@@ -243,7 +243,7 @@ int main(int argc, char** argv)
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
-  report_fatal_error_if_not(factory, "Driver %s is not available.", driver_name.c_str());
+  report_fatal_error_if_not(factory, "Driver {} is not available.", driver_name.c_str());
 
   // Create radio configuration.
   radio_configuration::radio config = {};

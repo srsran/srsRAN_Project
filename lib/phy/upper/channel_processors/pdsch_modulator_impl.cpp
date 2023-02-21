@@ -106,7 +106,7 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
   srsgnb_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
-                "The time allocation of the transmission (%d:%d) exceeds the slot boundary.",
+                "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
 
@@ -171,7 +171,7 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
   srsgnb_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
-                "The time allocation of the transmission (%d:%d) exceeds the slot boundary.",
+                "The time allocation of the transmission ({}:{}) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
 
@@ -234,7 +234,7 @@ void pdsch_modulator_impl::modulate(resource_grid_writer&            grid,
   // Deduce the number of codewords and assert it is coherent with the number of layers.
   unsigned nof_codewords = (nof_layers >= 4 ? 2 : 1);
   srsgnb_assert(
-      codewords.size() == nof_codewords, "For %d layers, %d codewords are required", nof_layers, codewords.size());
+      codewords.size() == nof_codewords, "For {} layers, {} codewords are required", nof_layers, codewords.size());
 
   // Process codewords.
   static_vector<span<cf_t>, MAX_NOF_CODEWORDS> d_pdsch(nof_codewords);

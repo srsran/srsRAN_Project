@@ -260,7 +260,7 @@ void nzp_csi_rs_generator_impl::apply_cdm(span<cf_t>            seq_out,
 
     } else {
       srsgnb_assert(
-          l_idx <= L_PRIME_MAX_TD4, "l_idx value: %d outside of range: 0..%d for CDM8-FD2-TD4", l_idx, L_PRIME_MAX_TD4);
+          l_idx <= L_PRIME_MAX_TD4, "l_idx value: {} outside of range: 0..{} for CDM8-FD2-TD4", l_idx, L_PRIME_MAX_TD4);
 
       // Get the CDM table.
       table = span<const cdm_sequence>(cdm8_fd2_td4_table);
