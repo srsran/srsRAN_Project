@@ -28,7 +28,7 @@ add_library(srsran_ran
         ssb_freq_position_generator.cpp
         ssb_mapping.cpp
         tdd_ul_dl_config.cpp)
-target_link_libraries(srsran_ran)
+target_link_libraries(srsran_ran srslog)
 
 install(TARGETS srsran_ran
         EXPORT srsran_export)
