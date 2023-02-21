@@ -26,9 +26,9 @@ struct rf_driver_appconfig {
   /// Sampling frequency in MHz.
   double srate_MHz = 61.44;
   /// RF driver name.
-  std::string device_driver = "zmq";
+  std::string device_driver = "uhd";
   /// RF driver arguments.
-  std::string device_arguments = "tx_port=tcp://*:5000,rx_port=tcp://localhost:6000";
+  std::string device_arguments = "";
   /// All transmit channel gain in decibels.
   double tx_gain_dB = 50.0;
   /// All receive channel gain in decibels.
