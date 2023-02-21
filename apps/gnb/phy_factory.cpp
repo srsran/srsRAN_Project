@@ -19,8 +19,8 @@ using namespace srsran;
 std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& config,
                                                     unsigned                 max_nof_prach_concurrent_requests)
 {
-  // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a FFTX
-  // based factory.
+  // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a generic
+  // DFT factory.
   std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
   if (dft_factory == nullptr) {
     dft_factory = create_dft_processor_factory_generic();

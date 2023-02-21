@@ -12,6 +12,7 @@
 
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/upper/upper_phy.h"
+#include "srsran/ran/bs_channel_bandwidth.h"
 
 namespace srsran {
 
@@ -25,12 +26,9 @@ std::unique_ptr<lower_phy> create_lower_phy(lower_phy_configuration& config,
 
 /// Upper PHY parameters to configure the upper PHY factory.
 struct upper_phy_params {
-  srslog::basic_levels log_level;
-  unsigned             nof_ports;
-  unsigned             dl_pipeline_depth;
-  unsigned             dl_bw_rb;
-  unsigned             ul_bw_rb;
-  subcarrier_spacing   scs;
+  srslog::basic_levels     log_level;
+  bs_channel_bandwidth_fr1 channel_bw_mhz;
+  subcarrier_spacing       scs;
 };
 
 std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_params&               params,

@@ -11,6 +11,7 @@
 #include "../../../lib/du_high/du_high.h"
 #include "../../../lib/du_high/du_high_executor_strategies.h"
 #include "fapi_factory.h"
+#include "lib/pcap/mac_pcap_impl.h"
 #include "phy_factory.h"
 #include "radio_factory.h"
 #include "radio_notifier_sample.h"
@@ -25,7 +26,6 @@
 #include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
 #include "srsran/phy/adapters/phy_timing_adapter.h"
 #include "srsran/phy/lower/lower_phy_factory.h"
-#include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include <atomic>
 #include <csignal>
@@ -55,21 +55,20 @@ struct configuration_profile {
 
 } // namespace
 
-/// Program parameters.
-static const pci_t              pci         = 55;
-static nr_band                  band        = nr_band::n3;
-static const subcarrier_spacing scs         = subcarrier_spacing::kHz15;
-static const subcarrier_spacing scs_common  = subcarrier_spacing::kHz15;
-static const cyclic_prefix      cp          = cyclic_prefix::NORMAL;
-static const unsigned           nof_ports   = 1;
-static const unsigned           nof_sectors = 1;
-static unsigned                 dl_arfcn    = 536020;
+/// Cell configuration parameters.
+static const pci_t              pci            = 55;
+static nr_band                  band           = nr_band::n3;
+static const subcarrier_spacing scs            = subcarrier_spacing::kHz15;
+static const cyclic_prefix      cp             = cyclic_prefix::NORMAL;
+static unsigned                 dl_arfcn       = 536020;
+static bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz20;
 
-static const unsigned max_processing_delay_slots  = 4;
-static const unsigned max_nof_concurrent_requests = 10;
-static const unsigned ul_to_dl_subframe_offset    = 1;
+static const unsigned max_nof_concurrent_requests = 11;
 
+/// Radio configuration parameters.
 static std::string                               driver_name = "zmq";
+static std::string                               rx_address  = "tcp://localhost:6000";
+static std::string                               tx_address  = "tcp://*:5000";
 static std::string                               device_arguments;
 static std::vector<std::string>                  tx_channel_args;
 static std::vector<std::string>                  rx_channel_args;
@@ -81,40 +80,30 @@ static const lower_phy_ta_offset                 ta_offset                  = lo
 static double                                    tx_gain                    = 60.0;
 static double                                    rx_gain                    = 70.0;
 
-/// From TS38.104 Section 5.3.2 Table 5.3.2-1. Default 20MHz FR1.
-static const std::array<uint16_t, NOF_NUMEROLOGIES> nof_prb_dl_grid = {106, 51, 24, 0, 0};
-static const std::array<uint16_t, NOF_NUMEROLOGIES> nof_prb_ul_grid = {106, 51, 24, 0, 0};
-
+/// SSB configuration parameters.
 static unsigned       offset_to_pointA = 40;
 static unsigned       K_ssb            = 6;
 static const unsigned coreset0_index   = 6;
 
+/// Logger configuration parameters.
 static std::string           log_level        = "info";
 static bool                  enable_fapi_logs = false;
 static srslog::basic_logger& du_logger        = srslog::fetch_basic_logger("DU_APP");
-static std::atomic<bool>     is_running       = {true};
 
-/// PRACH params
-static unsigned       prach_msg1_freq_offset    = 2;
-static unsigned       prach_root_sequence_index = 0;
-static const unsigned zero_correlation_zone     = 0;
-static const unsigned prach_config_index        = 16;
+/// PRACH configuration parameters.
+static unsigned       prach_msg1_freq_offset    = 3;
+static unsigned       prach_root_sequence_index = 1;
+static const unsigned zero_correlation_zone     = 15;
+static const unsigned prach_config_index        = 1;
 static const unsigned num_prach_fd_occasions    = 1;
 
-/// NOTE: ul_center_freq, dl_center_freq and ul_arfcn are derived from dl_arfcn.
-static double   dl_center_freq;
-static double   ul_center_freq;
-static unsigned ul_arfcn;
-
-/// Amplitude control args.
+/// Amplitude control configuration parameters.
 static float baseband_gain_dB       = -2.5F;
 static bool  enable_clipping        = false;
 static float full_scale_amplitude   = 1.0F;
 static float amplitude_ceiling_dBFS = -0.1F;
 
-/// ZMQ configuration parameters.
-static std::string rx_address = "tcp://localhost:6000";
-static std::string tx_address = "tcp://*:5000";
+static std::atomic<bool> is_running = {true};
 
 /// Defines a set of configuration profiles.
 static const std::vector<configuration_profile> profiles = {
@@ -126,6 +115,7 @@ static const std::vector<configuration_profile> profiles = {
        srate                      = sampling_rate::from_MHz(61.44);
        time_alignmemt_calibration = -16;
        dl_arfcn                   = 536020;
+       channel_bw_mhz             = bs_channel_bandwidth_fr1::MHz20;
        K_ssb                      = 6;
        offset_to_pointA           = 40;
        band                       = nr_band::n7;
@@ -140,6 +130,7 @@ static const std::vector<configuration_profile> profiles = {
        device_arguments = "type=b200";
        srate            = sampling_rate::from_MHz(23.04);
        dl_arfcn         = 536020;
+       channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
        K_ssb            = 6;
        offset_to_pointA = 40;
        band             = nr_band::n7;
@@ -154,6 +145,7 @@ static const std::vector<configuration_profile> profiles = {
        device_arguments = "type=x300,send_frame_size=8000,recv_frame_size=8000";
        srate            = sampling_rate::from_MHz(184.32 / 8);
        dl_arfcn         = 536020;
+       channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
        K_ssb            = 6;
        offset_to_pointA = 40;
        band             = nr_band::n7;
@@ -170,6 +162,7 @@ static const std::vector<configuration_profile> profiles = {
        device_arguments = "type=n3xx";
        srate            = sampling_rate::from_MHz(122.88);
        dl_arfcn         = 536020;
+       channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz100;
        K_ssb            = 6;
        offset_to_pointA = 40;
        band             = nr_band::n7;
@@ -181,6 +174,7 @@ static const std::vector<configuration_profile> profiles = {
        driver_name      = "zmq";
        device_arguments = "";
        srate            = sampling_rate::from_MHz(61.44);
+       channel_bw_mhz   = bs_channel_bandwidth_fr1::MHz20;
        dl_arfcn         = 520000;
        K_ssb            = 7;
        offset_to_pointA = 69;
@@ -324,16 +318,16 @@ struct worker_manager {
   // Lower PHY RT task executor.
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
   task_worker_executor rt_task_executor{{rt_task_worker}};
-  // PRACH lower PHY executor
-  task_worker          lower_prach_worker{"Lower PHY PRACH worker", task_worker_queue_size};
+  // PRACH lower PHY executor.
+  task_worker          lower_prach_worker{"LoPHY_PRACH", task_worker_queue_size};
   task_worker_executor lower_prach_executor{lower_prach_worker};
-  // Upper phy task executor
-  task_worker          upper_dl_worker{"PHY DL worker", task_worker_queue_size};
+  // Upper phy task executor.
+  task_worker          upper_dl_worker{"PHY_DL", task_worker_queue_size};
   task_worker_executor upper_dl_executor{upper_dl_worker};
-  task_worker          upper_ul_worker{"PHY UL worker", task_worker_queue_size};
+  task_worker          upper_ul_worker{"PHY_UL", task_worker_queue_size};
   task_worker_executor upper_ul_executor{upper_ul_worker};
-  // Radio task executor
-  task_worker          radio_worker{"Radio worker", task_worker_queue_size};
+  // Radio task executor.
+  task_worker          radio_worker{"radio_thread", task_worker_queue_size};
   task_worker_executor radio_executor{radio_worker};
 };
 
@@ -345,23 +339,27 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
                                                               lower_phy_error_notifier*     error_notifier,
                                                               task_executor&                prach_executor)
 {
-  float tx_scale = 1.0F / std::sqrt(NRE * nof_prb_dl_grid[to_numerology_value(scs)]);
-
   lower_phy_configuration phy_config;
-  phy_config.srate                      = srate;
+
+  phy_config.log_level                  = log_level;
   phy_config.scs                        = scs;
-  phy_config.max_processing_delay_slots = max_processing_delay_slots;
-  phy_config.ul_to_dl_subframe_offset   = ul_to_dl_subframe_offset;
-  phy_config.time_alignment_calibration = time_alignmemt_calibration;
-  phy_config.ta_offset                  = ta_offset;
-  phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
   phy_config.dft_window_offset          = 0.5F;
-  phy_config.bb_gateway                 = bb_gateway;
-  phy_config.error_notifier             = error_notifier;
-  phy_config.rx_symbol_notifier         = rx_symbol_notifier;
-  phy_config.timing_notifier            = timing_notifier;
-  phy_config.prach_async_executor       = &prach_executor;
+  phy_config.max_processing_delay_slots = 2 * get_nof_slots_per_subframe(scs);
+  phy_config.ul_to_dl_subframe_offset   = 1;
+
+  phy_config.srate = srate;
+
+  phy_config.ta_offset                  = ta_offset;
+  phy_config.time_alignment_calibration = time_alignmemt_calibration;
+
+  phy_config.tx_scale = 1.0F;
+
+  phy_config.bb_gateway           = bb_gateway;
+  phy_config.error_notifier       = error_notifier;
+  phy_config.rx_symbol_notifier   = rx_symbol_notifier;
+  phy_config.timing_notifier      = timing_notifier;
+  phy_config.prach_async_executor = &prach_executor;
 
   // Amplitude controller configuration.
   phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
@@ -369,21 +367,17 @@ static lower_phy_configuration create_lower_phy_configuration(baseband_gateway* 
   phy_config.amplitude_config.enable_clipping = enable_clipping;
   phy_config.amplitude_config.input_gain_dB   = baseband_gain_dB;
 
-  for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
-    lower_phy_sector_description sector_config;
-    sector_config.bandwidth_rb = nof_prb_dl_grid[to_numerology_value(scs)];
-    sector_config.dl_freq_hz   = dl_center_freq;
-    sector_config.ul_freq_hz   = ul_center_freq;
-    for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
-      lower_phy_sector_port_mapping port_mapping;
-      port_mapping.stream_id  = sector_id;
-      port_mapping.channel_id = port_id;
-      sector_config.port_mapping.push_back(port_mapping);
-    }
-    phy_config.sectors.push_back(sector_config);
-    phy_config.nof_channels_per_stream.push_back(nof_ports);
-  }
-  phy_config.log_level = log_level;
+  lower_phy_sector_description sector_config;
+  sector_config.bandwidth_rb = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs, frequency_range::FR1);
+  sector_config.dl_freq_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
+  sector_config.ul_freq_hz   = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn));
+
+  lower_phy_sector_port_mapping port_mapping;
+  port_mapping.stream_id  = 0;
+  port_mapping.channel_id = 0;
+  sector_config.port_mapping.push_back(port_mapping);
+  phy_config.sectors.push_back(sector_config);
+  phy_config.nof_channels_per_stream.push_back(1);
 
   return phy_config;
 }
@@ -505,27 +499,36 @@ static fapi::prach_config generate_prach_config_tlv()
 
 static fapi::carrier_config generate_carrier_config_tlv()
 {
-  fapi::carrier_config config = {};
+  // Deduce common numerology and grid size for DL and UL.
+  unsigned numerology       = to_numerology_value(scs);
+  unsigned grid_size_bw_prb = band_helper::get_n_rbs_from_bw(
+      channel_bw_mhz, scs, band_helper::get_freq_range(band_helper::get_band_from_dl_arfcn(dl_arfcn)));
 
-  // NOTE; for now we only need to fill the nof_prb_ul_grid.
-  config.ul_grid_size = nof_prb_ul_grid;
+  fapi::carrier_config fapi_config = {};
 
-  return config;
+  // NOTE; for now we only need to fill the nof_prb_ul_grid and nof_prb_dl_grid for the common SCS.
+  fapi_config.dl_grid_size             = {};
+  fapi_config.dl_grid_size[numerology] = grid_size_bw_prb;
+  fapi_config.ul_grid_size             = {};
+  fapi_config.ul_grid_size[numerology] = grid_size_bw_prb;
+
+  return fapi_config;
 }
 
 static std::unique_ptr<radio_session> build_radio(task_executor& executor, radio_notification_handler& radio_handler)
 {
   radio_params params;
+
   params.device_args     = device_arguments;
   params.log_level       = log_level;
   params.srate           = srate;
   params.otw_format      = otw_format;
-  params.nof_sectors     = nof_sectors;
-  params.nof_ports       = nof_ports;
-  params.dl_frequency_hz = dl_center_freq;
+  params.nof_sectors     = 1;
+  params.nof_ports       = 1;
+  params.dl_frequency_hz = band_helper::nr_arfcn_to_freq(dl_arfcn);
   params.tx_gain         = tx_gain;
   params.tx_channel_args = tx_channel_args;
-  params.ul_frequency_hz = ul_center_freq;
+  params.ul_frequency_hz = band_helper::nr_arfcn_to_freq(band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn));
   params.rx_gain         = rx_gain;
   params.rx_channel_args = rx_channel_args;
 
@@ -556,12 +559,10 @@ int main(int argc, char** argv)
     return ret;
   }
 
-  worker_manager workers;
-
   // Calculate derived frequency parameters.
-  dl_center_freq = band_helper::nr_arfcn_to_freq(dl_arfcn);
-  ul_arfcn       = band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn);
-  ul_center_freq = band_helper::nr_arfcn_to_freq(ul_arfcn);
+  double dl_center_freq = band_helper::nr_arfcn_to_freq(dl_arfcn);
+  double ul_arfcn       = band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn);
+  double ul_center_freq = band_helper::nr_arfcn_to_freq(ul_arfcn);
   du_logger.info("Starting du_example with DL_ARFCN={}, UL_ARFCN={}, DL center frequency {} Hz, UL center frequency {} "
                  "Hz, tx_gain={} dB, rx_gain={} dB",
                  dl_arfcn,
@@ -570,6 +571,8 @@ int main(int argc, char** argv)
                  ul_center_freq,
                  tx_gain,
                  rx_gain);
+
+  worker_manager workers;
 
   // Create radio.
   radio_notification_handler_printer radio_event_printer;
@@ -596,12 +599,9 @@ int main(int argc, char** argv)
 
   // Create upper PHY.
   upper_phy_params upper_params;
-  upper_params.log_level         = srslog::str_to_basic_level(log_level);
-  upper_params.nof_ports         = nof_ports;
-  upper_params.dl_pipeline_depth = max_processing_delay_slots;
-  upper_params.dl_bw_rb          = nof_prb_dl_grid[to_numerology_value(scs)];
-  upper_params.ul_bw_rb          = nof_prb_ul_grid[to_numerology_value(scs)];
-  upper_params.scs               = scs;
+  upper_params.log_level      = srslog::str_to_basic_level(log_level);
+  upper_params.channel_bw_mhz = channel_bw_mhz;
+  upper_params.scs            = scs;
 
   auto upper = create_upper_phy(upper_params,
                                 &rg_gateway_adapter,
@@ -621,7 +621,7 @@ int main(int argc, char** argv)
   const unsigned sector_id   = 0;
   auto           phy_adaptor = build_phy_fapi_adaptor(sector_id,
                                             scs,
-                                            scs_common,
+                                            scs,
                                             upper->get_downlink_processor_pool(),
                                             upper->get_downlink_resource_grid_pool(),
                                             upper->get_uplink_request_processor(),
@@ -670,23 +670,29 @@ int main(int argc, char** argv)
   // Cell configuration.
   struct cell_config_builder_params cell_config;
   cell_config.pci               = pci;
-  cell_config.scs_common        = scs_common;
+  cell_config.scs_common        = scs;
+  cell_config.channel_bw_mhz    = channel_bw_mhz;
   cell_config.dl_arfcn          = dl_arfcn;
   cell_config.band              = band;
   cell_config.offset_to_point_a = offset_to_pointA;
   cell_config.coreset0_index    = coreset0_index;
+  cell_config.k_ssb             = K_ssb;
 
   dummy_cu_cp_handler f1ap_notifier;
   phy_dummy           phy(mac_adaptor->get_cell_result_notifier());
 
-  du_high_configuration du_hi_cfg = {};
-  du_hi_cfg.du_mng_executor       = &workers.ctrl_exec;
-  du_hi_cfg.ue_executors          = &workers.ue_exec_mapper;
-  du_hi_cfg.cell_executors        = &workers.cell_exec_mapper;
-  du_hi_cfg.f1ap_notifier         = &f1ap_notifier;
-  du_hi_cfg.phy_adapter           = &phy;
-  du_hi_cfg.cells                 = {config_helpers::make_default_du_cell_config(cell_config)};
-  du_hi_cfg.sched_cfg             = config_helpers::make_default_scheduler_expert_config();
+  timer_manager             app_timers{256};
+  std::unique_ptr<mac_pcap> mac_p     = std::make_unique<mac_pcap_impl>();
+  du_high_configuration     du_hi_cfg = {};
+  du_hi_cfg.du_mng_executor           = &workers.ctrl_exec;
+  du_hi_cfg.ue_executors              = &workers.ue_exec_mapper;
+  du_hi_cfg.cell_executors            = &workers.cell_exec_mapper;
+  du_hi_cfg.f1ap_notifier             = &f1ap_notifier;
+  du_hi_cfg.phy_adapter               = &phy;
+  du_hi_cfg.timers                    = &app_timers;
+  du_hi_cfg.cells                     = {config_helpers::make_default_du_cell_config(cell_config)};
+  du_hi_cfg.sched_cfg                 = config_helpers::make_default_scheduler_expert_config();
+  du_hi_cfg.pcap                      = mac_p.get();
 
   du_cell_config& cell_cfg = du_hi_cfg.cells.front();
   cell_cfg.ssb_cfg.k_ssb   = K_ssb;
