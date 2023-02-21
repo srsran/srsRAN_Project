@@ -81,5 +81,11 @@ struct e1ap_bearer_context_modification_response {
   optional<e1ap_crit_diagnostics> crit_diagnostics;
 };
 
+/// \brief Request to release a bearer context.
+struct e1ap_bearer_context_release_command {
+  ue_index_t ue_index = INVALID_UE_INDEX;
+  cause_t    cause; // Cause of the release.
+};
+
 } // namespace srs_cu_up
 } // namespace srsran

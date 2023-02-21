@@ -328,7 +328,7 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
   }
 
   bearer_context_release_cmd.ue_index = ue_ctxt.ue_index;
-  bearer_context_release_cmd.cause    = msg->cause.value;
+  bearer_context_release_cmd.cause    = e1ap_cause_to_cause(msg->cause.value);
 
   // Forward message to CU-UP
   cu_up_notifier.on_bearer_context_release_command_received(bearer_context_release_cmd);
