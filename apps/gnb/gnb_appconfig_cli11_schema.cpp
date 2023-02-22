@@ -74,6 +74,9 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
     if (app.count("--rrc_level") == 0) {
       log_params.rrc_level = log_params.all_level;
     }
+    if (app.count("--sdap_level") == 0) {
+      log_params.sdap_level = log_params.all_level;
+    }
     if (app.count("--gtpu_level") == 0) {
       log_params.gtpu_level = log_params.all_level;
     }
