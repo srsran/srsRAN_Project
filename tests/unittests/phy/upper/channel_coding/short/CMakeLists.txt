@@ -11,10 +11,12 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
 set_directory_properties(PROPERTIES LABELS "phy")
 
-add_executable(short_block_encoder_test short_block_encoder_test.cpp)
-target_link_libraries(short_block_encoder_test srsran_channel_coding srslog)
-add_test_vector(short_block_encoder_test short_block_encoder_test_data.tar.gz "")
+if (USE_PHY_TESTVECTORS)
+    add_executable(short_block_encoder_test short_block_encoder_test.cpp)
+    target_link_libraries(short_block_encoder_test srsran_channel_coding srslog)
+    add_test_vector(short_block_encoder_test short_block_encoder_test_data.tar.gz "")
 
-add_executable(short_block_detector_test short_block_detector_test.cpp)
-target_link_libraries(short_block_detector_test srsran_channel_coding srsran_upper_phy_support srslog)
-add_test_vector(short_block_detector_test short_block_detector_test_data.tar.gz "")
+    add_executable(short_block_detector_test short_block_detector_test.cpp)
+    target_link_libraries(short_block_detector_test srsran_channel_coding srsran_upper_phy_support srslog)
+    add_test_vector(short_block_detector_test short_block_detector_test_data.tar.gz "")
+endif (USE_PHY_TESTVECTORS)

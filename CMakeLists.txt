@@ -52,6 +52,7 @@ option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
 option(BUILD_TESTS           "Compile tests"                            ON)
 option(ENABLE_GPROF          "Enable gprof"                             OFF)
+option(USE_PHY_TESTVECTORS   "Enable testvector PHY tests"              ON)
 # Set assertion level options and default value.
 set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
 set_property(CACHE ASSERT_LEVEL PROPERTY STRINGS AUTO MINIMAL NORMAL PARANOID)

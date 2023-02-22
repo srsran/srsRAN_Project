@@ -17,10 +17,6 @@ add_subdirectory(signal_processors)
 
 set_directory_properties(PROPERTIES LABELS "phy")
 
-add_executable(dl_processor_vectortest dl_processor_vectortest.cpp)
-target_link_libraries(dl_processor_vectortest srsran_sequence_generators srsran_channel_processors srsran_signal_processors srslog)
-add_test_vector(dl_processor_vectortest dl_processor_test_data.tar.gz "")
-
 add_executable(downlink_processor_pool_test downlink_processor_pool_test.cpp)
 target_link_libraries(downlink_processor_pool_test srsran_upper_phy srslog)
 add_test(downlink_processor_pool_test downlink_processor_pool_test)
@@ -60,3 +56,9 @@ gtest_discover_tests(upper_phy_rx_symbol_handler_test)
 add_executable(vrb_to_prb_mapper_test vrb_to_prb_mapper_test.cpp)
 target_link_libraries(vrb_to_prb_mapper_test srsran_upper_phy_support srslog)
 add_test(vrb_to_prb_mapper_test vrb_to_prb_mapper_test)
+
+if (USE_PHY_TESTVECTORS)
+    add_executable(dl_processor_vectortest dl_processor_vectortest.cpp)
+    target_link_libraries(dl_processor_vectortest srsran_sequence_generators srsran_channel_processors srsran_signal_processors srslog)
+    add_test_vector(dl_processor_vectortest dl_processor_test_data.tar.gz "")
+endif (USE_PHY_TESTVECTORS)
