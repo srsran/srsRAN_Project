@@ -1,0 +1,31 @@
+amf:
+  addr: 127.0.1.100                 # The address or hostname of the AMF.
+  bind_addr: 127.0.0.1              # A local IP that the gNB binds to for traffic from the AMF.
+
+rf_driver:
+  device_driver: uhd                # The RF driver name.
+  device_args: type=n3xx            # Optionally pass arguments to the selected RF driver.
+  clock: gpsdo                      # Specify the clock source used by the RF.
+  sync: gpsdo                       # Specify the sync source used by the RF.
+  srate: 30.72                      # RF sample rate might need to be adjusted according to selected bandwidth.
+  tx_gain: 35                       # Transmit gain of the RF might need to adjusted to the given situation.
+  rx_gain: 60                       # Receive gain of the RF might need to adjusted to the given situation.
+
+cell_cfg:
+  dl_arfcn: 368640                  # ARFCN of the downlink carrier (center frequency).
+  band: 3                           # The NR band.
+  channel_bandwidth_MHz: 20         # Bandwith in MHz. Number of PRBs will be automatically derived.
+  common_scs: 15                    # Subcarrier spacing in kHz used for data.
+  plmn: "00101"                     # PLMN broadcasted by the gNB.
+  tac: 7                            # Tracking area code (needs to match the core configuration).
+  pci: 1                            # Physical cell ID.
+
+log:
+  filename: /tmp/gnb.log            # Path of the log file.
+  all_level: warning                # Logging level applied to all layers.
+
+pcap:
+  mac_enable: false                 # Set to true to enable MAC-layer PCAPs.
+  mac_filename: /tmp/gnb_mac.pcap   # Path where the MAC PCAP is stored.
+  ngap_enable: false                # Set to true to enable NGAP PCAPs.
+  ngap_filename: /tmp/gnb_ngap.pcap # Path where the NGAP PCAP is stored.

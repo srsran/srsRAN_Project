@@ -29,7 +29,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.1_0.2.0
+  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.1_0.2.2
   resources:
     - type: sdr
       model: b200 
