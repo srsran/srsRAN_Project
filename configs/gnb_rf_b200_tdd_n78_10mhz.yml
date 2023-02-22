@@ -11,7 +11,7 @@ rf_driver:
   tx_gain: 50                       # Transmit gain of the RF might need to adjusted to the given situation.
   rx_gain: 60                       # Receive gain of the RF might need to adjusted to the given situation.
 
-common_cell:
+cell_cfg:
   dl_arfcn: 632628                  # ARFCN of the downlink carrier (center frequency).
   band: 78                          # The NR band.
   channel_bandwidth_MHz: 10         # Bandwith in MHz. Number of PRBs will be automatically derived.
