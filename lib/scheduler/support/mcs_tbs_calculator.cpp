@@ -260,6 +260,11 @@ optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&   pu
     return nullopt;
   }
 
+  // If no MCS such that nof bits for PUSCH > 0, return an empty optional object.
+  if (effective_code_rate == 0) {
+    return nullopt;
+  }
+
   optional<sch_mcs_tbs> output;
   return output.emplace(sch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes});
 }
