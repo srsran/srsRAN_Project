@@ -59,10 +59,10 @@ Download and build srsRAN:
 
 ```bash
 git clone https://github.com/srsran/srsRAN_Project.git
-cd srsran
+cd srsRAN_Project
 mkdir build
 cd build
-cmake ../
+cmake ..
 make
 make test
 ```
