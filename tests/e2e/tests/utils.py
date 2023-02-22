@@ -92,7 +92,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
 
         if test_successful:
             self.disable_download_report()
-        elif test_successful is False or get_retina_force_report():
+        if test_successful is False or get_retina_force_report():
             with suppress(UnboundLocalError, NameError):
                 extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
         assert teardown_ok is True
