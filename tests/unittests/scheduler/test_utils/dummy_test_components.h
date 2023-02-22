@@ -57,7 +57,7 @@ public:
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("UE-dedicated PDCCHs not supported");
+    srsran_terminate("UE-dedicated PDCCHs not supported");
     return nullptr;
   }
 
@@ -71,7 +71,7 @@ public:
 
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) override
   {
-    srsgnb_terminate("Cancellations not supported");
+    srsran_terminate("Cancellations not supported");
     return false;
   }
 

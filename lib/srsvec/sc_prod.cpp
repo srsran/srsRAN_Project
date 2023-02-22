@@ -77,21 +77,21 @@ static void sc_prod_ccc_simd(const cf_t* x, cf_t h, cf_t* z, std::size_t len)
 
 void srsran::srsvec::sc_prod(span<const cf_t> x, cf_t h, span<cf_t> z)
 {
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, z);
 
   sc_prod_ccc_simd(x.data(), h, z.data(), x.size());
 }
 
 void srsran::srsvec::sc_prod(span<const cf_t> x, float h, span<cf_t> z)
 {
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, z);
 
   sc_prod_fff_simd((float*)x.data(), h, (float*)z.data(), 2 * x.size());
 }
 
 void srsran::srsvec::sc_prod(span<const float> x, float h, span<float> z)
 {
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, z);
 
   sc_prod_fff_simd(x.data(), h, z.data(), x.size());
 }

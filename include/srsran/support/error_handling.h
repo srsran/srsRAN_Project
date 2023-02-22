@@ -18,7 +18,7 @@ namespace srsran {
 /// Attribute noinline is used to signal to the compiler that this path should rarely occur and therefore doesn't need
 /// to get optimized.
 template <typename... Args>
-[[gnu::noinline, noreturn]] inline bool srsgnb_terminate(const char* fmt, Args&&... args) noexcept
+[[gnu::noinline, noreturn]] inline bool srsran_terminate(const char* fmt, Args&&... args) noexcept
 {
   srslog::flush();
   fmt::print(stderr, fmt, std::forward<Args>(args)...);
@@ -40,7 +40,7 @@ template <typename... Args>
 template <typename... Args>
 [[gnu::noinline, noreturn]] inline void report_fatal_error(const char* reason_fmt, Args&&... args) noexcept
 {
-  srsgnb_terminate("srsGNB FATAL ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
+  srsran_terminate("srsGNB FATAL ERROR: {}\n", fmt::format(reason_fmt, std::forward<Args>(args)...));
 }
 
 /// \brief Verifies if condition is true. If not, report a fatal error and close application.

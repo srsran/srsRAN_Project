@@ -43,7 +43,7 @@ inline V dot_prod(const T& x, const U& y, V init)
                 "Template type is not compatible with a span of arithmetics");
   static_assert(detail::is_arithmetic_span_compatible<U>::value,
                 "Template type is not compatible with a span of arithmetics");
-  srsgnb_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, y);
   return std::inner_product(x.begin(), x.end(), y.begin(), init);
 }
 

@@ -24,6 +24,6 @@
 //
 // To make the span constant use srsran::span<const T>.
 
-#define srsgnb_srsvec_assert_size(X, Y)                                                                                \
+#define srsran_srsvec_assert_size(X, Y)                                                                                \
   srsran_assert(                                                                                                       \
       X.size() == Y.size(), "The size " #X " (i.e., {}) and " #Y " (i.e., {}) must be equal.", X.size(), Y.size())

@@ -25,8 +25,8 @@ void binary_xor(const T& x, const U& y, V&& z)
                 "Template type is not compatible with a span of integers");
   static_assert(detail::is_integral_span_compatible<V>::value,
                 "Template type is not compatible with a span of integers");
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   for (std::size_t i = 0, len = x.size(); i != len; ++i) {
     z[i] = x[i] ^ y[i];
@@ -42,8 +42,8 @@ void binary_and(const T& x, const U& y, V&& z)
                 "Template type is not compatible with a span of integers");
   static_assert(detail::is_integral_span_compatible<V>::value,
                 "Template type is not compatible with a span of integers");
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   for (std::size_t i = 0, len = x.size(); i != len; ++i) {
     z[i] = x[i] & y[i];
@@ -59,8 +59,8 @@ void binary_or(const T& x, const U& y, V&& z)
                 "Template type is not compatible with a span of integers");
   static_assert(detail::is_integral_span_compatible<V>::value,
                 "Template type is not compatible with a span of integers");
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   for (std::size_t i = 0, len = x.size(); i != len; ++i) {
     z[i] = x[i] | y[i];

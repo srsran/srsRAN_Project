@@ -17,7 +17,7 @@ using namespace srsran;
 cf_t srsran::srsvec::dot_prod(span<const cf_t> x, span<const cf_t> y)
 {
   cf_t result = 0;
-  srsgnb_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, y);
 
   unsigned i = 0, len = x.size();
 #if SRSRAN_SIMD_CF_SIZE

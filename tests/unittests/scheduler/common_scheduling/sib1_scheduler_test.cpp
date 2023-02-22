@@ -45,7 +45,7 @@ public:
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
+    srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
 
@@ -56,7 +56,7 @@ public:
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
+    srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
 
@@ -65,13 +65,13 @@ public:
                                               search_space_id               ss_id,
                                               aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("Common PDCCHs should not be called while allocating RARs");
+    srsran_terminate("Common PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
 
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) override
   {
-    srsgnb_terminate("Not supported");
+    srsran_terminate("Not supported");
     return true;
   }
 };

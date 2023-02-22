@@ -18,7 +18,7 @@ using namespace srsran;
 
 amplitude_controller_metrics amplitude_controller_clipping_impl::process(span<cf_t> output, span<const cf_t> input)
 {
-  srsgnb_srsvec_assert_size(output, input);
+  srsran_srsvec_assert_size(output, input);
 
   // Report clipping status.
   metrics.clipping_enabled = clipping_enabled;

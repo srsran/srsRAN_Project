@@ -116,7 +116,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
       TESTASSERT_EQ(N_rb_dl_bwp, cs_zero_crbs.length());
     } break;
     default:
-      srsgnb_terminate("DCI type not supported");
+      srsran_terminate("DCI type not supported");
   }
   ofdm_symbol_range symbols =
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_assignment].symbols;
@@ -172,7 +172,7 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, it->pdsch_cfg);
       } break;
       default:
-        srsgnb_terminate("DCI type not supported");
+        srsran_terminate("DCI type not supported");
     }
   }
 }

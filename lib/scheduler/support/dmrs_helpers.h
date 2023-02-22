@@ -59,7 +59,7 @@ inline dmrs_information make_dmrs_info_common(const pdsch_config_common& pdsch_c
     dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
 
   } else {
-    srsgnb_terminate("Mapping type B not supported");
+    srsran_terminate("Mapping type B not supported");
   }
 
   dmrs.config_type        = dmrs_config_type::type1;
@@ -103,7 +103,7 @@ inline dmrs_information make_dmrs_info_common(const pusch_config_common& pusch_c
     dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
 
   } else {
-    srsgnb_terminate("Mapping type B not supported");
+    srsran_terminate("Mapping type B not supported");
   }
 
   dmrs.config_type        = dmrs_config_type::type1;

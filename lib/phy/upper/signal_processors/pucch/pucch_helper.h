@@ -44,10 +44,10 @@ public:
         f_ss = n_id % low_papr_sequence_collection::NOF_GROUPS;
         break;
       case pucch_group_hopping::ENABLE:
-        srsgnb_terminate("Group hopping is not implemented");
+        srsran_terminate("Group hopping is not implemented");
         return;
       case pucch_group_hopping::DISABLE:
-        srsgnb_terminate("Hopping is not implemented");
+        srsran_terminate("Hopping is not implemented");
         return;
     }
 
