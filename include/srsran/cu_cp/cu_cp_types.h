@@ -425,5 +425,44 @@ struct cu_cp_ue_context_release_complete {
   optional<crit_diagnostics_t>                                       crit_diagnostics;
 };
 
+struct cu_cp_five_g_s_tmsi {
+  uint16_t amf_set_id;
+  uint8_t  amf_pointer;
+  uint64_t five_g_tmsi;
+};
+
+struct cu_cp_tai_list_for_paging_item {
+  cu_cp_tai tai;
+};
+
+struct cu_cp_ue_radio_cap_for_paging {
+  byte_buffer ue_radio_cap_for_paging_of_nr;
+};
+
+struct cu_cp_assist_data_for_recommended_cells {
+  cu_cp_recommended_cells_for_paging recommended_cells_for_paging;
+};
+
+struct cu_cp_paging_attempt_info {
+  uint8_t               paging_attempt_count;
+  uint8_t               intended_nof_paging_attempts;
+  optional<std::string> next_paging_area_scope;
+};
+
+struct cu_cp_assist_data_for_paging {
+  optional<cu_cp_assist_data_for_recommended_cells> assist_data_for_recommended_cells;
+  optional<cu_cp_paging_attempt_info>               paging_attempt_info;
+};
+
+struct cu_cp_paging_message {
+  cu_cp_five_g_s_tmsi                         ue_paging_id;
+  optional<uint16_t>                          paging_drx;
+  std::vector<cu_cp_tai_list_for_paging_item> tai_list_for_paging;
+  optional<uint8_t>                           paging_prio;
+  optional<cu_cp_ue_radio_cap_for_paging>     ue_radio_cap_for_paging;
+  optional<std::string>                       paging_origin;
+  optional<cu_cp_assist_data_for_paging>      assist_data_for_paging;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran
