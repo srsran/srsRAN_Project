@@ -273,8 +273,8 @@ TEST_P(rlc_um_test, tx_without_segmentation)
     // TODO: write PCAP
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
-  EXPECT_EQ(tester1.bsr, 0);
-  EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
+  EXPECT_EQ(tester1.bsr, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Write PDUs into RLC2
   for (uint32_t i = 0; i < num_pdus; i++) {
@@ -346,8 +346,8 @@ TEST_P(rlc_um_test, tx_with_segmentation)
     num_pdus++;
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
-  EXPECT_EQ(tester1.bsr, 0);
-  EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
+  EXPECT_EQ(tester1.bsr, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Verify there are no multiple transmit notifications
   EXPECT_EQ(0, tester1.transmitted_pdcp_sn_list.size());
@@ -434,15 +434,15 @@ TEST_P(rlc_um_test, sdu_discard)
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
   expect_buffer_state = (num_sdus - 4) * data_pdu_size;
-  EXPECT_EQ(tester1.bsr, expect_buffer_state);
-  EXPECT_EQ(tester1.bsr_count, 4);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester1.bsr_count, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
 
   // Try discard of already transmitted SDU
   rlc1_tx_upper->discard_sdu(1);
-  EXPECT_EQ(tester1.bsr, expect_buffer_state);
-  EXPECT_EQ(tester1.bsr_count, 4);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester1.bsr_count, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
 
@@ -451,8 +451,8 @@ TEST_P(rlc_um_test, sdu_discard)
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[2].begin()));
   expect_buffer_state = (num_sdus - 5) * data_pdu_size;
-  EXPECT_EQ(tester1.bsr, expect_buffer_state);
-  EXPECT_EQ(tester1.bsr_count, 5);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester1.bsr_count, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
 
@@ -460,7 +460,8 @@ TEST_P(rlc_um_test, sdu_discard)
   rlc1_tx_upper->discard_sdu(5);
   expect_buffer_state = 0;
   EXPECT_EQ(tester1.bsr, expect_buffer_state);
-  EXPECT_EQ(tester1.bsr_count, 6);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester1.bsr_count, 4);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 4);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
 }
@@ -527,15 +528,15 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[1].begin()));
   expect_buffer_state = (num_sdus - 4) * data_pdu_size;
-  EXPECT_EQ(tester1.bsr, expect_buffer_state);
-  EXPECT_EQ(tester1.bsr_count, 4);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester1.bsr_count, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 2);
 
   // Try discard of already transmitted SDU
   rlc1_tx_upper->discard_sdu((pdcp_sn_start + 1) % pdcp_sn_mod);
-  EXPECT_EQ(tester1.bsr, expect_buffer_state);
-  EXPECT_EQ(tester1.bsr_count, 4);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester1.bsr_count, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
 
@@ -544,16 +545,16 @@ TEST_P(rlc_um_test, sdu_discard_with_pdcp_sn_wraparound)
   EXPECT_FALSE(pdu.empty());
   EXPECT_TRUE(std::equal(pdu.begin() + header_size, pdu.end(), sdu_bufs[2].begin()));
   expect_buffer_state = (num_sdus - 5) * data_pdu_size;
-  EXPECT_EQ(tester1.bsr, expect_buffer_state);
-  EXPECT_EQ(tester1.bsr_count, 5);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester1.bsr_count, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 3);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
 
   // Discard remaining SDU
   rlc1_tx_upper->discard_sdu((pdcp_sn_start + 5) % pdcp_sn_mod);
   expect_buffer_state = 0;
-  EXPECT_EQ(tester1.bsr, expect_buffer_state);
-  EXPECT_EQ(tester1.bsr_count, 6);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), expect_buffer_state);
+  EXPECT_EQ(tester1.bsr_count, 4);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discarded_sdus, 4);
   EXPECT_EQ(rlc1->get_metrics().tx.num_discard_failures, 3);
 }
@@ -605,8 +606,8 @@ TEST_P(rlc_um_test, tx_with_segmentation_reverse_rx)
     num_pdus++;
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
-  EXPECT_EQ(tester1.bsr, 0);
-  EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
+  EXPECT_EQ(tester1.bsr, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Verify there are no multiple transmit notifications
   EXPECT_EQ(0, tester1.transmitted_pdcp_sn_list.size());
@@ -675,8 +676,8 @@ TEST_P(rlc_um_test, tx_multiple_SDUs_with_segmentation)
     num_pdus++;
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
-  EXPECT_EQ(tester1.bsr, 0);
-  EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
+  EXPECT_EQ(tester1.bsr, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Write PDUs into RLC2 (except 1 and 6)
   for (uint32_t i = 0; i < num_pdus; i++) {
@@ -773,7 +774,7 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
     // check buffer state
     EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), sdu_size + 1);
     EXPECT_EQ(tester1.bsr, sdu_size + 1);
-    EXPECT_EQ(tester1.bsr_count, i + 1 + num_pdus);
+    EXPECT_EQ(tester1.bsr_count, i + 1);
 
     // read PDUs from lower end of RLC1 and write into lower end of RLC2
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
@@ -802,8 +803,8 @@ TEST_P(rlc_um_test, reassembly_window_wrap_around)
     }
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
-  EXPECT_EQ(tester1.bsr, 0);
-  EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
+  EXPECT_EQ(tester1.bsr, sdu_size + 1);
+  EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Check number of received SDUs
   EXPECT_EQ(num_sdus, tester2.sdu_counter);
@@ -834,7 +835,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
     // check buffer state
     EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), sdu_size + 1);
     EXPECT_EQ(tester1.bsr, sdu_size + 1);
-    EXPECT_EQ(tester1.bsr_count, i + 1 + num_pdus);
+    EXPECT_EQ(tester1.bsr_count, i + 1);
 
     // read PDUs from lower end of RLC1 and write into lower end of RLC2 (except 11th)
     while (rlc1_tx_lower->get_buffer_state() > 0 && num_pdus < max_num_pdus) {
@@ -868,8 +869,8 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
     }
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
-  EXPECT_EQ(tester1.bsr, 0);
-  EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
+  EXPECT_EQ(tester1.bsr, sdu_size + 1);
+  EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Check number of received SDUs
   EXPECT_EQ(num_sdus - 1, tester2.sdu_counter);
@@ -927,8 +928,8 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
     num_pdus++;
   }
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
-  EXPECT_EQ(tester1.bsr, 0);
-  EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
+  EXPECT_EQ(tester1.bsr, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Write PDUs into RLC2 (except 2nd)
   for (uint32_t i = 0; i < num_pdus; i++) {
@@ -1006,8 +1007,8 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   }
   EXPECT_EQ(6, num_pdus);
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
-  EXPECT_EQ(tester1.bsr, 0);
-  EXPECT_EQ(tester1.bsr_count, num_sdus + num_pdus);
+  EXPECT_EQ(tester1.bsr, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, num_sdus);
 
   // Write all PDUs such that the middle section of SN=0 is received after the start section of SN=1
   //                    +------------------- skip 2nd PDU which is the middle section of SN=0

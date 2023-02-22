@@ -159,7 +159,6 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t grant_len)
 
   // Update metrics
   metrics.metrics_add_pdus(1, pdu_buf.length());
-  handle_buffer_state_update_nolock(); // already locked
 
   // Log state
   log_state(srslog::basic_levels::debug);
