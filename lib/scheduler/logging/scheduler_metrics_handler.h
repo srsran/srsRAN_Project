@@ -67,8 +67,8 @@ private:
       unsigned nof_puschs            = 0;
       uint64_t sum_dl_tb_bytes       = 0;
       uint64_t sum_ul_tb_bytes       = 0;
-      unsigned sum_pusch_snrs        = 0;
-      unsigned sum_pucch_snrs        = 0;
+      double   sum_pusch_snrs        = 0;
+      double   sum_pucch_snrs        = 0;
       unsigned nof_pucch_snr_reports = 0;
       unsigned nof_pusch_snr_reports = 0;
     };

@@ -174,12 +174,8 @@ scheduler_metrics_handler::ue_metric_context::compute_report(std::chrono::millis
   ret.dl_nof_nok    = data.count_uci_harqs - data.count_uci_harq_acks;
   ret.ul_nof_ok     = data.count_crc_acks;
   ret.ul_nof_nok    = data.count_crc_pdus - data.count_crc_acks;
-  ret.pusch_snr_db  = data.nof_pusch_snr_reports > 0
-                          ? std::roundf(static_cast<float>(data.sum_pusch_snrs) / data.nof_pusch_snr_reports)
-                          : 0;
-  ret.pucch_snr_db  = data.nof_pucch_snr_reports > 0
-                          ? std::roundf(static_cast<float>(data.sum_pucch_snrs) / data.nof_pucch_snr_reports)
-                          : 0;
+  ret.pusch_snr_db  = data.nof_pusch_snr_reports > 0 ? data.sum_pusch_snrs / data.nof_pusch_snr_reports : 0;
+  ret.pucch_snr_db  = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
   ret.bsr           = last_bsr;
   // TODO: update PUSCH and PUCCH SNR metrics based on indications.
 
