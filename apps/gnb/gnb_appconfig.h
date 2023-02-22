@@ -187,7 +187,7 @@ struct amf_appconfig {
 
 struct log_appconfig {
   std::string filename          = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
-  std::string all_level         = "info"; // Generic log level assigned to all layers without layer-specific level.
+  std::string all_level         = "info";         // Default log level for all layers.
   std::string app_level         = "info"; // Generic log level assigned to all layers without layer-specific level.
   std::string du_level          = "info";
   std::string cu_level          = "info";
