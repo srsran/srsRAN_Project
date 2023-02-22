@@ -92,6 +92,8 @@ struct amplitude_control_appconfig {
 
 /// Base cell configuration.
 struct base_cell_appconfig {
+  /// Physical cell identifier.
+  pci_t pci = 1;
   /// Downlink arfcn.
   unsigned dl_arfcn = 536020;
   /// NR band.
@@ -120,8 +122,6 @@ struct base_cell_appconfig {
 
 /// Cell configuration
 struct cell_appconfig {
-  /// Physical cell identifier.
-  pci_t pci = 1;
   /// Cell configuration.
   base_cell_appconfig cell;
 };
