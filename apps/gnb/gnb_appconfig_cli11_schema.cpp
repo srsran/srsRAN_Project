@@ -26,7 +26,8 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   };
 
   app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
-  app.add_option("--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC, PDCP, RRC, NGAP and GTPU")
+  app.add_option(
+         "--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC, PDCP, RRC, SDAP, NGAP and GTPU")
       ->capture_default_str()
       ->check(level_check);
   app.add_option("--radio_level", log_params.radio_level, "Radio log level")->capture_default_str()->check(level_check);
