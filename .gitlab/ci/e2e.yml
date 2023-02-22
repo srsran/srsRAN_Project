@@ -15,17 +15,19 @@
 
 .e2e-run:
   stage: e2e
-  timeout: 10h
+  resource_group: e2e
+  timeout: 4h
   interruptible: false
   image:
     name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.16
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
-    LOG_LEVEL: "debug"
+    LOG_LEVEL: "info"
     MARKERS: ""
     ARGS: ""
     FORCE_DOWNLOAD: "true"
+    PARALLEL: 2
   tags:
     - on-prem-amd64
   extends:
@@ -45,7 +47,7 @@
       export LOGNAME=$GITLAB_USER_LOGIN
       export RETINA_LOGLEVEL="$LOG_LEVEL"
       export RETINA_FORCE_DOWNLOAD_REPORT="$FORCE_DOWNLOAD"
-    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
+    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" -n "${PARALLEL}" .
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -57,7 +59,10 @@
 smoke-zmq-tsan:
   extends: .e2e-run
   rules:
+    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
     - if: $ON_MR
+      when: manual
+      allow_failure: false
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "smoke and not tcp and not multiue"
