@@ -42,7 +42,7 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--sdap_level", log_params.sdap_level, "SDAP log level")->capture_default_str()->check(level_check);
   app.add_option("--gtpu_level", log_params.gtpu_level, "GTPU log level")->capture_default_str()->check(level_check);
   app.add_option("--fapi_level", log_params.fapi_level, "FAPI log level")->capture_default_str()->check(level_check);
-  app.add_option("--hex_max_size", log_params.hex_max_size, "Number of bytes to print in hex")
+  app.add_option("--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex")
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
   app.add_option("--broadcast_enabled",
@@ -51,12 +51,10 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
       ->always_capture_default();
   app.add_option("--phy_rx_symbols_filename",
                  log_params.phy_rx_symbols_filename,
-                 "Set to a valid file path to print the received symbols.")
+                 "Set to a valid file path to print the received symbols")
       ->always_capture_default();
 
-  /// Post-parsing callback. This allows us to
-  /// set the log level to "all" level, if no level
-  /// is provided.
+  // Post-parsing callback. This allows us to set the log level to "all" level, if no level is provided.
   app.callback([&]() {
     if (app.count("--app_level") == 0) {
       log_params.app_level = log_params.all_level;
@@ -120,14 +118,14 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
 {
   app.add_option("--srate", rf_driver_params.srate_MHz, "Sample rate in MHz")->capture_default_str();
   app.add_option("--device_driver", rf_driver_params.device_driver, "Device driver name")->capture_default_str();
-  app.add_option("--device_args", rf_driver_params.device_arguments, "Optional device arguments.")
+  app.add_option("--device_args", rf_driver_params.device_arguments, "Optional device arguments")
       ->capture_default_str();
-  app.add_option("--tx_gain", rf_driver_params.tx_gain_dB, "Transmit gain in decibels.")->capture_default_str();
-  app.add_option("--rx_gain", rf_driver_params.rx_gain_dB, "Receive gain in decibels.")->capture_default_str();
-  app.add_option("--lo_offset", rf_driver_params.lo_offset_MHz, "LO frequency offset in MHz.")->capture_default_str();
-  app.add_option("--clock", rf_driver_params.clock_source, "Clock source.")->capture_default_str();
-  app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source.")->capture_default_str();
-  app.add_option("--otw_format", rf_driver_params.otw_format, "Over-the-wire format.")->capture_default_str();
+  app.add_option("--tx_gain", rf_driver_params.tx_gain_dB, "Transmit gain in decibels")->capture_default_str();
+  app.add_option("--rx_gain", rf_driver_params.rx_gain_dB, "Receive gain in decibels")->capture_default_str();
+  app.add_option("--lo_offset", rf_driver_params.lo_offset_MHz, "LO frequency offset in MHz")->capture_default_str();
+  app.add_option("--clock", rf_driver_params.clock_source, "Clock source")->capture_default_str();
+  app.add_option("--sync", rf_driver_params.synch_source, "Time synchronization source")->capture_default_str();
+  app.add_option("--otw_format", rf_driver_params.otw_format, "Over-the-wire format")->capture_default_str();
   app.add_option_function<std::string>(
          "--time_alignment_calibration",
          [&rf_driver_params](const std::string& value) {
@@ -140,7 +138,7 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
          },
          "Rx to Tx radio time alignment calibration in samples.\n"
          "Positive values reduce the RF transmission delay with respect\n"
-         "to the RF reception, while negative values increase it.")
+         "to the RF reception, while negative values increase it")
       ->check([](const std::string& value) -> std::string {
         // Check for valid option "auto".
         if (value == "auto") {
@@ -156,17 +154,17 @@ static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& r
 
 static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig& expert_phy_params)
 {
-  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of threads to process uplink.")
+  app.add_option("--nof_ul_threads", expert_phy_params.nof_ul_threads, "Number of threads to process uplink")
       ->capture_default_str()
       ->check(CLI::Number);
   app.add_option("--pusch_dec_max_iterations",
                  expert_phy_params.pusch_decoder_max_iterations,
-                 "Maximum number of PUSCH LDPC decoder iterations.")
+                 "Maximum number of PUSCH LDPC decoder iterations")
       ->capture_default_str()
       ->check(CLI::Number);
   app.add_option("--pusch_dec_enable_early_stop",
                  expert_phy_params.pusch_decoder_early_stop,
-                 "Enables PUSCH LDPC decoder early stop.")
+                 "Enables PUSCH LDPC decoder early stop")
       ->capture_default_str();
 }
 
@@ -212,7 +210,9 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)
 {
-  app.add_option("--tx_gain_backoff", amplitude_params.gain_backoff_dB, "Gain back-off to accommodate the signal PAPR")
+  app.add_option("--tx_gain_backoff",
+                 amplitude_params.gain_backoff_dB,
+                 "Gain back-off to accommodate the signal PAPR in decibels")
       ->capture_default_str();
   app.add_option("--enable_clipping", amplitude_params.enable_clipping, "Signal clipping")->capture_default_str();
   app.add_option("--ceiling", amplitude_params.power_ceiling_dBFS, "Clipping ceiling referenced to full scale")
@@ -222,7 +222,7 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
   app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
-  app.add_option("--dl_arfcn", cell_params.dl_arfcn, "Donwlink ARFCN")->capture_default_str();
+  app.add_option("--dl_arfcn", cell_params.dl_arfcn, "Downlink ARFCN")->capture_default_str();
   add_auto_enum_option(app, "--band", cell_params.band, "NR band");
   app.add_option("--common_scs", cell_params.common_scs, "Cell common subcarrier spacing")
       ->transform([](const std::string& value) {
@@ -364,7 +364,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   configure_cli11_rf_driver_args(*rf_driver_subcmd, gnb_cfg.rf_driver_cfg);
 
   // Common cell parameters.
-  CLI::App* common_cell_subcmd = app.add_subcommand("common_cell", "Common cell parameters")->configurable();
+  CLI::App* common_cell_subcmd = app.add_subcommand("cell_cfg", "Cell configuration")->configurable();
   configure_cli11_common_cell_args(*common_cell_subcmd, gnb_cfg.common_cell_cfg);
   // Configure the cells to use the common cell parameters once it has been parsed and before parsing the cells.
   common_cell_subcmd->parse_complete_callback([&gnb_cfg]() {
@@ -402,7 +402,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
     // Prepare the radio bearers
     gnb_cfg.qos_cfg.resize(values.size());
 
-    //// Format every QoS setting.
+    // Format every QoS setting.
     for (unsigned i = 0, e = values.size(); i != e; ++i) {
       CLI::App subapp("QoS parameters");
       subapp.config_formatter(create_yaml_config_parser());
@@ -415,7 +415,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   app.add_option_function<std::vector<std::string>>("--qos", qos_lambda, "qos");
 
   // Expert PHY section.
-  CLI::App* expert_phy_subcmd =
-      app.add_subcommand("expert_phy", "Expert physical layer configuration.")->configurable();
+  CLI::App* expert_phy_subcmd = app.add_subcommand("expert_phy", "Expert physical layer configuration")->configurable();
   configure_cli11_expert_phy_args(*expert_phy_subcmd, gnb_cfg.expert_phy_cfg);
 }
