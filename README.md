@@ -18,6 +18,7 @@ Build Instructions
 * Mandatory requirements:
   * cmake:               <https://cmake.org/>
   * libfftw:             <https://www.fftw.org/>
+  * UHD:                 <https://github.com/EttusResearch/uhd>
   * libsctp:             <https://github.com/sctp/lksctp-tools>
   * yaml-cpp:            <https://github.com/jbeder/yaml-cpp>
   * PolarSSL/mbedTLS:    <https://www.trustedfirmware.org/projects/mbed-tls/>
@@ -52,7 +53,6 @@ sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest
 </details>
 
 * Optional requirements
-  * UHD:                 <https://github.com/EttusResearch/uhd>
   * ZeroMQ:              <https://github.com/zeromq>
 
 Download and build srsRAN:
