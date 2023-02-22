@@ -69,6 +69,38 @@ static bool validate_amplitude_control_appconfig(const amplitude_control_appconf
   return valid;
 }
 
+static bool validate_dl_arfcn_and_band(const base_cell_appconfig& config)
+{
+  nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
+
+  // Check whether the DL-ARFCN is within the band and follows the Raster step.
+  if (config.band.has_value()) {
+    error_type<std::string> ret =
+        band_helper::is_dl_arfcn_valid_given_band(*config.band, config.dl_arfcn, config.common_scs);
+    if (ret.is_error()) {
+      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_arfcn, *config.band, ret.error());
+      return false;
+    }
+  } else {
+    if (band == nr_band::invalid) {
+      fmt::print("Invalid DL ARFCN={}. Cause: Could not find a valid band.\n", config.dl_arfcn);
+      return false;
+    }
+  }
+
+  // Check if the band is supported.
+  if (band == srsran::nr_band::n79) {
+    fmt::print("Band n79 not currently supported.\n");
+    return false;
+  }
+  if (config.common_scs == srsran::subcarrier_spacing::kHz15 and
+      (band == srsran::nr_band::n34 or band == srsran::nr_band::n38 or band == srsran::nr_band::n39)) {
+    fmt::print("Bands n34, 38 and 39 not currently supported with SCS 15kHz.\n");
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
 static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
 {
@@ -88,18 +120,6 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     fmt::print("Currently, only one UL antenna is supported.\n", config.nof_antennas_ul);
     return false;
   }
-  if (config.band.has_value()) {
-    error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(*config.band, config.dl_arfcn);
-    if (ret.is_error()) {
-      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_arfcn, *config.band, ret.error());
-      return false;
-    }
-  } else {
-    if (band_helper::get_band_from_dl_arfcn(config.dl_arfcn) == nr_band::invalid) {
-      fmt::print("Invalid DL ARFCN={}. Cause: Could not find a valid band.\n", config.dl_arfcn);
-      return false;
-    }
-  }
   if (config.common_scs == srsran::subcarrier_spacing::kHz15 and
       config.channel_bw_mhz > srsran::bs_channel_bandwidth_fr1::MHz50) {
     fmt::print("Maximum Channel BW with SCS common 15kHz is 50MHz.\n");
@@ -108,6 +128,10 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   if (config.common_scs == srsran::subcarrier_spacing::kHz30 and
       config.channel_bw_mhz < srsran::bs_channel_bandwidth_fr1::MHz10) {
     fmt::print("Minimum supported Channel BW with SCS common 30kHz is 10MHz.\n");
+    return false;
+  }
+
+  if (!validate_dl_arfcn_and_band(config)) {
     return false;
   }
 

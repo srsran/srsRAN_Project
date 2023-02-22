@@ -98,7 +98,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-       // clang-format off
+    // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
     {nr_band::n2,  duplex_mode::FDD},
     {nr_band::n3,  duplex_mode::FDD},
@@ -293,10 +293,22 @@ nr_band srsran::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
   return nr_band::invalid;
 }
 
-error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn)
+error_type<std::string>
+srsran::band_helper::is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn, subcarrier_spacing scs)
 {
+  // NOTE: This function restricts the choice of ARFCN for bands n41, n77, n78, and n79. As per Section 5.4.2.3,
+  // TS 38.104, Delta freq raster of 30kHz cannot be used for SSB SCS and SCS common of 15kHz. In this function we make
+  // a stronger requirement, i.e., we set Delta freq raster equal to the SSB SCS and SCS common.
+
+  // Assume standard Delta freq raster of 100kHz.
+  delta_freq_raster band_delta_freq_raster = delta_freq_raster::kHz100;
+  // Update Delta freq raster based on SCS for bands n41, n77, n78, and n79.
+  if (band == nr_band::n41 or band == nr_band::n77 or band == nr_band::n78 or band == nr_band::n79) {
+    band_delta_freq_raster = scs == subcarrier_spacing::kHz15 ? delta_freq_raster::kHz15 : delta_freq_raster::kHz30;
+  }
+
   for (const nr_band_raster& raster_band : nr_band_table_fr1) {
-    if (raster_band.band == band) {
+    if (raster_band.band == band and raster_band.delta_f_rast == band_delta_freq_raster) {
       if (arfcn >= raster_band.dl_nref_first and arfcn <= raster_band.dl_nref_last and
           ((arfcn - raster_band.dl_nref_first) % raster_band.dl_nref_step) == 0) {
         return {};
@@ -630,8 +642,19 @@ optional<ssb_coreset0_freq_location> srsran::band_helper::get_ssb_coreset0_freq_
                                                                                          subcarrier_spacing scs_ssb,
                                                                                          uint8_t            ss0_idx)
 {
-  srsran_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n79,
-                "Bands n34, n38, n39 and n79 not currently supported");
+  srsran_assert(band != nr_band::n79, "Band n79 not currently supported");
+  srsran_assert(scs_ssb < subcarrier_spacing::kHz60,
+                "Only 15kHz and 30kHz currently supported for SSB subcarrier spacing");
+  srsran_assert(scs_ssb == scs_common, "SSB subcarrier spacing different from SCS common is not currently supporetd");
+  if (scs_ssb == subcarrier_spacing::kHz15) {
+    srsran_assert(band != nr_band::n34 && band != nr_band::n38 && band != nr_band::n39 && band != nr_band::n79,
+                  "Bands n34, n38 and n39 not currently supported with SSB 15kHz subcarrier spacing");
+  }
+  error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(band, dl_arfcn, scs_ssb);
+  if (ret.is_error()) {
+    return nullopt;
+  }
+
   optional<ssb_coreset0_freq_location> result;
 
   // Get f_ref, point_A from dl_arfcn, band and bandwidth.

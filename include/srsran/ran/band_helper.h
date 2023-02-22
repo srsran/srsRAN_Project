@@ -99,8 +99,10 @@ nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 /// \brief     Checks whether a Downlink ARFCN is valid for a given band.
 /// \param[in] band Given NR band.
 /// \param[in] arfcn Given Downlink ARFCN.
+/// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1. Only used
+/// for bands n41, n77, n78, n79.
 /// \return    If the DL ARFCN is invalid for the band, a std::string value is returned with the reason.
-error_type<std::string> is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn);
+error_type<std::string> is_dl_arfcn_valid_given_band(nr_band band, uint32_t arfcn, subcarrier_spacing scs);
 
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
