@@ -11,7 +11,7 @@
 #include "f1ap_cu_impl.h"
 #include "../../ran/gnb_format.h"
 #include "../common/asn1_helpers.h"
-#include "f1ap_asn1_converters.h"
+#include "f1ap_asn1_helpers.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/ran/nr_cgi_helpers.h"
 
@@ -132,6 +132,28 @@ f1ap_cu_impl::handle_ue_context_modification_request(const cu_cp_ue_context_modi
   srsran_assert(
       ue_ctx_list.contains(request.ue_index) == true, "UE with index {} is not a valid F1AP UE", request.ue_index);
   return launch_async<ue_context_modification_procedure>(request, ue_ctx_list[request.ue_index], pdu_notifier, logger);
+}
+
+void f1ap_cu_impl::handle_paging(const cu_cp_paging_message& msg)
+{
+  asn1::f1ap::paging_s paging = {};
+
+  logger.debug("Sending Paging");
+  // Pack message into PDU
+  f1ap_message paging_msg;
+  paging_msg.pdu.set_init_msg();
+  paging_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_PAGING);
+
+  fill_asn1_paging_message(paging_msg.pdu.init_msg().value.paging(), msg);
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    paging_msg.pdu.to_json(js);
+    logger.debug("Containerized Paging: {}", js.to_string());
+  }
+
+  // send DL RRC message
+  pdu_notifier.on_new_message(paging_msg);
 }
 
 void f1ap_cu_impl::handle_message(const f1ap_message& msg)

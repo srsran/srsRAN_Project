@@ -102,6 +102,15 @@ public:
   handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) = 0;
 };
 
+/// Handle F1AP paging procedures as defined in TS 38.473 section 8.7.
+class f1ap_paging_manager
+{
+public:
+  virtual ~f1ap_paging_manager() = default;
+
+  virtual void handle_paging(const cu_cp_paging_message& msg) = 0;
+};
+
 /// Interface to notify the reception of an new RRC message.
 class f1ap_rrc_message_notifier
 {
@@ -189,7 +198,8 @@ class f1ap_cu : public f1ap_message_handler,
                 public f1ap_rrc_message_handler,
                 public f1ap_connection_manager,
                 public f1ap_ue_context_manager,
-                public f1ap_statistics_handler
+                public f1ap_statistics_handler,
+                public f1ap_paging_manager
 {
 public:
   virtual ~f1ap_cu() = default;
@@ -200,6 +210,7 @@ public:
   virtual f1ap_connection_manager&  get_f1ap_connection_manager()  = 0;
   virtual f1ap_ue_context_manager&  get_f1ap_ue_context_manager()  = 0;
   virtual f1ap_statistics_handler&  get_f1ap_statistics_handler()  = 0;
+  virtual f1ap_paging_manager&      get_f1ap_paging_manager()      = 0;
 
   /// \brief Update a notifier to higher layers for a UE.
   /// \param[in] ue_index The index of the UE.

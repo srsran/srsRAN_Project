@@ -278,5 +278,49 @@ inline void fill_f1ap_ue_context_modification_response_message(cu_cp_ue_context_
   }
 }
 
+/// \brief Convert the \c cu_cp_paging_message type to ASN.1.
+/// \param[out] asn1_paging The ASN.1 type struct to store the result.
+/// \param[in] paging The common type Paging message.
+inline void fill_asn1_paging_message(asn1::f1ap::paging_s& asn1_paging, const cu_cp_paging_message& paging)
+{
+  // Add ue id idx value
+  // UE Identity Index value is defined as: UE_ID 5G-S-TMSI mod 1024  (see TS 38.304 section 7.1)
+  asn1_paging->ue_id_idx_value.value.set_idx_len10().from_number(paging.ue_paging_id.five_g_tmsi % 1024);
+
+  // Add paging id
+  asn1_paging->paging_id.value.set_cn_ue_paging_id().set_five_g_s_tmsi().from_number(paging.ue_paging_id.five_g_tmsi);
+
+  // Add paging drx
+  if (paging.paging_drx.has_value()) {
+    asn1_paging->paging_drx_present = true;
+    asn1::number_to_enum(asn1_paging->paging_drx.value, paging.paging_drx.value());
+  }
+
+  // Add paging prio
+  if (paging.paging_prio.has_value()) {
+    asn1_paging->paging_prio_present = true;
+    asn1::number_to_enum(asn1_paging->paging_prio.value, paging.paging_prio.value());
+  }
+
+  // Add paging cell list
+  for (const auto& cell_item : paging.assist_data_for_paging.value()
+                                   .assist_data_for_recommended_cells.value()
+                                   .recommended_cells_for_paging.recommended_cell_list) {
+    asn1::protocol_ie_single_container_s<asn1::f1ap::paging_cell_item_ies_o> asn1_paging_cell_item_container;
+    auto& asn1_paging_cell_item = asn1_paging_cell_item_container->paging_cell_item();
+
+    asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(cell_item.ngran_cgi.nci.packed);
+    asn1_paging_cell_item.nr_cgi.plmn_id.from_string(cell_item.ngran_cgi.plmn_hex);
+
+    asn1_paging->paging_cell_list.value.push_back(asn1_paging_cell_item_container);
+  }
+
+  // Add paging origin
+  if (paging.paging_origin.has_value()) {
+    asn1_paging->paging_origin_present = true;
+    asn1::string_to_enum(asn1_paging->paging_origin.value, paging.paging_origin.value());
+  }
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

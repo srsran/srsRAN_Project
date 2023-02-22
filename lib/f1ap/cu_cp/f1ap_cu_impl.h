@@ -38,15 +38,12 @@ public:
   void connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1ap_rrc_message_notifier& notifier) override;
 
   // f1ap connection manager functions
-
   void handle_f1_setup_response(const f1_setup_response_message& msg) override;
 
   // f1ap rrc message transfer procedure functions
-
   void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) override;
 
   // f1ap ue context manager functions
-
   async_task<f1ap_ue_context_setup_response>
   handle_ue_context_setup_request(const f1ap_ue_context_setup_request& request) override;
 
@@ -55,8 +52,10 @@ public:
   async_task<cu_cp_ue_context_modification_response>
   handle_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) override;
 
-  // f1ap message handler functions
+  // f1ap paging handler functions
+  void handle_paging(const cu_cp_paging_message& msg) override;
 
+  // f1ap message handler functions
   void handle_message(const f1ap_message& msg) override;
 
   void handle_connection_loss() override {}
@@ -71,6 +70,7 @@ public:
   f1ap_connection_manager&  get_f1ap_connection_manager() override { return *this; }
   f1ap_ue_context_manager&  get_f1ap_ue_context_manager() override { return *this; }
   f1ap_statistics_handler&  get_f1ap_statistics_handler() override { return *this; }
+  f1ap_paging_manager&      get_f1ap_paging_manager() override { return *this; }
 
 private:
   /// \brief Notify about the reception of an initiating message.
