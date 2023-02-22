@@ -21,7 +21,6 @@ Build Instructions
   * libsctp:             <https://github.com/sctp/lksctp-tools>
   * yaml-cpp:            <https://github.com/jbeder/yaml-cpp>
   * PolarSSL/mbedTLS:    <https://www.trustedfirmware.org/projects/mbed-tls/>
-  * git-lfs:             <https://git-lfs.github.com/>
   * googletest:          <https://github.com/google/googletest/>
     * You can skip test building by using the cmake option `-DBUILD_TESTS=False`. GoogleTest is not mandatory when building without tests.
 
@@ -32,8 +31,7 @@ You can install the required libraries for some example distributions with the c
 
 
 ```bash
-sudo apt-get install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev git-lfs
-git lfs install
+sudo apt-get install cmake make gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
 ```
 </details>
 <details>
@@ -41,8 +39,7 @@ git lfs install
 
 
 ```bash
-sudo yum install cmake make gcc gcc-c++ fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel git-lfs
-git lfs install
+sudo yum install cmake make gcc gcc-c++ fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel
 ```
 </details>
 <details>
@@ -50,8 +47,7 @@ git lfs install
 
 
 ```bash
-sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest git-lfs
-git lfs install
+sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest
 ```
 </details>
 
@@ -62,9 +58,8 @@ git lfs install
 Download and build srsRAN:
 
 ```bash
-git clone https://gitlab.com/softwareradiosystems/srsran.git
+git clone https://github.com/srsran/srsRAN_Project.git
 cd srsran
-git lfs pull
 mkdir build
 cd build
 cmake ../
