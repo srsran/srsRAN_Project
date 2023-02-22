@@ -77,24 +77,6 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
     if (app.count("--gtpu_level") == 0) {
       log_params.gtpu_level = log_params.all_level;
     }
-    if (app.count("--fapi_level") == 0) {
-      log_params.fapi_level = "warning";
-    }
-    if (app.count("--sdap_level") == 0) {
-      log_params.sdap_level = "warning";
-    }
-    if (app.count("--f1u_level") == 0) {
-      log_params.f1u_level = "warning";
-    }
-    if (app.count("--du_level") == 0) {
-      log_params.du_level = "warning";
-    }
-    if (app.count("--cu_level") == 0) {
-      log_params.cu_level = "warning";
-    }
-    if (app.count("--lib_level") == 0) {
-      log_params.lib_level = "warning";
-    }
   });
 }
 
