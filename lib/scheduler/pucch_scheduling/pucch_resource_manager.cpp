@@ -153,8 +153,11 @@ const pucch_resource* pucch_resource_manager::reserve_specific_format2_res(slot_
   rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(slot_harq);
 
   const unsigned PUCCH_RESOURCE_SET_FORMAT2_IDX = 1;
-  srsran_sanity_check(res_indicator < pucch_cfg.pucch_res_set[PUCCH_RESOURCE_SET_FORMAT2_IDX].pucch_res_id_list.size(),
-                      "PUCCH resource indicator exceeds the PUCCH resource set list.");
+  if (res_indicator >= std::min(res_counter.ues_using_format2_res.size(),
+                                pucch_cfg.pucch_res_set[PUCCH_RESOURCE_SET_FORMAT2_IDX].pucch_res_id_list.size())) {
+    // PUCCH resource indicator exceeds the PUCCH resource set list.
+    return nullptr;
+  }
 
   const auto& pucch_res_list = pucch_cfg.pucch_res_list;
 

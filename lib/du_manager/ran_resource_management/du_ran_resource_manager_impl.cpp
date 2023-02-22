@@ -84,6 +84,7 @@ ue_ran_resource_configurator du_ran_resource_manager_impl::create_ue_resource_co
   // UE initialized PCell.
   if (not allocate_cell_resources(ue_index, pcell_index, SERVING_CELL_PCELL_IDX)) {
     logger.warning("RAN Resource Allocation failed for ue={}", ue_index);
+    ue_res_pool.erase(ue_index);
     return ue_ran_resource_configurator{std::unique_ptr<du_ue_ran_resource_updater_impl>{nullptr}};
   }
 
