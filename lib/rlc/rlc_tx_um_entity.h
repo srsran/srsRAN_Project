@@ -56,6 +56,9 @@ private:
   const uint32_t head_len_first;
   const uint32_t head_len_not_first;
 
+  // Storage for previous buffer state
+  unsigned prev_buffer_state = 0;
+
 public:
   rlc_tx_um_entity(du_ue_index_t                        du_index,
                    rb_id_t                              rb_id,
