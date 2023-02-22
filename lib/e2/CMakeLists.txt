@@ -5,14 +5,13 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+
 set(SOURCES
     procedures/e2_setup_procedure.cpp
     common/e2ap_asn1_packer.cpp
     common/e2_factory.cpp
     common/e2_impl.cpp
  )
-
-
 
 add_library(srsran_e2 STATIC ${SOURCES})
 target_link_libraries(srsran_e2 e2ap_asn1)
