@@ -10,6 +10,7 @@
 
 #include "rlc_tx_am_entity.h"
 #include "srsran/adt/scope_exit.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -697,8 +698,16 @@ void rlc_tx_am_entity::handle_buffer_state_update()
 void rlc_tx_am_entity::handle_buffer_state_update_nolock()
 {
   unsigned bs = get_buffer_state_nolock();
-  logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
-  lower_dn.on_buffer_state_update(bs);
+  if (not(bs > MAX_DL_PDU_LENGTH && prev_buffer_state > MAX_DL_PDU_LENGTH)) {
+    logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
+    lower_dn.on_buffer_state_update(bs);
+  } else {
+    logger.log_debug(
+        "Buffer state very large. Avoiding sending buffer state to lower layer. bs={} prev_buffer_state={}",
+        bs,
+        prev_buffer_state);
+  }
+  prev_buffer_state = bs;
 }
 
 uint32_t rlc_tx_am_entity::get_buffer_state_nolock()

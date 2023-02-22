@@ -107,6 +107,9 @@ private:
 
   task_executor& pcell_executor;
 
+  // Storage for previous buffer state
+  unsigned prev_buffer_state = 0;
+
 public:
   rlc_tx_am_entity(du_ue_index_t                        du_index,
                    rb_id_t                              rb_id,
