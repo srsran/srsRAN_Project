@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding/polar)
+include_directories(${PROJECT_SOURCE_DIR}/include/srsran/phy/upper/channel_coding/polar)
 
 add_library(srsran_polar STATIC
         polar_allocator_impl.cpp
@@ -17,5 +17,5 @@ add_library(srsran_polar STATIC
         polar_interleaver_impl.cpp
         polar_rate_dematcher_impl.cpp
         polar_rate_matcher_impl.cpp
-)
+        )
 target_link_libraries(srsran_polar log_likelihood_ratio srslog)

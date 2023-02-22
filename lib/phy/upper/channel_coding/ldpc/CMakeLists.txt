@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding/ldpc)
+include_directories(${PROJECT_SOURCE_DIR}/include/srsran/phy/upper/channel_coding/ldpc)
 
 set(ldpc_sources
         ldpc_graph_impl.cpp
@@ -36,11 +36,11 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set_source_files_properties(ldpc_rate_dematcher_avx512_impl.cpp PROPERTIES COMPILE_OPTIONS "-mavx512f;-mavx512bw;")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 
-if(HAVE_NEON)
-  list(APPEND ldpc_sources ldpc_encoder_neon.cpp)
-  list(APPEND ldpc_sources ldpc_decoder_neon.cpp)
-  list(APPEND ldpc_sources ldpc_rate_dematcher_neon_impl.cpp)
-endif(HAVE_NEON)
+if (HAVE_NEON)
+    list(APPEND ldpc_sources ldpc_encoder_neon.cpp)
+    list(APPEND ldpc_sources ldpc_decoder_neon.cpp)
+    list(APPEND ldpc_sources ldpc_rate_dematcher_neon_impl.cpp)
+endif (HAVE_NEON)
 
 add_library(srsran_ldpc STATIC ${ldpc_sources})
 
