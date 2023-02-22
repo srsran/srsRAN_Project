@@ -19,6 +19,8 @@ using namespace srsran;
 static serving_cell_config create_initial_ue_serving_cell_config_with_csi()
 {
   serving_cell_config cfg = config_helpers::create_default_initial_ue_serving_cell_config();
+  cfg.ul_config.reset();
+  cfg.ul_config.emplace(test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}));
   if (not cfg.csi_meas_cfg.has_value()) {
     cfg.csi_meas_cfg.emplace(config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
   }
