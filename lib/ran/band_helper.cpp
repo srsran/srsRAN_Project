@@ -301,7 +301,7 @@ error_type<std::string> srsran::band_helper::is_dl_arfcn_valid_given_band(nr_ban
           ((arfcn - raster_band.dl_nref_first) % raster_band.dl_nref_step) == 0) {
         return {};
       }
-      return {fmt::format("DL ARFCN must be within the interval [{},{}], step {}, for the chosen band",
+      return {fmt::format("DL ARFCN must be within the interval [{},{}], in steps of {}, for the chosen band",
                           raster_band.dl_nref_first,
                           raster_band.dl_nref_last,
                           raster_band.dl_nref_step)};
