@@ -62,7 +62,7 @@ ForEachMacros:
   - BOOST_FOREACH
 IncludeBlocks:   Preserve
 IncludeCategories: #Changed
-  - Regex:           '^"(srsgnb|llvm|llvm-c|clang|clang-c)/'
+  - Regex:           '^"(srsran|llvm|llvm-c|clang|clang-c)/'
     Priority:        2
   - Regex:           '^(<|"(CLI|fmt|gtest|gmock|isl|json|variant)/)'
     Priority:        3

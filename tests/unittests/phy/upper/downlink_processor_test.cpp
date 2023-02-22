@@ -27,9 +27,9 @@
 #include "channel_processors/pdsch_processor_test_doubles.h"
 #include "channel_processors/ssb_processor_test_doubles.h"
 #include "signal_processors/nzp_csi_rs_generator_test_doubles.h"
+#include "upper_phy_rg_gateway_test_doubles.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/srsran_test.h"
-#include "upper_phy_rg_gateway_test_doubles.h"
 
 using namespace srsran;
 

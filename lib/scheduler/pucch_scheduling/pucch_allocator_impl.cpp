@@ -686,13 +686,14 @@ pucch_harq_ack_grant pucch_allocator_impl::convert_to_format2(cell_slot_resource
   // indicator as for existing F1.
   else if (csi_part1_nof_bits > 0 and curr_harq_bits > 0) {
     int f1_pucch_res_ind = resource_manager.fetch_f1_pucch_res_indic(pucch_slot_alloc.slot, rnti);
-    srsran_sanity_check(f1_pucch_res_ind >= 0, "PUCCH Resource Indicator for allocated resource not found");
-    format2_res.pucch_res = resource_manager.reserve_specific_format2_res(
-        pucch_slot_alloc.slot,
-        rnti,
-        static_cast<unsigned>(f1_pucch_res_ind),
-        ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
-    format2_res.pucch_res_indicator = static_cast<unsigned>(f1_pucch_res_ind);
+    if (f1_pucch_res_ind >= 0) {
+      format2_res.pucch_res = resource_manager.reserve_specific_format2_res(
+          pucch_slot_alloc.slot,
+          rnti,
+          static_cast<unsigned>(f1_pucch_res_ind),
+          ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+      format2_res.pucch_res_indicator = static_cast<unsigned>(f1_pucch_res_ind);
+    }
   }
   // Case C) In any other case, just get any available PUCCH resource 2.
   else {

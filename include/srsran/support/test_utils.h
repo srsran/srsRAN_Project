@@ -22,9 +22,9 @@
 
 #pragma once
 
+#include "srsran_test.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/error_handling.h"
-#include "srsran_test.h"
 #include <cstdio>
 #include <random>
 

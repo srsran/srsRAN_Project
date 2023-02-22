@@ -21,8 +21,8 @@
  */
 
 #include "lib/srslog/formatters/text_formatter.h"
-#include "srsran/srslog/detail/log_entry_metadata.h"
 #include "testing_helpers.h"
+#include "srsran/srslog/detail/log_entry_metadata.h"
 #include <numeric>
 
 using namespace srslog;

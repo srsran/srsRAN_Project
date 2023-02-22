@@ -121,32 +121,32 @@ static void add_bbb_simd(const int8_t* x, const int8_t* y, int8_t* z, std::size_
 
 void srsran::srsvec::add(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   add_fff_simd((float*)x.data(), (float*)y.data(), (float*)z.data(), 2 * z.size());
 }
 
 void srsran::srsvec::add(span<const float> x, span<const float> y, span<float> z)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   add_fff_simd(x.data(), y.data(), z.data(), z.size());
 }
 
 void srsran::srsvec::add(span<const int16_t> x, span<const int16_t> y, span<int16_t> z)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   add_sss_simd(x.data(), y.data(), z.data(), z.size());
 }
 
 void srsran::srsvec::add(span<const int8_t> x, span<const int8_t> y, span<int8_t> z)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   add_bbb_simd(x.data(), y.data(), z.data(), z.size());
 }

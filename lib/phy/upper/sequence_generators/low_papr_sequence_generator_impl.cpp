@@ -189,7 +189,7 @@ void low_papr_sequence_generator_impl::r_uv_arg(span<float> tmp_arg, uint32_t u,
   } else if (M_zc >= 36) {
     r_uv_arg_mprb(tmp_arg, u, v);
   } else {
-    srsgnb_terminate("Invalid sequence length {}", M_zc);
+    srsran_terminate("Invalid sequence length {}", M_zc);
   }
 }
 

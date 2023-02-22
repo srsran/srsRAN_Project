@@ -23,9 +23,9 @@
 #include "ue_cell_grid_allocator.h"
 #include "../support/mcs_calculator.h"
 #include "../support/mcs_tbs_calculator.h"
-#include "srsran/support/error_handling.h"
 #include "ue_dci_builder.h"
 #include "ue_sch_pdu_builder.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 

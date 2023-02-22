@@ -31,7 +31,7 @@ std::unique_ptr<io_broker> srsran::create_io_broker(io_broker_type type)
     case io_broker_type::epoll:
       return std::make_unique<io_broker_epoll>(io_broker_config());
     default:
-      srsgnb_terminate("IO broker type not supported");
+      srsran_terminate("IO broker type not supported");
   }
   return nullptr;
 }

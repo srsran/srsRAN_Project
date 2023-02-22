@@ -23,9 +23,9 @@
 #pragma once
 
 #include "../cell/cell_configuration.h"
+#include "ue_configuration.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
-#include "ue_configuration.h"
 
 namespace srsran {
 

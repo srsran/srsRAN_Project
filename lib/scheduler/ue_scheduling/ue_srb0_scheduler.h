@@ -24,9 +24,9 @@
 
 #include "../policy/ue_allocator.h"
 #include "../support/slot_event_list.h"
-#include "srsran/scheduler/scheduler_configurator.h"
 #include "ue.h"
 #include "ue_sch_pdu_builder.h"
+#include "srsran/scheduler/scheduler_configurator.h"
 #include <queue>
 
 namespace srsran {

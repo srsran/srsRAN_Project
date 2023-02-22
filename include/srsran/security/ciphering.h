@@ -24,9 +24,9 @@
 
 #include "s3g.h"
 #include "security.h"
-#include "srsran/adt/byte_buffer.h"
 #include "ssl.h"
 #include "zuc.h"
+#include "srsran/adt/byte_buffer.h"
 
 namespace srsran {
 namespace security {

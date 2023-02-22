@@ -22,11 +22,11 @@
 
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
+#include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/ran/frame_types.h"
 #include "srsran/ran/ssb_mapping.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/test_utils.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include <gtest/gtest.h>
 
 /// This will be removed once we can get this value from the slot object.

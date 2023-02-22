@@ -26,12 +26,12 @@
 #include "procedures/bearer_context_release_procedure.h"
 #include "procedures/bearer_context_setup_procedure.h"
 #include "procedures/cu_cp_e1_setup_procedure.h"
+#include "ue_context/e1ap_cu_cp_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
-#include "ue_context/e1ap_cu_cp_ue_context.h"
 #include <memory>
 
 namespace srsran {

@@ -21,13 +21,13 @@
  */
 
 #include "srsran/ran/band_helper.h"
+#include "ssb_freq_position_generator.h"
 #include "srsran/adt/interval.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/subcarrier_spacing.h"
-#include "ssb_freq_position_generator.h"
 
 using namespace srsran;
 

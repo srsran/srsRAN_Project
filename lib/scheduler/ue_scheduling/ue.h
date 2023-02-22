@@ -23,11 +23,11 @@
 #pragma once
 
 #include "dl_logical_channel_manager.h"
+#include "ue_cell.h"
+#include "ul_logical_channel_manager.h"
 #include "srsran/adt/stable_id_map.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/mac_scheduler.h"
-#include "ue_cell.h"
-#include "ul_logical_channel_manager.h"
 
 namespace srsran {
 

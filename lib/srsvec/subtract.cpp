@@ -121,8 +121,8 @@ static void subtract_bbb_simd(int8_t* z, const int8_t* x, const int8_t* y, std::
 
 void srsran::srsvec::subtract(span<cf_t> z, span<const cf_t> x, span<const cf_t> y)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   subtract_fff_simd(reinterpret_cast<float*>(z.data()),
                     reinterpret_cast<const float*>(x.data()),
@@ -132,24 +132,24 @@ void srsran::srsvec::subtract(span<cf_t> z, span<const cf_t> x, span<const cf_t>
 
 void srsran::srsvec::subtract(span<float> z, span<const float> x, span<const float> y)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   subtract_fff_simd(z.data(), x.data(), y.data(), z.size());
 }
 
 void srsran::srsvec::subtract(span<int16_t> z, span<const int16_t> x, span<const int16_t> y)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   subtract_sss_simd(z.data(), x.data(), y.data(), z.size());
 }
 
 void srsran::srsvec::subtract(span<int8_t> z, span<const int8_t> x, span<const int8_t> y)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  srsgnb_srsvec_assert_size(x, z);
+  srsran_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, z);
 
   subtract_bbb_simd(z.data(), x.data(), y.data(), z.size());
 }

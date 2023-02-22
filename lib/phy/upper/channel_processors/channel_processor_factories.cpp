@@ -37,6 +37,9 @@
 #include "pusch_decoder_impl.h"
 #include "pusch_demodulator_impl.h"
 #include "pusch_processor_impl.h"
+#include "ssb_processor_impl.h"
+#include "uci_decoder_impl.h"
+#include "ulsch_demultiplex_impl.h"
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
@@ -44,9 +47,6 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/zero.h"
-#include "ssb_processor_impl.h"
-#include "uci_decoder_impl.h"
-#include "ulsch_demultiplex_impl.h"
 
 using namespace srsran;
 

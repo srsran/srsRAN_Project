@@ -22,9 +22,9 @@
 
 #include "../../../lib/phy/upper/uplink_request_processor_impl.h"
 #include "../support/prach_buffer_test_doubles.h"
+#include "upper_phy_rx_symbol_request_notifier_test_doubles.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/support_factories.h"
-#include "upper_phy_rx_symbol_request_notifier_test_doubles.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

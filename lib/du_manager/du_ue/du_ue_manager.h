@@ -23,12 +23,12 @@
 #pragma once
 
 #include "du_ue.h"
+#include "ue_manager_ctrl_configurator.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/stable_id_map.h"
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/support/async/async_task_loop.h"
-#include "ue_manager_ctrl_configurator.h"
 
 namespace srsran {
 namespace srs_du {

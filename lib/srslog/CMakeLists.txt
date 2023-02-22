@@ -19,18 +19,18 @@
 #
 
 set(SOURCES
-    backend_worker.cpp
-    srslog.cpp
-    srslog_c.cpp
-    event_trace.cpp)
+        backend_worker.cpp
+        srslog.cpp
+        srslog_c.cpp
+        event_trace.cpp)
 
-include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srslog/bundled/)
-include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srslog/formatters)
+include_directories(${PROJECT_SOURCE_DIR}/include/srsran/srslog/bundled/)
+include_directories(${PROJECT_SOURCE_DIR}/include/srsran/srslog/formatters)
 
 set(SOURCES
-    ${SOURCES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/formatters/json_formatter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/formatters/text_formatter.cpp)
+        ${SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/formatters/json_formatter.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/formatters/text_formatter.cpp)
 
 
 add_library(srslog STATIC ${SOURCES})

@@ -233,6 +233,7 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
 
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
+  app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
   app.add_option("--dl_arfcn", cell_params.dl_arfcn, "Donwlink ARFCN")->capture_default_str();
   add_auto_enum_option(app, "--band", cell_params.band, "NR band");
   app.add_option("--common_scs", cell_params.common_scs, "Cell common subcarrier spacing")
@@ -306,7 +307,6 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)
 {
-  app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
   configure_cli11_common_cell_args(app, cell_params.cell);
 }
 

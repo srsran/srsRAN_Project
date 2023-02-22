@@ -24,12 +24,12 @@
 #include "lib/du_high/du_high_executor_strategies.h"
 #include "lib/f1ap/common/f1ap_asn1_packer.h"
 #include "lib/gateways/sctp_network_gateway_impl.h"
-#include "srsran/du/du_cell_config_helpers.h"
-#include "srsran/support/test_utils.h"
 #include "test_utils/du_high_worker_manager.h"
 #include "test_utils/dummy_test_components.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/gateways/test_helpers.h"
+#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace srs_du;

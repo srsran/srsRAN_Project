@@ -33,7 +33,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
   for (const auto& cell : config.cells_cfg) {
     cell_config_builder_params param;
     const base_cell_appconfig& base_cell = cell.cell;
-    param.pci                            = cell.pci;
+    param.pci                            = base_cell.pci;
     param.scs_common                     = base_cell.common_scs;
     param.channel_bw_mhz                 = base_cell.channel_bw_mhz;
     param.dl_arfcn                       = base_cell.dl_arfcn;
@@ -49,7 +49,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         base_cell.dl_arfcn, *param.band, nof_crbs, base_cell.common_scs, base_cell.common_scs, ss0_idx);
 
     if (!ssb_freq_loc.has_value()) {
-      report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", cell.pci);
+      report_error("Unable to derive a valid SSB pointA and k_SSB for cell id ({}).\n", base_cell.pci);
     }
 
     srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
@@ -65,7 +65,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     logger.info(
         "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
         "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
-        cell.pci,
+        base_cell.pci,
         base_cell.band,
         base_cell.dl_arfcn,
         nof_crbs,

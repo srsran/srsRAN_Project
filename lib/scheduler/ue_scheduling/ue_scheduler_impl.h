@@ -28,14 +28,14 @@
 #include "../support/slot_event_list.h"
 #include "../support/slot_sync_point.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
-#include "srsran/adt/slotted_array.h"
-#include "srsran/adt/unique_function.h"
-#include "srsran/scheduler/config/scheduler_expert_config.h"
-#include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"
 #include "ue_srb0_scheduler.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/adt/unique_function.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
+#include "srsran/scheduler/config/serving_cell_config_factory.h"
 
 namespace srsran {
 

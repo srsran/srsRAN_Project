@@ -27,11 +27,11 @@
 #include "mac_dl_ue_manager.h"
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
+#include "ssb_assembler.h"
 #include "srsran/mac/mac.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
-#include "ssb_assembler.h"
 
 namespace srsran {
 

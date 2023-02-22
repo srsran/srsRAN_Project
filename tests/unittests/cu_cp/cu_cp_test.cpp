@@ -22,14 +22,14 @@
 
 #include "common/test_helpers.h"
 #include "lib/cu_cp/cu_cp.h"
-#include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/support/executors/manual_task_worker.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/e1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "tests/unittests/ngap/test_helpers.h"
+#include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

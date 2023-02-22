@@ -23,6 +23,7 @@
 #include "lib/cu_cp/ue_manager_impl.h"
 #include "lib/ngap/ngap_asn1_helpers.h"
 #include "lib/ngap/ngap_asn1_packer.h"
+#include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/ngap/ngap_configuration_helpers.h"
 #include "srsran/ngap/ngap_factory.h"
@@ -31,7 +32,6 @@
 #include "srsran/support/io_broker/io_broker_factory.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
-#include "tests/unittests/ngap/test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

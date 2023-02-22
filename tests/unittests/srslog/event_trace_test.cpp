@@ -20,10 +20,10 @@
  *
  */
 
-#include "srsran/srslog/event_trace.h"
-#include "srsran/srslog/log_channel.h"
 #include "test_dummies.h"
 #include "testing_helpers.h"
+#include "srsran/srslog/event_trace.h"
+#include "srsran/srslog/log_channel.h"
 #include <thread>
 
 using namespace srslog;

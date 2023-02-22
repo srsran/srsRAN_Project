@@ -27,7 +27,7 @@ using namespace srsran;
 
 unsigned srsvec::clip(span<float> y, span<const float> x, const float threshold)
 {
-  srsgnb_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, y);
 
   unsigned nof_clipped_samples = 0;
   unsigned len                 = x.size();
@@ -57,7 +57,7 @@ unsigned srsvec::clip_iq(span<cf_t> y, span<const cf_t> x, const float threshold
 
 unsigned srsvec::clip_magnitude(span<cf_t> y, span<const cf_t> x, const float threshold)
 {
-  srsgnb_srsvec_assert_size(x, y);
+  srsran_srsvec_assert_size(x, y);
 
   unsigned nof_clipped_samples = 0;
   unsigned len                 = x.size();

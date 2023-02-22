@@ -24,12 +24,12 @@
 #include "../ue_scheduling/ue_sch_pdu_builder.h"
 #include "dmrs_helpers.h"
 #include "prbs_calculator.h"
+#include "tbs_calculator.h"
 #include "srsran/adt/variant.h"
 #include "srsran/ran/pdsch/dlsch_info.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/uci/uci_mapping.h"
-#include "tbs_calculator.h"
 
 using namespace srsran;
 
@@ -269,6 +269,11 @@ optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&   pu
 
   // If no MCS such that effective code rate <= 0.95, return an empty optional object.
   if (effective_code_rate > max_supported_code_rate and mcs == 0) {
+    return nullopt;
+  }
+
+  // If no MCS such that nof bits for PUSCH > 0, return an empty optional object.
+  if (effective_code_rate == 0) {
     return nullopt;
   }
 

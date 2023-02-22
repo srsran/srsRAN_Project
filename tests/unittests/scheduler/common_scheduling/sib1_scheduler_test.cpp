@@ -24,9 +24,9 @@
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/support/ssb_helpers.h"
-#include "srsran/support/test_utils.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -57,7 +57,7 @@ public:
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
+    srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
 
@@ -68,7 +68,7 @@ public:
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
+    srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
 
@@ -77,13 +77,13 @@ public:
                                               search_space_id               ss_id,
                                               aggregation_level             aggr_lvl) override
   {
-    srsgnb_terminate("Common PDCCHs should not be called while allocating RARs");
+    srsran_terminate("Common PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
 
   bool cancel_last_pdcch(cell_slot_resource_allocator& slot_alloc) override
   {
-    srsgnb_terminate("Not supported");
+    srsran_terminate("Not supported");
     return true;
   }
 };

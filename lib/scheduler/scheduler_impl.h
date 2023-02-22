@@ -26,10 +26,10 @@
 #include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_metrics_handler.h"
 #include "logging/scheduler_result_logger.h"
+#include "ue_scheduling/ue_scheduler.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/scheduler/scheduler_factory.h"
-#include "ue_scheduling/ue_scheduler.h"
 
 namespace srsran {
 

@@ -64,7 +64,7 @@ unsigned srsran::prime_greater_than(unsigned n)
     }
   }
 
-  srsgnb_terminate("n={} exceeds the maximum prime.", n);
+  srsran_terminate("n={} exceeds the maximum prime.", n);
 }
 
 unsigned srsran::prime_lower_than(unsigned n)

@@ -325,7 +325,9 @@ static std::unique_ptr<radio_session>
 build_radio(task_executor& executor, radio_notification_handler& radio_handler, const gnb_appconfig& config)
 {
   std::unique_ptr<radio_factory> factory = create_radio_factory(config.rf_driver_cfg.device_driver);
-  report_fatal_error_if_not(factory, "Invalid radio factory.");
+  if (!factory) {
+    return nullptr;
+  }
 
   // Create radio configuration. Assume 1 sector per stream.
   radio_configuration::radio radio_config = generate_radio_config(config, factory->get_configuration_validator());

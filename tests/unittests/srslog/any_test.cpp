@@ -20,8 +20,8 @@
  *
  */
 
-#include "srsran/srslog/detail/support/any.h"
 #include "testing_helpers.h"
+#include "srsran/srslog/detail/support/any.h"
 
 using namespace srslog;
 
