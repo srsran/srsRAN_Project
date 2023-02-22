@@ -198,6 +198,7 @@ struct log_appconfig {
   std::string f1u_level   = "warning";
   std::string pdcp_level  = "warning";
   std::string rrc_level   = "warning";
+  std::string ngap_level  = "warning";
   std::string sdap_level  = "warning";
   std::string gtpu_level  = "warning";
   std::string fapi_level  = "warning";

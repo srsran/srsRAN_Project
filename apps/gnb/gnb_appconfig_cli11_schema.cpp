@@ -29,15 +29,16 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--all_level", log_params.all_level, "Default log level for PHY, MAC, RLC, PDCP, RRC, NGAP and GTPU")
       ->capture_default_str()
       ->check(level_check);
-  app.add_option("--phy_level", log_params.phy_level, "PHY log level")->capture_default_str()->check(level_check);
   app.add_option("--radio_level", log_params.radio_level, "Radio log level")->capture_default_str()->check(level_check);
+  app.add_option("--phy_level", log_params.phy_level, "PHY log level")->capture_default_str()->check(level_check);
   app.add_option("--mac_level", log_params.mac_level, "MAC log level")->capture_default_str()->check(level_check);
   app.add_option("--rlc_level", log_params.rlc_level, "RLC log level")->capture_default_str()->check(level_check);
   app.add_option("--pdcp_level", log_params.pdcp_level, "PDCP log level")->capture_default_str()->check(level_check);
   app.add_option("--rrc_level", log_params.rrc_level, "RRC log level")->capture_default_str()->check(level_check);
+  app.add_option("--sdap_level", log_params.sdap_level, "SDAP log level")->capture_default_str()->check(level_check);
+  app.add_option("--ngap_level", log_params.ngap_level, "NGAP log level")->capture_default_str()->check(level_check);
   app.add_option("--gtpu_level", log_params.gtpu_level, "GTPU log level")->capture_default_str()->check(level_check);
   app.add_option("--fapi_level", log_params.fapi_level, "FAPI log level")->capture_default_str()->check(level_check);
-  app.add_option("--sdap_level", log_params.sdap_level, "SDAP log level")->capture_default_str()->check(level_check);
   app.add_option("--f1u_level", log_params.f1u_level, "F1-U log level")->capture_default_str()->check(level_check);
   app.add_option("--du_level", log_params.du_level, "Log level for the DU")->capture_default_str()->check(level_check);
   app.add_option("--cu_level", log_params.cu_level, "Log level for the CU")->capture_default_str()->check(level_check);
@@ -76,6 +77,9 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
     }
     if (app.count("--sdap_level") == 0) {
       log_params.sdap_level = log_params.all_level;
+    }
+    if (app.count("--ngap_level") == 0) {
+      log_params.ngap_level = log_params.all_level;
     }
     if (app.count("--gtpu_level") == 0) {
       log_params.gtpu_level = log_params.all_level;
