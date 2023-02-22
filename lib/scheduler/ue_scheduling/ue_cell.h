@@ -12,9 +12,9 @@
 
 #include "../support/bwp_helpers.h"
 #include "harq_process.h"
+#include "ue_configuration.h"
 #include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
-#include "ue_configuration.h"
 
 namespace srsran {
 

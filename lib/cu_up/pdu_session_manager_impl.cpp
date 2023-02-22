@@ -9,11 +9,11 @@
  */
 
 #include "pdu_session_manager_impl.h"
+#include "ue_context.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_up/e1ap_config_converters.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
-#include "ue_context.h"
 
 using namespace srsran;
 using namespace srs_cu_up;

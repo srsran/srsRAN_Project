@@ -8,11 +8,11 @@
  *
  */
 
+#include "ssb_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/signal_processors/pss_processor.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsran/phy/upper/signal_processors/sss_processor.h"
-#include "ssb_processor_test_data.h"
 
 using namespace srsran;
 

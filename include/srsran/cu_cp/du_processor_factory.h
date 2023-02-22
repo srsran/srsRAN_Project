@@ -12,10 +12,10 @@
 
 #include "du_processor.h"
 #include "du_processor_config.h"
+#include "ue_manager.h"
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/rrc/rrc_ue.h"
 #include "srsran/support/executors/task_executor.h"
-#include "ue_manager.h"
 #include <memory>
 
 namespace srsran {

@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsran/support/test_utils.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "uci_test_utils.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
 

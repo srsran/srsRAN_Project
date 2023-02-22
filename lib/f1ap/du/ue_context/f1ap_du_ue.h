@@ -11,12 +11,12 @@
 #pragma once
 
 #include "f1ap_ue_context.h"
+#include "ue_bearer_manager.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/stable_id_map.h"
 #include "srsran/f1ap/common/f1ap_types.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/ran/du_types.h"
-#include "ue_bearer_manager.h"
 #include <mutex>
 #include <unordered_map>
 

@@ -12,8 +12,8 @@
 
 #include "../pucch_scheduling/pucch_allocator.h"
 #include "../uci_scheduling/uci_allocator.h"
-#include "srsran/scheduler/scheduler_configurator.h"
 #include "ue.h" // TEMP
+#include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
 

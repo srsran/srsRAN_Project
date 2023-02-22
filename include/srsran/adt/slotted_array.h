@@ -11,8 +11,8 @@
 #pragma once
 
 #include "span.h"
-#include "srsran/support/srsran_assert.h"
 #include "tiny_optional.h"
+#include "srsran/support/srsran_assert.h"
 #include <array>
 
 /// \file Definitions of slotted_array<T, N>, slotted_vector<T> used to manage containers with optional elements. All

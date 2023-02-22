@@ -14,10 +14,10 @@
 /// Detects short messages from sequences of log-likelihood ratios. Both the LLR sequences and the corresponding
 /// messages (for comparison purposes) are provided as test vectors.
 
+#include "uci_decoder_test_data.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/support/srsran_test.h"
-#include "uci_decoder_test_data.h"
 
 /// \cond
 using namespace srsran;

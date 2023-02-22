@@ -9,8 +9,8 @@
  */
 
 #include "upper_phy_impl.h"
-#include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
+#include "srsran/phy/upper/upper_phy_timing_notifier.h"
 
 using namespace srsran;
 

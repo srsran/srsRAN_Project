@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsran/srslog/logger.h"
 #include "test_dummies.h"
 #include "testing_helpers.h"
+#include "srsran/srslog/logger.h"
 
 using namespace srslog;
 

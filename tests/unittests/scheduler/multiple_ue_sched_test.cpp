@@ -14,11 +14,11 @@
 #include "lib/scheduler/scheduler_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
-#include "srsran/ran/duplex_mode.h"
-#include "srsran/support/test_utils.h"
 #include "test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "srsran/ran/duplex_mode.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <unordered_map>
 

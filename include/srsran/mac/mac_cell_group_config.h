@@ -12,9 +12,9 @@
 
 #include "bsr_format.h"
 #include "phr_config.h"
+#include "time_alignment_group_config.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/sr_configuration.h"
-#include "time_alignment_group_config.h"
 
 namespace srsran {
 

@@ -13,6 +13,7 @@
 #include "adapters/e1ap_adapters.h"
 #include "adapters/gtpu_adapters.h"
 #include "adapters/gw_adapters.h"
+#include "ue_manager.h"
 #include "srsran/cu_up/cu_up.h"
 #include "srsran/cu_up/cu_up_configuration.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
@@ -22,7 +23,6 @@
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/io_broker/io_broker.h"
 #include "srsran/support/timers.h"
-#include "ue_manager.h"
 #include <memory>
 #include <unordered_map>
 

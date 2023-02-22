@@ -13,12 +13,12 @@
 #include "procedures/ue_context_modification_procedure.h"
 #include "procedures/ue_context_release_procedure.h"
 #include "procedures/ue_context_setup_procedure.h"
+#include "ue_context/f1ap_cu_ue_context.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/executors/task_executor.h"
-#include "ue_context/f1ap_cu_ue_context.h"
 #include <memory>
 
 namespace srsran {

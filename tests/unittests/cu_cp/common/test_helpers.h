@@ -12,13 +12,13 @@
 
 #include "du_processor_test_messages.h"
 #include "lib/e1ap/common/e1ap_asn1_helpers.h"
+#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/cu_up_processor.h"
 #include "srsran/cu_cp/du_processor.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/test_utils.h"
-#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 
 namespace srsran {
 namespace srs_cu_cp {

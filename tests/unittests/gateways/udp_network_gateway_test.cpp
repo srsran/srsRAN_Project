@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsran/gateways/udp_network_gateway_factory.h"
 #include "test_helpers.h"
+#include "srsran/gateways/udp_network_gateway_factory.h"
 
 using namespace srsran;
 

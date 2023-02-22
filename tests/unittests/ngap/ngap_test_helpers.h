@@ -12,12 +12,12 @@
 
 #include "lib/cu_cp/ue_manager_impl.h"
 #include "ngap_test_messages.h"
+#include "test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/ngap/ngap_factory.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "test_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

@@ -9,9 +9,9 @@
  */
 
 #include "lib/scheduler/cell/cell_configuration.h"
+#include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/scheduler/scheduler_factory.h"
 #include "srsran/support/benchmark_utils.h"
-#include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include <getopt.h>
 
 using namespace srsran;

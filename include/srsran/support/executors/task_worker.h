@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "task_executor.h"
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/unique_thread.h"
-#include "task_executor.h"
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>

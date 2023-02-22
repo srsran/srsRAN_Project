@@ -9,9 +9,9 @@
  */
 
 #include "lib/srslog/sinks/syslog_sink.h"
-#include "srsran/srslog/srslog.h"
 #include "test_dummies.h"
 #include "testing_helpers.h"
+#include "srsran/srslog/srslog.h"
 
 #include <fstream>
 #include <sstream>

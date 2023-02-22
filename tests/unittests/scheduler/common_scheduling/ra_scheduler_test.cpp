@@ -11,11 +11,11 @@
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "lib/scheduler/logging/scheduler_event_logger.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
-#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
-#include "srsran/support/test_utils.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
+#include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <ostream>
 

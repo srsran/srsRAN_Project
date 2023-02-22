@@ -9,8 +9,8 @@
  */
 
 #include "lib/scheduler/cell/resource_grid.h"
-#include "srsran/support/test_utils.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
