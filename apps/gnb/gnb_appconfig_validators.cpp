@@ -205,7 +205,7 @@ static bool validate_log_appconfig(const log_appconfig& config)
   }
 
   // validate level selection
-  if (srslog::str_to_basic_level(config.app_level) == srslog::basic_levels::none) {
+  if (srslog::str_to_basic_level(config.lib_level) == srslog::basic_levels::none) {
     return false;
   }
 

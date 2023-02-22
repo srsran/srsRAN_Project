@@ -368,7 +368,7 @@ int main(int argc, char** argv)
   srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
   for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
-    logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.app_level));
+    logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.lib_level));
     logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
   }
 
