@@ -1,11 +1,26 @@
-srsRAN
-======
+srsRAN Project
+==============
 
-srsRAN is a complete 5G RAN solution, featuring an ORAN-native CU/DU developed by [SRS](http://www.srs.io).
+The srsRAN Project is a complete 5G RAN solution, featuring an ORAN-native CU/DU developed by [SRS](http://www.srs.io).
 
 The solution includes a complete L1/2/3 implementation with minimal external dependencies. Portable across processor architectures, the software has been optimized for x86 and ARM. srsRAN follows the 3GPP 5G system architecture implementing the functional splits between distributed unit (DU) and centralized unit (CU). The CU is further disaggregated into control plane (CU-CP) and user-plane (CU-UP).
 
-srsRAN further follows O-RAN architecture principles, supports all external interfaces (F1, E1, E2, A1, O1, N2 and N3) and allows split 7.2a/b as well as split 8 deployments for the fronthaul connection.
+See the [srsRAN Project](https://www.srsran.com/) for information, guides and project news.
+
+For application features, build instructions and user guides see the [srsRAN Project documentation](https://docs.srsran.com/projects/project).
+
+Current Features
+----------------
+
+* FDD/TDD supported, all FR1 bands
+* 15/30 KHz subcarrier spacing
+* All physical channels including PUCCH Format 1 and 2, excluding Sounding-RS 
+* Highly optimized LDPC and Polar encoder/decoder for ARM Neon and x86 AVX2/AVX512
+* All RRC procedures excluding Mobility and UE Release
+* All MAC procedures excluding power control
+* Tested Performance:
+  * 64 simultaneous users
+  * Simultaneous 140 Mbps DL and 120 Mbps UL in TDD-100 MHz or FDD-50 MHz configuration (running in AMD Ryzen5 6-core CPU)
 
 License
 -------
