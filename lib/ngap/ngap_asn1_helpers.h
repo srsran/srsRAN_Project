@@ -374,5 +374,98 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
   }
 }
 
+/// \brief Convert NGAP ASN1 Paging ASN1 struct to common type.
+/// \param[out] paging The cu_cp_paging_message struct to fill.
+/// \param[in] asn1_paging The Paging ASN1 struct.
+inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::ngap::paging_s& asn1_paging)
+{
+  // add ue paging id
+  paging.ue_paging_id.amf_set_id  = asn1_paging->ue_paging_id.value.five_g_s_tmsi().amf_set_id.to_number();
+  paging.ue_paging_id.amf_pointer = asn1_paging->ue_paging_id.value.five_g_s_tmsi().amf_pointer.to_number();
+  paging.ue_paging_id.five_g_tmsi = asn1_paging->ue_paging_id.value.five_g_s_tmsi().five_g_tmsi.to_number();
+
+  // add paging drx
+  if (asn1_paging->paging_drx_present) {
+    paging.paging_drx = asn1_paging->paging_drx.value.to_number();
+  }
+
+  // add tai list for paging
+  for (const auto& asn1_tai_item : asn1_paging->tai_list_for_paging.value) {
+    cu_cp_tai_list_for_paging_item tai_item;
+    tai_item.tai.plmn_id = asn1_tai_item.tai.plmn_id.to_string();
+    tai_item.tai.tac     = asn1_tai_item.tai.tac.to_number();
+
+    paging.tai_list_for_paging.push_back(tai_item);
+  }
+
+  // add paging prio
+  if (asn1_paging->paging_prio_present) {
+    paging.paging_prio = asn1_paging->paging_prio.value.to_number();
+  }
+
+  // add ue radio cap for paging
+  if (asn1_paging->ue_radio_cap_for_paging_present) {
+    cu_cp_ue_radio_cap_for_paging ue_radio_cap_for_paging;
+    ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr =
+        asn1_paging->ue_radio_cap_for_paging.value.ue_radio_cap_for_paging_of_nr.copy();
+
+    paging.ue_radio_cap_for_paging = ue_radio_cap_for_paging;
+  }
+
+  // add paging origin
+  if (asn1_paging->paging_origin_present) {
+    paging.paging_origin = asn1_paging->paging_origin.value.to_string();
+  }
+
+  // add assist data for paging
+  if (asn1_paging->assist_data_for_paging_present) {
+    cu_cp_assist_data_for_paging assist_data_for_paging;
+
+    // add assist data for recommended cells
+    if (asn1_paging->assist_data_for_paging.value.assist_data_for_recommended_cells_present) {
+      cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
+
+      for (const auto& asn1_recommended_cell :
+           asn1_paging->assist_data_for_paging.value.assist_data_for_recommended_cells.recommended_cells_for_paging
+               .recommended_cell_list) {
+        cu_cp_recommended_cell_item recommended_cell_item;
+
+        // add ngran cgi
+        recommended_cell_item.ngran_cgi.nci.packed = asn1_recommended_cell.ngran_cgi.nr_cgi().nr_cell_id.to_number();
+        recommended_cell_item.ngran_cgi.plmn_hex   = asn1_recommended_cell.ngran_cgi.nr_cgi().plmn_id.to_string();
+
+        // add time stayed in cell
+        if (asn1_recommended_cell.time_stayed_in_cell_present) {
+          recommended_cell_item.time_stayed_in_cell = asn1_recommended_cell.time_stayed_in_cell;
+        }
+
+        assist_data_for_recommended_cells.recommended_cells_for_paging.recommended_cell_list.push_back(
+            recommended_cell_item);
+      }
+
+      assist_data_for_paging.assist_data_for_recommended_cells = assist_data_for_recommended_cells;
+    }
+
+    // add paging attempt info
+    if (asn1_paging->assist_data_for_paging.value.paging_attempt_info_present) {
+      cu_cp_paging_attempt_info paging_attempt_info;
+
+      paging_attempt_info.paging_attempt_count =
+          asn1_paging->assist_data_for_paging.value.paging_attempt_info.paging_attempt_count;
+      paging_attempt_info.intended_nof_paging_attempts =
+          asn1_paging->assist_data_for_paging.value.paging_attempt_info.intended_nof_paging_attempts;
+
+      if (asn1_paging->assist_data_for_paging.value.paging_attempt_info.next_paging_area_scope_present) {
+        paging_attempt_info.next_paging_area_scope =
+            asn1_paging->assist_data_for_paging.value.paging_attempt_info.next_paging_area_scope.to_string();
+      }
+
+      assist_data_for_paging.paging_attempt_info = paging_attempt_info;
+    }
+
+    paging.assist_data_for_paging = assist_data_for_paging;
+  }
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

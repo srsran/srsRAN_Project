@@ -77,6 +77,10 @@ private:
   /// \param[in] msg The received UE Context Release Command.
   void handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd);
 
+  /// \brief Notify about the reception of a Paging message.
+  /// \param[in] msg The received Paging message.
+  void handle_paging(const asn1::ngap::paging_s& msg);
+
   /// \brief Notify about the reception of a successful outcome message.
   /// \param[in] outcome The successful outcome message.
   void handle_successful_outcome(const asn1::ngap::successful_outcome_s& outcome);

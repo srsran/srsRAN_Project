@@ -177,6 +177,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::paging:
+      handle_paging(msg.value.paging());
+      break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
@@ -321,6 +324,28 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
   logger.info("Sending UeContextReleaseComplete");
   ngap_notifier.on_new_message(ngap_msg);
+}
+
+void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
+{
+  logger.info("Received Paging");
+
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    msg.to_json(js);
+    logger.debug("Containerized Paging: {}", js.to_string());
+  }
+
+  if (msg->ue_paging_id.value.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
+    logger.error("Unsupportet UE Paging ID");
+    return;
+  }
+
+  // Convert to common type
+  cu_cp_paging_message cu_cp_paging_msg;
+  fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
+
+  // TODO: Notify DU processor about Paging
 }
 
 void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
