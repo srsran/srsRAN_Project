@@ -326,10 +326,10 @@ pusch_config srsran::config_helpers::make_default_pusch_config()
   b_offset.beta_offset_ack_idx_1    = 9;
   b_offset.beta_offset_ack_idx_2    = 9;
   b_offset.beta_offset_ack_idx_3    = 9;
-  b_offset.beta_offset_csi_p1_idx_1 = 6;
-  b_offset.beta_offset_csi_p1_idx_2 = 6;
-  b_offset.beta_offset_csi_p2_idx_1 = 6;
-  b_offset.beta_offset_csi_p2_idx_2 = 6;
+  b_offset.beta_offset_csi_p1_idx_1 = 9;
+  b_offset.beta_offset_csi_p1_idx_2 = 9;
+  b_offset.beta_offset_csi_p2_idx_1 = 9;
+  b_offset.beta_offset_csi_p2_idx_2 = 9;
   uci_cfg.beta_offsets_cfg          = uci_on_pusch::beta_offsets_semi_static{b_offset};
 
   return cfg;
