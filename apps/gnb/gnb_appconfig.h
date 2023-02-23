@@ -173,10 +173,20 @@ struct rlc_appconfig {
   rlc_am_appconfig am;
 };
 
+struct pdcp_tx_appconfig {
+  uint16_t sn_field_length;   ///< Number of bits used for sequence number
+  int32_t  t_reassembly;      ///< Timer used by rx to detect PDU loss (ms)
+  int32_t  t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
+};
+struct pdcp_appconfig {
+  uint16_t sn_size;
+  bool     integrity_protection_required;
+};
 /// QoS configuration
 struct qos_appconfig {
-  uint8_t       five_qi = 9;
-  rlc_appconfig rlc;
+  uint8_t        five_qi = 9;
+  rlc_appconfig  rlc;
+  pdcp_appconfig pdcp;
 };
 
 struct amf_appconfig {
