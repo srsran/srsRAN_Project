@@ -15,7 +15,8 @@ set(SOURCES
         f1ap_cu_ue_context_modification_procedure_test.cpp
         f1ap_cu_ue_context_release_procedure_test.cpp
         f1ap_cu_test.cpp
-        f1ap_cu_msg_filler_test.cpp)
+        f1ap_cu_msg_filler_test.cpp
+        f1ap_cu_paging_test.cpp)
 
 add_executable(f1ap_cu_test ${SOURCES})
 target_include_directories(f1ap_cu_test PRIVATE ${CMAKE_SOURCE_DIR})
