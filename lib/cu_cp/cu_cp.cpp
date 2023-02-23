@@ -239,6 +239,8 @@ void cu_cp::remove_du(du_index_t du_index)
       du_index, launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
         srsran_assert(du_db.find(du_index) != du_db.end(), "Remove DU called for inexistent du_index={}", du_index);
+
+        // Remove DU
         du_db.erase(du_index);
         logger.info("Removed du_index={}", du_index);
         CORO_RETURN();

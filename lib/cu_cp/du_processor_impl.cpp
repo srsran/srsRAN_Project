@@ -80,6 +80,7 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
   for (const auto& served_cell : msg.request->gnb_du_served_cells_list.value) {
     const auto&     cell_item = served_cell.value().gnb_du_served_cells_item();
     du_cell_context du_cell;
+    du_cell.du_index   = context.du_index;
     du_cell.cell_index = get_next_du_cell_index();
 
     if (du_cell.cell_index == du_cell_index_t::invalid) {
@@ -119,6 +120,9 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
     // add cell to DU context
     du_cell_index_t cell_index = du_cell.cell_index;
     cell_db.emplace(cell_index, std::move(du_cell));
+
+    // Add cell to lookup
+    tac_to_nr_cgi.emplace(cell_db.at(cell_index).tac, cell_db.at(cell_index).cgi);
   }
 
   // send setup response
