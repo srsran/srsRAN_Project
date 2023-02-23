@@ -122,13 +122,18 @@ private:
   // NOTE: this number allows us to have a 1-to-1 match between PUCCH resource indicator and index of the PUCCH resource
   // in its corresponding PUCCH resource set.
   static const size_t MAX_HARQ_PUCCH_RESOURCES{8};
+  static const size_t MAX_SR_PUCCH_RESOURCES{4};
 
   using pucch_res_record_array = std::array<rnti_t, MAX_HARQ_PUCCH_RESOURCES>;
+  struct sr_record {
+    int    pucch_res_id;
+    rnti_t allocated_ue{INVALID_RNTI};
+  };
 
   // Record for the RNTI and PUCCH resource indicator used for a given resource at a given slot.
   struct rnti_pucch_res_id_slot_record {
     // Keep track of the UE allocated to the SR resource.
-    rnti_t ue_using_sr_resource{INVALID_RNTI};
+    std::array<sr_record, MAX_SR_PUCCH_RESOURCES> ues_using_sr_resources;
     // Keep track of the UE allocated to the SR resource.
     rnti_t ue_using_csi_resource{INVALID_RNTI};
     // Keeps track of the RNTI of the UE using a given PUCCH resource format 1 (indexed by the PUCCH res. indicator).
