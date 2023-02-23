@@ -55,27 +55,39 @@ private:
 };
 
 /// Adapter between NGAP and CU-CP
-class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier
+class ngap_cu_cp_adapter : public ngap_cu_cp_connection_notifier, public ngap_cu_cp_paging_notifier
 {
 public:
   explicit ngap_cu_cp_adapter() = default;
 
-  void connect_cu_cp(cu_cp_ngap_connection_handler& cu_cp_handler_) { cu_cp_handler = &cu_cp_handler_; }
+  void connect_cu_cp(cu_cp_ngap_connection_handler& cu_cp_amf_handler_,
+                     cu_cp_ngap_paging_handler&     cu_cp_paging_handler_)
+  {
+    cu_cp_amf_handler    = &cu_cp_amf_handler_;
+    cu_cp_paging_handler = &cu_cp_paging_handler_;
+  }
 
   void on_amf_connection() override
   {
-    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
-    cu_cp_handler->handle_amf_connection();
+    srsran_assert(cu_cp_amf_handler != nullptr, "CU-CP AMF handler must not be nullptr");
+    cu_cp_amf_handler->handle_amf_connection();
   }
 
   void on_amf_connection_drop() override
   {
-    srsran_assert(cu_cp_handler != nullptr, "CU-CP handler must not be nullptr");
-    cu_cp_handler->handle_amf_connection_drop();
+    srsran_assert(cu_cp_amf_handler != nullptr, "CU-CP AMF handler must not be nullptr");
+    cu_cp_amf_handler->handle_amf_connection_drop();
+  }
+
+  void on_paging_message(cu_cp_paging_message& msg) override
+  {
+    srsran_assert(cu_cp_paging_handler != nullptr, "CU-CP Paging handler must not be nullptr");
+    cu_cp_paging_handler->handle_paging_message(msg);
   }
 
 private:
-  cu_cp_ngap_connection_handler* cu_cp_handler = nullptr;
+  cu_cp_ngap_connection_handler* cu_cp_amf_handler    = nullptr;
+  cu_cp_ngap_paging_handler*     cu_cp_paging_handler = nullptr;
 };
 
 /// Adapter between NGAP and RRC UE

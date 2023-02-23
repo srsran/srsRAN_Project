@@ -33,7 +33,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   // connect event notifiers to layers
   f1ap_ev_notifier.connect_cu_cp(get_cu_cp_du_handler());
   cu_up_processor_ev_notifier.connect_cu_cp(get_cu_cp_cu_up_handler());
-  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_connection_handler());
+  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_connection_handler(), get_cu_cp_ngap_paging_handler());
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);

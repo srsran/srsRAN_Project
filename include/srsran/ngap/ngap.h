@@ -90,6 +90,16 @@ public:
   virtual void on_amf_connection_drop() = 0;
 };
 
+/// Interface to notify about Paging messages to the CU-CP
+class ngap_cu_cp_paging_notifier
+{
+public:
+  virtual ~ngap_cu_cp_paging_notifier() = default;
+
+  /// \brief Notifies the CU-CP about a Paging message.
+  virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
+};
+
 struct ngap_initial_ue_message {
   ue_index_t                               ue_index = ue_index_t::invalid;
   byte_buffer                              nas_pdu;
