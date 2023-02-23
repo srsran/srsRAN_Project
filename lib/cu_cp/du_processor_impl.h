@@ -72,6 +72,9 @@ public:
        handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
   void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
 
+  // du_processor paging handler
+  void handle_paging_message(cu_cp_paging_message& msg) override;
+
   void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     task_sched.schedule_async_task(ue_index, std::move(task));
@@ -79,6 +82,14 @@ public:
 
   unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }
   timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
+
+  du_processor_f1ap_interface&     get_du_processor_f1ap_interface() override { return *this; }
+  du_processor_rrc_interface&      get_du_processor_rrc_interface() override { return *this; }
+  du_processor_rrc_ue_interface&   get_du_processor_rrc_ue_interface() override { return *this; }
+  du_processor_ngap_interface&     get_du_processor_ngap_interface() override { return *this; }
+  du_processor_ue_task_handler&    get_du_processor_ue_task_handler() override { return *this; }
+  du_processor_paging_handler&     get_du_processor_paging_handler() override { return *this; }
+  du_processor_statistics_handler& get_du_processor_statistics_handler() override { return *this; }
 
 private:
   /// \brief Lookup the cell based on a given NR cell ID.
@@ -119,6 +130,8 @@ private:
   du_processor_context                       context;
   std::map<du_cell_index_t, du_cell_context> cell_db; /// flattened version of served cells list provided by DU/F1AP
   std::atomic<uint16_t>                      next_du_cell_index{0};
+
+  std::map<uint32_t, nr_cell_global_id_t> tac_to_nr_cgi;
 
   // timers associated with a given DU.
   timer_manager timer_db;

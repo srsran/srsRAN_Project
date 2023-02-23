@@ -44,7 +44,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
 
   // create f1ap
   f1ap = create_f1ap(f1ap_notifier, f1ap_ev_notifier, f1ap_du_mgmt_notifier, ctrl_exec_);
-  f1ap_ev_notifier.connect_du_processor(*this);
+  f1ap_ev_notifier.connect_du_processor(get_du_processor_f1ap_interface());
 
   f1ap_ue_context_notifier.connect_f1(f1ap->get_f1ap_ue_context_manager());
 
@@ -54,7 +54,7 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   rrc = create_rrc_du(rrc_creation_msg);
   rrc_du_adapter.connect_rrc_du(rrc->get_rrc_du_ue_repository());
 
-  rrc_ue_ev_notifier.connect_du_processor(*this);
+  rrc_ue_ev_notifier.connect_du_processor(get_du_processor_rrc_ue_interface());
 
   routine_mng = std::make_unique<du_processor_routine_manager>(
       e1ap_ctrl_notifier, f1ap_ue_context_notifier, rrc_du_adapter, ue_manager, logger);
@@ -195,7 +195,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
 
   // Create and connect RRC UE task schedulers
   rrc_ue_task_scheds.emplace(ue->get_ue_index(), ue->get_ue_index());
-  rrc_ue_task_scheds.at(ue->get_ue_index()).connect_du_processor(*this);
+  rrc_ue_task_scheds.at(ue->get_ue_index()).connect_du_processor(get_du_processor_ue_task_handler());
 
   // Set task schedulers
   ue->set_task_sched(rrc_ue_task_scheds.at(ue->get_ue_index()));
@@ -342,4 +342,73 @@ void du_processor_impl::handle_new_ue_context_release_command(const cu_cp_ue_con
   ue->get_rrc_ue_notifier().on_rrc_ue_release();
 
   handle_ue_context_release_command(cmd);
+}
+
+void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
+{
+  // Add assist data for paging
+  // This will go through all tai items in the paging message and add the related NR CGI to the assist data for paging
+  // if it doesn't exist yet.
+  // This way the F1AP will always receive messages with the assist data for paging set.
+  for (const auto& tai_list_item : msg.tai_list_for_paging) {
+    if (tac_to_nr_cgi.find(tai_list_item.tai.tac) == tac_to_nr_cgi.end()) {
+      logger.debug("Could not find nr cgi for tac={}", tai_list_item.tai.tac);
+      continue;
+    }
+
+    // Setup recommended cell item to add in case it doesn't exist
+    cu_cp_recommended_cell_item cell_item;
+    cell_item.ngran_cgi = tac_to_nr_cgi.at(tai_list_item.tai.tac);
+
+    // Check if assist data for paging is already present
+    if (msg.assist_data_for_paging.has_value()) {
+      // Check if assist data for recommended cells is already present
+      if (msg.assist_data_for_paging.value().assist_data_for_recommended_cells.has_value()) {
+        // Check if recommended cell list already contains values
+        if (!msg.assist_data_for_paging.value()
+                 .assist_data_for_recommended_cells.value()
+                 .recommended_cells_for_paging.recommended_cell_list.empty()) {
+          // Check if NR CGI already present
+          bool is_present = false;
+          for (const auto& present_cell_item : msg.assist_data_for_paging.value()
+                                                   .assist_data_for_recommended_cells.value()
+                                                   .recommended_cells_for_paging.recommended_cell_list) {
+            if (present_cell_item.ngran_cgi.nci.packed == tac_to_nr_cgi.at(tai_list_item.tai.tac).nci.packed) {
+              is_present = true;
+              continue;
+            }
+          }
+          if (is_present) {
+            // NR CGI for TAC is already present
+            continue;
+          }
+        }
+
+        // NR CGI for TAC is not present so we add it
+        msg.assist_data_for_paging.value()
+            .assist_data_for_recommended_cells.value()
+            .recommended_cells_for_paging.recommended_cell_list.push_back(cell_item);
+      } else {
+        // Assist data for recommended cells is not present, we need to add it
+        cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
+        assist_data_for_recommended_cells.recommended_cells_for_paging.recommended_cell_list.push_back(cell_item);
+
+        msg.assist_data_for_paging.value().assist_data_for_recommended_cells = assist_data_for_recommended_cells;
+      }
+    } else {
+      // Assist data for paging is not present, we need to add it
+      cu_cp_assist_data_for_paging assist_data_for_paging;
+
+      // Add assist data for recommended cells
+      cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
+      // Add cell item
+      assist_data_for_recommended_cells.recommended_cells_for_paging.recommended_cell_list.push_back(cell_item);
+
+      assist_data_for_paging.assist_data_for_recommended_cells = assist_data_for_recommended_cells;
+
+      msg.assist_data_for_paging = assist_data_for_paging;
+    }
+  }
+
+  f1ap->get_f1ap_paging_manager().handle_paging(msg);
 }
