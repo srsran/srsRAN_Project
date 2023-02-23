@@ -120,5 +120,14 @@ ngap_message generate_invalid_pdu_session_resource_setup_request_message(amf_ue_
 cu_cp_pdu_session_resource_setup_response
 generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id);
 
+/// \brief Generate a valid dummy Paging message with only mandatory fields set.
+ngap_message generate_valid_minimal_paging_message();
+
+/// \brief Generate a valid dummy Paging message.
+ngap_message generate_valid_paging_message();
+
+/// \brief Generate an invalid dummy Paging message.
+ngap_message generate_invalid_paging_message();
+
 } // namespace srs_cu_cp
 } // namespace srsran
