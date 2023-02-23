@@ -6,8 +6,6 @@
 # the distribution.
 #
 
-include_directories(${PROJECT_SOURCE_DIR}/include/srsran/phy/upper/channel_coding/polar)
-
 add_library(srsran_polar STATIC
         polar_allocator_impl.cpp
         polar_code_impl.cpp
