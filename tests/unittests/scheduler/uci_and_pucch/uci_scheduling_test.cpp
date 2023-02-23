@@ -53,7 +53,7 @@ public:
     pucch_expected.crnti   = to_rnti(0x4601);
     pucch_expected.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_expected.resources.prbs            = prb_interval{0, 1};
+    pucch_expected.resources.prbs            = prb_interval{49, 50};
     pucch_expected.resources.second_hop_prbs = prb_interval{0, 0};
     pucch_expected.resources.symbols         = ofdm_symbol_range{0, 14};
 
@@ -132,7 +132,7 @@ public:
     pucch_expected.crnti   = to_rnti(0x4601);
     pucch_expected.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_expected.resources.prbs            = prb_interval{0, 1};
+    pucch_expected.resources.prbs            = prb_interval{49, 50};
     pucch_expected.resources.second_hop_prbs = prb_interval{0, 0};
     pucch_expected.resources.symbols         = ofdm_symbol_range{0, 14};
 

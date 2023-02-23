@@ -38,6 +38,9 @@ public:
     pucch_cfg{ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value()},
     sl_tx(slot_point(0, 0))
   {
+    uplink_config ul_cfg = test_helpers::make_test_ue_uplink_config(cell_config_builder_params{});
+    ul_cfg.init_ul_bwp.pucch_cfg.value().sr_res_list.front().pucch_res_id = 10;
+    pucch_cfg_ue_2                                                        = ul_cfg.init_ul_bwp.pucch_cfg.value();
     res_manager.slot_indication(sl_tx);
   };
 
@@ -45,7 +48,9 @@ protected:
   cell_configuration    cell_cfg;
   ue_cell_configuration ue_cell_cfg;
   // Helper variable.
-  const pucch_config&    pucch_cfg;
+  const pucch_config& pucch_cfg;
+  // Config with alternative configuration for SR using PUCCH resource idx 10.
+  pucch_config           pucch_cfg_ue_2;
   pucch_resource_manager res_manager;
   slot_point             sl_tx;
 
@@ -366,11 +371,30 @@ TEST_F(test_pucch_resource_manager, test_allocation_release_sr_resource)
   // Release resource and verify it was successful.
   ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, to_rnti(0x4601)));
 
-  // Assigne a different UE and verify it is assigned a resource.
+  // Allocate SR to another UE and verify it is assigned a resource.
   const pucch_resource* sr_resource_ue2 = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
   ASSERT_FALSE(nullptr == sr_resource_ue2);
   unsigned sr_pucch_res_idx = pucch_cfg.pucch_res_list.size() - 1;
   ASSERT_EQ(&pucch_cfg.pucch_res_list[sr_pucch_res_idx], sr_resource_ue2);
+}
+
+// Tests SRs for 2 UEs using different PUCCH resource indices.
+TEST_F(test_pucch_resource_manager, test_allocation_2_sr_resource)
+{
+  res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg_ue_2);
+
+  // Attempt to allocate UEs over already used SR resources.
+  ASSERT_EQ(nullptr, res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4603), pucch_cfg));
+  ASSERT_EQ(nullptr, res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4604), pucch_cfg_ue_2));
+
+  // Release resource and verify it was successful.
+  ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, to_rnti(0x4601)));
+  ASSERT_TRUE(res_manager.release_sr_resource(sl_tx, to_rnti(0x4602)));
+
+  // Attempt to allocate UEs over released SR resources.
+  ASSERT_NE(nullptr, res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4603), pucch_cfg));
+  ASSERT_NE(nullptr, res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4604), pucch_cfg_ue_2));
 }
 
 int main(int argc, char** argv)

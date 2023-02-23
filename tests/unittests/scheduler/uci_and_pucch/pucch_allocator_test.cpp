@@ -60,7 +60,7 @@ struct pucch_test_parameters {
 static expected_output_params_f1 make_expected_output_params_sr_only()
 {
   return expected_output_params_f1{.format               = pucch_format::FORMAT_1,
-                                   .prbs                 = prb_interval{0, 1},
+                                   .prbs                 = prb_interval{NOF_RBS - 3, NOF_RBS - 2},
                                    .second_hop_prbs      = prb_interval{0, 0},
                                    .symbols              = ofdm_symbol_range{0, 14},
                                    .intra_slot_freq_hop  = false,

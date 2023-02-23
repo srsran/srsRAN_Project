@@ -201,7 +201,12 @@ inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params
   pucch_resource& res10 = pucch_cfg.pucch_res_list.back();
   res10.res_id          = 10;
   res10.starting_prb    = 0;
-  res10.second_hop_prb  = nof_rbs - 1;
+
+  // >>> PUCCH resource 11.
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res11 = pucch_cfg.pucch_res_list.back();
+  res11.res_id          = 11;
+  res11.starting_prb    = nof_rbs - 3;
 
   // TODO: add more PUCCH resources.
 
