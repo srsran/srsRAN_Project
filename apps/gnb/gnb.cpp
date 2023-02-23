@@ -684,6 +684,10 @@ int main(int argc, char** argv)
   ngap_p->close();
   mac_p->close();
 
+  gnb_logger.info("Stopping radio...");
+  radio->stop();
+  gnb_logger.info("Radio stopped successfully");
+
   gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();
   gnb_logger.info("Lower PHY stopped successfully");
