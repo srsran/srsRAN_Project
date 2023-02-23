@@ -397,6 +397,25 @@ TEST_F(test_pucch_resource_manager, test_allocation_2_sr_resource)
   ASSERT_NE(nullptr, res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4604), pucch_cfg_ue_2));
 }
 
+// Tests release of SR resource.
+TEST_F(test_pucch_resource_manager, test_allocation_specific_f2)
+{
+  const unsigned res_indicator = 3;
+
+  // Attempt to allocate PUCCH resource Format 2 with given resource indicator.
+  ASSERT_TRUE(nullptr != res_manager.reserve_specific_format2_res(sl_tx, to_rnti(0x4601), res_indicator, pucch_cfg));
+
+  // Verify the resource can be retrieved.
+  ASSERT_EQ(static_cast<int>(res_indicator), res_manager.fetch_f2_pucch_res_indic(sl_tx, to_rnti(0x4601)));
+
+  // Attempt to allocate another UE to the same resource and verify it gets returned nullptr.
+  ASSERT_TRUE(nullptr == res_manager.reserve_specific_format2_res(sl_tx, to_rnti(0x4602), res_indicator, pucch_cfg));
+
+  // Attempt to allocate a third UE with wrong resource indicator and verify it gets returned nullptr.
+  ASSERT_TRUE(nullptr ==
+              res_manager.reserve_specific_format2_res(sl_tx, to_rnti(0x4602), /* res_indicator=*/8, pucch_cfg));
+}
+
 int main(int argc, char** argv)
 {
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
