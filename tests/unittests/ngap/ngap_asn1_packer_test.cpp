@@ -34,7 +34,7 @@ protected:
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("TEST").set_hex_dump_max_size(32);
-    srslog::fetch_basic_logger("NGAP-ASN1-PCK").set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("NGAP").set_level(srslog::basic_levels::debug);
     srslog::init();
 
     gw   = std::make_unique<dummy_network_gateway_data_handler>();

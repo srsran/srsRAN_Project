@@ -15,7 +15,7 @@ namespace srsran {
 ngap_asn1_packer::ngap_asn1_packer(sctp_network_gateway_data_handler& gw_,
                                    ngap_message_handler&              ngap_handler,
                                    ngap_pcap&                         pcap_) :
-  logger(srslog::fetch_basic_logger("NGAP-ASN1-PCK")), gw(gw_), ngap(ngap_handler), pcap(pcap_)
+  logger(srslog::fetch_basic_logger("NGAP")), gw(gw_), ngap(ngap_handler), pcap(pcap_)
 {
 }
 
@@ -39,6 +39,12 @@ void ngap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 // Receive populated ASN1 struct that needs to be packed and forwarded.
 void ngap_asn1_packer::handle_message(const srs_cu_cp::ngap_message& msg)
 {
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    msg.pdu.to_json(js);
+    logger.debug("Tx NGAP PDU: {}", js.to_string());
+  }
+
   // pack PDU into temporary buffer
   byte_buffer   tx_pdu;
   asn1::bit_ref bref(tx_pdu);
