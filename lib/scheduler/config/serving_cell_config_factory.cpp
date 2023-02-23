@@ -343,13 +343,15 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // >> PUCCH.
   auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cfg.value();
-  // PUCCH Resource Set ID 0.
+
+  // PUCCH Resource Set ID 0. This is for PUCCH Format 1 only (Format 0 not yet supported), used for HARQ-ACK only.
   auto& pucch_res_set_0            = pucch_cfg.pucch_res_set.emplace_back();
   pucch_res_set_0.pucch_res_set_id = 0;
   pucch_res_set_0.pucch_res_id_list.emplace_back(0);
   pucch_res_set_0.pucch_res_id_list.emplace_back(1);
   pucch_res_set_0.pucch_res_id_list.emplace_back(2);
 
+  // PUCCH Resource Set ID 1. This is for PUCCH Format 2 only and used for HARQ-ACK + optionally SR and/or CSI.
   auto& pucch_res_set_1            = pucch_cfg.pucch_res_set.emplace_back();
   pucch_res_set_1.pucch_res_set_id = 1;
   pucch_res_set_1.pucch_res_id_list.emplace_back(3);
@@ -381,15 +383,13 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
   res1.res_id          = 1;
   res1.starting_prb    = 1;
-  res1.second_hop_prb  = nof_rbs - res1.starting_prb - 1;
   // >>> PUCCH resource 2.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
   res2.res_id          = 2;
-  res2.second_hop_prb  = 1;
-  res2.starting_prb    = nof_rbs - res2.second_hop_prb - 1;
+  res2.starting_prb    = nof_rbs - 2;
 
-  // PUCCH resource format 2, for HARQ-ACK and CSI.
+  // PUCCH resource format 2, for HARQ-ACK + optionally SR and/or CSI.
   // >>> PUCCH resource 3.
   pucch_resource res_basic_f2{
       .starting_prb = 2, .second_hop_prb = 0, .intraslot_freq_hopping = false, .format = pucch_format::FORMAT_2};
@@ -423,18 +423,26 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_resource& res8           = pucch_cfg.pucch_res_list.back();
   res8.res_id                    = 8;
   res8.format_2.starting_sym_idx = 10;
+
+  // PUCCH resource format 2, for CSI and optionally for SR.
   // >>> PUCCH resource 9.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
   pucch_resource& res9           = pucch_cfg.pucch_res_list.back();
   res9.res_id                    = 9;
   res9.format_2.starting_sym_idx = 12;
 
+  // PUCCH resource format 1, for SR only.
   // >>> PUCCH resource 10.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res10 = pucch_cfg.pucch_res_list.back();
   res10.res_id          = 10;
   res10.starting_prb    = 0;
   res10.second_hop_prb  = nof_rbs - 1;
+
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res11 = pucch_cfg.pucch_res_list.back();
+  res11.res_id          = 11;
+  res11.starting_prb    = nof_rbs - 3;
 
   // TODO: add more PUCCH resources.
 
