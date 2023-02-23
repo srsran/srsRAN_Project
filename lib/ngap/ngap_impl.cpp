@@ -20,13 +20,15 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(ngap_configuration&     ngap_cfg_,
-                     ngap_ue_task_scheduler& task_sched_,
-                     ngap_ue_manager&        ue_manager_,
-                     ngap_message_notifier&  ngap_notifier_,
-                     task_executor&          ctrl_exec_) :
+ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
+                     ngap_cu_cp_paging_notifier& cu_cp_paging_notifier_,
+                     ngap_ue_task_scheduler&     task_sched_,
+                     ngap_ue_manager&            ue_manager_,
+                     ngap_message_notifier&      ngap_notifier_,
+                     task_executor&              ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   ngap_cfg(ngap_cfg_),
+  cu_cp_paging_notifier(cu_cp_paging_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngap_notifier(ngap_notifier_),
@@ -330,12 +332,6 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
 {
   logger.info("Received Paging");
 
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    msg.to_json(js);
-    logger.debug("Containerized Paging: {}", js.to_string());
-  }
-
   if (msg->ue_paging_id.value.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
     logger.error("Unsupportet UE Paging ID");
     return;
@@ -345,7 +341,7 @@ void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
   cu_cp_paging_message cu_cp_paging_msg;
   fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
 
-  // TODO: Notify DU processor about Paging
+  cu_cp_paging_notifier.on_paging_message(cu_cp_paging_msg);
 }
 
 void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)

@@ -63,6 +63,7 @@ protected:
   dummy_ngap_amf_notifier          msg_notifier;
   dummy_ngap_rrc_ue_notifier       rrc_ue_notifier;
   dummy_ngap_du_processor_notifier du_processor_notifier;
+  dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;
   dummy_ngap_ue_task_scheduler     ngap_ue_task_scheduler;
   manual_task_worker               ctrl_worker{128};
   std::unique_ptr<ngap_interface>  ngap;

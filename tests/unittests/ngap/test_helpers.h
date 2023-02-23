@@ -329,6 +329,23 @@ private:
   srslog::basic_logger& logger;
 };
 
+class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_paging_notifier
+{
+public:
+  dummy_ngap_cu_cp_paging_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_paging_message(cu_cp_paging_message& msg) override
+  {
+    logger.info("Received a new Paging message");
+    last_msg = std::move(msg);
+  }
+
+  cu_cp_paging_message last_msg;
+
+private:
+  srslog::basic_logger& logger;
+};
+
 class dummy_ngap_pcap : public ngap_pcap
 {
 public:
