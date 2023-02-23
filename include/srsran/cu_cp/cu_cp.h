@@ -34,6 +34,16 @@ public:
   virtual void handle_amf_connection_drop() = 0;
 };
 
+/// Interface to handle Paging messages
+class cu_cp_ngap_paging_handler
+{
+public:
+  virtual ~cu_cp_ngap_paging_handler() = default;
+
+  /// \brief Handles a Paging message notification.
+  virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
+};
+
 /// Methods used by CU-CP to initiate NGAP connection procedures.
 class cu_cp_ngap_control_notifier
 {
@@ -141,11 +151,21 @@ class cu_cp_interface : public cu_cp_du_handler,
                         public cu_cp_cu_up_handler,
                         public cu_cp_cu_up_interface,
                         public cu_cp_ng_interface,
-                        public cu_cp_ngap_connection_handler
+                        public cu_cp_ngap_connection_handler,
+                        public cu_cp_ngap_paging_handler
 {
 public:
   virtual ~cu_cp_interface() = default;
-  virtual void start()       = 0;
+
+  virtual cu_cp_du_handler&              get_cu_cp_du_handler()              = 0;
+  virtual cu_cp_du_interface&            get_cu_cp_du_interface()            = 0;
+  virtual cu_cp_cu_up_handler&           get_cu_cp_cu_up_handler()           = 0;
+  virtual cu_cp_cu_up_interface&         get_cu_cp_cu_up_interface()         = 0;
+  virtual cu_cp_ng_interface&            get_cu_cp_ng_interface()            = 0;
+  virtual cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() = 0;
+  virtual cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler()     = 0;
+
+  virtual void start() = 0;
 };
 
 } // namespace srs_cu_cp

@@ -31,9 +31,9 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   assert_cu_cp_configuration_valid(cfg);
 
   // connect event notifiers to layers
-  f1ap_ev_notifier.connect_cu_cp(*this);
-  cu_up_processor_ev_notifier.connect_cu_cp(*this);
-  ngap_cu_cp_ev_notifier.connect_cu_cp(*this);
+  f1ap_ev_notifier.connect_cu_cp(get_cu_cp_du_handler());
+  cu_up_processor_ev_notifier.connect_cu_cp(get_cu_cp_cu_up_handler());
+  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_connection_handler());
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);
@@ -182,6 +182,14 @@ void cu_cp::handle_amf_connection_drop()
   // inform all DU objects about the AMF connection drop
   for (auto& du : du_db) {
     du.second->get_rrc_amf_connection_handler().handle_amf_connection_drop();
+  }
+}
+
+void cu_cp::handle_paging_message(cu_cp_paging_message& msg)
+{
+  // Forward paging message to all DU processors
+  for (auto& du : du_db) {
+    du.second->get_du_processor_paging_handler().handle_paging_message(msg);
   }
 }
 
