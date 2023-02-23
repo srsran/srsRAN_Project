@@ -27,7 +27,6 @@
     MARKERS: ""
     ARGS: ""
     FORCE_DOWNLOAD: "true"
-    PARALLEL: 2
   tags:
     - on-prem-amd64
   extends:
@@ -47,7 +46,7 @@
       export LOGNAME=$GITLAB_USER_LOGIN
       export RETINA_LOGLEVEL="$LOG_LEVEL"
       export RETINA_FORCE_DOWNLOAD_REPORT="$FORCE_DOWNLOAD"
-    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" -n "${PARALLEL}" .
+    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
   after_script:
     - |
       echo "*******************************************************************************************************************************"
