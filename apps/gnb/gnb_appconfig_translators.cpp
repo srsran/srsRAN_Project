@@ -17,6 +17,16 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngap_config.plmn               = config.common_cell_cfg.plmn;
   out_cfg.ngap_config.tac                = config.common_cell_cfg.tac;
 
+  out_cfg.ngap_config.qos_config = generate_cu_cp_qos_config(config);
+  if (not out_cfg.ngap_config.qos_config.empty()) {
+    fmt::print("CU-CP QoS config {}.\n", out_cfg.ngap_config.qos_config.size());
+    // for (const auto& qos : config.qos_cfg) {
+    //   fmt::print("PDCP config {}.\n", qos.pdcp);
+    // }
+  } else {
+    fmt::print("CU-CP QoS confing empty.\n");
+  }
+
   if (!config_helpers::is_valid_configuration(out_cfg)) {
     report_error("Invalid CU-CP configuration.\n");
   }
@@ -101,6 +111,74 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     ++cell_id;
   }
 
+  return out_cfg;
+}
+
+std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config(const gnb_appconfig& config)
+{
+  std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> out_cfg = {};
+  if (config.qos_cfg.empty()) {
+    // out_cfg = config_helpers::make_default_du_qos_config_list();
+    return out_cfg;
+  }
+
+  for (const qos_appconfig& qos : config.qos_cfg) {
+    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
+      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+    }
+    // Convert PDCP config
+    auto& out_pdcp = out_cfg[qos.five_qi].pdcp;
+
+    // RB type
+    out_pdcp.tx.rb_type = pdcp_rb_type::drb;
+    out_pdcp.rx.rb_type = pdcp_rb_type::drb;
+
+    // RLC mode
+    rlc_mode mode;
+    if (!from_string(mode, qos.rlc.mode)) {
+      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+    }
+    if (mode == rlc_mode::um_bidir || mode == rlc_mode::um_unidir_ul || mode == rlc_mode::um_unidir_ul) {
+      out_pdcp.tx.rlc_mode = pdcp_rlc_mode::um;
+      out_pdcp.rx.rlc_mode = pdcp_rlc_mode::um;
+    } else if (mode == rlc_mode::am) {
+      out_pdcp.tx.rlc_mode = pdcp_rlc_mode::am;
+      out_pdcp.rx.rlc_mode = pdcp_rlc_mode::am;
+    }
+
+    // Integrity Protection required
+    out_pdcp.tx.integrity_protection_required = qos.pdcp.integrity_protection_required;
+    out_pdcp.rx.integrity_protection_required = qos.pdcp.integrity_protection_required;
+
+    // Ciphering required
+    out_pdcp.tx.integrity_protection_required = true;
+    out_pdcp.rx.integrity_protection_required = true;
+
+    // PDCP SN
+    if (!from_number(out_pdcp.tx.sn_size, qos.pdcp.tx.sn_field_length)) {
+      report_error("Invalid PDCP TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
+    }
+    if (!from_number(out_pdcp.rx.sn_size, qos.pdcp.rx.sn_field_length)) {
+      report_error("Invalid PDCP RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.rlc.am.tx.sn_field_length);
+    }
+
+    // TX discard timer
+    if (!from_number(out_pdcp.tx.discard_timer, qos.pdcp.tx.discard_timer)) {
+      report_error("Invalid PDCP TX discard timer: 5QI={}, discard_timer={}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
+    }
+
+    // TX status report required
+    out_pdcp.tx.status_report_required = qos.pdcp.tx.status_report_required;
+
+    // RX out of order delivery
+    out_pdcp.rx.out_of_order_delivery = qos.pdcp.rx.out_of_order_delivery;
+
+    // RX t-Reordering
+    if (!from_number(out_pdcp.rx.t_reordering, qos.pdcp.rx.t_reordering)) {
+      report_error(
+          "Invalid PDCP RX t-Reordering timer: 5QI={}, t-Reordering={}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
+    }
+  }
   return out_cfg;
 }
 

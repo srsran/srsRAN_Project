@@ -33,6 +33,9 @@ srs_cu_cp::cu_cp_configuration generate_cu_cp_config(const gnb_appconfig& config
 /// Converts and returns the given gnb application configuration to a DU cell configuration.
 std::vector<du_cell_config> generate_du_cell_config(const gnb_appconfig& config);
 
+/// Converts and returns the given gnb application QoS configuration to a CU-CP configuration.
+std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> generate_cu_cp_qos_config(const gnb_appconfig& config);
+
 /// Converts and returns the given gnb application QoS configuration to a DU configuration.
 std::map<uint8_t, du_qos_config> generate_du_qos_config(const gnb_appconfig& config);
 

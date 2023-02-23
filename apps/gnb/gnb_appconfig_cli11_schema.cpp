@@ -345,7 +345,7 @@ static void configure_cli11_pdcp_args(CLI::App& app, pdcp_appconfig& pdcp_params
       ->capture_default_str();
   CLI::App* pdcp_tx_subcmd = app.add_subcommand("tx", "PDCP TX parameters");
   configure_cli11_pdcp_tx_args(*pdcp_tx_subcmd, pdcp_params.tx);
-  CLI::App* pdcp_rx_subcmd = app.add_subcommand("tx", "PDCP RX parameters");
+  CLI::App* pdcp_rx_subcmd = app.add_subcommand("rx", "PDCP RX parameters");
   configure_cli11_pdcp_rx_args(*pdcp_rx_subcmd, pdcp_params.rx);
 }
 

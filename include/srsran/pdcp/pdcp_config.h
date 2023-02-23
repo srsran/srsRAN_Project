@@ -25,6 +25,18 @@ enum class pdcp_rlc_mode { um, am };
 
 /// PDCP NR sequence number field.
 enum class pdcp_sn_size : uint8_t { size12bits = 12, size18bits = 18 };
+inline bool from_number(pdcp_sn_size& sn_size, uint16_t num)
+{
+  if (num == 12) {
+    sn_size = pdcp_sn_size::size12bits;
+    return true;
+  }
+  if (num == 18) {
+    sn_size = pdcp_sn_size::size18bits;
+    return true;
+  }
+  return false;
+}
 
 /// \brief Convert PDCP SN size from enum to unsigned integer.
 constexpr uint8_t pdcp_sn_size_to_uint(pdcp_sn_size sn_size)
@@ -80,6 +92,52 @@ enum class pdcp_t_reordering {
   ms3000   = 3000,
   infinity = -1
 };
+inline bool from_number(pdcp_t_reordering t_reord, int num)
+{
+  switch (num) {
+    case 0:
+    case 1:
+    case 2:
+    case 4:
+    case 5:
+    case 8:
+    case 10:
+    case 15:
+    case 20:
+    case 30:
+    case 40:
+    case 50:
+    case 60:
+    case 80:
+    case 100:
+    case 120:
+    case 140:
+    case 160:
+    case 180:
+    case 200:
+    case 220:
+    case 240:
+    case 260:
+    case 280:
+    case 300:
+    case 500:
+    case 750:
+    case 1000:
+    case 1250:
+    case 1500:
+    case 1750:
+    case 2000:
+    case 2250:
+    case 2500:
+    case 2750:
+    case 3000:
+    case -1:
+      t_reord = static_cast<pdcp_t_reordering>(num);
+      return true;
+    default:
+      return false;
+  }
+}
 
 /// \brief Convert PDCP NR t-Reordering from enum to integer.
 constexpr uint8_t pdcp_t_reordering_to_int(pdcp_t_reordering t_reordering)
@@ -110,6 +168,32 @@ enum class pdcp_discard_timer {
   ms1500         = 1500,
   infinity       = -1
 };
+inline bool from_number(pdcp_discard_timer& discard_timer, int num)
+{
+  switch (num) {
+    case 0:
+    case 10:
+    case 20:
+    case 30:
+    case 40:
+    case 50:
+    case 60:
+    case 75:
+    case 100:
+    case 150:
+    case 200:
+    case 250:
+    case 300:
+    case 500:
+    case 750:
+    case 1500:
+    case -1:
+      discard_timer = static_cast<pdcp_discard_timer>(num);
+      return true;
+    default:
+      return false;
+  }
+}
 
 /// \brief Convert PDCP NR discard timer from enum to integer.
 constexpr uint8_t pdcp_discard_timer_to_int(pdcp_discard_timer discard_timer)
