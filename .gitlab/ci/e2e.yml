@@ -66,6 +66,7 @@ smoke-zmq-tsan:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "smoke and not tcp and not multiue"
     ARGS: "-x"
+    LOG_LEVEL: "debug"
     FORCE_DOWNLOAD: "false"
   needs:
     - job: "avx2 [tsan, cached]"
