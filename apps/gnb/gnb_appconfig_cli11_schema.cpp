@@ -323,7 +323,31 @@ static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
   configure_cli11_rlc_am_args(*rlc_am_subcmd, rlc_params.am);
 }
 
-static void configure_cli11_pdcp_args(CLI::App& app, pdcp_appconfig& rlc_params) {}
+static void configure_cli11_pdcp_tx_args(CLI::App& app, pdcp_tx_appconfig& pdcp_tx_params)
+{
+  app.add_option("--sn", pdcp_tx_params.sn_field_length, "PDCP TX SN size")->capture_default_str();
+  app.add_option("--discard_timer", pdcp_tx_params.discard_timer, "PDCP TX discard timer (ms)")->capture_default_str();
+  app.add_option("--status_report_required", pdcp_tx_params.status_report_required, "PDCP TX status report required")
+      ->capture_default_str();
+}
+
+static void configure_cli11_pdcp_rx_args(CLI::App& app, pdcp_rx_appconfig& pdcp_rx_params)
+{
+  app.add_option("--sn", pdcp_rx_params.sn_field_length, "PDCP RX SN size")->capture_default_str();
+  app.add_option("--t_reordering", pdcp_rx_params.t_reordering, "PDCP RX t-Reordering (ms)")->capture_default_str();
+  app.add_option("--out_of_order_delivery", pdcp_rx_params.out_of_order_delivery, "PDCP TX status report required")
+      ->capture_default_str();
+}
+
+static void configure_cli11_pdcp_args(CLI::App& app, pdcp_appconfig& pdcp_params)
+{
+  app.add_option("integrity_required", pdcp_params.integrity_protection_required, "DRB Integrity required")
+      ->capture_default_str();
+  CLI::App* pdcp_tx_subcmd = app.add_subcommand("tx", "PDCP TX parameters");
+  configure_cli11_pdcp_tx_args(*pdcp_tx_subcmd, pdcp_params.tx);
+  CLI::App* pdcp_rx_subcmd = app.add_subcommand("tx", "PDCP RX parameters");
+  configure_cli11_pdcp_rx_args(*pdcp_rx_subcmd, pdcp_params.rx);
+}
 
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
 {

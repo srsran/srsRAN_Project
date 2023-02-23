@@ -173,14 +173,22 @@ struct rlc_appconfig {
   rlc_am_appconfig am;
 };
 
-struct pdcp_tx_appconfig {
-  uint16_t sn_field_length;   ///< Number of bits used for sequence number
-  int32_t  t_reassembly;      ///< Timer used by rx to detect PDU loss (ms)
-  int32_t  t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
+struct pdcp_rx_appconfig {
+  uint16_t sn_field_length;       ///< Number of bits used for sequence number
+  int32_t  t_reordering;          ///< Timer used to detect PDUs losses (ms)
+  bool     out_of_order_delivery; ///< Whether out-of-order delivery to upper layers is enabled
 };
+
+struct pdcp_tx_appconfig {
+  uint16_t sn_field_length;        ///< Number of bits used for sequence number
+  int32_t  discard_timer;          ///< Timer used to notify lower layers to discard PDUs (ms)
+  bool     status_report_required; ///< Wether PDCP status report is required
+};
+
 struct pdcp_appconfig {
-  uint16_t sn_size;
-  bool     integrity_protection_required;
+  bool              integrity_protection_required;
+  pdcp_tx_appconfig tx;
+  pdcp_rx_appconfig rx;
 };
 /// QoS configuration
 struct qos_appconfig {
