@@ -300,9 +300,12 @@ void scheduler_result_logger::log_info(const sched_result& result)
 
 void scheduler_result_logger::on_scheduler_result(const sched_result& result)
 {
+  if (not enabled) {
+    return;
+  }
   if (logger.debug.enabled()) {
     log_debug(result);
-  } else if (logger.info.enabled()) {
+  } else {
     log_info(result);
   }
 }

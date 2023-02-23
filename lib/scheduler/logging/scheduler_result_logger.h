@@ -19,7 +19,7 @@ class scheduler_result_logger
 {
 public:
   explicit scheduler_result_logger(bool log_broadcast_ = true) :
-    logger(srslog::fetch_basic_logger("SCHED")), log_broadcast(log_broadcast_)
+    logger(srslog::fetch_basic_logger("SCHED")), log_broadcast(log_broadcast_), enabled(logger.info.enabled())
   {
   }
 
