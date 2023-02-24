@@ -91,20 +91,21 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
 {
   unsigned sr_period            = get_config_sr_period();
   unsigned slots_per_frame      = NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(cell_cfg_list[0].scs_common);
-  unsigned nof_avail_sr_offsets = sr_period;
+  unsigned nof_avail_sr_offsets = sr_period * 2;
   if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value()) {
     nof_avail_sr_offsets = 0;
     for (unsigned i = 0; i != sr_period; ++i) {
       if (has_active_tdd_ul_symbols(*cell_cfg_list[0].tdd_ul_dl_cfg_common, i % slots_per_frame)) {
-        nof_avail_sr_offsets++;
+        nof_avail_sr_offsets += 2;
       }
     }
   }
+  du_ue_index_t next_ue_index = to_du_ue_index(0);
 
-  // > Created UEs have unique SR offsets.
-  std::set<unsigned> sr_offsets;
+  // > Created UEs have unique (PUCCH resource, SR offset) pairs.
+  std::set<std::pair<unsigned, unsigned>> sr_offsets;
   for (unsigned i = 0; i != nof_avail_sr_offsets; ++i) {
-    ue_ran_resource_configurator& ue_res = create_ue(to_du_ue_index(i));
+    ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
     ASSERT_FALSE(ue_res.empty());
     const auto& sr_res_list = ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
     ASSERT_FALSE(sr_res_list.empty());
@@ -113,13 +114,14 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
       ASSERT_TRUE(
           has_active_tdd_ul_symbols(*cell_cfg_list[0].tdd_ul_dl_cfg_common, sr_res_list[0].offset % slots_per_frame));
     }
-    ASSERT_EQ(sr_offsets.count(sr_res_list[0].offset), 0);
-    sr_offsets.insert(sr_res_list[0].offset);
+    ASSERT_EQ(sr_offsets.count(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset)), 0);
+    sr_offsets.insert(std::make_pair(sr_res_list[0].pucch_res_id, sr_res_list[0].offset));
+    next_ue_index = to_du_ue_index((unsigned)next_ue_index + 1);
   }
 
   {
     // > No more SR offsets available. UE Resource Allocation fails.
-    ue_ran_resource_configurator& empty_ue_res = create_ue(to_du_ue_index(sr_period));
+    ue_ran_resource_configurator& empty_ue_res = create_ue(next_ue_index);
     ASSERT_TRUE(empty_ue_res.empty());
     ues.erase(to_du_ue_index(sr_period));
   }
@@ -129,7 +131,8 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
   unsigned      rem_sr_offset =
       ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset;
   ues.erase(ue_idx_to_rem);
-  ue_ran_resource_configurator& ue_res = create_ue(to_du_ue_index(sr_period + 1));
+  next_ue_index                        = to_du_ue_index((unsigned)next_ue_index + 1);
+  ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
   ASSERT_FALSE(ue_res.empty());
   ASSERT_EQ(rem_sr_offset, ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
 }

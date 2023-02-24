@@ -50,7 +50,8 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
           continue;
         }
       }
-      cell.sr_offset_free_list.push_back(offset);
+      cell.sr_offset_free_list.emplace_back(default_pucch_cfg.sr_res_list[0].pucch_res_id - 1, offset);
+      cell.sr_offset_free_list.emplace_back(default_pucch_cfg.sr_res_list[0].pucch_res_id, offset);
     }
 
     for (unsigned offset = 0; offset != csi_period; ++offset) {
@@ -79,14 +80,13 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     if (free_sr_list.empty()) {
       break;
     }
-    sr_res_list[i].offset = free_sr_list.back();
+    sr_res_list[i].pucch_res_id = free_sr_list.back().first;
+    sr_res_list[i].offset       = free_sr_list.back().second;
     free_sr_list.pop_back();
   }
   if (i != sr_res_list.size()) {
     // Allocation failed. Return resources back to the pool.
-    for (unsigned j = 0; j != i; ++j) {
-      free_sr_list.push_back(sr_res_list[i].offset);
-    }
+    dealloc_resources(cell_grp_cfg);
     return false;
   }
 
@@ -98,6 +98,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
     auto& free_csi_list = cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].csi_offset_free_list;
     if (free_csi_list.empty()) {
       // Allocation failed.
+      dealloc_resources(cell_grp_cfg);
       return false;
     }
     target_csi_cfg.report_slot_offset = free_csi_list.back();
@@ -110,7 +111,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
 void du_pucch_resource_manager::dealloc_resources(cell_group_config& cell_grp_cfg)
 {
   for (auto& sr : cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list) {
-    cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_offset_free_list.push_back(sr.offset);
+    cells[cell_grp_cfg.cells[0].serv_cell_cfg.cell_index].sr_offset_free_list.emplace_back(sr.pucch_res_id, sr.offset);
   }
   if (cell_grp_cfg.cells[0].serv_cell_cfg.csi_meas_cfg.has_value()) {
     auto& target_csi_cfg = srsran::variant_get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(

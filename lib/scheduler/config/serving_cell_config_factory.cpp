@@ -446,13 +446,13 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // TODO: add more PUCCH resources.
 
-  // >>> SR Resource.
-  const unsigned pucch_sr_res_id = pucch_cfg.pucch_res_list.size() - 1;
-  pucch_cfg.sr_res_list.push_back(scheduling_request_resource_config{.sr_res_id    = 1,
-                                                                     .sr_id        = uint_to_sched_req_id(0),
-                                                                     .period       = sr_periodicity::sl_40,
-                                                                     .offset       = 0,
-                                                                     .pucch_res_id = pucch_sr_res_id});
+  // >>> SR Resources.
+  pucch_cfg.sr_res_list.push_back(
+      scheduling_request_resource_config{.sr_res_id    = 1,
+                                         .sr_id        = uint_to_sched_req_id(0),
+                                         .period       = sr_periodicity::sl_40,
+                                         .offset       = 0,
+                                         .pucch_res_id = (unsigned)pucch_cfg.pucch_res_list.size() - 1U});
 
   pucch_cfg.format_1_common_param.emplace();
   pucch_cfg.format_2_common_param.emplace(
@@ -579,9 +579,9 @@ csi_report_config srsran::config_helpers::make_default_csi_report_config(const c
 
   csi_report_config::periodic_or_semi_persistent_report_on_pucch report_cfg_type{};
   report_cfg_type.report_type = csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic;
-  csi_resource_periodicity csi_rs_period = get_max_csi_rs_period(params);
-  // Set CSI report period equal to the CSI-RS period. No point in reporting more often than we get CSI-RS.
-  report_cfg_type.report_slot_period = static_cast<csi_report_periodicity>(std::min((unsigned)csi_rs_period, 320U));
+  // Note: the period for reporting is directly proportional to the number of CSI-RS resources available, and,
+  // therefore, to the number of UEs supported by the gNB.
+  report_cfg_type.report_slot_period = csi_report_periodicity::slots80;
   report_cfg_type.report_slot_offset = 9;
   report_cfg_type.pucch_csi_res_list.push_back(
       csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9});
