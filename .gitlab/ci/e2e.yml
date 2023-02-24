@@ -26,8 +26,9 @@
     LOG_LEVEL: "info"
     MARKERS: ""
     ARGS: ""
-    FORCE_DOWNLOAD: "false"
+    FORCE_DOWNLOAD: "false"  # Download only failed tests by default
     PCAP: "" # Disabled by default
+    FAIL_IF_INTERNAL_ERRORS: "true" # Enabled by default
   tags:
     - on-prem-amd64
   extends:
@@ -48,6 +49,7 @@
       export RETINA_LOGLEVEL="$LOG_LEVEL"
       export RETINA_FORCE_DOWNLOAD_REPORT="$FORCE_DOWNLOAD"
       export RETINA_PCAP_ENABLE="$PCAP"
+      export RETINA_FAIL_IF_INTERNAL_ERRORS="$FAIL_IF_INTERNAL_ERRORS"
     - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
   after_script:
     - |
@@ -125,6 +127,7 @@ rf:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     MARKERS: "rf and not tcp and not multiue"
     LOG_LEVEL: "warning"
+    FAIL_IF_INTERNAL_ERRORS: ""
   needs:
     - job: "avx2 [basic]"
       artifacts: true

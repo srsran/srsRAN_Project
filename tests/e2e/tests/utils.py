@@ -50,7 +50,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
                     "bandwidth": bandwidth,
                     "mcs": mcs,
                     "log_level": get_loglevel(),
-                    "pcap": bool(os.environ["RETINA_PCAP_ENABLE"])
+                    "pcap": get_pcap(),
                 }
             },
         }
@@ -74,10 +74,12 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
 
         with suppress(NameError, grpc._channel._InactiveRpcError):
             return_code = gnb.Stop(Empty()).value
-            teardown_ok &= return_code == 0
             if return_code < 0:
+                teardown_ok = False
                 logging.error("GNB crashed with exit code %s", return_code)
             elif return_code > 0:
+                if get_fail_if_internal_errors():
+                    teardown_ok = False
                 logging.error("GNB has %d errors or warnings", return_code)
         with suppress(NameError, grpc._channel._InactiveRpcError):
             epc.Stop(Empty()).value
@@ -85,8 +87,11 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
             return_code = ue.Stop(Empty()).value
             teardown_ok &= return_code == 0
             if return_code < 0:
+                teardown_ok = False
                 logging.error("UE crashed with exit code %s", return_code)
             elif return_code > 0:
+                if get_fail_if_internal_errors():
+                    teardown_ok = False
                 logging.error("UE has %d errors or warnings", return_code)
         if teardown_ok is False:
             test_successful = False
@@ -147,3 +152,23 @@ def get_loglevel():
         return os.environ["RETINA_LOGLEVEL"]
     except KeyError:
         return "info"
+
+
+def get_pcap():
+    """
+    Return True / False
+    """
+    try:
+        return bool(os.environ["RETINA_PCAP_ENABLE"])
+    except KeyError:
+        return False
+
+
+def get_fail_if_internal_errors():
+    """
+    Return True / False
+    """
+    try:
+        return bool(os.environ["RETINA_FAIL_IF_INTERNAL_ERRORS"])
+    except KeyError:
+        return True
