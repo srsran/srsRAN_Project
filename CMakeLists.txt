@@ -66,6 +66,12 @@ if (ENABLE_EXPORT)
 endif (ENABLE_EXPORT)
 
 ########################################################################
+# Install Dirs
+########################################################################
+
+set(DATA_DIR share/${CMAKE_PROJECT_NAME})
+
+########################################################################
 # Compiler specific setup
 ########################################################################
 macro(ADD_CXX_COMPILER_FLAG_IF_AVAILABLE flag have)
@@ -285,6 +291,7 @@ add_custom_target(all_srsran_headers SOURCES ${ALL_HEADER_FILES})
 ########################################################################
 
 add_subdirectory(apps)
+add_subdirectory(configs)
 add_subdirectory(docs)
 add_subdirectory(external)
 add_subdirectory(lib)
