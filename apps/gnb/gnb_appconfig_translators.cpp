@@ -53,7 +53,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
 
     srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
-    logger.set_level(srslog::basic_levels::info);
 
     param.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
     param.k_ssb             = (*ssb_freq_loc).k_ssb;
