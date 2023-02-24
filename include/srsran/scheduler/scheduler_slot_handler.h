@@ -57,7 +57,7 @@ struct dmrs_information {
   unsigned dmrs_scrambling_id_complement;
   /// False means that dmrs_scrambling_id == dmrs_scrambling_id_complement.
   bool low_papr_dmrs;
-  /// \brief DMRS sequence initialization (see TS 38.221 sec 7.4.1.1.2), as provided by parameter n_{SCID}.
+  /// \brief DMRS sequence initialization (see TS 38.211 sec 7.4.1.1.2), as provided by parameter n_{SCID}.
   /// Values: false -> 0, true -> 1.
   bool n_scid;
   /// Values: (1..3).
