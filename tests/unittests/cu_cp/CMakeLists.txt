@@ -9,10 +9,13 @@ set_directory_properties(PROPERTIES LABELS "cu_cp")
 
 include_directories(../../..)
 
-add_subdirectory(common)
 add_subdirectory(du_processor)
 add_subdirectory(cu_up_processor)
 add_subdirectory(ue_manager)
+
+add_library(cu_cp_test_helpers cu_cp_test_helpers.cpp du_processor_test_messages.cpp test_helpers.cpp)
+target_include_directories(cu_cp_test_helpers PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(cu_cp_test_helpers srsran_cu_cp srsran_support srslog f1ap_test_helpers e1ap_test_helpers f1ap_asn1 ngap_asn1 e1ap_asn1)
 
 add_executable(cu_cp_test cu_cp_test.cpp)
 target_link_libraries(cu_cp_test cu_cp_test_helpers f1ap_cu_test_helpers ngap_test_helpers srsran_cu_cp srsran_support srslog f1ap_asn1 ngap_asn1 gtest gtest_main)

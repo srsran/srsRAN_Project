@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../common/test_helpers.h"
+#include "../test_helpers.h"
 #include "lib/cu_cp/ue_manager_impl.h"
 #include "tests/unittests/ngap/test_helpers.h"
 #include "srsran/cu_cp/cu_cp_types.h"

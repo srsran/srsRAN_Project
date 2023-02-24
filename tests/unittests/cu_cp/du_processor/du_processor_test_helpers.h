@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../common/du_processor_test_messages.h"
-#include "../common/test_helpers.h"
+#include "../du_processor_test_messages.h"
+#include "../test_helpers.h"
 #include "du_processor_test_helpers.h"
 #include "lib/cu_cp/ue_manager_impl.h"
 #include "lib/f1ap/common/asn1_helpers.h"

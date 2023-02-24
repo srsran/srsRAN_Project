@@ -8,65 +8,12 @@
  *
  */
 
-#include "common/test_helpers.h"
-#include "lib/cu_cp/cu_cp.h"
-#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/e1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
-#include "tests/unittests/ngap/ngap_test_messages.h"
-#include "tests/unittests/ngap/test_helpers.h"
-#include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/support/executors/manual_task_worker.h"
+#include "cu_cp_test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
-
-/// Fixture class for CU-CP test
-class cu_cp_test : public ::testing::Test
-{
-protected:
-  void SetUp() override
-  {
-    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-    srslog::init();
-
-    // create CU-CP config
-    cu_cp_configuration cfg;
-    cfg.cu_cp_executor = &ctrl_worker;
-    cfg.f1ap_notifier  = &f1ap_pdu_notifier;
-    cfg.e1ap_notifier  = &e1ap_pdu_notifier;
-    cfg.ngap_notifier  = &ngap_amf_notifier;
-
-    cfg.ngap_config.ran_node_name = "srsgnb01";
-    cfg.ngap_config.plmn          = "00101";
-    cfg.ngap_config.tac           = 7;
-
-    // create and start DUT
-    cu_cp_obj = std::make_unique<cu_cp>(std::move(cfg));
-    cu_cp_obj->start();
-  }
-
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-
-    cu_cp_obj->stop();
-  }
-
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-
-  dummy_f1ap_pdu_notifier f1ap_pdu_notifier;
-  dummy_e1ap_pdu_notifier e1ap_pdu_notifier;
-  dummy_ngap_amf_notifier ngap_amf_notifier;
-
-  manual_task_worker ctrl_worker{128};
-
-  std::unique_ptr<cu_cp> cu_cp_obj;
-};
 
 //////////////////////////////////////////////////////////////////////////////////////
 /* Initial CU-CP routine manager with connected CU-UPs                              */

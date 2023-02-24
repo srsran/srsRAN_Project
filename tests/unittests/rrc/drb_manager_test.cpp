@@ -8,7 +8,7 @@
  *
  */
 
-#include "../cu_cp/common/du_processor_test_messages.h"
+#include "../cu_cp/du_processor_test_messages.h"
 #include "../lib/rrc/ue/drb_manager_impl.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/rrc/drb_manager.h"
