@@ -52,6 +52,27 @@ protected:
     return sr_periodicity_to_slot(default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].period);
   }
 
+  unsigned get_nof_sr_slot_offsets() const
+  {
+    const unsigned slots_per_frame = NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(cell_cfg_list[0].scs_common);
+    const auto&    sr_res_list     = default_ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
+    unsigned       nof_offsets     = 0;
+    for (unsigned i = 0; i != sr_res_list.size(); ++i) {
+      unsigned sr_period_slots = sr_periodicity_to_slot(sr_res_list[i].period);
+      if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value()) {
+        for (unsigned j = 0; j != sr_period_slots; ++j) {
+          if (has_active_tdd_ul_symbols(*cell_cfg_list[0].tdd_ul_dl_cfg_common, j % slots_per_frame)) {
+            nof_offsets++;
+          }
+        }
+      } else {
+        nof_offsets += sr_period_slots;
+      }
+    }
+    // Note: right now we are using two PUCCH resources for SR.
+    return nof_offsets * 2;
+  }
+
   std::vector<du_cell_config>                                 cell_cfg_list;
   std::map<uint8_t, du_qos_config>                            qos_cfg_list;
   const serving_cell_config                                   default_ue_cell_cfg;
@@ -89,18 +110,10 @@ TEST_P(du_ran_resource_manager_tester, when_srb1_is_added_then_ue_resource_confi
 
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)
 {
-  unsigned sr_period            = get_config_sr_period();
-  unsigned slots_per_frame      = NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(cell_cfg_list[0].scs_common);
-  unsigned nof_avail_sr_offsets = sr_period * 2;
-  if (cell_cfg_list[0].tdd_ul_dl_cfg_common.has_value()) {
-    nof_avail_sr_offsets = 0;
-    for (unsigned i = 0; i != sr_period; ++i) {
-      if (has_active_tdd_ul_symbols(*cell_cfg_list[0].tdd_ul_dl_cfg_common, i % slots_per_frame)) {
-        nof_avail_sr_offsets += 2;
-      }
-    }
-  }
-  du_ue_index_t next_ue_index = to_du_ue_index(0);
+  unsigned      sr_period       = get_config_sr_period();
+  unsigned      slots_per_frame = NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(cell_cfg_list[0].scs_common);
+  unsigned      nof_avail_sr_offsets = this->get_nof_sr_slot_offsets();
+  du_ue_index_t next_ue_index        = to_du_ue_index(0);
 
   // > Created UEs have unique (PUCCH resource, SR offset) pairs.
   std::set<std::pair<unsigned, unsigned>> sr_offsets;
@@ -123,17 +136,21 @@ TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_u
     // > No more SR offsets available. UE Resource Allocation fails.
     ue_ran_resource_configurator& empty_ue_res = create_ue(next_ue_index);
     ASSERT_TRUE(empty_ue_res.empty());
-    ues.erase(to_du_ue_index(sr_period));
+    ues.erase(next_ue_index);
   }
 
   // Removing one UE, should make one SR offset available.
-  du_ue_index_t ue_idx_to_rem = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, nof_avail_sr_offsets - 1));
-  unsigned      rem_sr_offset =
+  du_ue_index_t ue_idx_to_rem = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, ues.size() - 1));
+  unsigned      rem_pucch_resource =
+      ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id;
+  unsigned rem_sr_offset =
       ues[ue_idx_to_rem]->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset;
   ues.erase(ue_idx_to_rem);
   next_ue_index                        = to_du_ue_index((unsigned)next_ue_index + 1);
   ue_ran_resource_configurator& ue_res = create_ue(next_ue_index);
   ASSERT_FALSE(ue_res.empty());
+  ASSERT_EQ(rem_pucch_resource,
+            ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].pucch_res_id);
   ASSERT_EQ(rem_sr_offset, ue_res->cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset);
 }
 
