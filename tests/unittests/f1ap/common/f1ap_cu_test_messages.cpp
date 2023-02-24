@@ -17,14 +17,14 @@ using namespace asn1::f1ap;
 asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_item(unsigned nrcell_id, unsigned nrpci)
 {
   asn1::f1ap::gnb_du_served_cells_item_s served_cells_item;
-  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("208991");
+  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
   served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nrcell_id);
   served_cells_item.served_cell_info.nr_pci              = nrpci;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
-  served_cells_item.served_cell_info.five_gs_tac.from_number(1);
+  served_cells_item.served_cell_info.five_gs_tac.from_number(7);
 
   asn1::f1ap::served_plmns_item_s served_plmn;
-  served_plmn.plmn_id.from_string("208991");
+  served_plmn.plmn_id.from_string("00f110");
   asn1::protocol_ext_field_s<asn1::f1ap::served_plmns_item_ext_ies_o> plmn_ext_container = {};
   plmn_ext_container.set_item(ASN1_F1AP_ID_TAI_SLICE_SUPPORT_LIST);
   auto&                            tai_slice_support_list = plmn_ext_container.value().tai_slice_support_list();

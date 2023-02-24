@@ -25,14 +25,14 @@ cu_cp_e1_setup_request srsran::srs_cu_cp::generate_cu_cp_e1_setup_request()
 asn1::e1ap::supported_plmns_item_s srsran::srs_cu_cp::generate_supported_plmns_item(unsigned nrcell_id)
 {
   asn1::e1ap::supported_plmns_item_s supported_plmns_item = {};
-  supported_plmns_item.plmn_id.from_string("208991");
+  supported_plmns_item.plmn_id.from_string("00f110");
 
   asn1::e1ap::slice_support_item_s slice_support_item = {};
   slice_support_item.snssai.sst.from_number(1);
   supported_plmns_item.slice_support_list.push_back(slice_support_item);
 
   asn1::e1ap::nr_cgi_support_item_s nr_cgi_support_item;
-  nr_cgi_support_item.nr_cgi.plmn_id.from_string("208991");
+  nr_cgi_support_item.nr_cgi.plmn_id.from_string("00f110");
   nr_cgi_support_item.nr_cgi.nr_cell_id.from_number(nrcell_id);
   supported_plmns_item.nr_cgi_support_list.push_back(nr_cgi_support_item);
 
