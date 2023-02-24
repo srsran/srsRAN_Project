@@ -24,7 +24,7 @@ from retina.protocol.ue_pb2 import IPerfDir, IPerfProto, IPerfRequest, UEStartIn
 from .utils import ATTACH_TIMEOUT, DEFAULT_MCS, STARTUP_TIMEOUT, get_ue_gnb_epc
 
 SHORT_DURATION = 20
-LONG_DURATION = 20 * 60
+LONG_DURATION = 5 * 60
 LOW_BITRATE = int(1e6)
 HIGH_BITRATE = int(20e6)
 
