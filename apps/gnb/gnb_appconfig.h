@@ -202,7 +202,7 @@ struct log_appconfig {
   std::string sdap_level  = "warning";
   std::string gtpu_level  = "warning";
   std::string fapi_level  = "warning";
-  uint32_t    hex_max_size            = 32;    // Maximum number of bytes to write when dumping hex arrays.
+  uint32_t    hex_max_size            = 0;     // Maximum number of bytes to write when dumping hex arrays.
   bool        broadcast_enabled       = false; // Set to true to log broadcasting messages and all PRACH opportunities.
   std::string phy_rx_symbols_filename = "";    // Set to a valid file path to print the received symbols.
 };
