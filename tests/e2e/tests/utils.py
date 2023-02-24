@@ -50,6 +50,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
                     "bandwidth": bandwidth,
                     "mcs": mcs,
                     "log_level": get_loglevel(),
+                    "pcap": bool(os.environ["RETINA_PCAP_ENABLE"])
                 }
             },
         }

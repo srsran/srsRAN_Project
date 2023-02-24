@@ -27,6 +27,7 @@
     MARKERS: ""
     ARGS: ""
     FORCE_DOWNLOAD: "false"
+    PCAP: "" # Disabled by default
   tags:
     - on-prem-amd64
   extends:
@@ -46,6 +47,7 @@
       export LOGNAME=$GITLAB_USER_LOGIN
       export RETINA_LOGLEVEL="$LOG_LEVEL"
       export RETINA_FORCE_DOWNLOAD_REPORT="$FORCE_DOWNLOAD"
+      export RETINA_PCAP_ENABLE="$PCAP"
     - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
   after_script:
     - |
@@ -68,6 +70,7 @@ smoke-zmq-tsan:
     MARKERS: "smoke and not tcp and not multiue"
     ARGS: "-x"
     LOG_LEVEL: "debug"
+    PCAP: "true"
   needs:
     - job: "avx2 [tsan, cached]"
       artifacts: true
