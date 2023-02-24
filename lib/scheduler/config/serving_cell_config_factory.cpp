@@ -447,10 +447,12 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   // TODO: add more PUCCH resources.
 
   // >>> SR Resources.
+  // Use 40msec SR period by default.
+  unsigned sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
   pucch_cfg.sr_res_list.push_back(
       scheduling_request_resource_config{.sr_res_id    = 1,
                                          .sr_id        = uint_to_sched_req_id(0),
-                                         .period       = sr_periodicity::sl_40,
+                                         .period       = (sr_periodicity)sr_period,
                                          .offset       = 0,
                                          .pucch_res_id = (unsigned)pucch_cfg.pucch_res_list.size() - 1U});
 
@@ -581,7 +583,7 @@ csi_report_config srsran::config_helpers::make_default_csi_report_config(const c
   report_cfg_type.report_type = csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic;
   // Note: the period for reporting is directly proportional to the number of CSI-RS resources available, and,
   // therefore, to the number of UEs supported by the gNB.
-  report_cfg_type.report_slot_period = csi_report_periodicity::slots80;
+  report_cfg_type.report_slot_period = (csi_report_periodicity)(get_nof_slots_per_subframe(params.scs_common) * 80);
   report_cfg_type.report_slot_offset = 9;
   report_cfg_type.pucch_csi_res_list.push_back(
       csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9});
