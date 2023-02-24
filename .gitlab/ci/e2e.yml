@@ -52,6 +52,7 @@
       echo "*******************************************************************************************************************************"
       echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts/$CI_JOB_NAME/report.html"
       echo "*******************************************************************************************************************************"
+    - du -hs tests/e2e/log/
     - mv tests/e2e/log ${CI_PROJECT_DIR}/$CI_JOB_NAME
     - echo "$CI_JOB_ID" >> ${CI_PROJECT_DIR}/$CI_JOB_NAME/job.env
 
