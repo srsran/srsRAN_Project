@@ -22,10 +22,10 @@ namespace srs_cu_cp {
 /// \param[in] name The gNB CU name
 /// \param[in] rrc_version The RRC version
 /// \param[in] du_cell_db An array of DU cells to be activated
-void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                               response,
-                                 const std::string&                                         name,
-                                 const uint8_t                                              rrc_version,
-                                 const slotted_id_vector<du_cell_index_t, du_cell_context>& du_cell_db)
+void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                      response,
+                                 const std::string&                                name,
+                                 const uint8_t                                     rrc_version,
+                                 const std::map<du_cell_index_t, du_cell_context>& du_cell_db)
 {
   // fill CU common info
   response->gnb_cu_name_present = true;
@@ -34,7 +34,9 @@ void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                   
 
   // activate all DU cells
   response->cells_to_be_activ_list_present = true;
-  for (const auto& du_cell : du_cell_db) {
+  for (const auto& du_cell_pair : du_cell_db) {
+    const auto& du_cell = du_cell_pair.second;
+
     asn1::protocol_ie_single_container_s<asn1::f1ap::cells_to_be_activ_list_item_ies_o> resp_cell;
     resp_cell->cells_to_be_activ_list_item().nr_pci_present = true;
     resp_cell->cells_to_be_activ_list_item().nr_pci         = du_cell.pci;

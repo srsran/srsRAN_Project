@@ -15,7 +15,6 @@
 #include "adapters/rrc_ue_adapters.h"
 #include "routine_managers/du_processor_routine_manager.h"
 #include "ue_manager_impl.h"
-#include "srsran/adt/slotted_array.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/cu_cp/du_processor_config.h"
@@ -92,7 +91,7 @@ private:
 
   /// \brief Get the DU processor cell database.
   /// \return The DU processor cell database.
-  slotted_id_vector<du_cell_index_t, du_cell_context>& get_cell_db() { return cell_db; };
+  std::map<du_cell_index_t, du_cell_context>& get_cell_db() { return cell_db; };
 
   // F1AP senders
 
@@ -117,10 +116,9 @@ private:
   du_processor_ue_manager&            ue_manager;
   du_processor_f1ap_adapter           f1ap_ue_context_notifier;
 
-  du_processor_context context;
-  slotted_id_vector<du_cell_index_t, du_cell_context>
-                        cell_db; /// flattened version of served cells list provided by DU/F1AP
-  std::atomic<uint16_t> next_du_cell_index{0};
+  du_processor_context                       context;
+  std::map<du_cell_index_t, du_cell_context> cell_db; /// flattened version of served cells list provided by DU/F1AP
+  std::atomic<uint16_t>                      next_du_cell_index{0};
 
   // timers associated with a given DU.
   timer_manager timer_db;

@@ -132,7 +132,8 @@ rrc_amf_connection_handler& du_processor_impl::get_rrc_amf_connection_handler()
 
 du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
 {
-  for (auto& cell : cell_db) {
+  for (auto& cell_pair : cell_db) {
+    auto& cell = cell_pair.second;
     if (cell.cgi.nci.packed == packed_nr_cell_id) {
       return cell.cell_index;
     }
@@ -162,7 +163,7 @@ du_cell_index_t du_processor_impl::get_next_du_cell_index()
   for (int du_cell_idx_int = du_cell_index_to_uint(du_cell_index_t::min); du_cell_idx_int < MAX_NOF_DU_CELLS;
        du_cell_idx_int++) {
     du_cell_index_t cell_idx = uint_to_du_cell_index(du_cell_idx_int);
-    if (!cell_db.contains(cell_idx)) {
+    if (cell_db.find(cell_idx) == cell_db.end()) {
       return cell_idx;
     }
   }
@@ -204,7 +205,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   rrc_ue_create_msg.ue_index = ue->get_ue_index();
   rrc_ue_create_msg.c_rnti   = msg.c_rnti;
   rrc_ue_create_msg.cell.cgi = msg.cgi;
-  rrc_ue_create_msg.cell.tac = cell_db[pcell_index].tac;
+  rrc_ue_create_msg.cell.tac = cell_db.at(pcell_index).tac;
   for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
     ue->get_srbs()[int_to_srb_id(i)]       = {};
     rrc_ue_create_msg.srbs[i].pdu_notifier = ue->get_srbs().at(int_to_srb_id(i)).rrc_tx_notifier.get();
