@@ -44,7 +44,8 @@ static void configure_cli11_log_args(CLI::App& app, log_appconfig& log_params)
   app.add_option("--du_level", log_params.du_level, "Log level for the DU")->capture_default_str()->check(level_check);
   app.add_option("--cu_level", log_params.cu_level, "Log level for the CU")->capture_default_str()->check(level_check);
   app.add_option("--lib_level", log_params.lib_level, "Generic log level")->capture_default_str()->check(level_check);
-  app.add_option("--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex")
+  app.add_option(
+         "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
   app.add_option("--broadcast_enabled",
