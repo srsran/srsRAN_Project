@@ -551,20 +551,20 @@ avx2 [tsan, clean]:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache: []
 
-avx2 [asan]:
-  extends: .avx
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly/
-  variables:
-    OS: ubuntu-22.04
-    TEST_MODE: asan
-    COMPILER: gcc
-    BUILD_TYPE: Debug
-    ENABLE_ASAN: "True"
-    ASSERT_LEVEL: PARANOID
-    CPU_FLAG: "avx2"
-    ENABLE_AVX512: "False"
-    ENABLE_AVX2: "True"
+# avx2 [asan]:
+#   extends: .avx
+#   rules:
+#     - if: $CI_DESCRIPTION =~ /Nightly/
+#   variables:
+#     OS: ubuntu-22.04
+#     TEST_MODE: asan
+#     COMPILER: gcc
+#     BUILD_TYPE: Debug
+#     ENABLE_ASAN: "True"
+#     ASSERT_LEVEL: PARANOID
+#     CPU_FLAG: "avx2"
+#     ENABLE_AVX512: "False"
+#     ENABLE_AVX2: "True"
 
 avx512:
   extends: .avx

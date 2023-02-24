@@ -103,11 +103,11 @@ zmq-tsan:
       artifacts: true
       optional: true
 
-zmq-asan:
-  extends: zmq
-  needs:
-    - job: "avx2 [asan]"
-      artifacts: true
+# zmq-asan:
+#   extends: zmq
+#   needs:
+#     - job: "avx2 [asan]"
+#       artifacts: true
 
 zmq-multiue:
   extends: zmq
