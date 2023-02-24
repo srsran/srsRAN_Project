@@ -161,13 +161,15 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
     // Avoid including zero-padding in the TB.
     unsigned nof_new_bits = std::min(free_tb_bits, nof_data_bits);
 
+    // Get the LLRs from previous transmissions, if any, or a clean buffer.
+    span<log_likelihood_ratio> codeblock = soft_codeword->get_codeblock_soft_bits(cb_id, cb_length);
+
+    // Dematch the new LLRs and combine them with the ones from previous transmissions. We do this everytime, including
+    // when the CRC for the codeblock is OK (from previous retransmissions), because we may need to decode it again if,
+    // eventually, we find out that the CRC of the entire transport block is KO.
+    dematcher->rate_dematch(codeblock, cb_llrs, cfg.new_data, cb_meta);
+
     if (!cb_crcs[cb_id]) {
-      // Get the LLRs from previous transmissions, if any, or a clean buffer.
-      span<log_likelihood_ratio> codeblock = soft_codeword->get_codeblock_soft_bits(cb_id, cb_length);
-
-      // Dematch the new LLRs and combine them with the ones from previous transmissions.
-      dematcher->rate_dematch(codeblock, cb_llrs, cfg.new_data, cb_meta);
-
       // Try to decode.
       optional<unsigned> nof_iters = decode_cblk(message, codeblock, decoder.get(), block_crc, cb_meta, cfg);
 
