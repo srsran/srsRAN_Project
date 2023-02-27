@@ -410,13 +410,13 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&            pg_gra
   dci.p_rnti_f1_0.vrb_to_prb_mapping       = 0;
   dci.p_rnti_f1_0.modulation_coding_scheme = expert_cfg.pg.paging_mcs_index.to_uint();
 
-  // Add Paging to list of Paging information to pass to lower layers.
-  pg_grant.paging_type_indicator =
+  // Add Paging UE info to list of Paging information to pass to lower layers.
+  pg_grant.paging_ue_list.emplace_back();
+  pg_grant.paging_ue_list.back().paging_type_indicator =
       pg_msg.paging_type_indicator == paging_indication_message::paging_identity_type::cn_ue_paging_identity
-          ? dl_paging_allocation::cn_ue_paging_identity
-          : dl_paging_allocation::ran_ue_paging_identity;
-  pg_grant.paging_identity = pg_msg.paging_identity;
-  pg_grant.ue_id           = pg_msg.ue_identity_index_value;
+          ? paging_ue_info::cn_ue_paging_identity
+          : paging_ue_info::ran_ue_paging_identity;
+  pg_grant.paging_ue_list.back().paging_identity = pg_msg.paging_identity;
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = pg_grant.pdsch_cfg;

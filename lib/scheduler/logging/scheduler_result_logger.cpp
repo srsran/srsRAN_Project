@@ -153,16 +153,22 @@ void scheduler_result_logger::log_debug(const sched_result& result)
     }
   }
   for (const dl_paging_allocation& pg : result.dl.paging_grants) {
-    fmt::format_to(
-        fmtbuf,
-        "\n- PCCH: pg{}, pg-id={:#x}, prb={}, symb={}, tbs={}, mcs={}, rv={}",
-        pg.paging_type_indicator == dl_paging_allocation::paging_identity_type::cn_ue_paging_identity ? "cn" : "ran",
-        pg.paging_identity,
-        pg.pdsch_cfg.prbs.prbs(),
-        pg.pdsch_cfg.symbols,
-        pg.pdsch_cfg.codewords[0].tb_size_bytes,
-        pg.pdsch_cfg.codewords[0].mcs_index,
-        pg.pdsch_cfg.codewords[0].rv_index);
+    fmt::format_to(fmtbuf,
+                   "\n- PCCH: prb={}, symb={}, tbs={}, mcs={}, rv={}",
+                   pg.pdsch_cfg.prbs.prbs(),
+                   pg.pdsch_cfg.symbols,
+                   pg.pdsch_cfg.codewords[0].tb_size_bytes,
+                   pg.pdsch_cfg.codewords[0].mcs_index,
+                   pg.pdsch_cfg.codewords[0].rv_index);
+
+    for (const paging_ue_info& ue : pg.paging_ue_list) {
+      fmt::format_to(fmtbuf,
+                     "{}{}-pg-id={:#x}",
+                     (&ue == &pg.paging_ue_list.front()) ? " ues: " : ", ",
+                     ue.paging_type_indicator == paging_ue_info::paging_identity_type::cn_ue_paging_identity ? "cn"
+                                                                                                             : "ran",
+                     ue.paging_identity);
+    }
   }
 
   for (const ul_sched_info& ul_info : result.ul.puschs) {
@@ -281,14 +287,18 @@ void scheduler_result_logger::log_info(const sched_result& result)
   }
   for (const dl_paging_allocation& pg_info : result.dl.paging_grants) {
     fmt::format_to(fmtbuf,
-                   "{}PG{}: pg-id={:#x} prb={} tbs={}",
+                   "{}PG: prb={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
-                   pg_info.paging_type_indicator == dl_paging_allocation::paging_identity_type::cn_ue_paging_identity
-                       ? "cn"
-                       : "ran",
-                   pg_info.paging_identity,
                    pg_info.pdsch_cfg.prbs.prbs(),
                    pg_info.pdsch_cfg.codewords[0].tb_size_bytes);
+    for (const paging_ue_info& ue : pg_info.paging_ue_list) {
+      fmt::format_to(fmtbuf,
+                     "{}{}-pg-id={:#x}",
+                     (&ue == &pg_info.paging_ue_list.front()) ? " ues: " : ", ",
+                     ue.paging_type_indicator == paging_ue_info::paging_identity_type::cn_ue_paging_identity ? "cn"
+                                                                                                             : "ran",
+                     ue.paging_identity);
+    }
   }
 
   if (fmtbuf.size() > 0) {

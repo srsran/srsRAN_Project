@@ -202,7 +202,11 @@ protected:
   {
     return std::any_of(bench->res_grid[0].result.dl.paging_grants.begin(),
                        bench->res_grid[0].result.dl.paging_grants.end(),
-                       [&s_tmsi](const auto& grant) { return grant.paging_identity == s_tmsi; });
+                       [&s_tmsi](const auto& grant) {
+                         return std::any_of(grant.paging_ue_list.begin(),
+                                            grant.paging_ue_list.end(),
+                                            [&s_tmsi](const auto& ue) { return ue.paging_identity == s_tmsi; });
+                       });
   }
 };
 
