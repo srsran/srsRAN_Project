@@ -44,12 +44,13 @@ public:
   pdu_session_id_t           get_pdu_session_id(const drb_id_t drb_id) override;
   s_nssai_t                  get_s_nssai(const drb_id_t drb_id) override;
   size_t                     get_nof_drbs() override;
+  bool                       valid_5qi(uint8_t five_qi) override;
 
 private:
   drb_id_t allocate_drb_id(); // allocates a new DRB ID and returns it
 
   // returns valid RRC PDCP config for a given FiveQI
-  pdcp_config_t set_rrc_pdcp_config(uint16_t five_qi);
+  pdcp_config_t set_rrc_pdcp_config(uint8_t five_qi);
   sdap_config_t set_rrc_sdap_config(const drb_context& context);
 
   const drb_manager_cfg& cfg;

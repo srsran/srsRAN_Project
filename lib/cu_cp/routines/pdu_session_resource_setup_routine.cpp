@@ -392,10 +392,5 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_r
 
 bool pdu_session_resource_setup_routine::valid_5qi(const qos_flow_setup_request_item& flow)
 {
-  if (setup_msg.qos_config.find(flow.qos_characteristics.five_qi) == setup_msg.qos_config.end()) {
-    logger.warning(
-        "Could not find valid 5QI {}. QoS map size {}", flow.qos_characteristics.five_qi, setup_msg.qos_config.size());
-    return false;
-  }
-  return true;
+  return rrc_ue_drb_manager.valid_5qi(flow.qos_characteristics.five_qi);
 }

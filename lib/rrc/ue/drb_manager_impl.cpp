@@ -100,22 +100,14 @@ sdap_config_t drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
   return sdap_cfg;
 }
 
-pdcp_config_t drb_manager_impl::set_rrc_pdcp_config(uint16_t five_qi)
+pdcp_config_t drb_manager_impl::set_rrc_pdcp_config(uint8_t five_qi)
 {
-  // TODO lookup PDCP config for 5QI in config
-  (void)cfg;
-  pdcp_config_t pdcp_cfg;
-  pdcp_cfg.ciphering_disabled_present = true;
+  srsran_assert(cfg.five_qi_config.find(five_qi) != cfg.five_qi_config.end(),
+                "Could not find PDCP configuration. 5QI {}",
+                five_qi);
 
-  drb_t drb;
-  drb.pdcp_sn_size_dl = pdcp_sn_size::size18bits;
-  drb.pdcp_sn_size_ul = pdcp_sn_size::size18bits;
-  drb.discard_timer   = pdcp_discard_timer::not_configured;
-
-  pdcp_cfg.drb = drb;
-
-  pdcp_cfg.t_reordering = pdcp_t_reordering::ms0;
-  return pdcp_cfg;
+  // return cfg.five_qi_config.at(five_qi).pdcp;
+  return {};
 }
 
 pdu_session_id_t drb_manager_impl::get_pdu_session_id(const drb_id_t drb_id)
@@ -180,4 +172,13 @@ s_nssai_t drb_manager_impl::get_s_nssai(const drb_id_t drb_id)
 size_t drb_manager_impl::get_nof_drbs()
 {
   return drbs.size();
+}
+
+bool drb_manager_impl::valid_5qi(uint8_t five_qi)
+{
+  if (five_qi_map.find(five_qi) == five_qi_map.end()) {
+    logger.warning("Could not find valid 5QI {}. QoS map size {}", five_qi, five_qi_map.size());
+    return false;
+  }
+  return true;
 }

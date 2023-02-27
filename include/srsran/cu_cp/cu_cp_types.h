@@ -159,7 +159,6 @@ struct cu_cp_pdu_session_resource_setup_request {
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                                              ue_aggregate_maximum_bit_rate_dl;
   std::string                                                           serving_plmn;
-  std::map<uint8_t, cu_cp_qos_config>                                   qos_config;
 };
 
 struct cu_cp_associated_qos_flow {

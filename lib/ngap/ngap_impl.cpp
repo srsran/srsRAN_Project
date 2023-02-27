@@ -260,7 +260,6 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   msg.serving_plmn = ngap_cfg.plmn;
   fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
-  msg.qos_config                       = ngap_cfg.qos_config;
 
   // start routine
   task_sched.schedule_async_task(ue_index,

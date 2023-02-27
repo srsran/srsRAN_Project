@@ -51,6 +51,9 @@ public:
 
   /// \brief Return number of DRBs.
   virtual size_t get_nof_drbs() = 0;
+
+  /// \brief Return whether a configuration for a 5QI exists.
+  virtual bool valid_5qi(uint8_t five_qi) = 0;
 };
 
 } // namespace srs_cu_cp

@@ -90,7 +90,6 @@ cu_cp_pdu_session_resource_setup_request srsran::srs_cu_cp::generate_pdu_session
   item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
 
   req.pdu_session_res_setup_items.emplace(pdu_session_id, std::move(item));
-  req.qos_config[9] = {}; // Initialize 5QI 9
 
   return req;
 };

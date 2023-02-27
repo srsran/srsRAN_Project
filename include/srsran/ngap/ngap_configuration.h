@@ -24,8 +24,6 @@ struct ngap_configuration {
   std::string ran_node_name;
   std::string plmn; /// Full PLMN as string (without possible filler digit) e.g. "00101"
   unsigned    tac;
-
-  std::map<uint8_t, cu_cp_qos_config> qos_config;
 };
 
 } // namespace srs_cu_cp
