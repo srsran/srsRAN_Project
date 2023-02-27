@@ -102,14 +102,17 @@ public:
   }
 
   /// \brief Sets the result of a managed transaction with the provided transaction_id.
+  /// \param[in] transaction_id Id of the transaction.
+  /// \param[in] result Result of the transaction.
+  /// \return True if result of the transaction was successfully set. False, if the transaction has already finished.
   template <typename U>
-  bool __attribute__((warn_unused_result)) set(unsigned transaction_id, U&& u)
+  bool __attribute__((warn_unused_result)) set(unsigned transaction_id, U&& result)
   {
     if (transactions[transaction_id].is_set()) {
       return false;
     }
     running_timers[transaction_id].stop();
-    transactions[transaction_id].set(std::forward<U>(u));
+    transactions[transaction_id].set(std::forward<U>(result));
     return true;
   }
 
