@@ -15,6 +15,9 @@ using namespace srs_cu_cp;
 
 drb_manager_impl::drb_manager_impl(const drb_manager_cfg& cfg_) : cfg(cfg_), logger(srslog::fetch_basic_logger("RRC"))
 {
+  for (const auto& drb : cfg.five_qi_config) {
+    logger.debug("PDCP {}", drb.second.pdcp);
+  }
 }
 
 std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu)

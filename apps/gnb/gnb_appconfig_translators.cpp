@@ -20,9 +20,9 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngap_config.qos_config = generate_cu_cp_qos_config(config);
   if (not out_cfg.ngap_config.qos_config.empty()) {
     fmt::print("CU-CP QoS config {}.\n", out_cfg.ngap_config.qos_config.size());
-    // for (const auto& qos : config.qos_cfg) {
-    //   fmt::print("PDCP config {}.\n", qos.pdcp);
-    // }
+    for (const auto& qos : out_cfg.qos_config) {
+      fmt::print("PDCP config {}.\n", qos.second.pdcp);
+    }
   } else {
     fmt::print("CU-CP QoS confing empty.\n");
   }

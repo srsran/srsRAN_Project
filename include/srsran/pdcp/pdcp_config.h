@@ -379,4 +379,20 @@ struct formatter<srsran::pdcp_config::pdcp_rx_config> {
                      cfg.max_count.hard);
   }
 };
+
+// PDCP config
+template <>
+struct formatter<srsran::pdcp_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::pdcp_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
+  }
+};
 } // namespace fmt
