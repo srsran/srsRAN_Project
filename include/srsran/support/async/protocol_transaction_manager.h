@@ -74,7 +74,8 @@ public:
     unsigned transaction_id = next_transaction_id.fetch_add(1, std::memory_order_relaxed) % N;
     if (not transactions[transaction_id].is_set()) {
       // cancel any existing awaiter.
-      set(transaction_id, cancel_value);
+      bool ignore = set(transaction_id, cancel_value);
+      (void)ignore;
     }
     transactions[transaction_id].reset();
     return {transaction_id, transactions[transaction_id]};
@@ -90,19 +91,26 @@ public:
       // Create a new timer if it doesn't exist yet.
       running_timers[t.id()] = timer_db.create_unique_timer();
     }
-    running_timers[t.id()].set(time_to_cancel,
-                               [this, transaction_id = t.id()](timer_id_t tid) { set(transaction_id, cancel_value); });
+    running_timers[t.id()].set(time_to_cancel, [this, transaction_id = t.id()](timer_id_t tid) {
+      if (not set(transaction_id, cancel_value)) {
+        srslog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
+                                                  transaction_id);
+      }
+    });
     running_timers[t.id()].run();
     return t;
   }
 
   /// \brief Sets the result of a managed transaction with the provided transaction_id.
   template <typename U>
-  void set(unsigned transaction_id, U&& u)
+  bool __attribute__((warn_unused_result)) set(unsigned transaction_id, U&& u)
   {
+    if (transactions[transaction_id].is_set()) {
+      return false;
+    }
     running_timers[transaction_id].stop();
-    srsran_assert(not transactions[transaction_id].is_set(), "Transaction result cannot be overwritten.");
     transactions[transaction_id].set(std::forward<U>(u));
+    return true;
   }
 
 private:

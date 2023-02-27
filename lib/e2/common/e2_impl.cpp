@@ -96,7 +96,9 @@ void e2_impl::handle_successful_outcome(const asn1::e2ap::successful_outcome_s& 
         return;
       }
       // Set transaction result and resume suspended procedure.
-      events->transactions.set(transaction_id.value(), outcome);
+      if (not events->transactions.set(transaction_id.value(), outcome)) {
+        logger.warning("Unrecognized transaction id={}", transaction_id.value());
+      }
     } break;
     default:
       logger.error("Invalid E2AP successful outcome message type");
@@ -115,7 +117,9 @@ void e2_impl::handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome
         return;
       }
       // Set transaction result and resume suspended procedure.
-      events->transactions.set(transaction_id.value(), outcome);
+      if (not events->transactions.set(transaction_id.value(), outcome)) {
+        logger.warning("Unrecognized transaction id={}", transaction_id.value());
+      }
     } break;
     default:
       logger.error("Invalid E2AP unsuccessful outcome message type");

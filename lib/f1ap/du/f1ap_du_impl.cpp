@@ -269,19 +269,23 @@ void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
   }
 
   // Set transaction result and resume suspended procedure.
-  events->transactions.set(transaction_id.value(), outcome);
+  if (not events->transactions.set(transaction_id.value(), outcome)) {
+    logger.warning("Unexpected transaction id={}", transaction_id.value());
+  }
 }
 
 void f1ap_du_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome)
 {
   expected<uint8_t> transaction_id = get_transaction_id(outcome);
   if (transaction_id.is_error()) {
-    logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+    logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
   }
 
   // Set transaction result and resume suspended procedure.
-  events->transactions.set(transaction_id.value(), outcome);
+  if (not events->transactions.set(transaction_id.value(), outcome)) {
+    logger.warning("Unexpected transaction id={}", transaction_id.value());
+  }
 }
 
 bool f1ap_du_impl::handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id)

@@ -54,7 +54,7 @@ TEST_F(protocol_transaction_test, when_transaction_is_set_after_suspend_then_awa
 
   // Test Section.
   ASSERT_FALSE(t.ready());
-  transaction_manager.set(tr.id(), 1);
+  ASSERT_TRUE(transaction_manager.set(tr.id(), 1));
   ASSERT_TRUE(t.ready());
   ASSERT_EQ(1, tr.result());
 }
@@ -66,7 +66,7 @@ TEST_F(protocol_transaction_test, when_transaction_is_set_before_suspend_then_aw
     CORO_BEGIN(ctx);
     EXPECT_FALSE(tr.complete());
     // transaction set before await.
-    this->transaction_manager.set(tr.id(), 2);
+    ASSERT_TRUE(this->transaction_manager.set(tr.id(), 2));
     CORO_AWAIT(tr);
     EXPECT_TRUE(tr.complete());
     CORO_RETURN(tr.result());
@@ -90,9 +90,9 @@ TEST_F(protocol_transaction_test,
 
   // Test Section.
   ASSERT_FALSE(t.ready());
-  transaction_manager.set(tr2.id(), 1);
+  ASSERT_TRUE(transaction_manager.set(tr2.id(), 1));
   ASSERT_FALSE(t.ready());
-  transaction_manager.set(tr.id(), 2);
+  ASSERT_TRUE(transaction_manager.set(tr.id(), 2));
   ASSERT_TRUE(t.ready());
 }
 
