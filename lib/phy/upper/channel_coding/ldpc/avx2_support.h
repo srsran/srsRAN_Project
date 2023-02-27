@@ -147,12 +147,15 @@ public:
   using avxType                         = typename avxWrapper::avxType;
   static constexpr size_t AVX_SIZE_BYTE = sizeof(avxType);
 
+  /// Default constructor: empty view to a null pointer.
+  avx_span() : array_ptr(nullptr), view_length(0) {}
+
   /// \brief Constructs a span from an \ref avx_array.
   ///
   /// \tparam N     Array length.
-  /// \param arr    Array the span is a view of.
-  /// \param offset First element of the array (an AVX register) viewed by the span.
-  /// \param length Length of the span.
+  /// \param[in] arr    Array the span is a view of.
+  /// \param[in] offset First element of the array (an AVX register) viewed by the span.
+  /// \param[in] length Length of the span.
   template <size_t N>
   avx_span(avx_array<avxWrapper, N>& arr, unsigned offset, unsigned length) :
     array_ptr(arr.data_at(offset, 0)), view_length(length)
@@ -164,6 +167,21 @@ public:
   template <size_t N>
   avx_span(avx_array<avxWrapper, N>& arr) : avx_span(arr, 0, N)
   {
+  }
+
+  /// \brief Constructs a span from a standard array.
+  ///
+  /// \tparam IntType    Type of the standard array - must be an integer type of 8 bits.
+  /// \tparam N          Number of elements of the standard array.
+  /// \param[in] arr     Array the span is a view of.
+  /// \param[in] length  Number of elements spanned by the view (as a number of AVX registers).
+  template <typename IntType, size_t N>
+  avx_span(std::array<IntType, N>& arr, size_t length) :
+    array_ptr(reinterpret_cast<int8_t*>(arr.data())), view_length(length)
+  {
+    static_assert(sizeof(IntType) == sizeof(int8_t),
+                  "avx_span can only be created from arrays of 1-byte integer types.");
+    srsran_assert(view_length * AVX_SIZE_BYTE <= N, "Cannot take a span longer than the array.");
   }
 
   /// Returns a pointer to the \c pos AVX register inside the array.

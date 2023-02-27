@@ -123,13 +123,13 @@ void ldpc_encoder_avx2::select_strategy()
 
 void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
 {
-  // Resize internal buffer.
-  codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
-
   unsigned i_input        = 0;
   unsigned i_avx2         = 0;
   unsigned node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
   unsigned tail_bytes     = node_size_byte - lifting_size;
+
+  unsigned codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
+  codeblock                    = mm256::avx2_span(codeblock_buffer, codeblock_used_size);
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
     std::memcpy(codeblock.data_at(i_avx2), in.data() + i_input, lifting_size);
     std::memset(codeblock.data_at(i_avx2, lifting_size), 0, tail_bytes);
@@ -141,15 +141,19 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_AVX2_PH>
 void ldpc_encoder_avx2::systematic_bits_inner()
 {
-  // Resize auxiliary buffer.
-  auxiliary_used_size = (codeblock_length / lifting_size - BG_K_PH) * NODE_SIZE_AVX2_PH;
+  // Resize auxiliary buffers.
+  unsigned auxiliary_used_size = (codeblock_length / lifting_size - BG_K_PH) * NODE_SIZE_AVX2_PH;
+
+  auxiliary = mm256::avx2_span(auxiliary_buffer, auxiliary_used_size);
+
+  rotated_node = mm256::avx2_span(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
   std::memset(auxiliary.data_at(0), 0, auxiliary_used_size * AVX2_SIZE_BYTE);
 
   // For each BG information node...
   for (unsigned k = 0, i_blk = 0; k != BG_K_PH; ++k, i_blk += NODE_SIZE_AVX2_PH) {
     // and for each BG check node...
-    for (unsigned m = 0, i_aux = 0; m != BG_M_PH; ++m) {
+    for (unsigned m = 0, i_aux = 0; (m != BG_M_PH) && (i_aux != auxiliary_used_size); ++m) {
       unsigned node_shift = current_graph->get_lifted_node(m, k);
       if (node_shift == NO_EDGE) {
         i_aux += NODE_SIZE_AVX2_PH;

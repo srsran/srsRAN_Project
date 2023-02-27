@@ -24,22 +24,6 @@ namespace srsran {
 class ldpc_encoder_impl : public ldpc_encoder
 {
 public:
-  /// \name Constructors, destructor, copy and move operators.
-  /// Either default or deleted.
-
-  ///@{
-  ldpc_encoder_impl() = default;
-  // no copy and move constructors
-  ldpc_encoder_impl(ldpc_encoder_impl&)  = delete;
-  ldpc_encoder_impl(ldpc_encoder_impl&&) = delete;
-
-  // no copy and move operators
-  ldpc_encoder_impl& operator=(ldpc_encoder_impl&)  = delete;
-  ldpc_encoder_impl& operator=(ldpc_encoder_impl&&) = delete;
-
-  ~ldpc_encoder_impl() override = default;
-  ///@}
-
   // See interface for the documentation.
   void
   encode(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) override;

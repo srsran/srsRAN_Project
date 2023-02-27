@@ -91,18 +91,19 @@ private:
   void ext_region_inner();
 
   /// Buffer containing the codeblock.
-  mm256::avx2_array<MAX_BLK_SIZE_AVX2> codeblock;
-
-  /// Used portion of the codeblock buffer.
-  size_t codeblock_used_size = 0;
+  std::array<uint8_t, AVX2_SIZE_BYTE* MAX_BLK_SIZE_AVX2> codeblock_buffer = {};
+  /// View to the actual codeblock.
+  mm256::avx2_span codeblock;
 
   /// Auxiliary buffer for storing chunks of codeblocks.
-  mm256::avx2_array<MAX_AUX_SIZE_AVX2> auxiliary;
-  /// Used portion of the auxiliary buffer.
-  size_t auxiliary_used_size = 0;
+  std::array<uint8_t, AVX2_SIZE_BYTE* MAX_AUX_SIZE_AVX2> auxiliary_buffer = {};
+  /// View to the used part of the auxiliary buffer.
+  mm256::avx2_span auxiliary;
 
   /// Auxiliary buffer for storing a single node during rotations.
-  mm256::avx2_array<MAX_NODE_SIZE_AVX2> rotated_node;
+  std::array<uint8_t, AVX2_SIZE_BYTE* MAX_NODE_SIZE_AVX2> rotated_node_buffer = {};
+  /// View to the used part of \c rotated_node_buffer.
+  mm256::avx2_span rotated_node;
 
   /// Node size as a number of AVX2 vectors.
   unsigned node_size_avx2 = 0;
