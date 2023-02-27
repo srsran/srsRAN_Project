@@ -17,6 +17,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include <numeric>
 
 using namespace srsran;
 
@@ -45,7 +46,7 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         // NOTE:
         // - [Implementation defined] Use (n0 + 1) slot to avoid collisions between SSB and Paging.
         type0_pdcch_css_slots[i_ssb] =
-            precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
+            precompute_type0_pdcch_css_n0_plus_1(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
       }
     } else {
       bool ss_cfg_set = false;
@@ -62,12 +63,12 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
         srsran_assertion_failure("Paging Search Space not configured in DL BWP.");
       }
 
-      if (ss_cfg.cs_id != to_coreset_id(0) &&
-          ((not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()) ||
+      if (ss_cfg.cs_id != to_coreset_id(0) and
+          ((not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.has_value()) or
            (cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value().id != ss_cfg.cs_id))) {
         srsran_assertion_failure("CORESET configuration for Paging Search Space not configured in DL BWP.");
       }
-      if (ss_cfg.cs_id == to_coreset_id(0) &&
+      if (ss_cfg.cs_id == to_coreset_id(0) and
           (not cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value())) {
         srsran_assertion_failure("CORESET0 configuration for Paging Search Space not configured in DL BWP.");
       }
@@ -108,11 +109,12 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   //   point of a PO. For simplification, we do not support Paging Occasion which starts in PF and extends over multiple
   //   radio frames i.e. DU must ensure paging configuration is set to avoid Paging Occasion spanning multiple radio
   //   frames.
-  const auto sl_point            = res_grid[0].slot;
   const auto paging_search_space = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value();
 
   const cell_slot_resource_allocator& pdcch_alloc = res_grid[0];
-  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot)) {
+  const auto                          pdcch_slot  = pdcch_alloc.slot;
+  // Verify PDCCH slot is DL enabled.
+  if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
     return;
   }
 
@@ -155,11 +157,13 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
               return lhs_pg_attmpts < rhs_pg_attmpts;
             });
 
-  // NOTE:
-  // - [Implementation defined] We restrict number of Paged UEs per paging opportunity to 1 for simplification.
-  // Reason: When paging more than one UE during the same paging opportunity, the one paging message is used for all
-  // UEs with one paging record per UE in the Paging message. This would require slightly complex logic while allocating
-  // PDSCH.
+  // Map to keep track of scheduled paging UEs at a particular PDSCH time resource index.
+  std::unordered_map<unsigned, std::vector<paging_indication_message>> pdsch_time_res_idx_to_scheduled_ues_map;
+  for (unsigned time_res_idx = 0; time_res_idx != pdsch_td_alloc_list.size(); ++time_res_idx) {
+    // Initialize.
+    pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx] = {};
+  }
+
   for (const auto& pg_ind : paging_pending_ues) {
     const unsigned drx_cycle = pg_ind.paging_drx.has_value() ? pg_ind.paging_drx.value() : default_paging_cycle;
 
@@ -168,7 +172,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
 
     // Check for paging frame.
     // (SFN + PF_offset) mod T = (T div N)*(UE_ID mod N). See Ts 38.304, clause 7.1.
-    if (((sl_point.sfn() + paging_frame_offset) % drx_cycle) != (t_div_n * ue_id_mod_n)) {
+    if (((pdcch_slot.sfn() + paging_frame_offset) % drx_cycle) != (t_div_n * ue_id_mod_n)) {
       continue;
     }
 
@@ -189,29 +193,53 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
         continue;
       }
       // Verify there is space in PDSCH and PDCCH result lists for new allocations.
-      if (paging_alloc.result.dl.paging_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
+      if (paging_alloc.result.dl.paging_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full() or
+          pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx].size() >= MAX_PAGING_RECORDS_PER_PAGING_PDU) {
         continue;
       }
 
-      if (paging_search_space == 0 && schedule_paging_in_search_space0(res_grid, sl_point, time_res_idx, pg_ind, i_s)) {
-        if (pg_ind.paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
-          cn_paging_retries[pg_ind.paging_identity]++;
-        } else {
-          ran_paging_retries[pg_ind.paging_identity]++;
-        }
-        return;
+      if (paging_search_space == 0 and is_paging_slot_in_search_space0(pdcch_slot, i_s) and
+          is_space_available_for_paging(
+              res_grid,
+              time_res_idx,
+              get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx]) +
+                  pg_ind.paging_msg_size)) {
+        pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx].push_back(pg_ind);
+        break;
       }
-      if (paging_search_space > 0 &&
-          schedule_paging_in_search_space_id_gt_0(res_grid, sl_point, time_res_idx, pg_ind, i_s)) {
-        if (pg_ind.paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
-          cn_paging_retries[pg_ind.paging_identity]++;
-        } else {
-          ran_paging_retries[pg_ind.paging_identity]++;
-        }
-        return;
+      if (paging_search_space > 0 and is_paging_slot_in_search_space_id_gt_0(pdcch_slot, i_s) and
+          is_space_available_for_paging(
+              res_grid,
+              time_res_idx,
+              get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx]) +
+                  pg_ind.paging_msg_size)) {
+        pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx].push_back(pg_ind);
+        break;
       }
     }
   }
+
+  // Update paging re-tries counter for all successful allocations.
+  for (const auto& map_it : pdsch_time_res_idx_to_scheduled_ues_map) {
+    if (not map_it.second.empty() and allocate_paging(res_grid, map_it.first, map_it.second, paging_search_space)) {
+      // Allocation successful.
+      for (const auto& ue_pg_ind : map_it.second) {
+        if (ue_pg_ind.paging_type_indicator == paging_indication_message::cn_ue_paging_identity) {
+          cn_paging_retries[ue_pg_ind.paging_identity]++;
+        } else {
+          ran_paging_retries[ue_pg_ind.paging_identity]++;
+        }
+      }
+    }
+  }
+}
+
+unsigned paging_scheduler::get_accumulated_paging_msg_size(const span<const paging_indication_message>& paging_ues_ind)
+{
+  return std::accumulate(paging_ues_ind.begin(),
+                         paging_ues_ind.end(),
+                         0,
+                         [](unsigned sum, const paging_indication_message& msg) { return sum + msg.paging_msg_size; });
 }
 
 void paging_scheduler::handle_paging_indication_message(const paging_indication_message& paging_indication)
@@ -225,18 +253,14 @@ void paging_scheduler::handle_paging_indication_message(const paging_indication_
   }
 }
 
-bool paging_scheduler::schedule_paging_in_search_space_id_gt_0(cell_resource_allocator&         res_grid,
-                                                               slot_point                       sl_point,
-                                                               unsigned                         pdsch_time_res,
-                                                               const paging_indication_message& pg_msg,
-                                                               unsigned                         i_s)
+bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_slot, unsigned i_s)
 {
   // Following values for Ns are valid as per TS 38.304, clause 7.1 and TS 38.331, clause 5.2.1 when
   // pagingSearchSpace > 0
   // - Ns can be 1, 2 or 4 provided SearchSpace has sufficient PDCCH Monitoring Occasions to match nof. PO(s).
 
   // - [Implementation defined] Currently, PDCCH allocator does not support more than one monitoring occasion per slot
-  //   and the monitoring occasion should start at the first symbol of the slot. Therefore, DU must configuring paging
+  //   and the monitoring occasion should start at the first symbol of the slot. Therefore, DU must configure paging
   //   search space taking this into account when defining SearchSpace > 0 for paging.
 
   // For each beam, check if the paging needs to be allocated in this slot.
@@ -249,23 +273,16 @@ bool paging_scheduler::schedule_paging_in_search_space_id_gt_0(cell_resource_all
     // TODO: Support multi-beam operations. As per TS 38.304, clause 7.1, In multi-beam operations, the same paging
     //  message are repeated in all transmitted beams.
 
-    if (sl_point.slot_index() == type2_pdcch_css_slots[ssb_idx][i_s].slot_index()) {
-      return allocate_paging(res_grid,
-                             pdsch_time_res,
-                             pg_msg,
-                             ssb_idx,
-                             cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value());
+    if (pdcch_slot.slot_index() == type2_pdcch_css_slots[ssb_idx][i_s].slot_index()) {
+      // All conditions are satisfied.
+      return true;
     }
   }
 
   return false;
 }
 
-bool paging_scheduler::schedule_paging_in_search_space0(cell_resource_allocator&         res_grid,
-                                                        slot_point                       sl_point,
-                                                        unsigned                         pdsch_time_res,
-                                                        const paging_indication_message& pg_msg,
-                                                        unsigned                         i_s)
+bool paging_scheduler::is_paging_slot_in_search_space0(slot_point pdcch_slot, unsigned i_s)
 {
   // Following values for Ns are valid as per TS 38.304, clause 7.1 and TS 38.331, clause 5.2.1 when
   // pagingSearchSpace = 0
@@ -274,7 +291,7 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_resource_allocator&
 
   // TS 38.304, clause 7.1, When SearchSpaceId = 0 is configured for pagingSearchSpace and Ns = 2, PO is either in the
   // first half frame (i_s = 0) or the second half frame (i_s = 1) of the PF.
-  if ((i_s == 0 && sl_point.is_odd_hrf()) || (i_s == 1 && (not sl_point.is_odd_hrf()))) {
+  if ((i_s == 0 and pdcch_slot.is_odd_hrf()) or (i_s == 1 and (not pdcch_slot.is_odd_hrf()))) {
     return false;
   }
 
@@ -284,8 +301,8 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_resource_allocator&
   //   space for SSB. This simplification is taken from SIB1 scheduler.
 
   // The paging_period_slots is expressed in unit of slots.
-  // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
-  const unsigned paging_period_slots = sib1_period * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
+  // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to convert them into slots.
+  const unsigned paging_period_slots = sib1_period * static_cast<unsigned>(pdcch_slot.nof_slots_per_subframe());
 
   // For each beam, check if the paging needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -297,29 +314,18 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_resource_allocator&
     // TODO: Support multi-beam operations. As per TS 38.304, clause 7.1, In multi-beam operations, the same paging
     //  message are repeated in all transmitted beams.
 
-    if (sl_point.to_uint() % paging_period_slots == type0_pdcch_css_slots[ssb_idx].to_uint()) {
-      // Ensure slot for Paging has DL enabled.
-      if (not cell_cfg.is_dl_enabled(sl_point)) {
-        logger.error("Could not allocated paging for beam idx {} as slot is not DL enabled.", ssb_idx);
-        return false;
-      }
-
-      return allocate_paging(res_grid,
-                             pdsch_time_res,
-                             pg_msg,
-                             ssb_idx,
-                             cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id);
+    if (pdcch_slot.to_uint() % paging_period_slots == type0_pdcch_css_slots[ssb_idx].to_uint()) {
+      // All conditions are satisfied.
+      return true;
     }
   }
 
   return false;
 }
 
-bool paging_scheduler::allocate_paging(cell_resource_allocator&         res_grid,
-                                       unsigned                         pdsch_time_res,
-                                       const paging_indication_message& pg_msg,
-                                       unsigned                         beam_idx,
-                                       search_space_id                  ss_id)
+bool paging_scheduler::is_space_available_for_paging(cell_resource_allocator& res_grid,
+                                                     unsigned                 pdsch_time_res,
+                                                     unsigned                 msg_size)
 {
   // NOTE:
   // - [Implementation defined] Need to take into account PDSCH Time Domain Resource Allocation in UE's active DL BWP,
@@ -340,58 +346,101 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&         res_grid
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   const sch_mcs_description mcs_descr = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.pg.paging_mcs_index);
-  const sch_prbs_tbs        paging_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pg_msg.paging_msg_size,
-                                                                               nof_symb_sh,
-                                                                               calculate_nof_dmrs_per_rb(dmrs_info),
-                                                                               nof_oh_prb,
-                                                                               mcs_descr,
-                                                                               nof_layers,
-                                                                               tbs_scaling});
+  const sch_prbs_tbs        paging_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{
+      msg_size, nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_descr, nof_layers, tbs_scaling});
 
-  // 1. Find available RBs in PDSCH for Paging grant.
+  // Find available RBs in PDSCH for Paging grant.
   crb_interval paging_crbs;
   {
     const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
     paging_crbs                      = find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
     if (paging_crbs.length() < nof_paging_rbs) {
-      logger.error("Not enough PDSCH space for Paging in beam idx: {}", beam_idx);
+      logger.warning("Not enough PDSCH space for Paging");
       return false;
     }
   }
 
-  // 2. Allocate DCI_1_0 for Paging on PDCCH.
+  return true;
+}
+
+bool paging_scheduler::allocate_paging(cell_resource_allocator&                     res_grid,
+                                       unsigned                                     pdsch_time_res,
+                                       const span<const paging_indication_message>& paging_ues_ind,
+                                       search_space_id                              ss_id)
+{
+  // NOTE:
+  // - [Implementation defined] Need to take into account PDSCH Time Domain Resource Allocation in UE's active DL BWP,
+  //   for now only initial DL BWP is considered for simplification in this function.
+
+  const pdsch_time_domain_resource_allocation& pdsch_td_cfg = pdsch_td_alloc_list[pdsch_time_res];
+  static const unsigned                        nof_symb_sh  = pdsch_td_cfg.symbols.length();
+  static const unsigned                        nof_layers   = 1;
+  // As per Section 5.1.3.2, TS 38.214, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by P-RNTI.
+  static const unsigned nof_oh_prb = 0;
+  // As per TS 38.214, Table 5.1.3.2-2.
+  // TODO: TBS scaling is assumed to be 0. Need to set correct value.
+  static const unsigned tbs_scaling = 0;
+
+  // Generate dmrs information to be passed to (i) the fnc that computes number of RE used for DMRS per RB and (ii) to
+  // the fnc that fills the DCI.
+  const dmrs_information dmrs_info = make_dmrs_info_common(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_time_res, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+
+  const sch_mcs_description mcs_descr = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.pg.paging_mcs_index);
+  const sch_prbs_tbs        paging_prbs_tbs =
+      get_nof_prbs(prbs_calculator_sch_config{get_accumulated_paging_msg_size(paging_ues_ind),
+                                              nof_symb_sh,
+                                              calculate_nof_dmrs_per_rb(dmrs_info),
+                                              nof_oh_prb,
+                                              mcs_descr,
+                                              nof_layers,
+                                              tbs_scaling});
+
+  // > Find available RBs in PDSCH for Paging grant.
+  crb_interval paging_crbs;
+  {
+    const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
+    const prb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
+    paging_crbs                      = find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
+    if (paging_crbs.length() < nof_paging_rbs) {
+      logger.warning("Not enough PDSCH space for Paging");
+      return false;
+    }
+  }
+
+  // > Allocate DCI_1_0 for Paging on PDCCH.
   pdcch_dl_information* pdcch =
       pdcch_sch.alloc_pdcch_common(res_grid[0], rnti_t::P_RNTI, ss_id, expert_cfg.pg.paging_dci_aggr_lev);
   if (pdcch == nullptr) {
-    logger.warning("Could not allocated Paging's DCI in PDCCH for beam idx: {}", beam_idx);
+    logger.warning("Could not allocated Paging's DCI in PDCCH");
     return false;
   }
 
-  // 3. Now that we are sure there is space in both PDCCH and PDSCH, set Paging CRBs as used.
+  // > Now that we are sure there is space in both PDCCH and PDSCH, set Paging CRBs as used.
   res_grid[pdsch_td_cfg.k0].dl_res_grid.fill(
       grant_info{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, pdsch_td_cfg.symbols, paging_crbs});
 
-  // 4. Delegate filling Paging grants to helper function.
+  // > Delegate filling Paging grants to helper function.
   fill_paging_grant(res_grid[pdsch_td_cfg.k0].result.dl.paging_grants.emplace_back(),
                     *pdcch,
                     paging_crbs,
                     pdsch_time_res,
-                    pg_msg,
+                    paging_ues_ind,
                     dmrs_info,
                     paging_prbs_tbs.tbs_bytes);
 
-  logger.info("Paging, cell={}, SSB beam idx: {}, crbs={}", res_grid.cfg.cell_index, beam_idx, paging_crbs);
+  logger.info("Paging, cell={}, crbs={}", res_grid.cfg.cell_index, paging_crbs);
   return true;
 }
 
-void paging_scheduler::fill_paging_grant(dl_paging_allocation&            pg_grant,
-                                         pdcch_dl_information&            pdcch,
-                                         crb_interval                     crbs_grant,
-                                         unsigned                         time_resource,
-                                         const paging_indication_message& pg_msg,
-                                         const dmrs_information&          dmrs_info,
-                                         unsigned                         tbs)
+void paging_scheduler::fill_paging_grant(dl_paging_allocation&                        pg_grant,
+                                         pdcch_dl_information&                        pdcch,
+                                         crb_interval                                 crbs_grant,
+                                         unsigned                                     time_resource,
+                                         const span<const paging_indication_message>& paging_ues_ind,
+                                         const dmrs_information&                      dmrs_info,
+                                         unsigned                                     tbs)
 {
   const prb_interval paging_prbs = crb_to_prb(bwp_cfg, crbs_grant);
 
@@ -411,12 +460,14 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&            pg_gra
   dci.p_rnti_f1_0.modulation_coding_scheme = expert_cfg.pg.paging_mcs_index.to_uint();
 
   // Add Paging UE info to list of Paging information to pass to lower layers.
-  pg_grant.paging_ue_list.emplace_back();
-  pg_grant.paging_ue_list.back().paging_type_indicator =
-      pg_msg.paging_type_indicator == paging_indication_message::paging_identity_type::cn_ue_paging_identity
-          ? paging_ue_info::cn_ue_paging_identity
-          : paging_ue_info::ran_ue_paging_identity;
-  pg_grant.paging_ue_list.back().paging_identity = pg_msg.paging_identity;
+  for (const auto& pg_ue_ind : paging_ues_ind) {
+    pg_grant.paging_ue_list.emplace_back();
+    pg_grant.paging_ue_list.back().paging_type_indicator =
+        pg_ue_ind.paging_type_indicator == paging_indication_message::paging_identity_type::cn_ue_paging_identity
+            ? paging_ue_info::cn_ue_paging_identity
+            : paging_ue_info::ran_ue_paging_identity;
+    pg_grant.paging_ue_list.back().paging_identity = pg_ue_ind.paging_identity;
+  }
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = pg_grant.pdsch_cfg;
