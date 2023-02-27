@@ -44,16 +44,17 @@ protected:
       rrc_ue_create_msg.srbs[i].tx_sec_notifier = tx_security_notifier.get();
       rrc_ue_create_msg.srbs[i].rx_sec_notifier = rx_security_notifier.get();
     }
+    rrc_ue_cfg_t ue_cfg;
     rrc_ue = std::make_unique<rrc_ue_impl>(rrc_ue_ev_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_ngap_notifier,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
-                                           cfg.ue_default_cfg,
+                                           ue_cfg,
                                            rrc_ue_create_msg.srbs,
                                            rrc_ue_create_msg.du_to_cu_container,
-                                           *task_sched_handle.get(),
+                                           *task_sched_handle,
                                            reject_users);
 
     ASSERT_NE(rrc_ue, nullptr);

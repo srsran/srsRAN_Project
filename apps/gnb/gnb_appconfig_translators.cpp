@@ -17,10 +17,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngap_config.plmn               = config.common_cell_cfg.plmn;
   out_cfg.ngap_config.tac                = config.common_cell_cfg.tac;
 
-  out_cfg.ngap_config.qos_config = generate_cu_cp_qos_config(config);
-  if (not out_cfg.ngap_config.qos_config.empty()) {
-    fmt::print("CU-CP QoS config {}.\n", out_cfg.ngap_config.qos_config.size());
-    for (const auto& qos : out_cfg.qos_config) {
+  out_cfg.rrc_config.drb_config = generate_cu_cp_qos_config(config);
+  if (not out_cfg.rrc_config.drb_config.empty()) {
+    fmt::print("CU-CP DRB config {}.\n", out_cfg.rrc_config.drb_config.size());
+    for (const auto& qos : out_cfg.rrc_config.drb_config) {
       fmt::print("PDCP config {}.\n", qos.second.pdcp);
     }
   } else {

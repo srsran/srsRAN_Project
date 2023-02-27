@@ -27,13 +27,9 @@ struct rb_cfg_t {
 };
 
 struct rrc_cfg_t {
-  rrc_ue_cfg_t ue_default_cfg;
-
-  asn1::rrc_nr::pdcp_cfg_s            srb1_pdcp_cfg;  ///< PDCP configuration for SRB1.
-  optional<rb_cfg_t>                  srb2_cfg;       ///< Optional SRB2 config. SRB1 is configured by DU
-  std::map<uint8_t, cu_cp_qos_config> five_qi_config; ///< Configuration for available 5QI.
-
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("RRC");
+  asn1::rrc_nr::pdcp_cfg_s            srb1_pdcp_cfg; ///< PDCP configuration for SRB1.
+  optional<rb_cfg_t>                  srb2_cfg;      ///< Optional SRB2 config. SRB1 is configured by DU
+  std::map<uint8_t, cu_cp_qos_config> drb_config;    ///< Configuration for available 5QI.
 };
 
 } // namespace srs_cu_cp

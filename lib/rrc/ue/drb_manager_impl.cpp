@@ -15,6 +15,7 @@ using namespace srs_cu_cp;
 
 drb_manager_impl::drb_manager_impl(const drb_manager_cfg& cfg_) : cfg(cfg_), logger(srslog::fetch_basic_logger("RRC"))
 {
+  logger.debug("DRB manager {}", cfg.five_qi_config.size());
   for (const auto& drb : cfg.five_qi_config) {
     logger.debug("PDCP {}", drb.second.pdcp);
   }

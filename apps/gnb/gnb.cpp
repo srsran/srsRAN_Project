@@ -501,7 +501,7 @@ int main(int argc, char** argv)
       gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
-  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));
+  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
 
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
@@ -511,7 +511,7 @@ int main(int argc, char** argv)
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
 
   // create CU-CP.
-  std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cp_cfg));
+  std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
   cu_cp_obj->handle_new_du_connection();    // trigger DU addition
   cu_cp_obj->handle_new_cu_up_connection(); // trigger CU-UP addition
 

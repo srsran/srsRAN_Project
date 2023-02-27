@@ -24,7 +24,7 @@ rrc_du_impl::rrc_du_impl(const rrc_cfg_t&              cfg_,
   rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_),
   nas_notifier(nas_notif_),
   ngap_ctrl_notifier(ngap_ctrl_notif_),
-  logger(cfg_.logger)
+  logger(srslog::fetch_basic_logger("RRC", false))
 {
 }
 
@@ -44,16 +44,19 @@ rrc_ue_interface* rrc_du_impl::add_ue(rrc_ue_creation_message msg)
     logger.debug("Containerized MasterCellGroup: {}", js.to_string());
   }
 
+  logger.debug("UE config 5qi size: {}", cfg.drb_config.size());
   // create UE object
-  ue_index_t ue_index = msg.ue_index;
-  auto       res      = ue_db.emplace(ue_index,
+  ue_index_t   ue_index         = msg.ue_index;
+  rrc_ue_cfg_t ue_cfg           = {};
+  ue_cfg.drb_cfg.five_qi_config = cfg.drb_config;
+  auto res                      = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(rrc_ue_du_proc_notifier,
                                                          nas_notifier,
                                                          ngap_ctrl_notifier,
                                                          msg.ue_index,
                                                          msg.c_rnti,
                                                          msg.cell,
-                                                         cfg.ue_default_cfg,
+                                                         ue_cfg,
                                                          msg.srbs,
                                                          msg.du_to_cu_container,
                                                          *msg.ue_task_sched,
