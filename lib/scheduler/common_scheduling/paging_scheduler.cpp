@@ -9,7 +9,6 @@
  */
 
 #include "paging_scheduler.h"
-#include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
@@ -44,17 +43,9 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
           continue;
         }
         // NOTE:
-        // - [Implementation defined]
-        //   Precompute n0 PDCCH slots for Paging if channel BW > 5 Mhz. Otherwise, the (n0 + 1) slot to make space for
-        //   SSB.
-        // Channel BW = 5 Mhz.
-        if (cell_cfg.dl_carrier.carrier_bw_mhz == 5) {
-          type0_pdcch_css_slots[i_ssb] =
-              precompute_type0_pdcch_css_n0_plus_1(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
-        } else {
-          type0_pdcch_css_slots[i_ssb] =
-              precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
-        }
+        // - [Implementation defined] Use (n0 + 1) slot to avoid collisions between SSB and Paging.
+        type0_pdcch_css_slots[i_ssb] =
+            precompute_type0_pdcch_css_n0(msg.searchspace0, msg.coreset0, cell_cfg, msg.scs_common, i_ssb);
       }
     } else {
       bool ss_cfg_set = false;
@@ -193,6 +184,10 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
       if (not cell_cfg.is_dl_enabled(paging_alloc.slot)) {
         continue;
       }
+      // Note: Unable at the moment to multiplex CSI and PDSCH.
+      if (not paging_alloc.result.dl.csi_rs.empty()) {
+        continue;
+      }
       // Verify there is space in PDSCH and PDCCH result lists for new allocations.
       if (paging_alloc.result.dl.paging_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
         continue;
@@ -285,9 +280,8 @@ bool paging_scheduler::schedule_paging_in_search_space0(cell_resource_allocator&
 
   // - [Implementation defined] When pagingSearchSpace = 0, the UE monitors the SearchSpaceSet 0 for Paging in 2
   //   consecutive slots, starting from n0 for multiplexing pattern 1.
-  //   In this function, it is assumed that the GNB only allocates the PDCCH/DCI_1_0 for Paging in the first slot, i.e.,
-  //   in n0 if channel BW > 5 Mhz. Otherwise, in (n0 + 1) slot to make space for SSB. This simplification is taken
-  //   from SIB1 scheduler.
+  //   In this function, it is assumed that the GNB only allocates the PDCCH/DCI_1_0 for Paging in (n0 + 1) slot to make
+  //   space for SSB. This simplification is taken from SIB1 scheduler.
 
   // The paging_period_slots is expressed in unit of slots.
   // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
