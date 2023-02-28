@@ -45,12 +45,6 @@ void fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request,
                                 span<const du_cell_config*>     cells_to_add,
                                 std::vector<std::string>*       cell_json_strs = nullptr);
 
-/// \brief Derive packed cell PCCH-PCH Paging message.
-/// \param[in] five_g_s_tmsi 5G-S-TMSI assigned by AMF to UE.
-/// \return byte buffer with packed cell PCCH- message.
-/// \remark Only CN Paging is supported currently.
-byte_buffer make_asn1_rrc_cell_pcch_pch_msg(uint64_t five_g_s_tmsi);
-
 } // namespace srs_du
 
 } // namespace srsran

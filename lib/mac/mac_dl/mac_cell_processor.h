@@ -13,6 +13,7 @@
 #include "../mac_config.h"
 #include "dl_sch_pdu_assembler.h"
 #include "mac_dl_ue_manager.h"
+#include "paging_pdu_assembler.h"
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
@@ -87,6 +88,7 @@ private:
   sib_pdu_assembler    sib_assembler;
   rar_pdu_assembler    rar_assembler;
   dl_sch_pdu_assembler dlsch_assembler;
+  paging_pdu_assembler paging_assembler;
 
   mac_scheduler&     sched_obj;
   mac_dl_ue_manager& ue_mng;

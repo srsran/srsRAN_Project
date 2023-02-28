@@ -229,6 +229,14 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
     }
   }
 
+  // Add Paging PDU to the Tx_Data.request message.
+  for (const auto& pdu : dl_data.paging_pdus) {
+    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    if (pdu.cw_index == 0) {
+      ++fapi_index;
+    }
+  }
+
   // Send the message.
   msg_gw.tx_data_request(msg);
 }
