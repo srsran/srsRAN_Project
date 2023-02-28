@@ -123,7 +123,7 @@ constexpr inline std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(d
 /// QoS Configuration, i.e. 5QI and the associated PDCP
 /// and SDAP configuration for DRBs
 struct cu_cp_qos_config {
-  pdcp_config pdcp;
+  pdcp_config_t pdcp;
 };
 // ASN1 types converted to common types
 

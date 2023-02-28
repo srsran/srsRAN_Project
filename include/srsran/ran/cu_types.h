@@ -149,6 +149,7 @@ struct drb_t {
   bool                         integrity_protection_present   = false;
   bool                         status_report_required_present = false;
   bool                         out_of_order_delivery_present  = false;
+  pdcp_rlc_mode                rlc_mode;
 };
 
 struct primary_path_t {

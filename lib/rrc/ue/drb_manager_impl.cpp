@@ -16,9 +16,9 @@ using namespace srs_cu_cp;
 drb_manager_impl::drb_manager_impl(const drb_manager_cfg& cfg_) : cfg(cfg_), logger(srslog::fetch_basic_logger("RRC"))
 {
   logger.debug("DRB manager {}", cfg.five_qi_config.size());
-  for (const auto& drb : cfg.five_qi_config) {
-    logger.debug("PDCP {}", drb.second.pdcp);
-  }
+  // for (const auto& drb : cfg.five_qi_config) {
+  //   logger.debug("PDCP {}", drb.second.pdcp);
+  // }
 }
 
 std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu)
@@ -106,8 +106,7 @@ pdcp_config_t drb_manager_impl::set_rrc_pdcp_config(uint8_t five_qi)
                 "Could not find PDCP configuration. 5QI {}",
                 five_qi);
 
-  // return cfg.five_qi_config.at(five_qi).pdcp;
-  return {};
+  return cfg.five_qi_config.at(five_qi).pdcp;
 }
 
 pdu_session_id_t drb_manager_impl::get_pdu_session_id(const drb_id_t drb_id)
