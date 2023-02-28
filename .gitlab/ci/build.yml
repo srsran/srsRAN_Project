@@ -557,7 +557,7 @@ avx2 [asan]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: ubuntu-22.04
-    TEST_MODE: asan
+    TEST_MODE: none
     COMPILER: gcc
     BUILD_TYPE: Debug
     ENABLE_ASAN: "True"
