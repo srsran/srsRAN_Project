@@ -53,8 +53,8 @@ private:
   pdcp_config_t set_rrc_pdcp_config(uint8_t five_qi);
   sdap_config_t set_rrc_sdap_config(const drb_context& context);
 
-  const drb_manager_cfg& cfg;
-  srslog::basic_logger&  logger;
+  drb_manager_cfg       cfg;
+  srslog::basic_logger& logger;
 
   std::map<drb_id_t, drb_context> drbs;        // Stores existing DRBs
   std::map<uint16_t, drb_id_t>    five_qi_map; // Maps QoS flow characteristics to existing DRBs

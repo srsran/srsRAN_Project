@@ -241,7 +241,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
 {
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
-  auto*      ue       = ue_manager.find_ngap_ue(ue_index);
+  ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     logger.warning("ue={} does not exist - dropping PduSessionResourceSetupRequest", ue_index);
     return;

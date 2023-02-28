@@ -16,13 +16,16 @@ using namespace srs_cu_cp;
 drb_manager_impl::drb_manager_impl(const drb_manager_cfg& cfg_) : cfg(cfg_), logger(srslog::fetch_basic_logger("RRC"))
 {
   logger.debug("DRB manager {}", cfg.five_qi_config.size());
-  // for (const auto& drb : cfg.five_qi_config) {
-  //   logger.debug("PDCP {}", drb.second.pdcp);
-  // }
+  for (const auto& drb : cfg.five_qi_config) {
+    logger.debug("5qi {}", drb.first);
+  }
+  fmt::print("{} {}\n", fmt::ptr(this), fmt::ptr(&cfg));
+  srslog::flush();
 }
 
 std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu)
 {
+  fmt::print("{} {}\n", fmt::ptr(this), fmt::ptr(&cfg));
   std::vector<drb_id_t> drb_to_add_list;
 
   // look for existing DRB using the same FiveQI (does it need to be the same PDU session?)
