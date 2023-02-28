@@ -177,7 +177,7 @@ public:
   std::list<uint32_t> removed_ul_teid_list  = {};
 };
 
-e1ap_message generate_bearer_context_setup_request_msg(unsigned int cu_cp_ue_e1ap_id)
+e1ap_message generate_bearer_context_setup_request(unsigned int cu_cp_ue_e1ap_id)
 {
   e1ap_message bearer_context_setup_request = {};
 

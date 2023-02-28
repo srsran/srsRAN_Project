@@ -146,6 +146,13 @@ TEST_F(e1ap_cu_up_test, when_valid_bearer_context_setup_received_then_bearer_con
   ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, msg_notifier.last_e1ap_msg.pdu.type());
   ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_setup_resp,
             msg_notifier.last_e1ap_msg.pdu.successful_outcome().value.type());
+
+  ASSERT_EQ(msg_notifier.last_e1ap_msg.pdu.successful_outcome()
+                .value.bearer_context_setup_resp()
+                ->sys_bearer_context_setup_resp.value.ng_ran_bearer_context_setup_resp()
+                .pdu_session_res_setup_list.value[0]
+                .drb_setup_list_ng_ran.size(),
+            1);
 }
 
 TEST_F(e1ap_cu_up_test, when_invalid_bearer_context_setup_received_then_bearer_context_setup_failure_is_sent)

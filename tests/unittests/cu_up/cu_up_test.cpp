@@ -90,7 +90,7 @@ protected:
   void create_drb()
   {
     // Generate BearerContextSetupRequest
-    e1ap_message asn1_bearer_context_setup_msg = generate_bearer_context_setup_request_msg(9);
+    e1ap_message asn1_bearer_context_setup_msg = generate_bearer_context_setup_request(9);
 
     // Convert to common type
     e1ap_bearer_context_setup_request bearer_context_setup;
@@ -103,7 +103,7 @@ protected:
 };
 
 //////////////////////////////////////////////////////////////////////////////////////
-/* E1APonnection handling                                                           */
+/* E1AP connection handling                                                           */
 //////////////////////////////////////////////////////////////////////////////////////
 
 /// Test the E1AP connection

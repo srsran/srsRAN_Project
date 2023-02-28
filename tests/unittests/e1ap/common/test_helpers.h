@@ -73,6 +73,19 @@ public:
     srs_cu_up::e1ap_bearer_context_setup_response response = {};
     response.ue_index                                      = ue_index;
     response.success                                       = true;
+    for (const auto& request_setup_item : msg.pdu_session_res_to_setup_list) {
+      e1ap_pdu_session_resource_setup_modification_item response_setup_item;
+      response_setup_item.pdu_session_id = request_setup_item.pdu_session_id;
+
+      for (const auto& request_drb_item : request_setup_item.drb_to_setup_list_ng_ran) {
+        e1ap_drb_setup_item_ng_ran response_drb_item;
+        response_drb_item.drb_id = request_drb_item.drb_id;
+
+        response_setup_item.drb_setup_list_ng_ran.emplace(request_drb_item.drb_id, response_drb_item);
+      }
+
+      response.pdu_session_resource_setup_list.emplace(request_setup_item.pdu_session_id, response_setup_item);
+    }
 
     return response;
   }
