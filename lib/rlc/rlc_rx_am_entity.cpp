@@ -50,6 +50,7 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
 
   // initialize status report
   status_report.ack_sn = st.rx_next_highest;
+  status_report_size.store(status_report.get_packed_size(), std::memory_order_relaxed);
 
   logger.log_info("RLC AM configured. {}", cfg);
 }
@@ -522,6 +523,7 @@ void rlc_rx_am_entity::refresh_status_report()
   {
     std::unique_lock<std::mutex> lock(status_report_mutex);
     status_report = std::move(tmp_status_report);
+    status_report_size.store(status_report.get_packed_size(), std::memory_order_relaxed);
   }
 
   logger.log_debug("Refreshed status_report. {}", status_report);
@@ -539,8 +541,7 @@ rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
 
 uint32_t rlc_rx_am_entity::get_status_pdu_length()
 {
-  std::unique_lock<std::mutex> lock(status_report_mutex);
-  return status_report.get_packed_size();
+  return status_report_size.load(std::memory_order_relaxed);
 }
 
 bool rlc_rx_am_entity::status_report_required()
