@@ -90,7 +90,7 @@ zmq:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "zmq and not multiue"
+    MARKERS: "zmq and multiue"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
@@ -108,16 +108,11 @@ zmq-tsan:
       artifacts: true
       optional: true
 
-# zmq-asan:
-#   extends: zmq
-#   needs:
-#     - job: "avx2 [asan]"
-#       artifacts: true
-
-zmq-multiue:
+zmq-asan:
   extends: zmq
-  variables:
-    MARKERS: "zmq and multiue"
+  needs:
+    - job: "avx2 [asan]"
+      artifacts: true
 
 rf:
   extends: .e2e-run
@@ -125,7 +120,7 @@ rf:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
-    MARKERS: "rf and not tcp and not multiue"
+    MARKERS: "rf and not tcp and multiue"
     LOG_LEVEL: "warning"
     FAIL_IF_INTERNAL_ERRORS: ""
   needs:
