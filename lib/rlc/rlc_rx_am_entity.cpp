@@ -440,8 +440,8 @@ void rlc_rx_am_entity::update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) cons
 
 void rlc_rx_am_entity::refresh_status_report()
 {
-  std::unique_lock<std::mutex> lock(status_report_mutex);
-  status_report.reset();
+  rlc_am_status_pdu tmp_status_report = {cfg.sn_field_length};
+  tmp_status_report.reset();
   /*
    * - for the RLC SDUs with SN such that RX_Next <= SN < RX_Highest_Status that has not been completely
    *   received yet, in increasing SN order of RLC SDUs and increasing byte segment order within RLC SDUs,
@@ -459,7 +459,7 @@ void rlc_rx_am_entity::refresh_status_report()
         nack.nack_sn = i;
         nack.has_so  = false;
         logger.log_debug("Adding nack={}.", nack);
-        status_report.push_nack(nack);
+        tmp_status_report.push_nack(nack);
       } else if (not(*rx_window)[i].fully_received) {
         // Some segments were received, but not all.
         // NACK non consecutive missing bytes
@@ -474,7 +474,7 @@ void rlc_rx_am_entity::refresh_status_report()
             nack.so_start = last_so;
             nack.so_end   = segm->so - 1; // set to last missing byte
             logger.log_debug("Adding nack={}.", nack);
-            status_report.push_nack(nack);
+            tmp_status_report.push_nack(nack);
 
             // Sanity check
             if (nack.so_start > nack.so_end) {
@@ -504,7 +504,7 @@ void rlc_rx_am_entity::refresh_status_report()
           nack.so_start = last_so;
           nack.so_end   = rlc_am_status_nack::so_end_of_sdu;
           logger.log_debug("Adding nack={}.", nack);
-          status_report.push_nack(nack);
+          tmp_status_report.push_nack(nack);
           // Sanity check
           srsran_assert(nack.so_start <= nack.so_end, "Invalid segment offsets in nack={}.", nack);
         }
@@ -516,7 +516,14 @@ void rlc_rx_am_entity::refresh_status_report()
    * - set the ACK_SN to the SN of the next not received RLC SDU which is not
    * indicated as missing in the resulting STATUS PDU.
    */
-  status_report.ack_sn = st.rx_highest_status;
+  tmp_status_report.ack_sn = st.rx_highest_status;
+
+  // move into status_report
+  {
+    std::unique_lock<std::mutex> lock(status_report_mutex);
+    status_report = std::move(tmp_status_report);
+  }
+
   logger.log_debug("Refreshed status_report. {}", status_report);
 }
 
