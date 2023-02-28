@@ -54,6 +54,9 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
                 }
             },
         }
+        if is_tdd(band):
+            test_config["ue"]["parameters"]["rx_ant"] = "rx"
+
         logging.info("Test config: \n%s", pformat(test_config))
         self.test_config = test_config
         self.retina_manager.parse_configuration(test_config)
@@ -102,6 +105,10 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
             with suppress(UnboundLocalError, NameError):
                 extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
         assert teardown_ok is True
+
+
+def is_tdd(band):
+    return band in (41, 78)
 
 
 def get_dl_arfcn(band):
