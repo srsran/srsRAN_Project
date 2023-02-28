@@ -519,14 +519,16 @@ void rlc_rx_am_entity::refresh_status_report()
    */
   tmp_status_report.ack_sn = st.rx_highest_status;
 
-  // move into status_report
-  {
-    std::unique_lock<std::mutex> lock(status_report_mutex);
-    status_report = std::move(tmp_status_report);
-    status_report_size.store(status_report.get_packed_size(), std::memory_order_relaxed);
-  }
+  store_status_report(std::move(tmp_status_report));
 
   logger.log_debug("Refreshed status_report. {}", status_report);
+}
+
+void rlc_rx_am_entity::store_status_report(rlc_am_status_pdu&& status)
+{
+  std::unique_lock<std::mutex> lock(status_report_mutex);
+  status_report = std::move(status);
+  status_report_size.store(status_report.get_packed_size(), std::memory_order_relaxed);
 }
 
 rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()

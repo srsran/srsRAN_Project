@@ -248,6 +248,9 @@ private:
   /// and resets the rx_window_changed flag
   void refresh_status_report();
 
+  /// Replaces the cached status_report with a new version
+  void store_status_report(rlc_am_status_pdu&& status);
+
   void on_expired_status_prohibit_timer(uint32_t timeout_id);
 
   /// \brief on_expired_reassembly_timer Handler for expired reassembly timer
