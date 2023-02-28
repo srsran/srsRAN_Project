@@ -355,13 +355,15 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
 
   // >> PUCCH.
   auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cfg.value();
-  // PUCCH Resource Set ID 0.
+
+  // PUCCH Resource Set ID 0. This is for PUCCH Format 1 only (Format 0 not yet supported), used for HARQ-ACK only.
   auto& pucch_res_set_0            = pucch_cfg.pucch_res_set.emplace_back();
   pucch_res_set_0.pucch_res_set_id = 0;
   pucch_res_set_0.pucch_res_id_list.emplace_back(0);
   pucch_res_set_0.pucch_res_id_list.emplace_back(1);
   pucch_res_set_0.pucch_res_id_list.emplace_back(2);
 
+  // PUCCH Resource Set ID 1. This is for PUCCH Format 2 only and used for HARQ-ACK + optionally SR and/or CSI.
   auto& pucch_res_set_1            = pucch_cfg.pucch_res_set.emplace_back();
   pucch_res_set_1.pucch_res_set_id = 1;
   pucch_res_set_1.pucch_res_id_list.emplace_back(3);
@@ -393,15 +395,13 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
   res1.res_id          = 1;
   res1.starting_prb    = 1;
-  res1.second_hop_prb  = nof_rbs - res1.starting_prb - 1;
   // >>> PUCCH resource 2.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
   res2.res_id          = 2;
-  res2.second_hop_prb  = 1;
-  res2.starting_prb    = nof_rbs - res2.second_hop_prb - 1;
+  res2.starting_prb    = nof_rbs - 2;
 
-  // PUCCH resource format 2, for HARQ-ACK and CSI.
+  // PUCCH resource format 2, for HARQ-ACK + optionally SR and/or CSI.
   // >>> PUCCH resource 3.
   pucch_resource res_basic_f2{
       .starting_prb = 2, .second_hop_prb = 0, .intraslot_freq_hopping = false, .format = pucch_format::FORMAT_2};
@@ -435,12 +435,15 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   pucch_resource& res8           = pucch_cfg.pucch_res_list.back();
   res8.res_id                    = 8;
   res8.format_2.starting_sym_idx = 10;
+
+  // PUCCH resource format 2, for CSI and optionally for SR.
   // >>> PUCCH resource 9.
   pucch_cfg.pucch_res_list.push_back(res_basic_f2);
   pucch_resource& res9           = pucch_cfg.pucch_res_list.back();
   res9.res_id                    = 9;
   res9.format_2.starting_sym_idx = 12;
 
+  // PUCCH resource format 1, for SR only.
   // >>> PUCCH resource 10.
   pucch_cfg.pucch_res_list.push_back(res_basic);
   pucch_resource& res10 = pucch_cfg.pucch_res_list.back();
@@ -448,15 +451,22 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   res10.starting_prb    = 0;
   res10.second_hop_prb  = nof_rbs - 1;
 
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res11 = pucch_cfg.pucch_res_list.back();
+  res11.res_id          = 11;
+  res11.starting_prb    = nof_rbs - 3;
+
   // TODO: add more PUCCH resources.
 
-  // >>> SR Resource.
-  const unsigned pucch_sr_res_id = pucch_cfg.pucch_res_list.size() - 1;
-  pucch_cfg.sr_res_list.push_back(scheduling_request_resource_config{.sr_res_id    = 1,
-                                                                     .sr_id        = uint_to_sched_req_id(0),
-                                                                     .period       = sr_periodicity::sl_40,
-                                                                     .offset       = 0,
-                                                                     .pucch_res_id = pucch_sr_res_id});
+  // >>> SR Resources.
+  // Use 40msec SR period by default.
+  unsigned sr_period = get_nof_slots_per_subframe(params.scs_common) * 40;
+  pucch_cfg.sr_res_list.push_back(
+      scheduling_request_resource_config{.sr_res_id    = 1,
+                                         .sr_id        = uint_to_sched_req_id(0),
+                                         .period       = (sr_periodicity)sr_period,
+                                         .offset       = 0,
+                                         .pucch_res_id = (unsigned)pucch_cfg.pucch_res_list.size() - 1U});
 
   pucch_cfg.format_1_common_param.emplace();
   pucch_cfg.format_2_common_param.emplace(
@@ -583,9 +593,9 @@ csi_report_config srsran::config_helpers::make_default_csi_report_config(const c
 
   csi_report_config::periodic_or_semi_persistent_report_on_pucch report_cfg_type{};
   report_cfg_type.report_type = csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::periodic;
-  csi_resource_periodicity csi_rs_period = get_max_csi_rs_period(params);
-  // Set CSI report period equal to the CSI-RS period. No point in reporting more often than we get CSI-RS.
-  report_cfg_type.report_slot_period = static_cast<csi_report_periodicity>(std::min((unsigned)csi_rs_period, 320U));
+  // Note: the period for reporting is directly proportional to the number of CSI-RS resources available, and,
+  // therefore, to the number of UEs supported by the gNB.
+  report_cfg_type.report_slot_period = (csi_report_periodicity)(get_nof_slots_per_subframe(params.scs_common) * 80);
   report_cfg_type.report_slot_offset = 9;
   report_cfg_type.pucch_csi_res_list.push_back(
       csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9});

@@ -67,7 +67,9 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
   f1ap_notifier.on_new_message(msg);
 
   // Signal that the transaction has completed and the DU does not expect a response.
-  ev_manager.transactions.set(transaction.id(), f1ap_outcome{});
+  if (not ev_manager.transactions.set(transaction.id(), f1ap_outcome{})) {
+    logger.warning("Unexpected transaction id={}", transaction.id());
+  }
 
   log_ue_event(logger,
                ue_event_prefix{"UL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti,

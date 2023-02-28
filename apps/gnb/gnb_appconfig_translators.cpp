@@ -53,7 +53,6 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     }
 
     srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB", false);
-    logger.set_level(srslog::basic_levels::info);
 
     param.offset_to_point_a = (*ssb_freq_loc).offset_to_point_A;
     param.k_ssb             = (*ssb_freq_loc).k_ssb;
@@ -402,8 +401,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     static constexpr unsigned ul_pipeline_depth    = 8;
     static constexpr unsigned prach_pipeline_depth = 1;
 
-    cfg.log_level = srslog::str_to_basic_level(config.log_cfg.phy_level.empty() ? config.log_cfg.app_level
-                                                                                : config.log_cfg.phy_level);
+    cfg.log_level                  = srslog::str_to_basic_level(config.log_cfg.phy_level);
     cfg.enable_logging_broadcast   = config.log_cfg.broadcast_enabled;
     cfg.rx_symbol_printer_filename = config.log_cfg.phy_rx_symbols_filename;
     cfg.logger_max_hex_size        = config.log_cfg.hex_max_size;

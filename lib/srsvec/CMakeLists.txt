@@ -31,8 +31,6 @@ set(SOURCES
         subtract.cpp
         )
 
-include_directories(${PROJECT_SOURCE_DIR}/include/srsran/srsvec)
-
 add_library(srsvec STATIC ${SOURCES})
 target_link_libraries(srsvec srslog)
 

@@ -169,7 +169,9 @@ void rrc_ue_impl::handle_rrc_transaction_complete(const ul_dcch_msg_s& msg, uint
   expected<uint8_t> transaction_id = transaction_id_;
 
   // Set transaction result and resume suspended procedure.
-  event_mng->transactions.set(transaction_id.value(), msg);
+  if (not event_mng->transactions.set(transaction_id.value(), msg)) {
+    logger.warning("Unexpected transaction id={}", transaction_id.value());
+  }
 }
 
 void rrc_ue_impl::handle_new_guami(const guami& msg)

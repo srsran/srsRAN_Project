@@ -25,8 +25,6 @@ set(SOURCES
         sequence_generator_factories.cpp
         )
 
-include_directories(../../../../include/srsran/phy/upper/sequence_generators)
-
 add_library(srsran_sequence_generators STATIC ${SOURCES})
 target_link_libraries(srsran_sequence_generators srsran_support srsvec)
 

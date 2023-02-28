@@ -72,12 +72,6 @@ void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
   pdu_session_res_setup_resp->amf_ue_ngap_id.value = amf_ue_id_to_uint(ue.get_amf_ue_id());
   pdu_session_res_setup_resp->ran_ue_ngap_id.value = ran_ue_id_to_uint(ue.get_ran_ue_id());
 
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    ngap_msg.pdu.to_json(js);
-    logger.debug("Containerized PduSessionResourceSetupResponse: {}", js.to_string());
-  }
-
   logger.info("Sending PduSessionResourceSetupResponse");
   amf_notifier.on_new_message(ngap_msg);
 }

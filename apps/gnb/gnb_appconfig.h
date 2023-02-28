@@ -198,24 +198,25 @@ struct amf_appconfig {
 };
 
 struct log_appconfig {
-  std::string filename          = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
-  std::string all_level         = "info";         // Default log level for all layers.
-  std::string app_level         = "info"; // Generic log level assigned to all layers without layer-specific level.
-  std::string du_level          = "info";
-  std::string cu_level          = "info";
-  std::string phy_level         = "info";
-  std::string radio_level       = "info";
-  std::string mac_level         = "info";
-  std::string rlc_level         = "info";
-  std::string f1u_level         = "info";
-  std::string pdcp_level        = "info";
-  std::string rrc_level         = "info";
-  std::string sdap_level        = "info";
-  std::string gtpu_level        = "info";
-  std::string fapi_level        = "info";
-  uint32_t    hex_max_size      = 32;       // Maximum number of bytes to write when dumping hex arrays.
-  bool        broadcast_enabled = false;    // Set to true to log broadcasting messages and all PRACH opportunities.
-  std::string phy_rx_symbols_filename = ""; // Set to a valid file path to print the received symbols.
+  std::string filename    = "/tmp/gnb.log"; // Path to write log file or "stdout" to print to console.
+  std::string all_level   = "warning";      // Default log level for all layers.
+  std::string lib_level   = "warning"; // Generic log level assigned to library components without layer-specific level.
+  std::string du_level    = "warning";
+  std::string cu_level    = "warning";
+  std::string phy_level   = "warning";
+  std::string radio_level = "warning";
+  std::string mac_level   = "warning";
+  std::string rlc_level   = "warning";
+  std::string f1u_level   = "warning";
+  std::string pdcp_level  = "warning";
+  std::string rrc_level   = "warning";
+  std::string ngap_level  = "warning";
+  std::string sdap_level  = "warning";
+  std::string gtpu_level  = "warning";
+  std::string fapi_level  = "warning";
+  uint32_t    hex_max_size            = 0;     // Maximum number of bytes to write when dumping hex arrays.
+  bool        broadcast_enabled       = false; // Set to true to log broadcasting messages and all PRACH opportunities.
+  std::string phy_rx_symbols_filename = "";    // Set to a valid file path to print the received symbols.
 };
 
 struct pcap_appconfig {

@@ -18,8 +18,6 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-include_directories(${PROJECT_SOURCE_DIR}/include/srsran/phy/upper/channel_coding)
-
 set(CRC_CALCULATOR_SOURCES crc_calculator_lut_impl.cpp)
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     list(APPEND CRC_CALCULATOR_SOURCES crc_calculator_clmul_impl.cpp)

@@ -28,8 +28,6 @@ set(SOURCES
         evm_calculator_generic_impl.cpp
         modulation_mapper_impl.cpp)
 
-include_directories(../../../../include/srsran/phy/upper/channel_modulation)
-
 add_library(srsran_channel_modulation STATIC ${SOURCES})
 target_link_libraries(srsran_channel_modulation srsran_support log_likelihood_ratio)
 

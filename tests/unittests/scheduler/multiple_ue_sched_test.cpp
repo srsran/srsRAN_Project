@@ -225,9 +225,13 @@ protected:
     }
     auto ue_creation_req = test_helpers::create_default_sched_ue_creation_request(cell_cfg);
 
+    ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
+    ue_creation_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
+        test_helpers::make_test_ue_uplink_config(cell_cfg));
+
     if (not ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.has_value()) {
       ue_creation_req.cfg.cells.begin()->serv_cell_cfg.csi_meas_cfg.emplace(
-          config_helpers::make_default_csi_meas_config(cell_config_builder_params{}));
+          config_helpers::make_default_csi_meas_config(cell_cfg));
     }
 
     ue_creation_req.ue_index = ue_index;

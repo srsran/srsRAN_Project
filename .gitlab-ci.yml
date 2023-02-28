@@ -326,7 +326,7 @@ pages:
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
     - sed -i 's/zmq_job_id/'$( cat ./zmq/job.env  )'/' public/index.html
     - sed -i 's/zmq-tsan_job_id/'$( cat ./zmq-tsan/job.env  )'/' public/index.html
-    - sed -i 's/zmq-asan_job_id/'$( cat ./zmq-asan/job.env  )'/' public/index.html
+    # - sed -i 's/zmq-asan_job_id/'$( cat ./zmq-asan/job.env  )'/' public/index.html
     - sed -i 's/rf_job_id/'$( cat ./rf/job.env  )'/' public/index.html
 
   needs:
@@ -342,8 +342,8 @@ pages:
       artifacts: true
     - job: zmq-tsan
       artifacts: true
-    - job: zmq-asan
-      artifacts: true
+    # - job: zmq-asan
+    #   artifacts: true
     - job: rf
       artifacts: true
   artifacts:

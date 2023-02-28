@@ -195,7 +195,12 @@ static void convert_fapi_to_mac_pusch_uci_ind(mac_uci_pdu::pusch_type& mac_pusch
   if (fapi_pusch.pdu_bitmap.test(fapi::uci_pusch_pdu::HARQ_BIT)) {
     mac_uci_pdu::pusch_type::harq_information& harq = mac_pusch.harq_info.emplace();
     harq.harq_status                                = fapi_pusch.harq.detection_status;
-    harq.payload                                    = fapi_pusch.harq.payload;
+    if (fapi_pusch.harq.payload.size() > 0) {
+      harq.payload = fapi_pusch.harq.payload;
+    } else {
+      harq.payload.resize(fapi_pusch.harq.expected_bit_length);
+      harq.payload.reset();
+    }
   }
 
   // Fill CSI Part 1.

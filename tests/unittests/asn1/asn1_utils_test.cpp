@@ -260,6 +260,12 @@ TEST(asn1_octet_string_test, pack_unpack_operators)
   TESTASSERT(b.distance() == (int)(hexstr.size() * 8 / 2 + 16));
 }
 
+TEST(asn1_fixed_bit_string, integer_conversion)
+{
+  fixed_bitstring<48> bitstr;
+  ASSERT_EQ(bitstr.from_number(4211117727).to_number(), 4211117727);
+}
+
 TEST(asn1_bit_string_test, pack_unpack_operators)
 {
   fixed_bitstring<10>      bstr1;

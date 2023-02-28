@@ -21,6 +21,7 @@
  */
 
 #include "srsran/support/signal_handler.h"
+#include "srsran/srslog/srslog.h"
 #include "fmt/format.h"
 #include <atomic>
 #include <csignal>
@@ -39,6 +40,7 @@ static void signal_handler(int signal)
   switch (signal) {
     case SIGALRM:
       fmt::print(stderr, "Couldn't stop after {}s. Forcing exit.\n", TERM_TIMEOUT_S);
+      srslog::flush();
       ::raise(SIGKILL);
     default:
       // all other registered signals try to stop the app gracefully

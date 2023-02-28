@@ -51,8 +51,9 @@ private:
   const optional<csi_report_config> default_csi_report_cfg;
 
   struct cell_resource_context {
-    /// Pool of PUCCH SR offsets currently available to be allocated to UEs.
-    std::vector<unsigned> sr_offset_free_list;
+    /// \brief Pool of PUCCH SR offsets currently available to be allocated to UEs. Each element is represented by a
+    /// pair (pucch_resource_id, slot_offset).
+    std::vector<std::pair<unsigned, unsigned>> sr_offset_free_list;
     /// Pool of PUCCH CSI offsets currently available to be allocated to UEs.
     std::vector<unsigned> csi_offset_free_list;
   };

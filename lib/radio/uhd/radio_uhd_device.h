@@ -66,7 +66,10 @@ public:
   bool usrp_make(const std::string& device_address)
   {
     // Parse args into dictionary.
-    uhd::device_addr_t device_addr(device_address);
+    uhd::device_addr_t device_addr;
+    if (!safe_execution([device_address, &device_addr]() { device_addr = uhd::device_addr_t(device_address); })) {
+      return false;
+    }
 
     // Destroy any previous USRP instance
     usrp = nullptr;

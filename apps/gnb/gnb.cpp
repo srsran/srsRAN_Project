@@ -378,9 +378,9 @@ int main(int argc, char** argv)
 
   // Set log-level of app and all non-layer specific components to app level.
   srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
-  for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW"}) {
+  for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
-    logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.app_level));
+    logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.lib_level));
     logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
   }
 
@@ -391,7 +391,7 @@ int main(int argc, char** argv)
     du_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
   }
 
-  for (const auto& id : {"CU-CP", "CU-CP-F1", "CU-CP-E1", "NGAP"}) {
+  for (const auto& id : {"CU-CP", "CU-CP-F1", "CU-CP-E1"}) {
     auto& cu_cp_logger = srslog::fetch_basic_logger(id, false);
     cu_cp_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.cu_level));
     cu_cp_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
@@ -429,6 +429,10 @@ int main(int argc, char** argv)
   auto& rrc_logger = srslog::fetch_basic_logger("RRC", false);
   rrc_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.rrc_level));
   rrc_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
+
+  auto& ngap_logger = srslog::fetch_basic_logger("NGAP", false);
+  ngap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.ngap_level));
+  ngap_logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
 
   auto& sdap_logger = srslog::fetch_basic_logger("SDAP", false);
   sdap_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.sdap_level));
@@ -628,7 +632,7 @@ int main(int argc, char** argv)
   // DU QoS config
   const std::map<uint8_t, du_qos_config>& du_qos_cfg = generate_du_qos_config(gnb_cfg);
   for (const auto& it : du_qos_cfg) {
-    gnb_logger.info("QoS RLC configuration: 5QI={} RLC={}", it.first, it.second.rlc);
+    gnb_logger.debug("QoS RLC configuration: 5QI={} RLC={}", it.first, it.second.rlc);
   }
 
   // Cell configuration.
@@ -691,6 +695,10 @@ int main(int argc, char** argv)
 
   ngap_p->close();
   mac_p->close();
+
+  gnb_logger.info("Stopping radio...");
+  radio->stop();
+  gnb_logger.info("Radio stopped successfully");
 
   gnb_logger.info("Stopping lower PHY...");
   lower->get_controller().stop();

@@ -18,8 +18,6 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-include_directories(../../../../include/srsran/phy/upper/channel_processors)
-
 add_library(srsran_pbch_encoder STATIC pbch_encoder_impl.cpp)
 target_link_libraries(srsran_pbch_encoder srsran_channel_coding srsran_sequence_generators srsvec)
 

@@ -69,13 +69,6 @@ void ngap_impl::create_ngap_ue(ue_index_t                          ue_index,
 async_task<ng_setup_response> ngap_impl::handle_ng_setup_request(const ng_setup_request& request)
 {
   logger.info("Sending NgSetupRequest");
-
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    request.msg.to_json(js);
-    logger.debug("Containerized NGSetupRequest: {}", js.to_string());
-  }
-
   return launch_async<ng_setup_procedure>(request, ngap_notifier, ev_mng, task_sched.get_timer_manager(), logger);
 }
 
@@ -110,12 +103,6 @@ void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
   // TODO: Add missing optional values
 
   logger.info("ue={} Sending InitialUeMessage (ran_ue_id={})", msg.ue_index, ue->get_ran_ue_id());
-
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    ngap_msg.pdu.to_json(js);
-    logger.debug("Containerized InitialUeMessage: {}", js.to_string());
-  }
 
   // Forward message to AMF
   ngap_notifier.on_new_message(ngap_msg);
@@ -154,12 +141,6 @@ void ngap_impl::handle_ul_nas_transport_message(const ngap_ul_nas_transport_mess
 
   logger.info("ue={} Sending UlNasTransportMessage (ran_ue_id={})", msg.ue_index, ue->get_ran_ue_id());
 
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    ngap_msg.pdu.to_json(js);
-    logger.debug("Containerized UlNasTransportMessage: {}", js.to_string());
-  }
-
   // Forward message to AMF
   ngap_notifier.on_new_message(ngap_msg);
 }
@@ -171,7 +152,7 @@ void ngap_impl::handle_message(const ngap_message& msg)
   if (logger.debug.enabled()) {
     asn1::json_writer js;
     msg.pdu.to_json(js);
-    logger.debug("Containerized message: {}", js.to_string());
+    logger.debug("Rx NGAP PDU: {}", js.to_string());
   }
 
   // Run NGAP protocols in Control executor.
@@ -258,12 +239,6 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   // Update AMF ID and use the one from this Context Setup as per TS 38.413 v16.2 page 38
   ue_manager.set_amf_ue_id(ue_index, uint_to_amf_ue_id(request->amf_ue_ngap_id.value.value));
 
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    request.to_json(js);
-    logger.debug("Containerized InitialContextSetupRequestMessage: {}", js.to_string());
-  }
-
   // start routine
   task_sched.schedule_async_task(
       ue_index,
@@ -280,12 +255,6 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   }
 
   logger.info("ue={} Received PduSessionResourceSetupRequest (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
-
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    request.to_json(js);
-    logger.debug("Containerized PduSessionResourceSetupRequest: {}", js.to_string());
-  }
 
   // Store information in UE context
   if (request->ue_aggr_max_bit_rate_present) {
@@ -334,12 +303,6 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
   logger.info("ue={} Received UeContextReleaseCommand (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
 
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    cmd.to_json(js);
-    logger.debug("Containerized UeContextReleaseCommand: {}", js.to_string());
-  }
-
   // Convert to common type
   cu_cp_ue_context_release_command msg;
   msg.ue_index = ue_index;
@@ -364,14 +327,6 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);
-
-  logger.info("Sending UeContextReleaseComplete");
-
-  if (logger.debug.enabled()) {
-    asn1::json_writer js;
-    ngap_msg.pdu.to_json(js);
-    logger.debug("Containerized UeContextReleaseComplete: {}", js.to_string());
-  }
 
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);

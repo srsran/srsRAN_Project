@@ -113,5 +113,147 @@ inline rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, r
   return msg;
 }
 
+inline uplink_config make_test_ue_uplink_config(const cell_config_builder_params& params)
+
+{
+  // > UL Config.
+  uplink_config ul_config{};
+  ul_config.init_ul_bwp.pucch_cfg.emplace();
+
+  // >> PUCCH.
+  auto& pucch_cfg = ul_config.init_ul_bwp.pucch_cfg.value();
+  // PUCCH Resource Set ID 0.
+  auto& pucch_res_set_0            = pucch_cfg.pucch_res_set.emplace_back();
+  pucch_res_set_0.pucch_res_set_id = 0;
+  pucch_res_set_0.pucch_res_id_list.emplace_back(0);
+  pucch_res_set_0.pucch_res_id_list.emplace_back(1);
+  pucch_res_set_0.pucch_res_id_list.emplace_back(2);
+
+  auto& pucch_res_set_1            = pucch_cfg.pucch_res_set.emplace_back();
+  pucch_res_set_1.pucch_res_set_id = 1;
+  pucch_res_set_1.pucch_res_id_list.emplace_back(3);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(4);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(5);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(6);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(7);
+  pucch_res_set_1.pucch_res_id_list.emplace_back(8);
+
+  unsigned nof_rbs = band_helper::get_n_rbs_from_bw(
+      params.channel_bw_mhz,
+      params.scs_common,
+      params.band.has_value() ? band_helper::get_freq_range(params.band.value()) : frequency_range::FR1);
+
+  // PUCCH resource format 1, for HARQ-ACK.
+  // >>> PUCCH resource 0.
+  pucch_resource res_basic{.res_id                 = 0,
+                           .starting_prb           = nof_rbs - 1,
+                           .second_hop_prb         = 0,
+                           .intraslot_freq_hopping = false,
+                           .format                 = pucch_format::FORMAT_1};
+  res_basic.format_1.initial_cyclic_shift = 0;
+  res_basic.format_1.nof_symbols          = 14;
+  res_basic.format_1.starting_sym_idx     = 0;
+  res_basic.format_1.time_domain_occ      = 0;
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  // >>> PUCCH resource 1.
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res1 = pucch_cfg.pucch_res_list.back();
+  res1.res_id          = 1;
+  res1.starting_prb    = 1;
+  res1.second_hop_prb  = nof_rbs - res1.starting_prb - 1;
+  // >>> PUCCH resource 2.
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res2 = pucch_cfg.pucch_res_list.back();
+  res2.res_id          = 2;
+  res2.second_hop_prb  = 1;
+  res2.starting_prb    = nof_rbs - res2.second_hop_prb - 1;
+
+  // PUCCH resource format 2, for HARQ-ACK and CSI.
+  // >>> PUCCH resource 3.
+  pucch_resource res_basic_f2{
+      .starting_prb = 2, .second_hop_prb = 0, .intraslot_freq_hopping = false, .format = pucch_format::FORMAT_2};
+  res_basic_f2.res_id                    = 3;
+  res_basic_f2.format_2.nof_prbs         = 1;
+  res_basic_f2.format_2.nof_symbols      = 2;
+  res_basic_f2.format_2.starting_sym_idx = 0;
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  // >>> PUCCH resource 4.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res4           = pucch_cfg.pucch_res_list.back();
+  res4.res_id                    = 4;
+  res4.format_2.starting_sym_idx = 2;
+  // >>> PUCCH resource 5.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res5           = pucch_cfg.pucch_res_list.back();
+  res5.res_id                    = 5;
+  res5.format_2.starting_sym_idx = 4;
+  // >>> PUCCH resource 6.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res6           = pucch_cfg.pucch_res_list.back();
+  res6.res_id                    = 6;
+  res6.format_2.starting_sym_idx = 6;
+  // >>> PUCCH resource 7.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res7           = pucch_cfg.pucch_res_list.back();
+  res7.res_id                    = 7;
+  res7.format_2.starting_sym_idx = 8;
+  // >>> PUCCH resource 8.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res8           = pucch_cfg.pucch_res_list.back();
+  res8.res_id                    = 8;
+  res8.format_2.starting_sym_idx = 10;
+  // >>> PUCCH resource 9.
+  pucch_cfg.pucch_res_list.push_back(res_basic_f2);
+  pucch_resource& res9           = pucch_cfg.pucch_res_list.back();
+  res9.res_id                    = 9;
+  res9.format_2.starting_sym_idx = 12;
+
+  // >>> PUCCH resource 10.
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res10 = pucch_cfg.pucch_res_list.back();
+  res10.res_id          = 10;
+  res10.starting_prb    = 0;
+
+  // >>> PUCCH resource 11.
+  pucch_cfg.pucch_res_list.push_back(res_basic);
+  pucch_resource& res11 = pucch_cfg.pucch_res_list.back();
+  res11.res_id          = 11;
+  res11.starting_prb    = nof_rbs - 3;
+
+  // TODO: add more PUCCH resources.
+
+  // >>> SR Resource.
+  const unsigned pucch_sr_res_id = pucch_cfg.pucch_res_list.size() - 1;
+  pucch_cfg.sr_res_list.push_back(scheduling_request_resource_config{.sr_res_id    = 1,
+                                                                     .sr_id        = uint_to_sched_req_id(0),
+                                                                     .period       = sr_periodicity::sl_40,
+                                                                     .offset       = 0,
+                                                                     .pucch_res_id = pucch_sr_res_id});
+
+  pucch_cfg.format_1_common_param.emplace();
+  pucch_cfg.format_2_common_param.emplace(
+      pucch_common_all_formats{.max_c_rate = max_pucch_code_rate::dot_25, .simultaneous_harq_ack_csi = true});
+
+  // >>> dl-DataToUl-Ack
+  // TS38.213, 9.1.2.1 - "If a UE is provided dl-DataToUL-ACK, the UE does not expect to be indicated by DCI format 1_0
+  // a slot timing value for transmission of HARQ-ACK information that does not belong to the intersection of the set
+  // of slot timing values {1, 2, 3, 4, 5, 6, 7, 8} and the set of slot timing values provided by dl-DataToUL-ACK for
+  // the active DL BWP of a corresponding serving cell.
+  // Inactive for format1_0."
+  // Note2: Only k1 >= 4 supported.
+  nr_band band = params.band.has_value() ? params.band.value() : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
+  if (band_helper::get_duplex_mode(band) == duplex_mode::FDD) {
+    pucch_cfg.dl_data_to_ul_ack = {4};
+  } else {
+    // TDD
+    pucch_cfg.dl_data_to_ul_ack = {4, 5, 6, 7};
+  }
+
+  // > PUSCH config.
+  ul_config.init_ul_bwp.pusch_cfg.emplace(config_helpers::make_default_pusch_config());
+
+  return ul_config;
+}
+
 } // namespace test_helpers
 } // namespace srsran

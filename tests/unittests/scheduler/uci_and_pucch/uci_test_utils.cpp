@@ -140,6 +140,11 @@ test_bench::test_bench(const test_bench_params& params) :
                         1,
                 "sched_ue_creation_request_message initialization is not complete.");
 
+  // Add custom PUCCH config from this test file.
+  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.reset();
+  ue_req.cfg.cells.back().serv_cell_cfg.ul_config.emplace(
+      test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}));
+
   ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
   ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
 
@@ -174,6 +179,10 @@ const ue& test_bench::get_ue(du_ue_index_t ue_idx) const
 void test_bench::add_ue()
 {
   sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request();
+
+  ue_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
+  ue_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
+      test_helpers::make_test_ue_uplink_config(cell_config_builder_params{}));
 
   if (not ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.has_value()) {
     ue_req.cfg.cells.back().serv_cell_cfg.csi_meas_cfg.emplace(

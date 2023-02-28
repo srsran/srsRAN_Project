@@ -1254,7 +1254,7 @@ uint64_t to_number(const uint8_t* ptr, uint32_t nbits)
   uint64_t val       = 0;
   uint32_t nof_bytes = ceil_frac(nbits, 8u);
   for (uint32_t i = 0; i < nof_bytes; ++i) {
-    val += ptr[i] << (i * 8u);
+    val += static_cast<uint64_t>(ptr[i]) << static_cast<uint64_t>(i * 8u);
   }
   return val;
 }

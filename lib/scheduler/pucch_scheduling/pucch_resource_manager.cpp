@@ -57,13 +57,16 @@ int get_pucch_res_idx_for_csi(const ue_cell_configuration& ue_cell_cfg)
 pucch_resource_manager::pucch_resource_manager()
 {
   auto reset_slot_record = [](rnti_pucch_res_id_slot_record& res_counter) {
-    res_counter.ue_using_sr_resource  = INVALID_RNTI;
     res_counter.ue_using_csi_resource = INVALID_RNTI;
     for (auto& ue_rec : res_counter.ues_using_format1_res) {
       ue_rec = INVALID_RNTI;
     }
     for (auto& ue_rec : res_counter.ues_using_format2_res) {
       ue_rec = INVALID_RNTI;
+    }
+    for (auto& ue_rec : res_counter.ues_using_sr_resources) {
+      ue_rec.pucch_res_id = -1;
+      ue_rec.allocated_ue = INVALID_RNTI;
     }
   };
 
@@ -77,13 +80,16 @@ void pucch_resource_manager::slot_indication(slot_point slot_tx)
 
   rnti_pucch_res_id_slot_record& res_counter = get_slot_resource_counter(last_sl_ind - 1);
 
-  res_counter.ue_using_sr_resource  = INVALID_RNTI;
   res_counter.ue_using_csi_resource = INVALID_RNTI;
   for (auto& ue_rec : res_counter.ues_using_format1_res) {
     ue_rec = INVALID_RNTI;
   }
   for (auto& ue_rec : res_counter.ues_using_format2_res) {
     ue_rec = INVALID_RNTI;
+  }
+  for (auto& ue_rec : res_counter.ues_using_sr_resources) {
+    ue_rec.pucch_res_id = -1;
+    ue_rec.allocated_ue = INVALID_RNTI;
   }
 }
 
@@ -226,28 +232,32 @@ pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnt
 
   auto& slot_record = get_slot_resource_counter(slot_sr);
 
-  if (slot_record.ue_using_sr_resource == INVALID_RNTI) {
-    const auto& pucch_res_list = pucch_cfg.pucch_res_list;
+  // We assume each UE only has 1 SR Resource Config configured.
+  const unsigned sr_pucch_res_id = pucch_cfg.sr_res_list[0].pucch_res_id;
+  auto*          it              = std::find_if(slot_record.ues_using_sr_resources.begin(),
+                          slot_record.ues_using_sr_resources.end(),
+                          [sr_res_idx = pucch_cfg.sr_res_list[0].pucch_res_id](const sr_record& sr_rec) {
+                            return static_cast<int>(sr_res_idx) == sr_rec.pucch_res_id;
+                          });
 
-    // Check if the list of PUCCH resources (corresponding to \c resourceToAddModList, as part of \c PUCCH-Config, as
-    // per TS 38.331) contains the resource indexed to be used for SR.
-    const auto* sr_pucch_resource_cfg =
-        std::find_if(pucch_res_list.begin(),
-                     pucch_res_list.end(),
-                     [sr_res_idx = pucch_cfg.sr_res_list[0].pucch_res_id](const pucch_resource& pucch_sr_res_cfg) {
-                       return static_cast<unsigned>(sr_res_idx) == pucch_sr_res_cfg.res_id;
-                     });
-
-    // If there is no such PUCCH resource, return \c nullptr.
-    if (sr_pucch_resource_cfg == pucch_res_list.end()) {
-      // TODO: Add information about the LC which this SR is for.
-      return nullptr;
-    }
-
-    slot_record.ue_using_sr_resource = crnti;
-    return &(*sr_pucch_resource_cfg);
+  // If there is already a record for this pucch_res_id, it means it is used by another UE.
+  if (it != slot_record.ues_using_sr_resources.end()) {
+    return nullptr;
   }
-  return nullptr;
+
+  // Check the first available slot in the record list.
+  it = std::find_if(slot_record.ues_using_sr_resources.begin(),
+                    slot_record.ues_using_sr_resources.end(),
+                    [](const sr_record& sr_rec) { return sr_rec.allocated_ue == INVALID_RNTI; });
+
+  // There are no available records for the SR.
+  if (it == slot_record.ues_using_sr_resources.end()) {
+    return nullptr;
+  }
+
+  it->pucch_res_id = static_cast<int>(sr_pucch_res_id);
+  it->allocated_ue = crnti;
+  return &pucch_cfg.pucch_res_list[sr_pucch_res_id];
 };
 
 bool pucch_resource_manager::release_harq_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg)
@@ -284,15 +294,20 @@ bool pucch_resource_manager::release_format2_resource(slot_point slot_harq, rnti
 
 bool pucch_resource_manager::release_sr_resource(slot_point slot_sr, rnti_t crnti)
 {
-  auto& allocated_ue = get_slot_resource_counter(slot_sr).ue_using_sr_resource;
+  auto& slot_record = get_slot_resource_counter(slot_sr);
+
+  auto* it = std::find_if(slot_record.ues_using_sr_resources.begin(),
+                          slot_record.ues_using_sr_resources.end(),
+                          [crnti](const sr_record& sr_rec) { return crnti == sr_rec.allocated_ue; });
 
   // If the UE allocated to the SR PUCCH resource matches the given CRNTI, release the resource.
-  if (allocated_ue == crnti) {
-    allocated_ue = INVALID_RNTI;
-    return true;
+  if (it == slot_record.ues_using_sr_resources.end()) {
+    return false;
   }
 
-  return false;
+  it->allocated_ue = INVALID_RNTI;
+  it->pucch_res_id = -1;
+  return true;
 }
 
 bool pucch_resource_manager::release_csi_resource(slot_point slot_sr, rnti_t crnti)

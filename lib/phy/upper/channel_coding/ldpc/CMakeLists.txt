@@ -18,8 +18,6 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-include_directories(${PROJECT_SOURCE_DIR}/include/srsran/phy/upper/channel_coding/ldpc)
-
 set(ldpc_sources
         ldpc_graph_impl.cpp
         ldpc_luts_impl.cpp
