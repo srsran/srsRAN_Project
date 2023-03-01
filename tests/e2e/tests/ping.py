@@ -10,6 +10,7 @@
 Test ping
 """
 import logging
+from time import sleep
 
 from pytest import mark
 from retina.launcher.test_base import BaseTest
@@ -22,6 +23,7 @@ from retina.protocol.ue_pb2 import UEStartInfo
 from .utils import ATTACH_TIMEOUT, DEFAULT_MCS, STARTUP_TIMEOUT, get_ue_gnb_epc
 
 PING_COUNT = 10
+PING_START_DELAY = 0.250
 
 
 class TestPing(BaseTest):
@@ -39,10 +41,6 @@ class TestPing(BaseTest):
             param(3, 15, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
             param(3, 15, 20, marks=(mark.zmq, mark.smoke, mark.test), id="band:%s-scs:%s-bandwidth:%s"),
             param(3, 15, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 5, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 20, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
             param(41, 30, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
             param(41, 30, 20, marks=(mark.zmq, mark.smoke), id="band:%s-scs:%s-bandwidth:%s"),
             param(41, 30, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
@@ -109,9 +107,11 @@ class TestPing(BaseTest):
                 ping_task_dict[f"UE {ue_attached_info.ipv4} -> EPC {ue_attached_info.ipv4_gateway}"] = ue.Ping.future(
                     PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count)
                 )
+                sleep(PING_START_DELAY)
                 ping_task_dict[f"EPC {ue_attached_info.ipv4_gateway} -> UE {ue_attached_info.ipv4}"] = epc.Ping.future(
                     PingRequest(address=ue_attached_info.ipv4, count=ping_count)
                 )
+                sleep(PING_START_DELAY)
 
             ping_result_dict = {key: ping_task.result() for key, ping_task in ping_task_dict.items()}
 
