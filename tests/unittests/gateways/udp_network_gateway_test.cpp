@@ -125,7 +125,7 @@ TEST_F(udp_network_gateway_tester, when_binding_on_bogus_v6_address_then_bind_fa
 {
   udp_network_gateway_config config;
   config.bind_address = "1:1::";
-  config.bind_port    = get_unused_sctp_port("::1");
+  config.bind_port    = get_unused_udp_port("::1");
   config.reuse_addr   = true;
   ASSERT_NE(config.bind_port, 0);
   set_config(config, config);
