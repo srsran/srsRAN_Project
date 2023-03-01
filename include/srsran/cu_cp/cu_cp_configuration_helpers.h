@@ -27,6 +27,51 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
   return cfg;
 }
 
+/// Generates default QoS configuration used by gNB DU. The default configuration should be valid.
+inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list()
+{
+  std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> qos_list = {};
+  {
+    // 5QI=7
+    srs_cu_cp::cu_cp_qos_config cfg{};
+    pdcp_config_t               pdcp_cfg{};
+    pdcp_cfg.t_reordering = pdcp_t_reordering::ms0;
+
+    drb_t drb_cfg                          = {};
+    drb_cfg.pdcp_sn_size_ul                = pdcp_sn_size::size18bits;
+    drb_cfg.pdcp_sn_size_dl                = pdcp_sn_size::size18bits;
+    drb_cfg.integrity_protection_present   = false;
+    drb_cfg.discard_timer                  = pdcp_discard_timer::infinity;
+    drb_cfg.status_report_required_present = false;
+    drb_cfg.out_of_order_delivery_present  = false;
+    drb_cfg.rlc_mode                       = pdcp_rlc_mode::um;
+    pdcp_cfg.drb                           = drb_cfg;
+
+    cfg.pdcp    = pdcp_cfg;
+    qos_list[7] = cfg;
+  }
+  {
+    // 5QI=9 (temporary default to UM)
+    srs_cu_cp::cu_cp_qos_config cfg{};
+    pdcp_config_t               pdcp_cfg{};
+    pdcp_cfg.t_reordering = pdcp_t_reordering::ms0;
+
+    drb_t drb_cfg                          = {};
+    drb_cfg.pdcp_sn_size_ul                = pdcp_sn_size::size18bits;
+    drb_cfg.pdcp_sn_size_dl                = pdcp_sn_size::size18bits;
+    drb_cfg.integrity_protection_present   = false;
+    drb_cfg.discard_timer                  = pdcp_discard_timer::infinity;
+    drb_cfg.status_report_required_present = false;
+    drb_cfg.out_of_order_delivery_present  = false;
+    drb_cfg.rlc_mode                       = pdcp_rlc_mode::um;
+    pdcp_cfg.drb                           = drb_cfg;
+
+    cfg.pdcp    = pdcp_cfg;
+    qos_list[9] = cfg;
+  }
+  return qos_list;
+}
+
 /// Returns true if the given CU-CP configuration is valid, otherwise false.
 inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
 {

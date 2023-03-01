@@ -110,7 +110,7 @@ std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config
 {
   std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    // out_cfg = config_helpers::make_default_du_qos_config_list();
+    out_cfg = config_helpers::make_default_cu_cp_qos_config_list();
     return out_cfg;
   }
 
@@ -119,8 +119,8 @@ std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config
       report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
     }
     // Convert PDCP config
-    auto& out_pdcp = out_cfg[qos.five_qi].pdcp;
-    out_pdcp.drb   = drb_t{};
+    pdcp_config_t& out_pdcp = out_cfg[qos.five_qi].pdcp;
+    out_pdcp.drb            = drb_t{};
 
     // RLC mode
     rlc_mode mode;
