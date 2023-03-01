@@ -5,6 +5,10 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+include:
+  - project: softwareradiosystems/testing-tools
+    ref: "46"
+    file: .gitlab/ci-shared/setup/all.yml
 
 .prepare_test:
   before_script:
@@ -26,7 +30,7 @@
     LOG_LEVEL: "info"
     MARKERS: ""
     ARGS: ""
-    FORCE_DOWNLOAD: "false"  # Download only failed tests by default
+    FORCE_DOWNLOAD: "false" # Download only failed tests by default
     PCAP: "" # Disabled by default
     FAIL_IF_INTERNAL_ERRORS: "true" # Enabled by default
   tags:

@@ -86,9 +86,9 @@
             "allowed_to_push": [
                 {
                     "access_level": 40,
-                    "access_level_description": "codebot",
+                    "access_level_description": "$CODEBOT_USERNAME",
                     "group_id": null,
-                    "user_id": 11604565
+                    "user_id": $CODEBOT_USER_ID
                 }
             ],
             "code_owner_approval_required": false,
@@ -107,9 +107,9 @@
             "allowed_to_push": [
                 {
                     "access_level": 40,
-                    "access_level_description": "codebot",
+                    "access_level_description": "$CODEBOT_USERNAME",
                     "group_id": null,
-                    "user_id": 11604565
+                    "user_id": $CODEBOT_USER_ID
                 }
             ],
             "code_owner_approval_required": false,

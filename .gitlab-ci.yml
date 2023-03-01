@@ -13,13 +13,13 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "45"
+    ref: "46"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "45"
+    ref: "46"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/testing-tools
-    ref: "45"
+    ref: "46"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/e2e.yml
@@ -30,6 +30,11 @@ stages:
   - build and unit tests
   - e2e
   - documentation
+
+variables:
+  SLACK_CHANNEL_OK: "#ci_gnb"
+  SLACK_CHANNEL_FAIL: "#ci_gnb"
+  SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
 
 ################################################################################
 ## Static
@@ -212,6 +217,8 @@ unit coverage:
   image:
     name: $CR_REGISTRY_URI/testing-tools/report-generator:5.1.10
     entrypoint: ["/bin/sh", "-c"]
+  variables:
+    GIT_STRATEGY: none
   rules:
     - if: $ON_MR
       variables:
