@@ -9,6 +9,7 @@
  */
 
 #include "sctp_network_gateway_impl.h"
+#include "srsran/gateways/addr_info.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/sctp.h>
@@ -172,8 +173,16 @@ bool sctp_network_gateway_impl::create_and_bind()
   freeaddrinfo(results);
 
   if (sock_fd == -1) {
-    fmt::print("Error connecting to {}:{} - {}\n", config.connect_address, config.connect_port, strerror(ret));
-    logger.error("Error binding to {}:{} - {}", config.bind_address, config.bind_port, strerror(ret));
+    fmt::print("Failed to bind {} socket to {}:{}. {}\n",
+               ipproto_to_string(hints.ai_protocol),
+               config.bind_address,
+               config.bind_port,
+               strerror(ret));
+    logger.error("Failed to bind {} socket to {}:{}. {}",
+                 ipproto_to_string(hints.ai_protocol),
+                 config.bind_address,
+                 config.bind_port,
+                 strerror(ret));
     return false;
   }
 
@@ -274,7 +283,16 @@ bool sctp_network_gateway_impl::create_and_connect()
   freeaddrinfo(results);
 
   if (sock_fd == -1) {
-    logger.error("Error connecting to {}:{} - {}", config.connect_address, config.connect_port, strerror(ret));
+    fmt::print("Failed to connect {} socket to {}:{}. {}\n",
+               ipproto_to_string(hints.ai_protocol),
+               config.connect_address,
+               config.connect_port,
+               strerror(ret));
+    logger.error("Failed to connect {} socket to {}:{}. {}",
+                 ipproto_to_string(hints.ai_protocol),
+                 config.connect_address,
+                 config.connect_port,
+                 strerror(ret));
     return false;
   }
 
