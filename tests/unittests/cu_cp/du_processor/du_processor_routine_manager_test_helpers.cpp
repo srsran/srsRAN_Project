@@ -20,6 +20,12 @@ du_processor_routine_manager_test::du_processor_routine_manager_test()
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
+  drb_cfg                                             = {};
+  drb_cfg.five_qi_config[9]                           = {};
+  drb_cfg.five_qi_config[9].pdcp.drb                  = drb_t{};
+  drb_cfg.five_qi_config[9].pdcp.drb->pdcp_sn_size_ul = pdcp_sn_size::size12bits;
+  drb_cfg.five_qi_config[9].pdcp.drb->pdcp_sn_size_dl = pdcp_sn_size::size12bits;
+  rrc_ue_drb_manager                                  = std::make_unique<drb_manager_impl>(drb_cfg);
   // create routine manager
   routine_mng = std::make_unique<du_processor_routine_manager>(
       e1ap_ctrl_notifier, f1ap_ue_ctxt_notifier, rrc_du_notifier, ue_mng, cu_cp_logger);

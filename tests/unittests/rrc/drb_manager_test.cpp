@@ -31,7 +31,10 @@ protected:
     rrc_logger.set_hex_dump_max_size(32);
 
     drb_manager_cfg cfg;
-    manager = std::make_unique<drb_manager_impl>(cfg);
+    cfg.five_qi_config[9]          = {};
+    cfg.five_qi_config[9].pdcp     = pdcp_config_t{};
+    cfg.five_qi_config[9].pdcp.drb = drb_t{};
+    manager                        = std::make_unique<drb_manager_impl>(cfg);
   }
 
   void TearDown() override

@@ -33,7 +33,7 @@ protected:
     rrc_ue_ctrl_notifier.set_rrc_reconfiguration_outcome(rrc_reconfiguration_outcome);
 
     t = routine_mng->start_pdu_session_resource_setup_routine(
-        msg, security_cfg, rrc_ue_ctrl_notifier, rrc_ue_drb_manager);
+        msg, security_cfg, rrc_ue_ctrl_notifier, *rrc_ue_drb_manager);
     t_launcher.emplace(t);
   }
 
