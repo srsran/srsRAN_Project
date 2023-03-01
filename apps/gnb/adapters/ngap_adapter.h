@@ -41,7 +41,9 @@ public:
 
     packer = std::make_unique<ngap_asn1_packer>(*gateway_data_handler, *this, pcap);
 
-    gateway_ctrl_handler->create_and_connect();
+    if (!gateway_ctrl_handler->create_and_connect()) {
+      report_error("Failed to create SCTP gateway.\n");
+    }
     broker.register_fd(gateway_ctrl_handler->get_socket_fd(), [this](int fd) { gateway_ctrl_handler->receive(); });
   }
 
