@@ -19,7 +19,7 @@
   timeout: 4h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.18
+    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.19
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
