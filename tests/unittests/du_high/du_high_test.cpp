@@ -15,12 +15,25 @@
 #include "test_utils/du_high_worker_manager.h"
 #include "test_utils/dummy_test_components.h"
 #include "tests/unittests/f1ap/common/test_helpers.h"
-#include "tests/unittests/gateways/test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
 using namespace srs_du;
+
+class dummy_network_gateway_notifier : public sctp_network_gateway_control_notifier,
+                                       public network_gateway_data_notifier
+{
+public:
+  dummy_network_gateway_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_connection_loss() override { logger.info("Connection loss"); }
+  void on_connection_established() override { logger.info("Connection established"); }
+  void on_new_pdu(byte_buffer pdu) override { logger.info("Received PDU"); }
+
+private:
+  srslog::basic_logger& logger;
+};
 
 /// Test F1 setup over "local" connection to DU.
 void test_f1_setup_local()

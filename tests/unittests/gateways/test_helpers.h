@@ -148,7 +148,9 @@ int get_unused_sctp_port(const std::string& bind_addr)
   struct addrinfo hints;
   fill_sctp_hints(hints);
 
-  return get_unused_port(bind_addr, hints);
+  int port = get_unused_port(bind_addr, hints);
+  EXPECT_NE(port, 0) << "Failed to get unused port for SCTP socket";
+  return port;
 }
 
 int get_unused_udp_port(const std::string& bind_addr)
@@ -156,7 +158,9 @@ int get_unused_udp_port(const std::string& bind_addr)
   struct addrinfo hints;
   fill_udp_hints(hints);
 
-  return get_unused_port(bind_addr, hints);
+  int port = get_unused_port(bind_addr, hints);
+  EXPECT_NE(port, 0) << "Failed to get unused port for UDP socket";
+  return port;
 }
 
 class dummy_network_gateway_control_notifier : public sctp_network_gateway_control_notifier
