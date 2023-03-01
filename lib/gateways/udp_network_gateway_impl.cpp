@@ -301,8 +301,7 @@ bool udp_network_gateway_impl::set_reuse_addr()
 bool udp_network_gateway_impl::close_socket()
 {
   if (not is_initialized()) {
-    logger.error("Socket not initialized");
-    return false;
+    return true;
   }
 
   if (close(sock_fd) == -1) {

@@ -333,8 +333,7 @@ bool sctp_network_gateway_impl::recreate_and_reconnect()
 bool sctp_network_gateway_impl::close_socket()
 {
   if (not is_initialized()) {
-    logger.error("Socket not initialized");
-    return false;
+    return true;
   }
 
   if (::close(sock_fd) == -1) {
