@@ -133,13 +133,6 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   unsigned       k1      = 0;
   auto           k1_list = ue_cell_cfg.get_k1_candidates();
   uci_allocation uci     = {};
-  // Note: Right now, k1 candidates are hardcoded for TDD to avoid PUCCH format2.
-  // TODO: Do not hardcode k1.
-  if (ue_cell_cfg.cell_cfg_common.tdd_cfg_common.has_value()) {
-    static constexpr std::array<uint8_t, 6> tdd_slot_idx_to_k1 = {7, 6, 6, 5, 5, 4};
-    k1_list                                                    = span<const uint8_t>{tdd_slot_idx_to_k1}.subspan(
-        pdsch_alloc.slot.slot_index() % nof_slots_per_tdd_period(*ue_cell_cfg.cell_cfg_common.tdd_cfg_common), 1);
-  }
   for (const uint8_t k1_candidate : k1_list) {
     const slot_point uci_slot = pdsch_alloc.slot + k1_candidate;
     if (not cell_cfg.is_ul_enabled(uci_slot)) {
