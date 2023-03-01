@@ -366,12 +366,12 @@ int main(int argc, char** argv)
   srslog::init();
 
   // Set log-level of app and all non-layer specific components to app level.
+  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
   for (const auto& id : {"GNB", "ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.lib_level));
     logger.set_hex_dump_max_size(gnb_cfg.log_cfg.hex_max_size);
   }
-  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
 
   // Set component-specific logging options.
   for (const auto& id : {"DU", "DU-MNG", "UE-MNG", "DU-F1"}) {
