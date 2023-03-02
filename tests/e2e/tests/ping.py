@@ -35,15 +35,15 @@ class TestPing(BaseTest):
         ),
     )
     @mark.parametrize(
-        "band, common_scs, bandwidth",
+        "band, common_scs, bandwidth, log_search",
         (
-            param(3, 15, 5, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 20, marks=(mark.zmq, mark.smoke, mark.test), id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 20, marks=(mark.zmq, mark.smoke), id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 5, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(3, 15, 10, False, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(3, 15, 20, True, marks=(mark.zmq, mark.smoke, mark.test), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(3, 15, 50, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(41, 30, 10, False, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(41, 30, 20, True, marks=(mark.zmq, mark.smoke), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(41, 30, 50, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
         ),
     )
     def test(
@@ -52,6 +52,7 @@ class TestPing(BaseTest):
         band,
         common_scs,
         bandwidth,
+        log_search,
         ue_count,
         mcs=DEFAULT_MCS,
         startup_timeout=STARTUP_TIMEOUT,
@@ -67,6 +68,7 @@ class TestPing(BaseTest):
             common_scs=common_scs,
             bandwidth=bandwidth,
             mcs=mcs,
+            log_search=log_search,
             ue_count=ue_count,
         ) as items:
             ue, gnb, epc = items
@@ -107,7 +109,6 @@ class TestPing(BaseTest):
                 ping_task_dict[f"UE {ue_attached_info.ipv4} -> EPC {ue_attached_info.ipv4_gateway}"] = ue.Ping.future(
                     PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count)
                 )
-                sleep(PING_START_DELAY)
                 ping_task_dict[f"EPC {ue_attached_info.ipv4_gateway} -> UE {ue_attached_info.ipv4}"] = epc.Ping.future(
                     PingRequest(address=ue_attached_info.ipv4, count=ping_count)
                 )

@@ -53,22 +53,22 @@ class TestIPerf(BaseTest):
         ),
     )
     @mark.parametrize(
-        "band, common_scs, bandwidth, bitrate, iperf_duration",
+        "band, common_scs, bandwidth, bitrate, iperf_duration, log_search",
         (
             # Smoke
-            param(3, 15, 20, LOW_BITRATE, SHORT_DURATION, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 20, LOW_BITRATE, SHORT_DURATION, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 20, LOW_BITRATE, SHORT_DURATION, True, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(41, 30, 20, LOW_BITRATE, SHORT_DURATION, True, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
             # ZMQ
-            param(3, 15, 5, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(3, 15, 10, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(3, 15, 20, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(3, 15, 50, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 10, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 20, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 50, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 5, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(3, 15, 10, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(3, 15, 20, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(3, 15, 50, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(41, 30, 10, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(41, 30, 20, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(41, 30, 50, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
             # RF
-            param(3, 15, 10, HIGH_BITRATE, LONG_DURATION, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 10, HIGH_BITRATE, LONG_DURATION, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 10, HIGH_BITRATE, LONG_DURATION, False, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(41, 30, 10, HIGH_BITRATE, LONG_DURATION, False, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
         ),
     )
     def test(
@@ -82,6 +82,7 @@ class TestIPerf(BaseTest):
         iperf_duration,
         bitrate,
         ue_count,
+        log_search,
         mcs=DEFAULT_MCS,
         startup_timeout=ATTACH_TIMEOUT,
         attach_timeout=STARTUP_TIMEOUT,
@@ -89,7 +90,14 @@ class TestIPerf(BaseTest):
         logging.info("Iperf Test")
 
         with get_ue_gnb_epc(
-            self, extra, band=band, common_scs=common_scs, bandwidth=bandwidth, mcs=mcs, ue_count=ue_count
+            self,
+            extra,
+            band=band,
+            common_scs=common_scs,
+            bandwidth=bandwidth,
+            mcs=mcs,
+            ue_count=ue_count,
+            log_search=log_search,
         ) as items:
             ue, gnb, epc = items
 

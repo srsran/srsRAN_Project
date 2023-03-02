@@ -23,16 +23,14 @@ include:
   timeout: 4h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.20
+    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.21
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
-    LOG_LEVEL: "info"
     MARKERS: ""
-    ARGS: ""
-    FORCE_DOWNLOAD: "false" # Download only failed tests by default
-    PCAP: "" # Disabled by default
-    FAIL_IF_INTERNAL_ERRORS: "true" # Enabled by default
+    PYTEST_ARGS: ""
+    RETINA_ARGS: ""
+    LOG_LEVEL: "info"
   tags:
     - on-prem-amd64
   extends:
@@ -50,11 +48,9 @@ include:
     - |
       cd tests/e2e
       export LOGNAME=$GITLAB_USER_LOGIN
-      export RETINA_LOGLEVEL="$LOG_LEVEL"
-      export RETINA_FORCE_DOWNLOAD_REPORT="$FORCE_DOWNLOAD"
-      export RETINA_PCAP_ENABLE="$PCAP"
-      export RETINA_FAIL_IF_INTERNAL_ERRORS="$FAIL_IF_INTERNAL_ERRORS"
-    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${ARGS}" -m "${MARKERS}" .
+    - |
+      retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml \
+        "${PYTEST_ARGS}" --register-parameter ue.all.log_level=$LOG_LEVEL gnb.all.log_level=$LOG_LEVEL "${RETINA_ARGS}" -m "${MARKERS}" .
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -73,10 +69,10 @@ smoke-zmq-tsan:
       allow_failure: false
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "smoke and not tcp and multiue"
-    ARGS: "-x"
+    MARKERS: "smoke and not tcp and not multiue"
+    PYTEST_ARGS: "-x"
+    RETINA_ARGS: "gnb.all.pcap=True"
     LOG_LEVEL: "debug"
-    PCAP: "true"
   needs:
     - job: "avx2 [tsan, cached]"
       artifacts: true
@@ -95,7 +91,8 @@ zmq:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "zmq and multiue"
-    ARGS: "-n 2"
+    PYTEST_ARGS: "-n 2"
+    LOG_LEVEL: "info"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
@@ -127,8 +124,6 @@ rf:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     MARKERS: "rf and not tcp and multiue"
     LOG_LEVEL: "warning"
-    FAIL_IF_INTERNAL_ERRORS: ""
-    ARGS: "-n 2"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
