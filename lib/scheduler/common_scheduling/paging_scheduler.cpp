@@ -429,7 +429,6 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&                 
                     dmrs_info,
                     paging_prbs_tbs.tbs_bytes);
 
-  logger.info("Paging, cell={}, crbs={}", res_grid.cfg.cell_index, paging_crbs);
   return true;
 }
 

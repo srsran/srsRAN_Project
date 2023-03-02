@@ -34,7 +34,7 @@ static constexpr size_t MAX_UE_PDUS_PER_SLOT = 16;
 /// Maximum number of Paging records per Paging PDU. See Ts 38.331, \c maxNrofPageRec.
 static constexpr size_t MAX_PAGING_RECORDS_PER_PAGING_PDU = 32;
 
-/// [Implementation defined] Maximum number of Paging scheduled per slot.
+/// Maximum number of Paging PDU scheduled per slot. Since there can be only one PDCCH PDU with P-RNTI per slot.
 static constexpr size_t MAX_PAGING_PDUS_PER_SLOT = 1;
 
 /// [Implementation defined] Maximum number of CSI-RS PDUs scheduler per slot.
