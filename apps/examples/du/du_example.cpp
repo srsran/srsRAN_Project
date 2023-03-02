@@ -313,7 +313,7 @@ struct worker_manager {
   task_worker_executor     ctrl_exec{ctrl_worker};
   task_worker_executor     cell_execs{cell_workers};
   task_worker_executor     ue_execs{ue_workers};
-  pcell_ul_executor_mapper ue_exec_mapper{&ue_execs};
+  pcell_ue_executor_mapper ue_exec_mapper{&ue_execs};
   cell_executor_mapper     cell_exec_mapper{{&cell_execs}, false};
   // Lower PHY RT task executor.
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};

@@ -19,10 +19,13 @@
 namespace srsran {
 
 /// L2 UL executor mapper that maps UEs based on their RNTI.
-class ue_index_based_ul_executor_mapper final : public du_high_ue_executor_mapper
+class index_based_ue_executor_mapper final : public du_high_ue_executor_mapper
 {
 public:
-  ue_index_based_ul_executor_mapper(span<task_executor*> execs_) : execs(execs_.begin(), execs_.end()) {}
+  index_based_ue_executor_mapper(const std::initializer_list<task_executor*>& execs_) :
+    execs(execs_.begin(), execs_.end())
+  {
+  }
 
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
@@ -42,10 +45,10 @@ private:
 };
 
 /// L2 UL executor mapper that maps UEs based on their PCell.
-class pcell_ul_executor_mapper final : public du_high_ue_executor_mapper
+class pcell_ue_executor_mapper final : public du_high_ue_executor_mapper
 {
 public:
-  explicit pcell_ul_executor_mapper(const std::initializer_list<task_executor*>& execs_) :
+  explicit pcell_ue_executor_mapper(const std::initializer_list<task_executor*>& execs_) :
     execs(execs_.begin(), execs_.end())
   {
     // Initialize executors in a round-robin fashion.
@@ -58,20 +61,21 @@ public:
 
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
-    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue id={}", ue_index);
     ue_idx_to_exec[ue_index] = execs[pcell_index % execs.size()];
     return *ue_idx_to_exec[ue_index];
   }
 
   task_executor& executor(du_ue_index_t ue_index) override
   {
-    ue_index = ue_index < MAX_NOF_DU_UES ? ue_index : to_du_ue_index(0);
-    return *ue_idx_to_exec[ue_index];
+    return *ue_idx_to_exec[std::min(ue_index, MAX_NOF_DU_UES)];
   }
 
 private:
-  std::vector<task_executor*>                execs;
-  std::array<task_executor*, MAX_NOF_DU_UES> ue_idx_to_exec;
+  std::vector<task_executor*> execs;
+
+  /// Map of ue indexes to executors. The last position is used when the UE has no ue_index yet assigned.
+  std::array<task_executor*, MAX_NOF_DU_UES + 1> ue_idx_to_exec;
 };
 
 /// \brief Mapper of task executors used by the MAC DL, RLC DL and MAC scheduler for low-latency tasks. The task

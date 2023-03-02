@@ -157,7 +157,7 @@ struct worker_manager {
   std::unique_ptr<task_executor> radio_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
-  optional<pcell_ul_executor_mapper>                              ue_exec_mapper;
+  optional<pcell_ue_executor_mapper>                              ue_exec_mapper;
   optional<cell_executor_mapper>                                  cell_exec_mapper;
 
 private:
@@ -228,7 +228,7 @@ private:
     radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio"));
 
     // Executor mappers.
-    ue_exec_mapper.emplace(pcell_ul_executor_mapper{du_ue_exec.get()});
+    ue_exec_mapper.emplace(pcell_ue_executor_mapper{du_ue_exec.get()});
     cell_exec_mapper.emplace(cell_executor_mapper{{du_cell_exec.get()}, blocking_mode_active});
   }
 };
