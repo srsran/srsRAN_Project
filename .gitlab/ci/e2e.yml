@@ -23,7 +23,7 @@ include:
   timeout: 4h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.19
+    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.20
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -95,6 +95,7 @@ zmq:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "zmq and multiue"
+    ARGS: "-n 2"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
@@ -127,6 +128,7 @@ rf:
     MARKERS: "rf and not tcp and multiue"
     LOG_LEVEL: "warning"
     FAIL_IF_INTERNAL_ERRORS: ""
+    ARGS: "-n 2"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
