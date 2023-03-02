@@ -251,7 +251,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     return;
   }
 
-  static const std::set<radio_uhd_device_type::types> automatic_mcr_devices = {radio_uhd_device_type::types::B200};
+  static const std::set<radio_uhd_device_type::types> automatic_mcr_devices = {radio_uhd_device_type::types::B2xx};
   if (automatic_mcr_devices.count(device.get_type())) {
     if (!device.set_automatic_master_clock_rate(radio_config.sampling_rate_hz)) {
       fmt::print("Error setting master clock rate. {}\n", device.get_error_message());

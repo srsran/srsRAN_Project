@@ -21,17 +21,17 @@ public:
     /// The device is not registered.
     UNKNOWN = 0,
     /// B2xx series models: B200mini, B200mini-i, B205mini-i, B210 and B200.
-    B200,
+    B2xx,
     /// USRP Embedded series: E320, E312, E310 and E313.
-    E3X0,
+    E3xx,
     /// N3x0 series models: N300 and N310.
-    N300,
+    N3x0,
     /// N32x series models: N320 and N321.
-    N320,
+    N32x,
     /// X3x0 series models: X300 and X310.
-    X300,
+    X3x0,
     /// X410 model.
-    X400
+    X410
   };
 
   radio_uhd_device_type() = default;
@@ -43,15 +43,15 @@ public:
     }
 
     if (mboard_name.find("B2") != std::string::npos) {
-      type = types::B200;
+      type = types::B2xx;
     } else if (mboard_name.find("X3") != std::string::npos) {
-      type = types::X300;
+      type = types::X3x0;
     } else if (mboard_name.find("X4") != std::string::npos) {
-      type = types::X400;
+      type = types::X410;
     } else if (mboard_name.find("N32") != std::string::npos) {
-      type = types::N320;
+      type = types::N32x;
     } else if (mboard_name.find("N3") != std::string::npos) {
-      type = types::N300;
+      type = types::N3x0;
     } else {
       type = types::UNKNOWN;
     }
@@ -59,17 +59,17 @@ public:
   std::string to_string()
   {
     switch (type) {
-      case types::B200:
+      case types::B2xx:
         return "uhd_b200";
-      case types::E3X0:
+      case types::E3xx:
         return "uhd_e3x0";
-      case types::N300:
+      case types::N3x0:
         return "uhd_n300";
-      case types::N320:
+      case types::N32x:
         return "uhd_n320";
-      case types::X300:
+      case types::X3x0:
         return "uhd_x300";
-      case types::X400:
+      case types::X410:
         return "uhd_x400";
       case types::UNKNOWN:
       default:

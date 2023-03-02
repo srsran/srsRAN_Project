@@ -89,13 +89,13 @@ public:
       type = radio_uhd_device_type(device_addr.get("type"));
 
       switch (type) {
-        case radio_uhd_device_type::types::E3X0:
+        case radio_uhd_device_type::types::E3xx:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
             device_addr.set("master_clock_rate", "30.72e6");
           }
           break;
-        case radio_uhd_device_type::types::X300:
+        case radio_uhd_device_type::types::X3x0:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
             device_addr.set("master_clock_rate", "184.32e6");
@@ -109,25 +109,25 @@ public:
             device_addr.set("recv_frame_size", "8000");
           }
           break;
-        case radio_uhd_device_type::types::X400:
+        case radio_uhd_device_type::types::X410:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
             device_addr.set("master_clock_rate", "491.52e6");
           }
           break;
-        case radio_uhd_device_type::types::N300:
+        case radio_uhd_device_type::types::N3x0:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
             device_addr.set("master_clock_rate", "122.88e6");
           }
           break;
-        case radio_uhd_device_type::types::N320:
+        case radio_uhd_device_type::types::N32x:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
             device_addr.set("master_clock_rate", "245.76e6");
           }
           break;
-        case radio_uhd_device_type::types::B200:
+        case radio_uhd_device_type::types::B2xx:
         case radio_uhd_device_type::types::UNKNOWN:
         default:
           // No default parameters are required.
