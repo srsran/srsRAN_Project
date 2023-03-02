@@ -142,6 +142,17 @@ public:
   void on_discard_sdu(uint32_t pdcp_sn) override { last_discard_sn = pdcp_sn; }
 };
 
+class dummy_mac_f1ap_paging_handler : public f1ap_du_paging_notifier
+{
+public:
+  void connect(mac_cell_paging_information_handler& mac_) { mac = &mac_; }
+
+  void on_paging_received(const mac_paging_information& msg) override { mac->handle_paging_information(msg); }
+
+private:
+  mac_cell_paging_information_handler* mac;
+};
+
 /// Fixture class for F1AP
 class f1ap_du_test : public ::testing::Test
 {
@@ -191,6 +202,7 @@ protected:
   dummy_f1ap_du_configurator      f1ap_du_cfg_handler{f1ap_timers};
   manual_task_worker              ctrl_worker{128};
   dummy_ue_executor_mapper        ue_exec_mapper{ctrl_worker};
+  dummy_mac_f1ap_paging_handler   paging_handler;
   std::unique_ptr<f1ap_interface> f1ap;
 
   /// Storage of UE context related to the current unit test.

@@ -29,7 +29,8 @@ public:
   f1ap_du_impl(f1ap_message_notifier&      event_notifier_,
                f1ap_du_configurator&       task_sched_,
                task_executor&              ctrl_exec,
-               du_high_ue_executor_mapper& ue_exec_mapper);
+               du_high_ue_executor_mapper& ue_exec_mapper,
+               f1ap_du_paging_notifier&    paging_notifier_);
   ~f1ap_du_impl();
 
   // F1AP interface management procedures functions as per TS38.473, Section 8.2.
@@ -84,6 +85,9 @@ private:
 
   void send_error_indication(const asn1::f1ap::cause_c& cause);
 
+  /// \brief Handle Paging as per TS38.473, Section 8.7.
+  void handle_paging_request(const asn1::f1ap::paging_s& msg);
+
   srslog::basic_logger&       logger;
   f1ap_message_notifier&      f1ap_notifier;
   task_executor&              ctrl_exec;
@@ -96,6 +100,8 @@ private:
   f1ap_du_context ctxt;
 
   std::unique_ptr<f1ap_event_manager> events;
+
+  f1ap_du_paging_notifier& paging_notifier;
 };
 
 } // namespace srs_du

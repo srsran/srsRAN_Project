@@ -196,7 +196,10 @@ public:
   std::map<uint32_t, std::map<uint32_t, f1u_bearer_dummy>> f1u_bearers;
 };
 
-class mac_test_dummy : public mac_cell_manager, public mac_ue_configurator, public mac_ue_control_information_handler
+class mac_test_dummy : public mac_cell_manager,
+                       public mac_ue_configurator,
+                       public mac_ue_control_information_handler,
+                       public mac_cell_paging_information_handler
 {
 public:
   class mac_cell_dummy : public mac_cell_controller
@@ -244,6 +247,8 @@ public:
   }
 
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+
+  void handle_paging_information(const mac_paging_information& msg) override {}
 };
 
 class dummy_ue_resource_configurator_factory : public du_ran_resource_manager

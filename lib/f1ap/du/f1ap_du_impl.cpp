@@ -24,14 +24,16 @@ using namespace srs_du;
 f1ap_du_impl::f1ap_du_impl(f1ap_message_notifier&      message_notifier_,
                            f1ap_du_configurator&       du_mng_,
                            task_executor&              ctrl_exec_,
-                           du_high_ue_executor_mapper& ue_exec_mapper_) :
+                           du_high_ue_executor_mapper& ue_exec_mapper_,
+                           f1ap_du_paging_notifier&    paging_notifier_) :
   logger(srslog::fetch_basic_logger("DU-F1")),
   f1ap_notifier(message_notifier_),
   ctrl_exec(ctrl_exec_),
   ue_exec_mapper(ue_exec_mapper_),
   du_mng(du_mng_),
   ues(du_mng_, f1ap_notifier),
-  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory()))
+  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory())),
+  paging_notifier(paging_notifier_)
 {
 }
 
@@ -259,6 +261,8 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
+    case f1ap_elem_procs_o::init_msg_c::types_opts::paging:
+      handle_paging_request(msg.value.paging());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -325,4 +329,10 @@ bool f1ap_du_impl::handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue
 void f1ap_du_impl::send_error_indication(const asn1::f1ap::cause_c& cause)
 {
   // TODO
+}
+
+void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
+{
+  // TODO: Implement parsing of Paging message and forwarding to DU.
+  paging_notifier.on_paging_received({});
 }

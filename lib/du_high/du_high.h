@@ -60,6 +60,8 @@ private:
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
 
   du_manager_mac_event_indicator mac_ev_notifier;
+
+  mac_f1ap_paging_handler f1ap_paging_notifier;
 };
 
 } // namespace srs_du

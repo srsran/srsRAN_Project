@@ -11,7 +11,8 @@ namespace srs_du {
 std::unique_ptr<f1ap_interface> create_f1ap(f1ap_message_notifier&      event_notifier,
                                             f1ap_du_configurator&       du_mng,
                                             task_executor&              ctrl_exec,
-                                            du_high_ue_executor_mapper& ue_exec_mapper);
+                                            du_high_ue_executor_mapper& ue_exec_mapper,
+                                            f1ap_du_paging_notifier&    paging_notifier);
 
 } // namespace srs_du
 } // namespace srsran

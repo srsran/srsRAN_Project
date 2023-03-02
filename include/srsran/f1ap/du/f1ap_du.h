@@ -18,6 +18,7 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsran/f1u/du/f1u_bearer.h"
+#include "srsran/mac/mac_cell_paging_information_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/rnti.h"
@@ -186,6 +187,16 @@ public:
 
   /// \brief Retrieve task scheduler specific to a given UE.
   virtual f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;
+};
+
+/// \brief The F1AP uses this interface to notify the DU of paging.
+class f1ap_du_paging_notifier
+{
+public:
+  virtual ~f1ap_du_paging_notifier() = default;
+
+  /// \brief Forward the F1AP Paging to DU.
+  virtual void on_paging_received(const mac_paging_information& msg) = 0;
 };
 
 /// Combined entry point for F1AP handling.
