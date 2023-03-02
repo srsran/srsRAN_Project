@@ -65,7 +65,7 @@ public:
   }
 
   /// Handle scheduling of paging message.
-  void handle_paging_indication(const paging_indication_message& pi) override;
+  void handle_paging_information(const sched_paging_information& pi) override;
 
 private:
   const scheduler_expert_config sched_cfg;

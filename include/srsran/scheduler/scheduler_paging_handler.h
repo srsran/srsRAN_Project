@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-struct paging_indication_message {
+struct sched_paging_information {
   /// Type of Paging. RAN initiated or CN initiated.
   enum paging_identity_type { ran_ue_paging_identity, cn_ue_paging_identity } paging_type_indicator;
   /// Paging identity assigned to UE. Possible values are \c I-RNTI-Value (Bit string of size 40) and \c NG-5G-S-TMSI
@@ -38,7 +38,7 @@ public:
   virtual ~scheduler_paging_handler() = default;
 
   /// Forward paging information to scheduler.
-  virtual void handle_paging_indication(const paging_indication_message& pi) = 0;
+  virtual void handle_paging_information(const sched_paging_information& pi) = 0;
 };
 
 } // namespace srsran

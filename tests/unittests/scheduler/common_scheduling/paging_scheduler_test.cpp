@@ -182,20 +182,20 @@ protected:
     return five_g_s_tmsi_with_5g_tmsi_masked | get_random_uint(0, 0xfffffffe);
   }
 
-  void push_paging_indication_message(five_g_s_tmsi s_tmsi, unsigned paging_drx_)
+  void push_paging_information(five_g_s_tmsi s_tmsi, unsigned paging_drx_)
   {
     // UE_ID: 5G-S-TMSI mod 1024. See TS 38.304, clause 7.1.
     const unsigned ue_id = s_tmsi % 1024;
 
-    const paging_indication_message msg{.paging_type_indicator =
-                                            paging_indication_message::paging_identity_type::cn_ue_paging_identity,
+    const sched_paging_information info{.paging_type_indicator =
+                                            sched_paging_information::paging_identity_type::cn_ue_paging_identity,
                                         .paging_identity         = s_tmsi,
                                         .cell_index              = to_du_cell_index(0),
                                         .ue_identity_index_value = ue_id,
                                         .paging_drx              = paging_drx_,
                                         .paging_msg_size         = paging_sched_test_bench::pcch_pch_paging_msg_size};
 
-    bench->pg_sch.handle_paging_indication_message(msg);
+    bench->pg_sch.handle_paging_information(info);
   }
 
   bool is_ue_allocated_paging_grant(five_g_s_tmsi s_tmsi)
@@ -232,7 +232,7 @@ TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_gt_0)
 
   // Notify scheduler of paging message.
   const uint64_t fiveg_s_tmsi = generate_five_g_s_tmsi();
-  push_paging_indication_message(fiveg_s_tmsi, params.drx_cycle_in_nof_rf);
+  push_paging_information(fiveg_s_tmsi, params.drx_cycle_in_nof_rf);
 
   unsigned paging_attempts = 0;
   for (unsigned i = 0; i != (params.max_paging_retries + 1) * params.drx_cycle_in_nof_rf *
@@ -260,7 +260,7 @@ TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_eq_0)
 
   // Notify scheduler of paging message.
   const five_g_s_tmsi s_tmsi = generate_five_g_s_tmsi();
-  push_paging_indication_message(s_tmsi, params.drx_cycle_in_nof_rf);
+  push_paging_information(s_tmsi, params.drx_cycle_in_nof_rf);
 
   unsigned paging_attempts = 0;
   for (unsigned i = 0; i != (params.max_paging_retries + 1) * params.drx_cycle_in_nof_rf *
@@ -288,7 +288,7 @@ TEST_P(paging_sched_tester, successfully_allocated_paging_grant_ss_eq_0_5mhz_car
 
   // Notify scheduler of paging message.
   const five_g_s_tmsi s_tmsi = generate_five_g_s_tmsi();
-  push_paging_indication_message(s_tmsi, params.drx_cycle_in_nof_rf);
+  push_paging_information(s_tmsi, params.drx_cycle_in_nof_rf);
 
   unsigned paging_attempts = 0;
   for (unsigned i = 0; i != (params.max_paging_retries + 1) * params.drx_cycle_in_nof_rf *
@@ -315,7 +315,7 @@ TEST_P(paging_sched_tester, successfully_paging_multiple_ues)
   // Notify scheduler of paging message.
   for (unsigned ue_num = 0; ue_num < nof_ues; ue_num++) {
     const uint64_t fiveg_s_tmsi_ue = generate_five_g_s_tmsi();
-    push_paging_indication_message(fiveg_s_tmsi_ue, params.drx_cycle_in_nof_rf);
+    push_paging_information(fiveg_s_tmsi_ue, params.drx_cycle_in_nof_rf);
     fiveg_s_tmsi_to_paging_attempts_lookup[fiveg_s_tmsi_ue] = 0;
   }
 

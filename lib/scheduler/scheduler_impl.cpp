@@ -157,8 +157,8 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   return &cell.res_grid[0].result;
 }
 
-void scheduler_impl::handle_paging_indication(const paging_indication_message& pi)
+void scheduler_impl::handle_paging_information(const sched_paging_information& pi)
 {
   auto& cell = cells[pi.cell_index];
-  cell.pg_sch.handle_paging_indication_message(pi);
+  cell.pg_sch.handle_paging_information(pi);
 }
