@@ -10,6 +10,7 @@
 
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/build_info/build_info.h"
+#include "srsran/support/cpu_features.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/tsan_options.h"
 
@@ -435,6 +436,17 @@ int main(int argc, char** argv)
 
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
+
+  // Check and log included CPU features and check support by current CPU
+  if (cpu_supports_included_features()) {
+    gnb_logger.debug("Required CPU features: {}", get_cpu_feature_info());
+  } else {
+    // Quit here until we complete selection of the best matching implementation for the current CPU at runtime.
+    gnb_logger.error("The CPU does not support the required CPU features that were configured during compile time: {}",
+                     get_cpu_feature_info());
+    report_error("The CPU does not support the required CPU features that were configured during compile time: {}\n",
+                 get_cpu_feature_info());
+  }
 
   // Set layer-specific pcap options.
   std::unique_ptr<ngap_pcap> ngap_p = std::make_unique<ngap_pcap_impl>();
