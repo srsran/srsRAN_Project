@@ -12,33 +12,63 @@
 
 using namespace srsran;
 
+ue_repository::ue_repository(sched_configuration_notifier& mac_notif_) :
+  mac_notif(mac_notif_), logger(srslog::fetch_basic_logger("SCHED"))
+{
+}
+
+static bool is_ue_ready_for_removal(ue& u)
+{
+  unsigned nof_ue_cells = u.nof_cells();
+
+  for (unsigned cell_idx = 0; cell_idx != nof_ue_cells; ++cell_idx) {
+    ue_cell& c = u.get_cell((ue_cell_index_t)cell_idx);
+    for (unsigned i = 0; i != c.harqs.nof_dl_harqs(); ++i) {
+      if (not c.harqs.dl_harq(i).empty()) {
+        return false;
+      }
+    }
+    for (unsigned i = 0; i != c.harqs.nof_ul_harqs(); ++i) {
+      if (not c.harqs.ul_harq(i).empty()) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 void ue_repository::slot_indication(slot_point sl_tx)
 {
   for (du_ue_index_t& ue_index : ues_to_rem) {
+    if (ue_index == INVALID_DU_UE_INDEX) {
+      // Already removed.
+      continue;
+    }
     auto it = ues.find(ue_index);
+    if (it == ues.end()) {
+      logger.warning("Unexpected removal of ue={} already took place", ue_index);
+      ue_index = INVALID_DU_UE_INDEX;
+      // Notify MAC of the successful UE removal.
+      mac_notif.on_ue_delete_response(ue_index);
+      continue;
+    }
 
     // Check if UEs can be safely removed.
-    if (it != ues.end()) {
-      unsigned nof_ue_cells = it->nof_cells();
-      for (unsigned cell_idx = 0; cell_idx != nof_ue_cells; ++cell_idx) {
-        ue_cell& c = it->get_cell((ue_cell_index_t)cell_idx);
-        if (c.harqs.find_pending_dl_retx() != nullptr or c.harqs.find_pending_ul_retx() != nullptr) {
-          // There are still pending HARQs. Postpone removal of this UE.
-          continue;
-        }
-      }
+    if (is_ue_ready_for_removal(*it)) {
+      logger.debug("ue={} has been successfully removed.", ue_index);
+
+      // Notify MAC of the successful UE removal.
+      mac_notif.on_ue_delete_response(ue_index);
+
+      // Mark UE as ready for removal.
+      ue_index = INVALID_DU_UE_INDEX;
     }
+  }
 
-    // Notify MAC of the successful UE removal.
-    mac_notif.on_ue_delete_response(ue_index);
-
-    // Mark UE as ready for removal.
-    ue_index = INVALID_DU_UE_INDEX;
-
-    // In case the element at the front of the ring has been marked for removal, pop it from the queue.
-    if (ues_to_rem[0] == INVALID_DU_UE_INDEX) {
-      ues_to_rem.pop();
-    }
+  // In case the elements at the front of the ring has been marked for removal, pop them from the queue.
+  while (not ues_to_rem.empty() and ues_to_rem[0] == INVALID_DU_UE_INDEX) {
+    ues_to_rem.pop();
   }
 
   // Update state of existing UEs.

@@ -67,7 +67,8 @@ inline cell_config_dedicated create_test_initial_ue_spcell_cell_config(const cel
 }
 
 inline sched_ue_creation_request_message
-create_default_sched_ue_creation_request(const cell_config_builder_params& params = {})
+create_default_sched_ue_creation_request(const cell_config_builder_params&    params      = {},
+                                         const std::initializer_list<lcid_t>& lcid_to_cfg = {})
 {
   sched_ue_creation_request_message msg{};
 
@@ -82,6 +83,11 @@ create_default_sched_ue_creation_request(const cell_config_builder_params& param
   msg.cfg.lc_config_list.resize(2);
   msg.cfg.lc_config_list[0] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
   msg.cfg.lc_config_list[1] = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
+  for (lcid_t lcid : lcid_to_cfg) {
+    if (lcid >= lcid_t::LCID_SRB2) {
+      msg.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid));
+    }
+  }
 
   return msg;
 }

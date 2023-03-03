@@ -26,7 +26,7 @@ public:
   using iterator       = ue_list::iterator;
   using const_iterator = ue_list::const_iterator;
 
-  explicit ue_repository(sched_configuration_notifier& mac_notif_) : mac_notif(mac_notif_) {}
+  explicit ue_repository(sched_configuration_notifier& mac_notif_);
 
   /// \brief Mark start of new slot and update UEs states.
   void slot_indication(slot_point sl_tx);
@@ -59,6 +59,7 @@ public:
 
 private:
   sched_configuration_notifier& mac_notif;
+  srslog::basic_logger&         logger;
 
   /// Repository of UEs.
   ue_list ues;

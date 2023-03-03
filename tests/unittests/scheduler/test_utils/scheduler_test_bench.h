@@ -26,11 +26,16 @@ class scheduler_test_bench
 public:
   explicit scheduler_test_bench(unsigned tx_rx_delay_ = 4, subcarrier_spacing max_scs = subcarrier_spacing::kHz15) :
     tx_rx_delay(tx_rx_delay_),
+    logger([]() -> srslog::basic_logger& {
+      auto& l = srslog::fetch_basic_logger("SCHED", true);
+      l.set_level(srslog::basic_levels::debug);
+      return l;
+    }()),
     sched(create_scheduler(
         scheduler_config{config_helpers::make_default_scheduler_expert_config(), notif, metric_notif})),
     next_slot(to_numerology_value(max_scs), test_rgen::uniform_int<unsigned>(0, 10239))
   {
-    logger.set_level(srslog::basic_levels::debug);
+    logger.set_context(next_slot.sfn(), next_slot.slot_index());
   }
 
   slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }
@@ -43,7 +48,19 @@ public:
     sched->handle_cell_configuration_request(cell_cfg_req);
   }
 
-  void add_ue(const sched_ue_creation_request_message& ue_request) { sched->handle_ue_creation_request(ue_request); }
+  void add_ue(const sched_ue_creation_request_message& ue_request, bool wait_notification = false)
+  {
+    static const size_t ADD_TIMEOUT = 100;
+    sched->handle_ue_creation_request(ue_request);
+    if (wait_notification) {
+      notif.last_ue_index_cfg.reset();
+      for (unsigned i = 0; i != ADD_TIMEOUT and notif.last_ue_index_cfg != ue_request.ue_index; ++i) {
+        run_slot();
+      }
+    }
+  }
+
+  void rem_ue(du_ue_index_t ue_index) { sched->handle_ue_removal_request(ue_index); }
 
   void push_dl_buffer_state(const dl_buffer_state_indication_message& upd)
   {
@@ -83,7 +100,7 @@ public:
   }
 
   const unsigned                      tx_rx_delay;
-  srslog::basic_logger&               logger = srslog::fetch_basic_logger("SCHED", true);
+  srslog::basic_logger&               logger;
   sched_cfg_dummy_notifier            notif;
   scheduler_ue_metrics_dummy_notifier metric_notif;
   std::unique_ptr<mac_scheduler>      sched;
