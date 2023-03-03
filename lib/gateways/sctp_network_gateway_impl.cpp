@@ -350,6 +350,7 @@ bool sctp_network_gateway_impl::recreate_and_reconnect()
 /// Close socket handle and set FD to -1
 bool sctp_network_gateway_impl::close_socket()
 {
+  logger.debug("Closing socket.");
   if (not is_initialized()) {
     return true;
   }
