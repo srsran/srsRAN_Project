@@ -11,6 +11,7 @@
 #include "../test_utils/config_generators.h"
 #include "lib/scheduler/policy/scheduler_time_rr.h"
 #include "lib/scheduler/ue_scheduling/ue.h"
+#include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/test_utils.h"
@@ -62,7 +63,8 @@ public:
 class base_scheduler_policy_test
 {
 protected:
-  base_scheduler_policy_test(policy_type policy) : res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid)
+  base_scheduler_policy_test(policy_type policy) :
+    res_grid(cell_cfg), pdsch_alloc(res_grid), pusch_alloc(res_grid), ues(dummy_mac_notif)
   {
     ue_res_grid.add_cell(res_grid);
 
@@ -105,7 +107,7 @@ protected:
 
   ue& add_ue(const sched_ue_creation_request_message& ue_req)
   {
-    ues.emplace(ue_req.ue_index, expert_cfg, cell_cfg, ue_req);
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_req));
     return ues[ue_req.ue_index];
   }
 
@@ -149,12 +151,13 @@ protected:
 
   scheduler_ue_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
   cell_configuration         cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier   dummy_mac_notif;
 
   cell_resource_allocator           res_grid;
   ue_resource_grid_view             ue_res_grid;
   dummy_pdsch_allocator             pdsch_alloc;
   dummy_pusch_allocator             pusch_alloc;
-  ue_list                           ues;
+  ue_repository                     ues;
   std::unique_ptr<scheduler_policy> sched;
   slot_point                        next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };

@@ -20,7 +20,7 @@ using namespace srsran;
 /// round-robin to early-stop the iteration.
 /// \return Index of next UE to allocate.
 template <typename AllocUEFunc, typename StopIterationFunc>
-du_ue_index_t round_robin_apply(const ue_list&           ue_db,
+du_ue_index_t round_robin_apply(const ue_repository&     ue_db,
                                 du_ue_index_t            next_ue_index,
                                 const AllocUEFunc&       alloc_ue,
                                 const StopIterationFunc& stop_cond)
@@ -286,7 +286,7 @@ scheduler_time_rr::scheduler_time_rr() :
 
 void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 const ue_list&               ues,
+                                 const ue_repository&         ues,
                                  bool                         is_retx)
 {
   auto tx_ue_function = [this, &res_grid, &pdsch_alloc, is_retx](const ue& u) {
@@ -306,7 +306,7 @@ void scheduler_time_rr::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 
 void scheduler_time_rr::ul_sched(ue_pusch_allocator&          pusch_alloc,
                                  const ue_resource_grid_view& res_grid,
-                                 const ue_list&               ues,
+                                 const ue_repository&         ues,
                                  bool                         is_retx)
 {
   auto tx_ue_function = [this, &res_grid, &pusch_alloc, is_retx](const ue& u) {

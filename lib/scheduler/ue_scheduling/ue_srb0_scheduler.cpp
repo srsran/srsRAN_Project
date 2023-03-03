@@ -22,7 +22,7 @@ ue_srb0_scheduler::ue_srb0_scheduler(const scheduler_ue_expert_config& expert_cf
                                      const cell_configuration&         cell_cfg_,
                                      pdcch_resource_allocator&         pdcch_sch_,
                                      pucch_allocator&                  pucch_alloc_,
-                                     ue_list&                          ues_) :
+                                     ue_repository&                    ues_) :
   expert_cfg(expert_cfg_),
   cell_cfg(cell_cfg_),
   pdcch_sch(pdcch_sch_),

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../ue_scheduling/ue.h"
+#include "../ue_scheduling/ue_repository.h"
 #include "uci_scheduler.h"
 
 namespace srsran {
@@ -22,7 +22,7 @@ struct cell_resource_allocator;
 class uci_scheduler_impl final : public uci_scheduler
 {
 public:
-  explicit uci_scheduler_impl(const cell_configuration& cell_cfg_, uci_allocator& uci_alloc_, ue_list& ues_);
+  explicit uci_scheduler_impl(const cell_configuration& cell_cfg_, uci_allocator& uci_alloc_, ue_repository& ues_);
 
   ~uci_scheduler_impl() override;
 
@@ -33,7 +33,7 @@ private:
   const cell_configuration& cell_cfg;
   // Reference to PUCCH resource allocator object.
   uci_allocator& uci_alloc;
-  ue_list&       ues;
+  ue_repository& ues;
 
   srslog::basic_logger& logger;
 };

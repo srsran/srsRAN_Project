@@ -75,7 +75,7 @@ public:
   /// \param[in] is_retx Flag indicating DL grants for retransmissions or new transmissions.
   virtual void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                         const ue_resource_grid_view& res_grid,
-                        const ue_list&               ues,
+                        const ue_repository&         ues,
                         bool                         is_retx) = 0;
 
   /// Schedule UE UL grants for a given {slot, cell}.
@@ -86,7 +86,7 @@ public:
   /// \param[in] is_retx Flag indicating UL grants for retransmissions or new transmissions.
   virtual void ul_sched(ue_pusch_allocator&          pusch_alloc,
                         const ue_resource_grid_view& res_grid,
-                        const ue_list&               ues,
+                        const ue_repository&         ues,
                         bool                         is_retx) = 0;
 };
 

@@ -16,7 +16,9 @@ using namespace srsran;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_, uci_allocator& uci_alloc_, ue_list& ues_) :
+uci_scheduler_impl::uci_scheduler_impl(const cell_configuration& cell_cfg_,
+                                       uci_allocator&            uci_alloc_,
+                                       ue_repository&            ues_) :
   cell_cfg(cell_cfg_), uci_alloc(uci_alloc_), ues(ues_), logger(srslog::fetch_basic_logger("SCHED"))
 {
 }

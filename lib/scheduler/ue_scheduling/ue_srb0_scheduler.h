@@ -12,7 +12,7 @@
 
 #include "../policy/ue_allocator.h"
 #include "../support/slot_event_list.h"
-#include "ue.h"
+#include "ue_repository.h"
 #include "ue_sch_pdu_builder.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include <queue>
@@ -27,7 +27,7 @@ public:
                              const cell_configuration&         cell_cfg_,
                              pdcch_resource_allocator&         pdcch_sch_,
                              pucch_allocator&                  pucch_alloc_,
-                             ue_list&                          ues_);
+                             ue_repository&                    ues_);
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
@@ -66,7 +66,7 @@ private:
   const cell_configuration&         cell_cfg;
   pdcch_resource_allocator&         pdcch_sch;
   pucch_allocator&                  pucch_alloc;
-  ue_list&                          ues;
+  ue_repository&                    ues;
 
   bwp_configuration initial_active_dl_bwp;
 

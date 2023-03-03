@@ -15,7 +15,7 @@
 using namespace srsran;
 
 ue_event_manager::ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
-                                   ue_list&                          ue_db_,
+                                   ue_repository&                    ue_db_,
                                    sched_configuration_notifier&     mac_notifier_,
                                    scheduler_metrics_handler&        metrics_handler_,
                                    scheduler_event_logger&           ev_logger_) :
@@ -40,7 +40,7 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
     du_ue_index_t   ueidx       = u->ue_index;
     rnti_t          rnti        = u->crnti;
     du_cell_index_t pcell_index = u->get_pcell().cell_index;
-    ue_db.insert(ueidx, std::move(u));
+    ue_db.add_ue(std::move(u));
     auto& inserted_ue = ue_db[ueidx];
 
     // Log Event.
@@ -77,17 +77,14 @@ void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
     }
     rnti_t rnti = ue_db[ue_index].crnti;
 
-    // Remove UE from repository.
-    ue_db.erase(ue_index);
+    // Scheduler UE removal from repository.
+    ue_db.schedule_ue_rem(ue_index);
 
     // Log event.
     ev_logger.enqueue(sched_ue_delete_message{ue_index, rnti});
 
     // Notify metrics.
     metrics_handler.handle_ue_deletion(ue_index);
-
-    // Notify Scheduler UE configuration is complete.
-    mac_notifier.on_ue_delete_response(ue_index);
   });
 }
 

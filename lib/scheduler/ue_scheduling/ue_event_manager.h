@@ -32,7 +32,7 @@ class ue_event_manager : public scheduler_ue_configurator,
 {
 public:
   ue_event_manager(const scheduler_ue_expert_config& expert_cfg_,
-                   ue_list&                          ue_db,
+                   ue_repository&                    ue_db,
                    sched_configuration_notifier&     mac_notifier,
                    scheduler_metrics_handler&        metrics_handler,
                    scheduler_event_logger&           ev_logger);
@@ -86,7 +86,7 @@ private:
   void handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const mac_harq_ack_report_status> harq_bits);
 
   const scheduler_ue_expert_config& expert_cfg;
-  ue_list&                          ue_db;
+  ue_repository&                    ue_db;
   sched_configuration_notifier&     mac_notifier;
   scheduler_metrics_handler&        metrics_handler;
   scheduler_event_logger&           ev_logger;

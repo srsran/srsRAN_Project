@@ -15,6 +15,7 @@
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include <gtest/gtest.h>
@@ -134,14 +135,15 @@ public:
 
   void slot_indication(slot_point slot_tx);
 
-  scheduler_expert_config expert_cfg;
-  cell_configuration      cell_cfg;
-  cell_resource_allocator res_grid{cell_cfg};
-  pdcch_dl_information    dci_info;
-  const unsigned          k0;
-  const unsigned          k1{4};
-  du_ue_index_t           main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
-  ue_list                 ues;
+  scheduler_expert_config  expert_cfg;
+  cell_configuration       cell_cfg;
+  sched_cfg_dummy_notifier mac_notif;
+  cell_resource_allocator  res_grid{cell_cfg};
+  pdcch_dl_information     dci_info;
+  const unsigned           k0;
+  const unsigned           k1{4};
+  du_ue_index_t            main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
+  ue_repository            ues;
   // last_allocated_rnti keeps track of the last RNTI allocated.
   rnti_t                last_allocated_rnti;
   du_ue_index_t         last_allocated_ue_idx;

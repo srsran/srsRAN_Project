@@ -19,6 +19,7 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
                                      scheduler_event_logger&           sched_ev_logger) :
   expert_cfg(expert_cfg_),
   sched_strategy(create_scheduler_strategy(scheduler_strategy_params{"time_rr", &srslog::fetch_basic_logger("SCHED")})),
+  ue_db(mac_notif),
   ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
   event_mng(expert_cfg, ue_db, mac_notif, metric_handler, sched_ev_logger)
 {
@@ -34,10 +35,8 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
 {
-  for (ue& u : ue_db) {
-    // Update all UEs state.
-    u.slot_indication(slot_tx);
-  }
+  // Update all UEs state.
+  ue_db.slot_indication(slot_tx);
 
   if (not ue_res_grid_view.get_cell_cfg_common(to_du_cell_index(0)).is_dl_enabled(slot_tx)) {
     // This slot is inactive for PDCCH in this cell. We therefore, can skip the scheduling strategy.

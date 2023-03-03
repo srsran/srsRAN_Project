@@ -13,7 +13,6 @@
 #include "dl_logical_channel_manager.h"
 #include "ue_cell.h"
 #include "ul_logical_channel_manager.h"
-#include "srsran/adt/stable_id_map.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/scheduler/mac_scheduler.h"
 
@@ -34,6 +33,8 @@ public:
   const rnti_t        crnti;
 
   void slot_indication(slot_point sl_tx);
+
+  void deactivate();
 
   ue_cell* find_cell(du_cell_index_t cell_index)
   {
@@ -157,8 +158,5 @@ private:
   /// UE UL Logical Channel Manager.
   ul_logical_channel_manager ul_lc_ch_mgr;
 };
-
-/// Container that stores all scheduler UEs.
-using ue_list = stable_id_map<du_ue_index_t, ue, MAX_NOF_DU_UES>;
 
 } // namespace srsran

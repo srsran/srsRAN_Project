@@ -115,12 +115,14 @@ test_bench::test_bench(const test_bench_params& params) :
   cell_cfg{make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)},
   dci_info{make_default_dci(params.n_cces, &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.value())},
   k0(cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].k0),
+  ues(mac_notif),
   pucch_alloc{cell_cfg},
   uci_alloc(pucch_alloc),
   uci_sched{cell_cfg, uci_alloc, ues},
   sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
 {
   sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request();
+  ue_req.ue_index                          = main_ue_idx;
 
   srsran_assert(not ue_req.cfg.cells.empty() and ue_req.cfg.cells.back().serv_cell_cfg.ul_config.has_value() and
                     ue_req.cfg.cells.back().serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value() and
@@ -146,7 +148,7 @@ test_bench::test_bench(const test_bench_params& params) :
   csi_report.report_slot_period = params.csi_period;
   csi_report.report_slot_offset = params.csi_offset;
 
-  ues.insert(main_ue_idx, std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
+  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
   last_allocated_rnti   = ue_req.crnti;
   last_allocated_ue_idx = main_ue_idx;
   slot_indication(sl_tx);
@@ -167,6 +169,9 @@ const ue& test_bench::get_ue(du_ue_index_t ue_idx) const
 void test_bench::add_ue()
 {
   sched_ue_creation_request_message ue_req = test_helpers::create_default_sched_ue_creation_request();
+  last_allocated_ue_idx =
+      to_du_ue_index(static_cast<std::underlying_type<du_ue_index_t>::type>(last_allocated_ue_idx) + 1);
+  ue_req.ue_index = last_allocated_ue_idx;
 
   ue_req.cfg.cells.begin()->serv_cell_cfg.ul_config.reset();
   ue_req.cfg.cells.begin()->serv_cell_cfg.ul_config.emplace(
@@ -178,9 +183,7 @@ void test_bench::add_ue()
   }
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
-  last_allocated_ue_idx =
-      to_du_ue_index(static_cast<std::underlying_type<du_ue_index_t>::type>(last_allocated_ue_idx) + 1);
-  ues.insert(last_allocated_ue_idx, std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
+  ues.add_ue(std::make_unique<ue>(expert_cfg.ue, cell_cfg, ue_req));
   last_allocated_rnti = ue_req.crnti;
 }
 

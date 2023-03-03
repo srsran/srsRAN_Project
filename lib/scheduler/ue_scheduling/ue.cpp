@@ -62,6 +62,19 @@ void ue::slot_indication(slot_point sl_tx)
   }
 }
 
+void ue::deactivate()
+{
+  // Disable DL DRBs.
+  for (unsigned lcid = LCID_MIN_DRB; lcid <= LCID_MAX_DRB; lcid++) {
+    dl_lc_ch_mgr.set_status((lcid_t)lcid, false);
+  }
+
+  // Disable UL SRBs and DRBs.
+  for (unsigned lcg_id = 0; lcg_id <= MAX_LCG_ID; lcg_id++) {
+    ul_lc_ch_mgr.set_status((lcg_id_t)lcg_id, false);
+  }
+}
+
 void ue::handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg)
 {
   log_channels_configs = msg.cfg.lc_config_list;

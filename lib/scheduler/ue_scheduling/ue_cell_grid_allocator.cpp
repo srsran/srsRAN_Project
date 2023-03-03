@@ -17,7 +17,7 @@
 using namespace srsran;
 
 ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
-                                               ue_list&                          ues_,
+                                               ue_repository&                    ues_,
                                                srslog::basic_logger&             logger_) :
   expert_cfg(expert_cfg_), ues(ues_), logger(logger_)
 {

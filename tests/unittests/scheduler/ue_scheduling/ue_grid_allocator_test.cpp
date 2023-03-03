@@ -37,7 +37,8 @@ protected:
           params.dl_arfcn, *params.band, nof_crbs, params.scs_common, params.scs_common, 0);
       params.offset_to_point_a = ssb_freq_loc->offset_to_point_A;
       return test_helpers::make_default_sched_cell_configuration_request(params);
-    }())
+    }()),
+    ues(mac_notif)
   {
     alloc.add_cell(to_du_cell_index(0), dummy_pdcch_alloc, dummy_uci_alloc, res_grid);
   }
@@ -50,7 +51,7 @@ protected:
     for (lcid_t lcid : lcids_to_activate) {
       ue_creation_req.cfg.lc_config_list.push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
-    ues.emplace(ue_index, expert_cfg, cell_cfg, ue_creation_req);
+    ues.add_ue(std::make_unique<ue>(expert_cfg, cell_cfg, ue_creation_req));
 
     return ues[ue_index];
   }
@@ -70,12 +71,13 @@ protected:
 
   scheduler_ue_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config().ue;
   cell_configuration         cell_cfg{test_helpers::make_default_sched_cell_configuration_request()};
+  sched_cfg_dummy_notifier   mac_notif;
 
   dummy_pdcch_resource_allocator dummy_pdcch_alloc;
   dummy_uci_allocator            dummy_uci_alloc;
   cell_resource_allocator        res_grid{cell_cfg};
 
-  ue_list                ues;
+  ue_repository          ues;
   ue_cell_grid_allocator alloc{expert_cfg, ues, srslog::fetch_basic_logger("SCHED")};
 };
 

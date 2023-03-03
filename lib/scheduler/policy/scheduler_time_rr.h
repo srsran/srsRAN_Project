@@ -20,12 +20,12 @@ public:
 
   void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                 const ue_resource_grid_view& res_grid,
-                const ue_list&               ues,
+                const ue_repository&         ues,
                 bool                         is_retx) override;
 
   void ul_sched(ue_pusch_allocator&          pusch_alloc,
                 const ue_resource_grid_view& res_grid,
-                const ue_list&               ues,
+                const ue_repository&         ues,
                 bool                         is_retx) override;
 
 private:
