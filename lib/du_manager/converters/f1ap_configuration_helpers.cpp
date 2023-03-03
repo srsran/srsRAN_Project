@@ -404,8 +404,8 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   if (du_cfg.tdd_ul_dl_cfg_common.has_value()) {
     cell.tdd_ul_dl_cfg_common_present                = true;
     cell.tdd_ul_dl_cfg_common.ref_subcarrier_spacing = get_asn1_scs(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs);
-    float periodicity_ms = du_cfg.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots /
-                           get_nof_slots_per_subframe(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs);
+    float periodicity_ms = static_cast<float>(du_cfg.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots) /
+                           static_cast<float>(get_nof_slots_per_subframe(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs));
     if (periodicity_ms == 10.0) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms10;
@@ -421,7 +421,7 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
     } else if (periodicity_ms == 1.25) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms1p25;
-    } else if (periodicity_ms == 2) {
+    } else if (periodicity_ms == 1) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms1;
     } else if (periodicity_ms == 0.625) {

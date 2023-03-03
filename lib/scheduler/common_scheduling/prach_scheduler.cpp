@@ -82,8 +82,8 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
         unsigned start                       = prach_cfg.starting_symbol + i * prach_cfg.duration;
         cached_prach.grant_resources.symbols = {start, start + prach_cfg.duration};
       }
-      srsran_sanity_check(cached_prach.grant_resources.symbols.stop() <= nof_symbols_per_slot,
-                          "Invalid PRACH preamble position");
+      srsran_assert(cached_prach.grant_resources.symbols.stop() <= nof_symbols_per_slot,
+                    "Invalid PRACH preamble position");
       unsigned prach_nof_prbs =
           prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
       uint8_t      prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
