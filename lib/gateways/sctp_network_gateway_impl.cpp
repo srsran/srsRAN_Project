@@ -128,6 +128,16 @@ bool sctp_network_gateway_impl::create_and_bind()
     sock_fd = ::socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (sock_fd == -1) {
       ret = errno;
+      if (ret == ESOCKTNOSUPPORT) {
+        // probably the sctp kernel module is missing on the system, inform the user and exit here
+        logger.error(
+            "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.",
+            strerror(ret));
+        report_error(
+            "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.\n",
+            strerror(ret));
+        break;
+      }
       continue;
     }
 
@@ -238,6 +248,16 @@ bool sctp_network_gateway_impl::create_and_connect()
     sock_fd = ::socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (sock_fd == -1) {
       ret = errno;
+      if (ret == ESOCKTNOSUPPORT) {
+        // probably the sctp kernel module is missing on the system, inform the user and exit here
+        logger.error(
+            "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.",
+            strerror(ret));
+        report_error(
+            "Failed to create SCTP socket: {}. Hint: Please ensure 'sctp' kernel module is available on the system.\n",
+            strerror(ret));
+        break;
+      }
       continue;
     }
 
