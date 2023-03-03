@@ -442,7 +442,6 @@ void rlc_rx_am_entity::update_segment_inventory(rlc_rx_am_sdu_info& rx_sdu) cons
 void rlc_rx_am_entity::refresh_status_report()
 {
   rlc_am_status_pdu tmp_status_report = {cfg.sn_field_length};
-  tmp_status_report.reset();
   /*
    * - for the RLC SDUs with SN such that RX_Next <= SN < RX_Highest_Status that has not been completely
    *   received yet, in increasing SN order of RLC SDUs and increasing byte segment order within RLC SDUs,
