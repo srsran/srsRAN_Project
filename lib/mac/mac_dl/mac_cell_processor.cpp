@@ -344,7 +344,9 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
 
   // Assemble scheduled Paging payloads.
   for (const dl_paging_allocation& pg : dl_res.paging_grants) {
-    data_res.paging_pdus.emplace_back(0, paging_assembler.encode_paging_pdu(pg));
+    for (unsigned cw_idx = 0; cw_idx != pg.pdsch_cfg.codewords.size(); ++cw_idx) {
+      data_res.paging_pdus.emplace_back(cw_idx, paging_assembler.encode_paging_pdu(pg));
+    }
   }
 }
 

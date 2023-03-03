@@ -65,7 +65,8 @@ private:
   /// \param[in] pdsch_time_res Slot at which PDSCH needs to be scheduled.
   /// \param[in] msg_size Paging message size.
   /// \return True if there is space to allocate Paging grant, false otherwise.
-  bool is_space_available_for_paging(cell_resource_allocator& res_grid, unsigned pdsch_time_res, unsigned msg_size);
+  bool
+  is_there_space_available_for_paging(cell_resource_allocator& res_grid, unsigned pdsch_time_res, unsigned msg_size);
 
   /// \brief Allocates PDSCH and PDCCH for Paging.
   ///
@@ -74,10 +75,10 @@ private:
   /// \param[in] ues_paging_info List of UE scheduled at a particular slot for Paging.
   /// \param[in] ss_id Search Space Id used in scheduling paging message.
   /// \return True if paging allocation is successful, false otherwise.
-  bool allocate_paging(cell_resource_allocator&                    res_grid,
-                       unsigned                                    pdsch_time_res,
-                       const span<const sched_paging_information>& ues_paging_info,
-                       search_space_id                             ss_id);
+  bool allocate_paging(cell_resource_allocator&                   res_grid,
+                       unsigned                                   pdsch_time_res,
+                       const span<const sched_paging_information> ues_paging_info,
+                       search_space_id                            ss_id);
 
   /// \brief Fills the Paging grant.
   ///
@@ -88,13 +89,13 @@ private:
   /// \param[in] ues_paging_info List of UE scheduled at a particular slot for Paging.
   /// \param[in] dmrs_info DMRS information related to the scheduled grant.
   /// \param[in] tbs TBS information of the Paging grant.
-  void fill_paging_grant(dl_paging_allocation&                       pg_grant,
-                         pdcch_dl_information&                       pdcch,
-                         crb_interval                                crbs_grant,
-                         unsigned                                    time_resource,
-                         const span<const sched_paging_information>& ues_paging_info,
-                         const dmrs_information&                     dmrs_info,
-                         unsigned                                    tbs);
+  void fill_paging_grant(dl_paging_allocation&                      pg_grant,
+                         pdcch_dl_information&                      pdcch,
+                         crb_interval                               crbs_grant,
+                         unsigned                                   time_resource,
+                         const span<const sched_paging_information> ues_paging_info,
+                         const dmrs_information&                    dmrs_info,
+                         unsigned                                   tbs);
 
   /// \brief Helper function to precompute Type2-PDCCH Monitoring slots when pagingSearchSpace > 0.
   ///

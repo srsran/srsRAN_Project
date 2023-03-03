@@ -199,7 +199,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
       }
 
       if (paging_search_space == 0 and is_paging_slot_in_search_space0(pdcch_slot, i_s) and
-          is_space_available_for_paging(
+          is_there_space_available_for_paging(
               res_grid,
               time_res_idx,
               get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx]) +
@@ -208,7 +208,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
         break;
       }
       if (paging_search_space > 0 and is_paging_slot_in_search_space_id_gt_0(pdcch_slot, i_s) and
-          is_space_available_for_paging(
+          is_there_space_available_for_paging(
               res_grid,
               time_res_idx,
               get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx]) +
@@ -323,9 +323,9 @@ bool paging_scheduler::is_paging_slot_in_search_space0(slot_point pdcch_slot, un
   return false;
 }
 
-bool paging_scheduler::is_space_available_for_paging(cell_resource_allocator& res_grid,
-                                                     unsigned                 pdsch_time_res,
-                                                     unsigned                 msg_size)
+bool paging_scheduler::is_there_space_available_for_paging(cell_resource_allocator& res_grid,
+                                                           unsigned                 pdsch_time_res,
+                                                           unsigned                 msg_size)
 {
   // NOTE:
   // - [Implementation defined] Need to take into account PDSCH Time Domain Resource Allocation in UE's active DL BWP,
@@ -363,10 +363,10 @@ bool paging_scheduler::is_space_available_for_paging(cell_resource_allocator& re
   return true;
 }
 
-bool paging_scheduler::allocate_paging(cell_resource_allocator&                    res_grid,
-                                       unsigned                                    pdsch_time_res,
-                                       const span<const sched_paging_information>& ues_paging_info,
-                                       search_space_id                             ss_id)
+bool paging_scheduler::allocate_paging(cell_resource_allocator&                   res_grid,
+                                       unsigned                                   pdsch_time_res,
+                                       const span<const sched_paging_information> ues_paging_info,
+                                       search_space_id                            ss_id)
 {
   // NOTE:
   // - [Implementation defined] Need to take into account PDSCH Time Domain Resource Allocation in UE's active DL BWP,
@@ -432,13 +432,13 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&                 
   return true;
 }
 
-void paging_scheduler::fill_paging_grant(dl_paging_allocation&                       pg_grant,
-                                         pdcch_dl_information&                       pdcch,
-                                         crb_interval                                crbs_grant,
-                                         unsigned                                    time_resource,
-                                         const span<const sched_paging_information>& ues_paging_info,
-                                         const dmrs_information&                     dmrs_info,
-                                         unsigned                                    tbs)
+void paging_scheduler::fill_paging_grant(dl_paging_allocation&                      pg_grant,
+                                         pdcch_dl_information&                      pdcch,
+                                         crb_interval                               crbs_grant,
+                                         unsigned                                   time_resource,
+                                         const span<const sched_paging_information> ues_paging_info,
+                                         const dmrs_information&                    dmrs_info,
+                                         unsigned                                   tbs)
 {
   const prb_interval paging_prbs = crb_to_prb(bwp_cfg, crbs_grant);
 
