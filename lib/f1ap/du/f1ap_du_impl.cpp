@@ -10,11 +10,13 @@
 
 #include "f1ap_du_impl.h"
 #include "../../ran/gnb_format.h"
+#include "common/asn1_helpers.h"
 #include "procedures/f1ap_du_setup_procedure.h"
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/event_signal.h"
 
 using namespace srsran;
@@ -333,6 +335,81 @@ void f1ap_du_impl::send_error_indication(const asn1::f1ap::cause_c& cause)
 
 void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
 {
-  // TODO: Implement parsing of Paging message and forwarding to DU.
-  paging_notifier.on_paging_received({});
+  mac_paging_information info{};
+  switch (msg->ue_id_idx_value->type()) {
+    case ue_id_idx_value_c::types_opts::idx_len10:
+      info.ue_identity_index_value = msg->ue_id_idx_value->idx_len10().to_number();
+      break;
+    default:
+      logger.error("Paging UE Identity index type {} is not supported", msg->ue_id_idx_value->type().to_string());
+  }
+  switch (msg->paging_id->type()) {
+    case paging_id_c::types_opts::ran_ue_paging_id: {
+      info.paging_type_indicator = mac_paging_information::ran_ue_paging_identity;
+      info.paging_identity       = msg->paging_id->ran_ue_paging_id().irnti.to_number();
+      break;
+    }
+    case paging_id_c::types_opts::cn_ue_paging_id: {
+      info.paging_type_indicator = mac_paging_information::cn_ue_paging_identity;
+      info.paging_identity       = msg->paging_id->cn_ue_paging_id().five_g_s_tmsi().to_number();
+      break;
+    }
+    default:
+      logger.error("Paging Identity type {} is not supported", msg->paging_id->type().to_string());
+  }
+  if (msg->paging_drx_present) {
+    switch (msg->paging_drx.value) {
+      case paging_drx_opts::v32:
+        info.paging_drx = 32;
+        break;
+      case paging_drx_opts::v64:
+        info.paging_drx = 64;
+        break;
+      case paging_drx_opts::v128:
+        info.paging_drx = 128;
+        break;
+      case paging_drx_opts::v256:
+        info.paging_drx = 256;
+        break;
+      default:
+        logger.error("DRX value {} is not supported", msg->paging_drx.value.to_string());
+    }
+  }
+  if (msg->paging_prio_present) {
+    switch (msg->paging_prio.value) {
+      case paging_prio_opts::priolevel1:
+        info.paging_priority = 1;
+        break;
+      case paging_prio_opts::priolevel2:
+        info.paging_priority = 2;
+        break;
+      case paging_prio_opts::priolevel3:
+        info.paging_priority = 3;
+        break;
+      case paging_prio_opts::priolevel4:
+        info.paging_priority = 4;
+        break;
+      case paging_prio_opts::priolevel5:
+        info.paging_priority = 5;
+        break;
+      case paging_prio_opts::priolevel6:
+        info.paging_priority = 6;
+        break;
+      case paging_prio_opts::priolevel7:
+        info.paging_priority = 7;
+        break;
+      case paging_prio_opts::priolevel8:
+        info.paging_priority = 8;
+        break;
+      default:
+        logger.error("Paging priority value {} is not supported", msg->paging_prio.value.to_string());
+    }
+  }
+  if (msg->paging_origin_present and msg->paging_origin.value == paging_origin_e::non_neg3gpp) {
+    info.is_paging_origin_non_3gpp_access = true;
+  }
+  for (const auto& asn_nr_cgi : msg->paging_cell_list.value) {
+    info.paging_cells.push_back(cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi));
+  }
+  paging_notifier.on_paging_received(info);
 }

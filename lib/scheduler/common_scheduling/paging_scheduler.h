@@ -20,11 +20,16 @@ namespace srsran {
 /// Defines Paging scheduler that is used to allocate resources to send paging information to UE in a given slot.
 class paging_scheduler
 {
+public:
+  // 48 bits (6 Bytes) 5G-S-TMSI + 1 Byte for Paging record header size estimate.
+  static constexpr unsigned RRC_CN_PAGING_ID_RECORD_SIZE = 7U;
+  // 40 bits (5 Bytes) Full-I-RNTI + 1 Byte for Paging record header size estimate.
+  static constexpr unsigned RRC_RAN_PAGING_ID_RECORD_SIZE = 6U;
+
   using five_g_s_tmsi             = uint64_t;
   using full_i_rnti               = uint64_t;
   using paging_retries_count_type = unsigned;
 
-public:
   explicit paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
                             const cell_configuration&                       cell_cfg_,
                             pdcch_resource_allocator&                       pdcch_sch_,

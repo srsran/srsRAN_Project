@@ -8,16 +8,13 @@
  *
  */
 
-#include "lib/du_manager/converters/f1ap_configuration_helpers.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
-#include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/scheduler_impl.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
-#include "srsran/mac/mac_configuration_helpers.h"
 #include "srsran/ran/duplex_mode.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -190,10 +187,8 @@ protected:
     const sched_paging_information info{.paging_type_indicator =
                                             sched_paging_information::paging_identity_type::cn_ue_paging_identity,
                                         .paging_identity         = s_tmsi,
-                                        .cell_index              = to_du_cell_index(0),
                                         .ue_identity_index_value = ue_id,
-                                        .paging_drx              = paging_drx_,
-                                        .paging_msg_size         = paging_sched_test_bench::pcch_pch_paging_msg_size};
+                                        .paging_drx              = paging_drx_};
 
     bench->pg_sch.handle_paging_information(info);
   }

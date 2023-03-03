@@ -199,7 +199,7 @@ public:
 class mac_test_dummy : public mac_cell_manager,
                        public mac_ue_configurator,
                        public mac_ue_control_information_handler,
-                       public mac_cell_paging_information_handler
+                       public mac_paging_information_handler
 {
 public:
   class mac_cell_dummy : public mac_cell_controller

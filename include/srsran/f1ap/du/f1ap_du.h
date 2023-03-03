@@ -18,7 +18,7 @@
 #include "srsran/f1ap/common/f1ap_common.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsran/f1u/du/f1u_bearer.h"
-#include "srsran/mac/mac_cell_paging_information_handler.h"
+#include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/rnti.h"

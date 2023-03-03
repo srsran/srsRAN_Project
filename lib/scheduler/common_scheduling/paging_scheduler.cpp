@@ -200,7 +200,10 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
               res_grid,
               time_res_idx,
               get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx]) +
-                  pg_info.paging_msg_size)) {
+                          pg_info.paging_type_indicator ==
+                      sched_paging_information::cn_ue_paging_identity
+                  ? RRC_CN_PAGING_ID_RECORD_SIZE
+                  : RRC_RAN_PAGING_ID_RECORD_SIZE)) {
         pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx].push_back(&pg_info);
         break;
       }
@@ -209,7 +212,10 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
               res_grid,
               time_res_idx,
               get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx]) +
-                  pg_info.paging_msg_size)) {
+                          pg_info.paging_type_indicator ==
+                      sched_paging_information::cn_ue_paging_identity
+                  ? RRC_CN_PAGING_ID_RECORD_SIZE
+                  : RRC_RAN_PAGING_ID_RECORD_SIZE)) {
         pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx].push_back(&pg_info);
         break;
       }
@@ -238,10 +244,19 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
 
 unsigned paging_scheduler::get_accumulated_paging_msg_size(span<const sched_paging_information*> ues_paging_info)
 {
-  return std::accumulate(ues_paging_info.begin(),
-                         ues_paging_info.end(),
-                         0,
-                         [](unsigned sum, const sched_paging_information* msg) { return sum + msg->paging_msg_size; });
+  // Estimate of the number of bytes required for the upper layer header in bytes.
+  static constexpr unsigned RRC_HEADER_SIZE_ESTIMATE = 2U;
+
+  unsigned payload_size = 0;
+  for (const auto& pg_info : ues_paging_info) {
+    if (pg_info->paging_type_indicator == sched_paging_information::cn_ue_paging_identity) {
+      payload_size += RRC_CN_PAGING_ID_RECORD_SIZE;
+    } else {
+      payload_size += RRC_RAN_PAGING_ID_RECORD_SIZE;
+    }
+  }
+
+  return RRC_HEADER_SIZE_ESTIMATE + payload_size;
 }
 
 void paging_scheduler::handle_paging_information(const sched_paging_information& paging_info)

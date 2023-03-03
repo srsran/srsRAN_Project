@@ -159,6 +159,6 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)
 {
-  auto& cell = cells[pi.cell_index];
-  cell.pg_sch.handle_paging_information(pi);
+  // TODO: Find cell based on NR-CGI.
+  cells[static_cast<du_cell_index_t>(0)].pg_sch.handle_paging_information(pi);
 }
