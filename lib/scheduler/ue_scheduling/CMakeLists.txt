@@ -18,6 +18,7 @@ set(SOURCES
         ue_srb0_scheduler.cpp
         ue_scheduler_impl.cpp
         ue_dci_builder.cpp
-        ue_sch_pdu_builder.cpp)
+        ue_sch_pdu_builder.cpp
+        ue_repository.cpp)
 
 add_library(ue_sched OBJECT ${SOURCES})

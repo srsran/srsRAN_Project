@@ -28,40 +28,8 @@ public:
 
   explicit ue_repository(sched_configuration_notifier& mac_notif_) : mac_notif(mac_notif_) {}
 
-  void slot_indication(slot_point sl_tx)
-  {
-    for (du_ue_index_t& ue_index : ues_to_rem) {
-      auto it = ues.find(ue_index);
-
-      // Check if UEs can be safely removed.
-      if (it != ues.end()) {
-        unsigned nof_ue_cells = it->nof_cells();
-        for (unsigned cell_idx = 0; cell_idx != nof_ue_cells; ++cell_idx) {
-          ue_cell& c = it->get_cell((ue_cell_index_t)cell_idx);
-          if (c.harqs.find_pending_dl_retx() != nullptr or c.harqs.find_pending_ul_retx() != nullptr) {
-            // There are still pending HARQs. Postpone removal of this UE.
-            continue;
-          }
-        }
-      }
-
-      // Notify MAC of the successful UE removal.
-      mac_notif.on_ue_delete_response(ue_index);
-
-      // Mark UE as ready for removal.
-      ue_index = INVALID_DU_UE_INDEX;
-
-      // In case the element at the front of the ring has been marked for removal, pop it from the queue.
-      if (ues_to_rem[0] == INVALID_DU_UE_INDEX) {
-        ues_to_rem.pop();
-      }
-    }
-
-    // Update state of existing UEs.
-    for (auto& u : ues) {
-      u.slot_indication(sl_tx);
-    }
-  }
+  /// \brief Mark start of new slot and update UEs states.
+  void slot_indication(slot_point sl_tx);
 
   /// \brief Contains ue index.
   bool contains(du_ue_index_t ue_index) const { return ues.contains(ue_index); }
@@ -70,23 +38,10 @@ public:
   const ue& operator[](du_ue_index_t ue_index) const { return ues[ue_index]; }
 
   /// \brief Add new UE in the UE repository.
-  void add_ue(std::unique_ptr<ue> u)
-  {
-    du_ue_index_t ue_index = u->ue_index;
-    ues.insert(ue_index, std::move(u));
-  }
+  void add_ue(std::unique_ptr<ue> u);
 
   /// \brief Initiate removal of existing UE from the repository.
-  void schedule_ue_rem(du_ue_index_t ue_index)
-  {
-    if (contains(ue_index)) {
-      // Start deactivation of UE bearers.
-      ues[ue_index].deactivate();
-
-      // Register UE for later removal.
-      ues_to_rem.push(ue_index);
-    }
-  }
+  void schedule_ue_rem(du_ue_index_t ue_index);
 
   iterator       find(du_ue_index_t ue_index) { return ues.find(ue_index); }
   const_iterator find(du_ue_index_t ue_index) const { return ues.find(ue_index); }
