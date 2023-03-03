@@ -53,7 +53,7 @@ du_ue_manager::handle_ue_config_request(const f1ap_ue_context_update_request& ms
 async_task<void> du_ue_manager::handle_ue_delete_request(const f1ap_ue_delete_request& msg)
 {
   // Enqueue UE deletion procedure
-  return launch_async<ue_deletion_procedure>(msg, cfg.mac.ue_cfg, *this);
+  return launch_async<ue_deletion_procedure>(msg, cfg.mac.ue_cfg, *this, cfg.f1ap);
 }
 
 du_ue* du_ue_manager::find_ue(du_ue_index_t ue_index)

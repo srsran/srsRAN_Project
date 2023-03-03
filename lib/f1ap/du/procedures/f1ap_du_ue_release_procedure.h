@@ -16,7 +16,10 @@ namespace srs_du {
 class f1ap_du_ue_release_procedure
 {
 public:
-  f1ap_du_ue_release_procedure(const asn1::f1ap::ue_context_release_cmd_s& msg_, f1ap_du_ue& u) : msg(msg_), ue(u) {}
+  f1ap_du_ue_release_procedure(const asn1::f1ap::ue_context_release_cmd_s& msg_, f1ap_du_ue_manager& ues) :
+    msg(msg_), ue_db(ues), ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value)))
+  {
+  }
 
   void operator()(coro_context<async_task<void>>& ctx)
   {
@@ -32,20 +35,24 @@ public:
       }
 
       if (srb != nullptr) {
-        byte_buffer sdu{msg->rrc_container.value};
-        srb->handle_pdu(std::move(sdu));
+        byte_buffer pdu{msg->rrc_container.value};
 
-        // TODO: Await SDU to be transmitted over-the-air.
-
+        // Forward F1AP PDU to lower layers to be transmitted over-the-air.
+        srb->handle_pdu(std::move(pdu));
       } else {
         logger.warning("SRB-ID not defined");
         // Handle Error.
       }
     }
 
+    // Remove UE from DU manager.
     CORO_AWAIT(ue.du_handler.request_ue_removal(f1ap_ue_delete_request{ue.context.ue_index}));
 
+    // Send UE CONTEXT RELEASE COMPLETE to CU.
     send_ue_context_release_complete();
+
+    // Delete UE context from F1AP.
+    ue_db.remove_ue(ue.context.ue_index);
 
     CORO_RETURN();
   }
@@ -66,8 +73,9 @@ private:
   }
 
   const asn1::f1ap::ue_context_release_cmd_s msg;
-  srslog::basic_logger&                      logger = srslog::fetch_basic_logger("DU-F1");
+  f1ap_du_ue_manager&                        ue_db;
   f1ap_du_ue&                                ue;
+  srslog::basic_logger&                      logger = srslog::fetch_basic_logger("DU-F1");
 };
 
 } // namespace srs_du

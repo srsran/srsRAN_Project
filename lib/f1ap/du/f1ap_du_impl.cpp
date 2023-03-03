@@ -91,10 +91,11 @@ void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_contex
   f1ap_du_ue*         u                 = ues.find(gnb_du_ue_f1ap_id);
   if (u == nullptr) {
     logger.warning("Discarding UeContextReleaseCommand cause=Unrecognized gNB-DU UE F1AP ID={}", gnb_du_ue_f1ap_id);
+    // TODO: Handle.
     return;
   }
 
-  du_mng.get_ue_handler(u->context.ue_index).schedule_async_task(launch_async<f1ap_du_ue_release_procedure>(msg, *u));
+  du_mng.get_ue_handler(u->context.ue_index).schedule_async_task(launch_async<f1ap_du_ue_release_procedure>(msg, ues));
 }
 
 void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg)

@@ -23,10 +23,15 @@ namespace srs_du {
 class ue_deletion_procedure
 {
 public:
-  ue_deletion_procedure(const f1ap_ue_delete_request& msg_,
-                        mac_ue_configurator&          mac_ue_mng_,
-                        ue_manager_ctrl_configurator& ue_mng_) :
-    msg(msg_), mac_ue_mng(mac_ue_mng_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("DU-MNG"))
+  ue_deletion_procedure(const f1ap_ue_delete_request&                msg_,
+                        mac_ue_configurator&                         mac_ue_mng_,
+                        ue_manager_ctrl_configurator&                ue_mng_,
+                        const du_manager_params::f1ap_config_params& f1ap_mng_) :
+    msg(msg_),
+    mac_ue_mng(mac_ue_mng_),
+    ue_mng(ue_mng_),
+    f1ap_mng(f1ap_mng_),
+    logger(srslog::fetch_basic_logger("DU-MNG"))
   {
   }
 
@@ -42,16 +47,13 @@ public:
       CORO_EARLY_RETURN();
     }
 
-    // 1. Remove UE from MAC
+    // > Remove UE from MAC.
     CORO_AWAIT_VALUE(mac_ue_delete_response_message mac_resp, launch_mac_ue_delete());
     if (not mac_resp.result) {
       log_proc_failure(logger, ue->ue_index, ue->rnti, name(), "Failed to remove UE from MAC.");
     }
 
-    // 2. Remove UE from F1AP
-    // TODO
-
-    // 3. Remove UE object from DU UE manager
+    // > Remove UE object from DU UE manager.
     ue_mng.remove_ue(msg.ue_index);
 
     log_proc_completed(logger, msg.ue_index, ue->rnti, name());
@@ -70,10 +72,11 @@ private:
     return mac_ue_mng.handle_ue_delete_request(mac_msg);
   }
 
-  const f1ap_ue_delete_request  msg;
-  mac_ue_configurator&          mac_ue_mng;
-  ue_manager_ctrl_configurator& ue_mng;
-  srslog::basic_logger&         logger;
+  const f1ap_ue_delete_request                 msg;
+  mac_ue_configurator&                         mac_ue_mng;
+  ue_manager_ctrl_configurator&                ue_mng;
+  const du_manager_params::f1ap_config_params& f1ap_mng;
+  srslog::basic_logger&                        logger;
 
   du_ue* ue = nullptr;
 };
