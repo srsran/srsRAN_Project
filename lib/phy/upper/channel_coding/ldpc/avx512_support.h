@@ -20,9 +20,6 @@
 namespace srsran {
 namespace mm512 {
 
-template <size_t N>
-using avx512_array = detail::avx_array<detail::m512_wrapper, N>;
-
 using avx512_span = detail::avx_span<detail::m512_wrapper>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.

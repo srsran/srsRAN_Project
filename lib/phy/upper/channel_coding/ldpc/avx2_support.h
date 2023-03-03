@@ -38,101 +38,6 @@ struct m512_wrapper {
   using avxType = __m512i;
 };
 
-/// \brief Mimics an array of AVX registers.
-/// \tparam avxWrapper   Wrapper for an AVX vector type.
-/// \tparam nof_elements The number of AVX registers in the array.
-template <typename avxWrapper, size_t nof_elements>
-class avx_array
-{
-  /// Helper type for method overloading.
-  template <typename HelpType>
-  struct help_type {
-    // Intentionally empty.
-  };
-
-public:
-  static_assert(std::is_same<avxWrapper, m256_wrapper>::value || std::is_same<avxWrapper, m512_wrapper>::value,
-                "The provided type is not a supported AVX vector type.");
-  using avxType                         = typename avxWrapper::avxType;
-  static constexpr size_t AVX_SIZE_BYTE = sizeof(avxType);
-
-  /// Returns a pointer to the \c pos AVX register inside the array.
-  avxType* data_at(unsigned pos)
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return reinterpret_cast<avxType*>(inner_array.data()) + pos;
-  }
-
-  /// Returns a read-only pointer to the \c pos AVX register inside the array.
-  const avxType* data_at(unsigned pos) const
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return reinterpret_cast<const avxType*>(inner_array.data()) + pos;
-  }
-
-  /// Returns a pointer to the byte at position <tt>pos * AVX_SIZE_BYTE + byte</tt> inside the array.
-  int8_t* data_at(unsigned pos, unsigned byte)
-  {
-    unsigned index = pos * AVX_SIZE_BYTE + byte;
-    srsran_assert(index < nof_elements * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (inner_array.data() + index);
-  }
-
-  /// Returns a read-only pointer to the \c pos AVX2 register inside the array.
-  const int8_t* data_at(unsigned pos, unsigned byte) const
-  {
-    unsigned index = pos * AVX_SIZE_BYTE + byte;
-    srsran_assert(index < nof_elements * AVX_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (inner_array.data() + index);
-  }
-
-  // Unfortunately, we can't work with the array subscript operator [] since there seems to be no easy way to access a
-  // avxType object by reference.
-
-  /// Sets the \c pos AVX2 register to \c val.
-  void set_at(unsigned pos, __m256i val)
-  {
-    static_assert(AVX_SIZE_BYTE == AVX2_SIZE_BYTE, "Cannot set an AVX512 vector with an AVX2 vector.");
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(inner_array.data()) + pos, val);
-  }
-
-  /// Sets the \c pos AVX512 register to \c val.
-  void set_at(unsigned pos, __m512i val)
-  {
-    static_assert(AVX_SIZE_BYTE == AVX512_SIZE_BYTE, "Cannot set an AVX2 vector with an AVX512 vector.");
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    _mm512_storeu_si512(reinterpret_cast<__m512i*>(inner_array.data()) + pos, val);
-  }
-
-  /// Gets the value stored in the \c pos AVX register.
-  avxType get_at(unsigned pos) const { return get_at(help_type<avxWrapper>(), pos); }
-
-private:
-  /// Actual array where the AVX registers are stored.
-  std::array<int8_t, nof_elements * AVX_SIZE_BYTE> inner_array;
-
-  template <typename T>
-  auto get_at(help_type<T> /**/, unsigned /**/) const
-  {
-    return;
-  }
-
-  /// Specialization of the get method for AVX2.
-  __m256i get_at(help_type<m256_wrapper> /**/, unsigned pos) const
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(inner_array.data()) + pos);
-  }
-
-  /// Specialization of the get method for AVX512.
-  __m512i get_at(help_type<m512_wrapper> /**/, unsigned pos) const
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return _mm512_loadu_si512(reinterpret_cast<const __m512i*>(inner_array.data()) + pos);
-  }
-};
-
 /// \brief Mimics a span of AVX registers.
 /// \tparam avxWrapper   Wrapper for an AVX vector type.
 template <typename avxWrapper>
@@ -150,25 +55,6 @@ public:
 
   /// Default constructor: empty view to a null pointer.
   avx_span() : array_ptr(nullptr), view_length(0) {}
-
-  /// \brief Constructs a span from an \ref avx_array.
-  ///
-  /// \tparam N     Array length.
-  /// \param[in] arr    Array the span is a view of.
-  /// \param[in] offset First element of the array (an AVX register) viewed by the span.
-  /// \param[in] length Length of the span.
-  template <size_t N>
-  avx_span(avx_array<avxWrapper, N>& arr, unsigned offset, unsigned length) :
-    array_ptr(arr.data_at(offset, 0)), view_length(length)
-  {
-    srsran_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
-  }
-
-  /// \brief Implicitly constructs a span that is a view over an entire \ref avx_array.
-  template <size_t N>
-  avx_span(avx_array<avxWrapper, N>& arr) : avx_span(arr, 0, N)
-  {
-  }
 
   /// \brief Constructs a span from a standard array.
   ///
@@ -306,9 +192,6 @@ private:
 } // namespace detail
 
 namespace mm256 {
-
-template <size_t N>
-using avx2_array = detail::avx_array<detail::m256_wrapper, N>;
 
 using avx2_span = detail::avx_span<detail::m256_wrapper>;
 
