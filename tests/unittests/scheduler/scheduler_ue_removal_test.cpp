@@ -56,7 +56,6 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
   rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
   add_ue(ue_index, rnti);
-  ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
 
   // Push DL buffer status update for UE DRB.
   this->push_dl_buffer_state(dl_buffer_state_indication_message{ue_index, test_lcid_drb, 10000000});
@@ -101,4 +100,44 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
     run_slot();
   }
   ASSERT_TRUE(notif.last_ue_index_deleted == ue_index);
+}
+
+TEST_F(sched_ue_removal_test, when_ue_has_pending_srb_data_then_scheduler_waits_for_srb_data_to_be_flushed)
+{
+  // Create UE.
+  du_ue_index_t ue_index = (du_ue_index_t)test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX);
+  rnti_t        rnti     = to_rnti(test_rgen::uniform_int<unsigned>(0x4601, MAX_CRNTI));
+  add_ue(ue_index, rnti);
+
+  // Push DL buffer status update for UE SRB.
+  const unsigned bytes_to_tx = 1000;
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{ue_index, LCID_SRB1, bytes_to_tx});
+
+  // Schedule UE removal.
+  rem_ue(ue_index);
+
+  // Do not delete UE until SRB data is flushed.
+  const unsigned TX_TIMEOUT   = 1000;
+  unsigned       nof_dl_bytes = 0;
+  for (unsigned i = 0; i != TX_TIMEOUT and not notif.last_ue_index_deleted.has_value(); ++i) {
+    this->run_slot();
+
+    const dl_msg_alloc* alloc = find_ue_pdsch(rnti, *last_sched_res);
+    if (alloc != nullptr) {
+      nof_dl_bytes += alloc->pdsch_cfg.codewords[0].tb_size_bytes;
+    }
+
+    const pucch_info* pucch = find_ue_pucch(rnti, *last_sched_res);
+    if (pucch != nullptr) {
+      // HARQ-ACK and empty the HARQ process.
+      uci_indication uci;
+      uci.cell_index = to_du_cell_index(0);
+      uci.slot_rx    = last_result_slot();
+      uci.ucis.push_back(create_uci_pdu_with_harq_ack(ue_index, *pucch));
+      this->sched->handle_uci_indication(uci);
+    }
+  }
+
+  ASSERT_TRUE(notif.last_ue_index_deleted == ue_index);
+  ASSERT_GE(nof_dl_bytes, bytes_to_tx);
 }

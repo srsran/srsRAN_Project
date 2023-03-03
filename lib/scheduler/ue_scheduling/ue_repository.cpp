@@ -17,10 +17,19 @@ ue_repository::ue_repository(sched_configuration_notifier& mac_notif_) :
 {
 }
 
+/// \brief This function checks whether it is safe to remove a UE. Currently we verify that:
+/// - The UE has no pending DL SRB data. This ensures that messages like RRC Release are sent before the UE removal.
+/// - The UE has no DL or UL HARQ awaiting an ACK.
 static bool is_ue_ready_for_removal(ue& u)
 {
-  unsigned nof_ue_cells = u.nof_cells();
+  // Ensure DL SRB data is flushed.
+  for (lcid_t lcid : {LCID_SRB0, LCID_SRB1, LCID_SRB2}) {
+    if (u.has_pending_dl_newtx_bytes(lcid)) {
+      return false;
+    }
+  }
 
+  unsigned nof_ue_cells = u.nof_cells();
   for (unsigned cell_idx = 0; cell_idx != nof_ue_cells; ++cell_idx) {
     ue_cell& c = u.get_cell((ue_cell_index_t)cell_idx);
     for (unsigned i = 0; i != c.harqs.nof_dl_harqs(); ++i) {
@@ -60,6 +69,9 @@ void ue_repository::slot_indication(slot_point sl_tx)
 
       // Notify MAC of the successful UE removal.
       mac_notif.on_ue_delete_response(ue_index);
+
+      // Remove UE from the repository.
+      ues.erase(ue_index);
 
       // Mark UE as ready for removal.
       ue_index = INVALID_DU_UE_INDEX;
