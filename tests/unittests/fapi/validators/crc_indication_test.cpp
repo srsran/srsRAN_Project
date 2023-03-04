@@ -95,7 +95,7 @@ INSTANTIATE_TEST_SUITE_P(HARQ,
                                           testing::Values(test_case_data{0, true},
                                                           test_case_data{8, true},
                                                           test_case_data{15, true},
-                                                          test_case_data{16, false})));
+                                                          test_case_data{32, false})));
 
 INSTANTIATE_TEST_SUITE_P(TA,
                          validate_crc_message_field,

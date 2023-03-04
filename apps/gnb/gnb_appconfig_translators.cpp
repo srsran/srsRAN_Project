@@ -383,7 +383,7 @@ std::vector<upper_phy_config> srsran::generate_du_low_config(const gnb_appconfig
     // Calculate the maximum number of users assuming the CORESET above.
     unsigned max_nof_users_slot = coreset.get_nof_cces();
     // Assume a maximum of 16 HARQ processes.
-    unsigned max_harq_process = 16;
+    unsigned max_harq_process = 32;
     // Assume the maximum number of active UL HARQ processes is twice the maximum number of users per slot for the
     // maximum number of HARQ processes.
     unsigned max_softbuffers = 2 * max_nof_users_slot * max_harq_process;
