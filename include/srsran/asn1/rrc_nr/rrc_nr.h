@@ -8979,13 +8979,21 @@ struct t_reassembly_opts {
     ms180,
     ms190,
     ms200,
+    ms210,
+    ms220,
+    ms340,
+    ms350,
+    ms550,
+    ms1100,
+    ms1650,
+    ms2220,
     spare1,
     nulltype
   } value;
-  typedef uint8_t number_type;
+  typedef uint16_t number_type;
 
   const char* to_string() const;
-  uint8_t     to_number() const;
+  uint16_t     to_number() const;
 };
 typedef enumerated<t_reassembly_opts> t_reassembly_e;
 
