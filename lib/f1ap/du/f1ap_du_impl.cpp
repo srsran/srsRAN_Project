@@ -11,7 +11,7 @@
 #include "f1ap_du_impl.h"
 #include "../../ran/gnb_format.h"
 #include "procedures/f1ap_du_setup_procedure.h"
-#include "procedures/f1ap_du_ue_release_procedure.h"
+#include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/f1ap.h"
@@ -95,7 +95,8 @@ void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_contex
     return;
   }
 
-  du_mng.get_ue_handler(u->context.ue_index).schedule_async_task(launch_async<f1ap_du_ue_release_procedure>(msg, ues));
+  du_mng.get_ue_handler(u->context.ue_index)
+      .schedule_async_task(launch_async<f1ap_du_ue_context_release_procedure>(msg, ues));
 }
 
 void f1ap_du_impl::handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg)
@@ -255,6 +256,9 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       break;
     case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
       handle_ue_context_modification_request(msg.value.ue_context_mod_request());
+      break;
+    case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
+      handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());

@@ -13,10 +13,10 @@
 namespace srsran {
 namespace srs_du {
 
-class f1ap_du_ue_release_procedure
+class f1ap_du_ue_context_release_procedure
 {
 public:
-  f1ap_du_ue_release_procedure(const asn1::f1ap::ue_context_release_cmd_s& msg_, f1ap_du_ue_manager& ues) :
+  f1ap_du_ue_context_release_procedure(const asn1::f1ap::ue_context_release_cmd_s& msg_, f1ap_du_ue_manager& ues) :
     msg(msg_), ue_db(ues), ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value)))
   {
   }

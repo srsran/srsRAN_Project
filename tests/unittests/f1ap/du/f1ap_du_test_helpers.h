@@ -50,9 +50,10 @@ public:
   f1ap_ue_configuration_request            next_ue_cfg_req;
   optional<f1ap_ue_configuration_response> last_ue_cfg_response;
 
-  // F1-C procedures.
+  // F1AP procedures.
   optional<f1ap_ue_context_update_request> last_ue_context_update_req;
   f1ap_ue_context_update_response          next_ue_context_update_response;
+  optional<f1ap_ue_delete_request>         last_ue_delete_req;
 
   explicit dummy_f1ap_du_configurator(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -75,6 +76,7 @@ public:
 
   async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) override
   {
+    last_ue_delete_req = request;
     return launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();
@@ -112,6 +114,9 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid)
 
 /// \brief Generate an F1AP UE Context Modification Request message with specified list of DRBs.
 f1ap_message generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add);
+
+/// \brief Generate an F1AP UE Context Release Command message.
+f1ap_message generate_ue_context_release_command();
 
 class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 {
@@ -154,6 +159,8 @@ protected:
   struct ue_test_context {
     du_ue_index_t                                ue_index;
     rnti_t                                       crnti;
+    optional<gnb_du_ue_f1ap_id_t>                gnb_du_ue_f1ap_id;
+    optional<gnb_cu_ue_f1ap_id_t>                gnb_cu_ue_f1ap_id;
     slotted_array<f1c_test_bearer, MAX_NOF_SRBS> f1c_bearers;
     slotted_array<f1u_test_bearer, MAX_NOF_DRBS> f1u_bearers;
   };

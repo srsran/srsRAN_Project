@@ -132,6 +132,25 @@ srsran::srs_du::generate_ue_context_modification_request(const std::initializer_
   return msg;
 }
 
+f1ap_message srsran::srs_du::generate_ue_context_release_command()
+{
+  using namespace asn1::f1ap;
+  f1ap_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
+  ue_context_release_cmd_s& dl_msg = msg.pdu.init_msg().value.ue_context_release_cmd();
+  dl_msg->gnb_cu_ue_f1ap_id->value = 0;
+  dl_msg->gnb_du_ue_f1ap_id->value = 0;
+  dl_msg->cause.value.set(cause_c::types_opts::misc);
+  dl_msg->cause.value.misc().value = asn1::f1ap::cause_misc_opts::unspecified;
+  dl_msg->srb_id_present           = true;
+  dl_msg->srb_id->value            = 1;
+  dl_msg->rrc_container_present    = true;
+  dl_msg->rrc_container.value      = byte_buffer{0x1, 0x2, 0x3, 0x4};
+
+  return msg;
+}
+
 //////////////////////////////////
 
 f1ap_du_test::f1ap_du_test()
@@ -201,8 +220,16 @@ void f1ap_du_test::run_ue_context_setup_procedure(du_ue_index_t ue_index, const 
 {
   ue_test_context& ue = test_ues[ue_index];
 
+  // Update F1AP UE IDs if not set yet.
+  const auto& f1ap_req = msg.pdu.init_msg().value.ue_context_setup_request();
+  if (not ue.gnb_du_ue_f1ap_id.has_value()) {
+    ue.gnb_du_ue_f1ap_id = (gnb_du_ue_f1ap_id_t)f1ap_req->gnb_du_ue_f1ap_id->value;
+  }
+  if (not ue.gnb_cu_ue_f1ap_id.has_value()) {
+    ue.gnb_cu_ue_f1ap_id = (gnb_cu_ue_f1ap_id_t)f1ap_req->gnb_cu_ue_f1ap_id->value;
+  }
+
   // Generate dummy DU manager UE Config Update command to F1AP.
-  const auto& f1ap_req                         = msg.pdu.init_msg().value.ue_context_setup_request();
   f1ap_du_cfg_handler.next_ue_cfg_req.ue_index = ue_index;
   for (const auto& srb : f1ap_req->srbs_to_be_setup_list.value) {
     srb_id_t srb_id = (srb_id_t)srb.value().srbs_to_be_setup_item().srb_id;

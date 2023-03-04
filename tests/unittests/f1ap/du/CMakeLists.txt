@@ -15,6 +15,7 @@ set(SOURCES f1ap_du_setup_procedure_test.cpp
             f1ap_du_dl_rrc_message_transfer_test.cpp
             f1ap_du_ue_config_test.cpp
             f1ap_du_ue_context_setup_procedure_test.cpp
+            f1ap_du_ue_context_release_test.cpp
             f1ap_du_ue_context_modification_test.cpp)
 
 add_executable(f1ap_du_test ${SOURCES})
