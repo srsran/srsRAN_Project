@@ -113,7 +113,6 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 
   if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value ==
                                           f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
-    logger.debug("Received PDU with successful outcome");
     res.msg     = cu_pdu_response.value().value.f1_setup_resp();
     res.success = true;
 

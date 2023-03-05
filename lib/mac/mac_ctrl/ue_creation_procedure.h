@@ -62,8 +62,6 @@ public:
     // > Create UE context in Scheduler.
     CORO_AWAIT(sched_configurator.handle_ue_creation_request(req));
 
-    log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
-
     // > After UE insertion in scheduler, send response to DU manager.
     CORO_RETURN(handle_mac_ue_create_result(add_ue_result));
   }
