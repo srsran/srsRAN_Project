@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/support/executors/task_executor.h"
+#include <condition_variable>
+#include <mutex>
 
 namespace srsran {
 
