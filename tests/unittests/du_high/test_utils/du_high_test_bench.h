@@ -32,6 +32,8 @@ public:
   }
 };
 
+mac_rx_data_indication create_ccch_message(slot_point sl_rx, rnti_t rnti);
+
 class du_high_test_bench
 {
 public:
@@ -42,6 +44,8 @@ public:
     workers.stop();
   }
 
+  void run_slot();
+
   du_high_worker_manager  workers;
   dummy_f1ap_pdu_handler  pdu_handler;
   dummy_f1ap_pdu_notifier cu_notifier{&pdu_handler};
@@ -50,6 +54,8 @@ public:
   timer_manager           timers;
 
   du_high du_obj;
+
+  slot_point next_slot;
 };
 
 } // namespace srs_du
