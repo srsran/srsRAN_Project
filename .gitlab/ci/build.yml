@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "46"
+    ref: "47"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
@@ -22,7 +22,7 @@ stages:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   stage: build and unit tests
   variables:
-    DOCKER_BUILDER_VERSION: "1.7.4"
+    DOCKER_BUILDER_VERSION: "1.7.6"
     # General
     OS: ubuntu-22.04
     # Build
@@ -202,7 +202,7 @@ stages:
         COMPILER: gcc
         BUILD_TYPE: Release
         ENABLE_EXPORT: "True"
-      - OS: rhel8
+      - OS: rhel-8
         TEST_MODE: default
         COMPILER: gcc
         BUILD_TYPE: Release
@@ -401,33 +401,63 @@ build alt [archlinux-latest, amd64, RelWithDebInfo]:
     BUILD_TYPE: RelWithDebInfo
   cache: []
 
-build alt [rhel8, amd64, Debug]:
+build alt [rhel-8, amd64, Debug]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    OS: rhel8
+    OS: rhel-8
     PLATFORM: amd64
     BUILD_TYPE: Debug
   cache: []
 
-build alt [rhel8, amd64, Release]:
+build alt [rhel-8, amd64, Release]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
-    OS: rhel8
+    OS: rhel-8
     PLATFORM: amd64
     BUILD_TYPE: Release
   cache: []
 
-build alt [rhel8, amd64, RelWithDebInfo]:
+build alt [rhel-8, amd64, RelWithDebInfo]:
   extends: .build_and_unit_alt
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
-    OS: rhel8
+    OS: rhel-8
     PLATFORM: amd64
+    BUILD_TYPE: RelWithDebInfo
+  cache: []
+
+build alt [rhel-8, arm64, Debug]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: rhel-8
+    PLATFORM: arm64
+    BUILD_TYPE: Debug
+  cache: []
+
+build alt [rhel-8, arm64, Release]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    OS: rhel-8
+    PLATFORM: arm64
+    BUILD_TYPE: Release
+  cache: []
+
+build alt [rhel-8, arm64, RelWithDebInfo]:
+  extends: .build_and_unit_alt
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    OS: rhel-8
+    PLATFORM: arm64
     BUILD_TYPE: RelWithDebInfo
   cache: []
 
