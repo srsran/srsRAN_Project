@@ -304,6 +304,7 @@ bool paging_scheduler::is_paging_slot_in_search_space0(slot_point pdcch_slot, un
 
   // The paging_period_slots is expressed in unit of slots.
   // NOTE: As paging_period_slots is expressed in milliseconds or subframes, we need to convert them into slots.
+  // NOTE2: SIB1 period is since Search Space #0 is used by both Paging and SIB1.
   const unsigned paging_period_slots = sib1_period * static_cast<unsigned>(pdcch_slot.nof_slots_per_subframe());
 
   // For each beam, check if the paging needs to be allocated in this slot.
