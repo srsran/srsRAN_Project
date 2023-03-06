@@ -23,7 +23,6 @@ from retina.protocol.ue_pb2 import UEStartInfo
 from .utils import ATTACH_TIMEOUT, DEFAULT_MCS, STARTUP_TIMEOUT, get_ue_gnb_epc
 
 PING_COUNT = 10
-PING_START_DELAY = 0.250
 
 
 class TestPing(BaseTest):
@@ -104,19 +103,18 @@ class TestPing(BaseTest):
             ue_attached_info_list = ue.WainUntilAttached(UInteger(value=attach_timeout))
             logging.info("UEs attached %s", ue_attached_info_list)
 
-            ping_task_dict = {}
             for ue_attached_info in ue_attached_info_list.value:
+                ping_task_dict = {}
                 ping_task_dict[f"UE {ue_attached_info.ipv4} -> EPC {ue_attached_info.ipv4_gateway}"] = ue.Ping.future(
                     PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count)
                 )
                 ping_task_dict[f"EPC {ue_attached_info.ipv4_gateway} -> UE {ue_attached_info.ipv4}"] = epc.Ping.future(
                     PingRequest(address=ue_attached_info.ipv4, count=ping_count)
                 )
-                sleep(PING_START_DELAY)
 
-            ping_result_dict = {key: ping_task.result() for key, ping_task in ping_task_dict.items()}
+                ping_result_dict = {key: ping_task.result() for key, ping_task in ping_task_dict.items()}
 
-            for key, value in ping_result_dict.items():
-                logging.info("Ping %s: %s", key, value)
+                for key, value in ping_result_dict.items():
+                    logging.info("Ping %s: %s", key, value)
 
-            assert all(map(lambda r: r.status, ping_result_dict.values())) is True
+                assert all(map(lambda r: r.status, ping_result_dict.values())) is True, "Ping failed!"

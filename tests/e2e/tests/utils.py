@@ -70,6 +70,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count, log_
 
     finally:
         teardown_ok = True
+        log_search_ok = True
 
         with suppress(NameError, grpc._channel._InactiveRpcError):
             return_code = gnb.Stop(Empty()).value
@@ -78,7 +79,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count, log_
                 logging.error("GNB crashed with exit code %s", return_code)
             elif return_code > 0:
                 if log_search:
-                    teardown_ok = False
+                    log_search_ok = False
                 logging.error("GNB has %d errors or warnings", return_code)
         with suppress(NameError, grpc._channel._InactiveRpcError):
             epc.Stop(Empty()).value
@@ -90,17 +91,19 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count, log_
                 logging.error("UE crashed with exit code %s", return_code)
             elif return_code > 0:
                 if log_search:
-                    teardown_ok = False
+                    log_search_ok = False
                 logging.error("UE has %d errors or warnings", return_code)
-        if teardown_ok is False:
+        if not teardown_ok or not log_search_ok:
             test_successful = False
 
-        if test_successful:
-            self.disable_download_report()
-        if test_successful is False or data.force_download:
-            with suppress(UnboundLocalError, NameError):
-                extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
-        assert teardown_ok is True
+    if test_successful:
+        self.disable_download_report()
+    if test_successful is False or data.force_download:
+        with suppress(UnboundLocalError, NameError):
+            extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
+
+    assert teardown_ok is True, "GNB or UE crashed!"
+    assert log_search_ok is True, "There are errors in the log!"
 
 
 def is_tdd(band):
