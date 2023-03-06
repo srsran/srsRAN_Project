@@ -78,14 +78,20 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   // Wait for the right slot for ACK.
   const unsigned    ACK_TIMEOUT = 10;
   const pucch_info* pucch       = nullptr;
-  for (unsigned count = 0; count != ACK_TIMEOUT and pucch == nullptr; ++count) {
+  for (unsigned count = 0; count != ACK_TIMEOUT; ++count) {
     this->run_slot();
     ASSERT_EQ(find_ue_pdsch(rnti, *last_sched_res), nullptr)
         << "UE allocated despite having no SRB pending bytes and being marked for removal";
 
     pucch = find_ue_pucch(rnti, *last_sched_res);
+    if (pucch != nullptr and
+        ((pucch->format == srsran::pucch_format::FORMAT_1 and pucch->format_1.harq_ack_nof_bits > 0) or
+         (pucch->format == srsran::pucch_format::FORMAT_2 and pucch->format_2.harq_ack_nof_bits > 0))) {
+      break;
+    }
   }
   ASSERT_NE(pucch, nullptr);
+  ASSERT_FALSE(notif.last_ue_index_deleted.has_value());
 
   // HARQ-ACK should empty the HARQ process.
   uci_indication uci;
@@ -99,5 +105,5 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
   for (unsigned i = 0; not notif.last_ue_index_deleted.has_value() and i != REM_TIMEOUT; ++i) {
     run_slot();
   }
-  ASSERT_TRUE(notif.last_ue_index_deleted == ue_index);
+  ASSERT_EQ(notif.last_ue_index_deleted, ue_index);
 }

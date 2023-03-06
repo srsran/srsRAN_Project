@@ -33,8 +33,17 @@ void du_manager_impl::start()
 
   params.services.du_mng_exec.execute([this, &p]() {
     // start F1 setup procedure.
-    main_ctrl_loop.schedule<initial_du_setup_procedure>(params, cell_mng);
-    p.set_value();
+    main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+
+      // Send F1 Setup Request and await for F1 setup response.
+      CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
+
+      // Signal start() caller thread that the operation is complete.
+      p.set_value();
+
+      CORO_RETURN();
+    });
   });
 
   // Block waiting for DU setup to complete.

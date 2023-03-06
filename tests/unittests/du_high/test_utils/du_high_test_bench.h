@@ -17,36 +17,19 @@
 namespace srsran {
 namespace srs_du {
 
-class dummy_f1ap_rx_pdu_handler : public f1ap_message_handler
-{
-public:
-  f1ap_message   last_f1ap_msg;
-  task_executor* ctrl_exec;
-
-  explicit dummy_f1ap_rx_pdu_handler(task_executor& task_exec) : ctrl_exec(&task_exec) {}
-
-  void handle_message(const f1ap_message& msg) override
-  {
-    ctrl_exec->execute([this, msg]() { last_f1ap_msg = msg; });
-  }
-};
-
 class dummy_f1ap_tx_pdu_notifier : public f1ap_message_notifier
 {
 public:
-  dummy_f1ap_tx_pdu_notifier(task_executor& ctrl_exec_) : ctrl_exec(ctrl_exec_) {}
-  void on_new_message(const f1ap_message& msg) override
-  {
-    // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
-    ctrl_exec.execute([this, msg]() {
-      logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
-      last_f1ap_msg = msg;
-    });
-  }
+  dummy_f1ap_tx_pdu_notifier(task_executor& test_exec_);
+
+  void connect(f1ap_message_handler& f1ap_du_msg_handler);
+
+  void on_new_message(const f1ap_message& msg) override;
 
   f1ap_message          last_f1ap_msg;
-  task_executor&        ctrl_exec;
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+  task_executor&        test_exec;
+  f1ap_message_handler* f1ap_du = nullptr;
+  srslog::basic_logger& logger  = srslog::fetch_basic_logger("TEST");
 };
 
 mac_rx_data_indication create_ccch_message(slot_point sl_rx, rnti_t rnti);
@@ -61,9 +44,10 @@ public:
 
   void run_slot();
 
+  bool run_until(unique_function<bool()> condition);
+
   du_high_worker_manager     workers;
-  dummy_f1ap_rx_pdu_handler  pdu_handler;
-  dummy_f1ap_tx_pdu_notifier cu_notifier{workers.ctrl_worker};
+  dummy_f1ap_tx_pdu_notifier cu_notifier;
   phy_test_dummy             phy;
   mac_pcap_dummy             pcap;
   timer_manager              timers;

@@ -53,7 +53,7 @@ protected:
     srs_cu_cp::dummy_ngap_amf_notifier ngap_amf_notifier;
     // create CU-CP config
     srs_cu_cp::cu_cp_configuration cu_cfg;
-    cu_cfg.cu_cp_executor = &workers.ctrl_worker;
+    cu_cfg.cu_cp_executor = &workers.ctrl_exec;
     cu_cfg.f1ap_notifier  = &cu_msg_handler;
     cu_cfg.ngap_notifier  = &ngap_amf_notifier;
 
@@ -64,7 +64,7 @@ protected:
     phy_dummy phy;
 
     srsran::srs_du::du_high_configuration du_cfg{};
-    du_cfg.du_mng_executor = &workers.ctrl_worker;
+    du_cfg.du_mng_executor = &workers.ctrl_exec;
     du_cfg.cell_executors  = &workers.cell_exec_mapper;
     du_cfg.ue_executors    = &workers.ue_exec_mapper;
     du_cfg.f1ap_notifier   = &du_msg_handler;
