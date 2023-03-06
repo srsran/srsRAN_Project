@@ -23,15 +23,10 @@ namespace srs_du {
 class ue_deletion_procedure
 {
 public:
-  ue_deletion_procedure(const f1ap_ue_delete_request&                msg_,
-                        mac_ue_configurator&                         mac_ue_mng_,
-                        ue_manager_ctrl_configurator&                ue_mng_,
-                        const du_manager_params::f1ap_config_params& f1ap_mng_) :
-    msg(msg_),
-    mac_ue_mng(mac_ue_mng_),
-    ue_mng(ue_mng_),
-    f1ap_mng(f1ap_mng_),
-    logger(srslog::fetch_basic_logger("DU-MNG"))
+  ue_deletion_procedure(const f1ap_ue_delete_request& msg_,
+                        mac_ue_configurator&          mac_ue_mng_,
+                        ue_manager_ctrl_configurator& ue_mng_) :
+    msg(msg_), mac_ue_mng(mac_ue_mng_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("DU-MNG"))
   {
   }
 
@@ -72,11 +67,10 @@ private:
     return mac_ue_mng.handle_ue_delete_request(mac_msg);
   }
 
-  const f1ap_ue_delete_request                 msg;
-  mac_ue_configurator&                         mac_ue_mng;
-  ue_manager_ctrl_configurator&                ue_mng;
-  const du_manager_params::f1ap_config_params& f1ap_mng;
-  srslog::basic_logger&                        logger;
+  const f1ap_ue_delete_request  msg;
+  mac_ue_configurator&          mac_ue_mng;
+  ue_manager_ctrl_configurator& ue_mng;
+  srslog::basic_logger&         logger;
 
   du_ue* ue = nullptr;
 };
