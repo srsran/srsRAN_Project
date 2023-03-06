@@ -57,7 +57,7 @@ private:
   /// \brief Helper function to get sum of paging payload size of each UE scheduled at a particular slot.
   /// \param[in] ues_paging_info List of UE scheduled at a particular slot for Paging.
   /// \return Sum of payload size.
-  static unsigned get_accumulated_paging_msg_size(const span<const sched_paging_information>& ues_paging_info);
+  static unsigned get_accumulated_paging_msg_size(span<const sched_paging_information*> ues_paging_info);
 
   /// \brief Checks whether there is space for PDSCH to allocate Paging grant.
   ///
@@ -75,10 +75,10 @@ private:
   /// \param[in] ues_paging_info List of UE scheduled at a particular slot for Paging.
   /// \param[in] ss_id Search Space Id used in scheduling paging message.
   /// \return True if paging allocation is successful, false otherwise.
-  bool allocate_paging(cell_resource_allocator&                   res_grid,
-                       unsigned                                   pdsch_time_res,
-                       const span<const sched_paging_information> ues_paging_info,
-                       search_space_id                            ss_id);
+  bool allocate_paging(cell_resource_allocator&              res_grid,
+                       unsigned                              pdsch_time_res,
+                       span<const sched_paging_information*> ues_paging_info,
+                       search_space_id                       ss_id);
 
   /// \brief Fills the Paging grant.
   ///
@@ -89,13 +89,13 @@ private:
   /// \param[in] ues_paging_info List of UE scheduled at a particular slot for Paging.
   /// \param[in] dmrs_info DMRS information related to the scheduled grant.
   /// \param[in] tbs TBS information of the Paging grant.
-  void fill_paging_grant(dl_paging_allocation&                      pg_grant,
-                         pdcch_dl_information&                      pdcch,
-                         crb_interval                               crbs_grant,
-                         unsigned                                   time_resource,
-                         const span<const sched_paging_information> ues_paging_info,
-                         const dmrs_information&                    dmrs_info,
-                         unsigned                                   tbs);
+  void fill_paging_grant(dl_paging_allocation&                 pg_grant,
+                         pdcch_dl_information&                 pdcch,
+                         crb_interval                          crbs_grant,
+                         unsigned                              time_resource,
+                         span<const sched_paging_information*> ues_paging_info,
+                         const dmrs_information&               dmrs_info,
+                         unsigned                              tbs);
 
   /// \brief Helper function to precompute Type2-PDCCH Monitoring slots when pagingSearchSpace > 0.
   ///
@@ -145,6 +145,10 @@ private:
   std::unordered_map<five_g_s_tmsi, paging_retries_count_type> cn_paging_retries;
   /// Mapping between I-RNTI-Value (40 bits) to paging retries count for RAN Paging.
   std::unordered_map<full_i_rnti, paging_retries_count_type> ran_paging_retries;
+  /// Lookup to keep track of scheduled paging UEs at a particular PDSCH time resource index. Index of \c
+  /// pdsch_time_res_idx_to_scheduled_ues_lookup corresponds to PDSCH Time Domain Resource Index.
+  static_vector<std::vector<const sched_paging_information*>, MAX_NOF_PDSCH_TD_RESOURCE_ALLOCATIONS>
+      pdsch_time_res_idx_to_scheduled_ues_lookup;
 
   srslog::basic_logger& logger;
 };

@@ -157,12 +157,9 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
               return lhs_pg_attmpts < rhs_pg_attmpts;
             });
 
-  // Map to keep track of scheduled paging UEs at a particular PDSCH time resource index.
-  std::unordered_map<unsigned, std::vector<sched_paging_information>> pdsch_time_res_idx_to_scheduled_ues_map;
-  for (unsigned time_res_idx = 0; time_res_idx != pdsch_td_alloc_list.size(); ++time_res_idx) {
-    // Initialize.
-    pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx] = {};
-  }
+  // Initialize.
+  pdsch_time_res_idx_to_scheduled_ues_lookup.assign(MAX_NOF_PDSCH_TD_RESOURCE_ALLOCATIONS,
+                                                    std::vector<const sched_paging_information*>{});
 
   for (const auto& pg_info : paging_pending_ues) {
     const unsigned drx_cycle = pg_info.paging_drx.has_value() ? pg_info.paging_drx.value() : default_paging_cycle;
@@ -194,7 +191,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
       }
       // Verify there is space in PDSCH and PDCCH result lists for new allocations.
       if (paging_alloc.result.dl.paging_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full() or
-          pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx].size() >= MAX_PAGING_RECORDS_PER_PAGING_PDU) {
+          pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx].size() >= MAX_PAGING_RECORDS_PER_PAGING_PDU) {
         continue;
       }
 
@@ -202,44 +199,49 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
           is_there_space_available_for_paging(
               res_grid,
               time_res_idx,
-              get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx]) +
+              get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx]) +
                   pg_info.paging_msg_size)) {
-        pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx].push_back(pg_info);
+        pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx].push_back(&pg_info);
         break;
       }
       if (paging_search_space > 0 and is_paging_slot_in_search_space_id_gt_0(pdcch_slot, i_s) and
           is_there_space_available_for_paging(
               res_grid,
               time_res_idx,
-              get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx]) +
+              get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx]) +
                   pg_info.paging_msg_size)) {
-        pdsch_time_res_idx_to_scheduled_ues_map[time_res_idx].push_back(pg_info);
+        pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx].push_back(&pg_info);
         break;
       }
     }
   }
 
   // Update paging re-tries counter for all successful allocations.
-  for (const auto& map_it : pdsch_time_res_idx_to_scheduled_ues_map) {
-    if (not map_it.second.empty() and allocate_paging(res_grid, map_it.first, map_it.second, paging_search_space)) {
+  for (unsigned pdsch_td_res_idx = 0; pdsch_td_res_idx < pdsch_time_res_idx_to_scheduled_ues_lookup.size();
+       pdsch_td_res_idx++) {
+    if (not pdsch_time_res_idx_to_scheduled_ues_lookup[pdsch_td_res_idx].empty() and
+        allocate_paging(res_grid,
+                        pdsch_td_res_idx,
+                        pdsch_time_res_idx_to_scheduled_ues_lookup[pdsch_td_res_idx],
+                        paging_search_space)) {
       // Allocation successful.
-      for (const auto& pg_info : map_it.second) {
-        if (pg_info.paging_type_indicator == sched_paging_information::cn_ue_paging_identity) {
-          cn_paging_retries[pg_info.paging_identity]++;
+      for (const auto* pg_info : pdsch_time_res_idx_to_scheduled_ues_lookup[pdsch_td_res_idx]) {
+        if (pg_info->paging_type_indicator == sched_paging_information::cn_ue_paging_identity) {
+          cn_paging_retries[pg_info->paging_identity]++;
         } else {
-          ran_paging_retries[pg_info.paging_identity]++;
+          ran_paging_retries[pg_info->paging_identity]++;
         }
       }
     }
   }
 }
 
-unsigned paging_scheduler::get_accumulated_paging_msg_size(const span<const sched_paging_information>& ues_paging_info)
+unsigned paging_scheduler::get_accumulated_paging_msg_size(span<const sched_paging_information*> ues_paging_info)
 {
   return std::accumulate(ues_paging_info.begin(),
                          ues_paging_info.end(),
                          0,
-                         [](unsigned sum, const sched_paging_information& msg) { return sum + msg.paging_msg_size; });
+                         [](unsigned sum, const sched_paging_information* msg) { return sum + msg->paging_msg_size; });
 }
 
 void paging_scheduler::handle_paging_information(const sched_paging_information& paging_info)
@@ -363,10 +365,10 @@ bool paging_scheduler::is_there_space_available_for_paging(cell_resource_allocat
   return true;
 }
 
-bool paging_scheduler::allocate_paging(cell_resource_allocator&                   res_grid,
-                                       unsigned                                   pdsch_time_res,
-                                       const span<const sched_paging_information> ues_paging_info,
-                                       search_space_id                            ss_id)
+bool paging_scheduler::allocate_paging(cell_resource_allocator&              res_grid,
+                                       unsigned                              pdsch_time_res,
+                                       span<const sched_paging_information*> ues_paging_info,
+                                       search_space_id                       ss_id)
 {
   // NOTE:
   // - [Implementation defined] Need to take into account PDSCH Time Domain Resource Allocation in UE's active DL BWP,
@@ -432,13 +434,13 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&                 
   return true;
 }
 
-void paging_scheduler::fill_paging_grant(dl_paging_allocation&                      pg_grant,
-                                         pdcch_dl_information&                      pdcch,
-                                         crb_interval                               crbs_grant,
-                                         unsigned                                   time_resource,
-                                         const span<const sched_paging_information> ues_paging_info,
-                                         const dmrs_information&                    dmrs_info,
-                                         unsigned                                   tbs)
+void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 pg_grant,
+                                         pdcch_dl_information&                 pdcch,
+                                         crb_interval                          crbs_grant,
+                                         unsigned                              time_resource,
+                                         span<const sched_paging_information*> ues_paging_info,
+                                         const dmrs_information&               dmrs_info,
+                                         unsigned                              tbs)
 {
   const prb_interval paging_prbs = crb_to_prb(bwp_cfg, crbs_grant);
 
@@ -461,10 +463,10 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                  
   for (const auto& pg_info : ues_paging_info) {
     pg_grant.paging_ue_list.emplace_back();
     pg_grant.paging_ue_list.back().paging_type_indicator =
-        pg_info.paging_type_indicator == sched_paging_information::paging_identity_type::cn_ue_paging_identity
+        pg_info->paging_type_indicator == sched_paging_information::paging_identity_type::cn_ue_paging_identity
             ? paging_ue_info::cn_ue_paging_identity
             : paging_ue_info::ran_ue_paging_identity;
-    pg_grant.paging_ue_list.back().paging_identity = pg_info.paging_identity;
+    pg_grant.paging_ue_list.back().paging_identity = pg_info->paging_identity;
   }
 
   // Fill PDSCH configuration.
