@@ -593,6 +593,9 @@ TEST(asn1_enumerated, pack_unpack)
   buffer.append(255);
   bref2 = cbit_ref(buffer);
   TESTASSERT(unpack_enum(e, bref2) == SRSASN_ERROR_DECODE_FAIL);
+
+  // Make sure the log backend has already processed the generated log entries.
+  srslog::flush();
   TESTASSERT(test_spy->get_error_counter() == 2 and test_spy->get_warning_counter() == 0);
 }
 
