@@ -7,7 +7,7 @@
 #
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "47"
+    ref: "48"
     file: .gitlab/ci-shared/setup/all.yml
 
 .prepare_test:

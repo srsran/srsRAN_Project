@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "47"
+    ref: "48"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
@@ -22,7 +22,7 @@ stages:
     - ${SRS_INFRASTRUCTURE_TAG}-${PLATFORM}
   stage: build and unit tests
   variables:
-    DOCKER_BUILDER_VERSION: "1.7.6"
+    DOCKER_BUILDER_VERSION: "1.7.7"
     # General
     OS: ubuntu-22.04
     # Build
