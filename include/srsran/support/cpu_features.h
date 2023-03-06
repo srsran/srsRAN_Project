@@ -95,7 +95,7 @@ inline bool cpu_supports_feature(cpu_feature feature)
   }
 }
 
-static const std::vector<cpu_feature> cpu_features_included = {{
+static const std::vector<cpu_feature> cpu_features_included = {
 #ifdef __x86_64__
 #ifdef HAVE_SSE
     cpu_feature::sse4_1,
@@ -120,7 +120,7 @@ static const std::vector<cpu_feature> cpu_features_included = {{
     cpu_feature::neon,
 #endif // HAVE_NEON
 #endif // __aarch64__
-}};
+};
 
 inline std::string get_cpu_feature_info()
 {
