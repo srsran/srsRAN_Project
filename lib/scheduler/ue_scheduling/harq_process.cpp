@@ -34,10 +34,10 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
                        "but no HARQ-ACK report was received.",
                        ack_wait_in_slots);
       } else {
-        logger.info(id,
-                    "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
-                    "but only invalid HARQ-ACKs were received so far.",
-                    ack_wait_in_slots);
+        logger.debug(id,
+                     "Setting HARQ to \"pending reTx\" state. Cause: HARQ-ACK wait timeout ({} slots) was reached "
+                     "but only invalid HARQ-ACKs were received so far.",
+                     ack_wait_in_slots);
       }
     }
     if (tb.nof_retxs + 1 > tb.max_nof_harq_retxs) {
@@ -50,11 +50,11 @@ void detail::harq_process<IsDownlink>::slot_indication(slot_point slot_tx)
                        max_nof_harq_retxs(0),
                        ack_wait_in_slots);
       } else {
-        logger.info(id,
-                    "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached but only invalid HARQ-ACKs "
-                    "were received and the maximum number of reTxs {} was exceeded",
-                    max_nof_harq_retxs(0),
-                    ack_wait_in_slots);
+        logger.debug(id,
+                     "Discarding HARQ. Cause: HARQ-ACK wait timeout ({} slots) was reached but only invalid HARQ-ACKs "
+                     "were received and the maximum number of reTxs {} was exceeded",
+                     max_nof_harq_retxs(0),
+                     ack_wait_in_slots);
       }
     }
     // Reset the ACK wait time.

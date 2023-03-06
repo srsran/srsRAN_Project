@@ -22,13 +22,7 @@ ue_repository::ue_repository(sched_configuration_notifier& mac_notif_) :
 /// - The UE has no DL or UL HARQ awaiting an ACK.
 static bool is_ue_ready_for_removal(ue& u)
 {
-  // Ensure DL SRB data is flushed.
-  for (lcid_t lcid : {LCID_SRB0, LCID_SRB1, LCID_SRB2}) {
-    if (u.has_pending_dl_newtx_bytes(lcid)) {
-      return false;
-    }
-  }
-
+  // Ensure that there no currently active HARQs.
   unsigned nof_ue_cells = u.nof_cells();
   for (unsigned cell_idx = 0; cell_idx != nof_ue_cells; ++cell_idx) {
     ue_cell& c = u.get_cell((ue_cell_index_t)cell_idx);
