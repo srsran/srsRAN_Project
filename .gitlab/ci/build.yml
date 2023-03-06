@@ -93,6 +93,7 @@ stages:
         echo "${BUILD_CMD}"
         echo "============================================================================================="
         $BUILD_CMD
+        cd build && ninja install && cd ..
       }
     - |
       launch_tests() {
@@ -587,7 +588,7 @@ avx2 [asan]:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     OS: ubuntu-22.04
-    TEST_MODE: none
+    TEST_MODE: asan
     COMPILER: gcc
     BUILD_TYPE: Debug
     ENABLE_ASAN: "True"
