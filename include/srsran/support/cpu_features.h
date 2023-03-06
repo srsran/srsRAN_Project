@@ -34,10 +34,10 @@ enum class cpu_feature {
   /// CPU supports fused multiply-add (FMA). This refers to FMA3 supported by GCC via "-mfma" flag.
   fma,
 #endif // __x86_64__
-#ifdef __arm__
+#ifdef __aarch64__
   /// CPU supports NEON.
   neon,
-#endif // __arm__
+#endif // __aarch64__
 };
 
 constexpr const char* to_string(cpu_feature feature)
@@ -59,10 +59,10 @@ constexpr const char* to_string(cpu_feature feature)
     case cpu_feature::fma:
       return "fma";
 #endif // __x86_64__
-#ifdef __arm__
+#ifdef __aarch64__
     case cpu_feature::neon:
       return "neon";
-#endif // __arm__
+#endif // __aarch64__
   }
   return "invalid_cpu_feature";
 }
@@ -115,11 +115,11 @@ static const std::vector<cpu_feature> cpu_features_included = {{
 #endif // HAVE_FMA
     cpu_feature::pclmul,
 #endif // __x86_64__
-#ifdef __arm__
+#ifdef __aarch64__
 #ifdef HAVE_NEON
     cpu_feature::neon,
 #endif // HAVE_NEON
-#endif // __arm__
+#endif // __aarch64__
 }};
 
 inline std::string get_cpu_feature_info()
@@ -130,9 +130,9 @@ inline std::string get_cpu_feature_info()
     format_to(
         buffer, "{}{}{}", buffer.size() == 0 ? "" : " ", feature, cpu_supports_feature(feature) ? "(ok)" : "(na)");
 #endif // __x86_64__
-#ifdef __arm__
+#ifdef __aarch64__
     format_to(buffer, "{}{}", buffer.size() == 0 ? "" : " ", feature);
-#endif // __arm__
+#endif // __aarch64__
   }
   return std::string{srsran::to_c_str(buffer)};
 }
