@@ -27,6 +27,8 @@ class radio_session_uhd_impl : public radio_session,
                                private baseband_gateway_receiver
 {
 private:
+  /// Wait at most 1s for external clock locking.
+  static constexpr int CLOCK_TIMEOUT_MS = 1000;
   /// Defines the start stream command delay in seconds.
   static constexpr double START_STREAM_DELAY_S = 0.1;
   /// Enumerates possible UHD session states.
@@ -60,12 +62,11 @@ private:
   bool set_time_to_gps_time();
 
   /// \brief Waits for a sensor to be locked.
-  /// \param[out] is_locked Indicates if the sensor is locked by the time the method returns.
   /// \param[in] sensor_name Indicates the sensor name.
   /// \param[in] is_mboard Indicates if the sensor is from the motherboard or daughterboard.
   /// \param[in] timeout Indicates the amount of time to wait.
-  /// \return True if no exception is caught. Otherwise false.
-  bool wait_sensor_locked(bool& is_locked, const std::string& sensor_name, bool is_mboard, int timeout);
+  /// \return True if sensor is found and locked. Otherwise false.
+  bool wait_sensor_locked(const std::string& sensor_name, bool is_mboard, int timeout);
 
   /// \brief Set transmission gain from the class itself.
   /// \param[in] port_idx Indicates the port index.
