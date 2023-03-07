@@ -152,8 +152,8 @@ du_high_test_bench::~du_high_test_bench()
 
 bool du_high_test_bench::run_until(unique_function<bool()> condition)
 {
-  const unsigned MAX_COUNT = 1000;
-  for (unsigned count = 0; count != MAX_COUNT; ++count) {
+  const unsigned MAX_SLOT_COUNT = 1000;
+  for (unsigned count = 0; count != MAX_SLOT_COUNT; ++count) {
     if (condition()) {
       return true;
     }
@@ -178,12 +178,21 @@ bool du_high_test_bench::add_ue(rnti_t rnti)
 
 void du_high_test_bench::run_slot()
 {
+  // Signal slot indication to l2.
   du_obj.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_slot);
 
-  // Need to yield control of main thread.
-  std::this_thread::sleep_for(std::chrono::milliseconds{1});
+  // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test main
+  // thread).
+  const unsigned                       MAX_COUNT = 1000;
+  const optional<mac_dl_sched_result>& dl_result = phy.cell.last_dl_res;
+  for (unsigned count = 0; count < MAX_COUNT and (not dl_result.has_value() or dl_result->slot != next_slot); ++count) {
+    // Process tasks dispatched to the test main thread (e.g. L2 slot result)
+    workers.test_worker.run_pending_tasks();
 
-  workers.test_worker.run_pending_tasks();
+    // Wait for tasks to arrive to test thread.
+    std::this_thread::sleep_for(std::chrono::milliseconds{1});
+  }
+  EXPECT_TRUE(dl_result.has_value() and dl_result->slot == next_slot);
 
   ++next_slot;
 }

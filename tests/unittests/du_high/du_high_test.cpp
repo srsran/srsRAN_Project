@@ -70,7 +70,7 @@ TEST_F(du_high_tester, when_ue_context_release_received_then_ue_gets_deleted)
     for (const pucch_info& pucch : this->phy.cell.last_ul_res->ul_res->pucchs) {
       if (pucch.format == srsran::pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) {
         mac_uci_indication_message uci_msg;
-        uci_msg.sl_rx = next_slot - 1;
+        uci_msg.sl_rx = this->phy.cell.last_ul_res->slot;
         uci_msg.ucis  = {mac_uci_pdu{
              .rnti = to_rnti(0x4601),
              .pdu  = mac_uci_pdu::pucch_f0_or_f1_type{.harq_info = mac_uci_pdu::pucch_f0_or_f1_type::harq_information{
