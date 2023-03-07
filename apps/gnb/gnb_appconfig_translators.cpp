@@ -151,7 +151,7 @@ std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config
     // TX discard timer
     out_pdcp.drb->discard_timer = pdcp_discard_timer{};
     if (!from_number(out_pdcp.drb->discard_timer.value(), qos.pdcp.tx.discard_timer)) {
-      report_error("Invalid PDCP Discard timer: 5QI {} discard_timer {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
+      report_error("Invalid PDCP discard timer. 5QI {} discard_timer {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
     }
 
     // TX status report required
@@ -163,9 +163,8 @@ std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config
     // RX t-Reordering
     out_pdcp.t_reordering = pdcp_t_reordering{};
     if (!from_number(out_pdcp.drb->discard_timer.value(), qos.pdcp.tx.discard_timer)) {
-      report_error("Invalid PDCP Discard timer: 5QI {} discard_timer {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
+      report_error("Invalid PDCP t-Reordering. 5QI {} t-Reordering {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
     }
-    // out_pdcp.t_reordering = qos.pdcp.rx.t_reordering;
   }
   return out_cfg;
 }

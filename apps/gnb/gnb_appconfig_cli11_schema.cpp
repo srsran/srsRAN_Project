@@ -335,7 +335,8 @@ static void configure_cli11_pdcp_rx_args(CLI::App& app, pdcp_rx_appconfig& pdcp_
 {
   app.add_option("--sn", pdcp_rx_params.sn_field_length, "PDCP RX SN size")->capture_default_str();
   app.add_option("--t_reordering", pdcp_rx_params.t_reordering, "PDCP RX t-Reordering (ms)")->capture_default_str();
-  app.add_option("--out_of_order_delivery", pdcp_rx_params.out_of_order_delivery, "PDCP TX status report required")
+  app.add_option(
+         "--out_of_order_delivery", pdcp_rx_params.out_of_order_delivery, "PDCP RX enable out-of-order delivery")
       ->capture_default_str();
 }
 

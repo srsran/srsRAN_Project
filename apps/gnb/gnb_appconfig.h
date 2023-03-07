@@ -182,11 +182,11 @@ struct pdcp_rx_appconfig {
 struct pdcp_tx_appconfig {
   uint16_t sn_field_length;        ///< Number of bits used for sequence number
   int32_t  discard_timer;          ///< Timer used to notify lower layers to discard PDUs (ms)
-  bool     status_report_required; ///< Wether PDCP status report is required
+  bool     status_report_required; ///< Whether PDCP status report is required
 };
 
 struct pdcp_appconfig {
-  bool              integrity_protection_required;
+  bool              integrity_protection_required; ///< Whether DRB integrity is required
   pdcp_tx_appconfig tx;
   pdcp_rx_appconfig rx;
 };

@@ -27,7 +27,7 @@ inline srs_cu_cp::cu_cp_configuration make_default_cu_cp_config()
   return cfg;
 }
 
-/// Generates default QoS configuration used by gNB DU. The default configuration should be valid.
+/// Generates default QoS configuration used by gNB CU-CP. The default configuration should be valid.
 inline std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_config_list()
 {
   std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> qos_list = {};
