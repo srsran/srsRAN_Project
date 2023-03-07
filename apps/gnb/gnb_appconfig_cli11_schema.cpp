@@ -100,6 +100,11 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
   app.add_option("--bind_addr", amf_params.bind_addr, "Local IP address to bind for AMF connection")
       ->check(CLI::ValidIPV4);
+  app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
+  app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
+  app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
+  app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
+  app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
 }
 
 static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& rf_driver_params)

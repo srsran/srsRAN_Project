@@ -40,7 +40,6 @@ bool sctp_network_gateway_impl::set_sockopts()
   if (config.rx_timeout_sec > 0) {
     if (not set_receive_timeout(config.rx_timeout_sec)) {
       logger.error("Couldn't set receive timeout for socket");
-
       return false;
     }
   }
@@ -86,7 +85,7 @@ bool sctp_network_gateway_impl::set_receive_timeout(unsigned rx_timeout_sec)
   tv.tv_sec  = rx_timeout_sec;
   tv.tv_usec = 0;
 
-  if (::setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv)) {
+  if (::setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) != 0) {
     logger.error("Couldn't set receive timeout for socket: {}", strerror(errno));
     return false;
   }
@@ -97,7 +96,7 @@ bool sctp_network_gateway_impl::set_receive_timeout(unsigned rx_timeout_sec)
 bool sctp_network_gateway_impl::set_reuse_addr()
 {
   int one = 1;
-  if (::setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
+  if (::setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
     logger.error("Couldn't set reuseaddr for socket: {}", strerror(errno));
     return false;
   }

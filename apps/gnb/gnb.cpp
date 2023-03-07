@@ -89,15 +89,25 @@ static void populate_cli11_generic_args(CLI::App& app)
 static void compute_derived_args(const gnb_appconfig& gnb_params)
 {
   /// Simply set the respective values in the appconfig.
-  ngap_nw_config.connect_address   = gnb_params.amf_cfg.ip_addr;
-  ngap_nw_config.connect_port      = gnb_params.amf_cfg.port;
-  ngap_nw_config.bind_address      = gnb_params.amf_cfg.bind_addr;
-  ngap_nw_config.ppid              = NGAP_PPID;
-  ngap_nw_config.rto_initial       = 120;
-  ngap_nw_config.rto_min           = 120;
-  ngap_nw_config.rto_max           = 500;
-  ngap_nw_config.init_max_attempts = 3;
-  ngap_nw_config.max_init_timeo    = 500;
+  ngap_nw_config.connect_address = gnb_params.amf_cfg.ip_addr;
+  ngap_nw_config.connect_port    = gnb_params.amf_cfg.port;
+  ngap_nw_config.bind_address    = gnb_params.amf_cfg.bind_addr;
+  ngap_nw_config.ppid            = NGAP_PPID;
+  if (gnb_params.amf_cfg.sctp_rto_initial >= 0) {
+    ngap_nw_config.rto_initial = gnb_params.amf_cfg.sctp_rto_initial;
+  }
+  if (gnb_params.amf_cfg.sctp_rto_min >= 0) {
+    ngap_nw_config.rto_min = gnb_params.amf_cfg.sctp_rto_min;
+  }
+  if (gnb_params.amf_cfg.sctp_rto_max >= 0) {
+    ngap_nw_config.rto_max = gnb_params.amf_cfg.sctp_rto_max;
+  }
+  if (gnb_params.amf_cfg.sctp_init_max_attempts >= 0) {
+    ngap_nw_config.init_max_attempts = gnb_params.amf_cfg.sctp_init_max_attempts;
+  }
+  if (gnb_params.amf_cfg.sctp_max_init_timeo >= 0) {
+    ngap_nw_config.max_init_timeo = gnb_params.amf_cfg.sctp_max_init_timeo;
+  }
 }
 
 namespace {

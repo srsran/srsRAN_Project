@@ -198,9 +198,14 @@ struct qos_appconfig {
 };
 
 struct amf_appconfig {
-  std::string ip_addr   = "127.0.0.1";
-  uint16_t    port      = 38412;
-  std::string bind_addr = "127.0.0.1";
+  std::string ip_addr                = "127.0.0.1";
+  uint16_t    port                   = 38412;
+  std::string bind_addr              = "127.0.0.1";
+  int         sctp_rto_initial       = 120;
+  int         sctp_rto_min           = 120;
+  int         sctp_rto_max           = 500;
+  int         sctp_init_max_attempts = 3;
+  int         sctp_max_init_timeo    = 500;
 };
 
 struct log_appconfig {
