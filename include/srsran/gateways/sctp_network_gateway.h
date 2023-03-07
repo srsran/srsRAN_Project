@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/gateways/network_gateway.h"
 #include "srsran/srslog/srslog.h"
 #include <netdb.h>
@@ -26,7 +27,10 @@ struct sctp_network_gateway_config : common_network_gateway_config {
   std::string connect_address;
   int         connect_port = 0;
   int         ppid         = 0; /// the Payload Protocol Identifier
-  // TODO add SCTP specific options
+  // SCTP specific options
+  optional<int32_t> rto_max;
+  optional<int32_t> init_max_attempts;
+  optional<int32_t> max_init_timeo;
 };
 
 /// \brief Interface to inject PDUs into gateway entity.

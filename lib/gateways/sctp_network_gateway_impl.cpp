@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/sctp.h>
+#include <srsran/support/sockets.h>
 #include <unistd.h>
 
 #include <utility>
@@ -42,6 +43,16 @@ bool sctp_network_gateway_impl::set_sockopts()
 
       return false;
     }
+  }
+
+  // Set SRTO_MAX
+  if (not sctp_set_rto_opts(sock_fd, config.rto_max, logger)) {
+    return false;
+  }
+
+  // Set SCTP init options
+  if (not sctp_set_init_msg_opts(sock_fd, config.init_max_attempts, config.max_init_timeo, logger)) {
+    return false;
   }
 
   if (config.reuse_addr) {
@@ -271,10 +282,16 @@ bool sctp_network_gateway_impl::create_and_connect()
         result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
     logger.debug("Connecting to {} port {}", ip_addr, port_nr);
 
+    fmt::print("Connecting to {} port {}\n", ip_addr, port_nr);
+
+    std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::steady_clock::now();
     if (::connect(sock_fd, result->ai_addr, result->ai_addrlen) == -1) {
       // connection failed, try next address
       ret = errno;
       logger.debug("Failed to connect to {}:{} - {}", ip_addr, port_nr, strerror(ret));
+      std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
+      auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+      fmt::print("Failed to connect to {} port {}. Timeout={}ms\n", ip_addr, port_nr, now_ms.count());
       close_socket();
       continue;
     }

@@ -89,10 +89,13 @@ static void populate_cli11_generic_args(CLI::App& app)
 static void compute_derived_args(const gnb_appconfig& gnb_params)
 {
   /// Simply set the respective values in the appconfig.
-  ngap_nw_config.connect_address = gnb_params.amf_cfg.ip_addr;
-  ngap_nw_config.connect_port    = gnb_params.amf_cfg.port;
-  ngap_nw_config.bind_address    = gnb_params.amf_cfg.bind_addr;
-  ngap_nw_config.ppid            = NGAP_PPID;
+  ngap_nw_config.connect_address   = gnb_params.amf_cfg.ip_addr;
+  ngap_nw_config.connect_port      = gnb_params.amf_cfg.port;
+  ngap_nw_config.bind_address      = gnb_params.amf_cfg.bind_addr;
+  ngap_nw_config.ppid              = NGAP_PPID;
+  ngap_nw_config.rto_max           = 500;
+  ngap_nw_config.init_max_attempts = 3;
+  ngap_nw_config.max_init_timeo    = 500;
 }
 
 namespace {
