@@ -340,8 +340,10 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     case ue_id_idx_value_c::types_opts::idx_len10:
       info.ue_identity_index_value = msg->ue_id_idx_value->idx_len10().to_number();
       break;
-    default:
+    default: {
       logger.error("Paging UE Identity index type {} is not supported", msg->ue_id_idx_value->type().to_string());
+      return;
+    }
   }
   switch (msg->paging_id->type()) {
     case paging_id_c::types_opts::ran_ue_paging_id: {
@@ -354,8 +356,10 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
       info.paging_identity       = msg->paging_id->cn_ue_paging_id().five_g_s_tmsi().to_number();
       break;
     }
-    default:
+    default: {
       logger.error("Paging Identity type {} is not supported", msg->paging_id->type().to_string());
+      return;
+    }
   }
   if (msg->paging_drx_present) {
     switch (msg->paging_drx.value) {
