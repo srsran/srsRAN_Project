@@ -23,7 +23,7 @@ include:
   timeout: 4h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.21
+    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.23
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -48,9 +48,7 @@ include:
     - |
       cd tests/e2e
       export LOGNAME=$GITLAB_USER_LOGIN
-    - |
-      retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml \
-        "${PYTEST_ARGS}" --register-parameter ue.all.log_level=$LOG_LEVEL gnb.all.log_level=$LOG_LEVEL "${RETINA_ARGS}" -m "${MARKERS}" .
+    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$LOG_LEVEL gnb.all.log_level=$LOG_LEVEL "${RETINA_ARGS}"
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -91,7 +89,7 @@ zmq:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "zmq and multiue"
-    PYTEST_ARGS: "-n 2"
+    # PYTEST_ARGS: "-n 2"
     LOG_LEVEL: "info"
   needs:
     - job: "avx2 [basic]"
