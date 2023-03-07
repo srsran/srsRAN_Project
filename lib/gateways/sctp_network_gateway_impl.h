@@ -90,7 +90,6 @@ private:
   int                     server_ai_socktype = 0;
   int                     server_ai_protocol = 0;
 
-  unsigned ppi       = 0; /// the Payload Protocol Identifier (e.g. 18 for S1AP)
   unsigned stream_no = 0; /// the stream number to use for sending
 };
 

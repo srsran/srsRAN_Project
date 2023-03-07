@@ -546,7 +546,7 @@ void sctp_network_gateway_impl::handle_pdu(const byte_buffer& pdu)
                                 pdu_span.size_bytes(),
                                 (struct sockaddr*)&server_addr,
                                 server_addrlen,
-                                ppi,
+                                htonl(config.ppid),
                                 0,
                                 stream_no,
                                 0,
