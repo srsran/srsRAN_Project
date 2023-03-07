@@ -14,6 +14,7 @@
 #include "ldpc_decoder_avx512.h"
 #include "ldpc_graph_impl.h"
 #include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;
@@ -55,24 +56,35 @@ void ldpc_decoder_avx512::load_soft_bits(span<const log_likelihood_ratio> llrs)
     std::memset(tmp.data_at(0), 0, max_nof_connections);
   }
 
-  // Compute the number of data nodes occupied by the llrs.
-  unsigned nof_useful_nodes = divide_ceil(llrs.size(), lifting_size) + 2;
+  // Compute the number of data nodes fully occupied by the LLRs.
+  unsigned nof_full_nodes = (llrs.size() / lifting_size) + 2;
 
-  // Copy input llrs and organize them by nodes.
-  const log_likelihood_ratio* llr_ptr = llrs.data();
+  // Total node size in memory.
+  unsigned node_size = node_size_avx512 * AVX512_SIZE_BYTE;
+
   // Recall that the first 2 * lifting_size bits (2 nodes) are not transmitted.
-  std::memset(soft_bits.data_at(0), 0, 2 * node_size_avx512 * AVX512_SIZE_BYTE);
-  for (unsigned i_node = 2 * node_size_avx512, max_node = nof_useful_nodes * node_size_avx512; i_node != max_node;
+  span<log_likelihood_ratio> zero_nodes(reinterpret_cast<log_likelihood_ratio*>(soft_bits.data_at(0)), 2 * node_size);
+  srsvec::zero(zero_nodes);
+
+  // Copy input LLRs and organize them by nodes.
+  for (unsigned i_node = 2 * node_size_avx512, max_node = nof_full_nodes * node_size_avx512; i_node != max_node;
        i_node += node_size_avx512) {
-    std::memcpy(soft_bits.data_at(i_node), llr_ptr, lifting_size);
-    llr_ptr += lifting_size;
+    span<log_likelihood_ratio> node(reinterpret_cast<log_likelihood_ratio*>(soft_bits.data_at(i_node)), node_size);
+    srsvec::copy(node.first(lifting_size), llrs.first(lifting_size));
+    llrs = llrs.last(llrs.size() - lifting_size);
   }
 
-  // The length of llrs may not be an exact multiple of the lifting size.
-  unsigned tail_positions = llrs.size() % lifting_size;
-  if (tail_positions != 0) {
-    std::memset(
-        soft_bits.data_at((nof_useful_nodes - 1) * node_size_avx512, tail_positions), 0, lifting_size - tail_positions);
+  // The length of LLRs may not be an exact multiple of the lifting size.
+  if (!llrs.empty()) {
+    // Select a view of the remaining node.
+    span<log_likelihood_ratio> remaining_node(
+        reinterpret_cast<log_likelihood_ratio*>(soft_bits.data_at(nof_full_nodes * node_size_avx512)), node_size);
+
+    // Copy the remaining LLRs.
+    srsvec::copy(remaining_node.first(llrs.size()), llrs);
+
+    // Zero the rest of LLRs.
+    srsvec::zero(remaining_node.subspan(llrs.size(), lifting_size - llrs.size()));
   }
 }
 
