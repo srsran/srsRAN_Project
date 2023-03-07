@@ -478,6 +478,7 @@ int main(int argc, char** argv)
 
   // Create console helper object for commands and metrics printing.
   gnb_console_helper console(*epoll_broker);
+  console.on_app_starting();
 
   // Create NGAP adapter.
   std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
@@ -525,8 +526,6 @@ int main(int argc, char** argv)
   // attach E1AP adapters to CU-UP and CU-CP
   e1ap_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1ap_message_handler(srsran::srs_cu_cp::uint_to_cu_up_index(0)));
   e1ap_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1ap_message_handler());
-
-  console.on_app_starting();
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
