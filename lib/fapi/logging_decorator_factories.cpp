@@ -17,7 +17,7 @@
 using namespace srsran;
 using namespace fapi;
 
-std::unique_ptr<slot_message_gateway> logging_slot_gateway_decorator_factory::create(slot_message_gateway& gateway)
+std::unique_ptr<slot_message_gateway> srsran::fapi::create_logging_slot_gateway(slot_message_gateway& gateway)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("FAPI", true);
   logger.set_level(srslog::basic_levels::debug);
@@ -26,7 +26,7 @@ std::unique_ptr<slot_message_gateway> logging_slot_gateway_decorator_factory::cr
 }
 
 std::unique_ptr<slot_data_message_notifier>
-logging_slot_data_notifier_decorator_factory::create(slot_data_message_notifier& notifier)
+srsran::fapi::create_logging_slot_data_notifier(slot_data_message_notifier& notifier)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("FAPI", true);
   logger.set_level(srslog::basic_levels::debug);
@@ -35,7 +35,7 @@ logging_slot_data_notifier_decorator_factory::create(slot_data_message_notifier&
 }
 
 std::unique_ptr<slot_time_message_notifier>
-logging_slot_time_notifier_decorator_factory::create(slot_time_message_notifier& notifier)
+srsran::fapi::create_logging_slot_time_notifier(slot_time_message_notifier& notifier)
 {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("FAPI", true);
   logger.set_level(srslog::basic_levels::debug);

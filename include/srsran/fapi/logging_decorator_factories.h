@@ -18,26 +18,14 @@
 namespace srsran {
 namespace fapi {
 
-/// Factory that builds logging slot gateway decorators.
-class logging_slot_gateway_decorator_factory
-{
-public:
-  std::unique_ptr<slot_message_gateway> create(slot_message_gateway& gateway);
-};
+/// Decorates the given slot message gateway with logging capabilities.
+std::unique_ptr<slot_message_gateway> create_logging_slot_gateway(slot_message_gateway& gateway);
 
-/// Factory that builds logging slot data notifier decorators.
-class logging_slot_data_notifier_decorator_factory
-{
-public:
-  std::unique_ptr<slot_data_message_notifier> create(slot_data_message_notifier& notifier);
-};
+/// Decorates the given slot data notifier with logging capabilities.
+std::unique_ptr<slot_data_message_notifier> create_logging_slot_data_notifier(slot_data_message_notifier& notifier);
 
-/// Factory that builds logging slot time notifier decorators.
-class logging_slot_time_notifier_decorator_factory
-{
-public:
-  std::unique_ptr<slot_time_message_notifier> create(slot_time_message_notifier& notifier);
-};
+/// Decorates the given slot time notifier with logging capabilities.
+std::unique_ptr<slot_time_message_notifier> create_logging_slot_time_notifier(slot_time_message_notifier& notifier);
 
 } // namespace fapi
 } // namespace srsran
