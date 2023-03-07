@@ -17,6 +17,33 @@
 namespace srsran {
 namespace srs_du {
 
+struct phy_cell_test_dummy : public mac_cell_result_notifier {
+public:
+  explicit phy_cell_test_dummy(task_executor& exec_);
+  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
+  void on_new_downlink_data(const mac_dl_data_result& dl_data) override;
+  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override;
+  void on_cell_results_completion(slot_point slot) override;
+
+  optional<mac_dl_sched_result> last_dl_res;
+  optional<mac_dl_data_result>  last_dl_data;
+  optional<mac_ul_sched_result> last_ul_res;
+
+private:
+  task_executor&                test_exec;
+  optional<mac_dl_sched_result> cached_dl_res;
+  optional<mac_dl_data_result>  cached_dl_data;
+  optional<mac_ul_sched_result> cached_ul_res;
+};
+
+struct phy_test_dummy : public mac_result_notifier {
+public:
+  phy_test_dummy(task_executor& exec_) : cell(exec_) {}
+
+  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
+  phy_cell_test_dummy       cell;
+};
+
 class dummy_f1ap_tx_pdu_notifier : public f1ap_message_notifier
 {
 public:

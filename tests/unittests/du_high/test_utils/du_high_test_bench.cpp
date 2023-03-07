@@ -33,6 +33,32 @@ mac_rx_data_indication srsran::srs_du::create_ccch_message(slot_point sl_rx, rnt
       {mac_rx_pdu{rnti, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}};
 }
 
+phy_cell_test_dummy::phy_cell_test_dummy(task_executor& exec_) : test_exec(exec_) {}
+
+void phy_cell_test_dummy::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
+{
+  cached_dl_res = dl_res;
+}
+
+void phy_cell_test_dummy::on_new_downlink_data(const mac_dl_data_result& dl_data)
+{
+  cached_dl_data = dl_data;
+}
+
+void phy_cell_test_dummy::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
+{
+  cached_ul_res = ul_res;
+}
+
+void phy_cell_test_dummy::on_cell_results_completion(slot_point slot)
+{
+  test_exec.execute([this, dl_res_copy = cached_dl_res, dl_data_copy = cached_dl_data, ul_res_copy = cached_ul_res]() {
+    last_dl_res  = dl_res_copy;
+    last_dl_data = dl_data_copy;
+    last_ul_res  = ul_res_copy;
+  });
+}
+
 dummy_f1ap_tx_pdu_notifier::dummy_f1ap_tx_pdu_notifier(task_executor& test_exec_) :
   test_exec(test_exec_), logger{srslog::fetch_basic_logger("TEST")}
 {
@@ -72,6 +98,7 @@ static void init_loggers()
 
 du_high_test_bench::du_high_test_bench() :
   cu_notifier(workers.test_worker),
+  phy(workers.test_worker),
   du_obj([this]() {
     init_loggers();
 
