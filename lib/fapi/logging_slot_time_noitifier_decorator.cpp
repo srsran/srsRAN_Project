@@ -7,7 +7,9 @@
  * the distribution.
  *
  */
+
 #include "logging_slot_time_noitifier_decorator.h"
+#include "message_loggers.h"
 
 using namespace srsran;
 using namespace fapi;

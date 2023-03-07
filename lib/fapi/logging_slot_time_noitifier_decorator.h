@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/fapi/message_loggers.h"
 #include "srsran/fapi/slot_time_message_notifier.h"
 #include "srsran/srslog/srslog.h"
 

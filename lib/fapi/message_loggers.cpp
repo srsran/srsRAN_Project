@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/fapi/message_loggers.h"
+#include "message_loggers.h"
 #include "srsran/fapi/messages.h"
 #include "srsran/support/format_utils.h"
 
