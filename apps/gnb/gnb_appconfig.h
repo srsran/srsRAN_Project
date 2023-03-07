@@ -192,7 +192,7 @@ struct log_appconfig {
   std::string du_level    = "warning";
   std::string cu_level    = "warning";
   std::string phy_level   = "warning";
-  std::string radio_level = "warning";
+  std::string radio_level = "info";
   std::string mac_level   = "warning";
   std::string rlc_level   = "warning";
   std::string f1u_level   = "warning";

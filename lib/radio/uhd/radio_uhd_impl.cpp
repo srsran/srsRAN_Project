@@ -251,6 +251,11 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     return;
   }
 
+  // Validate USRP connection.
+  if (!device.is_connection_valid()) {
+    return;
+  }
+
   static const std::set<radio_uhd_device_type::types> automatic_mcr_devices = {radio_uhd_device_type::types::B2xx};
   if (automatic_mcr_devices.count(device.get_type())) {
     if (!device.set_automatic_master_clock_rate(radio_config.sampling_rate_hz)) {
@@ -310,6 +315,14 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   std::vector<radio_uhd_tx_stream::stream_description> tx_stream_description_list;
   std::vector<radio_uhd_rx_stream::stream_description> rx_stream_description_list;
 
+  // Force OTW format if it is set to default, the device is a B2xx and the total sampling rate exceeds 30.72MHz.
+  radio_configuration::over_the_wire_format otw_format = radio_config.otw_format;
+  if ((otw_format == radio_configuration::over_the_wire_format::DEFAULT) &&
+      (device.get_type() == radio_uhd_device_type::types::B2xx) &&
+      (radio_config.rx_streams.size() * sampling_rate_hz > 30.72)) {
+    otw_format = radio_configuration::over_the_wire_format::SC12;
+  }
+
   // For each transmit stream, create stream and configure RF ports.
   for (unsigned stream_idx = 0; stream_idx != radio_config.tx_streams.size(); ++stream_idx) {
     // Select stream.
@@ -318,7 +331,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     // Prepare stream description.
     radio_uhd_tx_stream::stream_description stream_description = {};
     stream_description.id                                      = stream_idx;
-    stream_description.otw_format                              = radio_config.otw_format;
+    stream_description.otw_format                              = otw_format;
     stream_description.srate_hz                                = radio_config.sampling_rate_hz;
     stream_description.args                                    = stream.args;
 
@@ -368,7 +381,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     // Prepare stream description.
     radio_uhd_rx_stream::stream_description stream_description = {};
     stream_description.id                                      = stream_idx;
-    stream_description.otw_format                              = radio_config.otw_format;
+    stream_description.otw_format                              = otw_format;
     stream_description.args                                    = stream.args;
 
     // Setup ports.

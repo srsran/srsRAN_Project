@@ -139,6 +139,24 @@ public:
 
     return safe_execution([this, &device_addr]() { usrp = uhd::usrp::multi_usrp::make(device_addr); });
   }
+  bool is_connection_valid()
+  {
+    // If the device is a B2xx, check if the USB is version 3.
+    if (type == radio_uhd_device_type::types::B2xx) {
+      // Get USB version.
+      unsigned usb_version = 0;
+      bool     success     = safe_execution(
+          [this, &usb_version]() { usb_version = usrp->get_tree()->access<unsigned>("/mboards/0/usb_version").get(); });
+
+      // The USB version is invalid if the USB version is accessed successfully and the version is not 3.
+      if (success && (usb_version != 3)) {
+        fmt::print("USRP operating over USB version {}, USB 3 is required.\n", usb_version);
+        return false;
+      }
+    }
+
+    return true;
+  }
   radio_uhd_device_type get_type() const { return type; }
   bool                  get_mboard_sensor_names(std::vector<std::string>& sensors)
   {
