@@ -252,7 +252,9 @@ bool sctp_network_gateway_impl::create_and_connect()
     return false;
   }
 
-  struct addrinfo* result;
+  fmt::print("Connecting to AMF on {}:{}\n", config.connect_address.c_str(), connect_port.c_str());
+  std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::steady_clock::now();
+  struct addrinfo*                                   result;
   for (result = results; result != nullptr; result = result->ai_next) {
     // create SCTP socket
     sock_fd = ::socket(result->ai_family, result->ai_socktype, result->ai_protocol);
@@ -281,16 +283,10 @@ bool sctp_network_gateway_impl::create_and_connect()
         result->ai_addr, result->ai_addrlen, ip_addr, NI_MAXHOST, port_nr, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
     logger.debug("Connecting to {} port {}", ip_addr, port_nr);
 
-    fmt::print("Connecting to {} port {}\n", ip_addr, port_nr);
-
-    std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::steady_clock::now();
     if (::connect(sock_fd, result->ai_addr, result->ai_addrlen) == -1) {
       // connection failed, try next address
       ret = errno;
       logger.debug("Failed to connect to {}:{} - {}", ip_addr, port_nr, strerror(ret));
-      std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
-      auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-      fmt::print("Failed to connect to {} port {}. Timeout={}ms\n", ip_addr, port_nr, now_ms.count());
       close_socket();
       continue;
     }
@@ -319,16 +315,20 @@ bool sctp_network_gateway_impl::create_and_connect()
   freeaddrinfo(results);
 
   if (sock_fd == -1) {
-    fmt::print("Failed to connect {} socket to {}:{}. {}\n",
+    std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
+    auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    fmt::print("Failed to connect {} socket to {}:{}. error=\"{}\" timeout={}ms\n",
                ipproto_to_string(hints.ai_protocol),
                config.connect_address,
                config.connect_port,
-               strerror(ret));
-    logger.error("Failed to connect {} socket to {}:{}. {}",
+               strerror(ret),
+               now_ms.count());
+    logger.error("Failed to connect {} socket to {}:{}. error=\"{}\" timeout={}ms",
                  ipproto_to_string(hints.ai_protocol),
                  config.connect_address,
                  config.connect_port,
-                 strerror(ret));
+                 strerror(ret),
+                 now_ms.count());
     return false;
   }
 
