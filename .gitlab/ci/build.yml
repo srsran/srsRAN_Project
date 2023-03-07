@@ -45,7 +45,7 @@ stages:
     ENABLE_EXPORT: "" # Empty for cmake default
     ENABLE_FFTW: "" # Empty for cmake default
     ENABLE_UHD: "" # Empty for cmake default
-    ENABLE_ZERO_MQ: "" # Empty for cmake default
+    ENABLE_ZEROMQ: "True" # Empty for cmake default
     ENABLE_ASAN: "" # Empty for cmake default
     ENABLE_TSAN: "" # Empty for cmake default
     ENABLE_GCOV: "" # Empty for cmake default
@@ -79,8 +79,8 @@ stages:
         if [ -n "${ENABLE_UHD}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DENABLE_UHD=${ENABLE_UHD}"
         fi
-        if [ -n "${ENABLE_ZERO_MQ}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} -DENABLE_ZERO_MQ=${ENABLE_ZERO_MQ}"
+        if [ -n "${ENABLE_ZEROMQ}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} -DENABLE_ZEROMQ=${ENABLE_ZEROMQ}"
         fi
         if [ -n "${ENABLE_ASAN}" ]; then
           BUILD_ARGS="${BUILD_ARGS} -DENABLE_ASAN=${ENABLE_ASAN}"
