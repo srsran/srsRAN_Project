@@ -28,6 +28,8 @@ struct sctp_network_gateway_config : common_network_gateway_config {
   int         connect_port = 0;
   int         ppid         = 0; /// the Payload Protocol Identifier
   // SCTP specific options
+  optional<int32_t> rto_initial;
+  optional<int32_t> rto_min;
   optional<int32_t> rto_max;
   optional<int32_t> init_max_attempts;
   optional<int32_t> max_init_timeo;

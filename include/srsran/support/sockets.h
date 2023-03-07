@@ -24,9 +24,13 @@ namespace srsran {
 
 /// Modify SCTP default parameters for quicker detection of broken links.
 /// Changes to the maximum re-transmission timeout (rto_max).
-bool sctp_set_rto_opts(int fd, optional<int> rto_max, srslog::basic_logger& logger)
+inline bool sctp_set_rto_opts(int                   fd,
+                              optional<int>         rto_initial,
+                              optional<int>         rto_min,
+                              optional<int>         rto_max,
+                              srslog::basic_logger& logger)
 {
-  if (not rto_max.has_value()) {
+  if (not rto_initial.has_value() && not rto_min.has_value() && not rto_max.has_value()) {
     // no need to set RTO
     return true;
   }
@@ -37,17 +41,19 @@ bool sctp_set_rto_opts(int fd, optional<int> rto_max, srslog::basic_logger& logg
   rto_opts.srto_assoc_id = 0;
   if (getsockopt(fd, SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz) < 0) {
     logger.error("Error getting RTO_INFO sockopts.", strerror(errno));
-    ::close(fd);
-    return false;
+    return false; // Responsibility of closing the socket is on the caller
   }
 
-  rto_opts.srto_min     = 120;
-  rto_opts.srto_max     = rto_max.value();
-  rto_opts.srto_initial = 120;
+  if (rto_initial.has_value()) {
+    rto_opts.srto_initial = rto_initial.value();
+  }
+  if (rto_min.has_value()) {
+    rto_opts.srto_min = rto_min.value();
+  }
+  if (rto_max.has_value()) {
+    rto_opts.srto_max = rto_max.value();
+  }
 
-  /*fmt::print("Setting RTO_INFO options on SCTP socket. Association {}, Initial RTO {}, Minimum RTO {}, Maximum RTO
-     {}", rto_opts.srto_assoc_id, rto_opts.srto_initial, rto_opts.srto_min, rto_opts.srto_max);
-  */
   logger.debug(
       "Setting RTO_INFO options on SCTP socket. Association {}, Initial RTO {}, Minimum RTO {}, Maximum RTO {}",
       rto_opts.srto_assoc_id,
@@ -57,8 +63,7 @@ bool sctp_set_rto_opts(int fd, optional<int> rto_max, srslog::basic_logger& logg
 
   if (::setsockopt(fd, SOL_SCTP, SCTP_RTOINFO, &rto_opts, rto_sz) < 0) {
     logger.error("Error setting RTO_INFO sockopts. errno={}", strerror(errno));
-    close(fd);
-    return false;
+    return false; // Responsibility of closing the socket is on the caller
   }
   return true;
 }
@@ -81,8 +86,7 @@ inline bool sctp_set_init_msg_opts(int                   fd,
   socklen_t    init_sz   = sizeof(sctp_initmsg);
   if (getsockopt(fd, SOL_SCTP, SCTP_INITMSG, &init_opts, &init_sz) < 0) {
     logger.error("Error getting sockopts. errno={}", strerror(errno));
-    close(fd);
-    return false;
+    return false; // Responsibility of closing the socket is on the caller
   }
 
   if (init_max_attempts.has_value()) {
@@ -92,17 +96,12 @@ inline bool sctp_set_init_msg_opts(int                   fd,
     init_opts.sinit_max_init_timeo = max_init_timeo.value();
   }
 
-  /*fmt::print("Setting SCTP_INITMSG options on SCTP socket. Max attempts {}, Max init attempts timeout {}\n",
-             init_opts.sinit_max_attempts,
-             init_opts.sinit_max_init_timeo);
-  */
-  logger.debug("Setting SCTP_INITMSG options on SCTP socket. Max attempts %d, Max init attempts timeout %d",
+  logger.debug("Setting SCTP_INITMSG options on SCTP socket. Max attempts {}, Max init attempts timeout {}",
                init_opts.sinit_max_attempts,
                init_opts.sinit_max_init_timeo);
   if (::setsockopt(fd, SOL_SCTP, SCTP_INITMSG, &init_opts, init_sz) < 0) {
     logger.error("Error setting SCTP_INITMSG sockopts. errno={}\n", strerror(errno));
-    close(fd);
-    return false;
+    return false; // Responsibility of closing the socket is on the caller
   }
   return true;
 }

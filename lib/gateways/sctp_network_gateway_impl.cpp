@@ -46,7 +46,7 @@ bool sctp_network_gateway_impl::set_sockopts()
   }
 
   // Set SRTO_MAX
-  if (not sctp_set_rto_opts(sock_fd, config.rto_max, logger)) {
+  if (not sctp_set_rto_opts(sock_fd, config.rto_initial, config.rto_min, config.rto_max, logger)) {
     return false;
   }
 
@@ -73,7 +73,7 @@ bool sctp_network_gateway_impl::subscripe_to_events()
   events.sctp_shutdown_event         = 1;
   events.sctp_association_event      = 1;
 
-  if (::setsockopt(sock_fd, IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events))) {
+  if (::setsockopt(sock_fd, IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof(events)) != 0) {
     logger.error("Subscribing to SCTP events failed: {}", strerror(errno));
     return false;
   }
