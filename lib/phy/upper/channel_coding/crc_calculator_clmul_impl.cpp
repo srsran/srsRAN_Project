@@ -10,6 +10,8 @@
 
 #include "crc_calculator_clmul_impl.h"
 #include "immintrin.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 
@@ -72,6 +74,17 @@ static inline __m128i crc32_reduce_128_to_64(__m128i data128, const __m128i k3_q
   return _mm_srli_si128(_mm_slli_si128(data128, 8), 8);
 }
 
+static inline __m128i mm_safe_load_si128(span<const uint8_t> data)
+{
+  alignas(64) std::array<uint8_t, 16> temp_data;
+  span<uint8_t>                       simd_data = temp_data;
+
+  srsvec::copy(simd_data.first(data.size()), data);
+  srsvec::zero(simd_data.last(16 - data.size()));
+
+  return _mm_load_si128(reinterpret_cast<const __m128i*>(simd_data.data()));
+}
+
 static inline uint32_t crc32_reduce_64_to_32(__m128i fold, const __m128i k3_q, const __m128i p_res)
 {
   __m128i temp;
@@ -82,15 +95,14 @@ static inline uint32_t crc32_reduce_64_to_32(__m128i fold, const __m128i k3_q, c
   return _mm_extract_epi32(_mm_xor_si128(temp, fold), 0);
 }
 
-static inline uint32_t
-crc32_calc_pclmulqdq(const uint8_t* data, uint32_t data_len, const crc_pclmulqdq_parameters& params)
+static inline uint32_t crc32_calc_pclmulqdq(span<const uint8_t> data, const crc_pclmulqdq_parameters& params)
 {
   // Add 4 bytes to data block size. This is to secure the following: CRC32 = M(X)^32 mod P(X) where M(X) is the message
   // to compute CRC on, and P(X) is the CRC polynomial.
-  data_len += 4;
+  uint32_t data_len = data.size() + 4;
 
   // Load first 16 data bytes in fold and set swap BE<->LE 16 byte conversion variable.
-  __m128i fold = _mm_loadu_si128(reinterpret_cast<const __m128i*>(data));
+  __m128i fold = mm_safe_load_si128(data.first(std::min(data.size(), 16UL)));
   __m128i swap = crc_xmm_be_le_swap128;
 
   // Folding all data into single 16 byte data block.
@@ -108,7 +120,7 @@ crc32_calc_pclmulqdq(const uint8_t* data, uint32_t data_len, const crc_pclmulqdq
     fold = _mm_shuffle_epi8(fold, swap);
 
     // Load next 16 bytes of data and adjust fold & next_data as follows: CONCAT(fold,next_data) >> (n*8)
-    __m128i next_data = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&data[16]));
+    __m128i next_data = mm_safe_load_si128(data.subspan(16, std::min(data.size() - 16UL, 16UL)));
     next_data         = _mm_shuffle_epi8(next_data, swap);
     next_data         = _mm_or_si128(xmm_shift_right(next_data, n), xmm_shift_left(fold, 16 - n));
     fold              = xmm_shift_right(fold, n);
@@ -156,11 +168,11 @@ crc32_calc_pclmulqdq(const uint8_t* data, uint32_t data_len, const crc_pclmulqdq
 crc_calculator_checksum_t crc_calculator_clmul_impl::calculate_byte(span<const uint8_t> data)
 {
   if (poly == crc_generator_poly::CRC24A) {
-    return crc32_calc_pclmulqdq(data.data(), data.size(), crc24A_ctx) >> 8U;
+    return crc32_calc_pclmulqdq(data, crc24A_ctx) >> 8U;
   }
 
   if (poly == crc_generator_poly::CRC24B) {
-    return crc32_calc_pclmulqdq(data.data(), data.size(), crc24B_ctx) >> 8U;
+    return crc32_calc_pclmulqdq(data, crc24B_ctx) >> 8U;
   }
 
   return crc_calc_lut.calculate_byte(data);
@@ -178,9 +190,9 @@ crc_calculator_checksum_t crc_calculator_clmul_impl::calculate(const bit_buffer&
 
   uint32_t crc;
   if (poly == crc_generator_poly::CRC24A) {
-    crc = crc32_calc_pclmulqdq(data.get_buffer().data(), nbytes, crc24A_ctx) >> 8U;
+    crc = crc32_calc_pclmulqdq(data.get_buffer().first(nbytes), crc24A_ctx) >> 8U;
   } else if (poly == crc_generator_poly::CRC24B) {
-    crc = crc32_calc_pclmulqdq(data.get_buffer().data(), nbytes, crc24B_ctx) >> 8U;
+    crc = crc32_calc_pclmulqdq(data.get_buffer().first(nbytes), crc24B_ctx) >> 8U;
   } else {
     crc = crc_calc_lut.calculate_byte(data.get_buffer().first(nbytes));
   }
