@@ -30,7 +30,10 @@ public:
   optional<mac_ul_sched_result> last_ul_res;
 
 private:
-  task_executor&                test_exec;
+  task_executor&  test_exec;
+  dl_sched_result last_dl_sched_res;
+  ul_sched_result last_ul_sched_res;
+
   optional<mac_dl_sched_result> cached_dl_res;
   optional<mac_dl_data_result>  cached_dl_data;
   optional<mac_ul_sched_result> cached_ul_res;
