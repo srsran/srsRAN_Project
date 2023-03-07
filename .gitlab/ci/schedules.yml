@@ -7,7 +7,7 @@
 #
 
 Nightly:
-  cron: "00 1 * * 1-6"
+  cron: "00 23 * * 0-5"
   cron_timezone: "Europe/Madrid"
   ref: dev
   active: true
