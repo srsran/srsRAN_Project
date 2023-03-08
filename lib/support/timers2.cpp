@@ -25,7 +25,7 @@ timer_manager2::timer_frontend::timer_frontend(timer_manager2& parent_, timer_id
 void timer_manager2::timer_frontend::destroy()
 {
   epoch.fetch_add(1, std::memory_order::memory_order_relaxed);
-  state = stopped;
+  state = state_t::stopped;
   parent.push_timer_command(cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::destroy});
 };
 
@@ -34,7 +34,7 @@ void timer_manager2::timer_frontend::set(timer_duration dur)
   srsran_assert(dur <= MAX_TIMER_DURATION, "Invalid timer duration ({}>{})", dur.count(), MAX_TIMER_DURATION.count());
   epoch.fetch_add(1, std::memory_order::memory_order_relaxed);
   duration = dur;
-  if (state == running) {
+  if (state == state_t::running) {
     // If we are setting the timer when it is already running, force run restart.
     parent.push_timer_command(
         cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::start, (unsigned)duration.count()});
@@ -50,20 +50,15 @@ void timer_manager2::timer_frontend::set(timer_duration dur, unique_function<voi
 void timer_manager2::timer_frontend::run()
 {
   epoch.fetch_add(1, std::memory_order::memory_order_relaxed);
-  state = running;
+  state = state_t::running;
   parent.push_timer_command(cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::start, (unsigned)duration.count()});
 }
 
 void timer_manager2::timer_frontend::stop()
 {
   epoch.fetch_add(1, std::memory_order::memory_order_relaxed);
-  state = stopped;
+  state = state_t::stopped;
   parent.push_timer_command(cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::stop});
-}
-
-bool timer_manager2::timer_handle::empty() const
-{
-  return frontend != nullptr and frontend->exec != nullptr;
 }
 
 // /////////////////////
@@ -75,7 +70,7 @@ timer_manager2::timer_manager2(size_t capacity) : time_wheel(WHEEL_SIZE)
   // Pre-reserve timers.
   while (timer_list.size() < capacity) {
     timer_list.emplace_back();
-    timer_list.back().frontend = std::make_unique<timer_frontend>(*this, next_timer_id++);
+    timer_list.back().frontend = std::make_unique<timer_frontend>(*this, (timer_id_t)next_timer_id++);
   }
 
   // Push to free list in reverse order to keep ascending ids.
@@ -97,7 +92,7 @@ void timer_manager2::tick_all()
   for (variant<cmd_t, std::unique_ptr<timer_frontend>>& event : cmds_to_process) {
     if (variant_holds_alternative<std::unique_ptr<timer_frontend>>(event)) {
       // New timer was created in the frontend.
-      create_timer_impl(std::move(variant_get<std::unique_ptr<timer_frontend>>(event)));
+      create_timer_handle(std::move(variant_get<std::unique_ptr<timer_frontend>>(event)));
       continue;
     }
 
@@ -109,13 +104,13 @@ void timer_manager2::tick_all()
     timer.backend.epoch = cmd.epoch;
 
     // Stop timer if it is currently running.
-    try_stop_timer_impl(timer, false);
+    try_stop_timer_backend(timer, false);
 
     if (cmd.action == cmd_t::start) {
       // Start new timer run.
-      start_timer_impl(timer, cmd.duration);
+      start_timer_backend(timer, cmd.duration);
     } else if (cmd.action == cmd_t::destroy) {
-      destroy_timer_impl(timer);
+      destroy_timer_backend(timer);
     }
   }
 
@@ -137,7 +132,7 @@ void timer_manager2::tick_all()
     }
 
     // Stop timer. Note: callback has to see the timer has already expired.
-    stop_timer_impl(timer, true);
+    stop_timer_backend(timer, true);
   }
 }
 
@@ -147,7 +142,7 @@ void timer_manager2::push_timer_command(cmd_t cmd)
   pending_cmds.emplace_back(cmd);
 }
 
-void timer_manager2::create_timer_impl(std::unique_ptr<timer_frontend> timer)
+void timer_manager2::create_timer_handle(std::unique_ptr<timer_frontend> timer)
 {
   srsran_assert(timer->id >= timer_list.size() or timer_list[timer->id].frontend == nullptr,
                 "Duplicate timer id detection");
@@ -157,20 +152,20 @@ void timer_manager2::create_timer_impl(std::unique_ptr<timer_frontend> timer)
   timer_list[timer->id].frontend = std::move(timer);
 }
 
-void timer_manager2::start_timer_impl(timer_handle& timer, unsigned duration)
+void timer_manager2::start_timer_backend(timer_handle& timer, unsigned duration)
 {
-  srsran_assert(timer.backend.state != running, "Invalid timer state");
+  srsran_assert(timer.backend.state != state_t::running, "Invalid timer state");
   srsran_assert(timer.frontend != nullptr, "Invalid timer state");
 
   timer.backend.timeout = cur_time + std::max(duration, 1U);
-  timer.backend.state   = running;
+  timer.backend.state   = state_t::running;
   time_wheel[timer.backend.timeout & WHEEL_MASK].push_front(&timer);
   nof_timers_running++;
 }
 
-bool timer_manager2::try_stop_timer_impl(timer_handle& timer, bool expiry_reason)
+bool timer_manager2::try_stop_timer_backend(timer_handle& timer, bool expiry_reason)
 {
-  if (timer.backend.state != running) {
+  if (timer.backend.state != state_t::running) {
     return false;
   }
 
@@ -179,7 +174,7 @@ bool timer_manager2::try_stop_timer_impl(timer_handle& timer, bool expiry_reason
   --nof_timers_running;
 
   // Update timer state in the backend.
-  timer.backend.state = expiry_reason ? expired : stopped;
+  timer.backend.state = expiry_reason ? state_t::expired : state_t::stopped;
 
   if (not expiry_reason) {
     // In case of stop command, no need to do any more actions. (stop is only set by timer frontend).
@@ -195,7 +190,7 @@ bool timer_manager2::try_stop_timer_impl(timer_handle& timer, bool expiry_reason
       // Note: Now that we are in the same execution context as the timer frontend, the frontend epoch is precise.
       if (frontend->epoch.load(std::memory_order_relaxed) == expiry_epoch) {
         // Update timer frontend state to expired.
-        frontend->state = expired;
+        frontend->state = state_t::expired;
 
         // Run callback if configured.
         if (not frontend->callback.is_empty()) {
@@ -207,29 +202,29 @@ bool timer_manager2::try_stop_timer_impl(timer_handle& timer, bool expiry_reason
   return true;
 }
 
-void timer_manager2::stop_timer_impl(timer_handle& timer, bool expiry_reason)
+void timer_manager2::stop_timer_backend(timer_handle& timer, bool expiry_reason)
 {
-  srsran_assert(timer.backend.state == running, "Stopping timer that was not running");
-  try_stop_timer_impl(timer, expiry_reason);
+  srsran_assert(timer.backend.state == state_t::running, "Stopping timer that was not running");
+  try_stop_timer_backend(timer, expiry_reason);
 }
 
-void timer_manager2::destroy_timer_impl(timer_handle& timer)
+void timer_manager2::destroy_timer_backend(timer_handle& timer)
 {
-  srsran_assert(timer.backend.state != running, "Destroying timer that is running not allowed");
+  srsran_assert(timer.backend.state != state_t::running, "Destroying timer that is running not allowed");
   // clear frontend (it is already released by unique_timer2).
-  timer.frontend->state    = stopped;
+  timer.frontend->state    = state_t::stopped;
   timer.frontend->duration = timer_manager2::INVALID_DURATION;
   timer.frontend->callback = {};
   timer.frontend->exec     = nullptr;
   // clear backend.
-  timer.backend.state   = stopped;
+  timer.backend.state   = state_t::stopped;
   timer.backend.timeout = 0;
   // Add timer handle in free list.
   std::lock_guard<std::mutex> lock(free_list_mutex);
   free_list.emplace_back(timer.frontend.get());
 }
 
-timer_manager2::timer_frontend& timer_manager2::create_timer(task_executor& exec)
+timer_manager2::timer_frontend& timer_manager2::create_frontend_timer(task_executor& exec)
 {
   // Allocate timer frontend with unique timer id.
   timer_id_t      id           = INVALID_TIMER_ID;
@@ -241,7 +236,7 @@ timer_manager2::timer_frontend& timer_manager2::create_timer(task_executor& exec
       free_list.pop_back();
     } else {
       // Need to allocate new timer.
-      id = next_timer_id++;
+      id = (timer_id_t)next_timer_id++;
     }
   }
 
@@ -257,6 +252,7 @@ timer_manager2::timer_frontend& timer_manager2::create_timer(task_executor& exec
       pending_cmds.emplace_back(std::move(new_handle));
     }
   } else {
+    srsran_assert(cached_timer->exec == nullptr, "Reassignment of timer detected");
     // Assign new executor to created timer.
     cached_timer->exec = &exec;
   }
@@ -266,7 +262,7 @@ timer_manager2::timer_frontend& timer_manager2::create_timer(task_executor& exec
 
 unique_timer2 timer_manager2::create_unique_timer(task_executor& exec)
 {
-  return unique_timer2(create_timer(exec));
+  return unique_timer2(create_frontend_timer(exec));
 }
 
 size_t timer_manager2::nof_timers() const
