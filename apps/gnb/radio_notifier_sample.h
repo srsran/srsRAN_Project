@@ -31,13 +31,20 @@ public:
       handler->on_radio_rt_event(description);
     }
 
-    static const auto& log_format = "Radio realtime event: Type={} Source={} Timestamp={}";
+    if (description.type == event_type::LATE or description.type == event_type::UNDERFLOW or
+        description.type == event_type::OVERFLOW) {
+      logger.warning("Real-time failure in RF: {}", description.type.to_string());
+    }
+
+    static const auto& log_format_debug = "Real-time failure in RF: Type={} Source={} Timestamp={}";
 
     if (description.timestamp.has_value()) {
-      logger.warning(
-          log_format, description.type.to_string(), description.source.to_string(), description.timestamp.value());
+      logger.debug(log_format_debug,
+                   description.type.to_string(),
+                   description.source.to_string(),
+                   description.timestamp.value());
     } else {
-      logger.warning(log_format, description.type.to_string(), description.source.to_string(), "na");
+      logger.debug(log_format_debug, description.type.to_string(), description.source.to_string(), "na");
     }
   }
 

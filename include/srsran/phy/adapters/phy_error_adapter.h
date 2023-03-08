@@ -25,13 +25,13 @@ private:
 
 public:
   /// Creates an adapter with the desired logging level.
-  phy_error_adapter(std::string log_level) : logger(srslog::fetch_basic_logger("Error notifier")) {}
+  phy_error_adapter(std::string log_level) : logger(srslog::fetch_basic_logger("Low-PHY")) {}
 
   // See interface for documentation.
   void on_late_resource_grid(const late_resource_grid_context& context) override
   {
     logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.info("Unavailable data to transmit for sector {}, slot {} and symbol {}.",
+    logger.info("Real-time failure in low-phy: Downlink data late for sector {}, slot {} and symbol {}.",
                 context.sector,
                 context.slot,
                 context.symbol);
@@ -41,7 +41,7 @@ public:
   void on_prach_request_late(const prach_buffer_context& context) override
   {
     logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.info("PRACH request late for sector {}, slot {} and start symbol {}.",
+    logger.info("Real-time failure in low-phy: PRACH request late for sector {}, slot {} and start symbol {}.",
                 context.sector,
                 context.slot,
                 context.start_symbol);
@@ -51,7 +51,7 @@ public:
   void on_prach_request_overflow(const prach_buffer_context& context) override
   {
     logger.set_context(context.slot.sfn(), context.slot.slot_index());
-    logger.info("PRACH request overflow for sector {}, slot {} and start symbol {}.",
+    logger.info("Real-time failure in low-phy: PRACH request overflow for sector {}, slot {} and start symbol {}.",
                 context.sector,
                 context.slot,
                 context.start_symbol);

@@ -181,12 +181,12 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
-    logger.warning(
-        "Received DL_TTI.request message out of time. Current slot is {}.{} while message corresponds to {}.{}",
-        current_slot_controller.get_slot().sfn(),
-        current_slot_controller.get_slot().slot_index(),
-        msg.sfn,
-        msg.slot);
+    logger.warning("Real-time failure in FAPI: Received late DL_TTI.request. Current slot is {}.{} while message "
+                   "corresponds to {}.{}",
+                   current_slot_controller.get_slot().sfn(),
+                   current_slot_controller.get_slot().slot_index(),
+                   msg.sfn,
+                   msg.slot);
     return;
   }
 
@@ -306,12 +306,12 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
-    logger.warning(
-        "Received UL_TTI.request message out of time. Current slot is {}.{} while message corresponds to {}.{}",
-        current_slot_controller.get_slot().sfn(),
-        current_slot_controller.get_slot().slot_index(),
-        msg.sfn,
-        msg.slot);
+    logger.warning("Real-time failure in FAPI: Received UL_TTI.request message out of time. Current slot is {}.{} "
+                   "while message corresponds to {}.{}",
+                   current_slot_controller.get_slot().sfn(),
+                   current_slot_controller.get_slot().slot_index(),
+                   msg.sfn,
+                   msg.slot);
     return;
   }
 
@@ -352,12 +352,12 @@ void fapi_to_phy_translator::ul_dci_request(const fapi::ul_dci_request_message& 
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
-    logger.warning(
-        "Received UL_DCI.request message out of time. Current slot is {}.{} while message corresponds to {}.{}",
-        current_slot_controller.get_slot().sfn(),
-        current_slot_controller.get_slot().slot_index(),
-        msg.sfn,
-        msg.slot);
+    logger.warning("Real-time failure in FAPI: Received late UL_DCI.request message. Current slot is {}.{} while "
+                   "message corresponds to {}.{}",
+                   current_slot_controller.get_slot().sfn(),
+                   current_slot_controller.get_slot().slot_index(),
+                   msg.sfn,
+                   msg.slot);
     return;
   }
 
@@ -386,12 +386,12 @@ void fapi_to_phy_translator::tx_data_request(const fapi::tx_data_request_message
 
   // Ignore messages that do not correspond to the current slot.
   if (!is_message_in_time(msg)) {
-    logger.warning(
-        "Received TX_Data.request message out of time. Current slot is {}.{} while message corresponds to {}.{}",
-        current_slot_controller.get_slot().sfn(),
-        current_slot_controller.get_slot().slot_index(),
-        msg.sfn,
-        msg.slot);
+    logger.warning("Real-time failure in FAPI: Received late TX_Data.request. Current slot is {}.{} while message "
+                   "corresponds to {}.{}",
+                   current_slot_controller.get_slot().sfn(),
+                   current_slot_controller.get_slot().slot_index(),
+                   msg.sfn,
+                   msg.slot);
     return;
   }
 
