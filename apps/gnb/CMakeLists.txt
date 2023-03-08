@@ -54,6 +54,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
         include_directories(${CMAKE_SOURCE_DIR}/external)
 
 else (ZEROMQ_FOUND OR UHD_FOUND)
-        message(WARNING "gNB application won't be built because no radio has been found. Please enable UHD or ZEROMQ to build gNB.")
+        message(WARNING "No radio driver found - gNB application will not be built. "
+                "Please install UHD or ZMQ to build gNB. See docs.srsran.com for details.")
 
 endif (ZEROMQ_FOUND OR UHD_FOUND)
