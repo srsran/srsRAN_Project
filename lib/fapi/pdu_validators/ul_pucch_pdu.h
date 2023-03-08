@@ -16,7 +16,7 @@ namespace fapi {
 struct ul_pucch_pdu;
 struct validator_report;
 
-/// Validate the given UL PUCCH PDU and returns true on success, otherwise false.
+/// Validates the given UL PUCCH PDU and returns true on success, otherwise false.
 bool validate_ul_pucch_pdu(const ul_pucch_pdu& pdu, validator_report& report);
 
 } // namespace fapi

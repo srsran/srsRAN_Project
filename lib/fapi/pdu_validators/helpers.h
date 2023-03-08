@@ -15,8 +15,10 @@
 namespace srsran {
 namespace fapi {
 
-/// Helper validation function. If the values are within the [min,max] range, returns true, otherwise returns false. If
-/// the validation fails, given report is filled.
+/// \brief Helper validation function.
+///
+/// If the value is within the [min, max] range, returns true, otherwise false. If the validation fails, the given
+/// report is filled.
 template <typename Integer>
 inline bool validate_field(Integer           min,
                            Integer           max,
@@ -36,8 +38,10 @@ inline bool validate_field(Integer           min,
   return false;
 }
 
-/// Helper validation function. If the values are within [min,max] range, returns true, otherwise returns false. If the
-/// validation fails, given report is filled.
+/// \brief Helper validation function.
+///
+/// If the value is within the [min, max] range, returns true, otherwise false. If the validation fails, the given
+/// report is filled.
 template <typename Integer>
 inline bool validate_field(Integer           min,
                            Integer           max,
@@ -56,8 +60,9 @@ inline bool validate_field(Integer           min,
   return false;
 }
 
-/// Helper validation function. If expected value matches value, returns true, otherwise returns false. If
-/// the validation fails, given report is filled.
+/// \brief Helper validation function.
+///
+/// If expected_value matches value, returns true, otherwise false. If the validation fails, the given report is filled.
 template <typename Integer>
 inline bool validate_field_eq(Integer           expected_value,
                               Integer           value,

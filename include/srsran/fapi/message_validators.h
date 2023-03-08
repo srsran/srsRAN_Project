@@ -57,7 +57,7 @@ error_type<validator_report> validate_ul_dci_request(const ul_dci_request_messag
 error_type<validator_report> validate_ul_tti_request(const ul_tti_request_message& msg);
 
 /// Logs the given validator report.
-void log_validator_report(const validator_report& report);
+void log_validator_report(const validator_report& report, srslog::basic_logger& logger);
 
 } // namespace fapi
 } // namespace srsran

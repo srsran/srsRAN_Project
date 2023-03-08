@@ -107,7 +107,7 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   };
 
 public:
-  explicit fapi_to_phy_translator(const fapi_to_phy_translator_config& config) :
+  explicit fapi_to_phy_translator(const fapi_to_phy_translator_config& config, srslog::basic_logger& logger_) :
     sector_id(config.sector_id),
     dl_processor_pool(*config.dl_processor_pool),
     dl_rg_pool(*config.dl_rg_pool),
@@ -120,9 +120,8 @@ public:
     scs_common(config.scs_common),
     prach_cfg(*config.prach_cfg),
     carrier_cfg(*config.carrier_cfg),
-    logger(srslog::fetch_basic_logger("FAPI", true))
+    logger(logger_)
   {
-    logger.set_level(srslog::basic_levels::info);
   }
 
   // See interface for documentation.

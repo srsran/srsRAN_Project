@@ -17,7 +17,10 @@ mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(fapi::slot_message_gateway&       m
                                              fapi::slot_last_message_notifier& last_msg_notifier,
                                              unsigned                          sector_id_,
                                              subcarrier_spacing                scs) :
-  sector_id(sector_id_), mac_translator(msg_gw, last_msg_notifier), fapi_data_translator(scs), fapi_time_translator(scs)
+  sector_id(sector_id_),
+  mac_translator(srslog::fetch_basic_logger("FAPI"), msg_gw, last_msg_notifier),
+  fapi_data_translator(scs),
+  fapi_time_translator(scs)
 {
   // :TODO: remove this when sector id is used (in logging)
   (void)(sector_id);

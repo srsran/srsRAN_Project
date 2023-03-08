@@ -35,7 +35,10 @@ public:
 /// actual data-specific notifier, which will be later set up through the \ref set_slot_data_message_notifier() method.
 static slot_data_message_notifier_dummy dummy_data_notifier;
 
-phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator() : data_notifier(dummy_data_notifier) {}
+phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator(srslog::basic_logger& logger_) :
+  logger(logger_), data_notifier(dummy_data_notifier)
+{
+}
 
 void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_results& result)
 {
@@ -81,7 +84,7 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
 
   error_type<fapi::validator_report> validation_result = validate_rach_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error());
+    log_validator_report(validation_result.error(), logger);
     return;
   }
 
@@ -174,7 +177,7 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
 
   error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error());
+    log_validator_report(validation_result.error(), logger);
     return;
   }
 
@@ -213,7 +216,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
 
   error_type<fapi::validator_report> validation_result = validate_crc_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error());
+    log_validator_report(validation_result.error(), logger);
     return;
   }
 
@@ -236,7 +239,7 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
 
   error_type<fapi::validator_report> validation_result = validate_rx_data_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error());
+    log_validator_report(validation_result.error(), logger);
     return;
   }
 
@@ -422,7 +425,7 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
 
   error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error());
+    log_validator_report(validation_result.error(), logger);
     return;
   }
 

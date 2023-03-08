@@ -214,6 +214,15 @@ static bool validate_power_control_offset_profile_nr(message_type_id   msg_type,
   return false;
 }
 
+/// Validates the collocated AL16 candidate property of the PDCCH PDU, as per SCF-222 v4.0 section 3.4.2.1.
+static bool validate_collocated_al16_candidate(message_type_id msg_type, unsigned value, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 1;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Collocated AL16 candidate", msg_type, pdu_type, report);
+}
+
 bool srsran::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcch_pdu& pdu, validator_report& report)
 {
   bool result = true;
@@ -237,7 +246,7 @@ bool srsran::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcc
   // Validate DL DCIs.
   for (unsigned i = 0, e = pdu.dl_dci.size(); i != e; ++i) {
     const auto& dci    = pdu.dl_dci[i];
-    const auto& dci_v3 = pdu.maintenance_v3.info[0];
+    const auto& dci_v3 = pdu.maintenance_v3.info[i];
 
     result &= validate_rnti(msg_type, static_cast<unsigned>(dci.rnti), report);
     // NOTE: N-Id PDCCH data field uses the whole range of the variable, so it will not be checked.
@@ -246,10 +255,11 @@ bool srsran::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcc
     result &= validate_aggregation_level(msg_type, dci.aggregation_level, report);
     result &= validate_power_control_offset_profile_nr(
         msg_type, dci.power_control_offset_ss_profile_nr, dci_v3.pdcch_dmrs_power_offset_profile_sss, report);
-    // NOTE: PDCCH Data power offset profile NR uses the whole range of the variable, so it will not be checked.
     // NOTE: DCI index uses the whole range of the variable, so it will not be checked.
-    // NOTE: Collocated AL-16 candidate uses the whole range of the variable, so it will not be checked.
-    // NOTE: N-ID uses the whole range of the variable, sso it will not be checked.
+    result &= validate_collocated_al16_candidate(msg_type, dci_v3.collocated_AL16_candidate, report);
+    // NOTE: PDCCH DMRS power offset profile NR uses the whole range of the variable, so it will not be checked.
+    // NOTE: PDCCH Data power offset profile NR uses the whole range of the variable, so it will not be checked.
+    // NOTE: N-ID uses the whole range of the variable, so it will not be checked.
   }
 
   return result;

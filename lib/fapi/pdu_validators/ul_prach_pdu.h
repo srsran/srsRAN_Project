@@ -16,7 +16,7 @@ namespace fapi {
 struct ul_prach_pdu;
 struct validator_report;
 
-/// Validate the given UL PRACH PDU and returns true on success, otherwise false.
+/// Validates the given UL PRACH PDU and returns true on success, otherwise false.
 bool validate_ul_prach_pdu(const ul_prach_pdu& pdu, validator_report& report);
 
 } // namespace fapi

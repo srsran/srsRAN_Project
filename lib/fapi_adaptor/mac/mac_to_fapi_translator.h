@@ -28,8 +28,10 @@ namespace fapi_adaptor {
 class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
-  mac_to_fapi_translator(fapi::slot_message_gateway& msg_gw_, fapi::slot_last_message_notifier& last_msg_notifier_) :
-    msg_gw(msg_gw_), last_msg_notifier(last_msg_notifier_)
+  mac_to_fapi_translator(srslog::basic_logger&             logger_,
+                         fapi::slot_message_gateway&       msg_gw_,
+                         fapi::slot_last_message_notifier& last_msg_notifier_) :
+    logger(logger_), msg_gw(msg_gw_), last_msg_notifier(last_msg_notifier_)
   {
   }
 
@@ -51,6 +53,8 @@ private:
   handle_ul_dci_request(span<const pdcch_ul_information> pdcch_info, span<const dci_payload> payloads, slot_point slot);
 
 private:
+  /// FAPI logger.
+  srslog::basic_logger& logger;
   /// FAPI message gateway to the outside world.
   fapi::slot_message_gateway& msg_gw;
   /// Slot-specific last message notifier.

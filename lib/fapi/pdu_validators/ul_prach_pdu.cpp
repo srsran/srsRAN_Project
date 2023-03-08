@@ -16,7 +16,7 @@
 using namespace srsran;
 using namespace fapi;
 
-/// This validator checks a DL_TTI,request message.
+/// This validator checks a DL_TTI.request message.
 static constexpr message_type_id msg_type = message_type_id::ul_tti_request;
 
 /// This validator checks the PRACH PDU.

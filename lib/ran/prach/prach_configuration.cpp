@@ -114,7 +114,7 @@ static prach_configuration prach_configuration_get_fr1_paired(uint8_t prach_conf
 
 static prach_configuration prach_configuration_get_fr1_unpaired(uint8_t prach_config_index)
 {
-  // TS38.211 Table 6.3.3.2-2.
+  // TS38.211 Table 6.3.3.2-3.
   static const std::array<prach_configuration, 67> table = {{
       {preamble_format::FORMAT0, 16, 1, {9}, 0, 0, 0, 0},
       {preamble_format::FORMAT0, 8, 1, {9}, 0, 0, 0, 0},

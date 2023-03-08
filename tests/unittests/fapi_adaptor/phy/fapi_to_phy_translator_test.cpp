@@ -107,7 +107,7 @@ protected:
   fapi_to_phy_translator         translator;
 
 public:
-  FAPIToPHYTranslatorFixture() : rg_pool(grid), pdu_repo(2), translator(config) {}
+  FAPIToPHYTranslatorFixture() : rg_pool(grid), pdu_repo(2), translator(config, srslog::fetch_basic_logger("FAPI")) {}
 };
 
 TEST_F(FAPIToPHYTranslatorFixture, DownlinkProcessorIsConfiguredOnNewSlot)

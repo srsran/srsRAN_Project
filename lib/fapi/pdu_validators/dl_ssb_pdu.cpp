@@ -16,7 +16,7 @@
 using namespace srsran;
 using namespace fapi;
 
-/// This validator checks a DL_TTI,request message.
+/// This validator checks a DL_TTI.request message.
 static constexpr message_type_id msg_type = message_type_id::dl_tti_request;
 
 /// This validator checks the SSB PDU.
@@ -167,9 +167,9 @@ bool srsran::fapi::validate_dl_ssb_pdu(const dl_ssb_pdu& pdu, validator_report& 
     result &= validate_dmrs_type_a_position(
         static_cast<std::underlying_type_t<fapi::dmrs_typeA_pos>>(pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position),
         report);
-    // NOTE:  PDCCH config SIB1 property uses the whole range and will not be validated.
-    // NOTE:  Cell barred property uses the whole range and will not be validated.
-    // NOTE:  Intra freq reselection property uses the whole range and will not be validated.
+    // NOTE: PDCCH config SIB1 property uses the whole range and will not be validated.
+    // NOTE: Cell barred property uses the whole range and will not be validated.
+    // NOTE: Intra freq reselection property uses the whole range and will not be validated.
   }
 
   // NOTE: SSB PDU index property will not be validated, as its range is not defined.

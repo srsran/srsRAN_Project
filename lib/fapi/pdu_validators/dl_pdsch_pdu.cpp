@@ -16,7 +16,7 @@
 using namespace srsran;
 using namespace fapi;
 
-/// This validator checks a DL_TTI,request message.
+/// This validator checks a DL_TTI.request message.
 static constexpr message_type_id msg_type = message_type_id::dl_tti_request;
 
 /// This validator checks the PDSCH PDU.
@@ -373,7 +373,6 @@ bool srsran::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
     result &= validate_codeword_mcs_table(cw.mcs_table, report);
     result &= validate_codeword_rv_index(cw.rv_index, report);
     // NOTE: TB size property will not be validated, as the document doesn't specify the valid values.
-    // NOTE: CBG tx information bitmap will not be validated.
   }
 
   result &= validate_nid_pdsch(pdu.nid_pdsch, report);
@@ -402,13 +401,6 @@ bool srsran::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
   result &= validate_start_symbol_index(pdu.start_symbol_index, report);
   result &= validate_nr_of_symbols(pdu.nr_of_symbols, report);
 
-  if (pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT]) {
-    // :TODO: PTRS.
-    ;
-  }
-
-  // :TODO: Beamforming
-
   result &= validate_power_control_offset_profile_nr(
       pdu.power_control_offset_profile_nr, pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss, report);
   result &= validate_power_control_offset_ss_profile_nr(static_cast<unsigned>(pdu.power_control_offset_ss_profile_nr),
@@ -427,10 +419,8 @@ bool srsran::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
 
   if (pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::non_interleaved_common_ss) {
     result &= validate_maintenance_v3_coreset_start_point(pdu.pdsch_maintenance_v3.coreset_start_point, report);
-  }
-
-  if (pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::interleaved_common_any_coreset0_present ||
-      pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::interleaved_common_any_coreset0_not_present) {
+  } else if (pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::interleaved_common_any_coreset0_present ||
+             pdu.pdsch_maintenance_v3.trans_type == pdsch_trans_type::interleaved_common_any_coreset0_not_present) {
     result &= validate_maintenance_v3_coreset_start_point(pdu.pdsch_maintenance_v3.coreset_start_point, report);
     result &= validate_maintenance_v3_initial_dl_bwp_size(pdu.pdsch_maintenance_v3.initial_dl_bwp_size, report);
   }

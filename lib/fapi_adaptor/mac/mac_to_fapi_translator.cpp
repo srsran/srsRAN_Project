@@ -181,7 +181,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   error_type<fapi::validator_report> result = validate_dl_tti_request(msg);
 
   if (!result) {
-    log_validator_report(result.error());
+    log_validator_report(result.error(), logger);
 
     clear_dl_tti_pdus(msg);
   }
@@ -277,7 +277,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   error_type<fapi::validator_report> result = validate_ul_tti_request(msg);
 
   if (!result) {
-    log_validator_report(result.error());
+    log_validator_report(result.error(), logger);
 
     clear_ul_tti_pdus(msg);
   }
@@ -304,7 +304,7 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
   // Validate the UL_DCI.request message.
   error_type<fapi::validator_report> result = validate_ul_dci_request(msg);
   if (!result) {
-    log_validator_report(result.error());
+    log_validator_report(result.error(), logger);
 
     return;
   }

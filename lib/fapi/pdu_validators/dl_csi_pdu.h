@@ -16,9 +16,8 @@ namespace fapi {
 struct dl_csi_rs_pdu;
 struct validator_report;
 
-/// Validate the given DL CSI PDU and returns true on success, otherwise false.
+/// Validates the given DL CSI-RS PDU and returns true on success, otherwise false.
 bool validate_dl_csi_pdu(const dl_csi_rs_pdu& pdu, validator_report& report);
 
 } // namespace fapi
-
 } // namespace srsran

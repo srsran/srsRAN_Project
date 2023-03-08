@@ -16,7 +16,7 @@ namespace fapi {
 struct dl_pdsch_pdu;
 struct validator_report;
 
-/// Validate the given DL PDSCH PDU and returns true on success, otherwise false.
+/// Validates the given DL PDSCH PDU and returns true on success, otherwise false.
 bool validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_report& report);
 
 } // namespace fapi

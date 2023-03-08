@@ -265,7 +265,7 @@ error_type<validator_report> srsran::fapi::validate_crc_indication(const crc_ind
 
   // Validate each PDU.
   for (const auto& pdu : msg.pdus) {
-    // NOTE: Handle property will no be validated as the values are not specified in the document.
+    // NOTE: Handle property will not be validated as the values are not specified in the document.
     success &= validate_rnti(pdu.rnti, message_type_id::crc_indication, report);
     success &= validate_rapid(pdu.rapid, message_type_id::crc_indication, report);
     success &= validate_harq_id(pdu.harq_id, message_type_id::crc_indication, report);
@@ -864,10 +864,8 @@ static void log_basic_report(fmt::memory_buffer& buffer, const validator_report:
   fmt::format_to(buffer, "\t- Property={}, value={}\n", report.property_name, report.value);
 }
 
-void srsran::fapi::log_validator_report(const validator_report& report)
+void srsran::fapi::log_validator_report(const validator_report& report, srslog::basic_logger& logger)
 {
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("FAPI");
-
   fmt::memory_buffer str_buffer;
   fmt::format_to(str_buffer,
                  "Detected {} error(s) in message type '{}' in slot={}.{}:\n",
@@ -899,5 +897,5 @@ void srsran::fapi::log_validator_report(const validator_report& report)
     log_basic_report(str_buffer, error);
   }
 
-  logger.error("{}", to_c_str(str_buffer));
+  logger.warning("{}", to_c_str(str_buffer));
 }

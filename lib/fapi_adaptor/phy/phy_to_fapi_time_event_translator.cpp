@@ -31,7 +31,7 @@ public:
 static slot_time_message_notifier_dummy dummy_time_notifier;
 
 phy_to_fapi_time_event_translator::phy_to_fapi_time_event_translator(fapi_to_phy_translator& translator_) :
-  time_notifier(dummy_time_notifier), translator(translator_)
+  translator(translator_), time_notifier(dummy_time_notifier)
 {
 }
 

@@ -35,9 +35,9 @@ static fapi_to_phy_translator_config generate_fapi_to_phy_translator_config(cons
 }
 
 phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(const phy_fapi_adaptor_impl_config& config) :
-  fapi_translator(generate_fapi_to_phy_translator_config(config)),
+  fapi_translator(generate_fapi_to_phy_translator_config(config), srslog::fetch_basic_logger("FAPI")),
   time_translator(fapi_translator),
-  results_translator()
+  results_translator(srslog::fetch_basic_logger("FAPI"))
 {
 }
 

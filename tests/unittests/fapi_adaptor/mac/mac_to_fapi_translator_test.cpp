@@ -56,7 +56,7 @@ static void test_valid_dl_sched_results_generate_correct_dl_tti_request()
 {
   slot_message_gateway_spy         gateway_spy;
   slot_last_message_notifier_dummy dummy_notifier;
-  mac_to_fapi_translator           translator(gateway_spy, dummy_notifier);
+  mac_to_fapi_translator           translator(srslog::fetch_basic_logger("FAPI"), gateway_spy, dummy_notifier);
 
   TESTASSERT(!gateway_spy.has_dl_tti_request_method_called());
 

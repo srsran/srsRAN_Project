@@ -16,7 +16,7 @@
 using namespace srsran;
 using namespace fapi;
 
-/// This validator checks a DL_TTI,request message.
+/// This validator checks a DL_TTI.request message.
 static constexpr message_type_id msg_type = message_type_id::dl_tti_request;
 
 /// This validator checks the CSI-RS PDU.
@@ -166,6 +166,20 @@ static bool validate_power_control_offset_ss_profile_nr(unsigned value, validato
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Power control offset SS profile NR", msg_type, pdu_type, report);
 }
 
+/// Validates the power offset profile SSS property of the CSI PDU, as per SCF-222 v4.0 section 3.4.2.3.
+static bool validate_power_offset_profile_sss(int value, validator_report& report)
+{
+  static constexpr int USE_PROFILE_NR = -32768;
+  static constexpr int MIN_VALUE      = -32767;
+  static constexpr int MAX_VALUE      = 32767;
+
+  if (value == USE_PROFILE_NR) {
+    return true;
+  }
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Power offset profile SSS", msg_type, pdu_type, report);
+}
+
 bool srsran::fapi::validate_dl_csi_pdu(const dl_csi_rs_pdu& pdu, validator_report& report)
 {
   bool result = true;
@@ -176,7 +190,7 @@ bool srsran::fapi::validate_dl_csi_pdu(const dl_csi_rs_pdu& pdu, validator_repor
   result &= validate_nof_rb(pdu.num_rbs, report);
   result &= validate_csi_type(static_cast<unsigned>(pdu.type), report);
   result &= validate_row(pdu.row, report);
-  // NOTE: Freq domain bitmap roperty will not be validated.
+  // NOTE: Freq domain bitmap property will not be validated.
   result &= validate_symbol_l0(pdu.symb_L0, report);
   result &= validate_symbol_l1(pdu.symb_L1, report);
   result &= validate_cdm_type(static_cast<unsigned>(pdu.cdm_type), report);
@@ -187,6 +201,7 @@ bool srsran::fapi::validate_dl_csi_pdu(const dl_csi_rs_pdu& pdu, validator_repor
   result &= validate_power_control_offset_ss_profile_nr(static_cast<unsigned>(pdu.power_control_offset_ss_profile_nr),
                                                         report);
   // NOTE: CSI-RS PDU index will not be validated.
+  result &= validate_power_offset_profile_sss(pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss, report);
 
   return result;
 }

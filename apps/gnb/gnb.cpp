@@ -450,6 +450,9 @@ int main(int argc, char** argv)
   auto& rf_logger = srslog::fetch_basic_logger("RF", false);
   rf_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.radio_level));
 
+  auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
+  fapi_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.fapi_level));
+
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
 

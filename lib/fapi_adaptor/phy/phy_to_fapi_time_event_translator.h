@@ -41,10 +41,10 @@ public:
   }
 
 private:
-  /// FAPI slot-based, time-specific message notifier.
-  std::reference_wrapper<fapi::slot_time_message_notifier> time_notifier;
   /// FAPI to PHY data translator.
   fapi_to_phy_translator& translator;
+  /// FAPI slot-based, time-specific message notifier.
+  std::reference_wrapper<fapi::slot_time_message_notifier> time_notifier;
 };
 
 } // namespace fapi_adaptor

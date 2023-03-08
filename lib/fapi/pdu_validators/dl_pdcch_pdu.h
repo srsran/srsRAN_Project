@@ -17,9 +17,8 @@ namespace fapi {
 
 struct validator_report;
 
-/// Validate the given DL PDCCH PDU and returns true on success, otherwise false.
+/// Validates the given DL PDCCH PDU and returns true on success, otherwise false.
 bool validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcch_pdu& pdu, validator_report& report);
 
 } // namespace fapi
-
 } // namespace srsran

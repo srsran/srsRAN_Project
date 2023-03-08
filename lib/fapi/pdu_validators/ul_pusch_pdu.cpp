@@ -16,7 +16,7 @@
 using namespace srsran;
 using namespace fapi;
 
-/// This validator checks a DL_TTI,request message.
+/// This validator checks a DL_TTI.request message.
 static constexpr message_type_id msg_type = message_type_id::ul_tti_request;
 
 /// This validator checks the PRACH PDU.
@@ -517,6 +517,7 @@ bool srsran::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
     const auto& data = pdu.pusch_data;
     result &= validate_rv_index(data.rv_index, report);
     result &= validate_harq_process_id(data.harq_process_id, report);
+    // NOTE: New data property uses the whole range, so it will not be validated.
     // NOTE: TB size property range is not specified, so it will not be validated.
     // NOTE: Num CB property range is not specified, so it will not be validated.
     // NOTE: CB present and position bitmap property will not be validated.
@@ -581,9 +582,6 @@ bool srsran::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
 
   // Parameters v4.
   // NOTE: CB CRC status request property uses the whole range of the variable, so it will not be validated
-
-  // :TODO: Beamforming.
-  // :TODO: MIMO.
 
   return result;
 }
