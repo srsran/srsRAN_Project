@@ -295,7 +295,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
     asn1_resp->user_location_info_present = true;
     auto& asn1_user_location_info         = asn1_resp->user_location_info.value.set_user_location_info_nr();
     // add nr cgi
-    asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_resp.user_location_info.value().nr_cgi.nci.packed);
+    asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_resp.user_location_info.value().nr_cgi.nci);
     asn1_user_location_info.nr_cgi.plmn_id.from_string(cu_cp_resp.user_location_info.value().nr_cgi.plmn_hex);
     // add tai
     asn1_user_location_info.tai.plmn_id.from_string(cu_cp_resp.user_location_info.value().tai.plmn_id);
@@ -317,7 +317,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
 
       // add ngran cgi
       asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().nr_cell_id.from_number(
-          cu_cp_recommended_cell_item.ngran_cgi.nci.packed);
+          cu_cp_recommended_cell_item.ngran_cgi.nci);
       asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().plmn_id.from_string(
           cu_cp_recommended_cell_item.ngran_cgi.plmn_hex);
 
@@ -431,8 +431,8 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
         cu_cp_recommended_cell_item recommended_cell_item;
 
         // add ngran cgi
-        recommended_cell_item.ngran_cgi.nci.packed = asn1_recommended_cell.ngran_cgi.nr_cgi().nr_cell_id.to_number();
-        recommended_cell_item.ngran_cgi.plmn_hex   = asn1_recommended_cell.ngran_cgi.nr_cgi().plmn_id.to_string();
+        recommended_cell_item.ngran_cgi.nci      = asn1_recommended_cell.ngran_cgi.nr_cgi().nr_cell_id.to_number();
+        recommended_cell_item.ngran_cgi.plmn_hex = asn1_recommended_cell.ngran_cgi.nr_cgi().plmn_id.to_string();
 
         // add time stayed in cell
         if (asn1_recommended_cell.time_stayed_in_cell_present) {

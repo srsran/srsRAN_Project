@@ -303,8 +303,8 @@ cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
   cu_cp_recommended_cell_item recommended_cell_item;
 
   // add ngran cgi
-  recommended_cell_item.ngran_cgi.nci.packed = 12345678;
-  recommended_cell_item.ngran_cgi.plmn_hex   = "00f110";
+  recommended_cell_item.ngran_cgi.nci      = 12345678;
+  recommended_cell_item.ngran_cgi.plmn_hex = "00f110";
 
   // add time stayed in cell
   recommended_cell_item.time_stayed_in_cell = 5;

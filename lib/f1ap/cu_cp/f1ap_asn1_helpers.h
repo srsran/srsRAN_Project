@@ -309,7 +309,7 @@ inline void fill_asn1_paging_message(asn1::f1ap::paging_s& asn1_paging, const cu
     asn1::protocol_ie_single_container_s<asn1::f1ap::paging_cell_item_ies_o> asn1_paging_cell_item_container;
     auto& asn1_paging_cell_item = asn1_paging_cell_item_container->paging_cell_item();
 
-    asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(cell_item.ngran_cgi.nci.packed);
+    asn1_paging_cell_item.nr_cgi.nr_cell_id.from_number(cell_item.ngran_cgi.nci);
     asn1_paging_cell_item.nr_cgi.plmn_id.from_string(cell_item.ngran_cgi.plmn_hex);
 
     asn1_paging->paging_cell_list.value.push_back(asn1_paging_cell_item_container);

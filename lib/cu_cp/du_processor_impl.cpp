@@ -142,7 +142,7 @@ du_cell_index_t du_processor_impl::find_cell(uint64_t packed_nr_cell_id)
 {
   for (auto& cell_pair : cell_db) {
     auto& cell = cell_pair.second;
-    if (cell.cgi.nci.packed == packed_nr_cell_id) {
+    if (cell.cgi.nci == packed_nr_cell_id) {
       return cell.cell_index;
     }
   }
@@ -185,9 +185,9 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   ue_creation_complete_msg.ue_index                     = ue_index_t::invalid;
 
   // Check that creation message is valid
-  du_cell_index_t pcell_index = find_cell(msg.cgi.nci.packed);
+  du_cell_index_t pcell_index = find_cell(msg.cgi.nci);
   if (pcell_index == du_cell_index_t::invalid) {
-    logger.error("Could not find cell with cell_id={}", msg.cgi.nci.packed);
+    logger.error("Could not find cell with cell_id={}", msg.cgi.nci);
     return ue_creation_complete_msg;
   }
 
@@ -386,7 +386,7 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
           for (const auto& present_cell_item : msg.assist_data_for_paging.value()
                                                    .assist_data_for_recommended_cells.value()
                                                    .recommended_cells_for_paging.recommended_cell_list) {
-            if (present_cell_item.ngran_cgi.nci.packed == tac_to_nr_cgi.at(tai_list_item.tai.tac).nci.packed) {
+            if (present_cell_item.ngran_cgi.nci == tac_to_nr_cgi.at(tai_list_item.tai.tac).nci) {
               is_present = true;
               continue;
             }

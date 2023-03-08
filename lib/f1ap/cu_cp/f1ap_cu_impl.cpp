@@ -222,8 +222,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ul_rrc_msg_transfer_
     return;
   }
 
-  logger.debug(
-      "Received InitialUlRrcMessageTransfer nr_cgi={} crnti={} plmn={}", cgi.nci.packed, msg->c_rnti.value, cgi.plmn);
+  logger.debug("Received InitialUlRrcMessageTransfer nci={} crnti={} plmn={}", cgi.nci, msg->c_rnti.value, cgi.plmn);
 
   if (msg->sul_access_ind_present) {
     logger.debug("Ignoring SUL access indicator");

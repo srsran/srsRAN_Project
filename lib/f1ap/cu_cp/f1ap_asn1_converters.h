@@ -87,13 +87,7 @@ inline asn1::f1ap::cause_c cause_to_f1ap_cause(cause_t cause)
 /// \return The NR Cell Identity.
 inline nr_cell_id_t f1ap_nrcgi_to_nr_cell_identity(asn1::f1ap::nr_cgi_s& f1ap_cgi)
 {
-  nr_cell_id_t nci;
-  nci.packed = f1ap_cgi.nr_cell_id.to_number();
-
-  nci.cell_idenity = (f1ap_cgi.nr_cell_id.to_number() & 0xfffc0000);
-  nci.gnb_identity = (f1ap_cgi.nr_cell_id.to_number() & 0X3ff0);
-
-  return nci;
+  return f1ap_cgi.nr_cell_id.to_number();
 }
 
 } // namespace srs_cu_cp
