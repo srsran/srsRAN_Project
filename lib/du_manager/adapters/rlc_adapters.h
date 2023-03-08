@@ -48,18 +48,46 @@ private:
   f1u_tx_sdu_handler* f1bearer = nullptr;
 };
 
-class rlc_tx_data_notifier : public rlc_tx_upper_layer_data_notifier
+class rlc_f1c_tx_data_notifier : public rlc_tx_upper_layer_data_notifier
 {
 public:
+  void connect(f1c_bearer& bearer_) { bearer = &bearer_; }
+
   void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn) override
   {
-    // TODO
+    srsran_assert(bearer != nullptr, "RLC to F1-C TX data notifier is disconnected");
+    bearer->handle_transmit_notification(max_deliv_pdcp_sn);
   }
 
   void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override
   {
-    // TODO
+    srsran_assert(bearer != nullptr, "RLC to F1-C TX data notifier is disconnected");
+    bearer->handle_delivery_notification(max_deliv_pdcp_sn);
   }
+
+private:
+  f1c_bearer* bearer = nullptr;
+};
+
+class rlc_f1u_tx_data_notifier : public rlc_tx_upper_layer_data_notifier
+{
+public:
+  void connect(f1u_tx_delivery_handler& handler_) { handler = &handler_; }
+
+  void on_transmitted_sdu(uint32_t max_deliv_pdcp_sn) override
+  {
+    srsran_assert(handler != nullptr, "RLC to F1-U TX data notifier is disconnected");
+    handler->handle_transmit_notification(max_deliv_pdcp_sn);
+  }
+
+  void on_delivered_sdu(uint32_t max_deliv_pdcp_sn) override
+  {
+    srsran_assert(handler != nullptr, "RLC to F1-U TX data notifier is disconnected");
+    handler->handle_delivery_notification(max_deliv_pdcp_sn);
+  }
+
+private:
+  f1u_tx_delivery_handler* handler = nullptr;
 };
 
 class rlc_tx_control_notifier : public rlc_tx_upper_layer_control_notifier

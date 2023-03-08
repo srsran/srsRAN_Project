@@ -47,6 +47,8 @@ public:
 
   void handle_pdu(byte_buffer pdu) override { last_rx_pdu = std::move(pdu); }
   void handle_sdu(byte_buffer_slice_chain sdu) override { last_tx_sdu = std::move(sdu); }
+  void handle_transmit_notification(uint32_t highest_pdcp_sn) override {}
+  void handle_delivery_notification(uint32_t highest_pdcp_sn) override {}
 };
 
 class dummy_f1u_bearer : public f1u_bearer,

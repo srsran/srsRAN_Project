@@ -28,7 +28,7 @@ struct du_srb_connector {
   mac_sdu_rx_adapter              mac_rx_sdu_notifier;
   mac_sdu_tx_adapter              mac_tx_sdu_notifier;
   rlc_rx_rrc_sdu_adapter          rlc_rx_sdu_notif;
-  rlc_tx_data_notifier            rlc_tx_data_notif;
+  rlc_f1c_tx_data_notifier        rlc_tx_data_notif;
   rlc_tx_control_notifier         rlc_tx_ctrl_notif;
   rlc_tx_mac_buffer_state_updater rlc_tx_buffer_state_notif;
   f1c_rx_sdu_rlc_adapter          f1c_rx_sdu_notif;
@@ -46,7 +46,7 @@ struct du_drb_connector {
   mac_sdu_rx_adapter              mac_rx_sdu_notifier;
   mac_sdu_tx_adapter              mac_tx_sdu_notifier;
   rlc_f1u_tx_sdu_adapter          rlc_rx_sdu_notif;
-  rlc_tx_data_notifier            rlc_tx_data_notif;
+  rlc_f1u_tx_data_notifier        rlc_tx_data_notif;
   rlc_tx_control_notifier         rlc_tx_ctrl_notif;
   rlc_tx_mac_buffer_state_updater rlc_tx_buffer_state_notif;
   f1u_rx_rlc_sdu_adapter          f1u_rx_sdu_notif;

@@ -23,6 +23,9 @@ void du_srb_connector::connect(du_ue_index_t                       ue_index,
   // > Connect RLC Rx SDU -> F1-C Tx SDU handler.
   rlc_rx_sdu_notif.connect(f1_bearer);
 
+  // > Connect RLC Tx Data Notifier -> F1-C handler
+  rlc_tx_data_notif.connect(f1_bearer);
+
   // > Connect F1-C Rx SDU -> RLC Tx SDU.
   f1c_rx_sdu_notif.connect(*rlc_bearer.get_tx_upper_layer_data_interface());
 
@@ -45,6 +48,9 @@ void du_drb_connector::connect(du_ue_index_t                       ue_index,
 {
   // > Connect RLC Rx SDU -> F1-U Tx SDU handler.
   rlc_rx_sdu_notif.connect(f1_bearer.get_tx_sdu_handler());
+
+  // > Connect RLC Tx Data Notifier -> F1-U handler
+  rlc_tx_data_notif.connect(f1_bearer.get_tx_delivery_handler());
 
   // > Connect F1-U Rx SDU -> RLC Tx SDU.
   f1u_rx_sdu_notif.connect(*rlc_bearer.get_tx_upper_layer_data_interface());
