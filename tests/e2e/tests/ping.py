@@ -38,10 +38,10 @@ class TestPing(BaseTest):
         (
             param(3, 15, 5, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
             param(3, 15, 10, False, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
-            param(3, 15, 20, True, marks=(mark.zmq, mark.smoke, mark.test), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(3, 15, 20, True, marks=(mark.zmq, mark.test), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
             param(3, 15, 50, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
             param(41, 30, 10, False, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
-            param(41, 30, 20, True, marks=(mark.zmq, mark.smoke), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(41, 30, 20, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
             param(41, 30, 50, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
         ),
     )

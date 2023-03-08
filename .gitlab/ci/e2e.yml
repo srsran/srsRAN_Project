@@ -67,7 +67,7 @@ smoke-zmq-tsan:
       allow_failure: false
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "smoke and not tcp and not multiue"
+    MARKERS: "smoke and not tcp and multiue"
     PYTEST_ARGS: "-x"
     RETINA_ARGS: "gnb.all.pcap=True"
     LOG_LEVEL: "debug"
