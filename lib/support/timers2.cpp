@@ -180,7 +180,7 @@ bool timer_manager2::try_stop_timer_impl(timer_handle& timer, bool expiry_reason
   // executor.
   epoch_type frontend_epoch_estim = timer.frontend.epoch.load(std::memory_order_relaxed);
   if (timer.backend.epoch == frontend_epoch_estim) {
-    timer.backend.exec->execute([this, tid = timer.id, expiry_epoch = timer.backend.epoch]() {
+    timer.backend.exec->defer([this, tid = timer.id, expiry_epoch = timer.backend.epoch]() {
       auto& timer_frontend = timer_list[tid].frontend;
 
       // In case, the timer state has not been updated since the task was dispatched (epoches match).
