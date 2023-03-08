@@ -18,7 +18,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 srsran_gateway
                 mac_fapi_adaptor_factory
                 phy_fapi_adaptor_factory
-                srsran_fapi_message_loggers
+                srsran_fapi
                 srsran_phy_support
                 srsran_upper_phy
                 srsran_signal_processors

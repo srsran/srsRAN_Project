@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../../lib/fapi/validators/dl_pdsch_pdu.h"
+#include "../../../lib/fapi/pdu_validators/dl_pdsch_pdu.h"
 #include "helpers.h"
 #include "srsran/fapi/message_validators.h"
 #include "srsran/support/test_utils.h"

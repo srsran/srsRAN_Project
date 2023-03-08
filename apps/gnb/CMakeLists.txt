@@ -14,7 +14,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 gnb.cpp
                 gnb_appconfig_cli11_schema.cpp
                 gnb_appconfig_validators.cpp
-                gnb_appconfig_translators.cpp        
+                gnb_appconfig_translators.cpp
                 fapi_factory.cpp
                 phy_factory.cpp
                 helpers/metrics_plotter_stdout.cpp
@@ -36,7 +36,7 @@ if (ZEROMQ_FOUND OR UHD_FOUND)
                 srsran_gateway
                 mac_fapi_adaptor_factory
                 phy_fapi_adaptor_factory
-                srsran_fapi_message_loggers
+                srsran_fapi
                 srsran_phy_support
                 srsran_upper_phy
                 srsran_signal_processors

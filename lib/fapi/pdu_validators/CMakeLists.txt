@@ -11,11 +11,10 @@ set(SOURCES
         dl_pdcch_pdu.cpp
         dl_pdsch_pdu.cpp
         dl_ssb_pdu.cpp
-        message_validators.cpp
         uci_pdus.cpp
         ul_prach_pdu.cpp
         ul_pucch_pdu.cpp
         ul_pusch_pdu.cpp)
 
-add_library(fapi_validators STATIC ${SOURCES})
-target_link_libraries(fapi_validators srslog)
+add_library(fapi_pdu_validators STATIC ${SOURCES})
+target_link_libraries(fapi_pdu_validators srslog)

@@ -9,15 +9,15 @@
  */
 
 #include "srsran/fapi/message_validators.h"
-#include "dl_csi_pdu.h"
-#include "dl_pdcch_pdu.h"
-#include "dl_pdsch_pdu.h"
-#include "dl_ssb_pdu.h"
-#include "helpers.h"
-#include "uci_pdus.h"
-#include "ul_prach_pdu.h"
-#include "ul_pucch_pdu.h"
-#include "ul_pusch_pdu.h"
+#include "pdu_validators/dl_csi_pdu.h"
+#include "pdu_validators/dl_pdcch_pdu.h"
+#include "pdu_validators/dl_pdsch_pdu.h"
+#include "pdu_validators/dl_ssb_pdu.h"
+#include "pdu_validators/helpers.h"
+#include "pdu_validators/uci_pdus.h"
+#include "pdu_validators/ul_prach_pdu.h"
+#include "pdu_validators/ul_pucch_pdu.h"
+#include "pdu_validators/ul_pusch_pdu.h"
 #include "srsran/support/format_utils.h"
 
 using namespace srsran;
@@ -32,7 +32,7 @@ static bool validate_sfn(unsigned value, message_type_id msg_type, validator_rep
   return validate_field(MIN_VALUE, MAX_VALUE, value, "sfn", msg_type, report);
 }
 
-/// Validates the slot property of any message.
+/// Validates the slot property of a message.
 static bool validate_slot(unsigned value, message_type_id msg_type, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -78,7 +78,6 @@ error_type<validator_report> srsran::fapi::validate_dl_tti_request(const dl_tti_
         break;
       default:
         srsran_assert(0, "Invalid pdu_type");
-        report.append(static_cast<int>(pdu.pdu_type), "DL_TTI.request PDU type", message_type_id::dl_tti_request);
         break;
     }
   }
@@ -106,10 +105,8 @@ error_type<validator_report> srsran::fapi::validate_ul_dci_request(const ul_dci_
       case ul_dci_pdu_type::PDCCH:
         success &= validate_dl_pdcch_pdu(message_type_id::ul_dci_request, pdu.pdu, report);
         break;
-        // :TODO: Implement the rest of the PDUs when their validators exist.
       default:
         srsran_assert(0, "Invalid pdu_type");
-        report.append(static_cast<int>(pdu.pdu_type), "UL_DCI.request PDU type", message_type_id::ul_dci_request);
         break;
     }
   }
@@ -165,7 +162,7 @@ error_type<validator_report> srsran::fapi::validate_tx_data_request(const tx_dat
 }
 
 /// Validates the RNTI property of a CRC.indication PDU or Rx_Data.indication PDU, as per  SCF-222 v4.0 section 3.4.8
-///// and 3.4.7.
+/// and 3.4.7.
 static bool validate_rnti(unsigned value, message_type_id msg_id, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
@@ -190,7 +187,7 @@ static bool validate_rapid(unsigned value, message_type_id msg_id, validator_rep
 }
 
 /// Validates the HARQ ID property of a CRC.indication PDU or Rx_Data.indication PDU, as per  SCF-222 v4.0 section 3.4.8
-///// and 3.4.7.
+/// and 3.4.7.
 static bool validate_harq_id(unsigned value, message_type_id msg_id, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -425,7 +422,7 @@ error_type<validator_report> srsran::fapi::validate_rach_indication(const rach_i
       success &= validate_rach_timing_advance_offset(preamble.timing_advance_offset, report);
       success &= validate_timing_advance_offset_ns(preamble.timing_advance_offset_ns, report);
       success &= validate_preamble_power(preamble.preamble_pwr, report);
-      // NOTE: Preamble SNR property uses the whole range of the property,so it will not be validated.
+      // NOTE: Preamble SNR property uses the whole range of the property, so it will not be validated.
     }
   }
 
@@ -460,7 +457,6 @@ error_type<validator_report> srsran::fapi::validate_uci_indication(const uci_ind
         break;
       default:
         srsran_assert(0, "Invalid pdu_type");
-        report.append(static_cast<int>(pdu.pdu_type), "UCI.indication PDU type", message_type_id::uci_indication);
         break;
     }
   }
@@ -683,7 +679,6 @@ error_type<validator_report> srsran::fapi::validate_ul_tti_request(const ul_tti_
         break;
       default:
         srsran_assert(0, "Invalid pdu_type");
-        report.append(static_cast<int>(pdu.pdu_type), "UL_TTI.request PDU type", msg_type);
         break;
     }
   }
@@ -785,7 +780,7 @@ static const char* get_pdu_type_string(message_type_id msg_id, unsigned pdu_id)
   return "";
 }
 
-/// Returns a string identifier for the given message identifier.
+/// Returns a string representation for the given message identifier.
 static const char* get_message_type_string(message_type_id msg_id)
 {
   switch (msg_id) {
@@ -871,12 +866,11 @@ static void log_basic_report(fmt::memory_buffer& buffer, const validator_report:
 
 void srsran::fapi::log_validator_report(const validator_report& report)
 {
-  static const std::string log_name = "FAPI";
-  srslog::basic_logger&    logger   = srslog::fetch_basic_logger(log_name);
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("FAPI");
 
   fmt::memory_buffer str_buffer;
   fmt::format_to(str_buffer,
-                 "Detected {} errors in {} message at slot={}.{}:\n",
+                 "Detected {} error(s) in message type '{}' in slot={}.{}:\n",
                  report.reports.size(),
                  get_message_type_string(report.reports.front().message_type),
                  report.sfn,

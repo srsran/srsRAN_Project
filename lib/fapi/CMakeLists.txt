@@ -6,14 +6,15 @@
 # the distribution.
 #
 
-add_subdirectory(validators)
+add_subdirectory(pdu_validators)
 
 set(SOURCES
         message_loggers.cpp
+        message_validators.cpp
         logging_decorator_factories.cpp
         logging_slot_data_notifier_decorator.cpp
         logging_slot_gateway_decorator.cpp
         logging_slot_time_notifier_decorator.cpp)
 
-add_library(srsran_fapi_message_loggers STATIC ${SOURCES})
-target_link_libraries(srsran_fapi_message_loggers srslog)
+add_library(srsran_fapi STATIC ${SOURCES})
+target_link_libraries(srsran_fapi fapi_pdu_validators srslog)
