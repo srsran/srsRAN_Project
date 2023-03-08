@@ -319,7 +319,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   radio_configuration::over_the_wire_format otw_format = radio_config.otw_format;
   if ((otw_format == radio_configuration::over_the_wire_format::DEFAULT) &&
       (device.get_type() == radio_uhd_device_type::types::B2xx) &&
-      (radio_config.rx_streams.size() * sampling_rate_hz > 30.72)) {
+      (radio_config.rx_streams.size() * sampling_rate_hz > 30.72e6)) {
     otw_format = radio_configuration::over_the_wire_format::SC12;
   }
 
