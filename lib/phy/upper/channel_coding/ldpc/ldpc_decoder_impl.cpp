@@ -10,6 +10,8 @@
 
 #include "ldpc_decoder_impl.h"
 #include "ldpc_luts_impl.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/fill.h"
 #include "srsran/srsvec/zero.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -40,7 +42,7 @@ void ldpc_decoder_impl::init(const configuration& cfg)
 
   nof_significant_bits = bg_K * lifting_size - cfg.block_conf.cb_specific.nof_filler_bits;
 
-  select_strategy();
+  specific_init();
 }
 
 optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      output,
@@ -78,6 +80,9 @@ optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      ou
     }
     return nullopt;
   }
+
+  // Ensure check-to-variable messages are not initialized.
+  std::fill(is_check_to_var_initialised.begin(), is_check_to_var_initialised.end(), false);
 
   unsigned input_size = static_cast<unsigned>(last - input.begin());
 
@@ -128,52 +133,205 @@ optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                      ou
   return {};
 }
 
-void ldpc_decoder_generic::load_soft_bits(span<const log_likelihood_ratio> llrs)
+void ldpc_decoder_impl::load_soft_bits(span<const log_likelihood_ratio> llrs)
 {
-  // Erase registers.
-  for (auto& tmp : check_to_var) {
-    std::fill(tmp.begin(), tmp.end(), 0);
+  // Compute the number of data nodes fully occupied by the llrs (the + 2 is due to the shortened nodes at the beginning
+  // of the codeblock).
+  unsigned nof_full_nodes = llrs.size() / lifting_size + 2;
+
+  // Copy input llrs and organize them by nodes.
+  span<const log_likelihood_ratio> llr_view = llrs;
+  // Recall that the first 2 * lifting_size bits (2 nodes) are not transmitted.
+  span<log_likelihood_ratio> soft_bits_view(soft_bits);
+  srsvec::zero(soft_bits_view.first(2 * node_size_byte));
+  soft_bits_view = soft_bits_view.last(soft_bits_view.size() - 2 * node_size_byte);
+  for (unsigned i_node = 2 * node_size_byte, max_node = nof_full_nodes * node_size_byte; i_node != max_node;
+       i_node += node_size_byte) {
+    srsvec::copy(soft_bits_view.first(lifting_size), llr_view.first(lifting_size));
+    llr_view = llr_view.last(llr_view.size() - lifting_size);
+    // Recall that soft bits may have zero padding in SIMD implementations (i.e., when node_size_byte != lifting_size).
+    soft_bits_view = soft_bits_view.last(soft_bits_view.size() - node_size_byte);
   }
 
-  // Recall that the first 2 * lifting_size bits are not transmitted.
-  unsigned nof_shortened_bits = 2 * lifting_size;
-  srsvec::zero(span<log_likelihood_ratio>(soft_bits).first(nof_shortened_bits));
-  std::copy(llrs.begin(), llrs.end(), soft_bits.begin() + nof_shortened_bits);
+  // The length of llrs may not be an exact multiple of the lifting size.
+  unsigned tail_positions = llr_view.size();
+  if (tail_positions != 0) {
+    srsvec::copy(soft_bits_view.first(tail_positions), llr_view);
+  }
 }
 
-void ldpc_decoder_generic::update_variable_to_check_messages(unsigned check_node)
+void ldpc_decoder_impl::update_variable_to_check_messages(unsigned check_node)
 {
-  // First, update the messages corresponding to the high-rate region. All layers contribute.
-  span<const log_likelihood_ratio> this_soft_bits(soft_bits);
-  span<const log_likelihood_ratio> this_check_to_var(check_to_var[check_node]);
-  span<log_likelihood_ratio>       this_var_to_check(var_to_check);
-
-  compute_var_to_check_msgs(this_var_to_check.first(nof_hrr_nodes),
-                            this_soft_bits.first(nof_hrr_nodes),
-                            this_check_to_var.first(nof_hrr_nodes));
+  unsigned                   nof_hrr_nodes = bg_N_high_rate * node_size_byte;
+  span<log_likelihood_ratio> soft          = span<log_likelihood_ratio>(soft_bits).first(nof_hrr_nodes);
+  span<log_likelihood_ratio> c2v           = span<log_likelihood_ratio>(check_to_var[check_node]).first(nof_hrr_nodes);
+  span<log_likelihood_ratio> v2c           = span<log_likelihood_ratio>(var_to_check).first(nof_hrr_nodes);
+  if (is_check_to_var_initialised[check_node]) {
+    compute_var_to_check_msgs(v2c, soft, c2v);
+  } else {
+    srsvec::copy(v2c, soft);
+  }
 
   // Next, update the messages corresponding to the extension region, if applicable.
   // From layer 4 onwards, each layer is connected to only one consecutive block of lifting_size bits.
   if (check_node >= 4) {
-    unsigned skip_soft_bits = nof_hrr_nodes + (check_node - 4) * lifting_size;
-    compute_var_to_check_msgs(this_var_to_check.subspan(nof_hrr_nodes, lifting_size),
-                              this_soft_bits.subspan(skip_soft_bits, lifting_size),
-                              this_check_to_var.subspan(nof_hrr_nodes, lifting_size));
+    unsigned offset_soft = (bg_N_high_rate + check_node - 4) * node_size_byte;
+    soft                 = span<log_likelihood_ratio>(soft_bits).subspan(offset_soft, node_size_byte);
+    c2v                  = span<log_likelihood_ratio>(check_to_var[check_node]).subspan(nof_hrr_nodes, node_size_byte);
+    v2c                  = span<log_likelihood_ratio>(var_to_check).subspan(nof_hrr_nodes, node_size_byte);
+    if (is_check_to_var_initialised[check_node]) {
+      compute_var_to_check_msgs(v2c, soft, c2v);
+    } else {
+      srsvec::copy(v2c, soft);
+    }
   }
 }
 
-void ldpc_decoder_generic::compute_var_to_check_msgs(span<log_likelihood_ratio>       v2c,
-                                                     span<const log_likelihood_ratio> soft,
-                                                     span<const log_likelihood_ratio> c2v)
+void ldpc_decoder_impl::update_soft_bits(unsigned check_node)
 {
-  assert((soft.size() == v2c.size()) && (c2v.size() == v2c.size()));
+  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
+  for (BG_adjacency_row_t::const_iterator this_var_index = current_var_indices.cbegin(),
+                                          last_var_index = current_var_indices.cend();
+       (this_var_index != last_var_index) && (*this_var_index != NO_EDGE);
+       ++this_var_index) {
+    unsigned                   node_index = std::min(*this_var_index, bg_N_high_rate) * node_size_byte;
+    span<log_likelihood_ratio> this_check_to_var =
+        span<log_likelihood_ratio>(check_to_var[check_node]).subspan(node_index, node_size_byte);
+    span<log_likelihood_ratio> this_var_to_check =
+        span<log_likelihood_ratio>(var_to_check).subspan(node_index, node_size_byte);
+    span<log_likelihood_ratio> this_soft_bits =
+        span<log_likelihood_ratio>(soft_bits).subspan(*this_var_index * node_size_byte, node_size_byte);
+    compute_soft_bits(this_soft_bits, this_var_to_check, this_check_to_var);
+  }
+}
+
+void ldpc_decoder_impl::update_check_to_variable_messages(unsigned check_node)
+{
+  // Buffer to store the minimum (in absolute value) variable-to-check message.
+  std::array<log_likelihood_ratio, MAX_LIFTING_SIZE> min_var_to_check;
+  // Buffer to store the second minimum (in absolute value) variable-to-check message for each base graph check node.
+  std::array<log_likelihood_ratio, MAX_LIFTING_SIZE> second_min_var_to_check;
+  // Buffer to store the index of the minimum-valued variable-to-check message.
+  std::array<uint8_t, MAX_LIFTING_SIZE> min_var_to_check_index = {};
+  // Buffer to store the sign product of all variable-to-check messages.
+  std::array<uint8_t, MAX_LIFTING_SIZE> sign_prod_var_to_check = {};
+
+  // Take views of the above buffers.
+  span<log_likelihood_ratio> min_var_to_check_view = span<log_likelihood_ratio>(min_var_to_check).first(node_size_byte);
+  span<log_likelihood_ratio> second_min_var_to_check_view =
+      span<log_likelihood_ratio>(second_min_var_to_check).first(node_size_byte);
+  span<uint8_t> min_var_to_check_index_view = span<uint8_t>(min_var_to_check_index).first(node_size_byte);
+  span<uint8_t> sign_prod_var_to_check_view = span<uint8_t>(sign_prod_var_to_check).first(node_size_byte);
+
+  // Reset temporal buffers.
+  srsvec::fill(min_var_to_check_view, LLR_MAX);
+  srsvec::fill(second_min_var_to_check_view, LLR_MAX);
+  srsvec::zero(min_var_to_check_index_view);
+  // For the optimized implementations, we store 0 if the sign is positive and 1 if the sign is negative. Therefore, the
+  // following is equivalent to setting al signs to +1.
+  srsvec::zero(sign_prod_var_to_check_view);
+
+  // Retrieve list of variable nodes connected to this check node.
+  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
+  const auto*               last_var_index_itr  = current_var_indices.cend();
+  // For all variable nodes connected to this check node.
+  unsigned var_node = 0;
+  for (const auto* this_var_index_itr = current_var_indices.cbegin();
+       (this_var_index_itr != last_var_index_itr) && (*this_var_index_itr != NO_EDGE);
+       ++this_var_index_itr, ++var_node) {
+    // Rotate the variable node as specified by the base graph.
+    unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index_itr);
+    unsigned v2c_base_index = std::min(*this_var_index_itr, bg_N_high_rate);
+
+    span<log_likelihood_ratio> this_var_to_check =
+        span<log_likelihood_ratio>(var_to_check).subspan(v2c_base_index * node_size_byte, lifting_size);
+    span<log_likelihood_ratio> this_rotated_node = get_rotated_node(var_node);
+
+    analyze_var_to_check_msgs(min_var_to_check_view,
+                              second_min_var_to_check_view,
+                              min_var_to_check_index_view,
+                              sign_prod_var_to_check_view,
+                              this_rotated_node,
+                              this_var_to_check,
+                              shift,
+                              var_node);
+  }
+
+  // For all variable nodes connected to this check node.
+  var_node = 0;
+  for (const auto* this_var_index_itr = current_var_indices.cbegin();
+       (this_var_index_itr != last_var_index_itr) && (*this_var_index_itr != NO_EDGE);
+       ++this_var_index_itr, ++var_node) {
+    unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index_itr);
+    unsigned c2v_base_index = std::min(*this_var_index_itr, bg_N_high_rate);
+
+    span<log_likelihood_ratio> this_check_to_var =
+        span<log_likelihood_ratio>(check_to_var[check_node]).subspan(c2v_base_index * node_size_byte, lifting_size);
+    span<log_likelihood_ratio> this_var_to_check =
+        span<log_likelihood_ratio>(var_to_check).subspan(c2v_base_index * node_size_byte, lifting_size);
+    span<log_likelihood_ratio> this_rotated_node = get_rotated_node(var_node);
+
+    compute_check_to_var_msgs(this_check_to_var,
+                              this_var_to_check,
+                              this_rotated_node,
+                              min_var_to_check_view,
+                              second_min_var_to_check_view,
+                              min_var_to_check_index_view,
+                              sign_prod_var_to_check_view,
+                              shift,
+                              var_node);
+  }
+  is_check_to_var_initialised[check_node] = true;
+}
+
+void ldpc_decoder_generic::compute_var_to_check_msgs(span<log_likelihood_ratio> this_var_to_check,
+                                                     span<log_likelihood_ratio> this_soft_bits,
+                                                     span<log_likelihood_ratio> this_check_to_var)
+{
+  srsran_srsvec_assert_size(this_var_to_check, this_soft_bits);
+  srsran_srsvec_assert_size(this_var_to_check, this_check_to_var);
 
   // By definition, the difference between two LLRs saturates at +/- LLR_MAX. Moreover, if either term is infinite, so
   // is the result, with proper sign.
-  std::transform(
-      soft.begin(), soft.end(), c2v.begin(), v2c.begin(), [](log_likelihood_ratio a, log_likelihood_ratio b) {
-        return a - b;
-      });
+  std::transform(this_soft_bits.begin(),
+                 this_soft_bits.end(),
+                 this_check_to_var.begin(),
+                 this_var_to_check.begin(),
+                 [](log_likelihood_ratio a, log_likelihood_ratio b) { return a - b; });
+}
+
+span<log_likelihood_ratio> ldpc_decoder_generic::get_rotated_node(unsigned /*i_loop*/)
+{
+  // In the generic implementation we don't physically rotate the node, since we can access the corresponding values by
+  // a simple shift. We return an empty span.
+  return {};
+}
+
+void ldpc_decoder_generic::analyze_var_to_check_msgs(span<log_likelihood_ratio> min_var_to_check,
+                                                     span<log_likelihood_ratio> second_min_var_to_check,
+                                                     span<uint8_t>              min_var_to_check_index,
+                                                     span<uint8_t>              sign_prod_var_to_check,
+                                                     span<log_likelihood_ratio> /*rotated_node*/,
+                                                     span<log_likelihood_ratio> this_var_to_check,
+                                                     unsigned                   shift,
+                                                     unsigned                   var_node)
+{
+  // Look for the two var_to_check messages with minimum absolute value and compute the sign product of all
+  // var_to_check messages.
+  for (unsigned j = 0; j != lifting_size; ++j) {
+    log_likelihood_ratio var_to_check_abs = log_likelihood_ratio::abs(this_var_to_check[j]);
+    unsigned             tmp_index        = (j + lifting_size - shift) % lifting_size;
+    bool                 is_min           = (var_to_check_abs < min_var_to_check[tmp_index]);
+    log_likelihood_ratio new_second_min   = is_min ? min_var_to_check[tmp_index] : var_to_check_abs;
+    bool                 is_best_two      = (var_to_check_abs < second_min_var_to_check[tmp_index]);
+    second_min_var_to_check[tmp_index]    = is_best_two ? new_second_min : second_min_var_to_check[tmp_index];
+    min_var_to_check[tmp_index]           = is_min ? var_to_check_abs : min_var_to_check[tmp_index];
+    min_var_to_check_index[tmp_index]     = is_min ? var_node : min_var_to_check_index[tmp_index];
+
+    // For consistency with the optimized implementations, we store 0 if the sign is positive and 1 if the sign is
+    // negative.
+    sign_prod_var_to_check[tmp_index] ^= (this_var_to_check[j] >= 0) ? 0U : 1U;
+  }
 }
 
 static log_likelihood_ratio scale_llr(log_likelihood_ratio llr, float scaling_factor)
@@ -187,82 +345,44 @@ static log_likelihood_ratio scale_llr(log_likelihood_ratio llr, float scaling_fa
       std::round(static_cast<float>(llr.to_value_type()) * scaling_factor));
 }
 
-void ldpc_decoder_generic::update_check_to_variable_messages(unsigned check_node)
+// In the generic implementation we don't physically rotate the node, since we can access the corresponding values by
+// a simple shift - therefore the unused parameter.
+void ldpc_decoder_generic::compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
+                                                     span<log_likelihood_ratio> this_var_to_check,
+                                                     span<log_likelihood_ratio> /*rotated_node*/,
+                                                     span<log_likelihood_ratio> min_var_to_check,
+                                                     span<log_likelihood_ratio> second_min_var_to_check,
+                                                     span<uint8_t>              min_var_to_check_index,
+                                                     span<uint8_t>              sign_prod_var_to_check,
+                                                     unsigned                   shift,
+                                                     unsigned                   var_node)
 {
-  // Prepare helper registers
-  std::fill(sign_prod_var_to_check.begin(), sign_prod_var_to_check.end(), 1);
-  std::fill(min_var_to_check.begin(), min_var_to_check.end(), LLR_MAX);
-  std::fill(second_min_var_to_check.begin(), second_min_var_to_check.end(), LLR_MAX);
+  for (unsigned j = 0; j != lifting_size; ++j) {
+    unsigned tmp_index = (j + lifting_size - shift) % lifting_size;
 
-  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
-  const auto*               this_var_index      = current_var_indices.cbegin();
-  const auto*               last_var_index      = current_var_indices.cend();
-  for (; (this_var_index != last_var_index) && (*this_var_index != NO_EDGE); ++this_var_index) {
-    unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index);
-    unsigned v2c_base_index = *this_var_index * lifting_size;
-    v2c_base_index          = (v2c_base_index <= nof_hrr_nodes) ? v2c_base_index : nof_hrr_nodes;
+    this_check_to_var[j] = (var_node != min_var_to_check_index[tmp_index]) ? min_var_to_check[tmp_index]
+                                                                           : second_min_var_to_check[tmp_index];
 
-    // Look for the two var_to_check messages with minimum absolute value and compute the sign product of all
-    // var_to_check messages.
-    for (unsigned j = 0; j != lifting_size; ++j) {
-      unsigned             v2c_index         = v2c_base_index + j;
-      log_likelihood_ratio this_var_to_check = log_likelihood_ratio::abs(var_to_check[v2c_index]);
-      unsigned             tmp_index         = (j + lifting_size - shift) % lifting_size;
-      bool                 is_min            = (this_var_to_check < min_var_to_check[tmp_index]);
-      log_likelihood_ratio new_second_min    = is_min ? min_var_to_check[tmp_index] : this_var_to_check;
-      bool                 is_best_two       = (this_var_to_check < second_min_var_to_check[tmp_index]);
-      second_min_var_to_check[tmp_index]     = is_best_two ? new_second_min : second_min_var_to_check[tmp_index];
-      min_var_to_check[tmp_index]            = is_min ? this_var_to_check : min_var_to_check[tmp_index];
-      min_var_to_check_index[tmp_index]      = is_min ? v2c_index : min_var_to_check_index[tmp_index];
+    this_check_to_var[j] = scale_llr(this_check_to_var[j], scaling_factor);
 
-      sign_prod_var_to_check[tmp_index] *= (var_to_check[v2c_index] >= 0) ? 1 : -1;
-    }
-  }
-
-  // Recall: check_to_var is an array of arrays of log_likelihood_ratio.
-  auto& this_check_to_var = check_to_var[check_node];
-
-  for (this_var_index = current_var_indices.cbegin();
-       (this_var_index != last_var_index) && (*this_var_index != NO_EDGE);
-       ++this_var_index) {
-    unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index);
-    unsigned c2v_base_index = *this_var_index * lifting_size;
-    c2v_base_index          = (c2v_base_index <= nof_hrr_nodes) ? c2v_base_index : nof_hrr_nodes;
-    for (unsigned j = 0; j != lifting_size; ++j) {
-      unsigned c2v_index = c2v_base_index + j;
-      unsigned tmp_index = (j + lifting_size - shift) % lifting_size;
-
-      this_check_to_var[c2v_index] = (c2v_index != min_var_to_check_index[tmp_index])
-                                         ? min_var_to_check[tmp_index]
-                                         : second_min_var_to_check[tmp_index];
-
-      this_check_to_var[c2v_index] = scale_llr(this_check_to_var[c2v_index], scaling_factor);
-
-      int final_sign               = sign_prod_var_to_check[tmp_index] * ((var_to_check[c2v_index] >= 0) ? 1 : -1);
-      this_check_to_var[c2v_index] = log_likelihood_ratio::copysign(this_check_to_var[c2v_index], final_sign);
-    }
+    // For consistency with the optimized implementations, we store 0 if the sign is positive and 1 if the sign is
+    // negative.
+    uint8_t final_sign   = sign_prod_var_to_check[tmp_index] ^ ((this_var_to_check[j] >= 0) ? 0U : 1U);
+    this_check_to_var[j] = log_likelihood_ratio::copysign(this_check_to_var[j], 1 - 2 * static_cast<int>(final_sign));
   }
 }
 
-void ldpc_decoder_generic::update_soft_bits(unsigned check_node)
+void ldpc_decoder_generic::compute_soft_bits(span<log_likelihood_ratio> this_soft_bits,
+                                             span<log_likelihood_ratio> this_var_to_check,
+                                             span<log_likelihood_ratio> this_check_to_var)
 {
-  // Recall: check_to_var is an array of arrays of log_likelihood_ratio.
-  auto& this_check_to_var = check_to_var[check_node];
+  srsran_srsvec_assert_size(this_soft_bits, this_var_to_check);
+  srsran_srsvec_assert_size(this_soft_bits, this_check_to_var);
 
-  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
-  const auto*               this_var_index      = current_var_indices.cbegin();
-  const auto*               last_var_index      = current_var_indices.cend();
-  for (; (this_var_index != last_var_index) && (*this_var_index != NO_EDGE); ++this_var_index) {
-    unsigned var_index_lifted = *this_var_index * lifting_size;
-    for (int j = 0; j != lifting_size; ++j) {
-      unsigned bit_index     = var_index_lifted + j;
-      unsigned bit_index_tmp = (var_index_lifted <= nof_hrr_nodes) ? bit_index : nof_hrr_nodes + j;
-
-      // Soft bits absolutely larger than LOCAL_MAX_RANGE are set to infinity (LOCAL_INF). As a result, they become
-      // fixed bits, that is they won't change their value from now on.
-      soft_bits[bit_index] =
-          log_likelihood_ratio::promotion_sum(this_check_to_var[bit_index_tmp], var_to_check[bit_index_tmp]);
-    }
+  for (int j = 0; j != lifting_size; ++j) {
+    // Soft bits absolutely larger than LOCAL_MAX_RANGE are set to infinity (LOCAL_INF). As a result, they become
+    // fixed bits, that is they won't change their value from now on.
+    this_soft_bits[j] = log_likelihood_ratio::promotion_sum(this_check_to_var[j], this_var_to_check[j]);
   }
 }
 
@@ -270,6 +390,6 @@ void ldpc_decoder_generic::get_hard_bits(bit_buffer& out)
 {
   unsigned out_length = out.size();
 
-  span<log_likelihood_ratio> llrs(soft_bits.begin(), out_length);
+  span<log_likelihood_ratio> llrs = span<log_likelihood_ratio>(soft_bits).first(out_length);
   srsran::hard_decision(out, llrs);
 }

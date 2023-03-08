@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
 #include "srsran/support/srsran_assert.h"
 #include <arm_neon.h>
 #include <array>
@@ -102,6 +103,31 @@ public:
   template <size_t N>
   neon_span(neon_array<N>& arr) : neon_span(arr, 0, N)
   {
+  }
+
+  template <typename IntType, size_t N>
+  neon_span(std::array<IntType, N>& arr, size_t offset, size_t length) :
+    array_ptr(reinterpret_cast<int8_t*>(arr.data()) + offset * NEON_SIZE_BYTE), view_length(length)
+  {
+    static_assert(sizeof(IntType) == sizeof(int8_t),
+                  "neon_span can only be created from arrays of 1-byte integer types.");
+    srsran_assert((offset + view_length) * NEON_SIZE_BYTE <= N,
+                  "Cannot create a neon_span longer than the original array.");
+  }
+
+  template <typename IntType, size_t N>
+  neon_span(std::array<IntType, N>& arr, size_t length) : neon_span(arr, 0, length)
+  {
+  }
+
+  template <typename IntType>
+  neon_span(span<IntType> sp, size_t length) : array_ptr(reinterpret_cast<int8_t*>(sp.data())), view_length(length)
+  {
+    static_assert(sizeof(IntType) == sizeof(int8_t),
+                  "neon_span can only be created from arrays of 1-byte integer types.");
+    static_assert(!std::is_const<IntType>::value, "Cannot create neon_span from span of const.");
+    srsran_assert(view_length * NEON_SIZE_BYTE <= sp.size(),
+                  "Cannot create a neon_span longer than the original span.");
   }
 
   /// Returns a pointer to the \c pos NEON register inside the array.

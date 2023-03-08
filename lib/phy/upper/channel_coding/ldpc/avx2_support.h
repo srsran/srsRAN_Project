@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
 #include <immintrin.h>
@@ -174,14 +175,36 @@ public:
   /// \tparam IntType    Type of the standard array - must be an integer type of 8 bits.
   /// \tparam N          Number of elements of the standard array.
   /// \param[in] arr     Array the span is a view of.
+  /// \param[in] offset  Offset from the beginning of the array (as a number of AVX registers).
   /// \param[in] length  Number of elements spanned by the view (as a number of AVX registers).
   template <typename IntType, size_t N>
-  avx_span(std::array<IntType, N>& arr, size_t length) :
-    array_ptr(reinterpret_cast<int8_t*>(arr.data())), view_length(length)
+  avx_span(std::array<IntType, N>& arr, size_t offset, size_t length) :
+    array_ptr(reinterpret_cast<int8_t*>(arr.data()) + offset * AVX_SIZE_BYTE), view_length(length)
   {
     static_assert(sizeof(IntType) == sizeof(int8_t),
                   "avx_span can only be created from arrays of 1-byte integer types.");
-    srsran_assert(view_length * AVX_SIZE_BYTE <= N, "Cannot take a span longer than the array.");
+    srsran_assert((offset + view_length) * AVX_SIZE_BYTE <= N, "Cannot take a span longer than the array.");
+  }
+
+  /// \brief Constructs a span from a standard array.
+  ///
+  /// \tparam IntType    Type of the standard array - must be an integer type of 8 bits.
+  /// \tparam N          Number of elements of the standard array.
+  /// \param[in] arr     Array the span is a view of.
+  /// \param[in] length  Number of elements spanned by the view (as a number of AVX registers).
+  template <typename IntType, size_t N>
+  avx_span(std::array<IntType, N>& arr, size_t length) : avx_span(arr, 0, length)
+  {
+  }
+
+  /// \brief Constructs an \c avx_span from a \c srsran::span.
+  template <typename IntType>
+  avx_span(span<IntType> sp, size_t length) : array_ptr(reinterpret_cast<int8_t*>(sp.data())), view_length(length)
+  {
+    static_assert(sizeof(IntType) == sizeof(int8_t),
+                  "avx_span can only be created from arrays of 1-byte integer types.");
+    static_assert(!std::is_const<IntType>::value, "Cannot create avx_span from span of const.");
+    srsran_assert(view_length * AVX_SIZE_BYTE <= sp.size(), "Cannot create an avx_span longer than the original span.");
   }
 
   /// Returns a pointer to the \c pos AVX register inside the array.
@@ -239,6 +262,18 @@ public:
   /// Returns the number of AVX registers viewed by the span.
   size_t size() const { return view_length; }
 
+  avx_span first(size_t length)
+  {
+    srsran_assert(length <= view_length, "Trying to create a subspan longer than the span itself.");
+    return {array_ptr, length};
+  }
+
+  avx_span subspan(size_t offset, size_t length)
+  {
+    srsran_assert(offset + length <= view_length, "Trying to create a subspan longer than the span itself.");
+    return {array_ptr + offset * AVX_SIZE_BYTE, length};
+  }
+
 private:
   /// Pointer to the first element viewed by the span.
   int8_t* array_ptr;
@@ -264,6 +299,9 @@ private:
     srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return _mm512_loadu_si512(reinterpret_cast<const __m512i*>(array_ptr) + pos);
   }
+
+  /// Constructor for generating subspans.
+  avx_span(int8_t* ptr, size_t length) : array_ptr(ptr), view_length(length) {}
 };
 } // namespace detail
 
