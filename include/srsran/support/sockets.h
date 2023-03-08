@@ -40,7 +40,7 @@ inline bool sctp_set_rto_opts(int                   fd,
   socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
   rto_opts.srto_assoc_id = 0;
   if (getsockopt(fd, SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz) < 0) {
-    logger.error("Error getting RTO_INFO sockopts.", strerror(errno));
+    logger.error("Error getting RTO_INFO sockopts. errono={}", strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
   }
 
