@@ -14,7 +14,7 @@ add_executable(task_worker_test task_worker_test.cpp)
 target_link_libraries(task_worker_test srslog srsran_support gtest gtest_main)
 gtest_discover_tests(task_worker_test)
 
-add_executable(timer_test timer_test.cpp)
+add_executable(timer_test timer_test.cpp timer2_test.cpp)
 target_link_libraries(timer_test srslog srsran_support pthread)
 add_test(timer_test timer_test)
 
