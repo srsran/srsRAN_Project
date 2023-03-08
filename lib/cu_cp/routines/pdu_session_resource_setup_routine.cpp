@@ -30,8 +30,6 @@ pdu_session_resource_setup_routine::pdu_session_resource_setup_routine(
   rrc_ue_drb_manager(rrc_ue_drb_manager_),
   logger(logger_)
 {
-  // calculate DRBs that need to added depending on QoSFlowSetupRequestList, more than one DRB could be needed
-  drb_to_add_list = rrc_ue_drb_manager.calculate_drb_to_add_list(setup_msg);
 }
 
 void pdu_session_resource_setup_routine::operator()(
@@ -71,6 +69,13 @@ void pdu_session_resource_setup_routine::operator()(
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
+
+  // sanity check passed, now we request the RRC to calculate calculate DRBs
+  // that need to added depending on QoSFlowSetupRequestList, more than one DRB could be needed
+  {
+    drb_to_add_list = rrc_ue_drb_manager.calculate_drb_to_add_list(setup_msg);
+  }
+
   {
     // prepare BearerContextSetupRequest
     fill_e1ap_bearer_context_setup_request(bearer_context_setup_request);
