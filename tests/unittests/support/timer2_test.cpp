@@ -41,7 +41,7 @@ protected:
     }
   }
 
-  unique_timer create_timer() { return timer_mng.create_unique_timer(worker); }
+  unique_timer2 create_timer() { return timer_mng.create_unique_timer(worker); }
 
   void tick()
   {
@@ -55,7 +55,7 @@ protected:
 
 TEST(unique_timer_test, default_ctor)
 {
-  unique_timer timer;
+  unique_timer2 timer;
   ASSERT_FALSE(timer.is_valid());
   ASSERT_EQ(timer.id(), INVALID_TIMER_ID);
   ASSERT_FALSE(timer.has_expired());
@@ -66,7 +66,7 @@ TEST(unique_timer_test, default_ctor)
 
 TEST_F(unique_timer_manual_tester, creation)
 {
-  unique_timer t = this->create_timer();
+  unique_timer2 t = this->create_timer();
 
   ASSERT_TRUE(t.is_valid());
   ASSERT_NE(t.id(), INVALID_TIMER_ID);
@@ -83,7 +83,7 @@ TEST_F(unique_timer_manual_tester, destruction)
 {
   {
     ASSERT_EQ(this->timer_mng.nof_timers(), 0);
-    unique_timer t = this->create_timer();
+    unique_timer2 t = this->create_timer();
     ASSERT_EQ(this->timer_mng.nof_timers(), 1);
   }
   // Note: dtor command sent to backend but not yet processed.
@@ -95,7 +95,7 @@ TEST_F(unique_timer_manual_tester, destruction)
 
 TEST_F(unique_timer_manual_tester, set_duration)
 {
-  unique_timer t = this->create_timer();
+  unique_timer2 t = this->create_timer();
 
   unsigned dur = test_rgen::uniform_int<unsigned>(0, 100);
   t.set(dur);
@@ -108,7 +108,7 @@ TEST_F(unique_timer_manual_tester, set_duration)
 
 TEST_F(unique_timer_manual_tester, single_run)
 {
-  unique_timer t = this->create_timer();
+  unique_timer2 t = this->create_timer();
 
   unsigned dur                       = test_rgen::uniform_int<unsigned>(0, 100);
   bool     expiry_callback_triggered = false;
@@ -133,8 +133,8 @@ TEST_F(unique_timer_manual_tester, single_run)
 
 TEST_F(unique_timer_manual_tester, multiple_timers_with_same_duration_and_timeout)
 {
-  unsigned                  dur = test_rgen::uniform_int<unsigned>(0, 100);
-  std::vector<unique_timer> timers(test_rgen::uniform_int<unsigned>(1, 10));
+  unsigned                   dur = test_rgen::uniform_int<unsigned>(0, 100);
+  std::vector<unique_timer2> timers(test_rgen::uniform_int<unsigned>(1, 10));
   for (unsigned i = 0; i != timers.size(); ++i) {
     timers[i] = this->create_timer();
     timers[i].set(dur);
@@ -155,8 +155,8 @@ TEST_F(unique_timer_manual_tester, multiple_timers_with_same_duration_and_timeou
 
 TEST_F(unique_timer_manual_tester, multiple_timers_with_same_timeout_but_different_durations)
 {
-  std::vector<unique_timer> timers(test_rgen::uniform_int<unsigned>(1, 10));
-  unsigned                  dur = timers.size() + test_rgen::uniform_int<unsigned>(1, 100);
+  std::vector<unique_timer2> timers(test_rgen::uniform_int<unsigned>(1, 10));
+  unsigned                   dur = timers.size() + test_rgen::uniform_int<unsigned>(1, 100);
   for (unsigned i = 0; i != timers.size(); ++i) {
     timers[i] = this->create_timer();
     timers[i].set(dur - i);
@@ -183,7 +183,7 @@ TEST_F(unique_timer_manual_tester, multiple_timers_with_same_timeout_but_differe
 
 TEST_F(unique_timer_manual_tester, single_run_and_stop_does_not_trigger_expiry)
 {
-  unique_timer t = this->create_timer();
+  unique_timer2 t = this->create_timer();
 
   unsigned dur = test_rgen::uniform_int<unsigned>(1, 100), stop_tick = test_rgen::uniform_int<unsigned>(0, dur - 1);
   bool     expiry_callback_triggered = false;
@@ -232,9 +232,9 @@ protected:
 
   void process_pending_expiry_callbacks() { this->worker.run_pending_tasks(); }
 
-  unique_timer t;
-  unsigned     dur;
-  bool         expiry_callback_triggered = false;
+  unique_timer2 t;
+  unsigned      dur;
+  bool          expiry_callback_triggered = false;
 };
 
 TEST_F(unique_timer_cancel_already_launched_expiry_callback_tester, stop_intercepts_callback)
@@ -278,9 +278,9 @@ TEST_F(unique_timer_cancel_already_launched_expiry_callback_tester, timer_run_in
 
 TEST_F(unique_timer_manual_tester, calling_run_on_running_timer_restarts_timer)
 {
-  unique_timer t                         = this->create_timer();
-  unsigned     dur                       = 1000;
-  bool         expiry_callback_triggered = false;
+  unique_timer2 t                         = this->create_timer();
+  unsigned      dur                       = 1000;
+  bool          expiry_callback_triggered = false;
   t.set(dur, callback_flag_setter(expiry_callback_triggered));
   t.run();
 
@@ -330,7 +330,7 @@ protected:
 
   void run_timer_creation()
   {
-    unique_timer t = timer_mng.create_unique_timer(frontend_exec);
+    unique_timer2 t = timer_mng.create_unique_timer(frontend_exec);
     t.set(100, [th_id = std::this_thread::get_id(), this](timer_id_t tid) {
       expiry_counter++;
       EXPECT_EQ(std::this_thread::get_id(), th_id);
@@ -372,9 +372,9 @@ protected:
   task_worker          frontend_worker{"frontend", 2048};
   task_worker_executor frontend_exec{frontend_worker};
 
-  std::vector<unique_timer> timers;
-  std::atomic<unsigned>     nof_events_processed{0};
-  unsigned                  expiry_counter = 0;
+  std::vector<unique_timer2> timers;
+  std::atomic<unsigned>      nof_events_processed{0};
+  unsigned                   expiry_counter = 0;
 };
 
 TEST_F(unique_timer_multithread_tester, randomize_timer_operations)

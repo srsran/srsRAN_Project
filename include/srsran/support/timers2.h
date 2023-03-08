@@ -25,7 +25,7 @@ constexpr timer_id_t INVALID_TIMER_ID = std::numeric_limits<timer_id_t>::max();
 
 using timer_tick_difference_t = uint32_t;
 
-class unique_timer;
+class unique_timer2;
 
 class timer_manager2
 {
@@ -103,7 +103,7 @@ public:
   void tick_all();
 
   /// Creates a new instance of a unique timer.
-  unique_timer create_unique_timer(task_executor& exec);
+  unique_timer2 create_unique_timer(task_executor& exec);
 
   /// Returns the number of timers handled by this instance.
   size_t nof_timers() const;
@@ -112,7 +112,7 @@ public:
   unsigned nof_running_timers() const;
 
 private:
-  friend class unique_timer;
+  friend class unique_timer2;
 
   timer_frontend& create_timer(task_executor& exec);
 
@@ -158,24 +158,24 @@ private:
 };
 
 /// This class represents a timer which invokes a user-provided callback upon timer expiration.
-class unique_timer
+class unique_timer2
 {
   using state_t = timer_manager2::state_t;
 
 public:
-  unique_timer()                               = default;
-  unique_timer(const unique_timer&)            = delete;
-  unique_timer& operator=(const unique_timer&) = delete;
+  unique_timer2()                                = default;
+  unique_timer2(const unique_timer2&)            = delete;
+  unique_timer2& operator=(const unique_timer2&) = delete;
 
-  unique_timer(unique_timer&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
-  unique_timer& operator=(unique_timer&& other) noexcept
+  unique_timer2(unique_timer2&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
+  unique_timer2& operator=(unique_timer2&& other) noexcept
   {
     handle = std::exchange(other.handle, nullptr);
     return *this;
   }
-  ~unique_timer() { reset(); }
+  ~unique_timer2() { reset(); }
 
-  /// Destroy current unique_timer context, cancelling any pending event.
+  /// Destroy current unique_timer2 context, cancelling any pending event.
   void reset()
   {
     if (is_valid()) {
@@ -234,7 +234,7 @@ public:
 private:
   friend class timer_manager2;
 
-  explicit unique_timer(timer_manager2::timer_frontend& impl) : handle(&impl) {}
+  explicit unique_timer2(timer_manager2::timer_frontend& impl) : handle(&impl) {}
 
   timer_manager2::timer_frontend* handle = nullptr;
 };
