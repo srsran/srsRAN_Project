@@ -209,12 +209,10 @@ void timer_manager2::destroy_timer_impl(timer_handle& timer)
 {
   srsran_assert(timer.backend.state != running, "Destroying timer that is running not allowed");
   // clear frontend.
-  timer.frontend.epoch.store(0, std::memory_order_relaxed);
   timer.frontend.state    = stopped;
   timer.frontend.duration = timer_manager2::INVALID_DURATION;
   timer.frontend.callback = {};
   // clear backend.
-  timer.backend.epoch   = 0;
   timer.backend.state   = stopped;
   timer.backend.timeout = 0;
   timer.backend.exec    = nullptr;
@@ -243,4 +241,15 @@ timer_manager2::timer_handle& timer_manager2::create_timer(task_executor& exec)
 unique_timer timer_manager2::create_unique_timer(task_executor& exec)
 {
   return unique_timer(create_timer(exec));
+}
+
+size_t timer_manager2::nof_timers() const
+{
+  return timer_list.size() - nof_free_timers;
+}
+
+/// Returns the number of running timers handled by this instance.
+unsigned timer_manager2::nof_running_timers() const
+{
+  return nof_timers_running;
 }

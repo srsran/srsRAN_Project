@@ -73,6 +73,23 @@ TEST_F(unique_timer_manual_tester, creation)
   ASSERT_FALSE(t.is_running());
   ASSERT_FALSE(t.has_expired());
   t.stop(); // no-op.
+
+  ASSERT_EQ(this->timer_mng.nof_timers(), 1);
+  ASSERT_EQ(this->timer_mng.nof_running_timers(), 0);
+}
+
+TEST_F(unique_timer_manual_tester, destruction)
+{
+  {
+    ASSERT_EQ(this->timer_mng.nof_timers(), 0);
+    unique_timer t = this->create_timer();
+    ASSERT_EQ(this->timer_mng.nof_timers(), 1);
+  }
+  // Note: dtor command sent to backend but not yet processed.
+  ASSERT_EQ(this->timer_mng.nof_timers(), 1);
+  this->tick();
+  ASSERT_EQ(this->timer_mng.nof_timers(), 0);
+  ASSERT_EQ(this->timer_mng.nof_running_timers(), 0);
 }
 
 TEST_F(unique_timer_manual_tester, set_duration)

@@ -110,6 +110,12 @@ public:
   /// Creates a new instance of a unique timer.
   unique_timer create_unique_timer(task_executor& exec);
 
+  /// Returns the number of timers handled by this instance.
+  size_t nof_timers() const;
+
+  /// Returns the number of running timers handled by this instance.
+  unsigned nof_running_timers() const;
+
 private:
   friend class unique_timer;
 
