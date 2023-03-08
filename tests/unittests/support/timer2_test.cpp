@@ -206,59 +206,106 @@ TEST_F(unique_timer_manual_tester, single_run_and_stop_does_not_trigger_expiry)
   }
 }
 
-TEST_F(unique_timer_manual_tester, single_run_and_stop_after_backend_expiry_but_before_callback_run)
+/// \brief This tester verifies that if the status of the timer is updated after the timer has expired in the backend,
+/// but before the expiry callback gets processed in the frontend (e.g. due to queue latency), the expiry callback is
+/// ignored.
+class unique_timer_cancel_already_launched_expiry_callback_tester : public unique_timer_manual_tester
 {
-  unique_timer t = this->create_timer();
+protected:
+  unique_timer_cancel_already_launched_expiry_callback_tester()
+  {
+    t   = this->create_timer();
+    dur = test_rgen::uniform_int<unsigned>(1, 100);
 
-  unsigned dur                       = test_rgen::uniform_int<unsigned>(1, 100);
-  bool     expiry_callback_triggered = false;
-  t.set(dur, callback_flag_setter(expiry_callback_triggered));
-  t.run();
+    t.set(dur, callback_flag_setter(expiry_callback_triggered));
+    t.run();
 
-  // Run until one tick before expiry.
-  for (unsigned i = 0; i != dur - 1; ++i) {
-    ASSERT_TRUE(t.is_running());
-    this->tick();
+    // Run until one tick before expiry.
+    for (unsigned i = 0; i != dur - 1; ++i) {
+      EXPECT_TRUE(t.is_running());
+      this->tick();
+    }
+
+    // Tick backend timer manager, but do not process frontend executor callbacks yet.
+    this->timer_mng.tick_all();
   }
 
-  // Tick timers, but do not run callback before timer stop.
-  this->timer_mng.tick_all();
+  void process_pending_expiry_callbacks() { this->worker.run_pending_tasks(); }
+
+  unique_timer t;
+  unsigned     dur;
+  bool         expiry_callback_triggered = false;
+};
+
+TEST_F(unique_timer_cancel_already_launched_expiry_callback_tester, stop_intercepts_callback)
+{
   ASSERT_TRUE(t.is_running());
   ASSERT_FALSE(t.has_expired());
   t.stop();
   ASSERT_FALSE(t.is_running());
   ASSERT_FALSE(t.has_expired());
-  this->worker.run_pending_tasks(); // the pending expiry callback dispatch should be ignored.
-
+  process_pending_expiry_callbacks();
   ASSERT_FALSE(t.is_running());
   ASSERT_FALSE(t.has_expired());
   ASSERT_FALSE(expiry_callback_triggered);
 }
 
-TEST_F(unique_timer_manual_tester, single_run_and_destroy_after_backend_expiry_but_before_callback_run)
+TEST_F(unique_timer_cancel_already_launched_expiry_callback_tester, timer_destroy_intercepts_callback)
 {
-  unique_timer t = this->create_timer();
-
-  unsigned dur                       = test_rgen::uniform_int<unsigned>(1, 100);
-  bool     expiry_callback_triggered = false;
-  t.set(dur, callback_flag_setter(expiry_callback_triggered));
-  t.run();
-
-  // Run until one tick before expiry.
-  for (unsigned i = 0; i != dur - 1; ++i) {
-    ASSERT_TRUE(t.is_running());
-    this->tick();
-  }
-
-  // Tick timers, but do not run callback before timer stop.
-  this->timer_mng.tick_all();
   ASSERT_TRUE(t.is_running());
   ASSERT_FALSE(t.has_expired());
   t.reset();
-  ASSERT_FALSE(t.is_valid());
-  this->worker.run_pending_tasks(); // the pending expiry callback dispatch should be ignored.
+  ASSERT_FALSE(t.is_running());
+  ASSERT_FALSE(t.has_expired());
+  process_pending_expiry_callbacks();
+  ASSERT_FALSE(t.is_running());
   ASSERT_FALSE(t.has_expired());
   ASSERT_FALSE(expiry_callback_triggered);
+}
+
+TEST_F(unique_timer_cancel_already_launched_expiry_callback_tester, timer_run_intercepts_callback)
+{
+  ASSERT_TRUE(t.is_running());
+  ASSERT_FALSE(t.has_expired());
+  t.run();
+  ASSERT_TRUE(t.is_running());
+  ASSERT_FALSE(t.has_expired());
+  process_pending_expiry_callbacks();
+  ASSERT_TRUE(t.is_running());
+  ASSERT_FALSE(t.has_expired());
+  ASSERT_FALSE(expiry_callback_triggered);
+}
+
+TEST_F(unique_timer_manual_tester, calling_run_on_running_timer_restarts_timer)
+{
+  unique_timer t                         = this->create_timer();
+  unsigned     dur                       = 1000;
+  bool         expiry_callback_triggered = false;
+  t.set(dur, callback_flag_setter(expiry_callback_triggered));
+  t.run();
+
+  // Restart the timer several times without letting the timer expire.
+  unsigned nof_restarts = test_rgen::uniform_int<unsigned>(0, 10);
+  for (unsigned i = 0; i != nof_restarts; ++i) {
+    unsigned rerun_tick = test_rgen::uniform_int<unsigned>(1, dur - 1);
+    for (unsigned n = 0; n != rerun_tick; ++n) {
+      this->tick();
+    }
+    ASSERT_TRUE(t.is_running());
+    ASSERT_FALSE(t.has_expired());
+    ASSERT_FALSE(expiry_callback_triggered);
+    t.run();
+  }
+
+  // Let the timer expire by ticking its full duration.
+  for (unsigned n = 0; n != dur; ++n) {
+    ASSERT_TRUE(t.is_running());
+    ASSERT_FALSE(t.has_expired());
+    this->tick();
+  }
+  ASSERT_FALSE(t.is_running());
+  ASSERT_TRUE(t.has_expired());
+  ASSERT_TRUE(expiry_callback_triggered);
 }
 
 class unique_timer_multithread_tester : public ::testing::Test
