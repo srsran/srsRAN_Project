@@ -9,6 +9,7 @@
  */
 
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers2.h"
 #include <gtest/gtest.h>
@@ -232,4 +233,111 @@ TEST_F(unique_timer_manual_tester, single_run_and_stop_after_backend_expiry_but_
   ASSERT_FALSE(t.is_running());
   ASSERT_FALSE(t.has_expired());
   ASSERT_FALSE(expiry_callback_triggered);
+}
+
+TEST_F(unique_timer_manual_tester, single_run_and_destroy_after_backend_expiry_but_before_callback_run)
+{
+  unique_timer t = this->create_timer();
+
+  unsigned dur                       = test_rgen::uniform_int<unsigned>(1, 100);
+  bool     expiry_callback_triggered = false;
+  t.set(dur, callback_flag_setter(expiry_callback_triggered));
+  t.run();
+
+  // Run until one tick before expiry.
+  for (unsigned i = 0; i != dur - 1; ++i) {
+    ASSERT_TRUE(t.is_running());
+    this->tick();
+  }
+
+  // Tick timers, but do not run callback before timer stop.
+  this->timer_mng.tick_all();
+  ASSERT_TRUE(t.is_running());
+  ASSERT_FALSE(t.has_expired());
+  t.reset();
+  ASSERT_FALSE(t.is_valid());
+  this->worker.run_pending_tasks(); // the pending expiry callback dispatch should be ignored.
+  ASSERT_FALSE(t.has_expired());
+  ASSERT_FALSE(expiry_callback_triggered);
+}
+
+class unique_timer_multithread_tester : public ::testing::Test
+{
+protected:
+  enum class timer_event { start, stop, create, rem };
+
+  void stop()
+  {
+    frontend_worker.stop();
+    backend_worker.stop();
+  }
+
+  void run_tick()
+  {
+    // Generate random event in frontend.
+    frontend_worker.push_task_blocking([this]() { run_event(); });
+
+    // Tick backworker
+    backend_worker.push_task_blocking([this]() { timer_mng.tick_all(); });
+  }
+
+  void run_timer_creation()
+  {
+    unique_timer t = timer_mng.create_unique_timer(frontend_exec);
+    t.set(100, [th_id = std::this_thread::get_id(), this](timer_id_t tid) {
+      expiry_counter++;
+      EXPECT_EQ(std::this_thread::get_id(), th_id);
+    });
+    timers.push_back(std::move(t));
+  }
+
+  void run_event()
+  {
+    if (timers.empty()) {
+      run_timer_creation();
+      nof_events_processed++;
+      return;
+    }
+
+    timer_event event    = (timer_event)test_rgen::uniform_int<unsigned>(0, (unsigned)timer_event::rem);
+    unsigned    timer_id = test_rgen::uniform_int<unsigned>(0, timers.size() - 1);
+    switch (event) {
+      case timer_event::create: {
+        run_timer_creation();
+      } break;
+      case timer_event::rem:
+        timers.erase(timers.begin() + timer_id);
+        break;
+      case timer_event::start:
+        timers[timer_id].run();
+        break;
+      case timer_event::stop:
+        timers[timer_id].stop();
+        break;
+      default:
+        report_fatal_error("Unrecognized event");
+    }
+    nof_events_processed++;
+  }
+
+  timer_manager2       timer_mng;
+  task_worker          backend_worker{"backend", 2048};
+  task_worker          frontend_worker{"frontend", 2048};
+  task_worker_executor frontend_exec{frontend_worker};
+
+  std::vector<unique_timer> timers;
+  std::atomic<unsigned>     nof_events_processed{0};
+  unsigned                  expiry_counter = 0;
+};
+
+TEST_F(unique_timer_multithread_tester, randomize_timer_operations)
+{
+  unsigned nof_events = 10000;
+
+  while (nof_events_processed < nof_events) {
+    run_tick();
+  }
+
+  stop();
+  fmt::print("event_counter={} expiry_counter={}\n", nof_events_processed, expiry_counter);
 }

@@ -139,8 +139,9 @@ private:
   size_t nof_timers_running = 0;
 
   /// List of created timer_impl objects.
+  /// Note: we use a deque to maintain reference validity.
   /// Note: this list will only grow in size.
-  std::vector<timer_handle> timer_list;
+  std::deque<timer_handle> timer_list;
 
   /// Free list of timer_impl objects in timer_list.
   mutable std::mutex           free_list_mutex;
@@ -172,7 +173,10 @@ public:
     handle = std::exchange(other.handle, nullptr);
     return *this;
   }
-  ~unique_timer()
+  ~unique_timer() { reset(); }
+
+  /// Destroy current unique_timer context, cancelling any pending event.
+  void reset()
   {
     if (is_valid()) {
       handle->destroy();

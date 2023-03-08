@@ -147,7 +147,8 @@ void timer_manager2::push_timer_command(cmd_t cmd)
 
 void timer_manager2::create_timer_impl(std::unique_ptr<timer_frontend> timer)
 {
-  srsran_assert(timer_list[timer->id].frontend == nullptr, "Duplicate timer id detection");
+  srsran_assert(timer->id >= timer_list.size() or timer_list[timer->id].frontend == nullptr,
+                "Duplicate timer id detection");
   if (timer->id >= timer_list.size()) {
     timer_list.resize(timer->id + 1);
   }
@@ -157,6 +158,7 @@ void timer_manager2::create_timer_impl(std::unique_ptr<timer_frontend> timer)
 void timer_manager2::start_timer_impl(timer_handle& timer, unsigned duration)
 {
   srsran_assert(timer.backend.state != running, "Invalid timer state");
+  srsran_assert(timer.frontend != nullptr, "Invalid timer state");
 
   timer.backend.timeout = cur_time + std::max(duration, 1U);
   timer.backend.state   = running;
@@ -243,9 +245,9 @@ timer_manager2::timer_frontend& timer_manager2::create_timer(task_executor& exec
 
   // In case it fails to reuse a cached timer frontend object. Need to create a new one.
   if (cached_timer == nullptr) {
-    auto new_handle    = std::make_unique<timer_frontend>(*this, id);
-    cached_timer->exec = &exec;
-    cached_timer       = new_handle.get();
+    auto new_handle  = std::make_unique<timer_frontend>(*this, id);
+    new_handle->exec = &exec;
+    cached_timer     = new_handle.get();
 
     // Forward created timer handle to the backend.
     {
