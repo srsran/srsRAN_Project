@@ -357,6 +357,17 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
   configure_cli11_rlc_args(*rlc_subcmd, qos_params.rlc);
   CLI::App* pdcp_subcmd = app.add_subcommand("pdcp", "PDCP parameters");
   configure_cli11_pdcp_args(*pdcp_subcmd, qos_params.pdcp);
+  auto verify_callback = [&]() {
+    CLI::App* rlc  = app.get_subcommand("rlc");
+    CLI::App* pdcp = app.get_subcommand("pdcp");
+    if (rlc->count_all() == 0) {
+      report_error("Error parsing QoS config for 5QI {}. RLC configuration not present.\n", qos_params.five_qi);
+    }
+    if (pdcp->count_all() == 0) {
+      report_error("Error parsing QoS config for 5QI {}. PDCP configuration not present.\n", qos_params.five_qi);
+    }
+  };
+  app.callback(verify_callback);
 }
 
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
