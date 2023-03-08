@@ -193,7 +193,10 @@ public:
   bool has_expired() const { return is_valid() && handle->frontend.state == timer_manager2::expired; }
 
   /// Returns the configured duration for this timer measured in ticks.
-  timer_tick_difference_t duration() const { return is_valid() ? handle->frontend.duration : 0; }
+  timer_tick_difference_t duration() const
+  {
+    return is_valid() ? handle->frontend.duration : timer_manager2::INVALID_DURATION;
+  }
 
   /// Configures the duration of the timer calling the provided callback upon timer expiration.
   void set(timer_tick_difference_t duration, unique_function<void(timer_id_t)> callback)
@@ -219,7 +222,7 @@ public:
   /// Stops the timer from ticking.
   void stop()
   {
-    if (is_valid() and is_running()) {
+    if (is_running()) {
       handle->stop();
     }
   }

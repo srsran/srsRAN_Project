@@ -41,10 +41,11 @@ void timer_manager2::timer_handle::set(unsigned duration)
                 (timer_tick_difference_t)MAX_TIMER_DURATION);
   frontend.epoch.fetch_add(1, std::memory_order::memory_order_relaxed);
   frontend.duration = duration;
-  parent.push_timer_command(cmd_t{id,
-                                  frontend.epoch.load(std::memory_order_relaxed),
-                                  frontend.state == running ? cmd_t::start : cmd_t::stop,
-                                  frontend.duration});
+  if (frontend.state == running) {
+    // If we are setting the timer when it is already running.
+    parent.push_timer_command(
+        cmd_t{id, frontend.epoch.load(std::memory_order_relaxed), cmd_t::start, frontend.duration});
+  }
 }
 
 void timer_manager2::timer_handle::set(unsigned duration, unique_function<void(timer_id_t)> callback)
@@ -120,6 +121,9 @@ void timer_manager2::tick_all()
     }
   }
 
+  // Advance time.
+  cur_time++;
+
   // Process the timer runs which expire in this tick.
   auto& wheel_list = time_wheel[cur_time & WHEEL_MASK];
 
@@ -136,9 +140,6 @@ void timer_manager2::tick_all()
     // Stop timer. Note: callback has to see the timer has already expired.
     stop_timer_impl(timer, true);
   }
-
-  // Advance time.
-  cur_time++;
 }
 
 void timer_manager2::push_timer_command(cmd_t cmd)
@@ -151,7 +152,7 @@ void timer_manager2::start_timer_impl(timer_handle& timer, unsigned duration)
 {
   srsran_assert(timer.backend.state != running, "Invalid timer state");
 
-  timer.backend.timeout = cur_time + duration;
+  timer.backend.timeout = cur_time + std::max(duration, 1U);
   timer.backend.state   = running;
   time_wheel[timer.backend.timeout & WHEEL_MASK].push_front(&timer);
   nof_timers_running++;
