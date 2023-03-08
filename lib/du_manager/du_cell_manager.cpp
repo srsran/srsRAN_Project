@@ -26,7 +26,7 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   // Verify that DU cell configuration is valid. Abort application otherwise.
   auto ret = is_du_cell_config_valid(cell_cfg);
   if (ret.is_error()) {
-    report_error("ERROR: Invalid DU Cell Configuration. Cause: {}.", ret.error());
+    report_error("ERROR: Invalid DU Cell Configuration. Cause: {}.\n", ret.error());
   }
 
   cells.emplace_back(std::make_unique<cell_t>());

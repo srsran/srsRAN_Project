@@ -393,7 +393,7 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
       // Add the tx ports.
       if (config.rf_driver_cfg.device_driver == "zmq") {
         if (sector_id * nof_ports + port_id >= zmq_tx_addr.size()) {
-          report_error("ZMQ transmission channel arguments out of bounds");
+          report_error("ZMQ transmission channel arguments out of bounds\n");
         }
 
         tx_ch_config.args = zmq_tx_addr[sector_id * nof_ports + port_id];
@@ -411,7 +411,7 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
 
       if (config.rf_driver_cfg.device_driver == "zmq") {
         if (sector_id * nof_ports + port_id >= zmq_rx_addr.size()) {
-          report_error("ZMQ reception channel arguments out of bounds");
+          report_error("ZMQ reception channel arguments out of bounds\n");
         }
 
         rx_ch_config.args = zmq_rx_addr[sector_id * nof_ports + port_id];

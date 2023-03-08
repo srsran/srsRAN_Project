@@ -48,7 +48,7 @@ public:
     } else if (optimization_flag == "measure") {
       fftw_config.optimization_flag = fftw_plan_optimization::fftw_measure;
     } else {
-      report_error("Invalid FFTW optimization flag: {}", optimization_flag);
+      report_error("Invalid FFTW optimization flag: {}\n", optimization_flag);
     }
   }
 
