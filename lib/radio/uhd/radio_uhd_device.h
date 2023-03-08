@@ -145,8 +145,9 @@ public:
     if (type == radio_uhd_device_type::types::B2xx) {
       // Get USB version.
       unsigned usb_version = 0;
-      bool     success     = safe_execution(
-          [this, &usb_version]() { usb_version = usrp->get_tree()->access<unsigned>("/mboards/0/usb_version").get(); });
+      bool     success     = safe_execution([this, &usb_version]() {
+        usb_version = usrp->get_device()->get_tree()->access<unsigned>("/mboards/0/usb_version").get();
+      });
 
       // The USB version is invalid if the USB version is accessed successfully and the version is not 3.
       if (success && (usb_version != 3)) {
