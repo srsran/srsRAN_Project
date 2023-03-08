@@ -25,7 +25,12 @@ struct du_cell_config {
   pci_t       pci;
   std::string plmn;
   uint32_t    tac;
-  uint32_t    cell_id;
+  /// gNB Identity in NR Cell Identity. 22-32 bits.
+  uint32_t gnb_id;
+  /// Length of gNB Identity in bits. Values {22,...32,}.
+  uint8_t gnb_id_bit_length;
+  /// Cell Identity in NR Cell Identity. 4-14 bits.
+  uint16_t cell_identity;
 
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;

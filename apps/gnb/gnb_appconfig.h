@@ -269,6 +269,8 @@ struct gnb_appconfig {
   pcap_appconfig pcap_cfg;
   /// gNodeB identifier.
   uint32_t gnb_id = 411;
+  /// Length of gNB identity in bits. Values {22,...,32}.
+  uint8_t gnb_id_bit_length = 32;
   /// Node name.
   std::string ran_node_name = "srsgnb01";
   /// AMF configuration.

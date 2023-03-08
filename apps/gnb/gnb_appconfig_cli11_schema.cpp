@@ -395,6 +395,9 @@ static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)
 {
   app.add_option("--gnb_id", gnb_cfg.gnb_id, "gNodeB identifier")->capture_default_str();
+  app.add_option("--gnb_id_bit_length", gnb_cfg.gnb_id_bit_length, "gNodeB identifier length in bits")
+      ->capture_default_str()
+      ->check(CLI::Range(22, 32));
   app.add_option("--ran_node_name", gnb_cfg.ran_node_name, "RAN node name")->capture_default_str();
 
   // Logging section.

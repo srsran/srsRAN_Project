@@ -322,5 +322,10 @@ bool srsran::validate_appconfig(const gnb_appconfig& config)
     return false;
   }
 
+  if (config.gnb_id_bit_length < 22 or config.gnb_id_bit_length > 32) {
+    fmt::print("gNB id bit length must be within the range [22,..,32].\n");
+    return false;
+  }
+
   return true;
 }

@@ -61,10 +61,12 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
 inline du_cell_config make_default_du_cell_config(const cell_config_builder_params& params = {})
 {
   du_cell_config cfg{};
-  cfg.pci     = params.pci;
-  cfg.plmn    = "00101";
-  cfg.tac     = 1;
-  cfg.cell_id = 1;
+  cfg.pci               = params.pci;
+  cfg.plmn              = "00101";
+  cfg.tac               = 1;
+  cfg.gnb_id            = 411;
+  cfg.gnb_id_bit_length = 32;
+  cfg.cell_identity     = 1;
 
   cfg.dl_carrier       = make_default_carrier_configuration(params);
   cfg.ul_carrier       = make_default_carrier_configuration(params);
