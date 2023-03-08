@@ -53,7 +53,7 @@ class mac_f1ap_paging_handler : public f1ap_du_paging_notifier
 public:
   void connect(mac_paging_information_handler& mac_) { mac = &mac_; }
 
-  void on_paging_received(const mac_paging_information& msg) override { mac->handle_paging_information(msg); }
+  void on_paging_received(const paging_information& msg) override { mac->handle_paging_information(msg); }
 
 private:
   mac_paging_information_handler* mac;

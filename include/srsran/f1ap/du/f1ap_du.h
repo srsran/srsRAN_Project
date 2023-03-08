@@ -196,7 +196,7 @@ public:
   virtual ~f1ap_du_paging_notifier() = default;
 
   /// \brief Forward the F1AP Paging to DU.
-  virtual void on_paging_received(const mac_paging_information& msg) = 0;
+  virtual void on_paging_received(const paging_information& msg) = 0;
 };
 
 /// Combined entry point for F1AP handling.

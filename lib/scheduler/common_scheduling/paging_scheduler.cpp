@@ -17,7 +17,6 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
-#include <numeric>
 
 using namespace srsran;
 
@@ -121,7 +120,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   // Check for maximum paging retries.
   auto it = paging_pending_ues.begin();
   while (it != paging_pending_ues.end()) {
-    if (it->paging_type_indicator == sched_paging_information::cn_ue_paging_identity) {
+    if (it->paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
       if (cn_paging_retries[it->paging_identity] >= expert_cfg.pg.max_paging_retries) {
         cn_paging_retries.erase(cn_paging_retries.find(it->paging_identity));
         it = paging_pending_ues.erase(it);
@@ -142,8 +141,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   std::sort(paging_pending_ues.begin(),
             paging_pending_ues.end(),
             [this](const sched_paging_information& lhs, const sched_paging_information& rhs) -> bool {
-              unsigned lhs_pg_attmpts = 0;
-              unsigned rhs_pg_attmpts = 0;
+              unsigned lhs_pg_attmpts, rhs_pg_attmpts;
               if (cn_paging_retries.find(lhs.paging_identity) != cn_paging_retries.end()) {
                 lhs_pg_attmpts = cn_paging_retries[lhs.paging_identity];
               } else {
@@ -200,10 +198,9 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
               res_grid,
               time_res_idx,
               get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx]) +
-                          pg_info.paging_type_indicator ==
-                      sched_paging_information::cn_ue_paging_identity
-                  ? RRC_CN_PAGING_ID_RECORD_SIZE
-                  : RRC_RAN_PAGING_ID_RECORD_SIZE)) {
+                  (pg_info.paging_type_indicator == paging_identity_type::cn_ue_paging_identity
+                       ? RRC_CN_PAGING_ID_RECORD_SIZE
+                       : RRC_RAN_PAGING_ID_RECORD_SIZE))) {
         pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx].push_back(&pg_info);
         break;
       }
@@ -212,10 +209,9 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
               res_grid,
               time_res_idx,
               get_accumulated_paging_msg_size(pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx]) +
-                          pg_info.paging_type_indicator ==
-                      sched_paging_information::cn_ue_paging_identity
-                  ? RRC_CN_PAGING_ID_RECORD_SIZE
-                  : RRC_RAN_PAGING_ID_RECORD_SIZE)) {
+                  (pg_info.paging_type_indicator == paging_identity_type::cn_ue_paging_identity
+                       ? RRC_CN_PAGING_ID_RECORD_SIZE
+                       : RRC_RAN_PAGING_ID_RECORD_SIZE))) {
         pdsch_time_res_idx_to_scheduled_ues_lookup[time_res_idx].push_back(&pg_info);
         break;
       }
@@ -232,7 +228,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
                         paging_search_space)) {
       // Allocation successful.
       for (const auto* pg_info : pdsch_time_res_idx_to_scheduled_ues_lookup[pdsch_td_res_idx]) {
-        if (pg_info->paging_type_indicator == sched_paging_information::cn_ue_paging_identity) {
+        if (pg_info->paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
           cn_paging_retries[pg_info->paging_identity]++;
         } else {
           ran_paging_retries[pg_info->paging_identity]++;
@@ -249,7 +245,7 @@ unsigned paging_scheduler::get_accumulated_paging_msg_size(span<const sched_pagi
 
   unsigned payload_size = 0;
   for (const auto& pg_info : ues_paging_info) {
-    if (pg_info->paging_type_indicator == sched_paging_information::cn_ue_paging_identity) {
+    if (pg_info->paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
       payload_size += RRC_CN_PAGING_ID_RECORD_SIZE;
     } else {
       payload_size += RRC_RAN_PAGING_ID_RECORD_SIZE;
@@ -263,7 +259,7 @@ void paging_scheduler::handle_paging_information(const sched_paging_information&
 {
   paging_pending_ues.push_back(paging_info);
   // Initialize paging retry count to zero.
-  if (paging_info.paging_type_indicator == sched_paging_information::cn_ue_paging_identity) {
+  if (paging_info.paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
     cn_paging_retries[paging_info.paging_identity] = 0;
   } else {
     ran_paging_retries[paging_info.paging_identity] = 0;
@@ -479,7 +475,7 @@ void paging_scheduler::fill_paging_grant(dl_paging_allocation&                 p
   for (const auto& pg_info : ues_paging_info) {
     pg_grant.paging_ue_list.emplace_back();
     pg_grant.paging_ue_list.back().paging_type_indicator =
-        pg_info->paging_type_indicator == sched_paging_information::paging_identity_type::cn_ue_paging_identity
+        pg_info->paging_type_indicator == paging_identity_type::cn_ue_paging_identity
             ? paging_ue_info::cn_ue_paging_identity
             : paging_ue_info::ran_ue_paging_identity;
     pg_grant.paging_ue_list.back().paging_identity = pg_info->paging_identity;

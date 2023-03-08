@@ -335,78 +335,44 @@ void f1ap_du_impl::send_error_indication(const asn1::f1ap::cause_c& cause)
 
 void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
 {
-  mac_paging_information info{};
-  switch (msg->ue_id_idx_value->type()) {
-    case ue_id_idx_value_c::types_opts::idx_len10:
-      info.ue_identity_index_value = msg->ue_id_idx_value->idx_len10().to_number();
-      break;
-    default: {
-      logger.error("Paging UE Identity index type {} is not supported", msg->ue_id_idx_value->type().to_string());
-      return;
-    }
+  paging_information info{};
+  expected<unsigned> ue_identity_index_value = get_paging_ue_identity_index_value(msg);
+  if (not ue_identity_index_value.has_value()) {
+    logger.error("Discarding Paging message. Cause=Paging UE Identity index type {} is not supported",
+                 msg->ue_id_idx_value->type().to_string());
+    return;
   }
-  switch (msg->paging_id->type()) {
-    case paging_id_c::types_opts::ran_ue_paging_id: {
-      info.paging_type_indicator = mac_paging_information::ran_ue_paging_identity;
-      info.paging_identity       = msg->paging_id->ran_ue_paging_id().irnti.to_number();
-      break;
-    }
-    case paging_id_c::types_opts::cn_ue_paging_id: {
-      info.paging_type_indicator = mac_paging_information::cn_ue_paging_identity;
-      info.paging_identity       = msg->paging_id->cn_ue_paging_id().five_g_s_tmsi().to_number();
-      break;
-    }
-    default: {
-      logger.error("Paging Identity type {} is not supported", msg->paging_id->type().to_string());
-      return;
-    }
+  info.ue_identity_index_value = ue_identity_index_value.value();
+
+  expected<paging_identity_type> paging_type_indicator = get_paging_identity_type(msg);
+  expected<unsigned>             paging_identity       = get_paging_identity(msg);
+  if (not paging_type_indicator.has_value()) {
+    logger.error("Discarding Paging message. Cause=Paging Identity type {} is not supported",
+                 msg->paging_id->type().to_string());
+    return;
   }
+  info.paging_type_indicator = paging_type_indicator.value();
+  if (not paging_identity.has_value()) {
+    logger.error("Discarding Paging message. Cause=Paging Identity type {} is not supported",
+                 msg->paging_id->type().to_string());
+    return;
+  }
+  info.paging_identity = paging_identity.value();
+
   if (msg->paging_drx_present) {
-    switch (msg->paging_drx.value) {
-      case paging_drx_opts::v32:
-        info.paging_drx = 32;
-        break;
-      case paging_drx_opts::v64:
-        info.paging_drx = 64;
-        break;
-      case paging_drx_opts::v128:
-        info.paging_drx = 128;
-        break;
-      case paging_drx_opts::v256:
-        info.paging_drx = 256;
-        break;
-      default:
-        logger.error("DRX value {} is not supported", msg->paging_drx.value.to_string());
+    expected<unsigned> paging_drx = get_paging_drx_in_nof_rf(msg);
+    if (not paging_drx.has_value()) {
+      logger.error("DRX value {} is not supported", msg->paging_drx.value.to_string());
+    } else {
+      info.paging_drx = paging_drx.value();
     }
   }
   if (msg->paging_prio_present) {
-    switch (msg->paging_prio.value) {
-      case paging_prio_opts::priolevel1:
-        info.paging_priority = 1;
-        break;
-      case paging_prio_opts::priolevel2:
-        info.paging_priority = 2;
-        break;
-      case paging_prio_opts::priolevel3:
-        info.paging_priority = 3;
-        break;
-      case paging_prio_opts::priolevel4:
-        info.paging_priority = 4;
-        break;
-      case paging_prio_opts::priolevel5:
-        info.paging_priority = 5;
-        break;
-      case paging_prio_opts::priolevel6:
-        info.paging_priority = 6;
-        break;
-      case paging_prio_opts::priolevel7:
-        info.paging_priority = 7;
-        break;
-      case paging_prio_opts::priolevel8:
-        info.paging_priority = 8;
-        break;
-      default:
-        logger.error("Paging priority value {} is not supported", msg->paging_prio.value.to_string());
+    expected<unsigned> paging_priority = get_paging_priority(msg);
+    if (not paging_priority.has_value()) {
+      logger.error("Paging priority value {} is not supported", msg->paging_prio.value.to_string());
+    } else {
+      info.paging_priority = paging_priority.value();
     }
   }
   if (msg->paging_origin_present and msg->paging_origin.value == paging_origin_e::non_neg3gpp) {

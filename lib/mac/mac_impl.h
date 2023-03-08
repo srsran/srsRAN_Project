@@ -53,19 +53,12 @@ public:
 
   mac_paging_information_handler& get_cell_paging_info_handler() override { return *this; }
 
-  void handle_paging_information(const mac_paging_information& msg) override
+  void handle_paging_information(const paging_information& msg) override
   {
     sched_paging_information pg_info{};
-    pg_info.paging_drx      = msg.paging_drx;
-    pg_info.paging_identity = msg.paging_identity;
-    switch (msg.paging_type_indicator) {
-      case mac_paging_information::ran_ue_paging_identity:
-        pg_info.paging_type_indicator = sched_paging_information::ran_ue_paging_identity;
-        break;
-      case mac_paging_information::cn_ue_paging_identity:
-        pg_info.paging_type_indicator = sched_paging_information::cn_ue_paging_identity;
-        break;
-    }
+    pg_info.paging_drx              = msg.paging_drx;
+    pg_info.paging_identity         = msg.paging_identity;
+    pg_info.paging_type_indicator   = msg.paging_type_indicator;
     pg_info.ue_identity_index_value = msg.ue_identity_index_value;
     pg_info.paging_cells.resize(msg.paging_cells.size());
     pg_info.paging_cells.assign(msg.paging_cells.begin(), msg.paging_cells.end());

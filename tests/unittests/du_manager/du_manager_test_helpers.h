@@ -248,7 +248,7 @@ public:
 
   void handle_dl_buffer_state_update_required(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 
-  void handle_paging_information(const mac_paging_information& msg) override {}
+  void handle_paging_information(const paging_information& msg) override {}
 };
 
 class dummy_ue_resource_configurator_factory : public du_ran_resource_manager
