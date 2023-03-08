@@ -97,7 +97,7 @@ TEST_F(unique_timer_manual_tester, set_duration)
 {
   unique_timer2 t = this->create_timer();
 
-  unsigned dur = test_rgen::uniform_int<unsigned>(0, 100);
+  timer_duration dur{test_rgen::uniform_int<unsigned>(0, 100)};
   t.set(dur);
   ASSERT_TRUE(t.is_set());
   ASSERT_FALSE(t.is_running());
@@ -110,14 +110,14 @@ TEST_F(unique_timer_manual_tester, single_run)
 {
   unique_timer2 t = this->create_timer();
 
-  unsigned dur                       = test_rgen::uniform_int<unsigned>(0, 100);
-  bool     expiry_callback_triggered = false;
+  timer_duration dur{test_rgen::uniform_int<unsigned>(0, 100)};
+  bool           expiry_callback_triggered = false;
   t.set(dur, callback_flag_setter(expiry_callback_triggered));
   t.run();
   ASSERT_TRUE(t.is_set());
   ASSERT_EQ(t.duration(), dur);
 
-  for (unsigned i = 0; i != std::max(dur, 1U); ++i) {
+  for (unsigned i = 0; i != std::max((unsigned)dur.count(), 1U); ++i) {
     ASSERT_TRUE(t.is_running());
     ASSERT_FALSE(t.has_expired());
 
@@ -133,7 +133,7 @@ TEST_F(unique_timer_manual_tester, single_run)
 
 TEST_F(unique_timer_manual_tester, multiple_timers_with_same_duration_and_timeout)
 {
-  unsigned                   dur = test_rgen::uniform_int<unsigned>(0, 100);
+  timer_duration             dur{test_rgen::uniform_int<unsigned>(0, 100)};
   std::vector<unique_timer2> timers(test_rgen::uniform_int<unsigned>(1, 10));
   for (unsigned i = 0; i != timers.size(); ++i) {
     timers[i] = this->create_timer();
@@ -141,7 +141,7 @@ TEST_F(unique_timer_manual_tester, multiple_timers_with_same_duration_and_timeou
     timers[i].run();
   }
 
-  for (unsigned i = 0; i != std::max(dur, 1U); ++i) {
+  for (unsigned i = 0; i != std::max((unsigned)dur.count(), 1U); ++i) {
     ASSERT_TRUE(std::all_of(timers.begin(), timers.end(), [](const auto& t) { return t.is_running(); }));
     ASSERT_TRUE(std::none_of(timers.begin(), timers.end(), [](const auto& t) { return t.has_expired(); }));
 
@@ -156,10 +156,10 @@ TEST_F(unique_timer_manual_tester, multiple_timers_with_same_duration_and_timeou
 TEST_F(unique_timer_manual_tester, multiple_timers_with_same_timeout_but_different_durations)
 {
   std::vector<unique_timer2> timers(test_rgen::uniform_int<unsigned>(1, 10));
-  unsigned                   dur = timers.size() + test_rgen::uniform_int<unsigned>(1, 100);
+  timer_duration             dur{timers.size() + test_rgen::uniform_int<unsigned>(1, 100)};
   for (unsigned i = 0; i != timers.size(); ++i) {
     timers[i] = this->create_timer();
-    timers[i].set(dur - i);
+    timers[i].set(dur - timer_duration{i});
   }
 
   // Each timer starts at a different tick.
@@ -169,7 +169,7 @@ TEST_F(unique_timer_manual_tester, multiple_timers_with_same_timeout_but_differe
     this->tick();
   }
 
-  for (unsigned i = 0; i != dur - timers.size(); ++i) {
+  for (unsigned i = 0; i != dur.count() - timers.size(); ++i) {
     ASSERT_TRUE(std::all_of(timers.begin(), timers.end(), [](const auto& t) { return t.is_running(); }));
     ASSERT_TRUE(std::none_of(timers.begin(), timers.end(), [](const auto& t) { return t.has_expired(); }));
 
@@ -185,8 +185,9 @@ TEST_F(unique_timer_manual_tester, single_run_and_stop_does_not_trigger_expiry)
 {
   unique_timer2 t = this->create_timer();
 
-  unsigned dur = test_rgen::uniform_int<unsigned>(1, 100), stop_tick = test_rgen::uniform_int<unsigned>(0, dur - 1);
-  bool     expiry_callback_triggered = false;
+  timer_duration dur{test_rgen::uniform_int<unsigned>(1, 100)};
+  unsigned       stop_tick                 = test_rgen::uniform_int<unsigned>(0, dur.count() - 1);
+  bool           expiry_callback_triggered = false;
   t.set(dur, callback_flag_setter(expiry_callback_triggered));
   t.run();
 
@@ -198,7 +199,7 @@ TEST_F(unique_timer_manual_tester, single_run_and_stop_does_not_trigger_expiry)
   t.stop();
 
   // Expiry never triggers.
-  for (unsigned i = stop_tick; i != dur + 1; ++i) {
+  for (unsigned i = stop_tick; i != dur.count() + 1; ++i) {
     this->tick();
     ASSERT_FALSE(t.is_running());
     ASSERT_FALSE(t.has_expired());
@@ -215,13 +216,13 @@ protected:
   unique_timer_cancel_already_launched_expiry_callback_tester()
   {
     t   = this->create_timer();
-    dur = test_rgen::uniform_int<unsigned>(1, 100);
+    dur = timer_duration{test_rgen::uniform_int<unsigned>(1, 100)};
 
     t.set(dur, callback_flag_setter(expiry_callback_triggered));
     t.run();
 
     // Run until one tick before expiry.
-    for (unsigned i = 0; i != dur - 1; ++i) {
+    for (unsigned i = 0; i != dur.count() - 1; ++i) {
       EXPECT_TRUE(t.is_running());
       this->tick();
     }
@@ -232,9 +233,9 @@ protected:
 
   void process_pending_expiry_callbacks() { this->worker.run_pending_tasks(); }
 
-  unique_timer2 t;
-  unsigned      dur;
-  bool          expiry_callback_triggered = false;
+  unique_timer2  t;
+  timer_duration dur;
+  bool           expiry_callback_triggered = false;
 };
 
 TEST_F(unique_timer_cancel_already_launched_expiry_callback_tester, stop_intercepts_callback)
@@ -278,16 +279,16 @@ TEST_F(unique_timer_cancel_already_launched_expiry_callback_tester, timer_run_in
 
 TEST_F(unique_timer_manual_tester, calling_run_on_running_timer_restarts_timer)
 {
-  unique_timer2 t                         = this->create_timer();
-  unsigned      dur                       = 1000;
-  bool          expiry_callback_triggered = false;
+  unique_timer2  t = this->create_timer();
+  timer_duration dur{1000};
+  bool           expiry_callback_triggered = false;
   t.set(dur, callback_flag_setter(expiry_callback_triggered));
   t.run();
 
   // Restart the timer several times without letting the timer expire.
   unsigned nof_restarts = test_rgen::uniform_int<unsigned>(0, 10);
   for (unsigned i = 0; i != nof_restarts; ++i) {
-    unsigned rerun_tick = test_rgen::uniform_int<unsigned>(1, dur - 1);
+    unsigned rerun_tick = test_rgen::uniform_int<unsigned>(1, dur.count() - 1);
     for (unsigned n = 0; n != rerun_tick; ++n) {
       this->tick();
     }
@@ -298,7 +299,7 @@ TEST_F(unique_timer_manual_tester, calling_run_on_running_timer_restarts_timer)
   }
 
   // Let the timer expire by ticking its full duration.
-  for (unsigned n = 0; n != dur; ++n) {
+  for (unsigned n = 0; n != dur.count(); ++n) {
     ASSERT_TRUE(t.is_running());
     ASSERT_FALSE(t.has_expired());
     this->tick();
@@ -331,7 +332,7 @@ protected:
   void run_timer_creation()
   {
     unique_timer2 t = timer_mng.create_unique_timer(frontend_exec);
-    t.set(100, [th_id = std::this_thread::get_id(), this](timer_id_t tid) {
+    t.set(timer_duration{100}, [th_id = std::this_thread::get_id(), this](timer_id_t tid) {
       expiry_counter++;
       EXPECT_EQ(std::this_thread::get_id(), th_id);
     });

@@ -14,6 +14,7 @@
 #include "srsran/adt/unique_function.h"
 #include "srsran/adt/variant.h"
 #include "srsran/support/executors/task_executor.h"
+#include <chrono>
 #include <deque>
 #include <mutex>
 
@@ -23,7 +24,8 @@ namespace srsran {
 using timer_id_t                      = uint32_t;
 constexpr timer_id_t INVALID_TIMER_ID = std::numeric_limits<timer_id_t>::max();
 
-using timer_tick_difference_t = uint32_t;
+/// Unit used for timer ticks
+using timer_duration = std::chrono::milliseconds;
 
 class unique_timer2;
 
@@ -34,7 +36,7 @@ class timer_manager2
 
   using epoch_type = uint32_t;
 
-  constexpr static timer_tick_difference_t INVALID_DURATION = std::numeric_limits<timer_tick_difference_t>::max();
+  constexpr static timer_duration INVALID_DURATION = std::numeric_limits<timer_duration>::max();
 
   enum state_t { stopped, running, expired };
 
@@ -62,7 +64,7 @@ class timer_manager2
     /// The current state of timer (e.g. running/expired/stopped) from the perspective of the timer frontend.
     state_t state = stopped;
     /// Duration of each timer run.
-    timer_tick_difference_t duration = INVALID_DURATION;
+    timer_duration duration = INVALID_DURATION;
     /// Callback triggered when timer expires. Callback updates are protected by backend lock.
     unique_function<void(timer_id_t)> callback;
 
@@ -70,9 +72,9 @@ class timer_manager2
 
     void destroy();
 
-    void set(unsigned duration);
+    void set(timer_duration duration);
 
-    void set(unsigned duration, unique_function<void(timer_id_t)> callback);
+    void set(timer_duration duration, unique_function<void(timer_id_t)> callback);
 
     void run();
 
@@ -200,17 +202,17 @@ public:
   bool has_expired() const { return is_valid() && handle->state == timer_manager2::expired; }
 
   /// Returns the configured duration for this timer measured in ticks.
-  timer_tick_difference_t duration() const { return is_valid() ? handle->duration : timer_manager2::INVALID_DURATION; }
+  timer_duration duration() const { return is_valid() ? handle->duration : timer_manager2::INVALID_DURATION; }
 
   /// Configures the duration of the timer calling the provided callback upon timer expiration.
-  void set(timer_tick_difference_t duration, unique_function<void(timer_id_t)> callback)
+  void set(timer_duration duration, unique_function<void(timer_id_t)> callback)
   {
     srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
     handle->set(duration, std::move(callback));
   }
 
   /// Configures the duration of the timer.
-  void set(timer_tick_difference_t duration)
+  void set(timer_duration duration)
   {
     srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
     handle->set(duration);

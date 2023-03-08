@@ -18,7 +18,7 @@ static constexpr size_t WHEEL_SIZE  = 1U << WHEEL_SHIFT;
 static constexpr size_t WHEEL_MASK  = WHEEL_SIZE - 1U;
 
 /// Maximum timeout duration supported for a given timer in ticks.
-static constexpr timer_tick_difference_t MAX_TIMER_DURATION = std::numeric_limits<timer_tick_difference_t>::max() / 2;
+static constexpr timer_duration MAX_TIMER_DURATION = timer_duration{std::numeric_limits<unsigned>::max() / 2};
 
 timer_manager2::timer_frontend::timer_frontend(timer_manager2& parent_, timer_id_t id_) : parent(parent_), id(id_) {}
 
@@ -29,19 +29,19 @@ void timer_manager2::timer_frontend::destroy()
   parent.push_timer_command(cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::destroy});
 };
 
-void timer_manager2::timer_frontend::set(unsigned dur)
+void timer_manager2::timer_frontend::set(timer_duration dur)
 {
-  srsran_assert(
-      dur <= MAX_TIMER_DURATION, "Invalid timer duration={}>{}", dur, (timer_tick_difference_t)MAX_TIMER_DURATION);
+  srsran_assert(dur <= MAX_TIMER_DURATION, "Invalid timer duration ({}>{})", dur.count(), MAX_TIMER_DURATION.count());
   epoch.fetch_add(1, std::memory_order::memory_order_relaxed);
   duration = dur;
   if (state == running) {
     // If we are setting the timer when it is already running, force run restart.
-    parent.push_timer_command(cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::start, duration});
+    parent.push_timer_command(
+        cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::start, (unsigned)duration.count()});
   }
 }
 
-void timer_manager2::timer_frontend::set(unsigned dur, unique_function<void(timer_id_t)> callback_)
+void timer_manager2::timer_frontend::set(timer_duration dur, unique_function<void(timer_id_t)> callback_)
 {
   set(dur);
   callback = std::move(callback_);
@@ -51,7 +51,7 @@ void timer_manager2::timer_frontend::run()
 {
   epoch.fetch_add(1, std::memory_order::memory_order_relaxed);
   state = running;
-  parent.push_timer_command(cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::start, duration});
+  parent.push_timer_command(cmd_t{id, epoch.load(std::memory_order_relaxed), cmd_t::start, (unsigned)duration.count()});
 }
 
 void timer_manager2::timer_frontend::stop()
@@ -67,6 +67,8 @@ bool timer_manager2::timer_handle::empty() const
 }
 
 // /////////////////////
+
+constexpr timer_duration timer_manager2::INVALID_DURATION;
 
 timer_manager2::timer_manager2(size_t capacity) : time_wheel(WHEEL_SIZE)
 {
