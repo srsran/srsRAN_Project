@@ -14,11 +14,6 @@
 using namespace srsran;
 using namespace fapi;
 
-void logging_slot_data_notifier_decorator::on_dl_tti_response(const dl_tti_response_message& msg)
-{
-  notifier.on_dl_tti_response(msg);
-}
-
 void logging_slot_data_notifier_decorator::on_rx_data_indication(const rx_data_indication_message& msg)
 {
   log_rx_data_indication(msg, logger);

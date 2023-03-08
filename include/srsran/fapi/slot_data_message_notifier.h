@@ -28,11 +28,6 @@ class slot_data_message_notifier
 public:
   virtual ~slot_data_message_notifier() = default;
 
-  /// \brief Notifies the reception of a downlink TTI response message.
-  ///
-  /// \param[in] msg Message contents.
-  virtual void on_dl_tti_response(const dl_tti_response_message& msg) = 0;
-
   /// \brief Notifies the reception of a RX data indication message.
   ///
   /// \param[in] msg Message contents.

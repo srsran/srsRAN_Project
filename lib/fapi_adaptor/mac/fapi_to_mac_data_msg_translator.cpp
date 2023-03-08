@@ -82,8 +82,6 @@ fapi_to_mac_data_msg_translator::fapi_to_mac_data_msg_translator(subcarrier_spac
 {
 }
 
-void fapi_to_mac_data_msg_translator::on_dl_tti_response(const fapi::dl_tti_response_message& msg) {}
-
 void fapi_to_mac_data_msg_translator::on_rx_data_indication(const fapi::rx_data_indication_message& msg)
 {
   mac_rx_data_indication indication;

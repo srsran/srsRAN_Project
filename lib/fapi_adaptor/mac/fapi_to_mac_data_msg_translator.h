@@ -28,9 +28,6 @@ public:
   explicit fapi_to_mac_data_msg_translator(subcarrier_spacing scs_);
 
   // See interface for documentation.
-  void on_dl_tti_response(const fapi::dl_tti_response_message& msg) override;
-
-  // See interface for documentation.
   void on_rx_data_indication(const fapi::rx_data_indication_message& msg) override;
 
   // See interface for documentation.

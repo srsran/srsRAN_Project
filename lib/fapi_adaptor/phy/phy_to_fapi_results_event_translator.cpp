@@ -22,7 +22,6 @@ namespace {
 class slot_data_message_notifier_dummy : public fapi::slot_data_message_notifier
 {
 public:
-  void on_dl_tti_response(const fapi::dl_tti_response_message& msg) override {}
   void on_rx_data_indication(const fapi::rx_data_indication_message& msg) override {}
   void on_crc_indication(const fapi::crc_indication_message& msg) override {}
   void on_uci_indication(const fapi::uci_indication_message& msg) override {}
