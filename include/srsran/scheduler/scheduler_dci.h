@@ -30,7 +30,7 @@ enum class dci_dl_format { f1_0, f1_1, f2_0 };
 enum class dci_ul_format { f0_0, f0_1 };
 
 /// Defines which fields are stored in the DCI payload, based on the chosen DCI format and RNTI type.
-enum class dci_dl_rnti_config_type { si_f1_0, ra_f1_0, c_rnti_f1_0, tc_rnti_f1_0, p_rnti_f1_0 };
+enum class dci_dl_rnti_config_type { si_f1_0, ra_f1_0, c_rnti_f1_0, tc_rnti_f1_0, p_rnti_f1_0, c_rnti_f1_1 };
 
 inline const char* dci_dl_rnti_config_rnti_type(dci_dl_rnti_config_type type)
 {
@@ -40,7 +40,10 @@ inline const char* dci_dl_rnti_config_rnti_type(dci_dl_rnti_config_type type)
 
 inline const char* dci_dl_rnti_config_format(dci_dl_rnti_config_type type)
 {
-  return "1_0";
+  if (type != dci_dl_rnti_config_type::c_rnti_f1_1) {
+    return "1_0";
+  }
+  return "1_1";
 }
 
 /// \brief Describes an unpacked DL DCI message.
@@ -53,13 +56,14 @@ struct dci_dl_info {
     dci_1_0_c_rnti_configuration  c_rnti_f1_0;
     dci_1_0_tc_rnti_configuration tc_rnti_f1_0;
     dci_1_0_p_rnti_configuration  p_rnti_f1_0;
+    // TODO: Add DCI Format 1_1 for C-RNTI.
   };
 
   dci_dl_info() : type(dci_dl_rnti_config_type::si_f1_0) { new (&si_f1_0) dci_1_0_si_rnti_configuration(); }
 };
 
 /// Defines which fields are stored in the DCI payload, based on the chosen DCI format and RNTI type.
-enum class dci_ul_rnti_config_type { tc_rnti_f0_0, c_rnti_f0_0 };
+enum class dci_ul_rnti_config_type { tc_rnti_f0_0, c_rnti_f0_0, c_rnti_f0_1 };
 
 inline const char* dci_ul_rnti_config_rnti_type(dci_ul_rnti_config_type type)
 {
@@ -69,7 +73,10 @@ inline const char* dci_ul_rnti_config_rnti_type(dci_ul_rnti_config_type type)
 
 inline const char* dci_ul_rnti_config_format(dci_ul_rnti_config_type type)
 {
-  return "0_0";
+  if (type != dci_ul_rnti_config_type::c_rnti_f0_1) {
+    return "0_0";
+  }
+  return "0_1";
 }
 
 struct dci_ul_info {
@@ -77,6 +84,7 @@ struct dci_ul_info {
   union {
     dci_0_0_c_rnti_configuration  c_rnti_f0_0;
     dci_0_0_tc_rnti_configuration tc_rnti_f0_0;
+    // TODO: Add DCI Format 0_1 for C-RNTI.
   };
 
   dci_ul_info() : type(dci_ul_rnti_config_type::c_rnti_f0_0) { new (&c_rnti_f0_0) dci_0_0_c_rnti_configuration(); }
