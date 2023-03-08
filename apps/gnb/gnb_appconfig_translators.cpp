@@ -239,11 +239,8 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
       // User specified time advance calibration.
       out_cfg.time_alignment_calibration = config.rf_driver_cfg.time_alignment_calibration.value();
     } else {
-      // Default time alingment calibration.
-      // NOTE: ZMQ has a delay of 16 samples, so the time alignment calibration is adjusted.
-      if (config.rf_driver_cfg.device_driver == "zmq") {
-        out_cfg.time_alignment_calibration = -16;
-      } else if (config.rf_driver_cfg.device_arguments.find("type=x300") != std::string::npos) {
+      // Apply default time alignment calibration.
+      if (config.rf_driver_cfg.device_arguments.find("type=x300") != std::string::npos) {
         // Calibrated values for the X300 for UHD-4.3.
         if (config.rf_driver_cfg.srate_MHz == 11.52) {
           out_cfg.time_alignment_calibration = 54;
