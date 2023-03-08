@@ -140,17 +140,17 @@ std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config
 
     // PDCP SN
     out_pdcp.drb->pdcp_sn_size_dl = pdcp_sn_size{};
-    if (!from_number(out_pdcp.drb->pdcp_sn_size_dl.value(), qos.pdcp.tx.sn_field_length)) {
+    if (!pdcp_sn_size_from_uint(out_pdcp.drb->pdcp_sn_size_dl.value(), qos.pdcp.tx.sn_field_length)) {
       report_error("Invalid PDCP TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
     }
     out_pdcp.drb->pdcp_sn_size_ul = pdcp_sn_size{};
-    if (!from_number(out_pdcp.drb->pdcp_sn_size_ul.value(), qos.pdcp.rx.sn_field_length)) {
+    if (!pdcp_sn_size_from_uint(out_pdcp.drb->pdcp_sn_size_ul.value(), qos.pdcp.rx.sn_field_length)) {
       report_error("Invalid PDCP RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.rx.sn_field_length);
     }
 
     // TX discard timer
     out_pdcp.drb->discard_timer = pdcp_discard_timer{};
-    if (!from_number(out_pdcp.drb->discard_timer.value(), qos.pdcp.tx.discard_timer)) {
+    if (!pdcp_discard_timer_from_int(out_pdcp.drb->discard_timer.value(), qos.pdcp.tx.discard_timer)) {
       report_error("Invalid PDCP discard timer. 5QI {} discard_timer {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
     }
 
@@ -162,8 +162,8 @@ std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config
 
     // RX t-Reordering
     out_pdcp.t_reordering = pdcp_t_reordering{};
-    if (!from_number(out_pdcp.drb->discard_timer.value(), qos.pdcp.tx.discard_timer)) {
-      report_error("Invalid PDCP t-Reordering. 5QI {} t-Reordering {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
+    if (!pdcp_t_reordering_from_int(out_pdcp.t_reordering.value(), qos.pdcp.rx.t_reordering)) {
+      report_error("Invalid PDCP t-Reordering. 5QI {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
     }
   }
   return out_cfg;

@@ -25,7 +25,7 @@ enum class pdcp_rlc_mode { um, am };
 
 /// PDCP NR sequence number field.
 enum class pdcp_sn_size : uint8_t { size12bits = 12, size18bits = 18 };
-inline bool from_number(pdcp_sn_size& sn_size, uint16_t num)
+inline bool pdcp_sn_size_from_uint(pdcp_sn_size& sn_size, uint16_t num)
 {
   if (num == 12) {
     sn_size = pdcp_sn_size::size12bits;
@@ -92,7 +92,7 @@ enum class pdcp_t_reordering {
   ms3000   = 3000,
   infinity = -1
 };
-inline bool from_number(pdcp_t_reordering t_reord, int num)
+inline bool pdcp_t_reordering_from_int(pdcp_t_reordering t_reord, int num)
 {
   switch (num) {
     case 0:
@@ -168,7 +168,7 @@ enum class pdcp_discard_timer {
   ms1500         = 1500,
   infinity       = -1
 };
-inline bool from_number(pdcp_discard_timer& discard_timer, int num)
+inline bool pdcp_discard_timer_from_int(pdcp_discard_timer& discard_timer, int num)
 {
   switch (num) {
     case 0:
