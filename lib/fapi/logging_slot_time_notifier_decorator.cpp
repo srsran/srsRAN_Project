@@ -8,7 +8,7 @@
  *
  */
 
-#include "logging_slot_time_noitifier_decorator.h"
+#include "logging_slot_time_notifier_decorator.h"
 #include "message_loggers.h"
 
 using namespace srsran;

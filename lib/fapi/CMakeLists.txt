@@ -13,7 +13,7 @@ set(SOURCES
         logging_decorator_factories.cpp
         logging_slot_data_notifier_decorator.cpp
         logging_slot_gateway_decorator.cpp
-        logging_slot_time_noitifier_decorator.cpp)
+        logging_slot_time_notifier_decorator.cpp)
 
 add_library(srsran_fapi_message_loggers STATIC ${SOURCES})
 target_link_libraries(srsran_fapi_message_loggers srslog)

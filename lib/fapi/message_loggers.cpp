@@ -34,19 +34,19 @@ void srsran::fapi::log_crc_indication(const crc_indication_message& msg, srslog:
 
   for (const auto& pdu : msg.pdus) {
     fmt::format_to(buffer,
-                   "\n\t- CRC rnti={:#x} harq_id={} tb_status={} ta_s={} sinr={} rsrp={}",
+                   "\n\t- CRC rnti={:#x} harq_id={} tb_status={}",
                    pdu.rnti,
                    pdu.harq_id,
-                   pdu.tb_crc_status_ok ? "OK" : "KO",
-                   (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min())
-                       ? fmt::format("{}", pdu.timing_advance_offset_ns * 1e-9)
-                       : "n/a",
-                   (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min())
-                       ? fmt::format("{}", to_crc_ul_sinr(pdu.ul_sinr_metric))
-                       : "n/a",
-                   (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max())
-                       ? fmt::format("{}", to_crc_ul_rsrp(pdu.rsrp))
-                       : "n/a");
+                   pdu.tb_crc_status_ok ? "OK" : "KO");
+    if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
+      fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
+    }
+    if (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min()) {
+      fmt::format_to(buffer, " sinr={:.1f}", to_crc_ul_sinr(pdu.ul_sinr_metric));
+    }
+    if (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max()) {
+      fmt::format_to(buffer, " rsrp={:.1f}", to_crc_ul_rsrp(pdu.rsrp));
+    }
   }
 
   logger.debug("{}", to_c_str(buffer));
@@ -55,11 +55,12 @@ void srsran::fapi::log_crc_indication(const crc_indication_message& msg, srslog:
 static void log_pdcch_pdu(const dl_pdcch_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(buffer,
-                 "\n\t- PDCCH bwp={}:{} symb={}:{}",
+                 "\n\t- PDCCH bwp={}:{} symb={}:{} nof_dcis={}",
                  pdu.coreset_bwp_start,
                  pdu.coreset_bwp_size,
                  pdu.start_symbol_index,
-                 pdu.duration_symbols);
+                 pdu.duration_symbols,
+                 pdu.dl_dci.size());
 }
 
 static void log_ssb_pdu(const dl_ssb_pdu& pdu, fmt::memory_buffer& buffer)
@@ -75,13 +76,27 @@ static void log_ssb_pdu(const dl_ssb_pdu& pdu, fmt::memory_buffer& buffer)
 static void log_pdsch_pdu(const dl_pdsch_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(buffer,
-                 "\n\t- PDSCH rnti={:#x} bwp={}:{} symb={}:{} tbs={}",
+                 "\n\t- PDSCH rnti={:#x} bwp={}:{} symb={}:{} CW: tbs={} mod={} rv_idx={}",
                  pdu.rnti,
                  pdu.bwp_start,
                  pdu.bwp_size,
                  pdu.start_symbol_index,
                  pdu.nr_of_symbols,
-                 pdu.cws.front().tb_size);
+                 pdu.cws.front().tb_size,
+                 pdu.cws.front().qam_mod_order,
+                 pdu.cws.front().rv_index);
+}
+
+static void log_csi_rs_pdu(const dl_csi_rs_pdu& pdu, fmt::memory_buffer& buffer)
+{
+  fmt::format_to(buffer,
+                 "\n\t- CSI-RS prbs={}:{} row={} symbL0={} symbL1={} scramb_id={}",
+                 pdu.start_rb,
+                 pdu.num_rbs,
+                 pdu.row,
+                 pdu.symb_L0,
+                 pdu.symb_L1,
+                 pdu.scramb_id);
 }
 
 void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog::basic_logger& logger)
@@ -92,6 +107,7 @@ void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog:
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case fapi::dl_pdu_type::CSI_RS:
+        log_csi_rs_pdu(pdu.csi_rs_pdu, buffer);
         break;
       case fapi::dl_pdu_type::PDCCH:
         log_pdcch_pdu(pdu.pdcch_pdu, buffer);
@@ -102,8 +118,6 @@ void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog:
       case fapi::dl_pdu_type::SSB:
         log_ssb_pdu(pdu.ssb_pdu, buffer);
         break;
-      default:
-        srsran_assert(0, "DL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 
@@ -132,30 +146,27 @@ void srsran::fapi::log_rach_indication(const rach_indication_message& msg, srslo
 {
   fmt::memory_buffer buffer;
   fmt::format_to(buffer, "RACH.indication slot={}.{}", msg.sfn, msg.slot);
+
   for (const auto& pdu : msg.pdus) {
-    fmt::format_to(buffer,
-                   "\n\t- PRACH symb_idx={} rssi={} preambles={}:",
-                   pdu.symbol_index,
-                   (pdu.avg_rssi != std::numeric_limits<decltype(pdu.avg_rssi)>::max())
-                       ? fmt::format("{}", to_rach_rssi_dB(pdu.avg_rssi))
-                       : "n/a",
-                   pdu.preambles.size());
+    fmt::format_to(buffer, "\n\t- PRACH symb_idx={} slot_idx={}", pdu.symbol_index, pdu.slot_index);
+    if (pdu.avg_rssi != std::numeric_limits<decltype(pdu.avg_rssi)>::max()) {
+      fmt::format_to(buffer, " rssi={:.1f}", to_rach_rssi_dB(pdu.avg_rssi));
+    }
+    fmt::format_to(buffer, " nof_preambles={}:", pdu.preambles.size());
 
     // Log the preambles.
-    for (const auto& pream : pdu.preambles) {
-      fmt::format_to(
-          buffer,
-          "\n\t\t- PREAMBLE index={} ta_s={} epre={} snr={}",
-          pream.preamble_index,
-          (pream.timing_advance_offset_ns != std::numeric_limits<decltype(pream.timing_advance_offset_ns)>::max())
-              ? fmt::format("{}", pream.timing_advance_offset_ns * 1e-9)
-              : "n/a",
-          (pream.preamble_pwr != std::numeric_limits<decltype(pream.preamble_pwr)>::max())
-              ? fmt::format("{}", to_rach_preamble_power_dB(pream.preamble_pwr))
-              : "n/a",
-          (pream.preamble_snr != std::numeric_limits<decltype(pream.preamble_snr)>::max())
-              ? fmt::format("{}", to_rach_preamble_snr_dB(pream.preamble_snr))
-              : "n/a");
+    for (const auto& preamble : pdu.preambles) {
+      fmt::format_to(buffer, "\n\t\t- PREAMBLE index={}", preamble.preamble_index);
+      if (preamble.timing_advance_offset_ns !=
+          std::numeric_limits<decltype(preamble.timing_advance_offset_ns)>::max()) {
+        fmt::format_to(buffer, " ta_s={}", preamble.timing_advance_offset_ns * 1e-9);
+      }
+      if (preamble.preamble_pwr != std::numeric_limits<decltype(preamble.preamble_pwr)>::max()) {
+        fmt::format_to(buffer, " pwr={:.1f}", to_rach_preamble_power_dB(preamble.preamble_pwr));
+      }
+      if (preamble.preamble_snr != std::numeric_limits<decltype(preamble.preamble_snr)>::max()) {
+        fmt::format_to(buffer, " snr={:.1f}", to_rach_preamble_snr_dB(preamble.preamble_snr));
+      }
     }
   }
 
@@ -176,7 +187,7 @@ void srsran::fapi::log_rx_data_indication(const rx_data_indication_message& msg,
 
 void srsran::fapi::log_tx_data_request(const tx_data_request_message& msg, srslog::basic_logger& logger)
 {
-  logger.debug("Tx_Data.request slot={}.{} nof_pdu={}", msg.sfn, msg.slot, msg.pdus.size());
+  logger.debug("Tx_Data.request slot={}.{} nof_pdus={}", msg.sfn, msg.slot, msg.pdus.size());
 }
 
 /// Converts the given FAPI UCI SINR to dBs as per SCF-222 v4.0 section 3.4.9.
@@ -193,22 +204,21 @@ static float to_uci_ul_rsrp(unsigned rsrp)
 
 static void log_uci_pucch_f0_f1_pdu(const uci_pucch_pdu_format_0_1& pdu, fmt::memory_buffer& buffer)
 {
-  fmt::format_to(buffer,
-                 "\n\t- UCI PUCCH format 0/1 format={} rnti={:#x} ta_ns={} sinr={} rsrp={}",
-                 static_cast<unsigned>(pdu.pucch_format),
-                 pdu.rnti,
-                 (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min())
-                     ? fmt::format("{}", pdu.timing_advance_offset_ns * 1e-9)
-                     : "n/a",
-                 (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min())
-                     ? fmt::format("{}", to_uci_ul_sinr(pdu.ul_sinr_metric))
-                     : "n/a",
-                 (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max())
-                     ? fmt::format("{}", to_uci_ul_rsrp(pdu.rsrp))
-                     : "n/a");
+  fmt::format_to(
+      buffer, "\n\t- UCI PUCCH format 0/1 format={} rnti={:#x}", static_cast<unsigned>(pdu.pucch_format), pdu.rnti);
+
+  if (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min()) {
+    fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
+  }
+  if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
+    fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
+  }
+  if (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max()) {
+    fmt::format_to(buffer, " rsrp={:.1f}", to_uci_ul_rsrp(pdu.rsrp));
+  }
 
   if (pdu.pdu_bitmap.test(fapi::uci_pucch_pdu_format_0_1::HARQ_BIT)) {
-    fmt::format_to(buffer, " harq_ack=");
+    fmt::format_to(buffer, " HARQ: confidence={} harq_ack=", pdu.harq.harq_confidence_level);
     for (unsigned i = 0, e = pdu.harq.harq_values.size(), last = e - 1; i != e; ++i) {
       fmt::format_to(buffer, "{}", to_string(pdu.harq.harq_values[i]));
       if (i != last) {
@@ -216,9 +226,63 @@ static void log_uci_pucch_f0_f1_pdu(const uci_pucch_pdu_format_0_1& pdu, fmt::me
       }
     }
   }
-
   if (pdu.pdu_bitmap.test(fapi::uci_pucch_pdu_format_0_1::SR_BIT)) {
-    fmt::format_to(buffer, " sr={} ", pdu.sr.sr_indication ? "detected" : "not detected");
+    fmt::format_to(buffer,
+                   " SR: confidence={} sr={}",
+                   pdu.sr.sr_confidence_level,
+                   pdu.sr.sr_indication ? "detected" : "not detected");
+  }
+}
+
+static void log_uci_pucch_f234_pdu(const uci_pucch_pdu_format_2_3_4& pdu, fmt::memory_buffer& buffer)
+{
+  fmt::format_to(buffer,
+                 "\n\t- UCI PUCCH format 2/3/4 format={} rnti={:#x}",
+                 static_cast<unsigned>(pdu.pucch_format) + 2,
+                 pdu.rnti);
+
+  if (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min()) {
+    fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
+  }
+  if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
+    fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
+  }
+  if (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max()) {
+    fmt::format_to(buffer, " rsrp={:.1f}", to_uci_ul_rsrp(pdu.rsrp));
+  }
+
+  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::SR_BIT)) {
+    fmt::format_to(buffer, " SR: bit_len={}", pdu.sr.sr_bitlen);
+  }
+  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::HARQ_BIT)) {
+    fmt::format_to(buffer, " HARQ: detection={} bit_len={}", pdu.harq.detection_status, pdu.harq.expected_bit_length);
+  }
+  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT)) {
+    fmt::format_to(
+        buffer, " CSI1: detection={} bit_len={}", pdu.csi_part1.detection_status, pdu.csi_part1.expected_bit_length);
+  }
+}
+
+static void log_uci_pusch_pdu(const uci_pusch_pdu& pdu, fmt::memory_buffer& buffer)
+{
+  fmt::format_to(buffer, "\n\t- UCI PUSCH rnti={:#x}", pdu.rnti);
+
+  if (pdu.ul_sinr_metric != std::numeric_limits<decltype(pdu.ul_sinr_metric)>::min()) {
+    fmt::format_to(buffer, " sinr={:.1f}", to_uci_ul_sinr(pdu.ul_sinr_metric));
+  }
+  if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
+    fmt::format_to(buffer, " ta_s={}", pdu.timing_advance_offset_ns * 1e-9);
+  }
+  if (pdu.rsrp != std::numeric_limits<decltype(pdu.rsrp)>::max()) {
+    fmt::format_to(buffer, " rsrp={:.1f}", to_uci_ul_rsrp(pdu.rsrp));
+  }
+
+  if (pdu.pdu_bitmap.test(uci_pusch_pdu::HARQ_BIT)) {
+    fmt::format_to(buffer, " HARQ: detection={} bit_len={}", pdu.harq.detection_status, pdu.harq.expected_bit_length);
+  }
+  if (pdu.pdu_bitmap.test(uci_pusch_pdu::CSI_PART1_BIT)) {
+    fmt::format_to(
+        buffer, " CSI1: detection={} bit_len={}", pdu.csi_part1.detection_status, pdu.csi_part1.expected_bit_length);
   }
 }
 
@@ -229,11 +293,15 @@ void srsran::fapi::log_uci_indication(const uci_indication_message& msg, srslog:
 
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
+      case fapi::uci_pdu_type::PUSCH:
+        log_uci_pusch_pdu(pdu.pusch_pdu, buffer);
+        break;
       case fapi::uci_pdu_type::PUCCH_format_0_1:
         log_uci_pucch_f0_f1_pdu(pdu.pucch_pdu_f01, buffer);
         break;
-      default:
-        continue;
+      case fapi::uci_pdu_type::PUCCH_format_2_3_4:
+        log_uci_pucch_f234_pdu(pdu.pucch_pdu_f234, buffer);
+        break;
     }
   }
 
@@ -243,41 +311,69 @@ void srsran::fapi::log_uci_indication(const uci_indication_message& msg, srslog:
 static void log_prach_pdu(const ul_prach_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(buffer,
-                 "\n\t- PRACH pci={} fd_ra={}:{} symb={} res_config_idx={} format={}",
+                 "\n\t- PRACH pci={} format={} fd_ra={}:{} symb={} z_corr={} res_config_idx={}",
                  pdu.phys_cell_id,
+                 to_string(pdu.prach_format),
                  pdu.index_fd_ra,
                  pdu.maintenance_v3.num_fd_ra,
                  pdu.prach_start_symbol,
-                 pdu.maintenance_v3.prach_res_config_index,
-                 to_string(pdu.prach_format));
+                 pdu.num_cs,
+                 pdu.maintenance_v3.prach_res_config_index);
 }
 
 static void log_pusch_pdu(const ul_pusch_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(buffer,
-                 "\n\t- PUSCH rnti={:#x} bwp={}:{} symb={}:{} tbs={}",
+                 "\n\t- PUSCH rnti={:#x} bwp={}:{} symb={}:{} mod={}",
                  pdu.rnti,
                  pdu.bwp_start,
                  pdu.bwp_size,
                  pdu.start_symbol_index,
                  pdu.nr_of_symbols,
-                 pdu.pdu_bitmap.test(fapi::ul_pusch_pdu::PUSCH_DATA_BIT) ? fmt::format("{}", pdu.pusch_data.tb_size)
-                                                                         : "n/a");
+                 pdu.qam_mod_order);
+
+  if (pdu.pdu_bitmap.test(fapi::ul_pusch_pdu::PUSCH_DATA_BIT)) {
+    fmt::format_to(buffer,
+                   " CW: tbs={} rv_idx={} harq_id={}",
+                   pdu.pusch_data.tb_size,
+                   pdu.pusch_data.rv_index,
+                   pdu.pusch_data.harq_process_id);
+  }
+
+  if (pdu.pdu_bitmap.test(fapi::ul_pusch_pdu::PUSCH_UCI_BIT)) {
+    fmt::format_to(buffer,
+                   " UCI: harq_bit_len={} csi1_bit_len={}",
+                   pdu.pusch_uci.harq_ack_bit_length,
+                   pdu.pusch_uci.csi_part1_bit_length);
+  }
 }
 
 static void log_pucch_pdu(const ul_pucch_pdu& pdu, fmt::memory_buffer& buffer)
 {
-  // :TODO: log different properties for different formats.
-  fmt::format_to(buffer,
-                 "\n\t- PUCCH rnti={:#x} format={} prb={} prb2={} symb={}:{} harq_bits={} sr_bits={}",
-                 pdu.rnti,
-                 pdu.format_type,
-                 pdu.prb_start,
-                 pdu.second_hop_prb,
-                 pdu.start_symbol_index,
-                 pdu.nr_of_symbols,
-                 pdu.bit_len_harq,
-                 pdu.sr_bit_len);
+  fmt::format_to(
+      buffer,
+      "\n\t- PUCCH rnti={:#x} bwp={}:{} format={} prb={}:{} prb2={} symb={}:{} harq_bit_len={} sr_bit_len={}",
+      pdu.rnti,
+      pdu.bwp_start,
+      pdu.bwp_size,
+      pdu.format_type,
+      pdu.prb_start,
+      pdu.prb_size,
+      pdu.second_hop_prb,
+      pdu.start_symbol_index,
+      pdu.nr_of_symbols,
+      pdu.bit_len_harq,
+      pdu.sr_bit_len);
+
+  switch (pdu.format_type) {
+    case pucch_format::FORMAT_2:
+    case pucch_format::FORMAT_3:
+    case pucch_format::FORMAT_4:
+      fmt::format_to(buffer, " csi1_bit_len={}", pdu.csi_part1_bit_length);
+      break;
+    default:
+      break;
+  }
 }
 
 void srsran::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog::basic_logger& logger)
@@ -298,7 +394,7 @@ void srsran::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog:
         break;
       case fapi::ul_pdu_type::SRS:
       default:
-        srsran_assert(0, "UL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+        srsran_assert(0, "UL_TTI.request PDU type value ({}) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 
@@ -322,7 +418,7 @@ void srsran::fapi::log_ul_dci_request(const ul_dci_request_message& msg, srslog:
         log_pdcch_pdu(pdu.pdu, buffer);
         break;
       default:
-        srsran_assert(0, "UL_DCI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+        srsran_assert(0, "UL_DCI.request PDU type value ({}) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 
