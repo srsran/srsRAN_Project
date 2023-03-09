@@ -26,7 +26,7 @@ struct callback_flag_setter {
   }
 
   bool&      flag;
-  timer_id_t last_timer_id = INVALID_TIMER_ID;
+  timer_id_t last_timer_id = timer_id_t::invalid;
 };
 
 class unique_timer_manual_tester : public ::testing::Test
@@ -45,7 +45,7 @@ protected:
 
   void tick()
   {
-    timer_mng.tick_all();
+    timer_mng.tick();
     worker.run_pending_tasks();
   }
 
@@ -57,7 +57,7 @@ TEST(unique_timer_test, default_ctor)
 {
   unique_timer2 timer;
   ASSERT_FALSE(timer.is_valid());
-  ASSERT_EQ(timer.id(), INVALID_TIMER_ID);
+  ASSERT_EQ(timer.id(), timer_id_t::invalid);
   ASSERT_FALSE(timer.has_expired());
   ASSERT_FALSE(timer.is_running());
   ASSERT_FALSE(timer.is_set());
@@ -69,7 +69,7 @@ TEST_F(unique_timer_manual_tester, creation)
   unique_timer2 t = this->create_timer();
 
   ASSERT_TRUE(t.is_valid());
-  ASSERT_NE(t.id(), INVALID_TIMER_ID);
+  ASSERT_NE(t.id(), timer_id_t::invalid);
   ASSERT_FALSE(t.is_set());
   ASSERT_FALSE(t.is_running());
   ASSERT_FALSE(t.has_expired());
@@ -228,7 +228,7 @@ protected:
     }
 
     // Tick backend timer manager, but do not process frontend executor callbacks yet.
-    this->timer_mng.tick_all();
+    this->timer_mng.tick();
   }
 
   void process_pending_expiry_callbacks() { this->worker.run_pending_tasks(); }
@@ -326,7 +326,7 @@ protected:
     frontend_worker.push_task_blocking([this]() { run_event(); });
 
     // Tick backworker
-    backend_worker.push_task_blocking([this]() { timer_mng.tick_all(); });
+    backend_worker.push_task_blocking([this]() { timer_mng.tick(); });
   }
 
   void run_timer_creation()

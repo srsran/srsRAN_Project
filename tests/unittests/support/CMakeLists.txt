@@ -21,6 +21,7 @@ add_test(timer_test timer_test)
 add_executable(timer2_test timer2_test.cpp)
 target_link_libraries(timer2_test srslog srsran_support gtest gtest_main)
 add_test(timer2_test timer2_test)
+set_tests_properties(timer2_test PROPERTIES LABELS "tsan")
 
 add_executable(function_signature_test function_signature_test.cpp)
 add_test(function_signature_test function_signature_test)
