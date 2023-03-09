@@ -171,8 +171,8 @@ size_t drb_manager_impl::get_nof_drbs()
 
 bool drb_manager_impl::valid_5qi(uint8_t five_qi)
 {
-  if (five_qi_map.find(five_qi) == five_qi_map.end()) {
-    logger.warning("Could not find valid 5QI {}. QoS map size {}", five_qi, five_qi_map.size());
+  if (cfg.five_qi_config.find(five_qi) == cfg.five_qi_config.end()) {
+    logger.warning("Could not find valid 5QI {}. QoS config size {}", five_qi, cfg.five_qi_config.size());
     return false;
   }
   return true;

@@ -130,3 +130,9 @@ TEST_F(pdu_session_resource_setup_test, when_empty_pdu_session_setup_request_rec
   // Nothing has been set up or failed
   ASSERT_FALSE(was_pdu_session_resource_setup_successful());
 }
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
