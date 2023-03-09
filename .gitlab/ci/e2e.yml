@@ -89,7 +89,7 @@ zmq:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "zmq and multiue"
-    # PYTEST_ARGS: "-n 2"
+    PYTEST_ARGS: "-n 2"
     LOG_LEVEL: "info"
   needs:
     - job: "avx2 [basic]"
@@ -121,7 +121,7 @@ rf:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     MARKERS: "rf and not tcp and multiue"
-    LOG_LEVEL: "info"
+    LOG_LEVEL: "warning"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
