@@ -843,14 +843,14 @@ void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
      */
     if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
       if (tx_window->empty()) {
-        logger.log_error(
+        logger.log_info(
             "Poll retransmit timer expired, but the TX window is empty. {} tx_window_size={}", st, tx_window->size());
         return;
       }
       if (not tx_window->has_sn(st.tx_next_ack)) {
-        logger.log_error("Poll retransmit timer expired, but tx_next_ack is not in the TX window. {} tx_window_size={}",
-                         st,
-                         tx_window->size());
+        logger.log_info("Poll retransmit timer expired, but tx_next_ack is not in the TX window. {} tx_window_size={}",
+                        st,
+                        tx_window->size());
         return;
       }
       // RETX first RLC SDU that has not been ACKed
