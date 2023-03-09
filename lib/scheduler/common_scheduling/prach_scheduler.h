@@ -47,7 +47,7 @@ private:
 
   bool first_slot_ind = true;
   /// Duration of the PRACH preamble in slots. For Long Format, it can be more than 1; for short format, it must be 1.
-  unsigned prach_length_slots = 1;
+  unsigned prach_length_slots   = 1;
   unsigned start_slot_pusch_scs = 0;
 
   /// PRACH Configuration parameters derived from the cell configuration.

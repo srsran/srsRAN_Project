@@ -38,8 +38,8 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
                                                    ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
                                                    : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
   static const double   symbol_duration_msec =
-      SUBFRAME_DURATION_MSEC * get_nof_slots_per_subframe(msg.ul_cfg_common.init_ul_bwp.generic_params.scs) /
-      (double)nof_symbols_per_slot;
+      (double)SUBFRAME_DURATION_MSEC /
+      (double)(get_nof_slots_per_subframe(msg.ul_cfg_common.init_ul_bwp.generic_params.scs) * nof_symbols_per_slot);
 
   VERIFY(msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.has_value(),
          "Cells without RACH-ConfigCommon are not supported");
@@ -51,31 +51,43 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
                               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
   VERIFY(prach_cfg.format.is_long_preamble(), "Short PRACH preamble formats not supported");
 
-  const prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
-  double   length_msecs                 = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
-  unsigned nof_symbols                  = ceil(length_msecs / symbol_duration_msec);
+  subcarrier_spacing               pusch_scs = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+  const prach_preamble_information info      = get_prach_preamble_long_info(prach_cfg.format);
+  const double   length_msecs                = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
+  const unsigned nof_symbols                 = ceil(length_msecs / symbol_duration_msec);
+  const unsigned starting_symbol_pusch_scs   = prach_cfg.starting_symbol * (1U << to_numerology_value(pusch_scs));
+  const unsigned start_slot_pusch_scs        = starting_symbol_pusch_scs / nof_symbols_per_slot;
+  const unsigned prach_length_slots =
+      static_cast<unsigned>(ceil(static_cast<double>((start_slot_pusch_scs % nof_symbols_per_slot) + nof_symbols) /
+                                 (static_cast<double>(nof_symbols_per_slot))));
 
-  const unsigned nof_td_occasions = prach_cfg.format.is_long_preamble() ? 1 : prach_cfg.nof_occasions_within_slot;
+  // Check if the PRACH preambles fall into UL slots
+  if (msg.tdd_ul_dl_cfg_common.has_value()) {
+    const cell_configuration cell_cfg{msg};
+    // For each subframe with PRACH, check if all slots are UL.
+    for (unsigned subframe_idx : prach_cfg.subframe) {
+      // There are configuration for which the PRACH starts in an odd slot within the subframe
+      // (for numerologies > mu(SCS 15kHz)); the addition of start_slot_pusch_scs compensate for this.
+      const unsigned start_slot_idx = subframe_idx * (1U << to_numerology_value(pusch_scs)) + start_slot_pusch_scs;
+      for (unsigned sl = 0; sl < prach_length_slots; ++sl) {
+        VERIFY(cell_cfg.is_ul_enabled(slot_point{to_numerology_value(pusch_scs), sl + start_slot_idx}),
+               "PRACH configuration index {} not supported with current TDD pattern. PRACH fall outside UL slots",
+               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
+      }
+    }
+  }
+
   const unsigned prach_nof_prbs =
       prach_frequency_mapping_get(info.scs, msg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
-  for (unsigned i = 0; i != nof_td_occasions; ++i) {
-    unsigned          start_symbol = prach_cfg.starting_symbol + i * nof_symbols;
-    ofdm_symbol_range symbols      = {start_symbol, start_symbol + nof_symbols};
-    ofdm_symbol_range valid_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
-    VERIFY(valid_symbol_range.contains(symbols),
-           "PRACH config not supported. PRACH symbols {} fall outside slot boundary",
-           symbols);
+  for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
+    uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
+    prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};
 
-    for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
-      uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
-      prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};
-
-      for (const auto& pucch_region : msg.pucch_guardbands) {
-        VERIFY(not pucch_region.prbs.overlaps(prach_prbs),
-               "Configured PRACH occasion collides with PUCCH RBs ({} intersects {})",
-               pucch_region.prbs,
-               prach_prbs);
-      }
+    for (const auto& pucch_region : msg.pucch_guardbands) {
+      VERIFY(not pucch_region.prbs.overlaps(prach_prbs),
+             "Configured PRACH occasion collides with PUCCH RBs ({} intersects {})",
+             pucch_region.prbs,
+             prach_prbs);
     }
   }
 

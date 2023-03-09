@@ -55,7 +55,7 @@ struct rf_driver_appconfig {
 /// PRACH application configuration.
 struct prach_appconfig {
   /// PRACH configuration index.
-  unsigned prach_config_index = 29;
+  unsigned prach_config_index = 1;
   /// PRACH root sequence index.
   unsigned prach_root_sequence_index = 1;
   /// Zero correlation zone
