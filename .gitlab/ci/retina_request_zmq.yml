@@ -16,7 +16,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.2_0.2.11
+  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.2_0.2.12
   resources:
     - type: zmq
   path: ../../build/apps/gnb/gnb
