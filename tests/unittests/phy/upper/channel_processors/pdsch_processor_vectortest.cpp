@@ -11,7 +11,6 @@
 #include "pdsch_processor_test_data.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
-#include "srsran/srsvec/bit.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
