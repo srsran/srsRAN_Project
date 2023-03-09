@@ -233,34 +233,15 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
 
     out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);
 
-    out_cfg.ta_offset                  = lower_phy_ta_offset::n0;
-    out_cfg.time_alignment_calibration = 0;
+    out_cfg.ta_offset = lower_phy_ta_offset::n0;
+
+    // Apply time alignment calibration.
     if (config.rf_driver_cfg.time_alignment_calibration.has_value()) {
-      // User specified time advance calibration.
+      // Selects the user specific value.
       out_cfg.time_alignment_calibration = config.rf_driver_cfg.time_alignment_calibration.value();
     } else {
-      // Apply default time alignment calibration.
-      if (config.rf_driver_cfg.device_arguments.find("type=x300") != std::string::npos) {
-        // Calibrated values for the X300 for UHD-4.3.
-        if (config.rf_driver_cfg.srate_MHz == 11.52) {
-          out_cfg.time_alignment_calibration = 54;
-        } else if (config.rf_driver_cfg.srate_MHz == 15.36) {
-          out_cfg.time_alignment_calibration = 48;
-        } else if (config.rf_driver_cfg.srate_MHz == 23.04) {
-          out_cfg.time_alignment_calibration = 60;
-        } else if (config.rf_driver_cfg.srate_MHz == 46.08) {
-          out_cfg.time_alignment_calibration = 72;
-        } else if (config.rf_driver_cfg.srate_MHz == 61.44) {
-          out_cfg.time_alignment_calibration = 64;
-        } else if (config.rf_driver_cfg.srate_MHz == 92.16) {
-          out_cfg.time_alignment_calibration = 96;
-        } else if (config.rf_driver_cfg.srate_MHz == 184.32) {
-          out_cfg.time_alignment_calibration = 192;
-        } else {
-          fmt::print("Time advance calibration not available for X300 devices and sampling rate of {:.2f} MHz.\n",
-                     config.rf_driver_cfg.srate_MHz);
-        }
-      }
+      // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
+      out_cfg.time_alignment_calibration = 0;
     }
 
     unsigned bandwidth_sc =
