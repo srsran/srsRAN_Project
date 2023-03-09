@@ -13,7 +13,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-cu_up_task_scheduler::cu_up_task_scheduler(timer_manager2& timers_, task_executor& exec_) : timers(timers_), exec(exec_)
+cu_up_task_scheduler::cu_up_task_scheduler(timer_manager& timers_, task_executor& exec_) : timers(timers_), exec(exec_)
 {
   // init cu_up control loops
   const size_t number_of_pending_cu_up_procedures = 16;
@@ -28,11 +28,11 @@ void cu_up_task_scheduler::handle_cu_up_async_task(cu_up_index_t cu_up_index, as
   cu_up_ctrl_loop[cu_up_index_to_uint(cu_up_index)].schedule(std::move(task));
 }
 
-unique_timer2 cu_up_task_scheduler::make_unique_timer()
+unique_timer cu_up_task_scheduler::make_unique_timer()
 {
   return timers.create_unique_timer(exec);
 }
-timer_manager2& cu_up_task_scheduler::get_timer_manager()
+timer_manager& cu_up_task_scheduler::get_timer_manager()
 {
   return timers;
 }

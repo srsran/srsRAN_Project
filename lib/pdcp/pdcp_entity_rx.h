@@ -115,7 +115,7 @@ private:
 
   // Reordering queue and timer.
   std::map<uint32_t, byte_buffer> reorder_queue;
-  unique_timer2                   reordering_timer;
+  unique_timer                    reordering_timer;
   class reordering_callback;
   void handle_t_reordering_expire();
 
@@ -153,7 +153,7 @@ class pdcp_entity_rx::reordering_callback
 {
 public:
   explicit reordering_callback(pdcp_entity_rx* parent_) : parent(parent_) {}
-  void operator()(timer2_id_t timer_id);
+  void operator()(timer_id_t timer_id);
 
 private:
   pdcp_entity_rx* parent;

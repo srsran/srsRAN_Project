@@ -152,7 +152,7 @@ public:
   virtual ~f1ap_ue_task_scheduler() = default;
 
   /// \brief Create timer for a given UE.
-  virtual unique_timer2 create_timer() = 0;
+  virtual unique_timer create_timer() = 0;
 
   /// \brief Schedule Async Task respective to a given UE.
   virtual void schedule_async_task(async_task<void>&& task) = 0;

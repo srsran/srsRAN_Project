@@ -102,7 +102,7 @@ protected:
   }
 
   ngap_configuration                            cfg;
-  timer_manager2                                timers;
+  timer_manager                                 timers;
   ue_manager                                    ue_mng;
   dummy_ngap_cu_cp_paging_notifier              cu_cp_paging_notifier;
   std::unique_ptr<dummy_ngap_ue_task_scheduler> ngap_ue_task_scheduler;

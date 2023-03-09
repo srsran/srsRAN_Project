@@ -65,7 +65,7 @@ public:
 
 private:
   cu_up_configuration cfg;
-  timer_manager2      timers;
+  timer_manager       timers;
 
   // Handler for CU-UP tasks.
   async_task_sequencer main_ctrl_loop;

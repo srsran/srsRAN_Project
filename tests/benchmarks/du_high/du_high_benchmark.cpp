@@ -320,7 +320,7 @@ public:
   cu_cp_simulator                    sim_cu_cp;
   cu_up_simulator                    sim_cu_up;
   phy_simulator                      sim_phy;
-  timer_manager2                     timers;
+  timer_manager                      timers;
   du_high_single_cell_worker_manager workers;
   std::unique_ptr<du_high>           du_hi;
   slot_point                         next_sl_tx{0, 0};

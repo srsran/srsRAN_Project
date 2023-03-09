@@ -80,7 +80,7 @@ private:
   /// layer (see sub clauses 5.2.2.2 and 5.2.3.2). If t-Reassembly is running, t-Reassembly shall not be started
   /// additionally, i.e.only one t-Reassembly per RLC entity is running at a given time.
   /// Ref: TS 38.322 Sec. 7.3
-  unique_timer2 reassembly_timer; // to detect loss of RLC PDUs at lower layers
+  unique_timer reassembly_timer; // to detect loss of RLC PDUs at lower layers
 
   bool sn_in_reassembly_window(const uint32_t sn);
   bool sn_invalid_for_rx_buffer(const uint32_t sn);

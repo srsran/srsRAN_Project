@@ -209,7 +209,7 @@ protected:
   srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST", false);
   rlc_um_sn_size                     sn_size;
   rlc_um_config                      config;
-  timer_manager2                     timers;
+  timer_manager                      timers;
   manual_task_worker                 ue_worker{128};
   rlc_test_frame                     tester1, tester2;
   std::unique_ptr<rlc_um_entity>     rlc1, rlc2;

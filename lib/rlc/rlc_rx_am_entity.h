@@ -108,14 +108,14 @@ private:
   /// This timer is used by the receiving side of an AM RLC entity in order to prohibit transmission of a STATUS PDU
   /// (see sub clause 5.3.4).
   /// Ref: TS 38.322 Sec. 7.3
-  unique_timer2 status_prohibit_timer;
+  unique_timer status_prohibit_timer;
 
   /// \brief t-Reassembly
   /// This timer is used by the receiving side of an AM RLC entity [...] in order to detect loss of RLC PDUs at lower
   /// layer (see sub clauses 5.2.2.2 and 5.2.3.2). If t-Reassembly is running, t-Reassembly shall not be started
   /// additionally, i.e.only one t-Reassembly per RLC entity is running at a given time.
   /// Ref: TS 38.322 Sec. 7.3
-  unique_timer2 reassembly_timer;
+  unique_timer reassembly_timer;
 
 public:
   rlc_rx_am_entity(du_ue_index_t                     du_index,

@@ -118,7 +118,7 @@ protected:
 
   pdcp_sn_size                        sn_size = {};
   pdcp_config::pdcp_rx_config         config  = {};
-  timer_manager2                      timers;
+  timer_manager                       timers;
   manual_task_worker                  worker{64};
   std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
 

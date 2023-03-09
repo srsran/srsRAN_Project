@@ -35,7 +35,7 @@ public:
 
     explicit dummy_ue_task_sched(dummy_f1ap_du_configurator* parent_) : parent(parent_) {}
 
-    unique_timer2 create_timer() override { return parent->timers.create_timer(); }
+    unique_timer create_timer() override { return parent->timers.create_timer(); }
 
     /// \brief Schedule Async Task respective to a given UE.
     void schedule_async_task(async_task<void>&& task) override { parent->task_loop.schedule(std::move(task)); }
@@ -186,7 +186,7 @@ protected:
   /// Notifier for messages coming out from F1AP to Gateway.
   f1ap_null_notifier msg_notifier = {};
 
-  timer_manager2                  timer_service;
+  timer_manager                   timer_service;
   timer_factory                   f1ap_timers{timer_service, ctrl_worker};
   dummy_f1ap_du_configurator      f1ap_du_cfg_handler{f1ap_timers};
   manual_task_worker              ctrl_worker{128};

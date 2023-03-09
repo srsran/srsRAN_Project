@@ -26,7 +26,7 @@ protected:
     ctrl_worker.run_pending_tasks();
   }
 
-  timer_manager2                                      timers;
+  timer_manager                                       timers;
   manual_task_worker                                  ctrl_worker{64};
   protocol_transaction_manager<int, NOF_TRANSACTIONS> transaction_manager{timer_factory{timers, ctrl_worker}, -1};
 };

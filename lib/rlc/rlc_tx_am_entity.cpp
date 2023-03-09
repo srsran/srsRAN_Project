@@ -42,7 +42,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   //  configure t_poll_retransmission timer
   if (cfg.t_poll_retx > 0) {
     poll_retransmit_timer.set(std::chrono::milliseconds(cfg.t_poll_retx),
-                              [this](timer2_id_t tid) { on_expired_poll_retransmit_timer(); });
+                              [this](timer_id_t tid) { on_expired_poll_retransmit_timer(); });
   }
   logger.log_info("RLC AM configured. {}", cfg);
 }

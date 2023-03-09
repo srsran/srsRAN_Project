@@ -38,13 +38,13 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
   // configure status_prohibit_timer
   if (cfg.t_status_prohibit > 0) {
     status_prohibit_timer.set(std::chrono::milliseconds{cfg.t_status_prohibit},
-                              [this](timer2_id_t tid) { on_expired_status_prohibit_timer(); });
+                              [this](timer_id_t tid) { on_expired_status_prohibit_timer(); });
   }
 
   // configure reassembly_timer
   if (cfg.t_reassembly > 0) {
     reassembly_timer.set(std::chrono::milliseconds{cfg.t_reassembly},
-                         [this](timer2_id_t tid) { on_expired_reassembly_timer(); });
+                         [this](timer_id_t tid) { on_expired_reassembly_timer(); });
   }
 
   // initialize status report

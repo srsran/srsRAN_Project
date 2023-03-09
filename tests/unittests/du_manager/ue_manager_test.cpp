@@ -83,7 +83,7 @@ protected:
   }
 
   srslog::basic_logger&      test_logger = srslog::fetch_basic_logger("TEST");
-  timer_manager2             timers;
+  timer_manager              timers;
   manual_task_worker         worker{128};
   dummy_ue_executor_mapper   ue_execs{worker};
   dummy_cell_executor_mapper cell_execs{worker};

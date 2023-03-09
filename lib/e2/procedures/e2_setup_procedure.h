@@ -45,7 +45,7 @@ private:
   e2_event_manager&              ev_mng;
   srslog::basic_logger&          logger;
 
-  unique_timer2 e2_setup_wait_timer;
+  unique_timer e2_setup_wait_timer;
 
   e2ap_transaction     transaction;
   unsigned             e2_setup_retry_no = 0;

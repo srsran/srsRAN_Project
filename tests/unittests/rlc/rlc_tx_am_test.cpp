@@ -255,7 +255,7 @@ protected:
   srslog::basic_logger&                 logger  = srslog::fetch_basic_logger("TEST", false);
   rlc_am_sn_size                        sn_size = GetParam();
   rlc_tx_am_config                      config;
-  timer_manager2                        timers;
+  timer_manager                         timers;
   manual_task_worker                    ue_worker{128};
   manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_am_test_frame> tester;

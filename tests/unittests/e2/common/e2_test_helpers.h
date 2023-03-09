@@ -69,7 +69,7 @@ protected:
   }
 
   std::unique_ptr<e2_interface>          e2;
-  timer_manager2                         timers;
+  timer_manager                          timers;
   manual_task_worker                     task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier> msg_notifier;
   srslog::basic_logger&                  test_logger = srslog::fetch_basic_logger("TEST");

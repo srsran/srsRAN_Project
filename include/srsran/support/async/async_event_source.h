@@ -71,7 +71,7 @@ private:
     set_observer(sub_);
     // Setup timeout.
     running_timer.set(time_to_cancel,
-                      [this, c = std::forward<U>(cancelled_value)](timer2_id_t /**/) { set(std::forward<U>(c)); });
+                      [this, c = std::forward<U>(cancelled_value)](timer_id_t /**/) { set(std::forward<U>(c)); });
     running_timer.run();
   }
 
@@ -83,7 +83,7 @@ private:
   }
 
   async_single_event_observer<T>* sub = nullptr;
-  unique_timer2                   running_timer;
+  unique_timer                    running_timer;
 };
 
 /// \brief Awaitable type that implements a observer/subscriber/listener for a single async event. This awaitable

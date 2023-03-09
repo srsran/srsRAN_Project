@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-class timer_manager2;
+class timer_manager;
 
 namespace srs_du {
 
@@ -28,7 +28,7 @@ struct du_high_configuration {
   f1ap_message_notifier*           f1ap_notifier    = nullptr;
   f1u_du_gateway*                  f1u_gw           = nullptr;
   mac_result_notifier*             phy_adapter      = nullptr;
-  timer_manager2*                  timers           = nullptr;
+  timer_manager*                   timers           = nullptr;
   scheduler_ue_metrics_notifier*   metrics_notifier = nullptr;
   std::vector<du_cell_config>      cells;
   std::map<uint8_t, du_qos_config> qos; // 5QI as key

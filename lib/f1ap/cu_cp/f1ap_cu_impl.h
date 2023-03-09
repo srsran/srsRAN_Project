@@ -102,7 +102,7 @@ private:
   srslog::basic_logger& logger;
 
   // TODO: Share timer manager with the rest of the CU.
-  timer_manager2 timers;
+  timer_manager timers;
 
   /// Repository of UE Contexts.
   f1ap_ue_context_list ue_ctx_list;

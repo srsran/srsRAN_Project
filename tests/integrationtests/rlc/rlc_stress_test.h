@@ -80,7 +80,7 @@ private:
   stress_stack* peer_stack = nullptr;
 
   // Timers
-  timer_manager2 timers;
+  timer_manager timers;
 
   // MAC
   std::unique_ptr<mac_dummy> mac = nullptr;

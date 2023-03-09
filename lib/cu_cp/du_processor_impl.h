@@ -80,8 +80,8 @@ public:
     task_sched.schedule_async_task(ue_index, std::move(task));
   }
 
-  unique_timer2   make_unique_timer() override { return task_sched.make_unique_timer(); }
-  timer_manager2& get_timer_manager() override { return task_sched.get_timer_manager(); }
+  unique_timer   make_unique_timer() override { return task_sched.make_unique_timer(); }
+  timer_manager& get_timer_manager() override { return task_sched.get_timer_manager(); }
 
   du_processor_f1ap_interface&     get_du_processor_f1ap_interface() override { return *this; }
   du_processor_rrc_interface&      get_du_processor_rrc_interface() override { return *this; }
@@ -135,7 +135,7 @@ private:
   std::map<uint32_t, nr_cell_global_id_t> tac_to_nr_cgi;
 
   // timers associated with a given DU.
-  timer_manager2 timer_db;
+  timer_manager timer_db;
 
   // Components
   std::unique_ptr<f1ap_cu>                                     f1ap;

@@ -120,7 +120,7 @@ private:
   cu_up_index_t get_next_cu_up_index();
 
   cu_cp_configuration cfg;
-  timer_manager2      timers;
+  timer_manager       timers;
 
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");

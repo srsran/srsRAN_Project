@@ -180,8 +180,8 @@ private:
   /// Discard timer information. We keep both the discard timer
   /// and a copy of the SDU for the data recovery procedure (for AM only).
   struct discard_info {
-    byte_buffer   buf;
-    unique_timer2 discard_timer;
+    byte_buffer  buf;
+    unique_timer discard_timer;
   };
 
   /// \brief discardTimer
@@ -204,7 +204,7 @@ class pdcp_entity_tx::discard_callback
 {
 public:
   discard_callback(pdcp_entity_tx* parent_, uint32_t count_) : parent(parent_), discard_count(count_) {}
-  void operator()(timer2_id_t timer_id);
+  void operator()(timer_id_t timer_id);
 
 private:
   pdcp_entity_tx* parent;

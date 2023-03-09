@@ -92,7 +92,7 @@ int main(int argc, char** argv)
   pdcp_sn_size sn_size = args.sn_size == "12" ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
   logger.info("Creating PDCP TX ({} bit)", sn_size);
 
-  timer_manager2     timers;
+  timer_manager      timers;
   manual_task_worker worker{64};
 
   // Set TX config

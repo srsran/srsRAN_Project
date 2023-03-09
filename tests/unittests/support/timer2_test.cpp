@@ -19,14 +19,14 @@ using namespace srsran;
 struct callback_flag_setter {
   callback_flag_setter(bool& flag_) : flag(flag_) { flag = false; }
 
-  void operator()(timer2_id_t tid)
+  void operator()(timer_id_t tid)
   {
     flag          = true;
     last_timer_id = tid;
   }
 
-  bool&       flag;
-  timer2_id_t last_timer_id = timer2_id_t::invalid;
+  bool&      flag;
+  timer_id_t last_timer_id = timer_id_t::invalid;
 };
 
 class unique_timer_manual_tester : public ::testing::Test
@@ -45,7 +45,7 @@ protected:
     }
   }
 
-  unique_timer2 create_timer() { return timer_mng.create_unique_timer(worker); }
+  unique_timer create_timer() { return timer_mng.create_unique_timer(worker); }
 
   void tick()
   {
@@ -54,15 +54,15 @@ protected:
   }
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
-  timer_manager2        timer_mng;
+  timer_manager         timer_mng;
   manual_task_worker    worker;
 };
 
 TEST(unique_timer_test, default_ctor)
 {
-  unique_timer2 timer;
+  unique_timer timer;
   ASSERT_FALSE(timer.is_valid());
-  ASSERT_EQ(timer.id(), timer2_id_t::invalid);
+  ASSERT_EQ(timer.id(), timer_id_t::invalid);
   ASSERT_FALSE(timer.has_expired());
   ASSERT_FALSE(timer.is_running());
   ASSERT_FALSE(timer.is_set());
@@ -71,10 +71,10 @@ TEST(unique_timer_test, default_ctor)
 
 TEST_F(unique_timer_manual_tester, creation)
 {
-  unique_timer2 t = this->create_timer();
+  unique_timer t = this->create_timer();
 
   ASSERT_TRUE(t.is_valid());
-  ASSERT_NE(t.id(), timer2_id_t::invalid);
+  ASSERT_NE(t.id(), timer_id_t::invalid);
   ASSERT_FALSE(t.is_set());
   ASSERT_FALSE(t.is_running());
   ASSERT_FALSE(t.has_expired());
@@ -88,7 +88,7 @@ TEST_F(unique_timer_manual_tester, destruction)
 {
   {
     ASSERT_EQ(this->timer_mng.nof_timers(), 0);
-    unique_timer2 t = this->create_timer();
+    unique_timer t = this->create_timer();
     ASSERT_EQ(this->timer_mng.nof_timers(), 1);
   }
   // Note: dtor command sent to backend but not yet processed.
@@ -100,7 +100,7 @@ TEST_F(unique_timer_manual_tester, destruction)
 
 TEST_F(unique_timer_manual_tester, set_duration)
 {
-  unique_timer2 t = this->create_timer();
+  unique_timer t = this->create_timer();
 
   timer_duration dur{test_rgen::uniform_int<unsigned>(0, 100)};
   t.set(dur);
@@ -111,41 +111,41 @@ TEST_F(unique_timer_manual_tester, set_duration)
   t.stop(); // no-op.
 }
 
-// TEST_F(unique_timer_manual_tester, single_run)
-// {
-//   unique_timer2 t = this->create_timer();
+TEST_F(unique_timer_manual_tester, single_run)
+{
+  unique_timer t = this->create_timer();
 
-//   timer_duration dur{test_rgen::uniform_int<unsigned>(0, 100)};
-//   bool           expiry_callback_triggered = false;
-//   t.set(dur, callback_flag_setter(expiry_callback_triggered));
-//   t.run();
-//   ASSERT_TRUE(t.is_set());
-//   ASSERT_EQ(t.duration(), dur);
+  timer_duration dur{test_rgen::uniform_int<unsigned>(1, 100)};
+  bool           expiry_callback_triggered = false;
+  t.set(dur, callback_flag_setter(expiry_callback_triggered));
+  t.run();
+  ASSERT_TRUE(t.is_set());
+  ASSERT_EQ(t.duration(), dur);
 
-//   for (unsigned i = 0; i != std::max((unsigned)dur.count(), 1U); ++i) {
-//     ASSERT_TRUE(t.is_running());
-//     ASSERT_FALSE(t.has_expired());
+  for (unsigned i = 0; i != std::max((unsigned)dur.count(), 1U); ++i) {
+    ASSERT_TRUE(t.is_running());
+    ASSERT_FALSE(t.has_expired());
 
-//     this->tick();
-//   }
+    this->tick();
+  }
 
-//   ASSERT_FALSE(t.is_running());
-//   ASSERT_TRUE(t.has_expired());
-//   ASSERT_TRUE(t.is_set());
-//   ASSERT_EQ(t.duration(), dur);
-//   ASSERT_TRUE(expiry_callback_triggered);
-// }
+  ASSERT_FALSE(t.is_running());
+  ASSERT_TRUE(t.has_expired());
+  ASSERT_TRUE(t.is_set());
+  ASSERT_EQ(t.duration(), dur);
+  ASSERT_TRUE(expiry_callback_triggered);
+}
 
 TEST_F(unique_timer_manual_tester, single_run_and_move)
 {
-  unique_timer2 t = this->create_timer();
+  unique_timer t = this->create_timer();
 
-  timer_duration dur{test_rgen::uniform_int<unsigned>(0, 100)};
+  timer_duration dur{test_rgen::uniform_int<unsigned>(1, 100)};
   bool           expiry_callback_triggered = false;
   t.set(dur, callback_flag_setter(expiry_callback_triggered));
   t.run();
 
-  unique_timer2 t2 = std::move(t);
+  unique_timer t2 = std::move(t);
   ASSERT_TRUE(t2.is_running());
   ASSERT_FALSE(t.is_valid());
 
@@ -165,8 +165,8 @@ TEST_F(unique_timer_manual_tester, single_run_and_move)
 
 TEST_F(unique_timer_manual_tester, multiple_timers_with_same_duration_and_timeout)
 {
-  timer_duration             dur{test_rgen::uniform_int<unsigned>(0, 100)};
-  std::vector<unique_timer2> timers(test_rgen::uniform_int<unsigned>(1, 10));
+  timer_duration            dur{test_rgen::uniform_int<unsigned>(1, 100)};
+  std::vector<unique_timer> timers(test_rgen::uniform_int<unsigned>(1, 10));
   for (unsigned i = 0; i != timers.size(); ++i) {
     timers[i] = this->create_timer();
     timers[i].set(dur);
@@ -187,8 +187,8 @@ TEST_F(unique_timer_manual_tester, multiple_timers_with_same_duration_and_timeou
 
 TEST_F(unique_timer_manual_tester, multiple_timers_with_same_timeout_but_different_durations)
 {
-  std::vector<unique_timer2> timers(test_rgen::uniform_int<unsigned>(1, 10));
-  timer_duration             dur{timers.size() + test_rgen::uniform_int<unsigned>(1, 100)};
+  std::vector<unique_timer> timers(test_rgen::uniform_int<unsigned>(1, 10));
+  timer_duration            dur{timers.size() + test_rgen::uniform_int<unsigned>(1, 100)};
   for (unsigned i = 0; i != timers.size(); ++i) {
     timers[i] = this->create_timer();
     timers[i].set(dur - timer_duration{i});
@@ -215,7 +215,7 @@ TEST_F(unique_timer_manual_tester, multiple_timers_with_same_timeout_but_differe
 
 TEST_F(unique_timer_manual_tester, single_run_and_stop_does_not_trigger_expiry)
 {
-  unique_timer2 t = this->create_timer();
+  unique_timer t = this->create_timer();
 
   timer_duration dur{test_rgen::uniform_int<unsigned>(1, 100)};
   unsigned       stop_tick                 = test_rgen::uniform_int<unsigned>(0, dur.count() - 1);
@@ -265,7 +265,7 @@ protected:
 
   void process_pending_expiry_callbacks() { this->worker.run_pending_tasks(); }
 
-  unique_timer2  t;
+  unique_timer   t;
   timer_duration dur;
   bool           expiry_callback_triggered = false;
 };
@@ -311,7 +311,7 @@ TEST_F(unique_timer_cancel_already_launched_expiry_callback_tester, timer_run_in
 
 TEST_F(unique_timer_manual_tester, calling_run_on_running_timer_restarts_timer)
 {
-  unique_timer2  t = this->create_timer();
+  unique_timer   t = this->create_timer();
   timer_duration dur{1000};
   bool           expiry_callback_triggered = false;
   t.set(dur, callback_flag_setter(expiry_callback_triggered));
@@ -350,14 +350,14 @@ protected:
 TEST_F(unique_timer_timeout_dispatch_fail_tester,
        when_timeout_handling_fails_to_be_dispatched_then_postpone_it_to_next_slot)
 {
-  unsigned                   q_size = worker.max_pending_tasks();
-  std::vector<unique_timer2> timers(q_size + 1);
-  unsigned                   timeout_counter = 0;
-  timer_duration             dur{100};
+  unsigned                  q_size = worker.max_pending_tasks();
+  std::vector<unique_timer> timers(q_size + 1);
+  unsigned                  timeout_counter = 0;
+  timer_duration            dur{100};
 
   for (unsigned i = 0; i != timers.size(); ++i) {
     timers[i] = this->create_timer();
-    timers[i].set(dur, [&timeout_counter](timer2_id_t tid) mutable { timeout_counter++; });
+    timers[i].set(dur, [&timeout_counter](timer_id_t tid) mutable { timeout_counter++; });
     timers[i].run();
   }
 
@@ -368,10 +368,9 @@ TEST_F(unique_timer_timeout_dispatch_fail_tester,
 
   // All but one timer should be successfully dispatched
   ASSERT_EQ(timeout_counter, timers.size() - 1);
-  ASSERT_EQ(std::count_if(timers.begin(), timers.end(), [](const unique_timer2& t) { return t.has_expired(); }),
+  ASSERT_EQ(std::count_if(timers.begin(), timers.end(), [](const unique_timer& t) { return t.has_expired(); }),
             timeout_counter);
-  auto missing_timer =
-      std::find_if(timers.begin(), timers.end(), [](const unique_timer2& t) { return t.is_running(); });
+  auto missing_timer = std::find_if(timers.begin(), timers.end(), [](const unique_timer& t) { return t.is_running(); });
   ASSERT_NE(missing_timer, timers.end());
 
   // Running one extra slot, schedules the dispatch of the last timer.
@@ -401,8 +400,8 @@ protected:
 
   void run_timer_creation()
   {
-    unique_timer2 t = timer_mng.create_unique_timer(frontend_exec);
-    t.set(timer_duration{100}, [th_id = std::this_thread::get_id(), this](timer2_id_t tid) {
+    unique_timer t = timer_mng.create_unique_timer(frontend_exec);
+    t.set(timer_duration{100}, [th_id = std::this_thread::get_id(), this](timer_id_t tid) {
       expiry_counter++;
       EXPECT_EQ(std::this_thread::get_id(), th_id);
     });
@@ -438,14 +437,14 @@ protected:
     nof_events_processed++;
   }
 
-  timer_manager2       timer_mng;
+  timer_manager        timer_mng;
   task_worker          backend_worker{"backend", 2048};
   task_worker          frontend_worker{"frontend", 2048};
   task_worker_executor frontend_exec{frontend_worker};
 
-  std::vector<unique_timer2> timers;
-  std::atomic<unsigned>      nof_events_processed{0};
-  unsigned                   expiry_counter = 0;
+  std::vector<unique_timer> timers;
+  std::atomic<unsigned>     nof_events_processed{0};
+  unsigned                  expiry_counter = 0;
 };
 
 TEST_F(unique_timer_multithread_tester, randomize_timer_operations)

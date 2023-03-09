@@ -26,7 +26,7 @@ public:
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
                 rlc_tx_upper_layer_control_notifier& tx_upper_cn,
                 rlc_tx_lower_layer_notifier&         tx_lower_dn,
-                timer_manager2&                      timers,
+                timer_manager&                       timers,
                 task_executor&                       pcell_executor,
                 task_executor&                       ue_executor) :
     rlc_base_entity(du_index, rb_id)

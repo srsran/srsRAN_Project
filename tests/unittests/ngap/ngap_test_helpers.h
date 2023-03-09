@@ -61,7 +61,7 @@ protected:
   std::unordered_map<ue_index_t, test_ue> test_ues;
 
   ngap_configuration               cfg;
-  timer_manager2                   timers;
+  timer_manager                    timers;
   dummy_ngap_ue_manager            ue_mng;
   dummy_ngap_amf_notifier          msg_notifier;
   dummy_ngap_rrc_ue_notifier       rrc_ue_notifier;

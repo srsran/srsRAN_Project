@@ -29,7 +29,7 @@ void assert_du_high_configuration_valid(const du_high_configuration& cfg)
 class du_high_slot_handler final : public mac_cell_slot_handler
 {
 public:
-  du_high_slot_handler(timer_manager2& timers_, mac_interface& mac_) : timers(timers_), mac(mac_) {}
+  du_high_slot_handler(timer_manager& timers_, mac_interface& mac_) : timers(timers_), mac(mac_) {}
   void handle_slot_indication(slot_point sl_tx) override
   {
     // Step timers by one millisecond.
@@ -42,8 +42,8 @@ public:
   }
 
 private:
-  timer_manager2& timers;
-  mac_interface&  mac;
+  timer_manager& timers;
+  mac_interface& mac;
 };
 
 class scheduler_ue_metrics_null_notifier final : public scheduler_ue_metrics_notifier

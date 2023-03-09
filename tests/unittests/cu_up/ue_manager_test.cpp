@@ -49,7 +49,7 @@ protected:
   std::unique_ptr<ue_manager_ctrl>                     ue_mng;
   network_interface_config                             net_config;
   srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST", false);
-  timer_manager2                                       timers;
+  timer_manager                                        timers;
   manual_task_worker                                   worker{64};
 };
 

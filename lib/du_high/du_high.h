@@ -48,7 +48,7 @@ public:
 private:
   du_high_configuration cfg;
 
-  timer_manager2& timers;
+  timer_manager& timers;
 
   f1ap_du_configurator_adapter f1ap_du_cfg_handler;
 

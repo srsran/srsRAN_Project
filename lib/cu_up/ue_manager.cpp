@@ -15,7 +15,7 @@ using namespace srs_cu_up;
 
 ue_manager::ue_manager(network_interface_config&            net_config_,
                        srslog::basic_logger&                logger_,
-                       timer_manager2&                      timers_,
+                       timer_manager&                       timers_,
                        f1u_cu_up_gateway&                   f1u_gw_,
                        gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                        gtpu_demux_ctrl&                     gtpu_rx_demux_,

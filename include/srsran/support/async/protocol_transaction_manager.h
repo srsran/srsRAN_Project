@@ -92,7 +92,7 @@ public:
       // Create a new timer if it doesn't exist yet.
       running_timers[t.id()] = timer_service.create_timer();
     }
-    running_timers[t.id()].set(time_to_cancel, [this, transaction_id = t.id()](timer2_id_t tid) {
+    running_timers[t.id()].set(time_to_cancel, [this, transaction_id = t.id()](timer_id_t tid) {
       if (not set(transaction_id, cancel_value)) {
         srslog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
                                                   transaction_id);
@@ -122,7 +122,7 @@ private:
   const T       cancel_value;
 
   std::atomic<unsigned>          next_transaction_id{0};
-  std::array<unique_timer2, N>   running_timers;
+  std::array<unique_timer, N>    running_timers;
   std::array<manual_event<T>, N> transactions;
 };
 

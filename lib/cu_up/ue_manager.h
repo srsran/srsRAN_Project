@@ -24,7 +24,7 @@ class ue_manager : public ue_manager_ctrl
 public:
   explicit ue_manager(network_interface_config&            net_config_,
                       srslog::basic_logger&                logger_,
-                      timer_manager2&                      timers_,
+                      timer_manager&                       timers_,
                       f1u_cu_up_gateway&                   f1u_gw_,
                       gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                       gtpu_demux_ctrl&                     gtpu_rx_demux_,
@@ -45,7 +45,7 @@ private:
 
   network_interface_config&            net_config;
   srslog::basic_logger&                logger;
-  timer_manager2&                      timers;
+  timer_manager&                       timers;
   f1u_cu_up_gateway&                   f1u_gw;
   gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier;
   gtpu_demux_ctrl&                     gtpu_rx_demux;

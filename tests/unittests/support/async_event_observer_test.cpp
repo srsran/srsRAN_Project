@@ -18,7 +18,7 @@ using namespace srsran;
 class async_single_event_observer_test : public ::testing::Test
 {
 protected:
-  timer_manager2                   timers{1};
+  timer_manager                    timers{1};
   manual_task_worker               worker{64};
   async_event_source<int>          event_source{timer_factory{timers, worker}};
   async_single_event_observer<int> tr;

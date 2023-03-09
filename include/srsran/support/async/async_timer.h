@@ -35,7 +35,7 @@ auto async_wait_for(UniqueTimer&& timer, std::chrono::milliseconds duration_msec
 
     void await_suspend(coro_handle<> suspending_awaitable)
     {
-      timer.set(duration, [ch = suspending_awaitable](timer2_id_t tid) mutable { ch.resume(); });
+      timer.set(duration, [ch = suspending_awaitable](timer_id_t tid) mutable { ch.resume(); });
       timer.run();
     }
 

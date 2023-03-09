@@ -143,14 +143,14 @@ private:
     du_ue_index_t                       ue_index = MAX_NOF_DU_UES;
     slotted_vector<mac_sdu_tx_builder*> dl_bearers;
     ue_con_res_id_t                     msg3_subpdu;
-    unique_timer2*                      activity_timer;
+    unique_timer*                       activity_timer;
     std::vector<std::vector<uint8_t>>   harq_buffers;
   };
 
   bool add_ue_nolock(du_ue_index_t                     ue_index,
                      rnti_t                            crnti,
                      const byte_buffer*                ul_ccch_msg,
-                     unique_timer2&                    activity_timer,
+                     unique_timer&                     activity_timer,
                      std::vector<std::vector<uint8_t>> dl_harq_buffers)
   {
     if (ue_db.contains(ue_index)) {

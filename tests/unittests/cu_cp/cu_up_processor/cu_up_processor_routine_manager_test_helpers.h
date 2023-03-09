@@ -29,7 +29,7 @@ protected:
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 
-  timer_manager2                                        timers;
+  timer_manager                                         timers;
   cu_up_processor_context                               context;
   dummy_cu_up_processor_e1ap_control_notifier           e1ap_conn_notifier;
   dummy_cu_up_processor_cu_up_management_notifier       cu_cp_notifier;

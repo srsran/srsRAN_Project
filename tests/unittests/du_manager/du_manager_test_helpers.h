@@ -301,7 +301,7 @@ public:
   }
 
   std::vector<du_cell_config>            du_cells;
-  timer_manager2                         timers;
+  timer_manager                          timers;
   manual_task_worker                     worker;
   task_executor&                         du_mng_exec;
   dummy_ue_executor_mapper               ue_exec_mapper;

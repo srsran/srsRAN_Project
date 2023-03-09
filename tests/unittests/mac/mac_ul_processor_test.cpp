@@ -146,7 +146,7 @@ struct test_bench {
 
 private:
   srslog::basic_logger&            logger = srslog::fetch_basic_logger("MAC", true);
-  timer_manager2                   timers;
+  timer_manager                    timers;
   manual_task_worker               task_exec{128};
   dummy_ue_executor_mapper         ul_exec_mapper{task_exec};
   dummy_dl_executor_mapper         dl_exec_mapper{&task_exec};

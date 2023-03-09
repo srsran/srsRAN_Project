@@ -135,7 +135,7 @@ bool ue_creation_procedure::setup_du_ue_resources()
   const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
   ue_ctx->activity_timer                    = services.timers.create_unique_timer(services.du_mng_exec);
   ue_ctx->activity_timer.set(std::chrono::milliseconds{UE_ACTIVITY_TIMEOUT},
-                             [ue_index = ue_ctx->ue_index, &logger = this->logger](timer2_id_t tid) {
+                             [ue_index = ue_ctx->ue_index, &logger = this->logger](timer_id_t tid) {
                                logger.debug("UE Manager: ue={} activity timeout.", ue_index);
                                // TODO: Handle.
                              });

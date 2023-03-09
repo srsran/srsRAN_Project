@@ -165,7 +165,7 @@ class rrc_ue_task_scheduler
 public:
   virtual ~rrc_ue_task_scheduler()                                   = default;
   virtual void          schedule_async_task(async_task<void>&& task) = 0;
-  virtual unique_timer2 make_unique_timer()                          = 0;
+  virtual unique_timer  make_unique_timer()                          = 0;
   virtual timer_factory get_timer_factory()                          = 0;
 };
 

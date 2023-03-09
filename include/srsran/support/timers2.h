@@ -21,12 +21,12 @@
 namespace srsran {
 
 /// Type used to represent a unique timer identifier.
-enum class timer2_id_t : unsigned { invalid = std::numeric_limits<unsigned>::max() };
+enum class timer_id_t : unsigned { invalid = std::numeric_limits<unsigned>::max() };
 
 /// Unit used to represent a time duration in terms of timer_manager ticks.
 using timer_duration = std::chrono::milliseconds;
 
-class unique_timer2;
+class unique_timer;
 
 /// \brief This class implements the service associated with the management of the timers of the application, including
 /// the allocation, destruction, starting/halting and timeout triggering of the registered timers. The user
@@ -41,7 +41,7 @@ class unique_timer2;
 /// The implementation assumes that the "tick()" method is always called from the same thread and that an unique_timer
 /// object is not accessed concurrently by different threads. However, separate unique_timers can be safely used from
 /// separate threads. An unique_timer object and the timer_manager communicate with one another via thread-safe queues.
-class timer_manager2
+class timer_manager
 {
   /// \brief Unambiguous identifier of the last command sent by a unique_timer to the timer_manager.
   using cmd_id_t = uint32_t;
@@ -57,7 +57,7 @@ class timer_manager2
     enum action_t { start, stop, destroy };
 
     /// Unique identity of the timer.
-    timer2_id_t id;
+    timer_id_t id;
 
     /// Identifier associated with this particular command.
     cmd_id_t cmd_id;
@@ -72,9 +72,9 @@ class timer_manager2
   /// Data relative to a timer state that is safe to access from the front-end side (the unique_timer).
   struct timer_frontend {
     /// Reference to timer manager class.
-    timer_manager2& parent;
+    timer_manager& parent;
     /// Timer identifier. This identifier should remain constant throughout the timer lifetime.
-    const timer2_id_t id;
+    const timer_id_t id;
     /// Task executor used to dispatch expiry callback. When set to nullptr, the timer is not allocated.
     task_executor* exec = nullptr;
     /// \brief Identifier of the last command sent from the front-end to the back-end side of the timer_manager. We use
@@ -87,15 +87,15 @@ class timer_manager2
     /// Duration of each timer run.
     timer_duration duration = INVALID_DURATION;
     /// Callback triggered when timer expires. Callback updates are protected by backend lock.
-    unique_function<void(timer2_id_t)> timeout_callback;
+    unique_function<void(timer_id_t)> timeout_callback;
 
-    timer_frontend(timer_manager2& parent_, timer2_id_t id_);
+    timer_frontend(timer_manager& parent_, timer_id_t id_);
 
     void destroy();
 
     void set(timer_duration duration);
 
-    void set(timer_duration duration, unique_function<void(timer2_id_t)> callback);
+    void set(timer_duration duration, unique_function<void(timer_id_t)> callback);
 
     void run();
 
@@ -120,13 +120,13 @@ class timer_manager2
 public:
   /// Constructs a timer manager.
   /// \param capacity Number of timers to pre-reserve and speed up timer construction.
-  explicit timer_manager2(size_t pre_reserve_capacity = 64);
+  explicit timer_manager(size_t pre_reserve_capacity = 64);
 
   /// Advances one tick and triggers any running timer that just expired.
   void tick();
 
   /// Creates a new instance of a unique timer.
-  unique_timer2 create_unique_timer(task_executor& exec);
+  unique_timer create_unique_timer(task_executor& exec);
 
   /// Returns the number of timers handled by this instance.
   size_t nof_timers() const;
@@ -135,7 +135,7 @@ public:
   unsigned nof_running_timers() const;
 
 private:
-  friend class unique_timer2;
+  friend class unique_timer;
 
   /// \brief Create a new front-end context to be used by a newly created unique_timer.
   timer_frontend& create_frontend_timer(task_executor& exec);
@@ -197,7 +197,7 @@ private:
   /// \brief This is a list of timers that already timeouted, but for some unforeseen reason,
   /// it was not possible to dispatch their respective timeout handling to the timer front-end.
   /// The timeout handling will be re-triggered in the next slot.
-  std::deque<std::pair<timer2_id_t, cmd_id_t>> failed_to_trigger_timers;
+  std::deque<std::pair<timer_id_t, cmd_id_t>> failed_to_trigger_timers;
 
   /// Commands sent by the timer front-end to the backend.
   std::mutex                                                   cmd_mutex;
@@ -207,24 +207,24 @@ private:
 /// \brief This class represents a timer which invokes a user-provided callback upon timer expiration. To setup a
 /// timer session it needs to connect to a \c timer_manager class.
 /// This class is not thread-safe.
-class unique_timer2
+class unique_timer
 {
-  using state_t = timer_manager2::state_t;
+  using state_t = timer_manager::state_t;
 
 public:
-  unique_timer2()                                = default;
-  unique_timer2(const unique_timer2&)            = delete;
-  unique_timer2& operator=(const unique_timer2&) = delete;
+  unique_timer()                               = default;
+  unique_timer(const unique_timer&)            = delete;
+  unique_timer& operator=(const unique_timer&) = delete;
 
-  unique_timer2(unique_timer2&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
-  unique_timer2& operator=(unique_timer2&& other) noexcept
+  unique_timer(unique_timer&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
+  unique_timer& operator=(unique_timer&& other) noexcept
   {
     handle = std::exchange(other.handle, nullptr);
     return *this;
   }
-  ~unique_timer2() { reset(); }
+  ~unique_timer() { reset(); }
 
-  /// Destroy current unique_timer2 context, cancelling any pending event.
+  /// Destroy current unique_timer context, cancelling any pending event.
   void reset()
   {
     if (is_valid()) {
@@ -237,22 +237,22 @@ public:
   bool is_valid() const { return handle != nullptr; }
 
   /// Returns the unique timer identifier.
-  timer2_id_t id() const { return is_valid() ? handle->id : timer2_id_t::invalid; }
+  timer_id_t id() const { return is_valid() ? handle->id : timer_id_t::invalid; }
 
   /// Returns true if the timer duration has been set, otherwise returns false.
-  bool is_set() const { return is_valid() && handle->duration != timer_manager2::INVALID_DURATION; }
+  bool is_set() const { return is_valid() && handle->duration != timer_manager::INVALID_DURATION; }
 
   /// Returns true if the timer is currently running, otherwise returns false.
-  bool is_running() const { return is_valid() && handle->state == timer_manager2::state_t::running; }
+  bool is_running() const { return is_valid() && handle->state == timer_manager::state_t::running; }
 
   /// Returns true if the timer has expired, otherwise returns false.
-  bool has_expired() const { return is_valid() && handle->state == timer_manager2::state_t::expired; }
+  bool has_expired() const { return is_valid() && handle->state == timer_manager::state_t::expired; }
 
   /// Returns the configured duration for this timer measured in ticks.
-  timer_duration duration() const { return is_valid() ? handle->duration : timer_manager2::INVALID_DURATION; }
+  timer_duration duration() const { return is_valid() ? handle->duration : timer_manager::INVALID_DURATION; }
 
   /// Configures the duration of the timer calling the provided callback upon timer expiration.
-  void set(timer_duration duration, unique_function<void(timer2_id_t)> callback)
+  void set(timer_duration duration, unique_function<void(timer_id_t)> callback)
   {
     srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
     handle->set(duration, std::move(callback));
@@ -281,27 +281,27 @@ public:
   }
 
 private:
-  friend class timer_manager2;
+  friend class timer_manager;
 
-  explicit unique_timer2(timer_manager2::timer_frontend& impl) : handle(&impl) {}
+  explicit unique_timer(timer_manager::timer_frontend& impl) : handle(&impl) {}
 
-  timer_manager2::timer_frontend* handle = nullptr;
+  timer_manager::timer_frontend* handle = nullptr;
 };
 
 class timer_factory
 {
 public:
   timer_factory() = default;
-  timer_factory(timer_manager2& timer_mng_, task_executor& timer_exec_) :
+  timer_factory(timer_manager& timer_mng_, task_executor& timer_exec_) :
     timer_mng(&timer_mng_), timer_exec(&timer_exec_)
   {
   }
 
-  unique_timer2 create_timer() { return timer_mng->create_unique_timer(*timer_exec); }
+  unique_timer create_timer() { return timer_mng->create_unique_timer(*timer_exec); }
 
 private:
-  timer_manager2* timer_mng  = nullptr;
-  task_executor*  timer_exec = nullptr;
+  timer_manager* timer_mng  = nullptr;
+  task_executor* timer_exec = nullptr;
 };
 
 } // namespace srsran

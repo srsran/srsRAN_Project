@@ -425,7 +425,7 @@ void pdcp_entity_rx::handle_t_reordering_expire()
 }
 
 // Reordering Timer Callback (t-reordering)
-void pdcp_entity_rx::reordering_callback::operator()(timer2_id_t /*timer_id*/)
+void pdcp_entity_rx::reordering_callback::operator()(timer_id_t /*timer_id*/)
 {
   parent->logger.log_info(
       "Reordering timer expired. rx_reord={} queued_sdus={}", parent->st.rx_reord, parent->reorder_queue.size());

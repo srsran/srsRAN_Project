@@ -126,7 +126,7 @@ protected:
   uint32_t                    pdu_hdr_len;
   uint32_t                    mac_hdr_len = 4;
   pdcp_config::pdcp_tx_config config      = {};
-  timer_manager2              timers;
+  timer_manager               timers;
   manual_task_worker          worker{64};
   pdcp_tx_test_frame          test_frame = {};
 

@@ -175,7 +175,7 @@ private:
 
   dummy_rrc_ue_du_processor_adapter               rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                       rrc_ue_ngap_notifier;
-  timer_manager2                                  timers;
+  timer_manager                                   timers;
   std::unique_ptr<dummy_rrc_pdu_notifier>         rrc_pdu_notifier;
   std::unique_ptr<dummy_rrc_tx_security_notifier> tx_security_notifier;
   std::unique_ptr<dummy_rrc_rx_security_notifier> rx_security_notifier;

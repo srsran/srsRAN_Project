@@ -483,7 +483,7 @@ int main(int argc, char** argv)
   e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP"), e1ap_up_to_cp_adapter("CU-UP");
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
-  timer_manager2 app_timers{256};
+  timer_manager app_timers{256};
 
   // Create F1-U connector
   std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();

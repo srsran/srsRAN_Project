@@ -49,7 +49,7 @@ private:
   srslog::basic_logger&          logger;
   f1ap_du_context&               du_ctxt;
 
-  unique_timer2 f1_setup_wait_timer;
+  unique_timer f1_setup_wait_timer;
 
   f1ap_transaction     transaction;
   unsigned             f1_setup_retry_no = 0;

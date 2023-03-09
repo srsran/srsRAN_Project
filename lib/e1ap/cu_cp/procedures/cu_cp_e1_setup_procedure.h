@@ -47,7 +47,7 @@ private:
   e1ap_transaction_manager&    ev_mng;
   srslog::basic_logger&        logger;
 
-  unique_timer2 e1_setup_wait_timer;
+  unique_timer e1_setup_wait_timer;
 
   e1ap_transaction     transaction;
   unsigned             e1_setup_retry_no = 0;

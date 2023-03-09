@@ -87,7 +87,7 @@ public:
     du_processor_task_handler->handle_ue_async_task(ue_index, std::move(task));
   }
 
-  unique_timer2 make_unique_timer() override
+  unique_timer make_unique_timer() override
   {
     srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
     return du_processor_task_handler->make_unique_timer();

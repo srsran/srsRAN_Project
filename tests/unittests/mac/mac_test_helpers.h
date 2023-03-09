@@ -134,7 +134,7 @@ struct mac_test_ue {
   du_ue_index_t                                       ue_index;
   rnti_t                                              rnti;
   slotted_array<mac_test_ue_bearer, MAX_NOF_RB_LCIDS> bearers;
-  unique_timer2                                       activity_timer;
+  unique_timer                                        activity_timer;
 
   void                          add_bearer(lcid_t lcid);
   mac_ue_create_request_message make_ue_create_request();

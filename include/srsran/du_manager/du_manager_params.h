@@ -22,7 +22,7 @@
 
 namespace srsran {
 
-class timer_manager2;
+class timer_manager;
 
 namespace srs_du {
 
@@ -35,7 +35,7 @@ struct du_manager_params {
     std::map<uint8_t, du_qos_config> qos;
   };
   struct service_params {
-    timer_manager2&               timers;
+    timer_manager&                timers;
     task_executor&                du_mng_exec;
     du_high_ue_executor_mapper&   ue_execs;
     du_high_cell_executor_mapper& cell_execs;

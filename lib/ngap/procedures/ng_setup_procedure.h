@@ -45,7 +45,7 @@ private:
   ngap_transaction_manager& ev_mng;
   srslog::basic_logger&     logger;
 
-  unique_timer2 ng_setup_wait_timer;
+  unique_timer ng_setup_wait_timer;
 
   unsigned                  ng_setup_retry_no = 0;
   std::chrono::milliseconds time_to_wait{0};

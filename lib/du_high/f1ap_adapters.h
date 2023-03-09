@@ -18,7 +18,7 @@
 
 namespace srsran {
 
-class timer_manager2;
+class timer_manager;
 
 namespace srs_du {
 
@@ -30,7 +30,7 @@ public:
   {
   }
 
-  unique_timer2 create_timer() override { return timers.create_timer(); }
+  unique_timer create_timer() override { return timers.create_timer(); }
 
   void schedule_async_task(async_task<void>&& task) override { du_mng->schedule_async_task(ue_index, std::move(task)); }
 

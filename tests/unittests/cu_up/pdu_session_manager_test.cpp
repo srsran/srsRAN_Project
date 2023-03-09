@@ -41,7 +41,7 @@ protected:
     srslog::flush();
   }
 
-  timer_manager2                                       timers;
+  timer_manager                                        timers;
   manual_task_worker                                   worker{64};
   std::unique_ptr<dummy_gtpu_demux_ctrl>               gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
