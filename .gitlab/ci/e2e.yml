@@ -23,7 +23,7 @@ include:
   timeout: 4h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.24
+    name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.25
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -47,7 +47,7 @@ include:
   script:
     - |
       cd tests/e2e
-      export LOGNAME=$GITLAB_USER_LOGIN
+      export LOGNAME=ci_$GITLAB_USER_LOGIN
     - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$LOG_LEVEL gnb.all.log_level=$LOG_LEVEL "${RETINA_ARGS}"
   after_script:
     - |
