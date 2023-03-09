@@ -415,7 +415,7 @@ struct cu_cp_recommended_ran_nodes_for_paging {
 
 struct cu_cp_info_on_recommended_cells_and_ran_nodes_for_paging {
   cu_cp_recommended_cells_for_paging     recommended_cells_for_paging;
-  cu_cp_recommended_ran_nodes_for_paging recommend_ran_nodes_for_paging;
+  cu_cp_recommended_ran_nodes_for_paging recommended_ran_nodes_for_paging;
 };
 
 struct cu_cp_ue_context_release_complete {

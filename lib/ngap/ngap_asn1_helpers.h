@@ -332,7 +332,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
     }
 
     for (auto cu_cp_recommended_ran_node_item : cu_cp_resp.info_on_recommended_cells_and_ran_nodes_for_paging.value()
-                                                    .recommend_ran_nodes_for_paging.recommended_ran_node_list) {
+                                                    .recommended_ran_nodes_for_paging.recommended_ran_node_list) {
       asn1::ngap::recommended_ran_node_item_s asn1_recommended_ran_node_item;
 
       // add amf paging target
