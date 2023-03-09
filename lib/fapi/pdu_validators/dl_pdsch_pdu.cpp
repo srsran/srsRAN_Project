@@ -9,7 +9,7 @@
  */
 
 #include "dl_pdsch_pdu.h"
-#include "helpers.h"
+#include "field_checkers.h"
 #include "srsran/fapi/messages.h"
 #include "srsran/fapi/validator_report.h"
 

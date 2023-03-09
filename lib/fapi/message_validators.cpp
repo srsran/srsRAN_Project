@@ -13,7 +13,7 @@
 #include "pdu_validators/dl_pdcch_pdu.h"
 #include "pdu_validators/dl_pdsch_pdu.h"
 #include "pdu_validators/dl_ssb_pdu.h"
-#include "pdu_validators/helpers.h"
+#include "pdu_validators/field_checkers.h"
 #include "pdu_validators/uci_pdus.h"
 #include "pdu_validators/ul_prach_pdu.h"
 #include "pdu_validators/ul_pucch_pdu.h"
