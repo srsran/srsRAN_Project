@@ -34,6 +34,10 @@ class unique_timer_manual_tester : public ::testing::Test
 protected:
   unique_timer_manual_tester()
   {
+    logger.set_level(srslog::basic_levels::debug);
+
+    srslog::init();
+
     // randomize time wheel start.
     unsigned nof_ticks = test_rgen::uniform_int<unsigned>(0, 100);
     for (unsigned i = 0; i != nof_ticks; ++i) {
@@ -49,8 +53,9 @@ protected:
     worker.run_pending_tasks();
   }
 
-  timer_manager2     timer_mng;
-  manual_task_worker worker{64};
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
+  timer_manager2        timer_mng;
+  manual_task_worker    worker{64};
 };
 
 TEST(unique_timer_test, default_ctor)

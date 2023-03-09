@@ -158,6 +158,14 @@ private:
   /// Called to destroy a timer context and return it back to the free timer pool.
   void destroy_timer_backend(timer_handle& timer);
 
+  /// Dispatch timeout handling to the front-end side.
+  bool trigger_timeout_handling(timer_handle& timer);
+
+  /// Handle timers for which the timeout handling dispatch failed and was postponed.
+  void handle_postponed_timeouts();
+
+  srslog::basic_logger& logger;
+
   /// Counter of the number of ticks elapsed. This counter gets incremented on every \c tick call.
   unsigned cur_time = 0;
 
@@ -184,7 +192,12 @@ private:
   /// For a number of running timers N, and uniform distribution of timeout values, the tick() complexity
   /// should be O(N/WHEEL_SIZE). Thus, the performance should improve with a larger WHEEL_SIZE, at the expense of more
   /// used memory.
-  std::vector<srsran::intrusive_double_linked_list<timer_handle>> time_wheel;
+  std::vector<intrusive_double_linked_list<timer_handle>> time_wheel;
+
+  /// \brief This is a list of timers that already timeouted, but for some unforeseen reason,
+  /// it was not possible to dispatch their respective timeout handling to the timer front-end.
+  /// The timeout handling will be re-triggered in the next slot.
+  std::deque<std::pair<timer_id_t, cmd_id_t>> failed_to_trigger_timers;
 
   /// Commands sent by the timer front-end to the backend.
   std::mutex                                                   cmd_mutex;

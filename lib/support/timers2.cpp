@@ -66,7 +66,7 @@ void timer_manager2::timer_frontend::stop()
 
 constexpr timer_duration timer_manager2::INVALID_DURATION;
 
-timer_manager2::timer_manager2(size_t capacity) : time_wheel(WHEEL_SIZE)
+timer_manager2::timer_manager2(size_t capacity) : logger(srslog::fetch_basic_logger("ALL")), time_wheel(WHEEL_SIZE)
 {
   // Pre-reserve timers.
   while (timer_list.size() < capacity) {
@@ -114,6 +114,9 @@ void timer_manager2::tick()
       destroy_timer_backend(timer);
     }
   }
+
+  // Re-trigger timeout for timers that failed to be triggered in the previous slot.
+  handle_postponed_timeouts();
 
   // Advance time.
   cur_time++;
@@ -165,6 +168,24 @@ void timer_manager2::start_timer_backend(timer_handle& timer, unsigned duration)
   nof_timers_running++;
 }
 
+bool timer_manager2::trigger_timeout_handling(timer_handle& timer)
+{
+  return timer.frontend->exec->defer([frontend = timer.frontend.get(), expiry_epoch = timer.backend.cmd_id]() {
+    // In case, the timer state has not been updated since the task was dispatched (epoches match).
+    // Note: Now that we are in the same execution context as the timer frontend, the frontend cmd_id is precise.
+    if (frontend->cmd_id.load(std::memory_order_relaxed) == expiry_epoch) {
+      srsran_assert(frontend->state == state_t::running, "The timer can only expire if it was already running");
+      // Update timer frontend state to expired.
+      frontend->state = state_t::expired;
+
+      // Run callback if configured.
+      if (not frontend->timeout_callback.is_empty()) {
+        frontend->timeout_callback(frontend->id);
+      }
+    }
+  });
+}
+
 bool timer_manager2::try_stop_timer_backend(timer_handle& timer, bool expiry_reason)
 {
   if (timer.backend.state != state_t::running) {
@@ -187,22 +208,34 @@ bool timer_manager2::try_stop_timer_backend(timer_handle& timer, bool expiry_rea
   // executor.
   cmd_id_t current_cmd_id_estim = timer.frontend->cmd_id.load(std::memory_order_relaxed);
   if (timer.backend.cmd_id == current_cmd_id_estim) {
-    timer.frontend->exec->defer([frontend = timer.frontend.get(), expiry_epoch = timer.backend.cmd_id]() {
-      // In case, the timer state has not been updated since the task was dispatched (epoches match).
-      // Note: Now that we are in the same execution context as the timer frontend, the frontend cmd_id is precise.
-      if (frontend->cmd_id.load(std::memory_order_relaxed) == expiry_epoch) {
-        srsran_assert(frontend->state == state_t::running, "The timer can only expire if it was already running");
-        // Update timer frontend state to expired.
-        frontend->state = state_t::expired;
+    bool success = trigger_timeout_handling(timer);
 
-        // Run callback if configured.
-        if (not frontend->timeout_callback.is_empty()) {
-          frontend->timeout_callback(frontend->id);
-        }
-      }
-    });
+    // When it was not possible to dispatch timeout callback to executor, postpone the dispatch.
+    if (not success) {
+      logger.warning("Failed to dispatch timeout handling for timer={}. Re-scheduling the handling to the next slot",
+                     timer.frontend->id);
+      failed_to_trigger_timers.push_back(std::make_pair(timer.frontend->id, timer.backend.cmd_id));
+    }
   }
   return true;
+}
+
+void timer_manager2::handle_postponed_timeouts()
+{
+  while (not failed_to_trigger_timers.empty()) {
+    timer_handle& timer       = timer_list[static_cast<unsigned>(failed_to_trigger_timers.front().first)];
+    cmd_id_t      prev_cmd_id = failed_to_trigger_timers.front().second;
+
+    if (timer.backend.cmd_id == prev_cmd_id and
+        timer.backend.cmd_id == timer.frontend->cmd_id.load(std::memory_order_relaxed) and
+        not trigger_timeout_handling(timer)) {
+      // Timeout handling dispatch failed again. No point in continuing loop.
+      break;
+    }
+
+    // Either the cmd_id was updated or the timeout dispatch was successful. Remove element from the list.
+    failed_to_trigger_timers.pop_front();
+  }
 }
 
 void timer_manager2::stop_timer_backend(timer_handle& timer, bool expiry_reason)
