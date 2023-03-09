@@ -30,17 +30,18 @@ For license details, see [LICENSE](LICENSE) file.
 Build Instructions
 ------------------
 
-* Mandatory requirements:
+* Build tools:
   * cmake:               <https://cmake.org/>
+  
+* Mandatory requirements:
   * libfftw:             <https://www.fftw.org/>
-  * UHD:                 <https://github.com/EttusResearch/uhd>
   * libsctp:             <https://github.com/sctp/lksctp-tools>
   * yaml-cpp:            <https://github.com/jbeder/yaml-cpp>
   * PolarSSL/mbedTLS:    <https://www.trustedfirmware.org/projects/mbed-tls/>
   * googletest:          <https://github.com/google/googletest/>
-    * You can skip test building by using the cmake option `-DBUILD_TESTS=False`. GoogleTest is not mandatory when building without tests.
+    * You can skip test building by using the cmake option `-DBUILD_TESTS=OFF`. GoogleTest is not mandatory when building without tests.
 
-You can install the required libraries for some example distributions with the commands below:
+You can install the build tools and mandatory requirements for some example distributions with the commands below:
 
 <details open>
 <summary>Ubuntu 22.04</summary>
@@ -67,8 +68,13 @@ sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest
 ```
 </details>
 
-* Optional requirements
-  * ZeroMQ:              <https://github.com/zeromq>
+The srsRAN Project uses RF drivers to support different radio types.
+Currently, only UHD is supported however additional drivers are under development:
+
+* RF driver:
+  * UHD:                 <https://github.com/EttusResearch/uhd>
+  
+See UHD documentation for installation instructions.
 
 Download and build srsRAN:
 
