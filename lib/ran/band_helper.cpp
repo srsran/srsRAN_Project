@@ -765,3 +765,13 @@ unsigned srsran::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned
                                    crb_ssb_0 - cset0_cfg.offset + cset0_cfg.nof_rb_coreset};
   return cset0_cfg.nof_rb_coreset - cset0_prbs.intersect(ssb_prbs).length();
 }
+
+n_ta_offset srsran::band_helper::get_ta_offset(nr_band band)
+{
+  if (get_freq_range(band) == frequency_range::FR1) {
+    // assume no LTE-NR coexistence
+    return n_ta_offset::n25600;
+  } else {
+    return n_ta_offset::n13792;
+  }
+}
