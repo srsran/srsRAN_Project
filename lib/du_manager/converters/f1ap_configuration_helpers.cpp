@@ -399,9 +399,19 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
                                                        static_cast<uint64_t>(56U));
   asn1::number_to_enum(cell.ssb_periodicity_serving_cell, ssb_periodicity_to_value(du_cfg.ssb_cfg.ssb_period));
-  cell.ss_pbch_block_pwr               = du_cfg.ssb_cfg.ssb_block_power;
+  cell.ss_pbch_block_pwr = du_cfg.ssb_cfg.ssb_block_power;
+
+  n_ta_offset ta_offset                = band_helper::get_ta_offset(du_cfg.dl_carrier.band);
   cell.n_timing_advance_offset_present = true;
-  cell.n_timing_advance_offset.value   = asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
+  if (ta_offset == n_ta_offset::n0) {
+    cell.n_timing_advance_offset.value = asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
+  } else if (ta_offset == n_ta_offset::n25600) {
+    cell.n_timing_advance_offset.value =
+        asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n25600;
+  } else if (ta_offset == n_ta_offset::n39936) {
+    cell.n_timing_advance_offset.value =
+        asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n39936;
+  }
 
   // TDD config
   if (du_cfg.tdd_ul_dl_cfg_common.has_value()) {
