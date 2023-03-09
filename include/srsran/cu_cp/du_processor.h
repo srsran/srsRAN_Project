@@ -21,7 +21,6 @@
 #include "srsran/rrc/rrc.h"
 #include "srsran/rrc/rrc_config.h"
 #include "srsran/rrc/rrc_du.h"
-#include "srsran/support/timers.h"
 #include <string>
 
 namespace srsran {

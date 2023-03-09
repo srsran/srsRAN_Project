@@ -14,7 +14,6 @@
 #include "pdcp_entity_tx.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_entity.h"
-#include "srsran/support/timers.h"
 #include <cstdio>
 #include <memory>
 

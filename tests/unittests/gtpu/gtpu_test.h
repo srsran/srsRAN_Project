@@ -13,7 +13,6 @@
 #include "lib/gtpu/gtpu_pdu.h"
 #include "srsran/gtpu/gtpu_tunnel_rx.h"
 #include "srsran/gtpu/gtpu_tunnel_tx.h"
-#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

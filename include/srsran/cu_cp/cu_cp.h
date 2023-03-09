@@ -15,7 +15,6 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/rrc/rrc_ue.h"
-#include "srsran/support/timers.h"
 #include <string>
 
 namespace srsran {

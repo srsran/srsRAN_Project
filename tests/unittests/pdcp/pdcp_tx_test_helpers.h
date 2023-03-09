@@ -15,7 +15,6 @@
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 

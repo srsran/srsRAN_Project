@@ -28,7 +28,6 @@
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/timers.h"
 #include <memory>
 #include <unordered_map>
 

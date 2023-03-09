@@ -11,7 +11,6 @@
 #pragma once
 
 #include "coroutine.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
 

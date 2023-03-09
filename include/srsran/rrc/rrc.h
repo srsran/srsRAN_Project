@@ -15,7 +15,6 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
 

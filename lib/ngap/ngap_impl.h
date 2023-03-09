@@ -17,7 +17,6 @@
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

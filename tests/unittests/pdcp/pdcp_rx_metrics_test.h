@@ -14,7 +14,6 @@
 #include "pdcp_rx_test_helpers.h"
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 

@@ -19,7 +19,6 @@
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

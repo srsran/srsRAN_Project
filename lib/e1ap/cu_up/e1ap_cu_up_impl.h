@@ -15,7 +15,6 @@
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
 #include <unordered_map>
 
 namespace srsran {

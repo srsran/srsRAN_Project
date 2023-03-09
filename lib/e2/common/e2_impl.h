@@ -14,7 +14,6 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/ran/nr_cgi.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

@@ -16,7 +16,6 @@
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {
