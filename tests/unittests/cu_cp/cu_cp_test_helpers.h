@@ -32,6 +32,9 @@ protected:
   cu_cp_test();
   ~cu_cp_test() override;
 
+  bool check_minimal_paging_result();
+  bool check_paging_result();
+
   srslog::basic_logger& test_logger  = srslog::fetch_basic_logger("TEST");
   srslog::basic_logger& cu_cp_logger = srslog::fetch_basic_logger("CU-CP");
 

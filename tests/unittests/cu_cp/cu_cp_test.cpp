@@ -297,3 +297,104 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     ASSERT_EQ(cu_cp_obj->get_f1ap_statistics_handler(uint_to_du_index(0)).get_nof_ues(), 1);
   }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* Paging handling                                                                  */
+//////////////////////////////////////////////////////////////////////////////////////
+
+/// Test the handling of a valid Paging message with only mandatory values set
+TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
+{
+  // Connect DU
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_TRUE(check_minimal_paging_result());
+}
+
+/// Test the handling of a valid Paging message with optional values set
+TEST_F(cu_cp_test, when_valid_paging_message_with_optional_values_received_then_paging_is_sent_to_du)
+{
+  // Connect DU
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging
+  ngap_message paging_msg = generate_valid_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_TRUE(check_paging_result());
+}
+
+/// Test the handling of an ivalid Paging message
+TEST_F(cu_cp_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
+{
+  // Connect DU
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging with unknown tac
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging.value[0].tai.tac.from_number(8);
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_FALSE(check_minimal_paging_result());
+}
+
+/// Test the handling of an ivalid Paging message
+TEST_F(cu_cp_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_paging_is_not_sent_to_du)
+{
+  // Connect DU
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging with unknown tac but assist data for paging
+  ngap_message paging_msg = generate_valid_paging_message();
+  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging.value[0].tai.tac.from_number(8);
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_FALSE(check_paging_result());
+}
+
+/// Test the handling of an ivalid Paging message
+TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_to_du)
+{
+  // Connect DU
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging
+  ngap_message paging_msg = generate_invalid_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_FALSE(check_paging_result());
+}

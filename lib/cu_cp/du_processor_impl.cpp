@@ -354,11 +354,16 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
   // This will go through all tai items in the paging message and add the related NR CGI to the assist data for paging
   // if it doesn't exist yet.
   // This way the F1AP will always receive messages with the assist data for paging set.
+
+  bool nr_cgi_for_tac_found = false;
+
   for (const auto& tai_list_item : msg.tai_list_for_paging) {
     if (tac_to_nr_cgi.find(tai_list_item.tai.tac) == tac_to_nr_cgi.end()) {
       logger.debug("Could not find nr cgi for tac={}", tai_list_item.tai.tac);
       continue;
     }
+
+    nr_cgi_for_tac_found = true;
 
     // Setup recommended cell item to add in case it doesn't exist
     cu_cp_recommended_cell_item cell_item;
@@ -412,6 +417,12 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
 
       msg.assist_data_for_paging = assist_data_for_paging;
     }
+  }
+
+  // If not nr cgi for a tac from the paging message is found paging message is not forwarded to DU
+  if (!nr_cgi_for_tac_found) {
+    logger.info("No NR CGI for paging TACs available at this DU du_index={}", context.du_index);
+    return;
   }
 
   f1ap->get_f1ap_paging_manager().handle_paging(msg);
