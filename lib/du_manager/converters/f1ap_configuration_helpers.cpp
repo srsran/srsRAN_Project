@@ -330,7 +330,10 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   } else {
     rach.prach_root_seq_idx.set_l139() = rach_cfg.prach_root_seq_index;
   }
-  rach.msg1_subcarrier_spacing = get_asn1_scs(rach_cfg.msg1_scs);
+  if (rach_cfg.msg1_scs != subcarrier_spacing::invalid) {
+    rach.msg1_subcarrier_spacing_present = true;
+    rach.msg1_subcarrier_spacing         = get_asn1_scs(rach_cfg.msg1_scs);
+  }
   switch (rach_cfg.restricted_set) {
     case srsran::restricted_set_config::UNRESTRICTED:
       rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::unrestricted_set;
