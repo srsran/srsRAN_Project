@@ -88,7 +88,7 @@ zmq:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "zmq and multiue"
+    MARKERS: "zmq and multiue and not smoke"
     PYTEST_ARGS: "-n 2"
     LOG_LEVEL: "info"
   needs:
