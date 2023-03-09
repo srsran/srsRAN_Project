@@ -32,7 +32,7 @@ struct callback_flag_setter {
 class unique_timer_manual_tester : public ::testing::Test
 {
 protected:
-  unique_timer_manual_tester()
+  unique_timer_manual_tester(bool blocking_worker = true) : worker(64, blocking_worker)
   {
     logger.set_level(srslog::basic_levels::debug);
 
@@ -55,7 +55,7 @@ protected:
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("ALL");
   timer_manager2        timer_mng;
-  manual_task_worker    worker{64};
+  manual_task_worker    worker;
 };
 
 TEST(unique_timer_test, default_ctor)
@@ -339,6 +339,44 @@ TEST_F(unique_timer_manual_tester, calling_run_on_running_timer_restarts_timer)
   ASSERT_FALSE(t.is_running());
   ASSERT_TRUE(t.has_expired());
   ASSERT_TRUE(expiry_callback_triggered);
+}
+
+class unique_timer_timeout_dispatch_fail_tester : public unique_timer_manual_tester
+{
+protected:
+  unique_timer_timeout_dispatch_fail_tester() : unique_timer_manual_tester(false) {}
+};
+
+TEST_F(unique_timer_timeout_dispatch_fail_tester,
+       when_timeout_handling_fails_to_be_dispatched_then_postpone_it_to_next_slot)
+{
+  unsigned                   q_size = worker.max_pending_tasks();
+  std::vector<unique_timer2> timers(q_size + 1);
+  unsigned                   timeout_counter = 0;
+  timer_duration             dur{100};
+
+  for (unsigned i = 0; i != timers.size(); ++i) {
+    timers[i] = this->create_timer();
+    timers[i].set(dur, [&timeout_counter](timer_id_t tid) mutable { timeout_counter++; });
+    timers[i].run();
+  }
+
+  // Run until completion.
+  for (unsigned t = 0; t != dur.count(); ++t) {
+    tick();
+  }
+
+  // All but one timer should be successfully dispatched
+  ASSERT_EQ(timeout_counter, timers.size() - 1);
+  ASSERT_EQ(std::count_if(timers.begin(), timers.end(), [](const unique_timer2& t) { return t.has_expired(); }),
+            timeout_counter);
+  auto missing_timer =
+      std::find_if(timers.begin(), timers.end(), [](const unique_timer2& t) { return t.is_running(); });
+  ASSERT_NE(missing_timer, timers.end());
+
+  // Running one extra slot, schedules the dispatch of the last timer.
+  tick();
+  ASSERT_TRUE(missing_timer->has_expired());
 }
 
 class unique_timer_multithread_tester : public ::testing::Test

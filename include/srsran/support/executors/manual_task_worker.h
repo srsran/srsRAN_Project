@@ -20,7 +20,10 @@ namespace srsran {
 class manual_task_worker : public task_executor
 {
 public:
-  manual_task_worker(size_t q_size) : t_id(std::this_thread::get_id()), pending_tasks(q_size) {}
+  manual_task_worker(size_t q_size, bool blocking_mode_ = true) :
+    t_id(std::this_thread::get_id()), pending_tasks(q_size), blocking_mode(blocking_mode_)
+  {
+  }
 
   std::thread::id get_thread_id() const { return t_id; }
 
@@ -28,17 +31,21 @@ public:
   {
     if (std::this_thread::get_id() == t_id) {
       task();
-    } else {
-      defer(std::move(task));
+      return true;
     }
-    return true;
+    return defer(std::move(task));
   }
 
   bool defer(unique_task task) override
   {
-    pending_tasks.push_blocking(std::move(task));
-    return true;
+    if (blocking_mode) {
+      pending_tasks.push_blocking(std::move(task));
+      return true;
+    }
+    return pending_tasks.try_push(std::move(task)).has_value();
   }
+
+  size_t max_pending_tasks() const { return pending_tasks.max_size(); }
 
   bool has_pending_tasks() const { return not pending_tasks.empty(); }
 
@@ -108,6 +115,7 @@ private:
 
   std::thread::id             t_id;
   blocking_queue<unique_task> pending_tasks;
+  bool                        blocking_mode;
 };
 
 } // namespace srsran
