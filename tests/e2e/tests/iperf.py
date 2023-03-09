@@ -30,6 +30,8 @@ HIGH_BITRATE = int(20e6)
 
 
 class TestIPerf(BaseTest):
+    ID = "band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s-timing_advance:%s-calibration:%s"
+
     @mark.parametrize(
         "ue_count",
         (
@@ -53,22 +55,22 @@ class TestIPerf(BaseTest):
         ),
     )
     @mark.parametrize(
-        "band, common_scs, bandwidth, bitrate, iperf_duration, log_search",
+        "band, common_scs, bandwidth, bitrate, iperf_duration, log_search, global_timing_advance, time_alignment_calibration",
         (
             # Smoke
-            param(3, 15, 20, LOW_BITRATE, SHORT_DURATION, True, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
-            param(41, 30, 20, LOW_BITRATE, SHORT_DURATION, True, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(3, 15, 20, LOW_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.smoke, id=ID),
+            param(41, 30, 20, LOW_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.smoke, id=ID),
             # ZMQ
-            param(3, 15, 5, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
-            param(3, 15, 10, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
-            param(3, 15, 20, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
-            param(3, 15, 50, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
-            param(41, 30, 10, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
-            param(41, 30, 20, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
-            param(41, 30, 50, HIGH_BITRATE, SHORT_DURATION, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(3, 15, 5, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(3, 15, 10, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(3, 15, 20, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(3, 15, 50, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 10, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 20, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 50, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
             # RF
-            param(3, 15, 10, HIGH_BITRATE, LONG_DURATION, False, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
-            param(41, 30, 10, HIGH_BITRATE, LONG_DURATION, False, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s"),
+            param(3, 15, 10, HIGH_BITRATE, LONG_DURATION, False, -1, "auto", marks=mark.rf, id=ID),
+            param(41, 30, 10, HIGH_BITRATE, LONG_DURATION, False, -1, "auto", marks=mark.rf, id=ID),
         ),
     )
     def test(
@@ -83,6 +85,8 @@ class TestIPerf(BaseTest):
         bitrate,
         ue_count,
         log_search,
+        global_timing_advance,
+        time_alignment_calibration,
         mcs=DEFAULT_MCS,
         startup_timeout=ATTACH_TIMEOUT,
         attach_timeout=STARTUP_TIMEOUT,
@@ -98,6 +102,8 @@ class TestIPerf(BaseTest):
             mcs=mcs,
             ue_count=ue_count,
             log_search=log_search,
+            global_timing_advance=global_timing_advance,
+            time_alignment_calibration=time_alignment_calibration,
         ) as items:
             ue, gnb, epc = items
 

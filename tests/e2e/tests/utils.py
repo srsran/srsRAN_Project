@@ -17,12 +17,23 @@ from retina.launcher import data
 from retina.protocol.base_pb2 import Empty
 
 ATTACH_TIMEOUT = 120
-STARTUP_TIMEOUT = 120
+STARTUP_TIMEOUT = 3 * 60  # RF requires more time
 DEFAULT_MCS = 10
 
 
 @contextmanager
-def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count, log_search):
+def get_ue_gnb_epc(
+    self,
+    extra,
+    band,
+    common_scs,
+    bandwidth,
+    mcs,
+    ue_count,
+    log_search,
+    global_timing_advance,
+    time_alignment_calibration,
+):
     """
     Get test elements
     """
@@ -38,7 +49,8 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count, log_
                     "ssb_scs": common_scs,
                     "bandwidth": bandwidth,
                     "ue_count": ue_count,
-                }
+                    "global_timing_advance": global_timing_advance,
+                },
             },
             "gnb": {
                 "parameters": {
@@ -47,7 +59,8 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count, log_
                     "common_scs": common_scs,
                     "bandwidth": bandwidth,
                     "mcs": mcs,
-                }
+                    "time_alignment_calibration": time_alignment_calibration,
+                },
             },
         }
         if is_tdd(band):

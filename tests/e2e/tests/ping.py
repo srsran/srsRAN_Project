@@ -10,7 +10,6 @@
 Test ping
 """
 import logging
-from time import sleep
 
 from pytest import mark
 from retina.launcher.test_base import BaseTest
@@ -26,6 +25,8 @@ PING_COUNT = 10
 
 
 class TestPing(BaseTest):
+    ID = "band:%s-scs:%s-bandwidth:%s-log_search:%s-timing_advance:%s-calibration:%s"
+
     @mark.parametrize(
         "ue_count",
         (
@@ -34,15 +35,15 @@ class TestPing(BaseTest):
         ),
     )
     @mark.parametrize(
-        "band, common_scs, bandwidth, log_search",
+        "band, common_scs, bandwidth, log_search, global_timing_advance, time_alignment_calibration",
         (
-            param(3, 15, 5, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
-            param(3, 15, 10, False, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
-            param(3, 15, 20, True, marks=(mark.zmq, mark.test), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
-            param(3, 15, 50, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
-            param(41, 30, 10, False, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
-            param(41, 30, 20, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
-            param(41, 30, 50, True, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s-log_search:%s"),
+            param(3, 15, 5, True, 0, 0, marks=mark.zmq, id=ID),
+            param(3, 15, 10, False, -1, "auto", marks=(mark.zmq, mark.rf), id=ID),
+            param(3, 15, 20, True, 0, 0, marks=(mark.zmq, mark.test), id=ID),
+            param(3, 15, 50, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 10, False, -1, "auto", marks=(mark.zmq, mark.rf), id=ID),
+            param(41, 30, 20, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 50, True, 0, 0, marks=mark.zmq, id=ID),
         ),
     )
     def test(
@@ -52,6 +53,8 @@ class TestPing(BaseTest):
         common_scs,
         bandwidth,
         log_search,
+        global_timing_advance,
+        time_alignment_calibration,
         ue_count,
         mcs=DEFAULT_MCS,
         startup_timeout=STARTUP_TIMEOUT,
@@ -68,6 +71,8 @@ class TestPing(BaseTest):
             bandwidth=bandwidth,
             mcs=mcs,
             log_search=log_search,
+            global_timing_advance=global_timing_advance,
+            time_alignment_calibration=time_alignment_calibration,
             ue_count=ue_count,
         ) as items:
             ue, gnb, epc = items

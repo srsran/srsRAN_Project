@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2023-02-06_17b9ea2_220ca4502_0.2.11
+  image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2023-02-06_17b9ea2_220ca4502_0.2.13
   resources:
     - type: sdr
       model: b200 
@@ -17,7 +17,7 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.2_0.2.12
+  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.2_0.2.13
   resources:
     - type: sdr
       model: b200 
