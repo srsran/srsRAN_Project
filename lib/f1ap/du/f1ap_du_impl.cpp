@@ -31,7 +31,7 @@ f1ap_du_impl::f1ap_du_impl(f1ap_message_notifier&      message_notifier_,
   ue_exec_mapper(ue_exec_mapper_),
   du_mng(du_mng_),
   ues(du_mng_, f1ap_notifier),
-  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_manager()))
+  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory()))
 {
 }
 
@@ -40,7 +40,7 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
 {
-  return launch_async<f1ap_du_setup_procedure>(request, f1ap_notifier, *events, du_mng.get_timer_manager(), ctxt);
+  return launch_async<f1ap_du_setup_procedure>(request, f1ap_notifier, *events, du_mng.get_timer_factory(), ctxt);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)

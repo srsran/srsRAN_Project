@@ -21,7 +21,7 @@
 namespace srsran {
 
 /// Type used to represent a unique timer identifier.
-enum class timer_id_t : unsigned { invalid = std::numeric_limits<unsigned>::max() };
+enum class timer2_id_t : unsigned { invalid = std::numeric_limits<unsigned>::max() };
 
 /// Unit used to represent a time duration in terms of timer_manager ticks.
 using timer_duration = std::chrono::milliseconds;
@@ -57,7 +57,7 @@ class timer_manager2
     enum action_t { start, stop, destroy };
 
     /// Unique identity of the timer.
-    timer_id_t id;
+    timer2_id_t id;
 
     /// Identifier associated with this particular command.
     cmd_id_t cmd_id;
@@ -74,7 +74,7 @@ class timer_manager2
     /// Reference to timer manager class.
     timer_manager2& parent;
     /// Timer identifier. This identifier should remain constant throughout the timer lifetime.
-    const timer_id_t id;
+    const timer2_id_t id;
     /// Task executor used to dispatch expiry callback. When set to nullptr, the timer is not allocated.
     task_executor* exec = nullptr;
     /// \brief Identifier of the last command sent from the front-end to the back-end side of the timer_manager. We use
@@ -87,15 +87,15 @@ class timer_manager2
     /// Duration of each timer run.
     timer_duration duration = INVALID_DURATION;
     /// Callback triggered when timer expires. Callback updates are protected by backend lock.
-    unique_function<void(timer_id_t)> timeout_callback;
+    unique_function<void(timer2_id_t)> timeout_callback;
 
-    timer_frontend(timer_manager2& parent_, timer_id_t id_);
+    timer_frontend(timer_manager2& parent_, timer2_id_t id_);
 
     void destroy();
 
     void set(timer_duration duration);
 
-    void set(timer_duration duration, unique_function<void(timer_id_t)> callback);
+    void set(timer_duration duration, unique_function<void(timer2_id_t)> callback);
 
     void run();
 
@@ -197,7 +197,7 @@ private:
   /// \brief This is a list of timers that already timeouted, but for some unforeseen reason,
   /// it was not possible to dispatch their respective timeout handling to the timer front-end.
   /// The timeout handling will be re-triggered in the next slot.
-  std::deque<std::pair<timer_id_t, cmd_id_t>> failed_to_trigger_timers;
+  std::deque<std::pair<timer2_id_t, cmd_id_t>> failed_to_trigger_timers;
 
   /// Commands sent by the timer front-end to the backend.
   std::mutex                                                   cmd_mutex;
@@ -237,7 +237,7 @@ public:
   bool is_valid() const { return handle != nullptr; }
 
   /// Returns the unique timer identifier.
-  timer_id_t id() const { return is_valid() ? handle->id : timer_id_t::invalid; }
+  timer2_id_t id() const { return is_valid() ? handle->id : timer2_id_t::invalid; }
 
   /// Returns true if the timer duration has been set, otherwise returns false.
   bool is_set() const { return is_valid() && handle->duration != timer_manager2::INVALID_DURATION; }
@@ -252,7 +252,7 @@ public:
   timer_duration duration() const { return is_valid() ? handle->duration : timer_manager2::INVALID_DURATION; }
 
   /// Configures the duration of the timer calling the provided callback upon timer expiration.
-  void set(timer_duration duration, unique_function<void(timer_id_t)> callback)
+  void set(timer_duration duration, unique_function<void(timer2_id_t)> callback)
   {
     srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
     handle->set(duration, std::move(callback));
@@ -286,6 +286,22 @@ private:
   explicit unique_timer2(timer_manager2::timer_frontend& impl) : handle(&impl) {}
 
   timer_manager2::timer_frontend* handle = nullptr;
+};
+
+class timer_factory
+{
+public:
+  timer_factory() = default;
+  timer_factory(timer_manager2& timer_mng_, task_executor& timer_exec_) :
+    timer_mng(&timer_mng_), timer_exec(&timer_exec_)
+  {
+  }
+
+  unique_timer2 create_timer() { return timer_mng->create_unique_timer(*timer_exec); }
+
+private:
+  timer_manager2* timer_mng  = nullptr;
+  task_executor*  timer_exec = nullptr;
 };
 
 } // namespace srsran

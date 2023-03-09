@@ -23,7 +23,7 @@ namespace srsran {
 class mac_ul_ue_context
 {
 public:
-  explicit mac_ul_ue_context(du_ue_index_t ue_index_, rnti_t rnti_, unique_timer& ue_activity_timer_) :
+  explicit mac_ul_ue_context(du_ue_index_t ue_index_, rnti_t rnti_, unique_timer2& ue_activity_timer_) :
     ue_index(ue_index_), rnti(rnti_), ue_activity_timer(ue_activity_timer_)
   {
   }
@@ -35,7 +35,7 @@ public:
   slotted_vector<mac_sdu_rx_notifier*> ul_bearers;
 
   /// UE activity timer.
-  unique_timer& ue_activity_timer;
+  unique_timer2& ue_activity_timer;
 };
 
 /// Class that manages the creation/reconfiguration/deletion of UEs from the MAC UL

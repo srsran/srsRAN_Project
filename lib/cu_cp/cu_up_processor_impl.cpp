@@ -28,7 +28,8 @@ cu_up_processor_impl::cu_up_processor_impl(const cu_up_processor_config_t       
   context.cu_up_index = cfg.index;
 
   // create e1
-  e1ap = create_e1ap(task_sched.get_timer_manager(), e1ap_notifier, e1ap_ev_notifier, ctrl_exec_);
+  e1ap = create_e1ap(
+      timer_factory{task_sched.get_timer_manager(), ctrl_exec_}, e1ap_notifier, e1ap_ev_notifier, ctrl_exec_);
   e1ap_ev_notifier.connect_cu_up_processor(*this);
   e1ap_adapter.connect_e1ap(*e1ap);
 

@@ -15,7 +15,7 @@
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -24,17 +24,18 @@ namespace srs_cu_cp {
 class du_task_scheduler
 {
 public:
-  explicit du_task_scheduler(timer_manager& timers_);
+  explicit du_task_scheduler(timer_manager2& timers_, task_executor& exec_);
   ~du_task_scheduler() = default;
 
   // CU-UP task scheduler
   void handle_du_async_task(du_index_t du_index, async_task<void>&& task);
 
-  unique_timer   make_unique_timer();
-  timer_manager& get_timer_manager();
+  unique_timer2   make_unique_timer();
+  timer_manager2& get_timer_manager();
 
 private:
-  timer_manager& timers;
+  timer_manager2& timers;
+  task_executor&  exec;
 
   // task event loops indexed by du_index
   slotted_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;

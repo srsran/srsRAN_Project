@@ -13,7 +13,7 @@
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include "fmt/format.h"
 #include <map>
 
@@ -80,7 +80,7 @@ private:
   /// layer (see sub clauses 5.2.2.2 and 5.2.3.2). If t-Reassembly is running, t-Reassembly shall not be started
   /// additionally, i.e.only one t-Reassembly per RLC entity is running at a given time.
   /// Ref: TS 38.322 Sec. 7.3
-  unique_timer reassembly_timer; // to detect loss of RLC PDUs at lower layers
+  unique_timer2 reassembly_timer; // to detect loss of RLC PDUs at lower layers
 
   bool sn_in_reassembly_window(const uint32_t sn);
   bool sn_invalid_for_rx_buffer(const uint32_t sn);
@@ -99,10 +99,10 @@ public:
                    rb_id_t                           rb_id,
                    const rlc_rx_um_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   timer_manager&                    timers,
+                   timer_factory                     timers,
                    task_executor&                    ue_executor);
 
-  void on_expired_status_prohibit_timer(uint32_t timeout_id);
+  void on_expired_status_prohibit_timer();
 
   void handle_pdu(byte_buffer_slice buf) override;
 };

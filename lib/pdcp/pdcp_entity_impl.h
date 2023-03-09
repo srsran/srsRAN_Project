@@ -30,7 +30,7 @@ public:
                    pdcp_tx_upper_control_notifier& tx_upper_cn,
                    pdcp_rx_upper_data_notifier&    rx_upper_dn,
                    pdcp_rx_upper_control_notifier& rx_upper_cn,
-                   timer_manager&                  timers)
+                   timer_factory                   timers)
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index, rb_id, config.tx, tx_lower_dn, tx_upper_cn, timers);
     rx = std::make_unique<pdcp_entity_rx>(ue_index, rb_id, config.rx, rx_upper_dn, rx_upper_cn, timers);

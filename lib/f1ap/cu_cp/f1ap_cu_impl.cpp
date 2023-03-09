@@ -24,7 +24,7 @@ f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier&       f1ap_pdu_notifier_,
                            f1ap_du_management_notifier& f1ap_du_management_notifier_,
                            task_executor&               ctrl_exec_) :
   logger(srslog::fetch_basic_logger("CU-CP-F1")),
-  ue_ctx_list(timers),
+  ue_ctx_list(timer_factory{timers, ctrl_exec_}),
   pdu_notifier(f1ap_pdu_notifier_),
   du_processor_notifier(f1ap_du_processor_notifier_),
   du_management_notifier(f1ap_du_management_notifier_),

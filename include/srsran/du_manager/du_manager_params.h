@@ -18,10 +18,12 @@
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/mac/mac.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
-#include "srsran/support/timers.h"
 #include <map>
 
 namespace srsran {
+
+class timer_manager2;
+
 namespace srs_du {
 
 struct du_manager_params {
@@ -33,7 +35,7 @@ struct du_manager_params {
     std::map<uint8_t, du_qos_config> qos;
   };
   struct service_params {
-    timer_manager&                timers;
+    timer_manager2&               timers;
     task_executor&                du_mng_exec;
     du_high_ue_executor_mapper&   ue_execs;
     du_high_cell_executor_mapper& cell_execs;

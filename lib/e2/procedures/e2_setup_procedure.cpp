@@ -17,13 +17,9 @@ using namespace asn1::e2ap;
 e2_setup_procedure::e2_setup_procedure(const e2_setup_request_message& request_,
                                        e2_message_notifier&            notif_,
                                        e2_event_manager&               ev_mng_,
-                                       timer_manager&                  timers,
+                                       timer_factory                   timers,
                                        srslog::basic_logger&           logger_) :
-  request(request_),
-  notifier(notif_),
-  ev_mng(ev_mng_),
-  logger(logger_),
-  e2_setup_wait_timer(timers.create_unique_timer())
+  request(request_), notifier(notif_), ev_mng(ev_mng_), logger(logger_), e2_setup_wait_timer(timers.create_timer())
 {
 }
 
@@ -47,10 +43,11 @@ void e2_setup_procedure::operator()(coro_context<async_task<e2_setup_response_me
 
     // Await timer.
     logger.info("Received E2SetupFailure with Time to Wait IE. Reinitiating E2 setup in {}s (retry={}/{}).",
-                time_to_wait,
+                time_to_wait.count(),
                 e2_setup_retry_no,
                 request.max_setup_retries);
-    CORO_AWAIT(async_wait_for(e2_setup_wait_timer, time_to_wait * 1000));
+    CORO_AWAIT(
+        async_wait_for(e2_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
   }
 
   // Forward procedure result to DU manager.

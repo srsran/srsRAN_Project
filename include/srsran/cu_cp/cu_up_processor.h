@@ -14,7 +14,7 @@
 #include "cu_up_processor_context.h"
 #include "srsran/adt/optional.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <string>
 
 namespace srsran {
@@ -78,10 +78,10 @@ public:
 class cu_up_processor_task_scheduler
 {
 public:
-  virtual ~cu_up_processor_task_scheduler()                                                      = default;
-  virtual void           schedule_async_task(cu_up_index_t cu_up_index, async_task<void>&& task) = 0;
-  virtual unique_timer   make_unique_timer()                                                     = 0;
-  virtual timer_manager& get_timer_manager()                                                     = 0;
+  virtual ~cu_up_processor_task_scheduler()                                                       = default;
+  virtual void            schedule_async_task(cu_up_index_t cu_up_index, async_task<void>&& task) = 0;
+  virtual unique_timer2   make_unique_timer()                                                     = 0;
+  virtual timer_manager2& get_timer_manager()                                                     = 0;
 };
 
 class cu_up_processor_controller

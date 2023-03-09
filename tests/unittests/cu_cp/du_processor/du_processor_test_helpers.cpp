@@ -20,7 +20,7 @@ du_processor_test::du_processor_test()
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  ue_task_sched = std::make_unique<dummy_du_processor_ue_task_scheduler>(timers);
+  ue_task_sched = std::make_unique<dummy_du_processor_ue_task_scheduler>(timers, ctrl_worker);
 
   // create and start DU processor
   du_processor_config_t du_cfg = {};

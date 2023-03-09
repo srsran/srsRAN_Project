@@ -18,7 +18,7 @@ using namespace srsran;
 using namespace asn1::e1ap;
 using namespace srs_cu_cp;
 
-e1ap_cu_cp_impl::e1ap_cu_cp_impl(timer_manager&                 timers_,
+e1ap_cu_cp_impl::e1ap_cu_cp_impl(timer_factory                  timers_,
                                  e1ap_message_notifier&         e1ap_pdu_notifier_,
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                  task_executor&                 ctrl_exec_) :

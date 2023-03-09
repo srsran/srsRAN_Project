@@ -11,6 +11,7 @@
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/ue_manager.h"
 #include "srsran/cu_up/cu_up_types.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -31,7 +32,8 @@ protected:
     f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
 
     // create DUT object
-    ue_mng = std::make_unique<ue_manager>(net_config, test_logger, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
+    ue_mng = std::make_unique<ue_manager>(
+        net_config, test_logger, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux, worker);
   }
 
   void TearDown() override
@@ -47,7 +49,8 @@ protected:
   std::unique_ptr<ue_manager_ctrl>                     ue_mng;
   network_interface_config                             net_config;
   srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST", false);
-  timer_manager                                        timers;
+  timer_manager2                                       timers;
+  manual_task_worker                                   worker{64};
 };
 
 /// UE object handling tests (creation/deletion)

@@ -16,13 +16,13 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
                                    rb_id_t                           rb_id,
                                    const rlc_rx_um_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                                   timer_manager&                    timers,
+                                   timer_factory                     timers,
                                    task_executor&                    ue_executor) :
   rlc_rx_entity(du_index, rb_id, upper_dn_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   um_window_size(window_size(to_number(cfg.sn_field_length))),
-  reassembly_timer(timers.create_unique_timer())
+  reassembly_timer(timers.create_timer())
 {
   metrics.metrics_set_mode(rlc_mode::um_bidir);
 
@@ -31,9 +31,8 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
 
   // configure reassembly_timer
   if (cfg.t_reassembly > 0) {
-    reassembly_timer.set(static_cast<uint32_t>(cfg.t_reassembly), [this, &ue_executor](uint32_t tid) {
-      ue_executor.execute([this, tid]() { on_expired_status_prohibit_timer(tid); });
-    });
+    reassembly_timer.set(std::chrono::milliseconds(cfg.t_reassembly),
+                         [this](timer2_id_t tid) { on_expired_status_prohibit_timer(); });
   }
   logger.log_info("RLC UM configured. {}", cfg);
 }
@@ -241,42 +240,39 @@ void rlc_rx_um_entity::update_total_sdu_length(rlc_rx_um_sdu_info& sdu_info, con
 };
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.2.4
-void rlc_rx_um_entity::on_expired_status_prohibit_timer(uint32_t timeout_id)
+void rlc_rx_um_entity::on_expired_status_prohibit_timer()
 {
-  if (reassembly_timer.id() == timeout_id) {
-    logger.log_debug("Reassembly timer expired for sn={}.", st.rx_next_reassembly);
-    metrics.metrics_add_lost_pdus(1);
+  logger.log_debug("Reassembly timer expired for sn={}.", st.rx_next_reassembly);
+  metrics.metrics_add_lost_pdus(1);
 
-    // update RX_Next_Reassembly to the next SN that has not been reassembled yet
-    st.rx_next_reassembly = st.rx_timer_trigger;
-    while (rx_mod_base(st.rx_next_reassembly) < rx_mod_base(st.rx_next_highest)) {
-      st.rx_next_reassembly = (st.rx_next_reassembly + 1) % mod;
-      log_state(srslog::basic_levels::debug);
-    }
-    logger.log_debug("Updated rx_next_reassembly={}.", st.rx_next_reassembly);
-
-    // discard all segments with SN < updated RX_Next_Reassembly
-    for (auto it = rx_window.begin(); it != rx_window.end();) {
-      if (rx_mod_base(it->first) < rx_mod_base(st.rx_next_reassembly)) {
-        it = rx_window.erase(it);
-      } else {
-        ++it;
-      }
-    }
-
-    // check start of t_reassembly
-    if (rx_mod_base(st.rx_next_highest) > rx_mod_base(st.rx_next_reassembly + 1) ||
-        ((rx_mod_base(st.rx_next_highest) == rx_mod_base(st.rx_next_reassembly + 1) &&
-          has_missing_byte_segment(st.rx_next_reassembly)))) {
-      reassembly_timer.run();
-      st.rx_timer_trigger = st.rx_next_highest;
-      logger.log_debug("Started reassembly_timer for sn={}, updated rx_timer_trigger={}.",
-                       st.rx_next_reassembly,
-                       st.rx_timer_trigger);
-    }
-
+  // update RX_Next_Reassembly to the next SN that has not been reassembled yet
+  st.rx_next_reassembly = st.rx_timer_trigger;
+  while (rx_mod_base(st.rx_next_reassembly) < rx_mod_base(st.rx_next_highest)) {
+    st.rx_next_reassembly = (st.rx_next_reassembly + 1) % mod;
     log_state(srslog::basic_levels::debug);
   }
+  logger.log_debug("Updated rx_next_reassembly={}.", st.rx_next_reassembly);
+
+  // discard all segments with SN < updated RX_Next_Reassembly
+  for (auto it = rx_window.begin(); it != rx_window.end();) {
+    if (rx_mod_base(it->first) < rx_mod_base(st.rx_next_reassembly)) {
+      it = rx_window.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  // check start of t_reassembly
+  if (rx_mod_base(st.rx_next_highest) > rx_mod_base(st.rx_next_reassembly + 1) ||
+      ((rx_mod_base(st.rx_next_highest) == rx_mod_base(st.rx_next_reassembly + 1) &&
+        has_missing_byte_segment(st.rx_next_reassembly)))) {
+    reassembly_timer.run();
+    st.rx_timer_trigger = st.rx_next_highest;
+    logger.log_debug(
+        "Started reassembly_timer for sn={}, updated rx_timer_trigger={}.", st.rx_next_reassembly, st.rx_timer_trigger);
+  }
+
+  log_state(srslog::basic_levels::debug);
 }
 
 // TS 38.322 v16.2.0 Sec 5.2.2.2.1

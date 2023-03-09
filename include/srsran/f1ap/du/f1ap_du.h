@@ -22,7 +22,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 namespace srs_du {
@@ -152,7 +152,7 @@ public:
   virtual ~f1ap_ue_task_scheduler() = default;
 
   /// \brief Create timer for a given UE.
-  virtual unique_timer create_timer() = 0;
+  virtual unique_timer2 create_timer() = 0;
 
   /// \brief Schedule Async Task respective to a given UE.
   virtual void schedule_async_task(async_task<void>&& task) = 0;
@@ -164,7 +164,7 @@ class f1ap_task_scheduler
 public:
   virtual ~f1ap_task_scheduler() = default;
 
-  virtual timer_manager& get_timer_manager() = 0;
+  virtual timer_factory& get_timer_factory() = 0;
 
   /// \brief Schedule Async Task respective to the whole DU.
   virtual void schedule_async_task(async_task<void>&& task) = 0;

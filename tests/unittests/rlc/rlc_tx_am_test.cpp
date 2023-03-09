@@ -104,8 +104,14 @@ protected:
     tester = std::make_unique<rlc_tx_am_test_frame>(config.sn_field_length);
 
     // Create RLC AM TX entity
-    rlc = std::make_unique<rlc_tx_am_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, config, *tester, *tester, *tester, timers, pcell_worker);
+    rlc = std::make_unique<rlc_tx_am_entity>(du_ue_index_t::MIN_DU_UE_INDEX,
+                                             srb_id_t::srb0,
+                                             config,
+                                             *tester,
+                                             *tester,
+                                             *tester,
+                                             timer_factory{timers, pcell_worker},
+                                             pcell_worker);
 
     // Bind AM Rx/Tx interconnect
     rlc->set_status_provider(tester.get());
@@ -240,10 +246,16 @@ protected:
     EXPECT_EQ(tester->bsr_count, n_bsr);
   }
 
+  void tick()
+  {
+    timers.tick();
+    pcell_worker.run_pending_tasks();
+  }
+
   srslog::basic_logger&                 logger  = srslog::fetch_basic_logger("TEST", false);
   rlc_am_sn_size                        sn_size = GetParam();
   rlc_tx_am_config                      config;
-  timer_manager                         timers;
+  timer_manager2                        timers;
   manual_task_worker                    ue_worker{128};
   manual_task_worker                    pcell_worker{128};
   std::unique_ptr<rlc_tx_am_test_frame> tester;
@@ -1338,7 +1350,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     EXPECT_EQ(rlc->get_buffer_state(), 0);
     EXPECT_EQ(tester->bsr, expect_mac_bsr);
     EXPECT_EQ(tester->bsr_count, n_bsr);
-    timers.tick_all();
+    tick();
   }
 
   // expiry of poll_retransmit_timer should schedule an SDU for ReTx
@@ -1416,7 +1428,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
     EXPECT_EQ(rlc->get_buffer_state(), old_bsr);
     EXPECT_EQ(tester->bsr, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
-    timers.tick_all();
+    tick();
   }
 
   // expiry of poll_retransmit_timer should not schedule any extra SDU for ReTx, since SDU queue is not empty

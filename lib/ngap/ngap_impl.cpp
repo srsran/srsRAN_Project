@@ -33,7 +33,7 @@ ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
   ue_manager(ue_manager_),
   ngap_notifier(ngap_notifier_),
   ctrl_exec(ctrl_exec_),
-  ev_mng(task_sched.get_timer_manager())
+  ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
 }
 
@@ -59,7 +59,8 @@ void ngap_impl::create_ngap_ue(ue_index_t                          ue_index,
 async_task<ng_setup_response> ngap_impl::handle_ng_setup_request(const ng_setup_request& request)
 {
   logger.info("Sending NgSetupRequest");
-  return launch_async<ng_setup_procedure>(request, ngap_notifier, ev_mng, task_sched.get_timer_manager(), logger);
+  return launch_async<ng_setup_procedure>(
+      request, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
 }
 
 void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)

@@ -26,12 +26,13 @@ public:
   ue_context(ue_index_t                           index_,
              network_interface_config&            net_config_,
              srslog::basic_logger&                logger_,
-             timer_manager&                       timers_,
+             timer_factory                        timers_,
              f1u_cu_up_gateway&                   f1u_gw_,
              gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
              gtpu_demux_ctrl&                     gtpu_rx_demux_) :
-    index(index_),
-    pdu_session_manager(index, net_config_, logger_, timers_, f1u_gw_, gtpu_tx_notifier_, gtpu_rx_demux_){};
+    index(index_), pdu_session_manager(index, net_config_, logger_, timers_, f1u_gw_, gtpu_tx_notifier_, gtpu_rx_demux_)
+  {
+  }
   ~ue_context() = default;
 
   // pdu_session_manager_ctrl

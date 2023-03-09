@@ -22,7 +22,7 @@ namespace srs_cu_cp {
 class f1ap_ue_transaction_manager
 {
 public:
-  f1ap_ue_transaction_manager(timer_manager& timers) :
+  f1ap_ue_transaction_manager(timer_factory timers) :
     context_setup_outcome(timers), context_modification_outcome(timers), context_release_complete(timers)
   {
   }

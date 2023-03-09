@@ -26,7 +26,7 @@ public:
   e2_setup_procedure(const e2_setup_request_message& request_,
                      e2_message_notifier&            notif_,
                      e2_event_manager&               ev_mng_,
-                     timer_manager&                  timers,
+                     timer_factory                   timers,
                      srslog::basic_logger&           logger);
 
   void operator()(coro_context<async_task<e2_setup_response_message>>& ctx);
@@ -46,11 +46,11 @@ private:
   e2_event_manager&              ev_mng;
   srslog::basic_logger&          logger;
 
-  unique_timer e2_setup_wait_timer;
+  unique_timer2 e2_setup_wait_timer;
 
-  e2ap_transaction transaction;
-  unsigned         e2_setup_retry_no = 0;
-  unsigned         time_to_wait      = 0;
+  e2ap_transaction     transaction;
+  unsigned             e2_setup_retry_no = 0;
+  std::chrono::seconds time_to_wait{0};
 };
 
 } // namespace srsran

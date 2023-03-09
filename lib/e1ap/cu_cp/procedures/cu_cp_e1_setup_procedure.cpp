@@ -19,13 +19,13 @@ using namespace asn1::e1ap;
 cu_cp_e1_setup_procedure::cu_cp_e1_setup_procedure(const cu_cp_e1_setup_request& request_,
                                                    e1ap_message_notifier&        cu_up_notif_,
                                                    e1ap_transaction_manager&     ev_mng_,
-                                                   timer_manager&                timers,
+                                                   timer_factory                 timers,
                                                    srslog::basic_logger&         logger_) :
   request(request_),
   cu_up_notifier(cu_up_notif_),
   ev_mng(ev_mng_),
   logger(logger_),
-  e1_setup_wait_timer(timers.create_unique_timer())
+  e1_setup_wait_timer(timers.create_timer())
 {
 }
 
@@ -49,10 +49,11 @@ void cu_cp_e1_setup_procedure::operator()(coro_context<async_task<cu_cp_e1_setup
 
     // Await timer.
     logger.debug("Received E1SetupFailure with Time to Wait IE - reinitiating E1 setup in {}s (retry={}/{})",
-                 time_to_wait,
+                 time_to_wait.count(),
                  e1_setup_retry_no,
                  request.max_setup_retries);
-    CORO_AWAIT(async_wait_for(e1_setup_wait_timer, time_to_wait * 1000));
+    CORO_AWAIT(
+        async_wait_for(e1_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
   }
 
   // Forward procedure result
@@ -106,7 +107,7 @@ bool cu_cp_e1_setup_procedure::retry_required()
     return false;
   }
 
-  time_to_wait = e1_setup_fail.time_to_wait->to_number();
+  time_to_wait = std::chrono::seconds{e1_setup_fail.time_to_wait->to_number()};
   return true;
 }
 

@@ -19,7 +19,7 @@
 #include "srsran/adt/byte_buffer_slice_chain.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_rx.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include "fmt/format.h"
 #include <map>
 
@@ -52,7 +52,7 @@ public:
                  pdcp_config::pdcp_rx_config     cfg_,
                  pdcp_rx_upper_data_notifier&    upper_dn_,
                  pdcp_rx_upper_control_notifier& upper_cn_,
-                 timer_manager&                  timers);
+                 timer_factory                   timers);
 
   // Rx/Tx interconnect
   void set_status_handler(pdcp_tx_status_handler* status_handler_) { status_handler = status_handler_; }
@@ -115,7 +115,7 @@ private:
 
   // Reordering queue and timer.
   std::map<uint32_t, byte_buffer> reorder_queue;
-  unique_timer                    reordering_timer;
+  unique_timer2                   reordering_timer;
   class reordering_callback;
   void handle_t_reordering_expire();
 
@@ -143,7 +143,7 @@ private:
   pdcp_rx_upper_data_notifier&    upper_dn;
   pdcp_rx_upper_control_notifier& upper_cn;
 
-  timer_manager& timers;
+  timer_factory timers;
 
   void log_state(srslog::basic_levels level) { logger.log(level, "RX entity state. {}", st); }
 };
@@ -153,7 +153,7 @@ class pdcp_entity_rx::reordering_callback
 {
 public:
   explicit reordering_callback(pdcp_entity_rx* parent_) : parent(parent_) {}
-  void operator()(uint32_t timer_id);
+  void operator()(timer2_id_t timer_id);
 
 private:
   pdcp_entity_rx* parent;

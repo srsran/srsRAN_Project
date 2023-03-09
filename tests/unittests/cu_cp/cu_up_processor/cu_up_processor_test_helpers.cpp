@@ -20,7 +20,7 @@ cu_up_processor_test::cu_up_processor_test()
   cu_cp_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  task_sched = std::make_unique<dummy_cu_up_processor_task_scheduler>(timers);
+  task_sched = std::make_unique<dummy_cu_up_processor_task_scheduler>(timers, ctrl_worker);
 
   // create and start CU-UP processor
   cu_up_processor_config_t cu_up_cfg = {};

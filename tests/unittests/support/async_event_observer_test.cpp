@@ -10,6 +10,7 @@
 
 #include "srsran/support/async/async_event_source.h"
 #include "srsran/support/async/eager_async_task.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -17,8 +18,9 @@ using namespace srsran;
 class async_single_event_observer_test : public ::testing::Test
 {
 protected:
-  timer_manager                    timers{1};
-  async_event_source<int>          event_source{timers};
+  timer_manager2                   timers{1};
+  manual_task_worker               worker{64};
+  async_event_source<int>          event_source{timer_factory{timers, worker}};
   async_single_event_observer<int> tr;
 };
 

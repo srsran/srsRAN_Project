@@ -52,7 +52,7 @@ stress_stack::stress_stack(const stress_test_args& args_, uint32_t id, rb_id_t r
   pdcp_msg.tx_upper_cn                   = rrc.get();
   pdcp_msg.rx_upper_dn                   = traffic_sink.get();
   pdcp_msg.rx_upper_cn                   = rrc.get();
-  pdcp_msg.timers                        = &timers;
+  pdcp_msg.timers                        = timer_factory{timers, *ue_executor};
   pdcp                                   = create_pdcp_entity(pdcp_msg);
   traffic_source->set_pdcp_tx_upper(&pdcp->get_tx_upper_data_interface());
   f1ap->set_pdcp_rx_lower(&pdcp->get_rx_lower_interface());
@@ -128,7 +128,7 @@ void stress_stack::run_upper_tti(uint32_t tti)
       traffic_source->send_pdu();
     }
     mac->run_rx_tti();
-    timers.tick_all(); // timers are run from the upper executor
+    timers.tick(); // timers are run from the upper executor
   } else {
     std::unique_lock<std::mutex> lk(mutex_ue);
     stopping_ue = true;

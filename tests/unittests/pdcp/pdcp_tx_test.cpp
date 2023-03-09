@@ -128,7 +128,8 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     }
     // Let timers expire
     for (int i = 0; i < 10; i++) {
-      timers.tick_all();
+      timers.tick();
+      worker.run_pending_tasks();
     }
 
     // Timers should have expired now.

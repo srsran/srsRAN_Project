@@ -14,6 +14,7 @@
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/bit_encoding.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -97,7 +98,8 @@ protected:
     sec_cfg.cipher_algo = security::ciphering_algorithm::nea1;
 
     // Create RLC entities
-    pdcp_tx = std::make_unique<pdcp_entity_tx>(0, srb_id_t::srb1, config, test_frame, test_frame, timers);
+    pdcp_tx = std::make_unique<pdcp_entity_tx>(
+        0, srb_id_t::srb1, config, test_frame, test_frame, timer_factory{timers, worker});
     pdcp_tx->set_status_provider(&test_frame);
   }
 
@@ -114,7 +116,8 @@ protected:
   void tick_all(uint32_t nof_ticks)
   {
     for (uint32_t i = 0; i < nof_ticks; i++) {
-      timers.tick_all();
+      timers.tick();
+      worker.run_pending_tasks();
     }
   }
 
@@ -124,7 +127,8 @@ protected:
   uint32_t                    pdu_hdr_len;
   uint32_t                    mac_hdr_len = 4;
   pdcp_config::pdcp_tx_config config      = {};
-  timer_manager               timers;
+  timer_manager2              timers;
+  manual_task_worker          worker{64};
   pdcp_tx_test_frame          test_frame = {};
 
   // 12 bit test PDUs

@@ -12,7 +12,7 @@
 
 #include "manual_event.h"
 #include "srsran/adt/expected.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 
@@ -25,7 +25,7 @@ template <typename T>
 class async_event_source
 {
 public:
-  explicit async_event_source(timer_manager& timer_db) : running_timer(timer_db.create_unique_timer()) {}
+  explicit async_event_source(timer_factory timer_db) : running_timer(timer_db.create_timer()) {}
   async_event_source(const async_event_source&)            = delete;
   async_event_source(async_event_source&&)                 = delete;
   async_event_source& operator=(const async_event_source&) = delete;
@@ -71,7 +71,7 @@ private:
     set_observer(sub_);
     // Setup timeout.
     running_timer.set(time_to_cancel,
-                      [this, c = std::forward<U>(cancelled_value)](timer_id_t /**/) { set(std::forward<U>(c)); });
+                      [this, c = std::forward<U>(cancelled_value)](timer2_id_t /**/) { set(std::forward<U>(c)); });
     running_timer.run();
   }
 
@@ -83,7 +83,7 @@ private:
   }
 
   async_single_event_observer<T>* sub = nullptr;
-  unique_timer                    running_timer;
+  unique_timer2                   running_timer;
 };
 
 /// \brief Awaitable type that implements a observer/subscriber/listener for a single async event. This awaitable

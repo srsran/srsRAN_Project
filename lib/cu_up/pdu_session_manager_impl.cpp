@@ -21,7 +21,7 @@ using namespace srs_cu_up;
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                           ue_index_,
                                                    network_interface_config&            net_config_,
                                                    srslog::basic_logger&                logger_,
-                                                   timer_manager&                       timers_,
+                                                   timer_factory                        timers_,
                                                    f1u_cu_up_gateway&                   f1u_gw_,
                                                    gtpu_tunnel_tx_upper_layer_notifier& gtpu_tx_notifier_,
                                                    gtpu_demux_ctrl&                     gtpu_rx_demux_) :
@@ -132,7 +132,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     pdcp_msg.tx_upper_cn                          = &new_drb->pdcp_tx_to_e1ap_adapter;
     pdcp_msg.rx_upper_dn                          = &new_drb->pdcp_to_sdap_adapter;
     pdcp_msg.rx_upper_cn                          = &new_drb->pdcp_rx_to_e1ap_adapter;
-    pdcp_msg.timers                               = &timers;
+    pdcp_msg.timers                               = timers;
     new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
 
     // Connect "PDCP-E1AP" adapter to E1AP

@@ -14,7 +14,6 @@
 #include "ngap_configuration.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

@@ -66,7 +66,7 @@ public:
 
 private:
   cu_up_configuration cfg;
-  timer_manager       timers;
+  timer_manager2      timers;
 
   // Handler for CU-UP tasks.
   async_task_sequencer main_ctrl_loop;
@@ -79,7 +79,6 @@ private:
   std::unique_ptr<e1ap_interface>      e1ap;
   std::unique_ptr<udp_network_gateway> ngu_gw;
   std::unique_ptr<gtpu_demux>          ngu_demux;
-  timer_manager                        timer_db;
   std::unique_ptr<ue_manager>          ue_mng;
 
   // Adapters

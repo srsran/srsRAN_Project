@@ -14,6 +14,7 @@
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/support/async/event_signal.h"
 #include "srsran/support/async/protocol_transaction_manager.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -28,7 +29,7 @@ public:
   constexpr static size_t                                          MAX_NOF_TRANSACTIONS = 256;
   protocol_transaction_manager<e1ap_outcome, MAX_NOF_TRANSACTIONS> transactions;
 
-  explicit e1ap_transaction_manager(timer_manager& timers) :
+  explicit e1ap_transaction_manager(timer_factory timers) :
     transactions(timers, e1ap_outcome{asn1::e1ap::unsuccessful_outcome_s{}})
   {
   }

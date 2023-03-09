@@ -88,7 +88,7 @@ public:
   std::unique_ptr<srs_cu_cp::cu_cp_interface> cu_cp_obj;
   std::unique_ptr<srs_du::du_high>            du_obj;
   du_high_worker_manager                      workers;
-  timer_manager                               timers;
+  timer_manager2                              timers;
   srslog::basic_logger&                       test_logger = srslog::fetch_basic_logger("TEST");
 };
 

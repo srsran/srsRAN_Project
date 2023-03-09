@@ -289,3 +289,9 @@ f1ap_ue_configuration_response f1ap_du_test::update_f1ap_ue_config(du_ue_index_t
   test_logger.info("Configuring ue={}", ue_index);
   return f1ap->handle_ue_configuration_request(req);
 }
+
+void f1ap_du_test::tick()
+{
+  timer_service.tick();
+  ctrl_worker.run_pending_tasks();
+}

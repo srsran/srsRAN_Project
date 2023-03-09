@@ -15,7 +15,8 @@
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_factory.h"
 #include "srsran/gateways/network_gateway.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/timers2.h"
 #include <gtest/gtest.h>
 
 namespace srsran {
@@ -58,7 +59,7 @@ protected:
 
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
 
-    e2 = create_e2(timers, *msg_notifier);
+    e2 = create_e2(timer_factory{timers, task_worker}, *msg_notifier);
   }
 
   void TearDown() override
@@ -68,7 +69,8 @@ protected:
   }
 
   std::unique_ptr<e2_interface>          e2;
-  timer_manager                          timers;
+  timer_manager2                         timers;
+  manual_task_worker                     task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier> msg_notifier;
   srslog::basic_logger&                  test_logger = srslog::fetch_basic_logger("TEST");
 };

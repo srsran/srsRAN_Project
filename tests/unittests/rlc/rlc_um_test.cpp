@@ -200,10 +200,16 @@ protected:
     }
   }
 
+  void tick()
+  {
+    timers.tick();
+    ue_worker.run_pending_tasks();
+  }
+
   srslog::basic_logger&              logger = srslog::fetch_basic_logger("TEST", false);
   rlc_um_sn_size                     sn_size;
   rlc_um_config                      config;
-  timer_manager                      timers;
+  timer_manager2                     timers;
   manual_task_worker                 ue_worker{128};
   rlc_test_frame                     tester1, tester2;
   std::unique_ptr<rlc_um_entity>     rlc1, rlc2;
@@ -881,7 +887,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
 
   // let t-reassembly expire
   while (timers.nof_running_timers() != 0) {
-    timers.tick_all();
+    tick();
   }
 
   rlc_metrics rlc2_metrics = rlc2->get_metrics();
@@ -947,7 +953,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
 
   // let t-reassembly expire
   while (timers.nof_running_timers() != 0) {
-    timers.tick_all();
+    tick();
   }
 
   // Read SDUs from RLC2's upper layer

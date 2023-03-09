@@ -21,7 +21,6 @@
 #include "srsran/rlc/rlc_tx.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {
@@ -49,7 +48,7 @@ public:
 private:
   du_high_configuration cfg;
 
-  timer_manager& timers;
+  timer_manager2& timers;
 
   f1ap_du_configurator_adapter f1ap_du_cfg_handler;
 

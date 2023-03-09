@@ -26,7 +26,10 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
-  cfg(config_), ue_task_sched(timers), du_task_sched(timers), cu_up_task_sched(timers)
+  cfg(config_),
+  ue_task_sched(timers, *config_.cu_cp_executor),
+  du_task_sched(timers, *config_.cu_cp_executor),
+  cu_up_task_sched(timers, *config_.cu_cp_executor)
 {
   assert_cu_cp_configuration_valid(cfg);
 

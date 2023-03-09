@@ -21,21 +21,22 @@ namespace srsran {
 /// \param duration_msec duration in msec until the timer gets triggered.
 /// \return awaitable object which returns true on resume if timer was stopped, and false if it expired.
 template <typename UniqueTimer>
-auto async_wait_for(UniqueTimer&& timer, unsigned duration_msec)
+auto async_wait_for(UniqueTimer&& timer, std::chrono::milliseconds duration_msec)
 {
   class async_timer
   {
   public:
-    async_timer(UniqueTimer timer_, unsigned duration_) : timer(std::forward<UniqueTimer>(timer_)), duration(duration_)
+    async_timer(UniqueTimer timer_, std::chrono::milliseconds duration_) :
+      timer(std::forward<UniqueTimer>(timer_)), duration(duration_)
     {
       timer.stop();
     }
 
-    bool await_ready() const { return duration == 0; }
+    bool await_ready() const { return duration.count() == 0; }
 
     void await_suspend(coro_handle<> suspending_awaitable)
     {
-      timer.set(duration, [ch = suspending_awaitable](unsigned tid) mutable { ch.resume(); });
+      timer.set(duration, [ch = suspending_awaitable](timer2_id_t tid) mutable { ch.resume(); });
       timer.run();
     }
 
@@ -44,8 +45,8 @@ auto async_wait_for(UniqueTimer&& timer, unsigned duration_msec)
     async_timer& get_awaiter() { return *this; }
 
   private:
-    UniqueTimer timer;
-    unsigned    duration;
+    UniqueTimer               timer;
+    std::chrono::milliseconds duration;
   };
 
   return async_timer{std::forward<UniqueTimer>(timer), duration_msec};

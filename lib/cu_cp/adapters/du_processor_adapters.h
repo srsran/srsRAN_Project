@@ -34,12 +34,12 @@ public:
     cu_cp_task_sched->handle_ue_async_task(ue_index, std::move(task));
   }
 
-  unique_timer make_unique_timer() override
+  unique_timer2 make_unique_timer() override
   {
     srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     return cu_cp_task_sched->make_unique_timer();
   }
-  timer_manager& get_timer_manager() override
+  timer_manager2& get_timer_manager() override
   {
     srsran_assert(cu_cp_task_sched != nullptr, "CU-CP task scheduler handler must not be nullptr");
     return cu_cp_task_sched->get_timer_manager();

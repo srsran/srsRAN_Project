@@ -16,6 +16,7 @@
 #include "srsran/rrc/rrc_du_factory.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/async/async_test_utils.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -29,7 +30,7 @@ class rrc_ue_test_helper
 protected:
   void init()
   {
-    task_sched_handle    = std::make_unique<dummy_ue_task_scheduler>(timers);
+    task_sched_handle    = std::make_unique<dummy_ue_task_scheduler>(timers, ctrl_worker);
     rrc_pdu_notifier     = std::make_unique<dummy_rrc_pdu_notifier>();
     tx_security_notifier = std::make_unique<dummy_rrc_tx_security_notifier>();
     rx_security_notifier = std::make_unique<dummy_rrc_rx_security_notifier>();
@@ -108,6 +109,7 @@ protected:
     unsigned setup_complete_timeout_ms = 1000;
     for (unsigned i = 0; i < setup_complete_timeout_ms; ++i) {
       task_sched_handle->tick_timer();
+      ctrl_worker.run_pending_tasks();
     }
   }
 
@@ -173,12 +175,13 @@ private:
 
   dummy_rrc_ue_du_processor_adapter               rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                       rrc_ue_ngap_notifier;
-  timer_manager                                   timers;
+  timer_manager2                                  timers;
   std::unique_ptr<dummy_rrc_pdu_notifier>         rrc_pdu_notifier;
   std::unique_ptr<dummy_rrc_tx_security_notifier> tx_security_notifier;
   std::unique_ptr<dummy_rrc_rx_security_notifier> rx_security_notifier;
   std::unique_ptr<dummy_ue_task_scheduler>        task_sched_handle;
   std::unique_ptr<rrc_ue_interface>               rrc_ue;
+  manual_task_worker                              ctrl_worker{64};
 
   bool reject_users = true;
 

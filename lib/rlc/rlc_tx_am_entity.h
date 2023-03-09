@@ -17,7 +17,7 @@
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include "fmt/format.h"
 #include <set>
 
@@ -102,7 +102,7 @@ private:
   /// This timer is used by the transmitting side of an AM RLC entity in order to retransmit a poll (see sub
   /// clause 5.3.3).
   /// Ref: TS 38.322 Sec. 7.3
-  unique_timer      poll_retransmit_timer;
+  unique_timer2     poll_retransmit_timer;
   std::atomic<bool> is_poll_retransmit_timer_expired;
 
   task_executor& pcell_executor;
@@ -117,7 +117,7 @@ public:
                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                   timer_manager&                       timers,
+                   timer_factory                        timers,
                    task_executor&                       pcell_executor_);
 
   // TX/RX interconnect
@@ -151,9 +151,7 @@ public:
   ///
   /// Note: This function shall be executed by the same executor that calls pull_pdu(), i.e. the pcell_executor,
   /// in order to avoid incidential blocking of those critical paths.
-  ///
-  /// \param timeout_id The timer ID
-  void on_expired_poll_retransmit_timer(uint32_t timeout_id);
+  void on_expired_poll_retransmit_timer();
 
   // Window helpers
 

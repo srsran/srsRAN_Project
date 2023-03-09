@@ -13,7 +13,6 @@
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/timers.h"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <list>
@@ -86,7 +85,8 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
 
     // Let timers expire
     for (int i = 0; i < 10; i++) {
-      timers.tick_all();
+      timers.tick();
+      worker.run_pending_tasks();
     }
 
     // Verify discard timers for already discarded SDU were disarmed (no duplicated discard)

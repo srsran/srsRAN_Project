@@ -86,8 +86,8 @@ struct test_bench {
     test_ues[du_ue_idx].rnti     = rnti;
     test_ues[du_ue_idx].ue_index = du_ue_idx;
     test_ues[du_ue_idx].add_bearer(LCID_SRB1);
-    test_ues[du_ue_idx].activity_timer = timers.create_unique_timer();
-    test_ues[du_ue_idx].activity_timer.set(activity_timeout);
+    test_ues[du_ue_idx].activity_timer = timers.create_unique_timer(ul_exec_mapper.executor(du_ue_idx));
+    test_ues[du_ue_idx].activity_timer.set(std::chrono::milliseconds{activity_timeout});
     test_ues[du_ue_idx].activity_timer.run();
     async_task<bool>         t = mac_ul.add_ue(test_ues[du_ue_idx].make_ue_create_request());
     lazy_task_launcher<bool> launcher(t);
@@ -140,12 +140,13 @@ struct test_bench {
   void run_slot()
   {
     logger.set_level(srslog::basic_levels::debug);
-    timers.tick_all();
+    timers.tick();
+    task_exec.run_pending_tasks();
   }
 
 private:
   srslog::basic_logger&            logger = srslog::fetch_basic_logger("MAC", true);
-  timer_manager                    timers;
+  timer_manager2                   timers;
   manual_task_worker               task_exec{128};
   dummy_ue_executor_mapper         ul_exec_mapper{task_exec};
   dummy_dl_executor_mapper         dl_exec_mapper{&task_exec};

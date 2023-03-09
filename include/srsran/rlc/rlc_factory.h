@@ -15,7 +15,7 @@
 #include "srsran/rlc/rlc_rx.h"
 #include "srsran/rlc/rlc_tx.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <memory>
 
 namespace srsran {
@@ -28,7 +28,7 @@ struct rlc_entity_creation_message {
   rlc_tx_upper_layer_data_notifier*    tx_upper_dn;
   rlc_tx_upper_layer_control_notifier* tx_upper_cn;
   rlc_tx_lower_layer_notifier*         tx_lower_dn;
-  timer_manager*                       timers;
+  timer_manager2*                      timers;
   task_executor*                       pcell_executor;
   task_executor*                       ue_executor;
 };

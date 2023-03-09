@@ -20,7 +20,7 @@ e1ap_cu_cp_test::e1ap_cu_cp_test()
   e1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  e1ap = create_e1ap(timers, e1ap_pdu_notifier, cu_up_processor_notifier, ctrl_worker);
+  e1ap = create_e1ap(timer_factory{timers, ctrl_worker}, e1ap_pdu_notifier, cu_up_processor_notifier, ctrl_worker);
 }
 
 e1ap_cu_cp_test::~e1ap_cu_cp_test()
@@ -54,4 +54,10 @@ void e1ap_cu_cp_test::run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue
   e1ap->handle_message(bearer_context_setup_response);
 
   srsran_assert(t.ready(), "The procedure should have completed by now");
+}
+
+void e1ap_cu_cp_test::tick()
+{
+  timers.tick();
+  ctrl_worker.run_pending_tasks();
 }

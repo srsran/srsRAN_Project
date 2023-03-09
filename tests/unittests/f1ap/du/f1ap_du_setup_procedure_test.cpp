@@ -73,7 +73,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
     ASSERT_FALSE(t.ready());
     ASSERT_EQ(msg_notifier.last_f1ap_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::nulltype);
 
-    this->timers.tick_all();
+    this->tick();
   }
 
   // Status: CU received F1 Setup Request again.
@@ -124,7 +124,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
     ASSERT_FALSE(t.ready());
     ASSERT_EQ(msg_notifier.last_f1ap_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::nulltype);
 
-    this->timers.tick_all();
+    this->tick();
   }
 
   // Status: CU received F1 Setup Request again.
@@ -174,7 +174,7 @@ TEST_F(f1ap_du_test, when_retry_limit_reached_then_du_not_connected)
       ASSERT_FALSE(t.ready());
       ASSERT_EQ(msg_notifier.last_f1ap_msg.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::nulltype);
 
-      this->timers.tick_all();
+      this->tick();
     }
   }
 

@@ -26,7 +26,7 @@ struct f1ap_ue_context {
 
   f1ap_ue_transaction_manager ev_mng;
 
-  f1ap_ue_context(ue_index_t ue_idx_, gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id_, timer_manager& timers_) :
+  f1ap_ue_context(ue_index_t ue_idx_, gnb_cu_ue_f1ap_id_t cu_ue_f1ap_id_, timer_factory timers_) :
     ue_index(ue_idx_), cu_ue_f1ap_id(cu_ue_f1ap_id_), ev_mng(timers_)
   {
   }
@@ -35,7 +35,7 @@ struct f1ap_ue_context {
 class f1ap_ue_context_list
 {
 public:
-  f1ap_ue_context_list(timer_manager& timers_) : timers(timers_) {}
+  f1ap_ue_context_list(timer_factory timers_) : timers(timers_) {}
 
   bool contains(gnb_cu_ue_f1ap_id_t cu_ue_id) const { return ues.find(cu_ue_id) != ues.end(); }
 
@@ -86,7 +86,7 @@ public:
   }
 
 private:
-  timer_manager& timers;
+  timer_factory timers;
 
   std::unordered_map<gnb_cu_ue_f1ap_id_t, f1ap_ue_context> ues;                    // indexed by gnb_cu_ue_f1ap_id
   std::unordered_map<ue_index_t, gnb_cu_ue_f1ap_id_t>      ue_index_to_ue_f1ap_id; // indexed by ue_index

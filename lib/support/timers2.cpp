@@ -20,7 +20,7 @@ static constexpr size_t WHEEL_MASK  = WHEEL_SIZE - 1U;
 /// Maximum timeout duration supported for a given timer in ticks.
 static constexpr timer_duration MAX_TIMER_DURATION = timer_duration{std::numeric_limits<unsigned>::max() / 2};
 
-timer_manager2::timer_frontend::timer_frontend(timer_manager2& parent_, timer_id_t id_) : parent(parent_), id(id_) {}
+timer_manager2::timer_frontend::timer_frontend(timer_manager2& parent_, timer2_id_t id_) : parent(parent_), id(id_) {}
 
 void timer_manager2::timer_frontend::destroy()
 {
@@ -41,7 +41,7 @@ void timer_manager2::timer_frontend::set(timer_duration dur)
   }
 }
 
-void timer_manager2::timer_frontend::set(timer_duration dur, unique_function<void(timer_id_t)> callback_)
+void timer_manager2::timer_frontend::set(timer_duration dur, unique_function<void(timer2_id_t)> callback_)
 {
   set(dur);
   timeout_callback = std::move(callback_);
@@ -71,7 +71,7 @@ timer_manager2::timer_manager2(size_t capacity) : logger(srslog::fetch_basic_log
   // Pre-reserve timers.
   while (timer_list.size() < capacity) {
     timer_list.emplace_back();
-    timer_list.back().frontend = std::make_unique<timer_frontend>(*this, (timer_id_t)next_timer_id++);
+    timer_list.back().frontend = std::make_unique<timer_frontend>(*this, (timer2_id_t)next_timer_id++);
   }
 
   // Push to free list in reverse order to keep ascending ids.
@@ -263,7 +263,7 @@ void timer_manager2::destroy_timer_backend(timer_handle& timer)
 timer_manager2::timer_frontend& timer_manager2::create_frontend_timer(task_executor& exec)
 {
   // Allocate timer frontend with unique timer id.
-  timer_id_t      id           = timer_id_t::invalid;
+  timer2_id_t     id           = timer2_id_t::invalid;
   timer_frontend* cached_timer = nullptr;
   {
     std::lock_guard<std::mutex> lock(free_list_mutex);
@@ -272,7 +272,7 @@ timer_manager2::timer_frontend& timer_manager2::create_frontend_timer(task_execu
       free_list.pop_back();
     } else {
       // Need to allocate new timer.
-      id = (timer_id_t)next_timer_id++;
+      id = (timer2_id_t)next_timer_id++;
     }
   }
 

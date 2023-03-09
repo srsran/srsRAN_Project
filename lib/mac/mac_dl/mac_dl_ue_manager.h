@@ -125,13 +125,7 @@ public:
     return ue_db[ue_index].msg3_subpdu;
   }
 
-  void restart_activity_timer(du_ue_index_t ue_index)
-  {
-    std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
-    if (ue_db.contains(ue_index)) {
-      ue_db[ue_index].activity_timer->run();
-    }
-  }
+  void restart_activity_timer(du_ue_index_t ue_index);
 
   span<uint8_t> get_dl_harq_buffer(rnti_t rnti, harq_id_t h_id, unsigned tb_idx)
   {
@@ -149,14 +143,14 @@ private:
     du_ue_index_t                       ue_index = MAX_NOF_DU_UES;
     slotted_vector<mac_sdu_tx_builder*> dl_bearers;
     ue_con_res_id_t                     msg3_subpdu;
-    unique_timer*                       activity_timer;
+    unique_timer2*                      activity_timer;
     std::vector<std::vector<uint8_t>>   harq_buffers;
   };
 
   bool add_ue_nolock(du_ue_index_t                     ue_index,
                      rnti_t                            crnti,
                      const byte_buffer*                ul_ccch_msg,
-                     unique_timer&                     activity_timer,
+                     unique_timer2&                    activity_timer,
                      std::vector<std::vector<uint8_t>> dl_harq_buffers)
   {
     if (ue_db.contains(ue_index)) {

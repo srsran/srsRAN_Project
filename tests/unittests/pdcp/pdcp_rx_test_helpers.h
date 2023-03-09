@@ -14,7 +14,8 @@
 #include "lib/pdcp/pdcp_interconnect.h"
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/timers2.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -84,7 +85,8 @@ protected:
 
     // Create PDCP RX entity
     test_frame = std::make_unique<pdcp_rx_test_frame>();
-    pdcp_rx    = std::make_unique<pdcp_entity_rx>(0, srb_id_t::srb1, config, *test_frame, *test_frame, timers);
+    pdcp_rx    = std::make_unique<pdcp_entity_rx>(
+        0, srb_id_t::srb1, config, *test_frame, *test_frame, timer_factory{timers, worker});
     pdcp_rx->set_status_handler(test_frame.get());
 
     srslog::flush();
@@ -103,7 +105,8 @@ protected:
   void tick_all(uint32_t nof_ticks)
   {
     for (uint32_t i = 0; i < nof_ticks; i++) {
-      timers.tick_all();
+      timers.tick();
+      worker.run_pending_tasks();
     }
   }
 
@@ -115,7 +118,8 @@ protected:
 
   pdcp_sn_size                        sn_size = {};
   pdcp_config::pdcp_rx_config         config  = {};
-  timer_manager                       timers;
+  timer_manager2                      timers;
+  manual_task_worker                  worker{64};
   std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
 
   security::sec_128_as_config sec_cfg;

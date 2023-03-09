@@ -17,13 +17,13 @@ using namespace asn1::ngap;
 ng_setup_procedure::ng_setup_procedure(const ng_setup_request&   request_,
                                        ngap_message_notifier&    amf_notif_,
                                        ngap_transaction_manager& ev_mng_,
-                                       timer_manager&            timers,
+                                       timer_factory             timers,
                                        srslog::basic_logger&     logger_) :
   request(request_),
   amf_notifier(amf_notif_),
   ev_mng(ev_mng_),
   logger(logger_),
-  ng_setup_wait_timer(timers.create_unique_timer())
+  ng_setup_wait_timer(timers.create_timer())
 {
 }
 
@@ -48,10 +48,11 @@ void ng_setup_procedure::operator()(coro_context<async_task<ng_setup_response>>&
 
     // Await timer.
     logger.info("Received NGSetupFailure with Time to Wait IE - Reinitiating NG setup in {}s (retry={}/{})",
-                time_to_wait,
+                time_to_wait.count(),
                 ng_setup_retry_no,
                 request.max_setup_retries);
-    CORO_AWAIT(async_wait_for(ng_setup_wait_timer, time_to_wait * 1000));
+    CORO_AWAIT(
+        async_wait_for(ng_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
   }
 
   // Forward procedure result to DU manager.
@@ -91,7 +92,7 @@ bool ng_setup_procedure::retry_required()
     return false;
   }
 
-  time_to_wait = ng_fail->time_to_wait->to_number();
+  time_to_wait = std::chrono::seconds{ng_fail->time_to_wait->to_number()};
   return true;
 }
 

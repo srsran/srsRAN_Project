@@ -43,19 +43,22 @@ gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
 
 struct dummy_du_processor_ue_task_scheduler : public du_processor_ue_task_scheduler {
 public:
-  dummy_du_processor_ue_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
+  dummy_du_processor_ue_task_scheduler(timer_manager2& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_)
+  {
+  }
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));
   }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(); }
-  timer_manager& get_timer_manager() override { return timer_db; }
+  unique_timer2   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
+  timer_manager2& get_timer_manager() override { return timer_db; }
 
-  void tick_timer() { timer_db.tick_all(); }
+  void tick_timer() { timer_db.tick(); }
 
 private:
   async_task_sequencer ctrl_loop{16};
-  timer_manager&       timer_db;
+  timer_manager2&      timer_db;
+  task_executor&       exec;
 };
 
 struct dummy_du_processor_cu_cp_notifier : public du_processor_cu_cp_notifier {
@@ -278,20 +281,23 @@ private:
 
 struct dummy_cu_up_processor_task_scheduler : public cu_up_processor_task_scheduler {
 public:
-  dummy_cu_up_processor_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
+  dummy_cu_up_processor_task_scheduler(timer_manager2& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_)
+  {
+  }
 
   void schedule_async_task(cu_up_index_t cu_up_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));
   }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(); }
-  timer_manager& get_timer_manager() override { return timer_db; }
+  unique_timer2   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
+  timer_manager2& get_timer_manager() override { return timer_db; }
 
-  void tick_timer() { timer_db.tick_all(); }
+  void tick_timer() { timer_db.tick(); }
 
 private:
   async_task_sequencer ctrl_loop{16};
-  timer_manager&       timer_db;
+  timer_manager2&      timer_db;
+  task_executor&       exec;
 };
 
 struct dummy_cu_up_processor_e1ap_control_notifier : public cu_up_processor_e1ap_control_notifier {

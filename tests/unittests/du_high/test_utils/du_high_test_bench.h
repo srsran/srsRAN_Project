@@ -80,7 +80,7 @@ public:
   dummy_f1ap_tx_pdu_notifier cu_notifier;
   phy_test_dummy             phy;
   mac_pcap_dummy             pcap;
-  timer_manager              timers;
+  timer_manager2             timers;
 
   du_high du_obj;
 

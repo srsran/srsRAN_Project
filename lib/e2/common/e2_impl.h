@@ -24,7 +24,7 @@ class e2_event_manager;
 class e2_impl final : public e2_interface
 {
 public:
-  e2_impl(timer_manager& timers_, e2_message_notifier& e2_pdu_notifier_);
+  e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_);
 
   /// E2 connection manager functions.
   async_task<e2_setup_response_message> handle_e2_setup_request(const e2_setup_request_message& request) override;
@@ -51,7 +51,7 @@ private:
   void handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome_s& outcome);
 
   srslog::basic_logger&             logger;
-  timer_manager&                    timers;
+  timer_factory                     timers;
   e2_message_notifier&              pdu_notifier;
   std::unique_ptr<e2_event_manager> events;
 

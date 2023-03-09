@@ -11,12 +11,12 @@
 #pragma once
 
 #include "e2.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <memory>
 
 namespace srsran {
 
 /// Creates an instance of an E2 interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<e2_interface> create_e2(srsran::timer_manager& timers_, e2_message_notifier& e2_pdu_notifier_);
+std::unique_ptr<e2_interface> create_e2(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_);
 
 } // namespace srsran

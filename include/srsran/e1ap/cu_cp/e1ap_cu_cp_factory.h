@@ -12,14 +12,14 @@
 
 #include "e1ap_cu_cp.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <memory>
 
 namespace srsran {
 namespace srs_cu_cp {
 
 /// Creates an instance of an E1AP interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<e1ap_interface> create_e1ap(srsran::timer_manager&         timers_,
+std::unique_ptr<e1ap_interface> create_e1ap(timer_factory                  timers_,
                                             e1ap_message_notifier&         e1ap_pdu_notifier_,
                                             e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                             task_executor&                 ctrl_exec_);

@@ -10,6 +10,7 @@
 
 #include "srsran/support/async/eager_async_task.h"
 #include "srsran/support/async/protocol_transaction_manager.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -19,8 +20,15 @@ class protocol_transaction_test : public ::testing::Test
 protected:
   static constexpr size_t NOF_TRANSACTIONS = 128;
 
-  timer_manager                                       timers;
-  protocol_transaction_manager<int, NOF_TRANSACTIONS> transaction_manager{timers, -1};
+  void tick()
+  {
+    timers.tick();
+    ctrl_worker.run_pending_tasks();
+  }
+
+  timer_manager2                                      timers;
+  manual_task_worker                                  ctrl_worker{64};
+  protocol_transaction_manager<int, NOF_TRANSACTIONS> transaction_manager{timer_factory{timers, ctrl_worker}, -1};
 };
 
 TEST_F(protocol_transaction_test,
@@ -99,7 +107,7 @@ TEST_F(protocol_transaction_test,
 TEST_F(protocol_transaction_test,
        when_transaction_is_created_with_timeout_then_transaction_is_automatically_cancelled_on_timeout)
 {
-  const unsigned timeout = 10;
+  const std::chrono::milliseconds timeout{10};
 
   protocol_transaction<int> tr = transaction_manager.create_transaction(timeout);
   ASSERT_FALSE(tr.complete());
@@ -110,9 +118,9 @@ TEST_F(protocol_transaction_test,
   });
 
   // Test Section.
-  for (unsigned i = 0; i < timeout; ++i) {
+  for (unsigned i = 0; i < timeout.count(); ++i) {
     ASSERT_FALSE(t.ready());
-    timers.tick_all();
+    tick();
   }
   ASSERT_TRUE(t.ready());
   ASSERT_EQ(-1, t.get());

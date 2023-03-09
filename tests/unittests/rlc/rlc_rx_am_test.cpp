@@ -85,7 +85,7 @@ protected:
 
     // Create RLC AM RX entity
     rlc = std::make_unique<rlc_rx_am_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, config, *tester, timers, ue_worker);
+        du_ue_index_t::MIN_DU_UE_INDEX, srb_id_t::srb0, config, *tester, timer_factory{timers, ue_worker}, ue_worker);
 
     // Bind AM Tx/Rx interconnect
     rlc->set_status_handler(tester.get());
@@ -388,10 +388,16 @@ protected:
     tester->sdu_queue.pop();
   }
 
+  void tick()
+  {
+    timers.tick();
+    ue_worker.run_pending_tasks();
+  }
+
   srslog::basic_logger&                 logger  = srslog::fetch_basic_logger("TEST", false);
   rlc_am_sn_size                        sn_size = GetParam();
   rlc_rx_am_config                      config;
-  timer_manager                         timers;
+  timer_manager2                        timers;
   manual_task_worker                    ue_worker{128};
   std::unique_ptr<rlc_rx_am_test_frame> tester;
   std::unique_ptr<rlc_rx_am_entity>     rlc;
@@ -830,7 +836,7 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
   for (int i = 0; i < config.t_status_prohibit; i++) {
     EXPECT_FALSE(rlc->status_report_required());
     EXPECT_EQ(tester->status_trigger_counter, 0);
-    timers.tick_all();
+    tick();
   }
   EXPECT_TRUE(rlc->status_report_required());
   EXPECT_EQ(tester->status_trigger_counter, 1);
@@ -894,7 +900,7 @@ TEST_P(rlc_rx_am_test, reassembly_timer)
   for (int j = 0; j < config.t_reassembly; j++) {
     EXPECT_FALSE(rlc->status_report_required());
     EXPECT_EQ(tester->status_trigger_counter, 0);
-    timers.tick_all();
+    tick();
   }
 
   EXPECT_TRUE(rlc->status_report_required());
@@ -1132,7 +1138,7 @@ TEST_P(rlc_rx_am_test, status_report)
   for (int t = 0; t < config.t_reassembly; t++) {
     EXPECT_FALSE(rlc->status_report_required());
     EXPECT_EQ(tester->status_trigger_counter, 0);
-    timers.tick_all();
+    tick();
   }
 
   EXPECT_TRUE(rlc->status_report_required());
@@ -1199,7 +1205,7 @@ TEST_P(rlc_rx_am_test, status_report)
 
   // Let the reassembly timer expire (advance rx_highest_status to 12)
   for (int t = 0; t < config.t_reassembly; t++) {
-    timers.tick_all();
+    tick();
   }
 
   EXPECT_EQ(tester->status_trigger_counter, 2);

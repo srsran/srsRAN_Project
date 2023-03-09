@@ -38,12 +38,14 @@ protected:
   /// \brief Helper method to run E1AP CU-CP Bearer Context Setup procedure.
   void run_bearer_context_setup(ue_index_t ue_index, gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id);
 
+  void tick();
+
   srslog::basic_logger& e1ap_logger = srslog::fetch_basic_logger("E1AP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
   slotted_id_table<ue_index_t, test_ue, MAX_NOF_CU_UES> test_ues;
 
-  timer_manager                       timers;
+  timer_manager2                      timers;
   dummy_e1ap_pdu_notifier             e1ap_pdu_notifier;
   dummy_e1ap_cu_up_processor_notifier cu_up_processor_notifier;
   manual_task_worker                  ctrl_worker{128};

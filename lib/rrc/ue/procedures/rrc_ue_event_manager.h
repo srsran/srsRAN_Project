@@ -31,7 +31,7 @@ public:
   constexpr static size_t MAX_NOF_TRANSACTIONS = 4; // Two bit RRC transaction id
   protocol_transaction_manager<rrc_outcome, MAX_NOF_TRANSACTIONS> transactions;
 
-  explicit rrc_ue_event_manager(timer_manager& timers) : transactions(timers, RRC_PROC_TIMEOUT) {}
+  explicit rrc_ue_event_manager(timer_factory timers) : transactions(timers, RRC_PROC_TIMEOUT) {}
 };
 
 } // namespace srs_cu_cp

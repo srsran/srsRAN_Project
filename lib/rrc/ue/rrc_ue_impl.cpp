@@ -36,7 +36,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_ue_du_processor_notifier&          du_proc_notif_,
   task_sched(task_sched_),
   reject_users(reject_users_),
   logger(cfg_.logger),
-  event_mng(std::make_unique<rrc_ue_event_manager>(task_sched_.get_timer_manager()))
+  event_mng(std::make_unique<rrc_ue_event_manager>(task_sched_.get_timer_factory()))
 {
   // TODO: Use task_sched to schedule RRC procedures.
   (void)task_sched;

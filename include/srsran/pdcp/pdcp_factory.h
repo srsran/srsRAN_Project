@@ -16,7 +16,7 @@
 #include "srsran/pdcp/pdcp_rx.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/ran/lcid.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <memory>
 
 /// This factory header file depends on the PDCP entity interfaces (see above include list). It is kept separate as
@@ -32,7 +32,7 @@ struct pdcp_entity_creation_message {
   pdcp_tx_upper_control_notifier* tx_upper_cn;
   pdcp_rx_upper_data_notifier*    rx_upper_dn;
   pdcp_rx_upper_control_notifier* rx_upper_cn;
-  timer_manager*                  timers;
+  timer_factory                   timers;
 };
 
 /// Creates an instance of a PDCP entity.

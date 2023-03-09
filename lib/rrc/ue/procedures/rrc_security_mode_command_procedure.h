@@ -60,8 +60,8 @@ private:
 
   security::sec_as_config sec_cfg = {};
 
-  const unsigned rrc_smc_timeout_ms =
-      1000; // arbitrary timeout for RRC SMC procedure, UE will be removed if timer fires
+  const std::chrono::milliseconds rrc_smc_timeout_ms{
+      1000}; // arbitrary timeout for RRC SMC procedure, UE will be removed if timer fires
   bool procedure_result = false;
 };
 

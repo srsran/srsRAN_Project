@@ -678,7 +678,7 @@ int main(int argc, char** argv)
   dummy_cu_cp_handler f1ap_notifier;
   phy_dummy           phy(mac_adaptor->get_cell_result_notifier());
 
-  timer_manager             app_timers{256};
+  timer_manager2            app_timers{256};
   std::unique_ptr<mac_pcap> mac_p     = std::make_unique<mac_pcap_impl>();
   du_high_configuration     du_hi_cfg = {};
   du_hi_cfg.du_mng_executor           = &workers.ctrl_exec;

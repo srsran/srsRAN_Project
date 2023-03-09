@@ -21,7 +21,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    rlc_tx_upper_layer_data_notifier&    upper_dn_,
                                    rlc_tx_upper_layer_control_notifier& upper_cn_,
                                    rlc_tx_lower_layer_notifier&         lower_dn_,
-                                   timer_manager&                       timers,
+                                   timer_factory                        timers,
                                    task_executor&                       pcell_executor_) :
   rlc_tx_entity(du_index, rb_id, upper_dn_, upper_cn_, lower_dn_),
   cfg(config),
@@ -30,7 +30,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   tx_window(create_tx_window(cfg.sn_field_length)),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
-  poll_retransmit_timer(timers.create_unique_timer()),
+  poll_retransmit_timer(timers.create_timer()),
   is_poll_retransmit_timer_expired(false),
   pcell_executor(pcell_executor_)
 {
@@ -41,9 +41,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
 
   //  configure t_poll_retransmission timer
   if (cfg.t_poll_retx > 0) {
-    poll_retransmit_timer.set(static_cast<uint32_t>(cfg.t_poll_retx), [this, &pcell_executor_](uint32_t timerid) {
-      pcell_executor_.execute([this, timerid]() { on_expired_poll_retransmit_timer(timerid); });
-    });
+    poll_retransmit_timer.set(std::chrono::milliseconds(cfg.t_poll_retx),
+                              [this](timer2_id_t tid) { on_expired_poll_retransmit_timer(); });
   }
   logger.log_info("RLC AM configured. {}", cfg);
 }
@@ -825,58 +824,56 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
   return poll;
 }
 
-void rlc_tx_am_entity::on_expired_poll_retransmit_timer(uint32_t timeout_id)
+void rlc_tx_am_entity::on_expired_poll_retransmit_timer()
 {
   std::unique_lock<std::mutex> lock(mutex);
 
   // t-PollRetransmit
-  if (poll_retransmit_timer.is_valid() && poll_retransmit_timer.id() == timeout_id) {
-    logger.log_info("Poll retransmit timer expired after {}ms.", poll_retransmit_timer.duration());
-    log_state(srslog::basic_levels::debug);
-    /*
-     * - if both the transmission buffer and the retransmission buffer are empty
-     *   (excluding transmitted RLC SDU or RLC SDU segment awaiting acknowledgements); or
-     * - if no new RLC SDU or RLC SDU segment can be transmitted (e.g. due to window stalling):
-     *   - consider the RLC SDU with the highest SN among the RLC SDUs submitted to lower layer for
-     *   retransmission; or
-     *   - consider any RLC SDU which has not been positively acknowledged for retransmission.
-     */
-    if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
-      if (tx_window->empty()) {
-        logger.log_info(
-            "Poll retransmit timer expired, but the TX window is empty. {} tx_window_size={}", st, tx_window->size());
-        return;
-      }
-      if (not tx_window->has_sn(st.tx_next_ack)) {
-        logger.log_info("Poll retransmit timer expired, but tx_next_ack is not in the TX window. {} tx_window_size={}",
-                        st,
-                        tx_window->size());
-        return;
-      }
-      // RETX first RLC SDU that has not been ACKed
-      // or first SDU segment of the first RLC SDU
-      // that has not been acked
-      rlc_tx_amd_retx retx = {};
-      retx.so              = 0;
-      retx.sn              = st.tx_next_ack;
-      retx.length          = (*tx_window)[st.tx_next_ack].sdu.length();
-      retx_queue.push(retx);
-      //
-      // TODO: Revise this: shall we send a minimum-sized segment instead?
-      //
-
-      logger.log_debug("Scheduled RETX due to expired poll retransmit timer. {}", retx);
-      //
-      // TODO: Increment RETX counter, handle max_retx
-      //
-
-      handle_buffer_state_update_nolock(); // already locked
+  logger.log_info("Poll retransmit timer expired after {}ms.", poll_retransmit_timer.duration().count());
+  log_state(srslog::basic_levels::debug);
+  /*
+   * - if both the transmission buffer and the retransmission buffer are empty
+   *   (excluding transmitted RLC SDU or RLC SDU segment awaiting acknowledgements); or
+   * - if no new RLC SDU or RLC SDU segment can be transmitted (e.g. due to window stalling):
+   *   - consider the RLC SDU with the highest SN among the RLC SDUs submitted to lower layer for
+   *   retransmission; or
+   *   - consider any RLC SDU which has not been positively acknowledged for retransmission.
+   */
+  if ((sdu_queue.is_empty() && retx_queue.empty() && sn_under_segmentation == INVALID_RLC_SN) || tx_window->full()) {
+    if (tx_window->empty()) {
+      logger.log_info(
+          "Poll retransmit timer expired, but the TX window is empty. {} tx_window_size={}", st, tx_window->size());
+      return;
     }
-    /*
-     * - include a poll in an AMD PDU as described in clause 5.3.3.2.
-     */
-    is_poll_retransmit_timer_expired.store(true, std::memory_order_relaxed);
+    if (not tx_window->has_sn(st.tx_next_ack)) {
+      logger.log_info("Poll retransmit timer expired, but tx_next_ack is not in the TX window. {} tx_window_size={}",
+                      st,
+                      tx_window->size());
+      return;
+    }
+    // RETX first RLC SDU that has not been ACKed
+    // or first SDU segment of the first RLC SDU
+    // that has not been acked
+    rlc_tx_amd_retx retx = {};
+    retx.so              = 0;
+    retx.sn              = st.tx_next_ack;
+    retx.length          = (*tx_window)[st.tx_next_ack].sdu.length();
+    retx_queue.push(retx);
+    //
+    // TODO: Revise this: shall we send a minimum-sized segment instead?
+    //
+
+    logger.log_debug("Scheduled RETX due to expired poll retransmit timer. {}", retx);
+    //
+    // TODO: Increment RETX counter, handle max_retx
+    //
+
+    handle_buffer_state_update_nolock(); // already locked
   }
+  /*
+   * - include a poll in an AMD PDU as described in clause 5.3.3.2.
+   */
+  is_poll_retransmit_timer_expired.store(true, std::memory_order_relaxed);
 }
 
 std::unique_ptr<rlc_am_window_base<rlc_tx_am_sdu_info>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)

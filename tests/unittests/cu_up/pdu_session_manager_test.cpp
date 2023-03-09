@@ -10,6 +10,7 @@
 
 #include "cu_up_test_helpers.h"
 #include "lib/cu_up/pdu_session_manager_impl.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -31,7 +32,7 @@ protected:
 
     // create DUT object
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(
-        MIN_UE_INDEX, net_config, logger, timers, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
+        MIN_UE_INDEX, net_config, logger, timer_factory{timers, worker}, *f1u_gw, *gtpu_tx_notifier, *gtpu_rx_demux);
   }
 
   void TearDown() override
@@ -40,7 +41,8 @@ protected:
     srslog::flush();
   }
 
-  timer_manager                                        timers;
+  timer_manager2                                       timers;
+  manual_task_worker                                   worker{64};
   std::unique_ptr<dummy_gtpu_demux_ctrl>               gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_inner_f1u_bearer                               f1u_bearer;

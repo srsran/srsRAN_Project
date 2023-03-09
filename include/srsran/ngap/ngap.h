@@ -14,7 +14,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 
@@ -193,10 +193,10 @@ public:
 class ngap_ue_task_scheduler
 {
 public:
-  virtual ~ngap_ue_task_scheduler()                                                        = default;
-  virtual void           schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
-  virtual unique_timer   make_unique_timer()                                               = 0;
-  virtual timer_manager& get_timer_manager()                                               = 0;
+  virtual ~ngap_ue_task_scheduler()                                                         = default;
+  virtual void            schedule_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
+  virtual unique_timer2   make_unique_timer()                                               = 0;
+  virtual timer_manager2& get_timer_manager()                                               = 0;
 };
 
 /// \brief Interface to query statistics from the NGAP interface.

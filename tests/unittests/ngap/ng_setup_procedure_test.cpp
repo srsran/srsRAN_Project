@@ -67,7 +67,7 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
   // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
   for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
     ASSERT_FALSE(t.ready());
-    this->timers.tick_all();
+    this->tick();
   }
 
   // Status: AMF received NG Setup Request again.
@@ -115,7 +115,7 @@ TEST_F(ngap_test, when_ng_setup_failure_with_time_to_wait_received_then_retry_wi
   // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
   for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
     ASSERT_FALSE(t.ready());
-    this->timers.tick_all();
+    this->tick();
   }
 
   // Unsuccessful outcome after reinitiated NG Setup
@@ -148,7 +148,7 @@ TEST_F(ngap_test, when_retry_limit_reached_then_amf_not_connected)
     // Status: AMF does not receive new NG Setup Request until time-to-wait has ended.
     for (unsigned msec_elapsed = 0; msec_elapsed < 10000; ++msec_elapsed) {
       ASSERT_FALSE(t.ready());
-      this->timers.tick_all();
+      this->tick();
     }
     ngap->handle_message(ng_setup_response_msg);
   }

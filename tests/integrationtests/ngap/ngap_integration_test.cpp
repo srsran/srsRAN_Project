@@ -19,7 +19,7 @@
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io_broker/io_broker_factory.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -95,14 +95,14 @@ protected:
     nw_config.non_blocking_mode = true;
     adapter                     = std::make_unique<ngap_network_adapter>(nw_config);
 
-    ngap_ue_task_scheduler = std::make_unique<dummy_ngap_ue_task_scheduler>(timers);
+    ngap_ue_task_scheduler = std::make_unique<dummy_ngap_ue_task_scheduler>(timers, ctrl_worker);
 
     ngap = create_ngap(cfg, cu_cp_paging_notifier, *ngap_ue_task_scheduler, ue_mng, *adapter, ctrl_worker);
     adapter->connect_ngap(ngap.get());
   }
 
   ngap_configuration                            cfg;
-  timer_manager                                 timers;
+  timer_manager2                                timers;
   ue_manager                                    ue_mng;
   dummy_ngap_cu_cp_paging_notifier              cu_cp_paging_notifier;
   std::unique_ptr<dummy_ngap_ue_task_scheduler> ngap_ue_task_scheduler;

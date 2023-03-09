@@ -68,8 +68,9 @@ void pdcp_entity_tx::handle_sdu(byte_buffer sdu)
   // Start discard timer. If using RLC AM, we store
   // the PDU to use later in the data recovery procedure.
   if (cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured) {
-    unique_timer discard_timer = timers.create_unique_timer();
-    discard_timer.set(static_cast<uint32_t>(cfg.discard_timer), discard_callback{this, st.tx_next});
+    unique_timer2 discard_timer = timers.create_timer();
+    discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer)),
+                      discard_callback{this, st.tx_next});
     discard_timer.run();
     discard_info info;
     if (cfg.rlc_mode == pdcp_rlc_mode::um) {
@@ -390,7 +391,7 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
 }
 
 // Discard Timer Callback (discardTimer)
-void pdcp_entity_tx::discard_callback::operator()(uint32_t timer_id)
+void pdcp_entity_tx::discard_callback::operator()(timer2_id_t timer_id)
 {
   parent->logger.log_debug("Discard timer expired. count={}", discard_count);
 

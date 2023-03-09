@@ -21,7 +21,7 @@ namespace srs_cu_cp {
 class e1ap_bearer_transaction_manager
 {
 public:
-  e1ap_bearer_transaction_manager(timer_manager& timers) :
+  e1ap_bearer_transaction_manager(timer_factory timers) :
     context_setup_outcome(timers), context_modification_outcome(timers), context_release_complete(timers)
   {
   }

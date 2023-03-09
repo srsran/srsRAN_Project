@@ -35,13 +35,13 @@ public:
 
     explicit dummy_ue_task_sched(dummy_f1ap_du_configurator* parent_) : parent(parent_) {}
 
-    unique_timer create_timer() override { return parent->timers.create_unique_timer(); }
+    unique_timer2 create_timer() override { return parent->timers.create_timer(); }
 
     /// \brief Schedule Async Task respective to a given UE.
     void schedule_async_task(async_task<void>&& task) override { parent->task_loop.schedule(std::move(task)); }
   };
 
-  timer_manager&       timers;
+  timer_factory        timers;
   async_task_sequencer task_loop;
   dummy_ue_task_sched  ue_sched;
   f1ap_interface*      f1ap;
@@ -55,11 +55,11 @@ public:
   f1ap_ue_context_update_response          next_ue_context_update_response;
   optional<f1ap_ue_delete_request>         last_ue_delete_req;
 
-  explicit dummy_f1ap_du_configurator(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
+  explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
   void connect(f1ap_interface& f1ap_) { f1ap = &f1ap_; }
 
-  timer_manager& get_timer_manager() override { return timers; }
+  timer_factory& get_timer_factory() override { return timers; }
 
   void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
 
@@ -181,11 +181,14 @@ protected:
                                                        std::initializer_list<srb_id_t> srbs,
                                                        std::initializer_list<drb_id_t> drbs);
 
+  void tick();
+
   /// Notifier for messages coming out from F1AP to Gateway.
   f1ap_null_notifier msg_notifier = {};
 
-  timer_manager                   timers;
-  dummy_f1ap_du_configurator      f1ap_du_cfg_handler{timers};
+  timer_manager2                  timer_service;
+  timer_factory                   f1ap_timers{timer_service, ctrl_worker};
+  dummy_f1ap_du_configurator      f1ap_du_cfg_handler{f1ap_timers};
   manual_task_worker              ctrl_worker{128};
   dummy_ue_executor_mapper        ue_exec_mapper{ctrl_worker};
   std::unique_ptr<f1ap_interface> f1ap;

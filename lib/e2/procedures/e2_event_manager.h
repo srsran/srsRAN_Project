@@ -27,7 +27,7 @@ public:
   protocol_transaction_manager<e2ap_outcome, MAX_NOF_TRANSACTIONS> transactions;
   // CU initiated E2 Setup Procedure
 
-  explicit e2_event_manager(timer_manager& timers) :
+  explicit e2_event_manager(timer_factory timers) :
     transactions(timers, e2ap_outcome{asn1::e2ap::unsuccessful_outcome_s{}})
   {
   }

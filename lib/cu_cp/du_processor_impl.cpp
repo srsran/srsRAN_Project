@@ -38,7 +38,8 @@ du_processor_impl::du_processor_impl(const du_processor_config_t         du_proc
   rrc_ue_nas_pdu_notifier(rrc_ue_nas_pdu_notifier_),
   rrc_ue_ngap_ctrl_notifier(rrc_ue_ngap_ctrl_notifier_),
   task_sched(task_sched_),
-  ue_manager(ue_manager_)
+  ue_manager(ue_manager_),
+  ctrl_exec(ctrl_exec_)
 {
   context.du_index = cfg.du_index;
 
@@ -198,7 +199,7 @@ ue_creation_complete_message du_processor_impl::handle_ue_creation_request(const
   ue->set_pcell_index(pcell_index);
 
   // Create and connect RRC UE task schedulers
-  rrc_ue_task_scheds.emplace(ue->get_ue_index(), ue->get_ue_index());
+  rrc_ue_task_scheds.emplace(ue->get_ue_index(), rrc_to_du_ue_task_scheduler{ue->get_ue_index(), ctrl_exec});
   rrc_ue_task_scheds.at(ue->get_ue_index()).connect_du_processor(get_du_processor_ue_task_handler());
 
   // Set task schedulers
@@ -290,7 +291,7 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
     srb_pdcp.tx_upper_cn        = srb.pdcp_context->rrc_tx_control_notifier.get();
     srb_pdcp.rx_upper_dn        = srb.pdcp_context->rrc_rx_data_notifier.get();
     srb_pdcp.rx_upper_cn        = srb.pdcp_context->rrc_rx_control_notifier.get();
-    srb_pdcp.timers             = &timer_db;
+    srb_pdcp.timers             = timer_factory{timer_db, ctrl_exec};
 
     // create PDCP entity
     pdcp_bearers.emplace(msg.ue_index, create_pdcp_entity(srb_pdcp));

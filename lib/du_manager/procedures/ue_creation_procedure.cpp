@@ -133,11 +133,12 @@ bool ue_creation_procedure::setup_du_ue_resources()
   ue_ctx->bearers.add_srb(srb_id_t::srb1, ue_ctx->resources->rlc_bearers[0].rlc_cfg);
 
   const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
-  ue_ctx->activity_timer                    = services.timers.create_unique_timer();
-  ue_ctx->activity_timer.set(UE_ACTIVITY_TIMEOUT, [ue_index = ue_ctx->ue_index, &logger = this->logger](unsigned tid) {
-    logger.debug("UE Manager: ue={} activity timeout.", ue_index);
-    // TODO: Handle.
-  });
+  ue_ctx->activity_timer                    = services.timers.create_unique_timer(services.du_mng_exec);
+  ue_ctx->activity_timer.set(std::chrono::milliseconds{UE_ACTIVITY_TIMEOUT},
+                             [ue_index = ue_ctx->ue_index, &logger = this->logger](timer2_id_t tid) {
+                               logger.debug("UE Manager: ue={} activity timeout.", ue_index);
+                               // TODO: Handle.
+                             });
 
   return true;
 }

@@ -14,7 +14,7 @@
 #include "manual_event.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/variant.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <array>
 
 namespace srsran {
@@ -63,8 +63,8 @@ template <typename T, size_t N>
 class protocol_transaction_manager
 {
 public:
-  explicit protocol_transaction_manager(timer_manager& timer_db_, const T& cancel_value_ = {}) :
-    timer_db(timer_db_), cancel_value(cancel_value_)
+  explicit protocol_transaction_manager(timer_factory timer_service_, const T& cancel_value_ = {}) :
+    timer_service(timer_service_), cancel_value(cancel_value_)
   {
   }
 
@@ -83,15 +83,16 @@ public:
 
   /// \brief Creates a new protocol transaction with automatically assigned transaction ID and with a timeout, after
   /// which the transaction gets cancelled.
-  protocol_transaction<T> create_transaction(unsigned time_to_cancel) __attribute__((warn_unused_result))
+  protocol_transaction<T> create_transaction(std::chrono::milliseconds time_to_cancel)
+      __attribute__((warn_unused_result))
   {
     protocol_transaction<T> t = create_transaction();
     // Setup timeout.
     if (not running_timers[t.id()].is_valid()) {
       // Create a new timer if it doesn't exist yet.
-      running_timers[t.id()] = timer_db.create_unique_timer();
+      running_timers[t.id()] = timer_service.create_timer();
     }
-    running_timers[t.id()].set(time_to_cancel, [this, transaction_id = t.id()](timer_id_t tid) {
+    running_timers[t.id()].set(time_to_cancel, [this, transaction_id = t.id()](timer2_id_t tid) {
       if (not set(transaction_id, cancel_value)) {
         srslog::fetch_basic_logger("ALL").warning("Transaction id={} timeout but transaction is already completed",
                                                   transaction_id);
@@ -117,11 +118,11 @@ public:
   }
 
 private:
-  timer_manager& timer_db;
-  const T        cancel_value;
+  timer_factory timer_service;
+  const T       cancel_value;
 
   std::atomic<unsigned>          next_transaction_id{0};
-  std::array<unique_timer, N>    running_timers;
+  std::array<unique_timer2, N>   running_timers;
   std::array<manual_event<T>, N> transactions;
 };
 

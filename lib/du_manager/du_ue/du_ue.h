@@ -32,7 +32,7 @@ struct du_ue {
   rnti_t                       rnti;
   du_cell_index_t              pcell_index;
   du_ue_bearer_manager         bearers;
-  unique_timer                 activity_timer;
+  unique_timer2                activity_timer;
   ue_ran_resource_configurator resources;
 };
 

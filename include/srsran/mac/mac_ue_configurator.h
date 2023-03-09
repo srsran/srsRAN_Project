@@ -12,9 +12,10 @@
 #include "srsran/ran/sr_configuration.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
+
+class unique_timer2;
 
 /// Parameters passed to MAC concerning a created logical channel.
 struct mac_logical_channel_to_setup {
@@ -32,7 +33,7 @@ struct mac_ue_create_request_message {
   mac_cell_group_config                     mac_cell_group_cfg;
   physical_cell_group_config                phy_cell_group_cfg;
   const byte_buffer*                        ul_ccch_msg;
-  unique_timer*                             ue_activity_timer;
+  unique_timer2*                            ue_activity_timer;
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;
 };

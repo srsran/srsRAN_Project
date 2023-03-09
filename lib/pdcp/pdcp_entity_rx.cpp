@@ -20,7 +20,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                pdcp_config::pdcp_rx_config     cfg_,
                                pdcp_rx_upper_data_notifier&    upper_dn_,
                                pdcp_rx_upper_control_notifier& upper_cn_,
-                               timer_manager&                  timers_) :
+                               timer_factory                   timers_) :
   pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
@@ -34,9 +34,10 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
 
   // t-Reordering timer
   if (cfg.t_reordering != pdcp_t_reordering::infinity) {
-    reordering_timer = timers.create_unique_timer();
+    reordering_timer = timers.create_timer();
     if (static_cast<uint32_t>(cfg.t_reordering) > 0) {
-      reordering_timer.set(static_cast<uint32_t>(cfg.t_reordering), reordering_callback{this});
+      reordering_timer.set(std::chrono::milliseconds{static_cast<unsigned>(cfg.t_reordering)},
+                           reordering_callback{this});
     }
   } else if (cfg.rlc_mode == pdcp_rlc_mode::um) {
     logger.log_error("Possible PDCP-NR misconfiguration: using infinite re-ordering timer with RLC UM bearer.");
@@ -424,7 +425,7 @@ void pdcp_entity_rx::handle_t_reordering_expire()
 }
 
 // Reordering Timer Callback (t-reordering)
-void pdcp_entity_rx::reordering_callback::operator()(uint32_t /*timer_id*/)
+void pdcp_entity_rx::reordering_callback::operator()(timer2_id_t /*timer_id*/)
 {
   parent->logger.log_info(
       "Reordering timer expired. rx_reord={} queued_sdus={}", parent->st.rx_reord, parent->reorder_queue.size());

@@ -13,7 +13,7 @@
 
 using namespace srsran;
 
-std::unique_ptr<e2_interface> srsran::create_e2(srsran::timer_manager& timers_, e2_message_notifier& e2_pdu_notifier_)
+std::unique_ptr<e2_interface> srsran::create_e2(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_)
 {
   auto e2 = std::make_unique<e2_impl>(timers_, e2_pdu_notifier_);
   return e2;

@@ -15,7 +15,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ngap_test::ngap_test() : ngap_ue_task_scheduler(timers)
+ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
 {
   test_logger.set_level(srslog::basic_levels::debug);
   ngap_logger.set_level(srslog::basic_levels::debug);
@@ -72,4 +72,10 @@ void ngap_test::run_inital_context_setup(ue_index_t ue_index)
   ngap_message init_context_setup_request =
       generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
   ngap->handle_message(init_context_setup_request);
+}
+
+void ngap_test::tick()
+{
+  timers.tick();
+  ctrl_worker.run_pending_tasks();
 }
