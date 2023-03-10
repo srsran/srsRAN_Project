@@ -67,8 +67,6 @@ public:
 
   void attach_handler(cu_cp_du_handler* cu_cp_handler_) { cu_cp_handler = cu_cp_handler_; }
 
-  void on_new_du_connection() override { logger.info("Received a new DU connection notification"); }
-
   void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) override
   {
     logger.info("Received a RRC UE creation notification");
