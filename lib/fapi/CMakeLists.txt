@@ -17,4 +17,4 @@ set(SOURCES
         logging_slot_time_notifier_decorator.cpp)
 
 add_library(srsran_fapi STATIC ${SOURCES})
-target_link_libraries(srsran_fapi fapi_pdu_validators srslog)
+target_link_libraries(srsran_fapi srsran_fapi_pdu_validators srslog)

@@ -324,6 +324,16 @@ INSTANTIATE_TEST_SUITE_P(dmrs_power_1,
                                                           test_case_data{0, true},
                                                           test_case_data{32767, true})));
 
+INSTANTIATE_TEST_SUITE_P(
+    collocated_al16_candidate,
+    validate_pdcch_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<dl_pdcch_pdu>{
+                         "Collocated AL16 candidate",
+                         [](dl_pdcch_pdu& pdu, int value) {
+                           pdu.maintenance_v3.info.back().collocated_AL16_candidate = value;
+                         }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
+
 /// Valid PDU should pass.
 TEST(validate_pdcch_pdu, valid_pdu_passes)
 {

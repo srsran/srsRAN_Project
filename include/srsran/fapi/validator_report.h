@@ -35,11 +35,7 @@ struct validator_report {
                  const char*                 name,
                  message_type_id             message_type_,
                  unsigned                    pdu_type_) :
-      value(value_),
-      property_name(name),
-      message_type(message_type_),
-      expected_value_range(range),
-      pdu_type(pdu_type_)
+      value(value_), property_name(name), message_type(message_type_), expected_value_range(range), pdu_type(pdu_type_)
     {
     }
 
