@@ -117,7 +117,7 @@ ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
   srsran_assert(search_spaces[ss_id] != nullptr, "Inexistent SearchSpace-Id={}", ss_id);
   const search_space_configuration& ss_cfg  = *search_spaces[ss_id];
   const bwp_params&                 bwp_row = bwp_table[coreset_id_to_bwp_id[ss_cfg.cs_id]];
-
+  // See TS 38.214, Table 5.1.2.1.1-1: Applicable PDSCH time domain resource allocation for DCI formats 1_0 and 1_1.
   if (ss_cfg.type != search_space_configuration::type_t::common or ss_cfg.cs_id != to_coreset_id(0)) {
     if (not bwp_row.dl_bwp_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
       // UE dedicated pdsch-TimeDomain list.

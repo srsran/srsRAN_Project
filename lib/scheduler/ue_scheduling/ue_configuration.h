@@ -84,14 +84,21 @@ public:
     return *ret;
   }
 
-  span<const uint8_t> get_k1_candidates() const
+  span<const uint8_t> get_k1_candidates(dci_dl_rnti_config_type dci_type) const
   {
     // TS38.213, 9.2.3 - For DCI f1_0, the PDSCH-to-HARQ-timing-indicator field values map to {1, 2, 3, 4, 5, 6, 7, 8}.
     // However, the tested UEs only support k1 >= 4.
     static constexpr std::array<uint8_t, 5> dl_data_to_ul_ack_f1_0 = {4, 5, 6, 7, 8};
-    const auto&                             pucch_cfg              = *cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg;
-    return pucch_cfg.dl_data_to_ul_ack.empty() ? span<const uint8_t>{dl_data_to_ul_ack_f1_0}
-                                               : span<const uint8_t>{pucch_cfg.dl_data_to_ul_ack};
+    // For a DCI format, other than DCI format 1_0, scheduling a PDSCH reception or a SPS PDSCH release, the PDSCH-to-
+    // HARQ_feedback timing indicator field values, if present, map to values for a set of number of slots provided by
+    // dl-DataToUL-ACK, or dl-DataToUL-ACKForDCIFormat1_2 for DCI format 1_2, as defined in Table 9.2.3-1
+    const auto& pucch_cfg = *cfg_dedicated().ul_config->init_ul_bwp.pucch_cfg;
+    if (dci_type != dci_dl_rnti_config_type::c_rnti_f1_1) {
+      return span<const uint8_t>{dl_data_to_ul_ack_f1_0};
+    }
+    srsran_assert(not pucch_cfg.dl_data_to_ul_ack.empty(),
+                  "List of timing for given PDSCH to the DL ACK cannot be empty");
+    return span<const uint8_t>{pucch_cfg.dl_data_to_ul_ack};
   }
 
 private:

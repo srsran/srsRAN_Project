@@ -56,11 +56,12 @@ void ue_cell::set_latest_wb_cqi(const bounded_bitset<uci_constants::MAX_NOF_CSI_
                              (static_cast<unsigned>(payload.test(2)) << 1) + (static_cast<unsigned>(payload.test(3)));
 }
 
-grant_prbs_mcs ue_cell::required_dl_prbs(unsigned time_resource, unsigned pending_bytes) const
+grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                         unsigned                                     pending_bytes) const
 {
   const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
-  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cfg, time_resource);
+  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, pdsch_td_cfg, ue_cfg);
 
   // NOTE: This value is for preventing uninitialized variables, will be overwritten, no need to set it to a particular
   // value.
@@ -80,7 +81,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(unsigned time_resource, unsigned pendin
   sch_mcs_description mcs_config = pdsch_mcs_get_config(cfg().cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table, mcs);
 
   dmrs_information dmrs_info = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   (unsigned)pdsch_cfg.symbols.length(),

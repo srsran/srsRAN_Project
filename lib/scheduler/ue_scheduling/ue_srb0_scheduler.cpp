@@ -134,7 +134,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Find available symbol x RB resources.
   const unsigned pending_bytes = u.pending_dl_srb0_newtx_bytes();
 
-  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_time_res);
+  pdsch_config_params pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
 
   prb_bitmap     used_crbs        = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, pdsch_cfg.symbols);
   const unsigned starting_crb_idx = 0;
@@ -196,7 +196,7 @@ bool ue_srb0_scheduler::schedule_srb0(ue&                               u,
   // Allocate PUCCH resources.
   unsigned             k1          = 4;
   pucch_harq_ack_grant pucch_grant = {};
-  for (const auto k1_candidate : ue_pcell.cfg().get_k1_candidates()) {
+  for (const auto k1_candidate : ue_pcell.cfg().get_k1_candidates(dci_dl_rnti_config_type::tc_rnti_f1_0)) {
     pucch_grant = pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_time_res, k1_candidate, *pdcch);
     if (pucch_grant.pucch_pdu != nullptr) {
       k1 = k1_candidate;

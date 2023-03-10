@@ -28,7 +28,8 @@ static unsigned get_pdsch_n_id(pci_t                              pci,
   return pci;
 }
 
-pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
+pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configuration&                    cell_cfg,
+                                                          const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
 {
   static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
@@ -42,10 +43,10 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configurati
   pdsch_config_params pdsch;
 
   pdsch.dmrs = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   pdsch.nof_oh_prb       = nof_oh_prb;
-  pdsch.symbols          = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols;
+  pdsch.symbols          = pdsch_td_cfg.symbols;
   pdsch.mcs_table        = mcs_table;
   pdsch.tb_scaling_field = tb_scaling_field;
   pdsch.nof_layers       = nof_layers;
@@ -53,9 +54,9 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configurati
   return pdsch;
 }
 
-pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuration&    cell_cfg,
-                                                         const ue_cell_configuration& ue_cell_cfg,
-                                                         unsigned                     time_resource)
+pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuration&                    cell_cfg,
+                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                                         const ue_cell_configuration&                 ue_cell_cfg)
 {
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
@@ -64,14 +65,14 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuratio
   pdsch_config_params pdsch;
 
   pdsch.dmrs = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
                          ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
                          : static_cast<unsigned>(x_overhead::not_set);
 
-  pdsch.symbols          = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols;
+  pdsch.symbols          = pdsch_td_cfg.symbols;
   pdsch.mcs_table        = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table;
   pdsch.tb_scaling_field = tb_scaling_field;
   pdsch.nof_layers       = nof_layers;

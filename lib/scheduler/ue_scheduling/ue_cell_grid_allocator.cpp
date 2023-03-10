@@ -32,6 +32,26 @@ void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
   cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &uci_alloc, &cell_alloc});
 }
 
+/// \brief Gets DCI Format to use based on SearchSpace configuration.
+/// \param[in] ss_cfg SearchSpace Configuration.
+/// \return DL DCI format.
+static dci_dl_rnti_config_type get_dl_dci_format(const search_space_configuration& ss_cfg)
+{
+  if (ss_cfg.type == search_space_configuration::type_t::common) {
+    if (ss_cfg.common.f0_0_and_f1_0) {
+      return dci_dl_rnti_config_type::c_rnti_f1_0;
+    }
+    // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
+  }
+  switch (ss_cfg.ue_specific) {
+    case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
+      return dci_dl_rnti_config_type::c_rnti_f1_0;
+    case search_space_configuration::ue_specific_dci_format::f0_1_and_1_1:
+      return dci_dl_rnti_config_type::c_rnti_f1_1;
+  }
+  report_fatal_error("Unsupported DL DCI format");
+}
+
 bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 {
   srsran_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
@@ -47,23 +67,11 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
     return false;
   }
 
-  const ue_cell_configuration&  ue_cell_cfg = ue_cc->cfg();
-  const cell_configuration&     cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_downlink_common&    init_dl_bwp = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
-  const bwp_downlink_common&    bwp_dl_cmn  = ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id());
-  dl_harq_process&              h_dl        = ue_cc->harqs.dl_harq(grant.h_id);
-  const dci_dl_rnti_config_type dci_type =
-      h_dl.empty() ? dci_dl_rnti_config_type::c_rnti_f1_0 : h_dl.last_alloc_params().dci_cfg_type;
-
-  // See 3GPP TS 38.213, clause 10.1,
-  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
-  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
-  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
-  if (dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 and
-      grant.ss_id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id) {
-    logger.debug("Failed to allocate PDSCH. Cause: SearchSpace not valid for re-transmission of msg4.");
-    return false;
-  }
+  const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
+  const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
+  const bwp_downlink_common&   init_dl_bwp = ue_cell_cfg.dl_bwp_common(to_bwp_id(0));
+  const bwp_downlink_common&   bwp_dl_cmn  = ue_cell_cfg.dl_bwp_common(ue_cc->active_bwp_id());
+  dl_harq_process&             h_dl        = ue_cc->harqs.dl_harq(grant.h_id);
 
   // Find a SearchSpace candidate.
   const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
@@ -74,6 +82,19 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   const coreset_configuration* cs_cfg = ue_cell_cfg.find_coreset(ss_cfg->cs_id);
   if (cs_cfg == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No valid CORESET found.");
+    return false;
+  }
+
+  const dci_dl_rnti_config_type dci_type =
+      h_dl.empty() ? get_dl_dci_format(*ss_cfg) : h_dl.last_alloc_params().dci_cfg_type;
+
+  // See 3GPP TS 38.213, clause 10.1,
+  // A UE monitors PDCCH candidates in one or more of the following search spaces sets
+  //  - a Type1-PDCCH CSS set configured by ra-SearchSpace in PDCCH-ConfigCommon for a DCI format with
+  //    CRC scrambled by a RA-RNTI, a MsgB-RNTI, or a TC-RNTI on the primary cell.
+  if (dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 and
+      grant.ss_id != cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id) {
+    logger.debug("Failed to allocate PDSCH. Cause: SearchSpace not valid for re-transmission of msg4.");
     return false;
   }
 
@@ -137,7 +158,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
 
   // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
   unsigned       k1      = 0;
-  auto           k1_list = ue_cell_cfg.get_k1_candidates();
+  auto           k1_list = ue_cell_cfg.get_k1_candidates(dci_type);
   uci_allocation uci     = {};
   for (const uint8_t k1_candidate : k1_list) {
     const slot_point uci_slot = pdsch_alloc.slot + k1_candidate;
@@ -162,11 +183,13 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   pdsch_config_params pdsch_cfg;
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, grant.time_res_index);
+      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_list[grant.time_res_index]);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cell_cfg, grant.time_res_index);
+      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, pdsch_list[grant.time_res_index], ue_cell_cfg);
       break;
+    case dci_dl_rnti_config_type::c_rnti_f1_1:
+      // TODO: Build PDSCH Config for DCI format 1_1.
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
@@ -281,6 +304,26 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
   return true;
 }
 
+/// \brief Gets DCI Format to use based on SearchSpace configuration.
+/// \param[in] ss_cfg SearchSpace Configuration.
+/// \return UL DCI format.
+static dci_ul_rnti_config_type get_ul_dci_format(const search_space_configuration& ss_cfg)
+{
+  if (ss_cfg.type == search_space_configuration::type_t::common) {
+    if (ss_cfg.common.f0_0_and_f1_0) {
+      return dci_ul_rnti_config_type::c_rnti_f0_0;
+    }
+    // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
+  }
+  switch (ss_cfg.ue_specific) {
+    case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
+      return dci_ul_rnti_config_type::c_rnti_f0_0;
+    case search_space_configuration::ue_specific_dci_format::f0_1_and_1_1:
+      return dci_ul_rnti_config_type::c_rnti_f0_1;
+  }
+  report_fatal_error("Unsupported UL DCI format");
+}
+
 bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
 {
   srsran_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
@@ -303,8 +346,6 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
   const bwp_uplink_common&     init_ul_bwp = ue_cell_cfg.ul_bwp_common(to_bwp_id(0));
   const bwp_uplink_common&     bwp_ul_cmn  = ue_cell_cfg.ul_bwp_common(ue_cc->active_bwp_id());
   ul_harq_process&             h_ul        = ue_cc->harqs.ul_harq(grant.h_id);
-  // TODO: Get correct DCI format.
-  const dci_ul_rnti_config_type dci_type = dci_ul_rnti_config_type::c_rnti_f0_0;
 
   // Find a SearchSpace candidate.
   const search_space_configuration* ss_cfg = ue_cell_cfg.find_search_space(grant.ss_id);
@@ -313,8 +354,9 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
     return false;
   }
 
-  const bwp_configuration  bwp_lims = ue_cc->alloc_type1_bwp_limits(dci_ul_format::f0_0, ss_cfg->type);
-  const subcarrier_spacing scs      = bwp_ul_cmn.generic_params.scs;
+  const dci_ul_rnti_config_type dci_type = get_ul_dci_format(*ss_cfg);
+  const bwp_configuration       bwp_lims = ue_cc->alloc_type1_bwp_limits(dci_ul_format::f0_0, ss_cfg->type);
+  const subcarrier_spacing      scs      = bwp_ul_cmn.generic_params.scs;
   span<const pusch_time_domain_resource_allocation> pusch_list   = ue_cell_cfg.get_pusch_time_domain_list(ss_cfg->id);
   const pusch_time_domain_resource_allocation&      pusch_td_cfg = pusch_list[grant.time_res_index];
 

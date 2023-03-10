@@ -42,7 +42,10 @@ public:
     cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
-    pdsch_cfg(get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cell_cfg, time_resource)){};
+    pdsch_cfg(
+        get_pdsch_config_f1_0_c_rnti(cell_cfg,
+                                     cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource],
+                                     ue_cell_cfg)){};
 
 protected:
   const cell_configuration    cell_cfg;
