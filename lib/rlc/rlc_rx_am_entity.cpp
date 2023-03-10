@@ -534,6 +534,7 @@ rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
   do_status.store(false, std::memory_order_relaxed);
   if (status_prohibit_timer.is_valid() && cfg.t_status_prohibit > 0) {
     status_prohibit_timer.run();
+    status_prohibit_timer_is_running.store(true, std::memory_order_relaxed);
   }
   std::unique_lock<std::mutex> lock(status_report_mutex);
   return status_report;
@@ -546,7 +547,8 @@ uint32_t rlc_rx_am_entity::get_status_pdu_length()
 
 bool rlc_rx_am_entity::status_report_required()
 {
-  return do_status.load(std::memory_order_relaxed) && not status_prohibit_timer.is_running();
+  return do_status.load(std::memory_order_relaxed) &&
+         not status_prohibit_timer_is_running.load(std::memory_order_relaxed);
 }
 
 void rlc_rx_am_entity::notify_status_report_changed()
@@ -584,8 +586,9 @@ std::unique_ptr<rlc_am_window_base<rlc_rx_am_sdu_info>> rlc_rx_am_entity::create
 void rlc_rx_am_entity::on_expired_status_prohibit_timer()
 {
   logger.log_debug("Status prohibit timer expired after {}ms.", status_prohibit_timer.duration().count());
+
+  status_prohibit_timer_is_running.store(false, std::memory_order_relaxed);
   notify_status_report_changed();
-  return;
 }
 
 void rlc_rx_am_entity::on_expired_reassembly_timer()

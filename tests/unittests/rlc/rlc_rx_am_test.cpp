@@ -1331,3 +1331,9 @@ INSTANTIATE_TEST_SUITE_P(rlc_rx_am_test_each_sn_size,
                          rlc_rx_am_test,
                          ::testing::Values(rlc_am_sn_size::size12bits, rlc_am_sn_size::size18bits),
                          test_param_info_to_string);
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

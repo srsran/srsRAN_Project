@@ -356,7 +356,7 @@ inline void init_log_from_args(const stress_test_args& args)
   log_pdcp.set_level(args.log_level_pdcp);
   log_pdcp.set_hex_dump_max_size(args.log_hex_limit);
 
-  auto& log_f1 = srslog::fetch_basic_logger("F1", false);
+  auto& log_f1 = srslog::fetch_basic_logger("F1AP", false);
   log_f1.set_level(args.log_level_pdcp);
   log_f1.set_hex_dump_max_size(args.log_hex_limit);
 

@@ -101,6 +101,8 @@ private:
   rlc_am_status_pdu status_report;
   /// Cached status report size
   std::atomic<uint32_t> status_report_size;
+  std::atomic<bool>     status_prohibit_timer_is_running{false};
+
   /// Mutex for controlled access to the cached status report, e.g. read by the Tx entity in a different executor
   std::mutex status_report_mutex;
 
