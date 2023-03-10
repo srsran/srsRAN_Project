@@ -20,7 +20,7 @@ include:
 .e2e-run:
   stage: e2e
   resource_group: e2e
-  timeout: 4h
+  timeout: 6h
   interruptible: false
   image:
     name: registry.gitlab.com/softwareradiosystems/retina/launcher/3.11-alpine:0.0.25
