@@ -125,6 +125,16 @@ public:
   on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) = 0;
 };
 
+/// Interface to notifiy Paging procedures.
+class du_processor_f1ap_paging_notifier
+{
+public:
+  virtual ~du_processor_f1ap_paging_notifier() = default;
+
+  /// Notify F1AP to send paging message.
+  virtual void on_paging_message(const cu_cp_paging_message& msg) = 0;
+};
+
 /// Interface for an RRC entity to communicate with the DU processor.
 class du_processor_rrc_interface
 {

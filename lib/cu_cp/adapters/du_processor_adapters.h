@@ -101,11 +101,11 @@ private:
   e1ap_bearer_context_manager* e1ap_bearer_context_mng = nullptr;
 };
 
-// Adapter between DU processor and F1AP
-class du_processor_f1ap_adapter : public du_processor_f1ap_ue_context_notifier
+// Adapter between DU processor and F1AP for UE context
+class du_processor_f1ap_ue_context_adapter : public du_processor_f1ap_ue_context_notifier
 {
 public:
-  du_processor_f1ap_adapter() = default;
+  du_processor_f1ap_ue_context_adapter() = default;
 
   void connect_f1(f1ap_ue_context_manager& handler_) { handler = &handler_; }
 
@@ -131,6 +131,27 @@ public:
 
 private:
   f1ap_ue_context_manager* handler = nullptr;
+};
+
+// Adapter between DU processor and F1AP for Paging
+class du_processor_f1ap_paging_adapter : public du_processor_f1ap_paging_notifier
+{
+public:
+  du_processor_f1ap_paging_adapter() = default;
+
+  void connect_f1(f1ap_paging_manager& handler_) { handler = &handler_; }
+
+  void on_paging_message(const cu_cp_paging_message& msg) override
+  {
+    if (handler == nullptr) {
+      srslog::fetch_basic_logger("CU-CP").info("DU not connected - dropping paging message");
+      return;
+    }
+    handler->handle_paging(msg);
+  }
+
+private:
+  f1ap_paging_manager* handler = nullptr;
 };
 
 // Adapter between DU processor and RRC DU

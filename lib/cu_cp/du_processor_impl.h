@@ -117,16 +117,17 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;
 
-  du_processor_cu_cp_notifier&        cu_cp_notifier;
-  f1ap_du_management_notifier&        f1ap_du_mgmt_notifier;
-  f1ap_message_notifier&              f1ap_notifier;
-  du_processor_e1ap_control_notifier& e1ap_ctrl_notifier;
-  rrc_ue_nas_notifier&                rrc_ue_nas_pdu_notifier;
-  rrc_ue_control_notifier&            rrc_ue_ngap_ctrl_notifier;
-  du_processor_ue_task_scheduler&     task_sched;
-  du_processor_ue_manager&            ue_manager;
-  du_processor_f1ap_adapter           f1ap_ue_context_notifier;
-  task_executor&                      ctrl_exec;
+  du_processor_cu_cp_notifier&         cu_cp_notifier;
+  f1ap_du_management_notifier&         f1ap_du_mgmt_notifier;
+  f1ap_message_notifier&               f1ap_notifier;
+  du_processor_e1ap_control_notifier&  e1ap_ctrl_notifier;
+  rrc_ue_nas_notifier&                 rrc_ue_nas_pdu_notifier;
+  rrc_ue_control_notifier&             rrc_ue_ngap_ctrl_notifier;
+  du_processor_ue_task_scheduler&      task_sched;
+  du_processor_ue_manager&             ue_manager;
+  du_processor_f1ap_ue_context_adapter f1ap_ue_context_notifier;
+  du_processor_f1ap_paging_adapter     f1ap_paging_notifier;
+  task_executor&                       ctrl_exec;
 
   du_processor_context                       context;
   std::map<du_cell_index_t, du_cell_context> cell_db; /// flattened version of served cells list provided by DU/F1AP

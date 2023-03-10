@@ -128,6 +128,9 @@ void du_processor_impl::handle_f1_setup_request(const f1_setup_request_message& 
 
   // send setup response
   send_f1_setup_response(context);
+
+  // connect paging f1ap paging adapter
+  f1ap_paging_notifier.connect_f1(f1ap->get_f1ap_paging_manager());
 }
 
 rrc_amf_connection_handler& du_processor_impl::get_rrc_amf_connection_handler()
@@ -426,5 +429,5 @@ void du_processor_impl::handle_paging_message(cu_cp_paging_message& msg)
     return;
   }
 
-  f1ap->get_f1ap_paging_manager().handle_paging(msg);
+  f1ap_paging_notifier.on_paging_message(msg);
 }

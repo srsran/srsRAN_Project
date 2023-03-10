@@ -53,7 +53,7 @@ TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
 /// Test the DU connection
 TEST_F(cu_cp_test, when_new_du_connection_then_du_added)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // check that DU has been added
@@ -63,7 +63,7 @@ TEST_F(cu_cp_test, when_new_du_connection_then_du_added)
 /// Test the DU removal
 TEST_F(cu_cp_test, when_du_remove_request_received_then_du_removed)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // Check that DU has been added
@@ -160,7 +160,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
@@ -194,7 +194,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 
 TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
@@ -236,7 +236,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
@@ -302,10 +302,24 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 /* Paging handling                                                                  */
 //////////////////////////////////////////////////////////////////////////////////////
 
+/// Test the handling of an paging message when a DU is not connected
+TEST_F(cu_cp_test, when_no_du_connection_not_finished_then_paging_is_not_sent_to_du)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate Paging
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_FALSE(check_minimal_paging_result());
+}
+
 /// Test the handling of a valid Paging message with only mandatory values set
 TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // Generate F1SetupRequest
@@ -324,7 +338,7 @@ TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
 /// Test the handling of a valid Paging message with optional values set
 TEST_F(cu_cp_test, when_valid_paging_message_with_optional_values_received_then_paging_is_sent_to_du)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // Generate F1SetupRequest
@@ -340,10 +354,10 @@ TEST_F(cu_cp_test, when_valid_paging_message_with_optional_values_received_then_
   ASSERT_TRUE(check_paging_result());
 }
 
-/// Test the handling of an ivalid Paging message
+/// Test the handling of an invalid Paging message
 TEST_F(cu_cp_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // Generate F1SetupRequest
@@ -360,10 +374,10 @@ TEST_F(cu_cp_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
   ASSERT_FALSE(check_minimal_paging_result());
 }
 
-/// Test the handling of an ivalid Paging message
+/// Test the handling of an invalid Paging message
 TEST_F(cu_cp_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_paging_is_not_sent_to_du)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // Generate F1SetupRequest
@@ -380,10 +394,10 @@ TEST_F(cu_cp_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_
   ASSERT_FALSE(check_paging_result());
 }
 
-/// Test the handling of an ivalid Paging message
+/// Test the handling of an invalid Paging message
 TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_to_du)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // Generate F1SetupRequest
