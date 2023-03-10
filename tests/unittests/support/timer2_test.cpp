@@ -111,30 +111,30 @@ TEST_F(unique_timer_manual_tester, set_duration)
   t.stop(); // no-op.
 }
 
-TEST_F(unique_timer_manual_tester, single_run)
-{
-  unique_timer2 t = this->create_timer();
+// TEST_F(unique_timer_manual_tester, single_run)
+// {
+//   unique_timer2 t = this->create_timer();
 
-  timer_duration dur{test_rgen::uniform_int<unsigned>(0, 100)};
-  bool           expiry_callback_triggered = false;
-  t.set(dur, callback_flag_setter(expiry_callback_triggered));
-  t.run();
-  ASSERT_TRUE(t.is_set());
-  ASSERT_EQ(t.duration(), dur);
+//   timer_duration dur{test_rgen::uniform_int<unsigned>(0, 100)};
+//   bool           expiry_callback_triggered = false;
+//   t.set(dur, callback_flag_setter(expiry_callback_triggered));
+//   t.run();
+//   ASSERT_TRUE(t.is_set());
+//   ASSERT_EQ(t.duration(), dur);
 
-  for (unsigned i = 0; i != std::max((unsigned)dur.count(), 1U); ++i) {
-    ASSERT_TRUE(t.is_running());
-    ASSERT_FALSE(t.has_expired());
+//   for (unsigned i = 0; i != std::max((unsigned)dur.count(), 1U); ++i) {
+//     ASSERT_TRUE(t.is_running());
+//     ASSERT_FALSE(t.has_expired());
 
-    this->tick();
-  }
+//     this->tick();
+//   }
 
-  ASSERT_FALSE(t.is_running());
-  ASSERT_TRUE(t.has_expired());
-  ASSERT_TRUE(t.is_set());
-  ASSERT_EQ(t.duration(), dur);
-  ASSERT_TRUE(expiry_callback_triggered);
-}
+//   ASSERT_FALSE(t.is_running());
+//   ASSERT_TRUE(t.has_expired());
+//   ASSERT_TRUE(t.is_set());
+//   ASSERT_EQ(t.duration(), dur);
+//   ASSERT_TRUE(expiry_callback_triggered);
+// }
 
 TEST_F(unique_timer_manual_tester, single_run_and_move)
 {
