@@ -121,7 +121,7 @@ rf:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
     MARKERS: "rf and not tcp and multiue"
-    LOG_LEVEL: "warning"
+    LOG_LEVEL: "info"
   needs:
     - job: "avx2 [basic]"
       artifacts: true
