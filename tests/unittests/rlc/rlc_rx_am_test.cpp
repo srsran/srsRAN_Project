@@ -811,6 +811,7 @@ TEST_P(rlc_rx_am_test, status_prohibit_timer)
 
   // check status report, reset status_prohibit_timer
   rlc_am_status_pdu status_report = rlc->get_status_pdu();
+  ue_worker.run_pending_tasks(); // Starting t-StatusProhibit is now defered.
   EXPECT_EQ(status_report.ack_sn, sn_state);
   EXPECT_EQ(status_report.get_nacks().size(), 0);
   EXPECT_EQ(status_report.get_packed_size(), 3);

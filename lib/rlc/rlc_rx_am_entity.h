@@ -119,6 +119,8 @@ private:
   /// Ref: TS 38.322 Sec. 7.3
   unique_timer reassembly_timer;
 
+  task_executor& ue_executor;
+
 public:
   rlc_rx_am_entity(du_ue_index_t                     du_index,
                    rb_id_t                           rb_id,

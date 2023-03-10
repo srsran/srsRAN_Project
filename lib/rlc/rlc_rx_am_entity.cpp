@@ -18,7 +18,7 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
                                    const rlc_rx_am_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn_,
                                    timer_factory                     timers,
-                                   task_executor&                    ue_executor) :
+                                   task_executor&                    ue_executor_) :
   rlc_rx_entity(du_index, rb_id, upper_dn_),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
@@ -26,7 +26,8 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
   rx_window(create_rx_window(cfg.sn_field_length)),
   status_report(cfg.sn_field_length),
   status_prohibit_timer(timers.create_timer()),
-  reassembly_timer(timers.create_timer())
+  reassembly_timer(timers.create_timer()),
+  ue_executor(ue_executor_)
 {
   metrics.metrics_set_mode(rlc_mode::am);
 
@@ -533,7 +534,7 @@ rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
 {
   do_status.store(false, std::memory_order_relaxed);
   if (status_prohibit_timer.is_valid() && cfg.t_status_prohibit > 0) {
-    status_prohibit_timer.run();
+    ue_executor.defer([&]() { status_prohibit_timer.run(); });
     status_prohibit_timer_is_running.store(true, std::memory_order_relaxed);
   }
   std::unique_lock<std::mutex> lock(status_report_mutex);
