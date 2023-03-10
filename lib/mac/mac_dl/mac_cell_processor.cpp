@@ -369,9 +369,6 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
         bs.lcid     = lc_info.lcid.to_lcid();
         bs.bs       = bearer->on_buffer_state_update();
         sched_obj.handle_dl_buffer_state_indication(bs);
-
-        // Restart UE activity timer.
-        ue_mng.restart_activity_timer(bs.ue_index);
       }
     }
   }
