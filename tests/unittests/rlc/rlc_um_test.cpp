@@ -200,6 +200,13 @@ protected:
     }
   }
 
+  void tick(uint32_t ticks)
+  {
+    for (uint32_t i = 0; i < ticks; ++i) {
+      tick();
+    }
+  }
+
   void tick()
   {
     timers.tick();
@@ -886,9 +893,7 @@ TEST_P(rlc_um_test, lost_PDU_outside_reassembly_window)
   EXPECT_EQ(tester2.bsr_count, 0);
 
   // let t-reassembly expire
-  while (timers.nof_running_timers() != 0) {
-    tick();
-  }
+  tick(config.rx.t_reassembly);
 
   rlc_metrics rlc2_metrics = rlc2->get_metrics();
   EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 1);
@@ -952,9 +957,7 @@ TEST_P(rlc_um_test, lost_segment_outside_reassembly_window)
   EXPECT_EQ(tester2.bsr_count, 0);
 
   // let t-reassembly expire
-  while (timers.nof_running_timers() != 0) {
-    tick();
-  }
+  tick(config.rx.t_reassembly);
 
   // Read SDUs from RLC2's upper layer
   EXPECT_EQ(num_sdus - 1, tester2.sdu_counter);
@@ -1066,3 +1069,9 @@ INSTANTIATE_TEST_SUITE_P(rlc_um_test_each_sn_size,
                          rlc_um_test,
                          ::testing::Values(rlc_um_sn_size::size6bits, rlc_um_sn_size::size12bits),
                          test_param_info_to_string);
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
