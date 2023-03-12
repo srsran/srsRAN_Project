@@ -174,7 +174,7 @@ protected:
     srslog::init();
 
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
-    e2           = create_e2(timers, *msg_notifier);
+    e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier);
     gw           = std::make_unique<dummy_network_gateway_data_handler>();
     packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
     msg_notifier->attach_handler(&(*packer));
@@ -189,6 +189,7 @@ protected:
   std::unique_ptr<e2_interface>                       e2;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
   timer_manager                                       timers;
+  manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
   srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
 };
