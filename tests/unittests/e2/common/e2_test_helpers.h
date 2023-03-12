@@ -48,7 +48,7 @@ private:
   e2_message_handler*   handler = nullptr;
 };
 
-e2_message generate_e2_setup_request()
+inline e2_message generate_e2_setup_request()
 {
   using namespace asn1::e2ap;
   e2_message  e2_msg;
@@ -99,7 +99,7 @@ e2_message generate_e2_setup_request()
   return e2_msg;
 }
 
-e2_message generate_e2_setup_request_message()
+inline e2_message generate_e2_setup_request_message()
 {
   e2_message e2_msg = {};
   e2_msg.pdu.set_init_msg();
@@ -111,7 +111,7 @@ e2_message generate_e2_setup_request_message()
   return e2_msg;
 }
 
-e2_message generate_e2_setup_response(unsigned transaction_id)
+inline e2_message generate_e2_setup_response(unsigned transaction_id)
 {
   e2_message e2_setup_response = {};
   e2_setup_response.pdu.set_successful_outcome();
@@ -125,7 +125,7 @@ e2_message generate_e2_setup_response(unsigned transaction_id)
   return e2_setup_response;
 }
 
-e2_message generate_e2_setup_failure(unsigned transaction_id)
+inline e2_message generate_e2_setup_failure(unsigned transaction_id)
 {
   e2_message e2_setup_failure = {};
   e2_setup_failure.pdu.set_unsuccessful_outcome();
