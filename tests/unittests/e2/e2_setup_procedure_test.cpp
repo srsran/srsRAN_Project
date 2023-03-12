@@ -18,7 +18,7 @@
 using namespace srsran;
 
 /// Test successful cu-cp initiated e2 setup procedure
-TEST_F(e2_test, when_e2_setup_response_received_then_E2_connected)
+TEST_F(e2_test, when_e2_setup_response_received_then_e2_connected)
 {
   // Action 1: Launch E2 setup procedure
   e2_message request_msg = generate_e2_setup_request_message();
@@ -45,7 +45,7 @@ TEST_F(e2_test, when_e2_setup_response_received_then_E2_connected)
   ASSERT_TRUE(t.get().success);
 }
 
-TEST_F(e2_test, when_e2_setup_failure_received_then_E2_setup_failed)
+TEST_F(e2_test, when_e2_setup_failure_received_then_e2_setup_failed)
 {
   // Action 1: Launch E2 setup procedure
   e2_message request_msg = generate_e2_setup_request_message();
