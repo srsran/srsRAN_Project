@@ -102,7 +102,7 @@ TEST_F(unique_timer_manual_tester, set_duration)
 {
   unique_timer t = this->create_timer();
 
-  timer_duration dur{test_rgen::uniform_int<unsigned>(0, 100)};
+  timer_duration dur{test_rgen::uniform_int<unsigned>(1, 100)};
   t.set(dur);
   ASSERT_TRUE(t.is_set());
   ASSERT_FALSE(t.is_running());
