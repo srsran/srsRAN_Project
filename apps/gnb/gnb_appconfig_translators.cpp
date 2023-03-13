@@ -98,10 +98,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
 
     // UE-dedicated config.
     if (config.common_cell_cfg.pdcch_cfg.ue_ss_type == search_space_configuration::type_t::common) {
-      search_space_configuration& ss_cfg =
-          out_cell.ue_ded_serv_cell_cfg.dl_bwps[0].bwp_dl_common->pdcch_common.search_spaces[0];
-      ss_cfg.type                 = search_space_configuration::type_t::common;
-      ss_cfg.common.f0_0_and_f1_0 = true;
+      search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
+      ss_cfg.type                        = search_space_configuration::type_t::common;
+      ss_cfg.common.f0_0_and_f1_0        = true;
     }
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
