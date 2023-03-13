@@ -188,6 +188,15 @@ if (ENABLE_SSE)
 
         if (HAVE_AVX512)
             message(STATUS "AVX512 is enabled - target CPU must support it")
+
+            if (NOT HAVE_AVX)
+                message(WARNING "AVX512 is enabled but AVX is not. This has not been tested. Enable AVX if you can.")
+            endif()
+
+            if (NOT HAVE_AVX2)
+                message(WARNING "AVX512 is enabled but AVX2 is not. This has not been tested. Enable AVX2 if you can.")
+            endif()
+
         endif()
     elseif (${GCC_ARCH} MATCHES "native" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         # When a GNU compiler flag -march=native is present and the CPU supports AVX512, the compiler enables
