@@ -617,8 +617,12 @@ avx extended:
     matrix:
       - CPU_FLAG: ["avx2", "avx2-avx512"]
         AUTO_DETECT_ISA: ["True", "False"]
+        ENABLE_AVX2: "True"
         ENABLE_AVX512: ["True", "False"]
-        ENABLE_AVX2: ["True", "False"]
+      - CPU_FLAG: ["avx2", "avx2-avx512"]
+        AUTO_DETECT_ISA: ["True", "False"]
+        ENABLE_AVX2: "False"
+        ENABLE_AVX512: "False"
 
 # Custom
 
