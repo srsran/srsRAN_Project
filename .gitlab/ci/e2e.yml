@@ -117,6 +117,9 @@ zmq-asan:
 rf:
   extends: .e2e-run
   rules:
+    - if: $ON_MR
+      when: manual
+      allow_failure: true
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
