@@ -67,7 +67,7 @@ TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_request_sent_then_procedure_wa
 {
   // Test Preamble.
   auto request = generate_bearer_context_setup_request(uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
 
   // Start BEARER CONTEXT SETUP procedure.
   this->start_procedure(request);
@@ -81,7 +81,7 @@ TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_response_received_then_procedu
 {
   // Test Preamble.
   auto request = generate_bearer_context_setup_request(uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
 
   // Start BEARER CONTEXT SETUP procedure and return back the response from the CU-UP.
   this->start_procedure(request);
@@ -89,7 +89,7 @@ TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_response_received_then_procedu
   auto& ue            = test_ues[request.ue_index];
   ue.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(
       test_rgen::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
-                                       gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1));
+                                       gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max)));
   e1ap_message response =
       generate_bearer_context_setup_response(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());
   e1ap->handle_message(response);
@@ -102,7 +102,7 @@ TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_failure_received_then_procedur
 {
   // Test Preamble.
   auto request = generate_bearer_context_setup_request(uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
 
   // Start BEARER CONTEXT SETUP procedure and return back the failure response from the CU-UP.
   this->start_procedure(request);
@@ -110,7 +110,7 @@ TEST_F(e1ap_cu_cp_bearer_context_setup_test, when_failure_received_then_procedur
   auto& ue            = test_ues[request.ue_index];
   ue.cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(
       test_rgen::uniform_int<uint64_t>(gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::min),
-                                       gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max) - 1));
+                                       gnb_cu_up_ue_e1ap_id_to_uint(gnb_cu_up_ue_e1ap_id_t::max)));
 
   e1ap_message response =
       generate_bearer_context_setup_failure(ue.cu_cp_ue_e1ap_id.value(), ue.cu_up_ue_e1ap_id.value());

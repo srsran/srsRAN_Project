@@ -66,7 +66,7 @@ TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_request_sent_then_proce
 {
   // Test Preamble.
   auto request = generate_bearer_context_modification_request(uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
 
   // Start BEARER CONTEXT MODIFICATION procedure.
   this->start_procedure(request);
@@ -82,7 +82,7 @@ TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_response_received_then_
 {
   // Test Preamble.
   auto request = generate_bearer_context_modification_request(uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
 
   // Start BEARER CONTEXT MODIFICATION procedure and return back the response from the CU-UP.
   this->start_procedure(request);
@@ -100,7 +100,7 @@ TEST_F(e1ap_cu_cp_bearer_context_modification_test, when_ue_setup_failure_receiv
 {
   // Test Preamble.
   auto request = generate_bearer_context_modification_request(uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
 
   // Start BEARER CONTEXT MODIFICATION procedure and return back the failure response from the CU-UP.
   this->start_procedure(request);
