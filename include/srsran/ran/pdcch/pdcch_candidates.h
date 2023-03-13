@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "coreset.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
+#include "srsran/ran/rnti.h"
 
 namespace srsran {
 
@@ -39,7 +41,7 @@ using pdcch_candidate_list = static_vector<uint8_t, PDCCH_MAX_NOF_CANDIDATES_SS>
 /// - \f$m_{s,n_{CI}}\in \{0,...,M_{s,n_{CI}}^{(L)}\}\f$,
 struct pdcch_candidates_common_ss_configuration {
   /// Aggregation level \f$L\epsilon\{1,2,4,8,16\}\f$.
-  aggregation_level L;
+  aggregation_level al;
   /// \brief Number of PDCCH candidates \f$M_{s,max}^{(L)}\f$ the UE is configured to monitor for aggregation level
   /// \f$L\f$ of a search space set \f$s\f$ for a serving cell corresponding to \f$n_{CI}\f$.
   unsigned nof_candidates;
@@ -66,16 +68,16 @@ struct pdcch_candidates_common_ss_configuration {
 /// - \f$m_{s,n_{CI}}\in \{0,...,M_{s,n_{CI}}^{(L)}\}\f$.
 struct pdcch_candidates_ue_ss_configuration {
   /// Aggregation level \f$L\epsilon\{1,2,4,8,16\}\f$.
-  aggregation_level L;
+  aggregation_level al;
   /// \brief Number of PDCCH candidates \f$M_{s,max}^{(L)}\f$ the UE is configured to monitor for aggregation level
   /// \f$L\f$ of a search space set \f$s\f$ for a serving cell corresponding to \f$n_{CI}\f$.
   unsigned nof_candidates;
   /// Number of CCEs contained in CORESET \f$p\f$, \f$N_{CCE,p}\f$.
   unsigned nof_cce_coreset;
   /// CORESET identifier. Parameter \f$p\f$.
-  unsigned coreset_id;
+  coreset_id cs_id;
   /// Parameter \f$n_\textup{RNTI}\f$.
-  uint16_t rnti;
+  rnti_t rnti;
   /// Slot index within the radio frame. Parameter \f$n_{s,f}^\mu\f$.
   unsigned slot_index;
 };
