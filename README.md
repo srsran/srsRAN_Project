@@ -41,7 +41,7 @@ git lfs install
 
 
 ```bash
-sudo yum install cmake make gcc gcc-c++ fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel git-lfs
+sudo yum install cmake make gcc gcc-c++ pkgconf fftw-devel lksctp-tools-devel yaml-cpp-devel mbedtls-devel gtest-devel git-lfs
 git lfs install
 ```
 </details>
@@ -50,7 +50,7 @@ git lfs install
 
 
 ```bash
-sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest git-lfs
+sudo pacman -S cmake make base-devel fftw mbedtls yaml-cpp lksctp-tools gtest git-lfs pkgconf
 git lfs install
 ```
 </details>
