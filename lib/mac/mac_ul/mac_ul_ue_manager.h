@@ -23,19 +23,13 @@ namespace srsran {
 class mac_ul_ue_context
 {
 public:
-  explicit mac_ul_ue_context(du_ue_index_t ue_index_, rnti_t rnti_, unique_timer& ue_activity_timer_) :
-    ue_index(ue_index_), rnti(rnti_), ue_activity_timer(ue_activity_timer_)
-  {
-  }
+  explicit mac_ul_ue_context(du_ue_index_t ue_index_, rnti_t rnti_) : ue_index(ue_index_), rnti(rnti_) {}
 
   const du_ue_index_t ue_index = MAX_NOF_DU_UES;
   const rnti_t        rnti     = INVALID_RNTI;
 
   /// List of UL PDU notification endpoints associated to UE's logical channels.
   slotted_vector<mac_sdu_rx_notifier*> ul_bearers;
-
-  /// UE activity timer.
-  unique_timer& ue_activity_timer;
 };
 
 /// Class that manages the creation/reconfiguration/deletion of UEs from the MAC UL
@@ -54,13 +48,13 @@ public:
   {
     srsran_sanity_check(is_crnti(request.crnti), "Invalid C-RNTI={:#x}", request.crnti);
 
-    // 1. Insert UE
+    // > Insert UE
     if (ue_db.contains(request.ue_index)) {
       return false;
     }
-    ue_db.emplace(request.ue_index, request.ue_index, request.crnti, *request.ue_activity_timer);
+    ue_db.emplace(request.ue_index, request.ue_index, request.crnti);
 
-    // 2. Add UE Bearers
+    // > Add UE Bearers
     if (not addmod_bearers(request.ue_index, request.bearers)) {
       log_proc_failure(logger, request.ue_index, request.crnti, "UE Create Request", "Failed to add/mod UE bearers");
       return false;

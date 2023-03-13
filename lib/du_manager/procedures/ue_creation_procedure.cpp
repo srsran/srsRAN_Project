@@ -83,9 +83,6 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
     CORO_EARLY_RETURN();
   }
 
-  // > Start UE activity timer.
-  ue_ctx->activity_timer.run();
-
   // > Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
   if (not msg.subpdu.empty()) {
     mac_mng.ue_cfg.handle_ul_ccch_msg(ue_ctx->ue_index, std::move(msg.subpdu));
@@ -132,14 +129,6 @@ bool ue_creation_procedure::setup_du_ue_resources()
   ue_ctx->bearers.add_srb(srb_id_t::srb0, tm_rlc_cfg);
   ue_ctx->bearers.add_srb(srb_id_t::srb1, ue_ctx->resources->rlc_bearers[0].rlc_cfg);
 
-  const static unsigned UE_ACTIVITY_TIMEOUT = 500; // TODO: Parametrize.
-  ue_ctx->activity_timer                    = services.timers.create_unique_timer(services.du_mng_exec);
-  ue_ctx->activity_timer.set(std::chrono::milliseconds{UE_ACTIVITY_TIMEOUT},
-                             [ue_index = ue_ctx->ue_index, &logger = this->logger](timer_id_t tid) {
-                               logger.debug("UE Manager: ue={} activity timeout.", ue_index);
-                               // TODO: Handle.
-                             });
-
   return true;
 }
 
@@ -179,8 +168,7 @@ async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_cr
     lc.ul_bearer                     = &bearer.connector.mac_rx_sdu_notifier;
     lc.dl_bearer                     = &bearer.connector.mac_tx_sdu_notifier;
   }
-  mac_ue_create_msg.ul_ccch_msg       = &msg.subpdu;
-  mac_ue_create_msg.ue_activity_timer = &ue_ctx->activity_timer;
+  mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
 
   // Create Scheduler UE Config Request that will be embedded in the mac UE creation request.
   mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx);

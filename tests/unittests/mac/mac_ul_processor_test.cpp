@@ -86,9 +86,6 @@ struct test_bench {
     test_ues[du_ue_idx].rnti     = rnti;
     test_ues[du_ue_idx].ue_index = du_ue_idx;
     test_ues[du_ue_idx].add_bearer(LCID_SRB1);
-    test_ues[du_ue_idx].activity_timer = timers.create_unique_timer(ul_exec_mapper.executor(du_ue_idx));
-    test_ues[du_ue_idx].activity_timer.set(std::chrono::milliseconds{activity_timeout});
-    test_ues[du_ue_idx].activity_timer.run();
     async_task<bool>         t = mac_ul.add_ue(test_ues[du_ue_idx].make_ue_create_request());
     lazy_task_launcher<bool> launcher(t);
     srsran_assert(t.ready(), "UE addition should have completed");
@@ -375,51 +372,4 @@ TEST(mac_ul_processor, decode_crnti_ce_and_sbsr)
   ul_bsr_lcg_report sbsr_report{.lcg_id = uint_to_lcg_id(2U), .nof_bytes = 28581};
   ul_bsr_ind.reported_lcgs.push_back(sbsr_report);
   ASSERT_NO_FATAL_FAILURE(t_bench.verify_sched_bsr_notification(ul_bsr_ind));
-}
-
-TEST(mac_ul_processor, no_ul_sdus_expires_ue_activity_timer)
-{
-  du_ue_index_t ue_index = to_du_ue_index(0);
-  test_bench    t_bench(to_rnti(0x4601), ue_index, to_du_cell_index(0));
-  ASSERT_TRUE(t_bench.get_test_ues().contains(ue_index));
-
-  unsigned timeout = test_bench::DEFAULT_ACTIVITY_TIMEOUT;
-  for (unsigned i = 0; i != timeout; ++i) {
-    ASSERT_TRUE(t_bench.get_test_ues()[ue_index].activity_timer.is_running());
-    ASSERT_FALSE(t_bench.get_test_ues()[ue_index].activity_timer.has_expired());
-    t_bench.run_slot();
-  }
-  ASSERT_FALSE(t_bench.get_test_ues()[ue_index].activity_timer.is_running());
-  ASSERT_TRUE(t_bench.get_test_ues()[ue_index].activity_timer.has_expired());
-}
-
-TEST(mac_ul_processor, ul_sdus_postpone_ue_activity_timeout)
-{
-  du_ue_index_t ue_index = to_du_ue_index(test_rgen::uniform_int<unsigned>(0, MAX_DU_UE_INDEX));
-  test_bench    t_bench(to_rnti(0x4601), ue_index, to_du_cell_index(0));
-  ASSERT_TRUE(t_bench.get_test_ues().contains(ue_index));
-  unsigned timeout = test_bench::DEFAULT_ACTIVITY_TIMEOUT;
-
-  // > Run until before activity timer expiry.
-  unsigned slots_to_run = test_rgen::uniform_int<unsigned>(0, timeout - 1);
-  for (unsigned i = 0; i != slots_to_run; ++i) {
-    t_bench.run_slot();
-  }
-
-  // > Send UL PDU.
-  unsigned    L = test_rgen::uniform_int<unsigned>(1, 64);
-  byte_buffer msg{test_rgen::random_vector<uint8_t>(L)};
-  // R/LCID MAC subheader = R|R|LCID || L = 0|0|1 || L
-  msg.prepend(std::vector<uint8_t>{0x01, static_cast<uint8_t>(L)});
-  // Create PDU content.
-  t_bench.send_rx_indication_msg(to_rnti(0x4601), msg);
-
-  // > Run until activity timer expiry.
-  for (unsigned i = 0; i != timeout; ++i) {
-    ASSERT_TRUE(t_bench.get_test_ues()[ue_index].activity_timer.is_running());
-    ASSERT_FALSE(t_bench.get_test_ues()[ue_index].activity_timer.has_expired());
-    t_bench.run_slot();
-  }
-  ASSERT_FALSE(t_bench.get_test_ues()[ue_index].activity_timer.is_running());
-  ASSERT_TRUE(t_bench.get_test_ues()[ue_index].activity_timer.has_expired());
 }

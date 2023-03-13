@@ -162,9 +162,6 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
   // Push PDU to upper layers
   ue->ul_bearers[lcid]->on_new_sdu(byte_buffer_slice{ctx.pdu_rx.pdu, sdu.payload()});
 
-  // Restart UE activity timer.
-  ue->ue_activity_timer.run();
-
   return true;
 }
 

@@ -33,7 +33,6 @@ struct mac_ue_create_request_message {
   mac_cell_group_config                     mac_cell_group_cfg;
   physical_cell_group_config                phy_cell_group_cfg;
   const byte_buffer*                        ul_ccch_msg;
-  unique_timer*                             ue_activity_timer;
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;
 };

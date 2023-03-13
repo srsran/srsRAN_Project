@@ -29,7 +29,6 @@ mac_ue_create_request_message mac_test_ue::make_ue_create_request()
   for (const auto& b : bearers) {
     msg.bearers.push_back(b.bearer);
   }
-  msg.ul_ccch_msg       = nullptr;
-  msg.ue_activity_timer = &activity_timer;
+  msg.ul_ccch_msg = nullptr;
   return msg;
 }
