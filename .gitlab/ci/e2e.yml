@@ -89,7 +89,7 @@ zmq:
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
     MARKERS: "zmq and multiue and not smoke"
-    PYTEST_ARGS: "-n 2"
+    # PYTEST_ARGS: "-n 2"
     LOG_LEVEL: "info"
   needs:
     - job: "avx2 [basic]"
@@ -97,6 +97,8 @@ zmq:
 
 zmq-tsan:
   extends: zmq
+  variables:
+    PYTEST_ARGS: "-n 2"
   needs:
     - job: "avx2 [tsan, cached]"
       artifacts: true
@@ -110,6 +112,8 @@ zmq-tsan:
 
 zmq-asan:
   extends: zmq
+  variables:
+    PYTEST_ARGS: "-n 2"
   needs:
     - job: "avx2 [asan]"
       artifacts: true
