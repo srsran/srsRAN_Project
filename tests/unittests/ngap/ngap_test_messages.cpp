@@ -140,6 +140,27 @@ ngap_ul_nas_transport_message srsran::srs_cu_cp::generate_ul_nas_transport_messa
   return ul_nas_transport;
 }
 
+ngap_message srsran::srs_cu_cp::generate_uplink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id)
+{
+  ngap_message ul_nas_transport = {};
+
+  ul_nas_transport.pdu.set_init_msg();
+  ul_nas_transport.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UL_NAS_TRANSPORT);
+
+  auto& ul_nas_transport_msg                 = ul_nas_transport.pdu.init_msg().value.ul_nas_transport();
+  ul_nas_transport_msg->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
+  ul_nas_transport_msg->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+  ul_nas_transport_msg->nas_pdu.value.resize(nas_pdu_len);
+
+  auto& user_loc_info_nr = ul_nas_transport_msg->user_location_info.value.set_user_location_info_nr();
+  user_loc_info_nr.nr_cgi.plmn_id.from_string("00f110");
+  user_loc_info_nr.nr_cgi.nr_cell_id.from_number(12345678);
+  user_loc_info_nr.tai.plmn_id.from_string("00f110");
+  user_loc_info_nr.tai.tac.from_number(7);
+
+  return ul_nas_transport;
+}
+
 ngap_message srsran::srs_cu_cp::generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id,
                                                                             ran_ue_id_t ran_ue_id)
 {

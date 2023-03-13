@@ -156,3 +156,47 @@ TEST_F(ngap_asn1_packer_test, when_unpack_init_ctx_extract_sec_params_correctly)
   ASSERT_EQ(false, inte_algos[2]);         // NEA3 not supported
   ASSERT_EQ(security_key, security_key_o); // Key was correctly copied
 }
+
+/// Test unpacking packing and unpacking of DL NAS messages
+TEST_F(ngap_asn1_packer_test, when_dl_nas_message_packing_successful_then_unpacking_successful)
+{
+  // Action 1: Create valid ngap message
+  amf_ue_id_t  amf_ue_id        = amf_ue_id_t::max;
+  ran_ue_id_t  ran_ue_id        = ran_ue_id_t::max;
+  ngap_message dl_nas_transport = generate_downlink_nas_transport_message(amf_ue_id, ran_ue_id);
+
+  // Action 2: Pack message and forward to gateway
+  packer->handle_message(dl_nas_transport);
+
+  // Action 3: Unpack message and forward to ngap
+  packer->handle_packed_pdu(std::move(gw->last_pdu));
+
+  // Assert that the originally created message is equal to the unpacked message
+  ASSERT_EQ(ngap->last_msg.pdu.type(), dl_nas_transport.pdu.type());
+
+  // Assert that the AMF UE ID of the originally created message is equal to the one of the unpacked message
+  ASSERT_EQ(ngap->last_msg.pdu.init_msg().value.dl_nas_transport()->amf_ue_ngap_id.value.value,
+            amf_ue_id_to_uint(amf_ue_id_t::max));
+}
+
+/// Test unpacking packing and unpacking of UL NAS messages
+TEST_F(ngap_asn1_packer_test, when_ul_nas_message_packing_successful_then_unpacking_successful)
+{
+  // Action 1: Create valid ngap message
+  amf_ue_id_t  amf_ue_id        = amf_ue_id_t::max;
+  ran_ue_id_t  ran_ue_id        = ran_ue_id_t::max;
+  ngap_message ul_nas_transport = generate_uplink_nas_transport_message(amf_ue_id, ran_ue_id);
+
+  // Action 2: Pack message and forward to gateway
+  packer->handle_message(ul_nas_transport);
+
+  // Action 3: Unpack message and forward to ngap
+  packer->handle_packed_pdu(std::move(gw->last_pdu));
+
+  // Assert that the originally created message is equal to the unpacked message
+  ASSERT_EQ(ngap->last_msg.pdu.type(), ul_nas_transport.pdu.type());
+
+  // Assert that the AMF UE ID of the originally created message is equal to the one of the unpacked message
+  ASSERT_EQ(ngap->last_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id.value.value,
+            amf_ue_id_to_uint(amf_ue_id_t::max));
+}
