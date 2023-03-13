@@ -40,8 +40,10 @@ struct f1u_du_bearer {
 };
 
 /// \brief Object used to connect the DU and CU-UP F1-U bearers
-/// On the co-located case this is done by connecting both entities
-/// directly.
+/// On the co-located case this is done by connecting both entities directly.
+///
+/// Note that CU and DU bearer creation and removal can be performed from different threads and are therefore
+/// protected by a common mutex.
 class f1u_local_connector final : public srs_du::f1u_du_gateway, public f1u_cu_up_gateway
 {
 public:
