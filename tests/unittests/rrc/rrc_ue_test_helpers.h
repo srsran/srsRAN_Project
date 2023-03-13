@@ -79,9 +79,9 @@ protected:
     return &rrc_ue->get_rrc_ue_init_security_context_handler();
   }
 
-  rrc_ue_reconfiguration_handler* get_rrc_ue_reconfiguration_handler()
+  rrc_ue_control_message_handler* get_rrc_ue_control_message_handler()
   {
-    return &rrc_ue->get_rrc_ue_reconfiguration_handler();
+    return &rrc_ue->get_rrc_ue_control_message_handler();
   }
 
   void connect_amf()

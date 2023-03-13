@@ -271,17 +271,6 @@ public:
   virtual async_task<bool> handle_init_security_context(const rrc_init_security_context& msg) = 0;
 };
 
-/// Handler to initialize a RRC Reconfiguration procedure.
-class rrc_ue_reconfiguration_handler
-{
-public:
-  virtual ~rrc_ue_reconfiguration_handler() = default;
-
-  /// \brief Start a RRC reconfiguration procedure.
-  /// \param[in] msg The procedure parameters.
-  virtual async_task<bool> start_rrc_reconfiguration(const cu_cp_rrc_reconfiguration_procedure_request& msg) = 0;
-};
-
 /// Combined entry point for the RRC UE handling.
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
@@ -289,7 +278,6 @@ class rrc_ue_interface : public rrc_ul_ccch_pdu_handler,
                          public rrc_ue_dl_nas_message_handler,
                          public rrc_ue_control_message_handler,
                          public rrc_ue_init_security_context_handler,
-                         public rrc_ue_reconfiguration_handler,
                          public rrc_ue_setup_proc_notifier,
                          public rrc_ue_security_mode_command_proc_notifier,
                          public rrc_ue_reconfiguration_proc_notifier
@@ -303,7 +291,6 @@ public:
   virtual rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler()        = 0;
   virtual rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler()       = 0;
   virtual rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() = 0;
-  virtual rrc_ue_reconfiguration_handler&       get_rrc_ue_reconfiguration_handler()       = 0;
   virtual drb_manager&                          get_rrc_ue_drb_manager()                   = 0;
   virtual security::sec_as_config&              get_rrc_ue_secutity_config()               = 0;
 
