@@ -14,6 +14,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
+#include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
 #include <thread>
@@ -64,6 +65,12 @@ struct prach_appconfig {
   unsigned max_msg3_harq_retx    = 4;
 };
 
+/// PDCCH application configuration.
+struct pdcch_appconfig {
+  /// Use an UE-dedicated or Common Search Space.
+  search_space_configuration::type_t ue_ss_type = search_space_configuration::type_t::ue_dedicated;
+};
+
 /// PDSCH application configuration.
 struct pdsch_appconfig {
   /// UE modulation and coding scheme index.
@@ -108,6 +115,8 @@ struct base_cell_appconfig {
   std::string plmn = "00101";
   /// TAC.
   unsigned tac = 7;
+  /// PDCCH configuration.
+  pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.
   pdsch_appconfig pdsch_cfg;
   /// PRACH configuration.

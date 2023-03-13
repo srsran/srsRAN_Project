@@ -602,9 +602,9 @@ int main(int argc, char** argv)
   phy_rx_symbol_req_adapter.connect(&lower->get_request_handler());
 
   // Create FAPI adaptors.
-  const std::vector<du_cell_config>& du_cfg = generate_du_cell_config(gnb_cfg);
-  unsigned                           sector = du_cfg.size() - 1;
-  subcarrier_spacing                 scs    = du_cfg.front().scs_common;
+  std::vector<du_cell_config> du_cfg = generate_du_cell_config(gnb_cfg);
+  unsigned                    sector = du_cfg.size() - 1;
+  subcarrier_spacing          scs    = du_cfg.front().scs_common;
 
   auto phy_adaptor = build_phy_fapi_adaptor(sector,
                                             scs,

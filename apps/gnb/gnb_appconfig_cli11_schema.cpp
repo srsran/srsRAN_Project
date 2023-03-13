@@ -161,6 +161,19 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig&
       ->capture_default_str();
 }
 
+static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_params)
+{
+  app.add_option_function<std::string>(
+         "--ss_type",
+         [&pdcch_params](const std::string& value) {
+           pdcch_params.ue_ss_type = (value == "common") ? search_space_configuration::type_t::common
+                                                         : search_space_configuration::type_t::ue_dedicated;
+         },
+         "SearchSpace type for UE data")
+      ->default_str("ue_dedicated")
+      ->check(CLI::IsMember({"common", "ue_dedicated"}, CLI::ignore_case));
+}
+
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)
 {
   app.add_option("--fixed_ue_mcs", pdsch_params.fixed_ue_mcs, "Fixed UE MCS")
@@ -169,7 +182,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--fixed_rar_mcs", pdsch_params.fixed_rar_mcs, "Fixed RAR MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
-  app.add_option("--fixed_sib1_mci", pdsch_params.fixed_sib1_mcs, "Fixed SIB1 MCS")
+  app.add_option("--fixed_sib1_mcs", pdsch_params.fixed_sib1_mcs, "Fixed SIB1 MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
 }
@@ -268,6 +281,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
 
     return (tac <= 0xffffffU) ? "" : "TAC value out of range";
   });
+
+  // PDCCH configuration.
+  CLI::App* pdcch_subcmd = app.add_subcommand("pdcch", "PDCCH parameters");
+  configure_cli11_pdcch_args(*pdcch_subcmd, cell_params.pdcch_cfg);
 
   // PDSCH configuration.
   CLI::App* pdsch_subcmd = app.add_subcommand("pdsch", "PDSCH parameters");
