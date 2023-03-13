@@ -347,7 +347,7 @@ void pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
 void pdcp_entity_tx::stop_discard_timer(uint32_t highest_sn)
 {
   if (!(cfg.discard_timer != pdcp_discard_timer::infinity && cfg.discard_timer != pdcp_discard_timer::not_configured)) {
-    logger.log_warning("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_sn);
+    logger.log_debug("Cannot stop discard timers. Not configured or infinite. highest_sn={}", highest_sn);
     return;
   }
   if (discard_timers_map.empty()) {
