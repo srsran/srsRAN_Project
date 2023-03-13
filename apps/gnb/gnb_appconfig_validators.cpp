@@ -43,17 +43,6 @@ static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_ban
     return false;
   }
 
-  if (not is_paired_spectrum) {
-    std::array<unsigned, 5> prach_cfg_idx_non_zero_symbol = {16, 37, 38, 39, 56};
-    if (std::any_of(prach_cfg_idx_non_zero_symbol.begin(),
-                    prach_cfg_idx_non_zero_symbol.end(),
-                    [prach_cfg_idx = config.prach_config_index](unsigned it) { return it == prach_cfg_idx; })) {
-      fmt::print("PRACH configuration indices 16, 37, 38, 39, 56 not supported for {} \n",
-                 is_paired_spectrum ? "FDD" : "TDD");
-      return false;
-    }
-  }
-
   return true;
 }
 
