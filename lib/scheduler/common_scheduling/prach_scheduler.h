@@ -27,9 +27,9 @@ public:
 
 private:
   // [Implementation-defined] This is the maximum number of slots per PRACH preamble. It's obtained by considering the
-  // longest preamble length in ms (4ms, which can be derived from Table 6.3.3.1-1, TS 38.211 for Format 2) and the
-  // shortest slot duration currently supported by the GNB, which is 0.5ms for SCS 30KHz.
-  static const unsigned MAX_SLOTS_PER_PRACH = 9;
+  // longest preamble length (which can be derived from Table 6.3.3.1-1, TS 38.211 for Format 2) and the shortest slot
+  // duration currently supported by the GNB, which is 0.5ms for SCS 30KHz.
+  static const unsigned MAX_SLOTS_PER_PRACH = 7;
 
   struct cached_prach_occasion {
     /// RB x symbol resources used for the PRACH.

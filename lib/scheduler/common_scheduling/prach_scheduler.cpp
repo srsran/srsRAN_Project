@@ -26,32 +26,21 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
 {
   srsran_assert(prach_cfg.format.is_long_preamble(), "Short PRACH preamble not supported");
 
-  static const unsigned nof_symbols_per_slot = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended
-                                                   ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
-                                                   : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
-  static const double   symbol_duration_msec =
-      (double)SUBFRAME_DURATION_MSEC /
-      (double)(get_nof_slots_per_subframe(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs) *
-               nof_symbols_per_slot);
+  // With SCS 15kHz and 30kHz, only normal CP is supported.
+  static const unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
 
   // Convert list of PRACH subframe occasions to bitmap.
   for (const unsigned pos : prach_cfg.subframe) {
     prach_subframe_occasion_bitmap.set(pos, true);
   }
 
-  // Derive PRACH subcarrier spacing and other parameters.
-  prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
+  prach_symbols_slots_duration prach_duration_info =
+      get_prach_duration_info(prach_cfg, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
 
-  subcarrier_spacing pusch_scs    = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-  const double       length_msecs = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
-  unsigned           nof_symbols  = ceil(length_msecs / symbol_duration_msec);
-  // Map the starting symbol with from the SCS 15kHz FR1 reference for PRACH into PUSCH SCS.
-  unsigned starting_symbol_pusch_scs = prach_cfg.starting_symbol * (1U << to_numerology_value(pusch_scs));
-  // Start slot within the subframe. For FR1, the starting_symbol_pusch_scs refers to the SCS 15kHz.
-  start_slot_pusch_scs = starting_symbol_pusch_scs / nof_symbols_per_slot;
-  prach_length_slots =
-      static_cast<unsigned>(ceil(static_cast<double>((start_slot_pusch_scs % nof_symbols_per_slot) + nof_symbols) /
-                                 (static_cast<double>(nof_symbols_per_slot))));
+  // Derive PRACH duration information.
+  const prach_preamble_information info = get_prach_preamble_long_info(prach_cfg.format);
+  start_slot_pusch_scs                  = prach_duration_info.start_slot_pusch_scs;
+  prach_length_slots                    = prach_duration_info.prach_length_slots;
 
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_common().rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     cached_prach_occasion& cached_prach = cached_prachs.emplace_back();
@@ -64,13 +53,14 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
 
     // If the PRACH preamble is longer than 1 slot, then allocate a grant for each slot that include the preamble.
     for (unsigned prach_slot_idx = 0; prach_slot_idx < prach_length_slots; ++prach_slot_idx) {
-      // For the first slot, use the starting_symbol_pusch_scs; in any other case, the preamble starts from the initial
+      // For the first slot, use the start_symbol_pusch_scs; in any other case, the preamble starts from the initial
       // symbol. For the last slot, compute the final symbol; in any other case, the preamble ends at the last slot's
       // symbol.
-      const ofdm_symbol_range prach_symbols{prach_slot_idx == 0 ? starting_symbol_pusch_scs : 0,
-                                            prach_slot_idx < prach_length_slots - 1
-                                                ? nof_symbols_per_slot
-                                                : (starting_symbol_pusch_scs + nof_symbols) % nof_symbols_per_slot};
+      const ofdm_symbol_range prach_symbols{
+          prach_slot_idx == 0 ? prach_duration_info.start_symbol_pusch_scs : 0,
+          prach_slot_idx < prach_length_slots - 1
+              ? nof_symbols_per_slot
+              : (prach_duration_info.start_symbol_pusch_scs + prach_duration_info.nof_symbols) % nof_symbols_per_slot};
       cached_prach.grant_list.emplace_back(
           grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, prach_symbols, crbs});
     }
@@ -100,6 +90,7 @@ void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
     // If called for the first time, pre-allocates the PRACH PDUs over the entire grid, until the last
     // (farthest in the future) usable slot.
     first_slot_ind = false;
+    // NOTE: Min value of cell_resource_allocator::RING_ALLOCATOR_SIZE is 20, max value of prach_length_slots is 7.
     for (unsigned sl = 0; sl < (cell_resource_allocator::RING_ALLOCATOR_SIZE - prach_length_slots + 1); ++sl) {
       allocate_slot_prach_pdus(res_grid, res_grid[sl].slot);
     }

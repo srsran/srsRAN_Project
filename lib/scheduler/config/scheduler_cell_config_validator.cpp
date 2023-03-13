@@ -34,13 +34,6 @@ using namespace config_validators;
 
 static error_type<std::string> validate_rach_cfg_common(const sched_cell_configuration_request_message& msg)
 {
-  static const unsigned nof_symbols_per_slot = msg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended
-                                                   ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
-                                                   : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
-  static const double   symbol_duration_msec =
-      (double)SUBFRAME_DURATION_MSEC /
-      (double)(get_nof_slots_per_subframe(msg.ul_cfg_common.init_ul_bwp.generic_params.scs) * nof_symbols_per_slot);
-
   VERIFY(msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.has_value(),
          "Cells without RACH-ConfigCommon are not supported");
   const rach_config_common& rach_cfg_cmn = msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
@@ -51,15 +44,8 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
                               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
   VERIFY(prach_cfg.format.is_long_preamble(), "Short PRACH preamble formats not supported");
 
-  subcarrier_spacing               pusch_scs = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-  const prach_preamble_information info      = get_prach_preamble_long_info(prach_cfg.format);
-  const double   length_msecs                = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
-  const unsigned nof_symbols                 = ceil(length_msecs / symbol_duration_msec);
-  const unsigned starting_symbol_pusch_scs   = prach_cfg.starting_symbol * (1U << to_numerology_value(pusch_scs));
-  const unsigned start_slot_pusch_scs        = starting_symbol_pusch_scs / nof_symbols_per_slot;
-  const unsigned prach_length_slots =
-      static_cast<unsigned>(ceil(static_cast<double>((start_slot_pusch_scs % nof_symbols_per_slot) + nof_symbols) /
-                                 (static_cast<double>(nof_symbols_per_slot))));
+  subcarrier_spacing           pusch_scs           = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+  prach_symbols_slots_duration prach_duration_info = get_prach_duration_info(prach_cfg, pusch_scs);
 
   // Check if the PRACH preambles fall into UL slots
   if (msg.tdd_ul_dl_cfg_common.has_value()) {
@@ -68,8 +54,9 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
     for (unsigned subframe_idx : prach_cfg.subframe) {
       // There are configuration for which the PRACH starts in an odd slot within the subframe
       // (for numerologies > mu(SCS 15kHz)); the addition of start_slot_pusch_scs compensate for this.
-      const unsigned start_slot_idx = subframe_idx * (1U << to_numerology_value(pusch_scs)) + start_slot_pusch_scs;
-      for (unsigned sl = 0; sl < prach_length_slots; ++sl) {
+      const unsigned start_slot_idx =
+          subframe_idx * (1U << to_numerology_value(pusch_scs)) + prach_duration_info.start_slot_pusch_scs;
+      for (unsigned sl = 0; sl < prach_duration_info.prach_length_slots; ++sl) {
         VERIFY(cell_cfg.is_ul_enabled(slot_point{to_numerology_value(pusch_scs), sl + start_slot_idx}),
                "PRACH configuration index {} not supported with current TDD pattern. PRACH fall outside UL slots",
                rach_cfg_cmn.rach_cfg_generic.prach_config_index);
@@ -78,7 +65,7 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
   }
 
   const unsigned prach_nof_prbs =
-      prach_frequency_mapping_get(info.scs, msg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
+      prach_frequency_mapping_get(get_prach_preamble_long_info(prach_cfg.format).scs, pusch_scs).nof_rb_ra;
   for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_cmn.rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
     uint8_t      prb_start  = rach_cfg_cmn.rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
     prb_interval prach_prbs = {prb_start, prb_start + prach_nof_prbs};
