@@ -16,7 +16,7 @@
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/srslog/srslog.h"
 #include <cstdint>
-#include <map>
+#include <unordered_map>
 
 namespace srsran {
 
@@ -64,9 +64,9 @@ public:
   void remove_du_bearer(uint32_t dl_teid) override;
 
 private:
-  srslog::basic_logger&             logger;
-  std::map<uint32_t, f1u_cu_bearer> cu_map;    // Key is UL-TEID (i.e., the CU's local TEID)
-  std::map<uint32_t, f1u_du_bearer> du_map;    // Key is DL-TEID (i.e., the DU's local TEID)
-  std::mutex                        map_mutex; // shared mutex for access to cu_map and du_map
+  srslog::basic_logger&                       logger;
+  std::unordered_map<uint32_t, f1u_cu_bearer> cu_map;    // Key is UL-TEID (i.e., the CU's local TEID)
+  std::unordered_map<uint32_t, f1u_du_bearer> du_map;    // Key is DL-TEID (i.e., the DU's local TEID)
+  std::mutex                                  map_mutex; // shared mutex for access to cu_map and du_map
 };
 }; // namespace srsran
