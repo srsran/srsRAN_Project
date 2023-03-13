@@ -63,7 +63,8 @@ public:
 
 private:
   srslog::basic_logger&             logger;
-  std::map<uint32_t, f1u_cu_bearer> cu_map; // Key is UL-TEID (i.e., the CU's local TEID)
-  std::map<uint32_t, f1u_du_bearer> du_map; // Key is DL-TEID (i.e., the DU's local TEID)
+  std::map<uint32_t, f1u_cu_bearer> cu_map;    // Key is UL-TEID (i.e., the CU's local TEID)
+  std::map<uint32_t, f1u_du_bearer> du_map;    // Key is DL-TEID (i.e., the DU's local TEID)
+  std::mutex                        map_mutex; // shared mutex for access to cu_map and du_map
 };
 }; // namespace srsran

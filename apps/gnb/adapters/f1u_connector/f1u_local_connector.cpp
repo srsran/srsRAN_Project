@@ -24,6 +24,7 @@ f1u_local_connector::create_cu_bearer(uint32_t                             ue_in
                                       srs_cu_up::f1u_rx_sdu_notifier&      rx_sdu_notifier)
 {
   logger.info("Creating CU F1-U bearer. UL-TEID={}", ul_teid);
+  std::unique_lock<std::mutex> lock(map_mutex);
   srsran_assert(
       cu_map.find(ul_teid) == cu_map.end(), "Cannot create CU F1-U bearer with already existing UL-TEID={}", ul_teid);
   std::unique_ptr<f1u_dl_local_adapter>  cu_tx = std::make_unique<f1u_dl_local_adapter>();
@@ -36,6 +37,7 @@ f1u_local_connector::create_cu_bearer(uint32_t                             ue_in
 
 void f1u_local_connector::attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid)
 {
+  std::unique_lock<std::mutex> lock(map_mutex);
   if (cu_map.find(ul_teid) == cu_map.end()) {
     logger.warning("Could not find UL-TEID at CU to connect. UL-TEID={}, DL-TEID={}", ul_teid, dl_teid);
     return;
@@ -56,6 +58,7 @@ void f1u_local_connector::attach_dl_teid(uint32_t ul_teid, uint32_t dl_teid)
 
 void f1u_local_connector::disconnect_cu_bearer(uint32_t ul_teid)
 {
+  std::unique_lock<std::mutex> lock(map_mutex);
   // Find bearer from ul_teid
   auto bearer_it = cu_map.find(ul_teid);
   if (bearer_it == cu_map.end()) {
@@ -89,6 +92,7 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
                                                           uint32_t                     ul_teid,
                                                           srs_du::f1u_rx_sdu_notifier& du_rx)
 {
+  std::unique_lock<std::mutex> lock(map_mutex);
   if (cu_map.find(ul_teid) == cu_map.end()) {
     logger.warning(
         "Could not find CU F1-U bearer, when creating DU F1-U bearer. DL-TEID={}, UL-TEID={}", dl_teid, ul_teid);
@@ -111,7 +115,8 @@ srs_du::f1u_bearer* f1u_local_connector::create_du_bearer(uint32_t              
 
 void f1u_local_connector::remove_du_bearer(uint32_t dl_teid)
 {
-  auto bearer_it = du_map.find(dl_teid);
+  std::unique_lock<std::mutex> lock(map_mutex);
+  auto                         bearer_it = du_map.find(dl_teid);
   if (bearer_it == du_map.end()) {
     logger.warning("Could not find DL-TEID at DU to remove. DL-TEID={}", dl_teid);
     return;
