@@ -221,6 +221,11 @@ public:
   void on_new_message(const ngap_message& msg) override
   {
     logger.info("Received message");
+    if (logger.debug.enabled()) {
+      asn1::json_writer js;
+      msg.pdu.to_json(js);
+      logger.debug("Tx NGAP PDU: {}", js.to_string());
+    }
     last_ngap_msg = msg;
 
     if (handler != nullptr) {
