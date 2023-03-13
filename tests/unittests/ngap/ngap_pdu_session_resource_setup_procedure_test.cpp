@@ -87,12 +87,12 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
 {
   // Test preamble
   ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
   this->start_procedure(ue_index);
 
   // Inject PDU Session Resource Setup Request
-  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rgen::uniform_int<uint32_t>(
-      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max) - 1));
+  pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(test_rgen::uniform_int<uint16_t>(
+      pdu_session_id_to_uint(pdu_session_id_t::min), pdu_session_id_to_uint(pdu_session_id_t::max)));
 
   auto& ue = test_ues.at(ue_index);
 
@@ -113,7 +113,7 @@ TEST_F(ngap_pdu_session_resource_setup_procedure_test,
 {
   // Test preamble
   ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
   this->start_procedure(ue_index);
 
   auto& ue = test_ues.at(ue_index);

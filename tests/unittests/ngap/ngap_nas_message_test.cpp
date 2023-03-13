@@ -52,7 +52,7 @@ TEST_F(ngap_nas_message_routine_test, when_initial_ue_message_is_received_then_n
 
   // Test preamble
   ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
   this->start_procedure(ue_index);
 
   // check that initial UE message is sent to AMF and that UE objects has been created
@@ -65,12 +65,12 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_dl_nas_transport_is_forwar
 {
   // Test preamble
   ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
   this->start_procedure(ue_index);
 
   auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = uint_to_amf_ue_id(
-      test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
 
   // Inject DL NAS transport message from AMF
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
@@ -85,10 +85,10 @@ TEST_F(ngap_nas_message_routine_test, when_no_ue_present_dl_nas_transport_is_dro
   // Inject DL NAS transport message from AMF
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(
 
-      uint_to_amf_ue_id(test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min),
-                                                         amf_ue_id_to_uint(amf_ue_id_t::max) - 1)),
-      uint_to_ran_ue_id(test_rgen::uniform_int<uint32_t>(ran_ue_id_to_uint(ran_ue_id_t::min),
-                                                         ran_ue_id_to_uint(ran_ue_id_t::max) - 1)));
+      uint_to_amf_ue_id(
+          test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max))),
+      uint_to_ran_ue_id(
+          test_rgen::uniform_int<uint64_t>(ran_ue_id_to_uint(ran_ue_id_t::min), ran_ue_id_to_uint(ran_ue_id_t::max))));
   ngap->handle_message(dl_nas_transport);
 
   // Check that no message has been sent to RRC
@@ -100,7 +100,7 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_and_amf_set_ul_nas_transpo
 {
   // Test preamble
   ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
   this->start_dl_nas_procedure(ue_index);
 
   ngap_ul_nas_transport_message ul_nas_transport = generate_ul_nas_transport_message(ue_index);

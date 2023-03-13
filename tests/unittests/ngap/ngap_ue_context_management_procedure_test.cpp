@@ -53,7 +53,7 @@ TEST_F(ngap_ue_context_management_procedure_test, when_valid_initial_context_set
 {
   // Test preamble
   ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
   this->start_procedure(ue_index);
 
   auto& ue = test_ues.at(ue_index);
@@ -75,7 +75,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
 {
   // Test preamble
   ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
   this->start_procedure(ue_index);
 
   auto& ue = test_ues.at(ue_index);
@@ -93,7 +93,7 @@ TEST_F(ngap_ue_context_management_procedure_test,
   amf_ue_id_t new_id = old_id;
   while (new_id == old_id) {
     new_id = uint_to_amf_ue_id(
-        test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max) - 1));
+        test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
   }
   ASSERT_NE(old_id, new_id);
 
@@ -116,7 +116,7 @@ TEST_F(ngap_ue_context_management_procedure_test, when_invalid_initial_context_s
 {
   // Test preamble
   ue_index_t ue_index = uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max)));
   this->start_procedure(ue_index);
 
   auto& ue = test_ues.at(ue_index);
