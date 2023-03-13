@@ -207,7 +207,7 @@ SRSASN_CODE cbit_ref::unpack(T& val, uint32_t n_bits)
       n_bits = 0;
     } else {
       auto mask = static_cast<uint8_t>((1u << (8u - offset)) - 1u);
-      val += ((uint32_t)((*it) & mask)) << (n_bits - 8 + offset);
+      val += ((uint64_t)((*it) & mask)) << (n_bits - 8 + offset);
       n_bits -= 8 - offset;
       offset = 0;
       if (it == buffer.end()) {
