@@ -20,18 +20,18 @@
 
 using namespace srsran;
 
-static sampling_rate       srate                      = sampling_rate::from_MHz(61.44);
-static subcarrier_spacing  scs                        = subcarrier_spacing::kHz15;
-static unsigned            max_processing_delay_slots = 4;
-static unsigned            ul_to_dl_subframe_offset   = 1;
-static int                 time_alignment_calibration = 0;
-static lower_phy_ta_offset ta_offset                  = lower_phy_ta_offset::n0;
-static float               tx_scale                   = 1.0F;
-static cyclic_prefix       cp                         = cyclic_prefix::NORMAL;
-static unsigned            bandwidth_rb               = 52;
-static double              dl_freq_hz                 = 2.65e9;
-static double              ul_freq_hz                 = 2.55e9;
-static std::string         log_level                  = "debug";
+static sampling_rate      srate                      = sampling_rate::from_MHz(61.44);
+static subcarrier_spacing scs                        = subcarrier_spacing::kHz15;
+static unsigned           max_processing_delay_slots = 4;
+static unsigned           ul_to_dl_subframe_offset   = 1;
+static int                time_alignment_calibration = 0;
+static n_ta_offset        ta_offset                  = n_ta_offset::n0;
+static float              tx_scale                   = 1.0F;
+static cyclic_prefix      cp                         = cyclic_prefix::NORMAL;
+static unsigned           bandwidth_rb               = 52;
+static double             dl_freq_hz                 = 2.65e9;
+static double             ul_freq_hz                 = 2.55e9;
+static std::string        log_level                  = "debug";
 
 static std::shared_ptr<ofdm_modulator_factory_spy>   modulator_factory         = nullptr;
 static std::shared_ptr<ofdm_demodulator_factory_spy> demodulator_factory       = nullptr;

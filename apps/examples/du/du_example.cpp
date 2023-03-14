@@ -76,7 +76,7 @@ static radio_configuration::over_the_wire_format otw_format = radio_configuratio
 static radio_configuration::clock_sources        clock_src  = {};
 static sampling_rate                             srate      = sampling_rate::from_MHz(61.44);
 static int                                       time_alignmemt_calibration = 0;
-static const lower_phy_ta_offset                 ta_offset                  = lower_phy_ta_offset::n0;
+static const n_ta_offset                         ta_offset                  = n_ta_offset::n0;
 static double                                    tx_gain                    = 60.0;
 static double                                    rx_gain                    = 70.0;
 
