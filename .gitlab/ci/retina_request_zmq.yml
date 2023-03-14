@@ -26,3 +26,4 @@
 - name: open5gs
   type: epc
   image: registry.gitlab.com/softwareradiosystems/retina/images/open5gs:2.5.6_0.2.10
+  debug-labels: [retina.cpu.low]
