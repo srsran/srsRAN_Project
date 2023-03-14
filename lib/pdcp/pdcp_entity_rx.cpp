@@ -33,7 +33,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                                                : security::security_direction::downlink;
 
   // t-Reordering timer
-  if (cfg.t_reordering != pdcp_t_reordering::infinity) {
+  if (cfg.t_reordering != pdcp_t_reordering::ms0 && cfg.t_reordering != pdcp_t_reordering::infinity) {
     reordering_timer = timers.create_timer();
     if (static_cast<uint32_t>(cfg.t_reordering) > 0) {
       reordering_timer.set(std::chrono::milliseconds{static_cast<unsigned>(cfg.t_reordering)},
