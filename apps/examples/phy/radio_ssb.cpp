@@ -27,6 +27,7 @@
 #include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsran/phy/adapters/phy_timing_adapter.h"
 #include "srsran/phy/lower/lower_phy.h"
+#include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/radio/radio_factory.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/math_utils.h"

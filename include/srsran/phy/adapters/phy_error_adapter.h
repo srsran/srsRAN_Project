@@ -56,6 +56,22 @@ public:
                 context.slot,
                 context.start_symbol);
   }
+
+  // See interface for documentation.
+  void on_puxch_request_late(const resource_grid_context& context) override
+  {
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
+    logger.info(
+        "Real-time failure in low-phy: PUxCH request late for sector {}, slot {}.", context.sector, context.slot);
+  }
+
+  // See interface for documentation.
+  void on_puxch_request_overflow(const resource_grid_context& context) override
+  {
+    logger.set_context(context.slot.sfn(), context.slot.slot_index());
+    logger.info(
+        "Real-time failure in low-phy: PUxCH request overflow for sector {}, slot {}.", context.sector, context.slot);
+  }
 };
 
 } // namespace srsran

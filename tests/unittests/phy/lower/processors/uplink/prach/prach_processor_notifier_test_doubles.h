@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2023 Software Radio Systems Limited
+ * Copyright 2013-2022 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
@@ -10,10 +10,7 @@
 
 #pragma once
 
-#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_factories.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_notifier.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_request_handler.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor_notifier.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/srslog/srslog.h"
@@ -92,45 +89,6 @@ public:
   const std::vector<prach_buffer_context>& get_request_overflow_entries() const { return request_overflow_entries; }
 
   const std::vector<rx_prach_window_entry>& get_rx_prach_window_entries() const { return rx_prach_window_entries; }
-};
-
-class prach_processor_baseband_spy : public prach_processor_baseband
-{
-public:
-  void process_symbol(span<const cf_t> samples, const symbol_context& context) override
-  {
-    // TBD.
-  }
-};
-
-class prach_processor_request_handler_spy : public prach_processor_request_handler
-{
-public:
-  void handle_request(prach_buffer& buffer, const prach_buffer_context& context) override
-  {
-    // TBD.
-  }
-};
-
-class prach_processor_spy : public prach_processor
-{
-public:
-  void                             connect(prach_processor_notifier& notifier) override {}
-  prach_processor_request_handler& get_request_handler() override { return request_handler; }
-  prach_processor_baseband&        get_baseband() override { return baseband; }
-
-private:
-  prach_processor_request_handler_spy request_handler;
-  prach_processor_baseband_spy        baseband;
-};
-
-class prach_processor_factory_spy : public prach_processor_factory
-{
-public:
-  std::unique_ptr<prach_processor> create(task_executor& /**/) override
-  {
-    return std::make_unique<prach_processor_spy>();
-  }
 };
 
 } // namespace srsran

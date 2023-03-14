@@ -7,4 +7,4 @@
 #
 
 add_subdirectory(adaptors)
-add_subdirectory(prach)
+add_subdirectory(uplink)

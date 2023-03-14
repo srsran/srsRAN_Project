@@ -9,8 +9,12 @@
  */
 
 #include "lower_phy_impl.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_request_handler.h"
+#include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor_request_handler.h"
+#include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_request_handler.h"
+#include "srsran/phy/lower/processors/uplink/uplink_processor.h"
+#include "srsran/phy/lower/processors/uplink/uplink_processor_baseband.h"
 #include "srsran/phy/support/resource_grid_reader_empty.h"
 #include "srsran/srsvec/zero.h"
 
@@ -20,11 +24,8 @@ static const resource_grid_reader_empty rg_reader_empty;
 
 baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
 {
-  // Get the transmission resource grid buffer for the given slot.
-  lower_phy_rg_buffer<resource_grid>& ul_grid_buffer = ul_rg_buffers[ul_slot_context.system_slot()];
-
   // Calculate symbol size. Assumes all sectors have the same symbol size.
-  unsigned symbol_sz = modulators[0]->get_symbol_size(symbol_id);
+  unsigned symbol_sz = sector_proc.ofdm_modulator->get_symbol_size(symbol_id);
 
   // For each stream, receive the baseband signal.
   for (unsigned stream_id = 0, nof_streams = radio_buffers.size(); stream_id != nof_streams; ++stream_id) {
@@ -39,49 +40,8 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
   baseband_gateway_timestamp aligned_receive_ts = receive_metadata[0].ts;
   // ...
 
-  // Demodulate signal for each sector.
-  for (unsigned sector_id = 0, nof_sectors = sectors.size(); sector_id != nof_sectors; ++sector_id) {
-    // Select sector configuration.
-    const lower_phy_sector_description& sector = sectors[sector_id];
-
-    // Select resource grid from the UL pool and skip sector processing if there is no grid.
-    resource_grid* ul_rg = ul_grid_buffer.get_grid(sector_id);
-
-    // For each port of the sector.
-    for (unsigned port_id = 0, nof_ports = sector.port_mapping.size(); port_id != nof_ports; ++port_id) {
-      // Select port mapping.
-      const lower_phy_sector_port_mapping& port_mapping = sector.port_mapping[port_id];
-
-      // Get buffer for the given port mapping.
-      span<const radio_sample_type> buffer =
-          radio_buffers[port_mapping.stream_id].get_channel_buffer(port_mapping.channel_id);
-
-      // Call PRACH processor.
-      prach_processor_baseband::symbol_context prach_context;
-      prach_context.slot   = ul_slot_context;
-      prach_context.symbol = symbol_id;
-      prach_context.sector = sector_id;
-      prach_context.port   = port_id;
-      prach_proc->get_baseband().process_symbol(buffer, prach_context);
-
-      // Demodulate the baseband signal if it has been requested.
-      if (ul_rg) {
-        demodulators[sector_id]->demodulate(*ul_rg, buffer, port_id, symbol_id);
-      }
-    }
-
-    // Skip the symbol notification when it has not been requested.
-    if (!ul_rg) {
-      continue;
-    }
-
-    // Notify the received symbols.
-    lower_phy_rx_symbol_context ul_symbol_context = {};
-    ul_symbol_context.sector                      = sector_id;
-    ul_symbol_context.slot                        = ul_slot_context;
-    ul_symbol_context.nof_symbols                 = symbol_id % nof_symbols_per_slot;
-    rx_symbol_notifier.on_rx_symbol(ul_symbol_context, *ul_rg);
-  }
+  // Process signal for each sector.
+  sector_proc.uplink_proc->get_baseband().process(radio_buffers[0]);
 
   return aligned_receive_ts;
 }
@@ -96,7 +56,7 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
   lower_phy_rg_buffer<const resource_grid_reader>& dl_grid_buffer = dl_rg_buffers[dl_slot_context.system_slot()];
 
   // Resize radio buffers, assume all sectors and ports symbol sizes are the same.
-  unsigned symbol_sz = modulators.front()->get_symbol_size(symbol_id);
+  unsigned symbol_sz = sector_proc.ofdm_modulator->get_symbol_size(symbol_id);
   for (auto& buffer : radio_buffers) {
     buffer.resize(symbol_sz);
   }
@@ -133,11 +93,10 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
         srsvec::zero(buffer);
         continue;
       }
-      modulators[sector_id]->modulate(buffer, *dl_rg, port_id, symbol_id);
+      sector_proc.ofdm_modulator->modulate(buffer, *dl_rg, port_id, symbol_id);
 
       // Process time domain signal with the amplitude controller.
-      amplitude_controller_metrics amplitude_control_metrics =
-          amplitude_controllers[sector_id]->process(buffer, buffer);
+      amplitude_controller_metrics amplitude_control_metrics = sector_proc.amplitude_control->process(buffer, buffer);
 
       // Add entries to long term power statistics when the signal carries power.
       if (amplitude_control_metrics.avg_power_fs > 0.0F) {
@@ -244,7 +203,6 @@ void lower_phy_impl::process_symbol()
   if (symbol_slot_idx == nof_symbols_per_slot) {
     // Reset DL resource grid buffers.
     dl_rg_buffers[dl_slot_context.system_slot()].reset();
-    ul_rg_buffers[ul_slot_context.system_slot()].reset();
 
     // Reset the symbol index.
     symbol_slot_idx = 0;
@@ -277,17 +235,13 @@ void lower_phy_impl::handle_resource_grid(const resource_grid_context& context, 
   dl_rg_buffers[context.slot.system_slot()].set_grid(grid, context.sector);
 }
 
-lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, const lower_phy_configuration& config) :
+lower_phy_impl::lower_phy_impl(sector_processors processors, const lower_phy_configuration& config) :
   logger(srslog::fetch_basic_logger("Low-PHY")),
   transmitter(config.bb_gateway->get_transmitter()),
   receiver(config.bb_gateway->get_receiver()),
-  rx_symbol_notifier(*config.rx_symbol_notifier),
   timing_notifier(*config.timing_notifier),
   error_notifier(*config.error_notifier),
-  modulators(std::move(common_config.modulators)),
-  demodulators(std::move(common_config.demodulators)),
-  amplitude_controllers(std::move(common_config.amplitude_controllers)),
-  prach_proc(std::move(common_config.prach_proc)),
+  sector_proc(std::move(processors)),
   rx_to_tx_delay(get_rx_to_tx_delay(config.ul_to_dl_subframe_offset,
                                     config.time_alignment_calibration,
                                     config.ta_offset,
@@ -315,27 +269,9 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   srsran_assert(config.error_notifier != nullptr, "Invalid error notifier.");
   srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
   srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
-  srsran_assert(modulators.size() == config.sectors.size(),
-                "The number of sectors ({}) and modulators ({}) do not match.",
-                config.sectors.size(),
-                modulators.size());
-  srsran_assert(demodulators.size() == config.sectors.size(),
-                "The number of sectors ({}) and demodulators ({}) do not match.",
-                config.sectors.size(),
-                demodulators.size());
-  srsran_assert(amplitude_controllers.size() == config.sectors.size(),
-                "The number of sectors ({}) and amplitude controllers ({}) do not match.",
-                config.sectors.size(),
-                amplitude_controllers.size());
-  for (auto& modulator : modulators) {
-    srsran_assert(modulator, "Invalid modulator.");
-  }
-  for (auto& demodulator : demodulators) {
-    srsran_assert(demodulator, "Invalid demodulator.");
-  }
-  for (auto& amplitude_controller : amplitude_controllers) {
-    srsran_assert(amplitude_controller, "Invalid amplitude controller.");
-  }
+  srsran_assert(sector_proc.ofdm_modulator, "Invalid modulator.");
+  srsran_assert(sector_proc.uplink_proc, "Invalid uplink processor.");
+  srsran_assert(sector_proc.amplitude_control, "Invalid amplitude control.");
 
   // Create radio buffers and receive metadata.
   for (unsigned nof_channels : config.nof_channels_per_stream) {
@@ -357,20 +293,18 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
     }
   }
 
-  // Create pool of receive resource grids.
-  for (auto& ul_rg_buffer : ul_rg_buffers) {
-    ul_rg_buffer.set_nof_sectors(sectors.size());
-  }
-
   // Signal a successful initialization.
   state_fsm.on_successful_init();
 
   // Connect notification adaptor to the notification interfaces.
   notification_adaptor.connect_error_notifier(*config.error_notifier);
   notification_adaptor.connect_rx_symbol_notifier(*config.rx_symbol_notifier);
+  notification_adaptor.connect_timing_notifier(*config.timing_notifier);
 
-  // Connect PRACH processor to the notification adaptor.
-  prach_proc->connect(notification_adaptor.get_prach_notifier());
+  // Connect uplink processor to the notification adaptor.
+  sector_proc.uplink_proc->connect(notification_adaptor.get_uplink_notifier(),
+                                   notification_adaptor.get_prach_notifier(),
+                                   notification_adaptor.get_puxch_notifier());
 }
 
 void lower_phy_impl::start(task_executor& realtime_task_executor)
@@ -388,10 +322,10 @@ void lower_phy_impl::stop()
 
 void lower_phy_impl::request_prach_window(const prach_buffer_context& context, prach_buffer& buffer)
 {
-  prach_proc->get_request_handler().handle_request(buffer, context);
+  sector_proc.uplink_proc->get_prach_request_handler().handle_request(buffer, context);
 }
 
 void lower_phy_impl::request_uplink_slot(const resource_grid_context& context, resource_grid& grid)
 {
-  ul_rg_buffers[context.slot.system_slot()].set_grid(grid, context.sector);
+  sector_proc.uplink_proc->get_puxch_request_handler().handle_request(grid, context);
 }

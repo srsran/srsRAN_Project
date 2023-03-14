@@ -8,14 +8,15 @@
  *
  */
 
-#include "../../../../support/task_executor_test_doubles.h"
-#include "../../../support/prach_buffer_test_doubles.h"
-#include "../../modulation/ofdm_prach_demodulator_test_doubles.h"
+#include "../../../../../support/task_executor_test_doubles.h"
+#include "../../../../support/prach_buffer_test_doubles.h"
+#include "../../../modulation/ofdm_prach_demodulator_test_doubles.h"
+#include "prach_processor_notifier_test_doubles.h"
 #include "prach_processor_test_doubles.h"
-#include "srsran/phy/lower/processors/prach/prach_processor.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_factories.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_request_handler.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor_factories.h"
+#include "srsran/phy/lower/sampling_rate.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
@@ -32,7 +33,7 @@ bool operator==(const prach_buffer_context& rhs, const prach_buffer_context& lhs
 using namespace srsran;
 
 // Combined parameters. First the DFT size for 15kHz and second the maximum number of concurrent PRACH requests.
-using prach_processor_param = std::tuple<unsigned, unsigned>;
+using prach_processor_param = std::tuple<sampling_rate, unsigned>;
 
 static constexpr slot_point TEST_SLOT_BEGIN   = slot_point(0, 0);
 static constexpr slot_point TEST_SLOT_END     = slot_point(0, 10);
@@ -58,19 +59,19 @@ protected:
   {
     Test::SetUp();
 
-    unsigned dft_size_15kHz              = std::get<0>(GetParam());
-    unsigned max_nof_concurrent_requests = std::get<1>(GetParam());
+    sampling_rate srate                       = std::get<0>(GetParam());
+    unsigned      max_nof_concurrent_requests = std::get<1>(GetParam());
 
     // Create OFDM PRACH demodulator spy.
     ofdm_prach_factory_spy = std::make_shared<ofdm_prach_demodulator_factory_spy>();
 
     // Create factory.
-    std::shared_ptr<prach_processor_factory> factory =
-        create_prach_processor_factory_sw(ofdm_prach_factory_spy, dft_size_15kHz, max_nof_concurrent_requests);
+    std::shared_ptr<prach_processor_factory> factory = create_prach_processor_factory_sw(
+        ofdm_prach_factory_spy, task_executor_spy, srate, max_nof_concurrent_requests);
     ASSERT_TRUE(factory);
 
     // Create processor.
-    processor = factory->create(task_executor_spy);
+    processor = factory->create();
     ASSERT_TRUE(processor);
 
     // Connect processor with the notifier.
@@ -330,10 +331,9 @@ TEST_P(prach_processor_test, single_baseband_symbol)
   context.nof_prb_ul_grid = 52;
   context.pusch_scs       = subcarrier_spacing::kHz30;
 
-  unsigned                   dft_size_15kHz   = std::get<0>(GetParam());
-  unsigned                   sampling_rate_Hz = dft_size_15kHz * 15000;
-  prach_preamble_information preamble_info    = get_prach_preamble_long_info(context.format);
-  unsigned prach_window_length = (preamble_info.cp_length + preamble_info.symbol_length).to_samples(sampling_rate_Hz);
+  sampling_rate              srate         = std::get<0>(GetParam());
+  prach_preamble_information preamble_info = get_prach_preamble_long_info(context.format);
+  unsigned prach_window_length = (preamble_info.cp_length + preamble_info.symbol_length).to_samples(srate.to_Hz());
   prach_buffer_spy buffer;
 
   // Do request.
@@ -411,10 +411,9 @@ TEST_P(prach_processor_test, three_baseband_symbol)
   context.nof_prb_ul_grid = 52;
   context.pusch_scs       = subcarrier_spacing::kHz30;
 
-  unsigned                   dft_size_15kHz   = std::get<0>(GetParam());
-  unsigned                   sampling_rate_Hz = dft_size_15kHz * 15000;
-  prach_preamble_information preamble_info    = get_prach_preamble_long_info(context.format);
-  unsigned prach_window_length = (preamble_info.cp_length + preamble_info.symbol_length).to_samples(sampling_rate_Hz);
+  sampling_rate              srate         = std::get<0>(GetParam());
+  prach_preamble_information preamble_info = get_prach_preamble_long_info(context.format);
+  unsigned prach_window_length = (preamble_info.cp_length + preamble_info.symbol_length).to_samples(srate.to_Hz());
   prach_buffer_spy buffer;
 
   // Do request.
@@ -536,4 +535,7 @@ TEST_P(prach_processor_test, three_baseband_symbol)
 // Creates test suite that combines all possible parameters.
 INSTANTIATE_TEST_SUITE_P(prach_processor,
                          prach_processor_test,
-                         ::testing::Combine(::testing::Values(512, 1024, 2048), ::testing::Values(1, 4)));
+                         ::testing::Combine(::testing::Values(sampling_rate::from_MHz(7.68),
+                                                              sampling_rate::from_MHz(11.52),
+                                                              sampling_rate::from_MHz(23.04)),
+                                            ::testing::Values(1, 4)));

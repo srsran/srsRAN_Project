@@ -42,9 +42,19 @@ std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& con
       create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate.get_dft_size(15e3));
 
   // Create PRACH processor factory.
-  std::shared_ptr<prach_processor_factory> prach_processor_factory = create_prach_processor_factory_sw(
-      prach_demodulator_factory, config.srate.get_dft_size(15e3), max_nof_prach_concurrent_requests);
-  report_fatal_error_if_not(prach_processor_factory, "Failed to create PRACH processor factory.");
+  std::shared_ptr<prach_processor_factory> prach_proc_factory =
+      create_prach_processor_factory_sw(prach_demodulator_factory, *config.prach_async_executor, config.srate, 1);
+  report_fatal_error_if_not(prach_proc_factory, "Failed to create PRACH processor factory.");
+
+  // Create PUxCH processor factory.
+  std::shared_ptr<puxch_processor_factory> puxch_proc_factory =
+      create_puxch_processor_factory_sw(10, demodulator_factory);
+  report_fatal_error_if_not(puxch_proc_factory, "Failed to create PUxCH processor factory.");
+
+  // Create Uplink processor factory.
+  std::shared_ptr<lower_phy_uplink_processor_factory> uplink_proc_factory =
+      create_uplink_processor_factory_sw(prach_proc_factory, puxch_proc_factory);
+  report_fatal_error_if_not(uplink_proc_factory, "Failed to create uplink processor factory.");
 
   // Create amplitude control factory.
   std::shared_ptr<amplitude_controller_factory> amplitude_control_factory =
@@ -52,8 +62,8 @@ std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& con
   report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
 
   // Create Lower PHY factory.
-  std::shared_ptr<lower_phy_factory> lphy_factory = create_lower_phy_factory_sw(
-      modulator_factory, demodulator_factory, prach_processor_factory, amplitude_control_factory);
+  std::shared_ptr<lower_phy_factory> lphy_factory =
+      create_lower_phy_factory_sw(modulator_factory, uplink_proc_factory, amplitude_control_factory);
   report_fatal_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   return lphy_factory->create(config);

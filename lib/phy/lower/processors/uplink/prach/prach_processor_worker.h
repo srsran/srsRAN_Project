@@ -11,8 +11,9 @@
 #pragma once
 
 #include "srsran/phy/lower/modulation/ofdm_prach_demodulator.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_baseband.h"
-#include "srsran/phy/lower/processors/prach/prach_processor_notifier.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
+#include "srsran/phy/lower/processors/uplink/prach/prach_processor_notifier.h"
+#include "srsran/phy/lower/sampling_rate.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/ran/phy_time_unit.h"
@@ -85,10 +86,10 @@ public:
   /// Creates a PRACH processor worker.
   prach_processor_worker(std::unique_ptr<ofdm_prach_demodulator> demodulator_,
                          task_executor&                          async_task_executor_,
-                         unsigned                                dft_size_15kHz) :
+                         sampling_rate                           srate) :
     demodulator(std::move(demodulator_)),
     async_task_executor(async_task_executor_),
-    sampling_rate_Hz(dft_size_15kHz * 15000),
+    sampling_rate_Hz(srate.to_Hz()),
     temp_baseband(prach_constants::MAX_LENGTH_TIME_DOMAIN.to_samples(sampling_rate_Hz))
   {
     srsran_assert(sampling_rate_Hz && prach_constants::MAX_LENGTH_TIME_DOMAIN.is_sample_accurate(sampling_rate_Hz),

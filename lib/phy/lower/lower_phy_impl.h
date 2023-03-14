@@ -24,25 +24,12 @@
 #include "srsran/phy/lower/lower_phy_rg_handler.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
-#include "srsran/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsran/phy/lower/modulation/ofdm_modulator.h"
-#include "srsran/phy/lower/processors/prach/prach_processor.h"
+#include "srsran/phy/lower/processors/uplink/uplink_processor.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/support/stats.h"
 
 namespace srsran {
-
-/// Describes the factory configuration.
-struct lower_phy_common_configuration {
-  /// Provides OFDM modulators. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<ofdm_symbol_modulator>> modulators;
-  /// Provides OFDM demodulators. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
-  /// PRACH processor.
-  std::unique_ptr<prach_processor> prach_proc;
-  /// Provides amplitude controllers. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<amplitude_controller>> amplitude_controllers;
-};
 
 template <class RG>
 class lower_phy_rg_buffer
@@ -84,6 +71,46 @@ class lower_phy_impl : public lower_phy,
                        public lower_phy_rg_handler,
                        public lower_phy_request_handler
 {
+public:
+  /// Collects the lower PHY processors for a sector.
+  struct sector_processors {
+    /// OFDM modulator.
+    std::unique_ptr<ofdm_symbol_modulator> ofdm_modulator;
+    /// Uplink processor.
+    std::unique_ptr<lower_phy_uplink_processor> uplink_proc;
+    /// Amplitude controller.
+    std::unique_ptr<amplitude_controller> amplitude_control;
+  };
+
+  /// \brief Constructs a generic lower physical layer.
+  /// \param[in] processors    Sector processors.
+  /// \param[in] config        Common lower PHY parameters to construct the lower physical layer.
+  explicit lower_phy_impl(sector_processors processors, const lower_phy_configuration& config);
+
+  // See interface for documentation.
+  void start(task_executor& realtime_task_executor) override;
+
+  // See interface for documentation.
+  void stop() override;
+
+  // See interface for documentation.
+  void request_prach_window(const prach_buffer_context& context, prach_buffer& buffer) override;
+
+  // See interface for documentation.
+  void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
+
+  // See interface for documentation.
+  void handle_resource_grid(const resource_grid_context& context, const resource_grid_reader& grid) override;
+
+  // See interface for documentation.
+  lower_phy_request_handler& get_request_handler() override { return *this; }
+
+  // See interface for documentation.
+  lower_phy_rg_handler& get_rg_handler() override { return *this; }
+
+  // See interface for documentation.
+  lower_phy_controller& get_controller() override { return *this; }
+
 private:
   /// Number of resource grid buffers.
   static constexpr unsigned NOF_RG_BUFFER = 40;
@@ -94,29 +121,19 @@ private:
   baseband_gateway_transmitter& transmitter;
   /// Baseband gateway receiver.
   baseband_gateway_receiver& receiver;
-  /// Receive symbol handler.
-  lower_phy_rx_symbol_notifier& rx_symbol_notifier;
   /// Timing boundary handler.
   lower_phy_timing_notifier& timing_notifier;
   /// Error handler.
   lower_phy_error_notifier& error_notifier;
   /// Container for downlink resource grids buffers. Each entry belongs to a slot.
   circular_array<lower_phy_rg_buffer<const resource_grid_reader>, NOF_RG_BUFFER> dl_rg_buffers;
-  /// Container for uplink resource grids buffers. Each entry belongs to a slot.
-  circular_array<lower_phy_rg_buffer<resource_grid>, NOF_RG_BUFFER> ul_rg_buffers;
   /// Container for radio baseband buffers for each stream. Common for transmit and receive. The number of entries
   /// indicates the number of streams.
   std::vector<baseband_gateway_buffer_dynamic> radio_buffers;
   /// Container for radio receive metadata for each stream. The number of entries indicates the number of streams.
   std::vector<baseband_gateway_receiver::metadata> receive_metadata;
-  /// Container for OFDM modulators. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<ofdm_symbol_modulator>> modulators;
-  /// Container for OFDM demodulators. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
-  /// Container for amplitude controllers. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<amplitude_controller>> amplitude_controllers;
-  /// PRACH processor.
-  std::unique_ptr<prach_processor> prach_proc;
+  /// Sector processors.
+  sector_processors sector_proc;
   /// Receive-to-transmit delay in clock ticks.
   const baseband_gateway_timestamp rx_to_tx_delay;
   /// Maximum allowed processing delay in slots.
@@ -215,37 +232,6 @@ private:
 
     return ul_to_dl_delay_samples;
   }
-
-public:
-  /// \brief Constructs a generic lower physical layer.
-  /// \param[in] common_config Provides the factory specific necessary parameters to construct the lower physical
-  /// layer.
-  /// \param[in] config Provides the common lower PHY parameters to construct the lower physical layer.
-  explicit lower_phy_impl(lower_phy_common_configuration&& common_config, const lower_phy_configuration& config);
-
-  // See interface for documentation.
-  void start(task_executor& realtime_task_executor) override;
-
-  // See interface for documentation.
-  void stop() override;
-
-  // See interface for documentation.
-  void request_prach_window(const prach_buffer_context& context, prach_buffer& buffer) override;
-
-  // See interface for documentation.
-  void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
-
-  // See interface for documentation.
-  void handle_resource_grid(const resource_grid_context& context, const resource_grid_reader& grid) override;
-
-  // See interface for documentation.
-  lower_phy_request_handler& get_request_handler() override { return *this; }
-
-  // See interface for documentation.
-  lower_phy_rg_handler& get_rg_handler() override { return *this; }
-
-  // See interface for documentation.
-  lower_phy_controller& get_controller() override { return *this; }
 };
 
 } // namespace srsran

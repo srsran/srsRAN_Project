@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_library(srsran_lower_phy_prach_processor STATIC
-  prach_processor_factories.cpp
-  prach_processor_worker.cpp)
-target_link_libraries(srsran_lower_phy_prach_processor srsran_lower_phy_modulation)
+add_library(srsran_lower_phy_puxch_processor STATIC
+        puxch_processor_factories.cpp
+        puxch_processor_impl.cpp)
+target_link_libraries(srsran_lower_phy_puxch_processor srsran_lower_phy_modulation)

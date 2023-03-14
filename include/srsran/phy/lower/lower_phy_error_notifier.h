@@ -15,6 +15,8 @@
 
 namespace srsran {
 
+struct resource_grid_context;
+
 /// Lower physical layer interface used to notify miscellaneous types of error events.
 class lower_phy_error_notifier
 {
@@ -59,6 +61,21 @@ public:
   ///
   /// \param[in] context Context of the PRACH request raising the error notification.
   virtual void on_prach_request_overflow(const prach_buffer_context& context) = 0;
+
+  /// \brief Notifies a PUxCH request outside the slot window.
+  ///
+  /// This error occurs when a PUxCH request for slot \f$n\f$ is received after slot \f$n\f$ started being
+  /// processed.
+  ///
+  /// \param[in] context Context of the PUxCH request raising the error notification.
+  virtual void on_puxch_request_late(const resource_grid_context& context) = 0;
+
+  /// \brief Notifies an excess of PUxCH requests.
+  ///
+  /// This error occurs when the number of pending PUxCH requests reaches the limit.
+  ///
+  /// \param[in] context Context of the PUxCH request raising the error notification.
+  virtual void on_puxch_request_overflow(const resource_grid_context& context) = 0;
 };
 
 } // namespace srsran

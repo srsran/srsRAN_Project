@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/lower/lower_phy_error_notifier.h"
+#include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
 
@@ -67,6 +68,18 @@ public:
                  context.start_symbol);
 
     prach_request_overflow_errors.push_back(context);
+  }
+
+  // See interface for documentation.
+  void on_puxch_request_late(const resource_grid_context& context) override
+  {
+    // TBD.
+  }
+
+  // See interface for documentation.
+  void on_puxch_request_overflow(const resource_grid_context& context) override
+  {
+    // TBD.
   }
 
   /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_late_resource_grid() interface.
