@@ -185,10 +185,54 @@ static bool validate_amf_appconfig(const amf_appconfig& config)
   return true;
 }
 
+/// Validates the given PDCP configuration. Returns true on success, otherwise false.
+static bool validate_pdcp_appconfig(uint8_t five_qi, const pdcp_appconfig& config)
+{
+  if (config.integrity_protection_required) {
+    fmt::print("PDCP DRB integrity protection is not supported yet. 5QI={}\n", five_qi);
+    return false;
+  }
+
+  // Check TX
+  if (config.tx.sn_field_length != 12 && config.tx.sn_field_length != 18) {
+    fmt::print("PDCP TX SN length is neither 12 or 18 bits. 5QI={} SN={}\n", five_qi, config.tx.sn_field_length);
+    return false;
+  }
+  if (config.tx.discard_timer != -1) {
+    fmt::print("PDCP TX discard timer different than infinity (-1) not supported.  5QI={} discard_timer={}\n",
+               five_qi,
+               config.tx.discard_timer);
+    return false;
+  }
+  if (config.tx.status_report_required) {
+    fmt::print("PDCP TX status report required not supported yet. 5QI={}\n", five_qi);
+    return false;
+  }
+
+  // Check RX
+  if (config.rx.sn_field_length != 12 && config.rx.sn_field_length != 18) {
+    fmt::print("PDCP RX SN length is neither 12 or 18 bits. 5QI={} SN={}\n", five_qi, config.rx.sn_field_length);
+    return false;
+  }
+  if (config.rx.t_reordering != 0) {
+    fmt::print("PDCP RX t-Reordering is not 0, different t-Reordering values are not supported yet. 5QI={}\n", five_qi);
+    return false;
+  }
+  if (config.rx.out_of_order_delivery) {
+    fmt::print("PDCP RX out-of-order delivery is not supported. 5QI={}\n", five_qi);
+    return false;
+  }
+  return true;
+}
+
 /// Validates the given QoS configuration. Returns true on success, otherwise false.
 static bool validate_qos_appconfig(span<const qos_appconfig> config)
 {
-  // TODO check validity of QoS configs
+  for (const auto& qos : config) {
+    if (!validate_pdcp_appconfig(qos.five_qi, qos.pdcp)) {
+      return false;
+    }
+  }
   return true;
 }
 
