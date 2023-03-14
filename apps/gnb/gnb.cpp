@@ -55,6 +55,7 @@
 #include "srsran/phy/lower/lower_phy_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/radio/radio_factory.h"
+#include "srsran/support/sysinfo.h"
 #include <atomic>
 #include <csignal>
 #include <unordered_map>
@@ -466,6 +467,11 @@ int main(int argc, char** argv)
     report_error("The CPU does not support the required CPU features that were configured during compile time: {}\n",
                  get_cpu_feature_info());
   }
+
+  // Check some common causes of performance issues and
+  // print a warning if required.
+  check_cpu_governor(gnb_logger);
+  check_drm_kms_polling(gnb_logger);
 
   // Set layer-specific pcap options.
   std::unique_ptr<ngap_pcap> ngap_p = std::make_unique<ngap_pcap_impl>();
