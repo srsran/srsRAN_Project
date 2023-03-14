@@ -13,6 +13,7 @@
 #include "procedures/rrc_reconfiguration_procedure.h"
 #include "procedures/rrc_security_mode_command_procedure.h"
 #include "procedures/rrc_setup_procedure.h"
+#include "procedures/rrc_ue_capability_transfer_procedure.h"
 #include "procedures/rrc_ue_event_manager.h"
 #include "rrc_ue_context.h"
 #include "srsran/rrc/rrc_du_factory.h"
@@ -49,6 +50,7 @@ public:
   rrc_ue_dl_nas_message_handler&        get_rrc_ue_dl_nas_message_handler() override { return *this; }
   rrc_ue_control_message_handler&       get_rrc_ue_control_message_handler() override { return *this; }
   rrc_ue_init_security_context_handler& get_rrc_ue_init_security_context_handler() override { return *this; }
+  rrc_ue_capability_handler&            get_rrc_ue_capability_handler() override { return *this; }
   drb_manager&                          get_rrc_ue_drb_manager() override { return context.get_drb_manager(); }
   security::sec_as_config&              get_rrc_ue_secutity_config() override { return context.sec_cfg; }
 
@@ -91,6 +93,9 @@ private:
 
   // initializes the security context and triggers the SMC procedure
   async_task<bool> handle_init_security_context(const rrc_init_security_context& sec_ctx) override;
+
+  // triggers a RRC UE Capability transfer
+  async_task<bool> handle_rrc_ue_capability_transfer() override;
 
   // Helper to create PDU from RRC message
   template <class T>

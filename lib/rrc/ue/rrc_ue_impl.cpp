@@ -85,6 +85,12 @@ async_task<bool> rrc_ue_impl::handle_init_security_context(const rrc_init_securi
   return launch_async<rrc_security_mode_command_procedure>(context, sec_ctx, *this, *event_mng, logger);
 }
 
+async_task<bool> rrc_ue_impl::handle_rrc_ue_capability_transfer()
+{
+  //  Launch RRC UE capability transfer procedure
+  return launch_async<rrc_ue_capability_transfer_procedure>(context, *this, *event_mng, logger);
+}
+
 template <class T>
 void rrc_ue_impl::log_rrc_message(const char*       source,
                                   const direction_t dir,
