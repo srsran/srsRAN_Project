@@ -10,9 +10,14 @@
 
 #include "ldpc_encoder_neon.h"
 #include "neon_support.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;
+
+/// Maximum number of NEON vectors needed to represent a BG node.
+static constexpr unsigned MAX_NODE_SIZE_NEON = divide_ceil(ldpc::MAX_LIFTING_SIZE, NEON_SIZE_BYTE);
 
 // Recursively selects the proper strategy for the high-rate region by successively decreasing the value of the template
 // parameter.
@@ -123,30 +128,41 @@ void ldpc_encoder_neon::select_strategy()
 
 void ldpc_encoder_neon::load_input(span<const uint8_t> in)
 {
-  unsigned i_input        = 0;
-  unsigned i_neon         = 0;
   unsigned node_size_byte = node_size_neon * NEON_SIZE_BYTE;
   unsigned tail_bytes     = node_size_byte - lifting_size;
+
+  // Set state variables depending on the codeblock length.
+  codeblock_used_size = codeblock_length / lifting_size * node_size_neon;
+  auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_neon;
+
+  span<uint8_t>       codeblock(codeblock_buffer);
+  span<const uint8_t> in_tmp = in;
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
-    std::memcpy(codeblock.data_at(i_neon), in.data() + i_input, lifting_size);
-    std::memset(codeblock.data_at(i_neon, lifting_size), 0, tail_bytes);
-    i_neon += node_size_neon;
-    i_input += lifting_size;
+    srsvec::copy(codeblock.first(lifting_size), in_tmp.first(lifting_size));
+    codeblock = codeblock.last(codeblock.size() - lifting_size);
+    in_tmp    = in_tmp.last(in_tmp.size() - lifting_size);
+
+    srsvec::zero(codeblock.first(tail_bytes));
+    codeblock = codeblock.last(codeblock.size() - tail_bytes);
   }
 }
 
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_NEON_PH>
 void ldpc_encoder_neon::systematic_bits_inner()
 {
-  // Resize auxiliary buffer.
-  auxiliary_used_size = (codeblock_length / lifting_size - BG_K_PH) * NODE_SIZE_NEON_PH;
+  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  std::memset(auxiliary.data_at(0), 0, auxiliary_used_size * NEON_SIZE_BYTE);
+  neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
+
+  span<uint8_t> aux_tmp(auxiliary_buffer);
+  srsvec::zero(aux_tmp.first(auxiliary_used_size * NEON_SIZE_BYTE));
 
   // For each BG information node...
   for (unsigned k = 0, i_blk = 0; k != BG_K_PH; ++k, i_blk += NODE_SIZE_NEON_PH) {
     // and for each BG check node...
-    for (unsigned m = 0, i_aux = 0; m != BG_M_PH; ++m) {
+    for (unsigned m = 0, i_aux = 0; (m != BG_M_PH) && (i_aux != auxiliary_used_size); ++m) {
       unsigned node_shift = current_graph->get_lifted_node(m, k);
       if (node_shift == NO_EDGE) {
         i_aux += NODE_SIZE_NEON_PH;
@@ -171,6 +187,12 @@ void ldpc_encoder_neon::high_rate_bg1_i6_inner()
   unsigned skip3         = (bg_K + 3) * NODE_SIZE_NEON_PH;
   unsigned node_size_x_2 = 2 * NODE_SIZE_NEON_PH;
   unsigned node_size_x_3 = 3 * NODE_SIZE_NEON_PH;
+
+  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
   // First chunk of parity bits.
   for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
@@ -204,6 +226,12 @@ void ldpc_encoder_neon::high_rate_bg1_other_inner()
   unsigned node_size_x_2 = 2 * NODE_SIZE_NEON_PH;
   unsigned node_size_x_3 = 3 * NODE_SIZE_NEON_PH;
 
+  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
+
   // First chunk of parity bits.
   for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
     int8x16_t block0 = veorq_s8(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_NEON_PH + j));
@@ -235,6 +263,12 @@ void ldpc_encoder_neon::high_rate_bg2_i3_7_inner()
   unsigned skip3         = (bg_K + 3) * NODE_SIZE_NEON_PH;
   unsigned node_size_x_2 = 2 * NODE_SIZE_NEON_PH;
   unsigned node_size_x_3 = 3 * NODE_SIZE_NEON_PH;
+
+  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
   // First chunk of parity bits.
   for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
@@ -268,6 +302,12 @@ void ldpc_encoder_neon::high_rate_bg2_other_inner()
   unsigned node_size_x_2 = 2 * NODE_SIZE_NEON_PH;
   unsigned node_size_x_3 = 3 * NODE_SIZE_NEON_PH;
 
+  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
+
   // First chunk of parity bits.
   for (unsigned j = 0; j != NODE_SIZE_NEON_PH; ++j) {
     int8x16_t rotated_j = veorq_s8(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_NEON_PH + j));
@@ -296,6 +336,12 @@ void ldpc_encoder_neon::ext_region_inner()
   // We only compute the variable nodes needed to fill the codeword.
   // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
   unsigned nof_layers = codeblock_length / lifting_size - bg_K;
+
+  neon::neon_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  neon::neon_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  neon::neon_span rotated_node(rotated_node_buffer, NODE_SIZE_NEON_PH);
 
   // Encode the extended region.
   unsigned skip     = (bg_K + 4) * NODE_SIZE_NEON_PH;
@@ -329,15 +375,17 @@ void ldpc_encoder_neon::write_codeblock(span<uint8_t> out)
   unsigned nof_nodes = codeblock_length / lifting_size;
 
   // The first two blocks are shortened and the last node is not considered, since it can be incomplete.
-  unsigned i_out = 0;
-  unsigned i_in  = 2 * node_size_neon;
+  unsigned            node_size_byte = node_size_neon * NEON_SIZE_BYTE;
+  span<uint8_t>       out_tmp        = out;
+  span<const uint8_t> codeblock(codeblock_buffer);
+  codeblock = codeblock.last(codeblock.size() - 2 * node_size_byte);
   for (unsigned i_node = 2, max_i_node = nof_nodes - 1; i_node != max_i_node; ++i_node) {
-    std::memcpy(out.data() + i_out, codeblock.data_at(i_in), lifting_size);
-    i_out += lifting_size;
-    i_in += node_size_neon;
+    srsvec::copy(out_tmp.first(lifting_size), codeblock.first(lifting_size));
+    out_tmp   = out_tmp.last(out_tmp.size() - lifting_size);
+    codeblock = codeblock.last(codeblock.size() - node_size_byte);
   }
 
   // Take care of the last node.
-  unsigned remainder = out.size() - i_out;
-  std::memcpy(out.data() + i_out, codeblock.data_at(i_in), remainder);
+  unsigned remainder = out_tmp.size();
+  srsvec::copy(out_tmp, codeblock.first(remainder));
 }

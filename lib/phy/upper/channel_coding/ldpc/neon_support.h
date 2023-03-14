@@ -23,88 +23,17 @@ namespace srsran {
 constexpr unsigned NEON_SIZE_BYTE = 16;
 
 namespace neon {
-
-/// \brief Mimics an array of NEON registers.
-/// \tparam nof_elements The number of NEON registers in the array.
-template <size_t nof_elements>
-class neon_array
-{
-public:
-  /// Default constructor.
-  neon_array() = default;
-
-  /// Returns a pointer to the \c pos NEON register inside the array.
-  int8x16_t* data_at(unsigned pos)
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return reinterpret_cast<int8x16_t*>(inner_array.data() + pos * NEON_SIZE_BYTE);
-  }
-
-  /// Returns a read-only pointer to the \c pos NEON register inside the array.
-  const int8x16_t* data_at(unsigned pos) const
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return reinterpret_cast<int8x16_t*>(inner_array.data() + pos * NEON_SIZE_BYTE);
-  }
-
-  /// Returns a pointer to the byte at position <tt>pos * NEON_SIZE_BYTE + byte</tt> inside the array.
-  int8_t* data_at(unsigned pos, unsigned byte)
-  {
-    unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsran_assert(index < nof_elements * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (inner_array.data() + index);
-  }
-
-  /// Returns a read-only pointer to the \c pos NEON register inside the array.
-  const int8_t* data_at(unsigned pos, unsigned byte) const
-  {
-    unsigned index = pos * NEON_SIZE_BYTE + byte;
-    srsran_assert(index < nof_elements * NEON_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
-    return (inner_array.data() + index);
-  }
-
-  /// Sets the \c pos NEON register to \c val.
-  void set_at(unsigned pos, int8x16_t val)
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    vst1q_s8(inner_array.data() + pos * NEON_SIZE_BYTE, val);
-  }
-
-  /// Gets the value stored in the \c pos NEON register.
-  int8x16_t get_at(unsigned pos) const
-  {
-    srsran_assert(pos < nof_elements, "Index {} out of bound.", pos);
-    return vld1q_s8(inner_array.data() + pos * NEON_SIZE_BYTE);
-  }
-
-private:
-  /// Actual array where the NEON registers are stored.
-  alignas(NEON_SIZE_BYTE) std::array<int8_t, nof_elements * NEON_SIZE_BYTE> inner_array;
-};
-
 /// \brief Mimics a span of NEON registers.
 class neon_span
 {
 public:
-  /// \brief Constructs a span from an \ref neon_array.
+  /// \brief Constructs a span from a standard array.
   ///
-  /// \tparam N     Array length.
-  /// \param arr    Array the span is a view of.
-  /// \param offset First element of the array (a NEON register) viewed by the span.
-  /// \param length Length of the span.
-  template <size_t N>
-  neon_span(neon_array<N>& arr, unsigned offset, unsigned length) :
-    array_ptr(arr.data_at(offset, 0)), view_length(length)
-  {
-    srsran_assert(offset + view_length <= N, "Cannot take a span longer than the array.");
-  }
-
-  /// \brief Implicitly constructs a span that is a view over an entire \ref neon_array.
-  template <size_t N>
-  neon_span(neon_array<N>& arr) : neon_span(arr, 0, N)
-  {
-  }
-
+  /// \tparam IntType    Type of the standard array - must be an integer type of 8 bits.
+  /// \tparam N          Number of elements of the standard array.
+  /// \param[in] arr     Array the span is a view of.
+  /// \param[in] offset  Offset from the beginning of the array (as a number of NEON registers).
+  /// \param[in] length  Number of elements spanned by the view (as a number of NEON registers).
   template <typename IntType, size_t N>
   neon_span(std::array<IntType, N>& arr, size_t offset, size_t length) :
     array_ptr(reinterpret_cast<int8_t*>(arr.data()) + offset * NEON_SIZE_BYTE), view_length(length)
@@ -115,11 +44,22 @@ public:
                   "Cannot create a neon_span longer than the original array.");
   }
 
+  /// \brief Constructs a span from a standard array.
+  ///
+  /// \tparam IntType    Type of the standard array - must be an integer type of 8 bits.
+  /// \tparam N          Number of elements of the standard array.
+  /// \param[in] arr     Array the span is a view of.
+  /// \param[in] length  Number of elements spanned by the view (as a number of NEON registers).
   template <typename IntType, size_t N>
   neon_span(std::array<IntType, N>& arr, size_t length) : neon_span(arr, 0, length)
   {
   }
 
+  /// \brief Constructs an \c avx_span from a \c srsran::span.
+  ///
+  /// \tparam IntType   Type of the span - must be an integer type of 8 bits.
+  /// \param[in] sp     Original span.
+  /// \param[in] length Number of elements viewed by the \c neon_span (as a number of NEON registers).
   template <typename IntType>
   neon_span(span<IntType> sp, size_t length) : array_ptr(reinterpret_cast<int8_t*>(sp.data())), view_length(length)
   {
@@ -161,7 +101,7 @@ public:
   }
 
   // Unfortunately, we can't work with the array subscript operator [] since there seems to be no easy way to access a
-  // avxType object by reference.
+  // int8x16_t object by reference.
 
   /// Sets the \c pos NEON register to \c val.
   void set_at(unsigned pos, int8x16_t val)

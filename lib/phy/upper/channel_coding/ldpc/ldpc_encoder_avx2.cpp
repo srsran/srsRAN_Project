@@ -10,9 +10,14 @@
 
 #include "ldpc_encoder_avx2.h"
 #include "avx2_support.h"
+#include "srsran/srsvec/copy.h"
+#include "srsran/srsvec/zero.h"
 
 using namespace srsran;
 using namespace srsran::ldpc;
+
+/// Maximum number of AVX2 vectors needed to represent a BG node.
+static constexpr unsigned MAX_NODE_SIZE_AVX2 = divide_ceil(ldpc::MAX_LIFTING_SIZE, AVX2_SIZE_BYTE);
 
 // Recursively selects the proper strategy for the high-rate region by successively decreasing the value of the template
 // parameter.
@@ -123,32 +128,36 @@ void ldpc_encoder_avx2::select_strategy()
 
 void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
 {
-  unsigned i_input        = 0;
-  unsigned i_avx2         = 0;
   unsigned node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
   unsigned tail_bytes     = node_size_byte - lifting_size;
 
-  unsigned codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
-  codeblock                    = mm256::avx2_span(codeblock_buffer, codeblock_used_size);
+  // Set state variables depending on the codeblock length.
+  codeblock_used_size = codeblock_length / lifting_size * node_size_avx2;
+  auxiliary_used_size = (codeblock_length / lifting_size - bg_K) * node_size_avx2;
+
+  span<uint8_t>       codeblock(codeblock_buffer);
+  span<const uint8_t> in_tmp = in;
   for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
-    std::memcpy(codeblock.data_at(i_avx2), in.data() + i_input, lifting_size);
-    std::memset(codeblock.data_at(i_avx2, lifting_size), 0, tail_bytes);
-    i_avx2 += node_size_avx2;
-    i_input += lifting_size;
+    srsvec::copy(codeblock.first(lifting_size), in_tmp.first(lifting_size));
+    codeblock = codeblock.last(codeblock.size() - lifting_size);
+    in_tmp    = in_tmp.last(in_tmp.size() - lifting_size);
+
+    srsvec::zero(codeblock.first(tail_bytes));
+    codeblock = codeblock.last(codeblock.size() - tail_bytes);
   }
 }
 
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_AVX2_PH>
 void ldpc_encoder_avx2::systematic_bits_inner()
 {
-  // Resize auxiliary buffers.
-  unsigned auxiliary_used_size = (codeblock_length / lifting_size - BG_K_PH) * NODE_SIZE_AVX2_PH;
+  mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  auxiliary = mm256::avx2_span(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
-  rotated_node = mm256::avx2_span(rotated_node_buffer, NODE_SIZE_AVX2_PH);
+  mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
-  std::memset(auxiliary.data_at(0), 0, auxiliary_used_size * AVX2_SIZE_BYTE);
+  span<uint8_t> aux_tmp(auxiliary_buffer);
+  srsvec::zero(aux_tmp.first(auxiliary_used_size * AVX2_SIZE_BYTE));
 
   // For each BG information node...
   for (unsigned k = 0, i_blk = 0; k != BG_K_PH; ++k, i_blk += NODE_SIZE_AVX2_PH) {
@@ -178,6 +187,12 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_inner()
   unsigned skip3         = (bg_K + 3) * NODE_SIZE_AVX2_PH;
   unsigned node_size_x_2 = 2 * NODE_SIZE_AVX2_PH;
   unsigned node_size_x_3 = 3 * NODE_SIZE_AVX2_PH;
+
+  mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
   // First chunk of parity bits.
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
@@ -211,6 +226,12 @@ void ldpc_encoder_avx2::high_rate_bg1_other_inner()
   unsigned node_size_x_2 = 2 * NODE_SIZE_AVX2_PH;
   unsigned node_size_x_3 = 3 * NODE_SIZE_AVX2_PH;
 
+  mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
+
   // First chunk of parity bits.
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i block0 = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_AVX2_PH + j));
@@ -242,6 +263,12 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_inner()
   unsigned skip3         = (bg_K + 3) * NODE_SIZE_AVX2_PH;
   unsigned node_size_x_2 = 2 * NODE_SIZE_AVX2_PH;
   unsigned node_size_x_3 = 3 * NODE_SIZE_AVX2_PH;
+
+  mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
   // First chunk of parity bits.
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
@@ -275,6 +302,12 @@ void ldpc_encoder_avx2::high_rate_bg2_other_inner()
   unsigned node_size_x_2 = 2 * NODE_SIZE_AVX2_PH;
   unsigned node_size_x_3 = 3 * NODE_SIZE_AVX2_PH;
 
+  mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
+
   // First chunk of parity bits.
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i rotated_j = _mm256_xor_si256(auxiliary.get_at(j), auxiliary.get_at(NODE_SIZE_AVX2_PH + j));
@@ -303,6 +336,12 @@ void ldpc_encoder_avx2::ext_region_inner()
   // We only compute the variable nodes needed to fill the codeword.
   // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
   unsigned nof_layers = codeblock_length / lifting_size - bg_K;
+
+  mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
+
+  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+
+  mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
   // Encode the extended region.
   unsigned skip     = (bg_K + 4) * NODE_SIZE_AVX2_PH;
@@ -336,15 +375,17 @@ void ldpc_encoder_avx2::write_codeblock(span<uint8_t> out)
   unsigned nof_nodes = codeblock_length / lifting_size;
 
   // The first two blocks are shortened and the last node is not considered, since it can be incomplete.
-  unsigned i_out = 0;
-  unsigned i_in  = 2 * node_size_avx2;
+  unsigned            node_size_byte = node_size_avx2 * AVX2_SIZE_BYTE;
+  span<uint8_t>       out_tmp        = out;
+  span<const uint8_t> codeblock(codeblock_buffer);
+  codeblock = codeblock.last(codeblock.size() - 2 * node_size_byte);
   for (unsigned i_node = 2, max_i_node = nof_nodes - 1; i_node != max_i_node; ++i_node) {
-    std::memcpy(out.data() + i_out, codeblock.data_at(i_in), lifting_size);
-    i_out += lifting_size;
-    i_in += node_size_avx2;
+    srsvec::copy(out_tmp.first(lifting_size), codeblock.first(lifting_size));
+    out_tmp   = out_tmp.last(out_tmp.size() - lifting_size);
+    codeblock = codeblock.last(codeblock.size() - node_size_byte);
   }
 
   // Take care of the last node.
-  unsigned remainder = out.size() - i_out;
-  std::memcpy(out.data() + i_out, codeblock.data_at(i_in), remainder);
+  unsigned remainder = out_tmp.size();
+  srsvec::copy(out_tmp, codeblock.first(remainder));
 }

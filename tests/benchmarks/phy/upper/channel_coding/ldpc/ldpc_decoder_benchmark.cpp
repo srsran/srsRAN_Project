@@ -30,7 +30,7 @@ static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
-  fmt::print("\t-T Encoder type generic, avx2 or avx512 [Default {}]\n", dec_type);
+  fmt::print("\t-T Encoder type generic, avx2, avx512 or neon [Default {}]\n", dec_type);
   fmt::print("\t-I Number of min-sum iterations [Default {}]\n", nof_iterations);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-C Toggle early stopping with CRC [Default {}]\n", use_crc);

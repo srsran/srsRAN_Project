@@ -84,6 +84,10 @@ public:
   }
 
   /// \brief Constructs an \c avx_span from a \c srsran::span.
+  ///
+  /// \tparam IntType   Type of the span - must be an integer type of 8 bits.
+  /// \param[in] sp     Original span.
+  /// \param[in] length Number of elements viewed by the \c avx_span (as a number of AVX registers).
   template <typename IntType>
   avx_span(span<IntType> sp, size_t length) : array_ptr(reinterpret_cast<int8_t*>(sp.data())), view_length(length)
   {
