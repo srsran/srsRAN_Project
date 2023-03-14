@@ -589,25 +589,13 @@ csi_report_config srsran::config_helpers::make_default_csi_report_config(const c
       csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0), .pucch_res_id = 9});
   cfg.report_cfg_type = report_cfg_type;
 
-  cfg.report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_pmi_cqi;
+  cfg.report_qty_type = csi_report_config::report_quantity_type_t::cri_ri_cqi;
+  cfg.non_pmi_port_indication.push_back(csi_report_config::port_index_for_8_ranks{
+      .port_index_type = srsran::csi_report_config::port_index_for_8_ranks::port_index_type_t::port_index_1});
 
   cfg.report_freq_cfg.emplace();
   cfg.report_freq_cfg.value().cqi_format_ind = csi_report_config::cqi_format_indicator::wideband_cqi;
   cfg.report_freq_cfg.value().pmi_format_ind = csi_report_config::pmi_format_indicator::wideband_pmi;
-
-  cfg.codebook_cfg.emplace();
-  auto ant_restriction = codebook_config::type1::single_panel::two_antenna_ports_two_tx_codebook_subset_restriction(6);
-  // '111111'B.
-  ant_restriction.from_uint64(0x3f);
-  codebook_config::type1::single_panel sub_type{};
-  sub_type.nof_antenna_ports = ant_restriction;
-  // '03'H.
-  sub_type.typei_single_panel_ri_restriction.resize(8);
-  sub_type.typei_single_panel_ri_restriction.from_uint64(0x03);
-  codebook_config::type1 type1{};
-  type1.sub_type                         = sub_type;
-  type1.codebook_mode                    = 1;
-  cfg.codebook_cfg.value().codebook_type = type1;
 
   cfg.is_group_based_beam_reporting_enabled = false;
   cfg.cqi_table.emplace(csi_report_config::cqi_table_t::table1);
