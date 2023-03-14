@@ -97,11 +97,9 @@ public:
   ngap_rrc_ue_adapter() = default;
 
   void connect_rrc_ue(rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler_,
-                      rrc_ue_control_message_handler*       rrc_ue_ctrl_handler_,
                       rrc_ue_init_security_context_handler* rrc_ue_security_handler_)
   {
     rrc_ue_msg_handler      = rrc_ue_msg_handler_;
-    rrc_ue_ctrl_handler     = rrc_ue_ctrl_handler_;
     rrc_ue_security_handler = rrc_ue_security_handler_;
   }
 
@@ -133,7 +131,6 @@ public:
 
 private:
   rrc_ue_dl_nas_message_handler*        rrc_ue_msg_handler      = nullptr;
-  rrc_ue_control_message_handler*       rrc_ue_ctrl_handler     = nullptr;
   rrc_ue_init_security_context_handler* rrc_ue_security_handler = nullptr;
   srslog::basic_logger&                 logger                  = srslog::fetch_basic_logger("NGAP");
 };
