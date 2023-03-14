@@ -10,8 +10,8 @@
 
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "crc_calculator_lut_impl.h"
-#include "ldpc/ldpc_decoder_impl.h"
-#include "ldpc/ldpc_encoder_impl.h"
+#include "ldpc/ldpc_decoder_generic.h"
+#include "ldpc/ldpc_encoder_generic.h"
 #include "ldpc/ldpc_rate_dematcher_impl.h"
 #include "ldpc/ldpc_rate_matcher_impl.h"
 #include "ldpc/ldpc_segmenter_impl.h"

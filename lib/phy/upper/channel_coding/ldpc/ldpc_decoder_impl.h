@@ -9,13 +9,12 @@
  */
 
 /// \file
-/// \brief LDPC decoder declaration.
+/// \brief LDPC decoder declaration - algorithm template.
 
 #pragma once
 
 #include "ldpc_graph_impl.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
-#include "srsran/support/error_handling.h"
 
 namespace srsran {
 namespace ldpc {
@@ -200,44 +199,6 @@ private:
 
   /// Initialization flags of check-to-variable messages: true if initialized.
   std::array<bool, ldpc::MAX_BG_M> is_check_to_var_initialised = {};
-};
-
-/// Generic LDPC decoder implementation without any optimization.
-class ldpc_decoder_generic : public ldpc_decoder_impl
-{
-  // See above for the documentation.
-  void specific_init() override { node_size_byte = lifting_size; }
-
-  void get_hard_bits(bit_buffer& out) override;
-
-  void compute_var_to_check_msgs(span<log_likelihood_ratio> this_var_to_check,
-                                 span<log_likelihood_ratio> this_soft_bits,
-                                 span<log_likelihood_ratio> this_check_to_var) override;
-
-  void compute_soft_bits(span<log_likelihood_ratio> this_soft_bits,
-                         span<log_likelihood_ratio> this_var_to_check,
-                         span<log_likelihood_ratio> this_check_to_var) override;
-
-  span<log_likelihood_ratio> get_rotated_node(unsigned var_node) override;
-
-  void analyze_var_to_check_msgs(span<log_likelihood_ratio> min_var_to_check,
-                                 span<log_likelihood_ratio> second_min_var_to_check,
-                                 span<uint8_t>              min_var_to_check_index,
-                                 span<uint8_t>              sign_prod_var_to_check,
-                                 span<log_likelihood_ratio> rotated_node,
-                                 span<log_likelihood_ratio> this_var_to_check,
-                                 unsigned                   shift,
-                                 unsigned                   var_node) override;
-
-  void compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
-                                 span<log_likelihood_ratio> this_var_to_check,
-                                 span<log_likelihood_ratio> rotated_node,
-                                 span<log_likelihood_ratio> min_var_to_check,
-                                 span<log_likelihood_ratio> second_min_var_to_check,
-                                 span<uint8_t>              min_var_to_check_index,
-                                 span<uint8_t>              sign_prod_var_to_check,
-                                 unsigned                   shift,
-                                 unsigned                   var_node) override;
 };
 
 } // namespace srsran
