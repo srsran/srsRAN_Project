@@ -122,7 +122,7 @@ uint32_t f1c_other_srb_du_bearer::get_srb_pdcp_sn(const byte_buffer& buf)
 
   // Extract PDCP SN (SRBs are always 12bits)
   uint32_t sn = {};
-  sn          = (*buf_it & 0x0fU) << 8U; // first 4 bits SN
+  sn          = (*buf_it & 0x0fU) << 8U; // first 4 bits SN (R bits are dropped)
   ++buf_it;
   sn |= (*buf_it & 0xffU); // last 8 bits SN
   ++buf_it;
