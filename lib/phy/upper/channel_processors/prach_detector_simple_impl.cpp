@@ -39,7 +39,7 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
   unsigned sequence_length_upper = preamble_info.sequence_length - sequence_length_lower;
 
   // Derive time domain sampling rate in Hz.
-  unsigned sampling_rate_Hz = preamble_info.scs.to_Hz() * idft->get_size();
+  unsigned sampling_rate_Hz = ra_scs_to_Hz(preamble_info.scs) * idft->get_size();
 
   // Get cyclic shift.
   unsigned N_cs = prach_cyclic_shifts_get(preamble_info.scs, config.restricted_set, config.zero_correlation_zone);

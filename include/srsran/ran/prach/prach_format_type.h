@@ -1,0 +1,107 @@
+/*
+ *
+ * Copyright 2021-2023 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+#include "srsran/support/srsran_assert.h"
+
+namespace srsran {
+
+/// \brief PRACH preamble formats.
+///
+/// PRACH preamble formats are described in TS38.211 Table 6.3.3.1-1 and 6.3.3.1-2.
+enum class prach_format_type : uint8_t {
+  zero = 0,
+  one,
+  two,
+  three,
+  A1,
+  A2,
+  A3,
+  B1,
+  B4,
+  C0,
+  C2,
+  A1_B1,
+  A2_B2,
+  A3_B3,
+  invalid
+};
+
+inline constexpr const char* to_string(prach_format_type format)
+{
+  switch (format) {
+    case prach_format_type::zero:
+      return "0";
+    case prach_format_type::one:
+      return "1";
+    case prach_format_type::two:
+      return "2";
+    case prach_format_type::three:
+      return "3";
+    case prach_format_type::A1:
+      return "A1";
+    case prach_format_type::A1_B1:
+      return "A1/B1";
+    case prach_format_type::A2:
+      return "A2";
+    case prach_format_type::A2_B2:
+      return "A2/B2";
+    case prach_format_type::A3:
+      return "A3";
+    case prach_format_type::A3_B3:
+      return "A3/B3";
+    case prach_format_type::B1:
+      return "B1";
+    case prach_format_type::B4:
+      return "B4";
+    case prach_format_type::C0:
+      return "C0";
+    case prach_format_type::C2:
+      return "C2";
+    default:
+      srsran_assert(0, "Invalid PRACH format={}", format);
+      break;
+  }
+  return "";
+}
+
+inline prach_format_type to_prach_format_type(const char* string)
+{
+  using int_type = std::underlying_type_t<prach_format_type>;
+  for (int_type i_format     = static_cast<int_type>(prach_format_type::zero),
+                i_format_end = static_cast<int_type>(prach_format_type::invalid);
+       i_format != i_format_end;
+       ++i_format) {
+    prach_format_type format = static_cast<prach_format_type>(i_format);
+    if (strcmp(string, to_string(format)) == 0) {
+      return format;
+    }
+  }
+
+  return prach_format_type::invalid;
+}
+
+/// \brief Checks if the preamble format is long.
+///
+/// Long preambles are listed in TS38.211 Table 6.3.3.1-1.
+constexpr bool is_long_preamble(prach_format_type type)
+{
+  return (type <= prach_format_type::three);
+}
+
+/// \brief Checks if the preamble format is short.
+///
+/// Short preambles are listed in TS38.211 Table 6.3.3.1-2.
+constexpr bool is_short_preamble(prach_format_type type)
+{
+  return (type < prach_format_type::invalid) && (type >= prach_format_type::A1);
+}
+
+} // namespace srsran

@@ -285,13 +285,13 @@ static fapi::prach_config generate_prach_config_tlv(const std::vector<du_cell_co
   fapi::prach_config config     = {};
   config.prach_res_config_index = 0;
   config.prach_sequence_length  = fapi::prach_sequence_length_type::long_sequence;
-  config.prach_scs              = prach_subcarrier_spacing::values::kHz1_25;
+  config.prach_scs              = prach_subcarrier_spacing::kHz1_25;
   config.prach_ul_bwp_pusch_scs = cell.scs_common;
   config.restricted_set         = restricted_set_config::UNRESTRICTED;
   config.num_prach_fd_occasions = cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_fdm;
   config.prach_config_index =
       cell.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.prach_config_index;
-  config.prach_format           = fapi::prach_format_type::zero;
+  config.prach_format           = prach_format_type::zero;
   config.num_prach_td_occasions = 1;
   config.num_preambles          = 1;
   config.start_preamble_index   = 0;

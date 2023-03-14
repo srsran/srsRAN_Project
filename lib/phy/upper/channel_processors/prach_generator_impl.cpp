@@ -199,7 +199,7 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
 
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)
 {
-  srsran_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
+  srsran_assert(is_long_preamble(config.format), "Short preambles are not implemented.");
   srsran_assert(config.restricted_set == restricted_set_config::UNRESTRICTED, "Unrestricted sets are not implemented.");
   prach_preamble_information info = get_prach_preamble_long_info(config.format);
 

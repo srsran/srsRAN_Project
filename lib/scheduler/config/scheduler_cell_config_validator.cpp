@@ -42,7 +42,7 @@ static error_type<std::string> validate_rach_cfg_common(const sched_cell_configu
       prach_configuration_get(frequency_range::FR1,
                               msg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD,
                               rach_cfg_cmn.rach_cfg_generic.prach_config_index);
-  VERIFY(prach_cfg.format.is_long_preamble(), "Short PRACH preamble formats not supported");
+  VERIFY(is_long_preamble(prach_cfg.format), "Short PRACH preamble formats not supported");
 
   subcarrier_spacing           pusch_scs           = msg.ul_cfg_common.init_ul_bwp.generic_params.scs;
   prach_symbols_slots_duration prach_duration_info = get_prach_duration_info(prach_cfg, pusch_scs);

@@ -125,7 +125,7 @@ TEST_P(prach_processor_test, sector_unmatch)
   context.port         = 0;
   context.slot         = TEST_SLOT_END;
   context.start_symbol = 0;
-  context.format       = preamble_format::FORMAT0;
+  context.format       = prach_format_type::zero;
   context.rb_offset    = 0;
   context.pusch_scs    = subcarrier_spacing::kHz15;
 
@@ -166,7 +166,7 @@ TEST_P(prach_processor_test, detect_late)
   context.port         = 0;
   context.slot         = TEST_SLOT_BEGIN;
   context.start_symbol = 0;
-  context.format       = preamble_format::FORMAT0;
+  context.format       = prach_format_type::zero;
   context.rb_offset    = 0;
   context.pusch_scs    = subcarrier_spacing::kHz15;
 
@@ -219,7 +219,7 @@ TEST_P(prach_processor_test, detect_unmatch_sector_late)
   context.port         = 0;
   context.slot         = TEST_SLOT_BEGIN;
   context.start_symbol = 0;
-  context.format       = preamble_format::FORMAT0;
+  context.format       = prach_format_type::zero;
   context.rb_offset    = 0;
   context.pusch_scs    = subcarrier_spacing::kHz15;
 
@@ -274,7 +274,7 @@ TEST_P(prach_processor_test, overflow)
     context.port         = 0;
     context.slot         = TEST_SLOT_BEGIN;
     context.start_symbol = 0;
-    context.format       = preamble_format::FORMAT0;
+    context.format       = prach_format_type::zero;
     context.rb_offset    = 0;
     context.pusch_scs    = subcarrier_spacing::kHz15;
 
@@ -295,7 +295,7 @@ TEST_P(prach_processor_test, overflow)
     context.port         = 0;
     context.slot         = TEST_SLOT_BEGIN;
     context.start_symbol = 0;
-    context.format       = preamble_format::FORMAT0;
+    context.format       = prach_format_type::zero;
     context.rb_offset    = 0;
     context.pusch_scs    = subcarrier_spacing::kHz15;
 
@@ -326,7 +326,7 @@ TEST_P(prach_processor_test, single_baseband_symbol)
   context.port            = 3;
   context.slot            = TEST_SLOT_BEGIN;
   context.start_symbol    = 1;
-  context.format          = preamble_format::FORMAT0;
+  context.format          = prach_format_type::zero;
   context.rb_offset       = 123;
   context.nof_prb_ul_grid = 52;
   context.pusch_scs       = subcarrier_spacing::kHz30;
@@ -406,7 +406,7 @@ TEST_P(prach_processor_test, three_baseband_symbol)
   context.port            = 3;
   context.slot            = TEST_SLOT_BEGIN;
   context.start_symbol    = 1;
-  context.format          = preamble_format::FORMAT0;
+  context.format          = prach_format_type::zero;
   context.rb_offset       = 123;
   context.nof_prb_ul_grid = 52;
   context.pusch_scs       = subcarrier_spacing::kHz30;

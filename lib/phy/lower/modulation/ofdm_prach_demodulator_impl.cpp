@@ -20,9 +20,10 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
                                              span<const cf_t>                             input,
                                              const ofdm_prach_demodulator::configuration& config)
 {
-  srsran_assert(config.format.is_long_preamble(), "Only PRACH long preamble formats are implemented.");
-
-  prach_preamble_information          preamble_info = get_prach_preamble_long_info(config.format);
+  prach_preamble_information preamble_info =
+      is_long_preamble(config.format)
+          ? get_prach_preamble_long_info(config.format)
+          : get_prach_preamble_short_info(config.format, to_ra_subcarrier_spacing(config.pusch_scs));
   prach_frequency_mapping_information freq_mapping_info =
       prach_frequency_mapping_get(preamble_info.scs, config.pusch_scs);
   srsran_assert(freq_mapping_info.nof_rb_ra != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.nof_rb_ra,
@@ -31,7 +32,7 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
                 "The PRACH and PUSCH subcarrier spacing combination resulted in a reserved configuration.");
 
   dft_processor& dft              = (preamble_info.scs == prach_subcarrier_spacing::kHz1_25) ? *dft_1_25kHz : *dft_5kHz;
-  unsigned       prach_scs_Hz     = preamble_info.scs.to_Hz();
+  unsigned       prach_scs_Hz     = ra_scs_to_Hz(preamble_info.scs);
   unsigned       pusch_scs_Hz     = scs_to_khz(config.pusch_scs) * 1000;
   unsigned       ofdm_symbol_len  = dft.get_size();
   unsigned       sampling_rate_Hz = ofdm_symbol_len * prach_scs_Hz;

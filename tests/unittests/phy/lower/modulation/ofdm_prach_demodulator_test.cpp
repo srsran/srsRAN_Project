@@ -58,8 +58,13 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
 {
   const test_case_t& test_case = GetParam();
 
+  // Short preambles are not implemented.
+  if (is_short_preamble(test_case.context.config.format)) {
+    GTEST_SKIP();
+  }
+
   std::unique_ptr<prach_buffer> output =
-      test_case.context.config.format.is_long_preamble() ? create_prach_buffer_long() : create_prach_buffer_short();
+      is_long_preamble(test_case.context.config.format) ? create_prach_buffer_long() : create_prach_buffer_short();
   unsigned sequence_length = output->get_sequence_length();
 
   std::vector<cf_t> input           = test_case.input.read();
@@ -72,9 +77,9 @@ TEST_P(ofdm_prach_demodulator_tester, vector)
   demodulator->demodulate(*output, input, GetParam().context.config);
 
   // Calculate amplitude correction.
-  prach_preamble_information preamble_info  = get_prach_preamble_long_info(test_case.context.config.format);
-  unsigned                   dft_size_prach = test_case.context.dft_size_15kHz * (15000 / preamble_info.scs.to_Hz());
-  unsigned                   dft_size_pusch =
+  prach_preamble_information preamble_info = get_prach_preamble_long_info(test_case.context.config.format);
+  unsigned dft_size_prach = test_case.context.dft_size_15kHz * (15000 / ra_scs_to_Hz(preamble_info.scs));
+  unsigned dft_size_pusch =
       test_case.context.dft_size_15kHz / pow2(to_numerology_value(test_case.context.config.pusch_scs));
   float scaling = std::sqrt(static_cast<float>(sequence_length * dft_size_pusch) / static_cast<float>(dft_size_prach));
 

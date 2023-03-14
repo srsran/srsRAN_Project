@@ -14,25 +14,6 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-static preamble_format convert_fapi_format_to_phy(fapi::prach_format_type format)
-{
-  switch (format) {
-    case fapi::prach_format_type::zero:
-      return preamble_format::values::FORMAT0;
-    case fapi::prach_format_type::one:
-      return preamble_format::values::FORMAT1;
-    case fapi::prach_format_type::two:
-      return preamble_format::values::FORMAT2;
-    case fapi::prach_format_type::three:
-      return preamble_format::values::FORMAT3;
-    default:
-      srsran_assert(0, "Invalid PRACH format type ({})", static_cast<unsigned>(format));
-      break;
-  }
-
-  return preamble_format::values::FORMAT1;
-}
-
 void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&       context,
                                                      const fapi::ul_prach_pdu&   fapi_pdu,
                                                      const fapi::prach_config&   prach_cfg,
@@ -50,7 +31,7 @@ void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
 
   context.slot                 = slot_point(prach_cfg.prach_ul_bwp_pusch_scs, sfn, slot);
   context.sector               = sector_id;
-  context.format               = convert_fapi_format_to_phy(fapi_pdu.prach_format);
+  context.format               = fapi_pdu.prach_format;
   context.start_symbol         = fapi_pdu.prach_start_symbol;
   context.start_preamble_index = fapi_pdu.maintenance_v3.start_preamble_index;
   context.nof_preamble_indices = fapi_pdu.maintenance_v3.num_preamble_indices;

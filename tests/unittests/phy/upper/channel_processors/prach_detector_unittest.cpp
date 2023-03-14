@@ -13,6 +13,7 @@
 #include "prach_generator_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/srsvec/add.h"
 #include "srsran/srsvec/prod.h"
 #include "fmt/ostream.h"
@@ -29,7 +30,7 @@ static std::uniform_int_distribution<unsigned> start_preamble_index_dist(0, 63);
 static std::uniform_int_distribution<unsigned> nof_preamble_indices_dist(1, 64);
 
 namespace srsran {
-std::ostream& operator<<(std::ostream& os, preamble_format format)
+std::ostream& operator<<(std::ostream& os, prach_format_type format)
 {
   fmt::print(os, "{}", static_cast<unsigned>(format));
   return os;
@@ -42,7 +43,7 @@ std::ostream& operator<<(std::ostream& os, restricted_set_config config)
 } // namespace srsran
 
 // Parameters in order dft_size, format, restricted set and extra iterations.
-using prach_detector_params = std::tuple<unsigned, preamble_format, restricted_set_config, unsigned>;
+using prach_detector_params = std::tuple<unsigned, prach_format_type, restricted_set_config, unsigned>;
 
 class PrachDetectorFixture : public ::testing::TestWithParam<prach_detector_params>
 {
@@ -75,7 +76,7 @@ protected:
 
   phy_time_unit GetExpectedTimeAdvancedResolution() const
   {
-    unsigned prach_scs_Hz = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
+    unsigned prach_scs_Hz = ra_scs_to_Hz(get_prach_preamble_long_info(std::get<1>(GetParam())).scs);
     unsigned dft_size     = std::get<0>(GetParam());
 
     return phy_time_unit::from_seconds(1 / static_cast<double>(dft_size * prach_scs_Hz));
@@ -83,8 +84,8 @@ protected:
 
   phy_time_unit GetExpectedTimeAdvancedMaximum(unsigned zero_correlation_zone) const
   {
-    unsigned                   prach_scs_Hz     = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
-    unsigned                   dft_size         = std::get<0>(GetParam());
+    unsigned                   prach_scs_Hz = ra_scs_to_Hz(get_prach_preamble_long_info(std::get<1>(GetParam())).scs);
+    unsigned                   dft_size     = std::get<0>(GetParam());
     unsigned                   sampling_rate_Hz = prach_scs_Hz * dft_size;
     prach_preamble_information preamble_info    = get_prach_preamble_long_info(std::get<1>(GetParam()));
     restricted_set_config      restricted_set   = std::get<2>(GetParam());
@@ -234,7 +235,7 @@ TEST_P(PrachDetectorFixture, ThresholdTest)
 {
   // Prepare derived parameters.
   unsigned sequence_length       = get_prach_preamble_long_info(std::get<1>(GetParam())).sequence_length;
-  unsigned prach_scs_Hz          = get_prach_preamble_long_info(std::get<1>(GetParam())).scs.to_Hz();
+  unsigned prach_scs_Hz          = ra_scs_to_Hz(get_prach_preamble_long_info(std::get<1>(GetParam())).scs);
   unsigned dft_size              = dft_spy->get_size();
   unsigned sampling_rate_Hz      = prach_scs_Hz * dft_size;
   unsigned zero_correlation_zone = zero_correlation_zone_dist(rgen);
@@ -298,9 +299,9 @@ TEST_P(PrachDetectorFixture, ThresholdTest)
 INSTANTIATE_TEST_SUITE_P(PrachDetectorSimple,
                          PrachDetectorFixture,
                          ::testing::Combine(::testing::Values(1536U),
-                                            ::testing::Values(preamble_format::FORMAT0,
-                                                              preamble_format::FORMAT1,
-                                                              preamble_format::FORMAT2,
-                                                              preamble_format::FORMAT3),
+                                            ::testing::Values(prach_format_type::zero,
+                                                              prach_format_type::one,
+                                                              prach_format_type::two,
+                                                              prach_format_type::three),
                                             ::testing::Values(restricted_set_config::UNRESTRICTED),
                                             ::testing::Range(0U, 10U)));

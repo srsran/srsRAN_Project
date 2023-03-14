@@ -66,6 +66,11 @@ TEST_P(prach_generator_test, vector)
 {
   const test_case_t& test_case = GetParam();
 
+  // Short premables are not implemented.
+  if (is_short_preamble(test_case.config.format)) {
+    GTEST_SKIP();
+  }
+
   // Restricted sets are not implemented. Skip.
   if (test_case.config.restricted_set != restricted_set_config::UNRESTRICTED) {
     GTEST_SKIP();

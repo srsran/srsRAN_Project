@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/phy/support/prach_buffer.h"
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
@@ -27,7 +27,7 @@ public:
   /// Collects the necessary parameters to demodulate a PRACH frequency- and time-domain occasion.
   struct configuration {
     /// PRACH preamble format.
-    preamble_format format;
+    prach_format_type format;
     /// PRACH frequency location (see \ref prach_buffer_context::rb_offset).
     unsigned rb_offset;
     /// Uplink resource grid size (see \ref prach_buffer_context::nof_prb_ul_grid).

@@ -12,7 +12,7 @@
 
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/upper/channel_processors/prach_detection_result.h"
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/restricted_set_config.h"
 
 namespace srsran {
@@ -29,7 +29,7 @@ public:
     /// preambles.
     unsigned root_sequence_index;
     /// Preamble format.
-    preamble_format format;
+    prach_format_type format;
     /// Restricted set configuration.
     restricted_set_config restricted_set;
     /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 Section 6.3.3.1.

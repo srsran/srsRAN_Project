@@ -15,29 +15,29 @@
 
 using namespace srsran;
 
-prach_preamble_information srsran::get_prach_preamble_long_info(preamble_format format)
+prach_preamble_information srsran::get_prach_preamble_long_info(prach_format_type format)
 {
-  srsran_assert(format.is_long_preamble(), "Invalid preamble format. It must be a long preamble.");
+  srsran_assert(is_long_preamble(format), "Invalid preamble format. It must be a long preamble.");
   switch (format) {
-    case preamble_format::FORMAT0:
+    case prach_format_type::zero:
       return {839U,
               prach_subcarrier_spacing::kHz1_25,
               phy_time_unit::from_units_of_kappa(24576),
               phy_time_unit::from_units_of_kappa(3168),
               true};
-    case preamble_format::FORMAT1:
+    case prach_format_type::one:
       return {839U,
               prach_subcarrier_spacing::kHz1_25,
               phy_time_unit::from_units_of_kappa(2 * 24576),
               phy_time_unit::from_units_of_kappa(21024),
               true};
-    case preamble_format::FORMAT2:
+    case prach_format_type::two:
       return {839U,
               prach_subcarrier_spacing::kHz1_25,
               phy_time_unit::from_units_of_kappa(4 * 24576),
               phy_time_unit::from_units_of_kappa(4688),
               true};
-    case preamble_format::FORMAT3:
+    case prach_format_type::three:
     default:
       return {839U,
               prach_subcarrier_spacing::kHz5,
@@ -45,6 +45,13 @@ prach_preamble_information srsran::get_prach_preamble_long_info(preamble_format 
               phy_time_unit::from_units_of_kappa(3168),
               true};
   }
+}
+
+prach_preamble_information srsran::get_prach_preamble_short_info(prach_format_type        format,
+                                                                 prach_subcarrier_spacing ra_scs)
+{
+  srsran_assert(is_short_preamble(format), "Invalid preamble format. It must be a long preamble.");
+  return {};
 }
 
 prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configuration& prach_cfg,

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/ran/prach/restricted_set_config.h"
 #include "srsran/ran/slot_point.h"
@@ -38,7 +38,7 @@ struct prach_buffer_context {
   /// Here, OFDM symbol indexing assumes a subcarrier spacing equal to \c pusch_scs.
   unsigned start_symbol;
   /// Preamble format.
-  preamble_format format;
+  prach_format_type format;
   /// \brief Offset, in PRBs, between Point A and the PRB overlapping with the lowest RE of the first frequency-domain
   /// PRACH occasion.
   ///

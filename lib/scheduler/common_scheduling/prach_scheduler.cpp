@@ -24,7 +24,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
                                     cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
                                     rach_cfg_common().rach_cfg_generic.prach_config_index))
 {
-  srsran_assert(prach_cfg.format.is_long_preamble(), "Short PRACH preamble not supported");
+  srsran_assert(is_long_preamble(prach_cfg.format), "Short PRACH preamble not supported");
 
   // With SCS 15kHz and 30kHz, only normal CP is supported.
   static const unsigned nof_symbols_per_slot = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;

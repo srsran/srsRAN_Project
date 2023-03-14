@@ -72,6 +72,11 @@ TEST_P(PrachDetectorFixture, FromVector)
   int                                   delay_samples     = std::get<1>(params);
   unsigned                              dft_size_detector = std::get<0>(params);
 
+  // Short preambles are not implemented.
+  if (is_short_preamble(config.format)) {
+    GTEST_SKIP();
+  }
+
   // Restricted sets are not implemented. Skip.
   if (config.restricted_set != restricted_set_config::UNRESTRICTED) {
     GTEST_SKIP();
@@ -106,7 +111,7 @@ TEST_P(PrachDetectorFixture, FromVector)
 
   // Calculate expected delay.
   phy_time_unit expected_delay = phy_time_unit::from_seconds(
-      static_cast<double>(delay_samples) / static_cast<double>(dft_size_detector * preamble_info.scs.to_Hz()));
+      static_cast<double>(delay_samples) / static_cast<double>(dft_size_detector * ra_scs_to_Hz(preamble_info.scs)));
 
   // Assert a one preamble is found.
   ASSERT_EQ(1, result.preambles.size());

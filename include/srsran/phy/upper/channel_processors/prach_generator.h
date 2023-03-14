@@ -13,7 +13,7 @@
 #include "srsran/adt/bounded_integer.h"
 #include "srsran/adt/complex.h"
 #include "srsran/phy/support/prach_buffer.h"
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/restricted_set_config.h"
 #include "srsran/ran/subcarrier_spacing.h"
 
@@ -28,7 +28,7 @@ public:
   /// Collects the necessary parameters to generate a PRACH frequency-domain signal.
   struct configuration {
     /// Preamble format.
-    preamble_format format;
+    prach_format_type format;
     /// \brief Root sequence index.
     ///
     /// Parameter \f$i\f$ to select the PRACH sequence number from:

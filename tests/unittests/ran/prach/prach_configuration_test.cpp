@@ -22,13 +22,13 @@ static void test_fr1_paired()
 
     // Assert format.
     if (prach_config_index < 28) {
-      TESTASSERT(config.format == preamble_format::FORMAT0);
+      TESTASSERT(config.format == prach_format_type::zero);
     } else if (prach_config_index < 53) {
-      TESTASSERT(config.format == preamble_format::FORMAT1);
+      TESTASSERT(config.format == prach_format_type::one);
     } else if (prach_config_index < 60) {
-      TESTASSERT(config.format == preamble_format::FORMAT2);
+      TESTASSERT(config.format == prach_format_type::two);
     } else if (prach_config_index < 87) {
-      TESTASSERT(config.format == preamble_format::FORMAT3);
+      TESTASSERT(config.format == prach_format_type::three);
     } else {
       TESTASSERT(config.format == PRACH_CONFIG_RESERVED.format);
     }
@@ -139,13 +139,13 @@ static void test_fr1_unpaired()
 
     // Assert format.
     if (prach_config_index < 28) {
-      TESTASSERT(config.format == preamble_format::FORMAT0);
+      TESTASSERT(config.format == prach_format_type::zero);
     } else if (prach_config_index < 34) {
-      TESTASSERT(config.format == preamble_format::FORMAT1);
+      TESTASSERT(config.format == prach_format_type::one);
     } else if (prach_config_index < 40) {
-      TESTASSERT(config.format == preamble_format::FORMAT2);
+      TESTASSERT(config.format == prach_format_type::two);
     } else if (prach_config_index < 67) {
-      TESTASSERT(config.format == preamble_format::FORMAT3);
+      TESTASSERT(config.format == prach_format_type::three);
     } else {
       TESTASSERT(config.format == PRACH_CONFIG_RESERVED.format);
     }

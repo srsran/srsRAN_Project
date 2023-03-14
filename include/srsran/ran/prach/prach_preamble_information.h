@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/ran/phy_time_unit.h"
-#include "srsran/ran/prach/prach_preamble_format.h"
+#include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 
 namespace srsran {
@@ -36,11 +36,23 @@ struct prach_preamble_information {
 
 /// \brief Get long PRACH preamble information as per TS38.211 Table 6.3.3.1-1.
 ///
-/// An assertion is triggered if the PRACH preamble format is not long.
+/// An assertion is triggered if the PRACH preamble format is short.
 ///
 /// \param[in] format PRACH preamble format.
 /// \return PRACH preamble information.
-prach_preamble_information get_prach_preamble_long_info(preamble_format format);
+prach_preamble_information get_prach_preamble_long_info(prach_format_type format);
+
+/// \brief Get short PRACH preamble information as per TS38.211 Table 6.3.3.1-2.
+///
+/// An assertion is triggered if:
+/// - the PRACH preamble format is long, or
+/// - the random access subcarrier spacing does not satisfy \f$\Delta f ^\textup{RA} = 15 \cdot 2^\mu\f$ where \f$\mu
+/// \in \{0, 1, 2, 3\}\f$.
+///
+/// \param[in] format PRACH preamble format.
+/// \param[in] ra_scs Random access subcarrier spacing \f$\Delta f ^\textup{RA}\f$.
+/// \return PRACH preamble information.
+prach_preamble_information get_prach_preamble_short_info(prach_format_type format, prach_subcarrier_spacing ra_scs);
 
 /// \brief Collects PRACH preamble duration information.
 struct prach_symbols_slots_duration {
