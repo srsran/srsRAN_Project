@@ -186,7 +186,9 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
     for (unsigned i_subframe = 0; i_subframe != NOF_SUBFRAMES_PER_FRAME; ++i_subframe) {
       for (unsigned i_slot = 0, i_symbol_subframe = 0; i_slot != nof_slots_per_subframe; ++i_slot, ++i_slot_frame) {
         for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol, ++i_symbol_subframe) {
+          // Calculate cyclic prefix size in samples.
           unsigned cp_size = cp.get_length(i_symbol_subframe, scs).to_samples(srate.to_Hz());
+
           // Setup buffer.
           buffer.resize(cp_size + base_symbol_size);
 
@@ -218,7 +220,7 @@ TEST_P(LowerPhyUplinkProcessorFixture, Flow)
           lower_phy_rx_symbol_context puxch_context;
           puxch_context.slot        = slot_point(to_numerology_value(scs), i_slot_frame);
           puxch_context.sector      = config.sector_id;
-          puxch_context.nof_symbols = i_symbol_subframe;
+          puxch_context.nof_symbols = i_symbol;
 
           // Assert PRACH processor call.
           auto& prach_proc_entries = prach_proc_spy->get_baseband_entries();

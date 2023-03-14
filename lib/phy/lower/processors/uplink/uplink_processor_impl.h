@@ -78,7 +78,7 @@ private:
   unsigned nof_symbols_per_subframe;
   /// Current number of buffered samples.
   unsigned current_nof_samples;
-  /// Current symbol index within the subframe.
+  /// Current symbol index within the slot.
   unsigned current_symbol_index;
   /// Current slot point.
   slot_point current_slot;

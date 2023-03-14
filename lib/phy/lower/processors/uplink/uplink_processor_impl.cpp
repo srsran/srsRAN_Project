@@ -118,7 +118,7 @@ void lower_phy_uplink_processor_impl::process_new_symbol()
   // Process symbol by PRACH processor.
   prach_processor_baseband::symbol_context prach_context;
   prach_context.slot   = current_slot;
-  prach_context.symbol = current_symbol_index % nof_symbols_per_slot;
+  prach_context.symbol = current_symbol_index;
   prach_context.sector = sector_id;
   prach_context.port   = 0;
   prach_proc->get_baseband().process_symbol(temp_buffer.get_channel_buffer(0), prach_context);
@@ -130,14 +130,11 @@ void lower_phy_uplink_processor_impl::process_new_symbol()
   puxch_context.nof_symbols = current_symbol_index;
   puxch_proc->get_baseband().process_symbol(temp_buffer, puxch_context);
 
-  // Increment current symbol index.
-  ++current_symbol_index;
-
-  // Calculate the symbol index within the slot.
-  unsigned symbol_index_slot = current_symbol_index % nof_symbols_per_slot;
+  // Increment current symbol index and wrap slot boundary.
+  current_symbol_index = (current_symbol_index + 1) % nof_symbols_per_slot;
 
   // Detect half-slot boundary.
-  if (symbol_index_slot == nof_symbols_per_slot / 2) {
+  if (current_symbol_index == nof_symbols_per_slot / 2) {
     // Notify half slot boundary.
     lower_phy_timing_context context;
     context.slot = current_slot;
@@ -145,7 +142,7 @@ void lower_phy_uplink_processor_impl::process_new_symbol()
   }
 
   // Detect full slot boundary.
-  if (symbol_index_slot == 0) {
+  if (current_symbol_index == 0) {
     // Notify full slot boundary.
     lower_phy_timing_context context;
     context.slot = current_slot;
@@ -154,7 +151,4 @@ void lower_phy_uplink_processor_impl::process_new_symbol()
     // Increment slot.
     ++current_slot;
   }
-
-  // Wrap subframe boundary.
-  current_symbol_index = current_symbol_index % nof_symbols_per_subframe;
 }
