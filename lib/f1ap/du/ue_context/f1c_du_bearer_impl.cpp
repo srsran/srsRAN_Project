@@ -66,7 +66,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
 
 void f1c_srb0_du_bearer::handle_pdu(byte_buffer pdu)
 {
-  sdu_notifier.on_new_sdu(std::move(pdu));
+  sdu_notifier.on_new_sdu({}, std::move(pdu));
 
   log_ue_event(
       logger, ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel("SRB0") | ue_ctxt.rnti, "DlRrcMessageTransfer");
@@ -108,9 +108,24 @@ void f1c_other_srb_du_bearer::handle_sdu(byte_buffer_slice_chain sdu)
 
 void f1c_other_srb_du_bearer::handle_pdu(srsran::byte_buffer sdu)
 {
-  sdu_notifier.on_new_sdu(std::move(sdu));
+  uint32_t pdcp_sn = get_srb_pdcp_sn(sdu);
+  sdu_notifier.on_new_sdu(pdcp_sn, std::move(sdu));
 
   log_ue_event(logger,
                ue_event_prefix{"DL", ue_ctxt.ue_index}.set_channel(srb_id_to_string(srb_id)) | ue_ctxt.rnti,
                "DL RRC Message Transfer.");
+}
+
+uint32_t f1c_other_srb_du_bearer::get_srb_pdcp_sn(const byte_buffer& buf)
+{
+  byte_buffer::const_iterator buf_it = buf.begin();
+
+  // Extract PDCP SN (SRBs are always 12bits)
+  uint32_t sn = {};
+  sn          = (*buf_it & 0x0fU) << 8U; // first 4 bits SN
+  ++buf_it;
+  sn |= (*buf_it & 0xffU); // last 8 bits SN
+  ++buf_it;
+
+  return sn;
 }
