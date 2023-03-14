@@ -233,7 +233,7 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
 
     out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);
 
-    out_cfg.ta_offset = n_ta_offset::n0;
+    out_cfg.ta_offset = band_helper::get_ta_offset(config.common_cell_cfg.band.value());
     if (config.rf_driver_cfg.time_alignment_calibration.has_value()) {
       // Selects the user specific value.
       out_cfg.time_alignment_calibration = config.rf_driver_cfg.time_alignment_calibration.value();
