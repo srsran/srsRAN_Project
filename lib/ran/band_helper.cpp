@@ -769,7 +769,7 @@ unsigned srsran::band_helper::get_nof_coreset0_rbs_not_intersecting_ssb(unsigned
 n_ta_offset srsran::band_helper::get_ta_offset(nr_band band)
 {
   if (get_freq_range(band) == frequency_range::FR1) {
-    // assume no LTE-NR coexistence
+    // Assume no LTE-NR coexistence.
     return n_ta_offset::n25600;
   } else {
     return n_ta_offset::n13792;
