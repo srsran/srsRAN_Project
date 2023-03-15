@@ -11,7 +11,7 @@
 /// \file
 /// \brief AVX512 support for LDPC.
 ///
-/// Builds upon \ref avx2_support.h and specializes functions and templates for AVX512 registers.
+/// Builds upon \ref simd_support.h and specializes functions and templates for AVX512 registers.
 
 #pragma once
 
@@ -20,7 +20,7 @@
 namespace srsran {
 namespace mm512 {
 
-using avx512_span = detail::avx_span<detail::m512_wrapper>;
+using avx512_span = detail::simd_span<detail::m512_wrapper>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
 ///
