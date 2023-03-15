@@ -18,12 +18,14 @@
 #include "srsran/adt/span.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
-#if HAVE_AVX2 || HAVE_AVX512
+
+#if defined(__x86_64__)
 #include <immintrin.h>
-#endif
-#if HAVE_NEON
+#endif // defined(__x86_64__)
+
+#if defined(HAVE_NEON)
 #include <arm_neon.h>
-#endif
+#endif // defined(HAVE_NEON)
 
 namespace srsran {
 /// Number of bytes in an AVX2 register.
@@ -36,7 +38,7 @@ constexpr unsigned NEON_SIZE_BYTE = 16;
 namespace detail {
 
 // These wrappers are needed to avoid attribute warnings about the SIMD vector types.
-#if defined(HAVE_AVX2) || defined(HAVE_AVX512)
+#if defined(__x86_64__)
 struct m256_wrapper {
   using simdType = __m256i;
 };
@@ -44,7 +46,7 @@ struct m256_wrapper {
 struct m512_wrapper {
   using simdType = __m512i;
 };
-#endif // defined(HAVE_AVX2) || defined(HAVE_AVX512)
+#endif // defined(__x86_64__)
 
 #if defined(HAVE_NEON)
 struct int8x16_wrapper {
@@ -150,7 +152,7 @@ public:
   // Unfortunately, we can't work with the array subscript operator [] since there seems to be no easy way to access a
   // simdType object by reference.
 
-#if defined(HAVE_AVX2) || defined(HAVE_AVX512)
+#if defined(__x86_64__)
   /// Sets the \c pos AVX2 register to \c val.
   void set_at(unsigned pos, __m256i val)
   {
@@ -166,7 +168,7 @@ public:
     srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     _mm512_storeu_si512(reinterpret_cast<__m512i*>(array_ptr) + pos, val);
   }
-#endif // defined(HAVE_AVX2) || defined(HAVE_AVX512)
+#endif // defined(__x86_64__)
 
 #if defined(HAVE_NEON)
   /// Sets the \c pos NEON register to \c val.
@@ -216,7 +218,7 @@ private:
     return;
   }
 
-#if defined(HAVE_AVX2) || defined(HAVE_AVX512)
+#if defined(__x86_64__)
   /// Specialization of the get method for AVX2.
   __m256i get_at(help_type<m256_wrapper> /**/, unsigned pos) const
   {
@@ -230,7 +232,7 @@ private:
     srsran_assert(pos < view_length, "Index {} out of bound.", pos);
     return _mm512_loadu_si512(reinterpret_cast<const __m512i*>(array_ptr) + pos);
   }
-#endif // defined(HAVE_AVX2) || defined(HAVE_AVX512)
+#endif // defined(__x86_64__)
 
 #if defined(HAVE_NEON)
   /// Specialization of the get method for NEON.
