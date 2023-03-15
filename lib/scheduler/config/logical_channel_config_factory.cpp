@@ -16,8 +16,8 @@ logical_channel_config srsran::config_helpers::create_default_logical_channel_co
 {
   logical_channel_config lc_ch;
   lc_ch.lcid                      = lcid;
-  lc_ch.priority                  = 1;
-  lc_ch.lc_group                  = uint_to_lcg_id(0);
+  lc_ch.priority                  = is_srb(lcid) ? 1 : 2;
+  lc_ch.lc_group                  = uint_to_lcg_id(is_srb(lcid) ? 0 : 1);
   lc_ch.lc_sr_mask                = false;
   lc_ch.lc_sr_delay_timer_applied = false;
   return lc_ch;
