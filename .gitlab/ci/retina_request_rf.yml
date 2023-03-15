@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_17b9ea2_220ca4502_0.2.14
+  image: registry.gitlab.com/softwareradiosystems/ci/retina/amarisoftue:2023-02-06_b80829e_fde1ce1f3_0.2.14
   resources:
     - type: sdr
       model: b200 
