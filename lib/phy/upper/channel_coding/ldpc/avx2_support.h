@@ -20,7 +20,8 @@
 namespace srsran {
 namespace mm256 {
 
-using avx2_span = detail::simd_span<detail::m256_wrapper>;
+using avx2_span       = detail::simd_span<detail::m256_wrapper, int8_t>;
+using avx2_const_span = detail::simd_span<detail::m256_wrapper, const int8_t>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
 ///

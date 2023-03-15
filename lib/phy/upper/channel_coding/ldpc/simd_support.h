@@ -54,9 +54,15 @@ struct int8x16_wrapper {
 
 /// \brief Mimics a span of SIMD registers.
 /// \tparam simdWrapper   Wrapper for an SIMD vector type.
-template <typename simdWrapper>
+/// \tparam storageType   Underlying data type of the \c simd_span (either \c int8_t or \c const \c int8_t).
+template <typename simdWrapper, typename storageType>
 class simd_span
 {
+  static_assert(std::is_same<typename std::remove_cv<storageType>::type, int8_t>::value,
+                "simd_span can only have (const) int8_t as underlying storage type.");
+
+  using pointer = storageType*;
+
   /// Helper type for method overloading.
   template <typename HelpType>
   struct help_type {
@@ -79,9 +85,9 @@ public:
   /// \param[in] length  Number of elements spanned by the view (as a number of SIMD registers).
   template <typename IntType, size_t N>
   simd_span(std::array<IntType, N>& arr, size_t offset, size_t length) :
-    array_ptr(reinterpret_cast<int8_t*>(arr.data()) + offset * SIMD_SIZE_BYTE), view_length(length)
+    array_ptr(reinterpret_cast<pointer>(arr.data()) + offset * SIMD_SIZE_BYTE), view_length(length)
   {
-    static_assert(sizeof(IntType) == sizeof(int8_t),
+    static_assert(sizeof(IntType) == sizeof(storageType),
                   "simd_span can only be created from arrays of 1-byte integer types.");
     srsran_assert((offset + view_length) * SIMD_SIZE_BYTE <= N, "Cannot take a span longer than the array.");
   }
@@ -103,11 +109,10 @@ public:
   /// \param[in] sp     Original span.
   /// \param[in] length Number of elements viewed by the \c simd_span (as a number of SIMD registers).
   template <typename IntType>
-  simd_span(span<IntType> sp, size_t length) : array_ptr(reinterpret_cast<int8_t*>(sp.data())), view_length(length)
+  simd_span(span<IntType> sp, size_t length) : array_ptr(reinterpret_cast<pointer>(sp.data())), view_length(length)
   {
-    static_assert(sizeof(IntType) == sizeof(int8_t),
+    static_assert(sizeof(IntType) == sizeof(storageType),
                   "simd_span can only be created from arrays of 1-byte integer types.");
-    static_assert(!std::is_const<IntType>::value, "Cannot create simd_span from span of const.");
     srsran_assert(view_length * SIMD_SIZE_BYTE <= sp.size(),
                   "Cannot create an simd_span longer than the original span.");
   }
@@ -127,7 +132,7 @@ public:
   }
 
   /// Returns a pointer to the byte at position <tt>pos * SIMD_SIZE_BYTE + byte</tt> inside the array.
-  int8_t* data_at(unsigned pos, unsigned byte)
+  pointer data_at(unsigned pos, unsigned byte)
   {
     unsigned index = pos * SIMD_SIZE_BYTE + byte;
     srsran_assert(index < view_length * SIMD_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
@@ -135,7 +140,7 @@ public:
   }
 
   /// Returns a read-only pointer to the \c pos SIMD register inside the array.
-  const int8_t* data_at(unsigned pos, unsigned byte) const
+  const pointer data_at(unsigned pos, unsigned byte) const
   {
     unsigned index = pos * SIMD_SIZE_BYTE + byte;
     srsran_assert(index < view_length * SIMD_SIZE_BYTE, "Index ({}, {}) out of bound.", pos, byte);
@@ -198,12 +203,12 @@ public:
 
 private:
   /// Pointer to the first element viewed by the span.
-  int8_t* array_ptr;
+  pointer array_ptr;
   /// Number of elements viewed by the span.
   size_t view_length;
 
   /// Constructor for generating subspans.
-  simd_span(int8_t* ptr, size_t length) : array_ptr(ptr), view_length(length) {}
+  simd_span(pointer ptr, size_t length) : array_ptr(ptr), view_length(length) {}
 
   template <typename T>
   auto get_at(help_type<T> /**/, unsigned /**/) const

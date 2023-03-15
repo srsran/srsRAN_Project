@@ -20,7 +20,8 @@
 namespace srsran {
 namespace mm512 {
 
-using avx512_span = detail::simd_span<detail::m512_wrapper>;
+using avx512_span       = detail::simd_span<detail::m512_wrapper, int8_t>;
+using avx512_const_span = detail::simd_span<detail::m512_wrapper, const int8_t>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
 ///

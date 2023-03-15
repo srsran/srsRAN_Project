@@ -67,7 +67,7 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
                          auxiliary_chunk.first(lifting_size - node_shift));
       srsvec::binary_xor(
           auxiliary_chunk.last(node_shift), message_chunk.first(node_shift), auxiliary_chunk.last(node_shift));
-      std::for_each(auxiliary_chunk.begin(), auxiliary_chunk.end(), [](uint8_t& v) { v &= 1; });
+      std::for_each(auxiliary_chunk.begin(), auxiliary_chunk.end(), [](uint8_t& v) { v &= 1U; });
     }
   }
 

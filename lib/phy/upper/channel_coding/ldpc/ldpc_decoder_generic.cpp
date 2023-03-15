@@ -15,9 +15,9 @@
 using namespace srsran;
 using namespace srsran::ldpc;
 
-void ldpc_decoder_generic::compute_var_to_check_msgs(span<log_likelihood_ratio> this_var_to_check,
-                                                     span<log_likelihood_ratio> this_soft_bits,
-                                                     span<log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_generic::compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
+                                                     span<const log_likelihood_ratio> this_soft_bits,
+                                                     span<const log_likelihood_ratio> this_check_to_var)
 {
   srsran_srsvec_assert_size(this_var_to_check, this_soft_bits);
   srsran_srsvec_assert_size(this_var_to_check, this_check_to_var);
@@ -43,9 +43,9 @@ void ldpc_decoder_generic::analyze_var_to_check_msgs(span<log_likelihood_ratio> 
                                                      span<uint8_t>              min_var_to_check_index,
                                                      span<uint8_t>              sign_prod_var_to_check,
                                                      span<log_likelihood_ratio> /*rotated_node*/,
-                                                     span<log_likelihood_ratio> this_var_to_check,
-                                                     unsigned                   shift,
-                                                     unsigned                   var_node)
+                                                     span<const log_likelihood_ratio> this_var_to_check,
+                                                     unsigned                         shift,
+                                                     unsigned                         var_node)
 {
   // Look for the two var_to_check messages with minimum absolute value and compute the sign product of all
   // var_to_check messages.
@@ -78,15 +78,15 @@ static log_likelihood_ratio scale_llr(log_likelihood_ratio llr, float scaling_fa
 
 // In the generic implementation we don't physically rotate the node, since we can access the corresponding values by
 // a simple shift - therefore the unused parameter.
-void ldpc_decoder_generic::compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
-                                                     span<log_likelihood_ratio> this_var_to_check,
-                                                     span<log_likelihood_ratio> /*rotated_node*/,
-                                                     span<log_likelihood_ratio> min_var_to_check,
-                                                     span<log_likelihood_ratio> second_min_var_to_check,
-                                                     span<uint8_t>              min_var_to_check_index,
-                                                     span<uint8_t>              sign_prod_var_to_check,
-                                                     unsigned                   shift,
-                                                     unsigned                   var_node)
+void ldpc_decoder_generic::compute_check_to_var_msgs(span<log_likelihood_ratio>       this_check_to_var,
+                                                     span<const log_likelihood_ratio> this_var_to_check,
+                                                     span<const log_likelihood_ratio> /*rotated_node*/,
+                                                     span<const log_likelihood_ratio> min_var_to_check,
+                                                     span<const log_likelihood_ratio> second_min_var_to_check,
+                                                     span<const uint8_t>              min_var_to_check_index,
+                                                     span<const uint8_t>              sign_prod_var_to_check,
+                                                     unsigned                         shift,
+                                                     unsigned                         var_node)
 {
   for (unsigned j = 0; j != lifting_size; ++j) {
     unsigned tmp_index = (j + lifting_size - shift) % lifting_size;
@@ -103,9 +103,9 @@ void ldpc_decoder_generic::compute_check_to_var_msgs(span<log_likelihood_ratio> 
   }
 }
 
-void ldpc_decoder_generic::compute_soft_bits(span<log_likelihood_ratio> this_soft_bits,
-                                             span<log_likelihood_ratio> this_var_to_check,
-                                             span<log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_generic::compute_soft_bits(span<log_likelihood_ratio>       this_soft_bits,
+                                             span<const log_likelihood_ratio> this_var_to_check,
+                                             span<const log_likelihood_ratio> this_check_to_var)
 {
   srsran_srsvec_assert_size(this_soft_bits, this_var_to_check);
   srsran_srsvec_assert_size(this_soft_bits, this_check_to_var);

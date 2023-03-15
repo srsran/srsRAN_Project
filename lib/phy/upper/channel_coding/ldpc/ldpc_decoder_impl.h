@@ -82,14 +82,14 @@ private:
   /// \param[in]  shift                   Shift applied to the variable-to-check edges when lifting the base graph.
   /// \param[in]  var_node                Counting index of the variable node, that is it can only take values between
   ///                                     zero and the degree of the check node minus one.
-  virtual void analyze_var_to_check_msgs(span<log_likelihood_ratio> min_var_to_check,
-                                         span<log_likelihood_ratio> second_min_var_to_check,
-                                         span<uint8_t>              min_var_to_check_index,
-                                         span<uint8_t>              sign_prod_var_to_check,
-                                         span<log_likelihood_ratio> rotated_node,
-                                         span<log_likelihood_ratio> this_var_to_check,
-                                         unsigned                   shift,
-                                         unsigned                   var_node) = 0;
+  virtual void analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
+                                         span<log_likelihood_ratio>       second_min_var_to_check,
+                                         span<uint8_t>                    min_var_to_check_index,
+                                         span<uint8_t>                    sign_prod_var_to_check,
+                                         span<log_likelihood_ratio>       rotated_node,
+                                         span<const log_likelihood_ratio> this_var_to_check,
+                                         unsigned                         shift,
+                                         unsigned                         var_node) = 0;
 
   /// \brief Helper function for \ref update_check_to_variable_messages - Computes the new check-to-variable messages.
   ///
@@ -109,15 +109,15 @@ private:
   /// \param[in]  shift                   Shift applied to the variable-to-check edges when lifting the base graph.
   /// \param[in]  var_node                Counting index of the variable node, that is it can only take values between
   ///                                     zero and the degree of the check node minus one.
-  virtual void compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
-                                         span<log_likelihood_ratio> this_var_to_check,
-                                         span<log_likelihood_ratio> rotated_node,
-                                         span<log_likelihood_ratio> min_var_to_check,
-                                         span<log_likelihood_ratio> second_min_var_to_check,
-                                         span<uint8_t>              min_var_to_check_index,
-                                         span<uint8_t>              sign_prod_var_to_check,
-                                         unsigned                   shift,
-                                         unsigned                   var_node) = 0;
+  virtual void compute_check_to_var_msgs(span<log_likelihood_ratio>       this_check_to_var,
+                                         span<const log_likelihood_ratio> this_var_to_check,
+                                         span<const log_likelihood_ratio> rotated_node,
+                                         span<const log_likelihood_ratio> min_var_to_check,
+                                         span<const log_likelihood_ratio> second_min_var_to_check,
+                                         span<const uint8_t>              min_var_to_check_index,
+                                         span<const uint8_t>              sign_prod_var_to_check,
+                                         unsigned                         shift,
+                                         unsigned                         var_node) = 0;
 
   /// \brief Updates the soft bits corresponding to the variable nodes connected to the same base graph check node.
   /// \param[in] check_node The check node (in the base graph) the variables nodes are connected to.
@@ -127,12 +127,12 @@ private:
   ///
   /// Updates the soft bits corresponding to one variable node of the base graph (that is, the number of updated soft
   /// bits is equal to the lifting size).
-  /// \param[in]  this_soft_bits     View to the updated soft bits.
-  /// \param[out] this_var_to_check  View to the input variable-to-check messages.
-  /// \param[out] this_check_to_var  View to the input check-to-variable messages.
-  virtual void compute_soft_bits(span<log_likelihood_ratio> this_soft_bits,
-                                 span<log_likelihood_ratio> this_var_to_check,
-                                 span<log_likelihood_ratio> this_check_to_var) = 0;
+  /// \param[out] this_soft_bits     View to the updated soft bits.
+  /// \param[in]  this_var_to_check  View to the input variable-to-check messages.
+  /// \param[in]  this_check_to_var  View to the input check-to-variable messages.
+  virtual void compute_soft_bits(span<log_likelihood_ratio>       this_soft_bits,
+                                 span<const log_likelihood_ratio> this_var_to_check,
+                                 span<const log_likelihood_ratio> this_check_to_var) = 0;
 
   /// Converts soft bits into hard bits and returns the decoded message.
   virtual void get_hard_bits(bit_buffer& out) = 0;
@@ -145,9 +145,9 @@ private:
   /// \param[in]  this_soft_bits     Current soft bits.
   /// \param[in]  this_check_to_var  Current check-to-variable messages.
   /// \remard An exception is raised if the size of the three spans is not the same.
-  virtual void compute_var_to_check_msgs(span<log_likelihood_ratio> this_var_to_check,
-                                         span<log_likelihood_ratio> this_soft_bits,
-                                         span<log_likelihood_ratio> this_check_to_var) = 0;
+  virtual void compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
+                                         span<const log_likelihood_ratio> this_soft_bits,
+                                         span<const log_likelihood_ratio> this_check_to_var) = 0;
 
 protected:
   /// Number of base graph variable nodes corresponding to information bits.

@@ -21,7 +21,8 @@ namespace srsran {
 
 namespace neon {
 
-using neon_span = detail::simd_span<detail::int8x16_wrapper>;
+using neon_span       = detail::simd_span<detail::int8x16_wrapper, int8_t>;
+using neon_const_span = detail::simd_span<detail::int8x16_wrapper, const int8_t>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
 ///

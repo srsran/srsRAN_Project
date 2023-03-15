@@ -150,7 +150,7 @@ void ldpc_encoder_avx2::load_input(span<const uint8_t> in)
 template <unsigned BG_K_PH, unsigned BG_M_PH, unsigned NODE_SIZE_AVX2_PH>
 void ldpc_encoder_avx2::systematic_bits_inner()
 {
-  mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
+  mm256::avx2_const_span codeblock(codeblock_buffer, codeblock_used_size);
 
   mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
@@ -190,7 +190,7 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
@@ -228,7 +228,7 @@ void ldpc_encoder_avx2::high_rate_bg1_other_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
@@ -266,7 +266,7 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
@@ -304,7 +304,7 @@ void ldpc_encoder_avx2::high_rate_bg2_other_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 
@@ -339,7 +339,7 @@ void ldpc_encoder_avx2::ext_region_inner()
 
   mm256::avx2_span codeblock(codeblock_buffer, codeblock_used_size);
 
-  mm256::avx2_span auxiliary(auxiliary_buffer, auxiliary_used_size);
+  mm256::avx2_const_span auxiliary(auxiliary_buffer, auxiliary_used_size);
 
   mm256::avx2_span rotated_node(rotated_node_buffer, NODE_SIZE_AVX2_PH);
 

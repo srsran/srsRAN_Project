@@ -38,9 +38,9 @@ void ldpc_decoder_avx512::specific_init()
   node_size_byte   = node_size_avx512 * AVX512_SIZE_BYTE;
 }
 
-void ldpc_decoder_avx512::compute_var_to_check_msgs(span<log_likelihood_ratio> this_var_to_check,
-                                                    span<log_likelihood_ratio> this_soft_bits,
-                                                    span<log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_avx512::compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
+                                                    span<const log_likelihood_ratio> this_soft_bits,
+                                                    span<const log_likelihood_ratio> this_check_to_var)
 {
   srsran_srsvec_assert_size(this_check_to_var, this_soft_bits);
   srsran_srsvec_assert_size(this_check_to_var, this_var_to_check);
@@ -51,9 +51,9 @@ void ldpc_decoder_avx512::compute_var_to_check_msgs(span<log_likelihood_ratio> t
   srsran_assert(this_var_to_check.size() == avx512_blocks * AVX512_SIZE_BYTE,
                 "The spans do not correspond to an integer number of AVX512 registers.");
 
-  mm512::avx512_span var_to_check_avx512(this_var_to_check, avx512_blocks);
-  mm512::avx512_span soft_bits_avx512(this_soft_bits, avx512_blocks);
-  mm512::avx512_span check_to_var_avx512(this_check_to_var, avx512_blocks);
+  mm512::avx512_span       var_to_check_avx512(this_var_to_check, avx512_blocks);
+  mm512::avx512_const_span soft_bits_avx512(this_soft_bits, avx512_blocks);
+  mm512::avx512_const_span check_to_var_avx512(this_check_to_var, avx512_blocks);
 
   // By definition, the difference between two LLRs saturates at +/- LLR_MAX. Moreover, if either term is infinite, so
   // is the result, with proper sign.
@@ -85,17 +85,17 @@ span<log_likelihood_ratio> ldpc_decoder_avx512::get_rotated_node(unsigned var_no
   return span<log_likelihood_ratio>(rotated_var_to_check).subspan(var_node * node_size_byte, node_size_byte);
 }
 
-void ldpc_decoder_avx512::analyze_var_to_check_msgs(span<log_likelihood_ratio> min_var_to_check,
-                                                    span<log_likelihood_ratio> second_min_var_to_check,
-                                                    span<uint8_t>              min_var_to_check_index,
-                                                    span<uint8_t>              sign_prod_var_to_check,
-                                                    span<log_likelihood_ratio> rotated_node,
-                                                    span<log_likelihood_ratio> this_var_to_check,
-                                                    unsigned                   shift,
-                                                    unsigned                   var_node)
+void ldpc_decoder_avx512::analyze_var_to_check_msgs(span<log_likelihood_ratio>       min_var_to_check,
+                                                    span<log_likelihood_ratio>       second_min_var_to_check,
+                                                    span<uint8_t>                    min_var_to_check_index,
+                                                    span<uint8_t>                    sign_prod_var_to_check,
+                                                    span<log_likelihood_ratio>       rotated_node,
+                                                    span<const log_likelihood_ratio> this_var_to_check,
+                                                    unsigned                         shift,
+                                                    unsigned                         var_node)
 {
   rotate_node_right(reinterpret_cast<int8_t*>(rotated_node.data()),
-                    reinterpret_cast<int8_t*>(this_var_to_check.data()),
+                    reinterpret_cast<const int8_t*>(this_var_to_check.data()),
                     shift,
                     lifting_size);
 
@@ -137,20 +137,20 @@ void ldpc_decoder_avx512::analyze_var_to_check_msgs(span<log_likelihood_ratio> m
 }
 
 void ldpc_decoder_avx512::compute_check_to_var_msgs(span<log_likelihood_ratio> this_check_to_var,
-                                                    span<log_likelihood_ratio> /*this_var_to_check*/,
-                                                    span<log_likelihood_ratio> rotated_node,
-                                                    span<log_likelihood_ratio> min_var_to_check,
-                                                    span<log_likelihood_ratio> second_min_var_to_check,
-                                                    span<uint8_t>              min_var_to_check_index,
-                                                    span<uint8_t>              sign_prod_var_to_check,
-                                                    unsigned                   shift,
-                                                    unsigned                   var_node)
+                                                    span<const log_likelihood_ratio> /*this_var_to_check*/,
+                                                    span<const log_likelihood_ratio> rotated_node,
+                                                    span<const log_likelihood_ratio> min_var_to_check,
+                                                    span<const log_likelihood_ratio> second_min_var_to_check,
+                                                    span<const uint8_t>              min_var_to_check_index,
+                                                    span<const uint8_t>              sign_prod_var_to_check,
+                                                    unsigned                         shift,
+                                                    unsigned                         var_node)
 {
-  mm512::avx512_span min_var_to_check_avx512(min_var_to_check, node_size_avx512);
-  mm512::avx512_span second_min_var_to_check_avx512(second_min_var_to_check, node_size_avx512);
-  mm512::avx512_span min_var_to_check_index_avx512(min_var_to_check_index, node_size_avx512);
-  mm512::avx512_span sign_prod_var_to_check_avx512(sign_prod_var_to_check, node_size_avx512);
-  mm512::avx512_span rotated_node_avx512(rotated_node, node_size_avx512);
+  mm512::avx512_const_span min_var_to_check_avx512(min_var_to_check, node_size_avx512);
+  mm512::avx512_const_span second_min_var_to_check_avx512(second_min_var_to_check, node_size_avx512);
+  mm512::avx512_const_span min_var_to_check_index_avx512(min_var_to_check_index, node_size_avx512);
+  mm512::avx512_const_span sign_prod_var_to_check_avx512(sign_prod_var_to_check, node_size_avx512);
+  mm512::avx512_const_span rotated_node_avx512(rotated_node, node_size_avx512);
 
   std::array<log_likelihood_ratio, MAX_NODE_SIZE_AVX512 * AVX512_SIZE_BYTE> help_check_to_var;
   mm512::avx512_span help_check_to_var_avx512(help_check_to_var, node_size_avx512);
@@ -189,12 +189,12 @@ void ldpc_decoder_avx512::compute_check_to_var_msgs(span<log_likelihood_ratio> t
                    lifting_size);
 }
 
-void ldpc_decoder_avx512::compute_soft_bits(span<log_likelihood_ratio> this_soft_bits,
-                                            span<log_likelihood_ratio> this_var_to_check,
-                                            span<log_likelihood_ratio> this_check_to_var)
+void ldpc_decoder_avx512::compute_soft_bits(span<log_likelihood_ratio>       this_soft_bits,
+                                            span<const log_likelihood_ratio> this_var_to_check,
+                                            span<const log_likelihood_ratio> this_check_to_var)
 {
-  const mm512::avx512_span this_check_to_var_avx512(this_check_to_var, node_size_avx512);
-  const mm512::avx512_span this_var_to_check_avx512(this_var_to_check, node_size_avx512);
+  mm512::avx512_const_span this_check_to_var_avx512(this_check_to_var, node_size_avx512);
+  mm512::avx512_const_span this_var_to_check_avx512(this_var_to_check, node_size_avx512);
   mm512::avx512_span       this_soft_bits_avx512(this_soft_bits, node_size_avx512);
 
   for (unsigned i_block = 0; i_block != node_size_avx512; ++i_block) {
@@ -238,8 +238,8 @@ void ldpc_decoder_avx512::get_hard_bits(bit_buffer& out)
   std::array<log_likelihood_ratio, MAX_LIFTING_SIZE * MAX_BG_K> temp_llr;
   span<log_likelihood_ratio>                                    llr_write_buffer(temp_llr);
 
-  unsigned           max_node_lifted = bg_K * node_size_avx512;
-  mm512::avx512_span soft_bits_avx512(soft_bits, max_node_lifted);
+  unsigned                 max_node_lifted = bg_K * node_size_avx512;
+  mm512::avx512_const_span soft_bits_avx512(soft_bits, max_node_lifted);
 
   // Copy the LLRs from the soft_bits AVX array into temp_llr without any padding. Recall that temp_llr is aligned to
   // the size of the AVX registers. This makes it possible to call the hard decision function only once, improving
@@ -247,7 +247,7 @@ void ldpc_decoder_avx512::get_hard_bits(bit_buffer& out)
   for (unsigned i_node_lifted = 0; i_node_lifted != max_node_lifted; i_node_lifted += node_size_avx512) {
     // View over the LLR.
     span<const log_likelihood_ratio> current_soft(
-        reinterpret_cast<log_likelihood_ratio*>(soft_bits_avx512.data_at(i_node_lifted, 0)), lifting_size);
+        reinterpret_cast<const log_likelihood_ratio*>(soft_bits_avx512.data_at(i_node_lifted, 0)), lifting_size);
 
     // Append LLRs to the buffer.
     srsvec::copy(llr_write_buffer.first(lifting_size), current_soft);
