@@ -27,7 +27,7 @@ set(SOURCES
         unique_thread.cpp
         task_worker.cpp
         task_worker_pool.cpp
-        timers.cpp
+        timers2.cpp
         bit_encoding.cpp
         config_json.cpp
         config_yaml.cpp

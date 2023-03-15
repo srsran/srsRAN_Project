@@ -22,6 +22,7 @@
 
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/build_info/build_info.h"
+#include "srsran/support/cpu_features.h"
 #include "srsran/support/signal_handler.h"
 #include "srsran/support/tsan_options.h"
 
@@ -66,6 +67,7 @@
 #include "srsran/phy/lower/lower_phy_factory.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/radio/radio_factory.h"
+#include "srsran/support/sysinfo.h"
 #include <atomic>
 #include <csignal>
 #include <unordered_map>
@@ -103,6 +105,22 @@ static void compute_derived_args(const gnb_appconfig& gnb_params)
   ngap_nw_config.connect_address = gnb_params.amf_cfg.ip_addr;
   ngap_nw_config.connect_port    = gnb_params.amf_cfg.port;
   ngap_nw_config.bind_address    = gnb_params.amf_cfg.bind_addr;
+  ngap_nw_config.ppid            = NGAP_PPID;
+  if (gnb_params.amf_cfg.sctp_rto_initial >= 0) {
+    ngap_nw_config.rto_initial = gnb_params.amf_cfg.sctp_rto_initial;
+  }
+  if (gnb_params.amf_cfg.sctp_rto_min >= 0) {
+    ngap_nw_config.rto_min = gnb_params.amf_cfg.sctp_rto_min;
+  }
+  if (gnb_params.amf_cfg.sctp_rto_max >= 0) {
+    ngap_nw_config.rto_max = gnb_params.amf_cfg.sctp_rto_max;
+  }
+  if (gnb_params.amf_cfg.sctp_init_max_attempts >= 0) {
+    ngap_nw_config.init_max_attempts = gnb_params.amf_cfg.sctp_init_max_attempts;
+  }
+  if (gnb_params.amf_cfg.sctp_max_init_timeo >= 0) {
+    ngap_nw_config.max_init_timeo = gnb_params.amf_cfg.sctp_max_init_timeo;
+  }
 }
 
 namespace {
@@ -169,7 +187,7 @@ struct worker_manager {
   std::unique_ptr<task_executor> radio_exec;
 
   std::unordered_map<std::string, std::unique_ptr<task_executor>> task_execs;
-  optional<pcell_ul_executor_mapper>                              ue_exec_mapper;
+  optional<pcell_ue_executor_mapper>                              ue_exec_mapper;
   optional<cell_executor_mapper>                                  cell_exec_mapper;
 
 private:
@@ -240,7 +258,7 @@ private:
     radio_exec = std::make_unique<task_worker_executor>(*workers.at("radio"));
 
     // Executor mappers.
-    ue_exec_mapper.emplace(pcell_ul_executor_mapper{du_ue_exec.get()});
+    ue_exec_mapper.emplace(pcell_ue_executor_mapper{du_ue_exec.get()});
     cell_exec_mapper.emplace(cell_executor_mapper{{du_cell_exec.get()}, blocking_mode_active});
   }
 };
@@ -445,8 +463,27 @@ int main(int argc, char** argv)
   auto& rf_logger = srslog::fetch_basic_logger("RF", false);
   rf_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.radio_level));
 
+  auto& fapi_logger = srslog::fetch_basic_logger("FAPI", true);
+  fapi_logger.set_level(srslog::str_to_basic_level(gnb_cfg.log_cfg.fapi_level));
+
   // Log build info
   gnb_logger.info("Built in {} mode using {}", get_build_mode(), get_build_info());
+
+  // Check and log included CPU features and check support by current CPU
+  if (cpu_supports_included_features()) {
+    gnb_logger.debug("Required CPU features: {}", get_cpu_feature_info());
+  } else {
+    // Quit here until we complete selection of the best matching implementation for the current CPU at runtime.
+    gnb_logger.error("The CPU does not support the required CPU features that were configured during compile time: {}",
+                     get_cpu_feature_info());
+    report_error("The CPU does not support the required CPU features that were configured during compile time: {}\n",
+                 get_cpu_feature_info());
+  }
+
+  // Check some common causes of performance issues and
+  // print a warning if required.
+  check_cpu_governor(gnb_logger);
+  check_drm_kms_polling(gnb_logger);
 
   // Set layer-specific pcap options.
   std::unique_ptr<ngap_pcap> ngap_p = std::make_unique<ngap_pcap_impl>();
@@ -474,6 +511,7 @@ int main(int argc, char** argv)
 
   // Create console helper object for commands and metrics printing.
   gnb_console_helper console(*epoll_broker);
+  console.on_app_starting();
 
   // Create NGAP adapter.
   std::unique_ptr<srsran::srs_cu_cp::ngap_network_adapter> ngap_adapter =
@@ -501,7 +539,7 @@ int main(int argc, char** argv)
       gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
 
   // create and start DUT
-  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(std::move(cu_up_cfg));
+  std::unique_ptr<srsran::srs_cu_up::cu_up_interface> cu_up_obj = create_cu_up(cu_up_cfg);
 
   // Create CU-CP config.
   srs_cu_cp::cu_cp_configuration cu_cp_cfg = generate_cu_cp_config(gnb_cfg);
@@ -511,7 +549,7 @@ int main(int argc, char** argv)
   cu_cp_cfg.ngap_notifier                  = ngap_adapter.get();
 
   // create CU-CP.
-  std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(std::move(cu_cp_cfg));
+  std::unique_ptr<srsran::srs_cu_cp::cu_cp_interface> cu_cp_obj = create_cu_cp(cu_cp_cfg);
   cu_cp_obj->handle_new_du_connection();    // trigger DU addition
   cu_cp_obj->handle_new_cu_up_connection(); // trigger CU-UP addition
 
@@ -521,8 +559,6 @@ int main(int argc, char** argv)
   // attach E1AP adapters to CU-UP and CU-CP
   e1ap_up_to_cp_adapter.attach_handler(&cu_cp_obj->get_e1ap_message_handler(srsran::srs_cu_cp::uint_to_cu_up_index(0)));
   e1ap_cp_to_up_adapter.attach_handler(&cu_up_obj->get_e1ap_message_handler());
-
-  console.on_app_starting();
 
   // start CU-CP
   gnb_logger.info("Starting CU-CP...");
@@ -578,9 +614,9 @@ int main(int argc, char** argv)
   phy_rx_symbol_req_adapter.connect(&lower->get_request_handler());
 
   // Create FAPI adaptors.
-  const std::vector<du_cell_config>& du_cfg = generate_du_cell_config(gnb_cfg);
-  unsigned                           sector = du_cfg.size() - 1;
-  subcarrier_spacing                 scs    = du_cfg.front().scs_common;
+  std::vector<du_cell_config> du_cfg = generate_du_cell_config(gnb_cfg);
+  unsigned                    sector = du_cfg.size() - 1;
+  subcarrier_spacing          scs    = du_cfg.front().scs_common;
 
   auto phy_adaptor = build_phy_fapi_adaptor(sector,
                                             scs,
@@ -605,17 +641,14 @@ int main(int argc, char** argv)
   std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>   mac_adaptor;
   if (gnb_cfg.log_cfg.fapi_level == "debug") {
     // Create gateway loggers and intercept MAC adaptor calls.
-    logging_slot_gateway =
-        fapi::logging_slot_gateway_decorator_factory().create(phy_adaptor->get_slot_message_gateway());
+    logging_slot_gateway = fapi::create_logging_slot_gateway(phy_adaptor->get_slot_message_gateway());
     report_fatal_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
     mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway, last_msg_dummy);
 
     // Create notification loggers.
-    logging_slot_data_notifier =
-        fapi::logging_slot_data_notifier_decorator_factory().create(mac_adaptor->get_slot_data_notifier());
+    logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(mac_adaptor->get_slot_data_notifier());
     report_fatal_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
-    logging_slot_time_notifier =
-        fapi::logging_slot_time_notifier_decorator_factory().create(mac_adaptor->get_slot_time_notifier());
+    logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(mac_adaptor->get_slot_time_notifier());
     report_fatal_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
 
     // Connect the PHY adaptor with the loggers to intercept PHY notifications.

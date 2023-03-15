@@ -31,21 +31,15 @@ static bool validate_pusch_cell_app_config(const pusch_appconfig& config)
 }
 
 /// Validates the given PRACH cell application configuration. Returns true on success, otherwise false.
-static bool validate_prach_cell_app_config(const prach_appconfig& config)
+static bool validate_prach_cell_app_config(const prach_appconfig& config, nr_band band)
 {
-  // The maximum value of 137 for \c l139 is defined by \c prach-RootSequenceIndex, in RACH-ConfigCommon, TS 38.331.
-  // The lengths \c l839 or \c l139 depend on the PRACH preamble format, defined in Tables 6.3.3.1-1 and
-  // Table 6.3.3.1-2, TS 38.211. \n
-  // The PRACH preamble format depends on prach_root_sequence_index, as per Tables Table 6.3.3.2-2 (FR1 and paired
-  // spectrum) and Table 6.3.3.2-3 (FR1 and unpaired spectrum), TS 38.211.
-  // NOTE: This check is condition on whether the GNB uses paired or unpaired spectrum; since this information is not
-  // available here, in unpaired spectrum there are some invalid combinations of prach_config_index and
-  // prach_root_sequence_index that are not rejected by this validator.
-  if (config.prach_config_index > 86 and config.prach_root_sequence_index > 137) {
-    fmt::print("The PRACH preamble format for PRACH configuration index {} is not compatible with Root seq. idx. {}. "
-               "The max Root seq. idx. for this PRACH configuration index is 137 \n",
-               config.prach_config_index,
-               config.prach_root_sequence_index);
+  bool           is_paired_spectrum          = band_helper::is_paired_spectrum(band);
+  const unsigned max_supported_prach_cfg_idx = is_paired_spectrum ? 86U : 66U;
+  if (config.prach_config_index > max_supported_prach_cfg_idx) {
+    fmt::print(
+        "Short PRACH preamble formats not supported. For {}, the max PRACH configuration index supported is {} \n",
+        is_paired_spectrum ? "FDD" : "TDD",
+        max_supported_prach_cfg_idx);
     return false;
   }
 
@@ -147,7 +141,8 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
     return false;
   }
 
-  if (!validate_prach_cell_app_config(config.prach_cfg)) {
+  nr_band band = config.band.has_value() ? config.band.value() : band_helper::get_band_from_dl_arfcn(config.dl_arfcn);
+  if (!validate_prach_cell_app_config(config.prach_cfg, band)) {
     return false;
   }
 

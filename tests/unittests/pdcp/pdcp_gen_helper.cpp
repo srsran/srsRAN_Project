@@ -23,6 +23,7 @@
 #include "lib/pdcp/pdcp_entity_impl.h"
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <cstdlib>
 #include <getopt.h>
 #include <queue>
@@ -103,7 +104,8 @@ int main(int argc, char** argv)
   pdcp_sn_size sn_size = args.sn_size == "12" ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
   logger.info("Creating PDCP TX ({} bit)", sn_size);
 
-  timer_manager timers;
+  timer_manager      timers;
+  manual_task_worker worker{64};
 
   // Set TX config
   pdcp_config::pdcp_tx_config config = {};
@@ -127,7 +129,7 @@ int main(int argc, char** argv)
   pdcp_tx_gen_frame frame = {};
   // Create RLC entities
   std::unique_ptr<pdcp_entity_tx> pdcp_tx =
-      std::make_unique<pdcp_entity_tx>(0, srb_id_t::srb1, config, frame, frame, timers);
+      std::make_unique<pdcp_entity_tx>(0, srb_id_t::srb1, config, frame, frame, timer_factory{timers, worker});
   pdcp_tx_state st = {args.count};
   pdcp_tx->set_state(st);
   pdcp_tx->enable_security(sec_cfg);

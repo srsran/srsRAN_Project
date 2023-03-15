@@ -20,7 +20,7 @@
  *
  */
 
-#include "../../../lib/fapi/validators/dl_pdcch_pdu.h"
+#include "../../../lib/fapi/pdu_validators/dl_pdcch_pdu.h"
 #include "helpers.h"
 #include "srsran/fapi/message_validators.h"
 #include "srsran/support/test_utils.h"
@@ -335,6 +335,16 @@ INSTANTIATE_TEST_SUITE_P(dmrs_power_1,
                                                           test_case_data{static_cast<unsigned>(int16_t(-32767)), true},
                                                           test_case_data{0, true},
                                                           test_case_data{32767, true})));
+
+INSTANTIATE_TEST_SUITE_P(
+    collocated_al16_candidate,
+    validate_pdcch_pdu_field,
+    testing::Combine(testing::Values(pdu_field_data<dl_pdcch_pdu>{
+                         "Collocated AL16 candidate",
+                         [](dl_pdcch_pdu& pdu, int value) {
+                           pdu.maintenance_v3.info.back().collocated_AL16_candidate = value;
+                         }}),
+                     testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
 
 /// Valid PDU should pass.
 TEST(validate_pdcch_pdu, valid_pdu_passes)

@@ -38,14 +38,17 @@ void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) :
-  cfg(config_), ue_task_sched(timers), du_task_sched(timers), cu_up_task_sched(timers)
+  cfg(config_),
+  ue_task_sched(timers, *config_.cu_cp_executor),
+  du_task_sched(timers, *config_.cu_cp_executor),
+  cu_up_task_sched(timers, *config_.cu_cp_executor)
 {
   assert_cu_cp_configuration_valid(cfg);
 
   // connect event notifiers to layers
-  f1ap_ev_notifier.connect_cu_cp(*this);
-  cu_up_processor_ev_notifier.connect_cu_cp(*this);
-  ngap_cu_cp_ev_notifier.connect_cu_cp(*this);
+  f1ap_ev_notifier.connect_cu_cp(get_cu_cp_du_handler());
+  cu_up_processor_ev_notifier.connect_cu_cp(get_cu_cp_cu_up_handler());
+  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_connection_handler(), get_cu_cp_ngap_paging_handler());
 
   // connect task schedulers
   ngap_task_sched.connect_cu_cp(ue_task_sched);
@@ -53,7 +56,8 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) :
   cu_up_processor_task_sched.connect_cu_cp(cu_up_task_sched);
 
   // Create layers
-  ngap_entity = create_ngap(cfg.ngap_config, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
+  ngap_entity = create_ngap(
+      cfg.ngap_config, ngap_cu_cp_ev_notifier, ngap_task_sched, ue_mng, *cfg.ngap_notifier, *cfg.cu_cp_executor);
   ngap_adapter.connect_ngap(*ngap_entity);
 
   routine_mng = std::make_unique<cu_cp_routine_manager>(ngap_adapter, ngap_cu_cp_ev_notifier, cu_up_db);
@@ -197,6 +201,14 @@ void cu_cp::handle_amf_connection_drop()
   }
 }
 
+void cu_cp::handle_paging_message(cu_cp_paging_message& msg)
+{
+  // Forward paging message to all DU processors
+  for (auto& du : du_db) {
+    du.second->get_du_processor_paging_handler().handle_paging_message(msg);
+  }
+}
+
 // private
 
 /// Create DU object with valid index
@@ -211,6 +223,7 @@ du_index_t cu_cp::add_du()
   // TODO: use real config
   du_processor_config_t du_cfg = {};
   du_cfg.du_index              = du_index;
+  du_cfg.rrc_cfg               = cfg.rrc_config;
 
   std::unique_ptr<du_processor_interface> du = create_du_processor(std::move(du_cfg),
                                                                    du_processor_ev_notifier,
@@ -251,6 +264,8 @@ void cu_cp::remove_du(du_index_t du_index)
       du_index, launch_async([this, du_index](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
         srsran_assert(du_db.find(du_index) != du_db.end(), "Remove DU called for inexistent du_index={}", du_index);
+
+        // Remove DU
         du_db.erase(du_index);
         logger.info("Removed du_index={}", du_index);
         CORO_RETURN();

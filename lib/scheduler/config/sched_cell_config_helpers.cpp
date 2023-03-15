@@ -57,7 +57,7 @@ std::vector<sched_grid_resource> srsran::config_helpers::build_pucch_guardbands_
           break;
         }
         default:
-          report_error("Only PUCCH format 1 currently supported");
+          report_error("Only PUCCH format 1 currently supported\n");
       }
     } else {
       switch (pucch_res.format) {
@@ -72,7 +72,7 @@ std::vector<sched_grid_resource> srsran::config_helpers::build_pucch_guardbands_
           break;
         }
         default:
-          report_error("Only PUCCH format 1 currently supported");
+          report_error("Only PUCCH format 1 currently supported\n");
       }
     }
 

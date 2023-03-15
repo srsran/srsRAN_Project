@@ -112,6 +112,11 @@ static void configure_cli11_amf_args(CLI::App& app, amf_appconfig& amf_params)
   app.add_option("--port", amf_params.port, "AMF port")->capture_default_str()->check(CLI::Range(20000, 40000));
   app.add_option("--bind_addr", amf_params.bind_addr, "Local IP address to bind for AMF connection")
       ->check(CLI::ValidIPV4);
+  app.add_option("--sctp_rto_initial", amf_params.sctp_rto_initial, "SCTP initial RTO value");
+  app.add_option("--sctp_rto_min", amf_params.sctp_rto_min, "SCTP RTO min");
+  app.add_option("--sctp_rto_max", amf_params.sctp_rto_max, "SCTP RTO max");
+  app.add_option("--sctp_init_max_attempts", amf_params.sctp_init_max_attempts, "SCTP init max attempts");
+  app.add_option("--sctp_max_init_timeo", amf_params.sctp_max_init_timeo, "SCTP max init timeout");
 }
 
 static void configure_cli11_rf_driver_args(CLI::App& app, rf_driver_appconfig& rf_driver_params)
@@ -168,6 +173,19 @@ static void configure_cli11_expert_phy_args(CLI::App& app, expert_phy_appconfig&
       ->capture_default_str();
 }
 
+static void configure_cli11_pdcch_args(CLI::App& app, pdcch_appconfig& pdcch_params)
+{
+  app.add_option_function<std::string>(
+         "--ss_type",
+         [&pdcch_params](const std::string& value) {
+           pdcch_params.ue_ss_type = (value == "common") ? search_space_configuration::type_t::common
+                                                         : search_space_configuration::type_t::ue_dedicated;
+         },
+         "SearchSpace type for UE data")
+      ->default_str("ue_dedicated")
+      ->check(CLI::IsMember({"common", "ue_dedicated"}, CLI::ignore_case));
+}
+
 static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_params)
 {
   app.add_option("--fixed_ue_mcs", pdsch_params.fixed_ue_mcs, "Fixed UE MCS")
@@ -176,7 +194,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, pdsch_appconfig& pdsch_par
   app.add_option("--fixed_rar_mcs", pdsch_params.fixed_rar_mcs, "Fixed RAR MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
-  app.add_option("--fixed_sib1_mci", pdsch_params.fixed_sib1_mcs, "Fixed SIB1 MCS")
+  app.add_option("--fixed_sib1_mcs", pdsch_params.fixed_sib1_mcs, "Fixed SIB1 MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
 }
@@ -276,6 +294,10 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
     return (tac <= 0xffffffU) ? "" : "TAC value out of range";
   });
 
+  // PDCCH configuration.
+  CLI::App* pdcch_subcmd = app.add_subcommand("pdcch", "PDCCH parameters");
+  configure_cli11_pdcch_args(*pdcch_subcmd, cell_params.pdcch_cfg);
+
   // PDSCH configuration.
   CLI::App* pdsch_subcmd = app.add_subcommand("pdsch", "PDSCH parameters");
   configure_cli11_pdsch_args(*pdsch_subcmd, cell_params.pdsch_cfg);
@@ -335,11 +357,51 @@ static void configure_cli11_rlc_args(CLI::App& app, rlc_appconfig& rlc_params)
   configure_cli11_rlc_am_args(*rlc_am_subcmd, rlc_params.am);
 }
 
+static void configure_cli11_pdcp_tx_args(CLI::App& app, pdcp_tx_appconfig& pdcp_tx_params)
+{
+  app.add_option("--sn", pdcp_tx_params.sn_field_length, "PDCP TX SN size")->capture_default_str();
+  app.add_option("--discard_timer", pdcp_tx_params.discard_timer, "PDCP TX discard timer (ms)")->capture_default_str();
+  app.add_option("--status_report_required", pdcp_tx_params.status_report_required, "PDCP TX status report required")
+      ->capture_default_str();
+}
+
+static void configure_cli11_pdcp_rx_args(CLI::App& app, pdcp_rx_appconfig& pdcp_rx_params)
+{
+  app.add_option("--sn", pdcp_rx_params.sn_field_length, "PDCP RX SN size")->capture_default_str();
+  app.add_option("--t_reordering", pdcp_rx_params.t_reordering, "PDCP RX t-Reordering (ms)")->capture_default_str();
+  app.add_option(
+         "--out_of_order_delivery", pdcp_rx_params.out_of_order_delivery, "PDCP RX enable out-of-order delivery")
+      ->capture_default_str();
+}
+
+static void configure_cli11_pdcp_args(CLI::App& app, pdcp_appconfig& pdcp_params)
+{
+  app.add_option("integrity_required", pdcp_params.integrity_protection_required, "DRB Integrity required")
+      ->capture_default_str();
+  CLI::App* pdcp_tx_subcmd = app.add_subcommand("tx", "PDCP TX parameters");
+  configure_cli11_pdcp_tx_args(*pdcp_tx_subcmd, pdcp_params.tx);
+  CLI::App* pdcp_rx_subcmd = app.add_subcommand("rx", "PDCP RX parameters");
+  configure_cli11_pdcp_rx_args(*pdcp_rx_subcmd, pdcp_params.rx);
+}
+
 static void configure_cli11_qos_args(CLI::App& app, qos_appconfig& qos_params)
 {
   app.add_option("--five_qi", qos_params.five_qi, "5QI")->capture_default_str()->check(CLI::Range(0, 255));
   CLI::App* rlc_subcmd = app.add_subcommand("rlc", "RLC parameters");
   configure_cli11_rlc_args(*rlc_subcmd, qos_params.rlc);
+  CLI::App* pdcp_subcmd = app.add_subcommand("pdcp", "PDCP parameters");
+  configure_cli11_pdcp_args(*pdcp_subcmd, qos_params.pdcp);
+  auto verify_callback = [&]() {
+    CLI::App* rlc  = app.get_subcommand("rlc");
+    CLI::App* pdcp = app.get_subcommand("pdcp");
+    if (rlc->count_all() == 0) {
+      report_error("Error parsing QoS config for 5QI {}. RLC configuration not present.\n", qos_params.five_qi);
+    }
+    if (pdcp->count_all() == 0) {
+      report_error("Error parsing QoS config for 5QI {}. PDCP configuration not present.\n", qos_params.five_qi);
+    }
+  };
+  app.callback(verify_callback);
 }
 
 void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appconfig& gnb_cfg)

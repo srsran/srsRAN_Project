@@ -26,6 +26,7 @@
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_srb0_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
+#include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
 #include <gtest/gtest.h>
@@ -54,11 +55,12 @@ struct test_bench {
 
   scheduler_ue_expert_config    expert_cfg;
   cell_configuration            cell_cfg;
+  sched_cfg_dummy_notifier      dummy_notif;
   cell_resource_allocator       res_grid;
   pdcch_resource_allocator_impl pdcch_sch;
   pucch_allocator_impl          pucch_alloc;
   uci_allocator_impl            uci_alloc;
-  ue_list                       ue_db;
+  ue_repository                 ue_db;
   ue_cell_grid_allocator        ue_alloc;
   ue_srb0_scheduler             srb0_sched;
 
@@ -70,6 +72,7 @@ struct test_bench {
     pdcch_sch{cell_cfg},
     pucch_alloc{cell_cfg},
     uci_alloc{pucch_alloc},
+    ue_db{dummy_notif},
     ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
     srb0_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db)
   {
@@ -251,7 +254,7 @@ protected:
       // UE already exists.
       return false;
     }
-    bench->ue_db.insert(ue_index, std::move(u));
+    bench->ue_db.add_ue(std::move(u));
     return true;
   }
 

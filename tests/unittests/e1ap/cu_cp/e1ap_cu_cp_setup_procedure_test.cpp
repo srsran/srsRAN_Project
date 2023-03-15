@@ -94,7 +94,7 @@ TEST_F(e1ap_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_t
     ASSERT_FALSE(t.ready());
     ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::nulltype);
 
-    this->timers.tick_all();
+    this->tick();
   }
 
   // Status: CU-UP received E1 Setup Request again.
@@ -145,7 +145,7 @@ TEST_F(e1ap_cu_cp_test, when_cu_cp_e1_setup_failure_with_time_to_wait_received_t
     ASSERT_FALSE(t.ready());
     ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::nulltype);
 
-    this->timers.tick_all();
+    this->tick();
   }
 
   // Status: CU-UP received E1 Setup Request again.
@@ -195,7 +195,7 @@ TEST_F(e1ap_cu_cp_test, when_retry_limit_reached_then_cu_cp_not_connected)
       ASSERT_FALSE(t.ready());
       ASSERT_EQ(e1ap_pdu_notifier.last_e1ap_msg.pdu.type().value, asn1::e1ap::e1ap_pdu_c::types_opts::nulltype);
 
-      this->timers.tick_all();
+      this->tick();
     }
   }
 

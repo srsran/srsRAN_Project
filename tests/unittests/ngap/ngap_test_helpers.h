@@ -64,6 +64,9 @@ protected:
   /// \brief Helper method to successfully run Initial Context Setup in NGAP.
   void run_inital_context_setup(ue_index_t ue_index);
 
+  /// \brief Manually tick timers.
+  void tick();
+
   srslog::basic_logger& ngap_logger = srslog::fetch_basic_logger("NGAP");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
@@ -75,6 +78,7 @@ protected:
   dummy_ngap_amf_notifier          msg_notifier;
   dummy_ngap_rrc_ue_notifier       rrc_ue_notifier;
   dummy_ngap_du_processor_notifier du_processor_notifier;
+  dummy_ngap_cu_cp_paging_notifier cu_cp_paging_notifier;
   dummy_ngap_ue_task_scheduler     ngap_ue_task_scheduler;
   manual_task_worker               ctrl_worker{128};
   std::unique_ptr<ngap_interface>  ngap;

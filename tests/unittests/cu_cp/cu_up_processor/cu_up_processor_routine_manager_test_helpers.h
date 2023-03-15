@@ -22,8 +22,9 @@
 
 #pragma once
 
-#include "../common/test_helpers.h"
+#include "../test_helpers.h"
 #include "lib/cu_cp/routine_managers/cu_up_processor_routine_manager.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -46,6 +47,7 @@ protected:
   dummy_cu_up_processor_cu_up_management_notifier       cu_cp_notifier;
   std::unique_ptr<dummy_cu_up_processor_task_scheduler> task_sched;
   std::unique_ptr<cu_up_processor_routine_manager>      routine_mng;
+  manual_task_worker                                    ctrl_worker{64};
 };
 
 } // namespace srs_cu_cp

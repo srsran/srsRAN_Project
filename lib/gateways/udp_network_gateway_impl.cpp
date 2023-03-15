@@ -22,6 +22,7 @@
 
 #include "udp_network_gateway_impl.h"
 #include "srsran/adt/span.h"
+#include "srsran/gateways/addr_info.h"
 #include "srsran/srslog/srslog.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -143,7 +144,16 @@ bool udp_network_gateway_impl::create_and_bind()
   freeaddrinfo(results);
 
   if (sock_fd == -1) {
-    logger.error("Error binding to {}:{} - {}", config.bind_address, config.bind_port, strerror(ret));
+    fmt::print("Failed to bind {} socket to {}:{}. {}\n",
+               ipproto_to_string(hints.ai_protocol),
+               config.bind_address,
+               config.bind_port,
+               strerror(ret));
+    logger.error("Failed to bind {} socket to {}:{}. {}",
+                 ipproto_to_string(hints.ai_protocol),
+                 config.bind_address,
+                 config.bind_port,
+                 strerror(ret));
     return false;
   }
 
@@ -313,8 +323,7 @@ bool udp_network_gateway_impl::set_reuse_addr()
 bool udp_network_gateway_impl::close_socket()
 {
   if (not is_initialized()) {
-    logger.error("Socket not initialized");
-    return false;
+    return true;
   }
 
   if (close(sock_fd) == -1) {

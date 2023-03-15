@@ -20,65 +20,12 @@
  *
  */
 
-#include "common/test_helpers.h"
-#include "lib/cu_cp/cu_cp.h"
-#include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
-#include "tests/unittests/e1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/common/test_helpers.h"
-#include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
-#include "tests/unittests/ngap/ngap_test_messages.h"
-#include "tests/unittests/ngap/test_helpers.h"
-#include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/support/executors/manual_task_worker.h"
+#include "cu_cp_test_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
-
-/// Fixture class for CU-CP test
-class cu_cp_test : public ::testing::Test
-{
-protected:
-  void SetUp() override
-  {
-    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-    srslog::init();
-
-    // create CU-CP config
-    cu_cp_configuration cfg;
-    cfg.cu_cp_executor = &ctrl_worker;
-    cfg.f1ap_notifier  = &f1ap_pdu_notifier;
-    cfg.e1ap_notifier  = &e1ap_pdu_notifier;
-    cfg.ngap_notifier  = &ngap_amf_notifier;
-
-    cfg.ngap_config.ran_node_name = "srsgnb01";
-    cfg.ngap_config.plmn          = "00101";
-    cfg.ngap_config.tac           = 7;
-
-    // create and start DUT
-    cu_cp_obj = std::make_unique<cu_cp>(std::move(cfg));
-    cu_cp_obj->start();
-  }
-
-  void TearDown() override
-  {
-    // flush logger after each test
-    srslog::flush();
-
-    cu_cp_obj->stop();
-  }
-
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-
-  dummy_f1ap_pdu_notifier f1ap_pdu_notifier;
-  dummy_e1ap_pdu_notifier e1ap_pdu_notifier;
-  dummy_ngap_amf_notifier ngap_amf_notifier;
-
-  manual_task_worker ctrl_worker{128};
-
-  std::unique_ptr<cu_cp> cu_cp_obj;
-};
 
 //////////////////////////////////////////////////////////////////////////////////////
 /* Initial CU-CP routine manager with connected CU-UPs                              */
@@ -118,7 +65,7 @@ TEST_F(cu_cp_test, when_new_cu_ups_conneced_then_cu_up_e1_setup_request_send)
 /// Test the DU connection
 TEST_F(cu_cp_test, when_new_du_connection_then_du_added)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // check that DU has been added
@@ -128,7 +75,7 @@ TEST_F(cu_cp_test, when_new_du_connection_then_du_added)
 /// Test the DU removal
 TEST_F(cu_cp_test, when_du_remove_request_received_then_du_removed)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
 
   // Check that DU has been added
@@ -225,7 +172,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
@@ -259,7 +206,7 @@ TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 
 TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
 {
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
@@ -301,7 +248,7 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
 
   ASSERT_TRUE(cu_cp_obj->amf_is_connected());
 
-  // Connect DU
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
   cu_cp_obj->handle_new_du_connection();
   // Connect CU-UP
   cu_cp_obj->handle_new_cu_up_connection();
@@ -361,4 +308,119 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     // Check that UE has also been removed from F1AP
     ASSERT_EQ(cu_cp_obj->get_f1ap_statistics_handler(uint_to_du_index(0)).get_nof_ues(), 1);
   }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////
+/* Paging handling                                                                  */
+//////////////////////////////////////////////////////////////////////////////////////
+
+/// Test the handling of an paging message when a DU is not connected
+TEST_F(cu_cp_test, when_no_du_connection_not_finished_then_paging_is_not_sent_to_du)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate Paging
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_FALSE(check_minimal_paging_result());
+}
+
+/// Test the handling of a valid Paging message with only mandatory values set
+TEST_F(cu_cp_test, when_valid_paging_message_received_then_paging_is_sent_to_du)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_TRUE(check_minimal_paging_result());
+}
+
+/// Test the handling of a valid Paging message with optional values set
+TEST_F(cu_cp_test, when_valid_paging_message_with_optional_values_received_then_paging_is_sent_to_du)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging
+  ngap_message paging_msg = generate_valid_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_TRUE(check_paging_result());
+}
+
+/// Test the handling of an invalid Paging message
+TEST_F(cu_cp_test, when_no_du_for_tac_exists_then_paging_is_not_sent_to_du)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging with unknown tac
+  ngap_message paging_msg = generate_valid_minimal_paging_message();
+  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging.value[0].tai.tac.from_number(8);
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_FALSE(check_minimal_paging_result());
+}
+
+/// Test the handling of an invalid Paging message
+TEST_F(cu_cp_test, when_assist_data_for_paging_for_unknown_tac_is_included_then_paging_is_not_sent_to_du)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging with unknown tac but assist data for paging
+  ngap_message paging_msg = generate_valid_paging_message();
+  paging_msg.pdu.init_msg().value.paging()->tai_list_for_paging.value[0].tai.tac.from_number(8);
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_FALSE(check_paging_result());
+}
+
+/// Test the handling of an invalid Paging message
+TEST_F(cu_cp_test, when_invalid_paging_message_received_then_paging_is_not_sent_to_du)
+{
+  // Connect DU (note that this creates a DU processor, but the DU is only connected after the F1Setup procedure)
+  cu_cp_obj->handle_new_du_connection();
+
+  // Generate F1SetupRequest
+  f1ap_message f1setup_msg = generate_f1_setup_request();
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1ap_message_handler(uint_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Generate Paging
+  ngap_message paging_msg = generate_invalid_paging_message();
+
+  cu_cp_obj->get_ngap_message_handler().handle_message(paging_msg);
+
+  ASSERT_FALSE(check_paging_result());
 }

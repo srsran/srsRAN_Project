@@ -30,7 +30,7 @@ using namespace srsran;
 using namespace asn1::e1ap;
 using namespace srs_cu_cp;
 
-e1ap_cu_cp_impl::e1ap_cu_cp_impl(timer_manager&                 timers_,
+e1ap_cu_cp_impl::e1ap_cu_cp_impl(timer_factory                  timers_,
                                  e1ap_message_notifier&         e1ap_pdu_notifier_,
                                  e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                  task_executor&                 ctrl_exec_) :
@@ -73,7 +73,7 @@ void e1ap_cu_cp_impl::handle_cu_up_e1_setup_response(const cu_up_e1_setup_respon
     e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
     e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
     auto& setup_fail        = e1ap_msg.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
-    setup_fail->cause.value = cause_to_e1ap_cause(msg.cause.value());
+    setup_fail->cause.value = cause_to_asn1_cause(msg.cause.value());
 
     // set values handled by E1
     setup_fail->transaction_id.value = current_transaction_id;

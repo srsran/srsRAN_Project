@@ -26,7 +26,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 
@@ -100,6 +100,16 @@ public:
 
   /// \brief Notifies the CU-CP about a dropped AMF connection.
   virtual void on_amf_connection_drop() = 0;
+};
+
+/// Interface to notify about Paging messages to the CU-CP
+class ngap_cu_cp_paging_notifier
+{
+public:
+  virtual ~ngap_cu_cp_paging_notifier() = default;
+
+  /// \brief Notifies the CU-CP about a Paging message.
+  virtual void on_paging_message(cu_cp_paging_message& msg) = 0;
 };
 
 struct ngap_initial_ue_message {

@@ -32,18 +32,20 @@ using namespace srsran;
 using namespace asn1::ngap;
 using namespace srs_cu_cp;
 
-ngap_impl::ngap_impl(ngap_configuration&     ngap_cfg_,
-                     ngap_ue_task_scheduler& task_sched_,
-                     ngap_ue_manager&        ue_manager_,
-                     ngap_message_notifier&  ngap_notifier_,
-                     task_executor&          ctrl_exec_) :
+ngap_impl::ngap_impl(ngap_configuration&         ngap_cfg_,
+                     ngap_cu_cp_paging_notifier& cu_cp_paging_notifier_,
+                     ngap_ue_task_scheduler&     task_sched_,
+                     ngap_ue_manager&            ue_manager_,
+                     ngap_message_notifier&      ngap_notifier_,
+                     task_executor&              ctrl_exec_) :
   logger(srslog::fetch_basic_logger("NGAP")),
   ngap_cfg(ngap_cfg_),
+  cu_cp_paging_notifier(cu_cp_paging_notifier_),
   task_sched(task_sched_),
   ue_manager(ue_manager_),
   ngap_notifier(ngap_notifier_),
   ctrl_exec(ctrl_exec_),
-  ev_mng(task_sched.get_timer_manager())
+  ev_mng(timer_factory{task_sched.get_timer_manager(), ctrl_exec})
 {
 }
 
@@ -69,7 +71,8 @@ void ngap_impl::create_ngap_ue(ue_index_t                          ue_index,
 async_task<ng_setup_response> ngap_impl::handle_ng_setup_request(const ng_setup_request& request)
 {
   logger.info("Sending NgSetupRequest");
-  return launch_async<ng_setup_procedure>(request, ngap_notifier, ev_mng, task_sched.get_timer_manager(), logger);
+  return launch_async<ng_setup_procedure>(
+      request, ngap_notifier, ev_mng, timer_factory{task_sched.get_timer_manager(), ctrl_exec}, logger);
 }
 
 void ngap_impl::handle_initial_ue_message(const ngap_initial_ue_message& msg)
@@ -189,6 +192,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::paging:
+      handle_paging(msg.value.paging());
+      break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
@@ -248,7 +254,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
 {
   ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(request->ran_ue_ngap_id.value));
-  auto*      ue       = ue_manager.find_ngap_ue(ue_index);
+  ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
   if (ue == nullptr) {
     logger.warning("ue={} does not exist - dropping PduSessionResourceSetupRequest", ue_index);
     return;
@@ -267,7 +273,6 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   msg.serving_plmn = ngap_cfg.plmn;
   fill_cu_cp_pdu_session_resource_setup_request(msg, request->pdu_session_res_setup_list_su_req.value);
   msg.ue_aggregate_maximum_bit_rate_dl = ue->get_aggregate_maximum_bit_rate_dl();
-  msg.qos_config                       = ngap_cfg.qos_config;
 
   // start routine
   task_sched.schedule_async_task(ue_index,
@@ -333,6 +338,22 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
 
   logger.info("Sending UeContextReleaseComplete");
   ngap_notifier.on_new_message(ngap_msg);
+}
+
+void ngap_impl::handle_paging(const asn1::ngap::paging_s& msg)
+{
+  logger.info("Received Paging");
+
+  if (msg->ue_paging_id.value.type() != asn1::ngap::ue_paging_id_c::types::five_g_s_tmsi) {
+    logger.error("Unsupportet UE Paging ID");
+    return;
+  }
+
+  // Convert to common type
+  cu_cp_paging_message cu_cp_paging_msg;
+  fill_cu_cp_paging_message(cu_cp_paging_msg, msg);
+
+  cu_cp_paging_notifier.on_paging_message(cu_cp_paging_msg);
 }
 
 void ngap_impl::handle_successful_outcome(const successful_outcome_s& outcome)

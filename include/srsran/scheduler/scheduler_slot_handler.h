@@ -69,7 +69,7 @@ struct dmrs_information {
   unsigned dmrs_scrambling_id_complement;
   /// False means that dmrs_scrambling_id == dmrs_scrambling_id_complement.
   bool low_papr_dmrs;
-  /// \brief DMRS sequence initialization (see TS 38.221 sec 7.4.1.1.2), as provided by parameter n_{SCID}.
+  /// \brief DMRS sequence initialization (see TS 38.211 sec 7.4.1.1.2), as provided by parameter n_{SCID}.
   /// Values: false -> 0, true -> 1.
   bool n_scid;
   /// Values: (1..3).
@@ -314,14 +314,18 @@ struct dl_broadcast_allocation {
   static_vector<sib_information, MAX_SIB1_PDUS_PER_SLOT> sibs;
 };
 
-/// Stores the information associated with Paging allocation.
-struct dl_paging_allocation {
+struct paging_ue_info {
   /// Type of Paging. RAN initiated or CN initiated.
   enum paging_identity_type { ran_ue_paging_identity, cn_ue_paging_identity } paging_type_indicator;
   /// Paging identity assigned to UE. Possible values are \c I-RNTI-Value (Bit string of size 40) and \c NG-5G-S-TMSI
   /// (Bit string of size 48). See TS 38.331.
-  uint64_t          paging_identity;
-  pdsch_information pdsch_cfg;
+  uint64_t paging_identity;
+};
+
+/// Stores the information associated with Paging allocation.
+struct dl_paging_allocation {
+  static_vector<paging_ue_info, MAX_PAGING_RECORDS_PER_PAGING_PDU> paging_ue_list;
+  pdsch_information                                                pdsch_cfg;
 };
 
 /// Stores the information associated with a CSI-RS signalling.

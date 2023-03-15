@@ -28,6 +28,8 @@
 
 namespace srsran {
 
+struct prach_configuration;
+
 /// \brief Collects PRACH preamble information parameters.
 ///
 /// The parameters are used and described in TS38.211 Section 6.3.3.1.
@@ -51,5 +53,25 @@ struct prach_preamble_information {
 /// \param[in] format PRACH preamble format.
 /// \return PRACH preamble information.
 prach_preamble_information get_prach_preamble_long_info(preamble_format format);
+
+/// \brief Collects PRACH preamble duration information.
+struct prach_symbols_slots_duration {
+  /// Duration of the PRACH Preamble in slots, with reference to the PUSCH SCS.
+  unsigned prach_length_slots;
+  /// PRACH starting slot within the subframe, with reference to the PUSCH SCS.
+  unsigned start_slot_pusch_scs;
+  /// PRACH duration in symbols, with reference to the PUSCH SCS.
+  unsigned nof_symbols;
+  /// PRACH starting symbol within the slot, with reference to the PUSCH SCS.
+  unsigned start_symbol_pusch_scs;
+};
+
+/// \brief Compute PRACH preamble duration information.
+///
+/// \param[in] prach_cfg PRACH preamble configuration.
+/// \param[in] pusch_scs PUSCH SCS that is used as a reference for symbol and slot unit.
+/// \return PRACH preamble duration information.
+prach_symbols_slots_duration get_prach_duration_info(const prach_configuration& prach_cfg,
+                                                     subcarrier_spacing         pusch_scs);
 
 } // namespace srsran

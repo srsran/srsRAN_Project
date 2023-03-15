@@ -88,7 +88,7 @@ static radio_configuration::over_the_wire_format otw_format = radio_configuratio
 static radio_configuration::clock_sources        clock_src  = {};
 static sampling_rate                             srate      = sampling_rate::from_MHz(61.44);
 static int                                       time_alignmemt_calibration = 0;
-static const lower_phy_ta_offset                 ta_offset                  = lower_phy_ta_offset::n0;
+static const n_ta_offset                         ta_offset                  = n_ta_offset::n0;
 static double                                    tx_gain                    = 60.0;
 static double                                    rx_gain                    = 70.0;
 
@@ -325,7 +325,7 @@ struct worker_manager {
   task_worker_executor     ctrl_exec{ctrl_worker};
   task_worker_executor     cell_execs{cell_workers};
   task_worker_executor     ue_execs{ue_workers};
-  pcell_ul_executor_mapper ue_exec_mapper{&ue_execs};
+  pcell_ue_executor_mapper ue_exec_mapper{&ue_execs};
   cell_executor_mapper     cell_exec_mapper{{&cell_execs}, false};
   // Lower PHY RT task executor.
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
@@ -654,17 +654,14 @@ int main(int argc, char** argv)
   std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>   mac_adaptor;
   if (enable_fapi_logs) {
     // Create gateway loggers and intercept MAC adaptor calls.
-    logging_slot_gateway =
-        fapi::logging_slot_gateway_decorator_factory().create(phy_adaptor->get_slot_message_gateway());
+    logging_slot_gateway = fapi::create_logging_slot_gateway(phy_adaptor->get_slot_message_gateway());
     report_fatal_error_if_not(logging_slot_gateway, "Unable to create logger for slot data notifications.");
     mac_adaptor = build_mac_fapi_adaptor(0, scs, *logging_slot_gateway, last_msg_notifier);
 
     // Create notification loggers.
-    logging_slot_data_notifier =
-        fapi::logging_slot_data_notifier_decorator_factory().create(mac_adaptor->get_slot_data_notifier());
+    logging_slot_data_notifier = fapi::create_logging_slot_data_notifier(mac_adaptor->get_slot_data_notifier());
     report_fatal_error_if_not(logging_slot_data_notifier, "Unable to create logger for slot data notifications.");
-    logging_slot_time_notifier =
-        fapi::logging_slot_time_notifier_decorator_factory().create(mac_adaptor->get_slot_time_notifier());
+    logging_slot_time_notifier = fapi::create_logging_slot_time_notifier(mac_adaptor->get_slot_time_notifier());
     report_fatal_error_if_not(logging_slot_time_notifier, "Unable to create logger for slot time notifications.");
 
     // Connect the PHY adaptor with the loggers to intercept PHY notifications.

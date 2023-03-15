@@ -30,10 +30,12 @@
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/mac/mac.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
-#include "srsran/support/timers.h"
 #include <map>
 
 namespace srsran {
+
+class timer_manager;
+
 namespace srs_du {
 
 struct du_manager_params {

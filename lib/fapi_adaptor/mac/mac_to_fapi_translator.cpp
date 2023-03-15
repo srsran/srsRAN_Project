@@ -193,7 +193,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   error_type<fapi::validator_report> result = validate_dl_tti_request(msg);
 
   if (!result) {
-    log_validator_report(result.error());
+    log_validator_report(result.error(), logger);
 
     clear_dl_tti_pdus(msg);
   }
@@ -241,6 +241,14 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
     }
   }
 
+  // Add Paging PDU to the Tx_Data.request message.
+  for (const auto& pdu : dl_data.paging_pdus) {
+    builder.add_pdu_custom_payload(fapi_index, pdu.cw_index, {pdu.pdu.data(), pdu.pdu.size()});
+    if (pdu.cw_index == 0) {
+      ++fapi_index;
+    }
+  }
+
   // Send the message.
   msg_gw.tx_data_request(msg);
 }
@@ -281,7 +289,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   error_type<fapi::validator_report> result = validate_ul_tti_request(msg);
 
   if (!result) {
-    log_validator_report(result.error());
+    log_validator_report(result.error(), logger);
 
     clear_ul_tti_pdus(msg);
   }
@@ -308,7 +316,7 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
   // Validate the UL_DCI.request message.
   error_type<fapi::validator_report> result = validate_ul_dci_request(msg);
   if (!result) {
-    log_validator_report(result.error());
+    log_validator_report(result.error(), logger);
 
     return;
   }

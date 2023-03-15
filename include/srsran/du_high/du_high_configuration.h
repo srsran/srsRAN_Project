@@ -13,6 +13,9 @@
 #include <map>
 
 namespace srsran {
+
+class timer_manager;
+
 namespace srs_du {
 
 class f1u_du_gateway;

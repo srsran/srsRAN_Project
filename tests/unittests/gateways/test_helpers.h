@@ -34,7 +34,8 @@
 #include <thread>
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/gateways/sctp_network_gateway_factory.h"
+#include "srsran/gateways/addr_info.h"
+#include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -107,7 +108,8 @@ int get_unused_port(const std::string& bind_addr, struct addrinfo& hints)
   // Create socket of proper type
   int sock_fd = socket(addrinfo_results->ai_family, addrinfo_results->ai_socktype, addrinfo_results->ai_protocol);
   if (sock_fd < 0) {
-    srslog::fetch_basic_logger("TEST").error("Failed to create socket: {}", strerror(errno));
+    srslog::fetch_basic_logger("TEST").error(
+        "Failed to create {} socket: {}", ipproto_to_string(addrinfo_results->ai_protocol), strerror(errno));
     goto free_addrinfo_results;
   }
 
@@ -158,7 +160,9 @@ int get_unused_sctp_port(const std::string& bind_addr)
   struct addrinfo hints;
   fill_sctp_hints(hints);
 
-  return get_unused_port(bind_addr, hints);
+  int port = get_unused_port(bind_addr, hints);
+  EXPECT_NE(port, 0) << "Failed to get unused port for SCTP socket";
+  return port;
 }
 
 int get_unused_udp_port(const std::string& bind_addr)
@@ -166,7 +170,9 @@ int get_unused_udp_port(const std::string& bind_addr)
   struct addrinfo hints;
   fill_udp_hints(hints);
 
-  return get_unused_port(bind_addr, hints);
+  int port = get_unused_port(bind_addr, hints);
+  EXPECT_NE(port, 0) << "Failed to get unused port for UDP socket";
+  return port;
 }
 
 class dummy_network_gateway_control_notifier : public sctp_network_gateway_control_notifier

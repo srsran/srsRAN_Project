@@ -29,7 +29,6 @@
 #include "srsran/ngap/ngap_configuration.h"
 #include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {
@@ -41,11 +40,12 @@ class ngap_event_manager;
 class ngap_impl final : public ngap_interface
 {
 public:
-  ngap_impl(ngap_configuration&     ngap_cfg_,
-            ngap_ue_task_scheduler& task_sched_,
-            ngap_ue_manager&        ue_manager_,
-            ngap_message_notifier&  ngap_notifier_,
-            task_executor&          ctrl_exec_);
+  ngap_impl(ngap_configuration&         ngap_cfg_,
+            ngap_cu_cp_paging_notifier& cu_cp_paging_notifier_,
+            ngap_ue_task_scheduler&     task_sched_,
+            ngap_ue_manager&            ue_manager_,
+            ngap_message_notifier&      ngap_notifier_,
+            task_executor&              ctrl_exec_);
   ~ngap_impl();
 
   // ngap ue control manager functions
@@ -89,6 +89,10 @@ private:
   /// \param[in] msg The received UE Context Release Command.
   void handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd);
 
+  /// \brief Notify about the reception of a Paging message.
+  /// \param[in] msg The received Paging message.
+  void handle_paging(const asn1::ngap::paging_s& msg);
+
   /// \brief Notify about the reception of a successful outcome message.
   /// \param[in] outcome The successful outcome message.
   void handle_successful_outcome(const asn1::ngap::successful_outcome_s& outcome);
@@ -97,12 +101,13 @@ private:
   /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::ngap::unsuccessful_outcome_s& outcome);
 
-  srslog::basic_logger&   logger;
-  ngap_configuration&     ngap_cfg;
-  ngap_ue_task_scheduler& task_sched;
-  ngap_ue_manager&        ue_manager;
-  ngap_message_notifier&  ngap_notifier;
-  task_executor&          ctrl_exec;
+  srslog::basic_logger&       logger;
+  ngap_configuration&         ngap_cfg;
+  ngap_cu_cp_paging_notifier& cu_cp_paging_notifier;
+  ngap_ue_task_scheduler&     task_sched;
+  ngap_ue_manager&            ue_manager;
+  ngap_message_notifier&      ngap_notifier;
+  task_executor&              ctrl_exec;
 
   ngap_transaction_manager ev_mng;
 };

@@ -39,19 +39,20 @@ namespace srs_cu_cp {
 
 struct dummy_ngap_ue_task_scheduler : public ngap_ue_task_scheduler {
 public:
-  dummy_ngap_ue_task_scheduler(timer_manager& timers_) : timer_db(timers_) {}
+  dummy_ngap_ue_task_scheduler(timer_manager& timers_, task_executor& exec_) : timer_db(timers_), exec(exec_) {}
   void schedule_async_task(ue_index_t ue_index, async_task<void>&& task) override
   {
     ctrl_loop.schedule(std::move(task));
   }
-  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(); }
+  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(exec); }
   timer_manager& get_timer_manager() override { return timer_db; }
 
-  void tick_timer() { timer_db.tick_all(); }
+  void tick_timer() { timer_db.tick(); }
 
 private:
   async_task_sequencer ctrl_loop{16};
   timer_manager&       timer_db;
+  task_executor&       exec;
 };
 
 struct dummy_ngap_ue : public ngap_ue {
@@ -232,6 +233,11 @@ public:
   void on_new_message(const ngap_message& msg) override
   {
     logger.info("Received message");
+    if (logger.debug.enabled()) {
+      asn1::json_writer js;
+      msg.pdu.to_json(js);
+      logger.debug("Tx NGAP PDU: {}", js.to_string());
+    }
     last_ngap_msg = msg;
 
     if (handler != nullptr) {
@@ -336,6 +342,23 @@ public:
 
   cu_cp_ue_context_release_command         last_command;
   cu_cp_pdu_session_resource_setup_request last_request;
+
+private:
+  srslog::basic_logger& logger;
+};
+
+class dummy_ngap_cu_cp_paging_notifier : public ngap_cu_cp_paging_notifier
+{
+public:
+  dummy_ngap_cu_cp_paging_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+
+  void on_paging_message(cu_cp_paging_message& msg) override
+  {
+    logger.info("Received a new Paging message");
+    last_msg = std::move(msg);
+  }
+
+  cu_cp_paging_message last_msg;
 
 private:
   srslog::basic_logger& logger;

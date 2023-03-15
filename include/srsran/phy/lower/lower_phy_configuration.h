@@ -32,6 +32,7 @@
 #include "srsran/phy/lower/sampling_rate.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -55,24 +56,6 @@ struct lower_phy_sector_description {
   double ul_freq_hz;
   /// Provides the sector port mapping.
   std::vector<lower_phy_sector_port_mapping> port_mapping;
-};
-
-/// \brief Time advance offset - parameter \f$N_{TA,offset}\f$ in TS38.211 Section 4.3.3.
-///
-/// This value must be selected from the parameter \e n-TimingAdvanceOffset (TS38.331 Section 6.3.2, Information Element
-/// \e ServingCellConfigCommon) if it is present. Otherwise, it is given by TS38.133 Section 7.1.2 depending on the
-/// duplex mode of the cell and the frequency range.
-///
-/// The values are given in units of \f$T_c\f$ (see TS38.211 Section 4.1).
-enum class lower_phy_ta_offset {
-  /// For FR1 FDD band with LTE-NR coexistence case.
-  n0 = 0,
-  /// For FR1 FDD band without LTE-NR coexistence case or for FR1 TDD band without LTE-NR coexistence case.
-  n25600 = 25600,
-  /// For FR2.
-  n13792 = 13792,
-  /// For FR1 TDD band with LTE-NR coexistence case.
-  n39936 = 39936
 };
 
 /// Lower physical layer configuration.
@@ -99,7 +82,7 @@ struct lower_phy_configuration {
   /// Sampling rate.
   sampling_rate srate;
   /// Time alignment offset.
-  lower_phy_ta_offset ta_offset;
+  n_ta_offset ta_offset;
   /// \brief Time alignment calibration in number of samples.
   ///
   /// Models the reception and transmission time misalignment inherent to the RF device. This time adjustment is

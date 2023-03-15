@@ -26,7 +26,6 @@
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 

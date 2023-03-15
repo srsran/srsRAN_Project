@@ -37,7 +37,7 @@ public:
   ng_setup_procedure(const ng_setup_request&   request_,
                      ngap_message_notifier&    amf_notif_,
                      ngap_transaction_manager& ev_mng_,
-                     timer_manager&            timers,
+                     timer_factory             timers,
                      srslog::basic_logger&     logger_);
 
   void operator()(coro_context<async_task<ng_setup_response>>& ctx);
@@ -59,8 +59,8 @@ private:
 
   unique_timer ng_setup_wait_timer;
 
-  unsigned ng_setup_retry_no = 0;
-  unsigned time_to_wait      = 0;
+  unsigned                  ng_setup_retry_no = 0;
+  std::chrono::milliseconds time_to_wait{0};
 
   protocol_transaction_outcome_observer<asn1::ngap::ng_setup_resp_s, asn1::ngap::ng_setup_fail_s> transaction_sink;
 };

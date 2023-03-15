@@ -20,7 +20,8 @@
 
 - name: amarisoft-ue
   type: ue
-  image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2021-09-18_97e143d_344d33aee_0.2.8
+  image: registry.gitlab.com/softwareradiosystems/retina/images/amarisoftue:2023-02-06_17b9ea2_220ca4502_0.2.13
+  debug-labels: [retina.cpu.high]
   resources:
     - type: sdr
       model: b200 
@@ -29,7 +30,8 @@
 
 - name: srs-gnb
   type: gnb
-  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.1_0.2.8
+  image: registry.gitlab.com/softwareradiosystems/retina/images/srsgnb:0.1.2_0.2.13
+  debug-labels: [retina.cpu.low]
   resources:
     - type: sdr
       model: b200 
@@ -37,4 +39,5 @@
 
 - name: open5gs
   type: epc
-  image: registry.gitlab.com/softwareradiosystems/retina/images/open5gs:2.5.6_0.2.4
+  image: registry.gitlab.com/softwareradiosystems/retina/images/open5gs:2.5.6_0.2.10
+  debug-labels: [retina.cpu.low]

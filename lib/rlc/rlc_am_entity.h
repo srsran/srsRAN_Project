@@ -44,10 +44,16 @@ public:
     rlc_base_entity(du_index, rb_id)
   {
     // Create AM entities
-    std::unique_ptr<rlc_tx_am_entity> tx_am = std::make_unique<rlc_tx_am_entity>(
-        du_index, rb_id, config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers, pcell_executor);
-    std::unique_ptr<rlc_rx_am_entity> rx_am =
-        std::make_unique<rlc_rx_am_entity>(du_index, rb_id, config.rx, rx_upper_dn, timers, ue_executor);
+    std::unique_ptr<rlc_tx_am_entity> tx_am = std::make_unique<rlc_tx_am_entity>(du_index,
+                                                                                 rb_id,
+                                                                                 config.tx,
+                                                                                 tx_upper_dn,
+                                                                                 tx_upper_cn,
+                                                                                 tx_lower_dn,
+                                                                                 timer_factory{timers, pcell_executor},
+                                                                                 pcell_executor);
+    std::unique_ptr<rlc_rx_am_entity> rx_am = std::make_unique<rlc_rx_am_entity>(
+        du_index, rb_id, config.rx, rx_upper_dn, timer_factory{timers, ue_executor}, ue_executor);
 
     // Tx/Rx interconnect
     tx_am->set_status_provider(rx_am.get());

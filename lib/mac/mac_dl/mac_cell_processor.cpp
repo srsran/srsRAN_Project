@@ -237,7 +237,8 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
   // Start assembling Slot Data Result.
   mac_dl_data_result data_res;
-  if (not sl_res->dl.ue_grants.empty() or not sl_res->dl.rar_grants.empty() or not sl_res->dl.bc.sibs.empty()) {
+  if (not sl_res->dl.ue_grants.empty() or not sl_res->dl.rar_grants.empty() or not sl_res->dl.bc.sibs.empty() or
+      not sl_res->dl.paging_grants.empty()) {
     assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
     // Send DL Data to PHY.
@@ -274,6 +275,8 @@ static dci_payload encode_dci(const pdcch_dl_information& pdcch)
       return dci_1_0_c_rnti_pack(pdcch.dci.c_rnti_f1_0);
     case dci_dl_rnti_config_type::tc_rnti_f1_0:
       return dci_1_0_tc_rnti_pack(pdcch.dci.tc_rnti_f1_0);
+    case dci_dl_rnti_config_type::p_rnti_f1_0:
+      return dci_1_0_p_rnti_pack(pdcch.dci.p_rnti_f1_0);
     default:
       srsran_terminate("Invalid DCI format");
   }
@@ -335,8 +338,6 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
     data_res.rar_pdus.emplace_back(0, rar_assembler.encode_rar_pdu(rar));
   }
 
-  // TODO: Assemble paging payload for paging grants.
-
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (unsigned cw_idx = 0; cw_idx != grant.pdsch_cfg.codewords.size(); ++cw_idx) {
@@ -350,6 +351,13 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
             dlsch_assembler.assemble_retx_pdu(grant.pdsch_cfg.rnti, grant.pdsch_cfg.harq_id, cw_idx, cw.tb_size_bytes);
       }
       data_res.ue_pdus.emplace_back(cw_idx, pdu);
+    }
+  }
+
+  // Assemble scheduled Paging payloads.
+  for (const dl_paging_allocation& pg : dl_res.paging_grants) {
+    for (unsigned cw_idx = 0; cw_idx != pg.pdsch_cfg.codewords.size(); ++cw_idx) {
+      data_res.paging_pdus.emplace_back(cw_idx, paging_assembler.encode_paging_pdu(pg));
     }
   }
 }
@@ -373,9 +381,6 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
         bs.lcid     = lc_info.lcid.to_lcid();
         bs.bs       = bearer->on_buffer_state_update();
         sched_obj.handle_dl_buffer_state_indication(bs);
-
-        // Restart UE activity timer.
-        ue_mng.restart_activity_timer(bs.ue_index);
       }
     }
   }

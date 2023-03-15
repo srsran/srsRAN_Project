@@ -34,7 +34,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 namespace srs_du {
@@ -135,15 +135,11 @@ class f1ap_ue_context_manager
 public:
   virtual ~f1ap_ue_context_manager() = default;
 
-  /// \brief Initiates creation of UE context object in F1AP.
+  /// \brief Requests the creation of a new UE context in the F1AP.
   virtual f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) = 0;
 
-  /// \brief Updates the configuration of an existing UE context object in F1AP.
+  /// \brief Updates the configuration of an existing UE context in the F1AP.
   virtual f1ap_ue_configuration_response handle_ue_configuration_request(const f1ap_ue_configuration_request& msg) = 0;
-
-  /// \brief Initiates UE context release request procedure as per TS 38.473 section 8.3.2.
-  /// \param[in] request The UE Context Release Request message to transmit.
-  virtual void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) = 0;
 
   /// \brief Initiates the UE Context Modification Required procedure as per TS 38.473 section 8.3.5.
   /// \param[in] msg The UE Context Modification Required message to transmit.
@@ -180,7 +176,7 @@ class f1ap_task_scheduler
 public:
   virtual ~f1ap_task_scheduler() = default;
 
-  virtual timer_manager& get_timer_manager() = 0;
+  virtual timer_factory& get_timer_factory() = 0;
 
   /// \brief Schedule Async Task respective to the whole DU.
   virtual void schedule_async_task(async_task<void>&& task) = 0;

@@ -25,34 +25,12 @@
 #include "../common/e1ap_types.h"
 #include "e1ap_cu_up_bearer_context_update.h"
 #include "srsran/adt/expected.h"
-#include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 
 namespace srsran {
 namespace srs_cu_up {
-
-/// \brief Request to modify a bearer context.
-struct e1ap_bearer_context_modification_request {
-  ue_index_t                                   ue_index = INVALID_UE_INDEX;
-  asn1::e1ap::sys_bearer_context_mod_request_c request;
-  // TODO: add optional fields
-};
-
-/// \brief Response to a bearer context modification request including UE index for E1AP map.
-struct e1ap_bearer_context_modification_response {
-  bool       success  = false;
-  ue_index_t ue_index = INVALID_UE_INDEX; // Valid UE index if modification was successful.
-  asn1::e1ap::sys_bearer_context_mod_resp_c sys_bearer_context_modification_resp;
-  asn1::e1ap::cause_c                       cause; // Cause if modification was unsuccessful.
-};
-
-/// \brief Request to release a bearer context.
-struct e1ap_bearer_context_release_command {
-  ue_index_t          ue_index = INVALID_UE_INDEX;
-  asn1::e1ap::cause_c cause; // Cause of the release.
-};
 
 /// Handle E1AP interface management procedures as defined in TS 38.463 section 8.2.
 class e1ap_connection_manager

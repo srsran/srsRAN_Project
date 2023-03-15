@@ -25,7 +25,7 @@
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include "fmt/format.h"
 #include <map>
 
@@ -111,10 +111,10 @@ public:
                    rb_id_t                           rb_id,
                    const rlc_rx_um_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   timer_manager&                    timers,
+                   timer_factory                     timers,
                    task_executor&                    ue_executor);
 
-  void on_expired_status_prohibit_timer(uint32_t timeout_id);
+  void on_expired_status_prohibit_timer();
 
   void handle_pdu(byte_buffer_slice buf) override;
 };

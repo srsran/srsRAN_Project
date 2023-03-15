@@ -83,11 +83,14 @@ private:
 class rrc_to_du_ue_task_scheduler : public rrc_ue_task_scheduler
 {
 public:
-  rrc_to_du_ue_task_scheduler(ue_index_t ue_index_) : ue_index(ue_index_) {}
+  rrc_to_du_ue_task_scheduler(ue_index_t ue_index_, task_executor& ue_exec_) : ue_index(ue_index_), ue_exec(&ue_exec_)
+  {
+  }
 
   void connect_du_processor(du_processor_ue_task_handler& du_processor_task_handler_)
   {
     du_processor_task_handler = &du_processor_task_handler_;
+    timers                    = timer_factory{du_processor_task_handler->get_timer_manager(), *ue_exec};
   }
 
   void schedule_async_task(async_task<void>&& task) override
@@ -101,14 +104,16 @@ public:
     srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
     return du_processor_task_handler->make_unique_timer();
   }
-  timer_manager& get_timer_manager() override
+  timer_factory get_timer_factory() override
   {
     srsran_assert(du_processor_task_handler != nullptr, "DU Processor task handler must not be nullptr");
-    return du_processor_task_handler->get_timer_manager();
+    return timers;
   }
 
 private:
   ue_index_t                    ue_index;
+  task_executor*                ue_exec = nullptr;
+  timer_factory                 timers;
   du_processor_ue_task_handler* du_processor_task_handler = nullptr;
 };
 

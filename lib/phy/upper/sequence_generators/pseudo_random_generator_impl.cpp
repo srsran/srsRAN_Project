@@ -22,16 +22,15 @@
 
 #include "pseudo_random_generator_impl.h"
 #include "srsran/support/math_utils.h"
-#include <cassert>
-#include <cstring>
+#include "srsran/support/srsran_assert.h"
 
-#if HAVE_SSE
+#if __SSE3__
 #include <immintrin.h>
-#endif // HAVE_SSE
+#endif // __SSE3__
 
-#ifdef HAVE_NEON
+#ifdef __aarch64__
 #include <arm_neon.h>
-#endif
+#endif // __aarch64__
 
 using namespace srsran;
 
@@ -130,7 +129,7 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
       uint32_t c = (uint32_t)(x1 ^ x2);
 
       uint32_t j = 0;
-#ifdef HAVE_SSE
+#ifdef __SSE3__
       for (; j < SEQUENCE_PAR_BITS - 3; j += 4) {
         // Preloads bits of interest in the 4 LSB
         __m128i mask = _mm_set1_epi32(c >> j);
@@ -152,8 +151,8 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
 
         _mm_storeu_ps(&out[i + j], v);
       }
-#endif
-#ifdef HAVE_NEON
+#endif // __SSE3__
+#ifdef __aarch64__
       for (; j < SEQUENCE_PAR_BITS - 3; j += 4) {
         // Preloads bits of interest in the 4 LSB
         int32x4_t mask_s32 = vdupq_n_s32(c >> j);
@@ -177,7 +176,7 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
 
         vst1q_f32(&out[i + j], v);
       }
-#endif // HAVE_NEON
+#endif // __aarch64__
       // Finish the parallel bits with generic code
       for (; j != SEQUENCE_PAR_BITS; ++j) {
         FLOAT_U32_XOR(out[i + j], value, (c << (31U - j)) & 0x80000000);
@@ -200,7 +199,10 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
 
 void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& in)
 {
-  assert(in.size() == out.size());
+  srsran_assert(in.size() == out.size(),
+                "Input size (i.e., {}) and output size (i.e., {}) must be equal.",
+                in.size(),
+                out.size());
 
   static constexpr unsigned BITS_PER_BYTE = 8;
   static constexpr unsigned NOF_PAR_BYTES = 3;
@@ -264,98 +266,121 @@ void pseudo_random_generator_impl::apply_xor(bit_buffer& out, const bit_buffer& 
 
 void pseudo_random_generator_impl::apply_xor(span<uint8_t> out, span<const uint8_t> in)
 {
-  assert(in.size() == out.size());
+  srsran_assert(in.size() == out.size(),
+                "Input size (i.e., {}) and output size (i.e., {}) must be equal.",
+                in.size(),
+                out.size());
+
+  // The optimal number of parallel bits to process is 16.
+  static constexpr unsigned nof_par_bits = 16;
 
   unsigned i      = 0;
   unsigned length = in.size();
 
-  if (length >= SEQUENCE_PAR_BITS) {
-    for (unsigned max_i = length - (SEQUENCE_PAR_BITS - 1); i < max_i; i += SEQUENCE_PAR_BITS) {
-      uint32_t c = (uint32_t)(x1 ^ x2);
+  for (unsigned i_end = (length / nof_par_bits) * nof_par_bits; i != i_end; i += nof_par_bits) {
+    uint32_t c = (x1 ^ x2);
 
-      uint32_t j = 0;
-#ifdef HAVE_SSE
-      if (SEQUENCE_PAR_BITS >= 16) {
-        // Preloads bits of interest in the 16 LSB
-        __m128i mask = _mm_set1_epi32(c);
-        mask         = _mm_shuffle_epi8(mask, _mm_setr_epi8(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1));
+    uint32_t j = 0;
+#ifdef __SSE3__
+    if (nof_par_bits >= 16) {
+      // Preloads bits of interest in the 16 LSB
+      __m128i mask = _mm_set1_epi32(c);
+      mask         = _mm_shuffle_epi8(mask, _mm_setr_epi8(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1));
 
-        // Masks each bit
-        // mask = _mm_and_si128( mask, _mm_set_epi64x(0x0102040810204080, 0x0102040810204080));
-        mask = _mm_and_si128(mask, _mm_set_epi64x(0x8040201008040201, 0x8040201008040201));
+      // Masks each bit.
+      mask = _mm_and_si128(mask, _mm_set_epi64x(0x8040201008040201, 0x8040201008040201));
 
-        // Get non zero mask
-        mask = _mm_cmpeq_epi8(mask, _mm_set_epi64x(0x8040201008040201, 0x8040201008040201));
+      // Get non zero mask.
+      mask = _mm_cmpeq_epi8(mask, _mm_set_epi64x(0x8040201008040201, 0x8040201008040201));
 
-        // Reduce to 1s and 0s
-        mask = _mm_and_si128(mask, _mm_set1_epi8(1));
+      // Reduce to 1s and 0s.
+      mask = _mm_and_si128(mask, _mm_set1_epi8(1));
 
-        // Load input
-        __m128i v = _mm_loadu_si128((__m128i*)(&in[i + j]));
+      // Load input.
+      __m128i v = _mm_loadu_si128((__m128i*)(&in[i + j]));
 
-        // Apply XOR
-        v = _mm_xor_si128(mask, v);
+      // Apply XOR.
+      v = _mm_xor_si128(mask, v);
 
-        _mm_storeu_si128((__m128i*)(&out[i + j]), v);
+      // Store output.
+      _mm_storeu_si128((__m128i*)(&out[i + j]), v);
 
-        // Increment bit counter `j`
-        j += 16;
-      }
-#endif
-#ifdef HAVE_NEON
-      if (SEQUENCE_PAR_BITS >= 16) {
-        // Preloads bits of interest in the 16 LSB
-        uint32x2_t c_dup_u32 = vdup_n_u32(c);
-        uint8x16_t mask_u8   = vcombine_u8(vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 0),
-                                         vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 1));
+      // Increment bit counter within the word.
+      j += 16;
 
-        // Create bit masks
-        const uint8_t    bit_masks[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
-        const uint8x16_t bit_masks_u8 = vcombine_u8(vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))),
-                                                    vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))));
-        // Mask each bit
-        mask_u8 = vandq_u8(mask_u8, bit_masks_u8);
-
-        // Get non zero mask
-        mask_u8 = vceqq_u8(mask_u8, bit_masks_u8);
-
-        // Reduce to 1s and 0s
-        mask_u8 = vandq_u8(mask_u8, vdupq_n_u8(1));
-
-        // Load input
-        uint8x16_t v = vld1q_u8(&in[i + j]);
-
-        // Apply XOR
-        v = veorq_u8(mask_u8, v);
-
-        vst1q_u8(&out[i + j], v);
-
-        // Increment bit counter `j`
-        j += 16;
-      }
-#endif // HAVE_NEON
-      for (; j < SEQUENCE_PAR_BITS; j++) {
-        out[i + j] = in[i + j] ^ ((c >> j) & 1U);
-      }
-
-      // Step sequences
-      x1 = step_par_x1(x1);
-      x2 = step_par_x2(x2);
+      // Shift c.
+      c = c >> 16U;
     }
+#endif // __SSE3__
+#ifdef __aarch64__
+    if (nof_par_bits >= 16) {
+      // Preloads bits of interest in the 16 LSB.
+      uint32x2_t c_dup_u32 = vdup_n_u32(c);
+      uint8x16_t mask_u8 =
+          vcombine_u8(vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 0), vdup_lane_u8(vreinterpret_u8_u32(c_dup_u32), 1));
+
+      // Create bit masks.
+      const uint8_t    bit_masks[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+      const uint8x16_t bit_masks_u8 = vcombine_u8(vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))),
+                                                  vcreate_u8(*(reinterpret_cast<const uint64_t*>(bit_masks))));
+      // Mask each bit.
+      mask_u8 = vandq_u8(mask_u8, bit_masks_u8);
+
+      // Get non zero mask.
+      mask_u8 = vceqq_u8(mask_u8, bit_masks_u8);
+
+      // Reduce to 1s and 0s.
+      mask_u8 = vandq_u8(mask_u8, vdupq_n_u8(1));
+
+      // Load input.
+      uint8x16_t v = vld1q_u8(&in[i + j]);
+
+      // Apply XOR.
+      v = veorq_u8(mask_u8, v);
+
+      // Store output.
+      vst1q_u8(&out[i + j], v);
+
+      // Increment bit counter within the word.
+      j += 16;
+
+      // Shift c.
+      c = c >> 16U;
+    }
+#endif // __aarch64__
+
+    // Apply mask to remainder bits.
+    for (; j != nof_par_bits; ++j) {
+      out[i + j] = in[i + j] ^ (c & 1U);
+      c          = c >> 1U;
+    }
+
+    // Step sequences.
+    x1 = step_par_x1(x1, nof_par_bits);
+    x2 = step_par_x2(x2, nof_par_bits);
   }
 
+  // Number of remainder bits.
+  unsigned remainder = length - i;
+
+  // Apply remainder bits.
+  uint32_t c = (x1 ^ x2);
   for (; i != length; ++i) {
-    out[i] = in[i] ^ ((x1 ^ x2) & 1U);
-
-    // Step sequences
-    x1 = step_x1(x1);
-    x2 = step_x2(x2);
+    out[i] = in[i] ^ (c & 1U);
+    c      = c >> 1U;
   }
+
+  // Step remainder bits.
+  x1 = step_par_x1(x1, remainder);
+  x2 = step_par_x2(x2, remainder);
 }
 
 void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in)
 {
-  assert(in.size() == out.size());
+  srsran_assert(in.size() == out.size(),
+                "Input size (i.e., {}) and output size (i.e., {}) must be equal.",
+                in.size(),
+                out.size());
 
   unsigned i      = 0;
   unsigned length = in.size();
@@ -365,7 +390,7 @@ void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, spa
       uint32_t c = (uint32_t)(x1 ^ x2);
 
       uint32_t j = 0;
-#ifdef HAVE_SSE
+#ifdef __SSE3__
       if (SEQUENCE_PAR_BITS >= 16) {
         // Preloads bits of interest in the 16 LSB
         __m128i mask = _mm_set1_epi32(c);
@@ -393,8 +418,8 @@ void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, spa
         // Increment bit counter `j`
         j += 16;
       }
-#endif
-#ifdef HAVE_NEON
+#endif // __SSE3__
+#ifdef __aarch64__
       if (SEQUENCE_PAR_BITS >= 16) {
         // Preloads bits of interest in the 16 LSB
         uint32x2_t c_dup_u32 = vdup_n_u32(c);
@@ -427,7 +452,7 @@ void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, spa
         // Increment bit counter `j`
         j += 16;
       }
-#endif // HAVE_NEON
+#endif // __aarch64__
       for (; j != SEQUENCE_PAR_BITS; ++j) {
         out[i + j] = in[i + j].to_value_type() * (((c >> j) & 1U) ? -1 : +1);
       }

@@ -29,14 +29,14 @@ using namespace asn1::f1ap;
 asn1::f1ap::gnb_du_served_cells_item_s srsran::srs_cu_cp::generate_served_cells_item(unsigned nrcell_id, unsigned nrpci)
 {
   asn1::f1ap::gnb_du_served_cells_item_s served_cells_item;
-  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("208991");
+  served_cells_item.served_cell_info.nr_cgi.plmn_id.from_string("00f110");
   served_cells_item.served_cell_info.nr_cgi.nr_cell_id.from_number(nrcell_id);
   served_cells_item.served_cell_info.nr_pci              = nrpci;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
-  served_cells_item.served_cell_info.five_gs_tac.from_number(1);
+  served_cells_item.served_cell_info.five_gs_tac.from_number(7);
 
   asn1::f1ap::served_plmns_item_s served_plmn;
-  served_plmn.plmn_id.from_string("208991");
+  served_plmn.plmn_id.from_string("00f110");
   asn1::protocol_ext_field_s<asn1::f1ap::served_plmns_item_ext_ies_o> plmn_ext_container = {};
   plmn_ext_container.set_item(ASN1_F1AP_ID_TAI_SLICE_SUPPORT_LIST);
   auto&                            tai_slice_support_list = plmn_ext_container.value().tai_slice_support_list();
@@ -275,4 +275,66 @@ f1ap_message srsran::srs_cu_cp::generate_ue_context_modification_failure(gnb_cu_
       cause_radio_network_opts::options::unknown_or_already_allocated_gnb_cu_ue_f1ap_id;
 
   return ue_context_modification_failure;
+}
+
+cu_cp_paging_message srsran::srs_cu_cp::generate_paging_message()
+{
+  cu_cp_paging_message paging_msg;
+
+  // add ue paging id
+  paging_msg.ue_paging_id.amf_set_id  = 1;
+  paging_msg.ue_paging_id.amf_pointer = 0;
+  paging_msg.ue_paging_id.five_g_tmsi = 4211117727;
+
+  // add paging drx
+  paging_msg.paging_drx = 64;
+
+  // add tai list for paging
+  cu_cp_tai_list_for_paging_item tai_item;
+  tai_item.tai.plmn_id = "00f110";
+  tai_item.tai.tac     = 7;
+  paging_msg.tai_list_for_paging.push_back(tai_item);
+
+  // add paging prio
+  paging_msg.paging_prio = 5;
+
+  // add ue radio cap for paging
+  cu_cp_ue_radio_cap_for_paging ue_radio_cap_for_paging;
+  ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr = make_byte_buffer("deadbeef");
+  paging_msg.ue_radio_cap_for_paging                    = ue_radio_cap_for_paging;
+
+  // add paging origin
+  paging_msg.paging_origin = "non-3gpp";
+
+  // add assist data for paging
+  cu_cp_assist_data_for_paging assist_data_for_paging;
+
+  // add assist data for recommended cells
+  cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
+
+  cu_cp_recommended_cell_item recommended_cell_item;
+
+  // add ngran cgi
+  recommended_cell_item.ngran_cgi.nci.packed = 12345678;
+  recommended_cell_item.ngran_cgi.plmn_hex   = "00f110";
+
+  // add time stayed in cell
+  recommended_cell_item.time_stayed_in_cell = 5;
+
+  assist_data_for_recommended_cells.recommended_cells_for_paging.recommended_cell_list.push_back(recommended_cell_item);
+
+  assist_data_for_paging.assist_data_for_recommended_cells = assist_data_for_recommended_cells;
+
+  // add paging attempt info
+  cu_cp_paging_attempt_info paging_attempt_info;
+
+  paging_attempt_info.paging_attempt_count         = 3;
+  paging_attempt_info.intended_nof_paging_attempts = 4;
+  paging_attempt_info.next_paging_area_scope       = "changed";
+
+  assist_data_for_paging.paging_attempt_info = paging_attempt_info;
+
+  paging_msg.assist_data_for_paging = assist_data_for_paging;
+
+  return paging_msg;
 }

@@ -30,6 +30,7 @@
 #include "srsran/pcap/pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/test_utils.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 
@@ -91,7 +92,7 @@ public:
   void handle_crc_indication(const ul_crc_indication& crc) override {}
   void handle_uci_indication(const uci_indication& uci) override {}
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override {}
-  void handle_paging_indication(const paging_indication_message& pi) override {}
+  void handle_paging_information(const sched_paging_information& pi) override {}
   const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override
   {
     return &next_sched_result;
@@ -145,7 +146,6 @@ struct mac_test_ue {
   du_ue_index_t                                       ue_index;
   rnti_t                                              rnti;
   slotted_array<mac_test_ue_bearer, MAX_NOF_RB_LCIDS> bearers;
-  unique_timer                                        activity_timer;
 
   void                          add_bearer(lcid_t lcid);
   mac_ue_create_request_message make_ue_create_request();

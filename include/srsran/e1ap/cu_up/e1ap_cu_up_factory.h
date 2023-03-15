@@ -24,7 +24,6 @@
 
 #include "e1ap_cu_up.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

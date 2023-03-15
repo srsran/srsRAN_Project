@@ -24,7 +24,7 @@
 
 #include "manual_event.h"
 #include "srsran/adt/expected.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 
 namespace srsran {
 
@@ -37,7 +37,7 @@ template <typename T>
 class async_event_source
 {
 public:
-  explicit async_event_source(timer_manager& timer_db) : running_timer(timer_db.create_unique_timer()) {}
+  explicit async_event_source(timer_factory timer_db) : running_timer(timer_db.create_timer()) {}
   async_event_source(const async_event_source&)            = delete;
   async_event_source(async_event_source&&)                 = delete;
   async_event_source& operator=(const async_event_source&) = delete;

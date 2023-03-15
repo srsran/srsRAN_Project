@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2023 Software Radio Systems Limited
+# Copyright 2021-2023 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -30,6 +30,8 @@ HIGH_BITRATE = int(20e6)
 
 
 class TestIPerf(BaseTest):
+    ID = "band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s-log_search:%s-timing_advance:%s-calibration:%s"
+
     @mark.parametrize(
         "ue_count",
         (
@@ -53,26 +55,22 @@ class TestIPerf(BaseTest):
         ),
     )
     @mark.parametrize(
-        "band, common_scs, bandwidth, bitrate, iperf_duration",
+        "band, common_scs, bandwidth, bitrate, iperf_duration, log_search, global_timing_advance, time_alignment_calibration",
         (
             # Smoke
-            param(3, 15, 20, LOW_BITRATE, SHORT_DURATION, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 20, LOW_BITRATE, SHORT_DURATION, marks=mark.smoke, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 20, LOW_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.smoke, id=ID),
+            param(41, 30, 20, LOW_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.smoke, id=ID),
             # ZMQ
-            param(3, 15, 5, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(3, 15, 10, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(3, 15, 20, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(3, 15, 50, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(7, 15, 5, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(7, 15, 10, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(7, 15, 20, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(7, 15, 50, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 10, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 20, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 50, HIGH_BITRATE, SHORT_DURATION, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 5, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(3, 15, 10, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(3, 15, 20, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(3, 15, 50, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 10, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 20, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 50, HIGH_BITRATE, SHORT_DURATION, True, 0, 0, marks=mark.zmq, id=ID),
             # RF
-            param(3, 15, 10, HIGH_BITRATE, LONG_DURATION, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
-            param(41, 30, 10, HIGH_BITRATE, LONG_DURATION, marks=mark.rf, id="band:%s-scs:%s-bandwidth:%s,bitrate:%s,duration:%s"),
+            param(3, 15, 10, HIGH_BITRATE, LONG_DURATION, False, -1, "auto", marks=mark.rf, id=ID),
+            param(41, 30, 10, HIGH_BITRATE, LONG_DURATION, False, -1, "auto", marks=mark.rf, id=ID),
         ),
     )
     def test(
@@ -86,6 +84,9 @@ class TestIPerf(BaseTest):
         iperf_duration,
         bitrate,
         ue_count,
+        log_search,
+        global_timing_advance,
+        time_alignment_calibration,
         mcs=DEFAULT_MCS,
         startup_timeout=ATTACH_TIMEOUT,
         attach_timeout=STARTUP_TIMEOUT,
@@ -93,7 +94,16 @@ class TestIPerf(BaseTest):
         logging.info("Iperf Test")
 
         with get_ue_gnb_epc(
-            self, extra, band=band, common_scs=common_scs, bandwidth=bandwidth, mcs=mcs, ue_count=ue_count
+            self,
+            extra,
+            band=band,
+            common_scs=common_scs,
+            bandwidth=bandwidth,
+            mcs=mcs,
+            ue_count=ue_count,
+            log_search=log_search,
+            global_timing_advance=global_timing_advance,
+            time_alignment_calibration=time_alignment_calibration,
         ) as items:
             ue, gnb, epc = items
 

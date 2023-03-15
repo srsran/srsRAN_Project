@@ -40,7 +40,6 @@
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/timers.h"
 #include <memory>
 #include <unordered_map>
 
@@ -84,6 +83,18 @@ public:
   // NGAP connection handler
   void handle_amf_connection() override;
   void handle_amf_connection_drop() override;
+
+  // Paging handler
+  void handle_paging_message(cu_cp_paging_message& msg) override;
+
+  // cu_cp interface
+  cu_cp_du_handler&              get_cu_cp_du_handler() override { return *this; }
+  cu_cp_du_interface&            get_cu_cp_du_interface() override { return *this; }
+  cu_cp_cu_up_handler&           get_cu_cp_cu_up_handler() override { return *this; }
+  cu_cp_cu_up_interface&         get_cu_cp_cu_up_interface() override { return *this; }
+  cu_cp_ng_interface&            get_cu_cp_ng_interface() override { return *this; }
+  cu_cp_ngap_connection_handler& get_cu_cp_ngap_connection_handler() override { return *this; }
+  cu_cp_ngap_paging_handler&     get_cu_cp_ngap_paging_handler() override { return *this; }
 
 private:
   /// \brief Adds a DU processor object to the CU-CP.

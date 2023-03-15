@@ -33,7 +33,6 @@
 #include "srsran/rrc/rrc.h"
 #include "srsran/rrc/rrc_config.h"
 #include "srsran/rrc/rrc_du.h"
-#include "srsran/support/timers.h"
 #include <string>
 
 namespace srsran {
@@ -136,6 +135,16 @@ public:
   /// 'true' in case of a successful outcome, 'false' otherwise.
   virtual async_task<cu_cp_ue_context_modification_response>
   on_ue_context_modification_request(const cu_cp_ue_context_modification_request& request) = 0;
+};
+
+/// Interface to notifiy Paging procedures.
+class du_processor_f1ap_paging_notifier
+{
+public:
+  virtual ~du_processor_f1ap_paging_notifier() = default;
+
+  /// Notify F1AP to send paging message.
+  virtual void on_paging_message(const cu_cp_paging_message& msg) = 0;
 };
 
 /// Interface for an RRC entity to communicate with the DU processor.
@@ -268,14 +277,21 @@ class du_processor_cu_cp_notifier
 public:
   virtual ~du_processor_cu_cp_notifier() = default;
 
-  /// \brief Notifies the CU-CP about a new DU connection.
-  virtual void on_new_du_connection() = 0;
-
   /// \brief Notifies about a successful RRC UE creation.
   /// \param[in] du_index The index of the DU the UE is connected to.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] rrc_ue_msg_handler The created RRC UE.
   virtual void on_rrc_ue_created(du_index_t du_index, ue_index_t ue_index, rrc_ue_interface* rrc_ue) = 0;
+};
+
+/// DU processor Paging handler.
+class du_processor_paging_handler
+{
+public:
+  virtual ~du_processor_paging_handler() = default;
+
+  /// \brief Handles a Paging message.
+  virtual void handle_paging_message(cu_cp_paging_message& msg) = 0;
 };
 
 /// Methods to get statistics of the DU processor.
@@ -294,11 +310,20 @@ class du_processor_interface : public du_processor_f1ap_interface,
                                public du_processor_rrc_ue_interface,
                                public du_processor_ngap_interface,
                                public du_processor_ue_task_handler,
+                               public du_processor_paging_handler,
                                public du_processor_statistics_handler
 
 {
 public:
   virtual ~du_processor_interface() = default;
+
+  virtual du_processor_f1ap_interface&     get_du_processor_f1ap_interface()     = 0;
+  virtual du_processor_rrc_interface&      get_du_processor_rrc_interface()      = 0;
+  virtual du_processor_rrc_ue_interface&   get_du_processor_rrc_ue_interface()   = 0;
+  virtual du_processor_ngap_interface&     get_du_processor_ngap_interface()     = 0;
+  virtual du_processor_ue_task_handler&    get_du_processor_ue_task_handler()    = 0;
+  virtual du_processor_paging_handler&     get_du_processor_paging_handler()     = 0;
+  virtual du_processor_statistics_handler& get_du_processor_statistics_handler() = 0;
 };
 
 } // namespace srs_cu_cp

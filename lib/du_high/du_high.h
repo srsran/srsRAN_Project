@@ -33,7 +33,6 @@
 #include "srsran/rlc/rlc_tx.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

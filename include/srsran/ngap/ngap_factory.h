@@ -26,7 +26,6 @@
 #include "ngap_configuration.h"
 #include "srsran/cu_cp/ue_manager.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {
@@ -34,11 +33,12 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Creates an instance of an NGAP interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<ngap_interface> create_ngap(ngap_configuration&     ngap_cfg_,
-                                            ngap_ue_task_scheduler& task_sched_,
-                                            ngap_ue_manager&        ue_manager_,
-                                            ngap_message_notifier&  ngap_notifier_,
-                                            task_executor&          ctrl_exec_);
+std::unique_ptr<ngap_interface> create_ngap(ngap_configuration&         ngap_cfg_,
+                                            ngap_cu_cp_paging_notifier& cu_cp_paging_notifier_,
+                                            ngap_ue_task_scheduler&     task_sched_,
+                                            ngap_ue_manager&            ue_manager_,
+                                            ngap_message_notifier&      ngap_notifier_,
+                                            task_executor&              ctrl_exec_);
 
 } // namespace srs_cu_cp
 

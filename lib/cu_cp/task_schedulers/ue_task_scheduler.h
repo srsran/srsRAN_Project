@@ -27,7 +27,7 @@
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -37,7 +37,7 @@ namespace srs_cu_cp {
 class ue_task_scheduler
 {
 public:
-  explicit ue_task_scheduler(timer_manager& timers_);
+  explicit ue_task_scheduler(timer_manager& timers_, task_executor& exec_);
   ~ue_task_scheduler() = default;
 
   // UE task scheduler
@@ -48,6 +48,7 @@ public:
 
 private:
   timer_manager& timers;
+  task_executor& exec;
 
   // task event loops indexed by ue_index
   std::unordered_map<ue_index_t, async_task_sequencer> ue_ctrl_loop;

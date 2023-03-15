@@ -25,7 +25,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-du_task_scheduler::du_task_scheduler(timer_manager& timers_) : timers(timers_)
+du_task_scheduler::du_task_scheduler(timer_manager& timers_, task_executor& exec_) : timers(timers_), exec(exec_)
 {
   // init du control loops
   const size_t number_of_pending_du_procedures = 16;
@@ -42,7 +42,7 @@ void du_task_scheduler::handle_du_async_task(du_index_t du_index, async_task<voi
 
 unique_timer du_task_scheduler::make_unique_timer()
 {
-  return timers.create_unique_timer();
+  return timers.create_unique_timer(exec);
 }
 timer_manager& du_task_scheduler::get_timer_manager()
 {

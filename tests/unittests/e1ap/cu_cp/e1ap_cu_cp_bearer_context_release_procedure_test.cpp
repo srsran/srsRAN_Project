@@ -82,7 +82,7 @@ TEST_F(e1ap_cu_cp_bearer_context_release_test, when_command_sent_then_procedure_
 {
   // Test Preamble.
   auto command = generate_bearer_context_release_command(uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
 
   // Start BEARER CONTEXT RELEASE procedure.
   this->start_procedure(command);
@@ -96,7 +96,7 @@ TEST_F(e1ap_cu_cp_bearer_context_release_test, when_bearer_release_complete_rece
 {
   // Test Preamble.
   auto command = generate_bearer_context_release_command(uint_to_ue_index(
-      test_rgen::uniform_int<uint32_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max) - 1)));
+      test_rgen::uniform_int<uint64_t>(ue_index_to_uint(ue_index_t::min), ue_index_to_uint(ue_index_t::max))));
 
   // Start BEARER CONTEXT RELEASE procedure and return back the response from the CU-UP.
   this->start_procedure(command);

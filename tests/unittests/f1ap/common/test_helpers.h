@@ -165,7 +165,6 @@ private:
 class dummy_f1ap_message_handler : public f1ap_message_handler
 {
 public:
-  dummy_f1ap_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
   void handle_message(const f1ap_message& msg) override
   {
     last_msg = msg;
@@ -175,7 +174,7 @@ public:
   f1ap_message last_msg;
 
 private:
-  srslog::basic_logger& logger;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 };
 
 } // namespace srsran

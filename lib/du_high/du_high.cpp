@@ -25,6 +25,7 @@
 #include "srsran/du_manager/du_manager_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/mac/mac_factory.h"
+#include "srsran/support/timers2.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -45,7 +46,7 @@ public:
   {
     // Step timers by one millisecond.
     if (sl_tx.to_uint() % get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology())) == 0) {
-      timers.tick_all();
+      timers.tick();
     }
 
     // Handle slot indication in MAC & Scheduler.
@@ -69,7 +70,7 @@ public:
 du_high::du_high(const du_high_configuration& config_) :
   cfg(config_),
   timers(*config_.timers),
-  f1ap_du_cfg_handler(*config_.timers),
+  f1ap_du_cfg_handler(timer_factory{*config_.timers, *config_.du_mng_executor}),
   metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
 {
   assert_du_high_configuration_valid(cfg);

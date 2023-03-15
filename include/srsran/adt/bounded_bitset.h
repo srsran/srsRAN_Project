@@ -259,7 +259,15 @@ public:
   constexpr bounded_bitset(Iterator begin, Iterator end)
   {
     resize(end - begin);
-    std::for_each(begin, end, [this, n = 0](bool value) mutable { set(n++, value); });
+    std::for_each(begin, end, [this, n = 0](bool value) mutable {
+      assert_within_bounds_(n, true);
+      if (value) {
+        set_(n);
+      } else {
+        reset_(n);
+      }
+      ++n;
+    });
   }
 
   /// \brief Constructs a bitset from an initializer list.
@@ -270,7 +278,15 @@ public:
   constexpr bounded_bitset(std::initializer_list<const bool> values)
   {
     resize(values.size());
-    std::for_each(values.begin(), values.end(), [this, n = 0](bool value) mutable { set(n++, value); });
+    std::for_each(values.begin(), values.end(), [this, n = 0](bool value) mutable {
+      assert_within_bounds_(n, true);
+      if (value) {
+        set_(n);
+      } else {
+        reset_(n);
+      }
+      ++n;
+    });
   }
 
   static constexpr bool bit_order() noexcept { return FirstBitIsLeftmost; }
@@ -299,11 +315,10 @@ public:
   /// \param[in] val Value to set the bit.
   void set(size_t pos, bool val)
   {
+    assert_within_bounds_(pos, true);
     if (val) {
-      assert_within_bounds_(pos, true);
       set_(pos);
     } else {
-      assert_within_bounds_(pos, true);
       reset_(pos);
     }
   }

@@ -24,7 +24,6 @@
 #include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -140,7 +139,8 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     }
     // Let timers expire
     for (int i = 0; i < 10; i++) {
-      timers.tick_all();
+      timers.tick();
+      worker.run_pending_tasks();
     }
 
     // Timers should have expired now.

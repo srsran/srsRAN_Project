@@ -22,6 +22,7 @@
 
 #include "radio_uhd_impl.h"
 #include "radio_uhd_device.h"
+#include <thread>
 
 #include <uhd/utils/thread_priority.h>
 
@@ -60,12 +61,10 @@ bool radio_session_uhd_impl::set_time_to_gps_time()
   return true;
 }
 
-bool radio_session_uhd_impl::wait_sensor_locked(bool&              is_locked,
-                                                const std::string& sensor_name,
-                                                bool               is_mboard,
-                                                int                timeout)
+bool radio_session_uhd_impl::wait_sensor_locked(const std::string& sensor_name, bool is_mboard, int timeout)
 {
-  is_locked = false;
+  bool is_locked = false;
+  auto end_time  = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
 
   // Get sensor list
   std::vector<std::string> sensors;
@@ -104,11 +103,10 @@ bool radio_session_uhd_impl::wait_sensor_locked(bool&              is_locked,
     }
 
     // Read value and wait
-    usleep(1000); // 1ms
-    timeout -= 1; // 1ms
-  } while (not is_locked and timeout > 0);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  } while (not is_locked and std::chrono::steady_clock::now() < end_time);
 
-  return true;
+  return is_locked;
 }
 
 bool radio_session_uhd_impl::set_tx_gain_unprotected(unsigned int port_idx, double gain_dB)
@@ -263,7 +261,12 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     return;
   }
 
-  static const std::set<radio_uhd_device_type::types> automatic_mcr_devices = {radio_uhd_device_type::types::B200};
+  // Validate USRP connection.
+  if (!device.is_connection_valid()) {
+    return;
+  }
+
+  static const std::set<radio_uhd_device_type::types> automatic_mcr_devices = {radio_uhd_device_type::types::B2xx};
   if (automatic_mcr_devices.count(device.get_type())) {
     if (!device.set_automatic_master_clock_rate(radio_config.sampling_rate_hz)) {
       fmt::print("Error setting master clock rate. {}\n", device.get_error_message());
@@ -276,6 +279,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
   // Set sync source.
   if (!device.set_sync_source(radio_config.clock)) {
+    fmt::print("Error: couldn't set sync source: {}\n", device.get_error_message());
     return;
   }
 
@@ -295,10 +299,9 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   if (radio_config.clock.sync == radio_configuration::clock_sources::source::GPSDO ||
       radio_config.clock.sync == radio_configuration::clock_sources::source::EXTERNAL) {
     // blocks until clock source is locked
-    bool not_error = wait_sensor_locked(is_locked, sensor_name, true, 300);
-    // Print Not lock error if the return was successful, wait_sensor_locked prints the error before returning
-    if (not is_locked and !not_error) {
+    if (not wait_sensor_locked(sensor_name, true, CLOCK_TIMEOUT_MS)) {
       fmt::print("Could not lock reference clock source. Sensor: {}={}.\n", sensor_name, is_locked ? "true" : "false");
+      return;
     }
   }
 
@@ -322,6 +325,14 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   std::vector<radio_uhd_tx_stream::stream_description> tx_stream_description_list;
   std::vector<radio_uhd_rx_stream::stream_description> rx_stream_description_list;
 
+  // Force OTW format if it is set to default, the device is a B2xx and the total sampling rate exceeds 30.72MHz.
+  radio_configuration::over_the_wire_format otw_format = radio_config.otw_format;
+  if ((otw_format == radio_configuration::over_the_wire_format::DEFAULT) &&
+      (device.get_type() == radio_uhd_device_type::types::B2xx) &&
+      (radio_config.rx_streams.size() * sampling_rate_hz > 30.72e6)) {
+    otw_format = radio_configuration::over_the_wire_format::SC12;
+  }
+
   // For each transmit stream, create stream and configure RF ports.
   for (unsigned stream_idx = 0; stream_idx != radio_config.tx_streams.size(); ++stream_idx) {
     // Select stream.
@@ -330,7 +341,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     // Prepare stream description.
     radio_uhd_tx_stream::stream_description stream_description = {};
     stream_description.id                                      = stream_idx;
-    stream_description.otw_format                              = radio_config.otw_format;
+    stream_description.otw_format                              = otw_format;
     stream_description.srate_hz                                = radio_config.sampling_rate_hz;
     stream_description.args                                    = stream.args;
 
@@ -380,7 +391,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     // Prepare stream description.
     radio_uhd_rx_stream::stream_description stream_description = {};
     stream_description.id                                      = stream_idx;
-    stream_description.otw_format                              = radio_config.otw_format;
+    stream_description.otw_format                              = otw_format;
     stream_description.args                                    = stream.args;
 
     // Setup ports.

@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2023 Software Radio Systems Limited
+# Copyright 2021-2023 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -25,6 +25,8 @@ PING_COUNT = 10
 
 
 class TestPing(BaseTest):
+    ID = "band:%s-scs:%s-bandwidth:%s-log_search:%s-timing_advance:%s-calibration:%s"
+
     @mark.parametrize(
         "ue_count",
         (
@@ -33,19 +35,15 @@ class TestPing(BaseTest):
         ),
     )
     @mark.parametrize(
-        "band, common_scs, bandwidth",
+        "band, common_scs, bandwidth, log_search, global_timing_advance, time_alignment_calibration",
         (
-            param(3, 15, 5, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 20, marks=(mark.zmq, mark.smoke, mark.test), id="band:%s-scs:%s-bandwidth:%s"),
-            param(3, 15, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 5, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 20, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(7, 15, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 10, marks=(mark.zmq, mark.rf), id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 20, marks=(mark.zmq, mark.smoke), id="band:%s-scs:%s-bandwidth:%s"),
-            param(41, 30, 50, marks=mark.zmq, id="band:%s-scs:%s-bandwidth:%s"),
+            param(3, 15, 5, True, 0, 0, marks=mark.zmq, id=ID),
+            param(3, 15, 10, False, -1, "auto", marks=(mark.zmq, mark.rf), id=ID),
+            param(3, 15, 20, True, 0, 0, marks=(mark.zmq, mark.test), id=ID),
+            param(3, 15, 50, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 10, False, -1, "auto", marks=(mark.zmq, mark.rf), id=ID),
+            param(41, 30, 20, True, 0, 0, marks=mark.zmq, id=ID),
+            param(41, 30, 50, True, 0, 0, marks=mark.zmq, id=ID),
         ),
     )
     def test(
@@ -54,6 +52,9 @@ class TestPing(BaseTest):
         band,
         common_scs,
         bandwidth,
+        log_search,
+        global_timing_advance,
+        time_alignment_calibration,
         ue_count,
         mcs=DEFAULT_MCS,
         startup_timeout=STARTUP_TIMEOUT,
@@ -69,6 +70,9 @@ class TestPing(BaseTest):
             common_scs=common_scs,
             bandwidth=bandwidth,
             mcs=mcs,
+            log_search=log_search,
+            global_timing_advance=global_timing_advance,
+            time_alignment_calibration=time_alignment_calibration,
             ue_count=ue_count,
         ) as items:
             ue, gnb, epc = items
@@ -104,8 +108,8 @@ class TestPing(BaseTest):
             ue_attached_info_list = ue.WainUntilAttached(UInteger(value=attach_timeout))
             logging.info("UEs attached %s", ue_attached_info_list)
 
-            ping_task_dict = {}
             for ue_attached_info in ue_attached_info_list.value:
+                ping_task_dict = {}
                 ping_task_dict[f"UE {ue_attached_info.ipv4} -> EPC {ue_attached_info.ipv4_gateway}"] = ue.Ping.future(
                     PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count)
                 )
@@ -113,9 +117,9 @@ class TestPing(BaseTest):
                     PingRequest(address=ue_attached_info.ipv4, count=ping_count)
                 )
 
-            ping_result_dict = {key: ping_task.result() for key, ping_task in ping_task_dict.items()}
+                ping_result_dict = {key: ping_task.result() for key, ping_task in ping_task_dict.items()}
 
-            for key, value in ping_result_dict.items():
-                logging.info("Ping %s: %s", key, value)
+                for key, value in ping_result_dict.items():
+                    logging.info("Ping %s: %s", key, value)
 
-            assert all(map(lambda r: r.status, ping_result_dict.values())) is True
+                assert all(map(lambda r: r.status, ping_result_dict.values())) is True, "Ping failed!"

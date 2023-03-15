@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2023 Software Radio Systems Limited
+# Copyright 2021-2023 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -7,23 +7,33 @@
 #
 
 import logging
-import os
 from collections import defaultdict
 from contextlib import contextmanager, suppress
 from pprint import pformat
 
 import grpc
 from pytest_html import extras
-from retina.launcher.utils import get_retina_force_report
+from retina.launcher import data
 from retina.protocol.base_pb2 import Empty
 
 ATTACH_TIMEOUT = 120
-STARTUP_TIMEOUT = 120
+STARTUP_TIMEOUT = 3 * 60  # RF requires more time
 DEFAULT_MCS = 10
 
 
 @contextmanager
-def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
+def get_ue_gnb_epc(
+    self,
+    extra,
+    band,
+    common_scs,
+    bandwidth,
+    mcs,
+    ue_count,
+    log_search,
+    global_timing_advance,
+    time_alignment_calibration,
+):
     """
     Get test elements
     """
@@ -38,9 +48,9 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
                     "common_scs": common_scs,
                     "ssb_scs": common_scs,
                     "bandwidth": bandwidth,
-                    "log_level": get_loglevel(),
                     "ue_count": ue_count,
-                }
+                    "global_timing_advance": global_timing_advance,
+                },
             },
             "gnb": {
                 "parameters": {
@@ -49,11 +59,13 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
                     "common_scs": common_scs,
                     "bandwidth": bandwidth,
                     "mcs": mcs,
-                    "log_level": get_loglevel(),
-                    "pcap": get_pcap(),
-                }
+                    "time_alignment_calibration": time_alignment_calibration,
+                },
             },
         }
+        if is_tdd(band):
+            test_config["ue"]["parameters"]["rx_ant"] = "rx"
+
         logging.info("Test config: \n%s", pformat(test_config))
         self.test_config = test_config
         self.retina_manager.parse_configuration(test_config)
@@ -71,6 +83,7 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
 
     finally:
         teardown_ok = True
+        log_search_ok = True
 
         with suppress(NameError, grpc._channel._InactiveRpcError):
             return_code = gnb.Stop(Empty()).value
@@ -78,8 +91,8 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
                 teardown_ok = False
                 logging.error("GNB crashed with exit code %s", return_code)
             elif return_code > 0:
-                if get_fail_if_internal_errors():
-                    teardown_ok = False
+                if log_search:
+                    log_search_ok = False
                 logging.error("GNB has %d errors or warnings", return_code)
         with suppress(NameError, grpc._channel._InactiveRpcError):
             epc.Stop(Empty()).value
@@ -90,18 +103,24 @@ def get_ue_gnb_epc(self, extra, band, common_scs, bandwidth, mcs, ue_count):
                 teardown_ok = False
                 logging.error("UE crashed with exit code %s", return_code)
             elif return_code > 0:
-                if get_fail_if_internal_errors():
-                    teardown_ok = False
+                if log_search:
+                    log_search_ok = False
                 logging.error("UE has %d errors or warnings", return_code)
-        if teardown_ok is False:
+        if not teardown_ok or not log_search_ok:
             test_successful = False
 
         if test_successful:
             self.disable_download_report()
-        if test_successful is False or get_retina_force_report():
+        if test_successful is False or data.get_force_download():
             with suppress(UnboundLocalError, NameError):
                 extra.append(extras.url(self.relative_output_html_path, name="[[ Go to logs and configs ]]"))
-        assert teardown_ok is True
+
+        assert teardown_ok is True, "GNB or UE crashed!"
+        assert log_search_ok is True, "There are errors in the log!"
+
+
+def is_tdd(band):
+    return band in (41, 78)
 
 
 def get_dl_arfcn(band):
@@ -142,33 +161,3 @@ def get_ssb_arfcn(band, bandwidth):
             },
         ),
     }[band][bandwidth]
-
-
-def get_loglevel():
-    """
-    Get retina loglevel
-    """
-    try:
-        return os.environ["RETINA_LOGLEVEL"]
-    except KeyError:
-        return "info"
-
-
-def get_pcap():
-    """
-    Return True / False
-    """
-    try:
-        return bool(os.environ["RETINA_PCAP_ENABLE"])
-    except KeyError:
-        return False
-
-
-def get_fail_if_internal_errors():
-    """
-    Return True / False
-    """
-    try:
-        return bool(os.environ["RETINA_FAIL_IF_INTERNAL_ERRORS"])
-    except KeyError:
-        return True

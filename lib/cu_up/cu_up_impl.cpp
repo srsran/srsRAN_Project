@@ -69,7 +69,8 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
 
   /// > Create UE manager
-  ue_mng = std::make_unique<ue_manager>(cfg.net_cfg, logger, timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux);
+  ue_mng = std::make_unique<ue_manager>(
+      cfg.net_cfg, logger, timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux, *cfg.cu_up_executor);
 
   // create e1ap
   e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor);
@@ -187,11 +188,10 @@ cu_up::handle_bearer_context_modification_request(const e1ap_bearer_context_modi
     return response;
   }
 
-  const auto& bearer_ctx_modification_request = msg.request.ng_ran_bearer_context_mod_request();
-
   // pdu session resource to modify list
-  if (bearer_ctx_modification_request.pdu_session_res_to_modify_list_present) {
-    for (const auto& pdu_session_item : bearer_ctx_modification_request.pdu_session_res_to_modify_list.value) {
+  if (msg.ng_ran_bearer_context_mod_request.has_value() &&
+      !msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list.empty()) {
+    for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
       pdu_session_modification_result result = ue_ctxt->modify_pdu_session(pdu_session_item);
     }
   }

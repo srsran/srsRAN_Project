@@ -17,6 +17,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const gnb_appconfig
   out_cfg.ngap_config.plmn               = config.common_cell_cfg.plmn;
   out_cfg.ngap_config.tac                = config.common_cell_cfg.tac;
 
+  out_cfg.rrc_config.drb_config = generate_cu_cp_qos_config(config);
+
   if (!config_helpers::is_valid_configuration(out_cfg)) {
     report_error("Invalid CU-CP configuration.\n");
   }
@@ -94,6 +96,13 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     rach_cfg.prach_root_seq_index                          = base_cell.prach_cfg.prach_root_sequence_index;
     rach_cfg.rach_cfg_generic.zero_correlation_zone_config = base_cell.prach_cfg.zero_correlation_zone;
 
+    // UE-dedicated config.
+    if (config.common_cell_cfg.pdcch_cfg.ue_ss_type == search_space_configuration::type_t::common) {
+      search_space_configuration& ss_cfg = out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0];
+      ss_cfg.type                        = search_space_configuration::type_t::common;
+      ss_cfg.common.f0_0_and_f1_0        = true;
+    }
+
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {
       report_error("Invalid configuration DU cell detected: {}\n", error.error());
@@ -101,6 +110,69 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     ++cell_id;
   }
 
+  return out_cfg;
+}
+
+std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config(const gnb_appconfig& config)
+{
+  std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> out_cfg = {};
+  if (config.qos_cfg.empty()) {
+    out_cfg = config_helpers::make_default_cu_cp_qos_config_list();
+    return out_cfg;
+  }
+
+  for (const qos_appconfig& qos : config.qos_cfg) {
+    if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
+      report_error("Duplicate 5QI configuration: 5QI={}\n", qos.five_qi);
+    }
+    // Convert PDCP config
+    pdcp_config_t& out_pdcp = out_cfg[qos.five_qi].pdcp;
+    out_pdcp.drb            = drb_t{};
+
+    // RLC mode
+    rlc_mode mode;
+    if (!from_string(mode, qos.rlc.mode)) {
+      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+    }
+    if (mode == rlc_mode::um_bidir || mode == rlc_mode::um_unidir_ul || mode == rlc_mode::um_unidir_ul) {
+      out_pdcp.drb->rlc_mode = pdcp_rlc_mode::um;
+    } else if (mode == rlc_mode::am) {
+      out_pdcp.drb->rlc_mode = pdcp_rlc_mode::am;
+    } else {
+      report_error("Invalid RLC mode: 5QI={}, mode={}\n", qos.five_qi, qos.rlc.mode);
+    }
+
+    // Integrity Protection required
+    out_pdcp.drb->integrity_protection_present = qos.pdcp.integrity_protection_required;
+
+    // PDCP SN
+    out_pdcp.drb->pdcp_sn_size_dl = pdcp_sn_size{};
+    if (!pdcp_sn_size_from_uint(out_pdcp.drb->pdcp_sn_size_dl.value(), qos.pdcp.tx.sn_field_length)) {
+      report_error("Invalid PDCP TX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.tx.sn_field_length);
+    }
+    out_pdcp.drb->pdcp_sn_size_ul = pdcp_sn_size{};
+    if (!pdcp_sn_size_from_uint(out_pdcp.drb->pdcp_sn_size_ul.value(), qos.pdcp.rx.sn_field_length)) {
+      report_error("Invalid PDCP RX SN: 5QI={}, SN={}\n", qos.five_qi, qos.pdcp.rx.sn_field_length);
+    }
+
+    // TX discard timer
+    out_pdcp.drb->discard_timer = pdcp_discard_timer{};
+    if (!pdcp_discard_timer_from_int(out_pdcp.drb->discard_timer.value(), qos.pdcp.tx.discard_timer)) {
+      report_error("Invalid PDCP discard timer. 5QI {} discard_timer {}\n", qos.five_qi, qos.pdcp.tx.discard_timer);
+    }
+
+    // TX status report required
+    out_pdcp.drb->status_report_required_present = qos.pdcp.tx.status_report_required;
+
+    // RX out of order delivery
+    out_pdcp.drb->out_of_order_delivery_present = qos.pdcp.rx.out_of_order_delivery;
+
+    // RX t-Reordering
+    out_pdcp.t_reordering = pdcp_t_reordering{};
+    if (!pdcp_t_reordering_from_int(out_pdcp.t_reordering.value(), qos.pdcp.rx.t_reordering)) {
+      report_error("Invalid PDCP t-Reordering. 5QI {} t-Reordering {}\n", qos.five_qi, qos.pdcp.rx.t_reordering);
+    }
+  }
   return out_cfg;
 }
 
@@ -168,37 +240,13 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
 
     out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);
 
-    out_cfg.ta_offset                  = lower_phy_ta_offset::n0;
-    out_cfg.time_alignment_calibration = 0;
+    out_cfg.ta_offset = band_helper::get_ta_offset(config.common_cell_cfg.band.value());
     if (config.rf_driver_cfg.time_alignment_calibration.has_value()) {
-      // User specified time advance calibration.
+      // Selects the user specific value.
       out_cfg.time_alignment_calibration = config.rf_driver_cfg.time_alignment_calibration.value();
     } else {
-      // Default time alingment calibration.
-      // NOTE: ZMQ has a delay of 16 samples, so the time alignment calibration is adjusted.
-      if (config.rf_driver_cfg.device_driver == "zmq") {
-        out_cfg.time_alignment_calibration = -16;
-      } else if (config.rf_driver_cfg.device_arguments.find("type=x300") != std::string::npos) {
-        // Calibrated values for the X300 for UHD-4.3.
-        if (config.rf_driver_cfg.srate_MHz == 11.52) {
-          out_cfg.time_alignment_calibration = 54;
-        } else if (config.rf_driver_cfg.srate_MHz == 15.36) {
-          out_cfg.time_alignment_calibration = 48;
-        } else if (config.rf_driver_cfg.srate_MHz == 23.04) {
-          out_cfg.time_alignment_calibration = 60;
-        } else if (config.rf_driver_cfg.srate_MHz == 46.08) {
-          out_cfg.time_alignment_calibration = 72;
-        } else if (config.rf_driver_cfg.srate_MHz == 61.44) {
-          out_cfg.time_alignment_calibration = 64;
-        } else if (config.rf_driver_cfg.srate_MHz == 92.16) {
-          out_cfg.time_alignment_calibration = 96;
-        } else if (config.rf_driver_cfg.srate_MHz == 184.32) {
-          out_cfg.time_alignment_calibration = 192;
-        } else {
-          fmt::print("Time advance calibration not available for X300 devices and sampling rate of {:.2f} MHz.\n",
-                     config.rf_driver_cfg.srate_MHz);
-        }
-      }
+      // Selects a default parameter that ensures a valid time alignment in the MSG1 (PRACH).
+      out_cfg.time_alignment_calibration = 0;
     }
 
     unsigned bandwidth_sc =
@@ -328,7 +376,7 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
       // Add the tx ports.
       if (config.rf_driver_cfg.device_driver == "zmq") {
         if (sector_id * nof_ports + port_id >= zmq_tx_addr.size()) {
-          report_error("ZMQ transmission channel arguments out of bounds");
+          report_error("ZMQ transmission channel arguments out of bounds\n");
         }
 
         tx_ch_config.args = zmq_tx_addr[sector_id * nof_ports + port_id];
@@ -346,7 +394,7 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
 
       if (config.rf_driver_cfg.device_driver == "zmq") {
         if (sector_id * nof_ports + port_id >= zmq_rx_addr.size()) {
-          report_error("ZMQ reception channel arguments out of bounds");
+          report_error("ZMQ reception channel arguments out of bounds\n");
         }
 
         rx_ch_config.args = zmq_rx_addr[sector_id * nof_ports + port_id];

@@ -206,10 +206,10 @@ private:
   ///                                       maps to \f$N_{\textup{TA, offset}}\f$.
   /// \param[in] srate                      Sampling rate.
   /// \return The reception-to-transmission delay as a number of samples.
-  static inline unsigned get_rx_to_tx_delay(unsigned            ul_to_dl_subframe_offset,
-                                            int                 time_alignment_calibration,
-                                            lower_phy_ta_offset ta_offset,
-                                            sampling_rate       srate)
+  static inline unsigned get_rx_to_tx_delay(unsigned      ul_to_dl_subframe_offset,
+                                            int           time_alignment_calibration,
+                                            n_ta_offset   ta_offset,
+                                            sampling_rate srate)
   {
     // Calculate time between the UL signal reception and the transmission.
     phy_time_unit ul_to_dl_delay = phy_time_unit::from_seconds(0.001 * static_cast<double>(ul_to_dl_subframe_offset));

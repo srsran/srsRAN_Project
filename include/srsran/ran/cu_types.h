@@ -154,13 +154,14 @@ struct hdr_compress_t {
 };
 
 struct drb_t {
-  hdr_compress_t         hdr_compress;
-  optional<int16_t>      discard_timer;
-  optional<pdcp_sn_size> pdcp_sn_size_ul;
-  optional<pdcp_sn_size> pdcp_sn_size_dl;
-  bool                   integrity_protection_present   = false;
-  bool                   status_report_required_present = false;
-  bool                   out_of_order_delivery_present  = false;
+  hdr_compress_t               hdr_compress;
+  optional<pdcp_discard_timer> discard_timer;
+  optional<pdcp_sn_size>       pdcp_sn_size_ul;
+  optional<pdcp_sn_size>       pdcp_sn_size_dl;
+  bool                         integrity_protection_present   = false;
+  bool                         status_report_required_present = false;
+  bool                         out_of_order_delivery_present  = false;
+  pdcp_rlc_mode                rlc_mode;
 };
 
 struct primary_path_t {
@@ -177,7 +178,7 @@ struct more_than_one_rlc_t {
 struct pdcp_config_t {
   optional<drb_t>               drb;
   optional<more_than_one_rlc_t> more_than_one_rlc;
-  optional<uint16_t>            t_reordering;
+  optional<pdcp_t_reordering>   t_reordering;
   bool                          ciphering_disabled_present = false;
 };
 

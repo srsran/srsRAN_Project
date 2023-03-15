@@ -51,6 +51,7 @@ error_type<validator_report> validate_rx_data_indication(const rx_data_indicatio
 /// Validates the given SLOT.indication message and returns a report for the result of the validation. The validation
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.1.
 error_type<validator_report> validate_slot_indication(const slot_indication_message& msg);
+
 /// Validates the given Tx_Data.request message and returns a report for the result of the validation. The validation
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.6.
 error_type<validator_report> validate_tx_data_request(const tx_data_request_message& msg);
@@ -68,7 +69,7 @@ error_type<validator_report> validate_ul_dci_request(const ul_dci_request_messag
 error_type<validator_report> validate_ul_tti_request(const ul_tti_request_message& msg);
 
 /// Logs the given validator report.
-void log_validator_report(const validator_report& report);
+void log_validator_report(const validator_report& report, srslog::basic_logger& logger);
 
 } // namespace fapi
 } // namespace srsran

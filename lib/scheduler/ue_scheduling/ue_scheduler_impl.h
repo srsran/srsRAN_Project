@@ -30,6 +30,7 @@
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
+#include "ue_repository.h"
 #include "ue_scheduler.h"
 #include "ue_srb0_scheduler.h"
 #include "srsran/adt/slotted_array.h"
@@ -72,7 +73,7 @@ private:
     /// SRB0 scheduler.
     ue_srb0_scheduler srb0_sched;
 
-    cell(const scheduler_ue_expert_config& expert_cfg, const ue_scheduler_cell_params& params, ue_list& ues) :
+    cell(const scheduler_ue_expert_config& expert_cfg, const ue_scheduler_cell_params& params, ue_repository& ues) :
       cell_res_alloc(params.cell_res_alloc),
       uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
       srb0_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues)
@@ -89,7 +90,7 @@ private:
   std::unique_ptr<scheduler_policy> sched_strategy;
 
   /// Repository of created UEs.
-  ue_list ue_db;
+  ue_repository ue_db;
 
   /// Allocator of grants in the resource grid.
   ue_cell_grid_allocator ue_alloc;

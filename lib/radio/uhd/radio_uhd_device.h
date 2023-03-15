@@ -101,7 +101,13 @@ public:
       type = radio_uhd_device_type(device_addr.get("type"));
 
       switch (type) {
-        case radio_uhd_device_type::types::X300:
+        case radio_uhd_device_type::types::E3xx:
+          // Set the default master clock rate.
+          if (!device_addr.has_key("master_clock_rate")) {
+            device_addr.set("master_clock_rate", "30.72e6");
+          }
+          break;
+        case radio_uhd_device_type::types::X3x0:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
             device_addr.set("master_clock_rate", "184.32e6");
@@ -115,19 +121,25 @@ public:
             device_addr.set("recv_frame_size", "8000");
           }
           break;
-        case radio_uhd_device_type::types::N300:
+        case radio_uhd_device_type::types::X410:
+          // Set the default master clock rate.
+          if (!device_addr.has_key("master_clock_rate")) {
+            device_addr.set("master_clock_rate", "491.52e6");
+          }
+          break;
+        case radio_uhd_device_type::types::N3x0:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
             device_addr.set("master_clock_rate", "122.88e6");
           }
           break;
-        case radio_uhd_device_type::types::E3X0:
+        case radio_uhd_device_type::types::N32x:
           // Set the default master clock rate.
           if (!device_addr.has_key("master_clock_rate")) {
-            device_addr.set("master_clock_rate", "30.72e6");
+            device_addr.set("master_clock_rate", "245.76e6");
           }
           break;
-        case radio_uhd_device_type::types::B200:
+        case radio_uhd_device_type::types::B2xx:
         case radio_uhd_device_type::types::UNKNOWN:
         default:
           // No default parameters are required.
@@ -138,6 +150,25 @@ public:
     fmt::print("Making USRP object with args '{}'\n", device_addr.to_string());
 
     return safe_execution([this, &device_addr]() { usrp = uhd::usrp::multi_usrp::make(device_addr); });
+  }
+  bool is_connection_valid()
+  {
+    // If the device is a B2xx, check if the USB is version 3.
+    if (type == radio_uhd_device_type::types::B2xx) {
+      // Get USB version.
+      unsigned usb_version = 0;
+      bool     success     = safe_execution([this, &usb_version]() {
+        usb_version = usrp->get_device()->get_tree()->access<unsigned>("/mboards/0/usb_version").get();
+      });
+
+      // The USB version is invalid if the USB version is accessed successfully and the version is not 3.
+      if (success && (usb_version != 3)) {
+        fmt::print("USRP operating over USB version {}, USB 3 is required.\n", usb_version);
+        return false;
+      }
+    }
+
+    return true;
   }
   radio_uhd_device_type get_type() const { return type; }
   bool                  get_mboard_sensor_names(std::vector<std::string>& sensors)

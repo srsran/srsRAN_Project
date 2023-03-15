@@ -27,6 +27,7 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/adt/optional.h"
+#include "srsran/ran/n_ta_offset.h"
 #include "srsran/ran/ssb_properties.h"
 #include <stdint.h>
 
@@ -299,6 +300,11 @@ unsigned get_nof_coreset0_rbs_not_intersecting_ssb(unsigned              cset0_i
                                                    subcarrier_spacing    scs_ssb,
                                                    ssb_offset_to_pointA  offset_to_point_A,
                                                    ssb_subcarrier_offset k_ssb);
+
+/// \brief Returns the n_ta_offset for a given band.
+/// \param[in] band is <em>NR operating band<\em>, as per TS 38.104, Table 5.2-1. Only FR1 values are supported.
+/// \return Value of n_ta_offset.
+n_ta_offset get_ta_offset(nr_band band);
 
 } // namespace band_helper
 

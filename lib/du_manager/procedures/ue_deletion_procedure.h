@@ -54,16 +54,13 @@ public:
       CORO_EARLY_RETURN();
     }
 
-    // 1. Remove UE from MAC
+    // > Remove UE from MAC.
     CORO_AWAIT_VALUE(mac_ue_delete_response_message mac_resp, launch_mac_ue_delete());
     if (not mac_resp.result) {
       log_proc_failure(logger, ue->ue_index, ue->rnti, name(), "Failed to remove UE from MAC.");
     }
 
-    // 2. Remove UE from F1AP
-    // TODO
-
-    // 3. Remove UE object from DU UE manager
+    // > Remove UE object from DU UE manager.
     ue_mng.remove_ue(msg.ue_index);
 
     log_proc_completed(logger, msg.ue_index, ue->rnti, name());

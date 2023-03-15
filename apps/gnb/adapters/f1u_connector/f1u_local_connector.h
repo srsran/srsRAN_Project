@@ -27,7 +27,7 @@
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/srslog/srslog.h"
 #include <cstdint>
-#include <map>
+#include <unordered_map>
 
 namespace srsran {
 
@@ -51,8 +51,10 @@ struct f1u_du_bearer {
 };
 
 /// \brief Object used to connect the DU and CU-UP F1-U bearers
-/// On the co-located case this is done by connecting both entities
-/// directly.
+/// On the co-located case this is done by connecting both entities directly.
+///
+/// Note that CU and DU bearer creation and removal can be performed from different threads and are therefore
+/// protected by a common mutex.
 class f1u_local_connector final : public srs_du::f1u_du_gateway, public f1u_cu_up_gateway
 {
 public:
@@ -73,8 +75,9 @@ public:
   void remove_du_bearer(uint32_t dl_teid) override;
 
 private:
-  srslog::basic_logger&             logger;
-  std::map<uint32_t, f1u_cu_bearer> cu_map; // Key is UL-TEID (i.e., the CU's local TEID)
-  std::map<uint32_t, f1u_du_bearer> du_map; // Key is DL-TEID (i.e., the DU's local TEID)
+  srslog::basic_logger&                       logger;
+  std::unordered_map<uint32_t, f1u_cu_bearer> cu_map;    // Key is UL-TEID (i.e., the CU's local TEID)
+  std::unordered_map<uint32_t, f1u_du_bearer> du_map;    // Key is DL-TEID (i.e., the DU's local TEID)
+  std::mutex                                  map_mutex; // shared mutex for access to cu_map and du_map
 };
 }; // namespace srsran

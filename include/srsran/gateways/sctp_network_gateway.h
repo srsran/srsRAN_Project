@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/optional.h"
 #include "srsran/gateways/network_gateway.h"
 #include "srsran/srslog/srslog.h"
 #include <netdb.h>
@@ -31,11 +32,19 @@
 
 namespace srsran {
 
+constexpr uint16_t NGAP_PPID = 60; // NGAP PPID, see TS 38.412, section 7.
+
 /// \brief Configuration for SCTP network gateway
 struct sctp_network_gateway_config : common_network_gateway_config {
   std::string connect_address;
   int         connect_port = 0;
-  // TODO add SCTP specific options
+  int         ppid         = 0; /// the Payload Protocol Identifier
+  // SCTP specific options
+  optional<int32_t> rto_initial;
+  optional<int32_t> rto_min;
+  optional<int32_t> rto_max;
+  optional<int32_t> init_max_attempts;
+  optional<int32_t> max_init_timeo;
 };
 
 /// \brief Interface to inject PDUs into gateway entity.

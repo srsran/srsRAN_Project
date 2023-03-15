@@ -27,7 +27,7 @@
 #include "rlc_am_window.h"
 #include "rlc_rx_entity.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include "fmt/format.h"
 #include <set>
 
@@ -111,6 +111,10 @@ private:
 
   /// Cached status report
   rlc_am_status_pdu status_report;
+  /// Cached status report size
+  std::atomic<uint32_t> status_report_size;
+  std::atomic<bool>     status_prohibit_timer_is_running{false};
+
   /// Mutex for controlled access to the cached status report, e.g. read by the Tx entity in a different executor
   std::mutex status_report_mutex;
 
@@ -127,12 +131,14 @@ private:
   /// Ref: TS 38.322 Sec. 7.3
   unique_timer reassembly_timer;
 
+  task_executor& ue_executor;
+
 public:
   rlc_rx_am_entity(du_ue_index_t                     du_index,
                    rb_id_t                           rb_id,
                    const rlc_rx_am_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn_,
-                   timer_manager&                    timers,
+                   timer_factory                     timers,
                    task_executor&                    ue_executor);
 
   // RX/TX interconnect
@@ -258,7 +264,10 @@ private:
   /// and resets the rx_window_changed flag
   void refresh_status_report();
 
-  void on_expired_status_prohibit_timer(uint32_t timeout_id);
+  /// Replaces the cached status_report with a new version
+  void store_status_report(rlc_am_status_pdu&& status);
+
+  void on_expired_status_prohibit_timer();
 
   /// \brief on_expired_reassembly_timer Handler for expired reassembly timer
   ///
@@ -266,7 +275,7 @@ private:
   /// in order to avoid incidential blocking of those critical paths.
   ///
   /// \param timeout_id The timer ID
-  void on_expired_reassembly_timer(uint32_t timeout_id);
+  void on_expired_reassembly_timer();
 
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)

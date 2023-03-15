@@ -34,7 +34,6 @@
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/io_broker/io_broker.h"
-#include "srsran/support/timers.h"
 #include <memory>
 #include <unordered_map>
 
@@ -91,7 +90,6 @@ private:
   std::unique_ptr<e1ap_interface>      e1ap;
   std::unique_ptr<udp_network_gateway> ngu_gw;
   std::unique_ptr<gtpu_demux>          ngu_demux;
-  timer_manager                        timer_db;
   std::unique_ptr<ue_manager>          ue_mng;
 
   // Adapters

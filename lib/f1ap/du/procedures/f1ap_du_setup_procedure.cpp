@@ -31,14 +31,14 @@ using namespace asn1::f1ap;
 f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message& request_,
                                                  f1ap_message_notifier&          cu_notif_,
                                                  f1ap_event_manager&             ev_mng_,
-                                                 timer_manager&                  timers,
+                                                 timer_factory&                  timers,
                                                  f1ap_du_context&                du_ctxt_) :
   request(request_),
   cu_notifier(cu_notif_),
   ev_mng(ev_mng_),
   logger(srslog::fetch_basic_logger("DU-F1")),
   du_ctxt(du_ctxt_),
-  f1_setup_wait_timer(timers.create_unique_timer())
+  f1_setup_wait_timer(timers.create_timer())
 {
 }
 
@@ -62,10 +62,11 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_respon
 
     // Await timer.
     logger.debug("Received F1SetupFailure with Time to Wait IE - reinitiating F1 setup in {}s (retry={}/{})",
-                 time_to_wait,
+                 time_to_wait.count(),
                  f1_setup_retry_no,
                  request.max_setup_retries);
-    CORO_AWAIT(async_wait_for(f1_setup_wait_timer, time_to_wait * 1000));
+    CORO_AWAIT(
+        async_wait_for(f1_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
   }
 
   // Forward procedure result to DU manager.
@@ -114,7 +115,7 @@ bool f1ap_du_setup_procedure::retry_required()
     return false;
   }
 
-  time_to_wait = f1_setup_fail.time_to_wait->to_number();
+  time_to_wait = std::chrono::seconds{f1_setup_fail.time_to_wait->to_number()};
   return true;
 }
 
@@ -125,7 +126,6 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 
   if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value ==
                                           f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
-    logger.debug("Received PDU with successful outcome");
     res.msg     = cu_pdu_response.value().value.f1_setup_resp();
     res.success = true;
 

@@ -47,13 +47,13 @@ public:
 
     explicit dummy_ue_task_sched(dummy_f1ap_du_configurator* parent_) : parent(parent_) {}
 
-    unique_timer create_timer() override { return parent->timers.create_unique_timer(); }
+    unique_timer create_timer() override { return parent->timers.create_timer(); }
 
     /// \brief Schedule Async Task respective to a given UE.
     void schedule_async_task(async_task<void>&& task) override { parent->task_loop.schedule(std::move(task)); }
   };
 
-  timer_manager&       timers;
+  timer_factory        timers;
   async_task_sequencer task_loop;
   dummy_ue_task_sched  ue_sched;
   f1ap_interface*      f1ap;
@@ -62,15 +62,16 @@ public:
   f1ap_ue_configuration_request            next_ue_cfg_req;
   optional<f1ap_ue_configuration_response> last_ue_cfg_response;
 
-  // F1-C procedures.
+  // F1AP procedures.
   optional<f1ap_ue_context_update_request> last_ue_context_update_req;
   f1ap_ue_context_update_response          next_ue_context_update_response;
+  optional<f1ap_ue_delete_request>         last_ue_delete_req;
 
-  explicit dummy_f1ap_du_configurator(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
+  explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
   void connect(f1ap_interface& f1ap_) { f1ap = &f1ap_; }
 
-  timer_manager& get_timer_manager() override { return timers; }
+  timer_factory& get_timer_factory() override { return timers; }
 
   void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
 
@@ -87,6 +88,7 @@ public:
 
   async_task<void> request_ue_removal(const f1ap_ue_delete_request& request) override
   {
+    last_ue_delete_req = request;
     return launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();
@@ -124,6 +126,9 @@ asn1::f1ap::drbs_to_be_setup_mod_item_s generate_drb_am_mod_item(drb_id_t drbid)
 
 /// \brief Generate an F1AP UE Context Modification Request message with specified list of DRBs.
 f1ap_message generate_ue_context_modification_request(const std::initializer_list<drb_id_t>& drbs_to_add);
+
+/// \brief Generate an F1AP UE Context Release Command message.
+f1ap_message generate_ue_context_release_command();
 
 class dummy_f1c_rx_sdu_notifier : public f1c_rx_sdu_notifier
 {
@@ -166,6 +171,8 @@ protected:
   struct ue_test_context {
     du_ue_index_t                                ue_index;
     rnti_t                                       crnti;
+    optional<gnb_du_ue_f1ap_id_t>                gnb_du_ue_f1ap_id;
+    optional<gnb_cu_ue_f1ap_id_t>                gnb_cu_ue_f1ap_id;
     slotted_array<f1c_test_bearer, MAX_NOF_SRBS> f1c_bearers;
     slotted_array<f1u_test_bearer, MAX_NOF_DRBS> f1u_bearers;
   };
@@ -186,11 +193,14 @@ protected:
                                                        std::initializer_list<srb_id_t> srbs,
                                                        std::initializer_list<drb_id_t> drbs);
 
+  void tick();
+
   /// Notifier for messages coming out from F1AP to Gateway.
   f1ap_null_notifier msg_notifier = {};
 
-  timer_manager                   timers;
-  dummy_f1ap_du_configurator      f1ap_du_cfg_handler{timers};
+  timer_manager                   timer_service;
+  timer_factory                   f1ap_timers{timer_service, ctrl_worker};
+  dummy_f1ap_du_configurator      f1ap_du_cfg_handler{f1ap_timers};
   manual_task_worker              ctrl_worker{128};
   dummy_ue_executor_mapper        ue_exec_mapper{ctrl_worker};
   std::unique_ptr<f1ap_interface> f1ap;

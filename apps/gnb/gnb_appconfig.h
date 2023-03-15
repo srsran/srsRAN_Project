@@ -26,6 +26,7 @@
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
+#include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>
 #include <thread>
@@ -76,6 +77,12 @@ struct prach_appconfig {
   unsigned max_msg3_harq_retx    = 4;
 };
 
+/// PDCCH application configuration.
+struct pdcch_appconfig {
+  /// Use an UE-dedicated or Common Search Space.
+  search_space_configuration::type_t ue_ss_type = search_space_configuration::type_t::ue_dedicated;
+};
+
 /// PDSCH application configuration.
 struct pdsch_appconfig {
   /// UE modulation and coding scheme index.
@@ -120,6 +127,8 @@ struct base_cell_appconfig {
   std::string plmn = "00101";
   /// TAC.
   unsigned tac = 7;
+  /// PDCCH configuration.
+  pdcch_appconfig pdcch_cfg;
   /// PDSCH configuration.
   pdsch_appconfig pdsch_cfg;
   /// PRACH configuration.
@@ -185,16 +194,39 @@ struct rlc_appconfig {
   rlc_am_appconfig am;
 };
 
+struct pdcp_rx_appconfig {
+  uint16_t sn_field_length;       ///< Number of bits used for sequence number
+  int32_t  t_reordering;          ///< Timer used to detect PDUs losses (ms)
+  bool     out_of_order_delivery; ///< Whether out-of-order delivery to upper layers is enabled
+};
+
+struct pdcp_tx_appconfig {
+  uint16_t sn_field_length;        ///< Number of bits used for sequence number
+  int32_t  discard_timer;          ///< Timer used to notify lower layers to discard PDUs (ms)
+  bool     status_report_required; ///< Whether PDCP status report is required
+};
+
+struct pdcp_appconfig {
+  bool              integrity_protection_required; ///< Whether DRB integrity is required
+  pdcp_tx_appconfig tx;
+  pdcp_rx_appconfig rx;
+};
 /// QoS configuration
 struct qos_appconfig {
-  uint8_t       five_qi = 9;
-  rlc_appconfig rlc;
+  uint8_t        five_qi = 9;
+  rlc_appconfig  rlc;
+  pdcp_appconfig pdcp;
 };
 
 struct amf_appconfig {
-  std::string ip_addr   = "127.0.0.1";
-  uint16_t    port      = 38412;
-  std::string bind_addr = "127.0.0.1";
+  std::string ip_addr                = "127.0.0.1";
+  uint16_t    port                   = 38412;
+  std::string bind_addr              = "127.0.0.1";
+  int         sctp_rto_initial       = 120;
+  int         sctp_rto_min           = 120;
+  int         sctp_rto_max           = 500;
+  int         sctp_init_max_attempts = 3;
+  int         sctp_max_init_timeo    = 500;
 };
 
 struct log_appconfig {
@@ -204,7 +236,7 @@ struct log_appconfig {
   std::string du_level    = "warning";
   std::string cu_level    = "warning";
   std::string phy_level   = "warning";
-  std::string radio_level = "warning";
+  std::string radio_level = "info";
   std::string mac_level   = "warning";
   std::string rlc_level   = "warning";
   std::string f1u_level   = "warning";

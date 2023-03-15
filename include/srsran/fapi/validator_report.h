@@ -47,11 +47,7 @@ struct validator_report {
                  const char*                 name,
                  message_type_id             message_type_,
                  unsigned                    pdu_type_) :
-      value(value_),
-      property_name(name),
-      message_type(message_type_),
-      expected_value_range({std::move(range)}),
-      pdu_type(pdu_type_)
+      value(value_), property_name(name), message_type(message_type_), expected_value_range(range), pdu_type(pdu_type_)
     {
     }
 
@@ -61,7 +57,7 @@ struct validator_report {
     }
 
     error_report(int32_t value_, std::pair<int32_t, int32_t> range, const char* name, message_type_id message_type_) :
-      value(value_), property_name(name), message_type(message_type_), expected_value_range({std::move(range)})
+      value(value_), property_name(name), message_type(message_type_), expected_value_range(range)
     {
     }
 

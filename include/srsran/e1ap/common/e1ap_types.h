@@ -157,7 +157,7 @@ struct e1ap_pdcp_count {
 
 struct e1ap_drb_status_transfer {
   e1ap_pdcp_count    count_value;
-  optional<uint64_t> receive_statusof_pdcpsdu;
+  optional<uint64_t> receive_status_of_pdcp_sdu;
 };
 
 struct e1ap_pdcp_sn_status_info {
@@ -319,7 +319,7 @@ struct e1ap_pdu_session_res_to_setup_mod_item {
 struct e1ap_drb_to_modify_item_ng_ran {
   drb_id_t                                                       drb_id = drb_id_t::invalid;
   optional<sdap_config_t>                                        sdap_cfg;
-  optional<pdcp_config_t>                                        pdcp_cfg;
+  optional<e1ap_pdcp_config>                                     pdcp_cfg;
   optional<e1ap_data_forwarding_info>                            drb_data_forwarding_info;
   optional<std::string>                                          pdcp_sn_status_request;
   std::vector<e1ap_up_params_item>                               dl_up_params         = {};
@@ -362,7 +362,7 @@ struct e1ap_drb_modified_item_ng_ran {
 
 struct e1ap_pdu_session_resource_modified_item {
   pdu_session_id_t                                           pdu_session_id = pdu_session_id_t::invalid;
-  up_transport_layer_info                                    ng_dl_up_tnl_info;
+  optional<up_transport_layer_info>                          ng_dl_up_tnl_info;
   slotted_id_vector<drb_id_t, e1ap_drb_setup_item_ng_ran>    drb_setup_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran>   drb_failed_list_ng_ran;
   slotted_id_vector<drb_id_t, e1ap_drb_modified_item_ng_ran> drb_modified_list_ng_ran;

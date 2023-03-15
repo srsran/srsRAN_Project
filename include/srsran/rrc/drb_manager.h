@@ -30,7 +30,9 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// \brief List of all supported FiveQIs and their correspondig PDCP/SDAP config
-struct drb_manager_cfg {};
+struct drb_manager_cfg {
+  std::map<uint8_t, cu_cp_qos_config> five_qi_config; ///< Configuration for available 5QI.
+};
 
 /// Object to manage DRB configs, allocation, creation and deletion for UE.
 class drb_manager
@@ -61,6 +63,9 @@ public:
 
   /// \brief Return number of DRBs.
   virtual size_t get_nof_drbs() = 0;
+
+  /// \brief Return whether a configuration for a 5QI exists.
+  virtual bool valid_5qi(uint8_t five_qi) = 0;
 };
 
 } // namespace srs_cu_cp

@@ -108,6 +108,9 @@ ngap_message generate_downlink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_
 /// \brief Generate a dummy UL NAS Transport Message.
 ngap_ul_nas_transport_message generate_ul_nas_transport_message(ue_index_t ue_index);
 
+/// \brief Generate a dummy UL NAS Transport Message.
+ngap_message generate_uplink_nas_transport_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
+
 /// \brief Generate a dummy Initial Context Setup Request base.
 ngap_message generate_initial_context_setup_request_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
@@ -131,6 +134,15 @@ ngap_message generate_invalid_pdu_session_resource_setup_request_message(amf_ue_
 /// \brief Generate a dummy PDU Session Resource Setup Response.
 cu_cp_pdu_session_resource_setup_response
 generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id);
+
+/// \brief Generate a valid dummy Paging message with only mandatory fields set.
+ngap_message generate_valid_minimal_paging_message();
+
+/// \brief Generate a valid dummy Paging message.
+ngap_message generate_valid_paging_message();
+
+/// \brief Generate an invalid dummy Paging message.
+ngap_message generate_invalid_paging_message();
 
 } // namespace srs_cu_cp
 } // namespace srsran

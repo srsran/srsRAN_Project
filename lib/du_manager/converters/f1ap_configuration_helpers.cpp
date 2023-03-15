@@ -342,7 +342,10 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   } else {
     rach.prach_root_seq_idx.set_l139() = rach_cfg.prach_root_seq_index;
   }
-  rach.msg1_subcarrier_spacing = get_asn1_scs(rach_cfg.msg1_scs);
+  if (rach_cfg.msg1_scs != subcarrier_spacing::invalid) {
+    rach.msg1_subcarrier_spacing_present = true;
+    rach.msg1_subcarrier_spacing         = get_asn1_scs(rach_cfg.msg1_scs);
+  }
   switch (rach_cfg.restricted_set) {
     case srsran::restricted_set_config::UNRESTRICTED:
       rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::unrestricted_set;
@@ -408,38 +411,48 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
                                                        static_cast<uint64_t>(56U));
   asn1::number_to_enum(cell.ssb_periodicity_serving_cell, ssb_periodicity_to_value(du_cfg.ssb_cfg.ssb_period));
-  cell.ss_pbch_block_pwr               = du_cfg.ssb_cfg.ssb_block_power;
+  cell.ss_pbch_block_pwr = du_cfg.ssb_cfg.ssb_block_power;
+
+  n_ta_offset ta_offset                = band_helper::get_ta_offset(du_cfg.dl_carrier.band);
   cell.n_timing_advance_offset_present = true;
-  cell.n_timing_advance_offset.value   = asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
+  if (ta_offset == n_ta_offset::n0) {
+    cell.n_timing_advance_offset.value = asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
+  } else if (ta_offset == n_ta_offset::n25600) {
+    cell.n_timing_advance_offset.value =
+        asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n25600;
+  } else if (ta_offset == n_ta_offset::n39936) {
+    cell.n_timing_advance_offset.value =
+        asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n39936;
+  }
 
   // TDD config
   if (du_cfg.tdd_ul_dl_cfg_common.has_value()) {
     cell.tdd_ul_dl_cfg_common_present                = true;
     cell.tdd_ul_dl_cfg_common.ref_subcarrier_spacing = get_asn1_scs(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs);
-    float periodicity_ms = du_cfg.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots /
-                           get_nof_slots_per_subframe(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs);
-    if (periodicity_ms == 10.0) {
+    float periodicity_ms = static_cast<float>(du_cfg.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots) /
+                           static_cast<float>(get_nof_slots_per_subframe(du_cfg.tdd_ul_dl_cfg_common.value().ref_scs));
+    if (periodicity_ms == 10.0F) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms10;
-    } else if (periodicity_ms == 5.0) {
+    } else if (periodicity_ms == 5.0F) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms5;
-    } else if (periodicity_ms == 2.5) {
+    } else if (periodicity_ms == 2.5F) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms2p5;
-    } else if (periodicity_ms == 2.0) {
+    } else if (periodicity_ms == 2.0F) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms2;
-    } else if (periodicity_ms == 1.25) {
+    } else if (periodicity_ms == 1.25F) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms1p25;
-    } else if (periodicity_ms == 2) {
+    } else if (periodicity_ms == 1.0F) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms1;
-    } else if (periodicity_ms == 0.625) {
+    } else if (periodicity_ms == 0.625F) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms0p625;
-    } else if (periodicity_ms == 0.5) {
+    } else if (periodicity_ms == 0.5F) {
       cell.tdd_ul_dl_cfg_common.pattern1.dl_ul_tx_periodicity =
           asn1::rrc_nr::tdd_ul_dl_pattern_s::dl_ul_tx_periodicity_opts::ms0p5;
     } else {
@@ -574,31 +587,4 @@ void srsran::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
     buf                                = make_asn1_rrc_cell_sib1_buffer(*cell_cfg, js_str);
     f1ap_cell.gnb_du_sys_info.sib1_msg = std::move(buf);
   }
-}
-
-asn1::rrc_nr::paging_s make_asn1_rrc_cell_cn_paging_msg(const uint64_t five_g_s_tmsi)
-{
-  asn1::rrc_nr::paging_record_s pg_rec{};
-  auto&                         rrc_pg_id = pg_rec.ue_id.set_ng_5_g_s_tmsi();
-  rrc_pg_id                               = rrc_pg_id.from_number(five_g_s_tmsi);
-
-  asn1::rrc_nr::paging_s rrc_pg{};
-  rrc_pg.paging_record_list.push_back(pg_rec);
-
-  return rrc_pg;
-}
-
-byte_buffer srsran::srs_du::make_asn1_rrc_cell_pcch_pch_msg(uint64_t five_g_s_tmsi)
-{
-  byte_buffer   buf;
-  asn1::bit_ref bref{buf};
-
-  asn1::rrc_nr::pcch_msg_s pcch_msg{};
-  auto&                    pcch_c1 = pcch_msg.msg.set_c1();
-  // TODO: Support RAN Paging.
-  pcch_c1.set_paging() = make_asn1_rrc_cell_cn_paging_msg(five_g_s_tmsi);
-
-  const asn1::SRSASN_CODE ret = pcch_msg.pack(bref);
-  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack PCCH-PCH Paging message");
-  return buf;
 }

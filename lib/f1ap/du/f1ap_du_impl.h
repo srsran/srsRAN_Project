@@ -28,7 +28,6 @@
 #include "srsran/du_high/du_high_ue_executor_mapper.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 
-#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {
@@ -60,7 +59,6 @@ public:
   f1ap_ue_configuration_response handle_ue_configuration_request(const f1ap_ue_configuration_request& msg) override;
 
   // F1AP UE context manager functions
-  void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}
   async_task<f1ap_ue_context_modification_response_message>
        handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override;
   void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) override {}

@@ -27,7 +27,7 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ngap_test::ngap_test() : ngap_ue_task_scheduler(timers)
+ngap_test::ngap_test() : ngap_ue_task_scheduler(timers, ctrl_worker)
 {
   test_logger.set_level(srslog::basic_levels::debug);
   ngap_logger.set_level(srslog::basic_levels::debug);
@@ -38,7 +38,7 @@ ngap_test::ngap_test() : ngap_ue_task_scheduler(timers)
   cfg.plmn          = "00101";
   cfg.tac           = 7;
 
-  ngap = create_ngap(cfg, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
+  ngap = create_ngap(cfg, cu_cp_paging_notifier, ngap_ue_task_scheduler, ue_mng, msg_notifier, ctrl_worker);
 }
 
 ngap_test::~ngap_test()
@@ -65,7 +65,7 @@ void ngap_test::run_dl_nas_transport(ue_index_t ue_index)
 {
   auto& ue     = test_ues.at(ue_index);
   ue.amf_ue_id = uint_to_amf_ue_id(
-      test_rgen::uniform_int<uint32_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max) - 1));
+      test_rgen::uniform_int<uint64_t>(amf_ue_id_to_uint(amf_ue_id_t::min), amf_ue_id_to_uint(amf_ue_id_t::max)));
 
   ngap_message dl_nas_transport = generate_downlink_nas_transport_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
   ngap->handle_message(dl_nas_transport);
@@ -84,4 +84,10 @@ void ngap_test::run_inital_context_setup(ue_index_t ue_index)
   ngap_message init_context_setup_request =
       generate_valid_initial_context_setup_request_message(ue.amf_ue_id.value(), ue.ran_ue_id.value());
   ngap->handle_message(init_context_setup_request);
+}
+
+void ngap_test::tick()
+{
+  timers.tick();
+  ctrl_worker.run_pending_tasks();
 }

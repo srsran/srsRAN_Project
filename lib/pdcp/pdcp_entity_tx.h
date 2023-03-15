@@ -32,7 +32,7 @@
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
-#include "srsran/support/timers.h"
+#include "srsran/support/timers2.h"
 #include <map>
 
 namespace srsran {
@@ -60,7 +60,7 @@ public:
                  pdcp_config::pdcp_tx_config     cfg_,
                  pdcp_tx_lower_notifier&         lower_dn_,
                  pdcp_tx_upper_control_notifier& upper_cn_,
-                 timer_manager&                  timers_) :
+                 timer_factory                   timers_) :
     pdcp_entity_tx_rx_base(rb_id_, cfg_.rb_type, cfg_.sn_size),
     logger("PDCP", {ue_index, rb_id_, "DL"}),
     cfg(cfg_),
@@ -168,7 +168,7 @@ private:
   pdcp_rx_status_provider*        status_provider = nullptr;
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
-  timer_manager&                  timers;
+  timer_factory                   timers;
 
   pdcp_tx_state                st        = {};
   security::security_direction direction = security::security_direction::downlink;
@@ -216,7 +216,7 @@ class pdcp_entity_tx::discard_callback
 {
 public:
   discard_callback(pdcp_entity_tx* parent_, uint32_t count_) : parent(parent_), discard_count(count_) {}
-  void operator()(uint32_t timer_id);
+  void operator()(timer_id_t timer_id);
 
 private:
   pdcp_entity_tx* parent;
