@@ -236,6 +236,20 @@ build clean:
 
 # Alt combinations
 
+build without rf:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    BUILD_TYPE: "" # Default one
+    TEST_MODE: default
+    ENABLE_ZEROMQ: "False"
+    ENABLE_UHD: "False"
+  parallel:
+    matrix:
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        COMPILER: [gcc, clang]
+
 .build_and_unit_alt:
   extends: .build_and_unit
   variables:
