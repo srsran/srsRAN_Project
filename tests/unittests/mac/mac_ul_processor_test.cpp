@@ -46,19 +46,19 @@ public:
   // Compare last_bsr_msg with a test message passed to the function.
   void verify_bsr_msg(const ul_bsr_indication_message& test_usr_msg)
   {
-    EXPECT_EQ(last_bsr_msg.cell_index, test_usr_msg.cell_index);
-    EXPECT_EQ(last_bsr_msg.ue_index, test_usr_msg.ue_index);
-    EXPECT_EQ(last_bsr_msg.crnti, test_usr_msg.crnti);
-    EXPECT_EQ(last_bsr_msg.type, test_usr_msg.type);
-    EXPECT_EQ(last_bsr_msg.reported_lcgs.size(), test_usr_msg.reported_lcgs.size());
+    EXPECT_EQ(last_bsr_msg->cell_index, test_usr_msg.cell_index);
+    EXPECT_EQ(last_bsr_msg->ue_index, test_usr_msg.ue_index);
+    EXPECT_EQ(last_bsr_msg->crnti, test_usr_msg.crnti);
+    EXPECT_EQ(last_bsr_msg->type, test_usr_msg.type);
+    EXPECT_EQ(last_bsr_msg->reported_lcgs.size(), test_usr_msg.reported_lcgs.size());
     for (size_t n = 0; n < test_usr_msg.reported_lcgs.size(); ++n) {
-      EXPECT_EQ(last_bsr_msg.reported_lcgs[n].lcg_id, test_usr_msg.reported_lcgs[n].lcg_id);
-      EXPECT_EQ(last_bsr_msg.reported_lcgs[n].nof_bytes, test_usr_msg.reported_lcgs[n].nof_bytes);
+      EXPECT_EQ(last_bsr_msg->reported_lcgs[n].lcg_id, test_usr_msg.reported_lcgs[n].lcg_id);
+      EXPECT_EQ(last_bsr_msg->reported_lcgs[n].nof_bytes, test_usr_msg.reported_lcgs[n].nof_bytes);
     }
   }
 
-  ul_bsr_indication_message last_bsr_msg;
-  uci_indication            last_uci_ind;
+  optional<ul_bsr_indication_message> last_bsr_msg;
+  uci_indication                      last_uci_ind;
 };
 
 // Helper struct that creates a MAC UL to test the correct processing of RX indication messages.
@@ -144,7 +144,10 @@ struct test_bench {
     task_exec.run_pending_tasks();
   }
 
-  bool verify_no_bsr_notification(rnti_t rnti) const { return sched_feedback.last_bsr_msg.crnti != rnti; }
+  bool verify_no_bsr_notification(rnti_t rnti) const
+  {
+    return not sched_feedback.last_bsr_msg.has_value() or sched_feedback.last_bsr_msg->crnti != rnti;
+  }
 
   bool verify_no_sr_notification(rnti_t rnti) const
   {
