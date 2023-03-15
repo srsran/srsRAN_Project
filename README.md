@@ -9,6 +9,8 @@ See the [srsRAN Project](https://www.srsran.com/) for information, guides and pr
 
 For application features, build instructions and user guides see the [srsRAN Project documentation](https://docs.srsran.com/projects/project).
 
+For community announcements and support, join our [discussion board](https://www.github.com/srsran/srsran_project/discussions).
+
 Current Features
 ----------------
 
