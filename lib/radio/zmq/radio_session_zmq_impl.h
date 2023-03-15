@@ -27,7 +27,7 @@ class radio_session_zmq_impl : public radio_session,
 {
 private:
   /// Alignment timeout. Waits this time before padding zeros.
-  const std::chrono::milliseconds RECEIVE_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(10);
+  const std::chrono::milliseconds RECEIVE_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(100);
   /// Alignment timeout. Waits this time before padding zeros.
   const std::chrono::milliseconds TRANSMIT_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(0);
   /// Default sockets send and receive timeout in milliseconds.
