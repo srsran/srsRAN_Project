@@ -22,7 +22,7 @@ class f1c_rx_sdu_rlc_adapter final : public f1c_rx_sdu_notifier
 public:
   void connect(rlc_tx_upper_layer_data_interface& rlc_tx_) { rlc_tx = &rlc_tx_; }
 
-  void on_new_sdu(optional<uint32_t> pdcp_sn, byte_buffer pdu) override
+  void on_new_sdu(byte_buffer pdu, optional<uint32_t> pdcp_sn) override
   {
     srsran_assert(rlc_tx != nullptr, "RLC Tx PDU notifier is disconnected");
 
