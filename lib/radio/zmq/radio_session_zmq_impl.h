@@ -26,6 +26,10 @@ class radio_session_zmq_impl : public radio_session,
                                public baseband_gateway_receiver
 {
 private:
+  /// Alignment timeout. Waits this time before padding zeros.
+  const std::chrono::milliseconds RECEIVE_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(10);
+  /// Alignment timeout. Waits this time before padding zeros.
+  const std::chrono::milliseconds TRANSMIT_TS_ALIGN_TIMEOUT = std::chrono::milliseconds(0);
   /// Default sockets send and receive timeout in milliseconds.
   static constexpr unsigned DEFAULT_TRX_TIMEOUT_MS = 10;
   /// Default linger timeout in milliseconds.

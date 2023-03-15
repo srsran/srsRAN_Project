@@ -236,7 +236,7 @@ void radio_zmq_tx_channel::transmit_samples(span<radio_sample_type> data)
   sample_count += count;
 }
 
-bool radio_zmq_tx_channel::align(uint64_t timestamp)
+bool radio_zmq_tx_channel::align(uint64_t timestamp, std::chrono::milliseconds timeout)
 {
   unsigned count = 0;
 
@@ -248,6 +248,16 @@ bool radio_zmq_tx_channel::align(uint64_t timestamp)
 
   // Protect concurrent alignment and transmit.
   std::unique_lock<std::mutex> lock(transmit_alignment_mutex);
+
+  // If the channel has never transmitted, skip wait.
+  if (is_tx_enabled && (timeout.count() != 0)) {
+    // Otherwise, wait for the transmitter to transmit.
+    bool is_not_timeout = transmit_alignment_cvar.wait_for(lock, timeout, [&]() { return sample_count >= timestamp; });
+    if (is_not_timeout) {
+      return sample_count > timestamp;
+    }
+    is_tx_enabled = false;
+  }
 
   std::array<cf_t, 1024> zero_buffer = {};
   // Transmit zeros until the sample count reaches the timestamp.
@@ -271,7 +281,14 @@ void radio_zmq_tx_channel::transmit(span<radio_sample_type> data)
   // Protect concurrent alignment and transmit.
   std::unique_lock<std::mutex> lock(transmit_alignment_mutex);
 
+  // Actual baseband transmission.
   transmit_samples(data);
+
+  // Indicate that transmit is enabled.
+  is_tx_enabled = true;
+
+  // Notify transmission.
+  transmit_alignment_cvar.notify_all();
 }
 
 void radio_zmq_tx_channel::stop()

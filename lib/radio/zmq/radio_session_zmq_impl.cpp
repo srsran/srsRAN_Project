@@ -126,7 +126,7 @@ void radio_session_zmq_impl::transmit(unsigned                                  
                             tx_streams.size());
 
   // Align stream to the new timestamp.
-  bool timestamp_passed = tx_streams[stream_id]->align(metadata.ts);
+  bool timestamp_passed = tx_streams[stream_id]->align(metadata.ts, TRANSMIT_TS_ALIGN_TIMEOUT);
 
   // Notify that a timestamp is late.
   if (timestamp_passed) {
@@ -159,7 +159,7 @@ baseband_gateway_receiver::metadata radio_session_zmq_impl::receive(baseband_gat
 
   // Align all transmit timestamps.
   for (auto& tx_stream : tx_streams) {
-    tx_stream->align(passed_timestamp);
+    tx_stream->align(passed_timestamp, RECEIVE_TS_ALIGN_TIMEOUT);
   }
 
   // Actual reception.
