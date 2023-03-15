@@ -196,15 +196,16 @@ static bool alloc_dl_ue(const ue&                    u,
           are_crbs_valid = ue_grant_crbs.length() == h->last_alloc_params().prbs.prbs().length();
         }
         if (are_crbs_valid) {
-          const bool res_allocated = pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
-                                                                                  ue_cc.cell_index,
-                                                                                  h->id,
-                                                                                  ss_cfg->id,
-                                                                                  time_res,
-                                                                                  ue_grant_crbs,
-                                                                                  dci_dl_format::f1_0,
-                                                                                  agg_lvl,
-                                                                                  mcs_prbs.mcs});
+          const bool res_allocated =
+              pdsch_alloc.allocate_dl_grant(ue_pdsch_grant{&u,
+                                                           ue_cc.cell_index,
+                                                           h->id,
+                                                           ss_cfg->id,
+                                                           time_res,
+                                                           ue_grant_crbs,
+                                                           ue_cc.cfg().get_dl_dci_format(ss_cfg->id),
+                                                           agg_lvl,
+                                                           mcs_prbs.mcs});
           if (res_allocated) {
             return true;
           }
@@ -268,7 +269,8 @@ static bool alloc_ul_ue(const ue&                    u,
 
       const span<const pusch_time_domain_resource_allocation> pusch_list =
           ue_cc.cfg().get_pusch_time_domain_list(ss_cfg->id);
-      const bwp_configuration bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_ul_format::f0_0, ss_cfg->type);
+      const dci_ul_rnti_config_type dci_type = ue_cc.cfg().get_ul_rnti_config_type(ss_cfg->id);
+      const bwp_configuration       bwp_lims = ue_cc.alloc_type1_bwp_limits(dci_type, ss_cfg->type);
 
       // Search minimum k2 that corresponds to a UL slot.
       unsigned time_res = 0;
@@ -297,15 +299,13 @@ static bool alloc_ul_ue(const ue&                    u,
         // only one PUSCH per UE per slot.
         continue;
       }
-      // TODO: Get correct DCI format.
-      const dci_ul_rnti_config_type dci_type      = dci_ul_rnti_config_type::c_rnti_f0_0;
-      const ofdm_symbol_range       pusch_symbols = pusch_list[time_res].symbols;
-      const prb_bitmap              used_crbs     = grid.used_crbs(bwp_lims, pusch_symbols);
+      const ofdm_symbol_range pusch_symbols = pusch_list[time_res].symbols;
+      const prb_bitmap        used_crbs     = grid.used_crbs(bwp_lims, pusch_symbols);
 
       // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
       const grant_prbs_mcs mcs_prbs =
           is_retx ? grant_prbs_mcs{h->last_tx_params().mcs, h->last_tx_params().prbs.prbs().length()}
-                  : ue_cc.required_ul_prbs(time_res, pending_newtx_bytes, dci_type);
+                  : ue_cc.required_ul_prbs(pusch_list[time_res], pending_newtx_bytes, dci_type);
 
       const crb_interval ue_grant_crbs  = find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
       bool               are_crbs_valid = not ue_grant_crbs.empty(); // Cannot be empty.

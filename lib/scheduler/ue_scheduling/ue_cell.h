@@ -70,12 +70,15 @@ public:
                                   unsigned                                     pending_bytes) const;
 
   /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
-  grant_prbs_mcs required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul_rnti_config_type type) const;
+  grant_prbs_mcs required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                  unsigned                                     pending_bytes,
+                                  dci_ul_rnti_config_type                      type) const;
 
   /// \brief Derive UL resource allocation type1 BWP configuration as per TS38.214, 6.1.2.2.2.
-  bwp_configuration alloc_type1_bwp_limits(dci_ul_format dci_fmt, search_space_configuration::type_t ss_type) const
+  bwp_configuration alloc_type1_bwp_limits(dci_ul_rnti_config_type            dci_type,
+                                           search_space_configuration::type_t ss_type) const
   {
-    return get_resource_alloc_type_1_ul_bwp_size(dci_fmt,
+    return get_resource_alloc_type_1_ul_bwp_size(dci_type,
                                                  ue_cfg.cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params,
                                                  ue_cfg.ul_bwp_common(active_bwp_id()).generic_params,
                                                  ss_type);

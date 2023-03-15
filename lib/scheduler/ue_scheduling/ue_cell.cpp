@@ -80,8 +80,7 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
 
   sch_mcs_description mcs_config = pdsch_mcs_get_config(cfg().cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table, mcs);
 
-  dmrs_information dmrs_info = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  dmrs_information dmrs_info = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   (unsigned)pdsch_cfg.symbols.length(),
@@ -94,8 +93,9 @@ grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_alloca
   return grant_prbs_mcs{mcs, std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length())};
 }
 
-grant_prbs_mcs
-ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul_rnti_config_type type) const
+grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                         unsigned                                     pending_bytes,
+                                         dci_ul_rnti_config_type                      type) const
 {
   const cell_configuration& cell_cfg = cfg().cell_cfg_common;
 
@@ -104,10 +104,10 @@ ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul
   pusch_config_params pusch_cfg;
   switch (type) {
     case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, time_resource);
+      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_c_rnti(cell_cfg, ue_cfg, bwp_ul_cmn, time_resource);
+      pusch_cfg = get_pusch_config_f0_0_c_rnti(cell_cfg, ue_cfg, bwp_ul_cmn, pusch_td_cfg);
       break;
     default:
       report_fatal_error("Unsupported PDCCH DCI UL format");
@@ -126,10 +126,7 @@ ue_cell::required_ul_prbs(unsigned time_resource, unsigned pending_bytes, dci_ul
 
   sch_mcs_description mcs_config = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, false);
 
-  const unsigned nof_symbols = static_cast<unsigned>(
-      cfg()
-          .cell_cfg_common.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource]
-          .symbols.length());
+  const unsigned nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   nof_symbols,

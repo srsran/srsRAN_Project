@@ -42,8 +42,7 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configurati
 
   pdsch_config_params pdsch;
 
-  pdsch.dmrs = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pdsch.dmrs = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
   pdsch.nof_oh_prb       = nof_oh_prb;
   pdsch.symbols          = pdsch_td_cfg.symbols;
@@ -64,8 +63,7 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuratio
 
   pdsch_config_params pdsch;
 
-  pdsch.dmrs = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pdsch.dmrs = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
   pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
@@ -80,7 +78,8 @@ pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuratio
   return pdsch;
 }
 
-pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configuration& cell_cfg, unsigned time_resource)
+pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configuration&                    cell_cfg,
+                                                          const pusch_time_domain_resource_allocation& pusch_td_cfg)
 {
   constexpr pusch_mcs_table mcs_table  = pusch_mcs_table::qam64;
   constexpr unsigned        nof_layers = 1;
@@ -102,10 +101,9 @@ pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configurati
   pusch_config_params pusch;
 
   // TODO: Use UE-dedicated DMRS info if needed.
-  pusch.dmrs = make_dmrs_info_common(
-      *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pusch.dmrs = make_dmrs_info_common(pusch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
-  pusch.symbols = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource].symbols;
+  pusch.symbols = pusch_td_cfg.symbols;
 
   pusch.mcs_table          = mcs_table;
   pusch.nof_layers         = nof_layers;
@@ -122,10 +120,10 @@ pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configurati
   return pusch;
 }
 
-pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuration&    cell_cfg,
-                                                         const ue_cell_configuration& ue_cell_cfg,
-                                                         const bwp_uplink_common&     ul_bwp,
-                                                         unsigned                     time_resource)
+pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuration&                    cell_cfg,
+                                                         const ue_cell_configuration&                 ue_cell_cfg,
+                                                         const bwp_uplink_common&                     ul_bwp,
+                                                         const pusch_time_domain_resource_allocation& pusch_td_cfg)
 {
   const pusch_mcs_table mcs_table  = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
   constexpr unsigned    nof_layers = 1;
@@ -144,10 +142,9 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuratio
 
   pusch_config_params pusch;
 
-  pusch.dmrs = make_dmrs_info_common(
-      *cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  pusch.dmrs = make_dmrs_info_common(pusch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 
-  pusch.symbols = ul_bwp.pusch_cfg_common->pusch_td_alloc_list[time_resource].symbols;
+  pusch.symbols = pusch_td_cfg.symbols;
 
   pusch.mcs_table          = mcs_table;
   pusch.nof_layers         = nof_layers;
@@ -276,8 +273,7 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   // PUSCH resources.
   pusch.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
   pusch.prbs    = prbs;
-  pusch.symbols =
-      cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[dci_cfg.time_resource].symbols;
+  pusch.symbols = pusch_cfg.symbols;
 
   // MCS.
   pusch.mcs_table = pusch_cfg.mcs_table;
@@ -324,7 +320,7 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   // PUSCH resources.
   pusch.bwp_cfg = &ul_bwp.generic_params;
   pusch.prbs    = prbs;
-  pusch.symbols = ul_bwp.pusch_cfg_common->pusch_td_alloc_list[dci_cfg.time_resource].symbols;
+  pusch.symbols = pusch_cfg.symbols;
 
   // MCS.
   pusch.mcs_table                = pusch_cfg.mcs_table;

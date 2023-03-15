@@ -137,8 +137,9 @@ void ra_scheduler::precompute_msg3_pdus()
     dummy_h_ul.new_tx(dummy_slot, sched_cfg.max_nof_msg3_harq_retxs);
 
     // Compute the required PRBs and TBS for Msg3.
-    const pusch_config_params pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, i);
-    const sch_prbs_tbs        prbs_tbs =
+    const pusch_config_params pusch_cfg =
+        get_pusch_config_f0_0_tc_rnti(cell_cfg, get_pusch_cfg().pusch_td_alloc_list[i]);
+    const sch_prbs_tbs prbs_tbs =
         get_nof_prbs(prbs_calculator_sch_config{max_msg3_sdu_payload_size_bytes + msg3_subheader_size_bytes,
                                                 (unsigned)get_pusch_cfg().pusch_td_alloc_list[i].symbols.length(),
                                                 calculate_nof_dmrs_per_rb(pusch_cfg.dmrs),

@@ -75,6 +75,23 @@ public:
   /// Get UE list of pusch-TimeDomainAllocationList as per TS 38.214 clause 6.1.2.1.1.
   span<const pusch_time_domain_resource_allocation> get_pusch_time_domain_list(search_space_id ss_id) const;
 
+  /// \brief Gets UL DCI RNTI type to use based on SearchSpace configuration.
+  /// \param[in] ss_id SearchSpace Id.
+  /// \return UL DCI RNTI type.
+  dci_ul_rnti_config_type get_ul_rnti_config_type(search_space_id ss_id) const;
+  /// \brief Gets DL DCI RNTI type to use based on SearchSpace configuration.
+  /// \param[in] ss_id SearchSpace Id.
+  /// \return DL DCI RNTI type.
+  dci_dl_rnti_config_type get_dl_rnti_config_type(search_space_id ss_id) const;
+  /// \brief Gets UL DCI format type to use based on SearchSpace configuration.
+  /// \param[in] ss_id SearchSpace Id.
+  /// \return UL DCI format.
+  dci_ul_format get_ul_dci_format(search_space_id ss_id) const;
+  /// \brief Gets DL DCI format type to use based on SearchSpace configuration.
+  /// \param[in] ss_id SearchSpace Id.
+  /// \return DL DCI format.
+  dci_dl_format get_dl_dci_format(search_space_id ss_id) const;
+
   /// Fetches UL BWP common configuration based on BWP-Id.
   const bwp_uplink_common* find_ul_bwp_common(bwp_id_t bwp_id) const { return bwp_table[bwp_id].ul_bwp_common; }
   const bwp_uplink_common& ul_bwp_common(bwp_id_t bwp_id) const

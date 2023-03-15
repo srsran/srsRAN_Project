@@ -91,7 +91,9 @@ public:
     cell_cfg(test_helpers::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
-    pusch_cfg(get_pusch_config_f0_0_tc_rnti(cell_cfg, time_resource)){};
+    pusch_cfg(get_pusch_config_f0_0_tc_rnti(
+        cell_cfg,
+        cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource])){};
 
 protected:
   const cell_configuration    cell_cfg;

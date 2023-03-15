@@ -119,20 +119,23 @@ inline bwp_configuration get_resource_alloc_type_1_dl_bwp_size(dci_dl_rnti_confi
 /// \param active_ul_bwp Active UL BWP configuration.
 /// \param ss_type SearchSpace type.
 /// \return Calculated BWP configuration.
-inline bwp_configuration get_resource_alloc_type_1_ul_bwp_size(dci_ul_format                      dci_fmt,
+inline bwp_configuration get_resource_alloc_type_1_ul_bwp_size(dci_ul_rnti_config_type            dci_type,
                                                                const bwp_configuration&           init_ul_bwp,
                                                                const bwp_configuration&           active_ul_bwp,
                                                                search_space_configuration::type_t ss_type)
 {
   // See TS 38.214, 6.1.2.2.2, Uplink resource allocation type 1.
-  if (dci_fmt == dci_ul_format::f0_0) {
+  if (dci_type != dci_ul_rnti_config_type::c_rnti_f0_1) {
     if (ss_type == search_space_configuration::type_t::common) {
       return init_ul_bwp;
     }
     // UE Search Space.
     return active_ul_bwp;
   }
-  report_fatal_error("Unsupported UL DCI format={}", dci_fmt);
+  if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
+    return active_ul_bwp;
+  }
+  report_fatal_error("Unsupported UL DCI format={}", dci_type);
 }
 
 } // namespace srsran
