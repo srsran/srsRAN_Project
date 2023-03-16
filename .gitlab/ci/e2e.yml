@@ -97,8 +97,8 @@ zmq:
 
 zmq-tsan:
   extends: zmq
-  variables:
-    PYTEST_ARGS: "-n 2"
+  # variables:
+  #   PYTEST_ARGS: "-n 2"
   needs:
     - job: "avx2 [tsan, cached]"
       artifacts: true
@@ -112,8 +112,8 @@ zmq-tsan:
 
 zmq-asan:
   extends: zmq
-  variables:
-    PYTEST_ARGS: "-n 2"
+  # variables:
+  #   PYTEST_ARGS: "-n 2"
   needs:
     - job: "avx2 [asan]"
       artifacts: true
