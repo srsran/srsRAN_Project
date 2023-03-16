@@ -7,8 +7,8 @@
 #
 
 include:
-  - project: softwareradiosystems/testing-tools
-    ref: "48"
+  - project: softwareradiosystems/ci/tools
+    ref: "2"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
