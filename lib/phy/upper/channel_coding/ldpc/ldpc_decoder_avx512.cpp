@@ -20,13 +20,40 @@ using namespace srsran;
 using namespace srsran::ldpc;
 
 // AVX512 vectors filled with useful constants.
-static const __m512i LLR_MAX_epi8          = _mm512_set1_epi8(LLR_MAX.to_value_type());
-static const __m512i LLR_MIN_epi8          = _mm512_set1_epi8(LLR_MIN.to_value_type());
-static const __m512i LLR_INFINITY_epi8     = _mm512_set1_epi8(LLR_INFINITY.to_value_type());
-static const __m512i LLR_NEG_INFINITY_epi8 = _mm512_set1_epi8(-LLR_INFINITY.to_value_type());
-static const __m512i ONE_epi8              = _mm512_set1_epi8(1);
-static const __m512i FF_epi8               = _mm512_set1_epi8(0xff);
-static const __m512i ZERO_epi8             = _mm512_set1_epi8(0);
+static __always_inline __m512i LLR_MAX_epi8()
+{
+  return _mm512_set1_epi8(LLR_MAX.to_value_type());
+}
+
+static __always_inline __m512i LLR_MIN_epi8()
+{
+  return _mm512_set1_epi8(LLR_MIN.to_value_type());
+}
+
+static __always_inline __m512i LLR_INFINITY_epi8()
+{
+  return _mm512_set1_epi8(LLR_INFINITY.to_value_type());
+}
+
+static __always_inline __m512i LLR_NEG_INFINITY_epi8()
+{
+  return _mm512_set1_epi8(-LLR_INFINITY.to_value_type());
+}
+
+static __always_inline __m512i ONE_epi8()
+{
+  return _mm512_set1_epi8(1);
+}
+
+static __always_inline __m512i FF_epi8()
+{
+  return _mm512_set1_epi8(0xff);
+}
+
+static __always_inline __m512i ZERO_epi8()
+{
+  return _mm512_setzero_si512();
+}
 
 /// Maximum number of AVX512 vectors needed to represent a BG node.
 static constexpr unsigned MAX_NODE_SIZE_AVX512 = divide_ceil(ldpc::MAX_LIFTING_SIZE, AVX512_SIZE_BYTE);
@@ -63,19 +90,19 @@ void ldpc_decoder_avx512::compute_var_to_check_msgs(span<log_likelihood_ratio>  
 
     // v2c = (soft - c2v > LLR_MAX) ? LLR_MAX : (soft - c2v)
     __m512i help_sub_epi8 = _mm512_subs_epi8(soft_epi8, c2v_epi8);
-    __m512i v2c_epi8      = _mm512_min_epi8(help_sub_epi8, LLR_MAX_epi8);
+    __m512i v2c_epi8      = _mm512_min_epi8(help_sub_epi8, LLR_MAX_epi8());
 
     // v2c = (v2c < MIN_LLR) ? MIN_LLR : v2c
-    v2c_epi8 = _mm512_max_epi8(v2c_epi8, LLR_MIN_epi8);
+    v2c_epi8 = _mm512_max_epi8(v2c_epi8, LLR_MIN_epi8());
 
     // Ensure that soft = +/- infinity implies v2c = +/- infinity.
     // v2c = (soft < infinity) ? v2c : infinity
-    __mmask64 mask_epi8 = _mm512_cmpgt_epi8_mask(LLR_INFINITY_epi8, soft_epi8);
-    v2c_epi8            = _mm512_mask_blend_epi8(mask_epi8, LLR_INFINITY_epi8, v2c_epi8);
+    __mmask64 mask_epi8 = _mm512_cmpgt_epi8_mask(LLR_INFINITY_epi8(), soft_epi8);
+    v2c_epi8            = _mm512_mask_blend_epi8(mask_epi8, LLR_INFINITY_epi8(), v2c_epi8);
 
     // v2c = (soft > - infinity) ? v2c : - infinity
-    mask_epi8 = _mm512_cmpgt_epi8_mask(soft_epi8, LLR_NEG_INFINITY_epi8);
-    v2c_epi8  = _mm512_mask_blend_epi8(mask_epi8, LLR_NEG_INFINITY_epi8, v2c_epi8);
+    mask_epi8 = _mm512_cmpgt_epi8_mask(soft_epi8, LLR_NEG_INFINITY_epi8());
+    v2c_epi8  = _mm512_mask_blend_epi8(mask_epi8, LLR_NEG_INFINITY_epi8(), v2c_epi8);
     var_to_check_avx512.set_at(i_block, v2c_epi8);
   }
 }
@@ -174,10 +201,10 @@ void ldpc_decoder_avx512::compute_check_to_var_msgs(span<log_likelihood_ratio> t
 
     // Assign the sign to the message:
     //   - first compute the negative message by taking the two's complement (invert all bits and add one);
-    __m512i negative_c2v_epi8 = _mm512_xor_si512(check_to_var_epi8, FF_epi8);
-    negative_c2v_epi8         = _mm512_add_epi8(negative_c2v_epi8, ONE_epi8);
+    __m512i negative_c2v_epi8 = _mm512_xor_si512(check_to_var_epi8, FF_epi8());
+    negative_c2v_epi8         = _mm512_add_epi8(negative_c2v_epi8, ONE_epi8());
     //   - then look at "final_sign_epi8" to decide which messages are positive and which not;
-    __mmask64 mask_neg_epi8 = _mm512_cmpge_epi8_mask(final_sign_epi8, ZERO_epi8);
+    __mmask64 mask_neg_epi8 = _mm512_cmpge_epi8_mask(final_sign_epi8, ZERO_epi8());
     //   - finally, take either the positive or the negative message according to the computed mask.
     help_check_to_var_avx512.set_at(i_block,
                                     _mm512_mask_blend_epi8(mask_neg_epi8, negative_c2v_epi8, check_to_var_epi8));
@@ -200,12 +227,12 @@ void ldpc_decoder_avx512::compute_soft_bits(span<log_likelihood_ratio>       thi
   for (unsigned i_block = 0; i_block != node_size_avx512; ++i_block) {
     // Get a mask of the infinite check-to-var messages.
     __m512i   check_to_var_epi8         = this_check_to_var_avx512.get_at(i_block);
-    __mmask64 is_check_plus_infty_epi8  = _mm512_cmpgt_epi8_mask(check_to_var_epi8, LLR_MAX_epi8);
-    __mmask64 is_check_minus_infty_epi8 = _mm512_cmpgt_epi8_mask(LLR_MIN_epi8, check_to_var_epi8);
+    __mmask64 is_check_plus_infty_epi8  = _mm512_cmpgt_epi8_mask(check_to_var_epi8, LLR_MAX_epi8());
+    __mmask64 is_check_minus_infty_epi8 = _mm512_cmpgt_epi8_mask(LLR_MIN_epi8(), check_to_var_epi8);
     // Get a mask of the infinite var-to_check messages.
     __m512i   var_to_check_epi8       = this_var_to_check_avx512.get_at(i_block);
-    __mmask64 is_var_plus_infty_epi8  = _mm512_cmpgt_epi8_mask(var_to_check_epi8, LLR_MAX_epi8);
-    __mmask64 is_var_minus_infty_epi8 = _mm512_cmpgt_epi8_mask(LLR_MIN_epi8, var_to_check_epi8);
+    __mmask64 is_var_plus_infty_epi8  = _mm512_cmpgt_epi8_mask(var_to_check_epi8, LLR_MAX_epi8());
+    __mmask64 is_var_minus_infty_epi8 = _mm512_cmpgt_epi8_mask(LLR_MIN_epi8(), var_to_check_epi8);
 
     // Add check-to-variable and variable-to-check messages.
     __m512i soft_epi8 =
@@ -213,21 +240,21 @@ void ldpc_decoder_avx512::compute_soft_bits(span<log_likelihood_ratio>       thi
 
     // Soft bits are +INFINITY if they are larger than LLR_MAX or if at least one of the addends is (but not if the two
     // addends are both infinity but with opposite signs).
-    __mmask64 mask_epi8        = _mm512_cmpgt_epi8_mask(soft_epi8, LLR_MAX_epi8);
+    __mmask64 mask_epi8        = _mm512_cmpgt_epi8_mask(soft_epi8, LLR_MAX_epi8());
     __mmask64 mask_inputs_epi8 = _kandn_mask64(is_var_minus_infty_epi8, is_check_plus_infty_epi8);
     __mmask64 mask_tmp_epi8    = _kandn_mask64(is_check_minus_infty_epi8, is_var_plus_infty_epi8);
     mask_inputs_epi8           = _kor_mask64(mask_inputs_epi8, mask_tmp_epi8);
     mask_epi8                  = _kor_mask64(mask_epi8, mask_inputs_epi8);
-    soft_epi8                  = _mm512_mask_blend_epi8(mask_epi8, soft_epi8, LLR_INFINITY_epi8);
+    soft_epi8                  = _mm512_mask_blend_epi8(mask_epi8, soft_epi8, LLR_INFINITY_epi8());
 
     // Soft bits are -INFINITY if they are smaller than LLR_MIN or if at least one of the addends is (but not if the two
     // addends are both infinity but with opposite signs).
-    mask_epi8        = _mm512_cmpgt_epi8_mask(LLR_MIN_epi8, soft_epi8);
+    mask_epi8        = _mm512_cmpgt_epi8_mask(LLR_MIN_epi8(), soft_epi8);
     mask_inputs_epi8 = _kandn_mask64(is_var_plus_infty_epi8, is_check_minus_infty_epi8);
     mask_tmp_epi8    = _kandn_mask64(is_check_plus_infty_epi8, is_var_minus_infty_epi8);
     mask_inputs_epi8 = _kor_mask64(mask_inputs_epi8, mask_tmp_epi8);
     mask_epi8        = _kor_mask64(mask_epi8, mask_inputs_epi8);
-    soft_epi8        = _mm512_mask_blend_epi8(mask_epi8, soft_epi8, LLR_NEG_INFINITY_epi8);
+    soft_epi8        = _mm512_mask_blend_epi8(mask_epi8, soft_epi8, LLR_NEG_INFINITY_epi8());
     this_soft_bits_avx512.set_at(i_block, soft_epi8);
   }
 };

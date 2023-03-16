@@ -20,10 +20,25 @@ using namespace srsran;
 using namespace srsran::ldpc;
 
 // NEON vectors filled with useful constants.
-static const int8x16_t LLR_MAX_s8          = vdupq_n_s8(LLR_MAX.to_value_type());
-static const int8x16_t LLR_MIN_s8          = vdupq_n_s8(LLR_MIN.to_value_type());
-static const int8x16_t LLR_INFINITY_s8     = vdupq_n_s8(LLR_INFINITY.to_value_type());
-static const int8x16_t LLR_NEG_INFINITY_s8 = vdupq_n_s8(-LLR_INFINITY.to_value_type());
+static __always_inline int8x16_t LLR_MAX_s8()
+{
+  return vdupq_n_s8(LLR_MAX.to_value_type());
+}
+
+static __always_inline int8x16_t LLR_MIN_s8()
+{
+  return vdupq_n_s8(LLR_MIN.to_value_type());
+}
+
+static __always_inline int8x16_t LLR_INFINITY_s8()
+{
+  return vdupq_n_s8(LLR_INFINITY.to_value_type());
+}
+
+static __always_inline int8x16_t LLR_NEG_INFINITY_s8()
+{
+  return vdupq_n_s8(-LLR_INFINITY.to_value_type());
+}
 
 /// Maximum number of NEON vectors needed to represent a BG node.
 static constexpr unsigned MAX_NODE_SIZE_NEON = divide_ceil(ldpc::MAX_LIFTING_SIZE, NEON_SIZE_BYTE);
@@ -59,19 +74,19 @@ void ldpc_decoder_neon::compute_var_to_check_msgs(span<log_likelihood_ratio>    
 
     // v2c = (soft - c2v > LLR_MAX) ? LLR_MAX : (soft - c2v)
     int8x16_t help_sub_s8 = vsubq_s8(soft_s8, c2v_s8);
-    int8x16_t v2c_s8      = vminq_s8(help_sub_s8, LLR_MAX_s8);
+    int8x16_t v2c_s8      = vminq_s8(help_sub_s8, LLR_MAX_s8());
 
     // v2c = (v2c < MIN_LLR) ? MIN_LLR : v2c
-    v2c_s8 = vmaxq_s8(v2c_s8, LLR_MIN_s8);
+    v2c_s8 = vmaxq_s8(v2c_s8, LLR_MIN_s8());
 
     // Ensure that soft = +/- infinity implies v2c = +/- infinity.
     // v2c = (soft < infinity) ? v2c : infinity
-    uint8x16_t mask_u8 = vcgtq_s8(LLR_INFINITY_s8, soft_s8);
-    v2c_s8             = vbslq_s8(mask_u8, v2c_s8, LLR_INFINITY_s8);
+    uint8x16_t mask_u8 = vcgtq_s8(LLR_INFINITY_s8(), soft_s8);
+    v2c_s8             = vbslq_s8(mask_u8, v2c_s8, LLR_INFINITY_s8());
 
     // v2c = (soft > - infinity) ? v2c : - infinity
-    mask_u8 = vcgtq_s8(soft_s8, LLR_NEG_INFINITY_s8);
-    v2c_s8  = vbslq_s8(mask_u8, v2c_s8, LLR_NEG_INFINITY_s8);
+    mask_u8 = vcgtq_s8(soft_s8, LLR_NEG_INFINITY_s8());
+    v2c_s8  = vbslq_s8(mask_u8, v2c_s8, LLR_NEG_INFINITY_s8());
     var_to_check_neon.set_at(i_block, v2c_s8);
   }
 }
@@ -188,32 +203,32 @@ void ldpc_decoder_neon::compute_soft_bits(span<log_likelihood_ratio>       this_
   for (unsigned i_block = 0; i_block != node_size_neon; ++i_block) {
     // Get a mask of the infinite check-to-var messages.
     int8x16_t  check_to_var_s8              = this_check_to_var_neon.get_at(i_block);
-    uint8x16_t is_check_plus_infty_mask_u8  = vcgtq_s8(check_to_var_s8, LLR_MAX_s8);
-    uint8x16_t is_check_minus_infty_mask_u8 = vcgtq_s8(LLR_MIN_s8, check_to_var_s8);
+    uint8x16_t is_check_plus_infty_mask_u8  = vcgtq_s8(check_to_var_s8, LLR_MAX_s8());
+    uint8x16_t is_check_minus_infty_mask_u8 = vcgtq_s8(LLR_MIN_s8(), check_to_var_s8);
     // Get a mask of the infinite var-to_check messages.
     int8x16_t  var_to_check_s8            = this_var_to_check_neon.get_at(i_block);
-    uint8x16_t is_var_plus_infty_mask_u8  = vcgtq_s8(var_to_check_s8, LLR_MAX_s8);
-    uint8x16_t is_var_minus_infty_mask_u8 = vcgtq_s8(LLR_MIN_s8, var_to_check_s8);
+    uint8x16_t is_var_plus_infty_mask_u8  = vcgtq_s8(var_to_check_s8, LLR_MAX_s8());
+    uint8x16_t is_var_minus_infty_mask_u8 = vcgtq_s8(LLR_MIN_s8(), var_to_check_s8);
     // Add check-to-variable and variable-to-check messages (note: we use saturated addition).
     int8x16_t soft_s8 = vqaddq_s8(check_to_var_s8, var_to_check_s8);
 
     // Soft bits are +INFINITY if they are larger than LLR_MAX or if at least one of the addends is (but not if the two
     // addends are both infinity but with opposite signs).
-    uint8x16_t mask_u8        = vcgtq_s8(soft_s8, LLR_MAX_s8);
+    uint8x16_t mask_u8        = vcgtq_s8(soft_s8, LLR_MAX_s8());
     uint8x16_t mask_inputs_u8 = vandq_u8(vmvnq_u8(is_var_minus_infty_mask_u8), is_check_plus_infty_mask_u8);
     uint8x16_t mask_tmp_u8    = vandq_u8(vmvnq_u8(is_check_minus_infty_mask_u8), is_var_plus_infty_mask_u8);
     mask_inputs_u8            = vorrq_u8(mask_inputs_u8, mask_tmp_u8);
     mask_u8                   = vorrq_u8(mask_u8, mask_inputs_u8);
-    soft_s8                   = vbslq_s8(mask_u8, LLR_INFINITY_s8, soft_s8);
+    soft_s8                   = vbslq_s8(mask_u8, LLR_INFINITY_s8(), soft_s8);
 
     // Soft bits are -INFINITY if they are smaller than LLR_MIN or if at least one of the addends is (but not if the two
     // addends are both infinity but with opposite signs).
-    mask_u8        = vcgtq_s8(LLR_MIN_s8, soft_s8);
+    mask_u8        = vcgtq_s8(LLR_MIN_s8(), soft_s8);
     mask_inputs_u8 = vandq_u8(vmvnq_u8(is_var_plus_infty_mask_u8), is_check_minus_infty_mask_u8);
     mask_tmp_u8    = vandq_u8(vmvnq_u8(is_check_plus_infty_mask_u8), is_var_minus_infty_mask_u8);
     mask_inputs_u8 = vorrq_u8(mask_inputs_u8, mask_tmp_u8);
     mask_u8        = vorrq_u8(mask_u8, mask_inputs_u8);
-    this_soft_bits_neon.set_at(i_block, vbslq_s8(mask_u8, LLR_NEG_INFINITY_s8, soft_s8));
+    this_soft_bits_neon.set_at(i_block, vbslq_s8(mask_u8, LLR_NEG_INFINITY_s8(), soft_s8));
   }
 }
 
