@@ -174,6 +174,7 @@ dci_ul_rnti_config_type ue_cell_configuration::get_ul_rnti_config_type(search_sp
       return dci_ul_rnti_config_type::c_rnti_f0_0;
     }
     // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
+    report_fatal_error("Unsupported UL DCI format");
   }
   switch (ss_cfg.ue_specific) {
     case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
@@ -194,6 +195,7 @@ dci_dl_rnti_config_type ue_cell_configuration::get_dl_rnti_config_type(search_sp
       return dci_dl_rnti_config_type::c_rnti_f1_0;
     }
     // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
+    report_fatal_error("Unsupported UL DCI format");
   }
   switch (ss_cfg.ue_specific) {
     case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
@@ -214,6 +216,7 @@ dci_ul_format ue_cell_configuration::get_ul_dci_format(search_space_id ss_id) co
       return dci_ul_format::f0_0;
     }
     // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
+    report_fatal_error("Unsupported UL DCI format");
   }
   switch (ss_cfg.ue_specific) {
     case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
@@ -234,6 +237,7 @@ dci_dl_format ue_cell_configuration::get_dl_dci_format(search_space_id ss_id) co
       return dci_dl_format::f1_0;
     }
     // TODO: Handle DCI Formats 2_0, 2_1, 2_2, 2_3 under Common SearchSpace.
+    report_fatal_error("Unsupported DL DCI format");
   }
   switch (ss_cfg.ue_specific) {
     case search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0:
