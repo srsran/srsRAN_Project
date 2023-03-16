@@ -164,7 +164,7 @@ coverity:
 # In build.yml
 
 intermediate commits:
-  extends: .build_and_unit_big
+  extends: .build_and_unit
   rules:
     - if: $ON_MR
   variables:
