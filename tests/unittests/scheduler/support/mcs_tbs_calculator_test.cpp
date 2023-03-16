@@ -45,7 +45,9 @@ public:
     pdsch_cfg(
         get_pdsch_config_f1_0_c_rnti(cell_cfg,
                                      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource],
-                                     ue_cell_cfg)){};
+                                     ue_cell_cfg))
+  {
+  }
 
 protected:
   const cell_configuration    cell_cfg;
@@ -93,7 +95,9 @@ public:
     time_resource{0},
     pusch_cfg(get_pusch_config_f0_0_tc_rnti(
         cell_cfg,
-        cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource])){};
+        cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource]))
+  {
+  }
 
 protected:
   const cell_configuration    cell_cfg;
