@@ -67,7 +67,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         "SSB derived parameters for cell: {}, band: {}, dl_arfcn:{}, crbs: {} scs:{}, ssb_scs:{}:\n\t - SSB offset "
         "pointA:{} \n\t - k_SSB:{} \n\t - SSB arfcn:{} \n\t - Coreset index:{} \n\t - Searchspace index:{}",
         base_cell.pci,
-        base_cell.band,
+        *param.band,
         base_cell.dl_arfcn,
         nof_crbs,
         to_string(base_cell.common_scs),
@@ -240,7 +240,9 @@ lower_phy_configuration srsran::generate_ru_config(const gnb_appconfig& config)
 
     out_cfg.srate = sampling_rate::from_MHz(config.rf_driver_cfg.srate_MHz);
 
-    out_cfg.ta_offset = band_helper::get_ta_offset(config.common_cell_cfg.band.value());
+    out_cfg.ta_offset = band_helper::get_ta_offset(
+        config.common_cell_cfg.band.has_value() ? *config.common_cell_cfg.band
+                                                : band_helper::get_band_from_dl_arfcn(config.common_cell_cfg.dl_arfcn));
     if (config.rf_driver_cfg.time_alignment_calibration.has_value()) {
       // Selects the user specific value.
       out_cfg.time_alignment_calibration = config.rf_driver_cfg.time_alignment_calibration.value();

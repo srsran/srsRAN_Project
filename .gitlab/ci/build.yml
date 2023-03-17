@@ -19,8 +19,8 @@
 #
 
 include:
-  - project: softwareradiosystems/testing-tools
-    ref: "48"
+  - project: softwareradiosystems/ci/tools
+    ref: "2"
     file: .gitlab/ci-shared/setup/all.yml
 
 stages:
@@ -187,16 +187,10 @@ stages:
       - ccache
     policy: pull
 
-.build_and_unit_big:
-  extends: .build_and_unit
-  variables:
-    KUBERNETES_CPU_REQUEST: 7
-    KUBERNETES_MEMORY_REQUEST: 13Gi
-
 # Main combinations
 
 .build_and_unit_main:
-  extends: .build_and_unit_big
+  extends: .build_and_unit
   variables:
     ASSERT_LEVEL: PARANOID
   parallel:
@@ -247,6 +241,20 @@ build clean:
   cache: []
 
 # Alt combinations
+
+build without rf:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    BUILD_TYPE: "" # Default one
+    TEST_MODE: default
+    ENABLE_ZEROMQ: "False"
+    ENABLE_UHD: "False"
+  parallel:
+    matrix:
+      - OS: [ubuntu-22.04, ubuntu-20.04]
+        COMPILER: [gcc, clang]
 
 .build_and_unit_alt:
   extends: .build_and_unit

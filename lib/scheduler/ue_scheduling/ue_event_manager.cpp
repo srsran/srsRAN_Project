@@ -70,6 +70,10 @@ void ue_event_manager::handle_ue_creation_request(const sched_ue_creation_reques
 void ue_event_manager::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
 {
   common_events.emplace(ue_request.ue_index, [this, ue_request]() {
+    if (not ue_db.contains(ue_request.ue_index)) {
+      log_invalid_ue_index(ue_request.ue_index, "UE Reconfig Request");
+      return;
+    }
     // Configure existing UE.
     ue_db[ue_request.ue_index].handle_reconfiguration_request(ue_request);
 
@@ -86,6 +90,7 @@ void ue_event_manager::handle_ue_removal_request(du_ue_index_t ue_index)
   common_events.emplace(ue_index, [this, ue_index]() {
     if (not ue_db.contains(ue_index)) {
       logger.warning("Received request to delete ue={} that does not exist", ue_index);
+      return;
     }
     rnti_t rnti = ue_db[ue_index].crnti;
 
@@ -106,7 +111,7 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 
   common_events.emplace(bsr_ind.ue_index, [this, bsr_ind]() {
     if (not ue_db.contains(bsr_ind.ue_index)) {
-      logger.warning("BSR received for inexistent ue={}", bsr_ind.ue_index);
+      log_invalid_ue_index(bsr_ind.ue_index, "BSR");
       return;
     }
     auto& u = ue_db[bsr_ind.ue_index];
@@ -195,6 +200,10 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       // Process SRs.
       if (pdu.sr_detected) {
         common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this]() {
+          if (not ue_db.contains(ue_index)) {
+            log_invalid_ue_index(ue_index, "SR");
+            return;
+          }
           auto& u = ue_db[ue_index];
 
           // Handle SR indication.
@@ -238,6 +247,10 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
       const size_t sr_bit_position_with_1_sr_bit = 0;
       if (pdu.sr_info.size() > 0 and pdu.sr_info.test(sr_bit_position_with_1_sr_bit)) {
         common_events.emplace(ind.ucis[i].ue_index, [ue_index = ind.ucis[i].ue_index, this]() {
+          if (not ue_db.contains(ue_index)) {
+            log_invalid_ue_index(ue_index, "SR");
+            return;
+          }
           auto& u = ue_db[ue_index];
 
           // Handle SR indication.
@@ -265,6 +278,10 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
 void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& ce)
 {
   common_events.emplace(ce.ue_index, [this, ce]() {
+    if (not ue_db.contains(ce.ue_index)) {
+      log_invalid_ue_index(ce.ue_index, "DL MAC CE");
+      return;
+    }
     ue_db[ce.ue_index].handle_dl_mac_ce_indication(ce);
 
     // Log event.
@@ -275,6 +292,10 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
   common_events.emplace(bs.ue_index, [this, bs]() {
+    if (not ue_db.contains(bs.ue_index)) {
+      log_invalid_ue_index(bs.ue_index, "DL Buffer State");
+      return;
+    }
     ue& u = ue_db[bs.ue_index];
 
     u.handle_dl_buffer_state_indication(bs);
@@ -367,12 +388,12 @@ bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
   return cell_index < MAX_NOF_DU_CELLS and du_cells[cell_index].cfg != nullptr;
 }
 
-void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index) const
+void ue_event_manager::log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name) const
 {
-  logger.warning("Event for ueId={} ignored. Cause: UE with provided ueId does not exist", ue_index);
+  logger.warning("{} for ue={} discarded. Cause: UE with provided Id does not exist", event_name, ue_index);
 }
 
 void ue_event_manager::log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const
 {
-  logger.warning("Event for ueId={} ignored. Cause: Cell {} is not configured.", ue_index, cell_index);
+  logger.warning("Event for ue={} ignored. Cause: Cell {} is not configured.", ue_index, cell_index);
 }

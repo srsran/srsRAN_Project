@@ -92,7 +92,7 @@ private:
   void process_cell_specific(du_cell_index_t cell_index);
   bool cell_exists(du_cell_index_t cell_index) const;
 
-  void log_invalid_ue_index(du_ue_index_t ue_index) const;
+  void log_invalid_ue_index(du_ue_index_t ue_index, const char* event_name = "Event") const;
   void log_invalid_cc(du_ue_index_t ue_index, du_cell_index_t cell_index) const;
 
   void handle_harq_ind(ue_cell& ue_cc, slot_point uci_sl, span<const mac_harq_ack_report_status> harq_bits);

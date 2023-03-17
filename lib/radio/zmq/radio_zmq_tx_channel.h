@@ -72,7 +72,10 @@ private:
   /// Indicates the number of transmitted samples. Protected for concurrent read-write.
   std::atomic<uint64_t> sample_count = {0};
   /// Protects concurrent transmit alignment operations from the receiver thread.
-  std::mutex transmit_alignment_mutex;
+  std::mutex              transmit_alignment_mutex;
+  std::condition_variable transmit_alignment_cvar;
+
+  bool is_tx_enabled = false;
 
   /// Transmits a single sample.
   void transmit_samples(span<radio_sample_type> data);
@@ -115,7 +118,7 @@ public:
 
   void run_async();
 
-  bool align(uint64_t timestamp);
+  bool align(uint64_t timestamp, std::chrono::milliseconds timeout);
 
   void transmit(span<radio_sample_type> buffer);
 
