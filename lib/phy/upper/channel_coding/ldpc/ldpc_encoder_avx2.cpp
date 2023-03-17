@@ -10,6 +10,7 @@
 
 #include "ldpc_encoder_avx2.h"
 #include "avx2_support.h"
+#include "srsran/srsvec/circ_shift.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/zero.h"
 
@@ -168,7 +169,9 @@ void ldpc_encoder_avx2::systematic_bits_inner()
         i_aux += NODE_SIZE_AVX2_PH;
         continue;
       }
-      rotate_node_right(rotated_node.data_at(0, 0), codeblock.data_at(i_blk, 0), node_shift, lifting_size);
+      srsvec::circ_shift_backward(
+          rotated_node.plain_span(0, lifting_size), codeblock.plain_span(i_blk, lifting_size), node_shift);
+
       for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
         __m256i tmp_epi8 = _mm256_and_si256(rotated_node.get_at(j), _mm256_set1_epi8(1));
         auxiliary.set_at(i_aux, _mm256_xor_si256(auxiliary.get_at(i_aux), tmp_epi8));
@@ -202,7 +205,8 @@ void ldpc_encoder_avx2::high_rate_bg1_i6_inner()
     rotated_node.set_at(j, tmp_epi8);
   }
 
-  rotate_node_left(codeblock.data_at(skip0, 0), rotated_node.data_at(0, 0), 105 % lifting_size, lifting_size);
+  srsvec::circ_shift_forward(
+      codeblock.plain_span(skip0, lifting_size), rotated_node.plain_span(0, lifting_size), 105 % lifting_size);
 
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i block0 = codeblock.get_at(skip0 + j);
@@ -240,7 +244,7 @@ void ldpc_encoder_avx2::high_rate_bg1_other_inner()
     codeblock.set_at(skip0 + j, block0);
   }
 
-  rotate_node_right(rotated_node.data_at(0, 0), codeblock.data_at(skip0, 0), 1, lifting_size);
+  srsvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size), codeblock.plain_span(skip0, lifting_size), 1);
 
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i rotated_j = rotated_node.get_at(j);
@@ -278,7 +282,7 @@ void ldpc_encoder_avx2::high_rate_bg2_i3_7_inner()
     codeblock.set_at(skip0 + j, block0);
   }
 
-  rotate_node_right(rotated_node.data_at(0, 0), codeblock.data_at(skip0, 0), 1, lifting_size);
+  srsvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size), codeblock.plain_span(skip0, lifting_size), 1);
 
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i rotated_j = rotated_node.get_at(j);
@@ -316,7 +320,7 @@ void ldpc_encoder_avx2::high_rate_bg2_other_inner()
     rotated_node.set_at(j, rotated_j);
   }
 
-  rotate_node_left(codeblock.data_at(skip0, 0), rotated_node.data_at(0, 0), 1, lifting_size);
+  srsvec::circ_shift_forward(codeblock.plain_span(skip0, lifting_size), rotated_node.plain_span(0, lifting_size), 1);
 
   for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
     __m256i block_0 = codeblock.get_at(skip0 + j);
@@ -359,8 +363,9 @@ void ldpc_encoder_avx2::ext_region_inner()
       if (node_shift == NO_EDGE) {
         continue;
       }
-      rotate_node_right(
-          rotated_node.data_at(0, 0), codeblock.data_at((bg_K + k) * NODE_SIZE_AVX2_PH, 0), node_shift, lifting_size);
+      srsvec::circ_shift_backward(rotated_node.plain_span(0, lifting_size),
+                                  codeblock.plain_span((bg_K + k) * NODE_SIZE_AVX2_PH, lifting_size),
+                                  node_shift);
       for (unsigned j = 0; j != NODE_SIZE_AVX2_PH; ++j) {
         codeblock.set_at(skip + j, _mm256_xor_si256(codeblock.get_at(skip + j), rotated_node.get_at(j)));
       }

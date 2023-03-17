@@ -14,6 +14,7 @@
 #include "ldpc_decoder_avx2.h"
 #include "avx2_support.h"
 #include "ldpc_graph_impl.h"
+#include "srsran/srsvec/circ_shift.h"
 #include "srsran/srsvec/copy.h"
 
 using namespace srsran;
@@ -106,10 +107,7 @@ void ldpc_decoder_avx2::analyze_var_to_check_msgs(span<log_likelihood_ratio>    
                                                   unsigned                         shift,
                                                   unsigned                         var_node)
 {
-  rotate_node_right(reinterpret_cast<int8_t*>(rotated_node.data()),
-                    reinterpret_cast<const int8_t*>(this_var_to_check.data()),
-                    shift,
-                    lifting_size);
+  srsvec::circ_shift_backward(rotated_node.first(lifting_size), this_var_to_check.first(lifting_size), shift);
 
   mm256::avx2_span min_var_to_check_avx2(min_var_to_check, node_size_avx2);
   mm256::avx2_span second_min_var_to_check_avx2(second_min_var_to_check, node_size_avx2);
@@ -188,10 +186,8 @@ void ldpc_decoder_avx2::compute_check_to_var_msgs(span<log_likelihood_ratio> thi
   }
 
   // Rotate the message back before storing it.
-  rotate_node_left(reinterpret_cast<int8_t*>(this_check_to_var.data()),
-                   reinterpret_cast<int8_t*>(help_check_to_var.data()),
-                   shift,
-                   lifting_size);
+  srsvec::circ_shift_forward(
+      this_check_to_var.first(lifting_size), span<log_likelihood_ratio>(help_check_to_var).first(lifting_size), shift);
 }
 
 void ldpc_decoder_avx2::compute_soft_bits(span<log_likelihood_ratio>       this_soft_bits,
@@ -262,5 +258,5 @@ void ldpc_decoder_avx2::get_hard_bits(bit_buffer& out)
   span<const log_likelihood_ratio> llr_read_buffer(temp_llr.begin(), llr_write_buffer.begin());
 
   // Convert to hard bits.
-  srsran::hard_decision(out, llr_read_buffer);
+  hard_decision(out, llr_read_buffer);
 }

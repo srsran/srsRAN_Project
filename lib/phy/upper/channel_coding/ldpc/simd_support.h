@@ -143,16 +143,15 @@ public:
   /// Returns the number of SIMD registers viewed by the span.
   size_t size() const { return view_length; }
 
-  simd_span first(size_t length)
+  /// Returns a view to bytes from the specified offset.
+  ///
+  /// \param[in] offset  Starting point of the view (as a number of SIMD registers).
+  /// \param[in] length  Length of the view (as a number of bytes).
+  span<storageType> plain_span(size_t offset, size_t length) const
   {
-    srsran_assert(length <= view_length, "Trying to create a subspan longer than the span itself.");
-    return {array_ptr, length};
-  }
-
-  simd_span subspan(size_t offset, size_t length)
-  {
-    srsran_assert(offset + length <= view_length, "Trying to create a subspan longer than the span itself.");
-    return {array_ptr + offset * SIMD_SIZE_BYTE, length};
+    unsigned offset_byte = offset * SIMD_SIZE_BYTE;
+    srsran_assert(offset_byte + length <= view_length * SIMD_SIZE_BYTE, "Size out of bound.");
+    return span<storageType>(array_ptr + offset_byte, length);
   }
 
 private:
@@ -160,9 +159,6 @@ private:
   pointer array_ptr;
   /// Number of elements viewed by the span.
   size_t view_length;
-
-  /// Constructor for generating subspans.
-  simd_span(pointer ptr, size_t length) : array_ptr(ptr), view_length(length) {}
 
   /// Overload of the get method for AVX2.
   simd256_type get_at(help_type<simd256_wrapper> /**/, unsigned pos) const;
@@ -175,33 +171,5 @@ private:
 };
 
 } // namespace detail
-
-/// \brief Rotates the contents of a node towards the left by \c steps chars, that is the \c steps * 8 least significant
-/// bits become the most significant ones - for long lifting sizes.
-/// \param[out] out       Pointer to the first byte of the output rotated node.
-/// \param[in]  in        Pointer to the first byte of the input node to rotate.
-/// \param[in]  steps     The order of the rotation as a number of chars.
-/// \param[in]  ls        The size of the node (lifting size).
-/// \remark Cannot be used to override memory.
-inline void rotate_node_left(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
-{
-  srsran_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
-  std::memcpy(out, in + ls - steps, steps);
-  std::memcpy(out + steps, in, ls - steps);
-}
-
-/// \brief Rotates the contents of a node towards the right by \c steps chars, that is the \c steps * 8 most significant
-/// bits become the least significant ones - for long lifting sizes.
-/// \param[out] out       Pointer to the first byte of the output rotated node.
-/// \param[in]  in        Pointer to the first byte of the input node to rotate.
-/// \param[in]  steps     The order of the rotation as a number of chars.
-/// \param[in]  ls        The size of the node (lifting size).
-/// \remark Cannot be used to override memory.
-inline void rotate_node_right(int8_t* out, const int8_t* in, unsigned steps, unsigned ls)
-{
-  srsran_assert(std::abs(in - out) >= ls, "Input and output memory overlap.");
-  std::memcpy(out, in + steps, ls - steps);
-  std::memcpy(out + ls - steps, in, steps);
-}
 
 } // namespace srsran
