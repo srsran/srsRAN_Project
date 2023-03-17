@@ -15,17 +15,10 @@
 
 #pragma once
 
+#include "simd_types.h"
 #include "srsran/adt/span.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
-
-#if defined(__x86_64__)
-#include <immintrin.h>
-#endif // defined(__x86_64__)
-
-#if defined(HAVE_NEON)
-#include <arm_neon.h>
-#endif // defined(HAVE_NEON)
 
 namespace srsran {
 /// Number of bytes in an AVX2 register.
@@ -36,23 +29,6 @@ constexpr unsigned AVX512_SIZE_BYTE = 64;
 constexpr unsigned NEON_SIZE_BYTE = 16;
 
 namespace detail {
-
-// These wrappers are needed to avoid attribute warnings about the SIMD vector types.
-#if defined(__x86_64__)
-struct m256_wrapper {
-  using simdType = __m256i;
-};
-
-struct m512_wrapper {
-  using simdType = __m512i;
-};
-#endif // defined(__x86_64__)
-
-#if defined(HAVE_NEON)
-struct int8x16_wrapper {
-  using simdType = int8x16_t;
-};
-#endif // defined(HAVE_NEON)
 
 /// \brief Mimics a span of SIMD registers.
 /// \tparam simdWrapper   Wrapper for an SIMD vector type.
@@ -152,44 +128,20 @@ public:
   // Unfortunately, we can't work with the array subscript operator [] since there seems to be no easy way to access a
   // simdType object by reference.
 
-#if defined(__x86_64__)
   /// Sets the \c pos AVX2 register to \c val.
-  void set_at(unsigned pos, __m256i val)
-  {
-    static_assert(SIMD_SIZE_BYTE == AVX2_SIZE_BYTE, "Cannot set an AVX512 vector with an AVX2 vector.");
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(array_ptr) + pos, val);
-  }
+  void set_at(unsigned pos, simd256_type val);
 
   /// Sets the \c pos AVX512 register to \c val.
-  void set_at(unsigned pos, __m512i val)
-  {
-    static_assert(SIMD_SIZE_BYTE == AVX512_SIZE_BYTE, "Cannot set an AVX2 vector with an AVX512 vector.");
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    _mm512_storeu_si512(reinterpret_cast<__m512i*>(array_ptr) + pos, val);
-  }
-#endif // defined(__x86_64__)
+  void set_at(unsigned pos, simd512_type val);
 
-#if defined(HAVE_NEON)
   /// Sets the \c pos NEON register to \c val.
-  void set_at(unsigned pos, int8x16_t val)
-  {
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    vst1q_s8(array_ptr + pos * NEON_SIZE_BYTE, val);
-  }
-#endif // defined(HAVE_NEON)
+  void set_at(unsigned pos, simd128_type val);
 
   /// Gets the value stored in the \c pos SIMD register.
-  simdType get_at(unsigned pos) const
-  {
-    return get_at(help_type<simdWrapper>(), pos);
-  }
+  auto get_at(unsigned pos) const { return get_at(help_type<simdWrapper>(), pos); }
 
   /// Returns the number of SIMD registers viewed by the span.
-  size_t size() const
-  {
-    return view_length;
-  }
+  size_t size() const { return view_length; }
 
   simd_span first(size_t length)
   {
@@ -212,36 +164,14 @@ private:
   /// Constructor for generating subspans.
   simd_span(pointer ptr, size_t length) : array_ptr(ptr), view_length(length) {}
 
-  template <typename T>
-  auto get_at(help_type<T> /**/, unsigned /**/) const
-  {
-    return;
-  }
+  /// Overload of the get method for AVX2.
+  simd256_type get_at(help_type<simd256_wrapper> /**/, unsigned pos) const;
 
-#if defined(__x86_64__)
-  /// Specialization of the get method for AVX2.
-  __m256i get_at(help_type<m256_wrapper> /**/, unsigned pos) const
-  {
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(array_ptr) + pos);
-  }
+  /// Overload of the get method for AVX512.
+  simd512_type get_at(help_type<simd512_wrapper> /**/, unsigned pos) const;
 
-  /// Specialization of the get method for AVX512.
-  __m512i get_at(help_type<m512_wrapper> /**/, unsigned pos) const
-  {
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    return _mm512_loadu_si512(reinterpret_cast<const __m512i*>(array_ptr) + pos);
-  }
-#endif // defined(__x86_64__)
-
-#if defined(HAVE_NEON)
-  /// Specialization of the get method for NEON.
-  int8x16_t get_at(help_type<int8x16_wrapper> /**/, unsigned pos) const
-  {
-    srsran_assert(pos < view_length, "Index {} out of bound.", pos);
-    return vld1q_s8(array_ptr + pos * NEON_SIZE_BYTE);
-  }
-#endif // defined(HAVE_NEON)
+  /// Overload of the get method for NEON.
+  simd128_type get_at(help_type<simd128_wrapper> /**/, unsigned pos) const;
 };
 
 } // namespace detail

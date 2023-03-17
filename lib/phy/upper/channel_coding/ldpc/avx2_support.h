@@ -18,10 +18,30 @@
 #include "simd_support.h"
 
 namespace srsran {
+
+namespace detail {
+
+template <typename simdWrapper, typename storageType>
+simd256_type simd_span<simdWrapper, storageType>::get_at(help_type<simd256_wrapper> /**/, unsigned pos) const
+{
+  srsran_assert(pos < view_length, "Index {} out of bound.", pos);
+  return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(array_ptr) + pos);
+}
+
+template <typename simdWrapper, typename storageType>
+void simd_span<simdWrapper, storageType>::set_at(unsigned pos, simd256_type val)
+{
+  static_assert(SIMD_SIZE_BYTE == AVX2_SIZE_BYTE, "Cannot set an AVX512 vector with an AVX2 vector.");
+  srsran_assert(pos < view_length, "Index {} out of bound.", pos);
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(array_ptr) + pos, val);
+}
+
+} // namespace detail
+
 namespace mm256 {
 
-using avx2_span       = detail::simd_span<detail::m256_wrapper, int8_t>;
-using avx2_const_span = detail::simd_span<detail::m256_wrapper, const int8_t>;
+using avx2_span       = detail::simd_span<detail::simd256_wrapper, int8_t>;
+using avx2_const_span = detail::simd_span<detail::simd256_wrapper, const int8_t>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
 ///

@@ -19,10 +19,28 @@
 
 namespace srsran {
 
+namespace detail {
+
+template <typename simdWrapper, typename storageType>
+simd128_type simd_span<simdWrapper, storageType>::get_at(help_type<simd128_wrapper> /**/, unsigned pos) const
+{
+  srsran_assert(pos < view_length, "Index {} out of bound.", pos);
+  return vld1q_s8(array_ptr + pos * NEON_SIZE_BYTE);
+}
+
+template <typename simdWrapper, typename storageType>
+void simd_span<simdWrapper, storageType>::set_at(unsigned pos, simd128_type val)
+{
+  srsran_assert(pos < view_length, "Index {} out of bound.", pos);
+  vst1q_s8(array_ptr + pos * NEON_SIZE_BYTE, val);
+}
+
+} // namespace detail
+
 namespace neon {
 
-using neon_span       = detail::simd_span<detail::int8x16_wrapper, int8_t>;
-using neon_const_span = detail::simd_span<detail::int8x16_wrapper, const int8_t>;
+using neon_span       = detail::simd_span<detail::simd128_wrapper, int8_t>;
+using neon_const_span = detail::simd_span<detail::simd128_wrapper, const int8_t>;
 
 /// \brief Scales packed 8-bit integers in \c a by the scaling factor \c sf.
 ///
