@@ -29,8 +29,8 @@ License
 
 For license details, see [LICENSE](LICENSE) file.
 
-Build Instructions
-------------------
+Build Preparation
+-----------------
 
 * Build tools:
   * cmake:               <https://cmake.org/>
@@ -75,8 +75,10 @@ Currently, only UHD is supported however additional drivers are under developmen
 
 * RF driver:
   * UHD:                 <https://github.com/EttusResearch/uhd>
-  
-See UHD documentation for installation instructions.
+    * See UHD documentation for installation instructions.
+    
+Build Instructions
+------------------
 
 Download and build srsRAN:
 
