@@ -1,5 +1,6 @@
 #include "gnb_appconfig_validators.h"
 #include "srsran/adt/span.h"
+#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/srslog/logger.h"
 
@@ -214,8 +215,14 @@ static bool validate_pdcp_appconfig(uint8_t five_qi, const pdcp_appconfig& confi
     fmt::print("PDCP RX SN length is neither 12 or 18 bits. 5QI={} SN={}\n", five_qi, config.rx.sn_field_length);
     return false;
   }
-  if (config.rx.t_reordering != 0) {
-    fmt::print("PDCP RX t-Reordering is not 0, different t-Reordering values are not supported yet. 5QI={}\n", five_qi);
+
+  pdcp_t_reordering t_reordering = {};
+  if (!pdcp_t_reordering_from_int(t_reordering, config.rx.t_reordering)) {
+    fmt::print("PDCP RX t-Reordering is not a valid value. 5QI={}, t-Reordering={}\n", five_qi, config.rx.t_reordering);
+    fmt::print("Valid values: "
+               "\"infinity, ms0, ms1, ms2, ms4, ms5, ms8, ms10, ms15, ms20, ms30, ms40,ms50, ms60, ms80, "
+               "ms100, ms120, ms140, ms160, ms180, ms200, ms220,ms240, ms260, ms280, ms300, ms500, ms750, ms1000, "
+               "ms1250, ms1500, ms1750, ms2000, ms2250, ms2500, ms2750\"\n");
     return false;
   }
   if (config.rx.out_of_order_delivery) {
