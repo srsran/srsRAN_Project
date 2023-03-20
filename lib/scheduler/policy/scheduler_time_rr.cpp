@@ -35,9 +35,10 @@ du_ue_index_t round_robin_apply(const ue_repository&     ue_db,
       // wrap-around
       it = ue_db.begin();
     }
-    if (alloc_ue(*it)) {
+    const ue& u = **it;
+    if (alloc_ue(u)) {
       if (first_alloc) {
-        next_ue_index = to_du_ue_index((unsigned)it->ue_index + 1U);
+        next_ue_index = to_du_ue_index((unsigned)u.ue_index + 1U);
         first_alloc   = false;
       }
       if (stop_cond()) {
