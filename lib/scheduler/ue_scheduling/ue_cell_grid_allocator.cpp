@@ -239,6 +239,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                                u.crnti,
                                cell_cfg,
                                pdcch->dci.tc_rnti_f1_0,
+                               prbs,
                                h_dl.tb(0).nof_retxs == 0);
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_0:
@@ -250,6 +251,7 @@ bool ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant)
                               ue_cc->active_bwp_id(),
                               *ss_cfg,
                               pdcch->dci.c_rnti_f1_0,
+                              prbs,
                               h_dl.tb(0).nof_retxs == 0);
       break;
     default:
@@ -429,6 +431,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                                u.crnti,
                                cell_cfg,
                                pdcch->dci.tc_rnti_f0_0,
+                               prbs,
                                h_ul.tb().nof_retxs == 0);
       break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
@@ -439,6 +442,7 @@ bool ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant)
                               cell_cfg,
                               bwp_ul_cmn,
                               pdcch->dci.c_rnti_f0_0,
+                              prbs,
                               h_ul.tb().nof_retxs == 0);
       break;
     default:

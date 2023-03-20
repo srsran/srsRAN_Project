@@ -154,6 +154,7 @@ void ra_scheduler::precompute_msg3_pdus()
                              to_rnti(0x4601),
                              cell_cfg,
                              msg3_data[i].dci.tc_rnti_f0_0,
+                             prb_interval{0, prbs_tbs.nof_prbs},
                              true);
   }
 }

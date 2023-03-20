@@ -40,19 +40,45 @@ struct dci_size_config {
   unsigned coreset0_bw;
 };
 
+/// \brief DCI format 0_0 payload size parameters.
+///
+/// Contains the DCI format 0_0 field sizes required to generate a DCI format 0_0 payload. See \ref get_dci_sizes for
+/// more information.
+struct dci_0_0_size {
+  /// Total DCI payload size in number of bits.
+  units::bits total;
+  /// Size of the DCI format 0_0 frequency resource field.
+  units::bits freq_resource;
+  /// Number of padding bits, including the optional UL/SUL indicator field.
+  units::bits padding_incl_ul_sul;
+};
+
+/// \brief DCI format 1_0 payload size parameters.
+///
+/// Contains the DCI format 1_0 field sizes required to generate a DCI format 1_0 payload. See \ref get_dci_sizes for
+/// more information.
+struct dci_1_0_size {
+  /// Total DCI payload size in number of bits.
+  units::bits total;
+  /// Size of the DCI format 1_0 frequency resource field.
+  units::bits freq_resource;
+  /// Number of padding bits.
+  units::bits padding;
+};
+
 /// \brief DCI payload sizes.
 ///
 /// Holds the DCI payload sizes, in number of bits, after performing the DCI size alignment procedure specified in
 /// TS38.212 Section 7.3.1.0.
 struct dci_sizes {
-  /// Payload size for a DCI format 0_0 message monitored in a common search space.
-  units::bits format0_0_common_size;
-  /// Payload size for a DCI format 0_0 message monitored in a UE-specific search space.
-  units::bits format0_0_ue_size;
-  /// Payload size for a DCI format 1_0 message monitored in a common search space.
-  units::bits format1_0_common_size;
-  /// Payload size for a DCI format 1_0 message monitored in a UE-specific search space.
-  units::bits format1_0_ue_size;
+  /// Payload size parameters for a DCI format 0_0 message monitored in a common search space.
+  dci_0_0_size format0_0_common_size;
+  /// Payload size parameters for a DCI format 0_0 message monitored in a UE-specific search space.
+  dci_0_0_size format0_0_ue_size;
+  /// Payload size parameters for a DCI format 1_0 message monitored in a common search space.
+  dci_1_0_size format1_0_common_size;
+  /// Payload size parameters for a DCI format 1_0 message monitored in a UE-specific search space.
+  dci_1_0_size format1_0_ue_size;
 };
 
 /// \brief DCI payload size alignment procedure
@@ -67,11 +93,11 @@ dci_sizes get_dci_sizes(const dci_size_config& config);
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by C-RNTI, CS-RNTI or MCS-C-RNTI.
 /// \remark Defined in TS38.212 Section 7.3.1.1.1.
 struct dci_0_0_c_rnti_configuration {
-  /// \brief DCI format 0_0 payload size.
+  /// \brief DCI format 0_0 payload size parameters.
   ///
   /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
   /// \ref get_dci_sizes for more information.
-  units::bits payload_size;
+  dci_0_0_size payload_size;
   /// \brief Parameter \f$N_{\textup{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
   ///
   /// \f$N_{\textup{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
@@ -92,8 +118,6 @@ struct dci_0_0_c_rnti_configuration {
   ///   - (0, 1), if \e frequencyHoppingOffsetLists has 2 possible offsets.
   ///   - (0, 1, 2, 3), if \e frequencyHoppingOffsetLists has 4 possible offsets.
   unsigned hopping_offset;
-  /// Parameter \f$N_{RB}^{UL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
-  unsigned N_rb_ul_bwp;
   /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 6.1.2.2.2.
   unsigned frequency_resource;
@@ -121,11 +145,11 @@ dci_payload dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config);
 /// \brief Describes the necessary parameters for packing a DCI format 0_0 scrambled by TC-RNTI.
 /// \remark Defined in TS38.212 Section 7.3.1.1.1.
 struct dci_0_0_tc_rnti_configuration {
-  /// \brief DCI format 0_0 payload size.
+  /// \brief DCI format 0_0 payload size parameters.
   ///
   /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
   /// \ref get_dci_sizes for more information.
-  units::bits payload_size;
+  dci_0_0_size payload_size;
   /// \brief Parameter \f$N_{\textup{UL\_hop}}\f$, as per TS38.212 Section 7.3.1.1.1.
   ///
   /// \f$N_{\textup{UL\_hop}}\f$ is the number of bits used in the DCI payload to pack the frequency hopping offset,
@@ -142,8 +166,6 @@ struct dci_0_0_tc_rnti_configuration {
   ///   - (0, 1), if \ref N_ul_hop is set to 1.
   ///   - (0, 1, 2, 3), if \ref N_ul_hop is set to 2.
   unsigned hopping_offset;
-  /// Parameter \f$N_{RB}^{UL,BWP}\f$. It must be set to the size of the initial UL BWP.
-  unsigned N_rb_ul_bwp;
   /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{UL,BWP}(N_{RB}^{UL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 6.1.2.2.2.
   unsigned frequency_resource;
@@ -166,13 +188,11 @@ dci_payload dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config);
 /// \remark Defined in TS38.212 Section 7.3.1.2.1.
 /// \remark The case where the random access procedure is initiated by a PDCCH order is handled separately.
 struct dci_1_0_c_rnti_configuration {
-  /// \brief DCI format 1_0 payload size.
+  /// \brief DCI format 1_0 payload size parameters.
   ///
   /// The DCI payload size is determined by the DCI size alignment procedure specified in TS38.212 Section 7.3.1.0. See
   /// \ref get_dci_sizes for more information.
-  units::bits payload_size;
-  /// Parameter \f$N_{RB}^{DL,BWP}\f$. It must be set according to TS38.212 Section 7.3.1.0.
-  unsigned N_rb_dl_bwp;
+  dci_1_0_size payload_size;
   /// \brief Frequency domain resource assignment - \f$\Bigl \lceil log_2(N_{RB}^{DL,BWP}(N_{RB}^{DL,BWP}+1)/2) \Bigr
   /// \rceil\f$ bits as per TS38.214 Section 5.1.2.2.2.
   unsigned frequency_resource;

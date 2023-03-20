@@ -259,7 +259,8 @@ void ue_srb0_scheduler::fill_srb0_grant(ue&                        u,
   msg.context.ue_index = u.ue_index;
   msg.context.k1       = k1;
   msg.context.ss_id    = pdcch.ctx.context.ss_id;
-  build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, true);
+  build_pdsch_f1_0_tc_rnti(
+      msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, ue_grant_prbs, true);
 
   // Set MAC logical channels to schedule in this PDU.
   u.build_dl_srb0_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes);
