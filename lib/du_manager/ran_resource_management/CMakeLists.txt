@@ -6,5 +6,8 @@
 # the distribution.
 #
 
-add_library(du_resource_manager du_ran_resource_manager_impl.cpp du_pucch_resource_manager.cpp)
+add_library(du_resource_manager
+        du_ran_resource_manager_impl.cpp
+        du_pucch_resource_manager.cpp
+        pucch_resource_generator.cpp)
 target_link_libraries(du_resource_manager srsran_du_config_validators)
