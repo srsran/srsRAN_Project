@@ -231,6 +231,64 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
       ->capture_default_str();
 }
 
+static void configure_cli11_tdd_ul_dl_args(CLI::App& app, tdd_ul_dl_config& tdd_ul_dl_params)
+{
+  app.add_option("--reference_scs", tdd_ul_dl_params.ref_scs, "TDD reference subcarrier spacing")
+      ->transform([](const std::string& value) {
+        const subcarrier_spacing scs = to_subcarrier_spacing(value);
+        if (scs == subcarrier_spacing::invalid) {
+          return "Invalid TDD UL DL reference subcarrier spacing '" + value + "'";
+        }
+        return std::to_string(to_numerology_value(scs));
+      })
+      ->capture_default_str();
+  app.add_option("--pattern1_dl_ul_tx_period",
+                 tdd_ul_dl_params.pattern1_dl_ul_tx_period,
+                 "TDD pattern 1 periodicity in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::Range(0.0, 10.0));
+  app.add_option("--pattern1_nof_dl_slots",
+                 tdd_ul_dl_params.pattern1_nof_dl_slots,
+                 "TDD pattern 1 nof. consecutive full DL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 80));
+  app.add_option("--pattern1_nof_dl_symbols",
+                 tdd_ul_dl_params.pattern1_nof_dl_symbols,
+                 "TDD pattern 1 nof. DL symbols in the beginning of the slot following full DL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 13));
+  app.add_option("--pattern1_nof_ul_slots",
+                 tdd_ul_dl_params.pattern1_nof_ul_slots,
+                 "TDD pattern 1 nof. consecutive full UL slots")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 80));
+  app.add_option("--pattern1_nof_ul_symbols",
+                 tdd_ul_dl_params.pattern1_nof_ul_symbols,
+                 "TDD pattern 1 nof. UL symbols in the end of the slot preceding the first full UL slot")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 13));
+  app.add_option("--pattern2_dl_ul_tx_period",
+                 tdd_ul_dl_params.pattern2_dl_ul_tx_period,
+                 "TDD pattern 2 periodicity in milliseconds")
+      ->check(CLI::Range(0.0, 10.0));
+  app.add_option("--pattern2_nof_dl_slots",
+                 tdd_ul_dl_params.pattern2_nof_dl_slots,
+                 "TDD pattern 2 nof. consecutive full DL slots")
+      ->check(CLI::Range(0, 80));
+  app.add_option("--pattern2_nof_dl_symbols",
+                 tdd_ul_dl_params.pattern2_nof_dl_symbols,
+                 "TDD pattern 2 nof. DL symbols at the beginning of the slot following full DL slots")
+      ->check(CLI::Range(0, 13));
+  app.add_option("--pattern2_nof_ul_slots",
+                 tdd_ul_dl_params.pattern2_nof_ul_slots,
+                 "TDD pattern 2 nof. consecutive full UL slots")
+      ->check(CLI::Range(0, 80));
+  app.add_option("--pattern2_nof_ul_symbols",
+                 tdd_ul_dl_params.pattern2_nof_ul_symbols,
+                 "TDD pattern 2 nof. UL symbols at the end of the slot preceding the first full UL slot")
+      ->check(CLI::Range(0, 13));
+}
+
 static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig& cell_params)
 {
   app.add_option("--pci", cell_params.pci, "PCI")->capture_default_str()->check(CLI::Range(0, 1007));
@@ -307,6 +365,11 @@ static void configure_cli11_common_cell_args(CLI::App& app, base_cell_appconfig&
   // Amplitude control configuration.
   CLI::App* amplitude_control_subcmd = app.add_subcommand("amplitude_control", "Amplitude control parameters");
   configure_cli11_amplitude_control_args(*amplitude_control_subcmd, cell_params.amplitude_cfg);
+
+  // TDD UL DL configuration.
+  CLI::App* tdd_ul_dl_subcmd =
+      app.add_subcommand("tdd_ul_dl_cfg", "TDD UL DL configuration parameters")->configurable();
+  configure_cli11_tdd_ul_dl_args(*tdd_ul_dl_subcmd, cell_params.tdd_pattern_cfg.emplace());
 }
 
 static void configure_cli11_cells_args(CLI::App& app, cell_appconfig& cell_params)

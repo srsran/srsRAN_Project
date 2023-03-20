@@ -69,6 +69,33 @@ struct prach_appconfig {
   optional<unsigned> total_nof_ra_preambles;
 };
 
+/// TDD slot configuration.
+struct tdd_ul_dl_config {
+  /// Reference SCS used to determine the time domain boundaries in the UL-DL pattern. The network ensures that
+  /// this value is not larger than any SCS of configured BWPs for the serving cell.
+  subcarrier_spacing ref_scs = subcarrier_spacing::kHz15;
+  /// Pattern 1: Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
+  float pattern1_dl_ul_tx_period = 5.0F;
+  /// Pattern 1: Values: {0,...,maxNrofSlots=80}.
+  unsigned pattern1_nof_dl_slots = 6;
+  /// Pattern 1: Values: {0,...,maxNrofSymbols-1=13}.
+  unsigned pattern1_nof_dl_symbols = 0;
+  /// Pattern 1: Values: {0,...,maxNrofSlots=80}.
+  unsigned pattern1_nof_ul_slots = 3;
+  /// Pattern 1: Values: {0,...,maxNrofSymbols-1=13}.
+  unsigned pattern1_nof_ul_symbols = 0;
+  /// Pattern 2: Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
+  optional<float> pattern2_dl_ul_tx_period;
+  /// Pattern 2: Values: {0,...,maxNrofSlots=80}.
+  optional<unsigned> pattern2_nof_dl_slots;
+  /// Pattern 2: Values: {0,...,maxNrofSymbols-1=13}.
+  optional<unsigned> pattern2_nof_dl_symbols;
+  /// Pattern 2: Values: {0,...,maxNrofSlots=80}.
+  optional<unsigned> pattern2_nof_ul_slots;
+  /// Pattern 2: Values: {0,...,maxNrofSymbols-1=13}.
+  optional<unsigned> pattern2_nof_ul_symbols;
+};
+
 /// PDCCH application configuration.
 struct pdcch_appconfig {
   /// Use an UE-dedicated or Common Search Space.
@@ -131,6 +158,8 @@ struct base_cell_appconfig {
   subcarrier_spacing common_scs = subcarrier_spacing::kHz15;
   /// Amplitude control configuration.
   amplitude_control_appconfig amplitude_cfg;
+  /// TDD slot configuration.
+  optional<tdd_ul_dl_config> tdd_pattern_cfg;
 };
 
 /// Cell configuration

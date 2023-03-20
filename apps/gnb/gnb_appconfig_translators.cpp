@@ -104,6 +104,36 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       ss_cfg.common.f0_0_and_f1_0        = true;
     }
 
+    // TDD UL DL config.
+    if (not band_helper::is_paired_spectrum(param.band.value()) and
+        config.common_cell_cfg.tdd_pattern_cfg.has_value()) {
+      if (not out_cell.tdd_ul_dl_cfg_common.has_value()) {
+        report_error("TDD UL DL configuration is absent for TDD Cell with id={} and pci={}\n", cell_id, base_cell.pci);
+      }
+      const auto& tdd_cfg = config.common_cell_cfg.tdd_pattern_cfg.value();
+
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots =
+          (unsigned)std::round(tdd_cfg.pattern1_dl_ul_tx_period * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_slots   = tdd_cfg.pattern1_nof_dl_slots;
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_symbols = tdd_cfg.pattern1_nof_dl_symbols;
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots   = tdd_cfg.pattern1_nof_ul_slots;
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_symbols = tdd_cfg.pattern1_nof_ul_symbols;
+
+      if (tdd_cfg.pattern2_dl_ul_tx_period.has_value() and tdd_cfg.pattern2_nof_dl_slots.has_value() and
+          tdd_cfg.pattern2_nof_dl_symbols.has_value() and tdd_cfg.pattern2_nof_ul_slots.has_value() and
+          tdd_cfg.pattern2_nof_ul_symbols.has_value()) {
+        if (not out_cell.tdd_ul_dl_cfg_common.value().pattern2.has_value()) {
+          out_cell.tdd_ul_dl_cfg_common.value().pattern2.emplace();
+        }
+        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().dl_ul_tx_period_nof_slots = (unsigned)std::round(
+            tdd_cfg.pattern2_dl_ul_tx_period.value() * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_dl_slots   = tdd_cfg.pattern2_nof_dl_slots.value();
+        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_dl_symbols = tdd_cfg.pattern2_nof_dl_symbols.value();
+        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_ul_slots   = tdd_cfg.pattern2_nof_ul_slots.value();
+        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_ul_symbols = tdd_cfg.pattern2_nof_ul_symbols.value();
+      }
+    }
+
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {
       report_error("Invalid configuration DU cell detected: {}\n", error.error());
