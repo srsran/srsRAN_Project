@@ -12,19 +12,10 @@
 #include "asn1_cell_group_config_helpers.h"
 #include "srsran/asn1/rrc_nr/rrc_nr.h"
 #include "srsran/ran/bcd_helpers.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
-
-static uint64_t make_nr_cell_identity(uint32_t gnb_id, uint8_t gnb_id_bit_length, uint16_t cell_identity)
-{
-  // The leftmost (22-32) bits of the NR Cell Identity correspond to the gNB ID and remaining (4-14) bits for Cell ID.
-  uint32_t gnb_id_mask        = (1U << gnb_id_bit_length) - 1;
-  uint16_t cell_identity_mask = (1U << (36U - gnb_id_bit_length)) - 1;
-  uint64_t nci                = (gnb_id & gnb_id_mask) << (36U - gnb_id_bit_length);
-  nci |= (cell_identity & cell_identity_mask);
-  return nci;
-}
 
 byte_buffer srsran::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& du_cfg)
 {
@@ -482,17 +473,16 @@ asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
   sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list.resize(1);
   plmn_id_s& plmn  = sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0];
   plmn.mcc_present = true;
-  plmn.mcc[0]      = du_cfg.plmn[0] - '0';
-  plmn.mcc[1]      = du_cfg.plmn[1] - '0';
-  plmn.mcc[2]      = du_cfg.plmn[2] - '0';
-  plmn.mnc.resize(du_cfg.plmn.size() == 5 ? 2 : 3);
-  for (unsigned i = 3; i < du_cfg.plmn.size(); ++i) {
-    plmn.mnc[i - 3] = du_cfg.plmn[i] - '0';
+  plmn.mcc[0]      = du_cfg.nr_cgi.plmn[0] - '0';
+  plmn.mcc[1]      = du_cfg.nr_cgi.plmn[1] - '0';
+  plmn.mcc[2]      = du_cfg.nr_cgi.plmn[2] - '0';
+  plmn.mnc.resize(du_cfg.nr_cgi.plmn.size() == 5 ? 2 : 3);
+  for (unsigned i = 3; i < du_cfg.nr_cgi.plmn.size(); ++i) {
+    plmn.mnc[i - 3] = du_cfg.nr_cgi.plmn[i] - '0';
   }
   sib1.cell_access_related_info.plmn_id_list[0].tac_present = true;
   sib1.cell_access_related_info.plmn_id_list[0].tac.from_number(du_cfg.tac);
-  sib1.cell_access_related_info.plmn_id_list[0].cell_id.from_number(
-      make_nr_cell_identity(du_cfg.gnb_id, du_cfg.gnb_id_bit_length, du_cfg.cell_identity));
+  sib1.cell_access_related_info.plmn_id_list[0].cell_id.from_number(du_cfg.nr_cgi.nci);
   sib1.cell_access_related_info.plmn_id_list[0].cell_reserved_for_oper.value =
       plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
 
@@ -567,9 +557,8 @@ void srsran::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
 
     // Fill Served Cell Information.
     f1ap_cell.served_cell_info.nr_pci = cell_cfg->pci;
-    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->plmn));
-    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(
-        make_nr_cell_identity(cell_cfg->gnb_id, cell_cfg->gnb_id_bit_length, cell_cfg->cell_identity));
+    f1ap_cell.served_cell_info.nr_cgi.plmn_id.from_number(plmn_string_to_bcd(cell_cfg->nr_cgi.plmn));
+    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg->nr_cgi.nci);
     f1ap_cell.served_cell_info.five_gs_tac_present = true;
     f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg->tac);
 

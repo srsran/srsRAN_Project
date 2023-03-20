@@ -14,6 +14,7 @@
 #include "srsran/du/du_qos_config.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
+#include "srsran/ran/nr_cgi_helpers.h"
 #include "srsran/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsran/ran/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
@@ -61,12 +62,10 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
 inline du_cell_config make_default_du_cell_config(const cell_config_builder_params& params = {})
 {
   du_cell_config cfg{};
-  cfg.pci               = params.pci;
-  cfg.plmn              = "00101";
-  cfg.tac               = 1;
-  cfg.gnb_id            = 411;
-  cfg.gnb_id_bit_length = 32;
-  cfg.cell_identity     = 1;
+  cfg.pci         = params.pci;
+  cfg.tac         = 1;
+  cfg.nr_cgi.plmn = "00101";
+  cfg.nr_cgi.nci  = config_helpers::make_nr_cell_identity(411, 32, 1);
 
   cfg.dl_carrier       = make_default_carrier_configuration(params);
   cfg.ul_carrier       = make_default_carrier_configuration(params);

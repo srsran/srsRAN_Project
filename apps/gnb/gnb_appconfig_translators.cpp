@@ -79,12 +79,10 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         (*ssb_freq_loc).searchspace0_idx);
 
     // Set the rest of the parameters.
-    du_cell_config& out_cell   = out_cfg.back();
-    out_cell.plmn              = base_cell.plmn;
-    out_cell.tac               = base_cell.tac;
-    out_cell.cell_identity     = cell_id;
-    out_cell.gnb_id            = config.gnb_id;
-    out_cell.gnb_id_bit_length = config.gnb_id_bit_length;
+    du_cell_config& out_cell = out_cfg.back();
+    out_cell.nr_cgi.plmn     = base_cell.plmn;
+    out_cell.nr_cgi.nci      = config_helpers::make_nr_cell_identity(config.gnb_id, config.gnb_id_bit_length, cell_id);
+    out_cell.tac             = base_cell.tac;
 
     out_cell.searchspace0_idx = ss0_idx;
 
