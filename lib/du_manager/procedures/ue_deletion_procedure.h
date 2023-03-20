@@ -12,7 +12,7 @@
 
 #include "../../ran/gnb_format.h"
 #include "../du_ue/du_ue.h"
-#include "../du_ue/ue_manager_ctrl_configurator.h"
+#include "../du_ue/du_ue_manager_repository.h"
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/support/async/async_task.h"
@@ -25,7 +25,7 @@ class ue_deletion_procedure
 public:
   ue_deletion_procedure(const f1ap_ue_delete_request& msg_,
                         mac_ue_configurator&          mac_ue_mng_,
-                        ue_manager_ctrl_configurator& ue_mng_) :
+                        du_ue_manager_repository&     ue_mng_) :
     msg(msg_), mac_ue_mng(mac_ue_mng_), ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("DU-MNG"))
   {
   }
@@ -67,10 +67,10 @@ private:
     return mac_ue_mng.handle_ue_delete_request(mac_msg);
   }
 
-  const f1ap_ue_delete_request  msg;
-  mac_ue_configurator&          mac_ue_mng;
-  ue_manager_ctrl_configurator& ue_mng;
-  srslog::basic_logger&         logger;
+  const f1ap_ue_delete_request msg;
+  mac_ue_configurator&         mac_ue_mng;
+  du_ue_manager_repository&    ue_mng;
+  srslog::basic_logger&        logger;
 
   du_ue* ue = nullptr;
 };

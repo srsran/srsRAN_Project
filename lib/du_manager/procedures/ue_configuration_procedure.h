@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../du_ue/ue_manager_ctrl_configurator.h"
+#include "../du_ue/du_ue_manager_repository.h"
 #include "srsran/du_manager/du_manager_params.h"
 
 namespace srsran {
@@ -20,7 +20,7 @@ class ue_configuration_procedure
 {
 public:
   ue_configuration_procedure(const f1ap_ue_context_update_request& request_,
-                             ue_manager_ctrl_configurator&         ue_mng_,
+                             du_ue_manager_repository&             ue_mng_,
                              const du_manager_params&              du_params_);
 
   void operator()(coro_context<async_task<f1ap_ue_context_update_response>>& ctx);
@@ -39,7 +39,7 @@ private:
   f1ap_ue_context_update_response make_ue_config_failure();
 
   const f1ap_ue_context_update_request request;
-  ue_manager_ctrl_configurator&        ue_mng;
+  du_ue_manager_repository&            ue_mng;
   const du_manager_params&             du_params;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("DU-MNG");

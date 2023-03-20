@@ -11,17 +11,18 @@
 #pragma once
 
 #include "du_ue.h"
-#include "ue_manager_ctrl_configurator.h"
+#include "du_ue_manager_repository.h"
 #include "srsran/adt/slotted_array.h"
-#include "srsran/adt/stable_id_map.h"
 #include "srsran/du_manager/du_manager.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/support/async/async_task_loop.h"
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_du {
 
-class du_ue_manager : public ue_manager_ctrl_configurator
+/// \brief This entity orchestrates the addition/reconfiguration/removal of UE contexts in the DU.
+class du_ue_manager : public du_ue_manager_repository
 {
 public:
   explicit du_ue_manager(du_manager_params& cfg_, du_ran_resource_manager& cell_res_alloc);
@@ -30,7 +31,7 @@ public:
   async_task<f1ap_ue_context_update_response> handle_ue_config_request(const f1ap_ue_context_update_request& msg);
   async_task<void>                            handle_ue_delete_request(const f1ap_ue_delete_request& msg);
 
-  const stable_id_map<du_ue_index_t, du_ue, MAX_NOF_DU_UES>& get_ues() { return ue_db; }
+  const slotted_id_table<du_ue_index_t, std::unique_ptr<du_ue>, MAX_NOF_DU_UES>& get_ues() { return ue_db; }
 
   void schedule_async_task(du_ue_index_t ue_index, async_task<void>&& task)
   {
@@ -47,8 +48,9 @@ private:
   du_ran_resource_manager& cell_res_alloc;
   srslog::basic_logger&    logger;
 
-  stable_id_map<du_ue_index_t, du_ue, MAX_NOF_DU_UES> ue_db;
-  std::array<du_ue_index_t, MAX_NOF_DU_UES>           rnti_to_ue_index;
+  // Mapping of ue_index and rnti to UEs.
+  slotted_id_table<du_ue_index_t, std::unique_ptr<du_ue>, MAX_NOF_DU_UES> ue_db;
+  std::unordered_map<rnti_t, du_ue_index_t>                               rnti_to_ue_index;
 
   // task event loops indexed by ue_index
   slotted_array<async_task_sequencer, MAX_NOF_DU_UES> ue_ctrl_loop;

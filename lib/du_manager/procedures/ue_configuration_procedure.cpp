@@ -20,7 +20,7 @@ using namespace srsran;
 using namespace srsran::srs_du;
 
 ue_configuration_procedure::ue_configuration_procedure(const f1ap_ue_context_update_request& request_,
-                                                       ue_manager_ctrl_configurator&         ue_mng_,
+                                                       du_ue_manager_repository&             ue_mng_,
                                                        const du_manager_params&              du_params_) :
   request(request_), ue_mng(ue_mng_), du_params(du_params_), ue(ue_mng.find_ue(request.ue_index))
 {

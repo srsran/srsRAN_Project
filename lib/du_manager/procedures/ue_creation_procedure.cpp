@@ -20,7 +20,7 @@ using namespace srsran::srs_du;
 
 ue_creation_procedure::ue_creation_procedure(du_ue_index_t                                ue_index,
                                              const ul_ccch_indication_message&            ccch_ind_msg,
-                                             ue_manager_ctrl_configurator&                ue_mng_,
+                                             du_ue_manager_repository&                    ue_mng_,
                                              const du_manager_params::service_params&     du_services_,
                                              const du_manager_params::mac_config_params&  mac_mng_,
                                              const du_manager_params::rlc_config_params&  rlc_params_,

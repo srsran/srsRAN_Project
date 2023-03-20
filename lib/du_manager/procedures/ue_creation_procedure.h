@@ -13,7 +13,7 @@
 #include "../../ran/gnb_format.h"
 #include "../converters/mac_config_helpers.h"
 #include "../du_ue/du_ue.h"
-#include "../du_ue/ue_manager_ctrl_configurator.h"
+#include "../du_ue/du_ue_manager_repository.h"
 #include "srsran/du_manager/du_manager_params.h"
 #include "srsran/mac/mac.h"
 #include "srsran/rlc/rlc_factory.h"
@@ -47,7 +47,7 @@ class ue_creation_procedure
 public:
   ue_creation_procedure(du_ue_index_t                                ue_index,
                         const ul_ccch_indication_message&            ccch_ind_msg,
-                        ue_manager_ctrl_configurator&                ue_mng_,
+                        du_ue_manager_repository&                    ue_mng_,
                         const du_manager_params::service_params&     du_services_,
                         const du_manager_params::mac_config_params&  mac_mng_,
                         const du_manager_params::rlc_config_params&  rlc_params_,
@@ -76,7 +76,7 @@ private:
   void connect_layer_bearers();
 
   ul_ccch_indication_message                   msg;
-  ue_manager_ctrl_configurator&                ue_mng;
+  du_ue_manager_repository&                    ue_mng;
   const du_manager_params::service_params&     services;
   const du_manager_params::mac_config_params&  mac_mng;
   const du_manager_params::rlc_config_params&  rlc_cfg;
