@@ -188,13 +188,13 @@ rlc_bearer_cfg_s make_asn1_rrc_rlc_bearer(const rlc_bearer_config& cfg)
 
   out.mac_lc_ch_cfg_present                    = true;
   out.mac_lc_ch_cfg.ul_specific_params_present = true;
-  out.mac_lc_ch_cfg.ul_specific_params.prio    = 1;
+  out.mac_lc_ch_cfg.ul_specific_params.prio    = is_srb(cfg.lcid) ? 1 : 2;
   out.mac_lc_ch_cfg.ul_specific_params.prioritised_bit_rate.value =
       lc_ch_cfg_s::ul_specific_params_s_::prioritised_bit_rate_opts::infinity;
   out.mac_lc_ch_cfg.ul_specific_params.bucket_size_dur.value =
       lc_ch_cfg_s::ul_specific_params_s_::bucket_size_dur_opts::ms5;
   out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group_present          = true;
-  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = 0;
+  out.mac_lc_ch_cfg.ul_specific_params.lc_ch_group                  = is_srb(cfg.lcid) ? 0 : 1;
   out.mac_lc_ch_cfg.ul_specific_params.sched_request_id_present     = true;
   out.mac_lc_ch_cfg.ul_specific_params.sched_request_id             = 0;
   out.mac_lc_ch_cfg.ul_specific_params.lc_ch_sr_mask                = false;
