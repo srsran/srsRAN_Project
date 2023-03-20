@@ -13,7 +13,7 @@
 #include "srsran/du_manager/du_manager_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/mac/mac_factory.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 using namespace srsran;
 using namespace srs_du;

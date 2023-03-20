@@ -16,7 +16,7 @@
 #include "srsran/e2/e2_factory.h"
 #include "srsran/gateways/network_gateway.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 
 namespace srsran {

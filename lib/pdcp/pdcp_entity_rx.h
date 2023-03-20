@@ -19,7 +19,7 @@
 #include "srsran/adt/byte_buffer_slice_chain.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_rx.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <map>
 

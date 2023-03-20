@@ -13,7 +13,7 @@
 #include "rlc_rx_entity.h"
 #include "rlc_um_pdu.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <map>
 

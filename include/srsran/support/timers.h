@@ -288,6 +288,7 @@ private:
   timer_manager::timer_frontend* handle = nullptr;
 };
 
+/// \brief Factory of timers that associates created timers to specific task executors.
 class timer_factory
 {
 public:

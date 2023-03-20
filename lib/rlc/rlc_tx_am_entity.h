@@ -17,7 +17,7 @@
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include "fmt/format.h"
 #include <set>
 

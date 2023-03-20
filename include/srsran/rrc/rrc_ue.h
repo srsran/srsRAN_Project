@@ -19,7 +19,7 @@
 #include "srsran/rrc/rrc.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 

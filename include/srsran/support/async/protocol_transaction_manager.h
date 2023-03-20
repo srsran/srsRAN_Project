@@ -14,7 +14,7 @@
 #include "manual_event.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/variant.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <array>
 
 namespace srsran {

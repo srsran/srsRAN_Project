@@ -16,7 +16,7 @@
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <map>
 
 namespace srsran {

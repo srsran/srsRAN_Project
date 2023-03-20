@@ -20,7 +20,7 @@
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <map>
 
 namespace srsran {

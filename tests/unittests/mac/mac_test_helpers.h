@@ -18,7 +18,7 @@
 #include "srsran/pcap/pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/test_utils.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 

@@ -9,7 +9,7 @@
  */
 
 #include "pdu_rx_handler.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 using namespace srsran;
 

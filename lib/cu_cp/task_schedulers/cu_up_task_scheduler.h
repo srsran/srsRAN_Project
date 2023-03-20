@@ -15,7 +15,7 @@
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_cu_cp {

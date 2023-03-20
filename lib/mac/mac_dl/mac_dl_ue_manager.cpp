@@ -9,7 +9,7 @@
  */
 
 #include "mac_dl_ue_manager.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 using namespace srsran;
 

@@ -22,7 +22,7 @@
 #include "srsran/ran/lcid.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_du {

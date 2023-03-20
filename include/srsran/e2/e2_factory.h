@@ -11,7 +11,7 @@
 #pragma once
 
 #include "e2.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 #include <memory>
 
 namespace srsran {

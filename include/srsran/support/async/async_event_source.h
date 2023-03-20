@@ -12,7 +12,7 @@
 
 #include "manual_event.h"
 #include "srsran/adt/expected.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 

@@ -14,7 +14,7 @@
 #include "srsran/adt/optional.h"
 #include "srsran/asn1/ngap/ngap.h"
 #include "srsran/support/async/async_task.h"
-#include "srsran/support/timers2.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 
