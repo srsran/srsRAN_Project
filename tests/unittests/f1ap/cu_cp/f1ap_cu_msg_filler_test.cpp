@@ -8,6 +8,7 @@
  *
  */
 
+#include "../common/f1ap_cu_test_messages.h"
 #include "lib/f1ap/cu_cp/f1ap_asn1_helpers.h"
 #include <gtest/gtest.h>
 
@@ -68,33 +69,10 @@ protected:
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-cu_cp_ue_context_modification_request generate_ue_context_mod_request()
-{
-  cu_cp_ue_context_modification_request msg                      = {};
-  cu_cp_drbs_to_be_setup_mod_item       drb_to_be_setup_mod_item = {};
-  drb_to_be_setup_mod_item.drb_id                                = uint_to_drb_id(1);
-  drb_to_be_setup_mod_item.rlc_mod                               = rlc_mode::am;
-
-  cu_cp_flows_mapped_to_drb_item mapped_flow = {};
-  mapped_flow.qos_flow_id                    = uint_to_qos_flow_id(1);
-  drb_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow.qos_flow_id, mapped_flow);
-
-  non_dyn_5qi_descriptor_t non_dyn_5qi;
-  non_dyn_5qi.five_qi                                                       = 8;
-  drb_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
-
-  up_transport_layer_info ul_up_tnl_info_item = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(1)};
-  drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
-
-  msg.drbs_to_be_setup_mod_list.emplace(drb_to_be_setup_mod_item.drb_id, drb_to_be_setup_mod_item);
-
-  return msg;
-}
-
 // Test correct filling and generation of F1AP ASN1 messages for UE context modficication request.
 TEST_F(f1ap_cu_msg_filler_test, when_context_mod_req_valid_then_valid_asn1_msg_generated)
 {
-  cu_cp_ue_context_modification_request msg = generate_ue_context_mod_request();
+  cu_cp_ue_context_modification_request msg = generate_ue_context_modification_request(uint_to_ue_index(1));
 
   asn1::f1ap::ue_context_mod_request_s f1ap_ue_context_mod_request;
   fill_f1ap_ue_context_modification_request(f1ap_ue_context_mod_request, msg);
