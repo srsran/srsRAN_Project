@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/pcap/e1ap_pcap.h"
+#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -44,7 +44,7 @@ protected:
     pcap_writer.close();
   }
 
-  srsran::e1ap_pcap     pcap_writer;
+  srsran::dlt_pcap_impl pcap_writer{srsran::PCAP_E1AP_DLT, "E1AP"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };
 
@@ -77,7 +77,7 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 
   // TODO: Accept byte buffer in pcap and log.
   std::vector<uint8_t> bytes{buffer.begin(), buffer.end()};
-  pcap_writer.write_pdu(bytes);
+  pcap_writer.push_pdu(bytes);
 
   logger.info(bytes.data(), bytes.size(), "Packed PDU ({} bytes):", bref.distance_bytes());
 
@@ -101,7 +101,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
                       0x00, 0x00, 0x00, 0x80, 0x00, 0x09, 0x7a, 0x00, 0x4d, 0x40, 0x02, 0x00, 0x00};
   srsran::byte_buffer rx_pdu{rx_msg};
 
-  pcap_writer.write_pdu(rx_msg);
+  pcap_writer.push_pdu(rx_msg);
 
   asn1::cbit_ref         bref{rx_pdu};
   asn1::e1ap::e1ap_pdu_c pdu;
@@ -160,7 +160,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking
                       0x06, 0x00, 0x1f, 0xac, 0x15, 0x06, 0x09, 0x80, 0x00, 0x02, 0x83, 0x00, 0x00, 0x80};
   srsran::byte_buffer rx_pdu{rx_msg};
 
-  pcap_writer.write_pdu(rx_msg);
+  pcap_writer.push_pdu(rx_msg);
 
   asn1::cbit_ref         bref{rx_pdu};
   asn1::e1ap::e1ap_pdu_c pdu;

@@ -14,11 +14,9 @@
 
 namespace srsran {
 
-constexpr uint16_t NGAP_DLT = 152;
-
 constexpr uint16_t pcap_ngap_max_len = 2000;
 
-dlt_pcap_impl::dlt_pcap_impl(unsigned dlt_, std::string layer_name) : worker(layer_name + "-PCAP", 1024)
+dlt_pcap_impl::dlt_pcap_impl(unsigned dlt_, std::string layer_name) : dlt(dlt_), worker(layer_name + "-PCAP", 1024)
 {
   tmp_mem.resize(pcap_ngap_max_len);
 }
@@ -30,7 +28,7 @@ dlt_pcap_impl::~dlt_pcap_impl()
 
 void dlt_pcap_impl::open(const char* filename_)
 {
-  auto fn = [this, filename_]() { writter.dlt_pcap_open(NGAP_DLT, filename_); };
+  auto fn = [this, filename_]() { writter.dlt_pcap_open(dlt, filename_); };
   worker.push_task_blocking(fn);
 }
 
