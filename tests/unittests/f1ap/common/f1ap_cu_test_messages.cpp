@@ -204,19 +204,23 @@ srsran::srs_cu_cp::generate_ue_context_modification_request(ue_index_t          
 {
   cu_cp_ue_context_modification_request msg;
 
-  msg.ue_index                         = ue_index;
-  msg.ue_aggregate_maximum_bit_rate_ul = 200000000;
+  msg.ue_index = ue_index;
 
   for (drb_id_t drb_id : drbs_to_add) {
-    cu_cp_drb_setup_message drb_setup_msg{};
-    drb_setup_msg.drb_id                  = drb_id;
-    drb_setup_msg.rlc                     = srsran::rlc_mode::am;
-    drb_setup_msg.qos_info.is_dynamic_5qi = true;
-    drb_setup_msg.qos_info.five_qi        = 8;
-    drb_setup_msg.qos_info.prio_level_arp = 1;
+    cu_cp_drbs_to_be_setup_mod_item drb_to_be_setup_mod_item{};
+    drb_to_be_setup_mod_item.drb_id  = drb_id;
+    drb_to_be_setup_mod_item.rlc_mod = srsran::rlc_mode::am;
 
-    msg.cu_cp_drb_setup_msgs.emplace(drb_id, drb_setup_msg);
+    non_dyn_5qi_descriptor_t non_dyn_5qi;
+    non_dyn_5qi.five_qi                                                       = 8;
+    drb_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+
+    drb_to_be_setup_mod_item.qos_info.drb_qos.alloc_and_retention_prio.prio_level_arp = 1;
+
+    msg.drbs_to_be_setup_mod_list.emplace(drb_id, drb_to_be_setup_mod_item);
   }
+
+  msg.gnb_du_ue_ambr_ul = 200000000;
 
   return msg;
 }

@@ -81,11 +81,31 @@ struct nr_cgi_support_item_t {
   nr_cell_global_id_t nr_cgi;
 };
 
+struct packet_error_rate_t {
+  uint8_t per_scalar;
+  uint8_t per_exponent;
+};
+
+struct dyn_5qi_descriptor_t {
+  uint8_t               qos_prio_level;
+  uint16_t              packet_delay_budget;
+  packet_error_rate_t   packet_error_rate;
+  optional<uint16_t>    five_qi;
+  optional<std::string> delay_crit;
+  optional<uint16_t>    averaging_win;
+  optional<uint16_t>    max_data_burst_volume;
+};
+
 struct non_dyn_5qi_descriptor_t {
   uint16_t           five_qi;
   optional<uint8_t>  qos_prio_level;
   optional<uint16_t> averaging_win;
   optional<uint16_t> max_data_burst_volume;
+};
+
+struct qos_characteristics_t {
+  optional<dyn_5qi_descriptor_t>     dyn_5qi;
+  optional<non_dyn_5qi_descriptor_t> non_dyn_5qi;
 };
 
 struct ng_ran_qos_support_item_t {

@@ -26,8 +26,21 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
     for (const auto& qos_flow : pdu_session.qos_flow_setup_request_items) {
       // TODO: check if FiveQI has configuration
 
+      uint16_t five_qi;
+      if (qos_flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
+        if (qos_flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.value().five_qi.has_value()) {
+          five_qi = qos_flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.value().five_qi.value();
+        } else {
+          report_fatal_error("Dynamic 5qi without 5qi not supported");
+        }
+      } else if (qos_flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
+        five_qi = qos_flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
+      } else {
+        report_fatal_error("Invalid QoS characteristics. Either dynamic or non-dynamic 5qi must be set");
+      }
+
       // check if other DRB with same FiveQI exists
-      if (five_qi_map.find(qos_flow.qos_characteristics.five_qi) == five_qi_map.end()) {
+      if (five_qi_map.find(five_qi) == five_qi_map.end()) {
         // no existing DRB with same FiveQI, create new DRB
         drb_id_t id = allocate_drb_id();
         if (id == drb_id_t::invalid) {
@@ -39,7 +52,7 @@ std::vector<drb_id_t> drb_manager_impl::calculate_drb_to_add_list(const cu_cp_pd
         drb_ctx.drb_id         = id;
         drb_ctx.pdu_session_id = pdu_session.pdu_session_id;
         drb_ctx.default_drb    = drbs.empty() ? true : false; // make first DRB the default
-        drb_ctx.five_qi        = qos_flow.qos_characteristics.five_qi;
+        drb_ctx.five_qi        = five_qi;
         drb_ctx.pdcp_cfg       = set_rrc_pdcp_config(drb_ctx.five_qi);
         drb_ctx.mapped_qos_flows.push_back(qos_flow.qos_flow_id);
         drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);

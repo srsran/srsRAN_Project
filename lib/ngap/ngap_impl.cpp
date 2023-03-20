@@ -321,9 +321,6 @@ void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_r
   // Remove NGAP UE
   ue_manager.remove_ngap_ue(ue_index);
 
-  // Remove NGAP UE
-  ue_manager.remove_ngap_ue(ue_index);
-
   logger.info("Sending UeContextReleaseComplete");
   ngap_notifier.on_new_message(ngap_msg);
 }

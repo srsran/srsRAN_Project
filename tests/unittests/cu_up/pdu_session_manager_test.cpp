@@ -88,7 +88,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
 
   e1ap_qos_flow_qos_param_item qos_flow_info;
   qos_flow_info.qos_flow_id = uint_to_qos_flow_id(8);
-  e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
+  non_dyn_5qi_descriptor_t non_dyn_5qi;
   non_dyn_5qi.five_qi                                                                 = 8;
   qos_flow_info.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi             = non_dyn_5qi;
   qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level      = 1;

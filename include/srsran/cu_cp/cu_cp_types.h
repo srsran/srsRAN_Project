@@ -127,20 +127,45 @@ struct cu_cp_qos_config {
 };
 // ASN1 types converted to common types
 
-struct cu_cp_qos_characteristics {
-  bool        is_dynamic_5qi = false;
-  uint16_t    five_qi;
+struct cu_cp_tai {
+  std::string plmn_id;
+  uint32_t    tac;
+};
+
+struct cu_cp_user_location_info_nr {
+  nr_cell_global_id_t nr_cgi;
+  cu_cp_tai           tai;
+  optional<uint64_t>  time_stamp;
+};
+
+struct cu_cp_alloc_and_retention_prio {
   uint8_t     prio_level_arp;
   std::string pre_emption_cap;
   std::string pre_emption_vulnerability;
 };
 
+struct cu_cp_gbr_qos_info {
+  uint64_t              max_flow_bit_rate_dl;
+  uint64_t              max_flow_bit_rate_ul;
+  uint64_t              guaranteed_flow_bit_rate_dl;
+  uint64_t              guaranteed_flow_bit_rate_ul;
+  optional<std::string> notif_ctrl;
+  optional<uint16_t>    max_packet_loss_rate_dl;
+  optional<uint16_t>    max_packet_loss_rate_ul;
+};
+
+struct cu_cp_qos_flow_level_qos_params {
+  qos_characteristics_t          qos_characteristics;
+  cu_cp_alloc_and_retention_prio alloc_and_retention_prio;
+  optional<cu_cp_gbr_qos_info>   gbr_qos_info;
+  optional<std::string>          add_qos_flow_info;
+  optional<std::string>          reflective_qos_attribute;
+};
+
 struct qos_flow_setup_request_item {
-  qos_flow_id_t             qos_flow_id = qos_flow_id_t::invalid;
-  cu_cp_qos_characteristics qos_characteristics;
-  optional<uint8_t>         erab_id;
-  optional<std::string>     add_qos_flow_info;
-  optional<std::string>     reflective_qos_attribute;
+  qos_flow_id_t                   qos_flow_id = qos_flow_id_t::invalid;
+  cu_cp_qos_flow_level_qos_params qos_flow_level_qos_params;
+  optional<uint8_t>               erab_id;
 };
 
 struct cu_cp_pdu_session_res_setup_item {
@@ -205,22 +230,104 @@ struct cu_cp_pdu_session_resource_setup_response {
   optional<crit_diagnostics_t>                                                   crit_diagnostics;
 };
 
-struct cu_cp_drb_setup_message {
-  drb_id_t                                                      drb_id = drb_id_t::invalid;
-  srsran::rlc_mode                                              rlc;
-  cu_cp_qos_characteristics                                     qos_info;
-  std::vector<up_transport_layer_info>                          gtp_tunnels = {};
-  s_nssai_t                                                     s_nssai;
-  slotted_id_vector<qos_flow_id_t, qos_flow_setup_request_item> qos_flows_mapped_to_drb;
+struct cu_cp_drx_cycle {
+  uint16_t           long_drx_cycle_len;
+  optional<uint16_t> short_drx_cycle_len;
+  optional<uint8_t>  short_drx_cycle_timer;
+};
 
-  uint8_t dl_pdcp_sn_length; // id-DLPDCPSNLength 161
-  uint8_t ul_pdcp_sn_length; // id-ULPDCPSNLength 192
+struct cu_cp_cu_to_du_rrc_info {
+  byte_buffer cg_cfg_info;
+  byte_buffer ue_cap_rat_container_list;
+  byte_buffer meas_cfg;
+};
+
+struct cu_cp_scell_to_be_setup_mod_item {
+  nr_cell_global_id_t   scell_id;
+  uint8_t               scell_idx;
+  optional<std::string> scell_ul_cfg;
+};
+
+struct cu_cp_scell_to_be_remd_item {
+  nr_cell_global_id_t scell_id;
+};
+
+struct cu_cp_srbs_to_be_setup_mod_item {
+  srb_id_t              srb_id = srb_id_t::nulltype;
+  optional<std::string> dupl_ind;
+};
+
+struct cu_cp_ul_cfg {
+  std::string ul_ue_cfg;
+};
+
+struct cu_cp_flows_mapped_to_drb_item {
+  qos_flow_id_t                   qos_flow_id = qos_flow_id_t::invalid;
+  cu_cp_qos_flow_level_qos_params qos_flow_level_qos_params;
+};
+
+struct cu_cp_drb_info {
+  cu_cp_qos_flow_level_qos_params                                  drb_qos;
+  s_nssai_t                                                        s_nssai;
+  optional<std::string>                                            notif_ctrl;
+  slotted_id_vector<qos_flow_id_t, cu_cp_flows_mapped_to_drb_item> flows_mapped_to_drb_list;
+};
+
+struct cu_cp_drbs_to_be_setup_mod_item {
+  drb_id_t                             drb_id = drb_id_t::invalid;
+  cu_cp_drb_info                       qos_info;
+  std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list = {};
+  srsran::rlc_mode                     rlc_mod;
+  optional<cu_cp_ul_cfg>               ul_cfg;
+  optional<std::string>                dupl_activation;
+};
+
+struct cu_cp_drbs_to_be_modified_item {
+  drb_id_t                             drb_id = drb_id_t::invalid;
+  optional<cu_cp_drb_info>             qos_info;
+  std::vector<up_transport_layer_info> ul_up_tnl_info_to_be_setup_list = {};
+  optional<cu_cp_ul_cfg>               ul_cfg;
+};
+
+struct cu_cp_rlc_fail_ind {
+  lcid_t assocated_lcid = lcid_t::INVALID_LCID;
+};
+
+struct cu_cp_res_coordination_transfer_info {
+  uint64_t m_enb_cell_id;
 };
 
 struct cu_cp_ue_context_modification_request {
-  ue_index_t                                           ue_index = ue_index_t::invalid;
-  slotted_id_vector<drb_id_t, cu_cp_drb_setup_message> cu_cp_drb_setup_msgs;
-  optional<uint64_t>                                   ue_aggregate_maximum_bit_rate_ul;
+  ue_index_t                                                   ue_index = ue_index_t::invalid;
+  optional<nr_cell_global_id_t>                                sp_cell_id;
+  optional<uint8_t>                                            serv_cell_idx;
+  optional<std::string>                                        sp_cell_ul_cfg;
+  optional<cu_cp_drx_cycle>                                    drx_cycle;
+  optional<cu_cp_cu_to_du_rrc_info>                            cu_to_du_rrc_info;
+  optional<std::string>                                        tx_action_ind;
+  byte_buffer                                                  res_coordination_transfer_container;
+  optional<std::string>                                        rrc_recfg_complete_ind;
+  byte_buffer                                                  rrc_container;
+  std::vector<cu_cp_scell_to_be_setup_mod_item>                scell_to_be_setup_mod_list;
+  std::vector<cu_cp_scell_to_be_remd_item>                     scell_to_be_remd_list;
+  slotted_id_vector<srb_id_t, cu_cp_srbs_to_be_setup_mod_item> srbs_to_be_setup_mod_list;
+  slotted_id_vector<drb_id_t, cu_cp_drbs_to_be_setup_mod_item> drbs_to_be_setup_mod_list;
+  slotted_id_vector<drb_id_t, cu_cp_drbs_to_be_modified_item>  drbs_to_be_modified_list;
+  std::vector<srb_id_t>                                        srbs_to_be_released_list;
+  std::vector<drb_id_t>                                        drbs_to_be_released_list;
+  optional<std::string>                                        inactivity_monitoring_request;
+  optional<std::string>                                        rat_freq_prio_info;
+  optional<std::string>                                        drx_cfg_ind;
+  optional<cu_cp_rlc_fail_ind>                                 rlc_fail_ind;
+  byte_buffer                                                  ul_tx_direct_current_list_info;
+  optional<std::string>                                        gnb_du_cfg_query;
+  optional<uint64_t>                                           gnb_du_ue_ambr_ul;
+  optional<std::string>                                        execute_dupl;
+  optional<std::string>                                        rrc_delivery_status_request;
+  optional<cu_cp_res_coordination_transfer_info>               res_coordination_transfer_info;
+  optional<uint8_t>                                            serving_cell_mo;
+  optional<std::string>                                        need_for_gap;
+  optional<std::string>                                        full_cfg;
 };
 
 struct cu_cp_du_to_cu_rrc_info {
@@ -370,17 +477,6 @@ struct cu_cp_rrc_reconfiguration_procedure_request {
 struct cu_cp_ue_context_release_command {
   ue_index_t ue_index = ue_index_t::invalid;
   cause_t    cause;
-};
-
-struct cu_cp_tai {
-  std::string plmn_id;
-  uint32_t    tac;
-};
-
-struct cu_cp_user_location_info_nr {
-  nr_cell_global_id_t nr_cgi;
-  cu_cp_tai           tai;
-  optional<uint64_t>  time_stamp;
 };
 
 struct cu_cp_recommended_cell_item {

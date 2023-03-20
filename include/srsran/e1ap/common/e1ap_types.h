@@ -70,33 +70,6 @@ struct e1ap_cell_group_info_item {
   optional<std::string> rat_type;
 };
 
-struct e1ap_packet_error_rate {
-  uint8_t per_scalar;
-  uint8_t per_exponent;
-};
-
-struct e1ap_dynamic_5qi_descriptor {
-  uint8_t                qos_prio_level;
-  uint16_t               packet_delay_budget;
-  e1ap_packet_error_rate packet_error_rate;
-  optional<uint16_t>     five_qi;
-  optional<std::string>  delay_crit;
-  optional<uint16_t>     averaging_win;
-  optional<uint16_t>     max_data_burst_volume;
-};
-
-struct e1ap_non_dynamic_5qi_descriptor {
-  uint16_t           five_qi;
-  optional<uint8_t>  qos_prio_level;
-  optional<uint16_t> averaging_win;
-  optional<uint16_t> max_data_burst_volume;
-};
-
-struct e1ap_qos_characteristics {
-  optional<e1ap_dynamic_5qi_descriptor>     dyn_5qi;
-  optional<e1ap_non_dynamic_5qi_descriptor> non_dyn_5qi;
-};
-
 struct e1ap_ng_ran_alloc_and_retention_prio {
   uint8_t     prio_level;
   std::string pre_emption_cap;
@@ -113,7 +86,7 @@ struct e1ap_gbr_qos_flow_info {
 };
 
 struct e1ap_qos_flow_level_qos_params {
-  e1ap_qos_characteristics             qos_characteristics;
+  qos_characteristics_t                qos_characteristics;
   e1ap_ng_ran_alloc_and_retention_prio ng_ran_alloc_retention_prio;
   optional<e1ap_gbr_qos_flow_info>     gbr_qos_flow_info;
   optional<std::string>                reflective_qos_attribute;

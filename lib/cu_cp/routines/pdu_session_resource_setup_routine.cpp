@@ -61,11 +61,20 @@ void pdu_session_resource_setup_routine::operator()(
   for (const qos_flow_setup_request_item& flow_item :
        setup_msg.pdu_session_res_setup_items.begin()->qos_flow_setup_request_items) {
     if (not valid_5qi(flow_item)) {
+      uint16_t five_qi;
+      if (flow_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
+        five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
+      } else if (flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
+        five_qi = flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
+      } else {
+        CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false))
+      }
+
       logger.error("ue={}: \"{}\" QoS flow 5QI is not configured. id {} 5QI {}",
                    setup_msg.ue_index,
                    name(),
                    flow_item.qos_flow_id,
-                   flow_item.qos_characteristics.five_qi);
+                   five_qi);
       CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
     }
   }
@@ -146,26 +155,34 @@ void pdu_session_resource_setup_routine::operator()(
         CORO_EARLY_RETURN(handle_pdu_session_resource_setup_result(false));
       }
 
-      cu_cp_drb_setup_message rrc_ue_drb_setup_message_item;
-      rrc_ue_drb_setup_message_item.gtp_tunnels.push_back(drb.ul_up_transport_params[0].up_tnl_info);
-      rrc_ue_drb_setup_message_item.drb_id  = drb_to_add;
-      rrc_ue_drb_setup_message_item.s_nssai = rrc_ue_drb_manager.get_s_nssai(drb_to_add);
-      rrc_ue_drb_setup_message_item.rlc     = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
+      cu_cp_drbs_to_be_setup_mod_item drb_setup_mod_item;
+      drb_setup_mod_item.drb_id = drb_to_add;
 
+      // Add qos info
       const auto& mapped_flows = rrc_ue_drb_manager.get_mapped_qos_flows(drb_to_add);
       for (const auto& qos_flow : mapped_flows) {
-        qos_flow_setup_request_item mapped_flow = {};
-        mapped_flow.qos_flow_id                 = qos_flow;
-        mapped_flow.qos_characteristics =
-            setup_msg.pdu_session_res_setup_items[session].qos_flow_setup_request_items[qos_flow].qos_characteristics;
-        rrc_ue_drb_setup_message_item.qos_flows_mapped_to_drb.emplace(qos_flow, mapped_flow);
-        rrc_ue_drb_setup_message_item.qos_info.is_dynamic_5qi = false;
-        rrc_ue_drb_setup_message_item.qos_info.five_qi        = setup_msg.pdu_session_res_setup_items[session]
-                                                             .qos_flow_setup_request_items[qos_flow]
-                                                             .qos_characteristics.five_qi;
+        drb_setup_mod_item.qos_info.drb_qos.qos_characteristics = setup_msg.pdu_session_res_setup_items[session]
+                                                                      .qos_flow_setup_request_items[qos_flow]
+                                                                      .qos_flow_level_qos_params.qos_characteristics;
+
+        non_dyn_5qi_descriptor_t non_dyn_5qi;
+        non_dyn_5qi.five_qi = setup_msg.pdu_session_res_setup_items[session]
+                                  .qos_flow_setup_request_items[qos_flow]
+                                  .qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value()
+                                  .five_qi;
+
+        drb_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
       }
 
-      ue_context_mod_request.cu_cp_drb_setup_msgs.emplace(drb_to_add, rrc_ue_drb_setup_message_item);
+      // Add up tnl info
+      for (const auto& ul_up_transport_param : drb.ul_up_transport_params) {
+        drb_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
+      }
+
+      // Add rlc mode
+      drb_setup_mod_item.rlc_mod = rlc_mode::am; // TODO: is this coming from FiveQI mapping?
+
+      ue_context_mod_request.drbs_to_be_setup_mod_list.emplace(drb_to_add, drb_setup_mod_item);
     }
 
     CORO_AWAIT_VALUE(ue_context_modification_response,
@@ -333,9 +350,9 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
         e1ap_qos_flow_qos_param_item e1ap_qos_item;
         e1ap_qos_item.qos_flow_id = qos_item.qos_flow_id;
 
-        if (!qos_item.qos_characteristics.is_dynamic_5qi) {
-          e1ap_non_dynamic_5qi_descriptor non_dyn_5qi;
-          non_dyn_5qi.five_qi = qos_item.qos_characteristics.five_qi;
+        if (qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
+          non_dyn_5qi_descriptor_t non_dyn_5qi;
+          non_dyn_5qi.five_qi = qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi;
 
           // TODO: Add optional values
 
@@ -345,11 +362,11 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
         }
 
         e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.prio_level =
-            qos_item.qos_characteristics.prio_level_arp;
+            qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
         e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_cap =
-            qos_item.qos_characteristics.pre_emption_cap;
+            qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap;
         e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention_prio.pre_emption_vulnerability =
-            qos_item.qos_characteristics.pre_emption_vulnerability;
+            qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability;
 
         e1ap_drb_setup_item.qos_flow_info_to_be_setup.emplace(qos_item.qos_flow_id, e1ap_qos_item);
       }
@@ -397,5 +414,15 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_modification_r
 
 bool pdu_session_resource_setup_routine::valid_5qi(const qos_flow_setup_request_item& flow)
 {
-  return rrc_ue_drb_manager.valid_5qi(flow.qos_characteristics.five_qi);
+  if (flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.has_value()) {
+    return rrc_ue_drb_manager.valid_5qi(flow.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi.value().five_qi);
+  } else if (flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.has_value()) {
+    if (flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.value().five_qi.has_value()) {
+      return rrc_ue_drb_manager.valid_5qi(
+          flow.qos_flow_level_qos_params.qos_characteristics.dyn_5qi.value().five_qi.value());
+    }
+  } else {
+    logger.error("Invalid QoS characteristics. Either dynamic or non-dynamic 5qi must be set");
+  }
+  return false;
 }

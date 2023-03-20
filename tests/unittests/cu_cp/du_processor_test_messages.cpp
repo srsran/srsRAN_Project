@@ -80,12 +80,15 @@ cu_cp_pdu_session_resource_setup_request srsran::srs_cu_cp::generate_pdu_session
   item.pdu_session_type                          = "ipv4";
 
   qos_flow_setup_request_item qos_item;
-  qos_item.qos_flow_id                                   = uint_to_qos_flow_id(1);
-  qos_item.qos_characteristics.is_dynamic_5qi            = false;
-  qos_item.qos_characteristics.five_qi                   = 9;
-  qos_item.qos_characteristics.prio_level_arp            = 8;
-  qos_item.qos_characteristics.pre_emption_cap           = "not-pre-emptable";
-  qos_item.qos_characteristics.pre_emption_vulnerability = "not-pre-emptable";
+  qos_item.qos_flow_id = uint_to_qos_flow_id(1);
+
+  non_dyn_5qi_descriptor_t non_dyn_5qi;
+  non_dyn_5qi.five_qi                                                = 9;
+  qos_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
+
+  qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp            = 8;
+  qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap           = "not-pre-emptable";
+  qos_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability = "not-pre-emptable";
 
   item.qos_flow_setup_request_items.emplace(qos_item.qos_flow_id, qos_item);
 

@@ -70,19 +70,23 @@ protected:
 
 cu_cp_ue_context_modification_request generate_ue_context_mod_request()
 {
-  cu_cp_ue_context_modification_request msg           = {};
-  cu_cp_drb_setup_message               drb_setup_msg = {};
-  drb_setup_msg.drb_id                                = uint_to_drb_id(1);
-  drb_setup_msg.rlc                                   = rlc_mode::am;
+  cu_cp_ue_context_modification_request msg                      = {};
+  cu_cp_drbs_to_be_setup_mod_item       drb_to_be_setup_mod_item = {};
+  drb_to_be_setup_mod_item.drb_id                                = uint_to_drb_id(1);
+  drb_to_be_setup_mod_item.rlc_mod                               = rlc_mode::am;
 
-  up_transport_layer_info gtp_tunnel = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(1)};
-  drb_setup_msg.gtp_tunnels.push_back(gtp_tunnel);
+  cu_cp_flows_mapped_to_drb_item mapped_flow = {};
+  mapped_flow.qos_flow_id                    = uint_to_qos_flow_id(1);
+  drb_to_be_setup_mod_item.qos_info.flows_mapped_to_drb_list.emplace(mapped_flow.qos_flow_id, mapped_flow);
 
-  qos_flow_setup_request_item mapped_flow = {};
-  mapped_flow.qos_flow_id                 = uint_to_qos_flow_id(1);
-  drb_setup_msg.qos_flows_mapped_to_drb.emplace(mapped_flow.qos_flow_id, mapped_flow);
+  non_dyn_5qi_descriptor_t non_dyn_5qi;
+  non_dyn_5qi.five_qi                                                       = 8;
+  drb_to_be_setup_mod_item.qos_info.drb_qos.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
 
-  msg.cu_cp_drb_setup_msgs.emplace(drb_setup_msg.drb_id, drb_setup_msg);
+  up_transport_layer_info ul_up_tnl_info_item = {transport_layer_address{"127.0.0.1"}, int_to_gtp_teid(1)};
+  drb_to_be_setup_mod_item.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_tnl_info_item);
+
+  msg.drbs_to_be_setup_mod_list.emplace(drb_to_be_setup_mod_item.drb_id, drb_to_be_setup_mod_item);
 
   return msg;
 }

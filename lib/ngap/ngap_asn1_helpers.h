@@ -72,7 +72,7 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& request,
   broadcast_plmn_item.plmn_id.from_number(plmn_bcd);
 
   asn1::ngap::slice_support_item_s slice_support_item = {};
-  slice_support_item.s_nssai.sst.from_number(1);
+  slice_support_item.s_nssai.sst.from_number(1); // TODO: Remove hardcoded value
   broadcast_plmn_item.tai_slice_support_list.push_back(slice_support_item);
 
   supported_ta_item.broadcast_plmn_list.push_back(broadcast_plmn_item);
@@ -118,7 +118,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
                          asn1_session_item.pdu_session_res_setup_request_transfer.end()});
 
     if (asn1_setup_req_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
-      //   logger.error("Couldn't unpack PDU Session Resource Setup Request Transfer PDU");
+      srslog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Setup Request Transfer PDU");
       return;
     }
 
@@ -144,32 +144,36 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
       // qosFlowLevelQosParameters
       if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
           asn1::ngap::qos_characteristics_c::types::dyn5qi) {
-        qos_flow_setup_req_item.qos_characteristics.is_dynamic_5qi = true;
-        qos_flow_setup_req_item.qos_characteristics.five_qi =
-            asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi;
+        dyn_5qi_descriptor_t dyn_5qi = {};
+        if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi_present) {
+          dyn_5qi.five_qi = asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi;
+        }
+        // TODO: Add optional values
 
-        // TODO: ADD optional values
+        qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi = dyn_5qi;
+
+        // TODO: Add optional values
 
       } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
                  asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
-        qos_flow_setup_req_item.qos_characteristics.is_dynamic_5qi = false;
-        qos_flow_setup_req_item.qos_characteristics.five_qi =
-            asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi;
+        non_dyn_5qi_descriptor_t non_dyn_5qi = {};
+        non_dyn_5qi.five_qi = asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi;
+        qos_flow_setup_req_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi = non_dyn_5qi;
 
-        // TODO: ADD optional values
+        // TODO: Add optional values
       }
 
       // allocationAndRetentionPriority
-      qos_flow_setup_req_item.qos_characteristics.prio_level_arp =
+      qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp =
           asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
-      qos_flow_setup_req_item.qos_characteristics.pre_emption_cap =
+      qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap =
           asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_cap.to_string();
-      qos_flow_setup_req_item.qos_characteristics.pre_emption_vulnerability =
+      qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
           asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability.to_string();
 
       // Optional Parameters
       if (asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info_present) {
-        qos_flow_setup_req_item.add_qos_flow_info =
+        qos_flow_setup_req_item.qos_flow_level_qos_params.add_qos_flow_info =
             asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info.to_string();
       }
 
@@ -178,7 +182,7 @@ inline void fill_cu_cp_pdu_session_resource_setup_request(
       }
 
       if (asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
-        qos_flow_setup_req_item.reflective_qos_attribute =
+        qos_flow_setup_req_item.qos_flow_level_qos_params.reflective_qos_attribute =
             asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute.to_string();
       }
 
@@ -293,18 +297,8 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
   // add user location info
   if (cu_cp_resp.user_location_info.has_value()) {
     asn1_resp->user_location_info_present = true;
-    auto& asn1_user_location_info         = asn1_resp->user_location_info.value.set_user_location_info_nr();
-    // add nr cgi
-    asn1_user_location_info.nr_cgi.nr_cell_id.from_number(cu_cp_resp.user_location_info.value().nr_cgi.nci);
-    asn1_user_location_info.nr_cgi.plmn_id.from_string(cu_cp_resp.user_location_info.value().nr_cgi.plmn_hex);
-    // add tai
-    asn1_user_location_info.tai.plmn_id.from_string(cu_cp_resp.user_location_info.value().tai.plmn_id);
-    asn1_user_location_info.tai.tac.from_number(cu_cp_resp.user_location_info.value().tai.tac);
-    // add timestamp
-    if (cu_cp_resp.user_location_info.value().time_stamp.has_value()) {
-      asn1_user_location_info.time_stamp_present = true;
-      asn1_user_location_info.time_stamp.from_number(cu_cp_resp.user_location_info.value().time_stamp.value());
-    }
+    asn1_resp->user_location_info.value.set_user_location_info_nr() =
+        cu_cp_user_location_info_to_asn1(cu_cp_resp.user_location_info.value());
   }
 
   // add info on recommended cells and ran nodes for paging
