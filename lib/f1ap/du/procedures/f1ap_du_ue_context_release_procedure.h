@@ -31,6 +31,8 @@ private:
   f1ap_du_ue_manager&                        ue_db;
   f1ap_du_ue&                                ue;
   srslog::basic_logger&                      logger = srslog::fetch_basic_logger("DU-F1");
+
+  unique_timer release_wait_timer;
 };
 
 } // namespace srs_du

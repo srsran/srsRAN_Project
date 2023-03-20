@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_du_ue_context_release_procedure.h"
+#include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -16,12 +17,19 @@ using namespace srs_du;
 f1ap_du_ue_context_release_procedure::f1ap_du_ue_context_release_procedure(
     const asn1::f1ap::ue_context_release_cmd_s& msg_,
     f1ap_du_ue_manager&                         ues) :
-  msg(msg_), ue_db(ues), ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value)))
+  msg(msg_),
+  ue_db(ues),
+  ue(*ues.find(int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id->value))),
+  release_wait_timer(ue.du_handler.get_timer_factory().create_timer())
 {
 }
 
 void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
+  // Wait period before the UE context is deleted from the DU. This value should be large enough to ensure any
+  // pending RRC message (e.g. RRC Release) is sent to the UE.
+  static const std::chrono::milliseconds ue_release_timeout{120};
+
   CORO_BEGIN(ctx);
 
   if (msg->rrc_container_present) {
@@ -43,6 +51,9 @@ void f1ap_du_ue_context_release_procedure::operator()(coro_context<async_task<vo
       // Handle Error.
     }
   }
+
+  // Wait for pending RRC messages to be flushed.
+  CORO_AWAIT(async_wait_for(release_wait_timer, ue_release_timeout));
 
   // Remove UE from DU manager.
   CORO_AWAIT(ue.du_handler.request_ue_removal(f1ap_ue_delete_request{ue.context.ue_index}));
