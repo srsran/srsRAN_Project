@@ -97,7 +97,7 @@ Run PHY testvector tests:
 A number of PHY tests are based on MATLAB generated testvectors. By default, those tests are disabled.
 The following steps are required to enable them:
 
-1. Download the [PHY testvector set](https://github.com/srsran/srsRAN_Project/releases/phy_testvectors.tar.gz).
+1. Download the [PHY testvector set](https://github.com/srsran/srsRAN_Project/releases/download/release_23_3/phy_testvectors.tar.gz).
 2. Copy the PHY testvectors to its location within srsRAN:
 ```
 tar -xzf phy_testvectors.tar.gz -C /path_to_your_local_repository/srsgnb/
