@@ -8,7 +8,7 @@
  *
  */
 
-#include "ngap_pcap_impl.h"
+#include "dlt_pcap_impl.h"
 #include "srsran/adt/byte_buffer.h"
 #include <stdint.h>
 
@@ -18,28 +18,28 @@ constexpr uint16_t NGAP_DLT = 152;
 
 constexpr uint16_t pcap_ngap_max_len = 2000;
 
-ngap_pcap_impl::ngap_pcap_impl() : worker("NGAP-PCAP", 1024)
+dlt_pcap_impl::dlt_pcap_impl(unsigned dlt_, std::string layer_name) : worker(layer_name + "-PCAP", 1024)
 {
   tmp_mem.resize(pcap_ngap_max_len);
 }
 
-ngap_pcap_impl::~ngap_pcap_impl()
+dlt_pcap_impl::~dlt_pcap_impl()
 {
   close();
 }
 
-void ngap_pcap_impl::open(const char* filename_)
+void dlt_pcap_impl::open(const char* filename_)
 {
   auto fn = [this, filename_]() { writter.dlt_pcap_open(NGAP_DLT, filename_); };
   worker.push_task_blocking(fn);
 }
 
-bool ngap_pcap_impl::is_write_enabled()
+bool dlt_pcap_impl::is_write_enabled()
 {
   return writter.is_write_enabled();
 }
 
-void ngap_pcap_impl::close()
+void dlt_pcap_impl::close()
 {
   if (is_write_enabled()) {
     auto fn = [this]() { writter.dlt_pcap_close(); };
@@ -49,20 +49,20 @@ void ngap_pcap_impl::close()
   }
 }
 
-void ngap_pcap_impl::push_pdu(srsran::byte_buffer pdu)
+void dlt_pcap_impl::push_pdu(srsran::byte_buffer pdu)
 {
   auto fn = [this, pdu]() mutable { write_pdu(std::move(pdu)); };
   worker.push_task(fn);
 }
 
-void ngap_pcap_impl::push_pdu(srsran::const_span<uint8_t> pdu)
+void dlt_pcap_impl::push_pdu(srsran::const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, buffer]() mutable { write_pdu(std::move(buffer)); };
   worker.push_task(fn);
 }
 
-void ngap_pcap_impl::write_pdu(srsran::byte_buffer buf)
+void dlt_pcap_impl::write_pdu(srsran::byte_buffer buf)
 {
   if (!is_write_enabled() || buf.empty()) {
     // skip

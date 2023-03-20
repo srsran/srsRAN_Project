@@ -40,8 +40,8 @@
 #include "fapi_factory.h"
 #include "lib/du_high/du_high.h"
 #include "lib/du_high/du_high_executor_strategies.h"
+#include "lib/pcap/dlt_pcap_impl.h"
 #include "lib/pcap/mac_pcap_impl.h"
-#include "lib/pcap/ngap_pcap_impl.h"
 #include "phy_factory.h"
 #include "radio_notifier_sample.h"
 #include "srsran/du/du_cell_config_helpers.h"
@@ -474,7 +474,7 @@ int main(int argc, char** argv)
   check_drm_kms_polling(gnb_logger);
 
   // Set layer-specific pcap options.
-  std::unique_ptr<ngap_pcap> ngap_p = std::make_unique<ngap_pcap_impl>();
+  std::unique_ptr<dlt_pcap> ngap_p = std::make_unique<dlt_pcap_impl>(PCAP_NGAP_DLT, "NGAP");
   if (gnb_cfg.pcap_cfg.ngap.enabled) {
     ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
   }

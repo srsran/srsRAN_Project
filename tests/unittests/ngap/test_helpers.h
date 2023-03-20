@@ -352,7 +352,7 @@ private:
   srslog::basic_logger& logger;
 };
 
-class dummy_ngap_pcap : public ngap_pcap
+class dummy_ngap_pcap : public dlt_pcap
 {
 public:
   void open(const char* filename_) override {}

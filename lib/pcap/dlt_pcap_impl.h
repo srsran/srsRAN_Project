@@ -17,15 +17,15 @@
 
 namespace srsran {
 
-class ngap_pcap_impl : public ngap_pcap
+class dlt_pcap_impl : public dlt_pcap
 {
 public:
-  ngap_pcap_impl();
-  ~ngap_pcap_impl() override;
-  ngap_pcap_impl(const ngap_pcap_impl& other)            = delete;
-  ngap_pcap_impl& operator=(const ngap_pcap_impl& other) = delete;
-  ngap_pcap_impl(ngap_pcap_impl&& other)                 = delete;
-  ngap_pcap_impl& operator=(ngap_pcap_impl&& other)      = delete;
+  dlt_pcap_impl(unsigned dlt_, std::string layer_name);
+  ~dlt_pcap_impl() override;
+  dlt_pcap_impl(const dlt_pcap_impl& other)            = delete;
+  dlt_pcap_impl& operator=(const dlt_pcap_impl& other) = delete;
+  dlt_pcap_impl(dlt_pcap_impl&& other)                 = delete;
+  dlt_pcap_impl& operator=(dlt_pcap_impl&& other)      = delete;
 
   void open(const char* filename_) override;
   void close() override;
@@ -34,6 +34,7 @@ public:
   void push_pdu(srsran::const_span<uint8_t> pdu) override;
 
 private:
+  unsigned             dlt;
   void                 write_pdu(srsran::byte_buffer buf);
   task_worker          worker;
   std::vector<uint8_t> tmp_mem;

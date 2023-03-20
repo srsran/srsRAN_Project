@@ -66,11 +66,14 @@ public:
   virtual void push_pdu(mac_nr_context_info context, byte_buffer pdu)         = 0;
 };
 
-/// @brief Interface class for writing a NGAP PCAP to a file.
-class ngap_pcap
+// DLT PCAP values for different layers
+constexpr uint16_t PCAP_NGAP_DLT = 152;
+
+/// @brief Interface class for writing a DLT PCAP to a file.
+class dlt_pcap
 {
 public:
-  virtual ~ngap_pcap() = default;
+  virtual ~dlt_pcap() = default;
 
   virtual void open(const char* filename_)       = 0;
   virtual void close()                           = 0;
