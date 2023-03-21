@@ -167,7 +167,7 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_
 
     supported_plmns_item_s plmn;
     plmn.plmn_id[0] = 0;    // MCC = 001
-    plmn.plmn_id[1] = 0xF1; // MCC = 001
+    plmn.plmn_id[1] = 0xf1; // MCC = 001
     plmn.plmn_id[2] = 0x1;  // MNC = 01
     setup_resp->supported_plmns->resize(1);
     setup_resp->supported_plmns.value[0] = plmn;

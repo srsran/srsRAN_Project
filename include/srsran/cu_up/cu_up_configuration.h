@@ -44,7 +44,6 @@ struct cu_up_configuration {
   e1ap_message_notifier* e1ap_notifier     = nullptr; ///< Callback for incoming E1AP messages.
   f1u_cu_up_gateway*     f1u_gateway       = nullptr;
   io_broker*             epoll_broker      = nullptr; ///< IO broker to receive messages from a network gateway
-  dlt_pcap*              e1ap_pcap         = nullptr;
 
   network_interface_config net_cfg;
 

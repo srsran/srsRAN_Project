@@ -490,7 +490,7 @@ int main(int argc, char** argv)
   worker_manager workers{gnb_cfg};
 
   f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1"), f1ap_du_to_cu_adapter("DU-F1");
-  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP", e1ap_p.get()), e1ap_up_to_cp_adapter("CU-UP", e1ap_p.get());
+  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP", *e1ap_p), e1ap_up_to_cp_adapter("CU-UP", *e1ap_p);
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -526,7 +526,6 @@ int main(int argc, char** argv)
   cu_up_cfg.e1ap_notifier        = &e1ap_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker         = epoll_broker.get();
-  cu_up_cfg.e1ap_pcap            = e1ap_p.get();
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
       gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
