@@ -12,6 +12,7 @@
 
 #include "../common/e1ap_cu_up_test_messages.h"
 #include "../common/test_helpers.h"
+#include "lib/pcap/dlt_pcap_impl.h"
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_factory.h"
@@ -38,6 +39,7 @@ protected:
   dummy_e1ap_cu_up_notifier       cu_up_notifier;
   manual_task_worker              cu_up_worker{128};
   std::unique_ptr<e1ap_interface> e1ap;
+  dlt_pcap_impl                   e1ap_p;
 };
 
 } // namespace srs_cu_up

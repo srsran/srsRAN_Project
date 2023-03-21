@@ -25,6 +25,7 @@ void assert_cu_up_configuration_valid(const cu_up_configuration& cfg)
   srsran_assert(cfg.e1ap_notifier != nullptr, "Invalid E1AP notifier");
   srsran_assert(cfg.f1u_gateway != nullptr, "Invalid F1-U connector");
   srsran_assert(cfg.epoll_broker != nullptr, "Invalid IO broker");
+  srsran_assert(cfg.e1ap_pcap != nullptr, "Invalid E1AP pcap");
 }
 
 cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(128)
@@ -61,7 +62,7 @@ cu_up::cu_up(const cu_up_configuration& config_) : cfg(config_), main_ctrl_loop(
       cfg.net_cfg, logger, timers, *cfg.f1u_gateway, gtpu_gw_adapter, *ngu_demux, *cfg.cu_up_executor);
 
   // create e1ap
-  e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor);
+  e1ap = create_e1ap(*cfg.e1ap_notifier, e1ap_cu_up_ev_notifier, *cfg.cu_up_executor, *cfg.e1ap_pcap);
   e1ap_cu_up_ev_notifier.connect_cu_up(*this);
 }
 

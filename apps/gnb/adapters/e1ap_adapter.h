@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/e1ap/common/e1ap_common.h"
+#include "srsran/pcap/pcap.h"
 
 namespace srsran {
 
@@ -18,19 +19,37 @@ namespace srsran {
 class e1ap_local_adapter : public e1ap_message_notifier
 {
 public:
-  explicit e1ap_local_adapter(const std::string& log_name) : logger(srslog::fetch_basic_logger(log_name)) {}
+  explicit e1ap_local_adapter(const std::string& log_name_, dlt_pcap* e1ap_pcap_) :
+    log_name(log_name_), logger(srslog::fetch_basic_logger(log_name_)), e1ap_pcap(e1ap_pcap_)
+  {
+  }
 
   void attach_handler(e1ap_message_handler* handler_) { handler = handler_; }
   void on_new_message(const e1ap_message& msg) override
   {
     report_fatal_error_if_not(handler, "E1AP message handler not set.");
     logger.debug("Received a PDU of type {}", msg.pdu.type().to_string());
+
+    fmt::print("asfdasdf asdfasdf {} {}\n", fmt::ptr(e1ap_pcap), log_name);
+    if (e1ap_pcap != nullptr && e1ap_pcap->is_write_enabled()) {
+      fmt::print("asfdasdf\n");
+      byte_buffer   buf;
+      asn1::bit_ref bref(buf);
+      if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
+        logger.error("Failed to pack PDU");
+        return;
+      }
+      e1ap_pcap->push_pdu(std::move(buf));
+    }
+
     handler->handle_message(msg);
   }
 
 private:
+  std::string           log_name;
   srslog::basic_logger& logger;
-  e1ap_message_handler* handler = nullptr;
+  dlt_pcap*             e1ap_pcap = nullptr;
+  e1ap_message_handler* handler   = nullptr;
 };
 
 }; // namespace srsran

@@ -20,11 +20,13 @@ using namespace srs_cu_up;
 
 e1ap_cu_up_impl::e1ap_cu_up_impl(e1ap_message_notifier& e1ap_pdu_notifier_,
                                  e1ap_cu_up_notifier&   cu_up_notifier_,
-                                 task_executor&         cu_up_exec_) :
+                                 task_executor&         cu_up_exec_,
+                                 dlt_pcap&              e1ap_pcap_) :
   cu_up_exec(cu_up_exec_),
   logger(srslog::fetch_basic_logger("CU-UP-E1")),
   pdu_notifier(e1ap_pdu_notifier_),
-  cu_up_notifier(cu_up_notifier_)
+  cu_up_notifier(cu_up_notifier_),
+  e1ap_pcap(e1ap_pcap_)
 {
 }
 
@@ -101,6 +103,16 @@ void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
       logger.debug("Rx E1AP SDU: {}", js.to_string());
     }
 
+    if (e1ap_pcap.is_write_enabled()) {
+      byte_buffer   buf;
+      asn1::bit_ref bref(buf);
+      if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
+        logger.error("Failed to pack PDU");
+        return;
+      }
+      e1ap_pcap.push_pdu(std::move(buf));
+    }
+
     switch (msg.pdu.type().value) {
       case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
         handle_initiating_message(msg.pdu.init_msg());
@@ -147,7 +159,37 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_
     req_msg.gnb_cu_cp_name = msg->gnb_cu_cp_name.value.to_string();
   }
 
-  cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
+  cu_cp_e1_setup_response response = cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
+
+  e1ap_message e1ap_msg;
+  if (response.success) {
+    logger.debug("Sending CuCpE1SetupResponse message");
+
+    e1ap_msg.pdu.set_successful_outcome();
+    e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
+    auto& setup_resp = e1ap_msg.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp();
+
+    setup_resp->gnb_cu_up_id.value = response.gnb_cu_up_id.value();
+    if (response.gnb_cu_up_name.has_value()) {
+      setup_resp->gnb_cu_up_name_present = true;
+      setup_resp->gnb_cu_up_name.value.from_string(response.gnb_cu_up_name.value());
+    }
+
+    setup_resp->cn_support.value = cn_support_opts::c_5gc;
+
+    supported_plmns_item_s plmn;
+    plmn.plmn_id[0] = 0;    // MCC = 001
+    plmn.plmn_id[1] = 0xF1; // MCC = 001
+    plmn.plmn_id[2] = 0x1;  // MNC = 01
+    setup_resp->supported_plmns->resize(1);
+    setup_resp->supported_plmns.value[0] = plmn;
+
+    // TODO: Add missing values
+
+    // set values handled by E1
+    setup_resp->transaction_id.value = current_transaction_id;
+    pdu_notifier.on_new_message(e1ap_msg);
+  }
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg)

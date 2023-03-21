@@ -13,6 +13,7 @@
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
+#include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/io_broker/io_broker.h"
 
@@ -43,6 +44,7 @@ struct cu_up_configuration {
   e1ap_message_notifier* e1ap_notifier     = nullptr; ///< Callback for incoming E1AP messages.
   f1u_cu_up_gateway*     f1u_gateway       = nullptr;
   io_broker*             epoll_broker      = nullptr; ///< IO broker to receive messages from a network gateway
+  dlt_pcap*              e1ap_pcap         = nullptr;
 
   network_interface_config net_cfg;
 

@@ -234,9 +234,9 @@ struct log_appconfig {
   std::string sdap_level  = "warning";
   std::string gtpu_level  = "warning";
   std::string fapi_level  = "warning";
-  uint32_t    hex_max_size            = 0;     // Maximum number of bytes to write when dumping hex arrays.
-  bool        broadcast_enabled       = false; // Set to true to log broadcasting messages and all PRACH opportunities.
-  std::string phy_rx_symbols_filename = "";    // Set to a valid file path to print the received symbols.
+  int         hex_max_size      = 0;     // Maximum number of bytes to write when dumping hex arrays.
+  bool        broadcast_enabled = false; // Set to true to log broadcasting messages and all PRACH opportunities.
+  std::string phy_rx_symbols_filename;   // Set to a valid file path to print the received symbols.
 };
 
 struct pcap_appconfig {
@@ -244,6 +244,10 @@ struct pcap_appconfig {
     std::string filename = "/tmp/gnb_ngap.pcap";
     bool        enabled  = false;
   } ngap;
+  struct {
+    std::string filename = "/tmp/gnb_e1ap.pcap";
+    bool        enabled  = false;
+  } e1ap;
   struct {
     std::string filename = "/tmp/gnb_mac.pcap";
     bool        enabled  = false;

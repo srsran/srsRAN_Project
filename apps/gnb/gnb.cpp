@@ -376,7 +376,7 @@ int main(int argc, char** argv)
   // Set up logging.
   srslog::sink* log_sink = (gnb_cfg.log_cfg.filename == "stdout") ? srslog::create_stdout_sink()
                                                                   : srslog::create_file_sink(gnb_cfg.log_cfg.filename);
-  if (!log_sink) {
+  if (log_sink == nullptr) {
     report_error("Could not create application main log sink.\n");
   }
   srslog::set_default_sink(*log_sink);
@@ -478,6 +478,10 @@ int main(int argc, char** argv)
   if (gnb_cfg.pcap_cfg.ngap.enabled) {
     ngap_p->open(gnb_cfg.pcap_cfg.ngap.filename.c_str());
   }
+  std::unique_ptr<dlt_pcap> e1ap_p = std::make_unique<dlt_pcap_impl>(PCAP_E1AP_DLT, "E1AP");
+  if (gnb_cfg.pcap_cfg.e1ap.enabled) {
+    e1ap_p->open(gnb_cfg.pcap_cfg.e1ap.filename.c_str());
+  }
   std::unique_ptr<mac_pcap> mac_p = std::make_unique<mac_pcap_impl>();
   if (gnb_cfg.pcap_cfg.mac.enabled) {
     mac_p->open(gnb_cfg.pcap_cfg.mac.filename.c_str());
@@ -486,7 +490,7 @@ int main(int argc, char** argv)
   worker_manager workers{gnb_cfg};
 
   f1ap_local_adapter f1ap_cu_to_du_adapter("CU-CP-F1"), f1ap_du_to_cu_adapter("DU-F1");
-  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP"), e1ap_up_to_cp_adapter("CU-UP");
+  e1ap_local_adapter e1ap_cp_to_up_adapter("CU-CP", e1ap_p.get()), e1ap_up_to_cp_adapter("CU-UP", e1ap_p.get());
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
@@ -522,6 +526,7 @@ int main(int argc, char** argv)
   cu_up_cfg.e1ap_notifier        = &e1ap_up_to_cp_adapter;
   cu_up_cfg.f1u_gateway          = f1u_conn->get_f1u_cu_up_gateway();
   cu_up_cfg.epoll_broker         = epoll_broker.get();
+  cu_up_cfg.e1ap_pcap            = e1ap_p.get();
   cu_up_cfg.net_cfg.n3_bind_addr = gnb_cfg.amf_cfg.bind_addr; // TODO: rename variable to core addr
   cu_up_cfg.net_cfg.f1u_bind_addr =
       gnb_cfg.amf_cfg.bind_addr; // FIXME: check if this can be removed for co-located case
@@ -715,6 +720,7 @@ int main(int argc, char** argv)
   console.on_app_stopping();
 
   ngap_p->close();
+  e1ap_p->close();
   mac_p->close();
 
   gnb_logger.info("Stopping radio...");
