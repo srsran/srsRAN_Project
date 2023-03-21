@@ -379,7 +379,17 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     info.is_paging_origin_non_3gpp_access = true;
   }
   for (const auto& asn_nr_cgi : msg->paging_cell_list.value) {
-    info.paging_cells.push_back(cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi));
+    const auto du_cell_it = std::find_if(ctxt.du_cell_index_to_nr_cgi_lookup.cbegin(),
+                                         ctxt.du_cell_index_to_nr_cgi_lookup.cend(),
+                                         [&asn_nr_cgi](const nr_cell_global_id_t& cgi) {
+                                           return cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi) == cgi;
+                                         });
+    // Cell not served by this DU.
+    if (du_cell_it == ctxt.du_cell_index_to_nr_cgi_lookup.cend()) {
+      continue;
+    }
+    info.paging_cells.push_back(
+        to_du_cell_index(std::distance(ctxt.du_cell_index_to_nr_cgi_lookup.cbegin(), du_cell_it)));
   }
   paging_notifier.on_paging_received(info);
 }

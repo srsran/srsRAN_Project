@@ -21,9 +21,11 @@
 #include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/lcid.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
+#include <unordered_map>
 
 namespace srsran {
 namespace srs_du {
@@ -71,6 +73,8 @@ struct du_setup_params {
 struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s msg;
   unsigned                       max_setup_retries = 5;
+  /// Vector element index corresponds to DU Cell Index.
+  std::vector<nr_cell_global_id_t> du_cell_index_to_nr_cgi_lookup;
 };
 
 struct f1_setup_response_message {

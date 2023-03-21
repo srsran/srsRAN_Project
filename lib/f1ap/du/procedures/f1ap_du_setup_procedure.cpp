@@ -124,6 +124,9 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {
       du_ctxt.served_cells[i] = request.msg->gnb_du_served_cells_list.value[i]->gnb_du_served_cells_item();
     }
+    for (const auto& cgi : request.du_cell_index_to_nr_cgi_lookup) {
+      du_ctxt.du_cell_index_to_nr_cgi_lookup.push_back(cgi);
+    }
 
   } else if (cu_pdu_response.has_value() or cu_pdu_response.error().value.type().value !=
                                                 f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {

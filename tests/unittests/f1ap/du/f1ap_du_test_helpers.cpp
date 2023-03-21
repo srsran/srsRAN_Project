@@ -22,6 +22,7 @@ f1_setup_request_message srsran::srs_du::generate_f1_setup_request_message()
   du_cell_config                     cell         = config_helpers::make_default_du_cell_config();
   std::vector<const du_cell_config*> cells        = {&cell};
   fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells);
+  request_msg.du_cell_index_to_nr_cgi_lookup.push_back(cell.nr_cgi);
 
   return request_msg;
 }

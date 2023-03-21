@@ -31,6 +31,12 @@ struct nr_cell_global_id_t {
   std::string plmn_hex;
   /// NR cell id.
   nr_cell_id_t nci;
+
+  bool operator==(const nr_cell_global_id_t& rhs) const
+  {
+    return mcc == rhs.mcc && mnc == rhs.mnc && plmn == rhs.plmn && plmn_hex == rhs.plmn_hex && nci == rhs.nci;
+  }
+  bool operator!=(const nr_cell_global_id_t& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsran

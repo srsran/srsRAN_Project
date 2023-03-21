@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/optional.h"
-#include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/du_types.h"
 
 namespace srsran {
 
@@ -20,8 +20,8 @@ enum class paging_identity_type { ran_ue_paging_identity, cn_ue_paging_identity 
 
 struct paging_information {
   /// Cells at which to perform Paging of UE.
-  std::vector<nr_cell_global_id_t> paging_cells;
-  paging_identity_type             paging_type_indicator;
+  std::vector<du_cell_index_t> paging_cells;
+  paging_identity_type         paging_type_indicator;
   /// Paging identity assigned to UE. Possible values are \c I-RNTI-Value (Bit string of size 40) and \c NG-5G-S-TMSI
   /// (Bit string of size 48). See TS 38.331.
   uint64_t paging_identity;
