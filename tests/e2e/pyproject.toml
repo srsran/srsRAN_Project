@@ -7,7 +7,10 @@
 #
 
 [tool.pytest.ini_options]
-addopts = "--tb=short"
+addopts = "--tb=short --random-order"
+filterwarnings = [
+  "ignore:HTTPResponse.getheaders:DeprecationWarning",
+]
 log_cli = true
 log_date_format = "%Y-%m-%d %H:%M:%S"
 log_format = "%(asctime)s [%(levelname)s] %(message)s"
@@ -42,3 +45,15 @@ include_trailing_comma = true
 line_length = 120
 profile = "black"
 remove_redundant_aliases = true
+
+[tool.mypy]
+ignore_missing_imports = true
+install_types = true
+non_interactive = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pylint]
+disable = ["fixme", "no-name-in-module"]
+ignore-signatures = true
+max-line-length = 120

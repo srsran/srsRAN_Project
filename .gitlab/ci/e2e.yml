@@ -23,7 +23,7 @@ include:
   timeout: 6h
   interruptible: false
   image:
-    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.0.27
+    name: registry.gitlab.com/softwareradiosystems/ci/retina/launcher:0.1.0
     entrypoint: ["/bin/sh", "-c"]
   variables:
     REQUEST: "" # Retina YAML request
@@ -48,7 +48,7 @@ include:
     - |
       cd tests/e2e
       export LOGNAME=ci_$GITLAB_USER_LOGIN
-    - retina-launcher --retina-request ${REQUEST} --self-contained-html --html=./log/report.html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$LOG_LEVEL gnb.all.log_level=$LOG_LEVEL "${RETINA_ARGS}"
+    - retina-launcher --retina-request=${REQUEST} --log-folder=./log --html=./log/report.html --self-contained-html --junitxml=out.xml "${PYTEST_ARGS}" -m "${MARKERS}" --register-parameter ue.all.log_level=$LOG_LEVEL gnb.all.log_level=$LOG_LEVEL "${RETINA_ARGS}"
   after_script:
     - |
       echo "*******************************************************************************************************************************"
@@ -67,7 +67,7 @@ smoke-zmq-tsan:
       allow_failure: false
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "smoke and not tcp and multiue"
+    MARKERS: "smoke and not tcp"
     PYTEST_ARGS: "-x"
     RETINA_ARGS: "gnb.all.pcap=True"
     LOG_LEVEL: "debug"
@@ -88,8 +88,7 @@ zmq:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_zmq.yml"
-    MARKERS: "zmq and multiue and not smoke"
-    # PYTEST_ARGS: "-n 2"
+    MARKERS: "zmq and not smoke"
     LOG_LEVEL: "info"
   needs:
     - job: "avx2 [basic]"
@@ -97,8 +96,6 @@ zmq:
 
 zmq-tsan:
   extends: zmq
-  # variables:
-  #   PYTEST_ARGS: "-n 2"
   needs:
     - job: "avx2 [tsan, cached]"
       artifacts: true
@@ -112,8 +109,6 @@ zmq-tsan:
 
 zmq-asan:
   extends: zmq
-  # variables:
-  #   PYTEST_ARGS: "-n 2"
   needs:
     - job: "avx2 [asan]"
       artifacts: true
@@ -127,7 +122,7 @@ rf:
     - if: $CI_DESCRIPTION =~ /Nightly/
   variables:
     REQUEST: "${CI_PROJECT_DIR}/.gitlab/ci/retina_request_rf.yml"
-    MARKERS: "rf and not tcp and multiue"
+    MARKERS: "rf"
     LOG_LEVEL: "info"
   needs:
     - job: "avx2 [basic]"
