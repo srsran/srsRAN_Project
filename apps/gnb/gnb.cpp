@@ -183,11 +183,10 @@ private:
   std::unordered_map<std::string, std::unique_ptr<task_worker_pool>> worker_pools;
 
   // helper method to create workers
-  void create_worker(const std::string&          name,
-                     size_t                      queue_size,
-                     os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime())
+  template <typename... Args>
+  void create_worker(const std::string& name, Args&&... args)
   {
-    auto ret = workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, queue_size, prio)));
+    auto ret = workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, std::forward<Args>(args)...)));
     srsran_assert(ret.second, "Unable to create worker {}.", name);
   }
   // helper method to create worker pool
@@ -208,7 +207,11 @@ private:
     // Instantiate workers
     create_worker("gnb_ctrl", task_worker_queue_size);
     create_worker("gnb_ue", 512);
-    create_worker("du_cell", task_worker_queue_size, os_thread_realtime_priority::max() - 2);
+    create_worker("du_cell",
+                  task_worker_queue_size,
+                  os_thread_realtime_priority::max() - 2,
+                  os_sched_affinity_bitmask{},
+                  std::chrono::microseconds{10});
     if (blocking_mode_active) {
       create_worker("phy_worker", task_worker_queue_size, os_thread_realtime_priority::max());
     } else {
