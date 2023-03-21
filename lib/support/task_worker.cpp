@@ -9,28 +9,51 @@
  */
 
 #include "srsran/support/executors/task_worker.h"
-#include "srsran/srslog/srslog.h"
-#include <assert.h>
-#include <chrono>
-#include <stdio.h>
+#include <future>
 
-namespace srsran {
+using namespace srsran;
 
-task_worker::task_worker(std::string                      thread_name,
-                         uint32_t                         queue_size,
-                         os_thread_realtime_priority      prio,
-                         const os_sched_affinity_bitmask& mask) :
-  logger(srslog::fetch_basic_logger("ALL")), pending_tasks(queue_size), t_handle(thread_name, prio, mask, [this]() {
+static unique_function<void()> make_blocking_pop_task(blocking_queue<unique_task>& queue)
+{
+  return [&queue]() {
     while (true) {
-      bool   success;
-      task_t task = pending_tasks.pop_blocking(&success);
+      bool        success;
+      unique_task task = queue.pop_blocking(&success);
       if (not success) {
         break;
       }
       task();
     }
-    logger.info("Task worker {} finished.", t_handle.get_name());
-  })
+    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
+  };
+}
+
+static unique_function<void()> make_wait_pop_task(blocking_queue<unique_task>& queue,
+                                                  std::chrono::microseconds    duration)
+{
+  return [&queue, duration]() {
+    while (true) {
+      unique_task task;
+      if (not queue.pop_wait_for(task, duration)) {
+        break;
+      }
+      task();
+    }
+    srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
+  };
+}
+
+task_worker::task_worker(std::string                      thread_name,
+                         uint32_t                         queue_size,
+                         os_thread_realtime_priority      prio,
+                         const os_sched_affinity_bitmask& mask,
+                         std::chrono::microseconds        pop_wait_timeout) :
+  pending_tasks(queue_size),
+  t_handle(thread_name,
+           prio,
+           mask,
+           pop_wait_timeout.count() == 0 ? make_blocking_pop_task(pending_tasks)
+                                         : make_wait_pop_task(pending_tasks, pop_wait_timeout))
 {
 }
 
@@ -55,5 +78,3 @@ void task_worker::wait_pending_tasks()
   // blocks for enqueued task to complete.
   fut.get();
 }
-
-} // namespace srsran

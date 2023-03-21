@@ -16,16 +16,6 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/attributes.h"
 #include "srsran/support/unique_thread.h"
-#include <atomic>
-#include <condition_variable>
-#include <cstdint>
-#include <functional>
-#include <future>
-#include <memory>
-#include <mutex>
-#include <stack>
-#include <string>
-#include <vector>
 
 namespace srsran {
 
@@ -36,10 +26,20 @@ class task_worker
   using task_t = unique_task;
 
 public:
+  /// \brief Creates a task worker instance.
+  ///
+  /// \param thread_name Name of the thread instantiated by this task worker.
+  /// \param queue_size Number of pending tasks that this task worker can hold.
+  /// \param prio OS thread realtime priority.
+  /// \param mask OS scheduler thread affinity mask.
+  /// \param pop_wait_timeout Timeout for popping tasks. By default, no timeout is set and the task worker thread may
+  /// block waiting either for a new task to be pushed by another thread or for the task_worker to be stopped.
+  /// If a timeout is set, the duration of this wait is bounded.
   task_worker(std::string                      thread_name,
               uint32_t                         queue_size,
-              os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
-              const os_sched_affinity_bitmask& mask = {});
+              os_thread_realtime_priority      prio             = os_thread_realtime_priority::no_realtime(),
+              const os_sched_affinity_bitmask& mask             = {},
+              std::chrono::microseconds        pop_wait_timeout = std::chrono::microseconds{0});
   task_worker(const task_worker&)            = delete;
   task_worker(task_worker&&)                 = delete;
   task_worker& operator=(const task_worker&) = delete;
@@ -59,7 +59,8 @@ public:
   {
     auto ret = pending_tasks.push_blocking(std::move(task));
     if (ret.is_error()) {
-      logger.debug("Cannot push more tasks into the {} worker queue because it was closed", t_handle.get_name());
+      srslog::fetch_basic_logger("ALL").debug("Cannot push more tasks into the {} worker queue because it was closed",
+                                              t_handle.get_name());
       return;
     }
   }
@@ -80,9 +81,6 @@ public:
   const char* worker_name() const { return t_handle.get_name(); }
 
 private:
-  // args
-  srslog::basic_logger& logger;
-
   // Queue of tasks.
   srsran::blocking_queue<task_t> pending_tasks;
 
