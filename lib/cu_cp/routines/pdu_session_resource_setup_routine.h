@@ -32,7 +32,7 @@ public:
 
   void operator()(coro_context<async_task<cu_cp_pdu_session_resource_setup_response>>& ctx);
 
-  static const char* name() { return "PDU Session Creation Routine"; }
+  static const char* name() { return "PDU Session Resource Setup Routine"; }
 
 private:
   void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request& e1ap_request);
