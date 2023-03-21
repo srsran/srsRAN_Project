@@ -97,6 +97,22 @@ cu_cp_pdu_session_resource_setup_request srsran::srs_cu_cp::generate_pdu_session
   return req;
 };
 
+cu_cp_pdu_session_resource_release_command srsran::srs_cu_cp::generate_pdu_session_resource_release()
+{
+  cu_cp_pdu_session_resource_release_command cmd;
+  pdu_session_id_t                           pdu_session_id = uint_to_pdu_session_id(1);
+
+  cmd.ue_index = uint_to_ue_index(0);
+
+  cu_cp_pdu_session_res_to_release_item_rel_cmd pdu_session_res_to_release_item_rel_cmd;
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_id                             = pdu_session_id;
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer.cause = cause_t::nas;
+
+  cmd.pdu_session_res_to_release_list_rel_cmd.emplace(pdu_session_id, pdu_session_res_to_release_item_rel_cmd);
+
+  return cmd;
+};
+
 e1ap_bearer_context_setup_response
 srsran::srs_cu_cp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
