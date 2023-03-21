@@ -305,6 +305,66 @@ srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_setup_response(pdu_sessio
   return pdu_session_res_setup_resp;
 }
 
+ngap_message srsran::srs_cu_cp::generate_pdu_session_resource_release_command_base(amf_ue_id_t amf_ue_id,
+                                                                                   ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg;
+
+  ngap_msg.pdu.set_init_msg();
+  ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_RELEASE);
+
+  auto& pdu_session_res_release_cmd                 = ngap_msg.pdu.init_msg().value.pdu_session_res_release_cmd();
+  pdu_session_res_release_cmd->amf_ue_ngap_id.value = amf_ue_id_to_uint(amf_ue_id);
+  pdu_session_res_release_cmd->ran_ue_ngap_id.value = ran_ue_id_to_uint(ran_ue_id);
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_release_command(amf_ue_id_t      amf_ue_id,
+                                                                                    ran_ue_id_t      ran_ue_id,
+                                                                                    pdu_session_id_t pdu_session_id)
+{
+  ngap_message ngap_msg = generate_pdu_session_resource_release_command_base(amf_ue_id, ran_ue_id);
+
+  auto& pdu_session_res_release_cmd = ngap_msg.pdu.init_msg().value.pdu_session_res_release_cmd();
+
+  // Add PDU Session NAS PDU
+  pdu_session_res_release_cmd->nas_pdu_present = true;
+  pdu_session_res_release_cmd->nas_pdu.value   = make_byte_buffer("7e02bcb47dc1137e00680100052e01b3d3241201");
+
+  // Add  PDU session resource to release list
+  asn1::ngap::pdu_session_res_to_release_item_rel_cmd_s pdu_session_res_to_release_item_rel_cmd;
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_id                       = pdu_session_id_to_uint(pdu_session_id);
+  pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer = make_byte_buffer("10");
+  pdu_session_res_release_cmd->pdu_session_res_to_release_list_rel_cmd.value.push_back(
+      pdu_session_res_to_release_item_rel_cmd);
+
+  return ngap_msg;
+}
+
+ngap_message srsran::srs_cu_cp::generate_invalid_pdu_session_resource_release_command(amf_ue_id_t amf_ue_id,
+                                                                                      ran_ue_id_t ran_ue_id)
+{
+  ngap_message ngap_msg = generate_pdu_session_resource_release_command_base(amf_ue_id, ran_ue_id);
+
+  return ngap_msg;
+}
+
+cu_cp_pdu_session_resource_release_response
+srsran::srs_cu_cp::generate_cu_cp_pdu_session_resource_release_response(pdu_session_id_t pdu_session_id)
+{
+  cu_cp_pdu_session_resource_release_response pdu_session_res_release_resp;
+
+  cu_cp_pdu_session_res_released_item_rel_res pdu_session_res_released_item_rel_res;
+
+  pdu_session_res_released_item_rel_res.pdu_session_id = pdu_session_id;
+
+  pdu_session_res_release_resp.pdu_session_res_released_list_rel_res.emplace(pdu_session_id,
+                                                                             pdu_session_res_released_item_rel_res);
+
+  return pdu_session_res_release_resp;
+}
+
 ngap_message srsran::srs_cu_cp::generate_valid_minimal_paging_message()
 {
   ngap_message ngap_msg;

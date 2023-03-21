@@ -321,6 +321,23 @@ public:
     });
   }
 
+  async_task<cu_cp_pdu_session_resource_release_response>
+  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) override
+  {
+    logger.info("Received a new pdu session resource release command");
+
+    last_release_command = std::move(command);
+
+    return launch_async([res = cu_cp_pdu_session_resource_release_response{}](
+                            coro_context<async_task<cu_cp_pdu_session_resource_release_response>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      res = generate_cu_cp_pdu_session_resource_release_response(uint_to_pdu_session_id(1));
+
+      CORO_RETURN(res);
+    });
+  }
+
   void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) override
   {
     logger.info("Received a new UE Context Release Command");
@@ -328,8 +345,9 @@ public:
     last_command = command;
   }
 
-  cu_cp_ue_context_release_command         last_command;
-  cu_cp_pdu_session_resource_setup_request last_request;
+  cu_cp_ue_context_release_command           last_command;
+  cu_cp_pdu_session_resource_setup_request   last_request;
+  cu_cp_pdu_session_resource_release_command last_release_command;
 
 private:
   srslog::basic_logger& logger;
