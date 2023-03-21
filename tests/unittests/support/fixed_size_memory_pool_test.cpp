@@ -69,7 +69,7 @@ TEST(fixed_memory_block_pool_test, when_worker_local_cache_exceeds_threshold_ret
     ASSERT_NE(b, nullptr) << "Pool got depleted before expected";
 
     // Delegate deallocation to another thread.
-    w.push_task([b, &pool]() { pool.deallocate_node(b); });
+    w.push_task_blocking([b, &pool]() { pool.deallocate_node(b); });
   }
 
   // Place a barrier to wait for other thread to deallocate some blocks.
@@ -78,7 +78,7 @@ TEST(fixed_memory_block_pool_test, when_worker_local_cache_exceeds_threshold_ret
   for (unsigned i = 0; i != nof_blocks - max_local_cache_size; ++i) {
     void* b = pool.allocate_node(256);
     ASSERT_NE(b, nullptr) << "Some blocks were not moved back to central cache";
-    w.push_task([b, &pool]() { pool.deallocate_node(b); });
+    w.push_task_blocking([b, &pool]() { pool.deallocate_node(b); });
   }
 
   // Place a barrier.

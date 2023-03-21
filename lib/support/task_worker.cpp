@@ -51,7 +51,7 @@ void task_worker::wait_pending_tasks()
 {
   std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
   std::future<void>          fut = pkg_task.get_future();
-  push_task(std::move(pkg_task));
+  push_task_blocking(std::move(pkg_task));
   // blocks for enqueued task to complete.
   fut.get();
 }

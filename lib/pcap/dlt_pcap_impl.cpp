@@ -50,14 +50,18 @@ void dlt_pcap_impl::close()
 void dlt_pcap_impl::push_pdu(srsran::byte_buffer pdu)
 {
   auto fn = [this, pdu]() mutable { write_pdu(std::move(pdu)); };
-  worker.push_task(fn);
+  if (not worker.push_task(fn)) {
+    srslog::fetch_basic_logger("ALL").warning("Dropped NGAP PCAP PDU. Cause: worker task is full");
+  }
 }
 
 void dlt_pcap_impl::push_pdu(srsran::const_span<uint8_t> pdu)
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, buffer]() mutable { write_pdu(std::move(buffer)); };
-  worker.push_task(fn);
+  if (not worker.push_task(fn)) {
+    srslog::fetch_basic_logger("ALL").warning("Dropped NGAP PCAP PDU. Cause: worker task is full");
+  }
 }
 
 void dlt_pcap_impl::write_pdu(srsran::byte_buffer buf)

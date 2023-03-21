@@ -57,13 +57,17 @@ void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::const_span<uin
 {
   byte_buffer buffer{pdu};
   auto        fn = [this, context, buffer = std::move(buffer)]() mutable { write_pdu(context, std::move(buffer)); };
-  worker.push_task(fn);
+  if (not worker.push_task(fn)) {
+    srslog::fetch_basic_logger("ALL").warning("Dropped MAC PCAP PDU. Cause: worker task is full");
+  }
 }
 
 void mac_pcap_impl::push_pdu(mac_nr_context_info context, srsran::byte_buffer pdu)
 {
   auto fn = [this, context, pdu = std::move(pdu)]() mutable { write_pdu(context, std::move(pdu)); };
-  worker.push_task(fn);
+  if (not worker.push_task(fn)) {
+    srslog::fetch_basic_logger("ALL").warning("Dropped MAC PCAP PDU. Cause: worker task is full");
+  }
 }
 
 void mac_pcap_impl::write_pdu(const mac_nr_context_info& context, srsran::byte_buffer buf)

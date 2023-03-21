@@ -14,6 +14,7 @@
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/attributes.h"
 #include "srsran/support/unique_thread.h"
 #include <atomic>
 #include <condition_variable>
@@ -50,19 +51,7 @@ public:
 
   /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, enqueueing fails.
   /// \return true if task was successfully enqueued. False if task FIFO was full.
-  bool push_task(task_t&& task, bool log_on_failure = true)
-  {
-    auto ret = pending_tasks.try_push(std::move(task));
-    if (ret.is_error()) {
-      if (log_on_failure) {
-        logger.error("Cannot push more tasks into the {} worker queue. Maximum size is {}",
-                     t_handle.get_name(),
-                     uint32_t(pending_tasks.max_size()));
-      }
-      return false;
-    }
-    return true;
-  }
+  bool push_task(task_t&& task) RETURN_NO_DISCARD { return pending_tasks.try_push(std::move(task)).has_value(); }
 
   /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, this call blocks,
   /// until the FIFO has space to enqueue the task.
@@ -118,10 +107,21 @@ public:
       task();
       return true;
     }
-    return worker->push_task(std::move(task), report_on_failure);
+    return defer(std::move(task));
   }
 
-  bool defer(unique_task task) override { return worker->push_task(std::move(task), report_on_failure); }
+  bool defer(unique_task task) override
+  {
+    if (not worker->push_task(std::move(task))) {
+      if (report_on_failure) {
+        srslog::fetch_basic_logger("ALL").error("Cannot push more tasks into the {} worker queue. Maximum size is {}",
+                                                worker->worker_name(),
+                                                worker->max_pending_tasks());
+      }
+      return false;
+    }
+    return true;
+  }
 
 private:
   task_worker* worker            = nullptr;
