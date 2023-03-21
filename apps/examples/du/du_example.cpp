@@ -316,7 +316,7 @@ struct worker_manager {
   pcell_ue_executor_mapper ue_exec_mapper{&ue_execs};
   cell_executor_mapper     cell_exec_mapper{{&cell_execs}, false};
   // Lower PHY RT task executor.
-  task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::max()};
+  task_worker          rt_task_worker{"phy_rt_thread", 1, os_thread_realtime_priority::max()};
   task_worker_executor rt_task_executor{{rt_task_worker}};
   // PRACH lower PHY executor.
   task_worker          lower_prach_worker{"LoPHY_PRACH", task_worker_queue_size};

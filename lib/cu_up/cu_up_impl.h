@@ -20,7 +20,6 @@
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/io_broker/io_broker.h"
 #include <memory>
 #include <unordered_map>

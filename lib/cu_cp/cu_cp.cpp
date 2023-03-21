@@ -14,6 +14,7 @@
 #include "srsran/cu_cp/du_processor_factory.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_factory.h"
 #include "srsran/ngap/ngap_factory.h"
+#include <future>
 
 using namespace srsran;
 using namespace srs_cu_cp;

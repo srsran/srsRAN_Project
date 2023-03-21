@@ -27,7 +27,6 @@
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/support/async/async_task_loop.h"
 #include "srsran/support/executors/task_executor.h"
-#include "srsran/support/executors/task_worker.h"
 #include <memory>
 #include <unordered_map>
 

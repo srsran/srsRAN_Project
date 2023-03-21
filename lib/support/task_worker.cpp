@@ -16,17 +16,21 @@
 
 namespace srsran {
 
-task_worker::task_worker(std::string                      thread_name_,
+task_worker::task_worker(std::string                      thread_name,
                          uint32_t                         queue_size,
-                         bool                             start_postponed,
-                         os_thread_realtime_priority      prio_,
-                         const os_sched_affinity_bitmask& mask_) :
-  worker_name(std::move(thread_name_)),
-  prio(prio_),
-  mask(mask_),
-  logger(srslog::fetch_basic_logger("ALL")),
-  pending_tasks(queue_size),
-  t_handle(start_postponed ? unique_thread{} : make_thread())
+                         os_thread_realtime_priority      prio,
+                         const os_sched_affinity_bitmask& mask) :
+  logger(srslog::fetch_basic_logger("ALL")), pending_tasks(queue_size), t_handle(thread_name, prio, mask, [this]() {
+    while (true) {
+      bool   success;
+      task_t task = pending_tasks.pop_blocking(&success);
+      if (not success) {
+        break;
+      }
+      task();
+    }
+    logger.info("Task worker {} finished.", t_handle.get_name());
+  })
 {
 }
 
@@ -43,32 +47,13 @@ void task_worker::stop()
   }
 }
 
-unique_thread task_worker::make_thread()
+void task_worker::wait_pending_tasks()
 {
-  auto task_func = [this]() {
-    while (true) {
-      bool   success;
-      task_t task = pending_tasks.pop_blocking(&success);
-      if (not success) {
-        break;
-      }
-      task();
-    }
-    logger.info("Task worker {} finished.", t_handle.get_name());
-  };
-  return unique_thread{worker_name, prio, mask, task_func};
-}
-
-void task_worker::start(os_thread_realtime_priority prio_, const os_sched_affinity_bitmask& mask_)
-{
-  if (t_handle.running()) {
-    logger.error("ERROR: Task Worker can only be started once.");
-    return;
-  }
-
-  prio     = prio_;
-  mask     = mask_;
-  t_handle = make_thread();
+  std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
+  std::future<void>          fut = pkg_task.get_future();
+  push_task(std::move(pkg_task));
+  // blocks for enqueued task to complete.
+  fut.get();
 }
 
 } // namespace srsran

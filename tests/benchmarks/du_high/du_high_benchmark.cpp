@@ -19,6 +19,7 @@
 #include "srsran/du_high/du_high_configuration.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;

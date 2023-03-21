@@ -187,7 +187,7 @@ private:
                      size_t                      queue_size,
                      os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime())
   {
-    auto ret = workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, queue_size, false, prio)));
+    auto ret = workers.insert(std::make_pair(name, std::make_unique<task_worker>(name, queue_size, prio)));
     srsran_assert(ret.second, "Unable to create worker {}.", name);
   }
   // helper method to create worker pool

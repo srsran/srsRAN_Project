@@ -20,7 +20,6 @@
 #include "srsran/rlc/rlc_rx.h"
 #include "srsran/rlc/rlc_tx.h"
 #include "srsran/scheduler/scheduler_metrics.h"
-#include "srsran/support/executors/task_worker.h"
 #include <memory>
 
 namespace srsran {

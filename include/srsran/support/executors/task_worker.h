@@ -28,17 +28,17 @@
 
 namespace srsran {
 
-/// Class used to create a single worker with an input task queue with a single reader
+/// \brief Single thread worker with a locking MPSC input task queue. This worker type is ideal for the cases where
+/// there is low contention between task producers.
 class task_worker
 {
   using task_t = unique_task;
 
 public:
-  task_worker(std::string                      thread_name_,
+  task_worker(std::string                      thread_name,
               uint32_t                         queue_size,
-              bool                             start_postponed = false,
-              os_thread_realtime_priority      prio_           = os_thread_realtime_priority::no_realtime(),
-              const os_sched_affinity_bitmask& mask_           = {});
+              os_thread_realtime_priority      prio = os_thread_realtime_priority::no_realtime(),
+              const os_sched_affinity_bitmask& mask = {});
   task_worker(const task_worker&)            = delete;
   task_worker(task_worker&&)                 = delete;
   task_worker& operator=(const task_worker&) = delete;
@@ -48,17 +48,15 @@ public:
   /// Stop task worker, if running.
   void stop();
 
-  /// Initialize task worker, if not yet running.
-  void start(os_thread_realtime_priority      prio_ = os_thread_realtime_priority::no_realtime(),
-             const os_sched_affinity_bitmask& mask_ = {});
-
+  /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, enqueueing fails.
+  /// \return true if task was successfully enqueued. False if task FIFO was full.
   bool push_task(task_t&& task, bool log_on_failure = true)
   {
     auto ret = pending_tasks.try_push(std::move(task));
     if (ret.is_error()) {
       if (log_on_failure) {
-        logger.error("Cannot push anymore tasks into the {} worker queue. maximum size is {}",
-                     worker_name,
+        logger.error("Cannot push more tasks into the {} worker queue. Maximum size is {}",
+                     t_handle.get_name(),
                      uint32_t(pending_tasks.max_size()));
       }
       return false;
@@ -66,37 +64,35 @@ public:
     return true;
   }
 
+  /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, this call blocks,
+  /// until the FIFO has space to enqueue the task.
   void push_task_blocking(task_t&& task)
   {
     auto ret = pending_tasks.push_blocking(std::move(task));
     if (ret.is_error()) {
-      logger.debug("Cannot push anymore tasks into the {} worker queue because it was closed", worker_name);
+      logger.debug("Cannot push more tasks into the {} worker queue because it was closed", t_handle.get_name());
       return;
     }
   }
 
   /// \brief Wait for all the currently enqueued tasks to complete.
-  void wait_pending_tasks()
-  {
-    std::packaged_task<void()> pkg_task([]() { /* do nothing */ });
-    std::future<void>          fut = pkg_task.get_future();
-    push_task(std::move(pkg_task));
-    // blocks for enqueued task to complete.
-    fut.get();
-  }
+  void wait_pending_tasks();
 
-  uint32_t nof_pending_tasks() const { return pending_tasks.size(); }
+  /// Number of pending tasks. It requires locking mutex.
+  unsigned nof_pending_tasks() const { return pending_tasks.size(); }
 
+  /// Maximum number of pending tasks the task FIFO can hold.
+  unsigned max_pending_tasks() const { return pending_tasks.max_size(); }
+
+  /// Get worker thread id.
   std::thread::id get_id() const { return t_handle.get_id(); }
 
-private:
-  unique_thread make_thread();
+  /// Get worker thread name.
+  const char* worker_name() const { return t_handle.get_name(); }
 
+private:
   // args
-  std::string                 worker_name;
-  os_thread_realtime_priority prio = os_thread_realtime_priority::no_realtime();
-  os_sched_affinity_bitmask   mask = {};
-  srslog::basic_logger&       logger;
+  srslog::basic_logger& logger;
 
   // Queue of tasks.
   srsran::blocking_queue<task_t> pending_tasks;
