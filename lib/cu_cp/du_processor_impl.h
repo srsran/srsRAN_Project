@@ -69,7 +69,9 @@ public:
 
   // du_processor_ngap_interface
   async_task<cu_cp_pdu_session_resource_setup_response>
-       handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
+  handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) override;
+  async_task<cu_cp_pdu_session_resource_release_response>
+       handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) override;
   void handle_new_ue_context_release_command(const cu_cp_ue_context_release_command& cmd) override;
 
   // du_processor paging handler

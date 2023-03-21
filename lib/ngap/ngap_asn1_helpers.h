@@ -277,6 +277,133 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
   }
 }
 
+/// \brief Convert NGAP ASN1 PDU Session Resource Release Comman ASN1 struct to common type.
+/// \param[out] pdu_session_resource_release_cmd The cu_cp_pdu_session_resource_release_command struct to fill.
+/// \param[in] asn1_pdu_session_resource_release_cmd The pdu_session_res_release_cmd ASN1 struct.
+inline void fill_cu_cp_pdu_session_resource_release_command(
+    cu_cp_pdu_session_resource_release_command&      pdu_session_resource_release_cmd,
+    const asn1::ngap::pdu_session_res_release_cmd_s& asn1_pdu_session_resource_release_cmd)
+{
+  if (asn1_pdu_session_resource_release_cmd->ran_paging_prio_present) {
+    pdu_session_resource_release_cmd.ran_paging_prio = asn1_pdu_session_resource_release_cmd->ran_paging_prio.value;
+  }
+
+  if (asn1_pdu_session_resource_release_cmd->nas_pdu_present) {
+    pdu_session_resource_release_cmd.nas_pdu = asn1_pdu_session_resource_release_cmd->nas_pdu.value.copy();
+  }
+
+  for (const auto& pdu_session_res_to_release_item :
+       asn1_pdu_session_resource_release_cmd->pdu_session_res_to_release_list_rel_cmd.value) {
+    cu_cp_pdu_session_res_to_release_item_rel_cmd pdu_session_res_to_release_item_rel_cmd;
+    pdu_session_res_to_release_item_rel_cmd.pdu_session_id =
+        uint_to_pdu_session_id(pdu_session_res_to_release_item.pdu_session_id);
+
+    asn1::ngap::pdu_session_res_release_cmd_transfer_s asn1_pdu_session_res_release_cmd_transfer;
+    asn1::cbit_ref bref({pdu_session_res_to_release_item.pdu_session_res_release_cmd_transfer.begin(),
+                         pdu_session_res_to_release_item.pdu_session_res_release_cmd_transfer.end()});
+
+    if (asn1_pdu_session_res_release_cmd_transfer.unpack(bref) != asn1::SRSASN_SUCCESS) {
+      srslog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Release Command Transfer PDU");
+      return;
+    }
+
+    pdu_session_res_to_release_item_rel_cmd.pdu_session_res_release_cmd_transfer.cause =
+        ngap_cause_to_cause(asn1_pdu_session_res_release_cmd_transfer.cause);
+
+    pdu_session_resource_release_cmd.pdu_session_res_to_release_list_rel_cmd.emplace(
+        pdu_session_res_to_release_item_rel_cmd.pdu_session_id, pdu_session_res_to_release_item_rel_cmd);
+  }
+}
+
+/// \brief Convert common type PDU Session Resource Release Response message to NGAP PDU Session Resource Release
+/// Response \param[out] resp The ASN1 NGAP PDU Session Resource Release Response message.
+/// \param[in] cu_cp_resp The CU-CP PDU Session Resource Release Response message.
+inline void
+fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_release_resp_s&        resp,
+                                                const cu_cp_pdu_session_resource_release_response& cu_cp_resp)
+{
+  for (const auto& cu_cp_pdu_session_res_released_item : cu_cp_resp.pdu_session_res_released_list_rel_res) {
+    asn1::ngap::pdu_session_res_released_item_rel_res_s asn1_pdu_session_res_released_item;
+    asn1_pdu_session_res_released_item.pdu_session_id =
+        pdu_session_id_to_uint(cu_cp_pdu_session_res_released_item.pdu_session_id);
+
+    asn1::ngap::pdu_session_res_release_resp_transfer_s res_release_resp_transfer;
+
+    if (cu_cp_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.secondary_rat_usage_info
+            .has_value()) {
+      res_release_resp_transfer.ext = true;
+
+      asn1::protocol_ext_field_s<asn1::ngap::pdu_session_res_release_resp_transfer_ext_ies_o>
+            res_release_resp_transfer_ext;
+      auto& asn1_secondary_rat_usage_info = res_release_resp_transfer_ext.value().secondary_rat_usage_info();
+
+      if (cu_cp_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.secondary_rat_usage_info.value()
+              .pdu_session_usage_report.has_value()) {
+        asn1_secondary_rat_usage_info.pdu_session_usage_report_present = true;
+
+        const auto& pdu_session_usage_report =
+            cu_cp_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.secondary_rat_usage_info.value()
+                .pdu_session_usage_report.value();
+
+        asn1::string_to_enum(asn1_secondary_rat_usage_info.pdu_session_usage_report.rat_type,
+                             pdu_session_usage_report.rat_type);
+
+        for (const auto& pdu_session_usage_timed_item : pdu_session_usage_report.pdu_session_timed_report_list) {
+          asn1::ngap::volume_timed_report_item_s asn1_pdu_session_usage_timed_item;
+
+          asn1_pdu_session_usage_timed_item.start_time_stamp.from_number(pdu_session_usage_timed_item.start_time_stamp);
+          asn1_pdu_session_usage_timed_item.end_time_stamp.from_number(pdu_session_usage_timed_item.end_time_stamp);
+          asn1_pdu_session_usage_timed_item.usage_count_ul = pdu_session_usage_timed_item.usage_count_ul;
+          asn1_pdu_session_usage_timed_item.usage_count_dl = pdu_session_usage_timed_item.usage_count_dl;
+
+          asn1_secondary_rat_usage_info.pdu_session_usage_report.pdu_session_timed_report_list.push_back(
+              asn1_pdu_session_usage_timed_item);
+        }
+      }
+
+      for (const auto& qos_flows_usage_report_item :
+           cu_cp_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.secondary_rat_usage_info.value()
+               .qos_flows_usage_report_list) {
+        asn1::ngap::qos_flows_usage_report_item_s asn1_qos_flows_usage_report_item;
+        asn1_qos_flows_usage_report_item.qos_flow_id = qos_flow_id_to_uint(qos_flows_usage_report_item.qos_flow_id);
+
+        asn1::string_to_enum(asn1_qos_flows_usage_report_item.rat_type, qos_flows_usage_report_item.rat_type);
+
+        for (const auto& qos_flow_timed_report_item : qos_flows_usage_report_item.qos_flows_timed_report_list) {
+          asn1::ngap::volume_timed_report_item_s asn1_qos_flow_timed_report_item;
+
+          asn1_qos_flow_timed_report_item.start_time_stamp.from_number(qos_flow_timed_report_item.start_time_stamp);
+          asn1_qos_flow_timed_report_item.end_time_stamp.from_number(qos_flow_timed_report_item.end_time_stamp);
+          asn1_qos_flow_timed_report_item.usage_count_ul = qos_flow_timed_report_item.usage_count_ul;
+          asn1_qos_flow_timed_report_item.usage_count_dl = qos_flow_timed_report_item.usage_count_dl;
+
+          asn1_qos_flows_usage_report_item.qos_flows_timed_report_list.push_back(asn1_qos_flow_timed_report_item);
+        }
+
+        asn1_secondary_rat_usage_info.qos_flows_usage_report_list.push_back(asn1_qos_flows_usage_report_item);
+      }
+
+      res_release_resp_transfer.ie_exts.push_back(res_release_resp_transfer_ext);
+    } else {
+      res_release_resp_transfer.ext = false;
+    }
+
+    // Pack pdu_session_res_release_resp_transfer_s
+    byte_buffer pdu = pack_into_pdu(res_release_resp_transfer);
+
+    asn1_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.resize(pdu.length());
+    std::copy(pdu.begin(), pdu.end(), asn1_pdu_session_res_released_item.pdu_session_res_release_resp_transfer.begin());
+
+    resp->pdu_session_res_released_list_rel_res.value.push_back(asn1_pdu_session_res_released_item);
+  }
+
+  if (cu_cp_resp.user_location_info.has_value()) {
+    resp->user_location_info_present = true;
+    resp->user_location_info.value.set_user_location_info_nr() =
+        cu_cp_user_location_info_to_asn1(cu_cp_resp.user_location_info.value());
+  }
+}
+
 /// \brief Convert NGAP ASN1 UE Context Release Command ASN1 struct to common type.
 /// \param[out] cu_cp_ue_context_release_cmd The cu_cp_ue_context_release_cmd struct to fill.
 /// \param[in] asn1_ue_context_release_cmd The UE Context Release Command ASN1 struct.

@@ -13,6 +13,7 @@
 #include "ngap_asn1_utils.h"
 #include "procedures/ng_setup_procedure.h"
 #include "procedures/ngap_initial_context_setup_procedure.h"
+#include "procedures/ngap_pdu_session_resource_release_procedure.h"
 #include "procedures/ngap_pdu_session_resource_setup_procedure.h"
 #include "procedures/ngap_procedure_helpers.h"
 
@@ -177,6 +178,9 @@ void ngap_impl::handle_initiating_message(const init_msg_s& msg)
     case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_setup_request:
       handle_pdu_session_resource_setup_request(msg.value.pdu_session_res_setup_request());
       break;
+    case ngap_elem_procs_o::init_msg_c::types_opts::pdu_session_res_release_cmd:
+      handle_pdu_session_resource_release_command(msg.value.pdu_session_res_release_cmd());
+      break;
     case ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
@@ -271,6 +275,37 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   if (request->nas_pdu_present) {
     handle_nas_pdu(logger, request->nas_pdu.value, *ue);
   }
+}
+
+void ngap_impl::handle_pdu_session_resource_release_command(const asn1::ngap::pdu_session_res_release_cmd_s& command)
+{
+  ue_index_t ue_index = ue_manager.get_ue_index(uint_to_ran_ue_id(command->ran_ue_ngap_id.value));
+  ngap_ue*   ue       = ue_manager.find_ngap_ue(ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={} does not exist - dropping PduSessionResourceReleaseCommand", ue_index);
+    return;
+  }
+
+  logger.info("ue={} Received PduSessionResourceReleaseCommand (ran_ue_id={})", ue_index, ue->get_ran_ue_id());
+
+  // Handle optional NAS PDU
+  if (command->nas_pdu_present) {
+    byte_buffer nas_pdu;
+    nas_pdu.resize(command->nas_pdu.value.size());
+    std::copy(command->nas_pdu.value.begin(), command->nas_pdu.value.end(), nas_pdu.begin());
+    logger.debug(nas_pdu.begin(), nas_pdu.end(), "DlNasTransport PDU ({} B)", nas_pdu.length());
+
+    ue->get_rrc_ue_pdu_notifier().on_new_pdu(std::move(nas_pdu));
+  }
+
+  cu_cp_pdu_session_resource_release_command msg;
+  msg.ue_index = ue_index;
+  fill_cu_cp_pdu_session_resource_release_command(msg, command);
+
+  // start routine
+  task_sched.schedule_async_task(ue_index,
+                                 launch_async<ngap_pdu_session_resource_release_procedure>(
+                                     *ue, msg, ue->get_du_processor_control_notifier(), ngap_notifier, logger));
 }
 
 void ngap_impl::handle_ue_context_release_command(const asn1::ngap::ue_context_release_cmd_s& cmd)

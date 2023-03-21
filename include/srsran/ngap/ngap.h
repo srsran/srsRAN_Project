@@ -168,6 +168,10 @@ public:
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   on_new_pdu_session_resource_setup_request(cu_cp_pdu_session_resource_setup_request& request) = 0;
 
+  /// \brief Notify about the reception of a new PDU Session Resource Release Command.
+  virtual async_task<cu_cp_pdu_session_resource_release_response>
+  on_new_pdu_session_resource_release_command(cu_cp_pdu_session_resource_release_command& command) = 0;
+
   /// \brief Notify about the reception of a new UE Context Release Command.
   virtual void on_new_ue_context_release_command(cu_cp_ue_context_release_command& command) = 0;
 };

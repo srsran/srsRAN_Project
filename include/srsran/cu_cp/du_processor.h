@@ -201,9 +201,13 @@ class du_processor_ngap_interface
 public:
   virtual ~du_processor_ngap_interface() = default;
 
-  /// \brief Handle the reception of a new PDU Session Resource Setup List.
+  /// \brief Handle the reception of a new PDU Session Resource Setup Request.
   virtual async_task<cu_cp_pdu_session_resource_setup_response>
   handle_new_pdu_session_resource_setup_request(const cu_cp_pdu_session_resource_setup_request& msg) = 0;
+
+  /// \brief Handle the reception of a new PDU Session Resource Release Command.
+  virtual async_task<cu_cp_pdu_session_resource_release_response>
+  handle_new_pdu_session_resource_release_command(const cu_cp_pdu_session_resource_release_command& msg) = 0;
 
   /// \brief Handle a UE Context Release Command.
   /// \param[in] cmd The UE Context Release Command.
