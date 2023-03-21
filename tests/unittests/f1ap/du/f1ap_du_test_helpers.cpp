@@ -75,7 +75,7 @@ f1ap_message srsran::srs_du::generate_ue_context_setup_request(const std::initia
   }
 
   dl_msg->rrc_container_present = true;
-  dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(1, 100)));
+  dl_msg->rrc_container.value.append(test_rgen::random_vector<uint8_t>(test_rgen::uniform_int<unsigned>(3, 100)));
 
   return msg;
 }
