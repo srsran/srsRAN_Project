@@ -33,6 +33,9 @@ class base_blocking_queue
 {
   using T = typename RingBuffer::value_type;
 
+  using blocking_tag     = std::true_type;
+  using non_blocking_tag = std::false_type;
+
 public:
   /// \brief Creates a blocking_queue.
   /// \param on_push_func Callable to be called on every inserted element.
@@ -71,19 +74,19 @@ public:
 
   /// \brief Try to push new element to queue.
   /// \return If the queue is full or inactive, returns false. Otherwise, it returns true.
-  bool try_push(const T& t) { return push_(t, false); }
+  bool try_push(const T& t) { return push_(t, non_blocking_tag{}); }
 
   /// \brief Try to push new r-value element to queue.
   /// \return If the queue is full or inactive, returns error type storing the element that failed to be pushed.
   /// Otherwise, it returns success type.
-  error_type<T> try_push(T&& t) { return push_(std::move(t), false); }
+  error_type<T> try_push(T&& t) { return push_(std::move(t), non_blocking_tag{}); }
 
   /// \brief Tries to push all elements in a range into the queue.
   /// \return Returns number of inserted elements.
   template <typename It>
   unsigned try_push(It b, It e)
   {
-    return push_(b, e, false);
+    return push_(b, e, non_blocking_tag{});
   }
 
   /// \brief Tries to push all elements in a span into the queue.
@@ -93,13 +96,13 @@ public:
   /// \brief Pushes an element into the queue. If the queue is full, this call *blocks* waiting for another thread
   /// to pop an element from the queue or set the queue as inactive.
   /// \return Returns true if element was pushed. False, otherwise.
-  bool push_blocking(const T& t) { return push_(t, true); }
+  bool push_blocking(const T& t) { return push_(t, blocking_tag{}); }
 
   /// \brief Pushes an r-value element into the queue. If the queue is full, this call *blocks* waiting for another
   /// thread to pop an element from the queue or set the queue as inactive.
   /// \return If the queue is inactive, returns error type storing the element that failed to be pushed.
   /// Otherwise, it returns success type.
-  error_type<T> push_blocking(T&& t) { return push_(std::move(t), true); }
+  error_type<T> push_blocking(T&& t) { return push_(std::move(t), blocking_tag{}); }
 
   /// \brief Pushes all elements in a range into the queue. If the queue becomes full, this call *blocks* waiting
   /// for space to become available or the queue to become inactive.
@@ -107,7 +110,7 @@ public:
   template <typename It>
   unsigned push_blocking(It b, It e)
   {
-    return push_(b, e, true);
+    return push_(b, e, blocking_tag{});
   }
 
   /// \brief Pushes all elements in a span into the queue. If the queue becomes full, this call *blocks* waiting
@@ -253,31 +256,30 @@ protected:
 
   ~base_blocking_queue() { stop(); }
 
-  bool push_is_possible(std::unique_lock<std::mutex>& lock, bool block_mode)
+  // Blocks producer while task queue is full.
+  bool wait_push_possible(std::unique_lock<std::mutex>& lock, blocking_tag /**/)
   {
-    if (not active) {
-      return false;
-    }
-    if (ring_buf.full()) {
-      if (not block_mode) {
-        return false;
-      }
+    if (active and ring_buf.full()) {
       nof_waiting++;
       while (ring_buf.full() and active) {
         cvar_full.wait(lock);
       }
       nof_waiting--;
     }
-    if (not active) {
-      return false;
-    }
-    return true;
+    return active;
   }
 
-  bool push_(const T& t, bool block_mode)
+  // Returns true if there is space in the task queue.
+  bool wait_push_possible(std::unique_lock<std::mutex>& lock, non_blocking_tag /**/)
+  {
+    return active and not ring_buf.full();
+  }
+
+  template <typename BlockingMode>
+  bool push_(const T& t, BlockingMode mode)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (push_is_possible(lock, block_mode)) {
+    if (wait_push_possible(lock, mode)) {
       push_func(t);
       ring_buf.push(t);
       // Note: I have read diverging opinions about notifying before or after the unlock. In this case,
@@ -288,10 +290,12 @@ protected:
     }
     return false;
   }
-  srsran::error_type<T> push_(T&& t, bool block_mode)
+
+  template <typename BlockingMode>
+  srsran::error_type<T> push_(T&& t, BlockingMode mode)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (push_is_possible(lock, block_mode)) {
+    if (wait_push_possible(lock, mode)) {
       push_func(t);
       ring_buf.push(std::move(t));
       cvar_empty.notify_one();
@@ -300,13 +304,14 @@ protected:
     }
     return std::move(t);
   }
-  template <typename It>
-  unsigned push_(It b, It e, bool block_mode)
+
+  template <typename It, typename BlockingMode>
+  unsigned push_(It b, It e, BlockingMode mode)
   {
     unsigned count = 0;
     for (auto it = b; it != e;) {
       std::unique_lock<std::mutex> lock(mutex);
-      if (not push_is_possible(lock, block_mode)) {
+      if (not wait_push_possible(lock, mode)) {
         return count;
       }
       unsigned n = ring_buf.try_push(it, e);
