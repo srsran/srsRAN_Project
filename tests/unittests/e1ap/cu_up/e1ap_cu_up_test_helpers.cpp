@@ -13,13 +13,13 @@
 using namespace srsran;
 using namespace srs_cu_up;
 
-e1ap_cu_up_test::e1ap_cu_up_test() : e1ap_p(PCAP_E1AP_DLT, "E1AP")
+e1ap_cu_up_test::e1ap_cu_up_test()
 {
   test_logger.set_level(srslog::basic_levels::debug);
   e1ap_logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  e1ap = create_e1ap(msg_notifier, cu_up_notifier, cu_up_worker, e1ap_p);
+  e1ap = create_e1ap(msg_notifier, cu_up_notifier, cu_up_worker);
 }
 
 e1ap_cu_up_test::~e1ap_cu_up_test()

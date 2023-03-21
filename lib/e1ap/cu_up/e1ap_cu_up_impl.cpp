@@ -20,13 +20,11 @@ using namespace srs_cu_up;
 
 e1ap_cu_up_impl::e1ap_cu_up_impl(e1ap_message_notifier& e1ap_pdu_notifier_,
                                  e1ap_cu_up_notifier&   cu_up_notifier_,
-                                 task_executor&         cu_up_exec_,
-                                 dlt_pcap&              e1ap_pcap_) :
+                                 task_executor&         cu_up_exec_) :
   cu_up_exec(cu_up_exec_),
   logger(srslog::fetch_basic_logger("CU-UP-E1")),
   pdu_notifier(e1ap_pdu_notifier_),
-  cu_up_notifier(cu_up_notifier_),
-  e1ap_pcap(e1ap_pcap_)
+  cu_up_notifier(cu_up_notifier_)
 {
 }
 
@@ -101,16 +99,6 @@ void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
       asn1::json_writer js;
       msg.pdu.to_json(js);
       logger.debug("Rx E1AP SDU: {}", js.to_string());
-    }
-
-    if (e1ap_pcap.is_write_enabled()) {
-      byte_buffer   buf;
-      asn1::bit_ref bref(buf);
-      if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
-        logger.error("Failed to pack PDU");
-        return;
-      }
-      e1ap_pcap.push_pdu(std::move(buf));
     }
 
     switch (msg.pdu.type().value) {

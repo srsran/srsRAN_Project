@@ -28,8 +28,7 @@ class e1ap_cu_up_impl final : public e1ap_interface
 public:
   e1ap_cu_up_impl(e1ap_message_notifier& e1ap_pdu_notifier_,
                   e1ap_cu_up_notifier&   cu_up_notifier_,
-                  task_executor&         cu_up_exec_,
-                  dlt_pcap&              e1ap_pcap_);
+                  task_executor&         cu_up_exec_);
   ~e1ap_cu_up_impl() override;
 
   // e1ap connection manager functions
@@ -86,8 +85,6 @@ private:
   e1ap_cu_up_notifier&   cu_up_notifier;
 
   unsigned current_transaction_id = 0; // store current E1AP transaction id
-
-  dlt_pcap& e1ap_pcap;
 };
 
 } // namespace srs_cu_up

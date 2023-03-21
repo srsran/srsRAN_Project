@@ -30,9 +30,7 @@ public:
     report_fatal_error_if_not(handler, "E1AP message handler not set.");
     logger.debug("Received a PDU of type {}", msg.pdu.type().to_string());
 
-    fmt::print("asfdasdf asdfasdf {} {}\n", fmt::ptr(e1ap_pcap), log_name);
     if (e1ap_pcap != nullptr && e1ap_pcap->is_write_enabled()) {
-      fmt::print("asfdasdf\n");
       byte_buffer   buf;
       asn1::bit_ref bref(buf);
       if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
