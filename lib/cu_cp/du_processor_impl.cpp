@@ -283,18 +283,14 @@ void du_processor_impl::create_srb(const srb_creation_message& msg)
 
     // prepare PDCP creation message
     pdcp_entity_creation_message srb_pdcp{};
-    srb_pdcp.ue_index           = ue_index_to_uint(msg.ue_index);
-    srb_pdcp.rb_id              = msg.srb_id;
-    srb_pdcp.config             = pdcp_make_default_srb_config(); // TODO: allow non-default PDCP SRB configs
-    srb_pdcp.config.tx.rb_type  = pdcp_rb_type::srb;
-    srb_pdcp.config.tx.rlc_mode = pdcp_rlc_mode::am;
-    srb_pdcp.config.rx.rb_type  = pdcp_rb_type::srb;
-    srb_pdcp.config.rx.rlc_mode = pdcp_rlc_mode::am;
-    srb_pdcp.tx_lower           = srb.pdcp_context->pdcp_tx_notifier.get();
-    srb_pdcp.tx_upper_cn        = srb.pdcp_context->rrc_tx_control_notifier.get();
-    srb_pdcp.rx_upper_dn        = srb.pdcp_context->rrc_rx_data_notifier.get();
-    srb_pdcp.rx_upper_cn        = srb.pdcp_context->rrc_rx_control_notifier.get();
-    srb_pdcp.timers             = timer_factory{timer_db, ctrl_exec};
+    srb_pdcp.ue_index    = ue_index_to_uint(msg.ue_index);
+    srb_pdcp.rb_id       = msg.srb_id;
+    srb_pdcp.config      = pdcp_make_default_srb_config(); // TODO: allow non-default PDCP SRB configs
+    srb_pdcp.tx_lower    = srb.pdcp_context->pdcp_tx_notifier.get();
+    srb_pdcp.tx_upper_cn = srb.pdcp_context->rrc_tx_control_notifier.get();
+    srb_pdcp.rx_upper_dn = srb.pdcp_context->rrc_rx_data_notifier.get();
+    srb_pdcp.rx_upper_cn = srb.pdcp_context->rrc_rx_control_notifier.get();
+    srb_pdcp.timers      = timer_factory{timer_db, ctrl_exec};
 
     // create PDCP entity
     pdcp_bearers.emplace(msg.ue_index, create_pdcp_entity(srb_pdcp));

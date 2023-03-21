@@ -45,7 +45,7 @@ class pdcp_entity_tx : public pdcp_entity_tx_rx_base,
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
                  rb_id_t                         rb_id_,
-                 pdcp_config::pdcp_tx_config     cfg_,
+                 pdcp_tx_config                  cfg_,
                  pdcp_tx_lower_notifier&         lower_dn_,
                  pdcp_tx_upper_control_notifier& upper_cn_,
                  timer_factory                   timers_) :
@@ -150,8 +150,8 @@ public:
   void data_recovery() final;
 
 private:
-  pdcp_bearer_logger          logger;
-  pdcp_config::pdcp_tx_config cfg;
+  pdcp_bearer_logger   logger;
+  const pdcp_tx_config cfg;
 
   pdcp_rx_status_provider*        status_provider = nullptr;
   pdcp_tx_lower_notifier&         lower_dn;

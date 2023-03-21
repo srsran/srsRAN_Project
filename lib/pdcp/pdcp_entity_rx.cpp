@@ -17,7 +17,7 @@ using namespace srsran;
 
 pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
                                rb_id_t                         rb_id_,
-                               pdcp_config::pdcp_rx_config     cfg_,
+                               pdcp_rx_config                  cfg_,
                                pdcp_rx_upper_data_notifier&    upper_dn_,
                                pdcp_rx_upper_control_notifier& upper_cn_,
                                timer_factory                   timers_) :
