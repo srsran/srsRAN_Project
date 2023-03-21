@@ -230,6 +230,62 @@ struct cu_cp_pdu_session_resource_setup_response {
   optional<crit_diagnostics_t>                                                   crit_diagnostics;
 };
 
+struct cu_cp_pdu_session_res_release_cmd_transfer {
+  cause_t cause;
+};
+
+struct cu_cp_pdu_session_res_to_release_item_rel_cmd {
+  pdu_session_id_t                           pdu_session_id;
+  cu_cp_pdu_session_res_release_cmd_transfer pdu_session_res_release_cmd_transfer;
+};
+
+struct cu_cp_pdu_session_resource_release_command {
+  ue_index_t         ue_index = ue_index_t::invalid;
+  optional<uint16_t> ran_paging_prio;
+  byte_buffer        nas_pdu;
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_to_release_item_rel_cmd>
+      pdu_session_res_to_release_list_rel_cmd;
+};
+
+struct cu_cp_volume_timed_report_item {
+  uint64_t start_time_stamp;
+  uint64_t end_time_stamp;
+  uint64_t usage_count_ul;
+  uint64_t usage_count_dl;
+};
+
+struct cu_cp_pdu_session_usage_report {
+  std::string                                 rat_type;
+  std::vector<cu_cp_volume_timed_report_item> pdu_session_timed_report_list;
+};
+
+struct cu_cp_qos_flows_usage_report_item {
+  qos_flow_id_t                               qos_flow_id;
+  std::string                                 rat_type;
+  std::vector<cu_cp_volume_timed_report_item> qos_flows_timed_report_list;
+};
+
+struct cu_cp_secondary_rat_usage_info {
+  optional<cu_cp_pdu_session_usage_report>                            pdu_session_usage_report;
+  slotted_id_vector<qos_flow_id_t, cu_cp_qos_flows_usage_report_item> qos_flows_usage_report_list;
+};
+
+struct cu_cp_pdu_session_res_release_resp_transfer {
+  optional<cu_cp_secondary_rat_usage_info> secondary_rat_usage_info;
+};
+
+struct cu_cp_pdu_session_res_released_item_rel_res {
+  pdu_session_id_t                            pdu_session_id;
+  cu_cp_pdu_session_res_release_resp_transfer pdu_session_res_release_resp_transfer;
+};
+
+struct cu_cp_pdu_session_resource_release_response {
+  slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_released_item_rel_res>
+                                        pdu_session_res_released_list_rel_res;
+  optional<cu_cp_user_location_info_nr> user_location_info;
+  optional<crit_diagnostics_t>          crit_diagnostics;
+};
+
 struct cu_cp_drx_cycle {
   uint16_t           long_drx_cycle_len;
   optional<uint16_t> short_drx_cycle_len;

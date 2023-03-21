@@ -41,6 +41,7 @@ public:
   sdap_config_t              get_sdap_config(const drb_id_t drb_id) override;
   std::vector<qos_flow_id_t> get_mapped_qos_flows(const drb_id_t drb_id) override;
   std::vector<qos_flow_id_t> get_mapped_qos_flows(const pdu_session_id_t pdu_session_id) override;
+  std::vector<drb_id_t>      get_drbs(const pdu_session_id_t pdu_session_id) override;
   pdu_session_id_t           get_pdu_session_id(const drb_id_t drb_id) override;
   s_nssai_t                  get_s_nssai(const drb_id_t drb_id) override;
   size_t                     get_nof_drbs() override;

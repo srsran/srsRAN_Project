@@ -150,6 +150,18 @@ std::vector<qos_flow_id_t> drb_manager_impl::get_mapped_qos_flows(const pdu_sess
   return mapped_flows;
 }
 
+std::vector<drb_id_t> drb_manager_impl::get_drbs(const pdu_session_id_t pdu_session_id)
+{
+  std::vector<drb_id_t> mapped_drbs;
+
+  for (const auto& drb : drbs) {
+    if (drb.second.pdu_session_id == pdu_session_id) {
+      mapped_drbs.push_back(drb.first);
+    }
+  }
+  return mapped_drbs;
+}
+
 pdcp_config_t drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
