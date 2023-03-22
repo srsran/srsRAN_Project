@@ -32,19 +32,20 @@ static unique_function<void()> make_wait_pop_task(blocking_queue<unique_task>& q
                                                   std::chrono::microseconds    duration)
 {
   return [&queue, duration]() {
-    while (true) {
+    blocking_queue<unique_task>::result ret = blocking_queue<unique_task>::result::timeout;
+    while (ret != blocking_queue<unique_task>::result::failed) {
       unique_task task;
-      if (not queue.pop_wait_for(task, duration)) {
-        break;
+      ret = queue.pop_wait_for(task, duration);
+      if (ret == blocking_queue<unique_task>::result::success) {
+        task();
       }
-      task();
     }
     srslog::fetch_basic_logger("ALL").info("Task worker {} finished.", this_thread_name());
   };
 }
 
 task_worker::task_worker(std::string                      thread_name,
-                         uint32_t                         queue_size,
+                         unsigned                         queue_size,
                          os_thread_realtime_priority      prio,
                          const os_sched_affinity_bitmask& mask,
                          std::chrono::microseconds        pop_wait_timeout) :

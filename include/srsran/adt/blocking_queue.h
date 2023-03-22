@@ -39,6 +39,9 @@ class base_blocking_queue
   using wait_until_tag   = std::chrono::steady_clock::time_point;
 
 public:
+  /// Possible outcomes for pop operation.
+  enum class result { failed, success, timeout };
+
   /// \brief Creates a blocking_queue.
   /// \param on_push_func Callable to be called on every inserted element.
   /// \param on_pop_func Callable to be called on every popped element.
@@ -122,7 +125,7 @@ public:
 
   /// \brief Tries to pop one object from the queue.
   /// \return If queue is empty or inactive, returns false. Otherwise, returns true.
-  bool try_pop(T& obj) { return pop_(obj, non_blocking_tag{}); }
+  bool try_pop(T& obj) { return pop_(obj, non_blocking_tag{}) == result::success; }
 
   /// \brief Tries to pop a range of elements from the queue.
   /// \return Number of popped elements.
@@ -141,10 +144,10 @@ public:
   /// \return Popped element.
   T pop_blocking(bool* success = nullptr)
   {
-    T    obj{};
-    bool ret = pop_(obj, blocking_tag{});
+    T      obj{};
+    result ret = pop_(obj, blocking_tag{});
     if (success != nullptr) {
-      *success = ret;
+      *success = ret == result::success;
     }
     return obj;
   }
@@ -172,14 +175,14 @@ public:
   /// \param[out] obj Popped element.
   /// \param[in] duration Maximum duration to wait for a pushed element.
   /// \return True if element was successfully popped. False, otherwise.
-  bool pop_wait_for(T& obj, const std::chrono::microseconds& duration) { return pop_(obj, duration); }
+  result pop_wait_for(T& obj, const std::chrono::microseconds& duration) { return pop_(obj, duration); }
 
   /// \brief Pops an element from the queue. If the queue is empty, this call *blocks* waiting an element to be pushed
   /// to the queue or that the queue becomes inactive. This wait is bounded by \c until.
   /// \param[out] obj Popped element.
   /// \param[in] until Maximum time point to wait for a pushed element.
   /// \return True if element was successfully popped. False, otherwise.
-  bool pop_wait_until(T& obj, const std::chrono::steady_clock::time_point& until) { return pop_(obj, until); }
+  result pop_wait_until(T& obj, const std::chrono::steady_clock::time_point& until) { return pop_(obj, until); }
 
   /// \brief Keeps popping and discarding elements until the \c stop_condition returns true.
   /// \param[in] stop_condition Callable with signature "bool(const T&)" that checks if the discarding can be halted.
@@ -194,7 +197,7 @@ public:
   void clear()
   {
     T obj;
-    while (pop_(obj, false)) {
+    while (pop_(obj, non_blocking_tag{})) {
     }
   }
 
@@ -372,7 +375,7 @@ protected:
   }
 
   template <typename BlockingMode>
-  bool pop_(T& obj, const BlockingMode& mode)
+  result pop_(T& obj, const BlockingMode& mode)
   {
     std::unique_lock<std::mutex> lock(mutex);
     if (wait_pop_possible(lock, mode)) {
@@ -381,9 +384,9 @@ protected:
       ring_buf.pop();
       lock.unlock();
       cvar_full.notify_one();
-      return true;
+      return result::success;
     }
-    return false;
+    return active ? result::timeout : result::failed;
   }
 
   template <typename It, typename BlockingMode>

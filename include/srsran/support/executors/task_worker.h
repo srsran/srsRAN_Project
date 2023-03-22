@@ -32,11 +32,12 @@ public:
   /// \param queue_size Number of pending tasks that this task worker can hold.
   /// \param prio OS thread realtime priority.
   /// \param mask OS scheduler thread affinity mask.
-  /// \param pop_wait_timeout Timeout for popping tasks. By default, no timeout is set and the task worker thread may
-  /// block waiting either for a new task to be pushed by another thread or for the task_worker to be stopped.
-  /// If a timeout is set, the duration of this wait is bounded.
+  /// \param pop_wait_timeout Timeout for popping tasks from the task queue. By default, no timeout is set and
+  /// the task worker thread will stay blocked while the queue is empty. If a timeout is set, the wait for tasks to pop
+  /// will be a combination of busy and passive waiting. This may help offset some experienced delays associated with
+  /// using condition variables.
   task_worker(std::string                      thread_name,
-              uint32_t                         queue_size,
+              unsigned                         queue_size,
               os_thread_realtime_priority      prio             = os_thread_realtime_priority::no_realtime(),
               const os_sched_affinity_bitmask& mask             = {},
               std::chrono::microseconds        pop_wait_timeout = std::chrono::microseconds{0});
