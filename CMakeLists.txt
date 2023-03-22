@@ -187,6 +187,8 @@ if (ENABLE_UHD)
         include_directories(${UHD_INCLUDE_DIRS})
         link_directories(${UHD_LIBRARY_DIRS})
     endif (UHD_FOUND)
+else (ENABLE_UHD)
+    unset(UHD_FOUND CACHE)
 endif (ENABLE_UHD)
 
 # Yaml-cpp
@@ -205,6 +207,8 @@ if (ENABLE_ZEROMQ)
         include_directories(${ZEROMQ_INCLUDE_DIRS})
         link_directories(${ZEROMQ_LIBRARY_DIRS})
     endif (ZEROMQ_FOUND)
+else (ENABLE_ZEROMQ)
+    unset(ZEROMQ_FOUND CACHE)
 endif (ENABLE_ZEROMQ)
 
 ########################################################################
