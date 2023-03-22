@@ -140,7 +140,7 @@ struct e1ap_rohc_params {
 struct e1ap_pdcp_config {
   pdcp_sn_size                 pdcp_sn_size_ul;
   pdcp_sn_size                 pdcp_sn_size_dl;
-  srsran::rlc_mode             rlc_mod;
+  srsran::pdcp_rlc_mode        rlc_mod;
   optional<e1ap_rohc_params>   rohc_params;
   optional<pdcp_t_reordering>  t_reordering_timer;
   optional<pdcp_discard_timer> discard_timer;

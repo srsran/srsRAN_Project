@@ -109,7 +109,7 @@ sdap_config_t drb_manager_impl::set_rrc_sdap_config(const drb_context& context)
   return sdap_cfg;
 }
 
-pdcp_config_t drb_manager_impl::set_rrc_pdcp_config(uint8_t five_qi)
+pdcp_config drb_manager_impl::set_rrc_pdcp_config(uint8_t five_qi)
 {
   srsran_assert(cfg.five_qi_config.find(five_qi) != cfg.five_qi_config.end(),
                 "Could not find PDCP configuration. 5QI {}",
@@ -162,7 +162,7 @@ std::vector<drb_id_t> drb_manager_impl::get_drbs(const pdu_session_id_t pdu_sess
   return mapped_drbs;
 }
 
-pdcp_config_t drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
+pdcp_config drb_manager_impl::get_pdcp_config(const drb_id_t drb_id)
 {
   if (drbs.find(drb_id) == drbs.end()) {
     logger.error("DRB {} not found", drb_id);

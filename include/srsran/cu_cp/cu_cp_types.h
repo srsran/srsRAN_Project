@@ -123,7 +123,7 @@ constexpr inline std::underlying_type_t<du_cell_index_t> du_cell_index_to_uint(d
 /// QoS Configuration, i.e. 5QI and the associated PDCP
 /// and SDAP configuration for DRBs
 struct cu_cp_qos_config {
-  pdcp_config_t pdcp;
+  pdcp_config pdcp;
 };
 // ASN1 types converted to common types
 
@@ -459,10 +459,10 @@ struct cu_cp_ue_context_modification_response {
 /// Arguments for the RRC Reconfiguration procedure.
 
 struct cu_cp_srb_to_add_mod {
-  bool                    reestablish_pdcp_present = false;
-  bool                    discard_on_pdcp_present  = false;
-  srb_id_t                srb_id                   = srb_id_t::nulltype;
-  optional<pdcp_config_t> pdcp_cfg;
+  bool                  reestablish_pdcp_present = false;
+  bool                  discard_on_pdcp_present  = false;
+  srb_id_t              srb_id                   = srb_id_t::nulltype;
+  optional<pdcp_config> pdcp_cfg;
 };
 
 struct cu_cp_cn_assoc {
@@ -475,7 +475,7 @@ struct cu_cp_drb_to_add_mod {
   bool                     recover_pdcp_present     = false;
   optional<cu_cp_cn_assoc> cn_assoc;
   drb_id_t                 drb_id = drb_id_t::invalid;
-  optional<pdcp_config_t>  pdcp_cfg;
+  optional<pdcp_config>    pdcp_cfg;
 };
 
 struct cu_cp_security_algorithm_config {

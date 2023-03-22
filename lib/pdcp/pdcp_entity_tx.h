@@ -57,9 +57,10 @@ public:
     timers(timers_)
   {
     // Validate configuration
-    srsran_assert((is_um() && cfg.discard_timer == pdcp_discard_timer::not_configured) || is_am(),
-                  "RLC UM with discard timer is not supported. {}",
-                  cfg);
+    if (is_um() && (cfg.discard_timer != pdcp_discard_timer::not_configured &&
+                    cfg.discard_timer != pdcp_discard_timer::infinity)) {
+      report_error("RLC UM with discard timer is not supported. {}", cfg);
+    }
     direction = cfg.direction == pdcp_security_direction::uplink ? security::security_direction::uplink
                                                                  : security::security_direction::downlink;
     logger.log_info("PDCP configured. {}", cfg);

@@ -26,13 +26,7 @@ inline pdcp_config make_pdcp_drb_config(const e1ap_pdcp_config& e1ap_cfg)
   cfg.rb_type = pdcp_rb_type::drb;
 
   // RLC mode
-  if (e1ap_cfg.rlc_mod == rlc_mode::um_bidir) {
-    cfg.rlc_mode = pdcp_rlc_mode::um;
-  } else if (e1ap_cfg.rlc_mod == rlc_mode::am) {
-    cfg.rlc_mode = pdcp_rlc_mode::am;
-  } else {
-    report_fatal_error("Unsupported RLC mode for DRB. RLC mode={}", e1ap_cfg.rlc_mod);
-  }
+  cfg.rlc_mode = e1ap_cfg.rlc_mod;
 
   // Integrity protection required
   cfg.integrity_protection_required = false; // FIXME check this

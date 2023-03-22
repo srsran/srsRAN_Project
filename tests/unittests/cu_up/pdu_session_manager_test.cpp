@@ -78,7 +78,7 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
   drb_to_setup_item.sdap_cfg.sdap_hdr_dl        = "present";
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup_item.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
-  drb_to_setup_item.pdcp_cfg.rlc_mod            = srsran::rlc_mode::am;
+  drb_to_setup_item.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::am;
   drb_to_setup_item.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms100;
   drb_to_setup_item.pdcp_cfg.discard_timer      = pdcp_discard_timer::infinity;
 
@@ -160,7 +160,7 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup;
   drb_to_setup.drb_id                      = uint_to_drb_id(0x0b);
-  drb_to_setup.pdcp_cfg.rlc_mod            = rlc_mode::um_bidir;
+  drb_to_setup.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::um;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms50;
@@ -231,7 +231,7 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
 
   e1ap_drb_to_setup_item_ng_ran drb_to_setup;
   drb_to_setup.drb_id                      = uint_to_drb_id(0x0b);
-  drb_to_setup.pdcp_cfg.rlc_mod            = rlc_mode::um_bidir;
+  drb_to_setup.pdcp_cfg.rlc_mod            = pdcp_rlc_mode::um;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_dl    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.pdcp_sn_size_ul    = pdcp_sn_size::size18bits;
   drb_to_setup.pdcp_cfg.t_reordering_timer = pdcp_t_reordering::ms50;

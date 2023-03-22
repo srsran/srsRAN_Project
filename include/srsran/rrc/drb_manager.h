@@ -17,7 +17,7 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-/// \brief List of all supported FiveQIs and their correspondig PDCP/SDAP config
+/// \brief List of all supported 5QIs and their corresponding PDCP/SDAP configs
 struct drb_manager_cfg {
   std::map<uint8_t, cu_cp_qos_config> five_qi_config; ///< Configuration for available 5QI.
 };
@@ -32,7 +32,7 @@ public:
   virtual std::vector<drb_id_t> calculate_drb_to_add_list(const cu_cp_pdu_session_resource_setup_request& pdu) = 0;
 
   /// \brief Return PDPC config for a given DRB.
-  virtual pdcp_config_t get_pdcp_config(const drb_id_t drb_id) = 0;
+  virtual pdcp_config get_pdcp_config(const drb_id_t drb_id) = 0;
 
   /// \brief Return SDAP config for a given DRB.
   virtual sdap_config_t get_sdap_config(const drb_id_t drb_id) = 0;

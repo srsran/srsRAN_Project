@@ -328,18 +328,16 @@ void pdu_session_resource_setup_routine::fill_e1ap_bearer_context_setup_request(
       e1ap_drb_setup_item.drb_id   = drb_to_setup;
       e1ap_drb_setup_item.sdap_cfg = rrc_ue_drb_manager.get_sdap_config(drb_to_setup);
 
-      const pdcp_config_t& cu_cp_pdcp_cfg = rrc_ue_drb_manager.get_pdcp_config(drb_to_setup);
+      const pdcp_config& cu_cp_pdcp_cfg = rrc_ue_drb_manager.get_pdcp_config(drb_to_setup);
 
-      e1ap_drb_setup_item.pdcp_cfg.pdcp_sn_size_ul = cu_cp_pdcp_cfg.drb.value().pdcp_sn_size_ul.value();
-      e1ap_drb_setup_item.pdcp_cfg.pdcp_sn_size_dl = cu_cp_pdcp_cfg.drb.value().pdcp_sn_size_dl.value();
-      e1ap_drb_setup_item.pdcp_cfg.rlc_mod         = srsran::rlc_mode::am; // TODO: Remove hardcoded value
-      if (cu_cp_pdcp_cfg.drb.value().discard_timer.has_value()) {
-        e1ap_drb_setup_item.pdcp_cfg.discard_timer =
-            static_cast<pdcp_discard_timer>(cu_cp_pdcp_cfg.drb.value().discard_timer.value());
+      e1ap_drb_setup_item.pdcp_cfg.pdcp_sn_size_ul = cu_cp_pdcp_cfg.tx.sn_size;
+      e1ap_drb_setup_item.pdcp_cfg.pdcp_sn_size_dl = cu_cp_pdcp_cfg.rx.sn_size;
+      e1ap_drb_setup_item.pdcp_cfg.rlc_mod         = cu_cp_pdcp_cfg.rlc_mode;
+      if (cu_cp_pdcp_cfg.tx.discard_timer != pdcp_discard_timer::not_configured) {
+        e1ap_drb_setup_item.pdcp_cfg.discard_timer = cu_cp_pdcp_cfg.tx.discard_timer;
       }
-      if (cu_cp_pdcp_cfg.t_reordering.has_value()) {
-        e1ap_drb_setup_item.pdcp_cfg.t_reordering_timer =
-            static_cast<pdcp_t_reordering>(cu_cp_pdcp_cfg.t_reordering.value());
+      if (cu_cp_pdcp_cfg.rx.t_reordering != pdcp_t_reordering::infinity) {
+        e1ap_drb_setup_item.pdcp_cfg.t_reordering_timer = cu_cp_pdcp_cfg.rx.t_reordering;
       }
 
       e1ap_cell_group_info_item e1ap_cell_group_item;

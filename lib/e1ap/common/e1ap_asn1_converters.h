@@ -206,24 +206,15 @@ inline sdap_config_t e1ap_asn1_to_sdap_config(asn1::e1ap::sdap_cfg_s asn1_sdap_c
 /// \brief Converts \c rlc_mode type to an E1AP ASN.1 type.
 /// \param rlc_mod rlc_mode type.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::rlc_mode rlc_mod)
+inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::pdcp_rlc_mode rlc_mod)
 {
   asn1::e1ap::rlc_mode_e asn1_rlc_mode = {};
 
   switch (rlc_mod) {
-    case srsran::rlc_mode::tm:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_tm;
-      break;
-    case srsran::rlc_mode::um_bidir:
+    case srsran::pdcp_rlc_mode::um:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional;
       break;
-    case srsran::rlc_mode::um_unidir_ul:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_ul;
-      break;
-    case srsran::rlc_mode::um_unidir_dl:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_dl;
-      break;
-    case srsran::rlc_mode::am:
+    case srsran::pdcp_rlc_mode::am:
       asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_am;
       break;
     default:
@@ -236,25 +227,18 @@ inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(srsran::rlc_mode rlc_mod)
 /// \brief Converts E1AP ASN.1 type to an \c rlc_mode type.
 /// \param asn1_rlc_mod E1AP ASN.1 type.
 /// \return The rlc_mode object where the result of the conversion is stored.
-inline srsran::rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
+inline srsran::pdcp_rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
 {
-  srsran::rlc_mode rlc_mode = {};
+  srsran::pdcp_rlc_mode rlc_mode = {};
 
   switch (asn1_rlc_mod) {
-    case asn1::e1ap::rlc_mode_opts::rlc_tm:
-      rlc_mode = srsran::rlc_mode::tm;
-      break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional:
-      rlc_mode = srsran::rlc_mode::um_bidir;
-      break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_ul:
-      rlc_mode = srsran::rlc_mode::um_unidir_ul;
-      break;
     case asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_dl:
-      rlc_mode = srsran::rlc_mode::um_unidir_dl;
+      rlc_mode = srsran::pdcp_rlc_mode::um;
       break;
     case asn1::e1ap::rlc_mode_opts::rlc_am:
-      rlc_mode = srsran::rlc_mode::am;
+      rlc_mode = srsran::pdcp_rlc_mode::am;
       break;
     default:
       srsran_assert(false, "Invalid RLC mode: {}", asn1_rlc_mod.to_string());
