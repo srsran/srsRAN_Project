@@ -515,17 +515,58 @@ TEST_P(rlc_rx_am_test, rx_invalid_control_pdu)
   EXPECT_EQ(tester->status.get_nacks().size(), 0);
 }
 
+/// Verify empty PDUs are discarded.
+TEST_P(rlc_rx_am_test, rx_empty_pdu)
+{
+  init(GetParam());
+
+  // Create empty PDU
+  byte_buffer pdu_buf = {};
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc->handle_pdu(std::move(pdu));
+
+  // Check if polling bit of malformed PDU was properly ignored
+  EXPECT_EQ(tester->status_trigger_counter, 0);
+}
+
 /// Verify malformed (too short) data PDUs are discarded. Testing here with polling bit set in the malformed PDU which
 /// shall not have any effect on the status-required state of the testee.
-TEST_P(rlc_rx_am_test, rx_short_data_pdu)
+TEST_P(rlc_rx_am_test, rx_data_pdu_with_short_header)
 {
   init(GetParam());
 
   EXPECT_FALSE(rlc->status_report_required());
 
-  // Create too short data PDU with polling bit set
+  // Create a short header of a data PDU with polling bit set
   byte_buffer pdu_buf = {};
   pdu_buf.append(0b11000000); // D/C = 1; P = 1
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc->handle_pdu(std::move(pdu));
+
+  // Check if polling bit of malformed PDU was properly ignored
+  EXPECT_FALSE(rlc->status_report_required());
+  EXPECT_EQ(tester->status_trigger_counter, 0);
+}
+
+/// Verify malformed (too short) data PDUs are discarded. Testing here with polling bit set in the malformed PDU which
+/// shall not have any effect on the status-required state of the testee.
+TEST_P(rlc_rx_am_test, rx_data_pdu_without_payload)
+{
+  init(GetParam());
+
+  EXPECT_FALSE(rlc->status_report_required());
+
+  // Create a complete header of a data PDU with polling bit set and with SO
+  byte_buffer pdu_buf = {};
+  pdu_buf.append(0b11110000); // D/C = 1; P = 1; SI = 0b11
+  pdu_buf.append({0x00, 0x00, 0x00});
+  if (sn_size == rlc_am_sn_size::size18bits) {
+    pdu_buf.append(0x00);
+  }
 
   // Push into RLC
   byte_buffer_slice pdu = {std::move(pdu_buf)};
