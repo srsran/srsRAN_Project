@@ -11,7 +11,7 @@
 
 #include "../common/e2ap_asn1_utils.h"
 #include "e2_event_manager.h"
-#include "srsran/asn1/e2ap/e2ap.h" 
+#include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
@@ -22,22 +22,22 @@ namespace srsran {
 class e2_subscription_setup_procedure
 {
 public:
-  e2_subscription_setup_procedure(e2_message_notifier&                       ric_notif_,
-                                  e2_subscriber&                             sub_notif_,
-                                  timer_factory                              timers_,
-                                  srslog::basic_logger&                      logger_);
+  e2_subscription_setup_procedure(e2_message_notifier&  ric_notif_,
+                                  e2_subscriber&        sub_notif_,
+                                  timer_factory         timers_,
+                                  srslog::basic_logger& logger_);
 
-  void run_subscription_procedure( const asn1::e2ap::ricsubscription_request_s request_);
+  void run_subscription_procedure(const asn1::e2ap::ricsubscription_request_s request_);
+
 private:
   // results senders
-  void send_e2_subscription_setup_response(const e2_subscribe_reponse_message &response);
-  void send_e2_subscription_setup_failure(const e2_subscribe_reponse_message &failure);
+  void send_e2_subscription_setup_response(const e2_subscribe_reponse_message& response);
+  void send_e2_subscription_setup_failure(const e2_subscribe_reponse_message& failure);
 
   srslog::basic_logger& logger;
   e2_message_notifier&  ric_notif;
   e2_subscriber&        sub_notif;
   timer_factory         timers;
-
 };
 
-} // namespace srsgnb
+} // namespace srsran

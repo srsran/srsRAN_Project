@@ -22,7 +22,7 @@ e2_impl::e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_, e
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),
   e2_sub_notif(e2_sub_notif_),
-  subscribe_proc(e2_pdu_notifier_,e2_sub_notif_, timers_,logger),
+  subscribe_proc(e2_pdu_notifier_, e2_sub_notif, timers_, logger),
   events(std::make_unique<e2_event_manager>(timers))
 {
 }
@@ -43,7 +43,8 @@ void e2_impl::handle_e2_setup_response(const e2_setup_response_message& msg)
   pdu_notifier.on_new_message(e2_msg);
 }
 
-void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg) {
+void e2_impl::handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg)
+{
   logger.info("Received RIC Subscription Request");
   subscribe_proc.run_subscription_procedure(msg);
 }
@@ -84,7 +85,7 @@ void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
   switch (msg.value.type().value) {
     case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::e2setup_request:
       current_transaction_id = msg.value.e2setup_request()->transaction_id.value.value;
-      //handle_e2_setup_request({msg.value.e2setup_request()});
+      // handle_e2_setup_request({msg.value.e2setup_request()});
       break;
     case asn1::e2ap::e2_ap_elem_procs_o::init_msg_c::types_opts::options::ricsubscription_request:
       handle_ric_subscription_request(msg.value.ricsubscription_request());

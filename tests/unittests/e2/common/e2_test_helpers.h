@@ -106,20 +106,23 @@ public:
   void handle_subscription(const asn1::e2ap::ricsubscription_request_s& request) override
   {
     last_subscription = request;
-    logger.info("Received a subscription request with action list size {}",  last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list.size());
+    logger.info("Received a subscription request with action list size {}",
+                last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list.size());
   }
 
   void get_subscription_result(e2_subscribe_reponse_message& msg, asn1::e2ap::ri_crequest_id_s request_id) override
   {
     if (request_id.ric_instance_id == last_subscription->ri_crequest_id.value.ric_instance_id) {
-      msg.success = true;
+      msg.success    = true;
       msg.request_id = last_subscription->ri_crequest_id.value;
 
       logger.info("Sending subscription result for Request instance ID {}", msg.request_id.ric_instance_id);
       int action_list_size = last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list.size();
       msg.admitted_list.resize(action_list_size);
       for (int i = 0; i < action_list_size; i++) {
-        auto& item = last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list[i].value().ri_caction_to_be_setup_item();
+        auto& item = last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list[i]
+                         .value()
+                         .ri_caction_to_be_setup_item();
         msg.admitted_list[i].value().ri_caction_admitted_item().ric_action_id = item.ric_action_id;
       }
     } else {
@@ -127,7 +130,7 @@ public:
     }
   }
 
-  private:
+private:
   asn1::e2ap::ricsubscription_request_s last_subscription;
   srslog::basic_logger&                 logger;
 };

@@ -54,7 +54,6 @@ private:
   /// \param[in] msg The received ric subscription request message.
   void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
 
-
   srslog::basic_logger&             logger;
   timer_factory                     timers;
   e2_message_notifier&              pdu_notifier;

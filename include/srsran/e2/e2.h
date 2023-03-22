@@ -113,8 +113,8 @@ public:
   /// @brief providing the result of the subscription request
   /// @param outcome  the result of the subscription request
   /// @param request_id the request id of the subscription request
-  virtual void get_subscription_result(e2_subscribe_reponse_message& outcome, asn1::e2ap::ri_crequest_id_s request_id) = 0;
+  virtual void get_subscription_result(e2_subscribe_reponse_message& outcome,
+                                       asn1::e2ap::ri_crequest_id_s  request_id) = 0;
 };
-
 
 } // namespace srsran
