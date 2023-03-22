@@ -19,6 +19,7 @@ using namespace srsran;
 
 cell_configuration::cell_configuration(const sched_cell_configuration_request_message& msg) :
   cell_index(msg.cell_index),
+  cell_group_index(msg.cell_group_index),
   pci(msg.pci),
   nof_dl_prbs(get_max_Nprb(msg.dl_carrier.carrier_bw_mhz, msg.scs_common, frequency_range::FR1)),
   nof_ul_prbs(get_max_Nprb(msg.ul_carrier.carrier_bw_mhz, msg.scs_common, frequency_range::FR1)),

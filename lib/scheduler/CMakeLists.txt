@@ -31,6 +31,7 @@ set(SOURCES
         support/tbs_calculator.cpp
         support/prbs_calculator.cpp
         support/mcs_calculator.cpp
+        scheduler_cell.cpp
         scheduler_factory.cpp
         scheduler_impl.cpp)
 

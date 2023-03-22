@@ -26,6 +26,7 @@ public:
   cell_configuration(cell_configuration&&)      = delete;
 
   const du_cell_index_t                   cell_index;
+  const du_cell_group_index_t             cell_group_index;
   const pci_t                             pci;
   const unsigned                          nof_dl_prbs;
   const unsigned                          nof_ul_prbs;

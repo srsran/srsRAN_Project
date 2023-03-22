@@ -8,7 +8,6 @@
 
 add_library(sched_cell OBJECT
         cell_configuration.cpp
-        scheduler_cell_manager.cpp
         prb_grant.cpp
         resource_block_group.cpp
         resource_grid.cpp
