@@ -322,14 +322,15 @@ TEST_P(prach_processor_test, single_baseband_symbol)
 {
   // Prepare context with the count as sector.
   prach_buffer_context context;
-  context.sector          = 1;
-  context.port            = 3;
-  context.slot            = TEST_SLOT_BEGIN;
-  context.start_symbol    = 1;
-  context.format          = prach_format_type::zero;
-  context.rb_offset       = 123;
-  context.nof_prb_ul_grid = 52;
-  context.pusch_scs       = subcarrier_spacing::kHz30;
+  context.sector           = 1;
+  context.port             = 3;
+  context.slot             = TEST_SLOT_BEGIN;
+  context.start_symbol     = 1;
+  context.format           = prach_format_type::zero;
+  context.nof_td_occasions = 1;
+  context.rb_offset        = 123;
+  context.nof_prb_ul_grid  = 52;
+  context.pusch_scs        = subcarrier_spacing::kHz30;
 
   sampling_rate              srate         = std::get<0>(GetParam());
   prach_preamble_information preamble_info = get_prach_preamble_long_info(context.format);
@@ -402,14 +403,15 @@ TEST_P(prach_processor_test, three_baseband_symbol)
 {
   // Prepare context with the count as sector.
   prach_buffer_context context;
-  context.sector          = 1;
-  context.port            = 3;
-  context.slot            = TEST_SLOT_BEGIN;
-  context.start_symbol    = 1;
-  context.format          = prach_format_type::zero;
-  context.rb_offset       = 123;
-  context.nof_prb_ul_grid = 52;
-  context.pusch_scs       = subcarrier_spacing::kHz30;
+  context.sector           = 1;
+  context.port             = 3;
+  context.slot             = TEST_SLOT_BEGIN;
+  context.start_symbol     = 1;
+  context.format           = prach_format_type::zero;
+  context.nof_td_occasions = 1;
+  context.rb_offset        = 123;
+  context.nof_prb_ul_grid  = 52;
+  context.pusch_scs        = subcarrier_spacing::kHz30;
 
   sampling_rate              srate         = std::get<0>(GetParam());
   prach_preamble_information preamble_info = get_prach_preamble_long_info(context.format);

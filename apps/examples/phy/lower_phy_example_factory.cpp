@@ -36,7 +36,7 @@ std::unique_ptr<lower_phy> srsran::create_lower_phy(lower_phy_configuration& con
 
   // Create OFDM PRACH demodulator factory.
   std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
-      create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate.get_dft_size(15e3));
+      create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate);
 
   // Create PRACH processor factory.
   std::shared_ptr<prach_processor_factory> prach_proc_factory =

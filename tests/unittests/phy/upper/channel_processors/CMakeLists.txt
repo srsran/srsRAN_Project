@@ -119,7 +119,7 @@ if (USE_PHY_TESTVECTORS)
 
     add_executable(prach_detector_vectortest prach_detector_vectortest.cpp)
     target_link_libraries(prach_detector_vectortest srsran_channel_processors srsran_generic_funcs srsran_phy_support srslog gtest gtest_main)
-    add_test(prach_detector_vectortest prach_detector_vectortest)
+    add_test_vector(prach_detector_vectortest prach_detector_test_data.tar.gz "")
 
     add_executable(prach_generator_vectortest prach_generator_vectortest.cpp)
     target_link_libraries(prach_generator_vectortest srsran_channel_processors srsran_generic_funcs srslog gtest gtest_main)

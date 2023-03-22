@@ -47,11 +47,80 @@ prach_preamble_information srsran::get_prach_preamble_long_info(prach_format_typ
   }
 }
 
-prach_preamble_information srsran::get_prach_preamble_short_info(prach_format_type        format,
-                                                                 prach_subcarrier_spacing ra_scs)
+prach_preamble_information
+srsran::get_prach_preamble_short_info(prach_format_type format, prach_subcarrier_spacing ra_scs, bool last_occasion)
 {
-  srsran_assert(is_short_preamble(format), "Invalid preamble format. It must be a long preamble.");
-  return {};
+  srsran_assert(is_short_preamble(format) && is_short_preamble(ra_scs),
+                "The preamble format (i.e., {}) is not short or subcarrier spacing (i.e., {}) is not compatible with "
+                "short preambles.",
+                to_string(format),
+                to_string(ra_scs));
+
+  prach_preamble_information info;
+  info.sequence_length         = 139U;
+  info.scs                     = ra_scs;
+  info.support_restricted_sets = false;
+
+  unsigned      numerology             = to_numerology_value(ra_scs);
+  phy_time_unit symbol_length_x0_kappa = phy_time_unit::from_units_of_kappa((1U * 2048) >> numerology);
+  phy_time_unit symbol_length_x1_kappa = phy_time_unit::from_units_of_kappa((2U * 2048) >> numerology);
+  phy_time_unit symbol_length_x2_kappa = phy_time_unit::from_units_of_kappa((4U * 2048) >> numerology);
+  phy_time_unit symbol_length_x3_kappa = phy_time_unit::from_units_of_kappa((6U * 2048) >> numerology);
+  phy_time_unit symbol_length_x4_kappa = phy_time_unit::from_units_of_kappa((12U * 2048) >> numerology);
+  phy_time_unit cp_length_A1_kappa     = phy_time_unit::from_units_of_kappa(288U >> numerology);
+  phy_time_unit cp_length_A2_kappa     = phy_time_unit::from_units_of_kappa(576U >> numerology);
+  phy_time_unit cp_length_A3_kappa     = phy_time_unit::from_units_of_kappa(864U >> numerology);
+  phy_time_unit cp_length_B1_kappa     = phy_time_unit::from_units_of_kappa(216U >> numerology);
+  phy_time_unit cp_length_B2_kappa     = phy_time_unit::from_units_of_kappa(360U >> numerology);
+  phy_time_unit cp_length_B3_kappa     = phy_time_unit::from_units_of_kappa(504U >> numerology);
+  phy_time_unit cp_length_B4_kappa     = phy_time_unit::from_units_of_kappa(936U >> numerology);
+  phy_time_unit cp_length_C0_kappa     = phy_time_unit::from_units_of_kappa(1240U >> numerology);
+  phy_time_unit cp_length_C2_kappa     = phy_time_unit::from_units_of_kappa(2048U >> numerology);
+
+  switch (format) {
+    case prach_format_type::A1:
+      info.symbol_length = symbol_length_x1_kappa;
+      info.cp_length     = cp_length_A1_kappa;
+      break;
+    case prach_format_type::A2:
+      info.symbol_length = symbol_length_x2_kappa;
+      info.cp_length     = cp_length_A2_kappa;
+      break;
+    case prach_format_type::A3:
+      info.symbol_length = symbol_length_x3_kappa;
+      info.cp_length     = cp_length_A3_kappa;
+      break;
+    case prach_format_type::B1:
+      info.symbol_length = symbol_length_x1_kappa;
+      info.cp_length     = cp_length_B1_kappa;
+      break;
+    case prach_format_type::B4:
+      info.symbol_length = symbol_length_x4_kappa;
+      info.cp_length     = cp_length_B4_kappa;
+      break;
+    case prach_format_type::C0:
+      info.symbol_length = symbol_length_x0_kappa;
+      info.cp_length     = cp_length_C0_kappa;
+      break;
+    case prach_format_type::C2:
+      info.symbol_length = symbol_length_x2_kappa;
+      info.cp_length     = cp_length_C2_kappa;
+      break;
+    case prach_format_type::A1_B1:
+      info.symbol_length = symbol_length_x1_kappa;
+      info.cp_length     = (last_occasion) ? cp_length_B1_kappa : cp_length_A1_kappa;
+      break;
+    case prach_format_type::A2_B2:
+      info.symbol_length = symbol_length_x2_kappa;
+      info.cp_length     = (last_occasion) ? cp_length_B2_kappa : cp_length_A2_kappa;
+      break;
+    case prach_format_type::A3_B3:
+    default:
+      info.symbol_length = symbol_length_x3_kappa;
+      info.cp_length     = (last_occasion) ? cp_length_B3_kappa : cp_length_A3_kappa;
+      break;
+  }
+  return info;
 }
 
 prach_symbols_slots_duration srsran::get_prach_duration_info(const prach_configuration& prach_cfg,

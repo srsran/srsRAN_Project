@@ -106,10 +106,11 @@ public:
   }
 
   /// Overload addition operator.
-  constexpr phy_time_unit operator+(phy_time_unit other)
+  constexpr phy_time_unit operator+(phy_time_unit other) const
   {
-    value += other.value;
-    return *this;
+    phy_time_unit ret(*this);
+    ret += other;
+    return ret;
   }
 
   /// Overload addition operator.
@@ -120,16 +121,32 @@ public:
   }
 
   /// Overload subtraction operator.
-  constexpr phy_time_unit operator-(phy_time_unit other)
+  constexpr phy_time_unit operator-(phy_time_unit other) const
   {
-    value -= other.value;
-    return *this;
+    phy_time_unit ret(*this);
+    ret -= other;
+    return ret;
   }
 
   /// Overload subtraction operator.
   constexpr phy_time_unit operator-=(phy_time_unit other)
   {
     value -= other.value;
+    return *this;
+  }
+
+  /// Overload multiplication operator.
+  constexpr phy_time_unit operator*(unsigned multiplier) const
+  {
+    phy_time_unit ret(*this);
+    ret *= multiplier;
+    return ret;
+  }
+
+  /// Overload multiplication operator.
+  constexpr phy_time_unit operator*=(unsigned multiplier)
+  {
+    value *= multiplier;
     return *this;
   }
 
@@ -144,6 +161,12 @@ public:
 
   /// Overload lower than operator.
   constexpr bool operator<(phy_time_unit other) const { return value < other.value; }
+
+  /// Overload greater than or equal to operator.
+  constexpr bool operator>=(phy_time_unit other) const { return value >= other.value; }
+
+  /// Overload lower than or equal to operator.
+  constexpr bool operator<=(phy_time_unit other) const { return value <= other.value; }
 
   /// Creates a physical layer time from units of \f$\kappa\f$.
   static constexpr inline phy_time_unit from_units_of_kappa(unsigned units_of_kappa)

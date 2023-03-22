@@ -32,6 +32,8 @@ void srsran::fapi_adaptor::convert_prach_fapi_to_phy(prach_buffer_context&      
   context.slot                 = slot_point(prach_cfg.prach_ul_bwp_pusch_scs, sfn, slot);
   context.sector               = sector_id;
   context.format               = fapi_pdu.prach_format;
+  context.nof_td_occasions     = fapi_pdu.num_prach_ocas;
+  context.nof_fd_occasions     = fapi_pdu.maintenance_v3.num_fd_ra;
   context.start_symbol         = fapi_pdu.prach_start_symbol;
   context.start_preamble_index = fapi_pdu.maintenance_v3.start_preamble_index;
   context.nof_preamble_indices = fapi_pdu.maintenance_v3.num_preamble_indices;

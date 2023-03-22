@@ -581,7 +581,7 @@ static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_conf
   prach_mem.reserve(config.nof_prach_buffer);
 
   for (unsigned i = 0, e = config.nof_prach_buffer; i != e; ++i) {
-    std::unique_ptr<prach_buffer> buffer = create_prach_buffer_long();
+    std::unique_ptr<prach_buffer> buffer = create_prach_buffer_long(1);
     report_fatal_error_if_not(buffer, "Invalid PRACH buffer.");
     prach_mem.push_back(std::move(buffer));
   }

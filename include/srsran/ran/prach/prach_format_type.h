@@ -104,4 +104,38 @@ constexpr bool is_short_preamble(prach_format_type type)
   return (type < prach_format_type::invalid) && (type >= prach_format_type::A1);
 }
 
+/// \brief Gets the PRACH time-domain occasion duration in symbols relative to the RA subcarrier spacing.
+///
+/// Corresponds to parameter \f$N_\textup{dur}^\textup{RA}\f$ is TS38.211 Section 5.3.2. It is selected from TS38.211
+/// Tables 6.3.3.2-2, 6.3.3.2-3 and 6.3.3.2-4.
+///
+/// \param[in] format PRACH preamble format.
+/// \return The PRACH time-domain occasion duration for short PRACH formats, and 0 otherwise.
+inline unsigned get_preamble_duration(prach_format_type format)
+{
+  switch (format) {
+    case prach_format_type::zero:
+    case prach_format_type::one:
+    case prach_format_type::two:
+    case prach_format_type::three:
+    case prach_format_type::invalid:
+    default:
+      return 0;
+    case prach_format_type::A1:
+    case prach_format_type::B1:
+    case prach_format_type::A1_B1:
+    case prach_format_type::C0:
+      return 2;
+    case prach_format_type::A2:
+    case prach_format_type::A2_B2:
+      return 4;
+    case prach_format_type::A3:
+    case prach_format_type::A3_B3:
+    case prach_format_type::C2:
+      return 6;
+    case prach_format_type::B4:
+      return 12;
+  }
+}
+
 } // namespace srsran

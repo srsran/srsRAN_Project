@@ -60,7 +60,9 @@ TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
 
   ASSERT_EQ(static_cast<unsigned>(fapi_pdu.prach_format), static_cast<unsigned>(context.format));
   ASSERT_EQ(fapi_pdu.prach_start_symbol, context.start_symbol);
+  ASSERT_EQ(fapi_pdu.num_prach_ocas, context.nof_td_occasions);
   const fapi::ul_prach_maintenance_v3& v3 = fapi_pdu.maintenance_v3;
+  ASSERT_EQ(v3.num_fd_ra, context.nof_fd_occasions);
   ASSERT_EQ(v3.start_preamble_index, context.start_preamble_index);
   ASSERT_EQ(v3.num_preamble_indices, context.nof_preamble_indices);
   ASSERT_EQ(static_cast<unsigned>(prach.restricted_set), static_cast<unsigned>(context.restricted_set));

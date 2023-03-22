@@ -49,10 +49,12 @@ prach_preamble_information get_prach_preamble_long_info(prach_format_type format
 /// - the random access subcarrier spacing does not satisfy \f$\Delta f ^\textup{RA} = 15 \cdot 2^\mu\f$ where \f$\mu
 /// \in \{0, 1, 2, 3\}\f$.
 ///
-/// \param[in] format PRACH preamble format.
-/// \param[in] ra_scs Random access subcarrier spacing \f$\Delta f ^\textup{RA}\f$.
+/// \param[in] format        PRACH preamble format.
+/// \param[in] ra_scs        Random access subcarrier spacing \f$\Delta f ^\textup{RA}\f$.
+/// \param[in] last_occasion Set to true if \f$n_\textup{t}^\textup{RA}=N_\textup{t}^\textup{RA,slot}-1\f$
 /// \return PRACH preamble information.
-prach_preamble_information get_prach_preamble_short_info(prach_format_type format, prach_subcarrier_spacing ra_scs);
+prach_preamble_information
+get_prach_preamble_short_info(prach_format_type format, prach_subcarrier_spacing ra_scs, bool last_occasion);
 
 /// \brief Collects PRACH preamble duration information.
 struct prach_symbols_slots_duration {

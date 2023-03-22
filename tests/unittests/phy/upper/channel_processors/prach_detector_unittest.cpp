@@ -121,8 +121,7 @@ TEST_P(PrachDetectorFixture, Flow)
   });
 
   // Prepare PRACH buffer.
-  prach_buffer_spy buffer;
-  buffer.set_symbol_data(buffer_data, sequence_length, 1);
+  prach_buffer_spy buffer(buffer_data, 1, 1, 1, sequence_length);
 
   // Generate PRACH configuration
   prach_detector::configuration detector_config;
@@ -202,8 +201,7 @@ TEST_P(PrachDetectorFixture, RssiZero)
   std::fill(buffer_data.begin(), buffer_data.end(), 0.0);
 
   // Prepare PRACH buffer.
-  prach_buffer_spy buffer;
-  buffer.set_symbol_data(buffer_data, sequence_length, 1);
+  prach_buffer_spy buffer(buffer_data, 1, 1, 1, sequence_length);
 
   // Generate PRACH configuration. It is irrelevant.
   prach_detector::configuration detector_config;
@@ -260,8 +258,7 @@ TEST_P(PrachDetectorFixture, ThresholdTest)
   dft_spy->set_output_buffer(correlation);
 
   // Prepare PRACH buffer.
-  prach_buffer_spy buffer;
-  buffer.set_symbol_data(buffer_data, sequence_length, 1);
+  prach_buffer_spy buffer(buffer_data, 1, 1, 1, sequence_length);
 
   // Generate PRACH configuration. Only one preamble index.
   prach_detector::configuration detector_config;

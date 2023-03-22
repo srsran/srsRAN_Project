@@ -82,14 +82,20 @@ void prach_processor_worker::accumulate_samples(span<const cf_t> samples)
   state = states::processing;
 
   async_task_executor.execute([this]() {
+    // Prepare PRACH demodulator configuration.
     ofdm_prach_demodulator::configuration config;
-    config.format          = prach_context.format;
-    config.rb_offset       = prach_context.rb_offset;
-    config.nof_prb_ul_grid = prach_context.nof_prb_ul_grid;
-    config.pusch_scs       = prach_context.pusch_scs;
+    config.format           = prach_context.format;
+    config.nof_td_occasions = prach_context.nof_td_occasions;
+    config.nof_fd_occasions = prach_context.nof_fd_occasions;
+    config.start_symbol     = prach_context.start_symbol;
+    config.rb_offset        = prach_context.rb_offset;
+    config.nof_prb_ul_grid  = prach_context.nof_prb_ul_grid;
+    config.pusch_scs        = prach_context.pusch_scs;
 
+    // Demodulate all candidates.
     demodulator->demodulate(*buffer, temp_baseband.first(nof_samples), config);
 
+    // Notify PRACH window reception.
     notifier->on_rx_prach_window(*buffer, prach_context);
 
     // Transition to idle.

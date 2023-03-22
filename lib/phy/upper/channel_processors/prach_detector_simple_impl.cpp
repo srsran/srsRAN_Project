@@ -69,7 +69,7 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
   srsvec::zero(idft_guard);
 
   // Calculate RSSI.
-  float rssi = srsvec::average_power(input.get_symbol(0));
+  float rssi = srsvec::average_power(input.get_symbol(0, 0, 0, 0));
 
   // Prepare results.
   prach_detection_result result;
@@ -102,7 +102,7 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
     report_fatal_error_if_not(std::isnormal(preamble_power), "Corrupted generated signal.");
 
     // Select first symbol in the buffer.
-    span<const cf_t> signal_freq = input.get_symbol(0);
+    span<const cf_t> signal_freq = input.get_symbol(0, 0, 0, 0);
 
     // Perform correlation in frequency-domain and store the result in the IDFT input.
     srsvec::prod_conj(

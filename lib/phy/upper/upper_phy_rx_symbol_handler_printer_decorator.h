@@ -78,7 +78,7 @@ public:
     // Queue write request.
     if (not worker.push_task([this, context, &buffer]() {
           // Save the first PRACH symbol only.
-          span<const cf_t> samples = buffer.get_symbol(0);
+          span<const cf_t> samples = buffer.get_symbol(0, 0, 0, 0);
           file.write(reinterpret_cast<const char*>(samples.data()), samples.size() * sizeof(cf_t));
 
           // Log the resource grid information.
