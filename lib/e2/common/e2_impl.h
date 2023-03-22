@@ -11,6 +11,7 @@
 #pragma once
 
 #include "procedures/e2_setup_procedure.h"
+#include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/ran/nr_cgi.h"
@@ -49,9 +50,16 @@ private:
   /// \param[in] outcome The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::e2ap::unsuccessful_outcome_s& outcome);
 
+  /// \brief Notify about the reception of an ric subscription request message.
+  /// \param[in] msg The received ric subscription request message.
+  void handle_ric_subscription_request(const asn1::e2ap::ricsubscription_request_s& msg);
+
+
   srslog::basic_logger&             logger;
   timer_factory                     timers;
   e2_message_notifier&              pdu_notifier;
+  e2_subscriber&                    e2_sub_notif;
+  e2_subscription_setup_procedure   subscribe_proc;
   std::unique_ptr<e2_event_manager> events;
 
   unsigned current_transaction_id = 0; // store current E2AP transaction id
