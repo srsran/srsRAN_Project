@@ -13,7 +13,6 @@
 #include "srsran/e1ap/common/e1ap_common.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
-#include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/io_broker/io_broker.h"
 

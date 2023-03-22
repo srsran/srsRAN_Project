@@ -147,37 +147,7 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_request(const asn1::e1ap::gnb_cu_cp_
     req_msg.gnb_cu_cp_name = msg->gnb_cu_cp_name.value.to_string();
   }
 
-  cu_cp_e1_setup_response response = cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
-
-  e1ap_message e1ap_msg;
-  if (response.success) {
-    logger.debug("Sending CuCpE1SetupResponse message");
-
-    e1ap_msg.pdu.set_successful_outcome();
-    e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_CP_E1_SETUP);
-    auto& setup_resp = e1ap_msg.pdu.successful_outcome().value.gnb_cu_cp_e1_setup_resp();
-
-    setup_resp->gnb_cu_up_id.value = response.gnb_cu_up_id.value();
-    if (response.gnb_cu_up_name.has_value()) {
-      setup_resp->gnb_cu_up_name_present = true;
-      setup_resp->gnb_cu_up_name.value.from_string(response.gnb_cu_up_name.value());
-    }
-
-    setup_resp->cn_support.value = cn_support_opts::c_5gc;
-
-    supported_plmns_item_s plmn;
-    plmn.plmn_id[0] = 0;    // MCC = 001
-    plmn.plmn_id[1] = 0xf1; // MCC = 001
-    plmn.plmn_id[2] = 0x1;  // MNC = 01
-    setup_resp->supported_plmns->resize(1);
-    setup_resp->supported_plmns.value[0] = plmn;
-
-    // TODO: Add missing values
-
-    // set values handled by E1
-    setup_resp->transaction_id.value = current_transaction_id;
-    pdu_notifier.on_new_message(e1ap_msg);
-  }
+  cu_up_notifier.on_cu_cp_e1_setup_request_received(req_msg);
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& msg)

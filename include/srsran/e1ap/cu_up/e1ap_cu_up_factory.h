@@ -11,7 +11,6 @@
 #pragma once
 
 #include "e1ap_cu_up.h"
-#include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
 

@@ -14,7 +14,6 @@
 #include "e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsran/pcap/pcap.h"
 #include "srsran/support/executors/task_executor.h"
 #include <unordered_map>
 
