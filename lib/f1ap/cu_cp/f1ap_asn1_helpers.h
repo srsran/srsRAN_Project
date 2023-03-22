@@ -270,9 +270,18 @@ inline void fill_f1ap_ue_context_modification_request(asn1::f1ap::ue_context_mod
   }
 
   // rat freq prio info
-  if (msg.rat_freq_prio_info.has_value() && msg.rat_freq_prio_info.value() == "nGRAN") { // only ng ran supported
+  if (msg.rat_freq_prio_info.has_value()) {
     asn1_request->rat_freq_prio_info_present = true;
-    asn1_request->rat_freq_prio_info.value.set_ngran();
+
+    if (msg.rat_freq_prio_info.value().type == "nGRAN") {
+      asn1_request->rat_freq_prio_info.value.set_ngran();
+      asn1_request->rat_freq_prio_info.value.ngran() = msg.rat_freq_prio_info.value().rat_freq_prio_info;
+    } else if (msg.rat_freq_prio_info.value().type == "eNDC") {
+      asn1_request->rat_freq_prio_info.value.set_endc();
+      asn1_request->rat_freq_prio_info.value.endc() = msg.rat_freq_prio_info.value().rat_freq_prio_info;
+    } else {
+      asn1_request->rat_freq_prio_info_present = false;
+    }
   }
 
   // drx cfg ind

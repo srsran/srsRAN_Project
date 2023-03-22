@@ -391,7 +391,10 @@ cu_cp_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_mod
   msg.inactivity_monitoring_request = "true";
 
   // rat freq prio info
-  msg.rat_freq_prio_info = "nGRAN";
+  cu_cp_rat_freq_prio_info rat_freq_prio_info;
+  rat_freq_prio_info.type               = "nGRAN";
+  rat_freq_prio_info.rat_freq_prio_info = 1;
+  msg.rat_freq_prio_info                = rat_freq_prio_info;
 
   // drx cfg ind
   msg.drx_cfg_ind = "release";

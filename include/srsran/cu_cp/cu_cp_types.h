@@ -289,6 +289,11 @@ struct cu_cp_drbs_to_be_modified_item {
   optional<cu_cp_ul_cfg>               ul_cfg;
 };
 
+struct cu_cp_rat_freq_prio_info {
+  std::string type;
+  uint16_t    rat_freq_prio_info;
+};
+
 struct cu_cp_rlc_fail_ind {
   lcid_t assocated_lcid = lcid_t::INVALID_LCID;
 };
@@ -316,7 +321,7 @@ struct cu_cp_ue_context_modification_request {
   std::vector<srb_id_t>                                        srbs_to_be_released_list;
   std::vector<drb_id_t>                                        drbs_to_be_released_list;
   optional<std::string>                                        inactivity_monitoring_request;
-  optional<std::string>                                        rat_freq_prio_info;
+  optional<cu_cp_rat_freq_prio_info>                           rat_freq_prio_info;
   optional<std::string>                                        drx_cfg_ind;
   optional<cu_cp_rlc_fail_ind>                                 rlc_fail_ind;
   byte_buffer                                                  ul_tx_direct_current_list_info;
