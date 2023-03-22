@@ -28,8 +28,8 @@ static unique_function<void()> make_blocking_pop_task(blocking_queue<unique_task
   };
 }
 
-static unique_function<void()> make_wait_pop_task(blocking_queue<unique_task>& queue,
-                                                  std::chrono::microseconds    duration)
+static unique_function<void()> make_waitable_pop_task(blocking_queue<unique_task>& queue,
+                                                      std::chrono::microseconds    duration)
 {
   return [&queue, duration]() {
     blocking_queue<unique_task>::result ret = blocking_queue<unique_task>::result::timeout;
@@ -54,7 +54,7 @@ task_worker::task_worker(std::string                      thread_name,
            prio,
            mask,
            pop_wait_timeout.count() == 0 ? make_blocking_pop_task(pending_tasks)
-                                         : make_wait_pop_task(pending_tasks, pop_wait_timeout))
+                                         : make_waitable_pop_task(pending_tasks, pop_wait_timeout))
 {
 }
 
