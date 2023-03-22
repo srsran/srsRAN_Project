@@ -9,10 +9,10 @@
  */
 
 #include "mac_controller.h"
-#include "../du_rnti_table.h"
 #include "ue_creation_procedure.h"
 #include "ue_delete_procedure.h"
 #include "ue_reconfiguration_procedure.h"
+#include "srsran/du_high/rnti_value_table.h"
 
 using namespace srsran;
 

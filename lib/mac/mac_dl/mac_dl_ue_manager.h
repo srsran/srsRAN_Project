@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../du_rnti_table.h"
+#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
@@ -21,6 +21,8 @@ namespace srsran {
 
 constexpr static size_t UE_CON_RES_ID_LEN = 6;
 using ue_con_res_id_t                     = std::array<uint8_t, UE_CON_RES_ID_LEN>;
+
+using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 
 class mac_dl_ue_manager
 {

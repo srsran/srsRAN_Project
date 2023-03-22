@@ -11,13 +11,15 @@
 #pragma once
 
 #include "../../ran/gnb_format.h"
-#include "../du_rnti_table.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/du_high/rnti_value_table.h"
 #include "srsran/mac/mac.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
 
 namespace srsran {
+
+using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 
 /// Stores MAC UL UE context. In particular, the UL PDU notifiers for each logical channel.
 class mac_ul_ue_context
