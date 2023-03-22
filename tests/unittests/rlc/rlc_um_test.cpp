@@ -246,6 +246,57 @@ TEST_P(rlc_um_test, create_new_entity)
   EXPECT_EQ(tester2.bsr_count, 0);
 }
 
+TEST_P(rlc_um_test, rx_empty_pdu)
+{
+  init(GetParam());
+
+  // Create empty PDU
+  byte_buffer pdu_buf = {};
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc2_rx_lower->handle_pdu(std::move(pdu));
+
+  // Read SDUs from RLC2's upper layer
+  EXPECT_EQ(tester2.sdu_counter, 0);
+}
+
+TEST_P(rlc_um_test, rx_pdu_with_short_header)
+{
+  init(GetParam());
+
+  // Create a short header of a PDU segment
+  byte_buffer pdu_buf = {};
+  pdu_buf.append(0b11000000); // SI = 0b11
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc2_rx_lower->handle_pdu(std::move(pdu));
+
+  // Read SDUs from RLC2's upper layer
+  EXPECT_EQ(tester2.sdu_counter, 0);
+}
+
+TEST_P(rlc_um_test, rx_pdu_without_payload)
+{
+  init(GetParam());
+
+  // Create a complete header of a PDU segment
+  byte_buffer pdu_buf = {};
+  pdu_buf.append(0b11000000); // SI = 0b11
+  pdu_buf.append({0x11, 0x22});
+  if (sn_size == rlc_um_sn_size::size12bits) {
+    pdu_buf.append(0x33);
+  }
+
+  // Push into RLC
+  byte_buffer_slice pdu = {std::move(pdu_buf)};
+  rlc2_rx_lower->handle_pdu(std::move(pdu));
+
+  // Read SDUs from RLC2's upper layer
+  EXPECT_EQ(tester2.sdu_counter, 0);
+}
+
 TEST_P(rlc_um_test, tx_without_segmentation)
 {
   init(GetParam());
