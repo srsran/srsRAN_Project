@@ -8,7 +8,7 @@
  *
  */
 
-#include "apps/gnb/adapters/f1u_connector/f1u_local_connector.h"
+#include "srsran/f1u/local_connector/f1u_local_connector.h"
 #include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 

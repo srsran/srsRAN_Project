@@ -18,8 +18,8 @@
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 
-#include "adapters/f1u_connector/f1u_local_connector.h"
 #include "srsran/cu_up/cu_up_factory.h"
+#include "srsran/f1u/local_connector/f1u_local_connector.h"
 
 #include "adapters/ngap_adapter.h"
 #include "srsran/support/io_broker/io_broker_factory.h"

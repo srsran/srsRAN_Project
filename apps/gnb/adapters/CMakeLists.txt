@@ -5,7 +5,3 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
-
-set(SOURCES f1u_connector/f1u_local_connector.cpp)
-add_library(srsgnb_app_f1u_connector STATIC ${SOURCES})
-target_link_libraries(srsgnb_app_f1u_connector srsran_f1u_cu_up)

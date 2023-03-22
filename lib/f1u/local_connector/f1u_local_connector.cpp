@@ -9,7 +9,7 @@
  *
  */
 
-#include "f1u_local_connector.h"
+#include "srsran/f1u/local_connector/f1u_local_connector.h"
 #include "srsran/f1u/cu_up/f1u_bearer_factory.h"
 #include "srsran/f1u/du/f1u_bearer_factory.h"
 #include "srsran/ran/lcid.h"
