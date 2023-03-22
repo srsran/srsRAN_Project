@@ -35,6 +35,19 @@ struct e2_setup_response_message {
   bool                       success;
 };
 
+struct e2_subscribe_request_message {
+  asn1::e2ap::ri_crequest_id_s          request_id;
+  asn1::e2ap::ricsubscription_details_s subscription;
+};
+
+struct e2_subscribe_reponse_message {
+  asn1::e2ap::ri_crequest_id_s               request_id;
+  asn1::e2ap::cause_c                        cause;
+  asn1::e2ap::ri_caction_admitted_list_l     admitted_list;
+  asn1::e2ap::ri_caction_not_admitted_list_l not_admitted_list;
+  bool                                       success;
+};
+
 /// This interface is used to push E2 messages to the E2 interface.
 class e2_message_handler
 {
@@ -88,4 +101,20 @@ class e2_interface : public e2_message_handler, public e2_event_handler, public 
 public:
   virtual ~e2_interface() = default;
 };
+
+class e2_subscriber
+{
+public:
+  virtual ~e2_subscriber() = default;
+
+  /// \brief Handle the incoming subscription message.
+  virtual void handle_subscription(const asn1::e2ap::ricsubscription_request_s& msg) = 0;
+
+  /// @brief providing the result of the subscription request
+  /// @param outcome  the result of the subscription request
+  /// @param request_id the request id of the subscription request
+  virtual void get_subscription_result(e2_subscribe_reponse_message& outcome, asn1::e2ap::ri_crequest_id_s request_id) = 0;
+};
+
+
 } // namespace srsran

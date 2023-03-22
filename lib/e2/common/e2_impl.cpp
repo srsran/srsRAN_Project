@@ -17,7 +17,7 @@
 using namespace srsran;
 using namespace asn1::e2ap;
 
-e2_impl::e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_) :
+e2_impl::e2_impl(timer_factory timers_, e2_message_notifier& e2_pdu_notifier_, e2_subscriber& e2_sub_notif_) :
   logger(srslog::fetch_basic_logger("E2")),
   timers(timers_),
   pdu_notifier(e2_pdu_notifier_),

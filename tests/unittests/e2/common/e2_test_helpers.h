@@ -99,6 +99,39 @@ inline e2_message generate_e2_setup_request()
   return e2_msg;
 }
 
+class dummy_e2_subscriber : public e2_subscriber
+{
+public:
+  dummy_e2_subscriber() : logger(srslog::fetch_basic_logger("TEST")){};
+  void handle_subscription(const asn1::e2ap::ricsubscription_request_s& request) override
+  {
+    last_subscription = request;
+    logger.info("Received a subscription request with action list size {}",  last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list.size());
+  }
+
+  void get_subscription_result(e2_subscribe_reponse_message& msg, asn1::e2ap::ri_crequest_id_s request_id) override
+  {
+    if (request_id.ric_instance_id == last_subscription->ri_crequest_id.value.ric_instance_id) {
+      msg.success = true;
+      msg.request_id = last_subscription->ri_crequest_id.value;
+
+      logger.info("Sending subscription result for Request instance ID {}", msg.request_id.ric_instance_id);
+      int action_list_size = last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list.size();
+      msg.admitted_list.resize(action_list_size);
+      for (int i = 0; i < action_list_size; i++) {
+        auto& item = last_subscription->ricsubscription_details.value.ric_action_to_be_setup_list[i].value().ri_caction_to_be_setup_item();
+        msg.admitted_list[i].value().ri_caction_admitted_item().ric_action_id = item.ric_action_id;
+      }
+    } else {
+      msg.success = false;
+    }
+  }
+
+  private:
+  asn1::e2ap::ricsubscription_request_s last_subscription;
+  srslog::basic_logger&                 logger;
+};
+
 inline e2_message generate_e2_setup_request_message()
 {
   e2_message e2_msg = {};
@@ -174,7 +207,8 @@ protected:
     srslog::init();
 
     msg_notifier = std::make_unique<dummy_e2_pdu_notifier>(nullptr);
-    e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier);
+    subscriber   = std::make_unique<dummy_e2_subscriber>();
+    e2           = create_e2(timer_factory{timers, task_worker}, *msg_notifier, *subscriber);
     gw           = std::make_unique<dummy_network_gateway_data_handler>();
     packer       = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2);
     msg_notifier->attach_handler(&(*packer));
@@ -188,6 +222,7 @@ protected:
   std::unique_ptr<dummy_network_gateway_data_handler> gw;
   std::unique_ptr<e2_interface>                       e2;
   std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
+  std::unique_ptr<dummy_e2_subscriber>                subscriber;
   timer_manager                                       timers;
   manual_task_worker                                  task_worker{64};
   std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
