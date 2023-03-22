@@ -31,18 +31,32 @@ class scheduler_metrics_handler;
 
 /// \brief This class holds all the resources that are specific to a cell.
 /// This includes the SIB and RA scheduler objects, PDCCH scheduler object, the cell resource grid, etc.
-class scheduler_cell
+class cell_scheduler
 {
 public:
-  explicit scheduler_cell(const scheduler_expert_config&                  sched_cfg,
+  explicit cell_scheduler(const scheduler_expert_config&                  sched_cfg,
                           const sched_cell_configuration_request_message& msg,
                           ue_scheduler&                                   ue_sched,
                           scheduler_event_logger&                         ev_logger);
 
   void run_slot(slot_point sl_tx);
 
+  const sched_result& last_result() const { return res_grid[0].result; }
+
+  void handle_rach_indication(const rach_indication_message& msg) { ra_sch.handle_rach_indication(msg); }
+
+  void handle_crc_indication(const ul_crc_indication& crc_ind);
+
+  void handle_paging_information(const sched_paging_information& pi) { pg_sch.handle_paging_information(pi); }
+
   const cell_configuration cell_cfg;
-  cell_resource_allocator  res_grid;
+
+  /// Reference to UE scheduler whose DU cell group contains this cell.
+  ue_scheduler& ue_sched;
+
+private:
+  /// Resource grid of this cell.
+  cell_resource_allocator res_grid;
 
   ssb_scheduler                 ssb_sch;
   pdcch_resource_allocator_impl pdcch_sch;
@@ -54,8 +68,6 @@ public:
   sib1_scheduler                sib1_sch;
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
-
-  ue_scheduler& ue_sched;
 };
 
 } // namespace srsran

@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "cell_scheduler.h"
 #include "logging/scheduler_event_logger.h"
 #include "logging/scheduler_metrics_handler.h"
 #include "logging/scheduler_result_logger.h"
-#include "scheduler_cell.h"
 #include "ue_scheduling/ue_scheduler.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/mac_scheduler.h"
@@ -63,7 +63,7 @@ private:
   scheduler_metrics_handler metrics;
 
   /// Container of DU Cell-specific resources.
-  slotted_id_table<du_cell_index_t, std::unique_ptr<scheduler_cell>, MAX_NOF_DU_CELLS> cells;
+  slotted_id_table<du_cell_index_t, std::unique_ptr<cell_scheduler>, MAX_NOF_DU_CELLS> cells;
 
   /// Container of DU Cell Group-specific resources.
   slotted_id_table<du_cell_group_index_t, std::unique_ptr<ue_scheduler>, MAX_DU_CELL_GROUPS> groups;

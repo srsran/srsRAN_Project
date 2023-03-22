@@ -9,7 +9,6 @@
  */
 
 #include "scheduler_impl.h"
-#include "common_scheduling/ssb_scheduler.h"
 #include "ue_scheduling/ue_scheduler_impl.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
@@ -41,15 +40,10 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
     groups.emplace(msg.cell_group_index,
                    std::make_unique<ue_scheduler_impl>(expert_params.ue, config_notifier, metrics, sched_ev_logger));
   }
-  ue_scheduler& ue_sched = *groups[msg.cell_group_index];
 
   // Create a new cell scheduler instance.
-  cells.emplace(msg.cell_index, std::make_unique<scheduler_cell>(expert_params, msg, ue_sched, sched_ev_logger));
-  scheduler_cell& cell = *cells[msg.cell_index];
-
-  // Register new cell in the UE scheduler.
-  ue_sched.add_cell(
-      ue_scheduler_cell_params{msg.cell_index, &cell.pdcch_sch, &cell.pucch_alloc, &cell.uci_alloc, &cell.res_grid});
+  cells.emplace(msg.cell_index,
+                std::make_unique<cell_scheduler>(expert_params, msg, *groups[msg.cell_group_index], sched_ev_logger));
 
   logger.info("Cell with cell_index={} was configured.", msg.cell_index);
 
@@ -63,6 +57,7 @@ void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_
     report_fatal_error("Invalid ue={} creation request message. Cause: {}", ue_request.crnti, result.error());
   }
 
+  // Add Mapping UE index -> DU Cell Group index.
   du_cell_index_t pcell_index = ue_request.cfg.cells[0].serv_cell_cfg.cell_index;
   ue_to_cell_group_index.emplace(ue_request.ue_index, cells[pcell_index]->cell_cfg.cell_group_index);
 
@@ -89,7 +84,7 @@ void scheduler_impl::handle_ue_removal_request(du_ue_index_t ue_index)
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
 {
   srsran_assert(cells.contains(msg.cell_index), "cell={} does not exist", msg.cell_index);
-  cells[msg.cell_index]->ra_sch.handle_rach_indication(msg);
+  cells[msg.cell_index]->handle_rach_indication(msg);
 }
 
 void scheduler_impl::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr)
@@ -116,29 +111,9 @@ void scheduler_impl::handle_dl_buffer_state_indication(const dl_buffer_state_ind
 
 void scheduler_impl::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  bool has_msg3_crcs = std::any_of(
-      crc_ind.crcs.begin(), crc_ind.crcs.end(), [](const auto& pdu) { return pdu.ue_index == INVALID_DU_UE_INDEX; });
+  srsran_assert(cells.contains(crc_ind.cell_index), "cell={} does not exist", crc_ind.cell_index);
 
-  if (has_msg3_crcs) {
-    ul_crc_indication msg3_crcs{}, ue_crcs{};
-    msg3_crcs.sl_rx      = crc_ind.sl_rx;
-    msg3_crcs.cell_index = crc_ind.cell_index;
-    ue_crcs.sl_rx        = crc_ind.sl_rx;
-    ue_crcs.cell_index   = crc_ind.cell_index;
-    for (const ul_crc_pdu_indication& crc_pdu : crc_ind.crcs) {
-      if (crc_pdu.ue_index == INVALID_DU_UE_INDEX) {
-        msg3_crcs.crcs.push_back(crc_pdu);
-      } else {
-        ue_crcs.crcs.push_back(crc_pdu);
-      }
-    }
-    // Forward CRC to Msg3 HARQs that has no ueId yet associated.
-    cells[crc_ind.cell_index]->ra_sch.handle_crc_indication(msg3_crcs);
-    // Forward remaining CRCs to UE scheduler.
-    cells[crc_ind.cell_index]->ue_sched.get_feedback_handler().handle_crc_indication(ue_crcs);
-  } else {
-    cells[crc_ind.cell_index]->ue_sched.get_feedback_handler().handle_crc_indication(crc_ind);
-  }
+  cells[crc_ind.cell_index]->handle_crc_indication(crc_ind);
 }
 
 void scheduler_impl::handle_uci_indication(const uci_indication& uci)
@@ -162,7 +137,7 @@ void scheduler_impl::handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac
 const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
   srsran_assert(cells.contains(cell_index), "cell={} does not exist", cell_index);
-  scheduler_cell& cell = *cells[cell_index];
+  cell_scheduler& cell = *cells[cell_index];
 
   if (cell_index == to_du_cell_index(0)) {
     // Set scheduler logger context.
@@ -179,18 +154,18 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   sched_ev_logger.log();
 
   // > Log the scheduler results.
-  sched_result_logger.on_scheduler_result(cell.res_grid[0].result);
+  sched_result_logger.on_scheduler_result(cell.last_result());
 
   // > Push the scheduler results to the metrics handler.
-  metrics.push_result(sl_tx, cell.res_grid[0].result);
+  metrics.push_result(sl_tx, cell.last_result());
 
   // Return result for the slot.
-  return &cell.res_grid[0].result;
+  return &cell.last_result();
 }
 
 void scheduler_impl::handle_paging_information(const sched_paging_information& pi)
 {
   for (const auto cell_id : pi.paging_cells) {
-    cells[cell_id]->pg_sch.handle_paging_information(pi);
+    cells[cell_id]->handle_paging_information(pi);
   }
 }
