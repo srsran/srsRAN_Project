@@ -40,7 +40,7 @@ std::ostream& operator<<(std::ostream& out, const test_params& params)
 class base_ra_scheduler_test : public ::testing::TestWithParam<test_params>
 {
 protected:
-  static constexpr unsigned tx_rx_delay = 4U;
+  static constexpr unsigned tx_rx_delay = 2U;
 
   base_ra_scheduler_test(duplex_mode dplx_mode) : params(GetParam()), cell_cfg(get_sched_req(dplx_mode, params))
   {
@@ -151,7 +151,14 @@ protected:
 
   slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }
 
-  void handle_rach_ind(const rach_indication_message& rach) { ra_sch.handle_rach_indication(rach); }
+  void run_slot_until_next_rach_opportunity()
+  {
+    while (not cell_cfg.is_ul_enabled(this->next_slot_rx() - 1)) {
+      run_slot();
+    }
+  }
+
+  void handle_rach_indication(const rach_indication_message& rach) { ra_sch.handle_rach_indication(rach); }
 
   rach_indication_message::preamble create_preamble()
   {
@@ -183,6 +190,21 @@ protected:
       rach_ind.occasions.back().preambles.emplace_back(create_preamble());
     }
     return rach_ind;
+  }
+
+  ul_crc_indication create_crc_indication(span<const ul_sched_info> puschs, bool ack)
+  {
+    ul_crc_indication crc_ind;
+    crc_ind.cell_index = to_du_cell_index(0);
+    crc_ind.sl_rx      = this->next_slot_rx() - 1;
+    for (const ul_sched_info& ul : puschs) {
+      crc_ind.crcs.emplace_back();
+      crc_ind.crcs.back().ue_index       = ul.context.ue_index;
+      crc_ind.crcs.back().rnti           = ul.pusch_cfg.rnti;
+      crc_ind.crcs.back().harq_id        = to_harq_id(0);
+      crc_ind.crcs.back().tb_crc_success = ack;
+    }
+    return crc_ind;
   }
 
   const pusch_time_domain_resource_allocation& get_pusch_td_resource(uint8_t time_resource) const
@@ -427,7 +449,7 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
   // Forward single RACH occasion with multiple preambles.
   rach_indication_message one_rach =
       create_rach_indication(test_rgen::uniform_int<unsigned>(1, MAX_PREAMBLES_PER_PRACH_OCCASION));
-  handle_rach_ind(one_rach);
+  handle_rach_indication(one_rach);
 
   unsigned   ra_win_size  = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window;
   slot_point last_slot_tx = next_slot_rx() + ra_win_size;
@@ -479,7 +501,7 @@ TEST_P(fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
     rach_ind.occasions.back().frequency_index = i;
     rach_ind.occasions.back().preambles.emplace_back(create_preamble());
   }
-  handle_rach_ind(rach_ind);
+  handle_rach_indication(rach_ind);
 
   unsigned nof_sched_grants = 0;
   for (unsigned slot_count = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size(); ++slot_count) {
@@ -512,8 +534,9 @@ TEST_P(tdd_test, schedules_rar_in_valid_slots_when_tdd)
 {
   // Forward single RACH occasion with multiple preambles.
   // Note: The number of preambles is small enough to fit all grants in one slot.
+  run_slot_until_next_rach_opportunity();
   rach_indication_message rach_ind = create_rach_indication(test_rgen::uniform_int<unsigned>(1, 10));
-  handle_rach_ind(rach_ind);
+  handle_rach_indication(rach_ind);
 
   for (unsigned nof_sched_grants = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size();) {
     run_slot();
@@ -543,40 +566,26 @@ TEST_P(tdd_test, schedules_msg3_retx_in_valid_slots_when_tdd)
 {
   // Forward single RACH occasion with multiple preambles.
   // Note: The number of preambles is small enough to fit all grants in one slot.
+  run_slot_until_next_rach_opportunity();
   rach_indication_message rach_ind = create_rach_indication(test_rgen::uniform_int<unsigned>(1, 10));
-  handle_rach_ind(rach_ind);
+  handle_rach_indication(rach_ind);
 
   unsigned       msg3_retx_count = 0;
   const unsigned MAX_COUNT       = 100;
   for (unsigned count = 0; count != MAX_COUNT; ++count) {
     run_slot();
 
-    for (unsigned res = 0; res != cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size();
-         ++res) {
-      span<const ul_sched_info> msg3s = scheduled_msg3_retxs(res);
-
-      if (not msg3s.empty()) {
-        unsigned retx_count =
-            std::count_if(msg3s.begin(), msg3s.end(), [](const ul_sched_info& e) { return not e.pusch_cfg.new_data; });
-        if (retx_count > 0) {
-          ASSERT_TRUE(is_slot_valid_for_msg3_retx_pdcch());
-        }
-        msg3_retx_count += retx_count;
-      }
-    }
-
     if (not res_grid[0].result.ul.puschs.empty()) {
-      ul_crc_indication crc_ind;
-      crc_ind.cell_index = to_du_cell_index(0);
-      crc_ind.sl_rx      = this->next_slot_rx() - 1;
-      for (const ul_sched_info& ul : res_grid[0].result.ul.puschs) {
-        crc_ind.crcs.emplace_back();
-        crc_ind.crcs.back().ue_index       = ul.context.ue_index;
-        crc_ind.crcs.back().rnti           = ul.pusch_cfg.rnti;
-        crc_ind.crcs.back().harq_id        = to_harq_id(0);
-        crc_ind.crcs.back().tb_crc_success = false;
-      }
+      ASSERT_TRUE(is_slot_valid_for_msg3_retx_pdcch());
+
+      // Forward CRC=KO for Msg3s.
+      ul_crc_indication crc_ind = create_crc_indication(res_grid[0].result.ul.puschs, false);
       this->ra_sch.handle_crc_indication(crc_ind);
+
+      // count retxs.
+      msg3_retx_count += std::count_if(res_grid[0].result.ul.puschs.begin(),
+                                       res_grid[0].result.ul.puschs.end(),
+                                       [](const ul_sched_info& e) { return not e.pusch_cfg.new_data; });
     }
   }
 

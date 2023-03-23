@@ -571,6 +571,11 @@ void ra_scheduler::schedule_msg3_retx(cell_resource_allocator& res_alloc, pendin
   cell_slot_resource_allocator& pdcch_alloc        = res_alloc[0];
   cell_slot_resource_allocator& pusch_alloc        = res_alloc[k2];
 
+  if (not cell_cfg.is_dl_enabled(pdcch_alloc.slot) or not cell_cfg.is_ul_enabled(pusch_alloc.slot)) {
+    // Not possible to schedule Msg3s in this TDD slot.
+    return;
+  }
+
   // Verify there is space in PUSCH and PDCCH result lists for new allocations.
   if (pusch_alloc.result.ul.puschs.full() or pdcch_alloc.result.dl.ul_pdcchs.full()) {
     logger.warning("Failed to allocate PUSCH. Cause: No space available in scheduler output list");
