@@ -575,9 +575,11 @@ TEST_P(tdd_test, schedules_msg3_retx_in_valid_slots_when_tdd)
   for (unsigned count = 0; count != MAX_COUNT; ++count) {
     run_slot();
 
-    if (not res_grid[0].result.ul.puschs.empty()) {
+    if (not res_grid[0].result.dl.ul_pdcchs.empty()) {
       ASSERT_TRUE(is_slot_valid_for_msg3_retx_pdcch());
+    }
 
+    if (not res_grid[0].result.ul.puschs.empty()) {
       // Forward CRC=KO for Msg3s.
       ul_crc_indication crc_ind = create_crc_indication(res_grid[0].result.ul.puschs, false);
       this->ra_sch.handle_crc_indication(crc_ind);
