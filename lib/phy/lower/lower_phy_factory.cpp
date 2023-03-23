@@ -16,12 +16,12 @@ using namespace srsran;
 class lower_phy_factory_generic : public lower_phy_factory
 {
 public:
-  lower_phy_factory_generic(std::shared_ptr<ofdm_modulator_factory>&            modulator_factory_,
+  lower_phy_factory_generic(std::shared_ptr<ofdm_modulator_factory>             modulator_factory_,
                             std::shared_ptr<lower_phy_uplink_processor_factory> uplink_proc_factory_,
-                            std::shared_ptr<amplitude_controller_factory>&      amplitude_control_factory_) :
-    modulator_factory(modulator_factory_),
-    uplink_proc_factory(uplink_proc_factory_),
-    amplitude_control_factory(amplitude_control_factory_)
+                            std::shared_ptr<amplitude_controller_factory>       amplitude_control_factory_) :
+    modulator_factory(std::move(modulator_factory_)),
+    uplink_proc_factory(std::move(uplink_proc_factory_)),
+    amplitude_control_factory(std::move(amplitude_control_factory_))
   {
     srsran_assert(modulator_factory, "Invalid modulator factory.");
     srsran_assert(uplink_proc_factory, "Invalid uplink processor factory.");
@@ -37,13 +37,13 @@ public:
     const lower_phy_sector_description& sector = config.sectors.front();
 
     // Prepare sector modulator.
-    ofdm_modulator_configuration ofdm_modulator_config = {};
-    ofdm_modulator_config.numerology                   = to_numerology_value(config.scs);
-    ofdm_modulator_config.bw_rb                        = sector.bandwidth_rb;
-    ofdm_modulator_config.dft_size                     = config.srate.get_dft_size(config.scs);
-    ofdm_modulator_config.cp                           = config.cp;
-    ofdm_modulator_config.scale                        = config.tx_scale;
-    ofdm_modulator_config.center_freq_hz               = sector.dl_freq_hz;
+    ofdm_modulator_configuration ofdm_modulator_config;
+    ofdm_modulator_config.numerology     = to_numerology_value(config.scs);
+    ofdm_modulator_config.bw_rb          = sector.bandwidth_rb;
+    ofdm_modulator_config.dft_size       = config.srate.get_dft_size(config.scs);
+    ofdm_modulator_config.cp             = config.cp;
+    ofdm_modulator_config.scale          = config.tx_scale;
+    ofdm_modulator_config.center_freq_hz = sector.dl_freq_hz;
 
     // Prepare sector demodulator.
     uplink_processor_configuration ul_proc_config;

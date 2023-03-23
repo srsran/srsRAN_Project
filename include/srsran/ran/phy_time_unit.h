@@ -85,7 +85,7 @@ public:
   template <typename U>
   constexpr value_type to_samples(U sampling_rate_Hz_) const
   {
-    static_assert(std::is_convertible<U, uint64_t>::value, "Invalid type.");
+    static_assert(std::is_convertible<U, value_type>::value, "Invalid type.");
     value_type sampling_rate_Hz = static_cast<value_type>(sampling_rate_Hz_);
     srsran_assert(is_sample_accurate(sampling_rate_Hz),
                   "Incompatible sampling rate {}.{:02} MHz with time {}.",

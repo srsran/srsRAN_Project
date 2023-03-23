@@ -20,14 +20,16 @@ public:
   puxch_processor_factory_sw(unsigned request_queue_size_, std::shared_ptr<ofdm_demodulator_factory> ofdm_factory_) :
     request_queue_size(request_queue_size_), ofdm_factory(std::move(ofdm_factory_))
   {
+    srsran_assert(request_queue_size > 0, "Invalid queue size.");
     srsran_assert(ofdm_factory, "Invalid demodulator factory.");
   }
 
   std::unique_ptr<puxch_processor> create(const puxch_processor_configuration& config) override
   {
     // Calculate the DFT window offset in samples.
-    unsigned nof_samples_window_offset = static_cast<unsigned>(
-        config.cp.get_length(1, config.scs).to_samples(config.srate.to_Hz()) * config.dft_window_offset);
+    unsigned nof_samples_window_offset =
+        static_cast<unsigned>(static_cast<float>(config.cp.get_length(1, config.scs).to_samples(config.srate.to_Hz())) *
+                              config.dft_window_offset);
 
     // Prepare OFDM demodulator configuration.
     ofdm_demodulator_configuration demodulator_config;
@@ -39,7 +41,7 @@ public:
     demodulator_config.scale                     = 1.0F;
     demodulator_config.center_freq_hz            = config.center_freq_Hz;
 
-    // Prepare PUxCH configuration.
+    // Prepare PUxCH processor configuration.
     puxch_processor_impl::configuration proc_config;
     proc_config.cp                 = config.cp;
     proc_config.nof_rx_ports       = config.nof_rx_ports;

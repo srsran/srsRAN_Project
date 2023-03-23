@@ -55,9 +55,30 @@ std::ostream& operator<<(std::ostream& os, const lower_phy_rx_symbol_context& co
   return os;
 }
 
-bool operator==(const lower_phy_rx_symbol_context left, const lower_phy_rx_symbol_context right)
+std::ostream& operator<<(std::ostream& os, const ofdm_demodulator_configuration& config)
+{
+  fmt::print(os,
+             "Numerology={} BW={} DftSize={} CP={} WindowOffset={} Scale={} CenterFreq={}Hz",
+             config.numerology,
+             config.bw_rb,
+             config.dft_size,
+             config.cp.to_string(),
+             config.nof_samples_window_offset,
+             config.scale,
+             config.center_freq_hz);
+  return os;
+}
+
+bool operator==(const lower_phy_rx_symbol_context& left, const lower_phy_rx_symbol_context& right)
 {
   return (left.slot == right.slot) && (left.nof_symbols == right.nof_symbols) && (left.sector == right.sector);
+}
+
+bool operator==(const ofdm_demodulator_configuration& left, const ofdm_demodulator_configuration& right)
+{
+  return (left.numerology == right.numerology) && (left.bw_rb == right.bw_rb) && (left.dft_size == right.dft_size) &&
+         (left.cp == right.cp) && (left.nof_samples_window_offset == right.nof_samples_window_offset) &&
+         (left.scale == right.scale) && (left.center_freq_hz == right.center_freq_hz);
 }
 
 bool operator==(span<const cf_t> left, span<const cf_t> right)
@@ -158,6 +179,34 @@ std::shared_ptr<ofdm_demodulator_factory_spy> LowerPhyUplinkProcessorFixture::of
 std::shared_ptr<puxch_processor_factory>      LowerPhyUplinkProcessorFixture::puxch_proc_factory     = nullptr;
 
 } // namespace
+
+TEST_P(LowerPhyUplinkProcessorFixture, DemodulatorConfiguration)
+{
+  sampling_rate      srate = std::get<1>(GetParam());
+  subcarrier_spacing scs   = std::get<2>(GetParam());
+  cyclic_prefix      cp    = std::get<3>(GetParam());
+
+  puxch_processor_configuration expected_config;
+  expected_config.cp                = cp;
+  expected_config.scs               = scs;
+  expected_config.srate             = srate;
+  expected_config.bandwidth_rb      = config.bandwidth_rb;
+  expected_config.dft_window_offset = config.dft_window_offset;
+  expected_config.center_freq_Hz    = config.center_freq_Hz;
+  expected_config.nof_rx_ports      = config.nof_rx_ports;
+
+  ofdm_demodulator_configuration expected_demod_config;
+  expected_demod_config.numerology                = to_numerology_value(scs);
+  expected_demod_config.bw_rb                     = config.bandwidth_rb;
+  expected_demod_config.dft_size                  = srate.get_dft_size(scs);
+  expected_demod_config.cp                        = cp;
+  expected_demod_config.nof_samples_window_offset = static_cast<unsigned>(
+      static_cast<float>(cp.get_length(1, scs).to_samples(srate.to_Hz())) * config.dft_window_offset);
+  expected_demod_config.scale          = 1.0F;
+  expected_demod_config.center_freq_hz = config.center_freq_Hz;
+
+  ASSERT_EQ(ofdm_demod_spy->get_configuration(), expected_demod_config);
+}
 
 TEST_P(LowerPhyUplinkProcessorFixture, FlowNoRequest)
 {

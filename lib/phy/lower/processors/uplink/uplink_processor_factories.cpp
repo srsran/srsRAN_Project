@@ -30,11 +30,13 @@ public:
   {
     // Prepare PUxCH processor configuration.
     puxch_processor_configuration puxch_proc_config;
-    puxch_proc_config.scs            = config.scs;
-    puxch_proc_config.srate          = config.rate;
-    puxch_proc_config.bandwidth_rb   = config.bandwidth_prb;
-    puxch_proc_config.center_freq_Hz = config.center_frequency_Hz;
-    puxch_proc_config.nof_rx_ports   = config.nof_rx_ports;
+    puxch_proc_config.cp                = config.cp;
+    puxch_proc_config.scs               = config.scs;
+    puxch_proc_config.srate             = config.rate;
+    puxch_proc_config.bandwidth_rb      = config.bandwidth_prb;
+    puxch_proc_config.dft_window_offset = dft_window_offset;
+    puxch_proc_config.center_freq_Hz    = config.center_frequency_Hz;
+    puxch_proc_config.nof_rx_ports      = config.nof_rx_ports;
 
     // Prepare uplink processor configuration.
     lower_phy_uplink_processor_impl::configuration proc_config;
@@ -50,6 +52,7 @@ public:
   }
 
 private:
+  static constexpr float                   dft_window_offset = 0.5F;
   std::shared_ptr<prach_processor_factory> prach_proc_factory;
   std::shared_ptr<puxch_processor_factory> puxch_proc_factory;
 };

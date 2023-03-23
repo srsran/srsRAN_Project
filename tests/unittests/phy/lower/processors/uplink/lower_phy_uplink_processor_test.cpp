@@ -42,6 +42,20 @@ std::ostream& operator<<(std::ostream& os, const prach_processor_baseband::symbo
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const puxch_processor_configuration& config)
+{
+  fmt::print(os,
+             "CP={} SCS={} SRate={} BW={} DftWindowOffset={} CenterFreq={}Hz NofRxPorts={}",
+             config.cp,
+             to_string(config.scs),
+             config.srate,
+             config.bandwidth_rb,
+             config.dft_window_offset,
+             config.center_freq_Hz,
+             config.nof_rx_ports);
+  return os;
+}
+
 bool operator==(const prach_processor_baseband::symbol_context left,
                 const prach_processor_baseband::symbol_context right)
 {
@@ -75,6 +89,13 @@ bool operator==(const baseband_gateway_buffer& left, const baseband_gateway_buff
   }
 
   return true;
+}
+
+bool operator==(const puxch_processor_configuration& left, const puxch_processor_configuration& right)
+{
+  return (left.cp == right.cp) && (left.scs == right.scs) && (left.srate == right.srate) &&
+         (left.bandwidth_rb == right.bandwidth_rb) && (left.dft_window_offset == right.dft_window_offset) &&
+         (left.center_freq_Hz == right.center_freq_Hz) && (left.nof_rx_ports == right.nof_rx_ports);
 }
 
 } // namespace srsran
@@ -159,6 +180,19 @@ std::shared_ptr<puxch_processor_factory_spy>        LowerPhyUplinkProcessorFixtu
 std::shared_ptr<lower_phy_uplink_processor_factory> LowerPhyUplinkProcessorFixture::ul_proc_factory    = nullptr;
 
 } // namespace
+
+TEST_P(LowerPhyUplinkProcessorFixture, PuxchConfiguration)
+{
+  puxch_processor_configuration expected_puxch_config;
+  expected_puxch_config.cp                = config.cp;
+  expected_puxch_config.scs               = config.scs;
+  expected_puxch_config.srate             = config.rate;
+  expected_puxch_config.bandwidth_rb      = config.bandwidth_prb;
+  expected_puxch_config.dft_window_offset = 0.5;
+  expected_puxch_config.center_freq_Hz    = config.center_frequency_Hz;
+  expected_puxch_config.nof_rx_ports      = config.nof_rx_ports;
+  ASSERT_EQ(expected_puxch_config, puxch_proc_spy->get_configuration());
+}
 
 TEST_P(LowerPhyUplinkProcessorFixture, Flow)
 {

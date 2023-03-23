@@ -58,9 +58,17 @@ public:
 class puxch_processor_spy : public puxch_processor
 {
 public:
-  void                             connect(puxch_processor_notifier& notifier) override {}
+  puxch_processor_spy(const puxch_processor_configuration& config_) : config(config_) {}
+
+  void connect(puxch_processor_notifier& notifier_) override { notifier = &notifier_; }
+
   puxch_processor_request_handler& get_request_handler() override { return request_handler; }
-  puxch_processor_baseband&        get_baseband() override { return baseband; }
+
+  puxch_processor_baseband& get_baseband() override { return baseband; }
+
+  const puxch_processor_configuration& get_configuration() const { return config; }
+
+  const puxch_processor_notifier* get_notifier() const { return notifier; }
 
   const std::vector<puxch_processor_baseband_spy::entry_t>& get_baseband_entries() const
   {
@@ -70,6 +78,8 @@ public:
   void clear() { baseband.clear(); }
 
 private:
+  puxch_processor_notifier*           notifier = nullptr;
+  puxch_processor_configuration       config;
   puxch_processor_request_handler_spy request_handler;
   puxch_processor_baseband_spy        baseband;
 };
@@ -77,9 +87,9 @@ private:
 class puxch_processor_factory_spy : public puxch_processor_factory
 {
 public:
-  std::unique_ptr<puxch_processor> create(const puxch_processor_configuration& /**/) override
+  std::unique_ptr<puxch_processor> create(const puxch_processor_configuration& config) override
   {
-    std::unique_ptr<puxch_processor_spy> ptr = std::make_unique<puxch_processor_spy>();
+    std::unique_ptr<puxch_processor_spy> ptr = std::make_unique<puxch_processor_spy>(config);
     instance                                 = ptr.get();
     return std::move(ptr);
   }
