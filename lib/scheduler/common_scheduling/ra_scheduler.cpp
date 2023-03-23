@@ -17,6 +17,7 @@
 #include "../ue_scheduling/ue_dci_builder.h"
 #include "../ue_scheduling/ue_sch_pdu_builder.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsran/support/compiler.h"
 
 using namespace srsran;
 
@@ -366,7 +367,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
         size_t new_pending_msg3s = rar_req.tc_rntis.size() > nof_allocs ? rar_req.tc_rntis.size() - nof_allocs : 0;
         if (new_pending_msg3s > MAX_PREAMBLES_PER_PRACH_OCCASION) {
           // Note: This check must be added to avoid compilation issue in gcc9.4.0. Potentially a false alarm.
-          __builtin_unreachable();
+          SRSRAN_UNREACHABLE;
         }
         rar_req.tc_rntis.resize(new_pending_msg3s);
         break;

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/compiler.h"
 #include <cstdio>
 
 /// Verifies if compile-time symbol is defined.
@@ -84,4 +85,4 @@ namespace detail {
 #define srsran_sanity_check(condition, fmtstr, ...)                                                                    \
   SRSRAN_ALWAYS_ASSERT_IFDEF__(PARANOID_ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
 
-#define srsran_assume(condition) static_cast<void>((condition) ? void(0) : __builtin_unreachable())
+#define srsran_assume(condition) static_cast<void>((condition) ? void(0) : SRSRAN_UNREACHABLE)

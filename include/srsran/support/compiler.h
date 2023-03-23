@@ -21,3 +21,6 @@
 #define SRSRAN_LIKELY(EXPR) __builtin_expect((bool)(EXPR), true)
 /// Provides a hint to the compiler that a condition is likely to be false.
 #define SRSRAN_UNLIKELY(EXPR) __builtin_expect((bool)(EXPR), false)
+
+/// States that it is undefined behavior for the compiler to reach this point.
+#define SRSRAN_UNREACHABLE __builtin_unreachable()
