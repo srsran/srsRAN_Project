@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <string>
 
 namespace srsran {
@@ -34,7 +35,10 @@ struct nr_cell_global_id_t {
 
   bool operator==(const nr_cell_global_id_t& rhs) const
   {
-    return mcc == rhs.mcc && mnc == rhs.mnc && plmn == rhs.plmn && plmn_hex == rhs.plmn_hex && nci == rhs.nci;
+    std::string plmn_copy{plmn}, rhs_plmn_copy{rhs.plmn}, plmn_hex_copy{plmn_hex}, rhs_plmn_hex_copy{rhs.plmn_hex};
+    std::transform(plmn_copy.begin(), plmn_copy.end(), plmn_copy.begin(), ::toupper);
+    std::transform(rhs_plmn_copy.begin(), rhs_plmn_copy.end(), rhs_plmn_copy.begin(), ::toupper);
+    return nci == rhs.nci && plmn_copy == rhs_plmn_copy;
   }
   bool operator!=(const nr_cell_global_id_t& rhs) const { return !(rhs == *this); }
 };
