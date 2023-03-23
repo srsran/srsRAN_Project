@@ -433,7 +433,18 @@ struct formatter<srsran::pdcp_config> {
   template <typename FormatContext>
   auto format(const srsran::pdcp_config& cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{} {}", cfg.tx, cfg.rx);
+    return format_to(ctx.out(),
+                     "rb_type={} rlc_mode={} int_req={} cip_req={} TX=[sn_size={} discard_timer={}] "
+                     "RX=[sn_size={} t_reordering={} out_of_order={}]",
+                     cfg.rb_type,
+                     cfg.rlc_mode,
+                     cfg.integrity_protection_required,
+                     cfg.ciphering_required,
+                     cfg.tx.sn_size,
+                     cfg.tx.discard_timer,
+                     cfg.rx.sn_size,
+                     cfg.rx.t_reordering,
+                     cfg.rx.out_of_order_delivery);
   }
 };
 } // namespace fmt

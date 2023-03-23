@@ -198,6 +198,9 @@ bool drb_manager_impl::valid_5qi(uint8_t five_qi)
 {
   if (cfg.five_qi_config.find(five_qi) == cfg.five_qi_config.end()) {
     logger.warning("Could not find valid 5QI {}. QoS config size {}", five_qi, cfg.five_qi_config.size());
+    for (const auto& qos : cfg.five_qi_config) {
+      logger.warning("5QI DRB config. 5QI={} PDCP={}", qos.first, qos.second.pdcp);
+    }
     return false;
   }
   return true;
