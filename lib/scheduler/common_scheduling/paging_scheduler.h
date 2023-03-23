@@ -27,8 +27,8 @@ public:
   // 40 bits (5 Bytes) Full-I-RNTI + 1 Byte for Paging record header size estimate.
   static constexpr unsigned RRC_RAN_PAGING_ID_RECORD_SIZE = 6U;
 
-  using five_g_s_tmsi             = uint64_t;
-  using full_i_rnti               = uint64_t;
+  /// NG-5G-S-TMSI (48 bits) or I-RNTI-Value (40 bits).
+  using ue_paging_id              = uint64_t;
   using paging_retries_count_type = unsigned;
 
   explicit paging_scheduler(const scheduler_expert_config&                  expert_cfg_,
@@ -46,6 +46,11 @@ public:
   void handle_paging_information(const sched_paging_information& paging_info);
 
 private:
+  struct ue_paging_info {
+    sched_paging_information  info;
+    paging_retries_count_type retry_count;
+  };
+
   /// \brief Checks paging conditions for a UE in SearchSpace > 0 i.e pagingSearchSpace > 0 in its active BWP config.
   ///
   /// \param[in] pdcch_slot Slot at which the paging scheduler is called.
@@ -148,12 +153,8 @@ private:
   /// List of notifications from upper layers containing Paging information.
   /// This is used only to avoid data race between threads.
   slot_event_list<sched_paging_information> new_paging_notifications;
-  /// List of paging information of UEs yet to be scheduled.
-  std::vector<sched_paging_information> paging_pending_ues;
-  /// Mapping between NG-5G-S-TMSI (48 bits) to paging retries count for CN Paging.
-  std::unordered_map<five_g_s_tmsi, paging_retries_count_type> cn_paging_retries;
-  /// Mapping between I-RNTI-Value (40 bits) to paging retries count for RAN Paging.
-  std::unordered_map<full_i_rnti, paging_retries_count_type> ran_paging_retries;
+  /// Contains paging information of UEs yet to be scheduled.
+  std::unordered_map<ue_paging_id, ue_paging_info> paging_pending_ues;
   /// Lookup to keep track of scheduled paging UEs at a particular PDSCH time resource index. Index of \c
   /// pdsch_time_res_idx_to_scheduled_ues_lookup corresponds to PDSCH Time Domain Resource Index.
   static_vector<std::vector<const sched_paging_information*>, MAX_NOF_PDSCH_TD_RESOURCE_ALLOCATIONS>

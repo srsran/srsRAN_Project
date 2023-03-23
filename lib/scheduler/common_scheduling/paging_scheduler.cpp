@@ -104,15 +104,8 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   for (const auto& pg_info : new_paging_infos) {
     // Check whether Paging information is already present or not. i.e. tackle repeated Paging attempt from upper
     // layers.
-    if (cn_paging_retries.find(pg_info.paging_identity) == cn_paging_retries.cend() and
-        ran_paging_retries.find(pg_info.paging_identity) == ran_paging_retries.cend()) {
-      paging_pending_ues.push_back(pg_info);
-      // Initialize paging retry count to zero.
-      if (pg_info.paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
-        cn_paging_retries[pg_info.paging_identity] = 0;
-      } else {
-        ran_paging_retries[pg_info.paging_identity] = 0;
-      }
+    if (paging_pending_ues.find(pg_info.paging_identity) == paging_pending_ues.cend()) {
+      paging_pending_ues[pg_info.paging_identity] = ue_paging_info{.info = pg_info, .retry_count = 0};
     }
   }
 
@@ -138,46 +131,19 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
   // Check for maximum paging retries.
   auto it = paging_pending_ues.begin();
   while (it != paging_pending_ues.end()) {
-    if (it->paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
-      if (cn_paging_retries[it->paging_identity] >= expert_cfg.pg.max_paging_retries) {
-        cn_paging_retries.erase(cn_paging_retries.find(it->paging_identity));
-        it = paging_pending_ues.erase(it);
-      } else {
-        ++it;
-      }
+    if (paging_pending_ues[it->first].retry_count >= expert_cfg.pg.max_paging_retries) {
+      it = paging_pending_ues.erase(it);
     } else {
-      if (ran_paging_retries[it->paging_identity] >= expert_cfg.pg.max_paging_retries) {
-        ran_paging_retries.erase(ran_paging_retries.find(it->paging_identity));
-        it = paging_pending_ues.erase(it);
-      } else {
-        ++it;
-      }
+      ++it;
     }
   }
-
-  // Sort based on paging attempts so that we give equal opportunities to all UEs.
-  std::sort(paging_pending_ues.begin(),
-            paging_pending_ues.end(),
-            [this](const sched_paging_information& lhs, const sched_paging_information& rhs) -> bool {
-              unsigned lhs_pg_attmpts, rhs_pg_attmpts;
-              if (cn_paging_retries.find(lhs.paging_identity) != cn_paging_retries.end()) {
-                lhs_pg_attmpts = cn_paging_retries[lhs.paging_identity];
-              } else {
-                lhs_pg_attmpts = ran_paging_retries[lhs.paging_identity];
-              }
-              if (cn_paging_retries.find(rhs.paging_identity) != cn_paging_retries.end()) {
-                rhs_pg_attmpts = cn_paging_retries[rhs.paging_identity];
-              } else {
-                rhs_pg_attmpts = ran_paging_retries[rhs.paging_identity];
-              }
-              return lhs_pg_attmpts < rhs_pg_attmpts;
-            });
 
   // Initialize.
   pdsch_time_res_idx_to_scheduled_ues_lookup.assign(MAX_NOF_PDSCH_TD_RESOURCE_ALLOCATIONS,
                                                     std::vector<const sched_paging_information*>{});
 
-  for (const auto& pg_info : paging_pending_ues) {
+  for (const auto& pg_it : paging_pending_ues) {
+    const auto&    pg_info   = pg_it.second.info;
     const unsigned drx_cycle = pg_info.paging_drx.has_value() ? pg_info.paging_drx.value() : default_paging_cycle;
 
     const unsigned t_div_n     = drx_cycle / nof_pf_per_drx_cycle;
@@ -246,11 +212,7 @@ void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
                         paging_search_space)) {
       // Allocation successful.
       for (const auto* pg_info : pdsch_time_res_idx_to_scheduled_ues_lookup[pdsch_td_res_idx]) {
-        if (pg_info->paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
-          cn_paging_retries[pg_info->paging_identity]++;
-        } else {
-          ran_paging_retries[pg_info->paging_identity]++;
-        }
+        paging_pending_ues[pg_info->paging_identity].retry_count++;
       }
     }
   }
