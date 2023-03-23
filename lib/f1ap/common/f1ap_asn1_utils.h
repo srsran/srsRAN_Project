@@ -197,7 +197,7 @@ inline expected<unsigned> get_paging_ue_identity_index_value(const asn1::f1ap::p
   return {default_error_t{}};
 }
 
-inline expected<unsigned> get_paging_identity(const asn1::f1ap::paging_s& pdu)
+inline expected<uint64_t> get_paging_identity(const asn1::f1ap::paging_s& pdu)
 {
   using namespace asn1::f1ap;
   switch (pdu->paging_id->type()) {

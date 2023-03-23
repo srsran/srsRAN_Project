@@ -345,7 +345,7 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
   info.ue_identity_index_value = ue_identity_index_value.value();
 
   expected<paging_identity_type> paging_type_indicator = get_paging_identity_type(msg);
-  expected<unsigned>             paging_identity       = get_paging_identity(msg);
+  expected<uint64_t>             paging_identity       = get_paging_identity(msg);
   if (not paging_type_indicator.has_value()) {
     logger.error("Discarding Paging message. Cause=Paging Identity type {} is not supported",
                  msg->paging_id->type().to_string());
@@ -379,13 +379,14 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     info.is_paging_origin_non_3gpp_access = true;
   }
   for (const auto& asn_nr_cgi : msg->paging_cell_list.value) {
-    const auto du_cell_it = std::find_if(ctxt.du_cell_index_to_nr_cgi_lookup.cbegin(),
-                                         ctxt.du_cell_index_to_nr_cgi_lookup.cend(),
-                                         [&asn_nr_cgi](const nr_cell_global_id_t& cgi) {
-                                           return cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi) == cgi;
-                                         });
+    const auto paging_cell_cgi = cgi_from_asn1(asn_nr_cgi->paging_cell_item().nr_cgi);
+    const auto du_cell_it =
+        std::find_if(ctxt.du_cell_index_to_nr_cgi_lookup.cbegin(),
+                     ctxt.du_cell_index_to_nr_cgi_lookup.cend(),
+                     [&paging_cell_cgi](const nr_cell_global_id_t& cgi) { return paging_cell_cgi == cgi; });
     // Cell not served by this DU.
     if (du_cell_it == ctxt.du_cell_index_to_nr_cgi_lookup.cend()) {
+      logger.error("Cell with PLMN={} and NCI={} not handled by DU", paging_cell_cgi.plmn, paging_cell_cgi.nci);
       continue;
     }
     info.paging_cells.push_back(
