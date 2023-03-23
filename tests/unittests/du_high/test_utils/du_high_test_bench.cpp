@@ -52,24 +52,26 @@ void phy_cell_test_dummy::on_new_uplink_scheduler_results(const mac_ul_sched_res
 
 void phy_cell_test_dummy::on_cell_results_completion(slot_point slot)
 {
-  test_exec.execute([this,
-                     dl_sched_res = cached_dl_res.has_value() ? *cached_dl_res->dl_res : dl_sched_result{},
-                     ul_sched_res = cached_ul_res.has_value() ? *cached_ul_res->ul_res : ul_sched_result{},
-                     dl_res_copy  = cached_dl_res,
-                     dl_data_copy = cached_dl_data,
-                     ul_res_copy  = cached_ul_res]() mutable {
-    last_dl_res  = dl_res_copy;
-    last_dl_data = dl_data_copy;
-    last_ul_res  = ul_res_copy;
-    if (last_dl_res.has_value()) {
-      last_dl_sched_res   = dl_sched_res;
-      last_dl_res->dl_res = &last_dl_sched_res;
-    }
-    if (last_ul_res.has_value()) {
-      last_ul_sched_res   = ul_sched_res;
-      last_ul_res->ul_res = &last_ul_sched_res;
-    }
-  });
+  bool result =
+      test_exec.execute([this,
+                         dl_sched_res = cached_dl_res.has_value() ? *cached_dl_res->dl_res : dl_sched_result{},
+                         ul_sched_res = cached_ul_res.has_value() ? *cached_ul_res->ul_res : ul_sched_result{},
+                         dl_res_copy  = cached_dl_res,
+                         dl_data_copy = cached_dl_data,
+                         ul_res_copy  = cached_ul_res]() mutable {
+        last_dl_res  = dl_res_copy;
+        last_dl_data = dl_data_copy;
+        last_ul_res  = ul_res_copy;
+        if (last_dl_res.has_value()) {
+          last_dl_sched_res   = dl_sched_res;
+          last_dl_res->dl_res = &last_dl_sched_res;
+        }
+        if (last_ul_res.has_value()) {
+          last_ul_sched_res   = ul_sched_res;
+          last_ul_res->ul_res = &last_ul_sched_res;
+        }
+      });
+  EXPECT_TRUE(result);
   cached_dl_res  = {};
   cached_dl_data = {};
   cached_ul_res  = {};
@@ -94,10 +96,11 @@ void dummy_f1ap_tx_pdu_notifier::on_new_message(const f1ap_message& msg)
   }
 
   // Dispatch storing of message to test main thread so it can be safely checked in the test function body.
-  test_exec.execute([this, msg]() {
+  bool result = test_exec.execute([this, msg]() {
     logger.info("Received F1 UL message with {}", msg.pdu.type().to_string());
     last_f1ap_msg = msg;
   });
+  EXPECT_TRUE(result);
 }
 
 static void init_loggers()

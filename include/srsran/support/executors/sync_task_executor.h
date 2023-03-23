@@ -38,11 +38,11 @@ public:
     std::unique_lock<std::mutex> lock(mutex);
     done = false;
     std::unique_ptr<bool, setter_deleter> unique_setter(&done, setter_deleter{this});
-    exec->execute([task = std::move(task), token = std::move(unique_setter)]() { task(); });
+    bool ret = exec->execute([task = std::move(task), token = std::move(unique_setter)]() { task(); });
     while (not done) {
       cvar.wait(lock);
     }
-    return true;
+    return ret;
   }
   bool defer(unique_task task) override { return execute(std::move(task)); }
 

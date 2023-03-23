@@ -26,15 +26,20 @@ auto execute_on(TaskExecutor& exec)
 
     void await_suspend(coro_handle<> suspending_awaitable)
     {
-      exec.execute([suspending_awaitable]() mutable { suspending_awaitable.resume(); });
+      success = exec.execute([suspending_awaitable]() mutable { suspending_awaitable.resume(); });
+      if (not success) {
+        // Failed to dispatch task. Resume it from current thread, but with "success == false".
+        suspending_awaitable.resume();
+      }
     }
 
-    void await_resume() {}
+    bool await_resume() { return success; }
 
     task_executor_awaiter& get_awaiter() { return *this; }
 
   private:
     TaskExecutor& exec;
+    bool          success = false;
   };
 
   return task_executor_awaiter{exec};

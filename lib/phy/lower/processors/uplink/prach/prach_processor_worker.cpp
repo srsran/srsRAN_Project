@@ -81,7 +81,7 @@ void prach_processor_worker::accumulate_samples(span<const cf_t> samples)
   // Otherwise, transition to processing.
   state = states::processing;
 
-  async_task_executor.execute([this]() {
+  if (not async_task_executor.execute([this]() {
     // Prepare PRACH demodulator configuration.
     ofdm_prach_demodulator::configuration config;
     config.format           = prach_context.format;
@@ -100,7 +100,9 @@ void prach_processor_worker::accumulate_samples(span<const cf_t> samples)
 
     // Transition to idle.
     state = states::idle;
-  });
+  })) {
+    srslog::fetch_basic_logger("PHY").warning("Unable to dispatch PRACH demodulation task");
+  }
 }
 
 void prach_processor_worker::handle_request(prach_buffer& buffer_, const prach_buffer_context& context_)

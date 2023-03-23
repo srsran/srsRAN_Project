@@ -466,7 +466,9 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
 {
   // Redirect handling of status to pcell_executor
   auto handle_func = [this, status = std::move(status)]() mutable { handle_status_pdu(std::move(status)); };
-  pcell_executor.execute(std::move(handle_func));
+  if (not pcell_executor.execute(std::move(handle_func))) {
+    logger.log_error("Unable to handle status report");
+  }
 }
 
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
@@ -613,7 +615,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 void rlc_tx_am_entity::on_status_report_changed()
 {
   // Redirect handling of status to pcell_executor
-  pcell_executor.execute([this]() { handle_buffer_state_update(); });
+  if (not pcell_executor.execute([this]() { handle_buffer_state_update(); })) {
+    logger.log_error("Unable to update buffer status");
+  }
 }
 
 bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)

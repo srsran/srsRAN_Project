@@ -19,6 +19,7 @@ using namespace srs_du;
 
 du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   params(params_),
+  logger(srslog::fetch_basic_logger("DU-MNG")),
   cell_mng(params),
   cell_res_alloc(params.ran.cells, params.ran.qos),
   ue_mng(params, cell_res_alloc),
@@ -31,20 +32,22 @@ void du_manager_impl::start()
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
-  params.services.du_mng_exec.execute([this, &p]() {
-    // start F1 setup procedure.
-    main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
+  if (not params.services.du_mng_exec.execute([this, &p]() {
+        // start F1 setup procedure.
+        main_ctrl_loop.schedule([this, &p](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
 
-      // Send F1 Setup Request and await for F1 setup response.
-      CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
+          // Send F1 Setup Request and await for F1 setup response.
+          CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
 
-      // Signal start() caller thread that the operation is complete.
-      p.set_value();
+          // Signal start() caller thread that the operation is complete.
+          p.set_value();
 
-      CORO_RETURN();
-    });
-  });
+          CORO_RETURN();
+        });
+      })) {
+    report_fatal_error("Unable to initiate DU setup procedure");
+  }
 
   // Block waiting for DU setup to complete.
   fut.wait();
@@ -58,10 +61,15 @@ void du_manager_impl::stop()
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
 {
   // Switch DU Manager exec context
-  params.services.du_mng_exec.execute([this, msg = std::move(msg)]() {
-    // Start UE create procedure
-    ue_mng.handle_ue_create_request(msg);
-  });
+  if (not params.services.du_mng_exec.execute([this, msg = std::move(msg)]() {
+        // Start UE create procedure
+        ue_mng.handle_ue_create_request(msg);
+      })) {
+    logger.warning("Discarding UL-CCCH message cell={} c-rnti={:#x} slot_rx={}. Cause: DU manager task queue is full",
+                   msg.cell_index,
+                   msg.crnti,
+                   msg.slot_rx);
+  }
 }
 
 async_task<f1ap_ue_context_update_response>
@@ -81,11 +89,14 @@ size_t du_manager_impl::nof_ues()
   static std::mutex              mutex;
   static std::condition_variable cvar;
   size_t                         result = MAX_NOF_DU_UES;
-  params.services.du_mng_exec.execute([this, &result]() {
-    std::unique_lock<std::mutex> lock(mutex);
-    result = ue_mng.get_ues().size();
-    cvar.notify_one();
-  });
+  if (not params.services.du_mng_exec.execute([this, &result]() {
+        std::unique_lock<std::mutex> lock(mutex);
+        result = ue_mng.get_ues().size();
+        cvar.notify_one();
+      })) {
+    logger.warning("Unable to compute the number of UEs active in the DU");
+    return 0;
+  }
   {
     std::unique_lock<std::mutex> lock(mutex);
     while (result == MAX_NOF_DU_UES) {

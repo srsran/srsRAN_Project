@@ -32,7 +32,6 @@ public:
     ue_manager(rnti_table),
     pdu_handler(cfg.event_notifier, cfg.ue_exec_mapper, sched_, ue_manager, rnti_table, cfg.pcap)
   {
-    (void)logger;
   }
 
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override
@@ -60,9 +59,12 @@ public:
 
   void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu) override
   {
-    cfg.ue_exec_mapper.executor(ue_index).execute([this, ue_index, pdu = std::move(ccch_pdu)]() mutable {
-      pdu_handler.push_ul_ccch_msg(ue_index, std::move(pdu));
-    });
+    if (not cfg.ue_exec_mapper.executor(ue_index).execute([this, ue_index, pdu = std::move(ccch_pdu)]() mutable {
+          pdu_handler.push_ul_ccch_msg(ue_index, std::move(pdu));
+        })) {
+      logger.warning("ue={}: Unable to forward UL-CCCH message to upper layers. Cause: task queue is full.", ue_index);
+      // Note: the inactivity timer will eventually destroy the UE.
+    }
   }
 
   /// Handles FAPI Rx_Data.Indication.
@@ -72,11 +74,14 @@ public:
     for (mac_rx_pdu& pdu : msg.pdus) {
       du_ue_index_t ue_index = rnti_table[pdu.rnti];
       // 1. Fork each PDU handling to different executors based on the PDU RNTI.
-      cfg.ue_exec_mapper.executor(ue_index).execute(
-          [this, slot_rx = msg.sl_rx, cell_idx = msg.cell_index, pdu = std::move(pdu)]() mutable {
-            // 2. Decode Rx PDU and handle respective subPDUs.
-            pdu_handler.handle_rx_pdu(slot_rx, cell_idx, std::move(pdu));
-          });
+      if (not cfg.ue_exec_mapper.executor(ue_index).execute(
+              [this, slot_rx = msg.sl_rx, cell_idx = msg.cell_index, pdu = std::move(pdu)]() mutable {
+                // 2. Decode Rx PDU and handle respective subPDUs.
+                pdu_handler.handle_rx_pdu(slot_rx, cell_idx, std::move(pdu));
+              })) {
+        logger.warning(
+            "cell={} slot_rx={}: Discarding Rx PDU. Cause: Rx task queue is full.", msg.cell_index, msg.sl_rx);
+      }
     }
   }
 

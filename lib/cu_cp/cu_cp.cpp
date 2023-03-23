@@ -62,11 +62,13 @@ void cu_cp::start()
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
-  cfg.cu_cp_executor->execute([this, &p]() {
-    // start NG setup procedure.
-    routine_mng->start_initial_cu_cp_setup_routine(cfg.ngap_config);
-    p.set_value();
-  });
+  if (not cfg.cu_cp_executor->execute([this, &p]() {
+        // start NG setup procedure.
+        routine_mng->start_initial_cu_cp_setup_routine(cfg.ngap_config);
+        p.set_value();
+      })) {
+    report_fatal_error("Failed to initiate CU-CP setup.");
+  }
 
   // Block waiting for CU-CP setup to complete.
   fut.wait();

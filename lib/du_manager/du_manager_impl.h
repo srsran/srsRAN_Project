@@ -47,7 +47,8 @@ public:
 
 private:
   // DU manager configuration that will be visible to all running procedures
-  du_manager_params params;
+  du_manager_params     params;
+  srslog::basic_logger& logger;
 
   // Components
   du_cell_manager              cell_mng;

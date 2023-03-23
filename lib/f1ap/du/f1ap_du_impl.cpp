@@ -172,9 +172,13 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   // Forward SDU to lower layers.
   byte_buffer sdu;
   sdu.append(msg->rrc_container.value);
-  ue_exec_mapper.executor(ue->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
-    srb_bearer->handle_pdu(std::move(sdu));
-  });
+  if (not ue_exec_mapper.executor(ue->context.ue_index).execute([sdu = std::move(sdu), srb_bearer]() mutable {
+        srb_bearer->handle_pdu(std::move(sdu));
+      })) {
+    logger.warning("Discarding DlRrcMessageTransfer. Cause: UE task queue is full.", srb_id);
+    // TODO: Handle error.
+    return;
+  }
 }
 
 async_task<f1ap_ue_context_modification_response_message>
@@ -228,22 +232,26 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
   }
 
   // Run F1AP protocols in Control executor.
-  ctrl_exec.execute([this, msg]() {
-    switch (msg.pdu.type().value) {
-      case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
-        handle_initiating_message(msg.pdu.init_msg());
-        break;
-      case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
-        handle_successful_outcome(msg.pdu.successful_outcome());
-        break;
-      case asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome:
-        handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-        break;
-      default:
-        logger.error("Invalid PDU type");
-        break;
-    }
-  });
+  if (not ctrl_exec.execute([this, msg]() {
+        switch (msg.pdu.type().value) {
+          case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
+            handle_initiating_message(msg.pdu.init_msg());
+            break;
+          case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
+            handle_successful_outcome(msg.pdu.successful_outcome());
+            break;
+          case asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome:
+            handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+            break;
+          default:
+            logger.error("Invalid PDU type");
+            break;
+        }
+      })) {
+    logger.error("Unable to dispatch handling of F1AP PDU. Cause: DU task queue is full");
+    // TODO: Handle.
+    return;
+  }
 }
 
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)

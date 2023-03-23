@@ -75,47 +75,49 @@ void e1ap_cu_up_impl::handle_cu_cp_e1_setup_response(const cu_cp_e1_setup_respon
 void e1ap_cu_up_impl::handle_message(const e1ap_message& msg)
 {
   // Run E1AP protocols in CU-UP executor.
-  cu_up_exec.execute([this, msg]() {
-    logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
+  if (not cu_up_exec.execute([this, msg]() {
+        logger.debug("Handling PDU of type {}", msg.pdu.type().to_string());
 
-    // Log message.
-    expected<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
-    expected<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
-    if (transaction_id.has_value()) {
-      logger.debug("SDU \"{}.{}\" transaction id={}",
-                   msg.pdu.type().to_string(),
-                   get_message_type_str(msg.pdu),
-                   transaction_id.value());
-    } else if (gnb_cu_up_ue_e1ap_id.has_value()) {
-      logger.debug("SDU \"{}.{}\" GNB-CU-UP-UE-E1AP-ID={}",
-                   msg.pdu.type().to_string(),
-                   get_message_type_str(msg.pdu),
-                   gnb_cu_up_ue_e1ap_id.value());
-    } else {
-      logger.debug("SDU \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
-    }
+        // Log message.
+        expected<gnb_cu_up_ue_e1ap_id_t> gnb_cu_up_ue_e1ap_id = get_gnb_cu_up_ue_e1ap_id(msg.pdu);
+        expected<uint8_t>                transaction_id       = get_transaction_id(msg.pdu);
+        if (transaction_id.has_value()) {
+          logger.debug("SDU \"{}.{}\" transaction id={}",
+                       msg.pdu.type().to_string(),
+                       get_message_type_str(msg.pdu),
+                       transaction_id.value());
+        } else if (gnb_cu_up_ue_e1ap_id.has_value()) {
+          logger.debug("SDU \"{}.{}\" GNB-CU-UP-UE-E1AP-ID={}",
+                       msg.pdu.type().to_string(),
+                       get_message_type_str(msg.pdu),
+                       gnb_cu_up_ue_e1ap_id.value());
+        } else {
+          logger.debug("SDU \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+        }
 
-    if (logger.debug.enabled()) {
-      asn1::json_writer js;
-      msg.pdu.to_json(js);
-      logger.debug("Rx E1AP SDU: {}", js.to_string());
-    }
+        if (logger.debug.enabled()) {
+          asn1::json_writer js;
+          msg.pdu.to_json(js);
+          logger.debug("Rx E1AP SDU: {}", js.to_string());
+        }
 
-    switch (msg.pdu.type().value) {
-      case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
-        handle_initiating_message(msg.pdu.init_msg());
-        break;
-      case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
-        handle_successful_outcome(msg.pdu.successful_outcome());
-        break;
-      case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
-        handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-        break;
-      default:
-        logger.error("Invalid PDU type");
-        break;
-    }
-  });
+        switch (msg.pdu.type().value) {
+          case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
+            handle_initiating_message(msg.pdu.init_msg());
+            break;
+          case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
+            handle_successful_outcome(msg.pdu.successful_outcome());
+            break;
+          case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
+            handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+            break;
+          default:
+            logger.error("Invalid PDU type");
+            break;
+        }
+      })) {
+    logger.warning("Discarding E1AP PDU. Cause: CU-UP task queue is full");
+  }
 }
 
 void e1ap_cu_up_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)

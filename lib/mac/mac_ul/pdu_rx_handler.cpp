@@ -263,29 +263,31 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   // 1. Decode CRNTI CE and update UE RNTI output parameter.
   ctx.pdu_rx.rnti = decode_crnti_ce(subpdu.payload());
   if (ctx.pdu_rx.rnti == INVALID_RNTI) {
-    logger.error("{}: Discarding CE. Cause: Invalid Payload length={} for C-RNTI MAC CE type",
-                 create_prefix(ctx, subpdu));
+    logger.warning("{}: Discarding CE. Cause: Invalid Payload length={} for C-RNTI MAC CE type",
+                   create_prefix(ctx, subpdu));
     return false;
   }
   ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];
 
   // 2. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-  ue_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
-    // 3. Handle remaining subPDUs using old C-RNTI.
-    if (not handle_rx_subpdus(ctx)) {
-      return;
-    }
+  if (not ue_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
+        // 3. Handle remaining subPDUs using old C-RNTI.
+        if (not handle_rx_subpdus(ctx)) {
+          return;
+        }
 
-    // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
-    uci_indication uci{};
-    uci.cell_index = ctx.cell_index_rx;
-    uci.slot_rx    = ctx.slot_rx;
-    uci.ucis.resize(1);
-    uci.ucis[0].ue_index = ctx.ue_index;
-    uci.ucis[0].crnti    = ctx.pdu_rx.rnti;
-    uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu{.sr_detected = true};
-    sched.handle_uci_indication(uci);
-  });
+        // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
+        uci_indication uci{};
+        uci.cell_index = ctx.cell_index_rx;
+        uci.slot_rx    = ctx.slot_rx;
+        uci.ucis.resize(1);
+        uci.ucis[0].ue_index = ctx.ue_index;
+        uci.ucis[0].crnti    = ctx.pdu_rx.rnti;
+        uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu{.sr_detected = true};
+        sched.handle_uci_indication(uci);
+      })) {
+    logger.warning("{}: Discarding PDU. Cause: Task queue is full.", create_prefix(ctx, subpdu));
+  }
 
   return true;
 }

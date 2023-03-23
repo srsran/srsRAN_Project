@@ -59,7 +59,9 @@ async_task<void> mac_cell_processor::stop()
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 {
   // Change execution context to slot indication executor.
-  slot_exec.execute([this, sl_tx]() { handle_slot_indication_impl(sl_tx); });
+  if (not slot_exec.execute([this, sl_tx]() { handle_slot_indication_impl(sl_tx); })) {
+    logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", sl_tx);
+  }
 }
 
 void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)

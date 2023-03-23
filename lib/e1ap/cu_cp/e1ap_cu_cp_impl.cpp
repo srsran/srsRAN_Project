@@ -178,22 +178,24 @@ void e1ap_cu_cp_impl::handle_message(const e1ap_message& msg)
   }
 
   // Run E1AP protocols in Control executor.
-  ctrl_exec.execute([this, msg]() {
-    switch (msg.pdu.type().value) {
-      case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
-        handle_initiating_message(msg.pdu.init_msg());
-        break;
-      case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
-        handle_successful_outcome(msg.pdu.successful_outcome());
-        break;
-      case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
-        handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-        break;
-      default:
-        logger.error("Invalid PDU type");
-        break;
-    }
-  });
+  if (not ctrl_exec.execute([this, msg]() {
+        switch (msg.pdu.type().value) {
+          case asn1::e1ap::e1ap_pdu_c::types_opts::init_msg:
+            handle_initiating_message(msg.pdu.init_msg());
+            break;
+          case asn1::e1ap::e1ap_pdu_c::types_opts::successful_outcome:
+            handle_successful_outcome(msg.pdu.successful_outcome());
+            break;
+          case asn1::e1ap::e1ap_pdu_c::types_opts::unsuccessful_outcome:
+            handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
+            break;
+          default:
+            logger.error("Invalid PDU type");
+            break;
+        }
+      })) {
+    logger.warning("Discarding E1AP PDU. Cause: CU-CP task queue is full.");
+  }
 }
 
 void e1ap_cu_cp_impl::handle_initiating_message(const asn1::e1ap::init_msg_s& msg)

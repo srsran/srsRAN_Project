@@ -219,7 +219,10 @@ void lower_phy_impl::realtime_process_loop(task_executor& realtime_task_executor
 
   // Feedbacks the task if no stop has been signaled.
   if (state_fsm.is_running()) {
-    realtime_task_executor.defer([this, &realtime_task_executor]() { realtime_process_loop(realtime_task_executor); });
+    if (not realtime_task_executor.defer(
+            [this, &realtime_task_executor]() { realtime_process_loop(realtime_task_executor); })) {
+      logger.error("Unable to schedule realtime process loop");
+    }
     return;
   }
 
@@ -309,7 +312,10 @@ lower_phy_impl::lower_phy_impl(sector_processors processors, const lower_phy_con
 void lower_phy_impl::start(task_executor& realtime_task_executor)
 {
   logger.info("Starting...");
-  realtime_task_executor.defer([this, &realtime_task_executor]() { realtime_process_loop(realtime_task_executor); });
+  if (not realtime_task_executor.defer(
+          [this, &realtime_task_executor]() { realtime_process_loop(realtime_task_executor); })) {
+    report_fatal_error("Unable to schedule realtime process loop");
+  }
 }
 
 void lower_phy_impl::stop()
