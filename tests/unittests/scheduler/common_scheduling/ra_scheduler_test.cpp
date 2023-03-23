@@ -139,7 +139,7 @@ protected:
     }
     for (unsigned i = 0; i != cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size(); ++i) {
       unsigned nof_msg3_matches = 0;
-      ASSERT_TRUE(msg3_consistent_with_rars(scheduled_rars(0), scheduled_puschs(i), nof_msg3_matches))
+      ASSERT_TRUE(msg3_consistent_with_rars(scheduled_rars(0), scheduled_msg3_newtxs(i), nof_msg3_matches))
           << "Msg3 PUSCHs parameters must match the content of the RAR grants";
       nof_puschs += nof_msg3_matches;
     }
@@ -198,11 +198,16 @@ protected:
     return res_grid[k0].result.dl.rar_grants;
   }
 
-  span<const ul_sched_info> scheduled_puschs(uint8_t time_resource) const
+  span<const ul_sched_info> scheduled_msg3_newtxs(uint8_t time_resource) const
   {
     return res_grid[get_msg3_delay(get_pusch_td_resource(time_resource),
                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)]
         .result.ul.puschs;
+  }
+
+  span<const ul_sched_info> scheduled_msg3_retxs(uint8_t time_resource) const
+  {
+    return res_grid[get_pusch_td_resource(time_resource).k2].result.ul.puschs;
   }
 
   bool no_rar_grants_scheduled() const
@@ -264,7 +269,7 @@ protected:
 
   /// \brief For a slot to be valid for RAR in TDD mode, the RAR PDCCH, RAR PDSCH and Msg3 PUSCH must fall in DL, DL
   /// and UL slots, respectively.
-  bool is_slot_valid_for_rar() const
+  bool is_slot_valid_for_rar_pdcch() const
   {
     if (not cell_cfg.is_tdd()) {
       // FDD case.
@@ -291,6 +296,30 @@ protected:
       // slot for Msg3 PUSCH is not UL slot.
       return false;
     }
+    return true;
+  }
+
+  bool is_slot_valid_for_msg3_retx_pdcch() const
+  {
+    if (not cell_cfg.is_tdd()) {
+      // FDD case.
+      return true;
+    }
+    slot_point pdcch_slot = res_grid[0].slot;
+
+    if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
+      // slot for PDCCH is not DL slot.
+      return false;
+    }
+
+    const auto& pusch_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    if (std::none_of(pusch_list.begin(), pusch_list.end(), [this, &pdcch_slot](const auto& pusch) {
+          return cell_cfg.is_ul_enabled(pdcch_slot + pusch.k2);
+        })) {
+      // slot for Msg3 reTx PUSCH is not UL slot.
+      return false;
+    }
+
     return true;
   }
 
@@ -416,7 +445,7 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
         << "All scheduled RAR grants must be for the provided occasion";
 
     // Msg3 allocated.
-    ASSERT_EQ(scheduled_puschs(0).size(), nof_grants);
+    ASSERT_EQ(scheduled_msg3_newtxs(0).size(), nof_grants);
 
     // PDCCH allocated.
     ASSERT_EQ(scheduled_dl_pdcchs().size(), 1);
@@ -432,7 +461,7 @@ TEST_P(fdd_test, schedules_one_rar_per_slot_when_multi_preambles_with_same_prach
   // For the next slot, no RAR should be scheduled.
   run_slot();
   ASSERT_TRUE(scheduled_rars(0).empty());
-  ASSERT_TRUE(scheduled_puschs(0).empty());
+  ASSERT_TRUE(scheduled_msg3_newtxs(0).empty());
   ASSERT_TRUE(scheduled_dl_pdcchs().empty());
 }
 
@@ -465,7 +494,7 @@ TEST_P(fdd_test, schedules_multiple_rars_per_slot_when_multiple_prach_occasions)
         << "The number of scheduled RARs must match the number of (single-preamble) RACH occasions";
 
     // Since each RAR contains one single Msg3 grant, the number of scheduled Msg3 PUSCHs must match the number of RARs.
-    ASSERT_EQ(scheduled_puschs(0).size(), nof_grants) << "Number of Msg3 PUSCHs must match number of RARs";
+    ASSERT_EQ(scheduled_msg3_newtxs(0).size(), nof_grants) << "Number of Msg3 PUSCHs must match number of RARs";
 
     // PDCCH allocated.
     ASSERT_EQ(scheduled_dl_pdcchs().size(), nof_grants) << "Number of PDCCHs must match number of RARs";
@@ -489,7 +518,7 @@ TEST_P(tdd_test, schedules_rar_in_valid_slots_when_tdd)
   for (unsigned nof_sched_grants = 0; nof_sched_grants < rach_ind.occasions[0].preambles.size();) {
     run_slot();
 
-    if (not is_slot_valid_for_rar()) {
+    if (not is_slot_valid_for_rar_pdcch()) {
       ASSERT_TRUE(scheduled_dl_pdcchs().empty())
           << fmt::format("RAR PDCCH allocated in invalid slot {}", result_slot_tx());
       continue;
@@ -508,6 +537,50 @@ TEST_P(tdd_test, schedules_rar_in_valid_slots_when_tdd)
 
     nof_sched_grants += nof_grants;
   }
+}
+
+TEST_P(tdd_test, schedules_msg3_retx_in_valid_slots_when_tdd)
+{
+  // Forward single RACH occasion with multiple preambles.
+  // Note: The number of preambles is small enough to fit all grants in one slot.
+  rach_indication_message rach_ind = create_rach_indication(test_rgen::uniform_int<unsigned>(1, 10));
+  handle_rach_ind(rach_ind);
+
+  unsigned       msg3_retx_count = 0;
+  const unsigned MAX_COUNT       = 100;
+  for (unsigned count = 0; count != MAX_COUNT; ++count) {
+    run_slot();
+
+    for (unsigned res = 0; res != cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.size();
+         ++res) {
+      span<const ul_sched_info> msg3s = scheduled_msg3_retxs(res);
+
+      if (not msg3s.empty()) {
+        unsigned retx_count =
+            std::count_if(msg3s.begin(), msg3s.end(), [](const ul_sched_info& e) { return not e.pusch_cfg.new_data; });
+        if (retx_count > 0) {
+          ASSERT_TRUE(is_slot_valid_for_msg3_retx_pdcch());
+        }
+        msg3_retx_count += retx_count;
+      }
+    }
+
+    if (not res_grid[0].result.ul.puschs.empty()) {
+      ul_crc_indication crc_ind;
+      crc_ind.cell_index = to_du_cell_index(0);
+      crc_ind.sl_rx      = this->next_slot_rx() - 1;
+      for (const ul_sched_info& ul : res_grid[0].result.ul.puschs) {
+        crc_ind.crcs.emplace_back();
+        crc_ind.crcs.back().ue_index       = ul.context.ue_index;
+        crc_ind.crcs.back().rnti           = ul.pusch_cfg.rnti;
+        crc_ind.crcs.back().harq_id        = to_harq_id(0);
+        crc_ind.crcs.back().tb_crc_success = false;
+      }
+      this->ra_sch.handle_crc_indication(crc_ind);
+    }
+  }
+
+  ASSERT_GT(msg3_retx_count, 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(ra_scheduler,
