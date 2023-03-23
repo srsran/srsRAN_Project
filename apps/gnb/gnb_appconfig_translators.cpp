@@ -367,7 +367,7 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
     for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
       // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config = {};
-      tx_ch_config.freq.center_frequency_hz     = cell_tx_freq_Hz;
+      tx_ch_config.freq.center_frequency_hz     = cell_tx_freq_Hz + config.rf_driver_cfg.center_freq_offset_Hz;
       if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
         tx_ch_config.freq.lo_frequency_hz = cell_tx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6;
       } else {
@@ -386,7 +386,7 @@ radio_configuration::radio srsran::generate_radio_config(const gnb_appconfig&   
       tx_stream_config.channels.emplace_back(tx_ch_config);
 
       radio_configuration::channel rx_ch_config = {};
-      rx_ch_config.freq.center_frequency_hz     = cell_rx_freq_Hz;
+      rx_ch_config.freq.center_frequency_hz     = cell_rx_freq_Hz + config.rf_driver_cfg.center_freq_offset_Hz;
       if (std::isnormal(config.rf_driver_cfg.lo_offset_MHz)) {
         rx_ch_config.freq.lo_frequency_hz = cell_rx_freq_Hz + config.rf_driver_cfg.lo_offset_MHz * 1e6;
       } else {
