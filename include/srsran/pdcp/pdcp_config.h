@@ -92,7 +92,7 @@ enum class pdcp_t_reordering {
   ms3000   = 3000,
   infinity = -1
 };
-inline bool pdcp_t_reordering_from_int(pdcp_t_reordering t_reord, int num)
+inline bool pdcp_t_reordering_from_int(pdcp_t_reordering& t_reord, int num)
 {
   switch (num) {
     case 0:
