@@ -216,6 +216,8 @@ static void configure_cli11_prach_args(CLI::App& app, prach_appconfig& prach_par
          "--max_msg3_harq_retx", prach_params.max_msg3_harq_retx, "Maximum number of message 3 HARQ retransmissions")
       ->capture_default_str()
       ->check(CLI::Range(0, 4));
+  app.add_option("--total_nof_ra_preambles", prach_params.total_nof_ra_preambles, "Number of different PRACH preambles")
+      ->check(CLI::Range(1, 64));
 }
 
 static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_control_appconfig& amplitude_params)

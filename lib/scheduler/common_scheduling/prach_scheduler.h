@@ -31,6 +31,9 @@ private:
   // duration currently supported by the GNB, which is 0.5ms for SCS 30KHz.
   static const unsigned MAX_SLOTS_PER_PRACH = 7;
 
+  // The maximum number of PRACH preamble indexes that the UE can choose from.
+  static const unsigned MAX_NOF_PRACH_PREAMBLES = 64;
+
   struct cached_prach_occasion {
     /// RB x symbol resources used for the PRACH.
     static_vector<grant_info, MAX_SLOTS_PER_PRACH> grant_list;

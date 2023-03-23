@@ -65,6 +65,8 @@ struct prach_appconfig {
   unsigned zero_correlation_zone = 0;
   unsigned fixed_msg3_mcs        = 0;
   unsigned max_msg3_harq_retx    = 4;
+  /// Total number of PRACH preambles used for contention based and contention free 4-step or 2-step random access.
+  optional<unsigned> total_nof_ra_preambles;
 };
 
 /// PDCCH application configuration.

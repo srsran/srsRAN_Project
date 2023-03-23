@@ -95,6 +95,7 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
     rach_cfg.rach_cfg_generic.prach_config_index           = base_cell.prach_cfg.prach_config_index;
     rach_cfg.prach_root_seq_index                          = base_cell.prach_cfg.prach_root_sequence_index;
     rach_cfg.rach_cfg_generic.zero_correlation_zone_config = base_cell.prach_cfg.zero_correlation_zone;
+    rach_cfg.total_nof_ra_preambles                        = base_cell.prach_cfg.total_nof_ra_preambles;
 
     // UE-dedicated config.
     if (config.common_cell_cfg.pdcch_cfg.ue_ss_type == search_space_configuration::type_t::common) {

@@ -240,7 +240,6 @@ ul_config_common srsran::config_helpers::make_default_ul_config_common(const cel
       params.band.has_value() ? *params.band : band_helper::get_band_from_dl_arfcn(params.dl_arfcn);
   cfg.init_ul_bwp.generic_params = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
-  cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
   // Msg1-SCS invalid in case the PRACH SCS is derived from prach-ConfigurationIndex in RACH-ConfigGeneric.
