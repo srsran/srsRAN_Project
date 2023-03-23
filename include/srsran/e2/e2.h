@@ -13,6 +13,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/expected.h"
 #include "srsran/asn1/e2ap/e2ap.h"
+#include "srsran/asn1/e2ap/e2sm_kpm.h"
 #include "srsran/ran/lcid.h"
 #include "srsran/support/async/async_task.h"
 
