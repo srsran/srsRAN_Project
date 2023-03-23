@@ -35,7 +35,7 @@ struct nr_cell_global_id_t {
 
   bool operator==(const nr_cell_global_id_t& rhs) const
   {
-    std::string plmn_copy{plmn}, rhs_plmn_copy{rhs.plmn}, plmn_hex_copy{plmn_hex}, rhs_plmn_hex_copy{rhs.plmn_hex};
+    std::string plmn_copy{plmn}, rhs_plmn_copy{rhs.plmn};
     std::transform(plmn_copy.begin(), plmn_copy.end(), plmn_copy.begin(), ::toupper);
     std::transform(rhs_plmn_copy.begin(), rhs_plmn_copy.end(), rhs_plmn_copy.begin(), ::toupper);
     return nci == rhs.nci && plmn_copy == rhs_plmn_copy;

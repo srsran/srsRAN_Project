@@ -12,6 +12,7 @@
 
 #include "../cell/cell_configuration.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
+#include "../support/slot_event_list.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include <unordered_map>
 
@@ -144,6 +145,9 @@ private:
   /// PDSCH time domain resource allocation list.
   span<const pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
 
+  /// List of notifications from upper layers containing Paging information.
+  /// This is used only to avoid data race between threads.
+  slot_event_list<sched_paging_information> new_paging_notifications;
   /// List of paging information of UEs yet to be scheduled.
   std::vector<sched_paging_information> paging_pending_ues;
   /// Mapping between NG-5G-S-TMSI (48 bits) to paging retries count for CN Paging.

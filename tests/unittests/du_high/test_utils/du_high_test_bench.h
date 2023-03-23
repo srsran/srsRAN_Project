@@ -82,7 +82,8 @@ public:
   mac_pcap_dummy             pcap;
   timer_manager              timers;
 
-  du_high du_obj;
+  du_high_configuration du_high_cfg;
+  du_high               du_obj;
 
   slot_point next_slot;
 };

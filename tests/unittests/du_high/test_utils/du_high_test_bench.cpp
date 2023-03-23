@@ -115,7 +115,7 @@ static void init_loggers()
 du_high_test_bench::du_high_test_bench() :
   cu_notifier(workers.test_worker),
   phy(workers.test_worker),
-  du_obj([this]() {
+  du_high_cfg([this]() {
     init_loggers();
 
     du_high_configuration cfg{};
@@ -131,6 +131,7 @@ du_high_test_bench::du_high_test_bench() :
 
     return cfg;
   }()),
+  du_obj(du_high_cfg),
   next_slot(0, test_rgen::uniform_int<unsigned>(0, 10239))
 {
   // Short-circuit the CU notifier to the F1AP-DU for automatic CU-CP responses.

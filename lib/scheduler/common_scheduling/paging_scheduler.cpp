@@ -98,6 +98,24 @@ paging_scheduler::paging_scheduler(const scheduler_expert_config&               
 
 void paging_scheduler::schedule_paging(cell_resource_allocator& res_grid)
 {
+  // Pop pending Paging notification and process them.
+  new_paging_notifications.slot_indication();
+  span<const sched_paging_information> new_paging_infos = new_paging_notifications.get_events();
+  for (const auto& pg_info : new_paging_infos) {
+    // Check whether Paging information is already present or not. i.e. tackle repeated Paging attempt from upper
+    // layers.
+    if (cn_paging_retries.find(pg_info.paging_identity) == cn_paging_retries.cend() and
+        ran_paging_retries.find(pg_info.paging_identity) == ran_paging_retries.cend()) {
+      paging_pending_ues.push_back(pg_info);
+      // Initialize paging retry count to zero.
+      if (pg_info.paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
+        cn_paging_retries[pg_info.paging_identity] = 0;
+      } else {
+        ran_paging_retries[pg_info.paging_identity] = 0;
+      }
+    }
+  }
+
   // NOTE:
   // - [Implementation defined] The pagingSearchSpace (in PDCCH-Common IE) value in UE's active BWP must be taken into
   //   consideration while paging a UE. However, for simplification we consider the value of pagingSearchSpace in UE's
@@ -257,13 +275,7 @@ unsigned paging_scheduler::get_accumulated_paging_msg_size(span<const sched_pagi
 
 void paging_scheduler::handle_paging_information(const sched_paging_information& paging_info)
 {
-  paging_pending_ues.push_back(paging_info);
-  // Initialize paging retry count to zero.
-  if (paging_info.paging_type_indicator == paging_identity_type::cn_ue_paging_identity) {
-    cn_paging_retries[paging_info.paging_identity] = 0;
-  } else {
-    ran_paging_retries[paging_info.paging_identity] = 0;
-  }
+  new_paging_notifications.push(paging_info);
 }
 
 bool paging_scheduler::is_paging_slot_in_search_space_id_gt_0(slot_point pdcch_slot, unsigned i_s)
