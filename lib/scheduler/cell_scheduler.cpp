@@ -9,6 +9,7 @@
  */
 
 #include "cell_scheduler.h"
+#include "logging/scheduler_metrics_handler.h"
 #include "ue_scheduling/ue_scheduler_impl.h"
 
 using namespace srsran;
@@ -16,10 +17,14 @@ using namespace srsran;
 cell_scheduler::cell_scheduler(const scheduler_expert_config&                  sched_cfg,
                                const sched_cell_configuration_request_message& msg,
                                ue_scheduler&                                   ue_sched_,
-                               scheduler_event_logger&                         ev_logger) :
+                               scheduler_event_logger&                         ev_logger,
+                               scheduler_metrics_handler&                      metrics_handler) :
   cell_cfg(msg),
   ue_sched(ue_sched_),
   res_grid(cell_cfg),
+  event_logger(ev_logger),
+  metrics(metrics_handler),
+  result_logger(sched_cfg.log_broadcast_messages),
   ssb_sch(cell_cfg),
   pdcch_sch(cell_cfg),
   csi_sch(cell_cfg),
@@ -69,6 +74,9 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   pdcch_sch.slot_indication(sl_tx);
   pucch_alloc.slot_indication(sl_tx);
 
+  // > Mark slot start for logging purposes.
+  result_logger.on_slot_start();
+
   // > SSB scheduling.
   ssb_sch.run_slot(res_grid, sl_tx);
 
@@ -92,4 +100,13 @@ void cell_scheduler::run_slot(slot_point sl_tx)
 
   // > Schedule UE DL and UL data.
   ue_sched.run_slot(sl_tx, cell_cfg.cell_index);
+
+  // > Log processed events.
+  event_logger.log();
+
+  // > Log the scheduler results.
+  result_logger.on_scheduler_result(last_result());
+
+  // > Push the scheduler results to the metrics handler.
+  metrics.push_result(sl_tx, last_result());
 }

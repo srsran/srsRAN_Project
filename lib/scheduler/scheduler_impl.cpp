@@ -20,7 +20,6 @@ scheduler_impl::scheduler_impl(const scheduler_config& sched_cfg_) :
   config_notifier(sched_cfg_.config_notifier),
   metrics_notifier(sched_cfg_.metrics_notifier),
   logger(srslog::fetch_basic_logger("SCHED")),
-  sched_result_logger(expert_params.log_broadcast_messages),
   metrics(expert_params.metrics_report_period, sched_cfg_.metrics_notifier)
 {
 }
@@ -42,8 +41,9 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   }
 
   // Create a new cell scheduler instance.
-  cells.emplace(msg.cell_index,
-                std::make_unique<cell_scheduler>(expert_params, msg, *groups[msg.cell_group_index], sched_ev_logger));
+  cells.emplace(
+      msg.cell_index,
+      std::make_unique<cell_scheduler>(expert_params, msg, *groups[msg.cell_group_index], sched_ev_logger, metrics));
 
   logger.info("Cell with cell_index={} was configured.", msg.cell_index);
 
@@ -144,20 +144,8 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
     logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
   }
 
-  // > Mark slot start for logging purposes.
-  sched_result_logger.on_slot_start();
-
   // > Run scheduler for the given slot and cell.
   cell.run_slot(sl_tx);
-
-  // > Log processed events.
-  sched_ev_logger.log();
-
-  // > Log the scheduler results.
-  sched_result_logger.on_scheduler_result(cell.last_result());
-
-  // > Push the scheduler results to the metrics handler.
-  metrics.push_result(sl_tx, cell.last_result());
 
   // Return result for the slot.
   return &cell.last_result();

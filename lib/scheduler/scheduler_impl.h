@@ -55,9 +55,8 @@ private:
   sched_configuration_notifier&  config_notifier;
   scheduler_ue_metrics_notifier& metrics_notifier;
 
-  srslog::basic_logger&   logger;
-  scheduler_result_logger sched_result_logger;
-  scheduler_event_logger  sched_ev_logger;
+  srslog::basic_logger&  logger;
+  scheduler_event_logger sched_ev_logger;
 
   // Slot metrics sink.
   scheduler_metrics_handler metrics;
