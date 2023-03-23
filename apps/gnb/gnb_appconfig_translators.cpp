@@ -128,6 +128,9 @@ std::map<uint8_t, srs_cu_cp::cu_cp_qos_config> srsran::generate_cu_cp_qos_config
     // Convert PDCP config
     pdcp_config& out_pdcp = out_cfg[qos.five_qi].pdcp;
 
+    // RB type
+    out_pdcp.rb_type = pdcp_rb_type::drb;
+
     // RLC mode
     rlc_mode mode = {};
     if (!from_string(mode, qos.rlc.mode)) {

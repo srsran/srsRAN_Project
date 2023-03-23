@@ -128,11 +128,6 @@ struct sdap_config_t {
   std::vector<qos_flow_id_t> mapped_qos_flows_to_release = {};
 };
 
-struct primary_path_t {
-  optional<uint8_t> cell_group;
-  optional<uint8_t> lc_ch;
-};
-
 struct security_result_t {
   std::string confidentiality_protection_result;
   std::string integrity_protection_result;
