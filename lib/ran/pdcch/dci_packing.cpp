@@ -165,6 +165,8 @@ dci_sizes srsran::get_dci_sizes(const dci_size_config& config)
 
 dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& config)
 {
+  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+
   dci_payload payload;
   units::bits frequency_resource_nof_bits = config.payload_size.freq_resource;
 
@@ -244,11 +246,15 @@ dci_payload srsran::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& conf
 
 dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& config)
 {
+  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+
   units::bits frequency_resource_nof_bits = config.payload_size.freq_resource;
   dci_payload payload;
 
   // Identifier for DCI formats - 1 bit. This field is always 0, indicating an UL DCI format.
   payload.push_back(0x00U, 1);
+
+  unsigned freq_resource_payload = config.frequency_resource;
 
   if (config.frequency_hopping_flag) {
     // Assert that the number of bits used to pack the frequency hopping offset is valid.
@@ -265,15 +271,20 @@ dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
                   config.hopping_offset,
                   config.N_ul_hop);
 
-    // Truncate the frequency resource allocation field. to fit the frequency hopping offset.
-    frequency_resource_nof_bits -= units::bits(config.N_ul_hop);
+    // Position of the LSB bit of the hopping offset within the frequency domain resource assignment field, as per
+    // TS38.212 Section 7.3.1.1.1.
+    unsigned hopping_offset_lsb_pos = frequency_resource_nof_bits.value() - config.N_ul_hop;
 
-    // Frequency hopping offset - N_ul_hop bits.
-    payload.push_back(config.hopping_offset, config.N_ul_hop);
+    // Frequency resource mask, to truncate the frequency resource payload before adding the hopping offset bits.
+    unsigned freq_resource_mask = (1U << hopping_offset_lsb_pos) - 1;
+
+    // Add the frequency hopping offset to the frequency domain resource assignment field.
+    freq_resource_payload =
+        (config.frequency_resource & freq_resource_mask) + (config.hopping_offset << hopping_offset_lsb_pos);
   }
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
-  payload.push_back(config.frequency_resource, frequency_resource_nof_bits.value());
+  payload.push_back(freq_resource_payload, frequency_resource_nof_bits.value());
 
   // Time domain resource assignment - 4 bit.
   payload.push_back(config.time_resource, 4);
@@ -312,6 +323,8 @@ dci_payload srsran::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& co
 
 dci_payload srsran::dci_1_0_c_rnti_pack(const dci_1_0_c_rnti_configuration& config)
 {
+  srsran_assert(config.payload_size.total.value() >= 12, "DCI payloads must be at least 12 bit long");
+
   dci_payload payload;
 
   // Identifier for DCI formats - 1 bit. This field is always 1, indicating a DL DCI format.
