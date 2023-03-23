@@ -13,6 +13,7 @@
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
 #include <cmath>
@@ -89,7 +90,7 @@ void assert_choice_type(uint32_t val, uint32_t choice_id);
 template <typename Enumerated>
 void assert_choice_type(typename Enumerated::options access_type, Enumerated& current_type, const char* choice_type)
 {
-  if (srsran_unlikely(current_type.value != access_type)) {
+  if (SRSRAN_UNLIKELY(current_type.value != access_type)) {
     log_error("Invalid field access for choice type \"{}\" (\"{}\"!=\"{}\")",
               choice_type,
               Enumerated(access_type).to_string(),

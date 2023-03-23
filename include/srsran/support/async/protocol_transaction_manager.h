@@ -14,6 +14,7 @@
 #include "manual_event.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/variant.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/timers.h"
 #include <array>
 
@@ -69,7 +70,7 @@ public:
   }
 
   /// \brief Creates a new protocol transaction with automatically assigned transaction ID.
-  protocol_transaction<T> create_transaction() __attribute__((warn_unused_result))
+  SRSRAN_NODISCARD protocol_transaction<T> create_transaction()
   {
     unsigned transaction_id = next_transaction_id.fetch_add(1, std::memory_order_relaxed) % N;
     if (not transactions[transaction_id].is_set()) {
@@ -83,8 +84,7 @@ public:
 
   /// \brief Creates a new protocol transaction with automatically assigned transaction ID and with a timeout, after
   /// which the transaction gets cancelled.
-  protocol_transaction<T> create_transaction(std::chrono::milliseconds time_to_cancel)
-      __attribute__((warn_unused_result))
+  SRSRAN_NODISCARD protocol_transaction<T> create_transaction(std::chrono::milliseconds time_to_cancel)
   {
     protocol_transaction<T> t = create_transaction();
     // Setup timeout.
@@ -107,7 +107,7 @@ public:
   /// \param[in] result Result of the transaction.
   /// \return True if result of the transaction was successfully set. False, if the transaction has already finished.
   template <typename U>
-  bool __attribute__((warn_unused_result)) set(unsigned transaction_id, U&& result)
+  SRSRAN_NODISCARD bool set(unsigned transaction_id, U&& result)
   {
     if (transactions[transaction_id].is_set()) {
       return false;

@@ -13,6 +13,7 @@
 #include "srsran/ran/prach/prach_cyclic_shifts.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/error_handling.h"
 
 using namespace srsran;
@@ -86,7 +87,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
 
 void prach_scheduler::run_slot(cell_resource_allocator& res_grid)
 {
-  if (srsran_unlikely(first_slot_ind)) {
+  if (SRSRAN_UNLIKELY(first_slot_ind)) {
     // If called for the first time, pre-allocates the PRACH PDUs over the entire grid, until the last
     // (farthest in the future) usable slot.
     first_slot_ind = false;

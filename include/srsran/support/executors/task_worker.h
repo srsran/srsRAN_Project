@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "task_executor.h"
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/attributes.h"
+#include "srsran/support/compiler.h"
+#include "srsran/support/executors/task_executor.h"
 #include "srsran/support/unique_thread.h"
 
 namespace srsran {
@@ -52,7 +52,7 @@ public:
 
   /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, enqueueing fails.
   /// \return true if task was successfully enqueued. False if task FIFO was full.
-  bool push_task(task_t&& task) RETURN_NO_DISCARD { return pending_tasks.try_push(std::move(task)).has_value(); }
+  SRSRAN_NODISCARD bool push_task(task_t&& task) { return pending_tasks.try_push(std::move(task)).has_value(); }
 
   /// \brief Push a new task to FIFO to be processed by the task worker. If the task FIFO is full, this call blocks,
   /// until the FIFO has space to enqueue the task.

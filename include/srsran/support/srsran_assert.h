@@ -13,9 +13,6 @@
 #include "srsran/srslog/srslog.h"
 #include <cstdio>
 
-/// Provides a hint to the compiler that a condition is likely false.
-#define srsran_unlikely(expr) __builtin_expect(!!(expr), 0)
-
 /// Verifies if compile-time symbol is defined.
 #define SRSRAN_IS_DEFINED(x) SRSRAN_IS_DEFINED2(x)
 #define SRSRAN_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))
