@@ -21,11 +21,11 @@ namespace srs_cu_cp {
 class ngap_pdu_session_resource_release_procedure
 {
 public:
-  ngap_pdu_session_resource_release_procedure(ngap_ue&                                    ue_,
-                                              cu_cp_pdu_session_resource_release_command& command_,
-                                              ngap_du_processor_control_notifier&         du_processor_ctrl_notif_,
-                                              ngap_message_notifier&                      amf_notif_,
-                                              srslog::basic_logger&                       logger_);
+  ngap_pdu_session_resource_release_procedure(ngap_ue&                                          ue_,
+                                              const cu_cp_pdu_session_resource_release_command& command_,
+                                              ngap_du_processor_control_notifier& du_processor_ctrl_notif_,
+                                              ngap_message_notifier&              amf_notif_,
+                                              srslog::basic_logger&               logger_);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -34,7 +34,7 @@ private:
   void send_pdu_session_resource_release_response();
 
   ngap_ue&                                    ue;
-  cu_cp_pdu_session_resource_release_command& command;
+  cu_cp_pdu_session_resource_release_command  command;
   cu_cp_pdu_session_resource_release_response response;
   ngap_du_processor_control_notifier&         du_processor_ctrl_notifier;
   ngap_message_notifier&                      amf_notifier;
