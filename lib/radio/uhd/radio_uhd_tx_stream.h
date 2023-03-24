@@ -95,5 +95,8 @@ public:
 
   /// Stop the transmission.
   void stop();
+
+  /// Wait until radio is stopped.
+  void wait_stop();
 };
 } // namespace srsran

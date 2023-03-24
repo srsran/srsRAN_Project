@@ -188,3 +188,9 @@ bool radio_uhd_rx_stream::stop()
 
   return true;
 }
+
+void radio_uhd_rx_stream::wait_stop()
+{
+  // nothing to wait here
+  return;
+}

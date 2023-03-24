@@ -453,14 +453,24 @@ void radio_session_uhd_impl::stop()
   // Transition state to stop.
   state = states::STOP;
 
-  // Iterate transmit streams and stop.
+  // Signal stop for each transmit stream.
   for (auto& stream : tx_streams) {
     stream->stop();
   }
 
-  // Iterate receive streams and stop.
+  // Signal stop for each receive stream.
   for (auto& stream : rx_streams) {
     stream->stop();
+  }
+
+  // Wait for transmitter streams to join.
+  for (auto& stream : tx_streams) {
+    stream->wait_stop();
+  }
+
+  // Wait for receiver streams to join.
+  for (auto& stream : rx_streams) {
+    stream->wait_stop();
   }
 }
 

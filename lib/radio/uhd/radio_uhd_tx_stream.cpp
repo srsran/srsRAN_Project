@@ -69,7 +69,8 @@ void radio_uhd_tx_stream::recv_async_msg()
 void radio_uhd_tx_stream::run_recv_async_msg()
 {
   // If stop was called, then stop enqueueing the task.
-  if (state_fsm.is_stopped()) {
+  if (state_fsm.is_stopping()) {
+    state_fsm.async_task_stopped();
     return;
   }
 
@@ -237,4 +238,9 @@ void radio_uhd_tx_stream::stop()
       stream->send(buffs_cpp, 0, metadata, TRANSMIT_TIMEOUT_S);
     });
   }
+}
+
+void radio_uhd_tx_stream::wait_stop()
+{
+  state_fsm.wait_stop();
 }

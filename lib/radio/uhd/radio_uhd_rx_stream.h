@@ -89,5 +89,8 @@ public:
   /// \brief Stops the reception stream.
   /// \return True if no exception is caught. Otherwise false.
   bool stop();
+
+  /// Wait until radio is stopped.
+  void wait_stop();
 };
 } // namespace srsran
