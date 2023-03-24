@@ -65,10 +65,11 @@ static bool validate_amplitude_control_appconfig(const amplitude_control_appconf
 }
 
 /// Validates the given TDD UL DL pattern application configuration. Returns true on success, otherwise false.
-static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_config& config)
+static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_config& config, subcarrier_spacing common_scs)
 {
-  if (config.ref_scs > subcarrier_spacing::kHz60) {
-    fmt::print("Invalid TDD UL DL reference SCS={}. Must be 15, 30 or 60 kHz for FR1.\n", config.ref_scs);
+  // NOTE: TDD pattern is assumed to use common SCS as reference SCS.
+  if (common_scs > subcarrier_spacing::kHz60) {
+    fmt::print("Invalid TDD UL DL reference SCS={}. Must be 15, 30 or 60 kHz for FR1.\n", common_scs);
     return false;
   }
   if (config.pattern1_dl_ul_tx_period != 0.5F and config.pattern1_dl_ul_tx_period != 0.625F and
@@ -81,27 +82,27 @@ static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_config& config)
     return false;
   }
   // See TS 38.213, clause 11.1.
-  if (config.pattern1_dl_ul_tx_period == 0.625F and config.ref_scs != subcarrier_spacing::kHz120) {
+  if (config.pattern1_dl_ul_tx_period == 0.625F and common_scs != subcarrier_spacing::kHz120) {
     fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120 kHz when using "
                "periodicity of {} ms.\n",
-               config.ref_scs,
+               common_scs,
                config.pattern1_dl_ul_tx_period);
     return false;
   }
   if (config.pattern1_dl_ul_tx_period == 1.25F and
-      (config.ref_scs != subcarrier_spacing::kHz120 and config.ref_scs != subcarrier_spacing::kHz60)) {
+      (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60)) {
     fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120 or 60 kHz when using "
                "periodicity of {} ms.\n",
-               config.ref_scs,
+               common_scs,
                config.pattern1_dl_ul_tx_period);
     return false;
   }
   if (config.pattern1_dl_ul_tx_period == 2.5F and
-      (config.ref_scs != subcarrier_spacing::kHz120 and config.ref_scs != subcarrier_spacing::kHz60 and
-       config.ref_scs != subcarrier_spacing::kHz30)) {
+      (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60 and
+       common_scs != subcarrier_spacing::kHz30)) {
     fmt::print("Invalid reference SCS={} for TDD pattern 1. Must be 120, 60 or 30 kHz when using "
                "periodicity of {} ms.\n",
-               config.ref_scs,
+               common_scs,
                config.pattern1_dl_ul_tx_period);
     return false;
   }
@@ -142,27 +143,27 @@ static bool validate_tdd_ul_dl_appconfig(const tdd_ul_dl_config& config)
   }
   // See TS 38.213, clause 11.1.
   if (config.pattern2_dl_ul_tx_period.has_value() and *config.pattern2_dl_ul_tx_period == 0.625F and
-      config.ref_scs != subcarrier_spacing::kHz120) {
+      common_scs != subcarrier_spacing::kHz120) {
     fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120 kHz when using "
                "periodicity of {} ms.\n",
-               config.ref_scs,
+               common_scs,
                *config.pattern2_dl_ul_tx_period);
     return false;
   }
   if (config.pattern2_dl_ul_tx_period.has_value() and *config.pattern2_dl_ul_tx_period == 1.25F and
-      (config.ref_scs != subcarrier_spacing::kHz120 and config.ref_scs != subcarrier_spacing::kHz60)) {
+      (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60)) {
     fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120 or 60 kHz when using "
                "periodicity of {} ms.\n",
-               config.ref_scs,
+               common_scs,
                *config.pattern2_dl_ul_tx_period);
     return false;
   }
   if (config.pattern2_dl_ul_tx_period.has_value() and *config.pattern2_dl_ul_tx_period == 2.5F and
-      (config.ref_scs != subcarrier_spacing::kHz120 and config.ref_scs != subcarrier_spacing::kHz60 and
-       config.ref_scs != subcarrier_spacing::kHz30)) {
+      (common_scs != subcarrier_spacing::kHz120 and common_scs != subcarrier_spacing::kHz60 and
+       common_scs != subcarrier_spacing::kHz30)) {
     fmt::print("Invalid reference SCS={} for TDD pattern 2. Must be 120, 60 or 30 kHz when using "
                "periodicity of {} ms.\n",
-               config.ref_scs,
+               common_scs,
                *config.pattern2_dl_ul_tx_period);
     return false;
   }
@@ -301,7 +302,7 @@ static bool validate_base_cell_appconfig(const base_cell_appconfig& config)
   }
 
   if (!band_helper::is_paired_spectrum(band) and config.tdd_pattern_cfg.has_value() and
-      !validate_tdd_ul_dl_appconfig(config.tdd_pattern_cfg.value())) {
+      !validate_tdd_ul_dl_appconfig(config.tdd_pattern_cfg.value(), config.common_scs)) {
     return false;
   }
 

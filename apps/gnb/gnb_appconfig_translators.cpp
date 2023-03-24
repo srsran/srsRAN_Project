@@ -112,8 +112,8 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
       }
       const auto& tdd_cfg = config.common_cell_cfg.tdd_pattern_cfg.value();
 
-      out_cell.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots =
-          (unsigned)std::round(tdd_cfg.pattern1_dl_ul_tx_period * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+      out_cell.tdd_ul_dl_cfg_common.value().pattern1.dl_ul_tx_period_nof_slots = (unsigned)std::round(
+          tdd_cfg.pattern1_dl_ul_tx_period * get_nof_slots_per_subframe(out_cell.tdd_ul_dl_cfg_common.value().ref_scs));
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_slots   = tdd_cfg.pattern1_nof_dl_slots;
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_dl_symbols = tdd_cfg.pattern1_nof_dl_symbols;
       out_cell.tdd_ul_dl_cfg_common.value().pattern1.nof_ul_slots   = tdd_cfg.pattern1_nof_ul_slots;
@@ -125,8 +125,9 @@ std::vector<du_cell_config> srsran::generate_du_cell_config(const gnb_appconfig&
         if (not out_cell.tdd_ul_dl_cfg_common.value().pattern2.has_value()) {
           out_cell.tdd_ul_dl_cfg_common.value().pattern2.emplace();
         }
-        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().dl_ul_tx_period_nof_slots = (unsigned)std::round(
-            tdd_cfg.pattern2_dl_ul_tx_period.value() * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
+        out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().dl_ul_tx_period_nof_slots =
+            (unsigned)std::round(tdd_cfg.pattern2_dl_ul_tx_period.value() *
+                                 get_nof_slots_per_subframe(out_cell.tdd_ul_dl_cfg_common.value().ref_scs));
         out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_dl_slots   = tdd_cfg.pattern2_nof_dl_slots.value();
         out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_dl_symbols = tdd_cfg.pattern2_nof_dl_symbols.value();
         out_cell.tdd_ul_dl_cfg_common.value().pattern2.value().nof_ul_slots   = tdd_cfg.pattern2_nof_ul_slots.value();

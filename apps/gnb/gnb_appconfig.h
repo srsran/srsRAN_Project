@@ -69,11 +69,8 @@ struct prach_appconfig {
   optional<unsigned> total_nof_ra_preambles;
 };
 
-/// TDD slot configuration.
+/// TDD slot configuration. See TS 38.331, \c TDD-UL-DL-Pattern and \c TDD-UL-DL-ConfigCommon.
 struct tdd_ul_dl_config {
-  /// Reference SCS used to determine the time domain boundaries in the UL-DL pattern. The network ensures that
-  /// this value is not larger than any SCS of configured BWPs for the serving cell.
-  subcarrier_spacing ref_scs = subcarrier_spacing::kHz15;
   /// Pattern 1: Periodicity of the DL-UL pattern in Milliseconds. Values {0.5, 0.625, 1, 1.25, 2, 2.5, 5, 10}.
   float pattern1_dl_ul_tx_period = 5.0F;
   /// Pattern 1: Values: {0,...,maxNrofSlots=80}.
