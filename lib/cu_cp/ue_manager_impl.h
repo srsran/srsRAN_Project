@@ -252,7 +252,7 @@ private:
     // TODO
   }
 
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("UE-MNG");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UE-MNG");
 
   std::unordered_map<ue_index_t, cu_cp_ue> ues; // ues indexed by ue_index
 

@@ -183,7 +183,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("CU-UE-MNG").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
@@ -200,7 +200,7 @@ TEST_F(du_processor_test, when_max_nof_ues_exceeded_then_ue_not_added)
 
   // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("CU-UE-MNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
@@ -257,7 +257,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
 
   // Reduce logger loglevel to warning to reduce console output
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::warning);
-  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::warning);
+  srslog::fetch_basic_logger("CU-UE-MNG").set_level(srslog::basic_levels::warning);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
 
   // Add the maximum number of UEs
@@ -274,7 +274,7 @@ TEST_F(du_processor_test, when_valid_ue_creation_request_received_after_ue_was_r
 
   // Reset logger loglevel
   srslog::fetch_basic_logger("CU-CP").set_level(srslog::basic_levels::debug);
-  srslog::fetch_basic_logger("UE-MNG").set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("CU-UE-MNG").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
 
   ASSERT_EQ(du_processor_obj->get_nof_ues(), MAX_NOF_UES_PER_DU);
