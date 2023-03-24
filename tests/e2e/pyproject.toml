@@ -27,6 +27,7 @@ markers = [
   "multiue",
   "zmq_valgrind",
   "rf_b200",
+  "rf_not_crash",
   "test",
 ]
 minversion = "6.0"

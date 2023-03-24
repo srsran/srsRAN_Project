@@ -12,6 +12,7 @@ Test ping
 from contextlib import suppress
 import logging
 from typing import Iterable, Union
+import grpc
 
 from pytest import mark
 from retina.client.manager import RetinaTestManager
@@ -142,6 +143,44 @@ def test_rf(
         time_alignment_calibration="auto",
         log_search=False,
     )
+
+
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(3, 15, 10, marks=mark.rf_not_crash, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+# pylint: disable=too-many-arguments
+def test_rf_does_not_crash(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    gnb: GNBStub,
+    epc: EPCStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+):
+    """
+    RF Ping test that:
+    - Ignore if the ping fails or ue can't attach
+    - Fails only if ue/gnb/epc crashes
+    """
+
+    with suppress(grpc.RpcError, AssertionError):
+        _ping(
+            retina_manager=retina_manager,
+            retina_data=retina_data,
+            ue=ue,
+            gnb=gnb,
+            epc=epc,
+            band=band,
+            common_scs=common_scs,
+            bandwidth=bandwidth,
+            global_timing_advance=-1,
+            time_alignment_calibration="auto",
+            log_search=False,
+            always_download_artifacts=True,
+        )
 
 
 # pylint: disable=too-many-arguments, too-many-locals

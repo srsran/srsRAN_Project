@@ -134,7 +134,35 @@ rf:
     - job: "avx2 [basic]"
       artifacts: true
 
-rf b200 config:
+rf-tsan:
+  extends: rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    MARKERS: "rf_not_crash"
+  needs:
+    - job: "avx2 [tsan, cached]"
+      artifacts: true
+      optional: true
+    - job: "avx2 [tsan, update cache]"
+      artifacts: true
+      optional: true
+    - job: "avx2 [tsan, clean]"
+      artifacts: true
+      optional: true
+  allow_failure: true
+
+rf-asan:
+  extends: rf
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly/
+  variables:
+    MARKERS: "rf_not_crash"
+  needs:
+    - job: "avx2 [asan]"
+      artifacts: true
+
+rf-b200-config:
   extends: rf
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly/
