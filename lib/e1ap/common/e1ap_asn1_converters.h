@@ -942,6 +942,10 @@ inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
     case cause_t::transport:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::transport);
       break;
+    case cause_t::nas:
+      // NAS doesn't exist as E1AP cause - use radio-network instead.
+      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::radio_network);
+      break;
     case cause_t::protocol:
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::protocol);
       break;
@@ -949,8 +953,7 @@ inline asn1::e1ap::cause_c cause_to_asn1_cause(cause_t cause)
       e1ap_cause.set(asn1::e1ap::cause_c::types_opts::misc);
       break;
     default:
-      e1ap_cause.set(asn1::e1ap::cause_c::types_opts::nulltype);
-      break;
+      report_fatal_error("Cannot convert cause {} to E1AP type", cause);
   }
 
   return e1ap_cause;
