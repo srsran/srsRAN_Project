@@ -263,6 +263,7 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       break;
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
+      break;
     case f1ap_elem_procs_o::init_msg_c::types_opts::paging:
       handle_paging_request(msg.value.paging());
       break;
