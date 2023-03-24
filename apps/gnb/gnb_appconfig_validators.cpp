@@ -225,6 +225,12 @@ static bool validate_pdcp_appconfig(uint8_t five_qi, const pdcp_appconfig& confi
                "ms1250, ms1500, ms1750, ms2000, ms2250, ms2500, ms2750\"\n");
     return false;
   }
+  if (t_reordering == pdcp_t_reordering::infinity) {
+    srslog::basic_logger& logger = srslog::fetch_basic_logger("GNB");
+    fmt::print("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. 5QI={}\n", five_qi);
+    logger.warning("PDCP t-Reordering=infinity on DRBs is not advised. It can cause data stalls. 5QI={}", five_qi);
+  }
+
   if (config.rx.out_of_order_delivery) {
     fmt::print("PDCP RX out-of-order delivery is not supported. 5QI={}\n", five_qi);
     return false;

@@ -39,8 +39,9 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
       reordering_timer.set(std::chrono::milliseconds{static_cast<unsigned>(cfg.t_reordering)},
                            reordering_callback{this});
     }
-  } else if (cfg.rlc_mode == pdcp_rlc_mode::um) {
-    logger.log_error("Possible PDCP-NR misconfiguration: using infinite re-ordering timer with RLC UM bearer.");
+  }
+  if (cfg.rb_type == pdcp_rb_type::drb && cfg.t_reordering == pdcp_t_reordering::infinity) {
+    logger.log_warning("t-Reordering of infinity on DRBs is not advised. It can cause data stalls.");
   }
   logger.log_info("PDCP configured. {}", cfg);
 }
