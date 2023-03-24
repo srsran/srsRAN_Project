@@ -29,21 +29,16 @@ constexpr float pucch_format2_code_rate(unsigned nof_prb, unsigned nof_symbols, 
   return static_cast<float>(nof_payload_bits) / static_cast<float>(nof_channel_bits);
 }
 
-/// \brief Calculates the number of PRBs require for PUCCH format 2.
+/// \brief Calculates the number of PRBs required for a given payload size for PUCCH format 2.
 /// \param[in] nof_payload_bits  Total number of payload bits.
-/// \param[in] max_nof_prbs      Maximum PUCCH format 2 bandwidth in PRB; it corresponds to \c nrofPRBs, part of
-///                              \c PUCCH-format2, TS 38.331.
 /// \param[in] nof_symbols       Transmission duration in symbols.
 /// \param[in] max_code_rate     Maximum code rate for PUCCH format 2; it corresponds to \c maxCodeRate, part of
 ///                              \c PUCCH-FormatConfig, TS 38.331.
-/// \return The number of PRBs required for the transmission of nof_payload_bits with PUCCH format 2.
-inline unsigned
-get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate)
+/// \return The number of PRBs required for the transmission of nof_payload_bits with PUCCH format 2. If the estimated
+/// number of PRBs is more than the maximum allowed value of 16, the function returns -1.
+inline int get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsigned nof_symbols, float max_code_rate)
 {
-  if (max_nof_prbs == 1) {
-    return 1;
-  }
-  if (nof_payload_bits == 0) {
+  if (nof_payload_bits == 0 or nof_symbols == 0) {
     return 0;
   }
 
@@ -59,7 +54,37 @@ get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, uns
       static_cast<float>(nof_payload_bits) /
       (static_cast<float>(pucch_constants::FORMAT2_NOF_DATA_SC * nof_symbols * NOF_BITS_QPSK_SYMBOL) * max_code_rate)));
 
-  return std::min(estimated_nof_prbs, max_nof_prbs);
+  return estimated_nof_prbs <= pucch_constants::FORMAT2_MAX_NPRB ? static_cast<int>(estimated_nof_prbs) : -1;
+}
+
+/// \brief Calculates the number of PRBs required for PUCCH format 2 given, capped to the configured maximum PRBs.
+/// \param[in] nof_payload_bits  Total number of payload bits.
+/// \param[in] max_nof_prbs      Maximum PUCCH format 2 bandwidth in PRB; it corresponds to \c nrofPRBs, part of
+///                              \c PUCCH-format2, TS 38.331.
+/// \param[in] nof_symbols       Transmission duration in symbols.
+/// \param[in] max_code_rate     Maximum code rate for PUCCH format 2; it corresponds to \c maxCodeRate, part of
+///                              \c PUCCH-FormatConfig, TS 38.331.
+/// \return The number of PRBs required for the transmission of nof_payload_bits with PUCCH format 2.
+inline unsigned
+get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate)
+{
+  if (nof_payload_bits == 0 or nof_symbols == 0) {
+    return 0;
+  }
+  if (max_nof_prbs == 1) {
+    return 1;
+  }
+
+  // The maximum value is the maximum payload that does not require addition of CRC, for which this function would need
+  // to be reviewed.
+  srsran_assert(max_nof_prbs <= pucch_constants::FORMAT2_MAX_NPRB, "Maximum number of payload bits supported is 11.");
+  // TODO: Review this max payload.
+
+  const int      estimated_nof_prbs = get_pucch_format2_max_nof_prbs(nof_payload_bits, nof_symbols, max_code_rate);
+  const unsigned nof_prbs =
+      estimated_nof_prbs < 0 ? pucch_constants::FORMAT2_MAX_NPRB : static_cast<unsigned>(estimated_nof_prbs);
+
+  return std::min(nof_prbs, max_nof_prbs);
 }
 
 /// \brief Calculates the maximum payload for a PUCCH Format 2 transmission.
